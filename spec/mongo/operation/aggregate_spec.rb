@@ -67,36 +67,28 @@ describe Mongo::Operation::Aggregate do
 
   describe '#execute' do
 
-    context 'message' do
+    context 'when the aggregation fails' do
 
-      it 'creates a query wire protocol message with correct specs' do
-        allow_any_instance_of(Mongo::ServerSelector::Primary).to receive(:server) do
-          primary_server
-        end
-
-        expect(Mongo::Protocol::Query).to receive(:new) do |db, coll, sel, options|
-          expect(db).to eq(db_name)
-          expect(coll).to eq(Mongo::Database::COMMAND)
-          expect(sel).to eq(selector)
-          expect(options).to eq(options)
-        end
-        op.execute(primary_context)
+      let(:selector) do
+        { :aggregate => coll_name,
+          :pipeline => [{ '$invalid' => 'operator' }],
+        }
       end
-    end
 
-    context 'connection' do
-
-      it 'dispatches the message on the connection' do
-        allow_any_instance_of(Mongo::ServerSelector::Primary).to receive(:server) do
-          primary_server
-        end
-
-        expect(connection).to receive(:dispatch)
-        op.execute(primary_context)
+      it 'raises an exception' do
+        expect {
+          op.execute(authorized_primary.context)
+        }.to raise_error(Mongo::Error::OperationFailure)
       end
     end
 
     context 'rerouting' do
+
+      before do
+        allow_any_instance_of(Mongo::Operation::Aggregate::Result).to receive(:validate!) do
+          true
+        end
+      end
 
       context 'when out is specified and server is a secondary' do
         let(:selector) do

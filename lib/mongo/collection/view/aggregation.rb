@@ -96,7 +96,7 @@ module Mongo
         def send_initial_query(server)
           begin
             initial_query_op.execute(server.context)
-          rescue Mongo::Operation::Aggregate::NeedPrimaryServer
+          rescue Mongo::Error::NeedPrimaryServer
             warn 'Rerouting the Aggregation operation to the primary server.'
             server = ServerSelector.get(mode: :primary).select_server(cluster)
             initial_query_op.execute(server.context)
