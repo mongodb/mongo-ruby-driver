@@ -13,7 +13,7 @@ describe Mongo::Operation::Read::Indexes do
     end
 
     after do
-      authorized_collection.indexes.drop(spec)
+      authorized_collection.indexes.drop_one('name_1')
     end
 
     let(:operation) do

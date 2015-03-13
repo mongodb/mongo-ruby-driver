@@ -6,6 +6,56 @@ describe Mongo::Index::View do
     described_class.new(authorized_collection)
   end
 
+  describe '#drop_many' do
+
+    let(:spec_one) do
+      { another: -1 }
+    end
+
+    let(:spec_two) do
+      { testing: 1 }
+    end
+
+    before do
+      view.create(spec_one, unique: true)
+      view.create(spec_two, unique: true)
+    end
+
+    context 'when the indexes exists' do
+
+      context 'when using multi-args' do
+
+        let(:result) do
+          view.drop_many('another_-1', 'testing_1')
+        end
+
+        it 'drops the index' do
+          expect(result).to_not be_nil
+        end
+      end
+
+      context 'when passing an array' do
+
+        let(:result) do
+          view.drop_many([ 'another_-1', 'testing_1' ])
+        end
+
+        it 'drops the index' do
+          expect(result).to_not be_nil
+        end
+      end
+    end
+
+    context 'when passing a * as a name' do
+
+      it 'raises an exception' do
+        expect {
+          view.drop_many('another_-1', 'testing_1', '*')
+        }.to raise_error(Mongo::Error::MultiIndexDrop)
+      end
+    end
+  end
+
   describe '#drop_one' do
 
     let(:spec) do

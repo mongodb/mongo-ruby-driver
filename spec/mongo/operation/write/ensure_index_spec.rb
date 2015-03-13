@@ -25,7 +25,7 @@ describe Mongo::Operation::Write::EnsureIndex do
       end
 
       after do
-        authorized_collection.indexes.drop(spec)
+        authorized_collection.indexes.drop_one('random_1')
       end
 
       it 'returns ok' do
@@ -64,7 +64,7 @@ describe Mongo::Operation::Write::EnsureIndex do
       end
 
       after do
-        authorized_collection.indexes.drop(spec)
+        authorized_collection.indexes.drop_one('random_1')
       end
 
       it 'raises an exception', if: write_command_enabled? do

@@ -41,7 +41,7 @@ module Mongo
           #
           # @since 2.0.0
           def selector
-            { :deleteIndexes => coll_name, :index => index_name }
+            { :dropIndexes => coll_name, :index => index_name }
           end
         end
       end

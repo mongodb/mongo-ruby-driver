@@ -42,6 +42,21 @@ module Mongo
       # @since 2.0.0
       NAME = 'name'.freeze
 
+      # Drop multiple indexes by their names.
+      #
+      # @example Drop multiple indexes by their names.
+      #   view.drop_many('name_1', 'age_1')
+      #
+      # @note This operation is NOT atomic and executes a drop command for each
+      #   index name provided.
+      #
+      # @param [ String ] name The name of the index.
+      #
+      # @since 2.0.0
+      def drop_many(*names)
+        names.flatten.each{ |name| drop_one(name) }
+      end
+
       # Drop an index by its name.
       #
       # @example Drop an index by its name.
@@ -69,7 +84,7 @@ module Mongo
         drop_by_name('*')
       end
 
-      #  Creates an index on the collection.
+      # Creates an index on the collection.
       #
       # @param [ Hash ] spec A hash of field name/direction pairs.
       # @param [ Hash ] options Options for this index.

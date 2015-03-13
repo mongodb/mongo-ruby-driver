@@ -87,7 +87,7 @@ describe Mongo::Operation::Write::Insert do
 
     after do
       authorized_collection.find.delete_many
-      authorized_collection.indexes.drop({ name: 1 })
+      authorized_collection.indexes.drop_one('name_1')
     end
 
     context 'when inserting a single document' do
