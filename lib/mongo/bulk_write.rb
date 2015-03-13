@@ -20,6 +20,27 @@ module Mongo
   module BulkWrite
     extend self
 
+    # Get a bulk write object either of type ordered or unordered.
+    #
+    # @example Get a bulk write object.
+    #   Mongo::BulkWrite.get(collection, operations, ordered: true)
+    #
+    # @param [ Collection ] collection The collection on which the operations
+    #   will be executed.
+    #
+    # @param [ Array<Hash> ] operations The operations to execute.
+    #
+    # @param [ Hash ] options The options for the bulk write object.
+    #
+    # @option options [ true, false ] :ordered Whether the operations
+    #   should be executed in order.
+    # @option options [ Hash ] :write_concern The write concern options.
+    #   Can be :w => Integer, :fsync => Boolean, :j => Boolean.
+    #
+    # @return [ OrderedBulkWrite, UnorderedBulkWrite ] The appropriate bulk
+    #   write object.
+    #
+    # @since 2.0.0
     def get(collection, operations, options)
       if options.fetch(:ordered, true)
         OrderedBulkWrite.new(collection, operations, options)
