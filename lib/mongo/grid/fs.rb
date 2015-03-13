@@ -100,7 +100,7 @@ module Mongo
         @options = options
         @chunks_collection = database[chunks_name]
         @files_collection = database[files_name]
-        chunks_collection.indexes.create(INDEX_SPEC, :unique => true)
+        chunks_collection.indexes.create_one(INDEX_SPEC, :unique => true)
       end
 
       # Get the prefix for the GridFS

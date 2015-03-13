@@ -82,12 +82,12 @@ describe Mongo::Operation::Write::Insert do
   describe '#execute' do
 
     before do
-      authorized_collection.indexes.create({ name: 1 }, { unique: true })
+      authorized_collection.indexes.create_one({ name: 1 }, { unique: true })
     end
 
     after do
       authorized_collection.find.delete_many
-      authorized_collection.indexes.drop({ name: 1 })
+      authorized_collection.indexes.drop_one('name_1')
     end
 
     context 'when inserting a single document' do

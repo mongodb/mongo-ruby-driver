@@ -61,10 +61,15 @@ module Mongo
       # @since 2.0.0
       CURSOR_IDS = :cursor_ids.freeze
 
-      # The field for indexes.
+      # The field for an index.
       #
       # @since 2.0.0
       INDEX = :index.freeze
+
+      # The field for multiple indexes.
+      #
+      # @since 2.0.0
+      INDEXES = :indexes.freeze
 
       # The field for index names.
       #
@@ -253,6 +258,18 @@ module Mongo
       # @since 2.0.0
       def index_name
         spec[INDEX_NAME]
+      end
+
+      # Get the indexes from the specification.
+      #
+      # @example Get the index specifications.
+      #   specifiable.indexes
+      #
+      # @return [ Hash ] The index specifications.
+      #
+      # @since 2.0.0
+      def indexes
+        spec[INDEXES]
       end
 
       # Create the new specifiable operation.

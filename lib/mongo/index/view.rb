@@ -42,25 +42,34 @@ module Mongo
       # @since 2.0.0
       NAME = 'name'.freeze
 
-      # Drop an index by its specification.
+      # Drop multiple indexes by their names.
       #
-      # @example Drop the index by spec.
-      #   view.drop(name: 1)
+      # @example Drop multiple indexes by their names.
+      #   view.drop_many('name_1', 'age_1')
+      #
+      # @note This operation is NOT atomic and executes a drop command for each
+      #   index name provided.
+      #
+      # @param [ String ] name The name of the index.
+      #
+      # @since 2.0.0
+      def drop_many(*names)
+        names.flatten.each{ |name| drop_one(name) }
+      end
+
+      # Drop an index by its name.
       #
       # @example Drop an index by its name.
-      #   view.drop('name_1')
+      #   view.drop_one('name_1')
       #
-      # @param [ Hash, String ] spec The index spec or name to drop.
+      # @param [ String ] name The name of the index.
       #
       # @return [ Result ] The response.
       #
       # @since 2.0.0
-      def drop(spec)
-        Operation::Write::DropIndex.new(
-          db_name: database.name,
-          coll_name: collection.name,
-          index_name: spec.is_a?(String) ? spec : index_name(spec)
-        ).execute(next_primary.context)
+      def drop_one(name)
+        raise Error::MultiIndexDrop.new if name == '*'
+        drop_by_name(name)
       end
 
       # Drop all indexes on the collection.
@@ -72,12 +81,15 @@ module Mongo
       #
       # @since 2.0.0
       def drop_all
-        drop('*')
+        drop_by_name('*')
       end
 
-      #  Creates an index on the collection.
+      # Creates an index on the collection.
       #
-      # @param [ Hash ] spec A hash of field name/direction pairs.
+      # @example Create a unique index on the collection.
+      #   view.create_one({ name: 1 }, { unique: true })
+      #
+      # @param [ Hash ] keys A hash of field name/direction pairs.
       # @param [ Hash ] options Options for this index.
       #
       # @option options [ true, false ] :unique (false) If true, this index will enforce
@@ -101,13 +113,32 @@ module Mongo
       # @return [ Result ] The response.
       #
       # @since 2.0.0
-      def create(spec, options = {})
-        Operation::Write::EnsureIndex.new(
-          index: spec,
+      def create_one(keys, options = {})
+        create_many({ key: keys }.merge(options))
+      end
+
+      # Creates multiple indexes on the collection.
+      #
+      # @example Create multiple indexes.
+      #   view.create_many([
+      #     { key: { name: 1 }, unique: true },
+      #     { key: { age: -1 }, background: true }
+      #   ])
+      #
+      # @note On MongoDB 3.0.0 and higher, the indexes will be created in
+      #   parallel on the server.
+      #
+      # @param [ Array<Hash> ] models The index specifications. Each model MUST
+      #   include a :key option.
+      #
+      # @return [ Result ] The result of the command.
+      #
+      # @since 2.0.0
+      def create_many(*models)
+        Operation::Write::CreateIndex.new(
+          indexes: with_generated_names(models.flatten),
           db_name: database.name,
           coll_name: collection.name,
-          index_name: options[:name] || index_name(spec),
-          options: options
         ).execute(next_primary.context)
       end
 
@@ -117,17 +148,17 @@ module Mongo
       # @example Get index information by name.
       #   view.get('name_1')
       #
-      # @example Get index information by spec.
+      # @example Get index information by the keys.
       #   view.get(name: 1)
       #
-      # @param [ Hash, String ] spec The index name or spec.
+      # @param [ Hash, String ] keys_or_name The index name or spec.
       #
       # @return [ Hash ] The index information.
       #
       # @since 2.0.0
-      def get(spec)
+      def get(keys_or_name)
         find do |index|
-          (index[NAME] == spec) || (index[KEY] == normalize_keys(spec))
+          (index[NAME] == keys_or_name) || (index[KEY] == normalize_keys(keys_or_name))
         end
       end
 
@@ -169,8 +200,16 @@ module Mongo
 
       private
 
-      def limit
-        -1
+      def drop_by_name(name)
+        Operation::Write::DropIndex.new(
+          db_name: database.name,
+          coll_name: collection.name,
+          index_name: name
+        ).execute(next_primary.context)
+      end
+
+      def index_name(spec)
+        spec.to_a.join('_')
       end
 
       def indexes_spec
@@ -185,19 +224,25 @@ module Mongo
         Operation::Read::Indexes.new(indexes_spec)
       end
 
-      def send_initial_query(server)
-        initial_query_op.execute(server.context)
-      end
-
-      def index_name(spec)
-        spec.to_a.join('_')
-      end
+      def limit; -1; end
 
       def normalize_keys(spec)
         return false if spec.is_a?(String)
         spec.reduce({}) do |normalized, (key, value)|
           normalized[key.to_s] = value
           normalized
+        end
+      end
+
+      def send_initial_query(server)
+        initial_query_op.execute(server.context)
+      end
+
+      def with_generated_names(models)
+        models.dup.each do |model|
+          unless model[:name]
+            model[:name] = index_name(model[:key])
+          end
         end
       end
     end

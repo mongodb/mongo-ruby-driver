@@ -1,4 +1,4 @@
-# Copyright (C) 2014-2015 MongoDB, Inc.
+# Copyright (C) 2015 MongoDB, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,11 +12,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/operation/write/command/writable'
-require 'mongo/operation/write/command/delete'
-require 'mongo/operation/write/command/insert'
-require 'mongo/operation/write/command/update'
-require 'mongo/operation/write/command/drop_index'
-require 'mongo/operation/write/command/create_index'
-require 'mongo/operation/write/command/create_user'
-require 'mongo/operation/write/command/remove_user'
+module Mongo
+  class Error
+
+    # Exception raised if '*' is passed to drop_one on indexes.
+    #
+    # @since 2.0.0
+    class MultiIndexDrop < Error
+
+      # Instantiate the new exception.
+      #
+      # @example Instantiate the exception.
+      #   Mongo::Error::MultiIndexDrop.new
+      #
+      # @since 2.0.0
+      def initialize
+        super("Passing '*' to #drop_one would cause all indexes to be dropped. Please use #drop_all")
+      end
+    end
+  end
+end

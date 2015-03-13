@@ -11,7 +11,7 @@ describe Mongo::Operation::Write::DropIndex do
       end
 
       before do
-        authorized_collection.indexes.create(spec, unique: true)
+        authorized_collection.indexes.create_one(spec, unique: true)
       end
 
       let(:operation) do

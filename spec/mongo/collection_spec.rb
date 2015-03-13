@@ -339,11 +339,11 @@ describe Mongo::Collection do
     end
 
     before do
-      authorized_collection.indexes.create(index_spec, unique: true)
+      authorized_collection.indexes.create_one(index_spec, unique: true)
     end
 
     after do
-      authorized_collection.indexes.drop(index_spec)
+      authorized_collection.indexes.drop_one('name_1')
     end
 
     it 'returns a list of indexes' do

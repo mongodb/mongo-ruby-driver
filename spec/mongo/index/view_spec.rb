@@ -6,41 +6,83 @@ describe Mongo::Index::View do
     described_class.new(authorized_collection)
   end
 
-  describe '#drop' do
+  describe '#drop_many' do
+
+    let(:spec_one) do
+      { another: -1 }
+    end
+
+    let(:spec_two) do
+      { testing: 1 }
+    end
+
+    before do
+      view.create_one(spec_one, unique: true)
+      view.create_one(spec_two, unique: true)
+    end
+
+    context 'when the indexes exists' do
+
+      context 'when using multi-args' do
+
+        let(:result) do
+          view.drop_many('another_-1', 'testing_1')
+        end
+
+        it 'drops the index' do
+          expect(result).to_not be_nil
+        end
+      end
+
+      context 'when passing an array' do
+
+        let(:result) do
+          view.drop_many([ 'another_-1', 'testing_1' ])
+        end
+
+        it 'drops the index' do
+          expect(result).to_not be_nil
+        end
+      end
+    end
+
+    context 'when passing a * as a name' do
+
+      it 'raises an exception' do
+        expect {
+          view.drop_many('another_-1', 'testing_1', '*')
+        }.to raise_error(Mongo::Error::MultiIndexDrop)
+      end
+    end
+  end
+
+  describe '#drop_one' do
 
     let(:spec) do
       { another: -1 }
     end
 
     before do
-      view.create(spec, unique: true)
+      view.create_one(spec, unique: true)
     end
 
-    context 'when providing an index spec' do
+    context 'when the index exists' do
 
-      context 'when the index exists' do
+      let(:result) do
+        view.drop_one('another_-1')
+      end
 
-        let(:result) do
-          view.drop(spec)
-        end
-
-        it 'drops the index' do
-          expect(result).to be_successful
-        end
+      it 'drops the index' do
+        expect(result).to be_successful
       end
     end
 
-    context 'when providing an index name' do
+    context 'when passing a * as the name' do
 
-      context 'when the index exists' do
-
-        let(:result) do
-          view.drop('another_-1')
-        end
-
-        it 'drops the index' do
-          expect(result).to be_successful
-        end
+      it 'raises an exception' do
+        expect {
+          view.drop_one('*')
+        }.to raise_error(Mongo::Error::MultiIndexDrop)
       end
     end
   end
@@ -52,7 +94,7 @@ describe Mongo::Index::View do
     end
 
     before do
-      view.create(spec, unique: true)
+      view.create_one(spec, unique: true)
     end
 
     context 'when indexes exists' do
@@ -67,7 +109,74 @@ describe Mongo::Index::View do
     end
   end
 
-  describe '#create' do
+  describe '#create_many' do
+
+    context 'when the indexes are created' do
+
+      context 'when passing multi-args' do
+
+        let(:result) do
+          view.create_many(
+            { key: { random: 1 }, unique: true },
+            { key: { testing: -1 }, unique: true }
+          )
+        end
+
+        after do
+          view.drop_many('random_1', 'testing_-1')
+        end
+
+        it 'returns ok' do
+          expect(result).to be_successful
+        end
+      end
+
+      context 'when passing an array' do
+
+        let(:result) do
+          view.create_many([
+            { key: { random: 1 }, unique: true },
+            { key: { testing: -1 }, unique: true }
+          ])
+        end
+
+        after do
+          view.drop_many('random_1', 'testing_-1')
+        end
+
+        it 'returns ok' do
+          expect(result).to be_successful
+        end
+      end
+
+      context 'when index creation fails' do
+
+        let(:spec) do
+          { name: 1 }
+        end
+
+        before do
+          view.create_one(spec, unique: true)
+        end
+
+        after do
+          view.drop_one('name_1')
+        end
+
+        it 'raises an exception', if: write_command_enabled? do
+          expect {
+            view.create_many([{ key: { name: 1 }, unique: false }])
+          }.to raise_error(Mongo::Error::OperationFailure)
+        end
+
+        it 'does not raise an exception', unless: write_command_enabled? do
+          expect(view.create_many([{ key: { name: 1 }, unique: false }])).to be_successful
+        end
+      end
+    end
+  end
+
+  describe '#create_one' do
 
     context 'when the index is created' do
 
@@ -76,11 +185,11 @@ describe Mongo::Index::View do
       end
 
       let(:result) do
-        view.create(spec, unique: true)
+        view.create_one(spec, unique: true)
       end
 
       after do
-        view.drop(spec)
+        view.drop_one('random_1')
       end
 
       it 'returns ok' do
@@ -95,21 +204,21 @@ describe Mongo::Index::View do
       end
 
       before do
-        view.create(spec, unique: true)
+        view.create_one(spec, unique: true)
       end
 
       after do
-        view.drop(spec)
+        view.drop_one('name_1')
       end
 
       it 'raises an exception', if: write_command_enabled? do
         expect {
-          view.create(spec, unique: false)
+          view.create_one(spec, unique: false)
         }.to raise_error(Mongo::Error::OperationFailure)
       end
 
       it 'does not raise an exception', unless: write_command_enabled? do
-        expect(view.create(spec, unique: false)).to be_successful
+        expect(view.create_one(spec, unique: false)).to be_successful
       end
     end
 
@@ -120,11 +229,11 @@ describe Mongo::Index::View do
       end
 
       let!(:result) do
-        view.create(spec, unique: true, name: 'random_name')
+        view.create_one(spec, unique: true, name: 'random_name')
       end
 
       after do
-        view.drop('random_name')
+        view.drop_one('random_name')
       end
 
       it 'returns ok' do
@@ -144,11 +253,11 @@ describe Mongo::Index::View do
     end
 
     let!(:result) do
-      view.create(spec, unique: true, name: 'random_name')
+      view.create_one(spec, unique: true, name: 'random_name')
     end
 
     after do
-      view.drop('random_name')
+      view.drop_one('random_name')
     end
 
     context 'when providing a name' do
@@ -190,11 +299,11 @@ describe Mongo::Index::View do
       end
 
       before do
-        view.create(spec, unique: true)
+        view.create_one(spec, unique: true)
       end
 
       after do
-        view.drop(spec)
+        view.drop_one('name_1')
       end
 
       let(:indexes) do
