@@ -41,7 +41,7 @@ module Mongo
           { q: u[:find],
             u: u[:update],
             multi: multi,
-            upsert: u[:upsert]
+            upsert: u.fetch(:upsert, false)
           }
         end
       end
