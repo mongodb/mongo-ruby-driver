@@ -45,19 +45,16 @@ module Mongo
       # Drop an index by its name.
       #
       # @example Drop an index by its name.
-      #   view.drop('name_1')
+      #   view.drop_one('name_1')
       #
       # @param [ String ] name The name of the index.
       #
       # @return [ Result ] The response.
       #
       # @since 2.0.0
-      def drop(name)
-        Operation::Write::DropIndex.new(
-          db_name: database.name,
-          coll_name: collection.name,
-          index_name: name
-        ).execute(next_primary.context)
+      def drop_one(name)
+        raise Error::MultiIndexDrop.new if name == '*'
+        drop_by_name(name)
       end
 
       # Drop all indexes on the collection.
@@ -69,7 +66,7 @@ module Mongo
       #
       # @since 2.0.0
       def drop_all
-        drop('*')
+        drop_by_name('*')
       end
 
       #  Creates an index on the collection.
@@ -165,6 +162,14 @@ module Mongo
       end
 
       private
+
+      def drop_by_name(name)
+        Operation::Write::DropIndex.new(
+          db_name: database.name,
+          coll_name: collection.name,
+          index_name: name
+        ).execute(next_primary.context)
+      end
 
       def limit
         -1

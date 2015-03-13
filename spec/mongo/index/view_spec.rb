@@ -6,7 +6,7 @@ describe Mongo::Index::View do
     described_class.new(authorized_collection)
   end
 
-  describe '#drop' do
+  describe '#drop_one' do
 
     let(:spec) do
       { another: -1 }
@@ -19,11 +19,20 @@ describe Mongo::Index::View do
     context 'when the index exists' do
 
       let(:result) do
-        view.drop('another_-1')
+        view.drop_one('another_-1')
       end
 
       it 'drops the index' do
         expect(result).to be_successful
+      end
+    end
+
+    context 'when passing a * as the name' do
+
+      it 'raises an exception' do
+        expect {
+          view.drop_one('*')
+        }.to raise_error(Mongo::Error::MultiIndexDrop)
       end
     end
   end
@@ -63,7 +72,7 @@ describe Mongo::Index::View do
       end
 
       after do
-        view.drop(spec)
+        view.drop_one('random_1')
       end
 
       it 'returns ok' do
@@ -82,7 +91,7 @@ describe Mongo::Index::View do
       end
 
       after do
-        view.drop(spec)
+        view.drop_one('name_1')
       end
 
       it 'raises an exception', if: write_command_enabled? do
@@ -107,7 +116,7 @@ describe Mongo::Index::View do
       end
 
       after do
-        view.drop('random_name')
+        view.drop_one('random_name')
       end
 
       it 'returns ok' do
@@ -131,7 +140,7 @@ describe Mongo::Index::View do
     end
 
     after do
-      view.drop('random_name')
+      view.drop_one('random_name')
     end
 
     context 'when providing a name' do
@@ -177,7 +186,7 @@ describe Mongo::Index::View do
       end
 
       after do
-        view.drop(spec)
+        view.drop_one('name_1')
       end
 
       let(:indexes) do
