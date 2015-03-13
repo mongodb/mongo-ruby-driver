@@ -4,12 +4,6 @@ gemspec
 gem 'rake'
 gem 'yard'
 
-platforms :rbx do
-  gem 'racc'
-  gem 'rubysl', '~> 2.0'
-  gem 'rubinius-coverage', github: 'rubinius/rubinius-coverage'
-end
-
 group :development, :testing do
   gem 'jruby-openssl', :platforms => [ :jruby ]
   gem 'json', :platforms => [ :jruby ]
