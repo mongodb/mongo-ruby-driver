@@ -86,6 +86,9 @@ module Mongo
 
       # Creates an index on the collection.
       #
+      # @example Create a unique index on the collection.
+      #   view.create_one({ name: 1 }, { unique: true })
+      #
       # @param [ Hash ] keys A hash of field name/direction pairs.
       # @param [ Hash ] options Options for this index.
       #
@@ -111,12 +114,31 @@ module Mongo
       #
       # @since 2.0.0
       def create_one(keys, options = {})
+        create_many({ key: keys }.merge(options))
+      end
+
+      # Creates multiple indexes on the collection.
+      #
+      # @example Create multiple indexes.
+      #   view.create_many([
+      #     { key: { name: 1 }, unique: true },
+      #     { key: { age: -1 }, background: true }
+      #   ])
+      #
+      # @note On MongoDB 3.0.0 and higher, the indexes will be created in
+      #   parallel on the server.
+      #
+      # @param [ Array<Hash> ] models The index specifications. Each model MUST
+      #   include a :key option.
+      #
+      # @return [ Result ] The result of the command.
+      #
+      # @since 2.0.0
+      def create_many(*models)
         Operation::Write::CreateIndex.new(
-          index: keys,
+          indexes: with_generated_names(models.flatten),
           db_name: database.name,
           coll_name: collection.name,
-          index_name: options[:name] || index_name(keys),
-          options: options
         ).execute(next_primary.context)
       end
 
@@ -214,6 +236,14 @@ module Mongo
 
       def send_initial_query(server)
         initial_query_op.execute(server.context)
+      end
+
+      def with_generated_names(models)
+        models.dup.each do |model|
+          unless model[:name]
+            model[:name] = index_name(model[:key])
+          end
+        end
       end
     end
   end

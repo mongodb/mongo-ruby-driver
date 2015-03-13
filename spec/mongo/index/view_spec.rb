@@ -109,6 +109,73 @@ describe Mongo::Index::View do
     end
   end
 
+  describe '#create_many' do
+
+    context 'when the indexes are created' do
+
+      context 'when passing multi-args' do
+
+        let(:result) do
+          view.create_many(
+            { key: { random: 1 }, unique: true },
+            { key: { testing: -1 }, unique: true }
+          )
+        end
+
+        after do
+          view.drop_many('random_1', 'testing_-1')
+        end
+
+        it 'returns ok' do
+          expect(result).to be_successful
+        end
+      end
+
+      context 'when passing an array' do
+
+        let(:result) do
+          view.create_many([
+            { key: { random: 1 }, unique: true },
+            { key: { testing: -1 }, unique: true }
+          ])
+        end
+
+        after do
+          view.drop_many('random_1', 'testing_-1')
+        end
+
+        it 'returns ok' do
+          expect(result).to be_successful
+        end
+      end
+
+      context 'when index creation fails' do
+
+        let(:spec) do
+          { name: 1 }
+        end
+
+        before do
+          view.create_one(spec, unique: true)
+        end
+
+        after do
+          view.drop_one('name_1')
+        end
+
+        it 'raises an exception', if: write_command_enabled? do
+          expect {
+            view.create_many([{ key: { name: 1 }, unique: false }])
+          }.to raise_error(Mongo::Error::OperationFailure)
+        end
+
+        it 'does not raise an exception', unless: write_command_enabled? do
+          expect(view.create_many([{ key: { name: 1 }, unique: false }])).to be_successful
+        end
+      end
+    end
+  end
+
   describe '#create_one' do
 
     context 'when the index is created' do

@@ -21,11 +21,9 @@ module Mongo
         #
         # @example Create an ensure index command operation.
         #   Write::Command::CreateIndex.new({
-        #     :index => { :foo => 1 },
+        #     :indexes => [{ :key => { :foo => 1 }, :name => 'foo_1', :unique => true }],
         #     :db_name => 'test',
-        #     :coll_name => 'test_coll',
-        #     :index_name => 'foo_1'
-        #     :options => { :unique => true }
+        #     :coll_name => 'test_coll'
         #   })
         #
         # @since 2.0.0
@@ -42,10 +40,7 @@ module Mongo
           #
           # @since 2.0.0
           def selector
-            {
-              :createIndexes => coll_name,
-              :indexes => [ options.merge(key: index, name: index_name) ],
-            }
+            { :createIndexes => coll_name, :indexes => indexes }
           end
         end
       end

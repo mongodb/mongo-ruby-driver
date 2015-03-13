@@ -74,9 +74,14 @@ module Mongo
           end
         end
 
+        def index_documents
+          indexes.dup.each do |index|
+            index[:ns] = namespace
+          end
+        end
+
         def message
-          document = options.merge(ns: namespace, key: index, name: index_name)
-          Protocol::Insert.new(db_name, Index::COLLECTION, [ document ])
+          Protocol::Insert.new(db_name, Index::COLLECTION, index_documents)
         end
       end
     end

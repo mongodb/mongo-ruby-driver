@@ -7,17 +7,11 @@ describe Mongo::Operation::Write::CreateIndex do
     context 'when the index is created' do
 
       let(:spec) do
-        { random: 1 }
+        { key: { random: 1 }, name: 'random_1', unique: true }
       end
 
       let(:operation) do
-        described_class.new(
-          index: spec,
-          db_name: TEST_DB,
-          coll_name: TEST_COLL,
-          index_name: 'random_1',
-          options: { unique: true }
-        )
+        described_class.new(indexes: [ spec ], db_name: TEST_DB, coll_name: TEST_COLL)
       end
 
       let(:response) do
@@ -36,27 +30,15 @@ describe Mongo::Operation::Write::CreateIndex do
     context 'when index creation fails' do
 
       let(:spec) do
-        { random: 1 }
+        { key: { random: 1 }, name: 'random_1', unique: true }
       end
 
       let(:operation) do
-        described_class.new(
-          index: spec,
-          db_name: TEST_DB,
-          coll_name: TEST_COLL,
-          index_name: 'random_1',
-          options: { unique: true }
-        )
+        described_class.new(indexes: [ spec ], db_name: TEST_DB, coll_name: TEST_COLL)
       end
 
       let(:second_operation) do
-        described_class.new(
-          index: spec,
-          db_name: TEST_DB,
-          coll_name: TEST_COLL,
-          index_name: 'random_1',
-          options: { unique: false }
-        )
+        described_class.new(indexes: [ spec.merge(unique: false) ], db_name: TEST_DB, coll_name: TEST_COLL)
       end
 
       before do
