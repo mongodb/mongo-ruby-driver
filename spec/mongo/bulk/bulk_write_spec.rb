@@ -41,6 +41,17 @@ describe Mongo::BulkWrite do
         expect(bulk).to be_a(Mongo::BulkWrite::UnorderedBulkWrite)
       end
     end
+
+    context 'When ordered is not specified in options' do
+
+      let(:options) do
+        { }
+      end
+
+      it 'returns an OrderedBulkWrite object' do
+        expect(bulk).to be_a(Mongo::BulkWrite::OrderedBulkWrite)
+      end
+    end
   end
 
   describe 'Ordered bulk write' do
