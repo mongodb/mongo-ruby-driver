@@ -20,7 +20,7 @@ module Mongo
         # A MongoDB ensure index write command operation.
         #
         # @example Create an ensure index command operation.
-        #   Write::Command::EnsureIndex.new({
+        #   Write::Command::CreateIndex.new({
         #     :index => { :foo => 1 },
         #     :db_name => 'test',
         #     :coll_name => 'test_coll',

@@ -17,13 +17,13 @@ module Mongo
   module Operation
     module Write
 
-      # A MongoDB ensure index operation.
+      # A MongoDB create index operation.
       #
       # @note If a server with version >= 2.5.5 is being used, a write command
       #   operation will be created and sent instead.
       #
-      # @example Create the ensure index operation.
-      #   Write::EnsureIndex.new({
+      # @example Create the create index operation.
+      #   Write::CreateIndex.new({
       #     :index => { :name => 1, :age => -1 },
       #     :db_name => 'test',
       #     :coll_name => 'test_coll',
@@ -40,7 +40,7 @@ module Mongo
       #   write command.
       #
       # @since 2.0.0
-      class EnsureIndex
+      class CreateIndex
         include Executable
         include Specifiable
 

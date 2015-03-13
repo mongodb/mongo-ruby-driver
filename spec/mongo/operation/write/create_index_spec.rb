@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe Mongo::Operation::Write::EnsureIndex do
+describe Mongo::Operation::Write::CreateIndex do
 
   describe '#execute' do
 

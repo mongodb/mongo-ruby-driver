@@ -111,7 +111,7 @@ module Mongo
       #
       # @since 2.0.0
       def create(spec, options = {})
-        Operation::Write::EnsureIndex.new(
+        Operation::Write::CreateIndex.new(
           index: spec,
           db_name: database.name,
           coll_name: collection.name,
