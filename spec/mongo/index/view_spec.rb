@@ -16,31 +16,14 @@ describe Mongo::Index::View do
       view.create(spec, unique: true)
     end
 
-    context 'when providing an index spec' do
+    context 'when the index exists' do
 
-      context 'when the index exists' do
-
-        let(:result) do
-          view.drop(spec)
-        end
-
-        it 'drops the index' do
-          expect(result).to be_successful
-        end
+      let(:result) do
+        view.drop('another_-1')
       end
-    end
 
-    context 'when providing an index name' do
-
-      context 'when the index exists' do
-
-        let(:result) do
-          view.drop('another_-1')
-        end
-
-        it 'drops the index' do
-          expect(result).to be_successful
-        end
+      it 'drops the index' do
+        expect(result).to be_successful
       end
     end
   end

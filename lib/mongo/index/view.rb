@@ -42,24 +42,21 @@ module Mongo
       # @since 2.0.0
       NAME = 'name'.freeze
 
-      # Drop an index by its specification.
-      #
-      # @example Drop the index by spec.
-      #   view.drop(name: 1)
+      # Drop an index by its name.
       #
       # @example Drop an index by its name.
       #   view.drop('name_1')
       #
-      # @param [ Hash, String ] spec The index spec or name to drop.
+      # @param [ String ] name The name of the index.
       #
       # @return [ Result ] The response.
       #
       # @since 2.0.0
-      def drop(spec)
+      def drop(name)
         Operation::Write::DropIndex.new(
           db_name: database.name,
           coll_name: collection.name,
-          index_name: spec.is_a?(String) ? spec : index_name(spec)
+          index_name: name
         ).execute(next_primary.context)
       end
 
