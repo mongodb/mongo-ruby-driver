@@ -339,7 +339,7 @@ describe Mongo::Collection do
     end
 
     before do
-      authorized_collection.indexes.create(index_spec, unique: true)
+      authorized_collection.indexes.create_one(index_spec, unique: true)
     end
 
     after do

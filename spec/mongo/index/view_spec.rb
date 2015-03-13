@@ -17,8 +17,8 @@ describe Mongo::Index::View do
     end
 
     before do
-      view.create(spec_one, unique: true)
-      view.create(spec_two, unique: true)
+      view.create_one(spec_one, unique: true)
+      view.create_one(spec_two, unique: true)
     end
 
     context 'when the indexes exists' do
@@ -63,7 +63,7 @@ describe Mongo::Index::View do
     end
 
     before do
-      view.create(spec, unique: true)
+      view.create_one(spec, unique: true)
     end
 
     context 'when the index exists' do
@@ -94,7 +94,7 @@ describe Mongo::Index::View do
     end
 
     before do
-      view.create(spec, unique: true)
+      view.create_one(spec, unique: true)
     end
 
     context 'when indexes exists' do
@@ -109,7 +109,7 @@ describe Mongo::Index::View do
     end
   end
 
-  describe '#create' do
+  describe '#create_one' do
 
     context 'when the index is created' do
 
@@ -118,7 +118,7 @@ describe Mongo::Index::View do
       end
 
       let(:result) do
-        view.create(spec, unique: true)
+        view.create_one(spec, unique: true)
       end
 
       after do
@@ -137,7 +137,7 @@ describe Mongo::Index::View do
       end
 
       before do
-        view.create(spec, unique: true)
+        view.create_one(spec, unique: true)
       end
 
       after do
@@ -146,12 +146,12 @@ describe Mongo::Index::View do
 
       it 'raises an exception', if: write_command_enabled? do
         expect {
-          view.create(spec, unique: false)
+          view.create_one(spec, unique: false)
         }.to raise_error(Mongo::Error::OperationFailure)
       end
 
       it 'does not raise an exception', unless: write_command_enabled? do
-        expect(view.create(spec, unique: false)).to be_successful
+        expect(view.create_one(spec, unique: false)).to be_successful
       end
     end
 
@@ -162,7 +162,7 @@ describe Mongo::Index::View do
       end
 
       let!(:result) do
-        view.create(spec, unique: true, name: 'random_name')
+        view.create_one(spec, unique: true, name: 'random_name')
       end
 
       after do
@@ -186,7 +186,7 @@ describe Mongo::Index::View do
     end
 
     let!(:result) do
-      view.create(spec, unique: true, name: 'random_name')
+      view.create_one(spec, unique: true, name: 'random_name')
     end
 
     after do
@@ -232,7 +232,7 @@ describe Mongo::Index::View do
       end
 
       before do
-        view.create(spec, unique: true)
+        view.create_one(spec, unique: true)
       end
 
       after do

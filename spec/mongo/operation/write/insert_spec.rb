@@ -82,7 +82,7 @@ describe Mongo::Operation::Write::Insert do
   describe '#execute' do
 
     before do
-      authorized_collection.indexes.create({ name: 1 }, { unique: true })
+      authorized_collection.indexes.create_one({ name: 1 }, { unique: true })
     end
 
     after do

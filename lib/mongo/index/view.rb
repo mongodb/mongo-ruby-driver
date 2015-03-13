@@ -86,7 +86,7 @@ module Mongo
 
       # Creates an index on the collection.
       #
-      # @param [ Hash ] spec A hash of field name/direction pairs.
+      # @param [ Hash ] keys A hash of field name/direction pairs.
       # @param [ Hash ] options Options for this index.
       #
       # @option options [ true, false ] :unique (false) If true, this index will enforce
@@ -110,12 +110,12 @@ module Mongo
       # @return [ Result ] The response.
       #
       # @since 2.0.0
-      def create(spec, options = {})
+      def create_one(keys, options = {})
         Operation::Write::CreateIndex.new(
-          index: spec,
+          index: keys,
           db_name: database.name,
           coll_name: collection.name,
-          index_name: options[:name] || index_name(spec),
+          index_name: options[:name] || index_name(keys),
           options: options
         ).execute(next_primary.context)
       end
@@ -126,17 +126,17 @@ module Mongo
       # @example Get index information by name.
       #   view.get('name_1')
       #
-      # @example Get index information by spec.
+      # @example Get index information by the keys.
       #   view.get(name: 1)
       #
-      # @param [ Hash, String ] spec The index name or spec.
+      # @param [ Hash, String ] keys_or_name The index name or spec.
       #
       # @return [ Hash ] The index information.
       #
       # @since 2.0.0
-      def get(spec)
+      def get(keys_or_name)
         find do |index|
-          (index[NAME] == spec) || (index[KEY] == normalize_keys(spec))
+          (index[NAME] == keys_or_name) || (index[KEY] == normalize_keys(keys_or_name))
         end
       end
 
@@ -186,8 +186,8 @@ module Mongo
         ).execute(next_primary.context)
       end
 
-      def limit
-        -1
+      def index_name(spec)
+        spec.to_a.join('_')
       end
 
       def indexes_spec
@@ -202,13 +202,7 @@ module Mongo
         Operation::Read::Indexes.new(indexes_spec)
       end
 
-      def send_initial_query(server)
-        initial_query_op.execute(server.context)
-      end
-
-      def index_name(spec)
-        spec.to_a.join('_')
-      end
+      def limit; -1; end
 
       def normalize_keys(spec)
         return false if spec.is_a?(String)
@@ -216,6 +210,10 @@ module Mongo
           normalized[key.to_s] = value
           normalized
         end
+      end
+
+      def send_initial_query(server)
+        initial_query_op.execute(server.context)
       end
     end
   end
