@@ -401,9 +401,18 @@ describe Mongo::Collection::View do
       end
     end
 
-    pending 'when the cursor is created'
-    pending 'when a block is provided'
-    pending 'when a block is not provided'
+    context 'when a block is not provided' do
+
+      let(:enumerator) do
+        view.each
+      end
+
+      it 'returns an enumerator' do
+        enumerator.each do |doc|
+          expect(doc).to have_key('field')
+        end
+      end
+    end
   end
 
   describe '#hash' do
