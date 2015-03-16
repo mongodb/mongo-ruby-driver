@@ -9,7 +9,7 @@ client[:restaurants].find(restaurant_id: '41156888').update_one('$set'=> { 'addr
 
 # Update multiple documents
 
-client[:restaurants].find('address.zipcode' => '10016').update_many('$set'=> { 'borough' => 'Midtown' },
+client[:restaurants].find('address.zipcode' => '10016').update_many('$set'=> { 'borough' => 'Manhattan' },
                                                                     '$currentDate' => { 'lastModified'  => true })
 
 # Replace the contents of a single document
