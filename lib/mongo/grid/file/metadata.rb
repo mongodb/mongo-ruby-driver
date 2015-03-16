@@ -129,7 +129,7 @@ module Mongo
         #
         # @since 2.0.0
         def initialize(document)
-          @document = default_document.merge(normalize(document))
+          @document = default_document.merge(Options::Mapper.transform(document, MAPPINGS))
           @client_md5 = Digest::MD5.new
         end
 
@@ -201,13 +201,6 @@ module Mongo
         end
 
         private
-
-        def normalize(document)
-          document.reduce(BSON::Document.new) do |doc, (key, value)|
-            doc[MAPPINGS[key] || key] = value
-            doc
-          end
-        end
 
         def default_document
           BSON::Document.new(

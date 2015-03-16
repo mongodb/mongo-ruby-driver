@@ -236,18 +236,12 @@ module Mongo
 
       def normalize_keys(spec)
         return false if spec.is_a?(String)
-        spec.reduce({}) do |normalized, (key, value)|
-          normalized[key.to_s] = value
-          normalized
-        end
+        Options::Mapper.transform_keys_to_strings(spec)
       end
 
       def normalize_models(models)
         with_generated_names(models).map do |model|
-          model.reduce({}) do |options, (key, value)|
-            options[OPTIONS[key] || key] = value
-            options
-          end
+          Options::Mapper.transform(model, OPTIONS)
         end
       end
 

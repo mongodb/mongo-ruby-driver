@@ -31,7 +31,9 @@ module Mongo
       #
       # @since 2.0.0
       def get_last_error
-        @get_last_error ||= { GET_LAST_ERROR => 1 }.merge(normalize(options))
+        @get_last_error ||= { GET_LAST_ERROR => 1 }.merge(
+          Options::Mapper.transform_values_to_strings(options)
+        )
       end
 
       # Get a human-readable string representation of an acknowledged write concern.

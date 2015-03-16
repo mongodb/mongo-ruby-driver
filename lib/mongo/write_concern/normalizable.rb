@@ -46,28 +46,6 @@ module Mongo
       def initialize(options)
         @options = options.freeze
       end
-
-      private
-
-      # Normalizes symbol option values into strings, since symbol will raise
-      # an error on the server side with the gle.
-      #
-      # @api private
-      #
-      # @example Normalize the options.
-      #   mode.normalize(:w => :majority)
-      #
-      # @param [ Hash ] options The options to normalize.
-      #
-      # @return [ Hash ] The hash with normalized values.
-      #
-      # @since 2.0.0
-      def normalize(options)
-        options.reduce({}) do |options, (key, value)|
-          options[key] = value.is_a?(Symbol) ? value.to_s : value
-          options
-        end
-      end
     end
   end
 end
