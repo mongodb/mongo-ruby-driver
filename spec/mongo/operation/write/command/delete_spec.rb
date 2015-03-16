@@ -98,19 +98,6 @@ describe Mongo::Operation::Write::Command::Delete do
           op.execute(primary_context)
         end
       end
-
-      context 'write concern' do
-
-        context 'w == 0' do
-
-          pending 'no response is returned'
-        end
-
-        context 'w > 0' do
-
-          pending 'returns a response'
-        end
-      end
     end
   end
 end
