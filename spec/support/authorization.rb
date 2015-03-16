@@ -74,7 +74,9 @@ TEST_USER = Mongo::Auth::User.new(
   password: 'password',
   roles: [
     { role: Mongo::Auth::Roles::READ_WRITE, db: TEST_DB },
-    { role: Mongo::Auth::Roles::DATABASE_ADMIN, db: TEST_DB }
+    { role: Mongo::Auth::Roles::DATABASE_ADMIN, db: TEST_DB },
+    { role: Mongo::Auth::Roles::READ_WRITE, db: 'invalid_database' },
+    { role: Mongo::Auth::Roles::DATABASE_ADMIN, db: 'invalid_database' }
   ]
 )
 
