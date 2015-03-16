@@ -42,6 +42,29 @@ module Mongo
       # @since 2.0.0
       NAME = 'name'.freeze
 
+      # The mappings of Ruby index options to server options.
+      #
+      # @since 2.0.0
+      OPTIONS = {
+        :background => :background,
+        :bits => :bits,
+        :bucket_size => :bucketSize,
+        :default_language => :default_language,
+        :expire_after => :expireAfterSeconds,
+        :key => :key,
+        :language_override => :language_override,
+        :max => :max,
+        :min => :min,
+        :name => :name,
+        :sparse => :sparse,
+        :sphere_version => :'2dsphereIndexVersion',
+        :storage_engine => :storageEngine,
+        :text_version => :textIndexVersion,
+        :unique => :unique,
+        :version => :v,
+        :weights => :weights
+      }.freeze
+
       # Drop an index by its name.
       #
       # @example Drop an index by its name.
@@ -121,7 +144,7 @@ module Mongo
       # @since 2.0.0
       def create_many(*models)
         Operation::Write::CreateIndex.new(
-          indexes: with_generated_names(models.flatten),
+          indexes: normalize_models(models.flatten),
           db_name: database.name,
           coll_name: collection.name,
         ).execute(next_primary.context)
@@ -216,6 +239,15 @@ module Mongo
         spec.reduce({}) do |normalized, (key, value)|
           normalized[key.to_s] = value
           normalized
+        end
+      end
+
+      def normalize_models(models)
+        with_generated_names(models).map do |model|
+          model.reduce({}) do |options, (key, value)|
+            options[OPTIONS[key] || key] = value
+            options
+          end
         end
       end
 

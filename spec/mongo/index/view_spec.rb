@@ -284,4 +284,47 @@ describe Mongo::Index::View do
       end
     end
   end
+
+  describe '#normalize_models' do
+
+    context 'when providing options' do
+
+      let(:options) do
+        {
+          :key => { :name => 1 },
+          :bucket_size => 5,
+          :default_language => 'deutsch',
+          :expire_after => 10,
+          :language_override => 'language',
+          :sphere_version => 1,
+          :storage_engine => 'wiredtiger',
+          :text_version => 2,
+          :version => 1
+        }
+      end
+
+      let(:models) do
+        view.send(:normalize_models, [ options ])
+      end
+
+      let(:expected) do
+        {
+          :key => { :name => 1 },
+          :name => 'name_1',
+          :bucketSize => 5,
+          :default_language => 'deutsch',
+          :expireAfterSeconds => 10,
+          :language_override => 'language',
+          :'2dsphereIndexVersion' => 1,
+          :storageEngine => 'wiredtiger',
+          :textIndexVersion => 2,
+          :v => 1
+        }
+      end
+
+      it 'maps the ruby options to the server options' do
+        expect(models).to eq([ expected ])
+      end
+    end
+  end
 end
