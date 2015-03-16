@@ -1,4 +1,5 @@
 # Insert a document
+
 require 'date'
 
 result = client[:restaurants].insert_one({
