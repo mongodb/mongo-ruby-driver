@@ -68,6 +68,7 @@ SERVER_DISCOVERY_TESTS = Dir.glob("#{CURRENT_PATH}/support/sdam/**/*.yml")
 SERVER_SELECTION_RTT_TESTS = Dir.glob("#{CURRENT_PATH}/support/server_selection/rtt/*.yml")
 SERVER_SELECTION_TESTS = Dir.glob("#{CURRENT_PATH}/support/server_selection/selection/**/*.yml")
 CRUD_TESTS = Dir.glob("#{CURRENT_PATH}/support/crud_tests/**/*.yml")
+INTEGRATION_TESTS = Dir.glob("#{CURRENT_PATH}/support/integration_tests/*.yml")
 
 SSL_CERTS_DIR = "#{CURRENT_PATH}/support/certificates"
 CLIENT_PEM = "#{SSL_CERTS_DIR}/client.pem"
