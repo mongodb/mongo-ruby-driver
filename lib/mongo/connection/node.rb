@@ -24,7 +24,7 @@ module Mongo
       @address = "#{@host}:#{@port}"
       @config = nil
       @socket = nil
-      @node_mutex = Mutex.new
+      @node_mutex = Monitor.new
     end
 
     def eql?(other)
@@ -73,6 +73,16 @@ module Mongo
       end
     end
 
+    def socket
+      if @socket && @socket.pid != Process.pid
+        @socket.close
+        @socket = nil
+        connect
+      else
+        @socket
+      end
+    end
+
     # This should only be called within a mutex
     def close
       if @socket && !@socket.closed?
@@ -88,7 +98,7 @@ module Mongo
 
     def active?
       begin
-        result = @client['admin'].command({:ping => 1}, :socket => @socket)
+        result = @client['admin'].command({:ping => 1}, :socket => socket)
       rescue OperationFailure, SocketError, SystemCallError, IOError
         return nil
       end
@@ -107,10 +117,10 @@ module Mongo
 
           if @client.connect_timeout
             Timeout::timeout(@client.connect_timeout, OperationTimeout) do
-              @config = @client['admin'].command({:ismaster => 1}, :socket => @socket)
+              @config = @client['admin'].command({:ismaster => 1}, :socket => socket)
             end
           else
-            @config = @client['admin'].command({:ismaster => 1}, :socket => @socket)
+            @config = @client['admin'].command({:ismaster => 1}, :socket => socket)
           end
 
           update_max_sizes

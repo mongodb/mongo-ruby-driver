@@ -164,6 +164,7 @@ class Test::Unit::TestCase
     socket.stubs(:closed?)
     socket.stubs(:checkin)
     socket.stubs(:pool)
+    socket.stubs(:pid)
     socket
   end
 
