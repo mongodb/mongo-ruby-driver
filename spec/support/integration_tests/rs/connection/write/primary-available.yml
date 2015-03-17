@@ -21,6 +21,8 @@ clientSetUp: {
                 options: {}
              }
 
+phases: []
+
 tests: [
           {
             clientOperation: { operation: "insertOne",
