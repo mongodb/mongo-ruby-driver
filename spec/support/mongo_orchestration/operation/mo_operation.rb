@@ -26,7 +26,7 @@ module Mongo
         end
 
         def run
-          @mo.action(@method, @uri, @payload)
+          @mo.request(@method, @uri, @payload)
         end
       end
     end

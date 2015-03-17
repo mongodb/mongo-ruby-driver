@@ -18,14 +18,13 @@ module Mongo
 
       class ClientOperation
 
-        OPERATIONS = {
-                       'insertOne' => :insert_one,
+        OPERATIONS = { 'insertOne' => :insert_one,
                        'find' => :find
                      }.freeze
 
         def initialize(client, config)
           @client = client
-          @outcome = config['outcome']
+          @ok = config['outcome']['ok']
           @operation = config['operation']
           @doc = config['doc']
         end
@@ -46,16 +45,25 @@ module Mongo
           @client['test'].find.to_a
         end
 
+        def successful?(result)
+          if result.respond_to?(:successful?)
+            result.successful?
+          else
+            result
+          end
+        end
+
+        def expect_failure?
+          @ok == 0
+        end
+
         def process
           begin
             result = yield
           rescue Mongo::Error
-            if @outcome['ok'] == 1
-              return false
-            end
+            expect_failure?
           end
-          return result unless result.respond_to?(:successful?)
-          result.successful?
+          successful?(result)
         end
       end
     end
