@@ -14,6 +14,8 @@
 
 require 'support/mongo_orchestration/operation/client_operation'
 require 'support/mongo_orchestration/operation/mo_operation'
+require 'support/mongo_orchestration/operation/client_hosts'
+require 'support/mongo_orchestration/operation/wait'
 
 module Mongo
 
@@ -26,6 +28,8 @@ module Mongo
       def get(spec, config)
         if config.keys.include?('clientOperation')
           ClientOperation.new(spec.client, config['clientOperation'])
+        elsif config.keys.include?('clientHosts')
+          ClientHosts.new(spec.client, spec.mo, config['clientHosts'])
         elsif config.keys.include?('MOOperation')
           MOOperation.new(spec.mo, config['MOOperation'])
         elsif config.keys.include?('wait')
