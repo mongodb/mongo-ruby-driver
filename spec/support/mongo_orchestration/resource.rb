@@ -46,6 +46,12 @@ module Mongo
         HTTParty.send(method.downcase.to_sym, path, options)
       end
 
+      def get_host_port(server_id)
+        info = get(@base_url + '/servers/' + server_id)
+        ["#{info['procInfo']['params']['bind_ip']}",
+         "#{info['procInfo']['params']['port']}"]
+      end
+
       private
 
       def id

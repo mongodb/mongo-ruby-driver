@@ -26,6 +26,9 @@ module Mongo
 
       attr_reader :base_url
 
+      OPTIONS_MAP = { 'readPreference' => :read,
+                      'heartbeatFrequency' => :heartbeat_frequency }
+
       def initialize(file)
         @spec = YAML.load(ERB.new(File.new(file).read).result)
         @description = @spec['description']
@@ -52,9 +55,19 @@ module Mongo
         @mo ||= Resource.new(@type, @init_config)
       end
 
+      def read(option)
+        { read: { mode: option['mode'].to_sym } }
+      end
+
+      def heartbeat_frequency(option)
+        { heartbeat_frequency: option}
+      end
 
       def client_options
-        @client_setup['options']
+        @client_setup['options'].keys.reduce({}) do |options, option|
+          options.merge!(send(OPTIONS_MAP[option],
+                             @client_setup['options'][option]))
+        end
       end
 
       def hosts
