@@ -9,12 +9,8 @@ describe 'Intgeration' do
 
     context(spec.description) do
 
-      it 'succeeds' do
-        begin
-          spec.run
-        rescue Mongo::MongoOrchestration::ServiceNotAvailable
-          skip
-        end
+      it 'succeeds', if: Mongo::MongoOrchestration.available?(spec.base_url) do
+        spec.run
       end
     end
   end

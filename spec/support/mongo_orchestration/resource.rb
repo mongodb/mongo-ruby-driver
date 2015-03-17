@@ -22,12 +22,10 @@ module Mongo
 
       attr_reader :hosts
 
-      DEFAULT_URL = 'http://localhost:8889'.freeze
-
       def initialize(type, config)
         @type = type.freeze
         @config = config.freeze
-        @base_url = config[:base].freeze || DEFAULT_URL
+        @base_url = config['base_url'].freeze || DEFAULT_URL
         setup
       end
 
@@ -35,7 +33,11 @@ module Mongo
         delete(id)
       end
 
-      def action(method, uri, payload)
+      def available?
+        get
+      end
+
+      def request(method, uri, payload = nil)
         path = @base_url + uri
         options = payload ?  { :body => payload.to_json } : {}
         HTTParty.send(method.downcase.to_sym, path, options)
