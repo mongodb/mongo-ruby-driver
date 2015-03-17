@@ -1,0 +1,68 @@
+#3. Description: Query with primary stopped, then restarted
+#                    (mo step) stop serverA
+#                    * Op fails
+#                    (mo step) restart serverA
+#                    * Op goes to serverA (with retries)
+
+description: "Successful read with primary read preference from restarted primary"
+
+type: "replica_sets"
+
+initConfig: { id: "integration_tests",
+              members: [
+                         { server_id: "serverA",
+                           rsParams: { priority: 1 } },
+                         { server_id: "serverB",
+                           rsParams: { priority: 0 } },
+                         { server_id: "serverC",
+                           rsParams: { arbiterOnly: true } }                   
+                        ]
+             }
+
+clientSetUp: {
+                hosts: [ "serverA", "serverB", "serverC" ],
+                options: {
+                           readPreference: { mode: 'primary' }
+                         }
+             }
+
+phases: [
+          {
+            clientOperation: { operation: "insertOne",
+                               doc: { x: 1 },
+                               writeConcern: { w: 3 }
+                             }
+          },
+
+          {
+            MOOperation: { method: "POST",
+                           uri: "/servers/serverA",
+                           payload: { action: "stop" }
+                         }
+          },
+
+          {
+            clientOperation: { operation: "find",
+                               outcome: { ok: 0 }
+                             }
+          },
+
+          {
+            MOOperation: { method: "POST",
+                           uri: "/servers/serverA",
+                           payload: { action: "restart" }
+                         }
+          }
+
+          {
+            wait: 3
+          }
+        ]
+
+tests: [
+          {
+            clientOperation: { operation: "find",
+                               outcome: { ok: 1 }
+                             }
+          }
+        ]

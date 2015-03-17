@@ -1,0 +1,85 @@
+#A. Removal of members and addition of primary:
+#                Setup
+#             - Servers:
+#                    - serverA
+#                    - serverB
+#                    - serverC
+#                    - serverD
+#                    - serverE
+#                 - Op: find
+#                 - URI: mongodb://serverA_host:serverA_port/?replicaSet=rs
+#                 - MOConfig actions: [
+#                                        1. create RS with config { replicaSet name: rs, 
+#                                                                             members: serverA, serverB, serverC },
+#                    2. create server: serverD,
+#                                         3. create server: serverE ]
+#
+#
+#1. Description: Ensure that client detects changes in the replica set
+#                    (test step) client with URI
+#                    (mo step) stop serverA
+#                    (mo step) add serverD to RS set
+#                    (mo step) add serverE to RS set
+#                    * Ensure that client reports serverB, serverC, serverD, serverE in topology
+#                    * Ensure that client does not report serverA in topology
+
+
+description: "Client detects new primary"
+
+type: "replica_sets"
+
+initConfig: { id: "integration_tests",
+              members: [
+                         { server_id: "serverA",
+                           rsParams: { priority: 1 } },
+                         { server_id: "serverB",
+                           rsParams: { priority: 0 } },
+                         { server_id: "serverC",
+                           rsParams: { priority: 0 } }
+                        ]
+             }
+
+clientSetUp: {
+                hosts: [ "serverA", "serverB", "serverC" ],
+                options: {
+                           heartbeatFrequency: 1
+                         }
+             }
+
+phases: [
+          {
+            MOOperation: { method: "POST",
+                           uri: "/servers/serverA",
+                           payload: { action: "stop" }
+                         }
+          },
+
+          {
+            MOOperation:
+                         { method: "POST",
+                           uri: "/replica_sets/integration_tests/members",
+                           payload: { server_id: "serverD",
+                                      rsParams: { priority: 1 } },
+                         }
+          },
+
+          {
+            MOOperation:
+                         { method: "POST",
+                           uri: "/replica_sets/integration_tests/members",
+                           payload: { server_id: "serverE",
+                                      rsParams: { priority: 0 } },
+                         }
+          },
+
+          {
+            wait: 1
+          }
+        ]
+
+tests: [
+         {
+           clientHosts: { primary: "serverD",
+                          secondaries: [ "serverB", "serverC", "serverE" ] }
+         }
+       ]

@@ -31,6 +31,9 @@ module Mongo
 
       def stop
         delete(id)
+        server_ids.each do |server_id|
+          delete("#{@base_url}/servers/#{server_id}")
+        end
       end
 
       def available?
@@ -51,10 +54,16 @@ module Mongo
 
       def setup
         @info = post(@config)
-        @hosts = @info['members'].collect do |member|
+        @hosts ||= @info['members'].collect do |member|
           { server_id: member['server_id'],
             host: member['host']
           }
+        end
+      end
+
+      def server_ids
+        @server_ids ||= @info['members'].collect do |member|
+          member['server_id']
         end
       end
 

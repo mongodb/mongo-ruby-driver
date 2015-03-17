@@ -1,0 +1,67 @@
+#E. Parse server errors
+#                Setup
+#                - Servers:
+#                    - serverA, priority 1
+#                    - serverB, priority 0
+#                    - serverC, arbiter
+#     - Op1: find
+#     - Op2: insert
+#     - MOConfig actions: [
+#                           1. create RS with config { replicaSet name: rs, 
+#                                                      members: serverA, serverB, serverC } ]
+#                 - URI2: mongodb://user:passwd@serverA_host/?replicaSet=rs&readPreference=SECONDARY
+#             
+#1. Description: Check that a recovering member triggers a refresh
+#                    (test step) create client with URI
+#                    (mo step) Run replSetMaintenance command on serverB
+#                    * Op1 fails
+#                    (test step) wait 1 second
+#                    * Op2 succeeds
+
+description: "A recovering member triggers a refresh"
+
+type: "replica_sets"
+
+initConfig: { id: "integration_tests",
+              members: [
+                         { server_id: "serverA" },
+                         { server_id: "serverB" },
+                         { server_id: "serverC",
+                           rsParams: { arbiterOnly: true } }                   
+                        ]
+             }
+
+clientSetUp: {
+                hosts: [ "serverA", "serverB", "serverC" ],
+                options: {
+                           readPreference: { mode: 'secondary' },
+                           heartbeatFrequency: 1
+                         }
+             }
+
+phases: [
+          {
+            MOOperation: { method: "POST",
+                           uri: "/servers/serverB",
+                           payload: { action: "restart" }
+                          }
+          },
+
+          {
+            clientOperation: { operation: "find",
+                               outcome: { ok: 0 }
+                             }
+          },
+
+          {
+            wait: 1
+          }
+        ]
+
+tests: [
+          {
+            clientOperation: { operation: "find",
+                               outcome: { ok: 1 }
+                             }
+          }
+        ]

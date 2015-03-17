@@ -60,7 +60,7 @@ module Mongo
         def process
           begin
             result = yield
-          rescue Mongo::Error
+          rescue Mongo::Error, Errno::ECONNREFUSED
             expect_failure?
           end
           successful?(result)

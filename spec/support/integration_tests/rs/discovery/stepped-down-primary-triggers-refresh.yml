@@ -1,0 +1,57 @@
+#2. Description: Check that a stepped-down primary triggers a refresh
+#                    (test step) create client with URI1
+#                    (test step) Run replSetStepDown command
+#                    * find fails
+#                    (test step) wait 1 second
+#                    * insert succeeds
+
+description: "A stepped-down primary triggers a refresh"
+
+type: "replica_sets"
+
+initConfig: { id: "integration_tests",
+              members: [
+                         { server_id: "serverA",
+                           rsParams: { priority: 2 } },
+                         { server_id: "serverB",
+                           rsParams: { priority: 1 } },
+                         { server_id: "serverC",
+                           rsParams: { arbiterOnly: true } }                   
+                        ]
+             }
+
+clientSetUp: {
+                hosts: [ "serverA", "serverB", "serverC" ],
+                options: {
+                           readPreference: { mode: 'primary' },
+                           heartbeatFrequency: 1
+                         }
+             }
+
+phases: [
+          {
+            MOOperation: { method: "POST",
+                           uri: "/servers/serverA",
+                           payload: { action: "stepdown" }
+                          }
+          },
+
+          {
+            clientOperation: { operation: "find",
+                               outcome: { ok: 0 }
+                             }
+          },
+
+          {
+            wait: 1
+          }
+        ]
+
+tests: [
+          {
+            clientOperation: { operation: "insertOne",
+                               doc: { x: 1 },
+                               outcome: { ok: 1 }
+                             }
+          }
+        ]

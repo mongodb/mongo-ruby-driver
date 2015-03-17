@@ -1,0 +1,67 @@
+# replica_sets/repl-id/primary
+  # a whole document including the server id
+
+#1. Description: Ensure that client detects primary failure and new elected member
+#                    (test step) client with URI
+#                    (mo step) cache primary
+#                    (mo step) cache secondaries
+#                    (mo step) stop primary
+#                    * Op fails
+#                    (mo step) get primary
+#                    (mo step) get secondaries
+#                    * Ensure that client primary != MO previous primary
+#                    * Ensure that client secondary != MO previous secondaries
+
+description: "Client detects primary failure and newly elected members"
+
+type: "replica_sets"
+
+initConfig: { id: "integration_tests",
+              members: [
+                         { server_id: "serverA",
+                           rsParams: { priority: 2 } },
+                         { server_id: "serverB",
+                           rsParams: { priority: 1 } },
+                         { server_id: "serverC",
+                           rsParams: { priority: 0 } }
+                        ]
+             }
+
+clientSetUp: {
+                hosts: [ "serverA", "serverB", "serverC" ],
+                options: {
+                           readPreference: { mode: 'primary' }
+                         }
+             }
+
+phases: [
+          {
+            clientOperation: { operation: "find",
+                               outcome: { ok: 1 }
+                             }
+          },
+
+          {
+            MOOperation: { method: "POST",
+                           uri: "/servers/serverA",
+                           payload: { action: "stop" }
+                          }
+          },
+
+          {
+            wait: 3
+          },
+
+          {
+            clientOperation: { operation: "find",
+                               outcome: { ok: 1 }
+                             }
+          },
+        ]
+
+tests: [
+         {
+           clientHosts: { primary: "serverB",
+                          secondaries: [ "serverC" ] }
+         }
+       ]

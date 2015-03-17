@@ -1,7 +1,7 @@
-#2. Description: primary is not available
-#                    * Op fails
+#1. Description: Primary is available
+#                     * Op succeeds
 
-description: "Read failure when primary is not available"
+description: "Successful write to an available primary"
 
 type: "replica_sets"
 
@@ -21,26 +21,11 @@ clientSetUp: {
                 options: {}
              }
 
-phases: [
+tests: [
           {
             clientOperation: { operation: "insertOne",
                                doc: { x: 1 },
                                outcome: { ok: 1 }
-                             }
-          },
-
-          {
-            MOOperation: { method: "POST",
-                           uri: "/servers/serverA",
-                           payload: { action: "stop" }
-                          }
-          }
-        ]
-
-tests: [
-          {
-            clientOperation: { operation: "find",
-                               outcome: { ok: 0 }
                              }
           }
         ]

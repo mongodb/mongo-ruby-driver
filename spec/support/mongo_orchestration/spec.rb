@@ -109,13 +109,13 @@ module Mongo
         begin
           setup_resources
           prepare_test
-          yield
-        rescue Errno::ECONNREFUSED
+        rescue Errno::ECONNREFUSED => ex
           raise ServiceNotAvailable.new
         rescue => ex
-          stop
+          stop if @mo
           raise ex
         end
+        yield
         stop
       end
     end

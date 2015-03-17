@@ -1,0 +1,76 @@
+#1. Description: Ensure that client detects significant changes in the replica set
+#                    (test step) client with URI
+#                    (mo step) add serverC to RS set
+#                    (mo step) remove serverA
+#                    (mo step) add serverD to RS set
+#                    (test step) wait
+#                    (mo step) remove serverB
+#                    (test step) Ensure that client only knows about serverC and serverD
+
+
+description: "Client detects changes in replica set"
+
+type: "replica_sets"
+
+initConfig: { id: "integration_tests",
+              members: [
+                         { server_id: "serverA" },
+                         { server_id: "serverB" }
+                        ]
+            }
+
+clientSetUp: {
+                hosts: [ "serverA", "serverB" ],
+                options: {
+                           heartbeatFrequency: 1
+                         }
+             }
+
+phases: [
+          {
+            MOOperation:
+                         { method: "POST",
+                           uri: "/replica_sets/integration_tests/members",
+                           payload: { server_id: "serverC",
+                                      rsParams: { priority: 1 } },
+                         }
+          },
+
+          {
+            MOOperation: { method: "POST",
+                           uri: "/servers/serverA",
+                           payload: { action: "stop" }
+                         }
+          },
+
+          {
+            MOOperation:
+                         { method: "POST",
+                           uri: "/replica_sets/integration_tests/members",
+                           payload: { server_id: "serverD",
+                                      rsParams: { priority: 0 } },
+                         }
+          },
+
+          {
+            wait: 1
+          },
+
+          {
+            MOOperation: { method: "POST",
+                           uri: "/servers/serverB",
+                           payload: { action: "stop" }
+                         }
+          },
+
+          {
+            wait: 1
+          }
+        ]
+
+tests: [
+         {
+           clientHosts: { primary: "serverC",
+                          secondaries: [ "serverD" ] }
+         }
+       ]
