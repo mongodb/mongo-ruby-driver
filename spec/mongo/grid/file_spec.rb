@@ -66,6 +66,29 @@ describe Mongo::Grid::File do
       end
     end
 
+    context 'when data is a ruby file' do
+
+      let(:ruby_file) do
+        File.open(__FILE__)
+      end
+
+      let(:data) do
+        ruby_file.read
+      end
+
+      let(:file) do
+        described_class.new(data, :filename => File.basename(ruby_file.path))
+      end
+
+      it 'sets the data' do
+        expect(file.data).to eq(data)
+      end
+
+      it 'creates the chunks' do
+        expect(file.chunks.size).to eq(4)
+      end
+    end
+
     context 'when using idiomatic ruby field names' do
 
       let(:time) do
