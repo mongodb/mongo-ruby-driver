@@ -87,35 +87,10 @@ describe Mongo::Server::Monitor do
     end
   end
 
-  describe '#heartbeat_frequency' do
-
-    context 'when an option is provided' do
-
-      let(:monitor) do
-        described_class.new(address, listeners, :heartbeat_frequency => 5)
-      end
-
-      it 'returns the option' do
-        expect(monitor.heartbeat_frequency).to eq(5)
-      end
-    end
-
-    context 'when no option is provided' do
-
-      let(:monitor) do
-        described_class.new(address, listeners)
-      end
-
-      it 'defaults to 5' do
-        expect(monitor.heartbeat_frequency).to eq(10)
-      end
-    end
-  end
-
   describe '#run!' do
 
     let(:monitor) do
-      described_class.new(address, listeners, :heartbeat_frequency => 1)
+      described_class.new(address, listeners)
     end
 
     before do
