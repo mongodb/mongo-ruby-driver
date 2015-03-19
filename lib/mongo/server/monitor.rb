@@ -24,10 +24,10 @@ module Mongo
     class Monitor
       include Loggable
 
-      # The default time for a server to refresh its status is 500 ms.
+      # The default time for a server to refresh its status is 10 seconds.
       #
       # @since 2.0.0
-      HEARTBEAT_FREQUENCY = 0.5.freeze
+      HEARTBEAT_FREQUENCY = 10.freeze
 
       # The command used for determining server status.
       #
@@ -69,6 +69,19 @@ module Mongo
         @description = inspector.run(description, *ismaster)
       end
 
+      # Get the refresh interval for the server. This will be defined via an option
+      # or will default to 5.
+      #
+      # @example Get the refresh interval.
+      #   server.heartbeat_frequency
+      #
+      # @return [ Integer ] The heartbeat frequency, in seconds.
+      #
+      # @since 2.0.0
+      def heartbeat_frequency
+        @heartbeat_frequency ||= options[:heartbeat_frequency] || HEARTBEAT_FREQUENCY
+      end
+
       # Create the new server monitor.
       #
       # @example Create the server monitor.
@@ -98,7 +111,7 @@ module Mongo
       #
       # @since 2.0.0
       def run!
-        @thread = Thread.new(HEARTBEAT_FREQUENCY) do |i|
+        @thread = Thread.new(heartbeat_frequency) do |i|
           loop do
             sleep(i)
             scan!
