@@ -24,7 +24,7 @@ module Mongo
       @address = "#{@host}:#{@port}"
       @config = nil
       @socket = nil
-      @node_mutex = Mutex.new
+      @node_mutex = Monitor.new
     end
 
     def eql?(other)
@@ -88,7 +88,7 @@ module Mongo
 
     def active?
       begin
-        result = @client['admin'].command({:ping => 1}, :socket => @socket)
+        result = @client['admin'].command({:ping => 1}, :socket => usable_socket)
       rescue OperationFailure, SocketError, SystemCallError, IOError
         return nil
       end
@@ -107,10 +107,10 @@ module Mongo
 
           if @client.connect_timeout
             Timeout::timeout(@client.connect_timeout, OperationTimeout) do
-              @config = @client['admin'].command({:ismaster => 1}, :socket => @socket)
+              @config = @client['admin'].command({:ismaster => 1}, :socket => usable_socket)
             end
           else
-            @config = @client['admin'].command({:ismaster => 1}, :socket => @socket)
+            @config = @client['admin'].command({:ismaster => 1}, :socket => usable_socket)
           end
 
           update_max_sizes
@@ -227,6 +227,16 @@ module Mongo
     end
 
     private
+
+    def usable_socket
+      if @socket && @socket.pid != Process.pid
+        @socket.close
+        @socket = nil
+        connect
+      else
+        @socket
+      end
+    end
 
     def update_max_sizes
       @max_bson_size = config['maxBsonObjectSize'] || DEFAULT_MAX_BSON_SIZE

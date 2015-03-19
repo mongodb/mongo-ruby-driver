@@ -79,6 +79,7 @@ require 'bson'
 
 require 'set'
 require 'thread'
+require 'monitor'
 
 require 'mongo/utils'
 require 'mongo/exception'
