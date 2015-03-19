@@ -32,6 +32,9 @@ module Mongo
       # @return [ Hash ] options The passed in options.
       attr_reader :options
 
+      # @return [ Integer ] pid The process id when the connection was created.
+      attr_reader :pid
+
       # Determine if the connection is currently connected.
       #
       # @example Is the connection connected?
@@ -82,12 +85,20 @@ module Mongo
       attr_reader :socket, :ssl_options
 
       def ensure_connected
+        ensure_same_process!
         connect! if socket.nil? || !socket.alive?
         begin
           yield socket
         rescue Error::SocketError, Error::SocketTimeoutError => e
           disconnect!
           raise e
+        end
+      end
+
+      def ensure_same_process!
+        if pid != Process.pid
+          disconnect!
+          @pid = Process.pid
         end
       end
 

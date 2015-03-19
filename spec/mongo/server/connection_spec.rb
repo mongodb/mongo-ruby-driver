@@ -154,19 +154,14 @@ describe Mongo::Server::Connection do
       Mongo::Protocol::Query.new(TEST_DB, TEST_COLL, { 'name' => 'testing' })
     end
 
-    let(:delete) do
-      Mongo::Protocol::Delete.new(TEST_DB, TEST_COLL, {})
-    end
-
     context 'when providing a single message' do
 
       let(:reply) do
         connection.dispatch([ insert, query ])
       end
 
-      # @todo: Can remove this once we have more implemented with global hooks.
       after do
-        connection.dispatch([ delete ])
+        authorized_collection.find.delete_many
       end
 
       it 'it dispatchs the message to the socket' do
@@ -188,9 +183,8 @@ describe Mongo::Server::Connection do
         connection.dispatch([ insert, command ])
       end
 
-      # @todo: Can remove this once we have more implemented with global hooks.
       after do
-        connection.dispatch([ delete ])
+        authorized_collection.find.delete_many
       end
 
       it 'it dispatchs the message to the socket' do
@@ -214,6 +208,31 @@ describe Mongo::Server::Connection do
           connection.dispatch([ insert ])
         }.to raise_error(Mongo::Error::SocketError)
         expect(connection).to_not be_connected
+      end
+    end
+
+    context 'when the process is forked' do
+
+      let(:insert) do
+        Mongo::Protocol::Insert.new(TEST_DB, TEST_COLL, documents)
+      end
+
+      before do
+        expect(Process).to receive(:pid).at_least(:once).and_return(1)
+      end
+
+      after do
+        authorized_collection.find.delete_many
+      end
+
+      it 'disconnects the connection' do
+        expect(connection).to receive(:disconnect!).and_call_original
+        connection.dispatch([ insert ])
+      end
+
+      it 'sets a new pid' do
+        connection.dispatch([ insert ])
+        expect(connection.pid).to eq(1)
       end
     end
   end
