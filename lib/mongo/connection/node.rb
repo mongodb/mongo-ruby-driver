@@ -73,7 +73,7 @@ module Mongo
       end
     end
 
-    def socket
+    def usable_socket
       if @socket && @socket.pid != Process.pid
         @socket.close
         @socket = nil
@@ -98,7 +98,7 @@ module Mongo
 
     def active?
       begin
-        result = @client['admin'].command({:ping => 1}, :socket => socket)
+        result = @client['admin'].command({:ping => 1}, :socket => usable_socket)
       rescue OperationFailure, SocketError, SystemCallError, IOError
         return nil
       end
@@ -117,10 +117,10 @@ module Mongo
 
           if @client.connect_timeout
             Timeout::timeout(@client.connect_timeout, OperationTimeout) do
-              @config = @client['admin'].command({:ismaster => 1}, :socket => socket)
+              @config = @client['admin'].command({:ismaster => 1}, :socket => usable_socket)
             end
           else
-            @config = @client['admin'].command({:ismaster => 1}, :socket => socket)
+            @config = @client['admin'].command({:ismaster => 1}, :socket => usable_socket)
           end
 
           update_max_sizes
