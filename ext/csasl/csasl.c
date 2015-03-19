@@ -69,7 +69,7 @@ static int sasl_interact(VALUE self, int id, const char **result, unsigned *len)
       user_name = rb_iv_get(self, "@user_name");
       *result = RSTRING_PTR(user_name);
       if (len) {
-        *len = RSTRING_LEN(user_name);
+        *len = (int)RSTRING_LEN(user_name);
       }
       return SASL_OK;
     }
@@ -133,7 +133,7 @@ static VALUE evaluate_challenge(VALUE self, VALUE rb_payload) {
 
   StringValue(rb_payload);
   step_payload = RSTRING_PTR(rb_payload);
-  step_payload_len = RSTRING_LEN(rb_payload);
+  step_payload_len = (int)RSTRING_LEN(rb_payload);
 
   result = sasl_decode64(step_payload, step_payload_len, base_payload, sizeof(base_payload), &base_payload_len);
   if (is_sasl_failure(result)) {
