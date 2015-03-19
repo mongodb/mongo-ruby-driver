@@ -110,6 +110,15 @@ class ReplicaSetBasicTest < Test::Unit::TestCase
     end
   end
 
+  def test_sockets_used_by_forked_process
+    @client = MongoReplicaSetClient.from_uri(@uri)
+    primary_node = @client.manager.primary_pool.node
+    primary_socket = primary_node.socket
+    primary_socket.instance_variable_set(:@pid, primary_socket.pid + 1)
+    primary_node.set_config
+    assert primary_socket != primary_node.socket
+  end
+
   context "Socket pools" do
     context "checking out writers" do
       setup do
