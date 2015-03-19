@@ -73,16 +73,6 @@ module Mongo
       end
     end
 
-    def usable_socket
-      if @socket && @socket.pid != Process.pid
-        @socket.close
-        @socket = nil
-        connect
-      else
-        @socket
-      end
-    end
-
     # This should only be called within a mutex
     def close
       if @socket && !@socket.closed?
@@ -237,6 +227,16 @@ module Mongo
     end
 
     private
+
+    def usable_socket
+      if @socket && @socket.pid != Process.pid
+        @socket.close
+        @socket = nil
+        connect
+      else
+        @socket
+      end
+    end
 
     def update_max_sizes
       @max_bson_size = config['maxBsonObjectSize'] || DEFAULT_MAX_BSON_SIZE
