@@ -14,8 +14,16 @@
 
 module Mongo
   module CRUD
+
+    # Defines common behaviour for running CRUD read operations on a
+    #   collection.
+    #
+    # @since 2.0.0
     module Readable
 
+      # Map of CRUD operation names to method names.
+      #
+      # @since 2.0.0
       ARGUMENTS = {
                     'sort' => :sort,
                     'skip' => :skip,
@@ -23,6 +31,14 @@ module Mongo
                     'limit' => :limit
                   }
 
+      # Whether the operation is expected to have restuls.
+      #
+      # @example Whether the operation is expected to have results.
+      #   operation.has_results?
+      #
+      # @param [ true, false ] If the operation is expected to have results.
+      #
+      # @since 2.0.0
       def has_results?
         if name == 'aggregate' && arguments['pipeline'].find {|op| op.keys.include?('$out') }
           return false
