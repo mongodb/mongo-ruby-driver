@@ -68,7 +68,7 @@ CURRENT_PATH = File.expand_path(File.dirname(__FILE__))
 SERVER_DISCOVERY_TESTS = Dir.glob("#{CURRENT_PATH}/support/sdam/**/*.yml")
 SERVER_SELECTION_RTT_TESTS = Dir.glob("#{CURRENT_PATH}/support/server_selection/rtt/*.yml")
 SERVER_SELECTION_TESTS = Dir.glob("#{CURRENT_PATH}/support/server_selection/selection/**/*.yml")
-CRUD_TESTS = Dir.glob("#{CURRENT_PATH}/support/crud/*.yml")
+CRUD_TESTS = Dir.glob("#{CURRENT_PATH}/support/crud_tests/**/*.yml")
 
 # Determine whether the test clients are connecting to a standlone.
 #
