@@ -23,6 +23,14 @@ module Mongo
                     'limit' => :limit
                   }
 
+      def has_results?
+        if name == 'aggregate' && arguments['pipeline'].find {|op| op.keys.include?('$out') }
+          return false
+        else
+          return true
+        end
+      end
+
       private
 
       def count(collection)
