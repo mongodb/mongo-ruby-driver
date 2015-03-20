@@ -12,10 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'support/crud/findable'
-require 'support/crud/countable'
-require 'support/crud/distinctable'
-require 'support/crud/aggregatable'
+require 'support/crud/readable'
 
 module Mongo
   module CRUD
@@ -76,17 +73,7 @@ module Mongo
     end
 
     class Operation
-      include Findable
-      include Countable
-      include Distinctable
-      include Aggregatable
-
-      ARGUMENTS = {
-                    'sort' => :sort,
-                    'skip' => :skip,
-                    'batchSize' => :batch_size,
-                    'limit' => :limit
-                  }
+      include Readable
 
       attr_reader :name
 
