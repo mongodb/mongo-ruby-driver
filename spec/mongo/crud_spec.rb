@@ -13,6 +13,10 @@ describe 'Server Discovery and Monitoring' do
 
         context(test.description) do
 
+          before(:each) do
+            authorized_collection.find.delete_many
+          end
+
           after(:each) do
             authorized_collection.find.delete_many
           end
