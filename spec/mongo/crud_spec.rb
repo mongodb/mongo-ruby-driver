@@ -13,6 +13,10 @@ describe 'Server Discovery and Monitoring' do
 
         context(test.description) do
 
+          after(:each) do
+            authorized_collection.find.delete_many
+          end
+
           it "returns the correct result" do
             expect(test.run(authorized_collection)).to eq(test.result)
           end

@@ -15,6 +15,7 @@
 require 'support/crud/findable'
 require 'support/crud/countable'
 require 'support/crud/distinctable'
+require 'support/crud/aggregatable'
 
 module Mongo
   module CRUD
@@ -78,6 +79,7 @@ module Mongo
       include Findable
       include Countable
       include Distinctable
+      include Aggregatable
 
       ARGUMENTS = {
                     'sort' => :sort,
