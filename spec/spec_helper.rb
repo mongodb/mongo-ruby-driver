@@ -26,6 +26,7 @@ require 'support/mongo_orchestration'
 require 'support/server_discovery_and_monitoring'
 require 'support/server_selection_rtt'
 require 'support/server_selection'
+require 'support/crud'
 
 Mongo::Logger.logger = Logger.new($stdout)
 Mongo::Logger.logger.level = Logger::INFO
@@ -67,6 +68,7 @@ CURRENT_PATH = File.expand_path(File.dirname(__FILE__))
 SERVER_DISCOVERY_TESTS = Dir.glob("#{CURRENT_PATH}/support/sdam/**/*.yml")
 SERVER_SELECTION_RTT_TESTS = Dir.glob("#{CURRENT_PATH}/support/server_selection/rtt/*.yml")
 SERVER_SELECTION_TESTS = Dir.glob("#{CURRENT_PATH}/support/server_selection/selection/**/*.yml")
+CRUD_TESTS = Dir.glob("#{CURRENT_PATH}/support/crud/*.yml")
 
 # Determine whether the test clients are connecting to a standlone.
 #
