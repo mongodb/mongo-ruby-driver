@@ -14,7 +14,7 @@
 
 module Mongo
   module CRUD
-    module Findable
+    module Readable
 
       ARGUMENTS = {
                     'sort' => :sort,
@@ -24,6 +24,26 @@ module Mongo
                   }
 
       private
+
+      def count(collection)
+        view = collection.find(filter)
+        opts = arguments.reduce({}) do |options, (key, value)|
+          options.merge!(ARGUMENTS[key] => value) unless key == 'filter'
+          options
+        end
+        view.count(opts)
+      end
+
+      def aggregate(collection)
+        collection.find.tap do |view|
+          view = view.batch_size(arguments['batchSize']) if arguments['batchSize']
+        end.aggregate(arguments['pipeline']).to_a
+      end
+
+      def distinct(collection)
+        view = collection.find(filter)
+        view.distinct(arguments['fieldName'])
+      end
 
       def find(collection)
         view = collection.find(filter)
