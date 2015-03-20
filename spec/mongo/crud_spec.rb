@@ -1,7 +1,6 @@
 require 'spec_helper'
 
-describe 'Server Discovery and Monitoring' do
-  include Mongo::SDAM
+describe 'CRUD' do
 
   CRUD_TESTS.each do |file|
 

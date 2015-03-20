@@ -49,7 +49,6 @@ module Mongo
       # @since 2.0.0
       attr_reader :description
 
-
       # Instantiate the new spec.
       #
       # @example Create the spec.
@@ -65,6 +64,14 @@ module Mongo
         @crud_tests = @spec['tests']
       end
 
+      # Get a list of CRUDTests for each test definition.
+      #
+      # @example Get the list of CRUDTests.
+      #   spec.tests
+      #
+      # @return [ Array<CRUDTest> ] The list of CRUDTests.
+      #
+      # @since 2.0.0
       def tests
         @crud_tests.collect do |test|
           Mongo::CRUD::CRUDTest.new(@data, test)
@@ -74,8 +81,23 @@ module Mongo
 
     class CRUDTest
 
+      # The test description.
+      #
+      # @return [ String ] description The test description.
+      #
+      # @since 2.0.0
       attr_reader :description
 
+      # Instantiate the new CRUDTest.
+      #
+      # @example Create the test.
+      #   CRUDTest.new(data, test)
+      #
+      # @param [ Array<Hash> ] data The documents the collection
+      # should have before the test runs.
+      # @param [ Hash ] test The test specification.
+      #
+      # @since 2.0.0
       def initialize(data, test)
         @data = data
         @description = test['description']
@@ -83,18 +105,45 @@ module Mongo
         @outcome = test['outcome']
       end
 
+      # Run the test.
+      #
+      # @example Run the test.
+      #   test.run(collection)
+      #
+      # @param [ Collection ] collection The collection the test
+      #   should be run on.
+      #
+      # @return [ Result, Array<Hash> ] The result(s) of running the test.
+      #
+      # @since 2.0.0
       def run(collection)
         @collection = collection
         @collection.find.delete_many
         @collection.insert_many(@data)
-        @operation.run(collection)
+        @operation.execute(collection)
       end
 
+      # The expected result of running the test.
+      #
+      # @example Get the expected result of running the test.
+      #   test.result
+      #
+      # @return [ Array<Hash> ] The expected result of running the test.
+      #
+      # @since 2.0.0
       def result
-        return @outcome['result'] if @operation.has_results?
-        []
+        @operation.has_results? ? @outcome['result'] : []
       end
 
+      # Compare the existing collection data and the expected collection data.
+      #
+      # @example Compare the existing and expected collection data.
+      #   test.compare_collection_data
+      #
+      # @return [ true, false ] The result of comparing the existing and expected
+      #  collection data.
+      #
+      # @since 2.0.0
       def compare_collection_data
         actual_collection_data == outcome_collection_data
       end
@@ -113,14 +162,38 @@ module Mongo
     class Operation
       include Readable
 
+      # The operation name.
+      #
+      # @return [ String ] name The operation name.
+      #
+      # @since 2.0.0
       attr_reader :name
 
+      # Instantiate the new Operation.
+      #
+      # @example Create the operation.
+      #   Operation.new(spec)
+      #
+      # @param [ Hash ] spec The operation specification.
+      #
+      # @since 2.0.0
       def initialize(spec)
         @spec = spec
         @name = @spec['name']
       end
 
-      def run(collection)
+      # Execute the operation.
+      #
+      # @example Execute the operation.
+      #   operation.execute
+      #
+      # @param [ Collection ] collection The collection the operation
+      #   should be executed on.
+      #
+      # @return [ Result, Array<Hash> ] The result of executing the operation.
+      #
+      # @since 2.0.0
+      def execute(collection)
         send(name.to_sym, collection)
       end
     end
