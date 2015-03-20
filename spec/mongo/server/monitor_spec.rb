@@ -12,6 +12,20 @@ describe Mongo::Server::Monitor do
 
   describe '#scan!' do
 
+    context 'when calling multiple times in succession' do
+
+      let(:monitor) do
+        described_class.new(address, listeners)
+      end
+
+      it 'throttles the scans to minimum 500ms' do
+        start = Time.now
+        monitor.scan!
+        monitor.scan!
+        expect(Time.now - start).to be > 0.5
+      end
+    end
+
     context 'when the ismaster command succeeds' do
 
       let(:monitor) do

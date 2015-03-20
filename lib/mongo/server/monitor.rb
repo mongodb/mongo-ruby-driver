@@ -29,6 +29,12 @@ module Mongo
       # @since 2.0.0
       HEARTBEAT_FREQUENCY = 10.freeze
 
+      # The minimum time between forced server scans. Is
+      # minHeartbeatFrequencyMS in the SDAM spec.
+      #
+      # @since 2.0.0
+      MIN_SCAN_FREQUENCY = 0.5.freeze
+
       # The command used for determining server status.
       #
       # @since 2.0.0
@@ -66,6 +72,7 @@ module Mongo
       #
       # @since 2.0.0
       def scan!
+        throttle_scan_frequency!
         @description = inspector.run(description, *ismaster)
       end
 
@@ -154,6 +161,15 @@ module Mongo
             return {}, calculate_average_round_trip_time(start)
           end
         end
+      end
+
+      def throttle_scan_frequency!
+        if @last_scan
+          difference = (Time.now - @last_scan)
+          throttle_time = (MIN_SCAN_FREQUENCY - difference)
+          sleep(throttle_time) if throttle_time > 0
+        end
+        @last_scan = Time.now
       end
     end
   end
