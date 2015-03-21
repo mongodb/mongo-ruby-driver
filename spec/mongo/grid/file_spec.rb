@@ -158,4 +158,15 @@ describe Mongo::Grid::File do
       end
     end
   end
+
+  describe '#inspect' do
+
+    let(:file) do
+      described_class.new('Hi', :filename => 'test.txt')
+    end
+
+    it 'includes the filename' do
+      expect(file.inspect).to include('test.txt')
+    end
+  end
 end

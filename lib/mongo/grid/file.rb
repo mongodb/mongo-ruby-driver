@@ -72,6 +72,18 @@ module Mongo
         initialize_chunks!(data)
       end
 
+      # Gets a pretty inspection of the file.
+      #
+      # @example Get the file inspection.
+      #   file.inspect
+      #
+      # @return [ String ] The file inspection.
+      #
+      # @since 2.0.0
+      def inspect
+        "<Mongo::Grid::File:0x#{object_id} filename=#{filename}>"
+      end
+
       private
 
       # @note If we have provided an array of BSON::Documents to initialize
