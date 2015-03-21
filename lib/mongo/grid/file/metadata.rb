@@ -133,6 +133,19 @@ module Mongo
           @client_md5 = Digest::MD5.new
         end
 
+        # Get a readable inspection for the object.
+        #
+        # @example Inspect the metadata.
+        #   metadata.inspect
+        #
+        # @return [ String ] The nice inspection.
+        #
+        # @since 2.0.0
+        def inspect
+          "<Mongo::Grid::File::Metadata:0x#{object_id} chunk_size=#{chunk_size} " +
+            "filename=#{filename} content_type=#{content_type} id=#{id} md5=#{md5}>"
+        end
+
         # Get the length of the document in bytes.
         #
         # @example Get the length

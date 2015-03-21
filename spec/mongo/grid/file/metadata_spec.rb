@@ -66,4 +66,27 @@ describe Mongo::Grid::File::Metadata do
       end
     end
   end
+
+  describe '#inspect' do
+
+    let(:metadata) do
+      described_class.new(:filename => 'test.txt', :length => 7)
+    end
+
+    it 'includes the chunk size' do
+      expect(metadata.inspect).to include(metadata.chunk_size.to_s)
+    end
+
+    it 'includes the filename' do
+      expect(metadata.inspect).to include(metadata.filename)
+    end
+
+    it 'includes the md5' do
+      expect(metadata.inspect).to include(metadata.md5.to_s)
+    end
+
+    it 'includes the id' do
+      expect(metadata.inspect).to include(metadata.id.to_s)
+    end
+  end
 end
