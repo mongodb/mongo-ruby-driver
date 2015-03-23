@@ -3,7 +3,8 @@ require 'spec_helper'
 describe Mongo::Operation::Write::Insert do
 
   let(:documents) do
-    [{ :name => 'test' }]
+    [{ :_id => 1,
+       :name => 'test' }]
   end
 
   let(:spec) do
@@ -105,6 +106,9 @@ describe Mongo::Operation::Write::Insert do
         it 'inserts the documents into the database', unless: write_command_enabled? do
           expect(response.written_count).to eq(0)
         end
+
+        pending 'reports the inserted id'
+          # response.inserted_id
       end
 
       context 'when the insert fails' do
@@ -153,6 +157,9 @@ describe Mongo::Operation::Write::Insert do
         it 'inserts the documents into the database', unless: write_command_enabled? do
           expect(response.written_count).to eq(0)
         end
+
+        pending 'reports the inserted ids'
+          # response.inserted_ids
       end
 
       context 'when the insert fails on the last document' do
@@ -205,6 +212,7 @@ describe Mongo::Operation::Write::Insert do
             failing_insert.execute(authorized_primary.context)
           }.to raise_error(Mongo::Error::OperationFailure)
         end
+
       end
 
       context 'when a document exceeds max bson size' do

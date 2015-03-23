@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/operation/bulk_insert/result'
+require 'mongo/operation/write/bulk_insert/result'
 
 module Mongo
   module Operation
