@@ -154,7 +154,7 @@ module Mongo
     #
     # @since 2.0.0
     def inspect
-      "<Mongo::Client:0x#{object_id} cluster=#{cluster.addresses.join(', ')}>"
+      "#<Mongo::Client:0x#{object_id} cluster=#{cluster.addresses.join(', ')}>"
     end
 
     # Get the read preference from the options passed to the client.

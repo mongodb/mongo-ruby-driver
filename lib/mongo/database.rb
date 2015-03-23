@@ -176,7 +176,7 @@ module Mongo
     #
     # @since 2.0.0
     def inspect
-      "<Mongo::Database:0x#{object_id} name=#{name}>"
+      "#<Mongo::Database:0x#{object_id} name=#{name}>"
     end
 
     # Get the Grid "filesystem" for this database.

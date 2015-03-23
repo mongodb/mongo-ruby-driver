@@ -48,7 +48,7 @@ module Mongo
       #
       # @since 2.0.0
       def inspect
-        "<Mongo::WriteConcern::Unacknowledged:0x#{object_id} options=#{options}>"
+        "#<Mongo::WriteConcern::Unacknowledged:0x#{object_id} options=#{options}>"
       end
     end
   end

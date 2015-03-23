@@ -110,7 +110,7 @@ module Mongo
         #
         # @since 2.0.0
         def inspect
-          "<Mongo::Pool::Queue:0x#{object_id} min_size=#{min_size} max_size=#{max_size} " +
+          "#<Mongo::Pool::Queue:0x#{object_id} min_size=#{min_size} max_size=#{max_size} " +
             "wait_timeout=#{wait_timeout} current_size=#{queue.size}>"
         end
 

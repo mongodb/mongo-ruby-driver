@@ -152,7 +152,7 @@ module Mongo
     #
     # @since 2.0.0
     def inspect
-      "<Mongo::Collection:0x#{object_id} namespace=#{namespace}>"
+      "#<Mongo::Collection:0x#{object_id} namespace=#{namespace}>"
     end
 
     # Insert a single document into the collection.

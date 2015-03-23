@@ -81,7 +81,7 @@ module Mongo
       #
       # @since 2.0.0
       def inspect
-        "<Mongo::Grid::File:0x#{object_id} filename=#{filename}>"
+        "#<Mongo::Grid::File:0x#{object_id} filename=#{filename}>"
       end
 
       private

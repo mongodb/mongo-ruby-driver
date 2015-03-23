@@ -142,7 +142,7 @@ module Mongo
         #
         # @since 2.0.0
         def inspect
-          "<Mongo::Grid::File::Metadata:0x#{object_id} chunk_size=#{chunk_size} " +
+          "#<Mongo::Grid::File::Metadata:0x#{object_id} chunk_size=#{chunk_size} " +
             "filename=#{filename} content_type=#{content_type} id=#{id} md5=#{md5}>"
         end
 

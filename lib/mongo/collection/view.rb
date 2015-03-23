@@ -139,7 +139,7 @@ module Mongo
       #
       # @since 2.0.0
       def inspect
-        "<Mongo::Collection::View:0x#{object_id} namespace='#{collection.namespace}" +
+        "#<Mongo::Collection::View:0x#{object_id} namespace='#{collection.namespace}" +
             " @selector=#{selector.inspect} @options=#{options.inspect}>"
       end
 

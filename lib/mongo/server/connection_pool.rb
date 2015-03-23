@@ -80,7 +80,7 @@ module Mongo
       #
       # @since 2.0.0
       def inspect
-        "<Mongo::Server::ConnectionPool:0x#{object_id} queue=#{queue.inspect}>"
+        "#<Mongo::Server::ConnectionPool:0x#{object_id} queue=#{queue.inspect}>"
       end
 
       # Yield the block to a connection, while handling checkin/checkout logic.
