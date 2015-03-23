@@ -392,6 +392,63 @@ describe Mongo::Collection::View::Writable do
         expect(updated[:field]).to eq('testing')
       end
     end
+
+    context 'when upsert is false' do
+
+      let!(:response) do
+        view.replace_one({ field: 'test1' }, upsert: false)
+      end
+
+      let(:updated) do
+        authorized_collection.find(field: 'test1').to_a
+      end
+
+      it 'reports that no documents were written' do
+        expect(response.written_count).to eq(0)
+      end
+
+      it 'does not insert the document' do
+        expect(updated).to be_empty
+      end
+    end
+
+    context 'when upsert is true' do
+
+      let!(:response) do
+        view.replace_one({ field: 'test1' }, upsert: true)
+      end
+
+      let(:updated) do
+        authorized_collection.find(field: 'test1').first
+      end
+
+      it 'reports that a document was written' do
+        expect(response.written_count).to eq(1)
+      end
+
+      it 'inserts the document' do
+        expect(updated[:field]).to eq('test1')
+      end
+    end
+
+    context 'when upsert is not specified' do
+
+      let!(:response) do
+        view.replace_one({ field: 'test1' })
+      end
+
+      let(:updated) do
+        authorized_collection.find(field: 'test1').to_a
+      end
+
+      it 'reports that no documents were written' do
+        expect(response.written_count).to eq(0)
+      end
+
+      it 'does not insert the document' do
+        expect(updated).to be_empty
+      end
+    end
   end
 
   describe '#update_many' do
@@ -447,6 +504,65 @@ describe Mongo::Collection::View::Writable do
         end
       end
     end
+
+    context 'when upsert is false' do
+
+      let(:response) do
+        view.update_many({ '$set'=> { field: 'testing' } },
+                           upsert: false)
+      end
+
+      let(:updated) do
+        authorized_collection.find.to_a
+      end
+
+      it 'reports that no documents were updated' do
+        expect(response.written_count).to eq(0)
+      end
+
+      it 'updates no documents in the collection' do
+        expect(updated).to be_empty
+      end
+    end
+
+    context 'when upsert is true' do
+
+      let!(:response) do
+        view.update_many({ '$set'=> { field: 'testing' } },
+                           upsert: true)
+      end
+
+      let(:updated) do
+        authorized_collection.find.first
+      end
+
+      it 'reports that a document was written' do
+        expect(response.written_count).to eq(1)
+      end
+
+      it 'inserts a document into the collection' do
+        expect(updated[:field]).to eq('testing')
+      end
+    end
+
+    context 'when upsert is not specified' do
+
+      let(:response) do
+        view.update_many({ '$set'=> { field: 'testing' } })
+      end
+
+      let(:updated) do
+        authorized_collection.find.to_a
+      end
+
+      it 'reports that no documents were updated' do
+        expect(response.written_count).to eq(0)
+      end
+
+      it 'updates no documents in the collection' do
+        expect(updated).to be_empty
+      end
+    end
   end
 
   describe '#update_one' do
@@ -498,6 +614,65 @@ describe Mongo::Collection::View::Writable do
 
       it 'updates the documents in the collection' do
         expect(updated[:field]).to eq('testing')
+      end
+    end
+
+    context 'when upsert is false' do
+
+      let(:response) do
+        view.update_one({ '$set'=> { field: 'testing' } },
+                          upsert: false)
+      end
+
+      let(:updated) do
+        authorized_collection.find.to_a
+      end
+
+      it 'reports that no documents were updated' do
+        expect(response.written_count).to eq(0)
+      end
+
+      it 'updates no documents in the collection' do
+        expect(updated).to be_empty
+      end
+    end
+
+    context 'when upsert is true' do
+
+      let!(:response) do
+        view.update_one({ '$set'=> { field: 'testing' } },
+                          upsert: true)
+      end
+
+      let(:updated) do
+        authorized_collection.find.first
+      end
+
+      it 'reports that a document was written' do
+        expect(response.written_count).to eq(1)
+      end
+
+      it 'inserts a document into the collection' do
+        expect(updated[:field]).to eq('testing')
+      end
+    end
+
+    context 'when upsert is not specified' do
+
+      let(:response) do
+        view.update_one({ '$set'=> { field: 'testing' } })
+      end
+
+      let(:updated) do
+        authorized_collection.find.to_a
+      end
+
+      it 'reports that no documents were updated' do
+        expect(response.written_count).to eq(0)
+      end
+
+      it 'updates no documents in the collection' do
+        expect(updated).to be_empty
       end
     end
   end
