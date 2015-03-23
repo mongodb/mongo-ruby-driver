@@ -88,9 +88,12 @@ module Mongo
           @spec[:updates] = original.spec[:updates].dup
         end
 
-        def message(update_spec = {})
-          opts = update[:multi] ? { :flags => [:multi_update] } : {}
-          Protocol::Update.new(db_name, coll_name, update[:q], update[:u], opts)
+        def message
+          flags = []
+          flags << :multi_update if update[:multi]
+          flags << :upsert if update[:upsert]
+          Protocol::Update.new(db_name, coll_name, update[:q], update[:u],
+                               flags.empty? ? {} : { flags: flags })
         end
       end
     end

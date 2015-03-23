@@ -112,36 +112,48 @@ module Mongo
         #   collection_view.replace_one({ name: 'test' })
         #
         # @param [ Hash ] document The document to replace.
+        # @param [ Hash ] opts The options.
+        #
+        # @option opts [ true, false ] :upsert Whether to upsert if the
+        #   document doesn't exist.
         #
         # @return [ Result ] The response from the database.
         #
         # @since 2.0.0
-        def replace_one(document)
-          update(document, false)
+        def replace_one(document, opts = {})
+          update(document, false, opts)
         end
 
         # Update documents in the collection.
         #
         # @example Update multiple documents in the collection.
         #   collection_view.update_many('$set' => { name: 'test' })
+        # @param [ Hash ] opts The options.
+        #
+        # @option opts [ true, false ] :upsert Whether to upsert if the
+        #   document doesn't exist.
         #
         # @return [ Result ] The response from the database.
         #
         # @since 2.0.0
-        def update_many(spec)
-          update(spec, true)
+        def update_many(spec, opts = {})
+          update(spec, true, opts)
         end
 
         # Update a single document in the collection.
         #
         # @example Update a single document in the collection.
         #   collection_view.update_one('$set' => { name: 'test' })
+        # @param [ Hash ] opts The options.
+        #
+        # @option opts [ true, false ] :upsert Whether to upsert if the
+        #   document doesn't exist.
         #
         # @return [ Result ] The response from the database.
         #
         # @since 2.0.0
-        def update_one(spec)
-          update(spec, false)
+        def update_one(spec, opts = {})
+          update(spec, false, opts)
         end
 
         private
@@ -155,9 +167,12 @@ module Mongo
           ).execute(next_primary.context)
         end
 
-        def update(spec, multi)
+        def update(spec, multi, opts)
           Operation::Write::Update.new(
-            :update => { q: selector, u: spec, multi: multi, upsert: false },
+            :update => { q: selector,
+                         u: spec,
+                         multi: multi,
+                         upsert: !!opts[:upsert] },
             :db_name => collection.database.name,
             :coll_name => collection.name,
             :write_concern => collection.write_concern
