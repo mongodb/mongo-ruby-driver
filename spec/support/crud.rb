@@ -16,12 +16,6 @@
 # test's expected results.
 #
 # @since 2.0.0
-RSpec::Matchers.define :match_results do |test|
-
-  match do |actual|
-    actual == test.result
-  end
-end
 
 # Matcher for determining if the collection's data matches the
 # test's expected collection data.
@@ -34,7 +28,8 @@ RSpec::Matchers.define :match_collection_data do |test|
   end
 end
 
-require 'support/crud/readable'
+require 'support/crud/read'
+require 'support/crud/write'
 
 module Mongo
   module CRUD
@@ -79,6 +74,9 @@ module Mongo
       end
     end
 
+    # Represents a single CRUD test.
+    #
+    # @since 2.0.0
     class CRUDTest
 
       # The test description.
@@ -94,14 +92,14 @@ module Mongo
       #   CRUDTest.new(data, test)
       #
       # @param [ Array<Hash> ] data The documents the collection
-      # should have before the test runs.
+      # must have before the test runs.
       # @param [ Hash ] test The test specification.
       #
       # @since 2.0.0
       def initialize(data, test)
         @data = data
         @description = test['description']
-        @operation = Operation.new(test['operation'])
+        @operation = Operation.get(test['operation'])
         @outcome = test['outcome']
       end
 
@@ -118,7 +116,6 @@ module Mongo
       # @since 2.0.0
       def run(collection)
         @collection = collection
-        @collection.find.delete_many
         @collection.insert_many(@data)
         @operation.execute(collection)
       end
@@ -148,6 +145,22 @@ module Mongo
         actual_collection_data == outcome_collection_data
       end
 
+      # Whether this test requires server version >= 2.6 for its results to match
+      # the expected results.
+      #
+      # @example If this test requires >= 2.6.
+      #   test.requires_2_6?(collection)
+      #
+      # @param [ true, false ] If write commands are enabled on the server.
+      # @param [ Collection ] The collection the test is run on.
+      #
+      # @return [ true, false ] Whether the test requires server >= 2.6.
+      #
+      # @since 2.0.0
+      def requires_2_6?(write_command_enabled, collection)
+        !write_command_enabled && @operation.requires_2_6?(collection)
+      end
+
       private
 
       def outcome_collection_data
@@ -155,46 +168,35 @@ module Mongo
       end
 
       def actual_collection_data
-        @collection.database[@outcome['collection']['name']].find.to_a if @outcome['collection']
+        if @outcome['collection']
+          collection_name = @outcome['collection']['name'] || @collection.name
+          @collection.database[collection_name].find.to_a
+        end
       end
     end
 
-    class Operation
-      include Readable
+    # Helper module for instantiating either a Read or Write test operation.
+    #
+    # @since 2.0.0
+    module Operation
+      extend self
 
-      # The operation name.
+      # Get a new Operation.
       #
-      # @return [ String ] name The operation name.
-      #
-      # @since 2.0.0
-      attr_reader :name
-
-      # Instantiate the new Operation.
-      #
-      # @example Create the operation.
-      #   Operation.new(spec)
+      # @example Get the operation.
+      #   Operation.get(spec)
       #
       # @param [ Hash ] spec The operation specification.
       #
-      # @since 2.0.0
-      def initialize(spec)
-        @spec = spec
-        @name = @spec['name']
-      end
-
-      # Execute the operation.
-      #
-      # @example Execute the operation.
-      #   operation.execute
-      #
-      # @param [ Collection ] collection The collection the operation
-      #   should be executed on.
-      #
-      # @return [ Result, Array<Hash> ] The result of executing the operation.
+      # @return [ Operation::Write, Operation::Read ] The Operation object.
       #
       # @since 2.0.0
-      def execute(collection)
-        send(name.to_sym, collection)
+      def get(spec)
+        if Write::OPERATIONS.keys.include?(spec['name'])
+          Write.new(spec)
+        else
+          Read.new(spec)
+        end
       end
     end
   end
