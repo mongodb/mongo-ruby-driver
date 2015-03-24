@@ -77,9 +77,10 @@ module Mongo
           cmd[:update] = document
           cmd[:fields] = projection if projection
           cmd[:sort] = sort if sort
-          cmd[:new] = (opts[:return_document] == :after ? true : false) if opts[:return_document]
+          cmd[:new] = !!(opts[:return_document] && opts[:return_document] == :after)
           cmd[:upsert] = opts[:upsert] if opts[:upsert]
-          database.command(cmd).first['value']
+          value = database.command(cmd).first['value']
+          value unless value.nil? || value.empty?
         end
 
         # Remove documents from the collection.
