@@ -12,40 +12,32 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/operation/write/bulk_update/result'
+require 'mongo/operation/write/bulk/bulk_insert/result'
 
 module Mongo
   module Operation
     module Write
 
-      # A MongoDB bulk update operation.
+      # A MongoDB bulk insert operation.
+      # This class should only be used by the Bulk API.
       #
-      # @note If the server version is >= 2.5.5, a write command operation
-      #   will be created and sent instead.
+      # @note If a server with version >= 2.5.5 is being used, a write command
+      #   operation will be created and sent instead.
       #
-      # @example Create the update operation.
-      #   Write::BulkUpdate.new({
-      #     :updates => [
-      #       {
-      #         :q => { :foo => 1 },
-      #         :u => { :$set => { :bar => 1 }},
-      #         :multi  => true,
-      #         :upsert => false
-      #       }
-      #     ],
+      # @example Create the new insert operation.
+      #   Write::BulkInsert.new({
+      #     :documents => [{ :foo => 1 }],
       #     :db_name => 'test',
       #     :coll_name => 'test_coll',
       #     :write_concern => write_concern,
       #     :ordered => false
       #   })
       #
-      # @param [ Hash ] spec The specifications for the update.
+      # @param [ Hash ] spec The specifications for the insert.
       #
-      # @option spec :updates [ Array ] The update documents.
-      # @option spec :db_name [ String ] The name of the database on which
-      #   the query should be run.
-      # @option spec :coll_name [ String ] The name of the collection on which
-      #   the query should be run.
+      # @option spec :documents [ Array ] The documents to insert.
+      # @option spec :db_name [ String ] The name of the database.
+      # @option spec :coll_name [ String ] The name of the collection.
       # @option spec :write_concern [ Mongo::WriteConcern ] The write concern.
       # @option spec :ordered [ true, false ] Whether the operations should be
       #   executed in order.
@@ -53,11 +45,10 @@ module Mongo
       #   write command.
       #
       # @since 2.0.0
-      class BulkUpdate
-        include Executable
+      class BulkInsert
         include Specifiable
 
-        # Execute the update operation.
+        # Execute the bulk insert operation.
         #
         # @example Execute the operation.
         #   operation.execute(context)
@@ -75,36 +66,20 @@ module Mongo
           end
         end
 
-        # Set the write concern on this operation.
-        #
-        # @example Set a write concern.
-        #   new_op = operation.write_concern(:w => 2)
-        #
-        # @param [ Hash ] wc The write concern.
-        #
-        # @since 2.0.0
-        def write_concern(wc = nil)
-          if wc
-            self.class.new(spec.merge(write_concern: WriteConcern.get(wc)))
-          else
-            spec[WRITE_CONCERN]
-          end
-        end
-
         private
 
         def execute_write_command(context)
-          Result.new(Command::Update.new(spec).execute(context))
+          Result.new(Command::Insert.new(spec).execute(context))
         end
 
         def execute_message(context)
-          replies = messages.map do |m|
+          replies = []
+          messages.map do |m|
             context.with_connection do |connection|
               result = LegacyResult.new(connection.dispatch([ m, gle ].compact))
+              replies << result.reply
               if stop_sending?(result)
-                return result
-              else
-                result.reply
+                return LegacyResult.new(replies)
               end
             end
           end
@@ -118,6 +93,11 @@ module Mongo
         # @todo put this somewhere else
         def ordered?
           @spec.fetch(:ordered, true)
+        end
+
+        def initialize_copy(original)
+          @spec = original.spec.dup
+          @spec[DOCUMENTS] = original.spec[DOCUMENTS].clone
         end
 
         def gle
@@ -134,17 +114,13 @@ module Mongo
           end
         end
 
-        def initialize_copy(original)
-          @spec = original.spec.dup
-          @spec[UPDATES] = original.spec[UPDATES].dup
-        end
-
         def messages
-          updates.collect do |u|
-            opts = { :flags => [] }
-            opts[:flags] << :multi_update if !!u[:multi]
-            opts[:flags] << :upsert if !!u[:upsert]
-            Protocol::Update.new(db_name, coll_name, u[:q], u[:u], opts)
+          if ordered? || gle
+            documents.collect do |doc|
+              Protocol::Insert.new(db_name, coll_name, [ doc ], options)
+            end
+          else
+            [ Protocol::Insert.new(db_name, coll_name, documents, { :flags => [:continue_on_error] }) ]
           end
         end
       end

@@ -12,50 +12,52 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/operation/write/bulk_insert/result'
+require 'mongo/operation/write/bulk/bulk_delete/result'
 
 module Mongo
   module Operation
     module Write
 
-      # A MongoDB bulk insert operation.
-      # This class should only be used by the Bulk API.
+      # A MongoDB bulk delete operation.
       #
-      # @note If a server with version >= 2.5.5 is being used, a write command
+      # @note If a server with version >= 2.5.5 is selected, a write command
       #   operation will be created and sent instead.
       #
-      # @example Create the new insert operation.
-      #   Write::BulkInsert.new({
-      #     :documents => [{ :foo => 1 }],
+      # @example Create the delete operation.
+      #   Write::BulkDelete.new({
+      #     :deletes => [{ :q => { :foo => 1 }, :limit => 1 }],
       #     :db_name => 'test',
       #     :coll_name => 'test_coll',
-      #     :write_concern => write_concern,
-      #     :ordered => false
+      #     :write_concern => write_concern
       #   })
       #
-      # @param [ Hash ] spec The specifications for the insert.
+      # @param [ Hash ] spec The specifications for the delete.
       #
-      # @option spec :documents [ Array ] The documents to insert.
-      # @option spec :db_name [ String ] The name of the database.
-      # @option spec :coll_name [ String ] The name of the collection.
-      # @option spec :write_concern [ Mongo::WriteConcern ] The write concern.
+      # @option spec :deletes [ Array ] The delete documents.
+      # @option spec :db_name [ String ] The name of the database on which
+      #   the delete should be executed.
+      # @option spec :coll_name [ String ] The name of the collection on which
+      #   the delete should be executed.
+      # @option spec :write_concern [ Mongo::WriteConcern ] The write concern
+      #   for this operation.
       # @option spec :ordered [ true, false ] Whether the operations should be
       #   executed in order.
-      # @option spec :options [ Hash ] Options for the command, if it ends up being a
+      # @option spec :options [Hash] Options for the command, if it ends up being a
       #   write command.
       #
       # @since 2.0.0
-      class BulkInsert
+      class BulkDelete
+        include Executable
         include Specifiable
 
-        # Execute the bulk insert operation.
+        # Execute the delete operation.
         #
         # @example Execute the operation.
         #   operation.execute(context)
         #
         # @param [ Mongo::Server::Context ] context The context for this operation.
         #
-        # @return [ Result ] The operation result.
+        # @return [ Result ] The result.
         #
         # @since 2.0.0
         def execute(context)
@@ -66,20 +68,36 @@ module Mongo
           end
         end
 
+        # Set the write concern on this operation.
+        #
+        # @example Set a write concern.
+        #   new_op = operation.write_concern(:w => 2)
+        #
+        # @param [ Hash ] wc The write concern.
+        #
+        # @since 2.0.0
+        def write_concern(wc = nil)
+          if wc
+            self.class.new(spec.merge(write_concern: WriteConcern.get(wc)))
+          else
+            spec[WRITE_CONCERN]
+          end
+        end
+
         private
 
         def execute_write_command(context)
-          Result.new(Command::Insert.new(spec).execute(context))
+          Result.new(Command::Delete.new(spec).execute(context))
         end
 
         def execute_message(context)
-          replies = []
-          messages.map do |m|
+          replies = messages.map do |m|
             context.with_connection do |connection|
               result = LegacyResult.new(connection.dispatch([ m, gle ].compact))
-              replies << result.reply
               if stop_sending?(result)
-                return LegacyResult.new(replies)
+                return result
+              else
+                result.reply
               end
             end
           end
@@ -93,11 +111,6 @@ module Mongo
         # @todo put this somewhere else
         def ordered?
           @spec.fetch(:ordered, true)
-        end
-
-        def initialize_copy(original)
-          @spec = original.spec.dup
-          @spec[DOCUMENTS] = original.spec[DOCUMENTS].clone
         end
 
         def gle
@@ -114,13 +127,15 @@ module Mongo
           end
         end
 
+        def initialize_copy(original)
+          @spec = original.spec.dup
+          @spec[DELETES] = original.spec[DELETES].clone
+        end
+
         def messages
-          if ordered? || gle
-            documents.collect do |doc|
-              Protocol::Insert.new(db_name, coll_name, [ doc ], options)
-            end
-          else
-            [ Protocol::Insert.new(db_name, coll_name, documents, { :flags => [:continue_on_error] }) ]
+          deletes.collect do |del|
+            opts = ( del[:limit] || 0 ) <= 0 ? {} : { :flags => [ :single_remove ] }
+            Protocol::Delete.new(db_name, coll_name, del[:q], opts)
           end
         end
       end

@@ -12,52 +12,59 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/operation/write/bulk_delete/result'
+require 'mongo/operation/write/bulk/bulk_update/result'
 
 module Mongo
   module Operation
     module Write
 
-      # A MongoDB bulk delete operation.
+      # A MongoDB bulk update operation.
       #
-      # @note If a server with version >= 2.5.5 is selected, a write command
-      #   operation will be created and sent instead.
+      # @note If the server version is >= 2.5.5, a write command operation
+      #   will be created and sent instead.
       #
-      # @example Create the delete operation.
-      #   Write::BulkDelete.new({
-      #     :deletes => [{ :q => { :foo => 1 }, :limit => 1 }],
+      # @example Create the update operation.
+      #   Write::BulkUpdate.new({
+      #     :updates => [
+      #       {
+      #         :q => { :foo => 1 },
+      #         :u => { :$set => { :bar => 1 }},
+      #         :multi  => true,
+      #         :upsert => false
+      #       }
+      #     ],
       #     :db_name => 'test',
       #     :coll_name => 'test_coll',
-      #     :write_concern => write_concern
+      #     :write_concern => write_concern,
+      #     :ordered => false
       #   })
       #
-      # @param [ Hash ] spec The specifications for the delete.
+      # @param [ Hash ] spec The specifications for the update.
       #
-      # @option spec :deletes [ Array ] The delete documents.
+      # @option spec :updates [ Array ] The update documents.
       # @option spec :db_name [ String ] The name of the database on which
-      #   the delete should be executed.
+      #   the query should be run.
       # @option spec :coll_name [ String ] The name of the collection on which
-      #   the delete should be executed.
-      # @option spec :write_concern [ Mongo::WriteConcern ] The write concern
-      #   for this operation.
+      #   the query should be run.
+      # @option spec :write_concern [ Mongo::WriteConcern ] The write concern.
       # @option spec :ordered [ true, false ] Whether the operations should be
       #   executed in order.
-      # @option spec :options [Hash] Options for the command, if it ends up being a
+      # @option spec :options [ Hash ] Options for the command, if it ends up being a
       #   write command.
       #
       # @since 2.0.0
-      class BulkDelete
+      class BulkUpdate
         include Executable
         include Specifiable
 
-        # Execute the delete operation.
+        # Execute the update operation.
         #
         # @example Execute the operation.
         #   operation.execute(context)
         #
         # @param [ Mongo::Server::Context ] context The context for this operation.
         #
-        # @return [ Result ] The result.
+        # @return [ Result ] The operation result.
         #
         # @since 2.0.0
         def execute(context)
@@ -87,7 +94,7 @@ module Mongo
         private
 
         def execute_write_command(context)
-          Result.new(Command::Delete.new(spec).execute(context))
+          Result.new(Command::Update.new(spec).execute(context))
         end
 
         def execute_message(context)
@@ -129,13 +136,15 @@ module Mongo
 
         def initialize_copy(original)
           @spec = original.spec.dup
-          @spec[DELETES] = original.spec[DELETES].clone
+          @spec[UPDATES] = original.spec[UPDATES].dup
         end
 
         def messages
-          deletes.collect do |del|
-            opts = ( del[:limit] || 0 ) <= 0 ? {} : { :flags => [ :single_remove ] }
-            Protocol::Delete.new(db_name, coll_name, del[:q], opts)
+          updates.collect do |u|
+            opts = { :flags => [] }
+            opts[:flags] << :multi_update if !!u[:multi]
+            opts[:flags] << :upsert if !!u[:upsert]
+            Protocol::Update.new(db_name, coll_name, u[:q], u[:u], opts)
           end
         end
       end
