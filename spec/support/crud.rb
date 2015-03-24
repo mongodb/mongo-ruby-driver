@@ -54,7 +54,7 @@ module Mongo
       # @since 2.0.0
       def initialize(file)
         @spec = YAML.load(ERB.new(File.new(file).read).result)
-        @description = file
+        @description = File.basename(file)
         @data = @spec['data']
         @crud_tests = @spec['tests']
       end
