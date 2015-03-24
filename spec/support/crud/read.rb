@@ -108,8 +108,7 @@ module Mongo
         end
   
         def distinct(collection)
-          view = collection.find(filter)
-          view.distinct(field_name)
+          collection.find(filter).distinct(field_name)
         end
   
         def find(collection)
