@@ -132,28 +132,25 @@ module Mongo
           { 'insertedId' => document['_id'] }
         end
 
-        def replace_one(collection)
-          result = collection.find(filter).replace_one(replacement, upsert: upsert)
+        def update_return_doc(result)
           return_doc = { 'upsertedId' => result.upserted_id } if upsert
           (return_doc || {}).merge!({ 'matchedCount' => result.matched_count,
-                                      'modifiedCount' => result.modified_count
-                                    })
+                                      'modifiedCount' => result.modified_count })
+        end
+
+        def replace_one(collection)
+          result = collection.find(filter).replace_one(replacement, upsert: upsert)
+          update_return_doc(result)
         end
 
         def update_many(collection)
           result = collection.find(filter).update_many(update, upsert: upsert)
-          return_doc = { 'upsertedId' => result.upserted_id } if upsert
-          (return_doc || {}).merge!({ 'matchedCount' => result.matched_count,
-                                      'modifiedCount' => result.modified_count
-                                    })
+          update_return_doc(result)
         end
 
         def update_one(collection)
           result = collection.find(filter).update_one(update, upsert: upsert)
-          return_doc = { 'upsertedId' => result.upserted_id } if upsert
-          (return_doc || {}).merge!({ 'matchedCount' => result.matched_count,
-                                      'modifiedCount' => result.modified_count
-                                    })
+          update_return_doc(result)
         end
 
         def find_one_and_delete(collection)
