@@ -99,6 +99,10 @@ describe Mongo::Operation::Write::Delete do
         it 'deletes the documents from the database' do
           expect(result.written_count).to eq(1)
         end
+
+        it 'reports the correct deleted count' do
+          expect(result.deleted_count).to eq(1)
+        end
       end
 
       context 'when the delete fails' do
@@ -138,6 +142,10 @@ describe Mongo::Operation::Write::Delete do
 
         it 'deletes the documents from the database' do
           expect(result.written_count).to eq(2)
+        end
+
+        it 'reports the correct deleted count' do
+          expect(result.deleted_count).to eq(2)
         end
       end
 

@@ -12,12 +12,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/operation/write/bulk'
-require 'mongo/operation/write/delete'
-require 'mongo/operation/write/insert'
-require 'mongo/operation/write/update'
-require 'mongo/operation/write/create_index'
-require 'mongo/operation/write/drop_index'
-require 'mongo/operation/write/create_user'
-require 'mongo/operation/write/remove_user'
-require 'mongo/operation/write/command'
+module Mongo
+  module Operation
+    module Write
+      class Insert
+
+        # Defines custom behaviour of results for an insert.
+        #
+        # According to the CRUD spec, reporting the inserted ids
+        # is optional. It can be added to this class later, if needed.
+        #
+        # @since 2.0.0
+        class Result < Operation::Result
+
+        end
+      end
+    end
+  end
+end

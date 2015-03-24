@@ -3,7 +3,8 @@ require 'spec_helper'
 describe Mongo::Operation::Write::Insert do
 
   let(:documents) do
-    [{ :name => 'test' }]
+    [{ '_id' => 1,
+       'name' => 'test' }]
   end
 
   let(:spec) do
@@ -94,16 +95,20 @@ describe Mongo::Operation::Write::Insert do
 
       context 'when the insert succeeds' do
 
-        let(:response) do
+        let!(:response) do
           insert.execute(authorized_primary.context)
         end
 
-        it 'inserts the documents into the database', if: write_command_enabled? do
+        it 'reports the correct written count', if: write_command_enabled? do
           expect(response.written_count).to eq(1)
         end
 
-        it 'inserts the documents into the database', unless: write_command_enabled? do
+        it 'reports the correct written count', unless: write_command_enabled? do
           expect(response.written_count).to eq(0)
+        end
+
+        it 'inserts the document into the collection' do
+          expect(authorized_collection.find(_id: 1).to_a). to eq(documents)
         end
       end
 
@@ -139,19 +144,26 @@ describe Mongo::Operation::Write::Insert do
       context 'when the insert succeeds' do
 
         let(:documents) do
-          [{ name: 'test1' }, { name: 'test2' }]
+          [{ '_id' => 1,
+             'name' => 'test1' },
+           { '_id' => 2,
+             'name' => 'test2' }]
         end
 
-        let(:response) do
+        let!(:response) do
           insert.execute(authorized_primary.context)
         end
 
-        it 'inserts the documents into the database', if: write_command_enabled? do
+        it 'reports the correct written count', if: write_command_enabled? do
           expect(response.written_count).to eq(2)
         end
 
-        it 'inserts the documents into the database', unless: write_command_enabled? do
+        it 'reports the correct written count', unless: write_command_enabled? do
           expect(response.written_count).to eq(0)
+        end
+
+        it 'inserts the documents into the collection' do
+          expect(authorized_collection.find.to_a). to eq(documents)
         end
       end
 
@@ -205,6 +217,7 @@ describe Mongo::Operation::Write::Insert do
             failing_insert.execute(authorized_primary.context)
           }.to raise_error(Mongo::Error::OperationFailure)
         end
+
       end
 
       context 'when a document exceeds max bson size' do

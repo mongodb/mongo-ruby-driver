@@ -12,12 +12,29 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/operation/write/bulk'
-require 'mongo/operation/write/delete'
-require 'mongo/operation/write/insert'
-require 'mongo/operation/write/update'
-require 'mongo/operation/write/create_index'
-require 'mongo/operation/write/drop_index'
-require 'mongo/operation/write/create_user'
-require 'mongo/operation/write/remove_user'
-require 'mongo/operation/write/command'
+module Mongo
+  module Operation
+    module Write
+      class Delete
+
+        # Defines custom behaviour of results for a delete.
+        #
+        # @since 2.0.0
+        class Result < Operation::Result
+
+          # Get the number of documents deleted.
+          #
+          # @example Get the deleted count.
+          #   result.deleted_count
+          #
+          # @return [ Integer ] The deleted count.
+          #
+          # @since 2.0.0
+          def deleted_count
+            n
+          end
+        end
+      end
+    end
+  end
+end

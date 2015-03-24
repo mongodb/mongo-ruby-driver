@@ -92,7 +92,7 @@ describe Mongo::Operation::Write::Update do
         })
       end
 
-      context 'when the update passes' do
+      context 'when the update succeeds' do
 
         let(:document) do
           { q: { name: 'test' }, u: { '$set' => { field: 'blah' }}, limit: 1 }
@@ -104,6 +104,18 @@ describe Mongo::Operation::Write::Update do
 
         it 'updates the document' do
           expect(result.written_count).to eq(1)
+        end
+
+        it 'reports the modified count' do
+          expect(result.modified_count).to eq(1)
+        end
+
+        it 'reports the matched count' do
+          expect(result.matched_count).to eq(1)
+        end
+
+        it 'reports the upserted id as nil' do
+          expect(result.upserted_id).to eq(nil)
         end
       end
 
@@ -145,6 +157,18 @@ describe Mongo::Operation::Write::Update do
         it 'updates the documents' do
           expect(result.written_count).to eq(2)
         end
+
+        it 'reports the modified count' do
+          expect(result.modified_count).to eq(2)
+        end
+
+        it 'reports the matched count' do
+          expect(result.matched_count).to eq(2)
+        end
+
+        it 'reports the upserted id as nil' do
+          expect(result.upserted_id).to eq(nil)
+        end
       end
 
       context 'when an update fails' do
@@ -170,6 +194,33 @@ describe Mongo::Operation::Write::Update do
           expect {
             update.execute(authorized_primary.context)
           }.to raise_error(Mongo::Error::MaxBSONSize)
+        end
+      end
+
+      context 'when upsert is true' do
+
+        let(:document) do
+          { q: { field: 'non-existent' }, u: { '$set' => { other: 'blah' }}, upsert: true }
+        end
+
+        let(:result) do
+          update.execute(authorized_primary.context)
+        end
+
+        it 'inserts the document' do
+          expect(result.written_count).to eq(1)
+        end
+
+        it 'reports the modified count' do
+          expect(result.modified_count).to eq(0)
+        end
+
+        it 'reports the matched count' do
+          expect(result.matched_count).to eq(0)
+        end
+
+        it 'retruns the upserted id' do
+          expect(result.upserted_id).to be_a(BSON::ObjectId)
         end
       end
     end
