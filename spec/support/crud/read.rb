@@ -103,13 +103,13 @@ module Mongo
   
         def aggregate(collection)
           collection.find.tap do |view|
-            view = view.batch_size(arguments['batchSize']) if arguments['batchSize']
-          end.aggregate(arguments['pipeline']).to_a
+            view = view.batch_size(batch_size) if batch_size
+          end.aggregate(pipeline).to_a
         end
   
         def distinct(collection)
           view = collection.find(filter)
-          view.distinct(arguments['fieldName'])
+          view.distinct(field_name)
         end
   
         def find(collection)
@@ -120,12 +120,20 @@ module Mongo
           view.to_a
         end
   
+        def batch_size
+          arguments['batchSize']
+        end
+
         def filter
           arguments['filter']
         end
   
         def pipeline
           arguments['pipeline']
+        end
+
+        def field_name
+          arguments['fieldName']
         end
 
         def arguments
