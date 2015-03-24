@@ -73,7 +73,7 @@ module Mongo
         # @example Whether the operation is expected to have results.
         #   operation.has_results?
         #
-        # @param [ true ] If the operation is expected to have results.
+        # @return [ true ] If the operation is expected to have results.
         #
         # @since 2.0.0
         def has_results?

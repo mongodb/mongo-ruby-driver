@@ -67,7 +67,7 @@ module Mongo
         # @example Whether the operation is expected to have results.
         #   operation.has_results?
         #
-        # @param [ true, false ] If the operation is expected to have results.
+        # @return [ true, false ] If the operation is expected to have results.
         #
         # @since 2.0.0
         def has_results?
@@ -83,7 +83,7 @@ module Mongo
         #
         # @param [ Collection ] collection The collection the operation is executed on.
         #
-        # @param [ true, false ] If the operation requires 2.6 for its results to match.
+        # @return [ true, false ] If the operation requires 2.6 for its results to match.
         #
         # @since 2.0.0
         def requires_2_6?(collection)
