@@ -147,7 +147,7 @@ module Mongo
           private
 
           def upsert?
-            !updated_existing?
+            !updated_existing? && n == 1
           end
 
           def updated_existing?
