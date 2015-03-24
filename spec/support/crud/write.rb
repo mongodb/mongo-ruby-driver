@@ -40,17 +40,14 @@ module Mongo
         # Map of operation options to method names.
         #
         # @since 2.0.0
-        # ARGUMENTS = {
-        #               'sort' => :sort,
-        #               'projection' => :projection,
-        #               'After' => :after
-        #             }
-
         ARGUMENT_MAP = {
                         :sort => 'sort',
                         :projection => 'projection'
                        }
 
+        # Operations that need a check if results on < 2.6 will match.
+        #
+        # @since 2.0.0
         REQUIRES_2_6 = ['findOneAndReplace',
                         'updateMany',
                         'updateOne',

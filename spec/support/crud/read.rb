@@ -22,14 +22,14 @@ module Mongo
       # @since 2.0.0
       class Read
 
-      # Map of method names to test operation argument names.
-      #
-      # @since 2.0.0
-      ARGUMENT_MAP = { :sort => 'sort',
-                       :skip => 'skip',
-                       :batch_size => 'batch_size',
-                       :limit => 'limit'
-                     }
+        # Map of method names to test operation argument names.
+        #
+        # @since 2.0.0
+        ARGUMENT_MAP = { :sort => 'sort',
+                         :skip => 'skip',
+                         :batch_size => 'batch_size',
+                         :limit => 'limit'
+                       }
 
         # The operation name.
         #
