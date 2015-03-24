@@ -87,7 +87,12 @@ module Mongo
           context.cert = OpenSSL::X509::Certificate.new(File.open(options[:ssl_cert]))
         end
         if options[:ssl_key]
-          context.key = OpenSSL::PKey::RSA.new(File.open(options[:ssl_key]))
+          if options[:ssl_key_pass_phrase]
+            context.key = OpenSSL::PKey::RSA.new(File.open(options[:ssl_key]),
+                                                           options[:ssl_key_pass_phrase])
+          else
+            context.key = OpenSSL::PKey::RSA.new(File.open(options[:ssl_key]))
+          end
         end
         if options[:ssl_verify] || options[:ssl_ca_cert]
           context.ca_file = options[:ssl_ca_cert]
