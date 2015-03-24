@@ -141,13 +141,13 @@ module Mongo
           #
           # @since 2.0.0
           def upserted_id
-            upsert?
+            first[UPSERTED] if upsert?
           end
 
           private
 
           def upsert?
-            first[UPSERTED]
+            !updated_existing?
           end
 
           def updated_existing?
