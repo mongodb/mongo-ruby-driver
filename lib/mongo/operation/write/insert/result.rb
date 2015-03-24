@@ -19,32 +19,12 @@ module Mongo
 
         # Defines custom behaviour of results for an insert.
         #
+        # According to the CRUD spec, reporting the inserted ids
+        # is optional. It can be added to this class later, if needed.
+        #
         # @since 2.0.0
         class Result < Operation::Result
 
-          # Get the inserted ids.
-          #
-          # @example Get the inserted ids.
-          #   result.inserted_ids
-          #
-          # @return [ Array ] The inserted ids.
-          #
-          # @since 2.0.0
-          def inserted_ids
-            documents
-          end
-
-          # Get the inserted id.
-          #
-          # @example Get the inserted id.
-          #   result.inserted_id
-          #
-          # @return [ Object ] The inserted id.
-          #
-          # @since 2.0.0
-          def inserted_id
-            inserted_ids.first
-          end
         end
       end
     end
