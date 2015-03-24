@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require 'mongo/operation/write/update/result'
+
 module Mongo
   module Operation
     module Write
@@ -79,7 +81,7 @@ module Mongo
 
         def execute_message(context)
           context.with_connection do |connection|
-            Result.new(connection.dispatch([ message, gle ].compact)).validate!
+            LegacyResult.new(connection.dispatch([ message, gle ].compact)).validate!
           end
         end
 
