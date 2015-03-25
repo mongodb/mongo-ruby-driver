@@ -271,12 +271,16 @@ describe Mongo::Server::Connection do
 
     context 'when ssl options are provided' do
 
+      let(:ssl_options) do
+        { :ssl => true, :ssl_key => 'file', :ssl_key_pass_phrase => 'iamaphrase' }
+      end
+
       let(:connection) do
-        described_class.new(server, :ssl => true)
+        described_class.new(server, ssl_options)
       end
 
       it 'sets the ssl options' do
-        expect(connection.send(:ssl_options)).to eq(:ssl => true)
+        expect(connection.send(:ssl_options)).to eq(ssl_options)
       end
     end
 
