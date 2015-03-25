@@ -38,6 +38,19 @@ module Mongo
       # @return [ Float ] timeout The connection timeout.
       attr_reader :timeout
 
+      # Close the socket.
+      #
+      # @example Close the socket.
+      #   socket.close
+      #
+      # @return [ true ] Always true.
+      #
+      # @since 2.0.0
+      def close
+        socket.sysclose rescue true
+        true
+      end
+
       # Establishes a socket connection.
       #
       # @example Connect the socket.
@@ -51,12 +64,11 @@ module Mongo
       # @since 2.0.0
       def connect!
         Timeout.timeout(timeout, Error::SocketTimeoutError) do
-          socket.setsockopt(IPPROTO_TCP, TCP_NODELAY, 1)
-          socket.connect(::Socket.pack_sockaddr_in(port, host))
-          ssl_socket = OpenSSL::SSL::SSLSocket.new(socket, context)
-          ssl_socket.sync_close = true
-          ssl_socket.connect
-          verify_certificate!(ssl_socket)
+          @tcp_socket.connect(::Socket.pack_sockaddr_in(port, host))
+          @socket = OpenSSL::SSL::SSLSocket.new(@tcp_socket, context)
+          @socket.sync_close = true
+          @socket.connect
+          verify_certificate!(@socket)
           self
         end
       end
@@ -76,7 +88,58 @@ module Mongo
       def initialize(host, port, timeout, family, options = {})
         @host, @port, @timeout, @options = host, port, timeout, options
         @context = create_context(options)
-        super(family)
+        @family = family
+        @tcp_socket = ::Socket.new(family, SOCK_STREAM, 0)
+        @tcp_socket.setsockopt(IPPROTO_TCP, TCP_NODELAY, 1)
+      end
+
+      # Will read all data from the socket for the provided number of bytes.
+      # If less data is returned than requested, an exception will be raised.
+      #
+      # @example Read all the requested data from the socket.
+      #   socket.read(4096)
+      #
+      # @param [ Integer ] length The number of bytes to read.
+      #
+      # @raise [ Mongo::SocketError ] If not all data is returned.
+      #
+      # @return [ Object ] The data from the socket.
+      #
+      # @since 2.0.0
+      def read(length)
+        handle_errors do
+          data = read_from_socket(length)
+          while data.length < length
+            data << read_from_socket(length - data.length)
+          end
+          data
+        end
+      end
+
+      # Read a single byte from the socket.
+      #
+      # @example Read a single byte.
+      #   socket.readbyte
+      #
+      # @return [ Object ] The read byte.
+      #
+      # @since 2.0.0
+      def readbyte
+        handle_errors { read_from_socket(1) }
+      end
+
+      # Writes data to the socket instance.
+      #
+      # @example Write to the socket.
+      #   socket.write(data)
+      #
+      # @param [ Object ] data The data to be written.
+      #
+      # @return [ Integer ] The length of bytes written to the socket.
+      #
+      # @since 2.0.0
+      def write(data)
+        handle_errors { socket.syswrite(data) }
       end
 
       private
@@ -94,6 +157,12 @@ module Mongo
           context.verify_mode = OpenSSL::SSL::VERIFY_PEER
         end
         context
+      end
+
+      def read_from_socket(length)
+        Timeout::timeout(timeout, Error::SocketTimeoutError) do
+          socket.sysread(length) || String.new
+        end
       end
 
       def verify_certificate!(socket)
