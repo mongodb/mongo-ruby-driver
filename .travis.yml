@@ -29,6 +29,7 @@ env:
 before_script:
   - wget http://fastdl.mongodb.org/linux/mongodb-linux-x86_64-${MONGODB}.tgz -O /tmp/mongodb.tgz
   - wget http://github.com/mongodb/mongo-ruby-driver/blob/master/.travis-config-ssl-${SSL}.yml -O /tmp/travis-mongo.yml
+  - wget http://github.com/mongodb/mongo-ruby-driver/blob/master/mongodb.pem -O /tmp/mongodb.pem
   - tar -xvf /tmp/mongodb.tgz
   - mkdir /tmp/data
   - ${PWD}/mongodb-linux-x86_64-${MONGODB}/bin/mongod --config /tmp/.travis-mongo.yml &> /dev/null &
