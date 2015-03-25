@@ -105,12 +105,14 @@ WRITE_CONCERN = (CONNECT == :replica_set) ? { w: ADDRESSES.size } : { w: 1 }
 # @since 2.0.0
 AUTHORIZED_CLIENT = Mongo::Client.new(
   ADDRESSES,
-  database: TEST_DB,
-  user: TEST_USER.name,
-  password: TEST_USER.password,
-  max_pool_size: 1,
-  write: WRITE_CONCERN,
-  connect: CONNECT
+  {
+    database: TEST_DB,
+    user: TEST_USER.name,
+    password: TEST_USER.password,
+    max_pool_size: 1,
+    write: WRITE_CONCERN,
+    connect: CONNECT
+  }.merge(SSL_OPTIONS)
 )
 
 # Provides an authorized mongo client on the default test database for the
