@@ -21,15 +21,17 @@ env:
     - CI="travis"
     - JRUBY_OPTS="--server -J-Xms512m -J-Xmx1024m"
   matrix:
-    - MONGODB=2.4.12
-    - MONGODB=2.6.7
-    - MONGODB=3.0.0
+    - MONGODB=2.4.12 SSL=disabled
+    - MONGODB=2.6.7 SSL=disabled
+    - MONGODB=3.0.0 SSL=disabled
+    - MONGODB=3.0.0 SSL=enabled
 
 before_script:
   - wget http://fastdl.mongodb.org/linux/mongodb-linux-x86_64-${MONGODB}.tgz -O /tmp/mongodb.tgz
+  - wget http://github.com/mongodb/mongo-ruby-driver/blob/master/.travis-config-ssl-${SSL}.yml -O /tmp/travis-mongo.yml
   - tar -xvf /tmp/mongodb.tgz
   - mkdir /tmp/data
-  - ${PWD}/mongodb-linux-x86_64-${MONGODB}/bin/mongod --dbpath /tmp/data --bind_ip 127.0.0.1 --auth &> /dev/null &
+  - ${PWD}/mongodb-linux-x86_64-${MONGODB}/bin/mongod --config /tmp/.travis-mongo.yml &> /dev/null &
 
 script: bundle exec rake spec:ci
 

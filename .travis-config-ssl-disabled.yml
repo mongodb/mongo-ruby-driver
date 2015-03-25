@@ -1,0 +1,6 @@
+net:
+  bindIp: 127.0.0.1
+security:
+  authorization: enabled
+storage:
+  dbPath: /tmp/data
