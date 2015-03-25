@@ -22,7 +22,6 @@ require 'mongo'
 require 'support/travis'
 require 'support/matchers'
 require 'support/authorization'
-require 'support/mongo_orchestration'
 require 'support/server_discovery_and_monitoring'
 require 'support/server_selection_rtt'
 require 'support/server_selection'
@@ -126,22 +125,6 @@ end
 # @since 2.0.0
 def initialize_scanned_client!
   Mongo::Client.new(ADDRESSES, database: TEST_DB, connect: CONNECT)
-end
-
-def initialize_mo_standalone!(path = nil)
-  $mongo_standalone ||= MongoOrchestration.get(:standalone, path: path)
-end
-
-def stop_mo_standalone!
-  $mongo_standalone.stop if $mongo_standalone
-end
-
-def mongo_orchestration_available?(path = nil)
-  begin
-    MongoOrchestration.get(:standalone, path: path)
-  rescue MongoOrchestration::ServiceNotAvailable
-    return false
-  end
 end
 
 # require all shared examples
