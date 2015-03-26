@@ -76,7 +76,7 @@ module Mongo
       # @since 2.0.0
       def log_message
         fields = []
-        fields << ["%s |", "QUERY"]
+        fields << ["%s |", query_type]
         fields << ["namespace=%s", namespace]
         fields << ["selector=%s", selector.inspect]
         fields << ["flags=%s", flags.inspect]
@@ -105,6 +105,10 @@ module Mongo
       # @return [Fixnum] the operation code.
       def op_code
         2004
+      end
+
+      def query_type
+        namespace.include?(Database::COMMAND) ? 'COMMAND' : 'QUERY'
       end
 
       # Available flags for a Query message.
