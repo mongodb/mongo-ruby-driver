@@ -28,10 +28,10 @@ module Mongo
         end
 
         def ensure_ids(documents)
-          @inserted_ids = []
+          @ids = []
           documents.collect do |doc|
             doc_with_id = has_id?(doc) ? doc : doc.merge(_id: BSON::ObjectId.new)
-            @inserted_ids << id(doc_with_id)
+            @ids << id(doc_with_id)
             doc_with_id
           end
         end
