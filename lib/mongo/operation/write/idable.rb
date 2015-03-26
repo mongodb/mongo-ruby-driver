@@ -24,7 +24,7 @@ module Mongo
         end
 
         def has_id?(doc)
-          id(doc)
+          !!id(doc)
         end
 
         def ensure_ids(documents)
