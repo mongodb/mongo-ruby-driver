@@ -43,6 +43,18 @@ module Mongo
             @replies = replies.is_a?(Protocol::Reply) ? [ replies ] : replies
             @inserted_ids = ids
           end
+
+          # Gets the id of the document inserted.
+          #
+          # @example Get id of the document inserted.
+          #   result.inserted_id
+          #
+          # @return [ Object ] The id of the document inserted.
+          #
+          # @since 2.0.0
+          def inserted_id
+            inserted_ids.first
+          end
         end
       end
     end

@@ -121,15 +121,13 @@ module Mongo
         end
 
         def insert_many(collection)
-          collection.insert_many(documents)
-          # returning inserted_ids is optional
-          { 'insertedIds' => documents.collect { |d| d['_id'] } }
+          result = collection.insert_many(documents)
+          { 'insertedIds' => result.inserted_ids }
         end
 
         def insert_one(collection)
           result = collection.insert_one(document)
-          # returning inserted_id is optional
-          { 'insertedId' => document['_id'] }
+          { 'insertedId' => result.inserted_id }
         end
 
         def update_return_doc(result)

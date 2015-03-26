@@ -56,6 +56,18 @@ module Mongo
           def n_inserted
             written_count
           end
+
+          # Gets the id of the document inserted.
+          #
+          # @example Get id of the document inserted.
+          #   result.inserted_id
+          #
+          # @return [ Object ] The id of the document inserted.
+          #
+          # @since 2.0.0
+          def inserted_id
+            inserted_ids.first
+          end
         end
 
         # Defines custom behaviour of results when inserting.
@@ -98,6 +110,18 @@ module Mongo
               n += 1 unless reply_write_errors?(reply)
               n
             end
+          end
+
+          # Gets the id of the document inserted.
+          #
+          # @example Get id of the document inserted.
+          #   result.inserted_id
+          #
+          # @return [ Object ] The id of the document inserted.
+          #
+          # @since 2.0.0
+          def inserted_id
+            inserted_ids.first
           end
         end
       end
