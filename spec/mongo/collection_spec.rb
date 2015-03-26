@@ -294,6 +294,10 @@ describe Mongo::Collection do
     it 'inserts the documents into the collection', unless: write_command_enabled? do
       expect(result.written_count).to eq(0)
     end
+
+    it 'contains the ids in the result' do
+      expect(result.inserted_ids.size).to eq(2)
+    end
   end
 
   describe '#insert_one' do
@@ -312,6 +316,10 @@ describe Mongo::Collection do
 
     it 'inserts the document into the collection', unless: write_command_enabled? do
       expect(result.written_count).to eq(0)
+    end
+
+    it 'contains the id in the result' do
+      expect(result.inserted_id).to_not be_nil
     end
   end
 
