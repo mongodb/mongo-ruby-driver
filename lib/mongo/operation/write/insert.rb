@@ -44,6 +44,7 @@ module Mongo
       class Insert
         include Executable
         include Specifiable
+        include Idable
 
         # Execute the insert operation.
         #
@@ -71,7 +72,7 @@ module Mongo
 
         def execute_message(context)
           context.with_connection do |connection|
-            Result.new(connection.dispatch([ message, gle ].compact)).validate!
+            Result.new(connection.dispatch([ message, gle ].compact), @inserted_ids).validate!
           end
         end
 
@@ -82,7 +83,7 @@ module Mongo
 
         def message
           opts = !!options[:continue_on_error] ? { :flags => [:continue_on_error] } : {}
-          Protocol::Insert.new(db_name, coll_name, documents, opts)
+          Protocol::Insert.new(db_name, coll_name, ensure_ids(documents), opts)
         end
       end
     end

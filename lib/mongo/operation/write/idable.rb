@@ -12,13 +12,30 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/operation/write/idable'
-require 'mongo/operation/write/bulk'
-require 'mongo/operation/write/delete'
-require 'mongo/operation/write/insert'
-require 'mongo/operation/write/update'
-require 'mongo/operation/write/create_index'
-require 'mongo/operation/write/drop_index'
-require 'mongo/operation/write/create_user'
-require 'mongo/operation/write/remove_user'
-require 'mongo/operation/write/command'
+module Mongo
+  module Operation
+    module Write
+      module Idable
+
+        private
+
+        def id(doc)
+          doc.respond_to?(:id) ? doc.id : (doc['_id'] || doc[:_id])
+        end
+
+        def has_id?(doc)
+          id(doc)
+        end
+
+        def ensure_ids(documents)
+          @inserted_ids = []
+          documents.collect do |doc|
+            doc_with_id = has_id?(doc) ? doc : doc.merge(_id: BSON::ObjectId.new)
+            @inserted_ids << id(doc_with_id)
+            doc_with_id
+          end
+        end
+      end
+    end
+  end
+end

@@ -119,7 +119,7 @@ module Mongo
         documents.each(&block)
       end
 
-      # Initialize a new result result.
+      # Initialize a new result.
       #
       # @example Instantiate the result.
       #   Result.new(replies)
