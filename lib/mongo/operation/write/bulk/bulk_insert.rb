@@ -47,6 +47,7 @@ module Mongo
       # @since 2.0.0
       class BulkInsert
         include Specifiable
+        include Idable
 
         # Execute the bulk insert operation.
         #
@@ -69,21 +70,22 @@ module Mongo
         private
 
         def execute_write_command(context)
-          Result.new(Command::Insert.new(spec).execute(context))
+          command_spec = spec.merge(:documents => ensure_ids(documents))
+          Result.new(Command::Insert.new(command_spec).execute(context), @ids)
         end
 
         def execute_message(context)
           replies = []
           messages.map do |m|
             context.with_connection do |connection|
-              result = LegacyResult.new(connection.dispatch([ m, gle ].compact))
+              result = LegacyResult.new(connection.dispatch([ m, gle ].compact), @ids)
               replies << result.reply
               if stop_sending?(result)
-                return LegacyResult.new(replies)
+                return LegacyResult.new(replies, @ids)
               end
             end
           end
-          LegacyResult.new(replies.compact.empty? ? nil : replies)
+          LegacyResult.new(replies.compact.empty? ? nil : replies, @ids)
         end
 
         def stop_sending?(result)
@@ -117,10 +119,10 @@ module Mongo
         def messages
           if ordered? || gle
             documents.collect do |doc|
-              Protocol::Insert.new(db_name, coll_name, [ doc ], options)
+              Protocol::Insert.new(db_name, coll_name, ensure_ids([ doc ]), options)
             end
           else
-            [ Protocol::Insert.new(db_name, coll_name, documents, { :flags => [:continue_on_error] }) ]
+            [ Protocol::Insert.new(db_name, coll_name, ensure_ids(documents), { :flags => [:continue_on_error] }) ]
           end
         end
       end
