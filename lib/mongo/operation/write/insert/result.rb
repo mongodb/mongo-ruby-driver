@@ -25,6 +25,36 @@ module Mongo
         # @since 2.0.0
         class Result < Operation::Result
 
+          # Get the ids of the inserted documents.
+          #
+          # @since 2.0.0
+          attr_reader :inserted_ids
+
+          # Initialize a new result.
+          #
+          # @example Instantiate the result.
+          #   Result.new(replies, inserted_ids)
+          #
+          # @param [ Protocol::Reply ] replies The wire protocol replies.
+          # @params [ Array<Object> ] ids The ids of the inserted documents.
+          #
+          # @since 2.0.0
+          def initialize(replies, ids)
+            @replies = replies.is_a?(Protocol::Reply) ? [ replies ] : replies
+            @inserted_ids = ids
+          end
+
+          # Gets the id of the document inserted.
+          #
+          # @example Get id of the document inserted.
+          #   result.inserted_id
+          #
+          # @return [ Object ] The id of the document inserted.
+          #
+          # @since 2.0.0
+          def inserted_id
+            inserted_ids.first
+          end
         end
       end
     end

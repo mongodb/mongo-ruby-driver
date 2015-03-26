@@ -15,6 +15,10 @@ describe Mongo::Operation::Write::Insert do
     }
   end
 
+  after do
+    authorized_collection.find.delete_many
+  end
+
   let(:insert) do
     described_class.new(spec)
   end
@@ -76,6 +80,29 @@ describe Mongo::Operation::Write::Insert do
       it 'copies the list of documents' do
         copy = insert.dup
         expect(copy.spec[:documents]).to_not be(insert.spec[:documents])
+      end
+    end
+  end
+
+  describe 'document ids' do
+
+    context 'when documents do not contain an id' do
+
+      let(:documents) do
+        [{ 'field' => 'test' },
+         { 'field' => 'test' }]
+      end
+
+      let(:inserted_ids) do
+        insert.execute(authorized_primary.context).inserted_ids
+      end
+
+      let(:collection_ids) do
+        authorized_collection.find(field: 'test').collect { |d| d['_id'] }
+      end
+
+      it 'adds an id to the documents' do
+        expect(inserted_ids).to eq(collection_ids)
       end
     end
   end

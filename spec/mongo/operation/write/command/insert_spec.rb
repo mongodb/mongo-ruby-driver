@@ -3,7 +3,7 @@ require 'spec_helper'
 describe Mongo::Operation::Write::Command::Insert do
   include_context 'operation'
 
-  let(:documents) { [{ :foo => 1 }] }
+  let(:documents) { [{ :_id => 1, :foo => 1 }] }
   let(:spec) do
     { :documents     => documents,
       :db_name       => db_name,

@@ -19,6 +19,10 @@ describe Mongo::Operation::Write::BulkInsert do
     described_class.new(spec)
   end
 
+  after do
+    authorized_collection.find.delete_many
+  end
+
   describe '#initialize' do
 
     context 'spec' do
@@ -77,6 +81,29 @@ describe Mongo::Operation::Write::BulkInsert do
       it 'copies the list of documents' do
         copy = op.dup
         expect(copy.spec[:documents]).to_not be(op.spec[:documents])
+      end
+    end
+  end
+
+  describe 'document ids' do
+
+    context 'when documents do not contain an id' do
+
+      let(:documents) do
+        [{ 'field' => 'test' },
+         { 'field' => 'test' }]
+      end
+
+      let(:inserted_ids) do
+        op.execute(authorized_primary.context).inserted_ids
+      end
+
+      let(:collection_ids) do
+        authorized_collection.find(field: 'test').collect { |d| d['_id'] }
+      end
+
+      it 'adds an id to the documents' do
+        expect(inserted_ids).to eq(collection_ids)
       end
     end
   end
