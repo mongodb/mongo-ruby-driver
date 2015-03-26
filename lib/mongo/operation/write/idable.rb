@@ -28,7 +28,7 @@ module Mongo
         end
 
         def ensure_ids(documents)
-          @ids = []
+          @ids ||= []
           documents.collect do |doc|
             doc_with_id = has_id?(doc) ? doc : doc.merge(_id: BSON::ObjectId.new)
             @ids << id(doc_with_id)
