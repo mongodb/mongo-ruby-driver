@@ -69,6 +69,12 @@ SERVER_SELECTION_RTT_TESTS = Dir.glob("#{CURRENT_PATH}/support/server_selection/
 SERVER_SELECTION_TESTS = Dir.glob("#{CURRENT_PATH}/support/server_selection/selection/**/*.yml")
 CRUD_TESTS = Dir.glob("#{CURRENT_PATH}/support/crud_tests/**/*.yml")
 
+SSL_CERTS_DIR = "#{CURRENT_PATH}/support/certificates"
+CLIENT_PEM = "#{SSL_CERTS_DIR}/client.pem"
+CLIENT_PASSWORD_PEM = "#{SSL_CERTS_DIR}/password_protected.pem"
+CA_PEM = "#{SSL_CERTS_DIR}/ca.pem"
+CRL_PEM = "#{SSL_CERTS_DIR}/crl.pem"
+
 # Determine whether the test clients are connecting to a standlone.
 #
 # @since 2.0.0
@@ -109,6 +115,10 @@ end
 def list_command_enabled?
   $mongo_client ||= initialize_scanned_client!
   $list_command_enabled ||= $mongo_client.cluster.servers.first.features.list_indexes_enabled?
+end
+
+def running_ssl?
+  !!ENV['SSL']
 end
 
 alias :scram_sha_1_enabled? :list_command_enabled?

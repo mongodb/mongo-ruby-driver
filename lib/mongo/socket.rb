@@ -103,10 +103,7 @@ module Mongo
     def initialize(family)
       @family = family
       @socket = ::Socket.new(family, SOCK_STREAM, 0)
-      encoded_timeout = [ timeout, 0 ].pack(TIMEOUT_PACK)
-      socket.set_encoding(BSON::BINARY)
-      socket.setsockopt(SOL_SOCKET, SO_RCVTIMEO, encoded_timeout)
-      socket.setsockopt(SOL_SOCKET, SO_SNDTIMEO, encoded_timeout)
+      set_socket_options(@socket)
     end
 
     # Will read all data from the socket for the provided number of bytes.
@@ -162,6 +159,13 @@ module Mongo
 
     def read_from_socket(length)
       socket.read(length) || String.new
+    end
+
+    def set_socket_options(sock)
+      encoded_timeout = [ timeout, 0 ].pack(TIMEOUT_PACK)
+      sock.set_encoding(BSON::BINARY)
+      sock.setsockopt(SOL_SOCKET, SO_RCVTIMEO, encoded_timeout)
+      sock.setsockopt(SOL_SOCKET, SO_SNDTIMEO, encoded_timeout)
     end
 
     def handle_errors

@@ -78,10 +78,7 @@ module Mongo
         @family = family
         @tcp_socket = ::Socket.new(family, SOCK_STREAM, 0)
         @tcp_socket.setsockopt(IPPROTO_TCP, TCP_NODELAY, 1)
-        encoded_timeout = [ timeout, 0 ].pack(TIMEOUT_PACK)
-        @tcp_socket.set_encoding(BSON::BINARY)
-        @tcp_socket.setsockopt(SOL_SOCKET, SO_RCVTIMEO, encoded_timeout)
-        @tcp_socket.setsockopt(SOL_SOCKET, SO_SNDTIMEO, encoded_timeout)
+        set_socket_options(@tcp_socket)
       end
 
       # Read a single byte from the socket.
