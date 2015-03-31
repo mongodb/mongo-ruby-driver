@@ -13,6 +13,7 @@
 # limitations under the License.
 
 require 'base64'
+require 'securerandom'
 require 'openssl'
 require 'digest/md5'
 
