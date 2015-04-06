@@ -82,7 +82,11 @@ module Mongo
 
       private
 
-      attr_reader :socket, :ssl_options
+      attr_reader :socket
+
+      def ssl_options
+        @ssl_options[:ssl] == true ? @ssl_options : {}
+      end
 
       def ensure_connected
         ensure_same_process!
