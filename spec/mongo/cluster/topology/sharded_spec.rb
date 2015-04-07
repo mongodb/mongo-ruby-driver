@@ -65,10 +65,10 @@ describe Mongo::Cluster::Topology::Sharded do
     end
   end
 
-  describe '.standalone?' do
+  describe '.single?' do
 
     it 'returns false' do
-      expect(topology).to_not be_standalone
+      expect(topology).to_not be_single
     end
   end
 end

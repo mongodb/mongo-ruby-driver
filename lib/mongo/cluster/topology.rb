@@ -14,7 +14,7 @@
 
 require 'mongo/cluster/topology/replica_set'
 require 'mongo/cluster/topology/sharded'
-require 'mongo/cluster/topology/standalone'
+require 'mongo/cluster/topology/single'
 require 'mongo/cluster/topology/unknown'
 
 module Mongo
@@ -32,7 +32,7 @@ module Mongo
       OPTIONS = {
         replica_set: ReplicaSet,
         sharded: Sharded,
-        direct: Standalone
+        direct: Single
       }
 
       # Get the initial cluster topology for the provided options.
@@ -42,7 +42,7 @@ module Mongo
       #
       # @param [ Hash ] options The cluster options.
       #
-      # @return [ ReplicaSet, Sharded, Standalone ] The topology.
+      # @return [ ReplicaSet, Sharded, Single ] The topology.
       #
       # @since 2.0.0
       def initial(seeds, options)
@@ -52,7 +52,7 @@ module Mongo
         if options.has_key?(:replica_set)
           ReplicaSet.new(options)
         else
-          seeds.size > 1 ? Unknown.new(options) : Standalone.new(options)
+          seeds.size > 1 ? Unknown.new(options) : Single.new(options)
         end
       end
     end

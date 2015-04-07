@@ -135,15 +135,15 @@ module Mongo
         # @since 2.0.0
         def sharded?; false; end
 
-        # A replica set topology is not standalone.
+        # A replica set topology is not single.
         #
-        # @example Is the topology standalone?
-        #   ReplicaSet.standalone?
+        # @example Is the topology single?
+        #   ReplicaSet.single?
         #
         # @return [ false ] Always false.
         #
         # @since 2.0.0
-        def standalone?; false; end
+        def single?; false; end
 
         # A replica set topology is not unknown.
         #

@@ -15,14 +15,14 @@ describe Mongo::Cluster::Topology do
       end
     end
 
-    context 'when provided a standalone option' do
+    context 'when provided a single option' do
 
       let(:topology) do
         described_class.initial([ 'a' ], connect: :direct)
       end
 
-      it 'returns a standalone topology' do
-        expect(topology).to be_a(Mongo::Cluster::Topology::Standalone)
+      it 'returns a single topology' do
+        expect(topology).to be_a(Mongo::Cluster::Topology::Single)
       end
     end
 
@@ -56,8 +56,8 @@ describe Mongo::Cluster::Topology do
           described_class.initial([], {})
         end
 
-        it 'returns a standalone topology' do
-          expect(topology).to be_a(Mongo::Cluster::Topology::Standalone)
+        it 'returns a single topology' do
+          expect(topology).to be_a(Mongo::Cluster::Topology::Single)
         end
       end
     end
