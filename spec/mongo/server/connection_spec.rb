@@ -284,6 +284,39 @@ describe Mongo::Server::Connection do
       end
     end
 
+    context 'when ssl is false' do
+
+      context 'when ssl options are provided' do
+
+        let(:ssl_options) do
+          { :ssl => false, :ssl_key => 'file', :ssl_key_pass_phrase => 'iamaphrase' }
+        end
+
+        let(:connection) do
+          described_class.new(server, ssl_options)
+        end
+
+        it 'does not set the ssl options' do
+          expect(connection.send(:ssl_options)).to be_empty
+        end
+      end
+
+      context 'when ssl options are not provided' do
+
+        let(:ssl_options) do
+          { :ssl => false }
+        end
+
+        let(:connection) do
+          described_class.new(server, ssl_options)
+        end
+
+        it 'does not set the ssl options' do
+          expect(connection.send(:ssl_options)).to be_empty
+        end
+      end
+    end
+
     context 'when authentication options are provided' do
 
       let(:connection) do
