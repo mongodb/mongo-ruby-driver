@@ -34,7 +34,7 @@ module Mongo
     # @return [ Object ] The cluster topology.
     attr_reader :topology
 
-    def_delegators :topology, :replica_set?, :replica_set_name, :sharded?, :standalone?, :unknown?
+    def_delegators :topology, :replica_set?, :replica_set_name, :sharded?, :single?, :unknown?
 
     # Determine if this cluster of servers is equal to another object. Checks the
     # servers currently in the cluster, not what was configured.

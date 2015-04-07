@@ -86,7 +86,7 @@ module Mongo
       def select_server(cluster)
         deadline = Time.now + server_selection_timeout
         while (deadline - Time.now) > 0
-          if cluster.standalone?
+          if cluster.single?
             servers = cluster.servers
           elsif cluster.sharded?
             servers = near_servers(cluster.servers)
@@ -136,7 +136,7 @@ module Mongo
       # @since 2.0.0
       def primary(candidates)
         candidates.select do |server|
-          server.primary? || server.standalone?
+          server.primary?
         end
       end
 

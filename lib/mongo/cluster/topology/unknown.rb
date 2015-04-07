@@ -118,15 +118,15 @@ module Mongo
         # @since 2.0.0
         def sharded?; false; end
 
-        # An unknown topology is not standalone.
+        # An unknown topology is not single.
         #
-        # @example Is the topology standalone?
-        #   Unknown.standalone?
+        # @example Is the topology single?
+        #   Unknown.single?
         #
         # @return [ true ] Always false.
         #
         # @since 2.0.0
-        def standalone?; false; end
+        def single?; false; end
 
         # An unknown topology is unknown.
         #

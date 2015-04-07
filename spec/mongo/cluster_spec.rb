@@ -126,4 +126,28 @@ describe Mongo::Cluster do
       expect(cluster.scan!).to be true
     end
   end
+
+  describe '#servers' do
+
+    context 'when topology is single', if: single_seed? do
+
+      let(:cluster) do
+        described_class.new(ADDRESSES)
+      end
+
+      context 'when the server is a mongos', if: single_mongos?  do
+
+        it 'returns the mongos' do
+          expect(cluster.servers.size).to eq(1)
+        end
+      end
+
+      context 'when the server is a replica set member', if: single_rs_member? do
+
+        it 'returns the replica set member' do
+          expect(cluster.servers.size).to eq(1)
+        end
+      end
+    end
+  end
 end

@@ -14,7 +14,7 @@ module Mongo
           'ReplicaSetNoPrimary' => Mongo::Cluster::Topology::ReplicaSet,
           'ReplicaSetWithPrimary' => Mongo::Cluster::Topology::ReplicaSet,
           'Sharded' => Mongo::Cluster::Topology::Sharded,
-          'Single' => Mongo::Cluster::Topology::Standalone,
+          'Single' => Mongo::Cluster::Topology::Single,
           'Unknown' => Mongo::Cluster::Topology::Unknown
         }
 

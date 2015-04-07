@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe Mongo::Cluster::Topology::Standalone do
+describe Mongo::Cluster::Topology::Single do
 
   let(:address) do
     Mongo::Address.new('127.0.0.1:27017')
@@ -70,10 +70,10 @@ describe Mongo::Cluster::Topology::Standalone do
     end
   end
 
-  describe '.standalone?' do
+  describe '.single?' do
 
     it 'returns true' do
-      expect(topology).to be_standalone
+      expect(topology).to be_single
     end
   end
 end

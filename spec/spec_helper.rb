@@ -80,7 +80,7 @@ CRL_PEM = "#{SSL_CERTS_DIR}/crl.pem"
 # @since 2.0.0
 def standalone?
   $mongo_client ||= initialize_scanned_client!
-  $standalone ||= $mongo_client.cluster.standalone?
+  $standalone ||= $mongo_client.cluster.servers.first.standalone?
 end
 
 # Determine whether the test clients are connecting to a replica set.
@@ -97,6 +97,35 @@ end
 def sharded?
   $mongo_client ||= initialize_scanned_client!
   $sharded ||= $mongo_client.cluster.sharded?
+end
+
+# Determine whether the single address provided is a replica set member.
+# @note To run the specs relying on this to return true,
+#   start a replica set and set the environment variable
+#   MONGODB_ADDRESSES to the address of a single member.
+#
+# @since 2.0.0
+def single_rs_member?
+  $mongo_client ||= initialize_scanned_client!
+  single_seed? && $mongo_client.cluster.servers.first.replica_set_name
+end
+
+# Determine whether the single address provided is a mongos.
+# @note To run the specs relying on this to return true,
+#   start a sharded cluster and set the environment variable
+#   MONGODB_ADDRESSES to the address of a single mongos.
+#
+# @since 2.0.0
+def single_mongos?
+  $mongo_client ||= initialize_scanned_client!
+  single_seed? && $mongo_client.cluster.servers.first.mongos?
+end
+
+# Determine whether a single address was provided.
+#
+# @since 2.0.0
+def single_seed?
+  ADDRESSES.size == 1
 end
 
 # For instances where behaviour is different on different versions, we need to

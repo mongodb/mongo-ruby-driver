@@ -92,10 +92,10 @@ describe Mongo::Cluster::Topology::ReplicaSet do
     end
   end
 
-  describe '.standalone?' do
+  describe '.single?' do
 
     it 'returns false' do
-      expect(described_class.new({})).to_not be_standalone
+      expect(described_class.new({})).to_not be_single
     end
   end
 end
