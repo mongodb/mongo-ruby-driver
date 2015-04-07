@@ -100,6 +100,9 @@ def sharded?
 end
 
 # Determine whether the single address provided is a replica set member.
+# @note To run the specs relying on this to return true,
+#   start a replica set and set the environment variable
+#   MONGODB_ADDRESSES to the address of a single member.
 #
 # @since 2.0.0
 def single_rs_member?
@@ -108,6 +111,9 @@ def single_rs_member?
 end
 
 # Determine whether the single address provided is a mongos.
+# @note To run the specs relying on this to return true,
+#   start a sharded cluster and set the environment variable
+#   MONGODB_ADDRESSES to the address of a single mongos.
 #
 # @since 2.0.0
 def single_mongos?
