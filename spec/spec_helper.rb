@@ -22,6 +22,7 @@ require 'mongo'
 require 'support/travis'
 require 'support/matchers'
 require 'support/authorization'
+require 'support/mongo_orchestration'
 require 'support/server_discovery_and_monitoring'
 require 'support/server_selection_rtt'
 require 'support/server_selection'
@@ -68,7 +69,7 @@ SERVER_DISCOVERY_TESTS = Dir.glob("#{CURRENT_PATH}/support/sdam/**/*.yml")
 SERVER_SELECTION_RTT_TESTS = Dir.glob("#{CURRENT_PATH}/support/server_selection/rtt/*.yml")
 SERVER_SELECTION_TESTS = Dir.glob("#{CURRENT_PATH}/support/server_selection/selection/**/*.yml")
 CRUD_TESTS = Dir.glob("#{CURRENT_PATH}/support/crud_tests/**/*.yml")
-INTEGRATION_TESTS = Dir.glob("#{CURRENT_PATH}/support/integration_tests/rs/connection/read/*.yml")
+INTEGRATION_TESTS = Dir.glob("#{CURRENT_PATH}/support/integration_tests/rs/connection/**/*.yml")
 
 SSL_CERTS_DIR = "#{CURRENT_PATH}/support/certificates"
 CLIENT_PEM = "#{SSL_CERTS_DIR}/client.pem"
