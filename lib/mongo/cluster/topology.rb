@@ -40,6 +40,7 @@ module Mongo
       # @example Get the initial cluster topology.
       #   Topology.initial(topology: :replica_set)
       #
+      # @param [ Array<String> ] seeds The addresses of the configured servers.
       # @param [ Hash ] options The cluster options.
       #
       # @return [ ReplicaSet, Sharded, Single ] The topology.

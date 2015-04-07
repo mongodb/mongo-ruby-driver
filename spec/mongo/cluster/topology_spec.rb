@@ -60,6 +60,28 @@ describe Mongo::Cluster::Topology do
           expect(topology).to be_a(Mongo::Cluster::Topology::Single)
         end
       end
+
+      context 'when provided a single mongos', if: single_mongos? do
+
+        let(:topology) do
+          described_class.initial(ADDRESSES, {})
+        end
+
+        it 'returns a single topology' do
+          expect(topology).to be_a(Mongo::Cluster::Topology::Single)
+        end
+      end
+
+      context 'when provided a single replica set member', if: single_rs_member? do
+
+        let(:topology) do
+          described_class.initial(ADDRESSES, {})
+        end
+
+        it 'returns a single topology' do
+          expect(topology).to be_a(Mongo::Cluster::Topology::Single)
+        end
+      end
     end
   end
 end

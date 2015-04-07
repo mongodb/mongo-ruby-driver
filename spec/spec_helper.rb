@@ -99,6 +99,29 @@ def sharded?
   $sharded ||= $mongo_client.cluster.sharded?
 end
 
+# Determine whether the single address provided is a replica set member.
+#
+# @since 2.0.0
+def single_rs_member?
+  $mongo_client ||= initialize_scanned_client!
+  single_seed? && $mongo_client.cluster.servers.first.replica_set_name
+end
+
+# Determine whether the single address provided is a mongos.
+#
+# @since 2.0.0
+def single_mongos?
+  $mongo_client ||= initialize_scanned_client!
+  single_seed? && $mongo_client.cluster.servers.first.mongos?
+end
+
+# Determine whether a single address was provided.
+#
+# @since 2.0.0
+def single_seed?
+  ADDRESSES.size == 1
+end
+
 # For instances where behaviour is different on different versions, we need to
 # determine in the specs if we are 2.6 or higher.
 #
