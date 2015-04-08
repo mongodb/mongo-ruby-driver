@@ -94,9 +94,7 @@ module Mongo
         #
         # @since 2.0.0
         def servers(servers, name = nil)
-          [ servers.detect do |server|
-              !server.unknown? && !server.arbiter? && !server.ghost?
-            end ]
+          [ servers.detect { |server| !server.unknown? } ]
         end
 
         # A single topology is not sharded.
