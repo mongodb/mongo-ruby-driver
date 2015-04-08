@@ -159,5 +159,17 @@ module Mongo
         tags[k] && tags[k] == tag_set[k]
       end
     end
+
+    # Whether the slaveOk bit must be set for all queries sent to the server.
+    #
+    # @example Does the slaveOk bit need to be set for all queries sent to the server.
+    #   server.slave_ok?
+    #
+    # @return [ true, false ] If the slaveOk bit needs to be set for all queries.
+    #
+    # @since 2.0.0
+    def slave_ok?
+      options[:slave_ok]
+    end
   end
 end
