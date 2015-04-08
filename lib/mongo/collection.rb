@@ -215,7 +215,7 @@ module Mongo
     #
     # @since 2.0.0
     def namespace
-      "#{name}.#{database.name}"
+      "#{database.name}.#{name}"
     end
   end
 end
