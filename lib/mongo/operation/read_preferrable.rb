@@ -22,11 +22,27 @@ module Mongo
 
       private
 
+      def update_selector(context)
+        if context.mongos? && read_pref = read.to_mongos
+          selector.merge(:$readPreference => read_pref)
+        else
+          selector
+        end
+      end
+
+      def update_options(context)
+        if context.slave_ok?
+          options.merge(flags: [:slave_ok])
+        elsif !context.mongos? && read.slave_ok?
+          options.merge(flags: [:slave_ok])
+        else
+          options
+        end
+      end
+
       def message(context)
-        sel = (context.mongos? && read_pref = read.to_mongos) ?
-                selector.merge(:$readPreference => read_pref) : selector
-        opts = context.standalone? || read.slave_ok? ?
-                 options.merge(flags: [:slave_ok]) : options
+        sel = update_selector(context)
+        opts = update_options(context)
         Protocol::Query.new(db_name, query_coll, sel, opts)
       end
     end

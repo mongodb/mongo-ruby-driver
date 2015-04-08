@@ -43,6 +43,7 @@ shared_context 'operation' do
       allow(cxt).to receive(:primary?) { true }
       allow(cxt).to receive(:secondary?) { false }
       allow(cxt).to receive(:standalone?) { false }
+      allow(cxt).to receive(:slave_ok?) { false }
     end
   end
   let(:secondary_context) do
@@ -54,6 +55,7 @@ shared_context 'operation' do
       allow(cxt).to receive(:secondary?) { true }
       allow(cxt).to receive(:primary?) { false }
       allow(cxt).to receive(:standalone?) { false }
+      allow(cxt).to receive(:slave_ok?) { false }
     end
   end
   let(:primary_context_2_4_version) do
@@ -64,6 +66,7 @@ shared_context 'operation' do
       allow(cxt).to receive(:primary?) { true }
       allow(cxt).to receive(:secondary?) { false }
       allow(cxt).to receive(:standalone?) { false }
+      allow(cxt).to receive(:slave_ok?) { false }
       allow(cxt).to receive(:features) { features_2_4 }
     end
   end

@@ -33,7 +33,8 @@ module Mongo
                      :mongos?,
                      :primary?,
                      :secondary?,
-                     :standalone?
+                     :standalone?,
+                     :slave_ok?
 
       # Instantiate a server context.
       #

@@ -69,7 +69,8 @@ module Mongo
       unless addresses.include?(address)
         log_debug([ "Adding #{address.to_s} to the cluster." ])
         addresses.push(address)
-        server = Server.new(address, event_listeners, options)
+        server = Server.new(address, event_listeners,
+                            options.merge(slave_ok: @slave_ok))
         @servers.push(server)
         server
       end
@@ -90,6 +91,7 @@ module Mongo
       @event_listeners = Event::Listeners.new
       @options = options.freeze
       @topology = Topology.initial(seeds, options)
+      @slave_ok = @topology.single? unless options[:read]
 
       subscribe_to(Event::SERVER_ADDED, Event::ServerAdded.new(self))
       subscribe_to(Event::SERVER_REMOVED, Event::ServerRemoved.new(self))
