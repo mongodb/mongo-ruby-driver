@@ -35,18 +35,36 @@ module Mongo
       # @since 2.0.0
       MATCH = Regexp.new('/\./').freeze
 
+      # Parse an IPv4 address into its host and port.
+      #
+      # @example Parse the address.
+      #   IPv4.parse("127.0.0.1:28011")
+      #
+      # @param [ String ] address The address to parse.
+      #
+      # @return [ Array<String, Integer> ] The host and port pair.
+      #
+      # @since 2.0.0
+      def self.parse(address)
+        parts = address.split(':')
+        host = parts[0]
+        port = (parts[1] || 27017).to_i
+        [ host, port ]
+      end
+
       # Initialize the IPv4 resolver.
       #
       # @example Initialize the resolver.
-      #   IPv4.new("127.0.0.1:28011")
+      #   IPv4.new("127.0.0.1", 27017, "127.0.0.1:28011")
       #
-      # @param [ String ] address The address to resolve.
+      # @param [ String ] host The host.
+      # @param [ Integer ] port The port.
+      # @param [ String ] address The seed address.
       #
       # @since 2.0.0
-      def initialize(address)
-        parts = address.split(':')
-        @host = parts[0]
-        @port = (parts[1] || 27017).to_i
+      def initialize(host, port, address)
+        @host = host
+        @port = port
         @seed = address
       end
 

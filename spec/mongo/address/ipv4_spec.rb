@@ -2,12 +2,33 @@ require 'spec_helper'
 
 describe Mongo::Address::IPv4 do
 
+  let(:resolver) do
+    described_class.new(*described_class.parse(address), address)
+  end
+
+  describe 'self.parse' do
+
+    context 'when a port is provided' do
+
+      it 'returns the host and port' do
+        expect(described_class.parse('127.0.0.1:27017')).to eq(['127.0.0.1', 27017])
+      end
+    end
+
+    context 'when no port is provided' do
+
+      it 'returns the host and port' do
+        expect(described_class.parse('127.0.0.1')).to eq(['127.0.0.1', 27017])
+      end
+    end
+  end
+
   describe '#initialize' do
 
     context 'when a port is provided' do
 
-      let(:resolver) do
-        described_class.new('127.0.0.1:27017')
+      let(:address) do
+        '127.0.0.1:27017'
       end
 
       it 'sets the port' do
@@ -21,8 +42,8 @@ describe Mongo::Address::IPv4 do
 
     context 'when no port is provided' do
 
-      let(:resolver) do
-        described_class.new('127.0.0.1')
+      let(:address) do
+        '127.0.0.1'
       end
 
       it 'sets the port to 27017' do
@@ -37,8 +58,8 @@ describe Mongo::Address::IPv4 do
 
   describe '#socket' do
 
-    let(:resolver) do
-      described_class.new('127.0.0.1')
+    let(:address) do
+      '127.0.0.1'
     end
 
     context 'when ssl options are provided' do
