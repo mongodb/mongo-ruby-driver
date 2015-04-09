@@ -84,6 +84,8 @@ module Mongo
     # Drop the collection. Will also drop all indexes associated with the
     # collection.
     #
+    # @note An error returned if the collection doesn't exist is suppressed.
+    #
     # @example Drop the collection.
     #   collection.drop
     #
@@ -92,6 +94,9 @@ module Mongo
     # @since 2.0.0
     def drop
       database.command(:drop => name)
+    rescue Error::OperationFailure => ex
+      raise ex unless ex.message =~ /ns not found/
+      false
     end
 
     # Find documents in the collection.

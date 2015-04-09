@@ -229,6 +229,13 @@ describe Mongo::Collection do
     it 'drops the collection from the database' do
       expect(database.collection_names).to_not include('specs')
     end
+
+    context 'when the collection does not exist' do
+
+      it 'does not raise an error' do
+        expect(database['non-existent-coll'].drop).to be(false)
+      end
+    end
   end
 
   describe '#find' do
