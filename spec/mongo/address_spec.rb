@@ -62,6 +62,11 @@ describe Mongo::Address do
 
     context 'when the addresses are identical unix sockets' do
 
+      before do
+        allow(::Socket).to receive(:getaddrinfo).twice.
+          and_return([[nil,nil,nil,nil,::Socket::PF_UNIX]])
+      end
+
       let(:address) do
         described_class.new('/path/to/socket.sock')
       end
@@ -123,6 +128,11 @@ describe Mongo::Address do
     end
 
     context 'when providing an ipv6 host' do
+
+      before do
+        allow(::Socket).to receive(:getaddrinfo).once.
+          and_return([[nil,nil,nil,nil,::Socket::AF_INET6]])
+      end
 
       context 'when a port is provided' do
 
@@ -189,6 +199,11 @@ describe Mongo::Address do
     end
 
     context 'when providing a socket path' do
+
+      before do
+        allow(::Socket).to receive(:getaddrinfo).once.
+          and_return([[nil,nil,nil,nil,::Socket::PF_UNIX]])
+      end
 
       let(:address) do
         described_class.new('/path/to/socket.sock')

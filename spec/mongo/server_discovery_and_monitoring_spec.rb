@@ -11,6 +11,20 @@ describe 'Server Discovery and Monitoring' do
 
       before(:all) do
 
+        # We monkey-patch the address, so that looking up the spec's hostname does
+        # not throw an error.
+        #
+        # @since 2.0.0
+        class Mongo::Address
+          private
+
+          def family(host)
+            fam = host == 'localhost' ? ::Socket::AF_INET : ::Socket::AF_UNSPEC
+            ::Socket.getaddrinfo(host, nil, fam, ::Socket::SOCK_STREAM).first[4]
+          rescue SocketError
+          end
+        end
+
         # We monkey-patch the server here, so the monitors do not run and no
         # real TCP connection is attempted. Thus we can control the server
         # descriptions per-phase.
@@ -58,6 +72,15 @@ describe 'Server Discovery and Monitoring' do
               connection.disconnect!
             end
             @monitor.stop! and true
+          end
+        end
+
+        class Mongo::Address
+          private
+
+          def family(host)
+            fam = host == 'localhost' ? ::Socket::AF_INET : ::Socket::AF_UNSPEC
+            ::Socket.getaddrinfo(host, nil, fam, ::Socket::SOCK_STREAM).first[4]
           end
         end
       end

@@ -2,12 +2,38 @@ require 'spec_helper'
 
 describe Mongo::Address::IPv6 do
 
+  before do
+    allow(::Socket).to receive(:getaddrinfo).at_most(2).times.
+      and_return([[nil,nil,nil,nil,::Socket::AF_INET6]])
+  end
+
+  let(:resolver) do
+    described_class.new(*described_class.parse(address), address)
+  end
+
+  describe 'self.parse' do
+
+    context 'when a port is provided' do
+
+      it 'returns the host and port' do
+        expect(described_class.parse('[::1]:27017')).to eq(['::1', 27017])
+      end
+    end
+
+    context 'when no port is provided' do
+
+      it 'returns the host and port' do
+        expect(described_class.parse('[::1]')).to eq(['::1', 27017])
+      end
+    end
+  end
+
   describe '#initialize' do
 
     context 'when a port is provided' do
 
-      let(:resolver) do
-        described_class.new('[::1]:27017')
+      let(:address) do
+        '[::1]:27017'
       end
 
       it 'sets the port' do
@@ -21,8 +47,8 @@ describe Mongo::Address::IPv6 do
 
     context 'when no port is provided' do
 
-      let(:resolver) do
-        described_class.new('[::1]')
+      let(:address) do
+        '[::1]'
       end
 
       it 'sets the port to 27017' do
@@ -37,8 +63,8 @@ describe Mongo::Address::IPv6 do
 
   describe '#socket' do
 
-    let(:resolver) do
-      described_class.new('[::1]')
+    let(:address) do
+      '[::1]'
     end
 
     context 'when ssl options are provided' do

@@ -89,10 +89,11 @@ module Mongo
     # @since 2.0.0
     def initialize(seed, options = {})
       address = seed.downcase
-      case address
-        when Unix::MATCH then @resolver = Unix.new(address)
-        when IPv6::MATCH then @resolver = IPv6.new(address)
-        else @resolver = IPv4.new(address)
+      host, port = match(address)
+      case family(host)
+        when ::Socket::PF_UNIX then @resolver = Unix.new(host, address)
+        when ::Socket::AF_INET6 then @resolver = IPv6.new(host, port, address)
+        else @resolver = IPv4.new(host, port, address)
       end
     end
 
@@ -106,6 +107,21 @@ module Mongo
     # @since 2.0.0
     def inspect
       "#<Mongo::Address:0x#{object_id} address=#{resolver.to_s}>"
+    end
+
+    private
+
+    def family(host)
+      fam = (host == 'localhost') ? ::Socket::AF_INET : ::Socket::AF_UNSPEC
+      ::Socket.getaddrinfo(host, nil, fam, ::Socket::SOCK_STREAM).first[4]
+    end
+
+    def match(address)
+      case address
+        when Unix::MATCH then Unix.parse(address)
+        when IPv6::MATCH then IPv6.parse(address)
+        else IPv4.parse(address)
+      end
     end
   end
 end

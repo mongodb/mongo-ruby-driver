@@ -34,16 +34,31 @@ module Mongo
       # @since 2.0.0
       MATCH = Regexp.new('\.sock').freeze
 
+      # Parse a socket path.
+      #
+      # @example Parse the address.
+      #   Unix.parse("/path/to/socket.sock")
+      #
+      # @param [ String ] address The address to parse.
+      #
+      # @return [ Array<String> ] A list with the host (socket path).
+      #
+      # @since 2.0.0
+      def self.parse(address)
+        [ address ]
+      end
+
       # Initialize the socket resolver.
       #
       # @example Initialize the resolver.
-      #   Sock.new("/path/to/socket.sock")
+      #   Unix.new("/path/to/socket.sock", "/path/to/socket.sock")
       #
-      # @param [ String ] address The socket path.
+      # @param [ String ] host The host.
+      # @param [ String ] address The seed address.
       #
       # @since 2.0.0
-      def initialize(address)
-        @host = address
+      def initialize(host, address)
+        @host = host
         @seed = address
       end
 
