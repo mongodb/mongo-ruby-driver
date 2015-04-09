@@ -28,7 +28,7 @@ module Mongo
       # Instantiate a new authenticator.
       #
       # @example Create the authenticator.
-      #   Mongo::Auth::X509.new(user)
+      #   Mongo::Auth::CR.new(user)
       #
       # @param [ Mongo::Auth::User ] user The user to authenticate.
       #
@@ -48,23 +48,10 @@ module Mongo
       #
       # @since 2.0.0
       def login(connection)
-        conversation = Conversation.new(user, auth_database(connection))
+        conversation = Conversation.new(user)
         reply = connection.dispatch([ conversation.start ])
         reply = connection.dispatch([ conversation.continue(reply) ])
         conversation.finalize(reply)
-      end
-
-      private
-
-      # If we are on MongoDB 2.6 and higher, we *always* authorize against the
-      # admin database. Otherwise for 2.4 and lower we authorize against the
-      # auth source provided. The logic for that is encapsulated in the User class.
-      def auth_database(connection)
-        if connection.features.write_command_enabled?
-          Database::ADMIN
-        else
-          user.auth_source
-        end
       end
     end
   end

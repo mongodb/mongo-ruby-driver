@@ -56,7 +56,7 @@ module Mongo
         def continue(reply)
           validate!(reply)
           Protocol::Query.new(
-            database,
+            user.auth_source,
             Database::COMMAND,
             LOGIN.merge(user: user.name, nonce: nonce, key: user.auth_key(nonce)),
             limit: -1
@@ -89,7 +89,11 @@ module Mongo
         #
         # @since 2.0.0
         def start
-          Protocol::Query.new(database, Database::COMMAND, Auth::GET_NONCE, limit: -1)
+          Protocol::Query.new(
+            user.auth_source,
+            Database::COMMAND,
+            Auth::GET_NONCE,
+            limit: -1)
         end
 
         # Create the new conversation.
@@ -101,9 +105,8 @@ module Mongo
         # @param [ String ] database The database to authenticate against.
         #
         # @since 2.0.0
-        def initialize(user, database)
+        def initialize(user)
           @user = user
-          @database = database
         end
 
         private

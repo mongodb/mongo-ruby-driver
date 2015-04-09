@@ -22,7 +22,7 @@ module Mongo
       include Connectable
       extend Forwardable
 
-      # @return [ Mongo::Auth::CR, Mongo::Auth::X509, Mongo::Auth:LDAP ]
+      # @return [ Mongo::Auth::CR, Mongo::Auth::X509, Mongo::Auth:LDAP, Mongo::Auth::SCRAM ]
       #   authenticator The authentication strategy.
       attr_reader :authenticator
 
