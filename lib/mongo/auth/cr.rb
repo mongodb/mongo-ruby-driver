@@ -21,7 +21,21 @@ module Mongo
     #
     # @since 2.0.0
     class CR
-      include Executable
+
+      # @return [ Mongo::Auth::User ] The user to authenticate.
+      attr_reader :user
+
+      # Instantiate a new authenticator.
+      #
+      # @example Create the authenticator.
+      #   Mongo::Auth::X509.new(user)
+      #
+      # @param [ Mongo::Auth::User ] user The user to authenticate.
+      #
+      # @since 2.0.0
+      def initialize(user)
+        @user = user
+      end
 
       # Log the user in on the given connection.
       #
@@ -38,6 +52,19 @@ module Mongo
         reply = connection.dispatch([ conversation.start ])
         reply = connection.dispatch([ conversation.continue(reply) ])
         conversation.finalize(reply)
+      end
+
+      private
+
+      # If we are on MongoDB 2.6 and higher, we *always* authorize against the
+      # admin database. Otherwise for 2.4 and lower we authorize against the
+      # auth source provided. The logic for that is encapsulated in the User class.
+      def auth_database(connection)
+        if connection.features.write_command_enabled?
+          Database::ADMIN
+        else
+          user.auth_source
+        end
       end
     end
   end

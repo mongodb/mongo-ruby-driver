@@ -21,12 +21,26 @@ module Mongo
     #
     # @since 2.0.0
     class X509
-      include Executable
 
       # The authentication mechinism string.
       #
       # @since 2.0.0
       MECHANISM = 'MONGODB-X509'.freeze
+
+      # @return [ Mongo::Auth::User ] The user to authenticate.
+      attr_reader :user
+
+      # Instantiate a new authenticator.
+      #
+      # @example Create the authenticator.
+      #   Mongo::Auth::X509.new(user)
+      #
+      # @param [ Mongo::Auth::User ] user The user to authenticate.
+      #
+      # @since 2.0.0
+      def initialize(user)
+        @user = user
+      end
 
       # Log the user in on the given connection.
       #

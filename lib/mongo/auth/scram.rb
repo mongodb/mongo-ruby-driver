@@ -21,12 +21,26 @@ module Mongo
     #
     # @since 2.0.0
     class SCRAM
-      include Executable
 
       # The authentication mechinism string.
       #
       # @since 2.0.0
       MECHANISM = 'SCRAM-SHA-1'.freeze
+
+      # @return [ Mongo::Auth::User ] The user to authenticate.
+      attr_reader :user
+
+      # Instantiate a new authenticator.
+      #
+      # @example Create the authenticator.
+      #   Mongo::Auth::SCRAM.new(user)
+      #
+      # @param [ Mongo::Auth::User ] user The user to authenticate.
+      #
+      # @since 2.0.0
+      def initialize(user)
+        @user = user
+      end
 
       # Log the user in on the given connection.
       #
