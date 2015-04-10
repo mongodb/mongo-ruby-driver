@@ -25,13 +25,22 @@ module Mongo
   class Address
     extend Forwardable
 
-    # Delegate the ip, host, and port methods to the resolver.
+    # Mapping from socket family to resolver class.
     #
     # @since 2.0.0
-    def_delegators :@resolver, :host, :port, :socket, :seed, :to_s
+    FAMILY_MAP = { ::Socket::PF_UNIX => Unix,
+                   ::Socket::AF_INET6 => IPv6,
+                   ::Socket::AF_INET => IPv4
+                 }
 
-    # @return [ Integer ] port The port to the connect to.
-    attr_reader :resolver
+    # @return [ String ] address The seed address.
+    attr_reader :seed
+
+    # @return [ String ] host The original host name.
+    attr_reader :host
+
+    # @return [ Integer ] port The port.
+    attr_reader :port
 
     # Check equality of the address to another.
     #
@@ -88,13 +97,8 @@ module Mongo
     #
     # @since 2.0.0
     def initialize(seed, options = {})
-      address = seed.downcase
-      host, port = match(address)
-      case family(host)
-        when ::Socket::PF_UNIX then @resolver = Unix.new(host, address)
-        when ::Socket::AF_INET6 then @resolver = IPv6.new(host, port, address)
-        else @resolver = IPv4.new(host, port, address)
-      end
+      @seed = seed
+      @host, @port = parse_host_port
     end
 
     # Get a pretty printed address inspection.
@@ -106,17 +110,55 @@ module Mongo
     #
     # @since 2.0.0
     def inspect
-      "#<Mongo::Address:0x#{object_id} address=#{resolver.to_s}>"
+      "#<Mongo::Address:0x#{object_id} address=#{to_s}>"
+    end
+
+    # Get a socket for the provided address, given the options.
+    #
+    # @example Get a socket.
+    #   address.socket(5, :ssl => true)
+    #
+    # @param [ Float ] timeout The socket timeout.
+    # @param [ Hash ] ssl_options SSL options.
+    #
+    # @return [ Pool::Socket::SSL, Pool::Socket::TCP, Pool::Socket::Unix ] The socket.
+    #
+    # @since 2.0.0
+    def socket(timeout, ssl_options = {})
+      @resolver ||= initialize_resolver!(timeout, ssl_options)
+      @resolver.socket(timeout, ssl_options)
+    end
+
+    # Get the address as a string.
+    #
+    # @example Get the address as a string.
+    #   address.to_s
+    #
+    # @return [ String ] The nice string.
+    #
+    # @since 2.0.0
+    def to_s
+      port ? "#{host}:#{port}" : host
     end
 
     private
 
-    def family(host)
-      fam = (host == 'localhost') ? ::Socket::AF_INET : ::Socket::AF_UNSPEC
-      ::Socket.getaddrinfo(host, nil, fam, ::Socket::SOCK_STREAM).first[4]
+    def initialize_resolver!(timeout, ssl_options)
+      family = (host == 'localhost') ? ::Socket::AF_INET : ::Socket::AF_UNSPEC
+      ::Socket.getaddrinfo(host, nil, family, ::Socket::SOCK_STREAM).detect do |info|
+        begin
+          return FAMILY_MAP[info[4]].new(host, port).tap do |res|
+            res.socket(timeout, ssl_options).connect!
+          end
+        rescue IOError, SystemCallError => e
+          error = e
+        end
+      end
+      raise error
     end
 
-    def match(address)
+    def parse_host_port
+      address = seed.downcase
       case address
         when Unix::MATCH then Unix.parse(address)
         when IPv6::MATCH then IPv6.parse(address)
