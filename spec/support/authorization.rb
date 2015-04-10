@@ -109,8 +109,7 @@ AUTHORIZED_CLIENT = Mongo::Client.new(
   user: TEST_USER.name,
   password: TEST_USER.password,
   max_pool_size: 1,
-  write: WRITE_CONCERN,
-  connect: CONNECT
+  write: WRITE_CONCERN
 )
 
 # Provides an authorized mongo client on the default test database for the
@@ -124,8 +123,7 @@ ROOT_AUTHORIZED_CLIENT = Mongo::Client.new(
   user: ROOT_USER.name,
   password: ROOT_USER.password,
   max_pool_size: 1,
-  write: WRITE_CONCERN,
-  connect: CONNECT
+  write: WRITE_CONCERN
 )
 
 # Provides an unauthorized mongo client on the default test database.
@@ -135,8 +133,7 @@ UNAUTHORIZED_CLIENT = Mongo::Client.new(
   ADDRESSES,
   database: TEST_DB,
   max_pool_size: 1,
-  write: WRITE_CONCERN,
-  connect: CONNECT
+  write: WRITE_CONCERN
 )
 
 # Provides an unauthorized mongo client on the admin database, for use in
@@ -147,8 +144,7 @@ ADMIN_UNAUTHORIZED_CLIENT = Mongo::Client.new(
   ADDRESSES,
   database: Mongo::Database::ADMIN,
   max_pool_size: 1,
-  write: WRITE_CONCERN,
-  connect: CONNECT
+  write: WRITE_CONCERN
 )
 
 # Get an authorized client on the admin database logged in as the admin
