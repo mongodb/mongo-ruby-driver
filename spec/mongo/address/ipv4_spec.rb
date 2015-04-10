@@ -91,5 +91,20 @@ describe Mongo::Address::IPv4 do
         expect(socket.family).to eq(Socket::PF_INET)
       end
     end
+
+		context 'when ssl:false is specified' do
+
+      let(:socket) do
+        resolver.socket(5, :ssl => false)
+      end
+
+      it 'returns a tcp socket' do
+        expect(socket).to be_a(Mongo::Socket::TCP)
+      end
+
+      it 'sets the family a ipv4' do
+        expect(socket.family).to eq(Socket::PF_INET)
+      end
+    end
   end
 end

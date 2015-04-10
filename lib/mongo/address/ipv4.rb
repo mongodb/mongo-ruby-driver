@@ -80,7 +80,7 @@ module Mongo
       #
       # @since 2.0.0
       def socket(timeout, ssl_options = {})
-        unless ssl_options.empty?
+        unless ssl_options.empty? || ! (ssl_options[:ssl] || false)
           Socket::SSL.new(host, port, timeout, Socket::PF_INET, ssl_options)
         else
           Socket::TCP.new(host, port, timeout, Socket::PF_INET)
