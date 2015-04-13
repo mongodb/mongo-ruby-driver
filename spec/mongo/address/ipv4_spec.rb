@@ -3,7 +3,7 @@ require 'spec_helper'
 describe Mongo::Address::IPv4 do
 
   let(:resolver) do
-    described_class.new(*described_class.parse(address), address)
+    described_class.new(*described_class.parse(address))
   end
 
   describe 'self.parse' do

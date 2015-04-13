@@ -8,7 +8,7 @@ describe Mongo::Address::IPv6 do
   end
 
   let(:resolver) do
-    described_class.new(*described_class.parse(address), address)
+    described_class.new(*described_class.parse(address))
   end
 
   describe 'self.parse' do

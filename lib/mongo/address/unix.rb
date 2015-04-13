@@ -26,9 +26,6 @@ module Mongo
       # @return [ nil ] port Will always be nil.
       attr_reader :port
 
-      # @return [ String ] seed The seed address.
-      attr_reader :seed
-
       # The regular expression to use to match a socket path.
       #
       # @since 2.0.0
@@ -54,12 +51,10 @@ module Mongo
       #   Unix.new("/path/to/socket.sock", "/path/to/socket.sock")
       #
       # @param [ String ] host The host.
-      # @param [ String ] address The seed address.
       #
       # @since 2.0.0
-      def initialize(host, address)
+      def initialize(host)
         @host = host
-        @seed = address
       end
 
       # Get a socket for the provided address type, given the options.
@@ -76,16 +71,6 @@ module Mongo
       def socket(timeout, ssl_options = {})
         Socket::Unix.new(host, timeout, Socket::AF_UNIX)
       end
-
-      # Get the address as a string.
-      #
-      # @example Get the address as a string.
-      #   ipv4.to_s
-      #
-      # @return [ String ] The nice string.
-      #
-      # @since 2.0.0
-      alias :to_s :host
     end
   end
 end

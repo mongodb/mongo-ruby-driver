@@ -27,9 +27,6 @@ module Mongo
       # @return [ Integer ] port The port.
       attr_reader :port
 
-      # @return [ String ] seed The seed address.
-      attr_reader :seed
-
       # The regular expression to use to match an IPv4 ip address.
       #
       # @since 2.0.0
@@ -59,13 +56,11 @@ module Mongo
       #
       # @param [ String ] host The host.
       # @param [ Integer ] port The port.
-      # @param [ String ] address The seed address.
       #
       # @since 2.0.0
-      def initialize(host, port, address)
+      def initialize(host, port)
         @host = host
         @port = port
-        @seed = address
       end
 
       # Get a socket for the provided address type, given the options.
@@ -85,18 +80,6 @@ module Mongo
         else
           Socket::TCP.new(host, port, timeout, Socket::PF_INET)
         end
-      end
-
-      # Get the address as a string.
-      #
-      # @example Get the address as a string.
-      #   ipv4.to_s
-      #
-      # @return [ String ] The nice string.
-      #
-      # @since 2.0.0
-      def to_s
-        "#{host}:#{port}"
       end
     end
   end
