@@ -48,14 +48,14 @@ RSpec.configure do |config|
     begin
       # Adds the test user to the test database with permissions on all
       # databases that will be used in the test suite.
-      ADMIN_AUTHORIZED_CLIENT.database.users.create(TEST_USER)
+      ADMIN_AUTHORIZED_TEST_CLIENT.database.users.create(TEST_USER)
     rescue Exception => e
       unless write_command_enabled?
         # If we are on versions less than 2.6, we need to create a user for
         # each database, since the users are not stored in the admin database
         # but in the system.users collection on the datbases themselves. Also,
         # roles in versions lower than 2.6 can only be strings, not hashes.
-        begin ROOT_AUTHORIZED_CLIENT.database.users.create(TEST_READ_WRITE_USER); rescue; end
+        begin ADMIN_AUTHORIZED_TEST_CLIENT.database.users.create(TEST_READ_WRITE_USER); rescue; end
       end
     end
   end

@@ -111,7 +111,7 @@ module Mongo
         def continue(reply)
           validate_first_message!(reply)
           Protocol::Query.new(
-            Database::ADMIN,
+            user.auth_source,
             Database::COMMAND,
             CLIENT_CONTINUE_MESSAGE.merge(payload: client_final_message, conversationId: id),
             limit: -1
@@ -133,7 +133,7 @@ module Mongo
         def finalize(reply)
           validate_final_message!(reply)
           Protocol::Query.new(
-            Database::ADMIN,
+            user.auth_source,
             Database::COMMAND,
             CLIENT_CONTINUE_MESSAGE.merge(payload: client_empty_message, conversationId: id),
             limit: -1
@@ -151,7 +151,7 @@ module Mongo
         # @since 2.0.0
         def start
           Protocol::Query.new(
-            Database::ADMIN,
+            user.auth_source,
             Database::COMMAND,
             CLIENT_FIRST_MESSAGE.merge(payload: client_first_message, mechanism: SCRAM::MECHANISM),
             limit: -1

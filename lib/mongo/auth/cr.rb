@@ -21,7 +21,26 @@ module Mongo
     #
     # @since 2.0.0
     class CR
-      include Executable
+
+      # The authentication mechinism string.
+      #
+      # @since 2.0.0
+      MECHANISM = 'MONGODB-CR'.freeze
+
+      # @return [ Mongo::Auth::User ] The user to authenticate.
+      attr_reader :user
+
+      # Instantiate a new authenticator.
+      #
+      # @example Create the authenticator.
+      #   Mongo::Auth::CR.new(user)
+      #
+      # @param [ Mongo::Auth::User ] user The user to authenticate.
+      #
+      # @since 2.0.0
+      def initialize(user)
+        @user = user
+      end
 
       # Log the user in on the given connection.
       #
@@ -34,7 +53,7 @@ module Mongo
       #
       # @since 2.0.0
       def login(connection)
-        conversation = Conversation.new(user, auth_database(connection))
+        conversation = Conversation.new(user)
         reply = connection.dispatch([ conversation.start ])
         reply = connection.dispatch([ conversation.continue(reply) ])
         conversation.finalize(reply)

@@ -54,7 +54,6 @@ ROOT_USER_PWD = ENV['ROOT_USER_PWD'] || 'password'
 #
 # @since 2.0.0
 ROOT_USER = Mongo::Auth::User.new(
-  database: Mongo::Database::ADMIN,
   user: ROOT_USER_NAME,
   password: ROOT_USER_PWD,
   roles: [
@@ -112,20 +111,6 @@ AUTHORIZED_CLIENT = Mongo::Client.new(
   write: WRITE_CONCERN
 )
 
-# Provides an authorized mongo client on the default test database for the
-# default root system administrator.
-#
-# @since 2.0.0
-ROOT_AUTHORIZED_CLIENT = Mongo::Client.new(
-  ADDRESSES,
-  auth_source: Mongo::Database::ADMIN,
-  database: TEST_DB,
-  user: ROOT_USER.name,
-  password: ROOT_USER.password,
-  max_pool_size: 1,
-  write: WRITE_CONCERN
-)
-
 # Provides an unauthorized mongo client on the default test database.
 #
 # @since 2.0.0
@@ -147,13 +132,15 @@ ADMIN_UNAUTHORIZED_CLIENT = Mongo::Client.new(
   write: WRITE_CONCERN
 )
 
-# Get an authorized client on the admin database logged in as the admin
+# Get an authorized client on the test database logged in as the admin
 # root user.
 #
 # @since 2.0.0
-ADMIN_AUTHORIZED_CLIENT = ADMIN_UNAUTHORIZED_CLIENT.with(
+ADMIN_AUTHORIZED_TEST_CLIENT = ADMIN_UNAUTHORIZED_CLIENT.with(
   user: ROOT_USER.name,
-  password: ROOT_USER.password
+  password: ROOT_USER.password,
+  database: TEST_DB,
+  auth_source: Mongo::Database::ADMIN
 )
 
 module Authorization
@@ -181,12 +168,6 @@ module Authorization
     # @since 2.0.0
     context.let(:authorized_client) { AUTHORIZED_CLIENT }
 
-    # Provides an authorized mongo client on the default test database for the
-    # default root system administrator.
-    #
-    # @since 2.0.0
-    context.let(:root_authorized_client) { ROOT_AUTHORIZED_CLIENT }
-
     # Provides an unauthorized mongo client on the default test database.
     #
     # @since 2.0.0
@@ -198,11 +179,11 @@ module Authorization
     # @since 2.0.0
     context.let!(:admin_unauthorized_client) { ADMIN_UNAUTHORIZED_CLIENT }
 
-    # Get an authorized client on the admin database logged in as the admin
+    # Get an authorized client on the test database logged in as the admin
     # root user.
     #
     # @since 2.0.0
-    context.let!(:admin_authorized_client) { ADMIN_AUTHORIZED_CLIENT }
+    context.let!(:root_authorized_client) { ADMIN_AUTHORIZED_TEST_CLIENT }
 
     # Gets the default test collection from the authorized client.
     #
