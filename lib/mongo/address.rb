@@ -145,6 +145,7 @@ module Mongo
 
     def initialize_resolver!(timeout, ssl_options)
       family = (host == 'localhost') ? ::Socket::AF_INET : ::Socket::AF_UNSPEC
+      error = nil
       ::Socket.getaddrinfo(host, nil, family, ::Socket::SOCK_STREAM).detect do |info|
         begin
           return FAMILY_MAP[info[4]].new(host, port).tap do |res|
