@@ -22,6 +22,11 @@ module Mongo
     # @since 2.0.0
     class CR
 
+      # The authentication mechinism string.
+      #
+      # @since 2.0.0
+      MECHANISM = 'MONGODB-CR'.freeze
+
       # @return [ Mongo::Auth::User ] The user to authenticate.
       attr_reader :user
 
