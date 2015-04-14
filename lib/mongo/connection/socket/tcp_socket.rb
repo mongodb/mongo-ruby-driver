@@ -35,6 +35,7 @@ module Mongo
       # Following python's lead (see PYTHON-356)
       family = host == 'localhost' ? Socket::AF_INET : Socket::AF_UNSPEC
       addr_info = Socket.getaddrinfo(host, nil, family, Socket::SOCK_STREAM)
+      error = nil
       addr_info.each do |info|
         begin
           sock = Socket.new(info[4], Socket::SOCK_STREAM, 0)
