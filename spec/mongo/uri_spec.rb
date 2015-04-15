@@ -7,8 +7,10 @@ describe Mongo::URI do
   describe '#initialize' do
     context 'string is not uri' do
       let(:string) { 'tyler' }
+      let(:expected_message) { %r{^MongoDB URI must be in the following format:} }
+
       it 'raises an error' do
-        expect { uri }.to raise_error(Mongo::URI::Invalid)
+        expect { uri }.to raise_error(Mongo::URI::Invalid, expected_message)
       end
     end
   end

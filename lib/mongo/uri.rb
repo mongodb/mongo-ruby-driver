@@ -230,12 +230,12 @@ module Mongo
       #
       # @since 2.0.0
       def initialize(uri)
-        super(message(uri))
+        super(self.class.message(uri))
       end
 
       private
 
-      def message(uri)
+      def self.message(uri)
         "MongoDB URI must be in the following format: #{FORMAT}\n" +
         "Please see the following URL for more information: #{HELP}\n" +
         "Bad URI: #{uri}"
