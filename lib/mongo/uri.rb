@@ -80,6 +80,13 @@ module Mongo
     # @since 2.0.0
     URI = /#{SCHEME}#{CREDENTIALS}#{SERVERS}#{DATABASE}#{OPTIONS}/.freeze
 
+
+    # MongoDB URI format specification.
+    #
+    # @since 2.0.0
+    FORMAT = 'mongodb://[username:password@]host1[:port1][,host2[:port2]' +
+      ',...[,hostN[:portN]]][/[database][?options]]'.freeze
+
     # MongoDB URI (connection string) documentation url
     #
     # @since 2.0.0
@@ -117,7 +124,7 @@ module Mongo
     # @since 2.0.0
     def initialize(string)
       @match = string.match(URI)
-      raise Invalid.new(string) unless @match
+      raise Error::InvalidURI.new(string) unless @match
     end
 
     # Get the servers provided in the URI.
@@ -203,62 +210,9 @@ module Mongo
       parsed_options.split('&').reduce({}) do |options, option|
         key, value = option.split('=')
         strategy = OPTION_MAP[key]
-        raise InvalidOption.new(key) if strategy.nil?
+        raise Error::InvalidURIOption.new(key) if strategy.nil?
         add_option(strategy, value, options)
         options
-      end
-    end
-
-    # Exception that is raised when trying to parse a URI that does not match
-    # the specification.
-    #
-    # @since 2.0.0
-    class Invalid < RuntimeError
-
-      # MongoDB URI format specification.
-      #
-      # @since 2.0.0
-      FORMAT = 'mongodb://[username:password@]host1[:port1][,host2[:port2]' +
-        ',...[,hostN[:portN]]][/[database][?options]]'.freeze
-
-      # Creates a new instance of the BadURI error.
-      #
-      # @example Initialize the error.
-      #   BadURI.new(uri)
-      #
-      # @param [ String ] uri The bad URI.
-      #
-      # @since 2.0.0
-      def initialize(uri)
-        super(message(uri))
-      end
-
-      private
-
-      def message(uri)
-        "MongoDB URI must be in the following format: #{FORMAT}\n" +
-        "Please see the following URL for more information: #{HELP}\n" +
-        "Bad URI: #{uri}"
-      end
-    end
-
-    # Raised if the URI is in the correct format but an option is provided that
-    # is not recognized.
-    #
-    # @since 2.0.0
-    class InvalidOption < RuntimeError
-
-      # Create the error.
-      #
-      # @example Create the error with the invalid option name.
-      #   InvalidOption.new('nothing')
-      #
-      # @param [ String ] name The invalid option name.
-      #
-      # @since 2.0.0
-      def initialize(name)
-        super("Invalid option in URI: '#{name}'.\n" +
-          "Please see the following URL for more information: #{HELP}\n")
       end
     end
 
