@@ -8,7 +8,7 @@ describe Mongo::URI do
     context 'string is not uri' do
       let(:string) { 'tyler' }
       it 'raises an error' do
-        expect { uri }.to raise_error(Mongo::URI::Invalid)
+        expect { uri }.to raise_error(Mongo::Error::InvalidURI)
       end
     end
   end
@@ -510,7 +510,7 @@ describe Mongo::URI do
       it 'raises an exception' do
         expect {
           uri.options
-        }.to raise_error(Mongo::URI::InvalidOption)
+        }.to raise_error(Mongo::Error::InvalidURIOption)
       end
     end
   end
