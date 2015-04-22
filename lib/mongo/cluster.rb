@@ -181,7 +181,7 @@ module Mongo
     #
     # @since 2.0.0
     def servers
-      topology.servers(@servers)
+      topology.servers(@servers.compact).compact
     end
 
     # Create a cluster for the provided client, for use when we don't want the

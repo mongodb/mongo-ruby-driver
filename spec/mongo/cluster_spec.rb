@@ -149,5 +149,65 @@ describe Mongo::Cluster do
         end
       end
     end
+
+    context 'when the cluster has no servers' do
+
+      let(:cluster) do
+        described_class.new(ADDRESSES)
+      end
+
+      let(:servers) do
+        [nil,nil]
+      end
+
+      before do
+        cluster.instance_variable_set(:@servers, servers)
+        cluster.instance_variable_set(:@topology, topology)
+      end
+
+      context 'when topology is Single' do
+
+        let(:topology) do
+          Mongo::Cluster::Topology::Single.new({})
+        end
+
+        it 'returns an empty array' do
+          expect(cluster.servers).to eq([])
+        end
+      end
+
+      context 'when topology is ReplicaSet' do
+
+        let(:topology) do
+          Mongo::Cluster::Topology::ReplicaSet.new({})
+        end
+
+        it 'returns an empty array' do
+          expect(cluster.servers).to eq([])
+        end
+      end
+
+      context 'when topology is Sharded' do
+
+        let(:topology) do
+          Mongo::Cluster::Topology::Sharded.new({})
+        end
+
+        it 'returns an empty array' do
+          expect(cluster.servers).to eq([])
+        end
+      end
+
+      context 'when topology is Unknown' do
+
+        let(:topology) do
+          Mongo::Cluster::Topology::Unknown.new({})
+        end
+
+        it 'returns an empty array' do
+          expect(cluster.servers).to eq([])
+        end
+      end
+    end
   end
 end
