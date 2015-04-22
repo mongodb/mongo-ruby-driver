@@ -97,4 +97,31 @@ describe Mongo::DBRef do
       end
     end
   end
+
+  describe '#from_bson' do
+
+    let(:dbref) do
+      described_class.new('users', object_id, 'database')
+    end
+
+    let(:bson) do
+      StringIO.new(dbref.to_bson)
+    end
+
+    let(:decoded) do
+      BSON::Document.from_bson(bson)
+    end
+
+    it 'decodes the ref' do
+      expect(decoded.collection).to eq('users')
+    end
+
+    it 'decodes the id' do
+      expect(decoded.id).to eq(object_id)
+    end
+
+    it 'decodes the database' do
+      expect(decoded.database).to eq('database')
+    end
+  end
 end

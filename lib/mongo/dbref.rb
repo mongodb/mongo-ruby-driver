@@ -20,6 +20,21 @@ module Mongo
   class DBRef
     include BSON::JSON
 
+    # The constant for the collection reference field.
+    #
+    # @since 2.1.0
+    COLLECTION = '$ref'.freeze
+
+    # The constant for the id field.
+    #
+    # @since 2.1.0
+    ID = '$id'.freeze
+
+    # The constant for the database field.
+    #
+    # @since 2.1.0
+    DATABASE = '$db'.freeze
+
     # @return [ String ] collection The collection name.
     attr_reader :collection
 
@@ -72,5 +87,27 @@ module Mongo
     def to_bson(encoded = ''.force_encoding(BSON::BINARY))
       as_json.to_bson(encoded)
     end
+
+    module ClassMethods
+
+      # Deserialize the hash from BSON, converting to a DBRef if appropriate.
+      #
+      # @param [ IO ] bson The bson representing a hash.
+      #
+      # @return [ Hash, DBRef ] The decoded hash or DBRef.
+      #
+      # @see http://bsonspec.org/#/specification
+      #
+      # @since 2.0.0
+      def from_bson(bson)
+        decoded = super
+        if ref = decoded['$ref']
+          decoded = DBRef.new(ref, decoded['$id'], decoded['$db'])
+        end
+        decoded
+      end
+    end
   end
+
+  ::Hash.send(:extend, DBRef::ClassMethods)
 end
