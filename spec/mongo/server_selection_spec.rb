@@ -61,7 +61,7 @@ describe 'Server Selection' do
         allow(cluster).to receive(:scan!).and_return(true)
       end
 
-      context 'Valid read preference and matching server available', unless: spec.raises_exception? do
+      context 'Valid read preference and matching server available', if: spec.server_available? do
       
         it 'Finds all suitable servers in the latency window', if: spec.replica_set? do
           expect(server_selector.send(:select, cluster.servers)).to eq(in_latency_window)   
@@ -72,21 +72,12 @@ describe 'Server Selection' do
         end
       end
 
-      context 'Invalid read preference', if: spec.invalid_server_preference? do
+      context 'No matching server available', if: !spec.server_available? do
       
         it 'Raises exception' do
           expect do
             server_selector.select_server(cluster)
-          end.to raise_exception(Mongo::ServerSelector::InvalidServerPreference) 
-        end
-      end
-
-      context 'No matching server available', unless: spec.server_available? do
-      
-        it 'Raises exception' do
-          expect do
-            server_selector.select_server(cluster)
-          end.to raise_exception(Mongo::ServerSelector::NoServerAvailable) 
+          end.to raise_exception(Mongo::Error::NoServerAvailable)
         end
       end
     end

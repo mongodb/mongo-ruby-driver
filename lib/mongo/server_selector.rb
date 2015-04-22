@@ -58,24 +58,5 @@ module Mongo
         options
       )
     end
-
-    # Exception raised if there are no servers available matching the preference.
-    #
-    # @since 2.0.0
-    class NoServerAvailable < Error
-
-      # Instantiate the new exception.
-      #
-      # @example Instantiate the exception.
-      #   Mongo::ServerSelector::NoServerAvailable.new(server_selector)
-      #
-      # @param [ Hash ] server_selector The server preference that could not be
-      #   satisfied.
-      #
-      # @since 2.0.0
-      def initialize(server_selector)
-        super("No server is available matching preference: #{server_selector.inspect}")
-      end
-    end
   end
 end

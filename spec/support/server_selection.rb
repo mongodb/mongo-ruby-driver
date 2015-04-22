@@ -92,18 +92,6 @@ module Mongo
           type == Mongo::Cluster::Topology::ReplicaSet
         end
 
-        # Does this spec raise an exception.
-        #
-        # @example Determine if the spec raises an exception.
-        #   spec.raises_exception?
-        #
-        # @return [true, false] If the spec raises an exception.
-        #
-        # @since 2.0.0
-        def raises_exception?
-          !server_available? || invalid_server_preference?
-        end
-
         # Does this spec expect a server to be found.
         #
         # @example Will a server be found with this spec.
@@ -114,18 +102,6 @@ module Mongo
         # @since 2.0.0
         def server_available?
           !in_latency_window.empty?
-        end
-
-        # Is the read preference defined in the spec invalid.
-        #
-        # @example Determine if the spec's read preference is invalid.
-        #   spec.invalid_server_preference?
-        #
-        # @return [true, false] If the spec's read preference is invalid.
-        #
-        # @since 2.0.0
-        def invalid_server_preference?
-          read_preference['mode'] == 'Primary' && read_preference['tag_sets']
         end
 
         # The subset of suitable servers that falls within the allowable latency

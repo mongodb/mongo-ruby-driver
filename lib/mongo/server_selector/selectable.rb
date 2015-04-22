@@ -67,7 +67,7 @@ module Mongo
       # @since 2.0.0
       def initialize(tag_sets = [], options = {})
         if !tag_sets.all? { |set| set.empty? } && !tags_allowed?
-          raise ServerSelector::InvalidServerPreference.new(name)
+          raise Error::InvalidServerPreference.new(name)
         end
         @tag_sets = tag_sets
         @options = options
@@ -96,7 +96,7 @@ module Mongo
           return servers.first if servers && !servers.compact.empty?
           cluster.scan!
         end
-        raise NoServerAvailable.new(self)
+        raise Error::NoServerAvailable.new(self)
       end
 
       # Get the timeout for server selection.
@@ -185,24 +185,6 @@ module Mongo
           !matches.empty?
         end
         matches || []
-      end
-    end
-
-    # Raised when an invalid server preference is provided.
-    #
-    # @since 2.0.0
-    class InvalidServerPreference < Error
-
-      # Instantiate the new exception.
-      #
-      # @example Instantiate the exception.
-      #   Mongo::ServerSelector::InvalidServerPreference.new
-      #
-      # @param [ String ] name The preference name.
-      #
-      # @since 2.0.0
-      def initialize(name)
-        super("This server preference #{name} cannot be combined with tags.")
       end
     end
   end

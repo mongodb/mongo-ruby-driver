@@ -94,7 +94,7 @@ describe Mongo::ServerSelector do
       it 'raises a NoServerAvailable error' do
         expect do
           read_pref.select_server(cluster)
-        end.to raise_exception(Mongo::ServerSelector::NoServerAvailable)
+        end.to raise_exception(Mongo::Error::NoServerAvailable)
       end
     end
   end
@@ -121,7 +121,7 @@ describe Mongo::ServerSelector do
       it 'raises a NoServerAvailable error' do
         expect do
           read_pref.select_server(cluster)
-        end.to raise_exception(Mongo::ServerSelector::NoServerAvailable)
+        end.to raise_exception(Mongo::Error::NoServerAvailable)
       end
     end
   end
