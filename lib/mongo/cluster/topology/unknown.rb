@@ -106,6 +106,7 @@ module Mongo
         #
         # @since 2.0.0
         def servers(servers)
+          []
         end
 
         # An unknown topology is not sharded.

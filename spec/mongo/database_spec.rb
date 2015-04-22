@@ -176,7 +176,7 @@ describe Mongo::Database do
       it 'uses that read preference', unless: sharded? do
         expect do
           database.command({ ping: 1 }, { read: read })
-        end.to raise_error(Mongo::ServerSelector::NoServerAvailable)
+        end.to raise_error(Mongo::Error::NoServerAvailable)
       end
     end
   end

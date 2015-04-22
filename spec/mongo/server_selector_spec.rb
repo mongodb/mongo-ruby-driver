@@ -94,8 +94,59 @@ describe Mongo::ServerSelector do
       it 'raises a NoServerAvailable error' do
         expect do
           read_pref.select_server(cluster)
-        end.to raise_exception(Mongo::ServerSelector::NoServerAvailable)
+        end.to raise_exception(Mongo::Error::NoServerAvailable)
       end
     end
+  end
+
+  shared_context 'a ServerSelector' do
+
+    context 'when cluster#servers is empty' do
+
+      let(:servers) { [] }
+
+      let(:cluster) do
+        double('cluster').tap do |c|
+          allow(c).to receive(:servers).and_return(servers)
+          allow(c).to receive(:single?).and_return(single)
+          allow(c).to receive(:sharded?).and_return(sharded)
+          allow(c).to receive(:scan!).and_return(true)
+        end
+      end
+
+      let(:read_pref) do
+        described_class.get({ mode: :primary }, server_selection_timeout: 1)
+      end
+
+      it 'raises a NoServerAvailable error' do
+        expect do
+          read_pref.select_server(cluster)
+        end.to raise_exception(Mongo::Error::NoServerAvailable)
+      end
+    end
+  end
+
+  context 'when the cluster has a Single topology' do
+
+    let(:single) { true }
+    let(:sharded) { false }
+
+    it_behaves_like 'a ServerSelector'
+  end
+
+  context 'when the cluster has a ReplicaSet topology' do
+
+    let(:single) { false }
+    let(:sharded) { false }
+
+    it_behaves_like 'a ServerSelector'
+  end
+
+  context 'when the cluster has a Sharded topology' do
+
+    let(:single) { false }
+    let(:sharded) { true }
+
+    it_behaves_like 'a ServerSelector'
   end
 end
