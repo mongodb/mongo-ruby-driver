@@ -157,7 +157,7 @@ describe Mongo::Cluster do
       end
 
       let(:servers) do
-        [nil,nil]
+        [nil]
       end
 
       before do
