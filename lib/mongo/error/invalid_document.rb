@@ -23,7 +23,7 @@ module Mongo
       # The error message.
       #
       # @since 2.0.0
-      MESSAGE = 'Invalid document provided'.freeze
+      MESSAGE = 'Invalid document provided.'.freeze
 
       # Instantiate the new exception.
       #

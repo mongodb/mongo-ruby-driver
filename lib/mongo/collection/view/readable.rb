@@ -232,6 +232,7 @@ module Mongo
         #
         # @since 2.0.0
         def projection(document = nil)
+          validate_doc!(document) if document
           configure(:projection, document)
         end
 
@@ -356,6 +357,10 @@ module Mongo
 
         def to_return
           [ limit || batch_size, batch_size || limit ].min
+        end
+
+        def validate_doc!(doc)
+          raise Error::InvalidDocument.new unless doc.respond_to?(:keys)
         end
       end
     end

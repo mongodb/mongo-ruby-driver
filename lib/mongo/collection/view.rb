@@ -125,6 +125,7 @@ module Mongo
       #
       # @since 2.0.0
       def initialize(collection, selector = {}, options = {})
+        validate_doc!(selector)
         @collection = collection
         @selector = selector.dup
         @options = options.dup

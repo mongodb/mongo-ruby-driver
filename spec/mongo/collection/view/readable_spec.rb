@@ -436,11 +436,11 @@ describe Mongo::Collection::View::Readable do
 
   describe '#projection' do
 
-    context 'when projection are specified' do
+    let(:options) do
+      { :projection => { 'x' => 1 } }
+    end
 
-      let(:options) do
-        { :projection => { 'x' => 1 } }
-      end
+    context 'when projection are specified' do
 
       let(:new_projection) do
         { 'y' => 1 }
@@ -456,12 +456,23 @@ describe Mongo::Collection::View::Readable do
       end
     end
 
-    context 'when projection are not specified' do
-
-      let(:options) { { :projection => { 'x' => 1 } } }
+    context 'when projection is not specified' do
 
       it 'returns the projection' do
         expect(view.projection).to eq(options[:projection])
+      end
+    end
+
+    context 'when projection is not a document' do
+
+      let(:new_projection) do
+        'y'
+      end
+
+      it 'raises an error' do
+        expect do
+          view.projection(new_projection)
+        end.to raise_error(Mongo::Error::InvalidDocument)
       end
     end
   end
