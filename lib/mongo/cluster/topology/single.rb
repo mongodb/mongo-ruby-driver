@@ -21,6 +21,9 @@ module Mongo
       # @since 2.0.0
       class Single
 
+        # @return [ String ] seed The seed address.
+        attr_reader :seed
+
         # The display name for the topology.
         #
         # @since 2.0.0
@@ -59,8 +62,9 @@ module Mongo
         # @param [ Hash ] options The options.
         #
         # @since 2.0.0
-        def initialize(options)
+        def initialize(options, seeds = [])
           @options = options
+          @seed = seeds.first
         end
 
         # A single topology is not a replica set.

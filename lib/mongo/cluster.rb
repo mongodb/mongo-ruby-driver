@@ -66,7 +66,7 @@ module Mongo
     # @since 2.0.0
     def add(host)
       address = Address.new(host)
-      unless addresses.include?(address)
+      unless addresses.include?(address) || (@topology.single? && address.seed != @topology.seed)
         log_debug([ "Adding #{address.to_s} to the cluster." ])
         addresses.push(address)
         server = Server.new(address, event_listeners,

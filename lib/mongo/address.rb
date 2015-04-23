@@ -33,7 +33,7 @@ module Mongo
                    ::Socket::AF_INET => IPv4
                  }
 
-    # @return [ String ] address The seed address.
+    # @return [ String ] seed The seed address.
     attr_reader :seed
 
     # @return [ String ] host The original host name.
