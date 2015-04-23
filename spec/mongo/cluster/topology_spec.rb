@@ -24,6 +24,10 @@ describe Mongo::Cluster::Topology do
       it 'returns a single topology' do
         expect(topology).to be_a(Mongo::Cluster::Topology::Single)
       end
+
+      it 'sets the seed on the topology' do
+        expect(topology.seed).to eq('a')
+      end
     end
 
     context 'when provided a sharded option' do

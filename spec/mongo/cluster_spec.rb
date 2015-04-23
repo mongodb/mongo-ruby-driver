@@ -2,11 +2,11 @@ require 'spec_helper'
 
 describe Mongo::Cluster do
 
-  describe '#==' do
+  let(:cluster) do
+    described_class.new(ADDRESSES)
+  end
 
-    let(:cluster) do
-      described_class.new([ '127.0.0.1:27017' ])
-    end
+  describe '#==' do
 
     context 'when the other is a cluster' do
 
@@ -61,10 +61,6 @@ describe Mongo::Cluster do
       Mongo::ServerSelector.get
     end
 
-    let(:cluster) do
-      described_class.new([ '127.0.0.1:27017' ])
-    end
-
     it 'displays the cluster seeds and topology' do
       expect(cluster.inspect).to include('topology')
       expect(cluster.inspect).to include('servers')
@@ -78,13 +74,13 @@ describe Mongo::Cluster do
     end
 
     let(:cluster) do
-      described_class.new([ '127.0.0.1:27017' ], :replica_set => 'testing')
+      described_class.new(ADDRESSES, :replica_set => 'testing')
     end
 
     context 'when the option is provided' do
 
       let(:cluster) do
-        described_class.new([ '127.0.0.1:27017' ], :replica_set => 'testing')
+        described_class.new(ADDRESSES, :replica_set => 'testing')
       end
 
       it 'returns the name' do
@@ -95,7 +91,7 @@ describe Mongo::Cluster do
     context 'when the option is not provided' do
 
       let(:cluster) do
-        described_class.new([ '127.0.0.1:27017' ])
+        described_class.new(ADDRESSES)
       end
 
       it 'returns nil' do
@@ -108,10 +104,6 @@ describe Mongo::Cluster do
 
     let(:preference) do
       Mongo::ServerSelector.get
-    end
-
-    let(:cluster) do
-      described_class.new([ '127.0.0.1:27017' ])
     end
 
     let(:known_servers) do
@@ -131,10 +123,6 @@ describe Mongo::Cluster do
 
     context 'when topology is single', if: single_seed? do
 
-      let(:cluster) do
-        described_class.new(ADDRESSES)
-      end
-
       context 'when the server is a mongos', if: single_mongos?  do
 
         it 'returns the mongos' do
@@ -151,10 +139,6 @@ describe Mongo::Cluster do
     end
 
     context 'when the cluster has no servers' do
-
-      let(:cluster) do
-        described_class.new(ADDRESSES)
-      end
 
       let(:servers) do
         [nil]
@@ -207,6 +191,24 @@ describe Mongo::Cluster do
         it 'returns an empty array' do
           expect(cluster.servers).to eq([])
         end
+      end
+    end
+  end
+
+  describe '#add' do
+
+    context 'when topology is Single' do
+
+      let(:topology) do
+        Mongo::Cluster::Topology::Single.new({})
+      end
+
+      before do
+        cluster.add('a')
+      end
+
+      it 'does not add discovered servers to the cluster' do
+        expect(cluster.servers[0].address.seed).to_not eq('a')
       end
     end
   end
