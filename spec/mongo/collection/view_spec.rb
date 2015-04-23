@@ -496,6 +496,19 @@ describe Mongo::Collection::View do
     it 'dups the options' do
       expect(view.options).not_to be(options)
     end
+
+    context 'when the selector is not a valid document' do
+
+      let(:selector) do
+        'y'
+      end
+
+      it 'raises an error' do
+        expect do
+          view
+        end.to raise_error(Mongo::Error::InvalidDocument)
+      end
+    end
   end
 
   describe '#inspect' do
