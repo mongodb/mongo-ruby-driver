@@ -30,6 +30,12 @@ module Mongo
     # @api semipublic
     class Query < Message
 
+      # Constant for the max number of characters to print when inspecting
+      # a query field.
+      #
+      # @since 2.0.3
+      LOG_STRING_LIMIT = 250
+
       # Creates a new Query message
       #
       # @example Find all users named Tyler.
@@ -78,7 +84,7 @@ module Mongo
         fields = []
         fields << ["%s |", query_type]
         fields << ["namespace=%s", namespace]
-        fields << ["selector=%s", selector.inspect]
+        fields << ["selector=%s", formatted_selector]
         fields << ["flags=%s", flags.inspect]
         fields << ["limit=%s", limit.inspect]
         fields << ["skip=%s", skip.inspect]
@@ -109,6 +115,13 @@ module Mongo
 
       def query_type
         namespace.include?(Database::COMMAND) ? 'COMMAND' : 'QUERY'
+      end
+
+      def formatted_selector
+        ( (str = selector.inspect).length > LOG_STRING_LIMIT ) ?
+          "#{str[0..LOG_STRING_LIMIT]}..." : str
+      rescue ArgumentError
+        '<Unable to inspect selector>'
       end
 
       # Available flags for a Query message.
