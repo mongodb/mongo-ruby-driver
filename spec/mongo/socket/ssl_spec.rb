@@ -5,7 +5,7 @@ describe Mongo::Socket::SSL do
   describe '#connect!', if: running_ssl? do
 
     let(:socket) do
-      described_class.new('localhost', 27017, 5, Socket::PF_INET, options)
+      described_class.new(*DEFAULT_ADDRESS.split(":"), 5, Socket::PF_INET, options)
     end
 
     context 'when a certificate is provided' do

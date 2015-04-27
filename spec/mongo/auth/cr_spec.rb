@@ -7,11 +7,11 @@ describe Mongo::Auth::CR do
   end
 
   let(:server) do
-    Mongo::Server.new(address, Mongo::Event::Listeners.new)
+    Mongo::Server.new(address, Mongo::Event::Listeners.new, TEST_OPTIONS)
   end
 
   let(:connection) do
-    Mongo::Server::Connection.new(server)
+    Mongo::Server::Connection.new(server, TEST_OPTIONS)
   end
 
   describe '#login' do

@@ -15,7 +15,7 @@ describe Mongo::Server::Monitor do
     context 'when calling multiple times in succession' do
 
       let(:monitor) do
-        described_class.new(address, listeners)
+        described_class.new(address, listeners, TEST_OPTIONS)
       end
 
       it 'throttles the scans to minimum 500ms' do
@@ -29,7 +29,7 @@ describe Mongo::Server::Monitor do
     context 'when the ismaster command succeeds' do
 
       let(:monitor) do
-        described_class.new(address, listeners)
+        described_class.new(address, listeners, TEST_OPTIONS)
       end
 
       before do

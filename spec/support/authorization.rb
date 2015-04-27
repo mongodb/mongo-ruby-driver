@@ -40,6 +40,23 @@ CONNECT = ENV['RS_ENABLED'] == 'true' ? :replica_set.freeze :
             ENV['SHARDED_ENABLED'] == 'true' ? :sharded.freeze :
             :direct.freeze
 
+# The write concern to use in the tests.
+#
+# @since 2.0.0
+WRITE_CONCERN = (CONNECT == :replica_set) ? { w: ADDRESSES.size } : { w: 1 }
+
+# Whether to use SSL.
+#
+# @since 2.0.3
+SSL = ENV['SSL_ENABLED'] == 'true'
+
+# Options for test suite clients.
+#
+# @since 2.0.3
+TEST_OPTIONS = { max_pool_size: 1,
+                 write: WRITE_CONCERN,
+                 ssl: SSL }
+
 # The root user name.
 #
 # @since 2.0.0
@@ -93,22 +110,16 @@ TEST_READ_WRITE_USER = Mongo::Auth::User.new(
   roles: [ Mongo::Auth::Roles::READ_WRITE, Mongo::Auth::Roles::DATABASE_ADMIN ]
 )
 
-# The write concern to use in the tests.
-#
-# @since 2.0.0
-WRITE_CONCERN = (CONNECT == :replica_set) ? { w: ADDRESSES.size } : { w: 1 }
-
 # Provides an authorized mongo client on the default test database for the
 # default test user.
 #
 # @since 2.0.0
 AUTHORIZED_CLIENT = Mongo::Client.new(
   ADDRESSES,
-  database: TEST_DB,
-  user: TEST_USER.name,
-  password: TEST_USER.password,
-  max_pool_size: 1,
-  write: WRITE_CONCERN
+  TEST_OPTIONS.merge(
+    database: TEST_DB,
+    user: TEST_USER.name,
+    password: TEST_USER.password)
 )
 
 # Provides an unauthorized mongo client on the default test database.
@@ -116,9 +127,8 @@ AUTHORIZED_CLIENT = Mongo::Client.new(
 # @since 2.0.0
 UNAUTHORIZED_CLIENT = Mongo::Client.new(
   ADDRESSES,
-  database: TEST_DB,
-  max_pool_size: 1,
-  write: WRITE_CONCERN
+  TEST_OPTIONS.merge(
+    database: TEST_DB)
 )
 
 # Provides an unauthorized mongo client on the admin database, for use in
@@ -127,9 +137,8 @@ UNAUTHORIZED_CLIENT = Mongo::Client.new(
 # @since 2.0.0
 ADMIN_UNAUTHORIZED_CLIENT = Mongo::Client.new(
   ADDRESSES,
-  database: Mongo::Database::ADMIN,
-  max_pool_size: 1,
-  write: WRITE_CONCERN
+  TEST_OPTIONS.merge(
+    database: Mongo::Database::ADMIN)
 )
 
 # Get an authorized client on the test database logged in as the admin

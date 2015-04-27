@@ -147,7 +147,7 @@ def list_command_enabled?
 end
 
 def running_ssl?
-  !!ENV['SSL']
+  SSL
 end
 
 alias :scram_sha_1_enabled? :list_command_enabled?
@@ -165,7 +165,7 @@ end
 #
 # @since 2.0.0
 def initialize_scanned_client!
-  Mongo::Client.new(ADDRESSES, database: TEST_DB, connect: CONNECT)
+  Mongo::Client.new(ADDRESSES, TEST_OPTIONS.merge(database: TEST_DB))
 end
 
 # require all shared examples

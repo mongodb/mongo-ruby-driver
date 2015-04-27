@@ -7,7 +7,7 @@ describe Mongo::Server::Connection do
   end
 
   let(:server) do
-    Mongo::Server.new(address, Mongo::Event::Listeners.new)
+    Mongo::Server.new(address, Mongo::Event::Listeners.new, TEST_OPTIONS)
   end
 
   describe '#connect!' do
@@ -66,9 +66,10 @@ describe Mongo::Server::Connection do
         let(:connection) do
           described_class.new(
             server,
-            :user => 'notauser',
-            :password => 'password',
-            :database => TEST_DB
+            TEST_OPTIONS.merge(
+              :user => 'notauser',
+              :password => 'password',
+              :database => TEST_DB )
           )
         end
 
@@ -84,9 +85,10 @@ describe Mongo::Server::Connection do
         let(:connection) do
           described_class.new(
             server,
-            :user => TEST_USER.name,
-            :password => TEST_USER.password,
-            :database => TEST_DB
+            TEST_OPTIONS.merge(
+              :user => TEST_USER.name,
+              :password => TEST_USER.password,
+              :database => TEST_DB )
           )
         end
 
@@ -136,9 +138,10 @@ describe Mongo::Server::Connection do
     let!(:connection) do
       described_class.new(
         server,
-        :user => TEST_USER.name,
-        :password => TEST_USER.password,
-        :database => TEST_DB
+        TEST_OPTIONS.merge(
+          :user => TEST_USER.name,
+          :password => TEST_USER.password,
+          :database => TEST_DB )
       )
     end
 
