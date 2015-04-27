@@ -70,7 +70,7 @@ module Mongo
         # @param [ Hash ] options The options.
         #
         # @since 2.0.0
-        def initialize(options)
+        def initialize(options, seeds = [])
           @options = options
         end
 

@@ -66,7 +66,7 @@ module Mongo
     # @since 2.0.0
     def add(host)
       address = Address.new(host)
-      unless addresses.include?(address)
+      if !addresses.include?(address) || direct_connection?(address)
         log_debug([ "Adding #{address.to_s} to the cluster." ])
         addresses.push(address)
         server = Server.new(address, event_listeners,
@@ -200,6 +200,12 @@ module Mongo
     def self.create(client)
       cluster = Cluster.new(client.cluster.addresses.map(&:to_s), client.options)
       client.instance_variable_set(:@cluster, cluster)
+    end
+
+    private
+
+    def direct_connection?(address)
+      @topology.single? && address.seed == @topology.seed
     end
   end
 end
