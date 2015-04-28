@@ -66,13 +66,15 @@ module Mongo
     # @since 2.0.0
     def add(host)
       address = Address.new(host)
-      if !addresses.include?(address) || direct_connection?(address)
-        log_debug([ "Adding #{address.to_s} to the cluster." ])
-        addresses.push(address)
-        server = Server.new(address, event_listeners,
-                            options.merge(slave_ok: @slave_ok))
-        @servers.push(server)
-        server
+      if !addresses.include?(address)
+        if addition_allowed?(address)
+          log_debug([ "Adding #{address.to_s} to the cluster." ])
+          addresses.push(address)
+          server = Server.new(address, event_listeners,
+                              options.merge(slave_ok: @slave_ok))
+          @servers.push(server)
+          server
+        end
       end
     end
 
@@ -205,7 +207,11 @@ module Mongo
     private
 
     def direct_connection?(address)
-      @topology.single? && address.seed == @topology.seed
+      address.seed == @topology.seed
+    end
+
+    def addition_allowed?(address)
+      !@topology.single? || direct_connection?(address)
     end
   end
 end
