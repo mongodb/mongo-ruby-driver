@@ -11,7 +11,7 @@ describe 'Server Selection' do
     context(spec.description) do
 
       before do
-        allow(::Socket).to receive(:getaddrinfo).at_most(10).times.
+        allow(::Socket).to receive(:getaddrinfo).at_most(5).times.
           and_return([[nil,nil,nil,nil,::Socket::AF_INET]])
       end
 
