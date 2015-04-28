@@ -31,7 +31,7 @@ describe 'Server Selection' do
       let(:candidate_servers) do
         spec.candidate_servers.collect do |server|
           address = Mongo::Address.new(server['address'])
-          Mongo::Server.new(address, Mongo::Event::Listeners.new).tap do |s|
+          Mongo::Server.new(address, Mongo::Event::Listeners.new, TEST_OPTIONS).tap do |s|
             allow(s).to receive(:average_round_trip_time).and_return(server['avg_rtt_ms'])
             allow(s).to receive(:tags).and_return(server['tags'])
             allow(s).to receive(:secondary?).and_return(server['type'] == 'RSSecondary')
@@ -43,7 +43,7 @@ describe 'Server Selection' do
       let(:in_latency_window) do
         spec.in_latency_window.collect do |server|
           address = Mongo::Address.new(server['address'])
-          Mongo::Server.new(address, Mongo::Event::Listeners.new).tap do |s|
+          Mongo::Server.new(address, Mongo::Event::Listeners.new, TEST_OPTIONS).tap do |s|
             allow(s).to receive(:average_round_trip_time).and_return(server['avg_rtt_ms'])
             allow(s).to receive(:tags).and_return(server['tags'])
           end

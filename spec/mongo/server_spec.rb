@@ -13,7 +13,7 @@ describe Mongo::Server do
   describe '#==' do
 
     let(:server) do
-      described_class.new(address, listeners)
+      described_class.new(address, listeners, TEST_OPTIONS)
     end
 
     context 'when the other is not a server' do
@@ -32,7 +32,7 @@ describe Mongo::Server do
       context 'when the addresses match' do
 
         let(:other) do
-          described_class.new(address, listeners)
+          described_class.new(address, listeners, TEST_OPTIONS)
         end
 
         it 'returns true' do
@@ -47,7 +47,7 @@ describe Mongo::Server do
         end
 
         let(:other) do
-          described_class.new(other_address, listeners)
+          described_class.new(other_address, listeners, TEST_OPTIONS)
         end
 
         it 'returns false' do
@@ -60,7 +60,7 @@ describe Mongo::Server do
   describe '#context' do
 
     let(:server) do
-      described_class.new(address, listeners)
+      described_class.new(address, listeners, TEST_OPTIONS)
     end
 
     let(:context) do
@@ -75,7 +75,7 @@ describe Mongo::Server do
   describe '#disconnect!' do
 
     let(:server) do
-      described_class.new(address, listeners)
+      described_class.new(address, listeners, TEST_OPTIONS)
     end
 
     it 'stops the monitor instance' do
@@ -87,7 +87,7 @@ describe Mongo::Server do
   describe '#initialize' do
 
     let(:server) do
-      described_class.new(address, listeners, :heartbeat_frequency => 5)
+      described_class.new(address, listeners, TEST_OPTIONS.merge(:heartbeat_frequency => 5))
     end
 
     it 'sets the address host' do
@@ -99,14 +99,14 @@ describe Mongo::Server do
     end
 
     it 'sets the options' do
-      expect(server.options).to eq(:heartbeat_frequency => 5)
+      expect(server.options).to eq(TEST_OPTIONS.merge(:heartbeat_frequency => 5))
     end
   end
 
   describe '#pool' do
 
     let(:server) do
-      described_class.new(address, listeners)
+      described_class.new(address, listeners, TEST_OPTIONS)
     end
 
     let(:pool) do
@@ -121,7 +121,7 @@ describe Mongo::Server do
   describe '#scan!' do
 
     let(:server) do
-      described_class.new(address, listeners)
+      described_class.new(address, listeners, TEST_OPTIONS)
     end
 
     it 'forces a scan on the monitor' do

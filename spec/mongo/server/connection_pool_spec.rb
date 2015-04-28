@@ -9,7 +9,7 @@ describe Mongo::Server::ConnectionPool do
   describe '#checkin' do
 
     let(:server) do
-      Mongo::Server.new(address, Mongo::Event::Listeners.new)
+      Mongo::Server.new(address, Mongo::Event::Listeners.new, ssl: SSL)
     end
 
     let(:pool) do
@@ -39,7 +39,7 @@ describe Mongo::Server::ConnectionPool do
   describe '#checkout' do
 
     let(:server) do
-      Mongo::Server.new(address, Mongo::Event::Listeners.new)
+      Mongo::Server.new(address, Mongo::Event::Listeners.new, ssl: SSL)
     end
 
     let(:pool) do
@@ -87,7 +87,7 @@ describe Mongo::Server::ConnectionPool do
   describe '.get' do
 
     let(:server) do
-      Mongo::Server.new(address, Mongo::Event::Listeners.new)
+      Mongo::Server.new(address, Mongo::Event::Listeners.new, ssl: SSL)
     end
 
     let(:pool) do
@@ -102,7 +102,7 @@ describe Mongo::Server::ConnectionPool do
   describe '#inspect' do
 
     let(:server) do
-      Mongo::Server.new(address, Mongo::Event::Listeners.new)
+      Mongo::Server.new(address, Mongo::Event::Listeners.new, ssl: SSL)
     end
 
     let(:pool) do

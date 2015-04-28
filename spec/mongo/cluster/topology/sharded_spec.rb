@@ -13,15 +13,15 @@ describe Mongo::Cluster::Topology::Sharded do
   describe '.servers' do
 
     let(:mongos) do
-      Mongo::Server.new(address, Mongo::Event::Listeners.new)
+      Mongo::Server.new(address, Mongo::Event::Listeners.new, TEST_OPTIONS)
     end
 
     let(:standalone) do
-      Mongo::Server.new(address, Mongo::Event::Listeners.new)
+      Mongo::Server.new(address, Mongo::Event::Listeners.new, TEST_OPTIONS)
     end
 
     let(:replica_set) do
-      Mongo::Server.new(address, Mongo::Event::Listeners.new)
+      Mongo::Server.new(address, Mongo::Event::Listeners.new, TEST_OPTIONS)
     end
 
     let(:mongos_description) do
