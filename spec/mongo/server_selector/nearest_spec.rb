@@ -118,7 +118,7 @@ describe Mongo::ServerSelector::Nearest do
         end
       end
 
-      context 'mtuliple candidates' do
+      context 'multiple candidates' do
 
         context 'no matching servers' do
           let(:candidates) { [primary, secondary, secondary] }
