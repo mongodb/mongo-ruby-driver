@@ -2,11 +2,6 @@ require 'spec_helper'
 
 describe Mongo::Address::Unix do
 
-  before do
-    allow(::Socket).to receive(:getaddrinfo).at_most(2).times.
-      and_return([[nil,nil,nil,nil,::Socket::PF_UNIX]])
-  end
-
   let(:resolver) do
     described_class.new(*described_class.parse(address))
   end
