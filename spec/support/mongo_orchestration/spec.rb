@@ -47,8 +47,8 @@ module Mongo
 
       private
 
-      def stop
-        @mo.stop
+      def stop_mo
+        @mo.stop if @mo
       end
 
       def make_mo
@@ -125,11 +125,11 @@ module Mongo
         rescue Errno::ECONNREFUSED => ex
           raise ServiceNotAvailable.new
         rescue => ex
-          stop if @mo
+          stop_mo
           raise ex
         end
         yield
-        stop
+        stop_mo
       end
     end
 

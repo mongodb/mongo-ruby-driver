@@ -17,13 +17,16 @@ module Mongo
     module Operation
 
       class ClientOperation
+        extend Forwardable
+
+        def_delegators :@spec, :client
 
         OPERATIONS = { 'insertOne' => :insert_one,
                        'find' => :find
                      }.freeze
 
-        def initialize(client, config)
-          @client = client
+        def initialize(spec, config)
+          @spec = spec
           @ok = config['outcome']['ok']
           @operation = config['operation']
           @doc = config['doc']
@@ -38,11 +41,11 @@ module Mongo
         private
 
         def insert_one
-          @client['test'].insert_one(@doc)
+          client['test'].insert_one(@doc)
         end
 
         def find
-          @client['test'].find.to_a
+          client['test'].find.to_a
         end
 
         def successful?(result)

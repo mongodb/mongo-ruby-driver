@@ -17,10 +17,12 @@ module Mongo
     module Operation
 
       class ClientHosts
+        extend Forwardable
 
-        def initialize(client, mo, config)
-          @client = client
-          @mo = mo
+        def_delegators :@spec, :client, :mo
+
+        def initialize(spec, config)
+          @spec = spec
           @primary = config['primary']
           @secondaries = config['secondaries']
         end
@@ -33,14 +35,14 @@ module Mongo
         private
 
         def client_primary
-          @client.cluster.servers.find do |server|
+          client.cluster.servers.find do |server|
             server.primary?
           end
         end
 
         def client_secondaries
-          @client.cluster.servers.select do |server|
-            server if server.secondary?
+          client.cluster.servers.select do |server|
+            server.secondary?
           end
         end
 
@@ -60,7 +62,7 @@ module Mongo
 
         def mo_pairs(servers)
           servers.collect do |server|
-            @mo.get_host_port(server)
+            mo.get_host_port(server)
           end
         end
 

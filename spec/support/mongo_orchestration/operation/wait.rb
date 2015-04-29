@@ -19,7 +19,7 @@ module Mongo
       class Wait
 
         def initialize(seconds)
-          @seconds = seconds
+          @seconds = seconds.freeze
         end
 
         def run

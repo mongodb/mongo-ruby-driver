@@ -27,11 +27,11 @@ module Mongo
 
       def get(spec, config)
         if config.keys.include?('clientOperation')
-          ClientOperation.new(spec.client, config['clientOperation'])
+          ClientOperation.new(spec, config['clientOperation'])
         elsif config.keys.include?('clientHosts')
-          ClientHosts.new(spec.client, spec.mo, config['clientHosts'])
+          ClientHosts.new(spec, config['clientHosts'])
         elsif config.keys.include?('MOOperation')
-          MOOperation.new(spec.mo, config['MOOperation'])
+          MOOperation.new(spec, config['MOOperation'])
         elsif config.keys.include?('wait')
           Wait.new(config['wait'])
         end

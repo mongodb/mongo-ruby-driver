@@ -17,16 +17,19 @@ module Mongo
     module Operation
 
       class MOOperation
+        extend Forwardable
 
-        def initialize(mo, config)
-          @mo = mo
+        def_delegators :@spec, :mo
+
+        def initialize(spec, config)
+          @spec = spec
           @method = config['method']
           @uri = config['uri']
           @payload = config['payload']
         end
 
         def run
-          @mo.request(@method, @uri, @payload)
+          mo.request(@method, @uri, @payload)
         end
       end
     end
