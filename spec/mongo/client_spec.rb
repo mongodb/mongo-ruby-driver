@@ -2,14 +2,6 @@ require 'spec_helper'
 
 describe Mongo::Client do
 
-  before do
-    if running_ssl?
-      allow_any_instance_of(Mongo::Server::Monitor).to receive(:ismaster) do
-        [{}, 1]
-      end
-    end
-  end
-
   describe '#==' do
 
     let(:client) do
