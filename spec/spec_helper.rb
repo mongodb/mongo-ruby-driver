@@ -75,7 +75,7 @@ CLIENT_PASSWORD_PEM = "#{SSL_CERTS_DIR}/password_protected.pem"
 CA_PEM = "#{SSL_CERTS_DIR}/ca.pem"
 CRL_PEM = "#{SSL_CERTS_DIR}/crl.pem"
 
-# Determine whether the test clients are connecting to a standlone.
+# Determine whether the test clients are connecting to a standalone.
 #
 # @since 2.0.0
 def standalone?
