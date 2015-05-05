@@ -1156,12 +1156,12 @@ void Init_cbson() {
     Timestamp = rb_const_get(bson, rb_intern("Timestamp"));
     rb_require("bson/types/regex");
     BSONRegex = rb_const_get(bson, rb_intern("Regex"));
-    BSONRegex_IGNORECASE = rb_const_get(BSONRegex, rb_intern("IGNORECASE"));
-    BSONRegex_EXTENDED = rb_const_get(BSONRegex, rb_intern("EXTENDED"));
-    BSONRegex_MULTILINE = rb_const_get(BSONRegex, rb_intern("MULTILINE"));
-    BSONRegex_DOTALL = rb_const_get(BSONRegex, rb_intern("DOTALL"));
-    BSONRegex_LOCALE_DEPENDENT = rb_const_get(BSONRegex, rb_intern("LOCALE_DEPENDENT"));
-    BSONRegex_UNICODE = rb_const_get(BSONRegex, rb_intern("UNICODE"));
+    BSONRegex_IGNORECASE = FIX2INT(rb_const_get(BSONRegex, rb_intern("IGNORECASE")));
+    BSONRegex_EXTENDED = FIX2INT(rb_const_get(BSONRegex, rb_intern("EXTENDED")));
+    BSONRegex_MULTILINE = FIX2INT(rb_const_get(BSONRegex, rb_intern("MULTILINE")));
+    BSONRegex_DOTALL = FIX2INT(rb_const_get(BSONRegex, rb_intern("DOTALL")));
+    BSONRegex_LOCALE_DEPENDENT = FIX2INT(rb_const_get(BSONRegex, rb_intern("LOCALE_DEPENDENT")));
+    BSONRegex_UNICODE = FIX2INT(rb_const_get(BSONRegex, rb_intern("UNICODE")));
     Regexp = rb_const_get(rb_cObject, rb_intern("Regexp"));
     rb_require("bson/exceptions");
     InvalidKeyName = rb_const_get(bson, rb_intern("InvalidKeyName"));
