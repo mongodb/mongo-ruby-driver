@@ -117,4 +117,31 @@ describe Mongo::Server::ConnectionPool do
       expect(pool.inspect).to include(pool.__send__(:queue).inspect)
     end
   end
+
+  describe '#with_connection' do
+
+    let(:server) do
+      Mongo::Server.new(address, Mongo::Event::Listeners.new, ssl: SSL)
+    end
+
+    let(:pool) do
+      described_class.get(server)
+    end
+
+    context 'when a connection cannot be checked out' do
+
+      before do
+        allow(pool).to receive(:checkout).and_return(nil)
+        pool.with_connection { |c| c }
+      end
+
+      let(:queue) do
+        pool.send(:queue).queue
+      end
+
+      it 'does not add the connection to the pool' do
+        expect(queue.size).to eq(1)
+      end
+    end
+  end
 end
