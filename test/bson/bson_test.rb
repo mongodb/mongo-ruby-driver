@@ -395,6 +395,19 @@ class BSONTest < Test::Unit::TestCase
     assert_equal 0x7, @encoder.deserialize(bson, :compile_regex => true)['doc'].options
   end
 
+  def test_bson_regex_options
+    bson_regex = BSON::Regex.new('foobar', 'i')
+    doc = { 'doc' => bson_regex }
+    bson = @encoder.serialize(doc)
+    options = @encoder.deserialize(bson, :compile_regex => false)['doc'].options
+    assert_equal BSON::Regex::IGNORECASE, BSON::Regex::IGNORECASE & options
+    assert_equal 0, BSON::Regex::LOCALE_DEPENDENT & options
+    assert_equal 0, BSON::Regex::MULTILINE & options
+    assert_equal 0, BSON::Regex::DOTALL & options
+    assert_equal 0, BSON::Regex::UNICODE & options
+    assert_equal 0, BSON::Regex::EXTENDED & options
+  end
+
   def test_ruby_regexp_to_bson_regex
     regexp = Regexp.new(/foobar/imx)
     doc = { 'doc' => regexp }
