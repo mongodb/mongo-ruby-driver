@@ -98,7 +98,7 @@ module Mongo
           connection = checkout
           yield(connection)
         ensure
-          checkin(connection)
+          checkin(connection) if connection
         end
       end
 
