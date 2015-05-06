@@ -48,7 +48,8 @@ module Mongo
         parse_single(@message, ERROR)
         parse_single(@message, ERRMSG)
         parse_multiple(@message, WRITE_ERRORS)
-        parse_multiple(@message, WRITE_CONCERN_ERROR)
+        parse_single(@message, ERRMSG,
+                     document[WRITE_CONCERN_ERROR]) if document[WRITE_CONCERN_ERROR]
       end
 
       def parse_single(message, key, doc = document)

@@ -84,35 +84,14 @@ describe Mongo::Error::Parser do
       end
     end
 
-    context 'when the document contains writeConcernErrors' do
+    context 'when the document contains a writeConcernError' do
 
-      context 'when a single error exists' do
-
-        let(:document) do
-          { 'writeConcernError' => [{ 'errmsg' => 'not authorized for query', 'code' => 13 }]}
-        end
-
-        it 'returns the message' do
-          expect(parser.message).to eq('not authorized for query (13)')
-        end
+      let(:document) do
+        { 'writeConcernError' => { 'code' => 100, 'errmsg' => 'Not enough data-bearing nodes' } }
       end
 
-      context 'when multiple errors exist' do
-
-        let(:document) do
-          {
-            'writeConcernError' => [
-              { 'code' => 9, 'errmsg' => 'Unknown modifier: $st' },
-              { 'code' => 9, 'errmsg' => 'Unknown modifier: $bl' }
-            ]
-          }
-        end
-
-        it 'returns the messages concatenated' do
-          expect(parser.message).to eq(
-            'Unknown modifier: $st (9), Unknown modifier: $bl (9)'
-          )
-        end
+      it 'returns the message' do
+        expect(parser.message).to eq('Not enough data-bearing nodes (100)')
       end
     end
   end
