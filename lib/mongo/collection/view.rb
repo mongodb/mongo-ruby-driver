@@ -161,8 +161,8 @@ module Mongo
         View.new(collection, selector, options)
       end
 
-      def send_initial_query(server, series)
-        record(series, Monitoring::QUERY, query_spec) do
+      def send_initial_query(server)
+        publish(Monitoring::QUERY, query_spec) do
           initial_query_op.execute(server.context)
         end
       end

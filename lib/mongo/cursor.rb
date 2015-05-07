@@ -46,10 +46,9 @@ module Mongo
     # @param [ Server ] server The server this cursor is locked to.
     #
     # @since 2.0.0
-    def initialize(view, result, server, series)
+    def initialize(view, result, server)
       @view = view
       @server = server
-      @series = series
       @initial_result = result
       @remaining = limit if limited?
     end
@@ -82,7 +81,6 @@ module Mongo
         return kill_cursors if exhausted?
         get_more.each { |doc| yield doc }
       end
-      publish(Monitoring::QUERY, @series)
     end
 
     private
@@ -96,7 +94,7 @@ module Mongo
     end
 
     def get_more
-      record(@series, Monitoring::GET_MORE, get_more_spec) do
+      publish(Monitoring::GET_MORE, get_more_spec) do
         process(get_more_operation.execute(@server.context))
       end
     end
@@ -115,7 +113,7 @@ module Mongo
     end
 
     def kill_cursors
-      record(@series, Monitoring::KILL_CURSORS, kill_cursors_spec) do
+      publish(Monitoring::KILL_CURSORS, kill_cursors_spec) do
         kill_cursors_operation.execute(@server.context)
       end
     end

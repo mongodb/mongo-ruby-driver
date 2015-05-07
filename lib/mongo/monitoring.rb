@@ -14,7 +14,6 @@
 
 require 'mongo/monitoring/event'
 require 'mongo/monitoring/publishable'
-require 'mongo/monitoring/series'
 
 module Mongo
 
@@ -42,24 +41,24 @@ module Mongo
 
       # Publish a global series of events.
       #
-      # @example Publish the event series.
-      #   Monitoring.publish(QUERY, series)
+      # @example Publish the event.
+      #   Monitoring.publish(QUERY, event)
       #
-      # @param [ String ] topic The series event topic.
-      # @param [ Series ] series The series of events.
+      # @param [ String ] topic The event topic.
+      # @param [ Event ] event The event.
       #
       # @since 2.1.0
-      def publish(topic, series)
-        subscribers_for(topic).each{ |subscriber| subscriber.notify(series) }
+      def publish(topic, event)
+        subscribers_for(topic).each{ |subscriber| subscriber.notify(event) }
       end
 
-      # Subscribe a listener to an event series topic.
+      # Subscribe a listener to an event topic.
       #
       # @example Subscribe to the topic.
       #   Monitoring.subscribe(QUERY, subscriber)
       #
-      # @param [ String ] topic The series event topic.
-      # @param [ Object ] subscriber The subscriber to handle the event series.
+      # @param [ String ] topic The event topic.
+      # @param [ Object ] subscriber The subscriber to handle the event.
       #
       # @since 2.1.0
       def subscribe(topic, subscriber)
