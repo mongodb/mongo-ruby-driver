@@ -36,7 +36,9 @@ module Mongo
         # @yieldparam [ Hash ] Each matching document.
         def each
           server = read.select_server(cluster)
-          cursor = Cursor.new(view, send_initial_query(server), server).to_enum
+          series = Monitoring::Series.new(Monitoring::QUERY)
+          initial_query = send_initial_query(server, series)
+          cursor = Cursor.new(view, initial_query, server, series).to_enum
           cursor.each do |doc|
             yield doc
           end if block_given?

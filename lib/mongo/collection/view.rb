@@ -46,6 +46,7 @@ module Mongo
       include Readable
       include Explainable
       include Writable
+      include Monitoring::Publishable
 
       # @return [ View ] The +View+ to query.
       attr_reader :collection
@@ -160,8 +161,10 @@ module Mongo
         View.new(collection, selector, options)
       end
 
-      def send_initial_query(server)
-        initial_query_op.execute(server.context)
+      def send_initial_query(server, series)
+        record(series, Monitoring::QUERY, query_spec) do
+          initial_query_op.execute(server.context)
+        end
       end
 
       def view; self; end

@@ -31,6 +31,7 @@ module Mongo
   class Cursor
     extend Forwardable
     include Enumerable
+    include Monitoring::Publishable
 
     def_delegators :@view, :collection, :limit
     def_delegators :collection, :client, :database
@@ -45,9 +46,10 @@ module Mongo
     # @param [ Server ] server The server this cursor is locked to.
     #
     # @since 2.0.0
-    def initialize(view, result, server)
+    def initialize(view, result, server, series)
       @view = view
       @server = server
+      @series = series
       @initial_result = result
       @remaining = limit if limited?
     end
@@ -80,6 +82,7 @@ module Mongo
         return kill_cursors if exhausted?
         get_more.each { |doc| yield doc }
       end
+      publish(Monitoring::QUERY, @series)
     end
 
     private
@@ -93,24 +96,36 @@ module Mongo
     end
 
     def get_more
-      process(get_more_operation.execute(@server.context))
+      record(@series, Monitoring::GET_MORE, get_more_spec) do
+        process(get_more_operation.execute(@server.context))
+      end
     end
 
     def get_more_operation
-      Operation::Read::GetMore.new({
+      Operation::Read::GetMore.new(get_more_spec)
+    end
+
+    def get_more_spec
+      {
         :to_return => to_return,
         :cursor_id => @cursor_id,
         :db_name   => database.name,
         :coll_name => @coll_name || collection.name
-      })
+      }
     end
 
     def kill_cursors
-      kill_cursors_operation.execute(@server.context)
+      record(@series, Monitoring::KILL_CURSORS, kill_cursors_spec) do
+        kill_cursors_operation.execute(@server.context)
+      end
     end
 
     def kill_cursors_operation
-      Operation::KillCursors.new({ :cursor_ids => [ @cursor_id ]})
+      Operation::KillCursors.new(kill_cursors_spec)
+    end
+
+    def kill_cursors_spec
+      { :cursor_ids => [ @cursor_id ]}
     end
 
     def limited?
