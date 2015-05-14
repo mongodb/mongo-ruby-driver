@@ -29,12 +29,29 @@ module Mongo
       # @param [ Hash ] payload The event payload.
       #
       # @since 2.1.0
-      def publish(topic, payload)
+      def publish(messages)
         start = Time.now
-        result = yield
-        duration = Time.now - start
-        Monitoring.publish(topic, Monitoring::Event.new(topic, payload, duration))
-        result
+        fire_events = Monitoring.subscribers?(Monitoring::COMMAND)
+        if fire_events
+          messages.each do |message|
+            Monitoring.started(Monitoring::COMMAND, message.event(address.to_s))
+          end
+        end
+        begin
+          result = yield(messages)
+          if result && fire_events
+            Monitoring.completed(Monitoring::COMMAND, result.event(address.to_s, duration(start)))
+          end
+          result
+        rescue Exception => e
+          raise e
+        end
+      end
+
+      private
+
+      def duration(start)
+        Time.now - start
       end
     end
   end

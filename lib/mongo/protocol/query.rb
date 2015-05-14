@@ -72,6 +72,10 @@ module Mongo
         @flags       = options[:flags] || []
       end
 
+      def event(server)
+        Monitoring::Event::Started.new('query', namespace, selector, server)
+      end
+
       # The log message for a query operation.
       #
       # @example Get the log message.

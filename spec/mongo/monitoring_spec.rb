@@ -9,10 +9,16 @@ describe Mongo::Monitoring do
       # This is a simple example of a subscriber to events that simply logs them.
       class LogSubscriber
 
-        # The notify method is the only method that needs to be implemented.
-        def notify(event)
-          logger = Logger.new($stdout)
-          logger.info("MONGODB.#{event.topic} | #{event.payload} | (#{event.duration}s)")
+        def initialize
+          @logger = Logger.new($stdout)
+        end
+
+        def started(event)
+          @logger.info("MONGODB.#{event.name} | #{event.server} | #{event.arguments}")
+        end
+
+        def completed(event)
+          @logger.info("MONGODB.#{event.name} | #{event.server} | #{event.reply} | (#{event.duration}s)")
         end
       end
 
@@ -21,9 +27,7 @@ describe Mongo::Monitoring do
       end
 
       before do
-        Mongo::Monitoring.subscribe(Mongo::Monitoring::QUERY, subscriber)
-        Mongo::Monitoring.subscribe(Mongo::Monitoring::GET_MORE, subscriber)
-        Mongo::Monitoring.subscribe(Mongo::Monitoring::KILL_CURSORS, subscriber)
+        Mongo::Monitoring.subscribe(Mongo::Monitoring::COMMAND, subscriber)
 
         102.times do |n|
           authorized_collection.insert_one({ name: "test_#{n}" })

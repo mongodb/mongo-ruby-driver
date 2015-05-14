@@ -22,34 +22,19 @@ module Mongo
   # @since 2.1.0
   module Monitoring
 
-    # The query event constant.
+    # The command topic.
     #
     # @since 2.1.0
-    QUERY = 'Query'.freeze
-
-    # The get more event constant.
-    #
-    # @since 2.1.0
-    GET_MORE = 'Get More'.freeze
-
-    # The kill cursors event constant.
-    #
-    # @since 2.1.0
-    KILL_CURSORS = 'Kill Cursors'.freeze
+    COMMAND = 'Command'.freeze
 
     class << self
 
-      # Publish a global series of events.
-      #
-      # @example Publish the event.
-      #   Monitoring.publish(QUERY, event)
-      #
-      # @param [ String ] topic The event topic.
-      # @param [ Event ] event The event.
-      #
-      # @since 2.1.0
-      def publish(topic, event)
-        subscribers_for(topic).each{ |subscriber| subscriber.notify(event) }
+      def started(topic, event)
+        subscribers_for(topic).each{ |subscriber| subscriber.started(event) }
+      end
+
+      def completed(topic, event)
+        subscribers_for(topic).each{ |subscriber| subscriber.completed(event) }
       end
 
       # Subscribe a listener to an event topic.
@@ -63,6 +48,10 @@ module Mongo
       # @since 2.1.0
       def subscribe(topic, subscriber)
         subscribers_for(topic).push(subscriber)
+      end
+
+      def subscribers?(topic)
+        !subscribers_for(topic).empty?
       end
 
       private

@@ -12,38 +12,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-module Mongo
-  module Monitoring
-
-    # Defines a single event in a series for performance monitoring.
-    #
-    # @since 2.1.0
-    class Event
-
-      # @return [ String ] topic The event topic.
-      attr_reader :topic
-
-      # @return [ Float ] duration The duration of the event.
-      attr_reader :duration
-
-      # @return [ Hash ] payload The event payload.
-      attr_reader :payload
-
-      # Instantiate a new event.
-      #
-      # @example Instantiate the event.
-      #   Event.new(Monitoring::QUERY, { filter: { name: 'test' }}, 0.10)
-      #
-      # @param [ String ] topic The event topic.
-      # @param [ Hash ] payload The event payload.
-      # @param [ Float ] duration The event duration.
-      #
-      # @since 2.1.0
-      def initialize(topic, payload, duration)
-        @topic = topic
-        @payload = payload
-        @duration = duration
-      end
-    end
-  end
-end
+require 'mongo/monitoring/event/started'
+require 'mongo/monitoring/event/completed'

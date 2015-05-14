@@ -31,7 +31,6 @@ module Mongo
   class Cursor
     extend Forwardable
     include Enumerable
-    include Monitoring::Publishable
 
     def_delegators :@view, :collection, :limit
     def_delegators :collection, :client, :database
@@ -94,9 +93,7 @@ module Mongo
     end
 
     def get_more
-      publish(Monitoring::GET_MORE, get_more_spec) do
-        process(get_more_operation.execute(@server.context))
-      end
+      process(get_more_operation.execute(@server.context))
     end
 
     def get_more_operation
@@ -113,9 +110,7 @@ module Mongo
     end
 
     def kill_cursors
-      publish(Monitoring::KILL_CURSORS, kill_cursors_spec) do
-        kill_cursors_operation.execute(@server.context)
-      end
+      kill_cursors_operation.execute(@server.context)
     end
 
     def kill_cursors_operation

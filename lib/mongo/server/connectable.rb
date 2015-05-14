@@ -19,7 +19,7 @@ module Mongo
     #
     # @since 2.0.0
     module Connectable
-      include Loggable
+      include Monitoring::Publishable
 
       # The default time in seconds to timeout a connection attempt.
       #
@@ -62,7 +62,7 @@ module Mongo
       #
       # @since 2.0.0
       def dispatch(messages)
-        log_debug(messages) do |msgs|
+        publish(messages) do |msgs|
           write(msgs)
           msgs.last.replyable? ? read : nil
         end
