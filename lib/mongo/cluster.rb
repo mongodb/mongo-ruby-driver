@@ -186,6 +186,31 @@ module Mongo
       topology.servers(@servers.compact).compact
     end
 
+    # Disconnect all servers.
+    #
+    # @example Disconnect the cluster's servers.
+    #   cluster.disconnect!
+    #
+    # @return [ true ] Always true.
+    #
+    # @since 2.1.0
+    def disconnect!
+      @servers.each { |server| server.disconnect! } and true
+    end
+
+    # Reconnect all servers.
+    #
+    # @example Reconnect the cluster's servers.
+    #   cluster.reconnect!
+    #
+    # @return [ true ] Always true.
+    #
+    # @since 2.1.0
+    def reconnect!
+      scan!
+      servers.each { |server| server.reconnect! } and true
+    end
+
     # Create a cluster for the provided client, for use when we don't want the
     # client's original cluster instance to be the same.
     #

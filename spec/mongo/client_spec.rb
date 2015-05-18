@@ -569,4 +569,34 @@ describe Mongo::Client do
       end
     end
   end
+
+  describe '#close' do
+
+    let(:client) do
+      described_class.new(['127.0.0.1:27017'])
+    end
+
+    before do
+      expect(client.cluster).to receive(:disconnect!).and_call_original
+    end
+
+    it 'disconnects the cluster and returns true' do
+      expect(client.close).to be(true)
+    end
+  end
+
+  describe '#reconnect' do
+
+    let(:client) do
+      described_class.new(['127.0.0.1:27017'])
+    end
+
+    before do
+      expect(client.cluster).to receive(:reconnect!).and_call_original
+    end
+
+    it 'reconnects the cluster and returns true' do
+      expect(client.reconnect).to be(true)
+    end
+  end
 end

@@ -123,7 +123,7 @@ module Mongo
     # Get a pretty printed server inspection.
     #
     # @example Get the server inspection.
-    #   server.inspec
+    #   server.inspect
     #
     # @return [ String ] The nice inspection string.
     #
@@ -170,6 +170,18 @@ module Mongo
     # @since 2.0.0
     def slave_ok?
       options[:slave_ok]
+    end
+
+    # Restart the server monitor.
+    #
+    # @example Restart the server monitor.
+    #   server.reconnect!
+    #
+    # @return [ true ] Always true.
+    #
+    # @since 2.1.0
+    def reconnect!
+      monitor.restart! and true
     end
   end
 end
