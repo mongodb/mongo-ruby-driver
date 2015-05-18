@@ -434,6 +434,41 @@ describe Mongo::Collection::View::Readable do
     end
   end
 
+  describe '#parallel_scan' do
+
+    let(:documents) do
+      (1..200).map do |i|
+        { name: "testing-scan-#{i}" }
+      end
+    end
+
+    before do
+      authorized_collection.insert_many(documents)
+    end
+
+    let(:cursors) do
+      view.parallel_scan(2)
+    end
+
+    it 'returns an array of cursors', if: write_command_enabled? do
+      cursors.each do |cursor|
+        expect(cursor.class).to be(Mongo::Cursor)
+      end
+    end
+
+    it 'returns the correct number of documents', if: write_command_enabled? do
+      expect(
+        cursors.reduce(0) { |total, cursor| total + cursor.to_a.size }
+      ).to eq(200)
+    end
+
+    it 'raises an error', unless: write_command_enabled? do
+      expect {
+        cursors
+      }.to raise_error(Mongo::Error::OperationFailure)
+    end
+  end
+
   describe '#projection' do
 
     let(:options) do
