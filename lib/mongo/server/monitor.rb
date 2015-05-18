@@ -112,7 +112,7 @@ module Mongo
       # server.
       #
       # @example Run the monitor.
-      #   monito.run
+      #   monitor.run
       #
       # @return [ Thread ] The thread the monitor runs on.
       #
@@ -137,6 +137,18 @@ module Mongo
       # @since 2.0.0
       def stop!
         @thread.kill && @thread.stop?
+      end
+
+      # Restarts the server monitor unless the current thread is alive.
+      #
+      # @example Restart the monitor.
+      #   monitor.restart!
+      #
+      # @return [ Thread ] The thread the monitor runs on.
+      #
+      # @since 2.1.0
+      def restart!
+        @thread.alive? ? @thread : run!
       end
 
       private
