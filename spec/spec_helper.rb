@@ -91,12 +91,13 @@ def replica_set?
   $replica_set ||= $mongo_client.cluster.replica_set?
 end
 
-# Determine whether the test clients are connecting to a sharded cluster.
+# Determine whether the test clients are connecting to a sharded cluster
+# or a single mongos.
 #
 # @since 2.0.0
 def sharded?
   $mongo_client ||= initialize_scanned_client!
-  $sharded ||= $mongo_client.cluster.sharded?
+  $sharded ||= ($mongo_client.cluster.sharded? || single_mongos?)
 end
 
 # Determine whether the single address provided is a replica set member.
@@ -107,7 +108,8 @@ end
 # @since 2.0.0
 def single_rs_member?
   $mongo_client ||= initialize_scanned_client!
-  single_seed? && $mongo_client.cluster.servers.first.replica_set_name
+  $single_rs_member ||= (single_seed? &&
+      $mongo_client.cluster.servers.first.replica_set_name)
 end
 
 # Determine whether the single address provided is a mongos.
@@ -118,7 +120,8 @@ end
 # @since 2.0.0
 def single_mongos?
   $mongo_client ||= initialize_scanned_client!
-  single_seed? && $mongo_client.cluster.servers.first.mongos?
+  $single_mongos ||= (single_seed? &&
+      $mongo_client.cluster.servers.first.mongos?)
 end
 
 # Determine whether a single address was provided.

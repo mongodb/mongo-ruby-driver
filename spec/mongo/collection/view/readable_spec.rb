@@ -434,7 +434,7 @@ describe Mongo::Collection::View::Readable do
     end
   end
 
-  describe '#parallel_scan' do
+  describe '#parallel_scan', unless: sharded? do
 
     let(:documents) do
       (1..200).map do |i|
