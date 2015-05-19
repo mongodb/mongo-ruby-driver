@@ -141,4 +141,34 @@ describe Mongo::Server::Monitor do
       expect(monitor.description).to_not be_nil
     end
   end
+
+  describe '#restart!' do
+
+    let(:monitor) do
+      described_class.new(address, listeners, TEST_OPTIONS)
+    end
+
+    let!(:thread) do
+      monitor.run!
+    end
+
+    context 'when the monitor is already running' do
+
+      it 'does not create a new thread' do
+        expect(monitor.restart!).to be(thread)
+      end
+    end
+
+    context 'when the monitor is not already running' do
+
+      before do
+        monitor.stop!
+        sleep(1)
+      end
+
+      it 'creates a new thread' do
+        expect(monitor.restart!).not_to be(thread)
+      end
+    end
+  end
 end

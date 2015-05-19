@@ -128,4 +128,19 @@ describe Mongo::Server do
       expect(server.scan!).to eq(server.description)
     end
   end
+
+  describe '#reconnect!' do
+
+    let(:server) do
+      described_class.new(address, listeners, TEST_OPTIONS)
+    end
+
+    before do
+      expect(server.monitor).to receive(:restart!).and_call_original
+    end
+
+    it 'restarts the monitor and returns true' do
+      expect(server.reconnect!).to be(true)
+    end
+  end
 end

@@ -221,6 +221,30 @@ module Mongo
       @write_concern ||= WriteConcern.get(options[:write])
     end
 
+    # Close all connections.
+    #
+    # @example Disconnect the client.
+    #   client.close
+    #
+    # @return [ true ] Always true.
+    #
+    # @since 2.1.0
+    def close
+      @cluster.disconnect! and true
+    end
+
+    # Reconnect the client.
+    #
+    # @example Reconnect the client.
+    #   client.reconnect
+    #
+    # @return [ true ] Always true.
+    #
+    # @since 2.1.0
+    def reconnect
+      @cluster.reconnect! and true
+    end
+
     private
 
     def create_from_addresses(addresses, opts = {})
