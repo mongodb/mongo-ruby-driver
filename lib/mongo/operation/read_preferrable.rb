@@ -29,7 +29,8 @@ module Mongo
 
       def update_selector(context)
         if context.mongos? && read_pref = read.to_mongos
-          selector.merge(:$readPreference => read_pref)
+          sel = selector[:$query] ? selector : { :$query => selector }
+          sel.merge(:$readPreference => read_pref)
         else
           selector
         end
