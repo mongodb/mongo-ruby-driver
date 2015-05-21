@@ -33,18 +33,24 @@ module Mongo
       #
       # @since 2.1.0
       def publish_command(messages)
-        start = Time.now
-        payload = messages.first.payload
-        Monitoring.started(Monitoring::COMMAND, command_started(payload))
+        if monitoring?
+          start = Time.now
+          payload = messages.first.payload
+          Monitoring.started(Monitoring::COMMAND, command_started(payload))
+        end
         begin
           result = yield(messages)
-          Monitoring.completed(
-            Monitoring::COMMAND,
-            command_completed(payload, result ? result.payload : nil, start)
-          )
+          if monitoring?
+            Monitoring.completed(
+              Monitoring::COMMAND,
+              command_completed(payload, result ? result.payload : nil, start)
+            )
+          end
           result
         rescue Exception => e
-          Monitoring.failed(Monitoring::COMMAND, command_failed(payload, e, start))
+          if monitoring?
+            Monitoring.failed(Monitoring::COMMAND, command_failed(payload, e, start))
+          end
           raise e
         end
       end
@@ -82,6 +88,10 @@ module Mongo
 
       def duration(start)
         Time.now - start
+      end
+
+      def monitoring?
+        options[:monitor] != false
       end
     end
   end
