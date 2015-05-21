@@ -109,10 +109,6 @@ module Mongo
       def read
         ensure_connected{ |socket| Protocol::Reply.deserialize(socket) }
       end
-
-      def duration(start)
-        Time.now - start
-      end
     end
   end
 end
