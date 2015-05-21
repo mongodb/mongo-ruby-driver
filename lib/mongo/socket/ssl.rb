@@ -29,6 +29,9 @@ module Mongo
       # @return [ String ] host The host to connect to.
       attr_reader :host
 
+      # @return [ String ] host_name The original host name.
+      attr_reader :host_name
+
       # @return [ Hash ] The ssl options.
       attr_reader :options
 
@@ -72,8 +75,8 @@ module Mongo
       # @param [ Hash ] options The ssl options.
       #
       # @since 2.0.0
-      def initialize(host, port, timeout, family, options = {})
-        @host, @port, @timeout, @options = host, port, timeout, options
+      def initialize(host, port, host_name, timeout, family, options = {})
+        @host, @port, @host_name, @timeout, @options = host, port, host_name, timeout, options
         @context = create_context(options)
         @family = family
         @tcp_socket = ::Socket.new(family, SOCK_STREAM, 0)
@@ -117,7 +120,7 @@ module Mongo
 
       def verify_certificate!(socket)
         if context.verify_mode == OpenSSL::SSL::VERIFY_PEER
-          unless OpenSSL::SSL.verify_certificate_identity(socket.peer_cert, host)
+          unless OpenSSL::SSL.verify_certificate_identity(socket.peer_cert, host_name)
             raise Error::SocketError, 'SSL handshake failed due to a hostname mismatch.'
           end
         end

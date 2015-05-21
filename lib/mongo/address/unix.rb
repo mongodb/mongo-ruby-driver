@@ -20,7 +20,7 @@ module Mongo
     # @since 2.0.0
     class Unix
 
-      # @return [ String ] host The original host name.
+      # @return [ String ] host The host.
       attr_reader :host
 
       # @return [ nil ] port Will always be nil.
@@ -53,7 +53,7 @@ module Mongo
       # @param [ String ] host The host.
       #
       # @since 2.0.0
-      def initialize(host)
+      def initialize(host, port=nil, host_name=nil)
         @host = host
       end
 
