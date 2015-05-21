@@ -29,12 +29,43 @@ module Mongo
 
     class << self
 
+      # Publish a started event.
+      #
+      # @example Publish a started event.
+      #   Monitoring.started(COMMAND, event)
+      #
+      # @param [ String ] topic The event topic.
+      # @param [ Event ] event The event to publish.
+      #
+      # @since 2.1.0
       def started(topic, event)
         subscribers_for(topic).each{ |subscriber| subscriber.started(event) }
       end
 
+      # Publish a completed event.
+      #
+      # @example Publish a completed event.
+      #   Monitoring.completed(COMMAND, event)
+      #
+      # @param [ String ] topic The event topic.
+      # @param [ Event ] event The event to publish.
+      #
+      # @since 2.1.0
       def completed(topic, event)
         subscribers_for(topic).each{ |subscriber| subscriber.completed(event) }
+      end
+
+      # Publish a failed event.
+      #
+      # @example Publish a failed event.
+      #   Monitoring.failed(COMMAND, event)
+      #
+      # @param [ String ] topic The event topic.
+      # @param [ Event ] event The event to publish.
+      #
+      # @since 2.1.0
+      def failed(topic, event)
+        subscribers_for(topic).each{ |subscriber| subscriber.failed(event) }
       end
 
       # Subscribe a listener to an event topic.
@@ -50,6 +81,16 @@ module Mongo
         subscribers_for(topic).push(subscriber)
       end
 
+      # Determine if there are any subscribers for a particular event.
+      #
+      # @example Are there subscribers?
+      #   Monitoring.subscribers?(COMMAND)
+      #
+      # @param [ String ] topic The event topic.
+      #
+      # @return [ true, false ] If there are subscribers for the topic.
+      #
+      # @since 2.1.0
       def subscribers?(topic)
         !subscribers_for(topic).empty?
       end

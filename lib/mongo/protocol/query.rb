@@ -66,14 +66,35 @@ module Mongo
       def initialize(database, collection, selector, options = {})
         @namespace   = "#{database}.#{collection}"
         @selector    = selector
+        @options     = options
         @project     = options[:project]
         @skip        = options[:skip]  || 0
         @limit       = options[:limit] || 0
         @flags       = options[:flags] || []
       end
 
-      def event(server)
-        Monitoring::Event::Started.new('query', namespace, selector, server)
+      def payload
+        { name: command_name, database: namespace, arguments: arguments }
+      end
+
+      def command?
+        namespace.include?(Database::COMMAND)
+      end
+
+      def command_name
+        if command?
+          selector.keys.first
+        else
+          'find'
+        end
+      end
+
+      def arguments
+        if command?
+          selector
+        else
+          { filter: selector }.merge(@options)
+        end
       end
 
       # The log message for a query operation.
@@ -118,7 +139,7 @@ module Mongo
       end
 
       def query_type
-        namespace.include?(Database::COMMAND) ? 'COMMAND' : 'QUERY'
+        command? ? 'COMMAND' : 'QUERY'
       end
 
       def formatted_selector

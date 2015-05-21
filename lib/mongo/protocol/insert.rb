@@ -72,6 +72,10 @@ module Mongo
         f.join(" ") % v
       end
 
+      def payload
+        { name: 'insert', database: namespace, arguments: documents }
+      end
+
       private
 
       # The operation code required to specify an Insert message.

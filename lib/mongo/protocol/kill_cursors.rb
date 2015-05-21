@@ -51,6 +51,10 @@ module Mongo
         f.join(" ") % v
       end
 
+      def payload
+        { name: 'killcursors', database: nil, arguments: { cursor_ids: cursor_ids }}
+      end
+
       private
 
       # The operation code required to specify +KillCursors+ message.

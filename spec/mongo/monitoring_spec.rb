@@ -14,11 +14,15 @@ describe Mongo::Monitoring do
         end
 
         def started(event)
-          @logger.info("MONGODB.#{event.name} | #{event.server} | #{event.arguments}")
+          @logger.info("MONGODB.#{event.name} STARTED | #{event.connection} | #{event.arguments}")
         end
 
         def completed(event)
-          @logger.info("MONGODB.#{event.name} | #{event.server} | #{event.reply} | (#{event.duration}s)")
+          @logger.info("MONGODB.#{event.name} COMPLETED | #{event.connection} | (#{event.duration}s)")
+        end
+
+        def failed(event)
+          @logger.info("MONGODB.#{event.name} FAILED | #{event.connection} | #{event.message} | (#{event.duration}s)")
         end
       end
 

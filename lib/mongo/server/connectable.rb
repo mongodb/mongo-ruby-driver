@@ -62,9 +62,9 @@ module Mongo
       #
       # @since 2.0.0
       def dispatch(messages)
-        publish(messages) do |msgs|
+        publish_command(messages) do |msgs|
           write(msgs)
-          msgs.last.replyable? ? read : nil
+          messages.last.replyable? ? read : nil
         end
       end
 
@@ -108,6 +108,10 @@ module Mongo
 
       def read
         ensure_connected{ |socket| Protocol::Reply.deserialize(socket) }
+      end
+
+      def duration(start)
+        Time.now - start
       end
     end
   end

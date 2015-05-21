@@ -16,10 +16,10 @@ module Mongo
   module Monitoring
     module Event
 
-      class Completed
-
-        # @return [ BSON::Document ] reply The command reply.
-        attr_reader :reply
+      # Event that is fired when a command operation fails.
+      #
+      # @since 2.1.0
+      class CommandFailed
 
         # @return [ String ] name The name of the command.
         attr_reader :name
@@ -27,17 +27,31 @@ module Mongo
         # @return [ String ] database The name of the database.
         attr_reader :database
 
-        # @return [ String ] server The server address.
-        attr_reader :server
+        # @return [ String ] connection The server address.
+        attr_reader :connection
 
+        # @return [ String ] message The error message.
+        attr_reader :message
+
+        # @return [ Float ] duration The duration of the event.
         attr_reader :duration
 
-        def initialize(name, database, reply, server, duration)
+        # Create the new event.
+        #
+        # @example Create the event.
+        #   CommandFailed.new('127.0.0.1:27017', 'Authorization failed.', 1.2)
+        #
+        # @param [ String ] connection The server connected to.
+        # @param [ String ] message The error message.
+        # @param [ Float ] duration The event duration, in seconds.
+        #
+        # @since 2.1.0
+        def initialize(name, database, connection, message, duration)
           @name = name
           @database = database
-          @reply = reply
-          @server = server
+          @connection = connection
           @duration = duration
+          @message = message
         end
       end
     end

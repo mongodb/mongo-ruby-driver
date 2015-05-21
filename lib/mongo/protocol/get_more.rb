@@ -60,6 +60,14 @@ module Mongo
         f.join(" ") % v
       end
 
+      def payload
+        {
+          name: 'getmore',
+          database: namespace,
+          arguments: { cursor_id: cursor_id, number_to_return: number_to_return }
+        }
+      end
+
       # Get more messages require replies from the database.
       #
       # @example Does the message require a reply?

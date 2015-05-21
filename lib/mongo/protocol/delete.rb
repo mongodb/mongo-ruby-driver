@@ -64,6 +64,10 @@ module Mongo
         f.join(" ") % v
       end
 
+      def payload
+        { name: 'delete', database: namespace, arguments: selector }
+      end
+
       private
 
       # The operation code required to specify a Delete message.

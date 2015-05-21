@@ -12,5 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/monitoring/event/started'
-require 'mongo/monitoring/event/completed'
+require 'mongo/monitoring/event/command_started'
+require 'mongo/monitoring/event/command_completed'
+require 'mongo/monitoring/event/command_failed'

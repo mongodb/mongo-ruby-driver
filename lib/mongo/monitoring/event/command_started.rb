@@ -16,7 +16,10 @@ module Mongo
   module Monitoring
     module Event
 
-      class Started
+      # Event that is fired when a command operation starts.
+      #
+      # @since 2.1.0
+      class CommandStarted
 
         # @return [ BSON::Document ] arguments The command arguments.
         attr_reader :arguments
@@ -27,14 +30,25 @@ module Mongo
         # @return [ String ] database The name of the database.
         attr_reader :database
 
-        # @return [ String ] server The server address.
-        attr_reader :server
+        # @return [ String ] connection The server address.
+        attr_reader :connection
 
-        def initialize(name, database, arguments, server)
+        # Create the new event.
+        #
+        # @example Create the event.
+        #   CommandCompleted.new('createIndexes', 'users', '127.0.0.1:27017', { name: 1 })
+        #
+        # @param [ String ] name The name of the command.
+        # @param [ String ] database The database name.
+        # @param [ String ] connection The server connected to.
+        # @param [ BSON::Document ] arguments The command arguments.
+        #
+        # @since 2.1.0
+        def initialize(name, database, connection, arguments)
           @name = name
           @database = database
+          @connection = connection
           @arguments = arguments
-          @server = server
         end
       end
     end

@@ -77,6 +77,10 @@ module Mongo
         f.join(" ") % v
       end
 
+      def payload
+        { name: 'update', database: namespace, arguments: { filter: selector, update: update }}
+      end
+
       private
 
       # The operation code required to specify an Update message.

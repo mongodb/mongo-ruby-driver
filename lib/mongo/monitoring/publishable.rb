@@ -20,35 +20,65 @@ module Mongo
     # @since 2.1.0
     module Publishable
 
-      # Publish an event to the global monitoring.
+      # Publish a command event to the global monitoring.
       #
-      # @example Publish an event.
-      #   object.publish(Monitoring::QUERY, { filter: { name: 'test' }})
+      # @example Publish a command event.
+      #   publish_command do |messages|
+      #     # ...
+      #   end
       #
-      # @param [ String ] topic The event topic.
-      # @param [ Hash ] payload The event payload.
+      # @param [ Array<Message> ] messages The messages.
+      #
+      # @return [ Object ] The result of the yield.
       #
       # @since 2.1.0
-      def publish(messages)
+      def publish_command(messages)
         start = Time.now
-        fire_events = Monitoring.subscribers?(Monitoring::COMMAND)
-        if fire_events
-          messages.each do |message|
-            Monitoring.started(Monitoring::COMMAND, message.event(address.to_s))
-          end
-        end
+        payload = messages.first.payload
+        Monitoring.started(Monitoring::COMMAND, command_started(payload))
         begin
           result = yield(messages)
-          if result && fire_events
-            Monitoring.completed(Monitoring::COMMAND, result.event(address.to_s, duration(start)))
-          end
+          Monitoring.completed(
+            Monitoring::COMMAND,
+            command_completed(payload, result ? result.payload : nil, start)
+          )
           result
         rescue Exception => e
+          Monitoring.failed(Monitoring::COMMAND, command_failed(payload, e, start))
           raise e
         end
       end
 
       private
+
+      def command_started(payload)
+        Event::CommandStarted.new(
+          payload[:name],
+          payload[:database],
+          address.to_s,
+          payload[:arguments]
+        )
+      end
+
+      def command_completed(started_payload, completed_payload, start)
+        Event::CommandCompleted.new(
+          started_payload[:name],
+          started_payload[:database],
+          address.to_s,
+          completed_payload ? completed_payload[:reply] : nil,
+          duration(start)
+        )
+      end
+
+      def command_failed(started_payload, exception, start)
+        Event::CommandFailed.new(
+          started_payload[:name],
+          started_payload[:database],
+          address.to_s,
+          exception.message,
+          duration(start)
+        )
+      end
 
       def duration(start)
         Time.now - start
