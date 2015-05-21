@@ -21,8 +21,11 @@ module Mongo
     # @since 2.0.0
     class IPv6
 
-      # @return [ String ] host The original host name.
+      # @return [ String ] host The host.
       attr_reader :host
+
+      # @return [ String ] host_name The original host name.
+      attr_reader :host_name
 
       # @return [ Integer ] port The port.
       attr_reader :port
@@ -52,15 +55,16 @@ module Mongo
       # Initialize the IPv6 resolver.
       #
       # @example Initialize the resolver.
-      #   IPv6.new("::1", 28011, "[::1]:28011")
+      #   IPv6.new("::1", 28011, 'localhost')
       #
       # @param [ String ] host The host.
       # @param [ Integer ] port The port.
       #
       # @since 2.0.0
-      def initialize(host, port)
+      def initialize(host, port, host_name=nil)
         @host = host
         @port = port
+        @host_name = host_name
       end
 
       # Get a socket for the provided address type, given the options.
@@ -76,7 +80,7 @@ module Mongo
       # @since 2.0.0
       def socket(timeout, ssl_options = {})
         unless ssl_options.empty?
-          Socket::SSL.new(host, port, timeout, Socket::PF_INET6, ssl_options)
+          Socket::SSL.new(host, port, host_name, timeout, Socket::PF_INET6, ssl_options)
         else
           Socket::TCP.new(host, port, timeout, Socket::PF_INET6)
         end
