@@ -64,7 +64,7 @@ module Mongo
       def dispatch(messages)
         publish_command(messages) do |msgs|
           write(msgs)
-          messages.last.replyable? ? read : nil
+          msgs.last.replyable? ? read : nil
         end
       end
 
