@@ -38,6 +38,14 @@ module Mongo
         flags.include?(:query_failure)
       end
 
+      # Return the event payload for monitoring.
+      #
+      # @example Return the event payload.
+      #   message.payload
+      #
+      # @return [ Hash ] The event payload.
+      #
+      # @since 2.1.0
       def payload
         { reply: documents }
       end

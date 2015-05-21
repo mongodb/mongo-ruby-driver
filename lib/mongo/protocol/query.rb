@@ -73,6 +73,14 @@ module Mongo
         @flags       = options[:flags] || []
       end
 
+      # Return the event payload for monitoring.
+      #
+      # @example Return the event payload.
+      #   message.payload
+      #
+      # @return [ Hash ] The event payload.
+      #
+      # @since 2.1.0
       def payload
         { name: command_name, database: namespace, arguments: arguments }
       end
@@ -95,27 +103,6 @@ module Mongo
         else
           { filter: selector }.merge(@options)
         end
-      end
-
-      # The log message for a query operation.
-      #
-      # @example Get the log message.
-      #   query.log_message
-      #
-      # @return [ String ] The log message
-      #
-      # @since 2.0.0
-      def log_message
-        fields = []
-        fields << ["%s |", query_type]
-        fields << ["namespace=%s", namespace]
-        fields << ["selector=%s", formatted_selector]
-        fields << ["flags=%s", flags.inspect]
-        fields << ["limit=%s", limit.inspect]
-        fields << ["skip=%s", skip.inspect]
-        fields << ["project=%s", project.inspect]
-        f, v = fields.transpose
-        f.join(" ") % v
       end
 
       # Query messages require replies from the database.

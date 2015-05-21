@@ -42,24 +42,14 @@ module Mongo
         @cursor_id = cursor_id
       end
 
-      # The log message for a get more operation.
+      # Return the event payload for monitoring.
       #
-      # @example Get the log message.
-      #   get_more.log_message
+      # @example Return the event payload.
+      #   message.payload
       #
-      # @return [ String ] The log message
+      # @return [ Hash ] The event payload.
       #
-      # @since 2.0.0
-      def log_message
-        fields = []
-        fields << ["%s |", "GETMORE"]
-        fields << ["namespace=%s", namespace]
-        fields << ["number_to_return=%s", number_to_return]
-        fields << ["cursor_id=%s", cursor_id]
-        f, v = fields.transpose
-        f.join(" ") % v
-      end
-
+      # @since 2.1.0
       def payload
         {
           name: 'getmore',

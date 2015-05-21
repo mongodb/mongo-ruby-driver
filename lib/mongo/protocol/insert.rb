@@ -54,24 +54,14 @@ module Mongo
         @flags = options[:flags] || []
       end
 
-      # The log message for a insert operation.
+      # Return the event payload for monitoring.
       #
-      # @example Get the log message.
-      #   insert.log_message
+      # @example Return the event payload.
+      #   message.payload
       #
-      # @return [ String ] The log message
+      # @return [ Hash ] The event payload.
       #
-      # @since 2.0.0
-      def log_message
-        fields = []
-        fields << ["%s |", "INSERT"]
-        fields << ["namespace=%s", namespace]
-        fields << ["documents=%s", documents.inspect]
-        fields << ["flags=%s", flags.inspect]
-        f, v = fields.transpose
-        f.join(" ") % v
-      end
-
+      # @since 2.1.0
       def payload
         { name: 'insert', database: namespace, arguments: documents }
       end

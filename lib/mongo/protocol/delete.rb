@@ -46,24 +46,14 @@ module Mongo
         @flags     = options[:flags] || []
       end
 
-      # The log message for a delete operation.
+      # Return the event payload for monitoring.
       #
-      # @example Get the log message.
-      #   delete.log_message
+      # @example Return the event payload.
+      #   message.payload
       #
-      # @return [ String ] The log message
+      # @return [ Hash ] The event payload.
       #
-      # @since 2.0.0
-      def log_message
-        fields = []
-        fields << ["%s |", "DELETE"]
-        fields << ["namespace=%s", namespace]
-        fields << ["selector=%s", selector.inspect]
-        fields << ["flags=%s", flags.inspect]
-        f, v = fields.transpose
-        f.join(" ") % v
-      end
-
+      # @since 2.1.0
       def payload
         { name: 'delete', database: namespace, arguments: selector }
       end

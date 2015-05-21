@@ -14,6 +14,7 @@
 
 require 'mongo/monitoring/event'
 require 'mongo/monitoring/publishable'
+require 'mongo/monitoring/command_log_subscriber'
 
 module Mongo
 
@@ -107,3 +108,5 @@ module Mongo
     end
   end
 end
+
+Mongo::Monitoring.subscribe(Mongo::Monitoring::COMMAND, Mongo::Monitoring::CommandLogSubscriber.new)

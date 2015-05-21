@@ -35,22 +35,14 @@ module Mongo
         @id_count   = @cursor_ids.size
       end
 
-      # The log message for a kill cursors operation.
+      # Return the event payload for monitoring.
       #
-      # @example Get the log message.
-      #   kill_cursors.log_message
+      # @example Return the event payload.
+      #   message.payload
       #
-      # @return [ String ] The log message
+      # @return [ Hash ] The event payload.
       #
-      # @since 2.0.0
-      def log_message
-        fields = []
-        fields << ["%s |", "KILLCURSORS"]
-        fields << ["cursor_ids=%s", cursor_ids.inspect]
-        f, v = fields.transpose
-        f.join(" ") % v
-      end
-
+      # @since 2.1.0
       def payload
         { name: 'killcursors', database: nil, arguments: { cursor_ids: cursor_ids }}
       end
