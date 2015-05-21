@@ -143,6 +143,10 @@ module Mongo
     # @option options [ String ] :user The user name.
     # @option options [ Hash ] :write The write concern options. Can be :w =>
     #   Integer, :fsync => Boolean, :j => Boolean.
+    # @option options [ true, false ] :monitor Turns on or off monitoring.
+    #   Defaults to true. If turned off all logging and performance monitoring
+    #   will be disabled, as well as possible 3rd party libraries that use the
+    #   monitoring API to subscribe to events.
     #
     # @since 2.0.0
     def initialize(addresses_or_uri, options = {})
