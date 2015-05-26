@@ -111,8 +111,10 @@ module Mongo
     #   seconds, in the connection pool for a connection to be checked in.
     # @option options [ Float ] :connect_timeout The timeout, in seconds, to
     #   attempt a connection.
-    # @option options [ Symbol ] :read The read preference options. :mode can
-    #   be one of :secondary, :secondary_preferred, :primary,
+    # @option options [ Hash ] :read The read preference options. They consist of a
+    #   mode specified as a symbol, an array of hashes known as tag_sets,
+    #   and two timing options: local_threshold and server_selection_timeout.
+    #   :mode can be one of :secondary, :secondary_preferred, :primary,
     #   :primary_preferred, :nearest.
     # @option options [ Array<Hash, String> ] :roles The list of roles for the
     #   user.
