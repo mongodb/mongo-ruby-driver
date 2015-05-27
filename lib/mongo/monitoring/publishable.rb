@@ -13,12 +13,15 @@
 # limitations under the License.
 
 module Mongo
-  module Monitoring
+  class Monitoring
 
     # Defines behaviour for an object that can publish monitoring events.
     #
     # @since 2.1.0
     module Publishable
+
+      # @return [ Monitoring ] monitoring The monitoring.
+      attr_reader :monitoring
 
       # Publish a command event to the global monitoring.
       #
@@ -33,24 +36,18 @@ module Mongo
       #
       # @since 2.1.0
       def publish_command(messages)
-        if monitoring?
-          start = Time.now
-          payload = messages.first.payload
-          Monitoring.started(Monitoring::COMMAND, command_started(payload))
-        end
+        start = Time.now
+        payload = messages.first.payload
+        monitoring.started(Monitoring::COMMAND, command_started(payload))
         begin
           result = yield(messages)
-          if monitoring?
-            Monitoring.completed(
-              Monitoring::COMMAND,
-              command_completed(payload, result ? result.payload : nil, start)
-            )
-          end
+          monitoring.completed(
+            Monitoring::COMMAND,
+            command_completed(payload, result ? result.payload : nil, start)
+          )
           result
         rescue Exception => e
-          if monitoring?
-            Monitoring.failed(Monitoring::COMMAND, command_failed(payload, e, start))
-          end
+          monitoring.failed(Monitoring::COMMAND, command_failed(payload, e, start))
           raise e
         end
       end
@@ -88,10 +85,6 @@ module Mongo
 
       def duration(start)
         Time.now - start
-      end
-
-      def monitoring?
-        options[:monitor] != false
       end
     end
   end

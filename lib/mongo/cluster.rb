@@ -67,7 +67,7 @@ module Mongo
         if addition_allowed?(address)
           log_debug([ "Adding #{address.to_s} to the cluster." ])
           @update_lock.synchronize { @addresses.push(address) }
-          server = Server.new(address, self, event_listeners, options)
+          server = Server.new(address, self, @monitoring, event_listeners, options)
           @update_lock.synchronize { @servers.push(server) }
           server
         end
@@ -76,16 +76,22 @@ module Mongo
 
     # Instantiate the new cluster.
     #
+    # @api private
+    #
     # @example Instantiate the cluster.
-    #   Mongo::Cluster.new(["127.0.0.1:27017"])
+    #   Mongo::Cluster.new(["127.0.0.1:27017"], monitoring)
+    #
+    # @note Cluster should never be directly instantiated outside of a Client.
     #
     # @param [ Array<String> ] seeds The addresses of the configured servers.
+    # @param [ Monitoring ] monitoring The monitoring.
     # @param [ Hash ] options The options.
     #
     # @since 2.0.0
-    def initialize(seeds, options = {})
+    def initialize(seeds, monitoring, options = {})
       @addresses = []
       @servers = []
+      @monitoring = monitoring
       @event_listeners = Event::Listeners.new
       @options = options.freeze
       @topology = Topology.initial(seeds, options)
@@ -265,7 +271,11 @@ module Mongo
     #
     # @since 2.0.0
     def self.create(client)
-      cluster = Cluster.new(client.cluster.addresses.map(&:to_s), client.options)
+      cluster = Cluster.new(
+        client.cluster.addresses.map(&:to_s),
+        client.instance_variable_get(:@monitoring).dup,
+        client.options
+      )
       client.instance_variable_set(:@cluster, cluster)
     end
 

@@ -13,12 +13,16 @@
 # limitations under the License.
 
 module Mongo
-  module Monitoring
+  class Monitoring
 
     # Subscribes to command events and logs them.
     #
     # @since 2.1.0
     class CommandLogSubscriber
+
+      def ==(other)
+        other.is_a?(CommandLogSubscriber) ? true : false
+      end
 
       # Handle the command started event.
       #

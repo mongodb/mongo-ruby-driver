@@ -13,7 +13,7 @@
 # limitations under the License.
 
 module Mongo
-  module Monitoring
+  class Monitoring
     module Event
 
       # Event that is fired when a command operation starts.

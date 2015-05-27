@@ -85,10 +85,26 @@ module Mongo
         { name: command_name, database: namespace, arguments: arguments }
       end
 
+      # If the message a command?
+      #
+      # @example Is the message a command?
+      #   message.command?
+      #
+      # @return [ true, false ] If the message is a command.
+      #
+      # @since 2.1.0
       def command?
         namespace.include?(Database::COMMAND)
       end
 
+      # Returns the name of the command.
+      #
+      # @example Get the command name.
+      #   message.command_name
+      #
+      # @return [ String ] The name of the command, or 'find' if a query.
+      #
+      # @since 2.1.0
       def command_name
         if command?
           selector.keys.first
@@ -97,6 +113,14 @@ module Mongo
         end
       end
 
+      # Get the command arguments.
+      #
+      # @example Get the command arguments.
+      #   message.arguments
+      #
+      # @return [ Hash ] The command arguments.
+      #
+      # @since 2.1.0
       def arguments
         if command?
           selector
@@ -123,10 +147,6 @@ module Mongo
       # @return [Fixnum] the operation code.
       def op_code
         2004
-      end
-
-      def query_type
-        command? ? 'COMMAND' : 'QUERY'
       end
 
       def formatted_selector

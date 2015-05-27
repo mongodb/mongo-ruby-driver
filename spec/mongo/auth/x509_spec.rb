@@ -6,8 +6,16 @@ describe Mongo::Auth::X509 do
     Mongo::Address.new(DEFAULT_ADDRESS)
   end
 
+  let(:monitoring) do
+    Mongo::Monitoring.new
+  end
+
+  let(:listeners) do
+    Mongo::Event::Listeners.new
+  end
+
   let(:server) do
-    Mongo::Server.new(address, double('cluster'), Mongo::Event::Listeners.new, TEST_OPTIONS)
+    Mongo::Server.new(address, double('cluster'), monitoring, listeners, TEST_OPTIONS)
   end
 
   let(:connection) do

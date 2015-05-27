@@ -6,8 +6,16 @@ describe Mongo::Server::Connection do
     Mongo::Address.new(DEFAULT_ADDRESS)
   end
 
+  let(:monitoring) do
+    Mongo::Monitoring.new
+  end
+
+  let(:listeners) do
+    Mongo::Event::Listeners.new
+  end
+
   let(:server) do
-    Mongo::Server.new(address, double('cluster'), Mongo::Event::Listeners.new, ssl: SSL)
+    Mongo::Server.new(address, double('cluster'), monitoring, listeners, ssl: SSL)
   end
 
   describe '#connect!' do

@@ -39,6 +39,9 @@ module Mongo
     # Delegate command execution to the current database.
     def_delegators :@database, :command
 
+    # Delegate subscription to monitoring.
+    def_delegators :@monitoring, :subscribe, :unsubscribe
+
     # Determine if this client is equivalent to another object.
     #
     # @example Check client equality.
@@ -143,18 +146,18 @@ module Mongo
     # @option options [ String ] :user The user name.
     # @option options [ Hash ] :write The write concern options. Can be :w =>
     #   Integer, :fsync => Boolean, :j => Boolean.
-    # @option options [ true, false ] :monitor Turns on or off monitoring.
-    #   Defaults to true. If turned off all logging and performance monitoring
-    #   will be disabled, as well as possible 3rd party libraries that use the
-    #   monitoring API to subscribe to events.
+    # @option options [ true, false ] :monitoring Initializes a client without
+    #   any default monitoring if false is provided.
     #
     # @since 2.0.0
     def initialize(addresses_or_uri, options = {})
+      @monitoring = Monitoring.new(options)
       if addresses_or_uri.is_a?(::String)
         create_from_uri(addresses_or_uri, options)
       else
         create_from_addresses(addresses_or_uri, options)
       end
+      yield(self) if block_given?
     end
 
     # Get an inspection of the client as a string.
@@ -287,14 +290,14 @@ module Mongo
 
     def create_from_addresses(addresses, opts = {})
       @options = Database::DEFAULT_OPTIONS.merge(opts).freeze
-      @cluster = Cluster.new(addresses, options)
+      @cluster = Cluster.new(addresses, @monitoring, options)
       @database = Database.new(self, options[:database], options)
     end
 
     def create_from_uri(connection_string, opts = {})
       uri = URI.new(connection_string)
       @options = Database::DEFAULT_OPTIONS.merge(uri.client_options.merge(opts)).freeze
-      @cluster = Cluster.new(uri.servers, options)
+      @cluster = Cluster.new(uri.servers, @monitoring, options)
       @database = Database.new(self, options[:database], options)
     end
 

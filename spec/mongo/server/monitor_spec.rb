@@ -6,6 +6,10 @@ describe Mongo::Server::Monitor do
     Mongo::Address.new(DEFAULT_ADDRESS)
   end
 
+  let(:monitoring) do
+    Mongo::Monitoring.new
+  end
+
   let(:listeners) do
     Mongo::Event::Listeners.new
   end
@@ -15,7 +19,7 @@ describe Mongo::Server::Monitor do
     context 'when calling multiple times in succession' do
 
       let(:monitor) do
-        described_class.new(address, listeners, TEST_OPTIONS)
+        described_class.new(address, monitoring, listeners, TEST_OPTIONS)
       end
 
       it 'throttles the scans to minimum 500ms' do
@@ -29,7 +33,7 @@ describe Mongo::Server::Monitor do
     context 'when the ismaster command succeeds' do
 
       let(:monitor) do
-        described_class.new(address, listeners, TEST_OPTIONS)
+        described_class.new(address, monitoring, listeners, TEST_OPTIONS)
       end
 
       before do
@@ -58,7 +62,7 @@ describe Mongo::Server::Monitor do
         end
 
         let(:monitor) do
-          described_class.new(bad_address, listeners)
+          described_class.new(bad_address, monitoring, listeners)
         end
 
         before do
@@ -77,7 +81,7 @@ describe Mongo::Server::Monitor do
         end
 
         let(:monitor) do
-          described_class.new(bad_address, listeners)
+          described_class.new(bad_address, monitoring, listeners)
         end
 
         let(:socket) do
@@ -106,7 +110,7 @@ describe Mongo::Server::Monitor do
     context 'when an option is provided' do
 
       let(:monitor) do
-        described_class.new(address, listeners, :heartbeat_frequency => 5)
+        described_class.new(address, monitoring, listeners, :heartbeat_frequency => 5)
       end
 
       it 'returns the option' do
@@ -117,7 +121,7 @@ describe Mongo::Server::Monitor do
     context 'when no option is provided' do
 
       let(:monitor) do
-        described_class.new(address, listeners)
+        described_class.new(address, monitoring, listeners)
       end
 
       it 'defaults to 5' do
@@ -129,7 +133,7 @@ describe Mongo::Server::Monitor do
   describe '#run!' do
 
     let(:monitor) do
-      described_class.new(address, listeners, :heartbeat_frequency => 1)
+      described_class.new(address, monitoring, listeners, :heartbeat_frequency => 1)
     end
 
     before do

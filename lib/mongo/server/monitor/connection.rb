@@ -62,15 +62,22 @@ module Mongo
 
         # Initialize a new socket connection from the client to the server.
         #
+        # @api private
+        #
         # @example Create the connection.
         #   Connection.new(address)
         #
+        # @note Connection must never be directly instantiated outside of a
+        #   Monitor.
+        #
         # @param [ Mongo::Address ] address The address the connection is for.
+        # @param [ Monitoring ] monitoring The monitoring.
         # @param [ Hash ] options The connection options.
         #
         # @since 2.0.0
-        def initialize(address, options = {})
+        def initialize(address, monitoring, options = {})
           @address = address
+          @monitoring = monitoring
           @options = options.freeze
           @ssl_options = options.reject { |k, v| !k.to_s.start_with?('ssl') }
           @socket = nil

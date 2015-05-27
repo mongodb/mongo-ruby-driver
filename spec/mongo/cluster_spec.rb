@@ -2,8 +2,12 @@ require 'spec_helper'
 
 describe Mongo::Cluster do
 
+  let(:monitoring) do
+    Mongo::Monitoring.new
+  end
+
   let(:cluster) do
-    described_class.new(ADDRESSES, TEST_OPTIONS)
+    described_class.new(ADDRESSES, monitoring, TEST_OPTIONS)
   end
 
   describe '#==' do
@@ -15,7 +19,7 @@ describe Mongo::Cluster do
         context 'when the options are the same' do
 
           let(:other) do
-            described_class.new(ADDRESSES, TEST_OPTIONS)
+            described_class.new(ADDRESSES, monitoring, TEST_OPTIONS)
           end
 
           it 'returns true' do
@@ -26,7 +30,7 @@ describe Mongo::Cluster do
         context 'when the options are not the same' do
 
           let(:other) do
-            described_class.new([ '127.0.0.1:27017' ], TEST_OPTIONS.merge(:replica_set => 'test'))
+            described_class.new([ '127.0.0.1:27017' ], monitoring, TEST_OPTIONS.merge(:replica_set => 'test'))
           end
 
           it 'returns false' do
@@ -38,7 +42,7 @@ describe Mongo::Cluster do
       context 'when the addresses are not the same' do
 
         let(:other) do
-          described_class.new([ '127.0.0.1:27018' ], TEST_OPTIONS)
+          described_class.new([ '127.0.0.1:27018' ], monitoring, TEST_OPTIONS)
         end
 
         it 'returns false' do
@@ -76,8 +80,11 @@ describe Mongo::Cluster do
     context 'when the option is provided' do
 
       let(:cluster) do
-        described_class.new([ '127.0.0.1:27017' ], TEST_OPTIONS.merge(:connect => :replica_set,
-                                                                      :replica_set => 'testing'))
+        described_class.new(
+          [ '127.0.0.1:27017' ],
+          monitoring,
+          TEST_OPTIONS.merge(:connect => :replica_set, :replica_set => 'testing')
+        )
       end
 
       it 'returns the name' do
@@ -88,7 +95,7 @@ describe Mongo::Cluster do
     context 'when the option is not provided' do
 
       let(:cluster) do
-        described_class.new([ '127.0.0.1:27017' ], TEST_OPTIONS.dup.delete_if { |k| k == :replica_set })
+        described_class.new([ '127.0.0.1:27017' ], monitoring, TEST_OPTIONS.dup.delete_if { |k| k == :replica_set })
       end
 
       it 'returns nil' do
@@ -250,12 +257,16 @@ describe Mongo::Cluster do
       Mongo::Address.new('127.0.0.1:27018')
     end
 
+    let(:monitoring) do
+      Mongo::Monitoring.new
+    end
+
     let(:server_a) do
-      Mongo::Server.new(address_a, cluster, Mongo::Event::Listeners.new)
+      Mongo::Server.new(address_a, cluster, monitoring, Mongo::Event::Listeners.new)
     end
 
     let(:server_b) do
-      Mongo::Server.new(address_b, cluster, Mongo::Event::Listeners.new)
+      Mongo::Server.new(address_b, cluster, monitoring, Mongo::Event::Listeners.new)
     end
 
     let(:servers) do
@@ -339,8 +350,12 @@ describe Mongo::Cluster do
       Mongo::Address.new('127.0.0.1:27017')
     end
 
+    let(:monitoring) do
+      Mongo::Monitoring.new
+    end
+
     let(:server) do
-      Mongo::Server.new(address, cluster, listeners)
+      Mongo::Server.new(address, cluster, monitoring, listeners)
     end
 
     let(:servers) do

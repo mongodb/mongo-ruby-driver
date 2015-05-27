@@ -14,6 +14,14 @@ describe 'Server Selection' do
         spec.type.new({})
       end
 
+      let(:monitoring) do
+        Mongo::Monitoring.new
+      end
+
+      let(:listeners) do
+        Mongo::Event::Listeners.new
+      end
+
       let(:cluster) do
         double('cluster').tap do |c|
           allow(c).to receive(:topology).and_return(topology)
@@ -26,7 +34,7 @@ describe 'Server Selection' do
       let(:candidate_servers) do
         spec.candidate_servers.collect do |server|
           address = Mongo::Address.new(server['address'])
-          Mongo::Server.new(address, double('cluster'), Mongo::Event::Listeners.new, TEST_OPTIONS).tap do |s|
+          Mongo::Server.new(address, double('cluster'), monitoring, listeners, TEST_OPTIONS).tap do |s|
             allow(s).to receive(:average_round_trip_time).and_return(server['avg_rtt_ms'])
             allow(s).to receive(:tags).and_return(server['tags'])
             allow(s).to receive(:secondary?).and_return(server['type'] == 'RSSecondary')
@@ -38,7 +46,7 @@ describe 'Server Selection' do
       let(:in_latency_window) do
         spec.in_latency_window.collect do |server|
           address = Mongo::Address.new(server['address'])
-          Mongo::Server.new(address, double('cluster'), Mongo::Event::Listeners.new, TEST_OPTIONS).tap do |s|
+          Mongo::Server.new(address, double('cluster'), monitoring, listeners, TEST_OPTIONS).tap do |s|
             allow(s).to receive(:average_round_trip_time).and_return(server['avg_rtt_ms'])
             allow(s).to receive(:tags).and_return(server['tags'])
           end
@@ -57,18 +65,18 @@ describe 'Server Selection' do
       end
 
       context 'Valid read preference and matching server available', if: spec.server_available? do
-      
+
         it 'Finds all suitable servers in the latency window', if: spec.replica_set? do
-          expect(server_selector.send(:select, cluster.servers)).to eq(in_latency_window)   
+          expect(server_selector.send(:select, cluster.servers)).to eq(in_latency_window)
         end
-      
+
         it 'Finds the most suitable server in the latency window' do
           expect(in_latency_window).to include(server_selector.select_server(cluster))
         end
       end
 
       context 'No matching server available', if: !spec.server_available? do
-      
+
         it 'Raises exception' do
           expect do
             server_selector.select_server(cluster)

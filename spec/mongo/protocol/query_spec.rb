@@ -282,33 +282,4 @@ describe Mongo::Protocol::Query do
       end
     end
   end
-
-  describe '#log_message' do
-
-    context 'when the selector is greater than LOG_STRING_LIMIT characters' do
-
-      let(:selector) do
-        'z'*260
-      end
-
-      it 'Only prints LOG_STRING_LIMIT number of characters' do
-        expect(message.log_message.scan(/z/).length).to eq(Mongo::Protocol::Query::LOG_STRING_LIMIT)
-      end
-    end
-
-    context 'when the selector cannot be inspected' do
-
-      let(:selector) do
-        'invalid string'
-      end
-
-      before do
-        allow(selector).to receive(:inspect).and_raise(ArgumentError)
-      end
-
-      it 'Does not include the selector in the log message' do
-        expect(message.log_message.scan(/invalid string/).length).to eq(0)
-      end
-    end
-  end
 end

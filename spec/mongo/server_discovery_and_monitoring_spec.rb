@@ -34,11 +34,12 @@ describe 'Server Discovery and Monitoring' do
 
           # The constructor keeps the same API, but does not instantiate a
           # monitor and run it.
-          def initialize(address, cluster, event_listeners, options = {})
+          def initialize(address, cluster, monitoring, event_listeners, options = {})
             @address = address
             @cluster = cluster
+            @monitoring = monitoring
             @options = options.freeze
-            @monitor = Monitor.new(address, event_listeners, options)
+            @monitor = Monitor.new(address, monitoring, event_listeners, options)
           end
 
           # Disconnect simply needs to return true since we have no monitor and
@@ -59,11 +60,12 @@ describe 'Server Discovery and Monitoring' do
         class Mongo::Server
 
           # Returns the constructor to its original implementation.
-          def initialize(address, cluster, event_listeners, options = {})
+          def initialize(address, cluster, monitoring, event_listeners, options = {})
             @address = address
             @cluster = cluster
+            @monitoring = monitoring
             @options = options.freeze
-            @monitor = Monitor.new(address, event_listeners, options)
+            @monitor = Monitor.new(address, monitoring, event_listeners, options)
             @monitor.scan!
             @monitor.run!
           end
@@ -96,8 +98,13 @@ describe 'Server Discovery and Monitoring' do
               # For each response in the phase, we need to change that server's
               # description.
               server = find_server(@client, response.address)
-              server = Mongo::Server.new(Mongo::Address.new(response.address), @client.cluster,
-                                         @client.cluster.send(:event_listeners), @client.cluster.options) unless server
+              server = Mongo::Server.new(
+                Mongo::Address.new(response.address),
+                @client.cluster,
+                @client.instance_variable_get(:@monitoring),
+                @client.cluster.send(:event_listeners),
+                @client.cluster.options
+              ) unless server
               monitor = server.instance_variable_get(:@monitor)
               description = monitor.inspector.run(server.description, response.ismaster, 0.5)
               monitor.instance_variable_set(:@description, description)

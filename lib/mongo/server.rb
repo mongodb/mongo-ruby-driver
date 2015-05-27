@@ -40,6 +40,9 @@ module Mongo
     # @return [ Hash ] The options hash.
     attr_reader :options
 
+    # @return [ Monitoring ] monitoring The monitoring.
+    attr_reader :monitoring
+
     # Get the description from the monitor and scan on monitor.
     def_delegators :monitor, :description, :scan!
 
@@ -107,20 +110,26 @@ module Mongo
     # Instantiate a new server object. Will start the background refresh and
     # subscribe to the appropriate events.
     #
+    # @api private
+    #
     # @example Initialize the server.
-    #   Mongo::Server.new('127.0.0.1:27017', cluster, listeners)
+    #   Mongo::Server.new('127.0.0.1:27017', cluster, monitoring, listeners)
+    #
+    # @note Server must never be directly instantiated outside of a Cluster.
     #
     # @param [ Address ] address The host:port address to connect to.
     # @param [ Cluster ] cluster  The cluster the server belongs to.
+    # @param [ Monitoring ] monitoring The monitoring.
     # @param [ Event::Listeners ] event_listeners The event listeners.
     # @param [ Hash ] options The server options.
     #
     # @since 2.0.0
-    def initialize(address, cluster, event_listeners, options = {})
+    def initialize(address, cluster, monitoring, event_listeners, options = {})
       @address = address
       @cluster = cluster
+      @monitoring = monitoring
       @options = options.freeze
-      @monitor = Monitor.new(address, event_listeners, options)
+      @monitor = Monitor.new(address, monitoring, event_listeners, options)
       monitor.scan!
       monitor.run!
     end
