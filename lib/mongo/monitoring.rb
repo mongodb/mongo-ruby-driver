@@ -171,6 +171,10 @@ module Mongo
 
     private
 
+    def initialize_copy(original)
+      @subscribers = original.subscribers.dup
+    end
+
     def subscribers_for(topic)
       subscribers[topic] ||= []
     end

@@ -4,6 +4,36 @@ describe Mongo::Monitoring do
 
   describe '#dup' do
 
+    let(:monitoring) do
+      described_class.new
+    end
+
+    let(:copy) do
+      monitoring.dup
+    end
+
+    it 'dups the subscribers' do
+      expect(monitoring.subscribers).to_not equal(copy.subscribers)
+    end
+
+    it 'keeps the same subscriber instances' do
+      expect(monitoring.subscribers).to eq(copy.subscribers)
+    end
+
+    context 'when adding to the copy' do
+
+      let(:subscriber) do
+        double('subscriber')
+      end
+
+      before do
+        copy.subscribe('topic', subscriber)
+      end
+
+      it 'does not modify the original subscribers' do
+        expect(monitoring.subscribers).to_not eq(copy.subscribers)
+      end
+    end
   end
 
   describe '#initialize' do
