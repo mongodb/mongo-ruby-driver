@@ -169,18 +169,6 @@ module Mongo
       !subscribers_for(topic).empty?
     end
 
-    # Unsubscribe from the topic.
-    #
-    # @example Unsubscribe from the topic.
-    #   monitoring.unsubscribe(COMMAND)
-    #
-    # @param [ String ] topic The topic to unsubscribe from.
-    #
-    # @since 2.1.0
-    def unsubscribe(topic)
-      subscribers_for(topic).clear
-    end
-
     private
 
     def subscribers_for(topic)
