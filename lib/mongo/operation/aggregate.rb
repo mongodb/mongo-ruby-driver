@@ -43,6 +43,7 @@ module Mongo
       include Executable
       include Specifiable
       include Limited
+      include ReadPreferrable
 
       # The need primary error message.
       #
@@ -62,7 +63,7 @@ module Mongo
       #
       # @since 2.0.0
       def execute(context)
-        unless context.standalone? || context.mongos? || context.primary? || secondary_ok?
+        unless valid_context?(context)
           raise Error::NeedPrimaryServer.new(ERROR_MESSAGE)
         end
         execute_message(context)
@@ -76,24 +77,30 @@ module Mongo
         end
       end
 
-      # Whether this operation can be executed on a replica set secondary server.
-      # The aggregate operation may not be executed on a secondary if the user has specified
-      # an output collection to which the results will be written.
-      #
-      # @return [ true, false ] Whether the operation can be executed on a secondary.
-      #
-      # @since 2.0.0
+      def valid_context?(context)
+        context.standalone? || context.mongos? || context.primary? || secondary_ok?
+      end
+
       def secondary_ok?
         selector[:pipeline].none? { |op| op.key?('$out') || op.key?(:$out) }
       end
 
-      def filter(context)
+      def query_coll
+        Database::COMMAND
+      end
+
+      def filter_selector(context)
         return selector if context.features.write_command_enabled?
         selector.reject{ |option, value| option.to_s == 'cursor' }
       end
 
-      def message(context)
-        Protocol::Query.new(db_name, Database::COMMAND, filter(context), options)
+      def update_selector(context)
+        if context.mongos? && read_pref = read.to_mongos
+          sel = selector[:$query] ? filter_selector(context) : { :$query => filter_selector(context) }
+          sel.merge(:$readPreference => read_pref)
+        else
+          filter_selector(context)
+        end
       end
     end
   end

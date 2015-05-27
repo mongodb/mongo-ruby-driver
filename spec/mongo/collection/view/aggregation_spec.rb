@@ -145,4 +145,30 @@ describe Mongo::Collection::View::Aggregation do
       expect(aggregation.options).not_to be(options)
     end
   end
+
+  describe '#aggregate_spec' do
+
+    context 'when the collection has a read preference' do
+
+      let(:read_preference) do
+        Mongo::ServerSelector.get(mode: :secondary)
+      end
+
+      it 'includes the read preference in the spec' do
+        allow(authorized_collection).to receive(:read_preference).and_return(read_preference)
+        expect(aggregation.send(:aggregate_spec)[:read]).to eq(read_preference)
+      end
+    end
+
+    context 'when allow_disk_use is set' do
+
+      let(:aggregation) do
+        described_class.new(view, pipeline, options).allow_disk_use(true)
+      end
+
+      it 'includes the option in the spec' do
+        expect(aggregation.send(:aggregate_spec)[:selector][:allowDiskUse]).to eq(true)
+      end
+    end
+  end
 end
