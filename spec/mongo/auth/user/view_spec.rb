@@ -36,6 +36,48 @@ describe Mongo::Auth::User::View do
     end
   end
 
+  describe '#update' do
+
+    before do
+      view.create(
+          'durran',
+          password: 'password', roles: [ Mongo::Auth::Roles::READ_WRITE ]
+      )
+    end
+
+    after do
+      view.remove('durran')
+    end
+
+    context 'when a user password is updated' do
+
+      let!(:response) do
+        view.update(
+            'durran',
+            password: '123', roles: [ Mongo::Auth::Roles::READ_WRITE ]
+        )
+      end
+
+      it 'updates the password' do
+        expect(response).to be_successful
+      end
+    end
+
+    context 'when the roles of a user are updated' do
+
+      let!(:response) do
+        view.update(
+            'durran',
+            password: 'password', roles: [ Mongo::Auth::Roles::READ ]
+        )
+      end
+
+      it 'updates the roles' do
+        expect(response).to be_successful
+      end
+    end
+  end
+
   describe '#remove' do
 
     context 'when user removal was successful' do
