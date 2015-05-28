@@ -120,7 +120,7 @@ module Mongo
         #
         # @param [ Hash ] object The scope object.
         #
-        # @return [ MapReduce, Hash ] The new MapReduce operation or thevalue
+        # @return [ MapReduce, Hash ] The new MapReduce operation or the value
         #   of the scope.
         #
         # @since 2.0.0
@@ -128,15 +128,32 @@ module Mongo
           configure(:scope, object)
         end
 
+        # Whether to include the timing information in the result.
+        #
+        # @example Set the verbose value.
+        #   map_reduce.verbose(false)
+        #
+        # @param [ true, false ] value Whether to include timing information
+        #   in the result.
+        #
+        # @return [ MapReduce, Hash ] The new MapReduce operation or the value
+        #   of the verbose option.
+        #
+        # @since 2.0.5
+        def verbose(value = nil)
+          configure(:verbose, value)
+        end
+
         private
 
         def inline?
-          out.nil? || out == { inline: 1 }
+          out.nil? || out == { inline: 1 } || out == { 'inline' => 1 }
         end
 
         def map_reduce_spec
           {
             :db_name => database.name,
+            :read => read,
             :selector => {
               :mapreduce => collection.name,
               :map => map,
