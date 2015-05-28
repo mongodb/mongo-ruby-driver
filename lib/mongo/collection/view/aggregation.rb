@@ -69,6 +69,18 @@ module Mongo
           @options = options.dup
         end
 
+        # Get the explain plan for the aggregation.
+        #
+        # @example Get the explain plan for the aggregation.
+        #   aggregation.explain
+        #
+        # @return [ Hash ] The explain plan.
+        #
+        # @since 2.0.0
+        def explain
+          self.class.new(view, pipeline, options.merge(explain_options)).first
+        end
+
         private
 
         def aggregate_spec
