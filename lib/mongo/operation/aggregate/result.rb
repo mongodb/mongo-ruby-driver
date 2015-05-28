@@ -31,6 +31,16 @@ module Mongo
         # @since 2.0.0
         CURSOR_ID = 'id'.freeze
 
+        # The field name for the aggregation explain information.
+        #
+        # @since 2.0.5
+        EXPLAIN = 'stages'.freeze
+
+        # The legacy field name for the aggregation explain information.
+        #
+        # @since 2.0.5
+        EXPLAIN_LEGACY = 'serverPipeline'.freeze
+
         # The field name for the first batch of a cursor.
         #
         # @since 2.0.0
@@ -70,10 +80,15 @@ module Mongo
         #
         # @since 2.0.0
         def documents
-          reply.documents[0][RESULT] || cursor_document[FIRST_BATCH]
+          reply.documents[0][RESULT] || explain_document ||
+              cursor_document[FIRST_BATCH]
         end
 
         private
+
+        def explain_document
+          first_document[EXPLAIN] || first_document[EXPLAIN_LEGACY]
+        end
 
         def cursor_document
           @cursor_document ||= reply.documents[0][CURSOR]

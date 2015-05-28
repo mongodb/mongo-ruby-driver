@@ -39,7 +39,7 @@ describe Mongo::Collection::View::Aggregation do
 
   describe '#each' do
 
-     let(:documents) do
+    let(:documents) do
       [
         { city: "Berlin", pop: 18913, neighborhood: "Kreuzberg" },
         { city: "Berlin", pop: 84143, neighborhood: "Mitte" },
@@ -143,6 +143,13 @@ describe Mongo::Collection::View::Aggregation do
 
     it 'dups the options' do
       expect(aggregation.options).not_to be(options)
+    end
+  end
+
+  describe '#explain' do
+
+    it 'executes an explain' do
+      expect(aggregation.explain).to_not be_empty
     end
   end
 
