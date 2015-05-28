@@ -99,12 +99,13 @@ module Mongo
       #   all objects.
       #
       # @param [ Array<Message> ] messages The messages to dispatch.
+      # @param [ Integer ] operation_id The operation id to link messages.
       #
       # @return [ Protocol::Reply ] The reply if needed.
       #
       # @since 2.0.0
-      def dispatch(messages)
-        publish_command(messages) do |msgs|
+      def dispatch(messages, operation_id = nil)
+        publish_command(messages, operation_id) do |msgs|
           write(msgs)
           msgs.last.replyable? ? read : nil
         end

@@ -35,12 +35,12 @@ module Mongo
       # @return [ Object ] The result of the yield.
       #
       # @since 2.1.0
-      def publish_command(messages)
+      def publish_command(messages, operation_id = Monitoring.next_operation_id)
         start = Time.now
         payload = messages.first.payload
         monitoring.started(
           Monitoring::COMMAND,
-          Event::CommandStarted.generate(address, 1, payload)
+          Event::CommandStarted.generate(address, operation_id, payload)
         )
         begin
           result = yield(messages)
@@ -48,7 +48,7 @@ module Mongo
             Monitoring::COMMAND,
             Event::CommandCompleted.generate(
               address,
-              1,
+              operation_id,
               payload,
               result ? result.payload : nil,
               duration(start)
@@ -58,7 +58,7 @@ module Mongo
         rescue Exception => e
           monitoring.failed(
             Monitoring::COMMAND,
-            Event::CommandFailed.generate(address, 1, payload, e.message, duration(start))
+            Event::CommandFailed.generate(address, operation_id, payload, e.message, duration(start))
           )
           raise e
         end

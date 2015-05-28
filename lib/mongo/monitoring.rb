@@ -28,6 +28,23 @@ module Mongo
     # @since 2.1.0
     COMMAND = 'Command'.freeze
 
+    @@operation_id = 0
+    @@operation_id_lock = Mutex.new
+
+    # Used for generating unique operation ids to link events together.
+    #
+    # @example Get the next operation id.
+    #   Monitoring.next_operation_id
+    #
+    # @return [ Integer ] The next operation id.
+    #
+    # @since 2.1.0
+    def self.next_operation_id
+      @@operation_id_lock.synchronize do
+        @@operation_id += 1
+      end
+    end
+
     # Provides behaviour around global subscribers.
     #
     # @since 2.1.0
