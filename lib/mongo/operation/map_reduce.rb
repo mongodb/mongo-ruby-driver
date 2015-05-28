@@ -63,7 +63,7 @@ module Mongo
       #
       # @since 2.0.0
       def execute(context)
-        unless context.standalone? || context.mongos? || context.primary? || secondary_ok?
+        unless valid_context?(context)
           raise Error::NeedPrimaryServer.new(ERROR_MESSAGE)
         end
         execute_message(context)
@@ -71,21 +71,19 @@ module Mongo
 
       private
 
+      def valid_context?(context)
+        context.standalone? || context.mongos? || context.primary? || secondary_ok?
+      end
+
       def execute_message(context)
         context.with_connection do |connection|
           Result.new(connection.dispatch([ message(context) ])).validate!
         end
       end
 
-      # Whether this operation can be executed on a replica set secondary server.
-      # The map reduce operation may not be executed on a secondary if the user has specified
-      # an output collection to which the results will be written.
-      #
-      # @return [ true, false ] Whether the operation can be executed on a secondary.
-      #
-      # @since 2.0.0
       def secondary_ok?
-        selector[:out] == 'inline'
+        selector[:out].respond_to?(:keys) &&
+          selector[:out].keys.first.to_s.downcase == 'inline'
       end
 
       def query_coll

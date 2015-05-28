@@ -150,6 +150,10 @@ describe Mongo::Collection::View::MapReduce do
             expect(document[:_id]).to eq('Berlin')
           end
         end
+
+        it 'includes the selector in the operation spec' do
+          expect(map_reduce.send(:map_reduce_spec)[:selector][:query]).to eq(selector)
+        end
       end
 
       context 'when the selector is advanced' do
@@ -162,6 +166,10 @@ describe Mongo::Collection::View::MapReduce do
           map_reduce.each do |document|
             expect(document[:_id]).to eq('Berlin')
           end
+        end
+
+        it 'includes the selector in the operation spec' do
+          expect(map_reduce.send(:map_reduce_spec)[:selector][:query]).to eq(selector[:$query])
         end
       end
     end
@@ -197,6 +205,10 @@ describe Mongo::Collection::View::MapReduce do
     it 'sets the finalize function' do
       expect(new_map_reduce.finalize).to eq(finalize)
     end
+
+    it 'includes the finalize function in the operation spec' do
+      expect(new_map_reduce.send(:map_reduce_spec)[:selector][:finalize]).to eq(finalize)
+    end
   end
 
   describe '#js_mode' do
@@ -207,6 +219,10 @@ describe Mongo::Collection::View::MapReduce do
 
     it 'sets the js mode value' do
       expect(new_map_reduce.js_mode).to be true
+    end
+
+    it 'includes the js mode value in the operation spec' do
+      expect(new_map_reduce.send(:map_reduce_spec)[:selector][:jsMode]).to be(true)
     end
   end
 
@@ -223,6 +239,17 @@ describe Mongo::Collection::View::MapReduce do
     it 'sets the out value' do
       expect(new_map_reduce.out).to eq(location)
     end
+
+    it 'includes the out value in the operation spec' do
+      expect(new_map_reduce.send(:map_reduce_spec)[:selector][:out]).to be(location)
+    end
+
+    context 'when out is not defined' do
+
+      it 'defaults to inline' do
+        expect(map_reduce.send(:map_reduce_spec)[:selector][:out]).to eq(inline: 1)
+      end
+    end
   end
 
   describe '#scope' do
@@ -237,6 +264,71 @@ describe Mongo::Collection::View::MapReduce do
 
     it 'sets the scope object' do
       expect(new_map_reduce.scope).to eq(object)
+    end
+
+    it 'includes the scope object in the operation spec' do
+      expect(new_map_reduce.send(:map_reduce_spec)[:selector][:scope]).to be(object)
+    end
+  end
+
+  describe '#verbose' do
+
+    let(:verbose) do
+      false
+    end
+
+    let(:new_map_reduce) do
+      map_reduce.verbose(verbose)
+    end
+
+    it 'sets the verbose value' do
+      expect(new_map_reduce.verbose).to be(false)
+    end
+
+    it 'includes the verbose option in the operation spec' do
+      expect(new_map_reduce.send(:map_reduce_spec)[:selector][:verbose]).to eq(verbose)
+    end
+  end
+
+  context 'when limit is set on the view' do
+
+    let(:limit) do
+      3
+    end
+
+    let(:view_options) do
+      { limit: limit }
+    end
+
+    it 'includes the limit in the operation spec' do
+      expect(map_reduce.send(:map_reduce_spec)[:selector][:limit]).to be(limit)
+    end
+  end
+
+  context 'when sort is set on the view' do
+
+    let(:sort) do
+      { name: -1 }
+    end
+
+    let(:view_options) do
+      { sort: sort }
+    end
+
+    it 'includes the sort object in the operation spec' do
+      expect(map_reduce.send(:map_reduce_spec)[:selector][:sort]).to be(sort)
+    end
+  end
+
+  context 'when the collection has a read preference' do
+
+    let(:read_preference) do
+      Mongo::ServerSelector.get(mode: :secondary)
+    end
+
+    it 'includes the read preference in the spec' do
+      allow(authorized_collection).to receive(:read_preference).and_return(read_preference)
+      expect(map_reduce.send(:map_reduce_spec)[:read]).to eq(read_preference)
     end
   end
 end
