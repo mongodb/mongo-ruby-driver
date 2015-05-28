@@ -83,7 +83,12 @@ module Mongo
       #
       # @since 2.1.0
       def payload
-        { command_name: command_name, database: @database, command_args: arguments }
+        {
+          command_name: command_name,
+          database: @database,
+          command_args: arguments,
+          request_id: request_id
+        }
       end
 
       # If the message a command?

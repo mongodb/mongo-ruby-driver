@@ -55,7 +55,8 @@ module Mongo
         {
           command_name: 'getmore',
           database: @database,
-          command_args: { cursor_id: cursor_id, number_to_return: number_to_return }
+          command_args: { cursor_id: cursor_id, number_to_return: number_to_return },
+          request_id: request_id
         }
       end
 
