@@ -37,6 +37,7 @@ module Mongo
       # @param number_to_return [Integer] The number of documents to return.
       # @param cursor_id [Integer] The cursor id returned in a reply.
       def initialize(database, collection, number_to_return, cursor_id)
+        @database = database
         @namespace = "#{database}.#{collection}"
         @number_to_return = number_to_return
         @cursor_id = cursor_id
@@ -52,9 +53,9 @@ module Mongo
       # @since 2.1.0
       def payload
         {
-          name: 'getmore',
-          database: namespace,
-          arguments: { cursor_id: cursor_id, number_to_return: number_to_return }
+          command_name: 'getmore',
+          database: @database,
+          command_args: { cursor_id: cursor_id, number_to_return: number_to_return }
         }
       end
 

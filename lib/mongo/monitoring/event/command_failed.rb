@@ -21,37 +21,74 @@ module Mongo
       # @since 2.1.0
       class CommandFailed
 
-        # @return [ String ] name The name of the command.
-        attr_reader :name
+        # @return [ Server::Address ] address The server address.
+        attr_reader :address
+
+        # @return [ String ] command_name The name of the command.
+        attr_reader :command_name
 
         # @return [ String ] database The name of the database.
         attr_reader :database
 
-        # @return [ String ] connection The server address.
-        attr_reader :connection
+        # @return [ Float ] duration The duration of the command in seconds.
+        attr_reader :duration
 
         # @return [ String ] message The error message.
         attr_reader :message
 
-        # @return [ Float ] duration The duration of the event.
-        attr_reader :duration
+        # @return [ Integer ] operation_id The operation id.
+        attr_reader :operation_id
+
+        # @return [ Integer ] request_id The request id.
+        attr_reader :request_id
 
         # Create the new event.
         #
         # @example Create the event.
-        #   CommandFailed.new('127.0.0.1:27017', 'Authorization failed.', 1.2)
         #
-        # @param [ String ] connection The server connected to.
+        # @param [ String ] command_name The name of the command.
+        # @param [ String ] database The database name.
+        # @param [ Server::Address ] address The server address.
+        # @param [ Integer ] request_id The request id.
+        # @param [ Integer ] operation_id The operation id.
         # @param [ String ] message The error message.
-        # @param [ Float ] duration The event duration, in seconds.
+        # @param [ Float ] duration The duration the command took in seconds.
         #
         # @since 2.1.0
-        def initialize(name, database, connection, message, duration)
-          @name = name
+        def initialize(command_name, database, address, request_id, operation_id, message, duration)
+          @command_name = command_name
           @database = database
-          @connection = connection
-          @duration = duration
+          @address = address
+          @request_id = request_id
+          @operation_id = operation_id
           @message = message
+          @duration = duration
+        end
+
+        # Create the event from a wire protocol message payload.
+        #
+        # @example Create the event.
+        #   CommandFailed.generate(address, 1, payload, duration)
+        #
+        # @param [ Server::Address ] address The server address.
+        # @param [ Integer ] operation_id The operation id.
+        # @param [ Hash ] payload The message payload.
+        # @param [ String ] message The error message.
+        # @param [ Float ] duration The duration of the command in seconds.
+        #
+        # @return [ CommandFailed ] The event.
+        #
+        # @since 2.1.0
+        def self.generate(address, operation_id, payload, message, duration)
+          new(
+            payload[:command_name],
+            payload[:database],
+            address,
+            payload[:request_id],
+            operation_id,
+            message,
+            duration
+          )
         end
       end
     end

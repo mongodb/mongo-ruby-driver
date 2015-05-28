@@ -94,21 +94,20 @@ module Mongo
       # @api private
       #
       # @example Create the server monitor.
-      #   Mongo::Server::Monitor.new(address, monitoring, listeners)
+      #   Mongo::Server::Monitor.new(address, listeners)
       #
       # @note Monitor must never be directly instantiated outside of a Server.
       #
       # @param [ Address ] address The address to monitor.
-      # @param [ Monitoring ] monitoring The monitoring.
       # @param [ Event::Listeners ] listeners The event listeners.
       # @param [ Hash ] options The options.
       #
       # @since 2.0.0
-      def initialize(address, monitoring, listeners, options = {})
+      def initialize(address, listeners, options = {})
         @description = Description.new(address, {})
         @inspector = Description::Inspector.new(listeners)
         @options = options.freeze
-        @connection = Connection.new(address, monitoring, options)
+        @connection = Connection.new(address, options)
         @last_round_trip_time = nil
         @mutex = Mutex.new
       end

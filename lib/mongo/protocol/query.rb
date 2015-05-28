@@ -64,6 +64,7 @@ module Mongo
       #   Supported flags: +:tailable_cursor+, +:slave_ok+, +:oplog_replay+,
       #   +:no_cursor_timeout+, +:await_data+, +:exhaust+, +:partial+
       def initialize(database, collection, selector, options = {})
+        @database    = database
         @namespace   = "#{database}.#{collection}"
         @selector    = selector
         @options     = options
@@ -82,7 +83,7 @@ module Mongo
       #
       # @since 2.1.0
       def payload
-        { name: command_name, database: namespace, arguments: arguments }
+        { command_name: command_name, database: @database, command_args: arguments }
       end
 
       # If the message a command?

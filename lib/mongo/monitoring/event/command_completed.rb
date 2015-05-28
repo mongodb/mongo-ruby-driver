@@ -21,39 +21,86 @@ module Mongo
       # @since 2.1.0
       class CommandCompleted
 
-        # @return [ BSON::Document ] reply The command reply.
-        attr_reader :reply
+        # @return [ Server::Address ] address The server address.
+        attr_reader :address
 
-        # @return [ String ] name The name of the command.
-        attr_reader :name
+        # @return [ String ] command_name The name of the command.
+        attr_reader :command_name
+
+        # @return [ BSON::Document ] command_reply The command reply.
+        attr_reader :command_reply
 
         # @return [ String ] database The name of the database.
         attr_reader :database
 
-        # @return [ String ] connection The server address.
-        attr_reader :connection
-
         # @return [ Float ] duration The duration of the event.
         attr_reader :duration
+
+        # @return [ BSON::Document ] metadata The command metadata.
+        attr_reader :metadata
+
+        # @return [ Integer ] operation_id The operation id.
+        attr_reader :operation_id
+
+        # @return [ Array<BSON::Document ] output_docs The output documents.
+        attr_reader :output_docs
+
+        # @return [ Integer ] request_id The request id.
+        attr_reader :request_id
 
         # Create the new event.
         #
         # @example Create the event.
-        #   CommandCompleted.new('createIndexes', 'users', '127.0.0.1:27017', reply, 0.14)
         #
-        # @param [ String ] name The name of the command.
+        # @param [ String ] command_name The name of the command.
         # @param [ String ] database The database name.
-        # @param [ String ] connection The server connected to.
-        # @param [ BSON::Document ] reply The command reply.
-        # @param [ Float ] duration The event duration, in seconds.
+        # @param [ Server::Address ] address The server address.
+        # @param [ Integer ] request_id The request id.
+        # @param [ Integer ] operation_id The operation id.
+        # @param [ BSON::Document ] command_reply The command reply.
+        # @param [ BSON::Document ] metadata The command metadata.
+        # @param [ Array<BSON::Document> ] output_docs The output documents.
+        # @param [ Float ] duration The duration the command took in seconds.
         #
         # @since 2.1.0
-        def initialize(name, database, connection, reply, duration)
-          @name = name
+        def initialize(command_name, database, address, request_id, operation_id, command_reply, metadata, output_docs, duration)
+          @command_name = command_name
           @database = database
-          @connection = connection
-          @reply = reply
+          @address = address
+          @request_id = request_id
+          @operation_id = operation_id
+          @command_reply = command_reply
+          @metadata = metadata
+          @output_docs = output_docs
           @duration = duration
+        end
+
+        # Create the event from a wire protocol message payload.
+        #
+        # @example Create the event.
+        #   CommandStarted.generate(address, 1, command_payload, reply_payload, 0.5)
+        #
+        # @param [ Server::Address ] address The server address.
+        # @param [ Integer ] operation_id The operation id.
+        # @param [ Hash ] command_payload The command message payload.
+        # @param [ Hash ] reply_payload The reply message payload.
+        # @param [ Float ] duration The duration of the command in seconds.
+        #
+        # @return [ CommandCompleted ] The event.
+        #
+        # @since 2.1.0
+        def self.generate(address, operation_id, command_payload, reply_payload, duration)
+          new(
+            command_payload[:command_name],
+            command_payload[:database],
+            address,
+            command_payload[:request_id],
+            operation_id,
+            reply_payload ? reply_payload[:command_reply] : nil,
+            reply_payload ? reply_payload[:metadata] : nil,
+            reply_payload ? reply_payload[:output_docs] : nil,
+            duration
+          )
         end
       end
     end

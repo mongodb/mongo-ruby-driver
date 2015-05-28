@@ -47,7 +47,7 @@ module Mongo
       #
       # @since 2.1.0
       def payload
-        { reply: documents }
+        { command_reply: documents }
       end
 
       private

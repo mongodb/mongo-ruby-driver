@@ -19,11 +19,11 @@ describe 'Server Selection moving average round trip time calculation' do
           # @since 2.0.0
           class Monitor
 
-            def initialize(address, monitoring, listeners, options = {})
+            def initialize(address, listeners, options = {})
               @description = Mongo::Server::Description.new(address, {})
               @inspector = Mongo::Server::Description::Inspector.new(listeners)
               @options = options.freeze
-              @connection = Connection.new(address, monitoring, options)
+              @connection = Connection.new(address, options)
               @last_round_trip_time = options[:avg_rtt_ms]
               @mutex = Mutex.new
             end
@@ -61,11 +61,11 @@ describe 'Server Selection moving average round trip time calculation' do
             # @param [ Hash ] options The options.
             #
             # @since 2.0.0
-            def initialize(address, monitoring, listeners, options = {})
+            def initialize(address, listeners, options = {})
               @description = Description.new(address, {})
               @inspector = Description::Inspector.new(listeners)
               @options = options.freeze
-              @connection = Connection.new(address, monitoring, options)
+              @connection = Connection.new(address, options)
               @last_round_trip_time = nil
               @mutex = Mutex.new
             end
@@ -87,12 +87,8 @@ describe 'Server Selection moving average round trip time calculation' do
         Mongo::Address.new('127.0.0.1:27017')
       end
 
-      let(:monitoring) do
-        Mongo::Monitoring.new
-      end
-
       let(:monitor) do
-        Mongo::Server::Monitor.new(address, monitoring, Mongo::Event::Listeners.new,
+        Mongo::Server::Monitor.new(address, Mongo::Event::Listeners.new,
                                    TEST_OPTIONS.merge(avg_rtt_ms: spec.avg_rtt_ms))
       end
 

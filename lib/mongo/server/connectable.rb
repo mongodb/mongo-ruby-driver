@@ -19,7 +19,6 @@ module Mongo
     #
     # @since 2.0.0
     module Connectable
-      include Monitoring::Publishable
 
       # The default time in seconds to timeout a connection attempt.
       #
@@ -45,27 +44,6 @@ module Mongo
       # @since 2.0.0
       def connected?
         !!@socket && @socket.alive?
-      end
-
-      # Dispatch the provided messages to the connection. If the last message
-      # requires a response a reply will be returned.
-      #
-      # @example Dispatch the messages.
-      #   connection.dispatch([ insert, command ])
-      #
-      # @note This method is named dispatch since 'send' is a core Ruby method on
-      #   all objects.
-      #
-      # @param [ Array<Message> ] messages The messages to dispatch.
-      #
-      # @return [ Protocol::Reply ] The reply if needed.
-      #
-      # @since 2.0.0
-      def dispatch(messages)
-        publish_command(messages) do |msgs|
-          write(msgs)
-          msgs.last.replyable? ? read : nil
-        end
       end
 
       # Get the connection timeout.

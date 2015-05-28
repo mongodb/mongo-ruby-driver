@@ -60,6 +60,25 @@ module Mongo
           true
         end
 
+        # Dispatch the provided messages to the connection. If the last message
+        # requires a response a reply will be returned.
+        #
+        # @example Dispatch the messages.
+        #   connection.dispatch([ insert, command ])
+        #
+        # @note This method is named dispatch since 'send' is a core Ruby method on
+        #   all objects.
+        #
+        # @param [ Array<Message> ] messages The messages to dispatch.
+        #
+        # @return [ Protocol::Reply ] The reply if needed.
+        #
+        # @since 2.0.0
+        def dispatch(messages)
+          write(messages)
+          messages.last.replyable? ? read : nil
+        end
+
         # Initialize a new socket connection from the client to the server.
         #
         # @api private
@@ -71,13 +90,11 @@ module Mongo
         #   Monitor.
         #
         # @param [ Mongo::Address ] address The address the connection is for.
-        # @param [ Monitoring ] monitoring The monitoring.
         # @param [ Hash ] options The connection options.
         #
         # @since 2.0.0
-        def initialize(address, monitoring, options = {})
+        def initialize(address, options = {})
           @address = address
-          @monitoring = monitoring
           @options = options.freeze
           @ssl_options = options.reject { |k, v| !k.to_s.start_with?('ssl') }
           @socket = nil

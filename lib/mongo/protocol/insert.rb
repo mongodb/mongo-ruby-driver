@@ -49,6 +49,7 @@ module Mongo
       #
       #   Supported flags: +:continue_on_error+
       def initialize(database, collection, documents, options = {})
+        @database = database
         @namespace = "#{database}.#{collection}"
         @documents = documents
         @flags = options[:flags] || []
@@ -63,7 +64,7 @@ module Mongo
       #
       # @since 2.1.0
       def payload
-        { name: 'insert', database: namespace, arguments: documents }
+        { command_name: 'insert', database: @database, command_args: documents }
       end
 
       private

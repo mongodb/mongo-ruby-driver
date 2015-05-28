@@ -20,9 +20,11 @@ module Mongo
     # @since 2.1.0
     class CommandLogSubscriber
 
-      def ==(other)
-        other.is_a?(CommandLogSubscriber) ? true : false
-      end
+      # Constant for the max number of characters to print when inspecting
+      # a query field.
+      #
+      # @since 2.1.0
+      LOG_STRING_LIMIT = 250
 
       # Handle the command started event.
       #
@@ -33,7 +35,7 @@ module Mongo
       #
       # @since 2.1.0
       def started(event)
-        Logger.logger.debug("MONGODB.#{event.name} STARTED | #{event.connection} | #{event.arguments}")
+        log("#{prefix(event)} | STARTED | #{format(event.command_args)}")
       end
 
       # Handle the command completed event.
@@ -45,7 +47,7 @@ module Mongo
       #
       # @since 2.1.0
       def completed(event)
-        Logger.logger.debug("MONGODB.#{event.name} COMPLETED | #{event.connection} | (#{event.duration}s)")
+        log("#{prefix(event)} | COMPLETED | #{event.duration}s")
       end
 
       # Handle the command failed event.
@@ -57,7 +59,23 @@ module Mongo
       #
       # @since 2.1.0
       def failed(event)
-        Logger.logger.debug("MONGODB.#{event.name} FAILED | #{event.connection} | #{event.message} | (#{event.duration}s)")
+        log("#{prefix(event)} | FAILED | #{event.message} | #{event.duration}s")
+      end
+
+      private
+
+      def format(args)
+        ((s = args.inspect).length > LOG_STRING_LIMIT) ? "#{s[0..LOG_STRING_LIMIT]}..." : s
+      rescue ArgumentError
+        '<Unable to inspect arguments>'
+      end
+
+      def log(message)
+        Logger.logger.debug(message)
+      end
+
+      def prefix(event)
+        "MONGODB | #{event.address.to_s} | #{event.database}.#{event.command_name}"
       end
     end
   end

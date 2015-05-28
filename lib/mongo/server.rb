@@ -129,7 +129,7 @@ module Mongo
       @cluster = cluster
       @monitoring = monitoring
       @options = options.freeze
-      @monitor = Monitor.new(address, monitoring, event_listeners, options)
+      @monitor = Monitor.new(address, event_listeners, options)
       monitor.scan!
       monitor.run!
     end

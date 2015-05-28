@@ -41,6 +41,7 @@ module Mongo
       #
       #   Supported flags: +:single_remove+
       def initialize(database, collection, selector, options = {})
+        @database = database
         @namespace = "#{database}.#{collection}"
         @selector  = selector
         @flags     = options[:flags] || []
@@ -55,7 +56,7 @@ module Mongo
       #
       # @since 2.1.0
       def payload
-        { name: 'delete', database: namespace, arguments: selector }
+        { command_name: 'delete', database: @database, command_args: selector }
       end
 
       private

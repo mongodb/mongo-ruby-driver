@@ -38,50 +38,33 @@ module Mongo
       def publish_command(messages)
         start = Time.now
         payload = messages.first.payload
-        monitoring.started(Monitoring::COMMAND, command_started(payload))
+        monitoring.started(
+          Monitoring::COMMAND,
+          Event::CommandStarted.generate(address, 1, payload)
+        )
         begin
           result = yield(messages)
           monitoring.completed(
             Monitoring::COMMAND,
-            command_completed(payload, result ? result.payload : nil, start)
+            Event::CommandCompleted.generate(
+              address,
+              1,
+              payload,
+              result ? result.payload : nil,
+              duration(start)
+            )
           )
           result
         rescue Exception => e
-          monitoring.failed(Monitoring::COMMAND, command_failed(payload, e, start))
+          monitoring.failed(
+            Monitoring::COMMAND,
+            Event::CommandFailed.generate(address, 1, payload, e.message, duration(start))
+          )
           raise e
         end
       end
 
       private
-
-      def command_started(payload)
-        Event::CommandStarted.new(
-          payload[:name],
-          payload[:database],
-          address.to_s,
-          payload[:arguments]
-        )
-      end
-
-      def command_completed(started_payload, completed_payload, start)
-        Event::CommandCompleted.new(
-          started_payload[:name],
-          started_payload[:database],
-          address.to_s,
-          completed_payload ? completed_payload[:reply] : nil,
-          duration(start)
-        )
-      end
-
-      def command_failed(started_payload, exception, start)
-        Event::CommandFailed.new(
-          started_payload[:name],
-          started_payload[:database],
-          address.to_s,
-          exception.message,
-          duration(start)
-        )
-      end
 
       def duration(start)
         Time.now - start

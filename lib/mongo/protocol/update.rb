@@ -52,6 +52,7 @@ module Mongo
       #
       #   Supported flags: +:upsert+, +:multi_update+
       def initialize(database, collection, selector, update, options = {})
+        @database    = database
         @namespace   = "#{database}.#{collection}"
         @selector    = selector
         @update      = update
@@ -67,7 +68,7 @@ module Mongo
       #
       # @since 2.1.0
       def payload
-        { name: 'update', database: namespace, arguments: { filter: selector, update: update }}
+        { command_name: 'update', database: @database, command_args: { filter: selector, update: update }}
       end
 
       private
