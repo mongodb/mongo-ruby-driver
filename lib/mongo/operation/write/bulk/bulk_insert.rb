@@ -79,7 +79,7 @@ module Mongo
           replies = []
           messages.map do |m|
             context.with_connection do |connection|
-              result = LegacyResult.new(connection.dispatch([ m, gle ].compact), @ids)
+              result = LegacyResult.new(connection.dispatch([ m, gle ].compact, operation_id), @ids)
               replies << result.reply
               if stop_sending?(result)
                 return LegacyResult.new(replies, @ids)

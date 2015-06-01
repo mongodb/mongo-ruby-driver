@@ -105,7 +105,7 @@ module Mongo
       #
       # @since 2.0.0
       def dispatch(messages, operation_id = nil)
-        publish_command(messages, operation_id) do |msgs|
+        publish_command(messages, operation_id || Monitoring.next_operation_id) do |msgs|
           write(msgs)
           msgs.last.replyable? ? read : nil
         end

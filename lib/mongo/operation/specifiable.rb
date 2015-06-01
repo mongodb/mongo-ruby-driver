@@ -76,6 +76,11 @@ module Mongo
       # @since 2.0.0
       INDEX_NAME = :index_name.freeze
 
+      # The operation id constant.
+      #
+      # @since 2.1.0
+      OPERATION_ID = :operation_id.freeze
+
       # The field for options.
       #
       # @since 2.0.0
@@ -285,6 +290,19 @@ module Mongo
       # @since 2.0.0
       def initialize(spec)
         @spec = spec
+      end
+
+      # Get the operation id for the operation. Used for linking operations in
+      # monitoring.
+      #
+      # @example Get the operation id.
+      #   specifiable.operation_id
+      #
+      # @return [ Integer ] The operation id.
+      #
+      # @since 2.1.0
+      def operation_id
+        spec[OPERATION_ID]
       end
 
       # Get the options for the operation.

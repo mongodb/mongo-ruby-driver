@@ -43,13 +43,14 @@ module Mongo
         end
       end
 
-      def replace_one(op, server)
+      def replace_one(op, server, operation_id)
         Operation::Write::BulkUpdate.new(
           :updates => replace_ops(op[:replace_one], __method__),
           :db_name => database.name,
           :coll_name => @collection.name,
           :write_concern => write_concern,
-          :ordered => ordered?
+          :ordered => ordered?,
+          :operation_id => operation_id
         ).execute(server.context)
       end
     end

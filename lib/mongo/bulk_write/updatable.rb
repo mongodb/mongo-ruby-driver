@@ -46,22 +46,23 @@ module Mongo
         end
       end
 
-      def update(ops, type, server)
+      def update(ops, type, server, operation_id)
         Operation::Write::BulkUpdate.new(
           :updates => updates(ops, type),
           :db_name => database.name,
           :coll_name => @collection.name,
           :write_concern => write_concern,
-          :ordered => ordered?
+          :ordered => ordered?,
+          :operation_id => operation_id
         ).execute(server.context)
       end
 
-      def update_one(op, server)
-        update(op[:update_one], __method__, server)
+      def update_one(op, server, operation_id)
+        update(op[:update_one], __method__, server, operation_id)
       end
 
-      def update_many(op, server)
-        update(op[:update_many], __method__, server)
+      def update_many(op, server, operation_id)
+        update(op[:update_many], __method__, server, operation_id)
       end
     end
   end

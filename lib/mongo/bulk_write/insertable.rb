@@ -33,14 +33,15 @@ module Mongo
         end
       end
 
-      def insert_one(op, server)
+      def insert_one(op, server, operation_id)
         validate_insert_ops!(__method__, op[:insert_one])
         Operation::Write::BulkInsert.new(
           :documents => op[:insert_one].flatten,
           :db_name => database.name,
           :coll_name => @collection.name,
           :write_concern => write_concern,
-          :ordered => ordered?
+          :ordered => ordered?,
+          :operation_id => operation_id
         ).execute(server.context)
       end
     end

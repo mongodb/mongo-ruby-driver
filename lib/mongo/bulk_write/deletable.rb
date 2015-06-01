@@ -34,22 +34,23 @@ module Mongo
         end
       end
 
-      def delete(ops, type, server)
+      def delete(ops, type, server, operation_id)
         Operation::Write::BulkDelete.new(
           :deletes => deletes(ops, type),
           :db_name => database.name,
           :coll_name => @collection.name,
           :write_concern => write_concern,
-          :ordered => ordered?
+          :ordered => ordered?,
+          :operation_id => operation_id
         ).execute(server.context)
       end
 
-      def delete_one(op, server)
-        delete(op[:delete_one], __method__, server)
+      def delete_one(op, server, operation_id)
+        delete(op[:delete_one], __method__, server, operation_id)
       end
 
-      def delete_many(op, server)
-        delete(op[:delete_many], __method__, server)
+      def delete_many(op, server, operation_id)
+        delete(op[:delete_many], __method__, server, operation_id)
       end
     end
   end

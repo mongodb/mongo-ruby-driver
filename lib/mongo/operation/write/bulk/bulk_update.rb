@@ -101,7 +101,7 @@ module Mongo
         def execute_message(context)
           replies = messages.map do |m|
             context.with_connection do |connection|
-              result = LegacyResult.new(connection.dispatch([ m, gle ].compact))
+              result = LegacyResult.new(connection.dispatch([ m, gle ].compact, operation_id))
               if stop_sending?(result)
                 return result
               else

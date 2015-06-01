@@ -32,7 +32,7 @@ module Mongo
       # @since 2.0.0
       def execute(context)
         context.with_connection do |connection|
-          connection.dispatch([ message ])
+          connection.dispatch([ message ], operation_id)
         end
       end
 
