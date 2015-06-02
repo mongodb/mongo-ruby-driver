@@ -56,8 +56,9 @@ module Mongo
     #
     # @since 2.0.0
     def alive?
-      if Kernel::select([ socket ], nil, [ socket ], 0)
-        !eof? rescue false
+      sock_arr = [@socket]
+      if Kernel::select(sock_arr, nil, sock_arr, 0)
+        !eof?
       else
         true
       end
@@ -89,7 +90,7 @@ module Mongo
     #
     # @since 2.0.0
     def gets(*args)
-      handle_errors { socket.gets(*args) }
+      handle_errors { @socket.gets(*args) }
     end
 
     # Create the new socket for the provided family - ipv4, piv6, or unix.
@@ -138,7 +139,7 @@ module Mongo
     #
     # @since 2.0.0
     def readbyte
-      handle_errors { socket.readbyte }
+      handle_errors { @socket.readbyte }
     end
 
     # Writes data to the socket instance.
@@ -152,13 +153,20 @@ module Mongo
     #
     # @since 2.0.0
     def write(*args)
-      handle_errors { socket.write(*args) }
+      handle_errors { @socket.write(*args) }
+    end
+
+    # Tests if this socket has reached EOF. Primarily used for liveness checks.
+    #
+    # @since 2.0.0
+    def eof?
+      @socket.eof?
     end
 
     private
 
     def read_from_socket(length)
-      socket.read(length) || String.new
+      @socket.read(length) || String.new
     end
 
     def set_socket_options(sock)
