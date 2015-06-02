@@ -75,7 +75,7 @@ module Mongo
       end
 
       def prefix(event)
-        "MONGODB | #{event.address.to_s} | #{event.operation_id} | #{event.database}.#{event.command_name}"
+        "MONGODB | #{event.address.to_s} | #{event.database}.#{event.command_name}"
       end
     end
   end
