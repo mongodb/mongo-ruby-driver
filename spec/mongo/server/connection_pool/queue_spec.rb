@@ -77,6 +77,10 @@ describe Mongo::Server::ConnectionPool::Queue do
       it 'creates the queue with the minimum connections' do
         expect(queue.size).to eq(2)
       end
+
+      it 'does not use the same objects in the queue' do
+        expect(queue.dequeue).to_not equal(queue.dequeue)
+      end
     end
 
     context 'when no min size is provided' do
