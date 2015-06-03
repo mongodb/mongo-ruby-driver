@@ -58,6 +58,18 @@ shared_context 'operation' do
       allow(cxt).to receive(:slave_ok?) { false }
     end
   end
+  let(:secondary_context_slave) do
+    double('secondary_context').tap do |cxt|
+      allow(cxt).to receive(:with_connection).and_yield(connection)
+      allow(cxt).to receive(:server) { secondary_server }
+      allow(cxt).to receive(:mongos?) { false }
+      allow(cxt).to receive(:features) { features_2_6 }
+      allow(cxt).to receive(:secondary?) { true }
+      allow(cxt).to receive(:primary?) { false }
+      allow(cxt).to receive(:standalone?) { false }
+      allow(cxt).to receive(:slave_ok?) { true }
+    end
+  end
   let(:primary_context_2_4_version) do
     double('primary_context').tap do |cxt|
       allow(cxt).to receive(:with_connection).and_yield(connection)
