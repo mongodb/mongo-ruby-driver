@@ -96,7 +96,7 @@ module Mongo
           @block = block
           @connections = 0
           @options = options
-          @queue = Array.new(min_size, create_connection)
+          @queue = Array.new(min_size) { create_connection }
           @mutex = Mutex.new
           @resource = ConditionVariable.new
         end
