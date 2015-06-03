@@ -26,11 +26,11 @@ module Mongo
       # Log a debug level message.
       #
       # @example Log a debug level message.
-      #   Logger.debug('mongo', 'message', 10)
+      #   Logger.debug('mongo', 'message', '10ms')
       #
       # @param [ String ] prefix The category prefix.
       # @param [ String ] message The log message.
-      # @param [ Float ] runtime The time of the operation.
+      # @param [ String ] runtime The time of the operation.
       #
       # @since 2.0.0
       def debug(prefix, message, runtime)
@@ -40,11 +40,11 @@ module Mongo
       # Log a error level message.
       #
       # @example Log a error level message.
-      #   Logger.error('mongo', 'message', 10)
+      #   Logger.error('mongo', 'message', '10ms')
       #
       # @param [ String ] prefix The category prefix.
       # @param [ String ] message The log message.
-      # @param [ Float ] runtime The time of the operation.
+      # @param [ String ] runtime The time of the operation.
       #
       # @since 2.0.0
       def error(prefix, message, runtime)
@@ -54,11 +54,11 @@ module Mongo
       # Log a fatal level message.
       #
       # @example Log a fatal level message.
-      #   Logger.fatal('mongo', 'message', 10)
+      #   Logger.fatal('mongo', 'message', '10ms')
       #
       # @param [ String ] prefix The category prefix.
       # @param [ String ] message The log message.
-      # @param [ Float ] runtime The time of the operation.
+      # @param [ String ] runtime The time of the operation.
       #
       # @since 2.0.0
       def fatal(prefix, message, runtime)
@@ -68,11 +68,11 @@ module Mongo
       # Log a info level message.
       #
       # @example Log a info level message.
-      #   Logger.info('mongo', 'message', 10)
+      #   Logger.info('mongo', 'message', '10ms')
       #
       # @param [ String ] prefix The category prefix.
       # @param [ String ] message The log message.
-      # @param [ Float ] runtime The time of the operation.
+      # @param [ String ] runtime The time of the operation.
       #
       # @since 2.0.0
       def info(prefix, message, runtime)
@@ -82,11 +82,11 @@ module Mongo
       # Log a warn level message.
       #
       # @example Log a warn level message.
-      #   Logger.warn('mongo', 'message', 10)
+      #   Logger.warn('mongo', 'message', '10ms')
       #
       # @param [ String ] prefix The category prefix.
       # @param [ String ] message The log message.
-      # @param [ Float ] runtime The time of the operation.
+      # @param [ String ] runtime The time of the operation.
       #
       # @since 2.0.0
       def warn(prefix, message, runtime)
