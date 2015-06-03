@@ -23,8 +23,9 @@ describe Mongo::Loggable do
     end
 
     before do
+      Mongo::Logger.level = Logger::DEBUG
       expect(operation).to receive(:log_message).and_return('test')
-      expect(Mongo::Logger).to receive(:debug).with('MONGO', 'test', anything())
+      expect(Mongo::Logger).to receive(:log).with(:debug, 'MONGO', 'test', anything())
     end
 
     context 'when a block is provided' do
