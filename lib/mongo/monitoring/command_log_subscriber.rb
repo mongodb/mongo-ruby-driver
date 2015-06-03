@@ -35,7 +35,9 @@ module Mongo
       #
       # @since 2.1.0
       def started(event)
-        log("#{prefix(event)} | STARTED | #{format(event.command_args)}")
+        if Logger.logger.debug?
+          log("#{prefix(event)} | STARTED | #{format(event.command_args)}")
+        end
       end
 
       # Handle the command completed event.
@@ -47,7 +49,9 @@ module Mongo
       #
       # @since 2.1.0
       def completed(event)
-        log("#{prefix(event)} | COMPLETED | #{event.duration}s")
+        if Logger.logger.debug?
+          log("#{prefix(event)} | COMPLETED | #{event.duration}s")
+        end
       end
 
       # Handle the command failed event.
@@ -59,7 +63,9 @@ module Mongo
       #
       # @since 2.1.0
       def failed(event)
-        log("#{prefix(event)} | FAILED | #{event.message} | #{event.duration}s")
+        if Logger.logger.debug?
+          log("#{prefix(event)} | FAILED | #{event.message} | #{event.duration}s")
+        end
       end
 
       private
