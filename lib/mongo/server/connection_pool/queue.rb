@@ -73,7 +73,7 @@ module Mongo
         # @since 2.0.0
         def enqueue(connection)
           mutex.synchronize do
-            queue.push(connection)
+            queue.unshift(connection)
             resource.broadcast
           end
         end
@@ -155,7 +155,7 @@ module Mongo
         def dequeue_connection
           deadline = Time.now + wait_timeout
           loop do
-            return queue.delete_at(0) unless queue.empty?
+            return queue.pop unless queue.empty?
             connection = create_connection
             return connection if connection
             wait_for_next!(deadline)
