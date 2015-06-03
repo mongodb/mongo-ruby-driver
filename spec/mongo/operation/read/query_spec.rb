@@ -58,6 +58,25 @@ describe Mongo::Operation::Read::Query do
     end
   end
 
+  describe '#message' do
+
+    let(:query_options) do
+      { :flags => [ :no_cursor_timeout ]}
+    end
+
+    let(:query) do
+      described_class.new(spec)
+    end
+
+    let(:message) do
+      query.send(:message, secondary_context_slave)
+    end
+
+    it 'does not lose flags' do
+      expect(message.flags).to eq([ :no_cursor_timeout, :slave_ok ])
+    end
+  end
+
   describe '#execute' do
 
     context 'message' do
