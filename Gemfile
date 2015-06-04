@@ -1,6 +1,6 @@
 source 'https://rubygems.org'
 
-gem 'json'
+gem 'json', '<= 1.8.1'
 gem 'rake', '10.1.1', :require => ['rake/testtask']
 gem 'rake-compiler', :require => ['rake/extensiontask', 'rake/javaextensiontask']
 gem 'mime-types', '~> 1.25'
