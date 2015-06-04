@@ -1828,11 +1828,7 @@ class CollectionTest < Test::Unit::TestCase
     @test.save({:a => 1})
     @test.save({:a => 2})
     assert @test.find({:a => 1}, :show_disk_loc => true).show_disk_loc
-    if @version > '3.0.0'
-      assert @test.find({:a => 1}, :show_disk_loc => true).next['$recordId']
-    else
-      assert @test.find({:a => 1}, :show_disk_loc => true).next['$diskLoc']
-    end
+    assert @test.find({:a => 1}, :show_disk_loc => true).next['$diskLoc']
     @test.remove
   end
 
