@@ -93,6 +93,9 @@ class ObjectIdTest < Test::Unit::TestCase
     assert_raise InvalidObjectId do
       ObjectId.from_string("")
     end
+    assert_raise InvalidObjectId do
+      ObjectId.from_string("a"*24+"\na")
+    end
   end
 
   def test_from_string_with_object_id
