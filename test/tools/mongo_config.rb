@@ -464,9 +464,10 @@ module Mongo
             next unless (primary = members.find { |m| m['state'] == 1 })
 
             # check replica set member optimes
-            primary_optime = primary['optime'].seconds
+            primary_optime = (primary['optime']['ts'] ? primary['optime']['ts'] : primary['optime']).seconds
             next unless primary_optime && members.all? do |m|
-              m['state'] == 7 || primary_optime - m['optime'].seconds < 5
+              m_optime = (m['optime']['ts'] ? m['optime']['ts'] : m['optime']).seconds
+              m['state'] == 7 || primary_optime - m_optime < 5
             end
 
             # check replica set state
