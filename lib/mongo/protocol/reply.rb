@@ -26,6 +26,18 @@ module Mongo
     # @api semipublic
     class Reply < Message
 
+      # Determine if the reply had a query failure flag.
+      #
+      # @example Did the reply have a query failure.
+      #   reply.query_failure?
+      #
+      # @return [ true, false ] If the query failed.
+      #
+      # @since 2.0.5
+      def query_failure?
+        flags.include?(:query_failure)
+      end
+
       private
 
       # The operation code required to specify a Reply message.

@@ -334,19 +334,22 @@ describe Mongo::Collection::View do
 
       context 'when providing a hint' do
 
-        let(:options) do
-          { :hint => { 'x' => Mongo::Index::ASCENDING }}
-        end
+        context 'when the hint is bad' do
 
-        before do
-          expect(Mongo::Operation::Read::Query).to receive(:new) do |spec|
-            expect(spec[:selector][:$query]).to eq(selector)
-          end.and_call_original
-        end
+          let(:options) do
+            { :hint => { 'x' => Mongo::Index::ASCENDING }}
+          end
 
-        it'creates a special query selector' do
-          view.each do |doc|
-            expect(doc).to have_key('$err')
+          before do
+            expect(Mongo::Operation::Read::Query).to receive(:new) do |spec|
+              expect(spec[:selector][:$query]).to eq(selector)
+            end.and_call_original
+          end
+
+          it'creates a special query selector' do
+            expect {
+              view.to_a
+            }.to raise_error(Mongo::Error::OperationFailure)
           end
         end
       end
