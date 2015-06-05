@@ -262,6 +262,19 @@ describe Mongo::Collection do
       end
     end
 
+    context 'when providing a bad selector' do
+
+      let(:view) do
+        authorized_collection.find('$or' => [])
+      end
+
+      it 'raises an exception when iterating' do
+        expect {
+          view.to_a
+        }.to raise_exception(Mongo::Error::OperationFailure)
+      end
+    end
+
     context 'when iterating the authorized_collection view' do
 
       before do

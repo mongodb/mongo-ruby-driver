@@ -192,7 +192,7 @@ module Mongo
         if first_document.has_key?(OK)
           first_document[OK] == 1 && parser.message.empty?
         else
-          parser.message.empty?
+          !query_failure? && parser.message.empty?
         end
       end
 
@@ -253,6 +253,10 @@ module Mongo
 
       def first_document
         @first_document ||= first || BSON::Document.new
+      end
+
+      def query_failure?
+        replies.first && replies.first.query_failure?
       end
     end
   end
