@@ -13,5 +13,5 @@
 # limitations under the License.
 
 require 'mongo/monitoring/event/command_started'
-require 'mongo/monitoring/event/command_completed'
+require 'mongo/monitoring/event/command_succeeded'
 require 'mongo/monitoring/event/command_failed'

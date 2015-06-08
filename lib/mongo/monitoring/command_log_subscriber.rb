@@ -40,17 +40,17 @@ module Mongo
         end
       end
 
-      # Handle the command completed event.
+      # Handle the command succeeded event.
       #
       # @example Handle the event.
-      #   subscriber.completed(event)
+      #   subscriber.succeeded(event)
       #
-      # @param [ CommandCompletedEvent ] event The event.
+      # @param [ CommandSucceededEvent ] event The event.
       #
       # @since 2.1.0
-      def completed(event)
+      def succeeded(event)
         if Logger.logger.debug?
-          log("#{prefix(event)} | COMPLETED | #{event.duration}s")
+          log("#{prefix(event)} | SUCCEEDED | #{event.duration}s")
         end
       end
 

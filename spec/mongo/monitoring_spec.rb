@@ -118,7 +118,7 @@ describe Mongo::Monitoring do
     end
   end
 
-  describe '#completed' do
+  describe '#succeeded' do
 
     let(:monitoring) do
       described_class.new(monitoring: false)
@@ -136,9 +136,9 @@ describe Mongo::Monitoring do
       monitoring.subscribe('topic', subscriber)
     end
 
-    it 'calls the completed method on each subscriber' do
-      expect(subscriber).to receive(:completed).with(event)
-      monitoring.completed('topic', event)
+    it 'calls the succeeded method on each subscriber' do
+      expect(subscriber).to receive(:succeeded).with(event)
+      monitoring.succeeded('topic', event)
     end
   end
 

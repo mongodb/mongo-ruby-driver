@@ -121,17 +121,17 @@ module Mongo
       subscribers_for(topic).each{ |subscriber| subscriber.started(event) }
     end
 
-    # Publish a completed event.
+    # Publish a succeeded event.
     #
-    # @example Publish a completed event.
-    #   monitoring.completed(COMMAND, event)
+    # @example Publish a succeeded event.
+    #   monitoring.succeeded(COMMAND, event)
     #
     # @param [ String ] topic The event topic.
     # @param [ Event ] event The event to publish.
     #
     # @since 2.1.0
-    def completed(topic, event)
-      subscribers_for(topic).each{ |subscriber| subscriber.completed(event) }
+    def succeeded(topic, event)
+      subscribers_for(topic).each{ |subscriber| subscriber.succeeded(event) }
     end
 
     # Publish a failed event.

@@ -16,10 +16,10 @@ module Mongo
   class Monitoring
     module Event
 
-      # Event that is fired when a command operation completes.
+      # Event that is fired when a command operation succeeds.
       #
       # @since 2.1.0
-      class CommandCompleted
+      class CommandSucceeded
 
         # @return [ Server::Address ] address The server address.
         attr_reader :address
@@ -78,7 +78,7 @@ module Mongo
         # Create the event from a wire protocol message payload.
         #
         # @example Create the event.
-        #   CommandStarted.generate(address, 1, command_payload, reply_payload, 0.5)
+        #   CommandSucceeded.generate(address, 1, command_payload, reply_payload, 0.5)
         #
         # @param [ Server::Address ] address The server address.
         # @param [ Integer ] operation_id The operation id.

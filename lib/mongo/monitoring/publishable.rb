@@ -44,9 +44,9 @@ module Mongo
         )
         begin
           result = yield(messages)
-          monitoring.completed(
+          monitoring.succeeded(
             Monitoring::COMMAND,
-            Event::CommandCompleted.generate(
+            Event::CommandSucceeded.generate(
               address,
               operation_id,
               payload,
