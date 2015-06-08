@@ -108,7 +108,7 @@ module Mongo
     end
 
     # Will read all data from the socket for the provided number of bytes.
-    # If less data is returned than requested, an exception will be raised.
+    # If no data is returned, an exception will be raised.
     #
     # @example Read all the requested data from the socket.
     #   socket.read(4096)
@@ -123,8 +123,11 @@ module Mongo
     def read(length)
       handle_errors do
         data = read_from_socket(length)
+        raise IOError unless (data.length > 0 || length == 0)
         while data.length < length
-          data << read_from_socket(length - data.length)
+          chunk = read_from_socket(length - data.length)
+          raise IOError unless (chunk.length > 0 || length == 0)
+          data << chunk
         end
         data
       end
