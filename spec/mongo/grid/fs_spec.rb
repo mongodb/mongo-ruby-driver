@@ -65,7 +65,7 @@ describe Mongo::Grid::FS do
 
     context 'when inserting the file once' do
 
-      before do
+      let!(:result) do
         fs.insert_one(file)
       end
 
@@ -85,6 +85,10 @@ describe Mongo::Grid::FS do
       it 'includes the chunks and data with the file' do
         expect(from_db.data).to eq('Hello!')
       end
+
+      it 'returns the file id' do
+        expect(result).to eq(file.id)
+      end
     end
 
     context 'when inserting the file more than once' do
@@ -99,6 +103,33 @@ describe Mongo::Grid::FS do
           fs.insert_one(file)
           fs.insert_one(file)
         }.to raise_error(Mongo::Error::OperationFailure)
+      end
+    end
+
+    context 'when the file exceeds the max bson size' do
+
+      let(:fs) do
+        described_class.new(authorized_client.database)
+      end
+
+      let(:file) do
+        str = 'y' * 16777216
+        Mongo::Grid::File.new(str, :filename => 'large-file.txt')
+      end
+
+      before do
+        fs.insert_one(file)
+      end
+
+      after do
+        fs.files_collection.find.delete_many
+        fs.chunks_collection.find.delete_many
+      end
+
+      it 'successfully inserts the file' do
+        expect(
+          fs.find_one(:filename => 'large-file.txt').chunks
+        ).to eq(file.chunks)
       end
     end
   end
