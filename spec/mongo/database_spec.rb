@@ -95,6 +95,35 @@ describe Mongo::Database do
     end
   end
 
+  describe '#list_collections' do
+
+    let(:database) do
+      described_class.new(authorized_client, TEST_DB)
+    end
+
+    let(:result) do
+      database.list_collections.map do |info|
+        info['name']
+      end
+    end
+
+    before do
+      database[:users].create
+    end
+
+    after do
+      database[:users].drop
+    end
+
+    it 'returns a list of the collections info', if: write_command_enabled?  do
+      expect(result).to include('users')
+    end
+
+    it 'returns a list of the collections info', unless: write_command_enabled?  do
+      expect(result).to include("#{TEST_DB}.users")
+    end
+  end
+
   describe '#collections' do
 
     context 'when the database exists' do

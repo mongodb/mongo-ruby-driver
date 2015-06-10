@@ -232,20 +232,18 @@ module Mongo
     #
     # @since 2.0.5
     def database_names
-      use(Database::ADMIN).command(
-        listDatabases: 1
-      ).first['databases'].collect{ |info| info['name'] }
+      list_databases.collect{ |info| info['name'] }
     end
 
     # Get info for each database.
     #
-    # @example Get the database info.
-    #   client.database_info
+    # @example Get the info for each database.
+    #   client.list_databases
     #
-    # @return [ Array<Hash ] The info for each database.
+    # @return [ Array<Hash> ] The info for each database.
     #
     # @since 2.0.5
-    def database_info
+    def list_databases
       use(Database::ADMIN).command(
         listDatabases: 1
       ).first['databases']

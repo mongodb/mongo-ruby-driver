@@ -57,6 +57,18 @@ module Mongo
         end
       end
 
+      # Get info on all the collections in the database.
+      #
+      # @example Get info on each collection.
+      #   database.list_collections
+      #
+      # @return [ Array<Hash> ] Info for each collection in the database.
+      #
+      # @since 2.0.5
+      def list_collections
+        collections_info(next_primary)
+      end
+
       # Create the new database view.
       #
       # @example Create the new database view.

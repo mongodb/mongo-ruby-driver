@@ -102,6 +102,18 @@ module Mongo
       View.new(self).collection_names(options)
     end
 
+    # Get info on all the collections in the database.
+    #
+    # @example Get info on each collection.
+    #   database.list_collections
+    #
+    # @return [ Array<Hash> ] Info for each collection in the database.
+    #
+    # @since 2.0.5
+    def list_collections
+      View.new(self).list_collections
+    end
+
     # Get all the collections that belong to this database.
     #
     # @example Get all the collections.

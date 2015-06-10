@@ -579,11 +579,11 @@ describe Mongo::Client do
     end
   end
 
-  describe '#database_info' do
+  describe '#list_databases' do
 
     it 'returns a list of database info documents' do
       expect(
-        root_authorized_client.database_info.collect do |i|
+        root_authorized_client.list_databases.collect do |i|
           i['name']
         end).to include('admin', 'local', TEST_DB)
     end
