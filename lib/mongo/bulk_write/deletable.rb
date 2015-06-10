@@ -22,10 +22,6 @@ module Mongo
 
       private
 
-      def valid_doc?(doc)
-        doc.respond_to?(:keys)
-      end
-
       def validate_delete_op!(type, d)
         raise Error::InvalidBulkOperation.new(type, d) unless valid_doc?(d)
       end
