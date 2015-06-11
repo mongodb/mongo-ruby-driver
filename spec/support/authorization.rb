@@ -53,7 +53,8 @@ SSL = ENV['SSL_ENABLED'] == 'true'
 # Options for test suite clients.
 #
 # @since 2.0.3
-TEST_OPTIONS = { max_pool_size: 1,
+TEST_OPTIONS = { connect: CONNECT,
+                 max_pool_size: 1,
                  write: WRITE_CONCERN,
                  ssl: SSL }
 

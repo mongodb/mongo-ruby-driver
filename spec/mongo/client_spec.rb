@@ -604,7 +604,7 @@ describe Mongo::Client do
 
     it 'returns a list of database names' do
       expect(root_authorized_client.database_names).to include(
-        'admin', TEST_DB
+        'admin'
       )
     end
   end
@@ -615,7 +615,7 @@ describe Mongo::Client do
       expect(
         root_authorized_client.list_databases.collect do |i|
           i['name']
-        end).to include('admin', TEST_DB)
+        end).to include('admin')
     end
   end
 end

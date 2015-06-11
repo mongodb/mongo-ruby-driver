@@ -76,7 +76,8 @@ describe Mongo::Cluster do
     context 'when the option is provided' do
 
       let(:cluster) do
-        described_class.new([ '127.0.0.1:27017' ], TEST_OPTIONS.merge(:replica_set => 'testing'))
+        described_class.new([ '127.0.0.1:27017' ], TEST_OPTIONS.merge(:connect => :replica_set,
+                                                                      :replica_set => 'testing'))
       end
 
       it 'returns the name' do
