@@ -307,12 +307,8 @@ describe Mongo::Collection do
       authorized_collection.insert_many([{ name: 'test1' }, { name: 'test2' }])
     end
 
-    it 'inserts the documents into the collection', if: write_command_enabled? do
+    it 'inserts the documents into the collection' do
       expect(result.inserted_count).to eq(2)
-    end
-
-    it 'inserts the documents into the collection', unless: write_command_enabled? do
-      expect(result.inserted_count).to eq(0)
     end
 
     it 'contains the ids in the result' do
