@@ -569,4 +569,23 @@ describe Mongo::Client do
       end
     end
   end
+
+  describe '#database_names' do
+
+    it 'returns a list of database names' do
+      expect(root_authorized_client.database_names).to include(
+        'admin', 'local', TEST_DB
+      )
+    end
+  end
+
+  describe '#list_databases' do
+
+    it 'returns a list of database info documents' do
+      expect(
+        root_authorized_client.list_databases.collect do |i|
+          i['name']
+        end).to include('admin', 'local', TEST_DB)
+    end
+  end
 end

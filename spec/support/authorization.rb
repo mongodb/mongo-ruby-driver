@@ -77,7 +77,8 @@ ROOT_USER = Mongo::Auth::User.new(
     Mongo::Auth::Roles::USER_ADMIN_ANY_DATABASE,
     Mongo::Auth::Roles::DATABASE_ADMIN_ANY_DATABASE,
     Mongo::Auth::Roles::READ_WRITE_ANY_DATABASE,
-    Mongo::Auth::Roles::HOST_MANAGER
+    Mongo::Auth::Roles::HOST_MANAGER,
+    Mongo::Auth::Roles::CLUSTER_ADMIN
   ]
 )
 
@@ -105,8 +106,8 @@ TEST_USER = Mongo::Auth::User.new(
 # @since 2.0.
 TEST_READ_WRITE_USER = Mongo::Auth::User.new(
   database: TEST_DB,
-  user: 'test-user',
-  password: 'password',
+  user: TEST_USER.name,
+  password: TEST_USER.password,
   roles: [ Mongo::Auth::Roles::READ_WRITE, Mongo::Auth::Roles::DATABASE_ADMIN ]
 )
 

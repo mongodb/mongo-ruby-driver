@@ -223,6 +223,32 @@ module Mongo
       @write_concern ||= WriteConcern.get(options[:write])
     end
 
+    # Get the names of all databases.
+    #
+    # @example Get the database names.
+    #   client.database_names
+    #
+    # @return [ Array<String> ] The names of the databases.
+    #
+    # @since 2.0.5
+    def database_names
+      list_databases.collect{ |info| info['name'] }
+    end
+
+    # Get info for each database.
+    #
+    # @example Get the info for each database.
+    #   client.list_databases
+    #
+    # @return [ Array<Hash> ] The info for each database.
+    #
+    # @since 2.0.5
+    def list_databases
+      use(Database::ADMIN).command(
+        listDatabases: 1
+      ).first['databases']
+    end
+
     private
 
     def create_from_addresses(addresses, opts = {})
