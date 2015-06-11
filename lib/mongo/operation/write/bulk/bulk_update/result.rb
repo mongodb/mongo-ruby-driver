@@ -89,10 +89,22 @@ module Mongo
             end
           end
 
+          # Get the upserted documents.
+          #
+          # @example Get upserted documents.
+          #   result.upserted
+          #
+          # @return [ Array<BSON::Document> ] The upserted document info
+          #
+          # @since 2.1.0
+          def upserted
+            reply.documents.first[UPSERTED] || []
+          end
+
           private
 
           def upsert?(reply)
-            reply.documents.first[UPSERTED]
+            upserted.any?
           end
         end
 

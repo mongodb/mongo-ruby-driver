@@ -15,6 +15,7 @@
 require 'mongo/bulk_write/bulk_writable'
 require 'mongo/bulk_write/ordered_bulk_write'
 require 'mongo/bulk_write/unordered_bulk_write'
+require 'mongo/bulk_write/result'
 
 module Mongo
   module BulkWrite

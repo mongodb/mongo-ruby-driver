@@ -30,19 +30,60 @@ module Mongo
       include Replacable
       extend Forwardable
 
-      # Delegate various methods to the collection.
-      def_delegators :@collection, :database, :cluster, :next_primary
+      # Constant for number removed.
+      #
+      # @since 2.1.0
+      REMOVED_COUNT = 'n_removed'.freeze
+
+      # Constant for number inserted.
+      #
+      # @since 2.1.0
+      INSERTED_COUNT = 'n_inserted'.freeze
+
+      # Constant for inserted ids.
+      #
+      # @since 2.1.0
+      INSERTED_IDS = 'inserted_ids'.freeze
+
+      # Constant for number matched.
+      #
+      # @since 2.1.0
+      MATCHED_COUNT = 'n_matched'.freeze
+
+      # Constant for number modified.
+      #
+      # @since 2.1.0
+      MODIFIED_COUNT = 'n_modified'.freeze
+
+      # Constant for number upserted.
+      #
+      # @since 2.1.0
+      UPSERTED_COUNT = 'n_upserted'.freeze
+
+      # Constant for upserted ids.
+      #
+      # @since 2.1.0
+      UPSERTED_IDS = 'upserted_ids'.freeze
+
+      # Constant for indexes.
+      #
+      # @since 2.1.0
+      INDEXES = 'indexes'.freeze
 
       # The fields contained in the result document returned from executing the
       # operations.
       #
       # @since 2.0.0.
-      RESULT_FIELDS = [ :n_inserted,
-                        :n_removed,
-                        :n_modified,
-                        :n_upserted,
-                        :n_matched ]
+      RESULT_FIELDS = [
+        INSERTED_COUNT,
+        REMOVED_COUNT,
+        MODIFIED_COUNT,
+        UPSERTED_COUNT,
+        MATCHED_COUNT
+      ].freeze
 
+      # Delegate various methods to the collection.
+      def_delegators :@collection, :database, :cluster, :next_primary
 
       # Initialize a bulk write object.
       #
@@ -85,6 +126,10 @@ module Mongo
 
       private
 
+      def valid_doc?(doc)
+        doc.respond_to?(:keys) || doc.respond_to?(:document)
+      end
+
       def write_concern
         @write_concern ||= WriteConcern.get(@options[:write_concern]) ||
                             @collection.write_concern
@@ -106,18 +151,19 @@ module Mongo
         type = op.keys.first
         ops = []
         while op[type].size > server.max_write_batch_size
-          ops << { type => op[type].shift(server.max_write_batch_size),
-                   :indexes => op[:indexes].shift(server.max_write_batch_size) }
+          ops << {
+            type => op[type].shift(server.max_write_batch_size),
+            INDEXES => op[INDEXES].shift(server.max_write_batch_size)
+          }
         end
         ops << op
       end
 
       def split(op, type)
         n = op[type].size/2
-        [ { type => op[type].shift(n),
-            :indexes => op[:indexes].shift(n) },
-          { type => op[type],
-            :indexes => op[:indexes] }
+        [
+          { type => op[type].shift(n), INDEXES => op[INDEXES].shift(n) },
+          { type => op[type], INDEXES => op[INDEXES] }
         ]
       end
 
@@ -128,7 +174,7 @@ module Mongo
           op = ops.shift
           type = op.keys.first
           begin
-            process(send(type, op, server), op[:indexes])
+            process(send(type, op, server), op[INDEXES])
           rescue Error::MaxBSONSize, Error::MaxMessageSize => ex
             raise ex if op[type].size < 2
             ops = split(op, type) + ops
@@ -139,15 +185,16 @@ module Mongo
       def merge_consecutive_ops(ops)
         ops.each_with_index.inject([]) do |merged, (op, i)|
           type = op.keys.first
-          op[:indexes] ||= [ i ]
+          op[INDEXES] ||= [ i ]
           previous = merged.last
           if previous && previous.keys.first == type
-            merged[-1].merge!(type => previous[type] << op[type],
-                             :indexes => previous[:indexes] + op[:indexes])
+            merged[-1].merge!(
+              type => previous[type] << op[type],
+              INDEXES => previous[INDEXES] + op[INDEXES]
+            )
             merged
           else
-            merged << { type => [ op[type] ].flatten,
-                        :indexes => op[:indexes] }
+            merged << { type => [ op[type] ].flatten, INDEXES => op[INDEXES] }
           end
         end
       end
@@ -161,7 +208,7 @@ module Mongo
           merged
         end
         ops_hash.keys.reduce([]) do |ops_list, type|
-          ops_list << { type => ops_hash[type], :indexes => indexes[type] }
+          ops_list << { type => ops_hash[type], INDEXES => indexes[type] }
         end
       end
 
@@ -179,11 +226,23 @@ module Mongo
             ) if result.respond_to?(field)
           end
 
-          results.merge!(
-            write_errors: ((results[:write_errors] || []) << write_errors).flatten
-          ) if write_errors
+          if result.respond_to?(INSERTED_IDS)
+            results.merge!(INSERTED_IDS => result.inserted_ids)
+          end
 
-          results.merge!(write_concern_errors: @write_concern_errors) if @write_concern_errors
+          if result.respond_to?(Operation::Write::BulkUpdate::Result::UPSERTED)
+            results.merge!(UPSERTED_IDS => result.upserted.map{ |doc| doc['_id'] })
+          end
+
+          if write_errors
+            results.merge!(
+              Error::WRITE_ERRORS => ((results[Error::WRITE_ERRORS] || []) << write_errors).flatten
+            )
+          end
+
+          if @write_concern_errors
+            results.merge!(Error::WRITE_CONCERN_ERRORS => @write_concern_errors)
+          end
         end
       end
     end

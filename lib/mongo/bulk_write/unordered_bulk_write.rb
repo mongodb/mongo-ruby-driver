@@ -13,11 +13,12 @@
 # limitations under the License.
 
 module Mongo
-
   module BulkWrite
 
+    # Encapsulates behaviour around an unordered bulk write operation.
+    #
+    # @since 2.0.0
     class UnorderedBulkWrite
-
       include BulkWritable
 
       private
@@ -35,11 +36,7 @@ module Mongo
       end
 
       def finalize
-        @results.tap do |results|
-          if results[:write_errors] || results[:write_concern_errors]
-            raise Error::BulkWriteError.new(results)
-          end
-        end
+        Result.new(@results).validate!
       end
     end
   end
