@@ -85,6 +85,11 @@ module Mongo
 
       private
 
+      def valid_doc?(doc)
+        doc.respond_to?(:keys) ||
+          doc.respond_to?(:document)
+      end
+
       def write_concern
         @write_concern ||= WriteConcern.get(@options[:write_concern]) ||
                             @collection.write_concern

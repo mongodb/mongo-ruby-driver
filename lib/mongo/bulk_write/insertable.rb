@@ -22,10 +22,6 @@ module Mongo
 
       private
 
-      def valid_doc?(doc)
-        doc.respond_to?(:keys)
-      end
-
       def validate_insert_ops!(type, inserts)
         if inserts.empty?
           raise Error::InvalidBulkOperation.new(type, inserts)

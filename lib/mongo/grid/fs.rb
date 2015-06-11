@@ -75,12 +75,12 @@ module Mongo
       # @since 2.0.0
       def insert_one(file)
         files_collection.insert_one(file.metadata)
-        result = chunks_collection.insert_many(file.chunks)
-        if write_concern.get_last_error
-          validate_md5!(file)
-        else
-          result
+        inserts = file.chunks.reduce([]) do |ops, chunk|
+          ops << { :insert_one => chunk }
         end
+        result = chunks_collection.bulk_write(inserts, ordered: true)
+        validate_md5!(file) if write_concern.get_last_error
+        file.id
       end
 
       # Create the GridFS.
