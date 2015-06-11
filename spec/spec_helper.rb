@@ -149,6 +149,10 @@ def list_command_enabled?
   $list_command_enabled ||= $mongo_client.cluster.servers.first.features.list_indexes_enabled?
 end
 
+def testing_locally?
+  !(ENV['CI'] || ENV['JENKINS_HOME'])
+end
+
 def running_ssl?
   SSL
 end
