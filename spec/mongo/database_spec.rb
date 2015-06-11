@@ -115,11 +115,11 @@ describe Mongo::Database do
       database[:users].drop
     end
 
-    it 'returns a list of the collections info', if: write_command_enabled?  do
+    it 'returns a list of the collections info', if: list_command_enabled?  do
       expect(result).to include('users')
     end
 
-    it 'returns a list of the collections info', unless: write_command_enabled?  do
+    it 'returns a list of the collections info', unless: list_command_enabled?  do
       expect(result).to include("#{TEST_DB}.users")
     end
   end
