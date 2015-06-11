@@ -35,7 +35,7 @@ shared_examples 'a bulk write object' do
       end
 
       it 'returns n_inserted of 1' do
-        expect(bulk.execute[:n_inserted]).to eq(1)
+        expect(bulk.execute.inserted_count).to eq(1)
       end
 
       it 'only inserts that document' do
@@ -94,7 +94,7 @@ shared_examples 'a bulk write object' do
     context 'when multiple documents match delete selector' do
 
       it 'reports n_removed correctly' do
-        expect(bulk.execute[:n_removed]).to eq(1)
+        expect(bulk.execute.deleted_count).to eq(1)
       end
 
       it 'deletes only matching documents' do
@@ -136,7 +136,7 @@ shared_examples 'a bulk write object' do
       context 'when multiple documents match delete selector' do
 
         it 'reports n_removed correctly' do
-          expect(bulk.execute[:n_removed]).to eq(2)
+          expect(bulk.execute.deleted_count).to eq(2)
         end
 
         it 'deletes all matching documents' do
@@ -156,7 +156,7 @@ shared_examples 'a bulk write object' do
         end
 
         it 'reports n_removed correctly' do
-          expect(bulk.execute[:n_removed]).to eq(1)
+          expect(bulk.execute.deleted_count).to eq(1)
         end
 
         it 'deletes all matching documents' do
@@ -233,7 +233,7 @@ shared_examples 'a bulk write object' do
       end
 
       it 'reports n_matched correctly' do
-        expect(bulk.execute[:n_matched]).to eq(1)
+        expect(bulk.execute.matched_count).to eq(1)
       end
 
       it 'only applies the replacement to one matching document' do
@@ -260,7 +260,7 @@ shared_examples 'a bulk write object' do
         end
 
         it 'reports n_matched correctly' do
-          expect(bulk.execute[:n_matched]).to eq(0)
+          expect(bulk.execute.matched_count).to eq(0)
         end
 
         it 'does not replace any documents' do
@@ -331,19 +331,19 @@ shared_examples 'a bulk write object' do
     context 'when a valid update document is specified' do
 
       it 'reports n_modified correctly', if: write_command_enabled?  do
-        expect(bulk.execute[:n_modified]).to eq(1)
+        expect(bulk.execute.modified_count).to eq(1)
       end
 
       it 'reports n_modified correctly', unless: write_command_enabled?  do
-        expect(bulk.execute[:n_modified]).to eq(nil)
+        expect(bulk.execute.modified_count).to eq(nil)
       end
 
       it 'reports n_upserted correctly' do
-        expect(bulk.execute[:n_upserted]).to eq(0)
+        expect(bulk.execute.upserted_count).to eq(0)
       end
 
       it 'reports n_matched correctly' do
-        expect(bulk.execute[:n_matched]).to eq(1)
+        expect(bulk.execute.matched_count).to eq(1)
       end
 
       it 'applies the correct writes' do
@@ -365,19 +365,19 @@ shared_examples 'a bulk write object' do
         end
 
         it 'reports n_modified correctly', if: write_command_enabled?  do
-          expect(bulk.execute[:n_modified]).to eq(0)
+          expect(bulk.execute.modified_count).to eq(0)
         end
 
         it 'reports n_modified correctly', unless: write_command_enabled?  do
-          expect(bulk.execute[:n_modified]).to eq(nil)
+          expect(bulk.execute.modified_count).to eq(nil)
         end
 
         it 'reports n_upserted correctly' do
-          expect(bulk.execute[:n_upserted]).to eq(1)
+          expect(bulk.execute.upserted_count).to eq(1)
         end
 
         it 'reports n_matched correctly' do
-          expect(bulk.execute[:n_matched]).to eq(0)
+          expect(bulk.execute.matched_count).to eq(0)
         end
 
         it 'applies the correct writes' do
@@ -444,19 +444,19 @@ shared_examples 'a bulk write object' do
     context 'when a valid update document is specified' do
 
       it 'reports n_modified correctly', if: write_command_enabled?  do
-        expect(bulk.execute[:n_modified]).to eq(2)
+        expect(bulk.execute.modified_count).to eq(2)
       end
 
       it 'reports n_modified correctly', unless: write_command_enabled?  do
-        expect(bulk.execute[:n_modified]).to eq(nil)
+        expect(bulk.execute.modified_count).to eq(nil)
       end
 
       it 'reports n_upserted correctly' do
-        expect(bulk.execute[:n_upserted]).to eq(0)
+        expect(bulk.execute.upserted_count).to eq(0)
       end
 
       it 'reports n_matched correctly' do
-        expect(bulk.execute[:n_matched]).to eq(2)
+        expect(bulk.execute.matched_count).to eq(2)
       end
 
       it 'applies the correct writes' do
@@ -478,19 +478,19 @@ shared_examples 'a bulk write object' do
         end
 
         it 'reports n_modified correctly', if: write_command_enabled?  do
-          expect(bulk.execute[:n_modified]).to eq(0)
+          expect(bulk.execute.modified_count).to eq(0)
         end
 
         it 'reports n_modified correctly', unless: write_command_enabled?  do
-          expect(bulk.execute[:n_modified]).to eq(nil)
+          expect(bulk.execute.modified_count).to eq(nil)
         end
 
         it 'reports n_upserted correctly' do
-          expect(bulk.execute[:n_upserted]).to eq(1)
+          expect(bulk.execute.upserted_count).to eq(1)
         end
 
         it 'reports n_matched correctly' do
-          expect(bulk.execute[:n_matched]).to eq(0)
+          expect(bulk.execute.matched_count).to eq(0)
         end
 
         it 'applies the correct writes' do

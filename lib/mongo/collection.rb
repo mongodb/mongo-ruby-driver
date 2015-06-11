@@ -172,7 +172,13 @@ module Mongo
     #
     # @since 2.0.0
     def insert_one(document, options = {})
-      insert_many([ document ], options)
+      Operation::Write::Insert.new(
+        :documents => [ document ],
+        :db_name => database.name,
+        :coll_name => name,
+        :write_concern => write_concern,
+        :options => options
+      ).execute(next_primary.context)
     end
 
     # Insert the provided documents into the collection.
@@ -187,13 +193,8 @@ module Mongo
     #
     # @since 2.0.0
     def insert_many(documents, options = {})
-      Operation::Write::Insert.new(
-        :documents => documents,
-        :db_name => database.name,
-        :coll_name => name,
-        :write_concern => write_concern,
-        :options => options
-      ).execute(next_primary.context)
+      inserts = documents.map{ |doc| { :insert_one => doc }}
+      bulk_write(inserts, options)
     end
 
     # Execute a batch of bulk write operations.
@@ -207,7 +208,7 @@ module Mongo
     # @return [ BSON::Document ] The result of the operation.
     #
     # @since 2.0.0
-    def bulk_write(operations, options)
+    def bulk_write(operations, options = {})
       BulkWrite.get(self, operations, options).execute
     end
 

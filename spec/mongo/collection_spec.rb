@@ -308,11 +308,11 @@ describe Mongo::Collection do
     end
 
     it 'inserts the documents into the collection', if: write_command_enabled? do
-      expect(result.written_count).to eq(2)
+      expect(result.inserted_count).to eq(2)
     end
 
     it 'inserts the documents into the collection', unless: write_command_enabled? do
-      expect(result.written_count).to eq(0)
+      expect(result.inserted_count).to eq(0)
     end
 
     it 'contains the ids in the result' do

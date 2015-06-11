@@ -32,7 +32,7 @@ module Mongo
         def aggregate_write_errors(indexes)
           @replies.reduce(nil) do |errors, reply|
             if reply.documents.first['writeErrors']
-              write_errors = reply.documents.first['writeErrors'].collect do |we|
+              write_errors = reply.documents.first[Error::WRITE_ERRORS].collect do |we|
                 we.merge!('index' => indexes[we['index']])
               end
               (errors || []) << write_errors if write_errors
@@ -53,7 +53,7 @@ module Mongo
         # @since 2.0.0
         def aggregate_write_concern_errors(indexes)
           @replies.each_with_index.reduce(nil) do |errors, (reply, i)|
-            if write_concern_errors = reply.documents.first['writeConcernErrors']
+            if write_concern_errors = reply.documents.first[Error::WRITE_CONCERN_ERRORS]
               (errors || []) << write_concern_errors.reduce(nil) do |errs, wce|
                   wce.merge!('index' => indexes[wce['index']])
                   (errs || []) << write_concern_error

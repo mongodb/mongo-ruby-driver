@@ -59,13 +59,13 @@ describe Mongo::BulkWrite do
     let(:options) do
        { ordered: true }
     end
-     
+
     it_behaves_like 'a bulk write object'
-    
+
     context 'when the batch requires splitting' do
-    
+
       context 'when the operations are the same type' do
-    
+
         let(:error) do
           begin
             bulk.execute
@@ -73,7 +73,7 @@ describe Mongo::BulkWrite do
             ex
           end
         end
-    
+
         let(:operations) do
           [].tap do |ops|
             3000.times do |i|
@@ -83,13 +83,13 @@ describe Mongo::BulkWrite do
             ops << { insert_one: { _id: 3001 } }
           end
         end
-    
+
         it 'raises a BulkWriteError' do
           expect(error).to be_a(Mongo::Error::BulkWriteError)
         end
 
         it 'halts execution after first error and reports correct index' do
-          expect(error.result[:write_errors].first['index']).to eq(3000)
+          expect(error.result[Mongo::Error::WRITE_ERRORS].first['index']).to eq(3000)
           expect(authorized_collection.find.count).to eq(3000)
         end
       end
@@ -120,7 +120,7 @@ describe Mongo::BulkWrite do
         end
 
         it 'halts execution after first error and reports correct index' do
-          expect(error.result[:write_errors].first['index']).to eq(2001)
+          expect(error.result[Mongo::Error::WRITE_ERRORS].first['index']).to eq(2001)
           expect(authorized_collection.find.count).to eq(1999)
         end
       end
@@ -134,7 +134,7 @@ describe Mongo::BulkWrite do
             ex
           end
         end
-    
+
         let(:operations) do
           [].tap do |ops|
             6.times do |i|
@@ -144,11 +144,11 @@ describe Mongo::BulkWrite do
             ops << { insert_one: { _id: 100 } }
           end
         end
-    
+
         it 'raises a BulkWriteError error' do
           expect(error).to be_a(Mongo::Error::BulkWriteError)
         end
-    
+
         it 'splits messages into multiple messages' do
           error
           expect(authorized_collection.find.count).to eq(6)
@@ -192,7 +192,7 @@ describe Mongo::BulkWrite do
         end
 
         it 'does not halt execution after first error' do
-          expect(error.result[:write_errors].first['index']).to eq(3000)
+          expect(error.result[Mongo::Error::WRITE_ERRORS].first['index']).to eq(3000)
           expect(authorized_collection.find.count).to eq(3001)
         end
       end
@@ -223,7 +223,7 @@ describe Mongo::BulkWrite do
         end
 
         it 'does not halt execution after first error' do
-          expect(error.result[:write_errors].first['index']).to eq(2001)
+          expect(error.result[Mongo::Error::WRITE_ERRORS].first['index']).to eq(2001)
           expect(authorized_collection.find.count).to eq(2000)
         end
       end
