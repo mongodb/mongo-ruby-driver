@@ -230,6 +230,10 @@ module Mongo
             results.merge!(INSERTED_IDS => result.inserted_ids)
           end
 
+          if result.respond_to?(Operation::Write::BulkUpdate::Result::UPSERTED)
+            results.merge!(UPSERTED_IDS => result.upserted.map{ |doc| doc['_id'] })
+          end
+
           if write_errors
             results.merge!(
               Error::WRITE_ERRORS => ((results[Error::WRITE_ERRORS] || []) << write_errors).flatten

@@ -376,6 +376,10 @@ shared_examples 'a bulk write object' do
           expect(bulk.execute.upserted_count).to eq(1)
         end
 
+        it 'returns the upserted ids' do
+          expect(bulk.execute.upserted_ids.size).to eq(1)
+        end
+
         it 'reports n_matched correctly' do
           expect(bulk.execute.matched_count).to eq(0)
         end
