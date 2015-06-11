@@ -376,7 +376,7 @@ shared_examples 'a bulk write object' do
           expect(bulk.execute.upserted_count).to eq(1)
         end
 
-        it 'returns the upserted ids' do
+        it 'returns the upserted ids', if: write_command_enabled? do
           expect(bulk.execute.upserted_ids.size).to eq(1)
         end
 
