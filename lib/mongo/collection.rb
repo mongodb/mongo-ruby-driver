@@ -205,7 +205,7 @@ module Mongo
     # @param [ Array<Hash> ] operations The operations.
     # @param [ Hash ] options The options.
     #
-    # @return [ BSON::Document ] The result of the operation.
+    # @return [ BulkWrite::Result ] The result of the operation.
     #
     # @since 2.0.0
     def bulk_write(operations, options = {})
