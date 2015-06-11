@@ -56,9 +56,9 @@ module Mongo
     #
     # @since 2.0.0
     def alive?
-      sock_arr = [@socket]
+      sock_arr = [ @socket ]
       if Kernel::select(sock_arr, nil, sock_arr, 0)
-        !eof?
+        !@socket.eof?
       else
         true
       end
@@ -75,7 +75,7 @@ module Mongo
     #
     # @since 2.0.0
     def close
-      socket.close rescue true
+      @socket.close rescue true
       true
     end
 

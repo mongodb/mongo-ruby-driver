@@ -63,13 +63,6 @@ module Mongo
         end
       end
 
-      # Tests if this socket has reached EOF. Primarily used for liveness checks.
-      #
-      # @since 2.0.0
-      def eof?
-        @tcp_socket.eof?
-      end
-
       # Initializes a new SSL socket.
       #
       # @example Create the SSL socket.
