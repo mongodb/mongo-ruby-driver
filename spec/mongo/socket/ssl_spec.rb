@@ -44,7 +44,7 @@ describe Mongo::Socket::SSL do
       end
     end
 
-    context 'when a CA certificate is provided' do
+    context 'when a CA certificate is provided', if: running_ssl? && testing_locally? do
 
       let(:options) do
         {
