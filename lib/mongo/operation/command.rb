@@ -20,14 +20,13 @@ module Mongo
     # @example Create the command operation.
     #   Mongo::Operation::Command.new({ :selector => { :isMaster => 1 } })
     #
-    # @note A command is actually a query on the virtual '$cmd' collection.
+    # Initialization:
+    #   param [ Hash ] spec The specifications for the command.
     #
-    # @param [ Hash ] spec The specifications for the command.
-    #
-    # @option spec :selector [ Hash ] The command selector.
-    # @option spec :db_name [ String ] The name of the database on which
+    #   option spec :selector [ Hash ] The command selector.
+    #   option spec :db_name [ String ] The name of the database on which
     #   the command should be executed.
-    # @option spec :options [ Hash ] Options for the command.
+    #   option spec :options [ Hash ] Options for the command.
     #
     # @since 2.0.0
     class Command

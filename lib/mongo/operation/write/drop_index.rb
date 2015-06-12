@@ -25,12 +25,13 @@ module Mongo
       #     :index_name => 'name_1_age_-1'
       #   })
       #
-      # @param [ Hash ] spec The specifications for the drop.
+      # Initialization:
+      #   param [ Hash ] spec The specifications for the drop.
       #
-      # @option spec :index [ Hash ] The index spec to create.
-      # @option spec :db_name [ String ] The name of the database.
-      # @option spec :coll_name [ String ] The name of the collection.
-      # @option spec :index_name [ String ] The name of the index.
+      #   option spec :index [ Hash ] The index spec to create.
+      #   option spec :db_name [ String ] The name of the database.
+      #   option spec :coll_name [ String ] The name of the collection.
+      #   option spec :index_name [ String ] The name of the index.
       #
       # @since 2.0.0
       class DropIndex

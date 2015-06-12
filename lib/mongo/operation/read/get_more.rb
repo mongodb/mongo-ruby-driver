@@ -26,14 +26,15 @@ module Mongo
       #     :coll_name => 'test_coll'
       #   })
       #
-      # @param [ Hash ] spec The specifications for the operation.
+      # Initialization:
+      #   param [ Hash ] spec The specifications for the operation.
       #
-      # @option spec :to_return [ Integer ] The number of results to return.
-      # @option spec :cursor_id [ Integer ] The id of the cursor.
-      # @option spec :db_name [ String ] The name of the database on which
-      #   the operation should be executed.
-      # @option spec :coll_name [ String ] The name of the collection on which
-      #   the operation should be executed.
+      #   option spec :to_return [ Integer ] The number of results to return.
+      #   option spec :cursor_id [ Integer ] The id of the cursor.
+      #   option spec :db_name [ String ] The name of the database on which
+      #     the operation should be executed.
+      #   option spec :coll_name [ String ] The name of the collection on which
+      #     the operation should be executed.
       #
       # @since 2.0.0
       class GetMore

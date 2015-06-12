@@ -31,19 +31,20 @@ module Mongo
       #     :write_concern => write_concern
       #   })
       #
-      # @param [ Hash ] spec The specifications for the delete.
+      # Initialization:
+      #   param [ Hash ] spec The specifications for the delete.
       #
-      # @option spec :delete [ Hash ] The delete document.
-      # @option spec :db_name [ String ] The name of the database on which
-      #   the delete should be executed.
-      # @option spec :coll_name [ String ] The name of the collection on which
-      #   the delete should be executed.
-      # @option spec :write_concern [ Mongo::WriteConcern ] The write concern
-      #   for this operation.
-      # @option spec :ordered [ true, false ] Whether the operations should be
-      #   executed in order.
-      # @option spec :options [Hash] Options for the command, if it ends up being a
-      #   write command.
+      #   option spec :delete [ Hash ] The delete document.
+      #   option spec :db_name [ String ] The name of the database on which
+      #     the delete should be executed.
+      #   option spec :coll_name [ String ] The name of the collection on which
+      #     the delete should be executed.
+      #   option spec :write_concern [ Mongo::WriteConcern ] The write concern
+      #     for this operation.
+      #   option spec :ordered [ true, false ] Whether the operations should be
+      #     executed in order.
+      #   option spec :options [Hash] Options for the command, if it ends up being a
+      #     write command.
       #
       # @since 2.0.0
       class Delete

@@ -22,10 +22,11 @@ module Mongo
       # @example Initialize the operation.
       #   Write::CreateUser.new(:db_name => 'test', :user => user)
       #
-      # @param [ Hash ] spec The specifications for the create.
+      # Initialization:
+      #   param [ Hash ] spec The specifications for the create.
       #
-      # @option spec :user [ Auth::User ] The user to create.
-      # @option spec :db_name [ String ] The name of the database.
+      #   option spec :user [ Auth::User ] The user to create.
+      #   option spec :db_name [ String ] The name of the database.
       #
       # @since 2.0.0
       class CreateUser

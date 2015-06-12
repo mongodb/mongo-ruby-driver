@@ -37,16 +37,17 @@ module Mongo
       #     :write_concern => write_concern
       #   })
       #
-      # @param [ Hash ] spec The specifications for the update.
+      # Initialization:
+      #   param [ Hash ] spec The specifications for the update.
       #
-      # @option spec :update [ Hash ] The update document.
-      # @option spec :db_name [ String ] The name of the database on which
-      #   the query should be run.
-      # @option spec :coll_name [ String ] The name of the collection on which
-      #   the query should be run.
-      # @option spec :write_concern [ Mongo::WriteConcern ] The write concern.
-      # @option spec :options [ Hash ] Options for the command, if it ends up being a
-      #   write command.
+      #   option spec :update [ Hash ] The update document.
+      #   option spec :db_name [ String ] The name of the database on which
+      #     the query should be run.
+      #   option spec :coll_name [ String ] The name of the collection on which
+      #     the query should be run.
+      #   option spec :write_concern [ Mongo::WriteConcern ] The write concern.
+      #   option spec :options [ Hash ] Options for the command, if it ends up being a
+      #     write command.
       #
       # @since 2.0.0
       class Update
