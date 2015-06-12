@@ -13,8 +13,7 @@
 # limitations under the License.
 
 require 'mongo/server/description/inspector/primary_elected'
-require 'mongo/server/description/inspector/server_added'
-require 'mongo/server/description/inspector/server_removed'
+require 'mongo/server/description/inspector/description_changed'
 
 module Mongo
   class Server
@@ -32,9 +31,8 @@ module Mongo
         #
         # @since 2.0.0
         INSPECTORS = [
-          Inspector::PrimaryElected,
-          Inspector::ServerAdded,
-          Inspector::ServerRemoved
+            Inspector::DescriptionChanged,
+            Inspector::PrimaryElected
         ].freeze
 
         # @return [ Array ] inspectors The description inspectors.

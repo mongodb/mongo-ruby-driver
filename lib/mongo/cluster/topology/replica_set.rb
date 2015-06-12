@@ -125,6 +125,56 @@ module Mongo
           end
         end
 
+        # Whether a server description's hosts may be added to the cluster.
+        #
+        # @example Check if a description's hosts may be added to the cluster.
+        #   topology.add_hosts?(description, servers)
+        #
+        # @param [ Mongo::Server::Description ] description The description.
+        # @param [ Array<Mongo::Server> ] servers The cluster servers.
+        #
+        # @return [ true, false ] Whether a description's hosts may be added.
+        #
+        # @since 2.0.6
+        def add_hosts?(description, servers)
+          if !has_primary?(servers)
+            member_of_this_set?(description)
+          end
+        end
+
+        # Whether a description can be used to remove hosts from the cluster.
+        #
+        # @example Check if a description can be used to remove hosts from the cluster.
+        #   topology.remove_hosts?(description)
+        #
+        # @param [ Mongo::Server::Description ] description The description.
+        #
+        # @return [ true, false ] Whether hosts may be removed from the cluster.
+        #
+        # @since 2.0.6
+        def remove_hosts?(description)
+          !description.config.empty? &&
+            (description.primary? ||
+              description.hosts.empty? ||
+                !member_of_this_set?(description))
+        end
+
+        # Whether a specific server in the cluster can be removed, given a description.
+        #
+        # @example Check if a specific server can be removed from the cluster.
+        #   topology.remove_server?(description, server)
+        #
+        # @param [ Mongo::Server::Description ] description The description.
+        # @param [ Mongo::Serve ] server The server in question.
+        #
+        # @return [ true, false ] Whether the server can be removed from the cluster.
+        #
+        # @since 2.0.6
+        def remove_server?(description, server)
+          remove_self?(description, server) ||
+            (member_of_this_set?(description) && !description.included?(server))
+        end
+
         # A replica set topology is not sharded.
         #
         # @example Is the topology sharded?
@@ -154,6 +204,23 @@ module Mongo
         #
         # @since 2.0.0
         def unknown?; false; end
+
+        private
+
+        def has_primary?(servers)
+          servers.find { |s| s.primary? }
+        end
+
+        def member_of_this_set?(description)
+          description.replica_set_member? &&
+            description.replica_set_name == replica_set_name
+        end
+
+        def remove_self?(description, server)
+          !member_of_this_set?(description) &&
+            description.me?(server) &&
+              !description.ghost?
+        end
       end
     end
   end
