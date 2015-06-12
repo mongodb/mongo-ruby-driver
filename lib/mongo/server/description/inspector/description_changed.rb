@@ -18,16 +18,16 @@ module Mongo
       class Inspector
 
         # Handles inspecting the result of an ismaster command for servers
-        # that were removed from the cluster.
+        # added to the cluster.
         #
         # @since 2.0.0
-        class ServerRemoved
+        class DescriptionChanged
           include Event::Publisher
 
-          # Instantiate the server removed inspection.
+          # Instantiate the server added inspection.
           #
           # @example Instantiate the inspection.
-          #   ServerRemoved.new(listeners)
+          #   ServerAdded.new(listeners)
           #
           # @param [ Event::Listeners ] event_listeners The event listeners.
           #
@@ -46,10 +46,8 @@ module Mongo
           #
           # @since 2.0.0
           def run(description, updated)
-            description.hosts.each do |host|
-              if updated.primary? && !updated.hosts.include?(host)
-                publish(Event::SERVER_REMOVED, host)
-              end
+            unless description == updated
+              publish(Event::DESCRIPTION_CHANGED, updated)
             end
           end
         end

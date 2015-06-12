@@ -93,8 +93,7 @@ module Mongo
       @options = options.freeze
       @topology = Topology.initial(seeds, options)
 
-      subscribe_to(Event::SERVER_ADDED, Event::ServerAdded.new(self))
-      subscribe_to(Event::SERVER_REMOVED, Event::ServerRemoved.new(self))
+      subscribe_to(Event::DESCRIPTION_CHANGED, Event::DescriptionChanged.new(self))
       subscribe_to(Event::PRIMARY_ELECTED, Event::PrimaryElected.new(self))
 
       seeds.each{ |seed| add(seed) }
@@ -139,7 +138,7 @@ module Mongo
       @topology = topology.elect_primary(description, @servers)
     end
 
-    # Removed the server from the cluster for the provided address, if it
+    # Remove the server from the cluster for the provided address, if it
     # exists.
     #
     # @example Remove the server from the cluster.
@@ -182,6 +181,36 @@ module Mongo
     # @since 2.0.0
     def servers
       topology.servers(@servers.compact).compact
+    end
+
+    # Add hosts in a description to the cluster.
+    #
+    # @example Add hosts in a description to the cluster.
+    #   cluster.add_hosts(description)
+    #
+    # @param [ Mongo::Server::Description ] description The description.
+    #
+    # @since 2.0.6
+    def add_hosts(description)
+      if topology.add_hosts?(description, @servers)
+        description.servers.each { |s| add(s) }
+      end
+    end
+
+    # Remove hosts in a description from the cluster.
+    #
+    # @example Remove hosts in a description from the cluster.
+    #   cluster.remove_hosts(description)
+    #
+    # @param [ Mongo::Server::Description ] description The description.
+    #
+    # @since 2.0.6
+    def remove_hosts(description)
+      if topology.remove_hosts?(description)
+        @servers.each do |s|
+          remove(s.address.to_s) if topology.remove_server?(description, s)
+        end
+      end
     end
 
     # Create a cluster for the provided client, for use when we don't want the

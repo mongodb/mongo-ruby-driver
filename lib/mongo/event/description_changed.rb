@@ -16,10 +16,10 @@
 module Mongo
   module Event
 
-    # This handles host added events for server descriptions.
+    # This handles a change in description.
     #
-    # @since 2.0.0
-    class ServerAdded
+    # @since 2.0.5
+    class DescriptionChanged
 
       # @return [ Mongo::Cluster ] cluster The event publisher.
       attr_reader :cluster
@@ -45,8 +45,9 @@ module Mongo
       # @param [ Address ] address The added host.
       #
       # @since 2.0.0
-      def handle(address)
-        cluster.add(address)
+      def handle(updated)
+        cluster.add_hosts(updated)
+        cluster.remove_hosts(updated)
       end
     end
   end
