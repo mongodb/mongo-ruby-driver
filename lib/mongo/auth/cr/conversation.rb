@@ -102,7 +102,6 @@ module Mongo
         #   Conversation.new(user, "admin")
         #
         # @param [ Auth::User ] user The user to converse about.
-        # @param [ String ] database The database to authenticate against.
         #
         # @since 2.0.0
         def initialize(user)

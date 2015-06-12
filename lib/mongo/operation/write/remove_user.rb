@@ -21,10 +21,11 @@ module Mongo
       # @example Create the remove user operation.
       #   Write::RemoveUser.new(:db_name => 'test', :name => name)
       #
-      # @param [ Hash ] spec The specifications for the remove.
+      # Initialization:
+      #   param [ Hash ] spec The specifications for the remove.
       #
-      # @option spec :name [ String ] The user name.
-      # @option spec :db_name [ String ] The name of the database.
+      #   option spec :name [ String ] The user name.
+      #   option spec :db_name [ String ] The name of the database.
       #
       # @since 2.0.0
       class RemoveUser

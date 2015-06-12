@@ -26,14 +26,15 @@ module Mongo
       #     :options => { :limit => 2 }
       #   })
       #
-      # @param [ Hash ] spec The specifications for the query.
+      # Initialization:
+      #   param [ Hash ] spec The specifications for the query.
       #
-      # @option spec :selector [ Hash ] The query selector.
-      # @option spec :db_name [ String ] The name of the database on which
-      #   the query should be run.
-      # @option spec :coll_name [ String ] The name of the collection on which
-      #   the query should be run.
-      # @option spec :options [ Hash ] Options for the query.
+      #   option spec :selector [ Hash ] The query selector.
+      #   option spec :db_name [ String ] The name of the database on which
+      #     the query should be run.
+      #   option spec :coll_name [ String ] The name of the collection on which
+      #     the query should be run.
+      #   option spec :options [ Hash ] Options for the query.
       #
       # @since 2.0.0
       class Query

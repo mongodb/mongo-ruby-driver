@@ -23,10 +23,11 @@ module Mongo
       # @example Instantiate the operation.
       #   Read::Indexes.new(:db_name => 'test', :coll_name => 'test_coll')
       #
-      # @param [ Hash ] spec The specifications for the insert.
+      # Initialization:
+      #   param [ Hash ] spec The specifications for the insert.
       #
-      # @option spec :db_name [ String ] The name of the database.
-      # @option spec :coll_name [ String ] The name of the collection.
+      #   option spec :db_name [ String ] The name of the database.
+      #   option spec :coll_name [ String ] The name of the collection.
       #
       # @since 2.0.0
       class Indexes
