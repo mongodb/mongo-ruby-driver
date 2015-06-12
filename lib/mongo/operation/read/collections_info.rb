@@ -21,11 +21,12 @@ module Mongo
       # @example Create the collection names operation.
       #   Read::CollectionNames.new(:db_name => 'test-db')
       #
-      # @param [ Hash ] spec The specifications for the collection names operation.
+      # Initialization:
+      #   param [ Hash ] spec The specifications for the collection names operation.
       #
-      # @option spec :db_name [ String ] The name of the database whose collection
-      #   names is requested.
-      # @option spec :options [ Hash ] Options for the operation.
+      #   option spec :db_name [ String ] The name of the database whose collection
+      #     names is requested.
+      #   option spec :options [ Hash ] Options for the operation.
       #
       # @since 2.0.0
       class CollectionsInfo

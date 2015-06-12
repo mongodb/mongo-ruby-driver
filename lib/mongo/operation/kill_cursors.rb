@@ -20,9 +20,10 @@ module Mongo
     # @example Create the kill cursors operation.
     #   Mongo::Operation::KillCursor.new({ :cursor_ids => [1, 2] })
     #
-    # @param [ Hash ] spec The specifications for the operation.
+    # Initialization:
+    #   param [ Hash ] spec The specifications for the operation.
     #
-    # @option spec :cursor_ids [ Array ] The ids of cursors to kill.
+    #   option spec :cursor_ids [ Array ] The ids of cursors to kill.
     #
     # @since 2.0.0
     class KillCursors

@@ -39,18 +39,19 @@ module Mongo
       #     :ordered => false
       #   })
       #
-      # @param [ Hash ] spec The specifications for the update.
+      # Initialization:
+      #   param [ Hash ] spec The specifications for the update.
       #
-      # @option spec :updates [ Array ] The update documents.
-      # @option spec :db_name [ String ] The name of the database on which
-      #   the query should be run.
-      # @option spec :coll_name [ String ] The name of the collection on which
-      #   the query should be run.
-      # @option spec :write_concern [ Mongo::WriteConcern ] The write concern.
-      # @option spec :ordered [ true, false ] Whether the operations should be
-      #   executed in order.
-      # @option spec :options [ Hash ] Options for the command, if it ends up being a
-      #   write command.
+      #   option spec :updates [ Array ] The update documents.
+      #   option spec :db_name [ String ] The name of the database on which
+      #     the query should be run.
+      #   option spec :coll_name [ String ] The name of the collection on which
+      #     the query should be run.
+      #   option spec :write_concern [ Mongo::WriteConcern ] The write concern.
+      #   option spec :ordered [ true, false ] Whether the operations should be
+      #     executed in order.
+      #   option spec :options [ Hash ] Options for the command, if it ends up being a
+      #     write command.
       #
       # @since 2.0.0
       class BulkUpdate

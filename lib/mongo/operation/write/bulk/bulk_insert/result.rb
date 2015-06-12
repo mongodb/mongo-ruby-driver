@@ -37,7 +37,7 @@ module Mongo
           #   Result.new(replies, inserted_ids)
           #
           # @param [ Protocol::Reply ] replies The wire protocol replies.
-          # @params [ Array<Object> ] ids The ids of the inserted documents.
+          # @param [ Array<Object> ] ids The ids of the inserted documents.
           #
           # @since 2.0.0
           def initialize(replies, ids)
@@ -88,7 +88,7 @@ module Mongo
           #   Result.new(replies, inserted_ids)
           #
           # @param [ Protocol::Reply ] replies The wire protocol replies.
-          # @params [ Array<Object> ] ids The ids of the inserted documents.
+          # @param [ Array<Object> ] ids The ids of the inserted documents.
           #
           # @since 2.0.0
           def initialize(replies, ids)

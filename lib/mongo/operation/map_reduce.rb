@@ -33,12 +33,13 @@ module Mongo
     #     :db_name  => 'test_db'
     #   })
     #
-    # @param [ Hash ] spec The specifications for the operation.
+    # Initialization:
+    #   param [ Hash ] spec The specifications for the operation.
     #
-    # @option spec :selector [ Hash ] The map reduce selector.
-    # @option spec :db_name [ String ] The name of the database on which
-    #   the operation should be executed.
-    # @option spec :options [ Hash ] Options for the map reduce command.
+    #   option spec :selector [ Hash ] The map reduce selector.
+    #   option spec :db_name [ String ] The name of the database on which
+    #     the operation should be executed.
+    #   option spec :options [ Hash ] Options for the map reduce command.
     #
     # @since 2.0.0
     class MapReduce

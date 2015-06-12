@@ -25,7 +25,8 @@ module Mongo
       # @example Instantiate the exception.
       #   Mongo::Error::InvalidBulkOperation.new(name)
       #
-      # @param [ String ] name The attempted operation name.
+      # @param [ String ] type The bulk operation type.
+      # @param [ Hash ] operation The bulk operation.
       #
       # @since 2.0.0
       def initialize(type, operation)

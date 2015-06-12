@@ -25,11 +25,12 @@ module Mongo
       #
       # @note A command is actually a query on the virtual '$cmd' collection.
       #
-      # @param [ Hash ] spec The specifications for the command.
+      # Initialization:
+      #   param [ Hash ] spec The specifications for the command.
       #
-      # @option spec :db_name [ String ] The name of the database whose list of
-      #   collection names is requested.
-      # @option spec :options [ Hash ] Options for the command.
+      #   option spec :db_name [ String ] The name of the database whose list of
+      #     collection names is requested.
+      #   option spec :options [ Hash ] Options for the command.
       #
       # @since 2.0.0
       class ListCollections
