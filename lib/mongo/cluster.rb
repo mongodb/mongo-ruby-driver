@@ -25,9 +25,6 @@ module Mongo
     include Event::Subscriber
     include Loggable
 
-    # @return [ Array<String> ] The provided seed addresses.
-    attr_reader :addresses
-
     # @return [ Hash ] The options hash.
     attr_reader :options
 
@@ -69,7 +66,7 @@ module Mongo
       if !addresses.include?(address)
         if addition_allowed?(address)
           log_debug([ "Adding #{address.to_s} to the cluster." ])
-          addresses.push(address)
+          @addresses_update.synchronize { @addresses.push(address) }
           server = Server.new(address, self, event_listeners, options)
           @servers_update.synchronize do
             @servers.push(server)
@@ -90,6 +87,7 @@ module Mongo
     # @since 2.0.0
     def initialize(seeds, options = {})
       @addresses = []
+      @addresses_update = Mutex.new
       @servers = []
       @servers_update = Mutex.new
       @event_listeners = Event::Listeners.new
@@ -157,7 +155,9 @@ module Mongo
         @servers.reject!{ |server| server.address == address }
       end
       removed_servers.each{ |server| server.disconnect! } if removed_servers
-      addresses.reject!{ |addr| addr == address }
+      @addresses_update.synchronize do
+        @addresses.reject!{ |addr| addr == address }
+      end
     end
 
     # Force a scan of all known servers in the cluster.
@@ -236,6 +236,18 @@ module Mongo
       client.instance_variable_set(:@cluster, cluster)
     end
 
+    # The addresses in the cluster.
+    #
+    # @example Get the addresses in the cluster.
+    #   cluster.addresses
+    #
+    # @return [ Array<Mongo::Address> ] The addresses.
+    #
+    # @since 2.0.6
+    def addresses
+      addresses_list
+    end
+
     private
 
     def direct_connection?(address)
@@ -249,6 +261,12 @@ module Mongo
     def servers_list
       @servers_update.synchronize do
         @servers
+      end
+    end
+
+    def addresses_list
+      @addresses_update.synchronize do
+        @addresses
       end
     end
   end
