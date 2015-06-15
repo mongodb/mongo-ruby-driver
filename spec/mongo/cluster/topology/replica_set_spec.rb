@@ -98,4 +98,254 @@ describe Mongo::Cluster::Topology::ReplicaSet do
       expect(described_class.new({})).to_not be_single
     end
   end
+
+  describe '#add_hosts?' do
+
+    let(:primary) do
+      Mongo::Server.new(address, Mongo::Event::Listeners.new, TEST_OPTIONS)
+    end
+
+    let(:secondary) do
+      Mongo::Server.new(address, Mongo::Event::Listeners.new, TEST_OPTIONS)
+    end
+
+    let(:primary_description) do
+      Mongo::Server::Description.new(address, { 'ismaster' => true, 'setName' => 'testing' })
+    end
+
+    let(:secondary_description) do
+      Mongo::Server::Description.new(address, { 'ismaster' => false, 'secondary' => true,
+                                                'setName' => 'testing' })
+    end
+
+    let(:topology) do
+      described_class.new(:replica_set => 'testing')
+    end
+
+    before do
+      primary.monitor.instance_variable_set(:@description, primary_description)
+      secondary.monitor.instance_variable_set(:@description, secondary_description)
+    end
+
+    context 'when the list of servers does not include a primary' do
+
+      let(:servers) do
+        [ secondary ]
+      end
+
+      context 'when the description is a member of the replica set' do
+
+        let(:description) do
+          double('description').tap do |d|
+            allow(d).to receive(:replica_set_member?).and_return(true)
+            allow(d).to receive(:replica_set_name).and_return('testing')
+          end
+        end
+
+        it 'returns true' do
+          expect(topology.add_hosts?(description, servers)).to eq(true)
+        end
+      end
+
+      context 'when the description is not a member of the replica set' do
+
+        let(:description) do
+          double('description').tap do |d|
+            allow(d).to receive(:replica_set_member?).and_return(false)
+          end
+        end
+
+        it 'returns false' do
+          expect(topology.add_hosts?(description, servers)).to eq(false)
+        end
+      end
+    end
+
+    context 'when the list of servers has a primary' do
+
+      let(:servers) do
+        [ primary, secondary ]
+      end
+
+      let(:description) do
+        double('description').tap do |d|
+          allow(d).to receive(:replica_set_member?).and_return(true)
+          allow(d).to receive(:replica_set_name).and_return('testing')
+        end
+      end
+
+      it 'returns false' do
+        expect(topology.add_hosts?(description, servers)).to eq(false)
+      end
+    end
+  end
+
+  describe '#remove_hosts?' do
+
+    let(:primary) do
+      Mongo::Server.new(address, Mongo::Event::Listeners.new, TEST_OPTIONS)
+    end
+
+    let(:primary_description) do
+      Mongo::Server::Description.new(address, { 'ismaster' => true, 'setName' => 'testing' })
+    end
+
+    let(:topology) do
+      described_class.new(:replica_set => 'testing')
+    end
+
+    before do
+      primary.monitor.instance_variable_set(:@description, primary_description)
+    end
+
+    context 'when the description has an empty config' do
+
+      let(:description) do
+        double('description').tap do |d|
+          allow(d).to receive(:config).and_return({})
+        end
+      end
+
+      it 'returns false' do
+        expect(topology.remove_hosts?(description)).to eq(false)
+      end
+    end
+
+    context 'when the description is from a primary' do
+
+      let(:description) do
+        double('description').tap do |d|
+          allow(d).to receive(:config).and_return({ 'ismaster' => true })
+          allow(d).to receive(:primary?).and_return(true)
+        end
+      end
+
+      it 'returns true' do
+        expect(topology.remove_hosts?(description)).to eq(true)
+      end
+    end
+
+    context 'when the description has an empty hosts list' do
+
+      let(:description) do
+        double('description').tap do |d|
+          allow(d).to receive(:config).and_return({ 'ismaster' => true })
+          allow(d).to receive(:primary?).and_return(false)
+          allow(d).to receive(:hosts).and_return([])
+        end
+      end
+
+      it 'returns true' do
+        expect(topology.remove_hosts?(description)).to eq(true)
+      end
+    end
+
+    context 'when the description is not from the replica set' do
+
+      let(:description) do
+        double('description').tap do |d|
+          allow(d).to receive(:config).and_return({ 'ismaster' => true })
+          allow(d).to receive(:primary?).and_return(false)
+          allow(d).to receive(:hosts).and_return([ primary ])
+          allow(d).to receive(:replica_set_name).and_return('test')
+          allow(d).to receive(:replica_set_member?).and_return(true)
+        end
+      end
+
+      it 'returns true' do
+        expect(topology.remove_hosts?(description)).to eq(true)
+      end
+    end
+
+  end
+
+  describe '#remove_server?' do
+
+    let(:secondary) do
+      Mongo::Server.new(address, Mongo::Event::Listeners.new, TEST_OPTIONS)
+    end
+
+    let(:secondary_description) do
+      Mongo::Server::Description.new(address, { 'ismaster' => false, 'secondary' => true,
+                                                'setName' => 'test' })
+    end
+
+    let(:topology) do
+      described_class.new(:replica_set => 'testing')
+    end
+
+    before do
+      secondary.monitor.instance_variable_set(:@description, secondary_description)
+    end
+
+    context 'when the description is from a server that should itself be removed' do
+
+      let(:description) do
+        double('description').tap do |d|
+          allow(d).to receive(:config).and_return({ 'setName' => 'test' })
+          allow(d).to receive(:replica_set_member?).and_return(true)
+          allow(d).to receive(:replica_set_name).and_return('test')
+          allow(d).to receive(:is_server?).and_return(true)
+          allow(d).to receive(:ghost?).and_return(false)
+        end
+      end
+
+      it 'returns true' do
+        expect(topology.remove_server?(description, secondary)).to eq(true)
+      end
+    end
+
+    context 'when the description is a member of the replica set' do
+
+      context 'when the description includes the server in question' do
+
+        let(:description) do
+          double('description').tap do |d|
+            allow(d).to receive(:config).and_return({ 'setName' => 'testing' })
+            allow(d).to receive(:replica_set_member?).and_return(true)
+            allow(d).to receive(:replica_set_name).and_return('testing')
+            allow(d).to receive(:lists_server?).and_return(true)
+          end
+        end
+
+        it 'returns false' do
+          expect(topology.remove_server?(description, secondary)).to eq(false)
+        end
+      end
+
+      context 'when the description does not include the server in question' do
+
+        let(:description) do
+          double('description').tap do |d|
+            allow(d).to receive(:config).and_return({ 'setName' => 'testing' })
+            allow(d).to receive(:replica_set_member?).and_return(true)
+            allow(d).to receive(:replica_set_name).and_return('testing')
+            allow(d).to receive(:is_server?).and_return(false)
+            allow(d).to receive(:lists_server?).and_return(false)
+          end
+        end
+
+        it 'returns true' do
+          expect(topology.remove_server?(description, secondary)).to eq(true)
+        end
+      end
+    end
+
+    context 'when the description is not a member of the replica set' do
+
+      let(:description) do
+        double('description').tap do |d|
+          allow(d).to receive(:config).and_return({ 'setName' => 'test' })
+          allow(d).to receive(:replica_set_member?).and_return(true)
+          allow(d).to receive(:replica_set_name).and_return('test')
+          allow(d).to receive(:is_server?).and_return(false)
+        end
+      end
+
+      it 'returns false' do
+        expect(topology.remove_server?(description, secondary)).to eq(false)
+      end
+    end
+
+  end
 end
