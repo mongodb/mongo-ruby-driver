@@ -71,7 +71,9 @@ module Mongo
           log_debug([ "Adding #{address.to_s} to the cluster." ])
           addresses.push(address)
           server = Server.new(address, self, event_listeners, options)
-          @servers.push(server)
+          @servers_update.synchronize do
+            @servers.push(server)
+          end
           server
         end
       end
@@ -89,6 +91,7 @@ module Mongo
     def initialize(seeds, options = {})
       @addresses = []
       @servers = []
+      @servers_update = Mutex.new
       @event_listeners = Event::Listeners.new
       @options = options.freeze
       @topology = Topology.initial(seeds, options)
@@ -135,7 +138,7 @@ module Mongo
     #
     # @since 2.0.0
     def elect_primary!(description)
-      @topology = topology.elect_primary(description, @servers)
+      @topology = topology.elect_primary(description, servers_list)
     end
 
     # Remove the server from the cluster for the provided address, if it
@@ -150,7 +153,9 @@ module Mongo
     def remove(host)
       log_debug([ "#{host} being removed from the cluster." ])
       address = Address.new(host)
-      removed_servers = @servers.reject!{ |server| server.address == address }
+      removed_servers = @servers_update.synchronize do
+        @servers.reject!{ |server| server.address == address }
+      end
       removed_servers.each{ |server| server.disconnect! } if removed_servers
       addresses.reject!{ |addr| addr == address }
     end
@@ -167,7 +172,7 @@ module Mongo
     #
     # @since 2.0.0
     def scan!
-      @servers.each{ |server| server.scan! } and true
+      servers_list.each{ |server| server.scan! } and true
     end
 
     # Get a list of server candidates from the cluster that can have operations
@@ -180,7 +185,7 @@ module Mongo
     #
     # @since 2.0.0
     def servers
-      topology.servers(@servers.compact).compact
+      topology.servers(servers_list.compact).compact
     end
 
     # Add hosts in a description to the cluster.
@@ -192,7 +197,7 @@ module Mongo
     #
     # @since 2.0.6
     def add_hosts(description)
-      if topology.add_hosts?(description, @servers)
+      if topology.add_hosts?(description, servers_list)
         description.servers.each { |s| add(s) }
       end
     end
@@ -207,7 +212,7 @@ module Mongo
     # @since 2.0.6
     def remove_hosts(description)
       if topology.remove_hosts?(description)
-        @servers.each do |s|
+        servers_list.each do |s|
           remove(s.address.to_s) if topology.remove_server?(description, s)
         end
       end
@@ -239,6 +244,12 @@ module Mongo
 
     def addition_allowed?(address)
       !@topology.single? || direct_connection?(address)
+    end
+
+    def servers_list
+      @servers_update.synchronize do
+        @servers
+      end
     end
   end
 end
