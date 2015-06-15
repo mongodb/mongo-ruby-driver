@@ -449,25 +449,25 @@ module Mongo
       # Is this description from the given server.
       #
       # @example Check if the description is from a given server.
-      #   description.me?(server)
+      #   description.is_server?(server)
       #
       # @return [ true, false ] If the description is from the server.
       #
       # @since 2.0.6
-      def me?(server)
+      def is_server?(server)
         address == server.address
       end
 
       # Is a server included in this description's list of servers.
       #
       # @example Check if a server is in the description list of servers.
-      #   description.included?(server)
+      #   description.lists_server?(server)
       #
       # @return [ true, false ] If a server is in the description's list
       #   of servers.
       #
       # @since 2.0.6
-      def included?(server)
+      def lists_server?(server)
         servers.include?(server.address.to_s)
       end
 

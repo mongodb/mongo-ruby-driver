@@ -172,7 +172,7 @@ module Mongo
         # @since 2.0.6
         def remove_server?(description, server)
           remove_self?(description, server) ||
-            (member_of_this_set?(description) && !description.included?(server))
+            (member_of_this_set?(description) && !description.lists_server?(server))
         end
 
         # A replica set topology is not sharded.
@@ -218,7 +218,7 @@ module Mongo
 
         def remove_self?(description, server)
           !member_of_this_set?(description) &&
-            description.me?(server) &&
+            description.is_server?(server) &&
               !description.ghost?
         end
       end
