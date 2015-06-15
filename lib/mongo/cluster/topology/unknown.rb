@@ -180,7 +180,7 @@ module Mongo
         #
         # @since 2.0.6
         def remove_server?(description, server)
-          description.standalone? && description.me?(server)
+          description.standalone? && description.is_server?(server)
         end
 
         private
