@@ -149,9 +149,8 @@ module Mongo
     def remove(host)
       log_debug([ "#{host} being removed from the cluster." ])
       address = Address.new(host)
-      removed_servers = @servers_update.synchronize do
-        @servers.reject!{ |server| server.address == address }
-      end
+      removed_servers = @servers.select { |s| s.address == address }
+      @servers_update.synchronize { @servers = @servers - removed_servers }
       removed_servers.each{ |server| server.disconnect! } if removed_servers
       @addresses_update.synchronize do
         @addresses.reject!{ |addr| addr == address }
