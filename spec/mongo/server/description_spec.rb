@@ -78,6 +78,27 @@ describe Mongo::Server::Description do
         expect(description.arbiters).to be_empty
       end
     end
+
+    context 'when the addresses are not lowercase' do
+
+      let(:config) do
+        replica.merge(
+                   {
+                       'arbiters' => [
+                           'SERVER:27017'
+                       ],
+                   }
+        )
+      end
+
+      let(:description) do
+        described_class.new(address, config)
+      end
+
+      it 'normalizes the addresses to lowercase' do
+        expect(description.arbiters).to eq(['server:27017'])
+      end
+    end
   end
 
   describe '#ghost?' do
@@ -142,6 +163,27 @@ describe Mongo::Server::Description do
 
     it 'returns all the hosts in the replica set' do
       expect(description.hosts).to eq([ '127.0.0.1:27018', '127.0.0.1:27019' ])
+    end
+
+    context 'when the addresses are not lowercase' do
+
+      let(:config) do
+        replica.merge(
+            {
+                'hosts' => [
+                    'SERVER:27017'
+                ],
+            }
+        )
+      end
+
+      let(:description) do
+        described_class.new(address, config)
+      end
+
+      it 'normalizes the addresses to lowercase' do
+        expect(description.hosts).to eq(['server:27017'])
+      end
     end
   end
 
@@ -334,6 +376,31 @@ describe Mongo::Server::Description do
         expect(description.passives).to be_empty
       end
     end
+
+    context 'when the addresses are not lowercase' do
+
+      let(:config) do
+        replica.merge(
+            {
+                'passives' => [
+                    'SERVER:27017'
+                ],
+            }
+        )
+      end
+
+      let(:description) do
+        described_class.new(address, config)
+      end
+
+      it 'normalizes the addresses to lowercase' do
+        expect(description.passives).to eq(['server:27017'])
+      end
+
+      it 'normalizes the addresses to lowercase' do
+
+      end
+    end
   end
 
   describe '#primary?' do
@@ -504,6 +571,164 @@ describe Mongo::Server::Description do
 
       it 'returns false' do
         expect(description).to_not be_unknown
+      end
+    end
+  end
+
+  describe '#is_server?' do
+
+    let(:listeners) do
+      Mongo::Event::Listeners.new
+    end
+
+    let(:server) do
+      Mongo::Server.new(address, listeners)
+    end
+
+    let(:description) do
+      described_class.new(address, {})
+    end
+
+    context 'when the server address matches the description address' do
+
+      it 'returns true' do
+        expect(description.is_server?(server)).to be(true)
+      end
+    end
+
+    context 'when the server address does not match the description address' do
+
+      let(:other_address) do
+        Mongo::Address.new('127.0.0.1:27020')
+      end
+
+      let(:server) do
+        Mongo::Server.new(other_address, listeners)
+      end
+
+      it 'returns false' do
+        expect(description.is_server?(server)).to be(false)
+      end
+    end
+  end
+
+  describe '#lists_server?' do
+
+    let(:description) do
+      described_class.new(address, replica)
+    end
+
+    let(:server_address) do
+      Mongo::Address.new('127.0.0.1:27018')
+    end
+
+    let(:listeners) do
+      Mongo::Event::Listeners.new
+    end
+
+    let(:server) do
+      Mongo::Server.new(server_address, listeners)
+    end
+
+    context 'when the server is included in the description hosts list' do
+
+      it 'returns true' do
+        expect(description.lists_server?(server)).to be(true)
+      end
+    end
+
+    context 'when the server is not included in the description hosts list' do
+
+      let(:server_address) do
+        Mongo::Address.new('127.0.0.1:27017')
+      end
+
+      it 'returns false' do
+        expect(description.lists_server?(server)).to be(false)
+      end
+    end
+  end
+
+  describe '#replica_set_member?' do
+
+    context 'when the description is from a mongos' do
+
+      let(:config) do
+        { 'msg' => 'isdbgrid', 'ismaster' => true }
+      end
+
+      let(:description) do
+        described_class.new(address, config)
+      end
+
+      it 'returns false' do
+        expect(description.replica_set_member?).to be(false)
+      end
+    end
+
+    context 'when the description is from a standalone' do
+
+      let(:description) do
+        described_class.new(address, { 'ismaster' => true, 'ok' => 1 })
+      end
+
+      it 'returns false' do
+        expect(description.replica_set_member?).to be(false)
+      end
+    end
+
+    context 'when the description is from a replica set member' do
+
+      let(:description) do
+        described_class.new(address, replica)
+      end
+
+      it 'returns true' do
+        expect(description.replica_set_member?).to be(true)
+      end
+    end
+  end
+
+  describe '#==' do
+
+    context 'when the classes do not match' do
+
+      let(:description) do
+        described_class.new(address, replica)
+      end
+
+      it 'returns false' do
+        expect(description == Array.new).to be(false)
+      end
+    end
+
+    context 'when the configs match' do
+
+      let(:description) do
+        described_class.new(address, replica)
+      end
+
+      let(:other) do
+        described_class.new(address, replica)
+      end
+
+      it 'returns true' do
+        expect(description == other).to be(true)
+      end
+    end
+
+    context 'when the configs do not match' do
+
+      let(:description) do
+        described_class.new(address, replica)
+      end
+
+      let(:other) do
+        described_class.new(address, { 'ismaster' => true, 'ok' => 1 })
+      end
+
+      it 'returns false' do
+        expect(description == other).to be(false)
       end
     end
   end
