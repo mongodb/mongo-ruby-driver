@@ -240,6 +240,47 @@ describe Mongo::Cluster do
     end
   end
 
+  describe '#remove' do
+
+    let(:address_a) do
+      Mongo::Address.new('127.0.0.1:27017')
+    end
+
+    let(:address_b) do
+      Mongo::Address.new('127.0.0.1:27018')
+    end
+
+    let(:server_a) do
+      Mongo::Server.new(address_a, Mongo::Event::Listeners.new)
+    end
+
+    let(:server_b) do
+      Mongo::Server.new(address_b, Mongo::Event::Listeners.new)
+    end
+
+    let(:servers) do
+      [ server_a, server_b ]
+    end
+
+    let(:addresses) do
+      [ address_a, address_b ]
+    end
+
+    before do
+      cluster.instance_variable_set(:@servers, servers)
+      cluster.instance_variable_set(:@addresses, addresses)
+      cluster.remove('127.0.0.1:27017')
+    end
+
+    it 'removes the host from the list of servers' do
+      expect(cluster.instance_variable_get(:@servers)).to eq([server_b])
+    end
+
+    it 'removes the host from the list of addresses' do
+      expect(cluster.instance_variable_get(:@addresses)).to eq([address_b])
+    end
+  end
+
   describe '#add_hosts' do
 
     let(:servers) do
