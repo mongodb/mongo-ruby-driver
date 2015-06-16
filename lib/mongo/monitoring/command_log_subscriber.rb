@@ -36,7 +36,7 @@ module Mongo
       # @since 2.1.0
       def started(event)
         if Logger.logger.debug?
-          log("#{prefix(event)} | STARTED | #{format(event.command_args)}")
+          log("#{prefix(event)} | STARTED | #{format(event.command)}")
         end
       end
 
@@ -81,7 +81,7 @@ module Mongo
       end
 
       def prefix(event)
-        "MONGODB | #{event.address.to_s} | #{event.database}.#{event.command_name}"
+        "MONGODB | #{event.address.to_s} | #{event.database_name}.#{event.command_name}"
       end
     end
   end

@@ -24,20 +24,14 @@ module Mongo
         # @return [ Server::Address ] address The server address.
         attr_reader :address
 
-        # @return [ BSON::Document ] command_args The command arguments.
-        attr_reader :command_args
+        # @return [ BSON::Document ] command The command arguments.
+        attr_reader :command
 
         # @return [ String ] command_name The name of the command.
         attr_reader :command_name
 
-        # @return [ String ] database The name of the database.
-        attr_reader :database
-
-        # @return [ Array<BSON::Document ] input_docs The input documents.
-        attr_reader :input_docs
-
-        # @return [ BSON::Document ] metadata The command metadata.
-        attr_reader :metadata
+        # @return [ String ] database_name The name of the database_name.
+        attr_reader :database_name
 
         # @return [ Integer ] operation_id The operation id.
         attr_reader :operation_id
@@ -50,24 +44,20 @@ module Mongo
         # @example Create the event.
         #
         # @param [ String ] command_name The name of the command.
-        # @param [ String ] database The database name.
+        # @param [ String ] database_name The database_name name.
         # @param [ Server::Address ] address The server address.
         # @param [ Integer ] request_id The request id.
         # @param [ Integer ] operation_id The operation id.
-        # @param [ BSON::Document ] command_args The command arguments.
-        # @param [ BSON::Document ] metadata The command metadata.
-        # @param [ Array<BSON::Document> ] input_docs The input documents.
+        # @param [ BSON::Document ] command The command arguments.
         #
         # @since 2.1.0
-        def initialize(command_name, database, address, request_id, operation_id, command_args, metadata, input_docs)
+        def initialize(command_name, database_name, address, request_id, operation_id, command)
           @command_name = command_name
-          @database = database
+          @database_name = database_name
           @address = address
           @request_id = request_id
           @operation_id = operation_id
-          @command_args = command_args
-          @metadata = metadata
-          @input_docs = input_docs
+          @command = command
         end
 
         # Create the event from a wire protocol message payload.
@@ -85,13 +75,11 @@ module Mongo
         def self.generate(address, operation_id, payload)
           new(
             payload[:command_name],
-            payload[:database],
+            payload[:database_name],
             address,
             payload[:request_id],
             operation_id,
-            payload[:command_args],
-            payload[:metadata],
-            payload[:input_docs]
+            payload[:command]
           )
         end
       end

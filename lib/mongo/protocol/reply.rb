@@ -47,7 +47,7 @@ module Mongo
       #
       # @since 2.1.0
       def payload
-        { command_reply: documents, request_id: request_id, metadata: { cursor_id: cursor_id }}
+        { reply: documents, request_id: request_id }
       end
 
       private

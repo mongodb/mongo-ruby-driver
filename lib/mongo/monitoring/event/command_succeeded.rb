@@ -27,8 +27,8 @@ module Mongo
         # @return [ String ] command_name The name of the command.
         attr_reader :command_name
 
-        # @return [ BSON::Document ] command_reply The command reply.
-        attr_reader :command_reply
+        # @return [ BSON::Document ] reply The command reply.
+        attr_reader :reply
 
         # @return [ String ] database The name of the database.
         attr_reader :database
@@ -36,14 +36,8 @@ module Mongo
         # @return [ Float ] duration The duration of the event.
         attr_reader :duration
 
-        # @return [ BSON::Document ] metadata The command metadata.
-        attr_reader :metadata
-
         # @return [ Integer ] operation_id The operation id.
         attr_reader :operation_id
-
-        # @return [ Array<BSON::Document ] output_docs The output documents.
-        attr_reader :output_docs
 
         # @return [ Integer ] request_id The request id.
         attr_reader :request_id
@@ -57,21 +51,17 @@ module Mongo
         # @param [ Server::Address ] address The server address.
         # @param [ Integer ] request_id The request id.
         # @param [ Integer ] operation_id The operation id.
-        # @param [ BSON::Document ] command_reply The command reply.
-        # @param [ BSON::Document ] metadata The command metadata.
-        # @param [ Array<BSON::Document> ] output_docs The output documents.
+        # @param [ BSON::Document ] reply The command reply.
         # @param [ Float ] duration The duration the command took in seconds.
         #
         # @since 2.1.0
-        def initialize(command_name, database, address, request_id, operation_id, command_reply, metadata, output_docs, duration)
+        def initialize(command_name, database, address, request_id, operation_id, reply, duration)
           @command_name = command_name
           @database = database
           @address = address
           @request_id = request_id
           @operation_id = operation_id
-          @command_reply = command_reply
-          @metadata = metadata
-          @output_docs = output_docs
+          @reply = reply
           @duration = duration
         end
 
@@ -92,13 +82,11 @@ module Mongo
         def self.generate(address, operation_id, command_payload, reply_payload, duration)
           new(
             command_payload[:command_name],
-            command_payload[:database],
+            command_payload[:database_name],
             address,
             command_payload[:request_id],
             operation_id,
-            reply_payload ? reply_payload[:command_reply] : nil,
-            reply_payload ? reply_payload[:metadata] : nil,
-            reply_payload ? reply_payload[:output_docs] : nil,
+            reply_payload ? reply_payload[:reply] : nil,
             duration
           )
         end

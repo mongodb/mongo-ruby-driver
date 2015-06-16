@@ -64,7 +64,7 @@ module Mongo
       #
       # @since 2.1.0
       def payload
-        { command_name: 'insert', database: @database, command_args: documents, request_id: request_id }
+        { command_name: 'insert', database_name: @database, command: documents, request_id: request_id }
       end
 
       private

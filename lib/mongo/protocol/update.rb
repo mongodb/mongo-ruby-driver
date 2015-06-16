@@ -70,8 +70,8 @@ module Mongo
       def payload
         {
           command_name: 'update',
-          database: @database,
-          command_args: { filter: selector, update: update },
+          database_name: @database,
+          command: { filter: selector, update: update },
           request_id: request_id
         }
       end

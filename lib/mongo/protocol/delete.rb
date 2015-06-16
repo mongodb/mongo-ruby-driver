@@ -56,7 +56,7 @@ module Mongo
       #
       # @since 2.1.0
       def payload
-        { command_name: 'delete', database: @database, command_args: selector, request_id: request_id }
+        { command_name: 'delete', database_name: @database, command: selector, request_id: request_id }
       end
 
       private

@@ -85,8 +85,8 @@ module Mongo
       def payload
         {
           command_name: command_name,
-          database: @database,
-          command_args: arguments,
+          database_name: @database,
+          command: arguments,
           request_id: request_id
         }
       end

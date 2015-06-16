@@ -44,7 +44,7 @@ module Mongo
       #
       # @since 2.1.0
       def payload
-        { command_name: 'killcursors', command_args: { cursor_ids: cursor_ids }, request_id: request_id }
+        { command_name: 'killcursors', command: { cursor_ids: cursor_ids }, request_id: request_id }
       end
 
       private
