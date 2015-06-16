@@ -36,7 +36,7 @@ module Mongo
       #
       # @since 2.0.0
       def initialize(document)
-        @document = document
+        @document = document || {}
         parse!
       end
 

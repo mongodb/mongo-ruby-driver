@@ -38,33 +38,55 @@ module Mongo
       def publish_command(messages, operation_id = Monitoring.next_operation_id)
         start = Time.now
         payload = messages.first.payload
-        monitoring.started(
-          Monitoring::COMMAND,
-          Event::CommandStarted.generate(address, operation_id, payload)
-        )
+        command_started(address, operation_id, payload)
         begin
           result = yield(messages)
-          monitoring.succeeded(
-            Monitoring::COMMAND,
-            Event::CommandSucceeded.generate(
-              address,
-              operation_id,
-              payload,
-              result ? result.payload : nil,
-              duration(start)
-            )
-          )
+          command_completed(result, address, operation_id, payload, start)
           result
         rescue Exception => e
-          monitoring.failed(
-            Monitoring::COMMAND,
-            Event::CommandFailed.generate(address, operation_id, payload, e.message, duration(start))
-          )
+          command_failed(address, operation_id, payload, e.message, start)
           raise e
         end
       end
 
       private
+
+      def command_started(address, operation_id, payload)
+        monitoring.started(
+          Monitoring::COMMAND,
+          Event::CommandStarted.generate(address, operation_id, payload)
+        )
+      end
+
+      def command_completed(result, address, operation_id, payload, start)
+        document = result ? (result.documents || []).first : nil
+        parser = Error::Parser.new(document)
+        if parser.message.empty?
+          command_succeeded(result, address, operation_id, payload, start)
+        else
+          command_failed(address, operation_id, payload, parser.message, start)
+        end
+      end
+
+      def command_succeeded(result, address, operation_id, payload, start)
+        monitoring.succeeded(
+          Monitoring::COMMAND,
+          Event::CommandSucceeded.generate(
+            address,
+            operation_id,
+            payload,
+            result ? result.payload : nil,
+            duration(start)
+          )
+        )
+      end
+
+      def command_failed(address, operation_id, payload, message, start)
+        monitoring.failed(
+          Monitoring::COMMAND,
+          Event::CommandFailed.generate(address, operation_id, payload, message, duration(start))
+        )
+      end
 
       def duration(start)
         Time.now - start
