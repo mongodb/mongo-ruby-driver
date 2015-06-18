@@ -257,13 +257,17 @@ module Mongo
 
     def servers_list
       @servers_update.synchronize do
-        @servers
+        @servers.reduce([]) do |servers, server|
+          servers << server
+        end
       end
     end
 
     def addresses_list
       @addresses_update.synchronize do
-        @addresses
+        @addresses.reduce([]) do |addresses, address|
+          addresses << address
+        end
       end
     end
   end
