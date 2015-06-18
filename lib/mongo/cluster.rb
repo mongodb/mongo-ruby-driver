@@ -66,7 +66,7 @@ module Mongo
       if !addresses.include?(address)
         if addition_allowed?(address)
           log_debug([ "Adding #{address.to_s} to the cluster." ])
-          @addresses_update.synchronize { @addresses.push(address) }
+          @update_lock.synchronize { @addresses.push(address) }
           server = Server.new(address, self, event_listeners, options)
           @servers_update.synchronize { @servers.push(server) }
           server
@@ -85,12 +85,11 @@ module Mongo
     # @since 2.0.0
     def initialize(seeds, options = {})
       @addresses = []
-      @addresses_update = Mutex.new
       @servers = []
-      @servers_update = Mutex.new
       @event_listeners = Event::Listeners.new
       @options = options.freeze
       @topology = Topology.initial(seeds, options)
+      @update_lock = Mutex.new
 
       subscribe_to(Event::DESCRIPTION_CHANGED, Event::DescriptionChanged.new(self))
       subscribe_to(Event::PRIMARY_ELECTED, Event::PrimaryElected.new(self))
@@ -150,11 +149,9 @@ module Mongo
       log_debug([ "#{host} being removed from the cluster." ])
       address = Address.new(host)
       removed_servers = @servers.select { |s| s.address == address }
-      @servers_update.synchronize { @servers = @servers - removed_servers }
+      @update_lock.synchronize { @servers = @servers - removed_servers }
       removed_servers.each{ |server| server.disconnect! } if removed_servers
-      @addresses_update.synchronize do
-        @addresses.reject!{ |addr| addr == address }
-      end
+      @update_lock.synchronize { @addresses.reject! { |addr| addr == address } }
     end
 
     # Force a scan of all known servers in the cluster.
@@ -256,7 +253,7 @@ module Mongo
     end
 
     def servers_list
-      @servers_update.synchronize do
+      @update_lock.synchronize do
         @servers.reduce([]) do |servers, server|
           servers << server
         end
@@ -264,7 +261,7 @@ module Mongo
     end
 
     def addresses_list
-      @addresses_update.synchronize do
+      @update_lock.synchronize do
         @addresses.reduce([]) do |addresses, address|
           addresses << address
         end
