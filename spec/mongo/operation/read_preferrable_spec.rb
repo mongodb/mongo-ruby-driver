@@ -157,6 +157,29 @@ describe Mongo::Operation::ReadPreferrable do
     end
   end
 
+  context 'when the slaveOk flag is already set' do
+
+    let(:read_pref) do
+      Mongo::ServerSelector.get(:mode => :secondary)
+    end
+
+    let(:options) do
+      { :flags => [ :slave_ok ]}
+    end
+
+    let(:expected) do
+      { :flags => [ :slave_ok ]}
+    end
+
+    let(:slave_ok) do
+      true
+    end
+
+    it 'sets the slave_ok flag once' do
+      expect(read_preferrable.send(:update_options, context)).to eq(expected)
+    end
+  end
+
   context 'when the server is not a mongos' do
 
     context 'when the read preference requires the slaveOk bit to be set' do

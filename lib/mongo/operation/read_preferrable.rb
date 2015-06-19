@@ -39,7 +39,8 @@ module Mongo
       def update_options(context)
         if context.slave_ok? || (!context.mongos? && read.slave_ok?)
           options.dup.tap do |opts|
-            (opts[:flags] ||= []) << SLAVE_OK
+            opts[:flags] = [] if !opts.key?(:flags)
+            opts[:flags].push(SLAVE_OK) if !opts[:flags].include?(SLAVE_OK)
           end
         else
           options
