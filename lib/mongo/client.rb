@@ -184,7 +184,7 @@ module Mongo
     #
     # @since 2.0.0
     def use(name)
-      with(database: name)
+      name.to_s == database.name ? self : with(database: name)
     end
 
     # Provides a new client with the passed options merged over the existing
@@ -202,7 +202,11 @@ module Mongo
     #
     # @since 2.0.0
     def with(new_options = {})
-      Client.new(cluster.addresses.map(&:to_s), options.merge(new_options))
+      if different?(new_options)
+        Client.new(cluster.addresses.map(&:to_s), options.merge(new_options))
+      else
+        self
+      end
     end
 
     # Get the write concern for this client. If no option was provided, then a
@@ -281,12 +285,8 @@ module Mongo
       @database = Database.new(self, options[:database], options)
     end
 
-    def initialize_copy(original)
-      @options = original.options.dup
-      @cluster = nil
-      @database = nil
-      @read_preference = nil
-      @write_concern = nil
+    def different?(new_options)
+      new_options.any?{ |name, value| options[name] != value }
     end
   end
 end

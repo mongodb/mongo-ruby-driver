@@ -440,9 +440,56 @@ describe Mongo::Client do
         }.to raise_error(Mongo::Error::InvalidDatabaseName)
       end
     end
+
+    context 'when the database name is the same' do
+
+      it 'returns self' do
+        expect(client.use(client.database.name)).to equal(client)
+      end
+    end
+
+    context 'when the database name is the same and a symbol' do
+
+      it 'returns self' do
+        expect(client.use(client.database.name.to_sym)).to equal(client)
+      end
+    end
   end
 
   describe '#with' do
+
+    context 'when no options are provided' do
+
+      let(:client) do
+        described_class.new(['127.0.0.1:27017'], :database => TEST_DB)
+      end
+
+      it 'returns self' do
+        expect(client.with({})).to equal(client)
+      end
+    end
+
+    context 'when a same option is provided' do
+
+      let(:client) do
+        described_class.new(['127.0.0.1:27017'], :database => TEST_DB)
+      end
+
+      it 'returns self' do
+        expect(client.with({ :database => TEST_DB })).to equal(client)
+      end
+    end
+
+    context 'when a different option is provided' do
+
+      let(:client) do
+        described_class.new(['127.0.0.1:27017'], :database => TEST_DB)
+      end
+
+      it 'returns a new client' do
+        expect(client.with({ :read => { :mode => :primary }})).to_not equal(client)
+      end
+    end
 
     context 'when the write concern is not changed' do
 
