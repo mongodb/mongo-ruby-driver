@@ -203,6 +203,10 @@ module Mongo
     # @since 2.0.0
     def with(new_options = {})
       if different?(new_options)
+        p "Creating new client:"
+        p "Options: #{options}"
+        p "New Options: #{new_options}"
+        p caller[0, 5]
         Client.new(cluster.addresses.map(&:to_s), options.merge(new_options))
       else
         self
@@ -286,7 +290,9 @@ module Mongo
     end
 
     def different?(new_options)
-      new_options && new_options.any?{ |name, value| options[name] != value }
+      new_options && new_options.any? do |name, value|
+        options[name] != value
+      end
     end
   end
 end
