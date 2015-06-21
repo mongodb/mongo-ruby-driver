@@ -278,7 +278,7 @@ module Mongo
         # @since 2.0.0
         def read(value = nil)
           return default_read if value.nil?
-          configure(:read, value.is_a?(Hash) ? ServerSelector.get(value) : value)
+          configure(:read, value)
         end
 
         # Set whether the disk location should be shown for each document.

@@ -514,15 +514,6 @@ describe Mongo::Collection::View::Readable do
 
   describe '#read' do
 
-    context 'when providing a hash' do
-
-      it 'converts to a read preference' do
-        expect(view.read(:mode => :primary_preferred).read).to be_a(
-          Mongo::ServerSelector::PrimaryPreferred
-        )
-      end
-    end
-
     context 'when a read pref is specified' do
 
       let(:options) do
