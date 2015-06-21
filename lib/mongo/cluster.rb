@@ -70,7 +70,8 @@ module Mongo
         if addition_allowed?(address)
           log_debug([ "Adding #{address.to_s} to the cluster." ])
           addresses.push(address)
-          server = Server.new(address, event_listeners, options.merge(slave_ok: @slave_ok))
+          server = Server.new(address, event_listeners,
+                              options.merge(slave_ok: @slave_ok))
           @servers.push(server)
           server
         end

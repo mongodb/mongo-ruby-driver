@@ -194,15 +194,20 @@ module Mongo
     # @example Get a client with changed options.
     #   client.with(:read => { :mode => :primary_preferred })
     #
-    # @note This will have the same overhead as new client instantiation.
-    #
     # @param [ Hash ] new_options The new options to use.
     #
     # @return [ Mongo::Client ] A new client instance.
     #
     # @since 2.0.0
     def with(new_options = {})
-      Client.new(cluster.addresses.map(&:to_s), options.merge(new_options))
+      clone.tap do |client|
+        client.options.update(new_options)
+        Database.create(client)
+        # We can't use the same cluster if authentication details have changed.
+        if new_options[:user] || new_options[:password]
+          Cluster.create(client)
+        end
+      end
     end
 
     # Get the write concern for this client. If no option was provided, then a
@@ -263,7 +268,9 @@ module Mongo
     #
     # @since 2.0.5
     def list_databases
-      use(Database::ADMIN).command(listDatabases: 1).first['databases']
+      use(Database::ADMIN).command(
+        listDatabases: 1
+      ).first['databases']
     end
 
     private
@@ -283,7 +290,6 @@ module Mongo
 
     def initialize_copy(original)
       @options = original.options.dup
-      @cluster = nil
       @database = nil
       @read_preference = nil
       @write_concern = nil

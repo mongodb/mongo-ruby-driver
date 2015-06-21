@@ -473,8 +473,8 @@ describe Mongo::Client do
         })
       end
 
-      it 'creates a new cluster' do
-        expect(new_client.cluster).not_to equal(client.cluster)
+      it 'keeps the same cluster' do
+        expect(new_client.cluster).to equal(client.cluster)
       end
     end
 
