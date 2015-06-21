@@ -5,6 +5,10 @@ shared_context 'operation' do
   let(:write_concern) { Mongo::WriteConcern.get(:w => 1) }
   let(:options) { {} }
 
+  let(:cluster_double) do
+    double('cluster')
+  end
+
   # Server doubles
   let(:secondary_server) do
     double('secondary_server').tap do |s|
@@ -43,7 +47,8 @@ shared_context 'operation' do
       allow(cxt).to receive(:primary?) { true }
       allow(cxt).to receive(:secondary?) { false }
       allow(cxt).to receive(:standalone?) { false }
-      allow(cxt).to receive(:slave_ok?) { false }
+      allow(cxt).to receive(:cluster) { cluster_double }
+      allow(cluster_double).to receive(:single?) { false }
     end
   end
   let(:secondary_context) do
@@ -55,7 +60,8 @@ shared_context 'operation' do
       allow(cxt).to receive(:secondary?) { true }
       allow(cxt).to receive(:primary?) { false }
       allow(cxt).to receive(:standalone?) { false }
-      allow(cxt).to receive(:slave_ok?) { false }
+      allow(cxt).to receive(:cluster) { cluster_double }
+      allow(cluster_double).to receive(:single?) { false }
     end
   end
   let(:secondary_context_slave) do
@@ -67,7 +73,8 @@ shared_context 'operation' do
       allow(cxt).to receive(:secondary?) { true }
       allow(cxt).to receive(:primary?) { false }
       allow(cxt).to receive(:standalone?) { false }
-      allow(cxt).to receive(:slave_ok?) { true }
+      allow(cxt).to receive(:cluster) { cluster_double }
+      allow(cluster_double).to receive(:single?) { true }
     end
   end
   let(:primary_context_2_4_version) do
@@ -78,7 +85,8 @@ shared_context 'operation' do
       allow(cxt).to receive(:primary?) { true }
       allow(cxt).to receive(:secondary?) { false }
       allow(cxt).to receive(:standalone?) { false }
-      allow(cxt).to receive(:slave_ok?) { false }
+      allow(cxt).to receive(:cluster) { cluster_double }
+      allow(cluster_double).to receive(:single?) { false }
       allow(cxt).to receive(:features) { features_2_4 }
     end
   end

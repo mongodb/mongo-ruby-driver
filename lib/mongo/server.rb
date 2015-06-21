@@ -31,6 +31,9 @@ module Mongo
     # @return [ String ] The configured address for the server.
     attr_reader :address
 
+    # @return [ Cluster ] cluster The server cluster.
+    attr_reader :cluster
+
     # @return [ Monitor ] monitor The server monitor.
     attr_reader :monitor
 
@@ -105,15 +108,17 @@ module Mongo
     # subscribe to the appropriate events.
     #
     # @example Initialize the server.
-    #   Mongo::Server.new('127.0.0.1:27017', listeners)
+    #   Mongo::Server.new('127.0.0.1:27017', cluster, listeners)
     #
     # @param [ Address ] address The host:port address to connect to.
+    # @param [ Cluster ] cluster  The cluster the server belongs to.
     # @param [ Event::Listeners ] event_listeners The event listeners.
     # @param [ Hash ] options The server options.
     #
     # @since 2.0.0
-    def initialize(address, event_listeners, options = {})
+    def initialize(address, cluster, event_listeners, options = {})
       @address = address
+      @cluster = cluster
       @options = options.freeze
       @monitor = Monitor.new(address, event_listeners, options)
       monitor.scan!
@@ -158,18 +163,6 @@ module Mongo
       tag_set.keys.all? do |k|
         tags[k] && tags[k] == tag_set[k]
       end
-    end
-
-    # Whether the slaveOk bit must be set for all queries sent to the server.
-    #
-    # @example Does the slaveOk bit need to be set for all queries sent to the server.
-    #   server.slave_ok?
-    #
-    # @return [ true, false ] If the slaveOk bit needs to be set for all queries.
-    #
-    # @since 2.0.0
-    def slave_ok?
-      options[:slave_ok]
     end
 
     # Restart the server monitor.

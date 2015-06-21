@@ -412,6 +412,10 @@ describe Mongo::Client do
       it 'returns the new client' do
         expect(client.send(:database).name).to eq('ruby-driver')
       end
+
+      it 'keeps the same cluster' do
+        expect(database.cluster).to equal(client.cluster)
+      end
     end
 
     context 'when provided a string' do

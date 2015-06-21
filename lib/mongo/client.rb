@@ -21,6 +21,12 @@ module Mongo
   class Client
     extend Forwardable
 
+    # The options that do not affect the behaviour of a cluster and its
+    # subcomponents.
+    #
+    # @since 2.1.0
+    CRUD_OPTIONS = [ :database, :read, :write ].freeze
+
     # @return [ Mongo::Cluster ] cluster The cluster of servers for the client.
     attr_reader :cluster
 
@@ -203,8 +209,9 @@ module Mongo
       clone.tap do |client|
         client.options.update(new_options)
         Database.create(client)
-        # We can't use the same cluster if authentication details have changed.
-        if new_options[:user] || new_options[:password]
+        # We can't use the same cluster if some options that would affect it
+        # have changed.
+        if cluster_modifying?(new_options)
           Cluster.create(client)
         end
       end
@@ -268,9 +275,7 @@ module Mongo
     #
     # @since 2.0.5
     def list_databases
-      use(Database::ADMIN).command(
-        listDatabases: 1
-      ).first['databases']
+      use(Database::ADMIN).command(listDatabases: 1).first['databases']
     end
 
     private
@@ -293,6 +298,15 @@ module Mongo
       @database = nil
       @read_preference = nil
       @write_concern = nil
+    end
+
+    def cluster_modifying?(new_options)
+      cluster_options = new_options.reject do |name|
+        CRUD_OPTIONS.include?(name)
+      end
+      cluster_options.any? do |name, value|
+        options[name] != value
+      end
     end
   end
 end

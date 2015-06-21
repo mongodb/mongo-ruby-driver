@@ -34,8 +34,9 @@ describe 'Server Discovery and Monitoring' do
 
           # The contructor keeps the same API, but does not instantiate a
           # monitor and run it.
-          def initialize(address, event_listeners, options = {})
+          def initialize(address, cluster, event_listeners, options = {})
             @address = address
+            @cluster = cluster
             @options = options.freeze
             @monitor = Monitor.new(address, event_listeners, options)
           end
@@ -58,8 +59,9 @@ describe 'Server Discovery and Monitoring' do
         class Mongo::Server
 
           # Returns the constructor to its original implementation.
-          def initialize(address, event_listeners, options = {})
+          def initialize(address, cluster, event_listeners, options = {})
             @address = address
+            @cluster = cluster
             @options = options.freeze
             @monitor = Monitor.new(address, event_listeners, options)
             @monitor.scan!

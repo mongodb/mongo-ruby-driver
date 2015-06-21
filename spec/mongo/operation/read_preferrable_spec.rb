@@ -28,9 +28,14 @@ describe Mongo::Operation::ReadPreferrable do
     end
   end
 
+  let(:cluster_double) do
+    double('cluster')
+  end
+
   let(:context) do
     double('context').tap do |c|
-      allow(c).to receive(:slave_ok?).and_return(slave_ok)
+      allow(c).to receive(:cluster).and_return(cluster_double)
+      allow(cluster_double).to receive(:single?).and_return(slave_ok)
       allow(c).to receive(:mongos?).and_return(mongos)
     end
   end
