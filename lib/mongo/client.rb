@@ -192,9 +192,16 @@ module Mongo
     # without altering the original client.
     #
     # @example Get a client with changed options.
-    #   client.with(:read => { :mode => :primary_preferred })
+    #   client.with(:user => 'name', :password => 'password')
     #
-    # @note This will have the same overhead as new client instantiation.
+    # @note If the provided options are not different from the existing
+    #   options, then the client will simply be returned as an optimiation. If
+    #   the options differ, then a new client will be returned with the new
+    #   options. This will have some overhead as the new cluster needs to be
+    #   instantiated and the initial server discovery needs to run. Do not use
+    #   this method when simply switching the read preference as the overhead
+    #   is unnecessary - use #read on the collection view or pass it as an
+    #   option to the read methods instead.
     #
     # @param [ Hash ] new_options The new options to use.
     #
@@ -202,7 +209,7 @@ module Mongo
     #
     # @since 2.0.0
     def with(new_options = {})
-      if different?(new_options)
+      if options_changed?(new_options)
         Client.new(cluster.addresses.map(&:to_s), options.merge(new_options))
       else
         self
@@ -285,7 +292,7 @@ module Mongo
       @database = Database.new(self, options[:database], options)
     end
 
-    def different?(new_options)
+    def options_changed?(new_options)
       new_options && new_options.any? do |name, value|
         options[name] != value
       end
