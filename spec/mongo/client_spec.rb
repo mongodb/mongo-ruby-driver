@@ -469,17 +469,6 @@ describe Mongo::Client do
       end
     end
 
-    context 'when nil is provided' do
-
-      let(:client) do
-        described_class.new(['127.0.0.1:27017'], :database => TEST_DB)
-      end
-
-      it 'returns self' do
-        expect(client.with(nil)).to equal(client)
-      end
-    end
-
     context 'when a same option is provided' do
 
       let(:client) do

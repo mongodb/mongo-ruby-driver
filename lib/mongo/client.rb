@@ -286,7 +286,7 @@ module Mongo
     end
 
     def different?(new_options)
-      new_options && new_options.any?{ |name, value| options[name] != value }
+      new_options.any?{ |name, value| options[name] != value }
     end
   end
 end

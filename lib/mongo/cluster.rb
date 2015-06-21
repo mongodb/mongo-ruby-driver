@@ -210,6 +210,24 @@ module Mongo
       servers.each { |server| server.reconnect! } and true
     end
 
+    # Create a cluster for the provided client, for use when we don't want the
+    # client's original cluster instance to be the same.
+    #
+    # @api private
+    #
+    # @example Create a cluster for the client.
+    #   Cluster.create(client)
+    #
+    # @param [ Client ] client The client to create on.
+    #
+    # @return [ Cluster ] The cluster.
+    #
+    # @since 2.0.0
+    def self.create(client)
+      cluster = Cluster.new(client.cluster.addresses.map(&:to_s), client.options)
+      client.instance_variable_set(:@cluster, cluster)
+    end
+
     private
 
     def direct_connection?(address)
