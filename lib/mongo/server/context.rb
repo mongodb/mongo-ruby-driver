@@ -27,14 +27,14 @@ module Mongo
 
       # Delegate state checks to the server.
       def_delegators :@server,
+                     :cluster,
                      :features,
                      :max_wire_version,
                      :max_write_batch_size,
                      :mongos?,
                      :primary?,
                      :secondary?,
-                     :standalone?,
-                     :slave_ok?
+                     :standalone?
 
       # Instantiate a server context.
       #
