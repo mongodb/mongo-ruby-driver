@@ -448,6 +448,17 @@ describe Mongo::Client do
 
   describe '#with' do
 
+    let(:client) do
+      described_class.new(['127.0.0.1:27017'], :database => TEST_DB)
+    end
+
+    context 'when providing nil' do
+
+      it 'returns the cloned client' do
+        expect(client.with(nil)).to eq(client)
+      end
+    end
+
     context 'when the write concern is not changed' do
 
       let(:client) do

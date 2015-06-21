@@ -207,11 +207,12 @@ module Mongo
     # @since 2.0.0
     def with(new_options = {})
       clone.tap do |client|
-        client.options.update(new_options)
+        opts = new_options || {}
+        client.options.update(opts)
         Database.create(client)
         # We can't use the same cluster if some options that would affect it
         # have changed.
-        if cluster_modifying?(new_options)
+        if cluster_modifying?(opts)
           Cluster.create(client)
         end
       end
