@@ -68,7 +68,7 @@ module Mongo
           log_debug([ "Adding #{address.to_s} to the cluster." ])
           @update_lock.synchronize { @addresses.push(address) }
           server = Server.new(address, self, event_listeners, options)
-          @servers_update.synchronize { @servers.push(server) }
+          @update_lock.synchronize { @servers.push(server) }
           server
         end
       end
