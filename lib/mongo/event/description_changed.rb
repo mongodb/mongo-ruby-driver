@@ -18,7 +18,7 @@ module Mongo
 
     # This handles a change in description.
     #
-    # @since 2.0.5
+    # @since 2.0.6
     class DescriptionChanged
 
       # @return [ Mongo::Cluster ] cluster The event publisher.

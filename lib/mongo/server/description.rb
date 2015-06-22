@@ -493,7 +493,7 @@ module Mongo
       #
       # @return [ true, false ] Whether the objects are equal.
       #
-      # @since 2.0.5
+      # @since 2.0.6
       def ==(other)
         return false if self.class != other.class
         config == other.config
