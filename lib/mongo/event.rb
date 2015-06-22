@@ -28,7 +28,7 @@ module Mongo
 
     # When a server is to be removed from a cluster.
     #
-    # @since 2.0.5
+    # @since 2.0.6
     DESCRIPTION_CHANGED = 'description_changed'.freeze
   end
 end
