@@ -7,7 +7,7 @@ describe Mongo::Server::Connection do
   end
 
   let(:server) do
-    Mongo::Server.new(address, Mongo::Event::Listeners.new, ssl: SSL)
+    Mongo::Server.new(address, double('cluster'), Mongo::Event::Listeners.new, ssl: SSL)
   end
 
   describe '#connect!' do

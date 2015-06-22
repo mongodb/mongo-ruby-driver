@@ -96,8 +96,8 @@ describe 'Server Discovery and Monitoring' do
               # For each response in the phase, we need to change that server's
               # description.
               server = find_server(@client, response.address)
-              server = Mongo::Server.new(Mongo::Address.new(response.address), @client.cluster.send(:event_listeners),
-                                  @client.cluster.options) unless server
+              server = Mongo::Server.new(Mongo::Address.new(response.address), @client.cluster,
+                                         @client.cluster.send(:event_listeners), @client.cluster.options) unless server
               monitor = server.instance_variable_get(:@monitor)
               description = monitor.inspector.run(server.description, response.ismaster, 0.5)
               monitor.instance_variable_set(:@description, description)

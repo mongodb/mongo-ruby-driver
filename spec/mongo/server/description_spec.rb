@@ -582,7 +582,7 @@ describe Mongo::Server::Description do
     end
 
     let(:server) do
-      Mongo::Server.new(address, listeners)
+      Mongo::Server.new(address, double('cluster'), listeners)
     end
 
     let(:description) do
@@ -603,7 +603,7 @@ describe Mongo::Server::Description do
       end
 
       let(:server) do
-        Mongo::Server.new(other_address, listeners)
+        Mongo::Server.new(other_address, double('cluster'), listeners)
       end
 
       it 'returns false' do
@@ -627,7 +627,7 @@ describe Mongo::Server::Description do
     end
 
     let(:server) do
-      Mongo::Server.new(server_address, listeners)
+      Mongo::Server.new(server_address, double('cluster'), listeners)
     end
 
     context 'when the server is included in the description hosts list' do
