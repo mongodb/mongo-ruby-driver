@@ -12,7 +12,7 @@ describe Mongo::Server::ConnectionPool do
       Mongo::Server.new(address, double('cluster'), Mongo::Event::Listeners.new, ssl: SSL)
     end
 
-    let(:pool) do
+    let!(:pool) do
       described_class.get(server)
     end
 
@@ -42,7 +42,7 @@ describe Mongo::Server::ConnectionPool do
       Mongo::Server.new(address, double('cluster'), Mongo::Event::Listeners.new, ssl: SSL)
     end
 
-    let(:pool) do
+    let!(:pool) do
       described_class.get(server)
     end
 
@@ -90,7 +90,7 @@ describe Mongo::Server::ConnectionPool do
       Mongo::Server.new(address, double('cluster'), Mongo::Event::Listeners.new, ssl: SSL)
     end
 
-    let(:pool) do
+    let!(:pool) do
       described_class.get(server)
     end
 
@@ -105,7 +105,7 @@ describe Mongo::Server::ConnectionPool do
       Mongo::Server.new(address, double('cluster'), Mongo::Event::Listeners.new, ssl: SSL)
     end
 
-    let(:pool) do
+    let!(:pool) do
       described_class.get(server)
     end
 
@@ -124,7 +124,7 @@ describe Mongo::Server::ConnectionPool do
       Mongo::Server.new(address, double('cluster'), Mongo::Event::Listeners.new, ssl: SSL)
     end
 
-    let(:pool) do
+    let!(:pool) do
       described_class.get(server)
     end
 
