@@ -7,7 +7,7 @@ describe Mongo::Auth::CR do
   end
 
   let(:server) do
-    Mongo::Server.new(address, Mongo::Event::Listeners.new, TEST_OPTIONS)
+    Mongo::Server.new(address, double('cluster'), Mongo::Event::Listeners.new, TEST_OPTIONS)
   end
 
   let(:connection) do

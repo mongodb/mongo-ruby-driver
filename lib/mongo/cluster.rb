@@ -25,9 +25,6 @@ module Mongo
     include Event::Subscriber
     include Loggable
 
-    # @return [ Array<String> ] The provided seed addresses.
-    attr_reader :addresses
-
     # @return [ Hash ] The options hash.
     attr_reader :options
 
@@ -69,9 +66,9 @@ module Mongo
       if !addresses.include?(address)
         if addition_allowed?(address)
           log_debug([ "Adding #{address.to_s} to the cluster." ])
-          addresses.push(address)
+          @update_lock.synchronize { @addresses.push(address) }
           server = Server.new(address, self, event_listeners, options)
-          @servers.push(server)
+          @update_lock.synchronize { @servers.push(server) }
           server
         end
       end
@@ -92,9 +89,9 @@ module Mongo
       @event_listeners = Event::Listeners.new
       @options = options.freeze
       @topology = Topology.initial(seeds, options)
+      @update_lock = Mutex.new
 
-      subscribe_to(Event::SERVER_ADDED, Event::ServerAdded.new(self))
-      subscribe_to(Event::SERVER_REMOVED, Event::ServerRemoved.new(self))
+      subscribe_to(Event::DESCRIPTION_CHANGED, Event::DescriptionChanged.new(self))
       subscribe_to(Event::PRIMARY_ELECTED, Event::PrimaryElected.new(self))
 
       seeds.each{ |seed| add(seed) }
@@ -136,10 +133,10 @@ module Mongo
     #
     # @since 2.0.0
     def elect_primary!(description)
-      @topology = topology.elect_primary(description, @servers)
+      @topology = topology.elect_primary(description, servers_list)
     end
 
-    # Removed the server from the cluster for the provided address, if it
+    # Remove the server from the cluster for the provided address, if it
     # exists.
     #
     # @example Remove the server from the cluster.
@@ -151,9 +148,10 @@ module Mongo
     def remove(host)
       log_debug([ "#{host} being removed from the cluster." ])
       address = Address.new(host)
-      removed_servers = @servers.reject!{ |server| server.address == address }
+      removed_servers = @servers.select { |s| s.address == address }
+      @update_lock.synchronize { @servers = @servers - removed_servers }
       removed_servers.each{ |server| server.disconnect! } if removed_servers
-      addresses.reject!{ |addr| addr == address }
+      @update_lock.synchronize { @addresses.reject! { |addr| addr == address } }
     end
 
     # Force a scan of all known servers in the cluster.
@@ -168,7 +166,7 @@ module Mongo
     #
     # @since 2.0.0
     def scan!
-      @servers.each{ |server| server.scan! } and true
+      servers_list.each{ |server| server.scan! } and true
     end
 
     # Get a list of server candidates from the cluster that can have operations
@@ -181,7 +179,37 @@ module Mongo
     #
     # @since 2.0.0
     def servers
-      topology.servers(@servers.compact).compact
+      topology.servers(servers_list.compact).compact
+    end
+
+    # Add hosts in a description to the cluster.
+    #
+    # @example Add hosts in a description to the cluster.
+    #   cluster.add_hosts(description)
+    #
+    # @param [ Mongo::Server::Description ] description The description.
+    #
+    # @since 2.0.6
+    def add_hosts(description)
+      if topology.add_hosts?(description, servers_list)
+        description.servers.each { |s| add(s) }
+      end
+    end
+
+    # Remove hosts in a description from the cluster.
+    #
+    # @example Remove hosts in a description from the cluster.
+    #   cluster.remove_hosts(description)
+    #
+    # @param [ Mongo::Server::Description ] description The description.
+    #
+    # @since 2.0.6
+    def remove_hosts(description)
+      if topology.remove_hosts?(description)
+        servers_list.each do |s|
+          remove(s.address.to_s) if topology.remove_server?(description, s)
+        end
+      end
     end
 
     # Create a cluster for the provided client, for use when we don't want the
@@ -202,6 +230,18 @@ module Mongo
       client.instance_variable_set(:@cluster, cluster)
     end
 
+    # The addresses in the cluster.
+    #
+    # @example Get the addresses in the cluster.
+    #   cluster.addresses
+    #
+    # @return [ Array<Mongo::Address> ] The addresses.
+    #
+    # @since 2.0.6
+    def addresses
+      addresses_list
+    end
+
     private
 
     def direct_connection?(address)
@@ -210,6 +250,22 @@ module Mongo
 
     def addition_allowed?(address)
       !@topology.single? || direct_connection?(address)
+    end
+
+    def servers_list
+      @update_lock.synchronize do
+        @servers.reduce([]) do |servers, server|
+          servers << server
+        end
+      end
+    end
+
+    def addresses_list
+      @update_lock.synchronize do
+        @addresses.reduce([]) do |addresses, address|
+          addresses << address
+        end
+      end
     end
   end
 end

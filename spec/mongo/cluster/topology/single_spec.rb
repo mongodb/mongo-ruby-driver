@@ -13,19 +13,19 @@ describe Mongo::Cluster::Topology::Single do
   describe '.servers' do
 
     let(:mongos) do
-      Mongo::Server.new(address, Mongo::Event::Listeners.new, TEST_OPTIONS)
+      Mongo::Server.new(address, double('cluster'), Mongo::Event::Listeners.new, TEST_OPTIONS)
     end
 
     let(:standalone) do
-      Mongo::Server.new(address, Mongo::Event::Listeners.new, TEST_OPTIONS)
+      Mongo::Server.new(address, double('cluster'), Mongo::Event::Listeners.new, TEST_OPTIONS)
     end
 
     let(:standalone_two) do
-      Mongo::Server.new(address, Mongo::Event::Listeners.new, TEST_OPTIONS)
+      Mongo::Server.new(address, double('cluster'), Mongo::Event::Listeners.new, TEST_OPTIONS)
     end
 
     let(:replica_set) do
-      Mongo::Server.new(address, Mongo::Event::Listeners.new, TEST_OPTIONS)
+      Mongo::Server.new(address, double('cluster'), Mongo::Event::Listeners.new, TEST_OPTIONS)
     end
 
     let(:mongos_description) do
@@ -74,6 +74,27 @@ describe Mongo::Cluster::Topology::Single do
 
     it 'returns true' do
       expect(topology).to be_single
+    end
+  end
+
+  describe '#add_hosts?' do
+
+    it 'returns false' do
+      expect(topology.add_hosts?(double('description'), [])).to eq(false)
+    end
+  end
+
+  describe '#remove_hosts?' do
+
+    it 'returns false' do
+      expect(topology.remove_hosts?(double('description'))).to eq(false)
+    end
+  end
+
+  describe '#remove_server?' do
+
+    it 'returns false' do
+      expect(topology.remove_server?(double('description'), double('server'))).to eq(false)
     end
   end
 end

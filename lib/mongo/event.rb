@@ -16,8 +16,7 @@ require 'mongo/event/listeners'
 require 'mongo/event/publisher'
 require 'mongo/event/subscriber'
 require 'mongo/event/primary_elected'
-require 'mongo/event/server_added'
-require 'mongo/event/server_removed'
+require 'mongo/event/description_changed'
 
 module Mongo
   module Event
@@ -27,14 +26,9 @@ module Mongo
     # @since 2.0.0
     PRIMARY_ELECTED = 'primary_elected'.freeze
 
-    # When a server is to be added to a cluster.
-    #
-    # @since 2.0.0
-    SERVER_ADDED = 'server_added'.freeze
-
     # When a server is to be removed from a cluster.
     #
-    # @since 2.0.0
-    SERVER_REMOVED = 'server_removed'.freeze
+    # @since 2.0.6
+    DESCRIPTION_CHANGED = 'description_changed'.freeze
   end
 end

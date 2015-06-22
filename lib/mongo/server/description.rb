@@ -157,7 +157,7 @@ module Mongo
       #
       # @since 2.0.0
       def arbiters
-        config[ARBITERS] || []
+        @arbiters ||= (config[ARBITERS] || []).map { |s| s.downcase }
       end
 
       # Is the server a ghost in a replica set?
@@ -193,7 +193,7 @@ module Mongo
       #
       # @since 2.0.0
       def hosts
-        config[HOSTS] || []
+        @hosts ||= (config[HOSTS] || []).map { |s| s.downcase }
       end
 
       # Instantiate the new server description from the result of the ismaster
@@ -344,7 +344,7 @@ module Mongo
       #
       # @since 2.0.0
       def passives
-        config[PASSIVES] || []
+        @passives ||= (config[PASSIVES] || []).map { |s| s.downcase }
       end
 
       # Will return true if the server is a primary.
@@ -445,6 +445,60 @@ module Mongo
       def wire_versions
         min_wire_version..max_wire_version
       end
+
+      # Is this description from the given server.
+      #
+      # @example Check if the description is from a given server.
+      #   description.is_server?(server)
+      #
+      # @return [ true, false ] If the description is from the server.
+      #
+      # @since 2.0.6
+      def is_server?(server)
+        address == server.address
+      end
+
+      # Is a server included in this description's list of servers.
+      #
+      # @example Check if a server is in the description list of servers.
+      #   description.lists_server?(server)
+      #
+      # @return [ true, false ] If a server is in the description's list
+      #   of servers.
+      #
+      # @since 2.0.6
+      def lists_server?(server)
+        servers.include?(server.address.to_s)
+      end
+
+      # Does this description correspond to a replica set member.
+      #
+      # @example Check if the description is from a replica set member.
+      #   description.replica_set_member?
+      #
+      # @return [ true, false ] If the description is from a replica set
+      #   member.
+      #
+      # @since 2.0.6
+      def replica_set_member?
+        !(standalone? || mongos?)
+      end
+
+      # Check equality of two descriptions.
+      #
+      # @example Check description equality.
+      #   description == other
+      #
+      # @param [ Object ] other The other description.
+      #
+      # @return [ true, false ] Whether the objects are equal.
+      #
+      # @since 2.0.6
+      def ==(other)
+        return false if self.class != other.class
+        config == other.config
+      end
+      alias_method :eql?, :==
     end
   end
 end

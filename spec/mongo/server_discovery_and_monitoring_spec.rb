@@ -92,15 +92,25 @@ describe 'Server Discovery and Monitoring' do
         context("Phase: #{index + 1}") do
 
           phase.responses.each do |response|
-
             before do
               # For each response in the phase, we need to change that server's
               # description.
               server = find_server(@client, response.address)
+              server = Mongo::Server.new(Mongo::Address.new(response.address), @client.cluster,
+                                         @client.cluster.send(:event_listeners), @client.cluster.options) unless server
               monitor = server.instance_variable_get(:@monitor)
               description = monitor.inspector.run(server.description, response.ismaster, 0.5)
               monitor.instance_variable_set(:@description, description)
             end
+          end
+
+          let(:cluster_addresses) do
+            @client.cluster.instance_variable_get(:@servers).
+              collect(&:address).collect(&:to_s).uniq.sort
+          end
+
+          let(:phase_addresses) do
+            phase.outcome.servers.keys.sort
           end
 
           it "sets the cluster topology to #{phase.outcome.topology_type}" do
@@ -109,6 +119,10 @@ describe 'Server Discovery and Monitoring' do
 
           it "sets the cluster replica set name to #{phase.outcome.set_name.inspect}" do
             expect(@client.cluster.replica_set_name).to eq(phase.outcome.set_name)
+          end
+
+          it "has the expected servers in the cluster" do
+            expect(cluster_addresses).to eq(phase_addresses)
           end
 
           phase.outcome.servers.each do |uri, server|

@@ -209,4 +209,182 @@ describe Mongo::Cluster do
       end
     end
   end
+
+  describe '#remove' do
+
+    let(:address_a) do
+      Mongo::Address.new('127.0.0.1:27017')
+    end
+
+    let(:address_b) do
+      Mongo::Address.new('127.0.0.1:27018')
+    end
+
+    let(:server_a) do
+      Mongo::Server.new(address_a, cluster, Mongo::Event::Listeners.new)
+    end
+
+    let(:server_b) do
+      Mongo::Server.new(address_b, cluster, Mongo::Event::Listeners.new)
+    end
+
+    let(:servers) do
+      [ server_a, server_b ]
+    end
+
+    let(:addresses) do
+      [ address_a, address_b ]
+    end
+
+    before do
+      cluster.instance_variable_set(:@servers, servers)
+      cluster.instance_variable_set(:@addresses, addresses)
+      cluster.remove('127.0.0.1:27017')
+    end
+
+    it 'removes the host from the list of servers' do
+      expect(cluster.instance_variable_get(:@servers)).to eq([server_b])
+    end
+
+    it 'removes the host from the list of addresses' do
+      expect(cluster.instance_variable_get(:@addresses)).to eq([address_b])
+    end
+  end
+
+  describe '#add_hosts' do
+
+    let(:servers) do
+      [nil]
+    end
+
+    let(:hosts) do
+      ["127.0.0.1:27018"]
+    end
+
+    let(:description) do
+      Mongo::Server::Description.new(double('address'), { 'hosts' => hosts })
+    end
+
+    before do
+      cluster.instance_variable_set(:@servers, servers)
+      cluster.instance_variable_set(:@topology, topology)
+    end
+
+    context 'when the topology allows servers to be added' do
+
+      let(:topology) do
+        double('topology').tap do |t|
+          allow(t).to receive(:add_hosts?).and_return(true)
+        end
+      end
+
+      it 'adds the servers' do
+        expect(cluster).to receive(:add).once
+        cluster.add_hosts(description)
+      end
+    end
+
+    context 'when the topology does not allow servers to be added' do
+
+      let(:topology) do
+        double('topology').tap do |t|
+          allow(t).to receive(:add_hosts?).and_return(false)
+        end
+      end
+
+      it 'does not add the servers' do
+        expect(cluster).not_to receive(:add)
+        cluster.add_hosts(description)
+      end
+    end
+  end
+
+  describe '#remove_hosts' do
+
+    let(:listeners) do
+      Mongo::Event::Listeners.new
+    end
+
+    let(:address) do
+      Mongo::Address.new('127.0.0.1:27017')
+    end
+
+    let(:server) do
+      Mongo::Server.new(address, cluster, listeners)
+    end
+
+    let(:servers) do
+      [ server ]
+    end
+
+    let(:hosts) do
+      ["127.0.0.1:27018"]
+    end
+
+    let(:description) do
+      Mongo::Server::Description.new(double('address'), { 'hosts' => hosts })
+    end
+
+    context 'when the topology allows servers to be removed' do
+
+      context 'when the topology allows a specific server to be removed' do
+
+        let(:topology) do
+          double('topology').tap do |t|
+            allow(t).to receive(:remove_hosts?).and_return(true)
+            allow(t).to receive(:remove_server?).and_return(true)
+          end
+        end
+
+        before do
+          cluster.instance_variable_set(:@servers, servers)
+          cluster.instance_variable_set(:@topology, topology)
+        end
+
+        it 'removes the servers' do
+          expect(cluster).to receive(:remove).once
+          cluster.remove_hosts(description)
+        end
+      end
+
+      context 'when the topology does not allow a specific server to be removed' do
+
+        let(:topology) do
+          double('topology').tap do |t|
+            allow(t).to receive(:remove_hosts?).and_return(true)
+            allow(t).to receive(:remove_server?).and_return(false)
+          end
+        end
+
+        before do
+          cluster.instance_variable_set(:@servers, servers)
+          cluster.instance_variable_set(:@topology, topology)
+        end
+
+        it 'removes the servers' do
+          expect(cluster).not_to receive(:remove)
+          cluster.remove_hosts(description)
+        end
+      end
+    end
+
+    context 'when the topology does not allow servers to be removed' do
+
+      let(:topology) do
+        double('topology').tap do |t|
+          allow(t).to receive(:remove_hosts?).and_return(false)
+        end
+      end
+
+      before do
+        cluster.instance_variable_set(:@servers, servers)
+        cluster.instance_variable_set(:@topology, topology)
+      end
+
+      it 'does not remove the servers' do
+        expect(cluster).not_to receive(:remove)
+        cluster.remove_hosts(description)
+      end
+    end
+  end
 end

@@ -22,7 +22,7 @@ module Mongo
 
       # The constant for slave ok flags.
       #
-      # @since 2.0.5
+      # @since 2.0.6
       SLAVE_OK = :slave_ok
 
       private

@@ -10,31 +10,32 @@ describe Mongo::Cluster::Topology::Sharded do
     described_class.new({})
   end
 
+
+  let(:mongos) do
+    Mongo::Server.new(address, double('cluster'), Mongo::Event::Listeners.new, TEST_OPTIONS)
+  end
+
+  let(:standalone) do
+    Mongo::Server.new(address, double('cluster'), Mongo::Event::Listeners.new, TEST_OPTIONS)
+  end
+
+  let(:replica_set) do
+    Mongo::Server.new(address, double('cluster'), Mongo::Event::Listeners.new, TEST_OPTIONS)
+  end
+
+  let(:mongos_description) do
+    Mongo::Server::Description.new(address, { 'msg' => 'isdbgrid' })
+  end
+
+  let(:standalone_description) do
+    Mongo::Server::Description.new(address, { 'ismaster' => true })
+  end
+
+  let(:replica_set_description) do
+    Mongo::Server::Description.new(address, { 'ismaster' => true, 'setName' => 'testing', 'ok' => 1 })
+  end
+
   describe '.servers' do
-
-    let(:mongos) do
-      Mongo::Server.new(address, Mongo::Event::Listeners.new, TEST_OPTIONS)
-    end
-
-    let(:standalone) do
-      Mongo::Server.new(address, Mongo::Event::Listeners.new, TEST_OPTIONS)
-    end
-
-    let(:replica_set) do
-      Mongo::Server.new(address, Mongo::Event::Listeners.new, TEST_OPTIONS)
-    end
-
-    let(:mongos_description) do
-      Mongo::Server::Description.new(address, { 'msg' => 'isdbgrid' })
-    end
-
-    let(:standalone_description) do
-      Mongo::Server::Description.new(address, { 'ismaster' => true })
-    end
-
-    let(:replica_set_description) do
-      Mongo::Server::Description.new(address, { 'ismaster' => true, 'setName' => 'testing' })
-    end
 
     before do
       mongos.monitor.instance_variable_set(:@description, mongos_description)
@@ -69,6 +70,56 @@ describe Mongo::Cluster::Topology::Sharded do
 
     it 'returns false' do
       expect(topology).to_not be_single
+    end
+  end
+
+  describe '#add_hosts?' do
+
+    it 'returns false' do
+      expect(topology.add_hosts?(double('description'), [])).to eq(false)
+    end
+  end
+
+  describe '#remove_hosts?' do
+
+    it 'returns true' do
+      expect(topology.remove_hosts?(double('description'))).to eq(true)
+    end
+  end
+
+  describe '#remove_server?' do
+
+    before do
+      mongos.monitor.instance_variable_set(:@description, mongos_description)
+      replica_set.monitor.instance_variable_set(:@description, replica_set_description)
+    end
+
+    context 'when the server itself should be removed' do
+
+      let(:description) do
+        double('description').tap do |d|
+          allow(d).to receive(:mongos?).and_return(false)
+          allow(d).to receive(:is_server?).and_return(true)
+        end
+      end
+
+      it 'returns true' do
+        expect(topology.remove_server?(description, mongos)).to eq(true)
+      end
+    end
+
+    context 'when the server is neither a mongos nor an unknown' do
+
+      let(:description) do
+        double('description').tap do |d|
+          allow(d).to receive(:mongos?).and_return(true)
+          allow(d).to receive(:is_server?).and_return(false)
+        end
+      end
+
+      it 'returns true' do
+        expect(topology.remove_server?(description, replica_set)).to eq(true)
+      end
     end
   end
 end
