@@ -36,8 +36,12 @@ module Mongo
         end
       end
 
+      def slave_ok?(context)
+        !context.mongos? && (context.cluster.single? || read.slave_ok?)
+      end
+
       def update_options(context)
-        if context.cluster.single? || (!context.mongos? && read.slave_ok?)
+        if slave_ok?(context)
           options.dup.tap do |opts|
             (opts[:flags] ||= []) << SLAVE_OK
           end
