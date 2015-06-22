@@ -71,7 +71,7 @@ describe Mongo::Server::ConnectionPool do
     context 'when a connection is checked out on a different thread' do
 
       let!(:connection) do
-        Thread.new { pool.checkout }.value
+        Thread.new { pool.checkout }.join
       end
 
       it 'returns a new connection' do
