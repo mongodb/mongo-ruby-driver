@@ -10,12 +10,20 @@ describe Mongo::Operation::ReadPreferrable do
     {}
   end
 
-  let(:mongos) do
+  let(:cluster_double) do
+    double('cluster')
+  end
+
+  let(:single?) do
+    true
+  end
+
+  let(:mongos?) do
     false
   end
 
-  let(:slave_ok) do
-    false
+  let(:read_pref) do
+    Mongo::ServerSelector.get
   end
 
   let(:read_preferrable) do
@@ -28,15 +36,11 @@ describe Mongo::Operation::ReadPreferrable do
     end
   end
 
-  let(:cluster_double) do
-    double('cluster')
-  end
-
   let(:context) do
     double('context').tap do |c|
       allow(c).to receive(:cluster).and_return(cluster_double)
-      allow(cluster_double).to receive(:single?).and_return(slave_ok)
-      allow(c).to receive(:mongos?).and_return(mongos)
+      allow(cluster_double).to receive(:single?).and_return(single?)
+      allow(c).to receive(:mongos?).and_return(mongos?)
     end
   end
 
@@ -65,7 +69,7 @@ describe Mongo::Operation::ReadPreferrable do
         selector.merge(:$readPreference => read_pref.to_mongos)
       end
 
-      it 'returns a special selector' do
+      it 'returns an unaltered special selector' do
         expect(read_preferrable.send(:update_selector, context)).to eq(expected)
       end
     end
@@ -77,14 +81,14 @@ describe Mongo::Operation::ReadPreferrable do
       Mongo::ServerSelector.get(:mode => mode)
     end
 
-    it 'returns a special selector' do
+    it 'returns a selector' do
       expect(read_preferrable.send(:update_selector, context)).to eq(selector)
     end
   end
 
   context 'when the server is a mongos' do
 
-    let(:mongos) do
+    let(:mongos?) do
       true
     end
 
@@ -136,6 +140,10 @@ describe Mongo::Operation::ReadPreferrable do
 
   context 'when the server is not a mongos' do
 
+    let(:mongos?) do
+      false
+    end
+
     let(:mode) do
       :secondary_preferred
     end
@@ -143,31 +151,16 @@ describe Mongo::Operation::ReadPreferrable do
     it_behaves_like 'not a selector updater'
   end
 
-  context 'when the server context requires the slaveOk bit to be set' do
-
-    let(:read_pref) do
-      Mongo::ServerSelector.get(:mode => :secondary)
-    end
-
-    let(:expected) do
-      { :flags => [ :slave_ok ] }
-    end
-
-    let(:slave_ok) do
-      true
-    end
-
-    it 'sets the slave_ok flag' do
-      expect(read_preferrable.send(:update_options, context)).to eq(expected)
-    end
-  end
-
   context 'when the server is not a mongos' do
 
-    context 'when the read preference requires the slaveOk bit to be set' do
+    let(:mongos?) do
+      false
+    end
 
-      let(:read_pref) do
-        Mongo::ServerSelector.get(:mode => :secondary)
+    context 'when the topology is Single' do
+
+      let(:single?) do
+        true
       end
 
       let(:expected) do
@@ -179,19 +172,71 @@ describe Mongo::Operation::ReadPreferrable do
       end
     end
 
-    context 'when the read preference does not require the slaveOk bit to be set' do
+    context 'when the topology is not Single' do
 
-      let(:read_pref) do
-        Mongo::ServerSelector.get(:mode => :primary)
+      let(:single?) do
+        false
+      end
+
+      context 'when the read preference requires the slave_ok flag' do
+
+        let(:read_pref) do
+          Mongo::ServerSelector.get(:mode => :secondary)
+        end
+
+        let(:expected) do
+          { :flags => [ :slave_ok ] }
+        end
+
+        it 'sets the slave_ok flag' do
+          expect(read_preferrable.send(:update_options, context)).to eq(expected)
+        end
+      end
+
+      context 'when the read preference does not require the slave_ok flag' do
+
+        let(:read_pref) do
+          Mongo::ServerSelector.get(:mode => :primary)
+        end
+
+        let(:expected) do
+          { }
+        end
+
+        it 'does not set the slave_ok flag' do
+          expect(read_preferrable.send(:update_options, context)).to eq(expected)
+        end
+      end
+    end
+
+    context 'when the topology is Single' do
+
+      let(:single?) do
+        true
       end
 
       let(:expected) do
-        { }
+        { :flags => [ :slave_ok ] }
       end
 
       it 'sets the slave_ok flag' do
         expect(read_preferrable.send(:update_options, context)).to eq(expected)
       end
+    end
+  end
+
+  context 'when the server is a mongos' do
+
+    let(:mongos?) do
+      true
+    end
+
+    let(:expected) do
+      { }
+    end
+
+    it 'does not set the slave_ok flag' do
+      expect(read_preferrable.send(:update_options, context)).to eq(expected)
     end
   end
 end
