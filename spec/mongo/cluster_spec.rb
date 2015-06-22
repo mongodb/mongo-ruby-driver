@@ -221,11 +221,11 @@ describe Mongo::Cluster do
     end
 
     let(:server_a) do
-      Mongo::Server.new(address_a, Mongo::Event::Listeners.new)
+      Mongo::Server.new(address_a, cluster, Mongo::Event::Listeners.new)
     end
 
     let(:server_b) do
-      Mongo::Server.new(address_b, Mongo::Event::Listeners.new)
+      Mongo::Server.new(address_b, cluster, Mongo::Event::Listeners.new)
     end
 
     let(:servers) do
@@ -310,7 +310,7 @@ describe Mongo::Cluster do
     end
 
     let(:server) do
-      Mongo::Server.new(address, listeners)
+      Mongo::Server.new(address, cluster, listeners)
     end
 
     let(:servers) do

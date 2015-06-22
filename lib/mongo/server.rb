@@ -128,7 +128,7 @@ module Mongo
     # Get a pretty printed server inspection.
     #
     # @example Get the server inspection.
-    #   server.inspec
+    #   server.inspect
     #
     # @return [ String ] The nice inspection string.
     #
