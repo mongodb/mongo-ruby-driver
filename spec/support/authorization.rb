@@ -43,7 +43,7 @@ CONNECT = ENV['RS_ENABLED'] == 'true' ? { connect: :replica_set, replica_set: EN
 # The write concern to use in the tests.
 #
 # @since 2.0.0
-WRITE_CONCERN = (CONNECT == :replica_set) ? { w: ADDRESSES.size } : { w: 1 }
+WRITE_CONCERN = CONNECT[:connect] == :replica_set ? { w: ADDRESSES.size } : { w: 1 }
 
 # Whether to use SSL.
 #
