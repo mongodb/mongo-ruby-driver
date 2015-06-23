@@ -36,9 +36,9 @@ DEFAULT_ADDRESS = ADDRESSES.first
 # The topology type.
 #
 # @since 2.0.0
-CONNECT = ENV['RS_ENABLED'] == 'true' ? :replica_set.freeze :
-            ENV['SHARDED_ENABLED'] == 'true' ? :sharded.freeze :
-            :direct.freeze
+CONNECT = ENV['RS_ENABLED'] == 'true' ? { connect: :replica_set, replica_set: ENV['RS_NAME'] } :
+          ENV['SHARDED_ENABLED'] == 'true' ? { connect: :sharded } :
+          { connect: :direct }
 
 # The write concern to use in the tests.
 #
@@ -53,10 +53,10 @@ SSL = ENV['SSL_ENABLED'] == 'true'
 # Options for test suite clients.
 #
 # @since 2.0.3
-TEST_OPTIONS = { connect: CONNECT,
-                 max_pool_size: 1,
-                 write: WRITE_CONCERN,
-                 ssl: SSL }
+TEST_OPTIONS = CONNECT.merge(max_pool_size: 1,
+                             write: WRITE_CONCERN,
+                             ssl: SSL,
+                             server_selection_timeout: 3)
 
 # The root user name.
 #
