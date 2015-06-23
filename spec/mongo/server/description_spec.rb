@@ -22,6 +22,7 @@ describe Mongo::Server::Description do
       'maxWriteBatchSize' => 1000,
       'maxWireVersion' => 2,
       'minWireVersion' => 0,
+      'localTime' => Time.now,
       'ok' => 1
     }
   end
@@ -690,6 +691,18 @@ describe Mongo::Server::Description do
   end
 
   describe '#==' do
+
+    let(:description) do
+      described_class.new(address, replica)
+    end
+
+    let(:other) do
+      described_class.new(address, replica.merge('localTime' => 1))
+    end
+
+    it 'excludes certain fields' do
+      expect(description == other).to be(true)
+    end
 
     context 'when the classes do not match' do
 
