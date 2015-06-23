@@ -48,12 +48,11 @@ module Mongo
       # @since 2.0.0
       def initial(seeds, options)
         if options.has_key?(:connect)
-          return OPTIONS.fetch(options[:connect]).new(options, seeds)
-        end
-        if options.has_key?(:replica_set)
+          OPTIONS.fetch(options[:connect]).new(options, seeds)
+        elsif options.has_key?(:replica_set)
           ReplicaSet.new(options, seeds)
         else
-          seeds.size > 1 ? Unknown.new(options, seeds) : Single.new(options, seeds)
+          Unknown.new(options, seeds)
         end
       end
     end

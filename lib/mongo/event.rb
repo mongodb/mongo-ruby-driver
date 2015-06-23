@@ -17,9 +17,15 @@ require 'mongo/event/publisher'
 require 'mongo/event/subscriber'
 require 'mongo/event/primary_elected'
 require 'mongo/event/description_changed'
+require 'mongo/event/standalone_discovered'
 
 module Mongo
   module Event
+
+    # When a standalone is discovered.
+    #
+    # @since 2.0.6
+    STANDALONE_DISCOVERED = 'standalone_discovered'.freeze
 
     # When a server is elected primary.
     #

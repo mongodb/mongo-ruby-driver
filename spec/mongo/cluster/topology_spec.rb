@@ -60,8 +60,8 @@ describe Mongo::Cluster::Topology do
           described_class.initial([], {})
         end
 
-        it 'returns a single topology' do
-          expect(topology).to be_a(Mongo::Cluster::Topology::Single)
+        it 'returns an unknown topology' do
+          expect(topology).to be_a(Mongo::Cluster::Topology::Unknown)
         end
       end
 
