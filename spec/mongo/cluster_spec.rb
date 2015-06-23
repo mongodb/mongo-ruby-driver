@@ -88,7 +88,7 @@ describe Mongo::Cluster do
     context 'when the option is not provided' do
 
       let(:cluster) do
-        described_class.new([ '127.0.0.1:27017' ], TEST_OPTIONS)
+        described_class.new([ '127.0.0.1:27017' ], TEST_OPTIONS.dup.delete_if { |k| k == :replica_set })
       end
 
       it 'returns nil' do
