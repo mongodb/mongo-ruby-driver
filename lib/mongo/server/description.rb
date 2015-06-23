@@ -501,6 +501,7 @@ module Mongo
       # @since 2.0.6
       def ==(other)
         return false if self.class != other.class
+        return true if config == other.config
         !config.keys.empty? && config.keys.all? do |k|
           config[k] == other.config[k] || EXCLUDE_FOR_COMPARISON.include?(k)
         end
