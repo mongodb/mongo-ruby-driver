@@ -72,6 +72,7 @@ module Mongo
         # @since 2.0.0
         def initialize(options, seeds = [])
           @options = options
+          @seeds = seeds
         end
 
         # An unknown topology is not a replica set.
@@ -181,6 +182,23 @@ module Mongo
         # @since 2.0.6
         def remove_server?(description, server)
           description.standalone? && description.is_server?(server)
+        end
+
+        # Notify the topology that a standalone was discovered.
+        #
+        # @example Notify the topology that a standalone was discovered.
+        #   topology.standalone_discovered
+        #
+        # @return [ Topology::Unknown, Topology::Single ] Either self or a
+        #   new Single topology.
+        #
+        # @since 2.0.6
+        def standalone_discovered
+          if @seeds.size == 1
+            Single.new(options, @seeds)
+          else
+            self
+          end
         end
 
         private

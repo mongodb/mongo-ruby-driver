@@ -91,6 +91,7 @@ module Mongo
       @topology = Topology.initial(seeds, options)
       @update_lock = Mutex.new
 
+      subscribe_to(Event::STANDALONE_DISCOVERED, Event::StandaloneDiscovered.new(self))
       subscribe_to(Event::DESCRIPTION_CHANGED, Event::DescriptionChanged.new(self))
       subscribe_to(Event::PRIMARY_ELECTED, Event::PrimaryElected.new(self))
 
@@ -134,6 +135,19 @@ module Mongo
     # @since 2.0.0
     def elect_primary!(description)
       @topology = topology.elect_primary(description, servers_list)
+    end
+
+    # Notify the cluster that a standalone server was discovered so that the
+    # topology can be updated accordingly.
+    #
+    # @example Notify the cluster that a standalone server was discovered.
+    #   cluster.standalone_discovered
+    #
+    # @return [ Topology ] The cluster topology.
+    #
+    # @since 2.0.6
+    def standalone_discovered
+      @topology = topology.standalone_discovered
     end
 
     # Remove the server from the cluster for the provided address, if it
