@@ -75,7 +75,8 @@ module Mongo
         private
 
         def check_driver_support!
-          if DRIVER_WIRE_VERSIONS.max < server_wire_versions.max
+          if DRIVER_WIRE_VERSIONS.max < server_wire_versions.min ||
+             DRIVER_WIRE_VERSIONS.min > server_wire_versions.max
             raise Error::UnsupportedFeatures.new(server_wire_versions)
           end
         end
