@@ -32,7 +32,7 @@ describe 'Server Discovery and Monitoring' do
         # @since 2.0.0
         class Mongo::Server
 
-          # The contructor keeps the same API, but does not instantiate a
+          # The constructor keeps the same API, but does not instantiate a
           # monitor and run it.
           def initialize(address, cluster, event_listeners, options = {})
             @address = address

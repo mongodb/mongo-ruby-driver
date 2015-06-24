@@ -171,6 +171,16 @@ module Mongo
         #
         # @since 2.0.0
         def unknown?; false; end
+
+        # Notify the topology that a standalone was discovered.
+        #
+        # @example Notify the topology that a standalone was discovered.
+        #   topology.standalone_discovered
+        #
+        # @return [ Topology::Single ] Always returns self.
+        #
+        # @since 2.0.6
+        def standalone_discovered; self; end
       end
     end
   end

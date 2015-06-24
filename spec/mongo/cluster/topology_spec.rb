@@ -60,26 +60,26 @@ describe Mongo::Cluster::Topology do
           described_class.initial([], {})
         end
 
-        it 'returns a single topology' do
-          expect(topology).to be_a(Mongo::Cluster::Topology::Single)
+        it 'returns an unknown topology' do
+          expect(topology).to be_a(Mongo::Cluster::Topology::Unknown)
         end
       end
 
       context 'when provided a single mongos', if: single_mongos? do
 
         let(:topology) do
-          described_class.initial(ADDRESSES, {})
+          described_class.initial(ADDRESSES, TEST_OPTIONS)
         end
 
-        it 'returns a single topology' do
-          expect(topology).to be_a(Mongo::Cluster::Topology::Single)
+        it 'returns a sharded topology' do
+          expect(topology).to be_a(Mongo::Cluster::Topology::Sharded)
         end
       end
 
       context 'when provided a single replica set member', if: single_rs_member? do
 
         let(:topology) do
-          described_class.initial(ADDRESSES, {})
+          described_class.initial(ADDRESSES, TEST_OPTIONS)
         end
 
         it 'returns a single topology' do

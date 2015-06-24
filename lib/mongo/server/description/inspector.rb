@@ -14,6 +14,7 @@
 
 require 'mongo/server/description/inspector/primary_elected'
 require 'mongo/server/description/inspector/description_changed'
+require 'mongo/server/description/inspector/standalone_discovered'
 
 module Mongo
   class Server
@@ -31,6 +32,7 @@ module Mongo
         #
         # @since 2.0.0
         INSPECTORS = [
+            Inspector::StandaloneDiscovered,
             Inspector::DescriptionChanged,
             Inspector::PrimaryElected
         ].freeze
