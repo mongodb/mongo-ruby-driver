@@ -24,6 +24,17 @@ describe Mongo::Server::Description::Features do
       end
     end
 
+    context 'when the server wire version range max is higher' do
+
+      let(:features) do
+        described_class.new(0..4)
+      end
+
+      it 'sets the server wire version range' do
+        expect(features.server_wire_versions).to eq(0..4)
+      end
+    end
+
     context 'when the server wire version range max is lower' do
 
       it 'raises an exception' do
@@ -33,7 +44,7 @@ describe Mongo::Server::Description::Features do
       end
     end
 
-    context 'when the server wire version range is lower' do
+    context 'when the server wire version range max is lower' do
 
       let(:features) do
         described_class.new(0..2)
