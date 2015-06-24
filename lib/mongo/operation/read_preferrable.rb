@@ -37,7 +37,7 @@ module Mongo
       end
 
       def slave_ok?(context)
-        !context.mongos? && (context.cluster.single? || read.slave_ok?)
+        (context.cluster.single? && !context.mongos?) || read.slave_ok?
       end
 
       def update_options(context)
