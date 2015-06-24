@@ -1,0 +1,33 @@
+description: "Single mongos"
+
+uri: "mongodb://a"
+
+phases: [
+
+    {
+        responses: [
+
+                ["a:27017", {
+
+                    ok: 1,
+                    ismaster: true,
+                    msg: "isdbgrid"
+                }]
+        ],
+
+        outcome: {
+
+            servers: {
+
+                "a:27017": {
+
+                    type: "Mongos",
+                    setName:
+                }
+            },
+
+            topologyType: "Sharded",
+            setName:
+        }
+    }
+]
