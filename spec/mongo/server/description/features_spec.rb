@@ -15,11 +15,20 @@ describe Mongo::Server::Description::Features do
       end
     end
 
-    context 'when the server wire version range is higher' do
+    context 'when the server wire version range min is higher' do
 
       it 'raises an exception' do
         expect {
-          described_class.new(0..4)
+          described_class.new(described_class::DRIVER_WIRE_VERSIONS.max+1..described_class::DRIVER_WIRE_VERSIONS.max+2)
+        }.to raise_error(Mongo::Error::UnsupportedFeatures)
+      end
+    end
+
+    context 'when the server wire version range max is lower' do
+
+      it 'raises an exception' do
+        expect {
+          described_class.new(described_class::DRIVER_WIRE_VERSIONS.min-2..described_class::DRIVER_WIRE_VERSIONS.min-1)
         }.to raise_error(Mongo::Error::UnsupportedFeatures)
       end
     end
