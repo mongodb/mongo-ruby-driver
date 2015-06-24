@@ -22,7 +22,7 @@ describe Mongo::Server::Monitor do
         start = Time.now
         monitor.scan!
         monitor.scan!
-        expect(Time.now - start).to be > 0.5
+        expect(Time.now - start).to be >= 0.5
       end
     end
 
