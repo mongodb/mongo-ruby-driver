@@ -226,6 +226,7 @@ describe Mongo::Operation::Write::BulkDelete do
       
           it 'does not abort after first error' do
             failing_delete.execute(authorized_primary.context)
+            sleep(1)
             expect(authorized_collection.find.count).to eq(1)
           end
         end
