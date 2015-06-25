@@ -10,17 +10,24 @@ describe Mongo::Cluster::Topology::Sharded do
     described_class.new({})
   end
 
+  let(:monitoring) do
+    Mongo::Monitoring.new
+  end
+
+  let(:listeners) do
+    Mongo::Event::Listeners.new
+  end
 
   let(:mongos) do
-    Mongo::Server.new(address, double('cluster'), Mongo::Event::Listeners.new, TEST_OPTIONS)
+    Mongo::Server.new(address, double('cluster'), monitoring, listeners, TEST_OPTIONS)
   end
 
   let(:standalone) do
-    Mongo::Server.new(address, double('cluster'), Mongo::Event::Listeners.new, TEST_OPTIONS)
+    Mongo::Server.new(address, double('cluster'), monitoring, listeners, TEST_OPTIONS)
   end
 
   let(:replica_set) do
-    Mongo::Server.new(address, double('cluster'), Mongo::Event::Listeners.new, TEST_OPTIONS)
+    Mongo::Server.new(address, double('cluster'), monitoring, listeners, TEST_OPTIONS)
   end
 
   let(:mongos_description) do

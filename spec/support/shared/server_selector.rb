@@ -11,9 +11,10 @@ def server(mode, options = {})
               }
 
   listeners = Mongo::Event::Listeners.new
+  monitoring = Mongo::Monitoring.new
   address = Mongo::Address.new('127.0.0.1:27017')
 
-  server = Mongo::Server.new(address, double('cluster'), listeners, TEST_OPTIONS)
+  server = Mongo::Server.new(address, double('cluster'), monitoring, listeners, TEST_OPTIONS)
   description = Mongo::Server::Description.new(address, ismaster, average_round_trip_time)
   server.tap do |s|
     allow(s).to receive(:description).and_return(description)
