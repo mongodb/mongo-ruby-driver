@@ -129,11 +129,11 @@ describe Mongo::URI do
   describe '#database' do
     let(:servers)  { 'localhost' }
     let(:string) { "#{scheme}#{servers}/#{db}" }
-    let(:db)     { TEST_DB }
+    let(:db)     { 'auth-db' }
 
     context 'database provided' do
       it 'returns the database name' do
-        expect(uri.database).to eq(TEST_DB)
+        expect(uri.database).to eq(db)
       end
     end
   end
@@ -171,7 +171,7 @@ describe Mongo::URI do
       end
 
       context 'journal' do
-        let(:options) { 'j=true' }
+        let(:options) { 'journal=true' }
         let(:concern) { { :j => true } }
 
         it 'sets the write concern options' do
@@ -248,7 +248,7 @@ describe Mongo::URI do
       end
     end
 
-    context 'read preferece tags provided' do
+    context 'read preference tags provided' do
 
       context 'single read preference tag set' do
         let(:options) do
@@ -505,12 +505,28 @@ describe Mongo::URI do
 
     context 'when an invalid option is provided' do
 
-      let(:options) { 'iDontKnow=10' }
+      let(:options) { 'invalidOption=10' }
 
-      it 'raises an exception' do
-        expect {
-          uri.options
-        }.to raise_error(Mongo::Error::InvalidURIOption)
+      let(:uri_options) do
+        uri.options
+      end
+
+      it 'does not raise an exception' do
+        expect(uri_options).to be_empty
+      end
+
+      context 'when an invalid option is combined with valid options' do
+
+        let(:options) { 'invalidOption=10&waitQueueTimeoutMS=500&ssl=true' }
+
+        it 'does not raise an exception' do
+          expect(uri_options).not_to be_empty
+        end
+
+        it 'sets the valid options' do
+          expect(uri_options[:wait_queue_timeout]).to eq(0.5)
+          expect(uri_options[:ssl]).to be true
+        end
       end
     end
   end
