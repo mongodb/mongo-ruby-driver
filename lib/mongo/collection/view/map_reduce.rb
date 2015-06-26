@@ -177,7 +177,9 @@ module Mongo
             begin
               initial_query_op.execute(server.context)
             rescue Mongo::Error::NeedPrimaryServer
-              warn 'Rerouting the MapReduce operation to the primary server.'
+              log_warn([
+                'Rerouting the MapReduce operation to the primary server.'
+              ])
               server = ServerSelector.get(mode: :primary).select_server(cluster)
               initial_query_op.execute(server.context)
             end
