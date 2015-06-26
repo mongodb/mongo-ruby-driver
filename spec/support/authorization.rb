@@ -56,7 +56,7 @@ SSL = ENV['SSL_ENABLED'] == 'true'
 TEST_OPTIONS = CONNECT.merge(max_pool_size: 1,
                              write: WRITE_CONCERN,
                              ssl: SSL,
-                             server_selection_timeout: 3)
+                             server_selection_timeout: 10)
 
 # The root user name.
 #
