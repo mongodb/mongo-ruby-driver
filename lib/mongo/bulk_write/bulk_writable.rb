@@ -132,8 +132,9 @@ module Mongo
       end
 
       def write_concern
-        @write_concern ||= WriteConcern.get(@options[:write_concern]) ||
-                            @collection.write_concern
+        @write_concern ||= @options[:write_concern] ?
+                             WriteConcern.get(@options[:write_concern]) :
+                               @collection.write_concern
       end
 
       def validate_operations!
