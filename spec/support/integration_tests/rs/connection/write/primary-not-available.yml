@@ -1,0 +1,41 @@
+#2. Description: Primary is not available
+#                    (mo step) primary stopped
+#                    * Op succeeds
+
+description: "Write failure when primary is not available"
+
+type: "replica_sets"
+
+initConfig: { id: "integration_tests",
+              members: [
+                         { server_id: "serverA",
+                           rsParams: { priority: 1 } },
+                         { server_id: "serverB",
+                           rsParams: { priority: 0 } },
+                         { server_id: "serverC",
+                           rsParams: { arbiterOnly: true } }                   
+                        ]
+             }
+
+clientSetUp: {
+                hosts: [ "serverA", "serverB", "serverC" ],
+                options: {}
+             }
+
+phases: [
+          {
+            MOOperation: { method: "POST",
+                           uri: "/servers/serverA",
+                           payload: { action: "stop" }
+                          }
+          }
+         ]
+
+tests: [
+          {
+            clientOperation: { operation: "insertOne",
+                               doc: { x: 1 },
+                               outcome: { ok: 0 }
+                             }
+          }
+        ]

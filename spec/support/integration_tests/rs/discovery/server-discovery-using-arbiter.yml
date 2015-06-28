@@ -1,0 +1,48 @@
+#D. Server discovery using arbiter:
+#                Setup
+#             - Servers:
+#                    - serverA: priority 1
+#                    - serverB: arbiter
+#                - URI: mongodb://user:passwd@serverB_host/?replicaSet=rs
+#                 - MOConfig actions: [
+#                                        1. create RS with config { replicaSet name: rs, 
+#                                                                             members: serverA, #serverB } ]
+#                - Op: insert
+#
+#(test step) client with URI
+#  * Op succeeds
+
+description: "Client uses arbiter to discover all members"
+
+type: "replica_sets"
+
+initConfig: { id: "integration_tests",
+              members: [
+                         { server_id: "serverA",
+                           rsParams: { priority: 1 } },
+                         { server_id: "serverB",
+                           rsParams: { priority: 0 } },
+                         { server_id: "serverC",
+                           rsParams: { arbiterOnly: true } }                   
+                        ]
+             }
+
+clientSetUp: {
+                hosts: [ "serverC" ],
+                options: {
+                           heartbeatFrequency: 1
+                         }
+             }
+
+phases: [
+          {
+            wait: 1
+          }
+        ]
+
+tests: [
+         {
+           clientHosts: { primary: "serverA",
+                          secondaries: [ "serverB" ] }
+         }
+       ]

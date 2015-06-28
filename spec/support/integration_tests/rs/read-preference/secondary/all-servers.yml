@@ -1,0 +1,42 @@
+#1. Description: Query with all servers available
+#                    * Op goes to serverB
+
+
+description: "Successful read with secondary read preference and all servers available"
+
+type: "replica_sets"
+
+initConfig: { id: "integration_tests",
+              members: [
+                         { server_id: "serverA",
+                           rsParams: { priority: 1 } },
+                         { server_id: "serverB",
+                           rsParams: { priority: 0 } },
+                         { server_id: "serverC",
+                           rsParams: { arbiterOnly: true } }                   
+                        ]
+             }
+
+clientSetUp: {
+                hosts: [ "serverA", "serverB", "serverC" ],
+                options: {
+                           readPreference: { mode: 'secondary' }
+                         }
+             }
+
+phases: [
+          {
+            clientOperation: { operation: "insertOne",
+                               doc: { x: 1 },
+                               writeConcern: { w: 3 }
+                             }
+          }
+        ]
+
+tests: [
+          {
+            clientOperation: { operation: "find",
+                               outcome: { ok: 1 }
+                             }
+          }
+        ]

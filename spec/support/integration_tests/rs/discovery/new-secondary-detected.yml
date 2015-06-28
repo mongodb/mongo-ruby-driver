@@ -1,0 +1,60 @@
+#2. Description: Ensure that client detects secondary failure and new elected member
+#                     (test step) client with URI
+#                    (mo step) cache primary
+#                    (mo step) cache secondaries
+#                    (mo step) stop secondary
+#                    * Op succeeds
+#                    (mo step) get primary
+#                    (mo step) get secondaries
+#                    * Ensure that client previous primary == MO previous primary
+#                    * Ensure that client secondaries != MO previous secondaries
+
+description: "Client detects secondary failure and newly elected members"
+
+type: "replica_sets"
+
+initConfig: { id: "integration_tests",
+              members: [
+                         { server_id: "serverA",
+                           rsParams: { priority: 2 } },
+                         { server_id: "serverB",
+                           rsParams: { priority: 1 } },
+                         { server_id: "serverC",
+                           rsParams: { priority: 0 } }
+                        ]
+             }
+
+clientSetUp: {
+                hosts: [ "serverA", "serverB", "serverC" ],
+                options: {
+                           readPreference: { mode: 'secondary' }
+                         }
+             }
+
+phases: [
+          {
+            clientOperation: { operation: "find",
+                               outcome: { ok: 1 }
+                             }
+          },
+
+          {
+            MOOperation: { method: "POST",
+                           uri: "/servers/serverB",
+                           payload: { action: "stop" }
+                          }
+          },
+
+          {
+            clientOperation: { operation: "find",
+                               outcome: { ok: 1 }
+                             }
+          },
+        ]
+
+tests: [
+         {
+           clientHosts: { primary: "serverA",
+                          secondaries: [ "serverC" ] }
+         }
+       ]
