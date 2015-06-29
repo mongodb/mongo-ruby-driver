@@ -12,9 +12,10 @@ describe Mongo::Socket::SSL do
 
       let(:options) do
         {
-          :ssl => true,
-          :ssl_cert => CLIENT_PEM,
-          :ssl_key => CLIENT_PEM
+            :ssl => true,
+            :ssl_cert => CLIENT_PEM,
+            :ssl_key => CLIENT_PEM,
+            :ssl_verify => false
         }
       end
 
@@ -31,9 +32,10 @@ describe Mongo::Socket::SSL do
 
       let(:options) do
         {
-          :ssl => true,
-          :ssl_cert => CLIENT_PEM,
-          :ssl_key => CRL_PEM
+            :ssl => true,
+            :ssl_cert => CLIENT_PEM,
+            :ssl_key => CRL_PEM,
+            :ssl_verify => false
         }
       end
 
@@ -51,7 +53,8 @@ describe Mongo::Socket::SSL do
             :ssl => true,
             :ssl_cert => CLIENT_PEM,
             :ssl_key => CLIENT_PEM,
-            :ssl_ca_cert => CA_PEM
+            :ssl_ca_cert => CA_PEM,
+            :ssl_verify => true
         }
       end
 
@@ -60,6 +63,68 @@ describe Mongo::Socket::SSL do
       end
 
       it 'connects to the server' do
+        expect(socket).to be_alive
+      end
+    end
+
+    context 'when ssl_verify is not specified' do
+
+      let(:options) do
+        {
+            :ssl => true,
+            :ssl_cert => CLIENT_PEM,
+            :ssl_key => CLIENT_PEM,
+            :ssl_ca_cert => CA_PEM
+        }
+      end
+
+      before do
+        socket.connect!
+      end
+
+      it 'verifies the server certificate' do
+        expect(socket).to be_alive
+      end
+    end
+
+    context 'when ssl_verify is true' do
+
+      let(:options) do
+        {
+            :ssl => true,
+            :ssl_cert => CLIENT_PEM,
+            :ssl_key => CLIENT_PEM,
+            :ssl_ca_cert => CA_PEM,
+            :ssl_verify => true
+        }
+      end
+
+      before do
+        socket.connect!
+      end
+
+      it 'verifies the server certificate' do
+        expect(socket).to be_alive
+      end
+    end
+
+    context 'when ssl_verify is false' do
+
+      let(:options) do
+        {
+            :ssl => true,
+            :ssl_cert => CLIENT_PEM,
+            :ssl_key => CLIENT_PEM,
+            :ssl_ca_cert => 'invalid',
+            :ssl_verify => false
+        }
+      end
+
+      before do
+        socket.connect!
+      end
+
+      it 'does not verify the server certificate' do
         expect(socket).to be_alive
       end
     end

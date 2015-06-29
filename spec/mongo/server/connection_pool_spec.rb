@@ -2,6 +2,10 @@ require 'spec_helper'
 
 describe Mongo::Server::ConnectionPool do
 
+  let(:options) do
+    TEST_OPTIONS.merge(max_pool_size: 2)
+  end
+
   let(:address) do
     Mongo::Address.new('127.0.0.1:27017')
   end
@@ -17,7 +21,7 @@ describe Mongo::Server::ConnectionPool do
   describe '#checkin' do
 
     let(:server) do
-      Mongo::Server.new(address, double('cluster'), monitoring, listeners, ssl: SSL)
+      Mongo::Server.new(address, double('cluster'), monitoring, listeners, options)
     end
 
     let!(:pool) do
@@ -47,7 +51,7 @@ describe Mongo::Server::ConnectionPool do
   describe '#checkout' do
 
     let(:server) do
-      Mongo::Server.new(address, double('cluster'), monitoring, listeners, ssl: SSL)
+      Mongo::Server.new(address, double('cluster'), monitoring, listeners, options)
     end
 
     let!(:pool) do
@@ -95,7 +99,7 @@ describe Mongo::Server::ConnectionPool do
   describe '.get' do
 
     let(:server) do
-      Mongo::Server.new(address, double('cluster'), monitoring, listeners, ssl: SSL)
+      Mongo::Server.new(address, double('cluster'), monitoring, listeners, options)
     end
 
     let!(:pool) do
@@ -110,7 +114,7 @@ describe Mongo::Server::ConnectionPool do
   describe '#inspect' do
 
     let(:server) do
-      Mongo::Server.new(address, double('cluster'), monitoring, listeners, ssl: SSL)
+      Mongo::Server.new(address, double('cluster'), monitoring, listeners, options)
     end
 
     let!(:pool) do
@@ -129,7 +133,7 @@ describe Mongo::Server::ConnectionPool do
   describe '#with_connection' do
 
     let(:server) do
-      Mongo::Server.new(address, double('cluster'), monitoring, listeners, ssl: SSL)
+      Mongo::Server.new(address, double('cluster'), monitoring, listeners, options)
     end
 
     let!(:pool) do
