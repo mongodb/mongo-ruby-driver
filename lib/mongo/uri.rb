@@ -27,6 +27,7 @@ module Mongo
   #
   # @since 2.0.0
   class URI
+    include Loggable
 
     # Scheme Regex: non-capturing, matches scheme.
     #
@@ -69,7 +70,7 @@ module Mongo
     # @since 2.0.0
     DATABASE = %r{(?:/([^/\.\ "*<>:\|\?]*))?}.freeze
 
-    # Option Regex: notably only matches the ampersand separator and does
+    # Option Regex: only matches the ampersand separator and does
     # not allow for semicolon to be used to separate options.
     #
     # @since 2.0.0
@@ -123,7 +124,8 @@ module Mongo
     #
     # @since 2.0.0
     def initialize(string)
-      @match = string.match(URI)
+      @string = string
+      @match = @string.match(URI)
       raise Error::InvalidURI.new(string) unless @match
     end
 
@@ -210,8 +212,13 @@ module Mongo
       parsed_options.split('&').reduce({}) do |options, option|
         key, value = option.split('=')
         strategy = OPTION_MAP[key]
-        raise Error::InvalidURIOption.new(key) if strategy.nil?
-        add_option(strategy, value, options)
+        if strategy.nil?
+          log_warn([
+                       "Unsupported URI option '#{key}' on URI '#{@string}'. It will be ignored."
+                   ])
+        else
+          add_option(strategy, value, options)
+        end
         options
       end
     end
@@ -243,7 +250,7 @@ module Mongo
 
     # Write Options
     option 'w', :w, :group => :write
-    option 'j', :j, :group => :write
+    option 'journal', :j, :group => :write
     option 'fsync', :fsync, :group => :write
     option 'wtimeoutMS', :timeout, :group => :write
 
