@@ -124,10 +124,20 @@ module Mongo
       # @since 2.0.0
       TAGS = 'tags'.freeze
 
+      # Constant for reading electionID info from config.
+      #
+      # @since 2.1.0
+      ELECTION_ID = 'electionId'.freeze
+
+      # Constant for reading localTime info from config.
+      #
+      # @since 2.1.0
+      LOCAL_TIME = 'localTime'.freeze
+
       # Fields to exclude when comparing two descriptions.
       #
       # @since 2.0.6
-      EXCLUDE_FOR_COMPARISON = [ 'localTime' ]
+      EXCLUDE_FOR_COMPARISON = [ LOCAL_TIME, ELECTION_ID ]
 
       # @return [ Address ] address The server's address.
       attr_reader :address
@@ -302,6 +312,18 @@ module Mongo
       # @since 2.0.0
       def tags
         config[TAGS] || {}
+      end
+
+      # Get the electionId from the config.
+      #
+      # @example Get the electionId.
+      #   description.election_id
+      #
+      # @return [ BSON::ObjectId ] The election id.
+      #
+      # @since 2.1.0
+      def election_id
+        config[ELECTION_ID]
       end
 
       # Is the server a mongos?
