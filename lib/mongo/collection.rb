@@ -108,12 +108,35 @@ module Mongo
     #   collection.find
     #
     # @param [ Hash ] filter The filter to use in the find.
+    # @param [ Hash ] options The options for the find.
+    #
+    # @option options [ true, false ] :allow_partial_results Allows the query to get partial
+    #   results if some shards are down.
+    # @option options [ Integer ] :batch_size The number of documents returned in each batch
+    #   of results from MongoDB.
+    # @option options [ String ] :comment Associate a comment with the query.
+    # @option options [ :tailable, :tailable_await ] :cursor_type The type of cursor to use.
+    # @option options [ Integer ] :limit The max number of docs to return from the query.
+    # @option options [ Integer ] :max_time_ms The maximum amount of time to allow the query
+    #   to run in milliseconds.
+    # @option options [ Hash ] :modifiers Meta-operators modifying the output or behavior
+    #   of a query.
+    # @option options [ true, false ] :no_cursor_timeout The server normally times out idle
+    #   cursors after an inactivity period (10 minutes) to prevent excess memory use.
+    #   Set this option to prevent that.
+    # @option options [ true, false ] :oplog_replay Internal replication use only - driver
+    #   should not set.
+    # @option options [ Hash ] :projection The fields to include or exclude from each doc
+    #   in the result set.
+    # @option options [ Integer ] :skip The number of docs to skip before returning results.
+    # @option options [ Hash ] :sort The key and direction pairs by which the result set
+    #   will be sorted.
     #
     # @return [ CollectionView ] The collection view.
     #
     # @since 2.0.0
-    def find(filter = nil)
-      View.new(self, filter || {})
+    def find(filter = nil, options = {})
+      View.new(self, filter || {}, options)
     end
 
     # Get a view of all indexes for this collection. Can be iterated or has
