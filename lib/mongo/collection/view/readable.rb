@@ -37,6 +37,17 @@ module Mongo
           :$explain => :explained?
         }.freeze
 
+        # Options to cursor flags mapping.
+        #
+        # @since 2.1.0
+        CURSOR_FLAGS = {
+          :allow_partial_results => [ :partial ],
+          :oplog_replay => [ :oplog_replay ],
+          :no_cursor_timeout => [ :no_cursor_timeout ],
+          :tailable => [ :tailable_cursor ],
+          :tailable_await => [ :await_data, :tailable_cursor]
+        }.freeze
+
         # Execute an aggregation on the collection view.
         #
         # @example Aggregate documents.
@@ -377,7 +388,13 @@ module Mongo
         end
 
         def flags
-          @flags ||= (!primary? ? [ :slave_ok ] : [])
+          @flags ||= (!primary? ? [ :slave_ok ] : []).tap do |flags|
+            CURSOR_FLAGS.each do |key, value|
+              if options[key] || (options[:cursor_type] && options[:cursor_type] == key)
+                flags.push(*value)
+              end
+            end
+          end
         end
 
         def has_special_fields?
