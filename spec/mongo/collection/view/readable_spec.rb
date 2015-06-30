@@ -568,12 +568,91 @@ describe Mongo::Collection::View::Readable do
 
   describe '#show_disk_loc' do
 
-    let(:new_view) do
-      view.show_disk_loc(true)
+    let(:options) do
+      { :show_disk_loc => true }
     end
 
-    it 'sets the value in the options' do
-      expect(new_view.show_disk_loc).to be true
+    context 'when show_disk_loc is specified' do
+
+      let(:new_show_disk_loc) do
+        false
+      end
+
+      it 'sets the show_disk_loc value' do
+        new_view = view.show_disk_loc(new_show_disk_loc)
+        expect(new_view.show_disk_loc).to eq(new_show_disk_loc)
+      end
+
+      it 'returns a new View' do
+        expect(view.show_disk_loc(new_show_disk_loc)).not_to be(view)
+      end
+    end
+
+    context 'when show_disk_loc is not specified' do
+
+      it 'returns the show_disk_loc value' do
+        expect(view.show_disk_loc).to eq(options[:show_disk_loc])
+      end
+    end
+  end
+
+  describe '#modifiers' do
+
+    let(:options) do
+      { :modifiers => { :$orderby => Mongo::Index::ASCENDING } }
+    end
+
+    context 'when a modifiers document is specified' do
+
+      let(:new_modifiers) do
+        { :modifiers => { :$orderby => Mongo::Index::DESCENDING } }
+      end
+
+      it 'sets the new_modifiers document' do
+        new_view = view.modifiers(new_modifiers)
+        expect(new_view.modifiers).to eq(new_modifiers)
+      end
+
+      it 'returns a new View' do
+        expect(view.modifiers(new_modifiers)).not_to be(view)
+      end
+    end
+
+    context 'when a modifiers document is not specified' do
+
+      it 'returns the modifiers value' do
+        expect(view.modifiers).to eq(options[:modifiers])
+      end
+    end
+  end
+
+  describe '#max_time_ms' do
+
+    let(:options) do
+      { :max_time_ms => 200 }
+    end
+
+    context 'when max_time_ms is specified' do
+
+      let(:new_max_time_ms) do
+        300
+      end
+
+      it 'sets the max_time_ms value' do
+        new_view = view.max_time_ms(new_max_time_ms)
+        expect(new_view.max_time_ms).to eq(new_max_time_ms)
+      end
+
+      it 'returns a new View' do
+        expect(view.max_time_ms(new_max_time_ms)).not_to be(view)
+      end
+    end
+
+    context 'when max_time_ms is not specified' do
+
+      it 'returns the max_time_ms value' do
+        expect(view.max_time_ms).to eq(options[:max_time_ms])
+      end
     end
   end
 
