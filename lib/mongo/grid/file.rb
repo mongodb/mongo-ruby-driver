@@ -30,7 +30,7 @@ module Mongo
       # @return [ Array<Chunk> ] chunks The file chunks.
       attr_reader :chunks
 
-      # @return [ IO ] data The raw datafor the file.
+      # @return [ IO ] data The raw data for the file.
       attr_reader :data
 
       # @return [ Metadata ] metadata The file metadata.
