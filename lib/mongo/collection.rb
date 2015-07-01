@@ -324,6 +324,25 @@ module Mongo
       find(filter).delete_many
     end
 
+    # Replaces a single document in the collection with the new document.
+    #
+    # @example Replace a single document.
+    #   collection.replace_one({ name: 'test' }, { name: 'test1' })
+    #
+    # @param [ Hash ] filter The filter to use.
+    # @param [ Hash ] document The document to replace.
+    # @param [ Hash ] opts The options.
+    #
+    # @option opts [ true, false ] :upsert Whether to upsert if the
+    #   document doesn't exist.
+    #
+    # @return [ Result ] The response from the database.
+    #
+    # @since 2.1.0
+    def replace_one(filter, document, opts = {})
+      find(filter).replace_one(document, opts)
+    end
+
     # Get the fully qualified namespace of the collection.
     #
     # @example Get the fully qualified namespace.

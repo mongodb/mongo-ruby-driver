@@ -662,4 +662,99 @@ describe Mongo::Collection do
       end
     end
   end
+
+  describe '#replace_one' do
+
+    let(:selector) do
+      { field: 'test1' }
+    end
+
+    context 'when a selector was provided' do
+
+      before do
+        authorized_collection.insert_many([{ field: 'test1' }, { field: 'test1' }])
+      end
+
+      after do
+        authorized_collection.delete_many
+      end
+
+      let!(:response) do
+        authorized_collection.replace_one(selector, { field: 'testing' })
+      end
+
+      let(:updated) do
+        authorized_collection.find(field: 'testing').first
+      end
+
+      it 'updates the first matching document in the collection' do
+        expect(response.written_count).to eq(1)
+      end
+
+      it 'updates the documents in the collection' do
+        expect(updated[:field]).to eq('testing')
+      end
+    end
+
+    context 'when upsert is false' do
+
+      let!(:response) do
+        authorized_collection.replace_one(selector, { field: 'test1' }, upsert: false)
+      end
+
+      let(:updated) do
+        authorized_collection.find(field: 'test1').to_a
+      end
+
+      it 'reports that no documents were written' do
+        expect(response.written_count).to eq(0)
+      end
+
+      it 'does not insert the document' do
+        expect(updated).to be_empty
+      end
+    end
+
+    context 'when upsert is true' do
+
+      let!(:response) do
+        authorized_collection.replace_one(selector, { field: 'test1' }, upsert: true)
+      end
+
+      let(:updated) do
+        authorized_collection.find(field: 'test1').first
+      end
+
+      after do
+        authorized_collection.delete_many
+      end
+
+      it 'reports that a document was written' do
+        expect(response.written_count).to eq(1)
+      end
+
+      it 'inserts the document' do
+        expect(updated[:field]).to eq('test1')
+      end
+    end
+
+    context 'when upsert is not specified' do
+
+      let!(:response) do
+        authorized_collection.replace_one(selector, { field: 'test1' })
+      end
+
+      let(:updated) do
+        authorized_collection.find(field: 'test1').to_a
+      end
+
+      it 'reports that no documents were written' do
+        expect(response.written_count).to eq(0)
+      end
+
+      it 'does not insert the document' do
+        expect(updated).to be_empty
+      end
+    end
+  end
 end
