@@ -199,6 +199,24 @@ module Mongo
       View.new(self, filter || {}).count(options)
     end
 
+    # Get a list of distinct values for a specific field.
+    #
+    # @example Get the distinct values.
+    #   collection.distinct('name')
+    #
+    # @param [ Symbol, String ] field_name The name of the field.
+    # @param [ Hash ] filter The documents from which to retrieve the distinct values.
+    # @param [ Hash ] options The distinct command options.
+    #
+    # @option options [ Integer ] :max_time_ms The maximum amount of time to allow the command to run.
+    #
+    # @return [ Integer ] The document count.
+    #
+    # @since 2.1.0
+    def distinct(field_name, filter = nil, options = {})
+      View.new(self, filter || {}).distinct(field_name, options)
+    end
+
     # Get a view of all indexes for this collection. Can be iterated or has
     # more operations.
     #

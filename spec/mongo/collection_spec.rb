@@ -555,4 +555,37 @@ describe Mongo::Collection do
       end
     end
   end
+
+  describe '#distinct' do
+
+    let(:documents) do
+      (1..3).map{ |i| { field: "test#{i}" }}
+    end
+
+    before do
+      authorized_collection.insert_many(documents)
+    end
+
+    after do
+      authorized_collection.find.delete_many
+    end
+
+    it 'returns the distinct values' do
+      expect(authorized_collection.distinct(:field)).to eq([ 'test1', 'test2', 'test3' ])
+    end
+
+    context 'when a selector is provided' do
+
+      it 'returns the distinct values' do
+        expect(authorized_collection.distinct(:field, field: 'test1')).to eq([ 'test1' ])
+      end
+    end
+
+    context 'when options are provided' do
+
+      it 'passes the options to the distinct command' do
+        expect(authorized_collection.distinct(:field, {}, max_time_ms: 100)).to eq([ 'test1', 'test2', 'test3' ])
+      end
+    end
+  end
 end
