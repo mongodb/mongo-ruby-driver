@@ -121,27 +121,33 @@ describe Mongo::Collection::View do
 
     context 'when sending the initial query' do
 
+      let(:returned) do
+        view.to_a
+      end
+
+      let(:query_spec) do
+        view.send(:query_spec)
+      end
+
       context 'when limit is specified' do
 
         let(:options) do
           { :limit => 5 }
         end
 
-        before do
-          expect(Mongo::Operation::Read::Query).to receive(:new) do |spec|
-            expect(spec[:options][:limit]).to eq(options[:limit])
-          end.and_call_original
-        end
-
         let(:returned) do
           view.to_a
+        end
+
+        it 'sets the limit on the initial query' do
+          expect(query_spec[:options][:limit]).to eq(options[:limit])
         end
 
         it 'returns limited documents' do
           expect(returned.count).to eq(5)
         end
 
-        it 'allows iteration of the documents' do
+        it 'iterates over all of the documents' do
           returned.each do |doc|
             expect(doc).to have_key('field')
           end
@@ -154,21 +160,19 @@ describe Mongo::Collection::View do
           { :batch_size => 5 }
         end
 
-        before do
-          expect(Mongo::Operation::Read::Query).to receive(:new) do |spec|
-            expect(spec[:options][:limit]).to eq(options[:batch_size])
-          end.and_call_original
-        end
-
         let(:returned) do
           view.to_a
+        end
+
+        it 'sets the batch size on the initial query' do
+          expect(query_spec[:options][:limit]).to eq(options[:batch_size])
         end
 
         it 'returns all the documents' do
           expect(returned.count).to eq(10)
         end
 
-        it 'allows iteration of all documents' do
+        it 'iterates over all of the documents' do
           returned.each do |doc|
             expect(doc).to have_key('field')
           end
@@ -177,21 +181,15 @@ describe Mongo::Collection::View do
 
       context 'when no limit is specified' do
 
-        before do
-          expect(Mongo::Operation::Read::Query).to receive(:new) do |spec|
-            expect(spec[:options][:limit]).to eq(nil)
-          end.and_call_original
-        end
-
-        let(:returned) do
-          view.to_a
+        it 'does not set a limit on the initial query' do
+          expect(query_spec[:options][:limit]).to be_nil
         end
 
         it 'returns all the documents' do
           expect(returned.count).to eq(10)
         end
 
-        it 'allows iteration of all documents' do
+        it 'iterates over all of the documents' do
           returned.each do |doc|
             expect(doc).to have_key('field')
           end
@@ -204,21 +202,19 @@ describe Mongo::Collection::View do
           { :batch_size => 5, :limit => 3 }
         end
 
-        before do
-          expect(Mongo::Operation::Read::Query).to receive(:new) do |spec|
-            expect(spec[:options][:limit]).to eq(options[:limit])
-          end.and_call_original
-        end
-
         let(:returned) do
           view.to_a
+        end
+
+        it 'sets the limit on the initial query' do
+          expect(query_spec[:options][:limit]).to eq(options[:limit])
         end
 
         it 'returns the limit of documents' do
           expect(returned.count).to eq(3)
         end
 
-        it 'allows iteration of the documents' do
+        it 'iterates over all of the documents' do
           returned.each do |doc|
             expect(doc).to have_key('field')
           end
@@ -231,21 +227,19 @@ describe Mongo::Collection::View do
           { :limit => 5, :batch_size => 3 }
         end
 
-        before do
-          expect(Mongo::Operation::Read::Query).to receive(:new) do |spec|
-            expect(spec[:options][:limit]).to eq(options[:batch_size])
-          end.and_call_original
-        end
-
         let(:returned) do
           view.to_a
+        end
+
+        it 'sets the batch size on the initial query' do
+          expect(query_spec[:options][:limit]).to eq(options[:batch_size])
         end
 
         it 'returns the limit of documents' do
           expect(returned.count).to eq(5)
         end
 
-        it 'allows iteration of the documents' do
+        it 'iterates over all of the documents' do
           returned.each do |doc|
             expect(doc).to have_key('field')
           end
@@ -254,20 +248,18 @@ describe Mongo::Collection::View do
 
       context 'when the selector has special fields' do
 
-        context 'when a snapshot option is provided' do
+        context 'when a snapshot option is specified' do
 
           let(:options) do
             { :snapshot => true }
           end
 
-          before do
-            expect(Mongo::Operation::Read::Query).to receive(:new) do |spec|
-              expect(spec[:selector][:$query]).to eq(selector)
-            end.and_call_original
+          it 'creates a special query selector' do
+            expect(query_spec[:selector][:$snapshot]).to eq(options[:snapshot])
           end
 
-          it 'creates a special query selector' do
-            view.each do |doc|
+          it 'iterates over all of the documents' do
+            returned.each do |doc|
               expect(doc).to have_key('field')
             end
           end
@@ -279,14 +271,12 @@ describe Mongo::Collection::View do
             { :max_scan => 100 }
           end
 
-          before do
-            expect(Mongo::Operation::Read::Query).to receive(:new) do |spec|
-              expect(spec[:selector][:$query]).to eq(selector)
-            end.and_call_original
+          it 'creates a special query selector' do
+            expect(query_spec[:selector][:$maxScan]).to eq(options[:max_scan])
           end
 
-          it 'creates a special query selector' do
-            view.each do |doc|
+          it 'iterates over all of the documents' do
+            returned.each do |doc|
               expect(doc).to have_key('field')
             end
           end
@@ -298,16 +288,13 @@ describe Mongo::Collection::View do
             { :show_disk_loc => true }
           end
 
-          before do
-            expect(Mongo::Operation::Read::Query).to receive(:new) do |spec|
-              expect(spec[:selector][:$query]).to eq(selector)
-            end.and_call_original
+          it 'creates a special query selector' do
+            expect(query_spec[:selector][:$showDiskLoc]).to eq(options[:show_disk_loc])
           end
 
-          it 'creates a special query selector' do
-            view.each do |doc|
+          it 'iterates over all of the documents' do
+            returned.each do |doc|
               expect(doc).to have_key('field')
-              break
             end
           end
         end
@@ -319,14 +306,12 @@ describe Mongo::Collection::View do
           { :sort => {'x' => Mongo::Index::ASCENDING }}
         end
 
-        before do
-          expect(Mongo::Operation::Read::Query).to receive(:new) do |spec|
-            expect(spec[:selector][:$query]).to eq(selector)
-          end.and_call_original
+        it 'creates a special query selector' do
+          expect(query_spec[:selector][:$orderby]).to eq(options[:sort])
         end
 
-        it 'creates a special query selector' do
-          view.each do |doc|
+        it 'iterates over all of the documents' do
+          returned.each do |doc|
             expect(doc).to have_key('field')
           end
         end
@@ -341,15 +326,11 @@ describe Mongo::Collection::View do
           end
 
           before do
-            expect(Mongo::Operation::Read::Query).to receive(:new) do |spec|
-              expect(spec[:selector][:$query]).to eq(selector)
-            end.and_call_original
+            expect(view).to receive(:special_selector).and_call_original
           end
 
-          it'creates a special query selector' do
-            expect {
-              view.to_a
-            }.to raise_error(Mongo::Error::OperationFailure)
+          it 'creates a special query selector' do
+            expect(query_spec[:selector][:$hint]).to eq(options[:hint])
           end
         end
       end
@@ -360,14 +341,12 @@ describe Mongo::Collection::View do
           { :comment => 'query1' }
         end
 
-        before do
-          expect(Mongo::Operation::Read::Query).to receive(:new) do |spec|
-            expect(spec[:selector][:$query]).to eq(selector)
-          end.and_call_original
+        it 'creates a special query selector' do
+          expect(query_spec[:selector][:$comment]).to eq(options[:comment])
         end
 
-        it 'creates a special query selector' do
-          view.each do |doc|
+        it 'iterates over all of the documents' do
+          returned.each do |doc|
             expect(doc).to have_key('field')
           end
         end
@@ -376,17 +355,155 @@ describe Mongo::Collection::View do
       context 'when the cluster is sharded' do
 
         before do
-          expect(Mongo::Operation::Read::Query).to receive(:new) do |spec|
-            expect(spec[:selector][:$query]).to eq(selector)
-          end.and_call_original
+          allow(authorized_collection.cluster).to receive(:sharded?).and_return(true)
+          expect(view).to receive(:special_selector).and_call_original
         end
 
-        it 'creates a special query selector' do
+        it 'iterates over all of the documents' do
           view.each do |doc|
             expect(doc).to have_key('field')
           end
         end
       end
+
+      context 'when a modifier document is provided' do
+
+        let(:options) do
+          { :modifiers => {
+                            :$orderby => {'x' => Mongo::Index::ASCENDING }
+                          }
+          }
+        end
+
+        it 'creates a special query selector' do
+          expect(query_spec[:selector][:$orderby]).to eq(options[:modifiers][:$orderby])
+        end
+
+        it 'iterates over all of the documents' do
+          view.each do |doc|
+            expect(doc).to have_key('field')
+          end
+        end
+
+        context 'when $explain is specified' do
+          let(:options) do
+            { :modifiers => {
+                :$explain => 1
+            }
+            }
+          end
+
+          let(:explain) do
+            view.to_a.first
+          end
+
+          it 'executes an explain' do
+            expect(explain['cursor'] == 'BasicCursor' ||
+                       explain['queryPlanner']).to be_truthy
+          end
+
+        end
+
+        context 'when an option is also provided' do
+
+          context 'when $orderby and sort are specified' do
+
+            let(:options) do
+              { :modifiers => {
+                  :$orderby => { 'x' => Mongo::Index::ASCENDING }
+              },
+                :sort => { 'x' => Mongo::Index::DESCENDING }
+              }
+            end
+
+            it 'overrides the modifier value with the option value' do
+              expect(query_spec[:selector][:$orderby]).to eq(options[:sort])
+            end
+          end
+
+          context 'when $comment and comment are specified' do
+
+            let(:options) do
+              { :modifiers => {
+                  :$comment => 'query1'
+              },
+                :comment => 'query2'
+              }
+            end
+
+            it 'overrides the modifier value with the option value' do
+              expect(query_spec[:selector][:$comment]).to eq(options[:comment])
+            end
+          end
+
+          context 'when $hint and hint are specified' do
+
+            let(:options) do
+              { :modifiers => {
+                  :$hint => 'x'
+              },
+                :hint => 'y'
+              }
+            end
+
+            it 'overrides the modifier value with the option value' do
+              expect(query_spec[:selector][:$hint]).to eq(options[:hint])
+            end
+
+          end
+
+          context 'when $maxScan and max_scan are specified' do
+
+            let(:options) do
+              { :modifiers => {
+                  :$maxScan => 4
+              },
+                :max_scan => 5
+              }
+            end
+
+            it 'overrides the modifier value with the option value' do
+              expect(query_spec[:selector][:$maxScan]).to eq(options[:max_scan])
+            end
+          end
+
+          context 'when $maxTimeMS and max_time_ms are specified' do
+
+            let(:options) do
+              { :modifiers => {
+                  :$maxTimeMS => 100
+              },
+                :max_time_ms => 200
+              }
+            end
+
+            it 'overrides the modifier value with the option value' do
+              expect(query_spec[:selector][:$maxTimeMS]).to eq(options[:max_time_ms])
+            end
+          end
+
+          context 'when $query and a selector are specified' do
+
+            let(:selector) do
+              { 'y' => 1 }
+            end
+
+            let(:options) do
+              { :modifiers => {
+                                :$query => { 'field' => 1 }
+                              }
+              }
+            end
+
+            it 'overrides the modifier value with the option value' do
+              expect(query_spec[:selector][:$query]).to eq(selector)
+            end
+          end
+
+
+        end
+      end
+
     end
 
     context 'when there are no special fields' do

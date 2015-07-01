@@ -32,8 +32,20 @@ module Mongo
           :$comment => :comment,
           :$snapshot => :snapshot,
           :$maxScan => :max_scan,
+          :$maxTimeMS => :max_time_ms,
           :$showDiskLoc => :show_disk_loc,
           :$explain => :explained?
+        }.freeze
+
+        # Options to cursor flags mapping.
+        #
+        # @since 2.1.0
+        CURSOR_FLAGS = {
+          :allow_partial_results => [ :partial ],
+          :oplog_replay => [ :oplog_replay ],
+          :no_cursor_timeout => [ :no_cursor_timeout ],
+          :tailable => [ :tailable_cursor ],
+          :tailable_await => [ :await_data, :tailable_cursor]
         }.freeze
 
         # Execute an aggregation on the collection view.
@@ -341,6 +353,34 @@ module Mongo
           configure(:sort, spec)
         end
 
+        # “meta” operators that let you modify the output or behavior of a query.
+        #
+        # @example Set the modifiers document.
+        #   view.modifiers(:$orderby => Mongo::Index::ASCENDING)
+        #
+        # @param [ Hash ] doc The modifiers document.
+        #
+        # @return [ Hash, View ] Either the modifiers document or a new +View+.
+        #
+        # @since 2.1.0
+        def modifiers(doc = nil)
+          configure(:modifiers, doc)
+        end
+
+        # A cumulative time limit in milliseconds for processing operations on a cursor.
+        #
+        # @example Set the max time ms value.
+        #   view.max_time_ms(500)
+        #
+        # @param [ Integer ] max The max time in milliseconds.
+        #
+        # @return [ Integer, View ] Either the max time ms value or a new +View+.
+        #
+        # @since 2.1.0
+        def max_time_ms(max = nil)
+          configure(:max_time_ms, max)
+        end
+
         private
 
         def default_read(read = nil)
@@ -348,11 +388,18 @@ module Mongo
         end
 
         def flags
-          @flags ||= (!primary? ? [ :slave_ok ] : [])
+          @flags ||= (!primary? ? [ :slave_ok ] : []).tap do |flags|
+            CURSOR_FLAGS.each do |key, value|
+              if options[key] || (options[:cursor_type] && options[:cursor_type] == key)
+                flags.push(*value)
+              end
+            end
+          end
         end
 
         def has_special_fields?
-          sort || hint || comment || max_scan || show_disk_loc || snapshot || explained? || cluster.sharded?
+          modifiers || sort || hint || comment || max_scan ||
+              show_disk_loc || snapshot || explained? || cluster.sharded?
         end
 
         def primary?
@@ -378,7 +425,7 @@ module Mongo
 
         def special_selector
           SPECIAL_FIELDS.reduce({}) do |hash, (key, method)|
-            value = send(method)
+            value = send(method) || (options[:modifiers] && options[:modifiers][key])
             hash[key] = value if value
             hash
           end

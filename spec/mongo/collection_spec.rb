@@ -295,6 +295,134 @@ describe Mongo::Collection do
         end
       end
     end
+
+    context 'when provided options' do
+
+      let(:view) do
+        authorized_collection.find({}, options)
+      end
+
+      context 'when provided :allow_partial_results' do
+
+        let(:options) do
+          { allow_partial_results: true }
+        end
+
+        it 'returns a view with :allow_partial_results set' do
+          expect(view.options[:allow_partial_results]).to be(options[:allow_partial_results])
+        end
+      end
+
+      context 'when provided :batch_size' do
+
+        let(:options) do
+          { batch_size: 100 }
+        end
+
+        it 'returns a view with :batch_size set' do
+          expect(view.options[:batch_size]).to be(options[:batch_size])
+        end
+      end
+
+      context 'when provided :comment' do
+
+        let(:options) do
+          { comment: 'slow query' }
+        end
+
+        it 'returns a view with :comment set' do
+          expect(view.options[:comment]).to be(options[:comment])
+        end
+      end
+
+      context 'when provided :cursor_type' do
+
+        let(:options) do
+          { cursor_type: :tailable }
+        end
+
+        it 'returns a view with :cursor_type set' do
+          expect(view.options[:cursor_type]).to be(options[:cursor_type])
+        end
+      end
+
+      context 'when provided :max_time_ms' do
+
+        let(:options) do
+          { max_time_ms: 500 }
+        end
+
+        it 'returns a view with :max_time_ms set' do
+          expect(view.options[:max_time_ms]).to be(options[:max_time_ms])
+        end
+      end
+
+      context 'when provided :modifiers' do
+
+        let(:options) do
+          { modifiers: { :$orderby => Mongo::Index::ASCENDING } }
+        end
+
+        it 'returns a view with modifiers set' do
+          expect(view.options[:modifiers]).to be(options[:modifiers])
+        end
+      end
+
+      context 'when provided :no_cursor_timeout' do
+
+        let(:options) do
+          { no_cursor_timeout: true }
+        end
+
+        it 'returns a view with :no_cursor_timeout set' do
+          expect(view.options[:no_cursor_timeout]).to be(options[:no_cursor_timeout])
+        end
+      end
+
+      context 'when provided :oplog_replay' do
+
+        let(:options) do
+          { oplog_replay: false }
+        end
+
+        it 'returns a view with :oplog_replay set' do
+          expect(view.options[:oplog_replay]).to be(options[:oplog_replay])
+        end
+      end
+
+      context 'when provided :projection' do
+
+        let(:options) do
+          { projection:  { 'x' => 1 } }
+        end
+
+        it 'returns a view with :projection set' do
+          expect(view.options[:projection]).to be(options[:projection])
+        end
+      end
+
+      context 'when provided :skip' do
+
+        let(:options) do
+          { skip:  5 }
+        end
+
+        it 'returns a view with :skip set' do
+          expect(view.options[:skip]).to be(options[:skip])
+        end
+      end
+
+      context 'when provided :sort' do
+
+        let(:options) do
+          { sort:  { 'x' => Mongo::Index::ASCENDING } }
+        end
+
+        it 'returns a view with :sort set' do
+          expect(view.options[:sort]).to be(options[:sort])
+        end
+      end
+    end
   end
 
   describe '#insert_many' do
