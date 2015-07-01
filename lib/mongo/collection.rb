@@ -381,6 +381,29 @@ module Mongo
       find(filter).update_one(update, opts)
     end
 
+    # Finds a single document in the database via findAndModify and deletes
+    # it, returning the original document.
+    #
+    # @example Find one document and delete it.
+    #   collection.find_one_and_delete(name: 'test')
+    #
+    # @param [ Hash ] filter The filter to use.
+    # @param [ Hash ] opts The options.
+    #
+    # @option opts [ Integer ] :max_time_ms The maximum amount of time to allow the command
+    #   to run in milliseconds.
+    # @option options [ Hash ] :projection The fields to include or exclude from each doc
+    #   in the result set.
+    # @option options [ Hash ] :sort The key and direction pairs by which the result set
+    #   will be sorted.
+    #
+    # @return [ BSON::Document, nil ] The document, if found.
+    #
+    # @since 2.1.0
+    def find_one_and_delete(filter, opts = {})
+      find(filter, opts).find_one_and_delete
+    end
+
     # Get the fully qualified namespace of the collection.
     #
     # @example Get the fully qualified namespace.

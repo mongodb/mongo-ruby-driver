@@ -34,6 +34,7 @@ module Mongo
           cmd = { :findandmodify => collection.name, :query => selector, :remove => true }
           cmd[:fields] = projection if projection
           cmd[:sort] = sort if sort
+          cmd[:maxTimeMS] = max_time_ms if max_time_ms
           database.command(cmd).first['value']
         end
 
