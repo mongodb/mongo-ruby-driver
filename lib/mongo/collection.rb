@@ -139,6 +139,29 @@ module Mongo
       View.new(self, filter || {}, options)
     end
 
+    # Perform an aggregation on the collection.
+    #
+    # @example Perform an aggregation.
+    #   collection.aggregate([ { "$group" => { "_id" => "$city", "tpop" => { "$sum" => "$pop" }}} ])
+    #
+    # @param [ Array<Hash> ] pipeline The aggregation pipeline.
+    # @param [ Hash ] options The aggregation options.
+    #
+    # @option options [ true, false ] :allow_disk_use Set to true if disk usage is allowed during
+    #   the aggregation..
+    # @option options [ Integer ] :batch_size The number of documents to return per batch.
+    # @option options [ Integer ] :max_time_ms The maximum amount of time in milliseconds to allow the
+    #   aggregation to run..
+    # @option options [ true, false ] :use_cursor Indicates whether the command will request that the server
+    #   provide results using a cursor..
+    #
+    # @return [ Aggregation ] The aggregation object.
+    #
+    # @since 2.1.0
+    def aggregate(pipeline, options = {})
+      View.new(self, {}).aggregate(pipeline, options)
+    end
+
     # Get a view of all indexes for this collection. Can be iterated or has
     # more operations.
     #
