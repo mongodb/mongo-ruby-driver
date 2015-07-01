@@ -618,7 +618,7 @@ describe Mongo::Collection do
       end
 
       it 'deletes the first matching document in the collection' do
-        expect(response.written_count).to eq(1)
+        expect(response.deleted_count).to eq(1)
       end
     end
 
@@ -633,7 +633,7 @@ describe Mongo::Collection do
       end
 
       it 'deletes the first document in the collection' do
-        expect(response.written_count).to eq(1)
+        expect(response.deleted_count).to eq(1)
       end
     end
   end
@@ -655,14 +655,14 @@ describe Mongo::Collection do
       end
 
       it 'deletes the matching documents in the collection' do
-        expect(authorized_collection.delete_many(selector).written_count).to eq(1)
+        expect(authorized_collection.delete_many(selector).deleted_count).to eq(1)
       end
     end
 
     context 'when no selector was provided' do
 
       it 'deletes all the documents in the collection' do
-        expect(authorized_collection.delete_many.written_count).to eq(2)
+        expect(authorized_collection.delete_many.deleted_count).to eq(2)
       end
     end
   end
@@ -692,7 +692,7 @@ describe Mongo::Collection do
       end
 
       it 'updates the first matching document in the collection' do
-        expect(response.written_count).to eq(1)
+        expect(response.modified_count).to eq(1)
       end
 
       it 'updates the documents in the collection' do
@@ -711,7 +711,7 @@ describe Mongo::Collection do
       end
 
       it 'reports that no documents were written' do
-        expect(response.written_count).to eq(0)
+        expect(response.modified_count).to eq(0)
       end
 
       it 'does not insert the document' do
@@ -753,7 +753,7 @@ describe Mongo::Collection do
       end
 
       it 'reports that no documents were written' do
-        expect(response.written_count).to eq(0)
+        expect(response.modified_count).to eq(0)
       end
 
       it 'does not insert the document' do
@@ -787,7 +787,7 @@ describe Mongo::Collection do
       end
 
       it 'returns the number updated' do
-        expect(response.written_count).to eq(2)
+        expect(response.modified_count).to eq(2)
       end
 
       it 'updates the documents in the collection' do
@@ -807,7 +807,7 @@ describe Mongo::Collection do
       end
 
       it 'reports that no documents were updated' do
-        expect(response.written_count).to eq(0)
+        expect(response.modified_count).to eq(0)
       end
 
       it 'updates no documents in the collection' do
@@ -846,7 +846,7 @@ describe Mongo::Collection do
       end
 
       it 'reports that no documents were updated' do
-        expect(response.written_count).to eq(0)
+        expect(response.modified_count).to eq(0)
       end
 
       it 'updates no documents in the collection' do
@@ -876,7 +876,7 @@ describe Mongo::Collection do
       end
 
       it 'updates the first matching document in the collection' do
-        expect(response.written_count).to eq(1)
+        expect(response.modified_count).to eq(1)
       end
 
       it 'updates the documents in the collection' do
@@ -896,7 +896,7 @@ describe Mongo::Collection do
       end
 
       it 'reports that no documents were updated' do
-        expect(response.written_count).to eq(0)
+        expect(response.modified_count).to eq(0)
       end
 
       it 'updates no documents in the collection' do
@@ -935,7 +935,7 @@ describe Mongo::Collection do
       end
 
       it 'reports that no documents were updated' do
-        expect(response.written_count).to eq(0)
+        expect(response.modified_count).to eq(0)
       end
 
       it 'updates no documents in the collection' do
