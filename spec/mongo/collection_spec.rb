@@ -2,6 +2,10 @@ require 'spec_helper'
 
 describe Mongo::Collection do
 
+  after do
+    authorized_collection.delete_many
+  end
+
   describe '#==' do
 
     let(:database) do
@@ -779,7 +783,7 @@ describe Mongo::Collection do
       end
 
       let(:updated) do
-        authorized_collection.find(field: 'testing').first
+        authorized_collection.find(field: 'testing').to_a.last
       end
 
       it 'returns the number updated' do
@@ -819,7 +823,7 @@ describe Mongo::Collection do
       end
 
       let(:updated) do
-        authorized_collection.find.first
+        authorized_collection.find.to_a.last
       end
 
       it 'reports that a document was written' do
@@ -835,6 +839,95 @@ describe Mongo::Collection do
 
       let(:response) do
         authorized_collection.update_many(selector, { '$set'=> { field: 'testing' } })
+      end
+
+      let(:updated) do
+        authorized_collection.find.to_a
+      end
+
+      it 'reports that no documents were updated' do
+        expect(response.written_count).to eq(0)
+      end
+
+      it 'updates no documents in the collection' do
+        expect(updated).to be_empty
+      end
+    end
+  end
+
+  describe '#update_one' do
+
+    let(:selector) do
+      { field: 'test1' }
+    end
+
+    context 'when a selector was provided' do
+
+      before do
+        authorized_collection.insert_many([{ field: 'test1' }, { field: 'test1' }])
+      end
+
+      let!(:response) do
+        authorized_collection.update_one(selector, '$set'=> { field: 'testing' })
+      end
+
+      let(:updated) do
+        authorized_collection.find(field: 'testing').first
+      end
+
+      it 'updates the first matching document in the collection' do
+        expect(response.written_count).to eq(1)
+      end
+
+      it 'updates the documents in the collection' do
+        expect(updated[:field]).to eq('testing')
+      end
+    end
+
+    context 'when upsert is false' do
+
+      let(:response) do
+        authorized_collection.update_one(selector, { '$set'=> { field: 'testing' } },
+                        upsert: false)
+      end
+
+      let(:updated) do
+        authorized_collection.find.to_a
+      end
+
+      it 'reports that no documents were updated' do
+        expect(response.written_count).to eq(0)
+      end
+
+      it 'updates no documents in the collection' do
+        expect(updated).to be_empty
+      end
+    end
+
+    context 'when upsert is true' do
+
+      let!(:response) do
+        authorized_collection.update_one(selector, { '$set'=> { field: 'testing' } },
+                        upsert: true)
+      end
+
+      let(:updated) do
+        authorized_collection.find.first
+      end
+
+      it 'reports that a document was written' do
+        expect(response.written_count).to eq(1)
+      end
+
+      it 'inserts a document into the collection' do
+        expect(updated[:field]).to eq('testing')
+      end
+    end
+
+    context 'when upsert is not specified' do
+
+      let(:response) do
+        authorized_collection.update_one(selector, { '$set'=> { field: 'testing' } })
       end
 
       let(:updated) do
