@@ -13,11 +13,11 @@ describe 'CRUD' do
         context(test.description) do
 
           before(:each) do
-            authorized_collection.find.delete_many
+            authorized_collection.delete_many
           end
 
           after(:each) do
-            authorized_collection.find.delete_many
+            authorized_collection.delete_many
           end
 
           let(:results) do

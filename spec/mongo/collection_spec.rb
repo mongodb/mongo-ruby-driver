@@ -286,7 +286,7 @@ describe Mongo::Collection do
       end
 
       after do
-        authorized_collection.find.delete_many
+        authorized_collection.delete_many
       end
 
       let(:view) do
@@ -432,7 +432,7 @@ describe Mongo::Collection do
   describe '#insert_many' do
 
     after do
-      authorized_collection.find.delete_many
+      authorized_collection.delete_many
     end
 
     let(:result) do
@@ -451,7 +451,7 @@ describe Mongo::Collection do
   describe '#insert_one' do
 
     after do
-      authorized_collection.find.delete_many
+      authorized_collection.delete_many
     end
 
     let(:result) do
@@ -545,7 +545,7 @@ describe Mongo::Collection do
     end
 
     after do
-      authorized_collection.find.delete_many
+      authorized_collection.delete_many
     end
 
     it 'returns an integer count' do
@@ -571,7 +571,7 @@ describe Mongo::Collection do
     end
 
     after do
-      authorized_collection.find.delete_many
+      authorized_collection.delete_many
     end
 
     it 'returns the distinct values' do

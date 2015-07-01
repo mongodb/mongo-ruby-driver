@@ -109,7 +109,7 @@ describe Mongo::Operation::MapReduce do
     end
 
     after do
-      authorized_collection.find.delete_many
+      authorized_collection.delete_many
     end
 
     context 'when the map/reduce succeeds' do

@@ -15,7 +15,7 @@ describe Mongo::Collection::View::Readable do
   end
 
   after do
-    authorized_collection.find.delete_many
+    authorized_collection.delete_many
   end
 
   describe '#allow_partial_results' do
@@ -215,7 +215,7 @@ describe Mongo::Collection::View::Readable do
     end
 
     after do
-      authorized_collection.find.delete_many
+      authorized_collection.delete_many
     end
 
     context 'when a selector is provided' do

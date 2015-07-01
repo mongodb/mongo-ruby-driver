@@ -15,7 +15,7 @@ describe Mongo::Collection::View::Explainable do
   end
 
   after do
-    authorized_collection.find.delete_many
+    authorized_collection.delete_many
   end
 
   describe '#explain' do

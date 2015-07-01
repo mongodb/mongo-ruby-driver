@@ -48,7 +48,7 @@ describe Mongo::Collection::View::MapReduce do
   end
 
   after do
-    authorized_collection.find.delete_many
+    authorized_collection.delete_many
   end
 
   let(:map_reduce) do

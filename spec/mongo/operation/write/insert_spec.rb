@@ -16,7 +16,7 @@ describe Mongo::Operation::Write::Insert do
   end
 
   after do
-    authorized_collection.find.delete_many
+    authorized_collection.delete_many
   end
 
   let(:insert) do
@@ -114,7 +114,7 @@ describe Mongo::Operation::Write::Insert do
     end
 
     after do
-      authorized_collection.find.delete_many
+      authorized_collection.delete_many
       authorized_collection.indexes.drop_one('name_1')
     end
 

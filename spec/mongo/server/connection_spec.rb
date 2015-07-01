@@ -172,7 +172,7 @@ describe Mongo::Server::Connection do
       end
 
       after do
-        authorized_collection.find.delete_many
+        authorized_collection.delete_many
       end
 
       it 'it dispatchs the message to the socket' do
@@ -195,7 +195,7 @@ describe Mongo::Server::Connection do
       end
 
       after do
-        authorized_collection.find.delete_many
+        authorized_collection.delete_many
       end
 
       it 'it dispatchs the message to the socket' do
@@ -233,7 +233,7 @@ describe Mongo::Server::Connection do
       end
 
       after do
-        authorized_collection.find.delete_many
+        authorized_collection.delete_many
       end
 
       it 'disconnects the connection' do
