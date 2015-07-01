@@ -152,6 +152,8 @@ module Mongo
         # @option options :hint [ Hash ] Override default index selection and force
         #   MongoDB to use a specific index for the query.
         # @option options :limit [ Integer ] Max number of docs to return.
+        # @option options :max_time_ms [ Integer ] The maximum amount of time to allow the
+        #   command to run.
         # @option options :read [ Hash ] The read preference for this command.
         #
         # @return [ Integer ] The document count.
@@ -162,6 +164,7 @@ module Mongo
           cmd[:skip] = options[:skip] if options[:skip]
           cmd[:hint] = options[:hint] if options[:hint]
           cmd[:limit] = options[:limit] if options[:limit]
+          cmd[:maxTimeMS] = options[:max_time_ms] if options[:max_time_ms]
           database.command(cmd, options).n
         end
 

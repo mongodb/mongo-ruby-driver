@@ -239,6 +239,12 @@ describe Mongo::Collection::View::Readable do
     it 'takes a read preference option' do
       expect(view.count(read: { mode: :secondary })).to eq(10)
     end
+
+    it 'takes a max_time_ms option' do
+      expect {
+        view.count(max_time_ms: 0.1)
+      }.to raise_error(Mongo::Error::OperationFailure)
+    end
   end
 
   describe '#distinct' do
