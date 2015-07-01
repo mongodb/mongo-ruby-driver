@@ -773,7 +773,7 @@ describe Mongo::Collection::View::Readable do
         end
       end
 
-      context 'when oplog_replay is set as an option' do
+      context 'when no_cursor_timeout is set as an option' do
 
         let(:options) do
           { :no_cursor_timeout => true }
@@ -803,7 +803,7 @@ describe Mongo::Collection::View::Readable do
             { :cursor_type => :tailable_await }
           end
 
-          it 'sets the cursor flag' do
+          it 'sets the cursor flags' do
             expect(query_spec_options[:flags]).to eq([:await_data, :tailable_cursor])
           end
         end
