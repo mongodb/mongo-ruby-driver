@@ -588,4 +588,46 @@ describe Mongo::Collection do
       end
     end
   end
+
+  describe '#delete_one' do
+
+    context 'when a selector was provided' do
+
+      let(:selector) do
+        { field: 'test1' }
+      end
+
+      before do
+        authorized_collection.insert_many([
+                                              { field: 'test1' },
+                                              { field: 'test1' },
+                                              { field: 'test1' }
+                                          ])
+      end
+
+      let(:response) do
+        authorized_collection.delete_one(selector)
+      end
+
+      it 'deletes the first matching document in the collection' do
+        expect(response.written_count).to eq(1)
+      end
+    end
+
+    context 'when no selector was provided' do
+
+      before do
+        authorized_collection.insert_many([{ field: 'test1' }, { field: 'test2' }])
+      end
+
+      let(:response) do
+        authorized_collection.delete_one
+      end
+
+      it 'deletes the first document in the collection' do
+        expect(response.written_count).to eq(1)
+      end
+    end
+  end
+
 end

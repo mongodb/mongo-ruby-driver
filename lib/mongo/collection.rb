@@ -296,6 +296,20 @@ module Mongo
       BulkWrite.get(self, operations, options).execute
     end
 
+    # Remove a document from the collection.
+    #
+    # @example Remove a single document from the collection.
+    #   collection.delete_one
+    #
+    # @param [ Hash ] filter The filter to use.
+    #
+    # @return [ Result ] The response from the database.
+    #
+    # @since 2.1.0
+    def delete_one(filter = nil)
+      find(filter).delete_one
+    end
+
     # Get the fully qualified namespace of the collection.
     #
     # @example Get the fully qualified namespace.
