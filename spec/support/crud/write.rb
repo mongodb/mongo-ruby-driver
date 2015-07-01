@@ -42,7 +42,9 @@ module Mongo
         # @since 2.0.0
         ARGUMENT_MAP = {
                         :sort => 'sort',
-                        :projection => 'projection'
+                        :projection => 'projection',
+                        :return_document => 'returnDocument',
+                        :upsert => 'upsert'
                        }
 
         # Operations that need a check if results on < 2.6 will match.
@@ -111,12 +113,12 @@ module Mongo
         private
   
         def delete_many(collection)
-          result = collection.find(filter).delete_many
+          result = collection.delete_many(filter)
           { 'deletedCount' => result.deleted_count }
         end
 
         def delete_one(collection)
-          result = collection.find(filter).delete_one
+          result = collection.delete_one(filter)
           { 'deletedCount' => result.deleted_count }
         end
 
@@ -137,46 +139,48 @@ module Mongo
         end
 
         def replace_one(collection)
-          result = collection.find(filter).replace_one(replacement, upsert: upsert)
+          result = collection.replace_one(filter, replacement, options)
           update_return_doc(result)
         end
 
         def update_many(collection)
-          result = collection.find(filter).update_many(update, upsert: upsert)
+          result = collection.update_many(filter, update, options)
           update_return_doc(result)
         end
 
         def update_one(collection)
-          result = collection.find(filter).update_one(update, upsert: upsert)
+          result = collection.update_one(filter, update, options)
           update_return_doc(result)
         end
 
         def find_one_and_delete(collection)
-          view = collection.find(filter)
-          ARGUMENT_MAP.each do |key, value|
-            view = view.send(key, arguments[value]) if arguments[value]
-          end
-          view.find_one_and_delete
+          collection.find_one_and_delete(filter, options)
         end
 
         def find_one_and_replace(collection)
-          view = collection.find(filter)
-          ARGUMENT_MAP.each do |key, value|
-            view = view.send(key, arguments[value]) if arguments[value]
-          end
-          view.find_one_and_replace(replacement, upsert: upsert, return_document: return_document)
+          collection.find_one_and_replace(filter, replacement,options)
         end
 
         def find_one_and_update(collection)
-          view = collection.find(filter)
-          ARGUMENT_MAP.each do |key, value|
-            view = view.send(key, arguments[value]) if arguments[value]
+          collection.find_one_and_update(filter, update, options)
+        end
+
+        def options
+          ARGUMENT_MAP.reduce({}) do |opts, (key, value)|
+            arguments[value] ? opts.merge!(key => send(key)) : opts
           end
-          view.find_one_and_update(update, upsert: upsert, return_document: return_document)
         end
 
         def replacement
           arguments['replacement']
+        end
+
+        def sort
+          arguments['sort']
+        end
+
+        def projection
+          arguments['projection']
         end
 
         def documents

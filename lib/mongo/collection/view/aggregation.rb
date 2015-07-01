@@ -42,8 +42,7 @@ module Mongo
         # @since 2.1.0
         OPTIONS_MAP = {
                        :allow_disk_use => :allowDiskUse,
-                       :max_time_ms => :maxTimeMS,
-                       :batch_size => :batchSize
+                       :max_time_ms => :maxTimeMS
                       }
 
         # Set to true if disk usage is allowed during the aggregation.
@@ -105,11 +104,7 @@ module Mongo
 
         def process_options
           @agg_options ||= @options.each.reduce({}) do |opts, (key, value)|
-            if OPTIONS_MAP[key]
-              opts.merge(OPTIONS_MAP[key] => value)
-            else
-              opts.merge(key => value)
-            end
+            OPTIONS_MAP[key] ? opts.merge(OPTIONS_MAP[key] => value) : opts
           end
         end
 
@@ -121,7 +116,7 @@ module Mongo
 
         def batch_size_doc
           (value = options[:batch_size] || view.batch_size) ?
-              { OPTIONS_MAP[:batch_size] => value } : {}
+              { :batchSize => value } : {}
         end
 
         def explain_options
