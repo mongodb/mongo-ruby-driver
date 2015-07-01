@@ -75,6 +75,21 @@ describe Mongo::Collection::View::Readable do
         end
       end
     end
+
+    context 'when options are specified' do
+
+      let(:agg_options) do
+        { :max_time_ms => 500 }
+      end
+
+      let(:aggregation) do
+        view.aggregate(pipeline, agg_options)
+      end
+
+      it 'passes the option to the Aggregation object' do
+        expect(aggregation.options[:max_time_ms]).to eq(agg_options[:max_time_ms])
+      end
+    end
   end
 
   describe '#map_reduce' do

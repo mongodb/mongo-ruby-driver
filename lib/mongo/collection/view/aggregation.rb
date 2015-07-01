@@ -37,6 +37,15 @@ module Mongo
         # Delegate necessary operations to the collection.
         def_delegators :collection, :database
 
+        # Options mapping for an aggregation.
+        #
+        # @since 2.1.0
+        OPTIONS_MAP = {
+                       :allow_disk_use => :allowDiskUse,
+                       :max_time_ms => :maxTimeMS,
+                       :batch_size => :batchSize
+                      }
+
         # Set to true if disk usage is allowed during the aggregation.
         #
         # @example Set disk usage flag.
@@ -49,7 +58,7 @@ module Mongo
         #
         # @since 2.0.0
         def allow_disk_use(value = nil)
-          configure(:allowDiskUse, value)
+          configure(OPTIONS_MAP[__method__], value)
         end
 
         # Initialize the aggregation for the provided collection view, pipeline
@@ -89,9 +98,30 @@ module Mongo
             :selector => {
               :aggregate => collection.name,
               :pipeline => pipeline,
-              :cursor => view.batch_size ? { :batchSize => view.batch_size } : {}
-            }.merge!(options)
+              :cursor => cursor,
+            }.merge!(process_options)
           }
+        end
+
+        def process_options
+          @agg_options ||= @options.each.reduce({}) do |opts, (key, value)|
+            if OPTIONS_MAP[key]
+              opts.merge(OPTIONS_MAP[key] => value)
+            else
+              opts.merge(key => value)
+            end
+          end
+        end
+
+        def cursor
+          if options[:use_cursor] == true || options[:use_cursor].nil?
+            batch_size_doc
+          end
+        end
+
+        def batch_size_doc
+          (value = options[:batch_size] || view.batch_size) ?
+              { OPTIONS_MAP[:batch_size] => value } : {}
         end
 
         def explain_options
