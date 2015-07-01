@@ -282,6 +282,23 @@ describe Mongo::Collection::View do
           end
         end
 
+        context 'when a max_time_ms option is provided' do
+
+          let(:options) do
+            { :max_time_ms => 100 }
+          end
+
+          it 'creates a special query selector' do
+            expect(query_spec[:selector][:$maxTimeMS]).to eq(options[:max_time_ms])
+          end
+
+          it 'iterates over all of the documents' do
+            returned.each do |doc|
+              expect(doc).to have_key('field')
+            end
+          end
+        end
+
         context 'when a show_disk_loc option is provided' do
 
           let(:options) do

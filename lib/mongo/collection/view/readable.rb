@@ -398,7 +398,7 @@ module Mongo
         end
 
         def has_special_fields?
-          modifiers || sort || hint || comment || max_scan ||
+          modifiers || sort || hint || comment || max_time_ms || max_scan ||
               show_disk_loc || snapshot || explained? || cluster.sharded?
         end
 
