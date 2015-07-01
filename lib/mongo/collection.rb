@@ -343,6 +343,25 @@ module Mongo
       find(filter).replace_one(document, opts)
     end
 
+    # Update documents in the collection.
+    #
+    # @example Update multiple documents in the collection.
+    #   collection.update_many({ name: 'test'}, '$set' => { name: 'test1' })
+    #
+    # @param [ Hash ] filter The filter to use.
+    # @param [ Hash ] update The update statement.
+    # @param [ Hash ] opts The options.
+    #
+    # @option opts [ true, false ] :upsert Whether to upsert if the
+    #   document doesn't exist.
+    #
+    # @return [ Result ] The response from the database.
+    #
+    # @since 2.1.0
+    def update_many(filter, update, opts = {})
+      find(filter).update_many(update, opts)
+    end
+
     # Get the fully qualified namespace of the collection.
     #
     # @example Get the fully qualified namespace.
