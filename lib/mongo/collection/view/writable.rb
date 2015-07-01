@@ -80,6 +80,7 @@ module Mongo
           cmd[:sort] = sort if sort
           cmd[:new] = !!(opts[:return_document] && opts[:return_document] == :after)
           cmd[:upsert] = opts[:upsert] if opts[:upsert]
+          cmd[:maxTimeMS] = max_time_ms if max_time_ms
           value = database.command(cmd).first['value']
           value unless value.nil? || value.empty?
         end
