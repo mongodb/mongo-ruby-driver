@@ -57,6 +57,23 @@ module Mongo
       name == other.name && database == other.database && options == other.options
     end
 
+    # Instantiate a new collection.
+    #
+    # @example Instantiate a new collection.
+    #   Mongo::Collection.new(database, 'test')
+    #
+    # @param [ Mongo::Database ] database The collection's database.
+    # @param [ String, Symbol ] name The collection name.
+    # @param [ Hash ] options The collection options.
+    #
+    # @since 2.0.0
+    def initialize(database, name, options = {})
+      raise Error::InvalidCollectionName.new unless name
+      @database = database
+      @name = name.to_s.freeze
+      @options = options.freeze
+    end
+
     # Is the collection capped?
     #
     # @example Is the collection capped?
@@ -195,23 +212,6 @@ module Mongo
     # @since 2.0.0
     def indexes(options = {})
       Index::View.new(self, options)
-    end
-
-    # Instantiate a new collection.
-    #
-    # @example Instantiate a new collection.
-    #   Mongo::Collection.new(database, 'test')
-    #
-    # @param [ Mongo::Database ] database The collection's database.
-    # @param [ String, Symbol ] name The collection name.
-    # @param [ Hash ] options The collection options.
-    #
-    # @since 2.0.0
-    def initialize(database, name, options = {})
-      raise Error::InvalidCollectionName.new unless name
-      @database = database
-      @name = name.to_s.freeze
-      @options = options.freeze
     end
 
     # Get a pretty printed string inspection for the collection.
