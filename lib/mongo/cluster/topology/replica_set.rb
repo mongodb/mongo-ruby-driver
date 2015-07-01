@@ -60,11 +60,14 @@ module Mongo
         # @return [ ReplicaSet ] The topology.
         def elect_primary(description, servers)
           if description.replica_set_name == replica_set_name
-            log_debug([ "Server #{description.address.to_s} elected as primary in #{replica_set_name}." ])
-            servers.each do |server|
-              if server.primary? && server.address != description.address
-                server.description.unknown!
+            unless detect_stale_primary!(description)
+              log_debug([ "Server #{description.address.to_s} elected as primary in #{replica_set_name}." ])
+              servers.each do |server|
+                if server.primary? && server.address != description.address
+                  server.description.unknown!
+                end
               end
+              @max_election_id = description.election_id
             end
           else
             log_warn([
@@ -84,6 +87,7 @@ module Mongo
         # @since 2.0.0
         def initialize(options, seeds = [])
           @options = options
+          @max_election_id = 0
         end
 
         # A replica set topology is a replica set.
@@ -214,6 +218,12 @@ module Mongo
         def standalone_discovered; self; end
 
         private
+
+        def detect_stale_primary!(description)
+          if description.election_id && description.election_id < @max_election_id
+            description.unknown!
+          end
+        end
 
         def has_primary?(servers)
           servers.find { |s| s.primary? }

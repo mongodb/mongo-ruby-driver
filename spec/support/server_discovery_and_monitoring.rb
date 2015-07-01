@@ -45,6 +45,15 @@ module Mongo
       client.cluster.instance_variable_get(:@servers).detect{ |s| s.address.to_s == uri }
     end
 
+    # Helper to convert an extended JSON ObjectId electionId to BSON::ObjectId.
+    #
+    # @since 2.1.0
+    def self.convert_election_ids(docs)
+      docs.each do |doc |
+        doc['electionId'] = BSON::ObjectId.from_string(doc['electionId']['$oid']) if doc['electionId']
+      end
+    end
+
     # Represents a specification.
     #
     # @since 2.0.0
@@ -102,7 +111,7 @@ module Mongo
       # @since 2.0.0
       def initialize(phase, uri)
         @phase = phase
-        @responses = @phase['responses'].map{ |response| Response.new(response, uri) }
+        @responses = @phase['responses'].map{ |response| Response.new(SDAM::convert_election_ids(response), uri) }
         @outcome = Outcome.new(@phase['outcome'])
       end
     end
@@ -158,9 +167,17 @@ module Mongo
       #
       # @since 2.0.0
       def initialize(outcome)
-        @servers = outcome['servers']
+        @servers = process_servers(outcome['servers'])
         @set_name = outcome['setName']
         @topology_type = outcome['topologyType']
+      end
+
+      private
+
+      def process_servers(servers)
+        servers.each do |s|
+          SDAM::convert_election_ids([ s[1] ])
+        end
       end
     end
   end
