@@ -388,8 +388,8 @@ describe Mongo::Collection::View do
         context 'when $explain is specified' do
           let(:options) do
             { :modifiers => {
-                :$explain => 1
-            }
+                             :$explain => 1
+                            }
             }
           end
 
@@ -410,8 +410,8 @@ describe Mongo::Collection::View do
 
             let(:options) do
               { :modifiers => {
-                  :$orderby => { 'x' => Mongo::Index::ASCENDING }
-              },
+                               :$orderby => { 'x' => Mongo::Index::ASCENDING }
+                              },
                 :sort => { 'x' => Mongo::Index::DESCENDING }
               }
             end
@@ -425,8 +425,8 @@ describe Mongo::Collection::View do
 
             let(:options) do
               { :modifiers => {
-                  :$comment => 'query1'
-              },
+                               :$comment => 'query1'
+                              },
                 :comment => 'query2'
               }
             end
@@ -440,8 +440,8 @@ describe Mongo::Collection::View do
 
             let(:options) do
               { :modifiers => {
-                  :$hint => 'x'
-              },
+                               :$hint => 'x'
+                              },
                 :hint => 'y'
               }
             end
@@ -456,8 +456,8 @@ describe Mongo::Collection::View do
 
             let(:options) do
               { :modifiers => {
-                  :$maxScan => 4
-              },
+                               :$maxScan => 4
+                              },
                 :max_scan => 5
               }
             end
@@ -471,8 +471,8 @@ describe Mongo::Collection::View do
 
             let(:options) do
               { :modifiers => {
-                  :$maxTimeMS => 100
-              },
+                               :$maxTimeMS => 100
+                              },
                 :max_time_ms => 200
               }
             end
