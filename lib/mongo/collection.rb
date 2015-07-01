@@ -148,12 +148,12 @@ module Mongo
     # @param [ Hash ] options The aggregation options.
     #
     # @option options [ true, false ] :allow_disk_use Set to true if disk usage is allowed during
-    #   the aggregation..
+    #   the aggregation.
     # @option options [ Integer ] :batch_size The number of documents to return per batch.
     # @option options [ Integer ] :max_time_ms The maximum amount of time in milliseconds to allow the
-    #   aggregation to run..
+    #   aggregation to run.
     # @option options [ true, false ] :use_cursor Indicates whether the command will request that the server
-    #   provide results using a cursor..
+    #   provide results using a cursor.
     #
     # @return [ Aggregation ] The aggregation object.
     #

@@ -514,12 +514,8 @@ describe Mongo::Collection do
 
   describe '#aggregate' do
 
-    let(:collection) do
-      described_class.new(TEST_DB, TEST_COLL)
-    end
-
     it 'returns an Aggregation object' do
-      expect(collection.aggregate([])).to be_a(Mongo::Collection::View::Aggregation)
+      expect(authorized_collection.aggregate([])).to be_a(Mongo::Collection::View::Aggregation)
     end
 
     context 'when options are provided' do
@@ -529,7 +525,7 @@ describe Mongo::Collection do
       end
 
       it 'sets the options on the Aggregation object' do
-        expect(collection.aggregate([], options).options).to eq(options)
+        expect(authorized_collection.aggregate([], options).options).to eq(options)
       end
     end
   end
