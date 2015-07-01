@@ -430,6 +430,35 @@ module Mongo
       find(filter, opts).find_one_and_update(document, opts)
     end
 
+    # Finds a single document and replaces it.
+    #
+    # @example Find a document and replace it, returning the original.
+    #   collection.find_one_and_replace({ name: 'test' }, { name: 'test1' }, :return_document => :before)
+    #
+    # @example Find a document and replace it, returning the new document.
+    #   collection.find_one_and_replace({ name: 'test' }, { name: 'test1' }, :return_document => :after)
+    #
+    # @param [ Hash ] filter The filter to use.
+    # @param [ BSON::Document ] document The replacement.
+    # @param [ Hash ] opts The options.
+    #
+    # @option opts [ Integer ] :max_time_ms The maximum amount of time to allow the command
+    #   to run in milliseconds.
+    # @option options [ Hash ] :projection The fields to include or exclude from each doc
+    #   in the result set.
+    # @option options [ Hash ] :sort The key and direction pairs by which the result set
+    #   will be sorted.
+    # @option opts [ Symbol ] :return_document Either :before or :after.
+    # @option opts [ true, false ] :upsert Whether to upsert if the
+    #   document doesn't exist.
+    #
+    # @return [ BSON::Document ] The document.
+    #
+    # @since 2.1.0
+    def find_one_and_replace(filter, replacement, opts = {})
+      find(filter, opts).find_one_and_update(replacement, opts)
+    end
+
     # Get the fully qualified namespace of the collection.
     #
     # @example Get the fully qualified namespace.

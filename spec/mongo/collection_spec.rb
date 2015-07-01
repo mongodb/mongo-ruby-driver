@@ -1134,5 +1134,153 @@ describe Mongo::Collection do
         expect(document).to be_nil
       end
     end
+
+    context 'when no matching document is found' do
+
+      context 'when no upsert options are provided' do
+
+        let(:selector) do
+          { field: 'test5' }
+        end
+
+        let(:document) do
+          authorized_collection.find_one_and_update(selector, { '$set' => { field: 'testing' }})
+        end
+
+        it 'returns nil' do
+          expect(document).to be_nil
+        end
+      end
+
+      context 'when upsert options are provided' do
+
+        let(:selector) do
+          { field: 'test5' }
+        end
+
+        let(:document) do
+          authorized_collection.find_one_and_update(selector, { '$set' => { field: 'testing' }}, :upsert => true, :return_document => :after)
+        end
+
+        it 'returns the new document' do
+          expect(document['field']).to eq('testing')
+        end
+      end
+    end
+  end
+
+  describe '#find_one_and_replace' do
+
+    before do
+      authorized_collection.insert_many([{ field: 'test1', other: 'sth' }])
+    end
+
+    let(:selector) do
+      { field: 'test1' }
+    end
+
+    context 'when a matching document is found' do
+
+      context 'when no options are provided' do
+
+        let(:document) do
+          authorized_collection.find_one_and_replace(selector, { field: 'testing' })
+        end
+
+        it 'returns the original document' do
+          expect(document['field']).to eq('test1')
+        end
+      end
+
+      context 'when return_document options are provided' do
+
+        context 'when return_document is :after' do
+
+          let(:document) do
+            authorized_collection.find_one_and_replace(selector, { field: 'testing' }, :return_document => :after)
+          end
+
+          it 'returns the new document' do
+            expect(document['field']).to eq('testing')
+          end
+        end
+
+        context 'when return_document is :before' do
+
+          let(:document) do
+            authorized_collection.find_one_and_replace(selector, { field: 'testing' }, :return_document => :before)
+          end
+
+          it 'returns the original document' do
+            expect(document['field']).to eq('test1')
+          end
+        end
+      end
+
+      context 'when a projection is provided' do
+
+        let(:document) do
+          authorized_collection.find_one_and_replace(selector, { field: 'testing' }, projection: { _id: 1 })
+        end
+
+        it 'returns the document with limited fields' do
+          expect(document['field']).to be_nil
+          expect(document['_id']).to_not be_nil
+        end
+      end
+
+      context 'when a sort is provided' do
+
+        let(:document) do
+          authorized_collection.find_one_and_replace(selector, { field: 'testing' }, :sort => { field: 1 })
+        end
+
+        it 'returns the original document' do
+          expect(document['field']).to eq('test1')
+        end
+      end
+    end
+
+    context 'when no matching document is found' do
+
+      context 'when no upsert options are provided' do
+
+        let(:selector) do
+          { field: 'test5' }
+        end
+
+        let(:document) do
+          authorized_collection.find_one_and_replace(selector, { field: 'testing' })
+        end
+
+        it 'returns nil' do
+          expect(document).to be_nil
+        end
+      end
+
+      context 'when upsert options are provided' do
+
+        let(:selector) do
+          { field: 'test5' }
+        end
+
+        let(:document) do
+          authorized_collection.find_one_and_replace(selector, { field: 'testing' }, :upsert => true, :return_document => :after)
+        end
+
+        it 'returns the new document' do
+          expect(document['field']).to eq('testing')
+        end
+      end
+    end
+
+    context 'when max_time_ms is provided' do
+
+      it 'includes the max_time_ms value in the command' do
+        expect {
+          authorized_collection.find_one_and_replace(selector, { field: 'testing' }, max_time_ms: 0.1)
+        }.to raise_error(Mongo::Error::OperationFailure)
+      end
+    end
   end
 end

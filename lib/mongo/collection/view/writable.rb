@@ -38,7 +38,7 @@ module Mongo
           database.command(cmd).first['value']
         end
 
-        # Finds a single document and replace it.
+        # Finds a single document and replaces it.
         #
         # @example Find a document and replace it, returning the original.
         #   view.find_one_and_replace({ name: 'test' }, :return_document => :before)
@@ -46,7 +46,7 @@ module Mongo
         # @example Find a document and replace it, returning the new document.
         #   view.find_one_and_replace({ name: 'test' }, :return_document => :after)
         #
-        # @param [ BSON::Document ] replacement The updates.
+        # @param [ BSON::Document ] replacement The replacement.
         # @param [ Hash ] opts The options.
         #
         # @option opts [ Symbol ] :return_document Either :before or :after.
