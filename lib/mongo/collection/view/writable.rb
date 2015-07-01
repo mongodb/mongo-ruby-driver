@@ -131,6 +131,8 @@ module Mongo
         #
         # @example Update multiple documents in the collection.
         #   collection_view.update_many('$set' => { name: 'test' })
+        #
+        # @param [ Hash ] spec The update statement.
         # @param [ Hash ] opts The options.
         #
         # @option opts [ true, false ] :upsert Whether to upsert if the
@@ -147,6 +149,8 @@ module Mongo
         #
         # @example Update a single document in the collection.
         #   collection_view.update_one('$set' => { name: 'test' })
+        #
+        # @param [ Hash ] spec The update statement.
         # @param [ Hash ] opts The options.
         #
         # @option opts [ true, false ] :upsert Whether to upsert if the
