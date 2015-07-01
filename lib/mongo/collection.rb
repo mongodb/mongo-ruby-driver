@@ -162,6 +162,26 @@ module Mongo
       View.new(self, {}).aggregate(pipeline, options)
     end
 
+    # Get a count of matching documents in the collection.
+    #
+    # @example Get the count.
+    #   collection.count(name: 1)
+    #
+    # @param [ Hash ] filter A filter for matching documents.
+    # @param [ Hash ] options The count options.
+    #
+    # @option options [ Hash ] :hint The index to use.
+    # @option options [ Integer ] :limit The maximum number of documents to count.
+    # @option options [ Integer ] :max_time_ms The maximum amount of time to allow the command to run.
+    # @option options [ Integer ] :skip The number of documents to skip before counting.
+    #
+    # @return [ Integer ] The document count.
+    #
+    # @since 2.1.0
+    def count(filter = nil, options = {})
+      View.new(self, filter || {}).count(options)
+    end
+
     # Get a view of all indexes for this collection. Can be iterated or has
     # more operations.
     #

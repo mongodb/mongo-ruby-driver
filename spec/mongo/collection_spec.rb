@@ -529,4 +529,30 @@ describe Mongo::Collection do
       end
     end
   end
+
+  describe '#count' do
+
+    let(:documents) do
+      (1..10).map{ |i| { field: "test#{i}" }}
+    end
+
+    before do
+      authorized_collection.insert_many(documents)
+    end
+
+    after do
+      authorized_collection.find.delete_many
+    end
+
+    it 'returns an integer count' do
+      expect(authorized_collection.count).to eq(10)
+    end
+
+    context 'when options are provided' do
+
+      it 'passes the options to the count' do
+        expect(authorized_collection.count({}, limit: 5)).to eq(5)
+      end
+    end
+  end
 end
