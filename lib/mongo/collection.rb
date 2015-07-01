@@ -310,6 +310,20 @@ module Mongo
       find(filter).delete_one
     end
 
+    # Remove documents from the collection.
+    #
+    # @example Remove multiple documents from the collection.
+    #   collection.delete_many
+    #
+    # @param [ Hash ] filter The filter to use.
+    #
+    # @return [ Result ] The response from the database.
+    #
+    # @since 2.1.0
+    def delete_many(filter = nil)
+      find(filter).delete_many
+    end
+
     # Get the fully qualified namespace of the collection.
     #
     # @example Get the fully qualified namespace.

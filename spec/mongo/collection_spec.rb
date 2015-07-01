@@ -605,6 +605,10 @@ describe Mongo::Collection do
                                           ])
       end
 
+      after do
+        authorized_collection.delete_many
+      end
+
       let(:response) do
         authorized_collection.delete_one(selector)
       end
@@ -630,4 +634,32 @@ describe Mongo::Collection do
     end
   end
 
+  describe '#delete_many' do
+
+    before do
+      authorized_collection.insert_many([{ field: 'test1' }, { field: 'test2' }])
+    end
+
+    after do
+      authorized_collection.delete_many
+    end
+
+    context 'when a selector was provided' do
+
+      let(:selector) do
+        { field: 'test1' }
+      end
+
+      it 'deletes the matching documents in the collection' do
+        expect(authorized_collection.delete_many(selector).written_count).to eq(1)
+      end
+    end
+
+    context 'when no selector was provided' do
+
+      it 'deletes all the documents in the collection' do
+        expect(authorized_collection.delete_many.written_count).to eq(2)
+      end
+    end
+  end
 end
