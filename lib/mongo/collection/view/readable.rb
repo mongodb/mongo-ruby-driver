@@ -176,18 +176,19 @@ module Mongo
         # @param [ String, Symbol ] field_name The name of the field.
         # @param [ Hash ] options Options for the distinct command.
         #
+        # @option options :max_time_ms [ Integer ] The maximum amount of time to allow the
+        #   command to run.
         # @option options :read [ Hash ] The read preference for this command.
         #
         # @return [ Array<Object> ] The list of distinct values.
         #
         # @since 2.0.0
         def distinct(field_name, options={})
-          database.command({
-            :distinct => collection.name,
-            :key => field_name.to_s,
-            :query => selector },
-            options
-          ).documents.first['values']
+          cmd = { :distinct => collection.name,
+                  :key => field_name.to_s,
+                  :query => selector }
+          cmd[:maxTimeMS] = options[:max_time_ms] if options[:max_time_ms]
+          database.command(cmd, options).first['values']
         end
 
         # The index that MongoDB will be forced to use for the query.

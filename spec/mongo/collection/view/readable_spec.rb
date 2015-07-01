@@ -359,6 +359,27 @@ describe Mongo::Collection::View::Readable do
         expect(distinct).to eq([ 'test1', 'test2', 'test3' ])
       end
     end
+
+    context 'when a max_time_ms is specified' do
+
+      let(:documents) do
+        (1..3).map{ |i| { field: "test" }}
+      end
+
+      before do
+        authorized_collection.insert_many(documents)
+      end
+
+      it 'sets the max_time_ms option on the command' do
+        expect {
+          view.distinct(:field, max_time_ms: 0.1)
+        }.to raise_error(Mongo::Error::OperationFailure)
+      end
+
+      it 'sets the max_time_ms option on the command' do
+        expect(view.distinct(:field, max_time_ms: 100)).to eq([ 'test' ])
+      end
+    end
   end
 
   describe '#hint' do
