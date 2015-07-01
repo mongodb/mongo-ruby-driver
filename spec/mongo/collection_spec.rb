@@ -1002,7 +1002,7 @@ describe Mongo::Collection do
         end
       end
 
-      context 'when max_time_ms is provided' do
+      context 'when max_time_ms is provided', if: write_command_enabled? do
 
         it 'includes the max_time_ms value in the command' do
           expect {
@@ -1113,7 +1113,7 @@ describe Mongo::Collection do
 
     context 'when max_time_ms is provided' do
 
-      it 'includes the max_time_ms value in the command' do
+      it 'includes the max_time_ms value in the command', if: write_command_enabled? do
         expect {
           authorized_collection.find_one_and_update(selector, { '$set' => { field: 'testing' }}, max_time_ms: 0.1)
         }.to raise_error(Mongo::Error::OperationFailure)
@@ -1274,7 +1274,7 @@ describe Mongo::Collection do
       end
     end
 
-    context 'when max_time_ms is provided' do
+    context 'when max_time_ms is provided', if: write_command_enabled? do
 
       it 'includes the max_time_ms value in the command' do
         expect {

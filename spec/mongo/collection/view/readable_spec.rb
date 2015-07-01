@@ -240,7 +240,7 @@ describe Mongo::Collection::View::Readable do
       expect(view.count(read: { mode: :secondary })).to eq(10)
     end
 
-    it 'takes a max_time_ms option' do
+    it 'takes a max_time_ms option', if: write_command_enabled? do
       expect {
         view.count(max_time_ms: 0.1)
       }.to raise_error(Mongo::Error::OperationFailure)
@@ -360,7 +360,7 @@ describe Mongo::Collection::View::Readable do
       end
     end
 
-    context 'when a max_time_ms is specified' do
+    context 'when a max_time_ms is specified', if: write_command_enabled? do
 
       let(:documents) do
         (1..3).map{ |i| { field: "test" }}
