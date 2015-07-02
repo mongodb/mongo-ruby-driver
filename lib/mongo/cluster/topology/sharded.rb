@@ -184,7 +184,7 @@ module Mongo
         private
 
         def remove_self?(description, server)
-          description.is_server?(server) && !description.mongos?
+          description.is_server?(server) && !(description.mongos? || description.unknown?)
         end
       end
     end
