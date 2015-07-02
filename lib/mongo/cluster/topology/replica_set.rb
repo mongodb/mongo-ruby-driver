@@ -67,7 +67,7 @@ module Mongo
                   server.description.unknown!
                 end
               end
-              @max_election_id = description.election_id
+              update_max_election_id(description)
             end
           else
             log_warn([
@@ -218,6 +218,12 @@ module Mongo
         def standalone_discovered; self; end
 
         private
+
+        def update_max_election_id(description)
+          if description.election_id && description.election_id > @max_election_id
+            @max_election_id = description.election_id
+          end
+        end
 
         def detect_stale_primary!(description)
           if description.election_id && description.election_id < @max_election_id
