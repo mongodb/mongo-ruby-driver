@@ -210,7 +210,7 @@ module Mongo
     #
     # @option options [ Integer ] :max_time_ms The maximum amount of time to allow the command to run.
     #
-    # @return [ Integer ] The document count.
+    # @return [ Array<Object> ] The list of distinct values.
     #
     # @since 2.1.0
     def distinct(field_name, filter = nil, options = {})
@@ -288,6 +288,11 @@ module Mongo
     #
     # @param [ Array<Hash> ] operations The operations.
     # @param [ Hash ] options The options.
+    #
+    # @option options [ true, false ] :ordered Whether the operations
+    #   should be executed in order.
+    # @option options [ Hash ] :write_concern The write concern options.
+    #   Can be :w => Integer, :fsync => Boolean, :j => Boolean.
     #
     # @return [ BulkWrite::Result ] The result of the operation.
     #
@@ -410,7 +415,7 @@ module Mongo
     #   collection.find_one_and_update({ name: 'test' }, { "$set" => { name: 'test1' }}, :return_document => :before)
     #
     # @param [ Hash ] filter The filter to use.
-    # @param [ BSON::Document ] document The update statement.
+    # @param [ BSON::Document ] update The update statement.
     # @param [ Hash ] opts The options.
     #
     # @option opts [ Integer ] :max_time_ms The maximum amount of time to allow the command
@@ -426,8 +431,8 @@ module Mongo
     # @return [ BSON::Document ] The document.
     #
     # @since 2.1.0
-    def find_one_and_update(filter, document, opts = {})
-      find(filter, opts).find_one_and_update(document, opts)
+    def find_one_and_update(filter, update, opts = {})
+      find(filter, opts).find_one_and_update(update, opts)
     end
 
     # Finds a single document and replaces it.
@@ -439,7 +444,7 @@ module Mongo
     #   collection.find_one_and_replace({ name: 'test' }, { name: 'test1' }, :return_document => :after)
     #
     # @param [ Hash ] filter The filter to use.
-    # @param [ BSON::Document ] document The replacement.
+    # @param [ BSON::Document ] replacement The replacement document.
     # @param [ Hash ] opts The options.
     #
     # @option opts [ Integer ] :max_time_ms The maximum amount of time to allow the command
