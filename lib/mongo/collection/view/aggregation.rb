@@ -58,7 +58,7 @@ module Mongo
         #
         # @since 2.0.0
         def allow_disk_use(value = nil)
-          configure(OPTIONS_MAP[__method__], value)
+          configure(__method__, value)
         end
 
         # Initialize the aggregation for the provided collection view, pipeline
@@ -99,19 +99,13 @@ module Mongo
               :aggregate => collection.name,
               :pipeline => pipeline,
               :cursor => cursor,
-            }.merge!(process_options)
+            }.merge!(agg_options)
           }
         end
 
-        def process_options
-          @agg_options ||= @options.each.reduce({}) do |opts, (key, value)|
-            if OPTIONS_MAP[key]
-              opts.merge(OPTIONS_MAP[key] => value)
-            elsif OPTIONS_MAP.values.include?(key)
-              opts.merge(key => value)
-            else
-              opts
-            end
+        def agg_options
+          @agg_options ||= options.each.reduce({}) do |opts, (key, value)|
+            OPTIONS_MAP[key] ? opts.merge!(OPTIONS_MAP[key] => value) : opts
           end
         end
 
