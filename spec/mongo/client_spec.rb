@@ -585,7 +585,26 @@ describe Mongo::Client do
     end
   end
 
-  describe '#close' do
+  describe '#database_names' do
+
+    it 'returns a list of database names' do
+      expect(root_authorized_client.database_names).to include(
+        'admin'
+      )
+    end
+  end
+
+  describe '#list_databases' do
+
+    it 'returns a list of database info documents' do
+      expect(
+        root_authorized_client.list_databases.collect do |i|
+          i['name']
+        end).to include('admin')
+    end
+  end
+
+    describe '#close' do
 
     let(:client) do
       described_class.new(['127.0.0.1:27017'])
@@ -612,25 +631,7 @@ describe Mongo::Client do
 
     it 'reconnects the cluster and returns true' do
       expect(client.reconnect).to be(true)
-    end
-  end
-
-  describe '#database_names' do
-
-    it 'returns a list of database names' do
-      expect(root_authorized_client.database_names).to include(
-        'admin'
-      )
-    end
-  end
-
-  describe '#list_databases' do
-
-    it 'returns a list of database info documents' do
-      expect(
-        root_authorized_client.list_databases.collect do |i|
-          i['name']
-        end).to include('admin')
+      sleep(2)
     end
   end
 end
