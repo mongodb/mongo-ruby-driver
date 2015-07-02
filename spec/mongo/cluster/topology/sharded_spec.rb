@@ -106,6 +106,7 @@ describe Mongo::Cluster::Topology::Sharded do
       let(:description) do
         double('description').tap do |d|
           allow(d).to receive(:mongos?).and_return(false)
+          allow(d).to receive(:unknown?).and_return(false)
           allow(d).to receive(:is_server?).and_return(true)
         end
       end
