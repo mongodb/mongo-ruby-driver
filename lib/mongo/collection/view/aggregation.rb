@@ -42,7 +42,8 @@ module Mongo
         # @since 2.1.0
         OPTIONS_MAP = {
                        :allow_disk_use => :allowDiskUse,
-                       :max_time_ms => :maxTimeMS
+                       :max_time_ms => :maxTimeMS,
+                       :explain => :explain
                       }
 
         # Set to true if disk usage is allowed during the aggregation.
@@ -104,7 +105,13 @@ module Mongo
 
         def process_options
           @agg_options ||= @options.each.reduce({}) do |opts, (key, value)|
-            OPTIONS_MAP[key] ? opts.merge(OPTIONS_MAP[key] => value) : opts
+            if OPTIONS_MAP[key]
+              opts.merge(OPTIONS_MAP[key] => value)
+            elsif OPTIONS_MAP.values.include?(key)
+              opts.merge(key => value)
+            else
+              opts
+            end
           end
         end
 
