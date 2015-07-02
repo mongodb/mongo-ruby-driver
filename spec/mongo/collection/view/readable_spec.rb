@@ -245,6 +245,10 @@ describe Mongo::Collection::View::Readable do
         view.count(max_time_ms: 0.1)
       }.to raise_error(Mongo::Error::OperationFailure)
     end
+
+    it 'sets the max_time_ms option on the command', if: write_command_enabled? do
+      expect(view.count(max_time_ms: 100)).to eq(10)
+    end
   end
 
   describe '#distinct' do
