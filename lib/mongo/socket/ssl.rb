@@ -100,22 +100,34 @@ module Mongo
 
       def create_context(options)
         context = OpenSSL::SSL::SSLContext.new
-        if options[:ssl_cert]
-          context.cert = OpenSSL::X509::Certificate.new(File.open(options[:ssl_cert]))
-        end
-        if options[:ssl_key]
-          if options[:ssl_key_pass_phrase]
-            context.key = OpenSSL::PKey::RSA.new(File.open(options[:ssl_key]),
-                                                           options[:ssl_key_pass_phrase])
-          else
-            context.key = OpenSSL::PKey::RSA.new(File.open(options[:ssl_key]))
-          end
-        end
-        if options[:ssl_verify] || options[:ssl_ca_cert]
-          context.ca_file = options[:ssl_ca_cert]
-          context.verify_mode = OpenSSL::SSL::VERIFY_PEER
-        end
+        set_cert(context, options) if options[:ssl_cert]
+        set_key(context, options) if options[:ssl_key]
+        set_cert_verification(context, options) unless options[:ssl_verify] == false
         context
+      end
+
+      def set_cert(context, options)
+        context.cert = OpenSSL::X509::Certificate.new(File.open(options[:ssl_cert]))
+      end
+
+      def set_key(context, options)
+        if options[:ssl_key_pass_phrase]
+          context.key = OpenSSL::PKey::RSA.new(File.open(options[:ssl_key]),
+                                               options[:ssl_key_pass_phrase])
+        else
+          context.key = OpenSSL::PKey::RSA.new(File.open(options[:ssl_key]))
+        end
+      end
+
+      def set_cert_verification(context, options)
+        context.verify_mode = OpenSSL::SSL::VERIFY_PEER
+        cert_store = OpenSSL::X509::Store.new
+        if options[:ssl_ca_cert]
+          cert_store.add_file(options[:ssl_ca_cert])
+        else
+          cert_store.set_default_paths
+        end
+        context.cert_store = cert_store
       end
 
       def verify_certificate!(socket)

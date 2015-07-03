@@ -50,12 +50,28 @@ WRITE_CONCERN = CONNECT[:connect] == :replica_set ? { w: ADDRESSES.size } : { w:
 # @since 2.0.3
 SSL = ENV['SSL_ENABLED'] == 'true'
 
+# SSL options.
+#
+# @since 2.1.0
+SSL_OPTIONS = {
+                  ssl: SSL,
+                  ssl_verify: false,
+                  ssl_cert:  CLIENT_PEM,
+                  ssl_key:  CLIENT_PEM
+                }
+
+# Base test options.
+#
+# @since 2.1.0
+BASE_OPTIONS = {
+                  max_pool_size: 1,
+                  write: WRITE_CONCERN
+               }
+
 # Options for test suite clients.
 #
 # @since 2.0.3
-TEST_OPTIONS = CONNECT.merge(max_pool_size: 1,
-                             write: WRITE_CONCERN,
-                             ssl: SSL)
+TEST_OPTIONS = BASE_OPTIONS.merge(CONNECT).merge(SSL_OPTIONS)
 
 # The root user name.
 #

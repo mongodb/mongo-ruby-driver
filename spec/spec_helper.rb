@@ -17,6 +17,20 @@ if RUBY_VERSION > '1.9' && RUBY_VERSION < '2.2'
   end
 end
 
+TEST_SET = 'ruby-driver-rs'
+COVERAGE_MIN = 90
+CURRENT_PATH = File.expand_path(File.dirname(__FILE__))
+SERVER_DISCOVERY_TESTS = Dir.glob("#{CURRENT_PATH}/support/sdam/**/*.yml")
+SERVER_SELECTION_RTT_TESTS = Dir.glob("#{CURRENT_PATH}/support/server_selection/rtt/*.yml")
+SERVER_SELECTION_TESTS = Dir.glob("#{CURRENT_PATH}/support/server_selection/selection/**/*.yml")
+CRUD_TESTS = Dir.glob("#{CURRENT_PATH}/support/crud_tests/**/*.yml")
+
+SSL_CERTS_DIR = "#{CURRENT_PATH}/support/certificates"
+CLIENT_PEM = "#{SSL_CERTS_DIR}/client.pem"
+CLIENT_PASSWORD_PEM = "#{SSL_CERTS_DIR}/password_protected.pem"
+CA_PEM = "#{SSL_CERTS_DIR}/ca.pem"
+CRL_PEM = "#{SSL_CERTS_DIR}/crl.pem"
+
 require 'mongo'
 
 require 'support/travis'
@@ -60,20 +74,6 @@ RSpec.configure do |config|
     end
   end
 end
-
-TEST_SET = 'ruby-driver-rs'
-COVERAGE_MIN = 90
-CURRENT_PATH = File.expand_path(File.dirname(__FILE__))
-SERVER_DISCOVERY_TESTS = Dir.glob("#{CURRENT_PATH}/support/sdam/**/*.yml")
-SERVER_SELECTION_RTT_TESTS = Dir.glob("#{CURRENT_PATH}/support/server_selection/rtt/*.yml")
-SERVER_SELECTION_TESTS = Dir.glob("#{CURRENT_PATH}/support/server_selection/selection/**/*.yml")
-CRUD_TESTS = Dir.glob("#{CURRENT_PATH}/support/crud_tests/**/*.yml")
-
-SSL_CERTS_DIR = "#{CURRENT_PATH}/support/certificates"
-CLIENT_PEM = "#{SSL_CERTS_DIR}/client.pem"
-CLIENT_PASSWORD_PEM = "#{SSL_CERTS_DIR}/password_protected.pem"
-CA_PEM = "#{SSL_CERTS_DIR}/ca.pem"
-CRL_PEM = "#{SSL_CERTS_DIR}/crl.pem"
 
 # Determine whether the test clients are connecting to a standalone.
 #
@@ -149,10 +149,16 @@ def list_command_enabled?
   $list_command_enabled ||= $mongo_client.cluster.servers.first.features.list_indexes_enabled?
 end
 
+# Is the test suite running locally (not on Travis or Jenkins).
+#
+# @since 2.1.0
 def testing_locally?
   !(ENV['CI'] || ENV['JENKINS_HOME'])
 end
 
+# Is the test suite running on SSL.
+#
+# @since 2.0.2
 def running_ssl?
   SSL
 end
