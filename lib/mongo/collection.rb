@@ -136,8 +136,8 @@ module Mongo
     # @option options [ Integer ] :limit The max number of docs to return from the query.
     # @option options [ Integer ] :max_time_ms The maximum amount of time to allow the query
     #   to run in milliseconds.
-    # @option options [ Hash ] :modifiers Meta-operators modifying the output or behavior
-    #   of a query.
+    # @option options [ Hash ] :modifiers A document containing meta-operators modifying the
+    #   output or behavior of a query.
     # @option options [ true, false ] :no_cursor_timeout The server normally times out idle
     #   cursors after an inactivity period (10 minutes) to prevent excess memory use.
     #   Set this option to prevent that.
@@ -335,17 +335,17 @@ module Mongo
     #   collection.replace_one({ name: 'test' }, { name: 'test1' })
     #
     # @param [ Hash ] filter The filter to use.
-    # @param [ Hash ] document The document to replace.
-    # @param [ Hash ] opts The options.
+    # @param [ Hash ] replacement The replacement document..
+    # @param [ Hash ] options The options.
     #
-    # @option opts [ true, false ] :upsert Whether to upsert if the
+    # @option options [ true, false ] :upsert Whether to upsert if the
     #   document doesn't exist.
     #
     # @return [ Result ] The response from the database.
     #
     # @since 2.1.0
-    def replace_one(filter, document, opts = {})
-      find(filter).replace_one(document, opts)
+    def replace_one(filter, replacement, options = {})
+      find(filter).replace_one(replacement, options)
     end
 
     # Update documents in the collection.
@@ -355,16 +355,16 @@ module Mongo
     #
     # @param [ Hash ] filter The filter to use.
     # @param [ Hash ] update The update statement.
-    # @param [ Hash ] opts The options.
+    # @param [ Hash ] options The options.
     #
-    # @option opts [ true, false ] :upsert Whether to upsert if the
+    # @option options [ true, false ] :upsert Whether to upsert if the
     #   document doesn't exist.
     #
     # @return [ Result ] The response from the database.
     #
     # @since 2.1.0
-    def update_many(filter, update, opts = {})
-      find(filter).update_many(update, opts)
+    def update_many(filter, update, options = {})
+      find(filter).update_many(update, options)
     end
 
     # Update a single document in the collection.
@@ -374,16 +374,16 @@ module Mongo
     #
     # @param [ Hash ] filter The filter to use.
     # @param [ Hash ] update The update statement.
-    # @param [ Hash ] opts The options.
+    # @param [ Hash ] options The options.
     #
-    # @option opts [ true, false ] :upsert Whether to upsert if the
+    # @option options [ true, false ] :upsert Whether to upsert if the
     #   document doesn't exist.
     #
     # @return [ Result ] The response from the database.
     #
     # @since 2.1.0
-    def update_one(filter, update, opts = {})
-      find(filter).update_one(update, opts)
+    def update_one(filter, update, options = {})
+      find(filter).update_one(update, options)
     end
 
     # Finds a single document in the database via findAndModify and deletes
@@ -393,75 +393,75 @@ module Mongo
     #   collection.find_one_and_delete(name: 'test')
     #
     # @param [ Hash ] filter The filter to use.
-    # @param [ Hash ] opts The options.
+    # @param [ Hash ] options The options.
     #
-    # @option opts [ Integer ] :max_time_ms The maximum amount of time to allow the command
+    # @option options [ Integer ] :max_time_ms The maximum amount of time to allow the command
     #   to run in milliseconds.
-    # @option options [ Hash ] :projection The fields to include or exclude from each doc
-    #   in the result set.
+    # @option options [ Hash ] :projection The fields to include or exclude in the returned doc.
     # @option options [ Hash ] :sort The key and direction pairs by which the result set
     #   will be sorted.
     #
     # @return [ BSON::Document, nil ] The document, if found.
     #
     # @since 2.1.0
-    def find_one_and_delete(filter, opts = {})
-      find(filter, opts).find_one_and_delete
+    def find_one_and_delete(filter, options = {})
+      find(filter, options).find_one_and_delete
     end
 
-    # Finds a single document via findAndModify and updates it.
+    # Finds a single document via findAndModify and updates it, returning the original doc unless
+    # otherwise specified.
     #
     # @example Find a document and update it, returning the original.
-    #   collection.find_one_and_update({ name: 'test' }, { "$set" => { name: 'test1' }}, :return_document => :before)
+    #   collection.find_one_and_update({ name: 'test' }, { "$set" => { name: 'test1' }})
+    #
+    # @example Find a document and update it, returning the updated document.
+    #   collection.find_one_and_update({ name: 'test' }, { "$set" => { name: 'test1' }}, :return_document => :after)
     #
     # @param [ Hash ] filter The filter to use.
     # @param [ BSON::Document ] update The update statement.
-    # @param [ Hash ] opts The options.
+    # @param [ Hash ] options The options.
     #
-    # @option opts [ Integer ] :max_time_ms The maximum amount of time to allow the command
+    # @option options [ Integer ] :max_time_ms The maximum amount of time to allow the command
     #   to run in milliseconds.
-    # @option options [ Hash ] :projection The fields to include or exclude from each doc
-    #   in the result set.
+    # @option options [ Hash ] :projection The fields to include or exclude in the returned doc.
     # @option options [ Hash ] :sort The key and direction pairs by which the result set
     #   will be sorted.
-    # @option opts [ Symbol ] :return_document Either :before or :after.
-    # @option opts [ true, false ] :upsert Whether to upsert if the
-    #   document doesn't exist.
+    # @option options [ Symbol ] :return_document Either :before or :after.
+    # @option options [ true, false ] :upsert Whether to upsert if the document doesn't exist.
     #
     # @return [ BSON::Document ] The document.
     #
     # @since 2.1.0
-    def find_one_and_update(filter, update, opts = {})
-      find(filter, opts).find_one_and_update(update, opts)
+    def find_one_and_update(filter, update, options = {})
+      find(filter, options).find_one_and_update(update, options)
     end
 
-    # Finds a single document and replaces it.
+    # Finds a single document and replaces it, returning the original doc unless
+    # otherwise specified.
     #
     # @example Find a document and replace it, returning the original.
-    #   collection.find_one_and_replace({ name: 'test' }, { name: 'test1' }, :return_document => :before)
+    #   collection.find_one_and_replace({ name: 'test' }, { name: 'test1' })
     #
     # @example Find a document and replace it, returning the new document.
     #   collection.find_one_and_replace({ name: 'test' }, { name: 'test1' }, :return_document => :after)
     #
     # @param [ Hash ] filter The filter to use.
     # @param [ BSON::Document ] replacement The replacement document.
-    # @param [ Hash ] opts The options.
+    # @param [ Hash ] options The options.
     #
-    # @option opts [ Integer ] :max_time_ms The maximum amount of time to allow the command
+    # @option options [ Integer ] :max_time_ms The maximum amount of time to allow the command
     #   to run in milliseconds.
-    # @option options [ Hash ] :projection The fields to include or exclude from each doc
-    #   in the result set.
+    # @option options [ Hash ] :projection The fields to include or exclude in the returned doc.
     # @option options [ Hash ] :sort The key and direction pairs by which the result set
     #   will be sorted.
-    # @option opts [ Symbol ] :return_document Either :before or :after.
-    # @option opts [ true, false ] :upsert Whether to upsert if the
-    #   document doesn't exist.
+    # @option options [ Symbol ] :return_document Either :before or :after.
+    # @option options [ true, false ] :upsert Whether to upsert if the document doesn't exist.
     #
     # @return [ BSON::Document ] The document.
     #
     # @since 2.1.0
-    def find_one_and_replace(filter, replacement, opts = {})
-      find(filter, opts).find_one_and_update(replacement, opts)
+    def find_one_and_replace(filter, replacement, options = {})
+      find(filter, options).find_one_and_update(replacement, options)
     end
 
     # Get the fully qualified namespace of the collection.

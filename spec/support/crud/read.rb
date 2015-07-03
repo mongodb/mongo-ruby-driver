@@ -105,7 +105,7 @@ module Mongo
         end
   
         def distinct(collection)
-          collection.distinct(field_name, filter)
+          collection.distinct(field_name, filter, options)
         end
   
         def find(collection)

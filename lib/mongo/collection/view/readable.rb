@@ -40,7 +40,7 @@ module Mongo
         # Options to cursor flags mapping.
         #
         # @since 2.1.0
-        CURSOR_FLAGS = {
+        CURSOR_FLAGS_MAP = {
           :allow_partial_results => [ :partial ],
           :oplog_replay => [ :oplog_replay ],
           :no_cursor_timeout => [ :no_cursor_timeout ],
@@ -392,22 +392,17 @@ module Mongo
         end
 
         def flags
-          @flags ||= (!primary? ? [ :slave_ok ] : []).tap do |flags|
-            CURSOR_FLAGS.each do |key, value|
-              if options[key] || (options[:cursor_type] && options[:cursor_type] == key)
-                flags.push(*value)
-              end
+          @flags ||= CURSOR_FLAGS_MAP.each.reduce([]) do |flags, (key, value)|
+            if options[key] || (options[:cursor_type] && options[:cursor_type] == key)
+              flags.push(*value)
             end
+            flags
           end
         end
 
         def has_special_fields?
           modifiers || sort || hint || comment || max_time_ms || max_scan ||
               show_disk_loc || snapshot || explained? || cluster.sharded?
-        end
-
-        def primary?
-          read.name == :primary
         end
 
         def query_options

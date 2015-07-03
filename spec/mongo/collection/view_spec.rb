@@ -254,6 +254,10 @@ describe Mongo::Collection::View do
             { :snapshot => true }
           end
 
+          before do
+            expect(view).to receive(:special_selector).and_call_original
+          end
+
           it 'creates a special query selector' do
             expect(query_spec[:selector][:$snapshot]).to eq(options[:snapshot])
           end
@@ -269,6 +273,10 @@ describe Mongo::Collection::View do
 
           let(:options) do
             { :max_scan => 100 }
+          end
+
+          before do
+            expect(view).to receive(:special_selector).and_call_original
           end
 
           it 'creates a special query selector' do
@@ -288,6 +296,10 @@ describe Mongo::Collection::View do
             { :max_time_ms => 100 }
           end
 
+          before do
+            expect(view).to receive(:special_selector).and_call_original
+          end
+
           it 'creates a special query selector' do
             expect(query_spec[:selector][:$maxTimeMS]).to eq(options[:max_time_ms])
           end
@@ -303,6 +315,10 @@ describe Mongo::Collection::View do
 
           let(:options) do
             { :show_disk_loc => true }
+          end
+
+          before do
+            expect(view).to receive(:special_selector).and_call_original
           end
 
           it 'creates a special query selector' do
@@ -321,6 +337,10 @@ describe Mongo::Collection::View do
 
         let(:options) do
           { :sort => {'x' => Mongo::Index::ASCENDING }}
+        end
+
+        before do
+          expect(view).to receive(:special_selector).and_call_original
         end
 
         it 'creates a special query selector' do
@@ -358,6 +378,10 @@ describe Mongo::Collection::View do
           { :comment => 'query1' }
         end
 
+        before do
+          expect(view).to receive(:special_selector).and_call_original
+        end
+
         it 'creates a special query selector' do
           expect(query_spec[:selector][:$comment]).to eq(options[:comment])
         end
@@ -390,6 +414,10 @@ describe Mongo::Collection::View do
                             :$orderby => {'x' => Mongo::Index::ASCENDING }
                           }
           }
+        end
+
+        before do
+          expect(view).to receive(:special_selector).and_call_original
         end
 
         it 'creates a special query selector' do

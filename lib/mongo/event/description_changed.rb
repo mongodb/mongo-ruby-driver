@@ -42,7 +42,7 @@ module Mongo
       # @example Handle the event.
       #   server_added.handle('127.0.0.1:27018')
       #
-      # @param [ Address ] address The added host.
+      # @param [ Server::Description ] updated The changed description.
       #
       # @since 2.0.0
       def handle(updated)

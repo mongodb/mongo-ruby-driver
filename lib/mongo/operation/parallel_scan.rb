@@ -26,13 +26,14 @@ module Mongo
     #     :cursor_count => 5
     #   })
     #
-    # @param [ Hash ] spec The specifications for the operation.
+    # Initialization:
+    #   param [ Hash ] spec The specifications for the operation.
     #
-    # @option spec :db_name [ String ] The name of the database on which
-    #   the operation should be executed.
-    # @option spec :coll_name [ String ] The collection to scan.
-    # @option spec :cursor_count [ Integer ] The number of cursors to use.
-    # @option spec :options [ Hash ] Options for the command.
+    #   option spec :db_name [ String ] The name of the database on which
+    #     the operation should be executed.
+    #   option spec :coll_name [ String ] The collection to scan.
+    #   option spec :cursor_count [ Integer ] The number of cursors to use.
+    #   option spec :options [ Hash ] Options for the command.
     #
     # @since 2.0.0
     class ParallelScan
@@ -46,7 +47,7 @@ module Mongo
       # @example Execute the operation.
       #   operation.execute(context)
       #
-      # @params [ Mongo::Server::Context ] The context for this operation.
+      # @param [ Mongo::Server::Context ] context The context for this operation.
       #
       # @return [ Result ] The operation response, if there is one.
       #

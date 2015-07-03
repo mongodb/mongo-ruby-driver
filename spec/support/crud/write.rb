@@ -158,7 +158,7 @@ module Mongo
         end
 
         def find_one_and_replace(collection)
-          collection.find_one_and_replace(filter, replacement,options)
+          collection.find_one_and_replace(filter, replacement, options)
         end
 
         def find_one_and_update(collection)

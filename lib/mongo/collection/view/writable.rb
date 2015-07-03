@@ -114,7 +114,7 @@ module Mongo
         # @example Replace a single document.
         #   collection_view.replace_one({ name: 'test' })
         #
-        # @param [ Hash ] document The document to replace.
+        # @param [ Hash ] replacement The replacement document.
         # @param [ Hash ] opts The options.
         #
         # @option opts [ true, false ] :upsert Whether to upsert if the
@@ -123,8 +123,8 @@ module Mongo
         # @return [ Result ] The response from the database.
         #
         # @since 2.0.0
-        def replace_one(document, opts = {})
-          update(document, false, opts)
+        def replace_one(replacement, opts = {})
+          update(replacement, false, opts)
         end
 
         # Update documents in the collection.
