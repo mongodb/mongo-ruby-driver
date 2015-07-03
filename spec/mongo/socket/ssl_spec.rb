@@ -46,7 +46,7 @@ describe Mongo::Socket::SSL do
       end
     end
 
-    context 'when a CA certificate is provided', if: running_ssl? && testing_locally? do
+    context 'when a CA certificate is provided', if: testing_ssl_locally? do
 
       let(:options) do
         {
@@ -67,7 +67,7 @@ describe Mongo::Socket::SSL do
       end
     end
 
-    context 'when a CA certificate is not provided', if: running_ssl? && testing_locally? do
+    context 'when a CA certificate is not provided', if: testing_ssl_locally? do
 
       let(:options) do
         {
@@ -88,7 +88,7 @@ describe Mongo::Socket::SSL do
       end
     end
 
-    context 'when ssl_verify is not specified' do
+    context 'when ssl_verify is not specified', if: testing_ssl_locally? do
 
       let(:options) do
         {
@@ -108,7 +108,7 @@ describe Mongo::Socket::SSL do
       end
     end
 
-    context 'when ssl_verify is true' do
+    context 'when ssl_verify is true', if: testing_ssl_locally? do
 
       let(:options) do
         {

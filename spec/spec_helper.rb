@@ -152,8 +152,8 @@ end
 # Is the test suite running locally (not on Travis or Jenkins).
 #
 # @since 2.1.0
-def testing_locally?
-  !(ENV['CI'] || ENV['JENKINS_HOME'])
+def testing_ssl_locally?
+  running_ssl? && !(ENV['CI'] || ENV['JENKINS_CI'])
 end
 
 # Is the test suite running on SSL.
