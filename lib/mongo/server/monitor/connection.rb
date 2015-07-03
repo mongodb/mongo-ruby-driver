@@ -75,8 +75,10 @@ module Mongo
         #
         # @since 2.0.0
         def dispatch(messages)
-          write(messages)
-          messages.last.replyable? ? read : nil
+          handle_errors do
+            write(messages)
+            messages.last.replyable? ? read : nil
+          end
         end
 
         # Initialize a new socket connection from the client to the server.
@@ -106,6 +108,18 @@ module Mongo
         def write(messages, buffer = '')
           messages.each{ |message| message.serialize(buffer) }
           ensure_connected{ |socket| socket.write(buffer) }
+        end
+
+        def handle_errors
+          begin
+            yield
+          rescue Errno::ETIMEDOUT
+            raise Error::SocketTimeoutError, TIMEOUT_ERROR
+          rescue IOError, SystemCallError => e
+            raise Error::SocketError, e.message
+          rescue OpenSSL::SSL::SSLError
+            raise Error::SocketError, SSL_ERROR
+          end
         end
       end
     end
