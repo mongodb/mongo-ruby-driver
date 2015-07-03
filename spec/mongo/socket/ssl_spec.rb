@@ -67,6 +67,27 @@ describe Mongo::Socket::SSL do
       end
     end
 
+    context 'when a CA certificate is not provided', if: running_ssl? && testing_locally? do
+
+      let(:options) do
+        {
+            :ssl => true,
+            :ssl_cert => CLIENT_PEM,
+            :ssl_key => CLIENT_PEM,
+            :ssl_verify => true
+        }
+      end
+
+      before do
+        ENV['SSL_CERT_FILE']= CA_PEM
+        socket.connect!
+      end
+
+      it 'uses the default cert store' do
+        expect(socket).to be_alive
+      end
+    end
+
     context 'when ssl_verify is not specified' do
 
       let(:options) do

@@ -149,7 +149,7 @@ def list_command_enabled?
   $list_command_enabled ||= $mongo_client.cluster.servers.first.features.list_indexes_enabled?
 end
 
-# Is the test suite running locallly (not on Travis or Jenkins).
+# Is the test suite running locally (not on Travis or Jenkins).
 #
 # @since 2.1.0
 def testing_locally?
