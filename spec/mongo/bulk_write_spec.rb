@@ -3,11 +3,11 @@ require 'spec_helper'
 describe Mongo::BulkWrite do
 
   before do
-    authorized_collection.find.delete_many
+    authorized_collection.delete_many
   end
 
   after do
-    authorized_collection.find.delete_many
+    authorized_collection.delete_many
   end
 
   let(:bulk) do

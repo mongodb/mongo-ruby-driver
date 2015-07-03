@@ -93,30 +93,29 @@ module Mongo
         private
   
         def count(collection)
-          view = collection.find(filter)
           options = ARGUMENT_MAP.reduce({}) do |opts, (key, value)|
             opts.merge!(key => arguments[value]) if arguments[value]
             opts
           end
-          view.count(options)
+          collection.count(filter, options)
         end
   
         def aggregate(collection)
-          collection.find.tap do |view|
-            view = view.batch_size(batch_size) if batch_size
-          end.aggregate(pipeline).to_a
+          collection.aggregate(pipeline, options).to_a
         end
   
         def distinct(collection)
-          collection.find(filter).distinct(field_name)
+          collection.distinct(field_name, filter, options)
         end
   
         def find(collection)
-          view = collection.find(filter)
-          ARGUMENT_MAP.each do |key, value|
-            view = view.send(key, arguments[value]) if arguments[value]
+          collection.find(filter, options).to_a
+        end
+
+        def options
+          ARGUMENT_MAP.reduce({}) do |opts, (key, value)|
+            arguments[value] ? opts.merge!(key => arguments[value]) : opts
           end
-          view.to_a
         end
   
         def batch_size

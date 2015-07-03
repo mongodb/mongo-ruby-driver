@@ -15,7 +15,7 @@ describe Mongo::Collection::View::Readable do
   end
 
   after do
-    authorized_collection.find.delete_many
+    authorized_collection.delete_many
   end
 
   describe '#allow_partial_results' do
@@ -73,6 +73,21 @@ describe Mongo::Collection::View::Readable do
         aggregation.each do |doc|
           expect(doc[:totalpop]).to_not be_nil
         end
+      end
+    end
+
+    context 'when options are specified' do
+
+      let(:agg_options) do
+        { :max_time_ms => 500 }
+      end
+
+      let(:aggregation) do
+        view.aggregate(pipeline, agg_options)
+      end
+
+      it 'passes the option to the Aggregation object' do
+        expect(aggregation.options[:max_time_ms]).to eq(agg_options[:max_time_ms])
       end
     end
   end
@@ -200,7 +215,7 @@ describe Mongo::Collection::View::Readable do
     end
 
     after do
-      authorized_collection.find.delete_many
+      authorized_collection.delete_many
     end
 
     context 'when a selector is provided' do
@@ -223,6 +238,16 @@ describe Mongo::Collection::View::Readable do
 
     it 'takes a read preference option' do
       expect(view.count(read: { mode: :secondary })).to eq(10)
+    end
+
+    it 'takes a max_time_ms option', if: write_command_enabled? do
+      expect {
+        view.count(max_time_ms: 0.1)
+      }.to raise_error(Mongo::Error::OperationFailure)
+    end
+
+    it 'sets the max_time_ms option on the command', if: write_command_enabled? do
+      expect(view.count(max_time_ms: 100)).to eq(10)
     end
   end
 
@@ -336,6 +361,27 @@ describe Mongo::Collection::View::Readable do
 
       it 'returns the distinct values' do
         expect(distinct).to eq([ 'test1', 'test2', 'test3' ])
+      end
+    end
+
+    context 'when a max_time_ms is specified', if: write_command_enabled? do
+
+      let(:documents) do
+        (1..3).map{ |i| { field: "test" }}
+      end
+
+      before do
+        authorized_collection.insert_many(documents)
+      end
+
+      it 'sets the max_time_ms option on the command' do
+        expect {
+          view.distinct(:field, max_time_ms: 0.1)
+        }.to raise_error(Mongo::Error::OperationFailure)
+      end
+
+      it 'sets the max_time_ms option on the command' do
+        expect(view.distinct(:field, max_time_ms: 100)).to eq([ 'test' ])
       end
     end
   end
@@ -568,12 +614,91 @@ describe Mongo::Collection::View::Readable do
 
   describe '#show_disk_loc' do
 
-    let(:new_view) do
-      view.show_disk_loc(true)
+    let(:options) do
+      { :show_disk_loc => true }
     end
 
-    it 'sets the value in the options' do
-      expect(new_view.show_disk_loc).to be true
+    context 'when show_disk_loc is specified' do
+
+      let(:new_show_disk_loc) do
+        false
+      end
+
+      it 'sets the show_disk_loc value' do
+        new_view = view.show_disk_loc(new_show_disk_loc)
+        expect(new_view.show_disk_loc).to eq(new_show_disk_loc)
+      end
+
+      it 'returns a new View' do
+        expect(view.show_disk_loc(new_show_disk_loc)).not_to be(view)
+      end
+    end
+
+    context 'when show_disk_loc is not specified' do
+
+      it 'returns the show_disk_loc value' do
+        expect(view.show_disk_loc).to eq(options[:show_disk_loc])
+      end
+    end
+  end
+
+  describe '#modifiers' do
+
+    let(:options) do
+      { :modifiers => { :$orderby => Mongo::Index::ASCENDING } }
+    end
+
+    context 'when a modifiers document is specified' do
+
+      let(:new_modifiers) do
+        { :modifiers => { :$orderby => Mongo::Index::DESCENDING } }
+      end
+
+      it 'sets the new_modifiers document' do
+        new_view = view.modifiers(new_modifiers)
+        expect(new_view.modifiers).to eq(new_modifiers)
+      end
+
+      it 'returns a new View' do
+        expect(view.modifiers(new_modifiers)).not_to be(view)
+      end
+    end
+
+    context 'when a modifiers document is not specified' do
+
+      it 'returns the modifiers value' do
+        expect(view.modifiers).to eq(options[:modifiers])
+      end
+    end
+  end
+
+  describe '#max_time_ms' do
+
+    let(:options) do
+      { :max_time_ms => 200 }
+    end
+
+    context 'when max_time_ms is specified' do
+
+      let(:new_max_time_ms) do
+        300
+      end
+
+      it 'sets the max_time_ms value' do
+        new_view = view.max_time_ms(new_max_time_ms)
+        expect(new_view.max_time_ms).to eq(new_max_time_ms)
+      end
+
+      it 'returns a new View' do
+        expect(view.max_time_ms(new_max_time_ms)).not_to be(view)
+      end
+    end
+
+    context 'when max_time_ms is not specified' do
+
+      it 'returns the max_time_ms value' do
+        expect(view.max_time_ms).to eq(options[:max_time_ms])
+      end
     end
   end
 
@@ -652,6 +777,82 @@ describe Mongo::Collection::View::Readable do
 
       it 'returns the sort' do
         expect(view.sort).to eq(options[:sort])
+      end
+    end
+
+    context 'when an option is a cursor flag' do
+
+      let(:query_spec_options) do
+        view.send(:query_spec)[:options]
+      end
+
+      context 'when allow_partial_results is set as an option' do
+
+        let(:options) do
+          { :allow_partial_results => true }
+        end
+
+        it 'sets the cursor flag' do
+          expect(query_spec_options[:flags]).to eq([:partial])
+        end
+
+        context 'when allow_partial_results is also called as a method' do
+
+          before do
+            view.allow_partial_results
+          end
+
+          it 'sets only one cursor flag' do
+            expect(query_spec_options[:flags]).to eq([:partial])
+          end
+        end
+      end
+
+      context 'when oplog_replay is set as an option' do
+
+        let(:options) do
+          { :oplog_replay => true }
+        end
+
+        it 'sets the cursor flag' do
+          expect(query_spec_options[:flags]).to eq([:oplog_replay])
+        end
+      end
+
+      context 'when no_cursor_timeout is set as an option' do
+
+        let(:options) do
+          { :no_cursor_timeout => true }
+        end
+
+        it 'sets the cursor flag' do
+          expect(query_spec_options[:flags]).to eq([:no_cursor_timeout])
+        end
+      end
+
+      context 'when cursor_type is set as an option' do
+
+        context 'when :tailable is the cursor type' do
+
+          let(:options) do
+            { :cursor_type => :tailable }
+          end
+
+          it 'sets the cursor flag' do
+            expect(query_spec_options[:flags]).to eq([:tailable_cursor])
+          end
+        end
+
+        context 'when :tailable_await is the cursor type' do
+
+          let(:options) do
+            { :cursor_type => :tailable_await }
+          end
+
+          it 'sets the cursor flags' do
+            expect(query_spec_options[:flags]).to eq([:await_data, :tailable_cursor])
+          end
+        end
       end
     end
   end

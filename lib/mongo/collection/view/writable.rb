@@ -34,10 +34,11 @@ module Mongo
           cmd = { :findandmodify => collection.name, :query => selector, :remove => true }
           cmd[:fields] = projection if projection
           cmd[:sort] = sort if sort
+          cmd[:maxTimeMS] = max_time_ms if max_time_ms
           database.command(cmd).first['value']
         end
 
-        # Finds a single document and replace it.
+        # Finds a single document and replaces it.
         #
         # @example Find a document and replace it, returning the original.
         #   view.find_one_and_replace({ name: 'test' }, :return_document => :before)
@@ -45,7 +46,7 @@ module Mongo
         # @example Find a document and replace it, returning the new document.
         #   view.find_one_and_replace({ name: 'test' }, :return_document => :after)
         #
-        # @param [ BSON::Document ] replacement The updates.
+        # @param [ BSON::Document ] replacement The replacement.
         # @param [ Hash ] opts The options.
         #
         # @option opts [ Symbol ] :return_document Either :before or :after.
@@ -79,6 +80,7 @@ module Mongo
           cmd[:sort] = sort if sort
           cmd[:new] = !!(opts[:return_document] && opts[:return_document] == :after)
           cmd[:upsert] = opts[:upsert] if opts[:upsert]
+          cmd[:maxTimeMS] = max_time_ms if max_time_ms
           value = database.command(cmd).first['value']
           value unless value.nil? || value.empty?
         end
@@ -112,7 +114,7 @@ module Mongo
         # @example Replace a single document.
         #   collection_view.replace_one({ name: 'test' })
         #
-        # @param [ Hash ] document The document to replace.
+        # @param [ Hash ] replacement The replacement document.
         # @param [ Hash ] opts The options.
         #
         # @option opts [ true, false ] :upsert Whether to upsert if the
@@ -121,14 +123,16 @@ module Mongo
         # @return [ Result ] The response from the database.
         #
         # @since 2.0.0
-        def replace_one(document, opts = {})
-          update(document, false, opts)
+        def replace_one(replacement, opts = {})
+          update(replacement, false, opts)
         end
 
         # Update documents in the collection.
         #
         # @example Update multiple documents in the collection.
         #   collection_view.update_many('$set' => { name: 'test' })
+        #
+        # @param [ Hash ] spec The update statement.
         # @param [ Hash ] opts The options.
         #
         # @option opts [ true, false ] :upsert Whether to upsert if the
@@ -145,6 +149,8 @@ module Mongo
         #
         # @example Update a single document in the collection.
         #   collection_view.update_one('$set' => { name: 'test' })
+        #
+        # @param [ Hash ] spec The update statement.
         # @param [ Hash ] opts The options.
         #
         # @option opts [ true, false ] :upsert Whether to upsert if the

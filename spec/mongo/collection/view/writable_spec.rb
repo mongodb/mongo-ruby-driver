@@ -15,7 +15,7 @@ describe Mongo::Collection::View::Writable do
   end
 
   after do
-    authorized_collection.find.delete_many
+    authorized_collection.delete_many
   end
 
   describe '#find_one_and_delete' do
@@ -456,11 +456,11 @@ describe Mongo::Collection::View::Writable do
     context 'when a selector was provided' do
 
       let(:selector) do
-        { field: 'test1' }
+        { field: 'test' }
       end
 
       before do
-        authorized_collection.insert_many([{ field: 'test1' }, { field: 'test2' }])
+        authorized_collection.insert_many([{ field: 'test' }, { field: 'test' }])
       end
 
       let!(:response) do
@@ -472,7 +472,7 @@ describe Mongo::Collection::View::Writable do
       end
 
       it 'returns the number updated' do
-        expect(response.written_count).to eq(1)
+        expect(response.written_count).to eq(2)
       end
 
       it 'updates the documents in the collection' do

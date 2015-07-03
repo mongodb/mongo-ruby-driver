@@ -57,6 +57,23 @@ module Mongo
       name == other.name && database == other.database && options == other.options
     end
 
+    # Instantiate a new collection.
+    #
+    # @example Instantiate a new collection.
+    #   Mongo::Collection.new(database, 'test')
+    #
+    # @param [ Mongo::Database ] database The collection's database.
+    # @param [ String, Symbol ] name The collection name.
+    # @param [ Hash ] options The collection options.
+    #
+    # @since 2.0.0
+    def initialize(database, name, options = {})
+      raise Error::InvalidCollectionName.new unless name
+      @database = database
+      @name = name.to_s.freeze
+      @options = options.freeze
+    end
+
     # Is the collection capped?
     #
     # @example Is the collection capped?
@@ -108,12 +125,96 @@ module Mongo
     #   collection.find
     #
     # @param [ Hash ] filter The filter to use in the find.
+    # @param [ Hash ] options The options for the find.
+    #
+    # @option options [ true, false ] :allow_partial_results Allows the query to get partial
+    #   results if some shards are down.
+    # @option options [ Integer ] :batch_size The number of documents returned in each batch
+    #   of results from MongoDB.
+    # @option options [ String ] :comment Associate a comment with the query.
+    # @option options [ :tailable, :tailable_await ] :cursor_type The type of cursor to use.
+    # @option options [ Integer ] :limit The max number of docs to return from the query.
+    # @option options [ Integer ] :max_time_ms The maximum amount of time to allow the query
+    #   to run in milliseconds.
+    # @option options [ Hash ] :modifiers A document containing meta-operators modifying the
+    #   output or behavior of a query.
+    # @option options [ true, false ] :no_cursor_timeout The server normally times out idle
+    #   cursors after an inactivity period (10 minutes) to prevent excess memory use.
+    #   Set this option to prevent that.
+    # @option options [ true, false ] :oplog_replay Internal replication use only - driver
+    #   should not set.
+    # @option options [ Hash ] :projection The fields to include or exclude from each doc
+    #   in the result set.
+    # @option options [ Integer ] :skip The number of docs to skip before returning results.
+    # @option options [ Hash ] :sort The key and direction pairs by which the result set
+    #   will be sorted.
     #
     # @return [ CollectionView ] The collection view.
     #
     # @since 2.0.0
-    def find(filter = nil)
-      View.new(self, filter || {})
+    def find(filter = nil, options = {})
+      View.new(self, filter || {}, options)
+    end
+
+    # Perform an aggregation on the collection.
+    #
+    # @example Perform an aggregation.
+    #   collection.aggregate([ { "$group" => { "_id" => "$city", "tpop" => { "$sum" => "$pop" }}} ])
+    #
+    # @param [ Array<Hash> ] pipeline The aggregation pipeline.
+    # @param [ Hash ] options The aggregation options.
+    #
+    # @option options [ true, false ] :allow_disk_use Set to true if disk usage is allowed during
+    #   the aggregation.
+    # @option options [ Integer ] :batch_size The number of documents to return per batch.
+    # @option options [ Integer ] :max_time_ms The maximum amount of time in milliseconds to allow the
+    #   aggregation to run.
+    # @option options [ true, false ] :use_cursor Indicates whether the command will request that the server
+    #   provide results using a cursor.
+    #
+    # @return [ Aggregation ] The aggregation object.
+    #
+    # @since 2.1.0
+    def aggregate(pipeline, options = {})
+      View.new(self, {}).aggregate(pipeline, options)
+    end
+
+    # Get a count of matching documents in the collection.
+    #
+    # @example Get the count.
+    #   collection.count(name: 1)
+    #
+    # @param [ Hash ] filter A filter for matching documents.
+    # @param [ Hash ] options The count options.
+    #
+    # @option options [ Hash ] :hint The index to use.
+    # @option options [ Integer ] :limit The maximum number of documents to count.
+    # @option options [ Integer ] :max_time_ms The maximum amount of time to allow the command to run.
+    # @option options [ Integer ] :skip The number of documents to skip before counting.
+    #
+    # @return [ Integer ] The document count.
+    #
+    # @since 2.1.0
+    def count(filter = nil, options = {})
+      View.new(self, filter || {}).count(options)
+    end
+
+    # Get a list of distinct values for a specific field.
+    #
+    # @example Get the distinct values.
+    #   collection.distinct('name')
+    #
+    # @param [ Symbol, String ] field_name The name of the field.
+    # @param [ Hash ] filter The documents from which to retrieve the distinct values.
+    # @param [ Hash ] options The distinct command options.
+    #
+    # @option options [ Integer ] :max_time_ms The maximum amount of time to allow the command to run.
+    #
+    # @return [ Array<Object> ] The list of distinct values.
+    #
+    # @since 2.1.0
+    def distinct(field_name, filter = nil, options = {})
+      View.new(self, filter || {}).distinct(field_name, options)
     end
 
     # Get a view of all indexes for this collection. Can be iterated or has
@@ -129,23 +230,6 @@ module Mongo
     # @since 2.0.0
     def indexes(options = {})
       Index::View.new(self, options)
-    end
-
-    # Instantiate a new collection.
-    #
-    # @example Instantiate a new collection.
-    #   Mongo::Collection.new(database, 'test')
-    #
-    # @param [ Mongo::Database ] database The collection's database.
-    # @param [ String, Symbol ] name The collection name.
-    # @param [ Hash ] options The collection options.
-    #
-    # @since 2.0.0
-    def initialize(database, name, options = {})
-      raise Error::InvalidCollectionName.new unless name
-      @database = database
-      @name = name.to_s.freeze
-      @options = options.freeze
     end
 
     # Get a pretty printed string inspection for the collection.
@@ -205,11 +289,179 @@ module Mongo
     # @param [ Array<Hash> ] operations The operations.
     # @param [ Hash ] options The options.
     #
+    # @option options [ true, false ] :ordered Whether the operations
+    #   should be executed in order.
+    # @option options [ Hash ] :write_concern The write concern options.
+    #   Can be :w => Integer, :fsync => Boolean, :j => Boolean.
+    #
     # @return [ BulkWrite::Result ] The result of the operation.
     #
     # @since 2.0.0
     def bulk_write(operations, options = {})
       BulkWrite.get(self, operations, options).execute
+    end
+
+    # Remove a document from the collection.
+    #
+    # @example Remove a single document from the collection.
+    #   collection.delete_one
+    #
+    # @param [ Hash ] filter The filter to use.
+    #
+    # @return [ Result ] The response from the database.
+    #
+    # @since 2.1.0
+    def delete_one(filter = nil)
+      find(filter).delete_one
+    end
+
+    # Remove documents from the collection.
+    #
+    # @example Remove multiple documents from the collection.
+    #   collection.delete_many
+    #
+    # @param [ Hash ] filter The filter to use.
+    #
+    # @return [ Result ] The response from the database.
+    #
+    # @since 2.1.0
+    def delete_many(filter = nil)
+      find(filter).delete_many
+    end
+
+    # Replaces a single document in the collection with the new document.
+    #
+    # @example Replace a single document.
+    #   collection.replace_one({ name: 'test' }, { name: 'test1' })
+    #
+    # @param [ Hash ] filter The filter to use.
+    # @param [ Hash ] replacement The replacement document..
+    # @param [ Hash ] options The options.
+    #
+    # @option options [ true, false ] :upsert Whether to upsert if the
+    #   document doesn't exist.
+    #
+    # @return [ Result ] The response from the database.
+    #
+    # @since 2.1.0
+    def replace_one(filter, replacement, options = {})
+      find(filter).replace_one(replacement, options)
+    end
+
+    # Update documents in the collection.
+    #
+    # @example Update multiple documents in the collection.
+    #   collection.update_many({ name: 'test'}, '$set' => { name: 'test1' })
+    #
+    # @param [ Hash ] filter The filter to use.
+    # @param [ Hash ] update The update statement.
+    # @param [ Hash ] options The options.
+    #
+    # @option options [ true, false ] :upsert Whether to upsert if the
+    #   document doesn't exist.
+    #
+    # @return [ Result ] The response from the database.
+    #
+    # @since 2.1.0
+    def update_many(filter, update, options = {})
+      find(filter).update_many(update, options)
+    end
+
+    # Update a single document in the collection.
+    #
+    # @example Update a single document in the collection.
+    #   collection.update_one({ name: 'test'}, '$set' => { name: 'test1'})
+    #
+    # @param [ Hash ] filter The filter to use.
+    # @param [ Hash ] update The update statement.
+    # @param [ Hash ] options The options.
+    #
+    # @option options [ true, false ] :upsert Whether to upsert if the
+    #   document doesn't exist.
+    #
+    # @return [ Result ] The response from the database.
+    #
+    # @since 2.1.0
+    def update_one(filter, update, options = {})
+      find(filter).update_one(update, options)
+    end
+
+    # Finds a single document in the database via findAndModify and deletes
+    # it, returning the original document.
+    #
+    # @example Find one document and delete it.
+    #   collection.find_one_and_delete(name: 'test')
+    #
+    # @param [ Hash ] filter The filter to use.
+    # @param [ Hash ] options The options.
+    #
+    # @option options [ Integer ] :max_time_ms The maximum amount of time to allow the command
+    #   to run in milliseconds.
+    # @option options [ Hash ] :projection The fields to include or exclude in the returned doc.
+    # @option options [ Hash ] :sort The key and direction pairs by which the result set
+    #   will be sorted.
+    #
+    # @return [ BSON::Document, nil ] The document, if found.
+    #
+    # @since 2.1.0
+    def find_one_and_delete(filter, options = {})
+      find(filter, options).find_one_and_delete
+    end
+
+    # Finds a single document via findAndModify and updates it, returning the original doc unless
+    # otherwise specified.
+    #
+    # @example Find a document and update it, returning the original.
+    #   collection.find_one_and_update({ name: 'test' }, { "$set" => { name: 'test1' }})
+    #
+    # @example Find a document and update it, returning the updated document.
+    #   collection.find_one_and_update({ name: 'test' }, { "$set" => { name: 'test1' }}, :return_document => :after)
+    #
+    # @param [ Hash ] filter The filter to use.
+    # @param [ BSON::Document ] update The update statement.
+    # @param [ Hash ] options The options.
+    #
+    # @option options [ Integer ] :max_time_ms The maximum amount of time to allow the command
+    #   to run in milliseconds.
+    # @option options [ Hash ] :projection The fields to include or exclude in the returned doc.
+    # @option options [ Hash ] :sort The key and direction pairs by which the result set
+    #   will be sorted.
+    # @option options [ Symbol ] :return_document Either :before or :after.
+    # @option options [ true, false ] :upsert Whether to upsert if the document doesn't exist.
+    #
+    # @return [ BSON::Document ] The document.
+    #
+    # @since 2.1.0
+    def find_one_and_update(filter, update, options = {})
+      find(filter, options).find_one_and_update(update, options)
+    end
+
+    # Finds a single document and replaces it, returning the original doc unless
+    # otherwise specified.
+    #
+    # @example Find a document and replace it, returning the original.
+    #   collection.find_one_and_replace({ name: 'test' }, { name: 'test1' })
+    #
+    # @example Find a document and replace it, returning the new document.
+    #   collection.find_one_and_replace({ name: 'test' }, { name: 'test1' }, :return_document => :after)
+    #
+    # @param [ Hash ] filter The filter to use.
+    # @param [ BSON::Document ] replacement The replacement document.
+    # @param [ Hash ] options The options.
+    #
+    # @option options [ Integer ] :max_time_ms The maximum amount of time to allow the command
+    #   to run in milliseconds.
+    # @option options [ Hash ] :projection The fields to include or exclude in the returned doc.
+    # @option options [ Hash ] :sort The key and direction pairs by which the result set
+    #   will be sorted.
+    # @option options [ Symbol ] :return_document Either :before or :after.
+    # @option options [ true, false ] :upsert Whether to upsert if the document doesn't exist.
+    #
+    # @return [ BSON::Document ] The document.
+    #
+    # @since 2.1.0
+    def find_one_and_replace(filter, replacement, options = {})
+      find(filter, options).find_one_and_update(replacement, options)
     end
 
     # Get the fully qualified namespace of the collection.

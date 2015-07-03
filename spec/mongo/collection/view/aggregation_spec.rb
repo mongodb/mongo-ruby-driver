@@ -61,7 +61,7 @@ describe Mongo::Collection::View::Aggregation do
     end
 
     after do
-      authorized_collection.find.delete_many
+      authorized_collection.delete_many
     end
 
     context 'when a block is provided' do
@@ -175,6 +175,128 @@ describe Mongo::Collection::View::Aggregation do
 
       it 'includes the option in the spec' do
         expect(aggregation.send(:aggregate_spec)[:selector][:allowDiskUse]).to eq(true)
+      end
+
+      context 'when allow_disk_use is specified as an option' do
+
+        let(:options) do
+          { :allow_disk_use => true }
+        end
+
+        let(:aggregation) do
+          described_class.new(view, pipeline, options)
+        end
+
+        it 'includes the option in the spec' do
+          expect(aggregation.send(:aggregate_spec)[:selector][:allowDiskUse]).to eq(true)
+        end
+
+        context 'when #allow_disk_use is also called' do
+
+          let(:options) do
+            { :allow_disk_use => true }
+          end
+
+          let(:aggregation) do
+            described_class.new(view, pipeline, options).allow_disk_use(false)
+          end
+
+          it 'overrides the first option with the second' do
+            expect(aggregation.send(:aggregate_spec)[:selector][:allowDiskUse]).to eq(false)
+          end
+        end
+      end
+    end
+
+    context 'when max_time_ms is an option' do
+
+      let(:options) do
+        { :max_time_ms => 100 }
+      end
+
+      it 'includes the option in the spec' do
+        expect(aggregation.send(:aggregate_spec)[:selector][:maxTimeMS]).to eq(options[:max_time_ms])
+      end
+    end
+
+    context 'when batch_size is set' do
+
+      context 'when batch_size is set on the view' do
+
+        let(:view_options) do
+          { :batch_size => 10 }
+        end
+
+        it 'uses the batch_size on the view' do
+          expect(aggregation.send(:aggregate_spec)[:selector][:cursor][:batchSize]).to eq(view_options[:batch_size])
+        end
+      end
+
+      context 'when batch_size is provided in the options' do
+
+        let(:options) do
+          { :batch_size => 20 }
+        end
+
+        it 'includes the option in the spec' do
+          expect(aggregation.send(:aggregate_spec)[:selector][:cursor][:batchSize]).to eq(options[:batch_size])
+        end
+
+        context 'when  batch_size is also set on the view' do
+
+          let(:view_options) do
+            { :batch_size => 10 }
+          end
+
+          it 'overrides the view batch_size with the option batch_size' do
+            expect(aggregation.send(:aggregate_spec)[:selector][:cursor][:batchSize]).to eq(options[:batch_size])
+          end
+        end
+      end
+    end
+
+    context 'when use_cursor is set' do
+
+      context 'when use_cursor is true' do
+
+        context 'when batch_size is set' do
+
+          let(:options) do
+            { :use_cursor => true,
+              :batch_size => 10
+            }
+          end
+
+          it 'sets a batch size document in the spec' do
+            expect(aggregation.send(:aggregate_spec)[:selector][:cursor][:batchSize]).to eq(options[:batch_size])
+          end
+        end
+
+        context 'when batch_size is not set' do
+
+          let(:options) do
+            { :use_cursor => true }
+          end
+
+          it 'sets an empty document in the spec' do
+            expect(aggregation.send(:aggregate_spec)[:selector][:cursor]).to eq({})
+          end
+        end
+
+      end
+
+      context 'when use_cursor is false' do
+
+        let(:options) do
+          { :use_cursor => false }
+        end
+
+        context 'when batch_size is set' do
+
+          it 'does not set the cursor option in the spec' do
+            expect(aggregation.send(:aggregate_spec)[:selector][:cursor]).to be_nil
+          end
+        end
       end
     end
   end
