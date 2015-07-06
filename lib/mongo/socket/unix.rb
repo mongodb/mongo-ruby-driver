@@ -39,7 +39,7 @@ module Mongo
       # @since 2.0.0
       def connect!
         Timeout.timeout(timeout, Error::SocketTimeoutError) do
-          socket.connect(path)
+          handle_errors { socket.connect(path) }
           self
         end
       end
