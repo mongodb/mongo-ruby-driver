@@ -617,6 +617,48 @@ describe Mongo::Server::Description do
     end
   end
 
+  describe '#me_mismatch?' do
+
+    let(:description) do
+      described_class.new(address, config)
+    end
+
+    context 'when the server address matches the me field' do
+
+      let(:config) do
+        replica.merge('me' => address.to_s)
+      end
+
+      it 'returns false' do
+        expect(description.me_mismatch?).to be(false)
+      end
+    end
+
+    context 'when the server address does not match the me field' do
+
+      let(:config) do
+        replica.merge('me' => 'localhost:27020')
+      end
+
+      it 'returns true' do
+        expect(description.me_mismatch?).to be(true)
+      end
+    end
+
+    context 'when there is no me field' do
+
+      let(:config) do
+        replica.tap do |r|
+          r.delete('me')
+        end
+      end
+
+      it 'returns false' do
+        expect(description.me_mismatch?).to be(false)
+      end
+    end
+  end
+
   describe '#lists_server?' do
 
     let(:description) do

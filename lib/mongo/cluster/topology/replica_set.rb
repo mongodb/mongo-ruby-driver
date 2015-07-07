@@ -157,8 +157,9 @@ module Mongo
         def remove_hosts?(description)
           !description.config.empty? &&
             (description.primary? ||
-              description.hosts.empty? ||
-                !member_of_this_set?(description))
+              description.me_mismatch? ||
+                description.hosts.empty? ||
+                  !member_of_this_set?(description))
         end
 
         # Whether a specific server in the cluster can be removed, given a description.
