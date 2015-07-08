@@ -29,7 +29,7 @@ phases: [
                 "a:27017": {
                     type: "Unknown",
                     setName: ,
-                    electionId: ,
+                    electionId:
                 },
                 "b:27017": {
                     type: "RSPrimary",
@@ -39,7 +39,6 @@ phases: [
             },
             topologyType: "ReplicaSetWithPrimary",
             setName: "rs",
-            maxElectionId: {"$oid": "000000000000000000000001"}
         }
     }
 ]
