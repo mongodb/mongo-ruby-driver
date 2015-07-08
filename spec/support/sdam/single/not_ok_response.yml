@@ -26,7 +26,6 @@ phases: [
 
                 "a:27017": {
 
-                    address: "a",
                     type: "Unknown",
                     setName:
                 }
