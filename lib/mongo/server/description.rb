@@ -84,6 +84,11 @@ module Mongo
       # @since 2.0.0
       MAX_WRITE_BATCH_SIZE = 'maxWriteBatchSize'.freeze
 
+      # Constant for reading the me field.
+      #
+      # @since 2.1.0
+      ME = 'me'.freeze
+
       # Default max write batch size.
       #
       # @since 2.0.0
@@ -302,6 +307,18 @@ module Mongo
         config[MIN_WIRE_VERSION] || LEGACY_WIRE_VERSION
       end
 
+      # Get the me field value.
+      #
+      # @example Get the me field value.
+      #   description.me
+      #
+      # @return [ String ] The me field.
+      #
+      # @since 2.1.0
+      def me
+        config[ME]
+      end
+
       # Get the tags configured for the server.
       #
       # @example Get the tags.
@@ -509,6 +526,18 @@ module Mongo
       # @since 2.0.6
       def replica_set_member?
         !(standalone? || mongos?)
+      end
+
+      # Check if there is a mismatch between the address host and the me field.
+      #
+      # @example Check if there is a mismatch.
+      #   description.me_mismatch?
+      #
+      # @return [ true, false ] If there is a mismatch between the me field and the address host.
+      #
+      # @since 2.0.6
+      def me_mismatch?
+        !!(address.to_s != me if me)
       end
 
       # Check equality of two descriptions.
