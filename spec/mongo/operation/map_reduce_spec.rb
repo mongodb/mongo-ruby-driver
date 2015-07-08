@@ -77,24 +77,6 @@ describe Mongo::Operation::MapReduce do
     end
   end
 
-  describe '#merge' do
-
-    let(:other_op) { described_class.new(spec) }
-
-    it 'is not allowed' do
-      expect{ op.merge(other_op) }.to raise_exception
-    end
-  end
-
-  describe '#merge!' do
-
-    let(:other_op) { described_class.new(spec) }
-
-    it 'is not allowed' do
-      expect{ op.merge!(other_op) }.to raise_exception
-    end
-  end
-
   describe '#execute' do
 
     let(:documents) do
@@ -137,6 +119,82 @@ describe Mongo::Operation::MapReduce do
         expect {
           op.execute(authorized_primary.context)
         }.to raise_error(Mongo::Error::OperationFailure)
+      end
+    end
+
+    describe '#secondary_ok' do
+
+      context 'when the selector has an out value' do
+
+        context 'when out is a symbol' do
+
+          context 'when out is inline' do
+
+            let(:selector) do
+              { :mapreduce => TEST_COLL,
+                :map => map,
+                :reduce => reduce,
+                :query => {},
+                :out => { 'inline' => 1 }
+              }
+            end
+
+            it 'returns true' do
+              expect(op.send(:secondary_ok?)).to be(true)
+            end
+          end
+
+          context 'when out is not inline' do
+
+            let(:selector) do
+              { :mapreduce => TEST_COLL,
+                :map => map,
+                :reduce => reduce,
+                :query => {},
+                :out => 'a_collection'
+              }
+            end
+
+            it 'returns false' do
+              expect(op.send(:secondary_ok?)).to be(false)
+            end
+          end
+        end
+
+        context 'when out is a string' do
+
+          context 'when out is inline' do
+
+            let(:selector) do
+              { :mapreduce => TEST_COLL,
+                :map => map,
+                :reduce => reduce,
+                :query => {},
+                'out' => { 'inline' => 1 }
+              }
+            end
+
+            it 'returns true' do
+              expect(op.send(:secondary_ok?)).to be(true)
+            end
+          end
+
+          context 'when out is not inline' do
+
+            let(:selector) do
+              { :mapreduce => TEST_COLL,
+                :map => map,
+                :reduce => reduce,
+                :query => {},
+                'out' => 'a_collection'
+              }
+            end
+
+            it 'returns false' do
+              expect(op.send(:secondary_ok?)).to be(false)
+            end
+          end
+        end
       end
     end
   end

@@ -43,7 +43,6 @@ module Mongo
     #
     # @since 2.0.0
     class MapReduce
-      include Executable
       include Specifiable
       include Limited
       include ReadPreferrable
@@ -64,9 +63,7 @@ module Mongo
       #
       # @since 2.0.0
       def execute(context)
-        unless valid_context?(context)
-          raise Error::NeedPrimaryServer.new(ERROR_MESSAGE)
-        end
+        raise Error::NeedPrimaryServer.new(ERROR_MESSAGE) unless valid_context?(context)
         execute_message(context)
       end
 
@@ -82,9 +79,13 @@ module Mongo
         end
       end
 
+      def out
+        selector[:out] || selector['out']
+      end
+
       def secondary_ok?
-        selector[:out].respond_to?(:keys) &&
-          selector[:out].keys.first.to_s.downcase == 'inline'
+        out.respond_to?(:keys) &&
+          out.keys.first.to_s.downcase == 'inline'
       end
 
       def query_coll
