@@ -25,6 +25,7 @@ module Mongo
         include Immutable
         include Iterable
         include Explainable
+        include Loggable
 
         # @return [ View ] view The collection view.
         attr_reader :view
@@ -132,16 +133,20 @@ module Mongo
           Operation::Aggregate.new(aggregate_spec)
         end
 
+        def valid_server?(server)
+          server.standalone? || server.mongos? || server.primary? || secondary_ok?
+        end
+
+        def secondary_ok?
+          pipeline.none? { |op| op.key?('$out') || op.key?(:$out) }
+        end
+
         def send_initial_query(server)
-          begin
-            initial_query_op.execute(server.context)
-          rescue Mongo::Error::NeedPrimaryServer
-            log_warn([
-              'Rerouting the Aggregation operation to the primary server.'
-            ])
+          unless valid_server?(server)
+            log_warn([ 'Rerouting the Aggregation operation to the primary server.' ])
             server = cluster.next_primary
-            initial_query_op.execute(server.context)
           end
+          initial_query_op.execute(server.context)
         end
       end
     end

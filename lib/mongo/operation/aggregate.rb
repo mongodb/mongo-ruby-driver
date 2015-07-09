@@ -46,11 +46,6 @@ module Mongo
       include Limited
       include ReadPreferrable
 
-      # The need primary error message.
-      #
-      # @since 2.0.0
-      ERROR_MESSAGE = "The pipeline contains the '$out' operator so the primary must be used.".freeze
-
       # Execute the operation.
       # The context gets a connection on which the operation
       # is sent in the block.
@@ -64,9 +59,6 @@ module Mongo
       #
       # @since 2.0.0
       def execute(context)
-        unless valid_context?(context)
-          raise Error::NeedPrimaryServer.new(ERROR_MESSAGE)
-        end
         execute_message(context)
       end
 
@@ -76,14 +68,6 @@ module Mongo
         context.with_connection do |connection|
           Result.new(connection.dispatch([ message(context) ])).validate!
         end
-      end
-
-      def valid_context?(context)
-        context.standalone? || context.mongos? || context.primary? || secondary_ok?
-      end
-
-      def secondary_ok?
-        selector[:pipeline].none? { |op| op.key?('$out') || op.key?(:$out) }
       end
 
       def query_coll

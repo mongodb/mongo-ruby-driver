@@ -300,4 +300,69 @@ describe Mongo::Collection::View::Aggregation do
       end
     end
   end
+
+  context 'when $out is in the pipeline' do
+
+    let(:pipeline) do
+      [{
+           "$group" => {
+               "_id" => "$city",
+               "totalpop" => { "$sum" => "$pop" }
+           }
+       },
+       {
+           '$out' => 'output_collection'
+       }
+      ]
+    end
+
+    after do
+      authorized_client['output_collection'].delete_many
+    end
+
+    context 'when $out is a string' do
+
+      it 'does not allow the operation on a secondary' do
+        expect(aggregation.send(:secondary_ok?)).to be(false)
+      end
+    end
+
+    context 'when $out is a symbol' do
+
+      let(:pipeline) do
+        [{
+             "$group" => {
+                 "_id" => "$city",
+                 "totalpop" => { "$sum" => "$pop" }
+             }
+         },
+         {
+             :$out => 'output_collection'
+         }
+        ]
+      end
+
+      it 'does not allow the operation on a secondary' do
+        expect(aggregation.send(:secondary_ok?)).to be(false)
+      end
+    end
+
+
+    context 'when the context is not a valid server for writing' do
+
+     it 'reroutes the operation to a primary' do
+       allow(aggregation).to receive(:valid_server?).and_return(false)
+       expect(Mongo::Logger).to receive(:log).and_return(true)
+       aggregation.to_a
+     end
+    end
+
+    context 'when the context is a valid server for writing' do
+
+     it 'does not reroute the operation to a primary' do
+       expect(Mongo::Logger).not_to receive(:log)
+       aggregation.to_a
+     end
+    end
+  end
 end
