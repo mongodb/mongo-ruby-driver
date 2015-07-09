@@ -30,7 +30,7 @@ module Mongo
       #
       # @since 2.0.0
       class UpdateUser
-        include Executable
+        include GLEable
         include Specifiable
 
         # Execute the operation.

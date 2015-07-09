@@ -12,15 +12,28 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/operation/write/idable'
-require 'mongo/operation/write/gleable'
-require 'mongo/operation/write/bulk'
-require 'mongo/operation/write/delete'
-require 'mongo/operation/write/insert'
-require 'mongo/operation/write/update'
-require 'mongo/operation/write/create_index'
-require 'mongo/operation/write/drop_index'
-require 'mongo/operation/write/create_user'
-require 'mongo/operation/write/update_user'
-require 'mongo/operation/write/remove_user'
-require 'mongo/operation/write/command'
+module Mongo
+  module Operation
+    module Write
+
+      # This module contains common functionality for sending a GetLastError message.
+      #
+      # @since 2.1.0
+      module GLEable
+
+        private
+
+        def gle
+          if gle_message = write_concern.get_last_error
+            Protocol::Query.new(
+                db_name,
+                Database::COMMAND,
+                gle_message,
+                options.merge(limit: -1)
+            )
+          end
+        end
+      end
+    end
+  end
+end

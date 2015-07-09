@@ -29,7 +29,7 @@ module Mongo
       #
       # @since 2.0.0
       class RemoveUser
-        include Executable
+        include GLEable
         include Specifiable
 
         # Execute the remove user operation.
