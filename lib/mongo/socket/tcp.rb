@@ -51,8 +51,8 @@ module Mongo
       # Initializes a new TCP socket.
       #
       # @example Create the TCP socket.
-      #   TCP.new('::1', 27017, 30)
-      #   TCP.new('127.0.0.1', 27017, 30)
+      #   TCP.new('::1', 27017, 30, Socket::PF_INET)
+      #   TCP.new('127.0.0.1', 27017, 30, Socket::PF_INET)
       #
       # @param [ String ] host The hostname or IP address.
       # @param [ Integer ] port The port number.
