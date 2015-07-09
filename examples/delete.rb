@@ -8,7 +8,7 @@ client[:restaurants].find('borough' => 'Queens').delete_one
 
 # Delete all documents in a collection
 
-client[:restaurants].find.delete_many
+client[:restaurants].delete_many
 
 # Drop a collection
 

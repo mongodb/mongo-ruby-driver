@@ -40,8 +40,8 @@ describe Mongo::Grid::FS do
     end
 
     after do
-      fs.files_collection.find.delete_many
-      fs.chunks_collection.find.delete_many
+      fs.files_collection.delete_many
+      fs.chunks_collection.delete_many
     end
 
     let(:from_db) do
@@ -70,8 +70,8 @@ describe Mongo::Grid::FS do
       end
 
       after do
-        fs.files_collection.find.delete_many
-        fs.chunks_collection.find.delete_many
+        fs.files_collection.delete_many
+        fs.chunks_collection.delete_many
       end
 
       let(:from_db) do
@@ -94,8 +94,8 @@ describe Mongo::Grid::FS do
     context 'when inserting the file more than once' do
 
       after do
-        fs.files_collection.find.delete_many
-        fs.chunks_collection.find.delete_many
+        fs.files_collection.delete_many
+        fs.chunks_collection.delete_many
       end
 
       it 'raises an error' do
@@ -122,8 +122,8 @@ describe Mongo::Grid::FS do
       end
 
       after do
-        fs.files_collection.find.delete_many
-        fs.chunks_collection.find.delete_many
+        fs.files_collection.delete_many
+        fs.chunks_collection.delete_many
       end
 
       it 'successfully inserts the file' do

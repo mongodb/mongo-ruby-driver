@@ -292,8 +292,8 @@ describe Mongo::Database do
         end
 
         after do
-          fs.files_collection.find.delete_many
-          fs.chunks_collection.find.delete_many
+          fs.files_collection.delete_many
+          fs.chunks_collection.delete_many
         end
 
         let(:from_db) do
