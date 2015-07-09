@@ -19,7 +19,7 @@ module Mongo
       # This module contains common functionality for sending a GetLastError message.
       #
       # @since 2.1.0
-      module GLEable
+      module GLE
 
         private
 

@@ -42,7 +42,7 @@ module Mongo
       #
       # @since 2.0.0
       class CreateIndex
-        include GLEable
+        include GLE
         include Specifiable
 
         # Execute the ensure index operation.
@@ -77,7 +77,7 @@ module Mongo
 
         def index_documents
           indexes.dup.each do |index|
-            index[:ns] = "#{db_name}.#{coll_name}"
+            index[:ns] = namespace
           end
         end
 

@@ -43,7 +43,7 @@ module Mongo
       #
       # @since 2.0.0
       class Insert
-        include GLEable
+        include GLE
         include Specifiable
         include Idable
 

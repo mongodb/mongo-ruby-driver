@@ -13,7 +13,7 @@
 # limitations under the License.
 
 require 'mongo/operation/write/idable'
-require 'mongo/operation/write/gleable'
+require 'mongo/operation/write/gle'
 require 'mongo/operation/write/bulk'
 require 'mongo/operation/write/delete'
 require 'mongo/operation/write/insert'

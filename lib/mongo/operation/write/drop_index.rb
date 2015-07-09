@@ -35,7 +35,7 @@ module Mongo
       #
       # @since 2.0.0
       class DropIndex
-        include GLEable
+        include GLE
         include Specifiable
 
         # Execute the drop index operation.

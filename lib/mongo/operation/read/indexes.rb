@@ -31,7 +31,6 @@ module Mongo
       #
       # @since 2.0.0
       class Indexes
-        include Executable
         include Specifiable
         include ReadPreferrable
 

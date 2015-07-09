@@ -422,6 +422,18 @@ module Mongo
       def ordered?
         !!(@spec.fetch(:ordered, true))
       end
+
+      # The namespace, consisting of the db name and collection name.
+      #
+      # @example Get the namespace.
+      #   specifiable.namespace
+      #
+      # @return [ String ] The namespace.
+      #
+      # @since 2.1.0
+      def namespace
+        "#{db_name}.#{coll_name}"
+      end
     end
   end
 end
