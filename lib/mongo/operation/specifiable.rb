@@ -410,6 +410,18 @@ module Mongo
       def read
         @spec[READ] || ServerSelector.get
       end
+
+      # Whether the operation is ordered.
+      #
+      # @example Get the ordered value, true is the default.
+      #   specifiable.ordered?
+      #
+      # @return [ true, false ] Whether the operation is ordered.
+      #
+      # @since 2.1.0
+      def ordered?
+        !!(@spec.fetch(:ordered, true))
+      end
     end
   end
 end

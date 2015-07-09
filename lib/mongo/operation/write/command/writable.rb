@@ -25,27 +25,6 @@ module Mongo
 
           private
 
-          # Whether this operation may be executed on a secondary server.
-          #
-          # @return [ false ] A write command may not be executed on a secondary.
-          def secondary_ok?
-            false
-          end
-
-          # Whether the batch writes should be applied in the same order the
-          # items appear, ie. sequentially. 
-          # If ordered is false, the server applies the batch items in no particular
-          # order, and possibly in parallel. Execution halts after the first error.
-          # The default value is true, which means the batch items are applied
-          # sequentially.
-          #
-          # @return [ true, false ] Whether batch items are applied sequentially. 
-          #
-          # @since 2.0.0
-          def ordered?
-            @spec.fetch(:ordered, true)
-          end
-
           # The wire protocol message for this write operation.
           #
           # @return [ Mongo::Protocol::Query ] Wire protocol message.
