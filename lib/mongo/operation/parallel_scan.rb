@@ -37,7 +37,6 @@ module Mongo
     #
     # @since 2.0.0
     class ParallelScan
-      include Executable
       include Specifiable
       include Limited
       include ReadPreferrable
