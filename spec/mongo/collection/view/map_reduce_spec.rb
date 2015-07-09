@@ -294,6 +294,57 @@ describe Mongo::Collection::View::MapReduce do
         expect(map_reduce.send(:map_reduce_spec)[:selector][:out]).to eq(inline: 1)
       end
     end
+
+    context 'when out is specified in the options' do
+
+      let(:location) do
+        { replace: 'testing' }
+      end
+
+      let(:options) do
+        { :out => location }
+      end
+
+      it 'sets the out value' do
+        expect(map_reduce.out).to eq(location)
+      end
+
+      it 'includes the out value in the operation spec' do
+        expect(map_reduce.send(:map_reduce_spec)[:selector][:out]).to be(location)
+      end
+    end
+
+    context 'when out is not inline' do
+
+      let(:location) do
+        { replace: 'testing' }
+      end
+
+      let(:options) do
+        { :out => location }
+      end
+
+      it 'does not allow the operation on a secondary' do
+        expect(map_reduce.send(:secondary_ok?)).to be(false)
+      end
+
+      context 'when the context is not a valid server for writing' do
+
+        it 'reroutes the operation to a primary' do
+          allow(map_reduce).to receive(:valid_context?).and_return(false)
+          expect(Mongo::Logger).to receive(:log).and_call_original
+          map_reduce.to_a
+        end
+      end
+
+      context 'when the context is a valid server for writing' do
+
+        it 'does not reroute the operation to a primary' do
+          expect(Mongo::Logger).not_to receive(:log)
+          map_reduce.to_a
+        end
+      end
+    end
   end
 
   describe '#scope' do

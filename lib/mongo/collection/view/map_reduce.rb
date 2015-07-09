@@ -25,6 +25,7 @@ module Mongo
         include Enumerable
         include Immutable
         include Iterable
+        include Loggable
 
         # @return [ View ] view The collection view.
         attr_reader :view
@@ -172,22 +173,22 @@ module Mongo
           Operation::MapReduce.new(map_reduce_spec)
         end
 
+        def valid_context?(context)
+          context.standalone? || context.mongos? || context.primary? || secondary_ok?
+        end
+
+        def secondary_ok?
+          out.respond_to?(:keys) &&
+              out.keys.first.to_s.downcase == 'inline'
+        end
+
         def send_initial_query(server)
-          result =
-            begin
-              initial_query_op.execute(server.context)
-            rescue Mongo::Error::NeedPrimaryServer
-              log_warn([
-                'Rerouting the MapReduce operation to the primary server.'
-              ])
-              server = cluster.next_primary
-              initial_query_op.execute(server.context)
-            end
-          if inline?
-            result
-          else
-            send_fetch_query(server)
+          unless valid_context?(server.context)
+            log_warn([ 'Rerouting the MapReduce operation to the primary server.' ])
+            server = cluster.next_primary
           end
+          result = initial_query_op.execute(server.context)
+          inline? ? result : send_fetch_query(server)
         end
 
         def fetch_query_spec
