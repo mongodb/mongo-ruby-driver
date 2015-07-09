@@ -173,8 +173,8 @@ module Mongo
           Operation::MapReduce.new(map_reduce_spec)
         end
 
-        def valid_context?(context)
-          context.standalone? || context.mongos? || context.primary? || secondary_ok?
+        def valid_server?(server)
+          server.standalone? || server.mongos? || server.primary? || secondary_ok?
         end
 
         def secondary_ok?
@@ -183,7 +183,7 @@ module Mongo
         end
 
         def send_initial_query(server)
-          unless valid_context?(server.context)
+          unless valid_server?(server)
             log_warn([ 'Rerouting the MapReduce operation to the primary server.' ])
             server = cluster.next_primary
           end

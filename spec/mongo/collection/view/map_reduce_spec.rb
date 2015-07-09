@@ -331,7 +331,7 @@ describe Mongo::Collection::View::MapReduce do
       context 'when the context is not a valid server for writing' do
 
         it 'reroutes the operation to a primary' do
-          allow(map_reduce).to receive(:valid_context?).and_return(false)
+          allow(map_reduce).to receive(:valid_server?).and_return(false)
           expect(Mongo::Logger).to receive(:log).and_call_original
           map_reduce.to_a
         end
