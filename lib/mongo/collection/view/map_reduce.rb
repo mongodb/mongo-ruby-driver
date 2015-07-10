@@ -194,7 +194,7 @@ module Mongo
           { :selector  => {},
             :options   => {},
             :db_name   => database.name,
-            :coll_name => out.values.first }
+            :coll_name => out.respond_to?(:keys) ? out.values.first : out }
         end
 
         def fetch_query_op
