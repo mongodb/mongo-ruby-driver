@@ -48,8 +48,8 @@ module Mongo
       #
       # @since 2.0.0
       class Delete
-        include GLE
-        include WriteCommandEnabled
+        include GLEable
+        include WriteCommandEnablable
         include Specifiable
 
         private

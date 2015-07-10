@@ -15,47 +15,24 @@
 module Mongo
   module Operation
 
-    # This module contains common functionality for defining an operation
-    # and executing it, given a certain context.
+    # This module contains common functionality for executing an operation
     #
     # @since 2.0.0
     module Executable
 
-      # # Execute the operation.
-      # # The context gets a connection on which the operation
-      # # is sent in the block.
-      # #
-      # # @param [ Mongo::Server::Context ] context The context for this operation.
-      # #
-      # # @return [ Result ] The operation response, if there is one.
-      # #
-      # # @since 2.0.0
-      # def execute(context)
-      #   context.with_connection do |connection|
-      #     connection.dispatch([ message(context) ], operation_id)
-      #   end
-      # end
-
+      # Execute the operation.
+      # The context gets a connection on which the operation
+      # is sent in the block.
+      #
+      # @param [ Mongo::Server::Context ] context The context for this operation.
+      #
+      # @return [ Result ] The operation response, if there is one.
+      #
+      # @since 2.0.0
       def execute(context)
         context.with_connection do |connection|
           result_class = defined?(self.class::Result) ? self.class::Result : Result
           result_class.new(connection.dispatch([ message(context) ], operation_id)).validate!
-        end
-      end
-
-      private
-
-      # Gets the legacy get last error command as a wire protocol query.
-      #
-      # @since 2.0.0
-      def gle
-        if gle_message = write_concern.get_last_error
-          Protocol::Query.new(
-              db_name,
-              Database::COMMAND,
-              gle_message,
-              options.merge(limit: -1)
-          )
         end
       end
     end

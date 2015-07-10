@@ -16,13 +16,13 @@ module Mongo
   module Operation
     module Write
 
-      # This module contains common functionality for sending a GetLastError message.
+      # This module contains common functionality for sending a write command, if on
+      # server version >= 2.6 or write protocol message.
       #
       # @since 2.1.0
-      module WriteCommandEnabled
+      module WriteCommandEnablable
 
-
-        # Execute the remove user operation.
+        # Execute the operation.
         #
         # @example Execute the operation.
         #   operation.execute(context)

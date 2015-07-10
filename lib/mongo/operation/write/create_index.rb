@@ -42,8 +42,8 @@ module Mongo
       #
       # @since 2.0.0
       class CreateIndex
-        include GLE
-        include WriteCommandEnabled
+        include GLEable
+        include WriteCommandEnablable
         include Specifiable
 
         private
