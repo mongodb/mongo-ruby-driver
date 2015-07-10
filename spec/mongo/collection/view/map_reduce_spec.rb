@@ -66,6 +66,39 @@ describe Mongo::Collection::View::MapReduce do
       end
     end
 
+    context 'when out is in the options' do
+
+      after do
+        authorized_client['output_collection'].delete_many
+      end
+
+      context 'when out is a string' do
+
+        let(:options) do
+          { :out => 'output_collection' }
+        end
+
+        it 'iterates over the documents in the result' do
+          map_reduce.each do |document|
+            expect(document[:value]).to_not be_nil
+          end
+        end
+      end
+
+      context 'when out is a document' do
+
+        let(:options) do
+          { :out => {  replace: 'output_collection' } }
+        end
+
+        it 'iterates over the documents in the result' do
+          map_reduce.each do |document|
+            expect(document[:value]).to_not be_nil
+          end
+        end
+      end
+    end
+
     context 'when out is inline' do
 
       let(:new_map_reduce) do
@@ -129,6 +162,17 @@ describe Mongo::Collection::View::MapReduce do
           new_map_reduce.each do |document|
             expect(document[:value]).to_not be_nil
           end
+        end
+
+        it 'fetches the results from the collection' do
+          expect(new_map_reduce.count).to eq(2)
+        end
+      end
+
+      context 'when the option is a collection name' do
+
+        let(:new_map_reduce) do
+          map_reduce.out('output_collection')
         end
 
         it 'fetches the results from the collection' do
