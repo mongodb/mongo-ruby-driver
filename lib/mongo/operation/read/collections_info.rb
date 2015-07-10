@@ -46,13 +46,17 @@ module Mongo
           if context.features.list_collections_enabled?
             ListCollections.new(spec).execute(context)
           else
-            context.with_connection do |connection|
-              Result.new(connection.dispatch([ message(context) ])).validate!
-            end
+            execute_message(context)
           end
         end
 
         private
+
+        def execute_message(context)
+          context.with_connection do |connection|
+            Result.new(connection.dispatch([ message(context) ])).validate!
+          end
+        end
 
         def selector
           { :name => { '$not' => /system\.|\$/ } }

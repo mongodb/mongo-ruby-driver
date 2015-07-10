@@ -47,13 +47,17 @@ module Mongo
           if context.features.list_indexes_enabled?
             ListIndexes.new(spec).execute(context)
           else
-            context.with_connection do |connection|
-              Result.new(connection.dispatch([ message(context) ]))
-            end
+            execute_message(context)
           end
         end
 
         private
+
+        def execute_message(context)
+          context.with_connection do |connection|
+            Result.new(connection.dispatch([ message(context) ]))
+          end
+        end
 
         def selector
           { ns: namespace }

@@ -13,6 +13,7 @@
 # limitations under the License.
 
 require 'mongo/operation/result'
+require 'mongo/operation/executable'
 require 'mongo/operation/specifiable'
 require 'mongo/operation/limited'
 require 'mongo/operation/read_preferrable'

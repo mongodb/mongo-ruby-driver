@@ -43,31 +43,10 @@ module Mongo
     class Aggregate
       include Specifiable
       include Limited
+      include Executable
       include ReadPreferrable
 
-      # Execute the operation.
-      # The context gets a connection on which the operation
-      # is sent in the block.
-      # If the aggregation will be written to an output collection and the
-      # server is not primary, the operation will be rerouted to the primary
-      # with a warning.
-      #
-      # @param [ Server::Context ] context The context for this operation.
-      #
-      # @return [ Result ] The operation response, if there is one.
-      #
-      # @since 2.0.0
-      def execute(context)
-        execute_message(context)
-      end
-
       private
-
-      def execute_message(context)
-        context.with_connection do |connection|
-          Result.new(connection.dispatch([ message(context) ])).validate!
-        end
-      end
 
       def query_coll
         Database::COMMAND

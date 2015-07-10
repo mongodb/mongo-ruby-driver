@@ -49,38 +49,15 @@ module Mongo
       # @since 2.0.0
       class Delete
         include GLE
+        include WriteCommandEnabled
         include Specifiable
-
-        # Execute the delete operation.
-        #
-        # @example Execute the operation.
-        #   operation.execute(context)
-        #
-        # @param [ Mongo::Server::Context ] context The context for this operation.
-        #
-        # @return [ Result ] The result.
-        #
-        # @since 2.0.0
-        def execute(context)
-          if context.features.write_command_enabled?
-            execute_write_command(context)
-          else
-            execute_message(context)
-          end
-        end
 
         private
 
-        def execute_write_command(context)
+        def write_command_op
           s = spec.merge(:deletes => [ delete ])
           s.delete(:delete)
-          Result.new(Command::Delete.new(s).execute(context)).validate!
-        end
-
-        def execute_message(context)
-          context.with_connection do |connection|
-            Result.new(connection.dispatch([ message, gle ].compact)).validate!
-          end
+          Command::Delete.new(s)
         end
 
         def message

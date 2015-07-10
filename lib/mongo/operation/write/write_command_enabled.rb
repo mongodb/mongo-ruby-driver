@@ -16,46 +16,35 @@ module Mongo
   module Operation
     module Write
 
-      # A MongoDB drop index operation.
+      # This module contains common functionality for sending a GetLastError message.
       #
-      # @example Create the drop index operation.
-      #   Write::DropIndex.new({
-      #     :db_name => 'test',
-      #     :coll_name => 'test_coll',
-      #     :index_name => 'name_1_age_-1'
-      #   })
-      #
-      # Initialization:
-      #   param [ Hash ] spec The specifications for the drop.
-      #
-      #   option spec :index [ Hash ] The index spec to create.
-      #   option spec :db_name [ String ] The name of the database.
-      #   option spec :coll_name [ String ] The name of the collection.
-      #   option spec :index_name [ String ] The name of the index.
-      #
-      # @since 2.0.0
-      class DropIndex
-        include WriteCommandEnabled
-        include Specifiable
+      # @since 2.1.0
+      module WriteCommandEnabled
 
-        # Execute the drop index operation.
+
+        # Execute the remove user operation.
         #
         # @example Execute the operation.
         #   operation.execute(context)
         #
         # @param [ Mongo::Server::Context ] context The context for this operation.
         #
-        # @return [ Result ] The result of the operation.
+        # @return [ Result ] The operation result.
         #
         # @since 2.0.0
         def execute(context)
-          execute_write_command(context)
+          if context.features.write_command_enabled?
+            execute_write_command(context)
+          else
+            execute_message(context)
+          end
         end
 
         private
 
-        def write_command_op
-          Command::DropIndex.new(spec)
+        def execute_write_command(context)
+          result_class = defined?(self.class::Result) ? self.class::Result : Result
+          result_class.new(write_command_op.execute(context)).validate!
         end
       end
     end

@@ -52,43 +52,15 @@ module Mongo
       # @since 2.0.0
       class Update
         include GLE
+        include WriteCommandEnabled
         include Specifiable
-
-        # Execute the update operation.
-        #
-        # @example Execute the operation.
-        #   operation.execute(context)
-        #
-        # @param [ Mongo::Server::Context ] context The context for this operation.
-        #
-        # @return [ Result ] The operation result.
-        #
-        # @since 2.0.0
-        def execute(context)
-          if context.features.write_command_enabled?
-            execute_write_command(context)
-          else
-            execute_message(context)
-          end
-        end
 
         private
 
-        def execute_write_command(context)
+        def write_command_op
           s = spec.merge(:updates => [ update ])
           s.delete(:update)
-          Result.new(Command::Update.new(s).execute(context)).validate!
-        end
-
-        def execute_message(context)
-          context.with_connection do |connection|
-            LegacyResult.new(connection.dispatch([ message, gle ].compact)).validate!
-          end
-        end
-
-        def initialize_copy(original)
-          @spec = original.spec.dup
-          @spec[:updates] = original.spec[:updates].dup
+          Command::Update.new(s)
         end
 
         def message

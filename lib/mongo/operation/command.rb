@@ -33,22 +33,7 @@ module Mongo
       include Specifiable
       include Limited
       include ReadPreferrable
-
-      # Execute the command operation.
-      #
-      # @example Execute the operation.
-      #   operation.execute(context)
-      #
-      # @param [ Server::Context ] context The context for this operation.
-      #
-      # @return [ Result ] The operation result.
-      #
-      # @since 2.0.0
-      def execute(context)
-        context.with_connection do |connection|
-          Result.new(connection.dispatch([ message(context) ])).validate!
-        end
-      end
+      include Executable
 
       private
 

@@ -23,6 +23,14 @@ module Mongo
 
         private
 
+        def execute_message(context)
+          context.with_connection do |connection|
+            result_class = defined?(self.class::LegacyResult) ? self.class::LegacyResult :
+                defined?(self.class::Result) ? self.class::Result : Result
+            result_class.new(connection.dispatch([ message, gle ].compact)).validate!
+          end
+        end
+
         def gle
           if gle_message = write_concern.get_last_error
             Protocol::Query.new(

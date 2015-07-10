@@ -44,26 +44,9 @@ module Mongo
       # @since 2.0.0
       class Insert
         include GLE
+        include WriteCommandEnabled
         include Specifiable
         include Idable
-
-        # Execute the insert operation.
-        #
-        # @example Execute the operation.
-        #   operation.execute(context)
-        #
-        # @param [ Mongo::Server::Context ] context The context for this operation.
-        #
-        # @return [ Result ] The operation result.
-        #
-        # @since 2.0.0
-        def execute(context)
-          if context.features.write_command_enabled?
-            execute_write_command(context)
-          else
-            execute_message(context)
-          end
-        end
 
         private
 
@@ -76,11 +59,6 @@ module Mongo
           context.with_connection do |connection|
             Result.new(connection.dispatch([ message, gle ].compact), @ids).validate!
           end
-        end
-
-        def initialize_copy(original)
-          @spec = original.spec.dup
-          @spec[:documents] = original.spec[:documents].dup
         end
 
         def message

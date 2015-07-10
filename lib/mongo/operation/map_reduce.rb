@@ -46,28 +46,9 @@ module Mongo
       include Specifiable
       include Limited
       include ReadPreferrable
-
-      # Execute the map/reduce operation.
-      #
-      # @example Execute the operation.
-      #   operation.execute(context)
-      #
-      # @param [ Server::Context ] context The context for this operation.
-      #
-      # @return [ Result ] The operation response, if there is one.
-      #
-      # @since 2.0.0
-      def execute(context)
-        execute_message(context)
-      end
+      include Executable
 
       private
-
-      def execute_message(context)
-        context.with_connection do |connection|
-          Result.new(connection.dispatch([ message(context) ])).validate!
-        end
-      end
 
       def query_coll
         Database::COMMAND

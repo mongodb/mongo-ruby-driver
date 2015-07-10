@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require 'mongo/operation/write/write_command_enabled'
 require 'mongo/operation/write/idable'
 require 'mongo/operation/write/gle'
 require 'mongo/operation/write/bulk'

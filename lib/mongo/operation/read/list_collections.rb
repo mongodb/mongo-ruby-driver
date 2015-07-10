@@ -36,29 +36,10 @@ module Mongo
       class ListCollections
         include Specifiable
         include Limited
+        include Executable
         include ReadPreferrable
 
-        # Execute the listCollections command operation.
-        #
-        # @example Execute the operation.
-        #   operation.execute(context)
-        #
-        # @param [ Mongo::Server::Context ] context The context for this operation.
-        #
-        # @return [ Result ] The operation result.
-        #
-        # @since 2.0.0
-        def execute(context)
-          execute_message(context)
-        end
-
         private
-
-        def execute_message(context)
-          context.with_connection do |connection|
-            Result.new(connection.dispatch([ message(context) ])).validate!
-          end
-        end
 
         def query_coll
           Database::COMMAND
