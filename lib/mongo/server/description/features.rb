@@ -28,7 +28,8 @@ module Mongo
           :list_collections => 3,
           :list_indexes => 3,
           :scram_sha_1 => 3,
-          :write_command => 2
+          :write_command => 2,
+          :users_info => 2
         }.freeze
 
         # The wire protocol versions that this version of the driver supports.

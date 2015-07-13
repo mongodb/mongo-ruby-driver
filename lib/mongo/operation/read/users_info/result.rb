@@ -12,11 +12,27 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/operation/read/query'
-require 'mongo/operation/read/get_more'
-require 'mongo/operation/read/indexes'
-require 'mongo/operation/read/list_indexes'
-require 'mongo/operation/read/list_collections'
-require 'mongo/operation/read/collections_info'
-require 'mongo/operation/read/user_query'
-require 'mongo/operation/read/users_info'
+module Mongo
+  module Operation
+    module Read
+      class UsersInfo
+
+        # Defines custom behaviour of results when using the
+        # usersInfo command.
+        #
+        # @since 2.1.0
+        class Result < Operation::Result
+
+          # The field name for the users document in a usersInfo result.
+          #
+          # @since 2.1.0
+          USERS = 'users'.freeze
+
+          def documents
+            reply.documents.first[USERS]
+          end
+        end
+      end
+    end
+  end
+end

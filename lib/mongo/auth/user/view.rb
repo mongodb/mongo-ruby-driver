@@ -95,7 +95,28 @@ module Mongo
           ).execute(next_primary.context)
         end
 
+        # Check if a particular user exists in the database.
+        #
+        # @example Check if a user exists.
+        #   view.exists?('emily')
+        #
+        # @param [ String ] name The user name.
+        #
+        # @return [ true, false ] Whether the user exists.
+        #
+        # @since 2.1.0
+        def exists?(name)
+          !user_query(name).empty?
+        end
+
         private
+
+        def user_query(name)
+          Operation::Read::UserQuery.new(
+            user_name: name,
+            db_name: database.name
+          ).execute(next_primary.context).documents
+        end
 
         def generate(user, options)
           user.is_a?(String) ? Auth::User.new({ user: user }.merge(options)) : user
