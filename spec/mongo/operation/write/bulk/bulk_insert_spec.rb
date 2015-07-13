@@ -74,17 +74,6 @@ describe Mongo::Operation::Write::BulkInsert do
     end
   end
 
-  describe '#dup' do
-
-    context 'deep copy' do
-
-      it 'copies the list of documents' do
-        copy = op.dup
-        expect(copy.spec[:documents]).to_not be(op.spec[:documents])
-      end
-    end
-  end
-
   describe 'document ids' do
 
     context 'when documents do not contain an id' do

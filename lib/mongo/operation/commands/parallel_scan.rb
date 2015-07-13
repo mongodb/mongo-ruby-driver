@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/operation/parallel_scan/result'
+require 'mongo/operation/commands/parallel_scan/result'
 
 module Mongo
   module Operation

@@ -229,7 +229,7 @@ module Mongo
       end
 
       def initial_query_op
-        Operation::Read::Indexes.new(indexes_spec)
+        Operation::Indexes.new(indexes_spec)
       end
 
       def limit; -1; end

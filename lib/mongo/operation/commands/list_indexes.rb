@@ -12,47 +12,45 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/operation/map_reduce/result'
+require 'mongo/operation/commands/list_indexes/result'
 
 module Mongo
   module Operation
 
-    # A MongoDB map reduce operation.
+    # A MongoDB listIndexes command operation.
     #
-    # @note A map/reduce operation can behave like a read and
-    #   return a result set, or can behave like a write operation and
-    #   output results to a user-specified collection.
+    # @example Create the listIndexes command operation.
+    #   Mongo::Operation::Read::ListIndexes.new({ db_name: 'test', coll_name: 'example' })
     #
-    # @example Create the map/reduce operation.
-    #   MapReduce.new({
-    #     :selector => {
-    #       :mapreduce => 'test_coll',
-    #       :map => '',
-    #       :reduce => ''
-    #     },
-    #     :db_name  => 'test_db'
-    #   })
+    # @note A command is actually a query on the virtual '$cmd' collection.
     #
     # Initialization:
-    #   param [ Hash ] spec The specifications for the operation.
+    #   param [ Hash ] spec The specifications for the command.
     #
-    #   option spec :selector [ Hash ] The map reduce selector.
+    #   option spec :coll_name [ Hash ] The name of the collection whose index
+    #     info is requested.
     #   option spec :db_name [ String ] The name of the database on which
-    #     the operation should be executed.
-    #   option spec :options [ Hash ] Options for the map reduce command.
+    #     the command should be executed.
+    #   option spec :options [ Hash ] Options for the command.
     #
     # @since 2.0.0
-    class MapReduce
+    class ListIndexes
       include Specifiable
       include Limited
-      include ReadPreferrable
       include Executable
+      include ReadPreferrable
 
       private
 
       def query_coll
         Database::COMMAND
       end
+
+      def selector
+        (spec[SELECTOR] || {}).merge(listIndexes: coll_name)
+      end
     end
   end
 end
+
+

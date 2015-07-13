@@ -72,11 +72,6 @@ module Mongo
           LegacyResult.new(replies.compact.empty? ? nil : replies, @ids)
         end
 
-        def initialize_copy(original)
-          @spec = original.spec.dup
-          @spec[DOCUMENTS] = original.spec[DOCUMENTS].clone
-        end
-
         def messages
           if ordered? || gle
             documents.collect do |doc|

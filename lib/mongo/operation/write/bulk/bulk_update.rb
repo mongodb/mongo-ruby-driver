@@ -64,10 +64,6 @@ module Mongo
           Result.new(Command::Update.new(spec).execute(context))
         end
 
-        def initialize_copy(original)
-          @spec = original.spec.dup
-          @spec[UPDATES] = original.spec[UPDATES].dup
-        end
 
         def messages
           updates.collect do |u|

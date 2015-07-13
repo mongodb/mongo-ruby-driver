@@ -62,17 +62,6 @@ describe Mongo::Operation::Write::BulkDelete do
     end
   end
 
-  describe '#dup' do
-
-    context 'deep copy' do
-
-      it 'copies the list of deletes' do
-        copy = op.dup
-        expect(copy.spec[:deletes]).not_to be(op.spec[:deletes])
-      end
-    end
-  end
-
   describe '#execute' do
 
     before do

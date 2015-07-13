@@ -15,11 +15,23 @@
 module Mongo
   module Operation
 
-    # This module contains common functionality for executing an operation
-    # and makes sure to instantiate the appropriate Result class for the operation.
+    # A MongoDB operation to get a list of collection names in a database.
+    #
+    # @example Create the collection names operation.
+    #   Read::CollectionNames.new(:db_name => 'test-db')
+    #
+    # Initialization:
+    #   param [ Hash ] spec The specifications for the collection names operation.
+    #
+    #   option spec :db_name [ String ] The name of the database whose collection
+    #     names is requested.
+    #   option spec :options [ Hash ] Options for the operation.
     #
     # @since 2.0.0
-    module Executable
+    class CollectionsInfo
+      include Specifiable
+      include ReadPreferrable
+      include Executable
 
       # Execute the operation.
       # The context gets a connection on which the operation
@@ -31,10 +43,23 @@ module Mongo
       #
       # @since 2.0.0
       def execute(context)
-        context.with_connection do |connection|
-          result_class = defined?(self.class::Result) ? self.class::Result : Result
-          result_class.new(connection.dispatch([ message(context) ], operation_id)).validate!
+        if context.features.list_collections_enabled?
+          ListCollections.new(spec).execute(context)
+        else
+          context.with_connection do |connection|
+            Result.new(connection.dispatch([ message(context) ])).validate!
+          end
         end
+      end
+
+      private
+
+      def selector
+        { :name => { '$not' => /system\.|\$/ } }
+      end
+
+      def query_coll
+        Database::NAMESPACES
       end
     end
   end

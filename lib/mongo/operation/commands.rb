@@ -12,7 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/operation/read/query'
-require 'mongo/operation/read/get_more'
-require 'mongo/operation/read/user_query'
-require 'mongo/operation/read/users_info'
+require 'mongo/operation/commands/command'
+require 'mongo/operation/commands/parallel_scan'
+require 'mongo/operation/commands/aggregate'
+require 'mongo/operation/commands/map_reduce'
+require 'mongo/operation/commands/collections_info'
+require 'mongo/operation/commands/indexes'
+require 'mongo/operation/commands/list_collections'
+require 'mongo/operation/commands/list_indexes'

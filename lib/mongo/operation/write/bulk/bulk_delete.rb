@@ -57,11 +57,6 @@ module Mongo
           Result.new(Command::Delete.new(spec).execute(context))
         end
 
-        def initialize_copy(original)
-          @spec = original.spec.dup
-          @spec[DELETES] = original.spec[DELETES].clone
-        end
-
         def messages
           deletes.collect do |del|
             opts = ( del[:limit] || 0 ) <= 0 ? {} : { :flags => [ :single_remove ] }

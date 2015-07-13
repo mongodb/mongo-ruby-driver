@@ -72,17 +72,6 @@ describe Mongo::Operation::Write::BulkUpdate do
     end
   end
 
-  describe '#dup' do
-
-    context 'deep copy' do
-
-      it 'copies the list of updates' do
-        copy = op.dup
-        expect(copy.spec[:updates]).not_to be(op.spec[:updates])
-      end
-    end
-  end
-
   describe '#execute' do
 
     before do
