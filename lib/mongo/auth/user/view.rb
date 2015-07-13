@@ -95,18 +95,18 @@ module Mongo
           ).execute(next_primary.context)
         end
 
-        # Check if a particular user exists in the database.
+        # Get info for a particular user in the database.
         #
-        # @example Check if a user exists.
-        #   view.exists?('emily')
+        # @example Get a particular user's info.
+        #   view.info('emily')
         #
         # @param [ String ] name The user name.
         #
-        # @return [ true, false ] Whether the user exists.
+        # @return [ Hash ] A document containing information on a particular user.
         #
         # @since 2.1.0
-        def exists?(name)
-          !user_query(name).empty?
+        def info(name)
+          user_query(name).first
         end
 
         private

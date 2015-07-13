@@ -112,7 +112,7 @@ describe Mongo::Auth::User::View do
     end
   end
 
-  describe '#exists?' do
+  describe '#info' do
 
     context 'when a user exists in the database' do
 
@@ -127,15 +127,15 @@ describe Mongo::Auth::User::View do
         view.remove('emily')
       end
 
-      it 'returns true' do
-        expect(view.exists?('emily')).to be(true)
+      it 'returns information for that user' do
+        expect(view.info('emily')).to_not be_empty
       end
     end
 
     context 'when a user does not exist in the database' do
 
       it 'returns false' do
-        expect(view.exists?('emily')).to be(false)
+        expect(view.info('emily')).to be_nil
       end
     end
 
