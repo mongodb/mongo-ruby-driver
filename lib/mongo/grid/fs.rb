@@ -19,7 +19,6 @@ module Mongo
     #
     # @since 2.0.0
     class FS
-      extend Forwardable
 
       # The default root prefix.
       #
@@ -44,9 +43,6 @@ module Mongo
 
       # @return [ Collection ] files_collection The files collection.
       attr_reader :files_collection
-
-      # Get write concern from database.
-      def_delegators :database, :write_concern
 
       # Find a file in the GridFS.
       #
@@ -141,6 +137,16 @@ module Mongo
 
       def files_name
         "#{prefix}.#{Grid::File::Metadata::COLLECTION}"
+      end
+
+      def write_concern
+        @options[:write] ? WriteConcern.get(@options[:write]) :
+            database.write_concern
+      end
+
+      def write_concern
+        @write_concern ||= @options[:write] ? WriteConcern.get(@options[:write]) :
+                             database.write_concern
       end
 
       def validate_md5!(file)
