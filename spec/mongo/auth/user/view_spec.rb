@@ -112,7 +112,32 @@ describe Mongo::Auth::User::View do
     end
   end
 
-  describe '#update' do
+  describe '#info' do
+
+    context 'when a user exists in the database' do
+
+      before do
+        view.create(
+            'emily',
+            password: 'password'
+        )
+      end
+
+      after do
+        view.remove('emily')
+      end
+
+      it 'returns information for that user' do
+        expect(view.info('emily')).to_not be_empty
+      end
+    end
+
+    context 'when a user does not exist in the database' do
+
+      it 'returns nil' do
+        expect(view.info('emily')).to be_nil
+      end
+    end
 
   end
 end

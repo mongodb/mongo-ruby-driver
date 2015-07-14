@@ -67,7 +67,7 @@ RSpec.configure do |config|
       unless write_command_enabled?
         # If we are on versions less than 2.6, we need to create a user for
         # each database, since the users are not stored in the admin database
-        # but in the system.users collection on the datbases themselves. Also,
+        # but in the system.users collection on the databases themselves. Also,
         # roles in versions lower than 2.6 can only be strings, not hashes.
         begin ADMIN_AUTHORIZED_TEST_CLIENT.database.users.create(TEST_READ_WRITE_USER); rescue; end
       end
