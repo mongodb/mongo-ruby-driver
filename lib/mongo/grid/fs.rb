@@ -81,7 +81,6 @@ module Mongo
       def insert_one(file)
         files_collection.insert_one(file.metadata)
         result = chunks_collection.insert_many(file.chunks)
-        validate_md5!(file) if write_concern.get_last_error
         file.id
       end
 
