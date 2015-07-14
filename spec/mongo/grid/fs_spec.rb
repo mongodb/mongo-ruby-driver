@@ -8,8 +8,12 @@ describe Mongo::Grid::FS do
       described_class.new(authorized_client.database)
     end
 
-    let(:index) do
+    let(:chunks_index) do
       fs.chunks_collection.indexes.get(:files_id => 1, :n => 1)
+    end
+
+    let(:files_index) do
+      fs.files_collection.indexes.get(:filename => 1, :uploadDate => 1)
     end
 
     it 'sets the files collection' do
@@ -21,7 +25,31 @@ describe Mongo::Grid::FS do
     end
 
     it 'creates the index on the chunks collection' do
-      expect(index[:name]).to eq('files_id_1_n_1')
+      expect(chunks_index[:name]).to eq('files_id_1_n_1')
+    end
+
+    it 'creates the index on the files collection' do
+      expect(files_index[:name]).to eq('filename_1_uploadDate_1')
+    end
+
+    context 'when there is an OperationFailure' do
+
+      let(:chunks_collection) do
+        authorized_client.database["fs.#{Mongo::Grid::File::Chunk::COLLECTION}"]
+      end
+
+      before do
+        chunks_collection.drop
+        chunks_collection.indexes.create_one(Mongo::Grid::FS::CHUNKS_INDEX, unique: false)
+      end
+
+      after do
+        chunks_collection.drop
+      end
+
+      it 'recovers and does not raise an exception' do
+        expect(fs.chunks_collection).to eq(chunks_collection)
+      end
     end
   end
 
