@@ -45,10 +45,10 @@ module Mongo
 
       # Find a file in the GridFS.
       #
-      # @example Find a file by it's id.
+      # @example Find a file by its id.
       #   fs.find_one(_id: id)
       #
-      # @example Find a file by it's filename.
+      # @example Find a file by its filename.
       #   fs.find_one(filename: 'test.txt')
       #
       # @param [ Hash ] selector The selector.
