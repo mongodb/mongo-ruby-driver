@@ -51,8 +51,8 @@ module Mongo
       #
       # @since 2.0.0
       class Update
-        include GLEable
-        include WriteCommandEnablable
+        include GLE
+        include WriteCommandEnabled
         include Specifiable
 
         private

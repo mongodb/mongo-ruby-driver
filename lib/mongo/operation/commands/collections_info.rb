@@ -30,7 +30,7 @@ module Mongo
     # @since 2.0.0
     class CollectionsInfo
       include Specifiable
-      include ReadPreferrable
+      include ReadPreference
       include Executable
 
       # Execute the operation.

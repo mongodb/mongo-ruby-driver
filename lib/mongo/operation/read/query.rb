@@ -40,7 +40,7 @@ module Mongo
       class Query
         include Specifiable
         include Executable
-        include ReadPreferrable
+        include ReadPreference
 
         private
 

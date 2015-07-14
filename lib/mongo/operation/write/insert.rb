@@ -43,8 +43,8 @@ module Mongo
       #
       # @since 2.0.0
       class Insert
-        include GLEable
-        include WriteCommandEnablable
+        include GLE
+        include WriteCommandEnabled
         include Specifiable
         include Idable
 

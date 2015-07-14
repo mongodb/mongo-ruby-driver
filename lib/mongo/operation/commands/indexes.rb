@@ -31,7 +31,7 @@ module Mongo
     # @since 2.0.0
     class Indexes
       include Specifiable
-      include ReadPreferrable
+      include ReadPreference
 
       # Execute the operation.
       # The context gets a connection on which the operation

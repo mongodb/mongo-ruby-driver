@@ -30,8 +30,8 @@ module Mongo
       #
       # @since 2.0.0
       class UpdateUser
-        include GLEable
-        include WriteCommandEnablable
+        include GLE
+        include WriteCommandEnabled
         include Specifiable
 
         private

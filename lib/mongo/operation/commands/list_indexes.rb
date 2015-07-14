@@ -38,7 +38,7 @@ module Mongo
       include Specifiable
       include Limited
       include Executable
-      include ReadPreferrable
+      include ReadPreference
 
       private
 

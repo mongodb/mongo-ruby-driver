@@ -35,7 +35,7 @@ module Mongo
       #
       # @since 2.0.0
       class DropIndex
-        include WriteCommandEnablable
+        include WriteCommandEnabled
         include Specifiable
 
         # Execute the drop index operation.

@@ -32,7 +32,7 @@ module Mongo
     class Command
       include Specifiable
       include Limited
-      include ReadPreferrable
+      include ReadPreference
       include Executable
 
       private

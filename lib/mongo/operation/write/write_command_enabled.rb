@@ -20,7 +20,7 @@ module Mongo
       # server version >= 2.6 or write protocol message.
       #
       # @since 2.1.0
-      module WriteCommandEnablable
+      module WriteCommandEnabled
 
         # Execute the operation.
         #

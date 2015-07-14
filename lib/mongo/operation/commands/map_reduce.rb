@@ -44,7 +44,7 @@ module Mongo
     class MapReduce
       include Specifiable
       include Limited
-      include ReadPreferrable
+      include ReadPreference
       include Executable
 
       private

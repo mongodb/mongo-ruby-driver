@@ -39,7 +39,7 @@ module Mongo
     class ParallelScan
       include Specifiable
       include Limited
-      include ReadPreferrable
+      include ReadPreference
       include Executable
 
       private
