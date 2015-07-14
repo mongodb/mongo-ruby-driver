@@ -51,6 +51,24 @@ describe Mongo::Grid::FS do
         expect(fs.chunks_collection).to eq(chunks_collection)
       end
     end
+
+    context 'when options are provided' do
+
+      let(:fs) do
+        described_class.new(authorized_client.database, options)
+      end
+
+      context 'when a write concern is set' do
+
+        let(:options) do
+          { write: { w: 2 } }
+        end
+
+        it 'set the write concern' do
+          expect(fs.send(:write_concern).options).to eq(Mongo::WriteConcern.get(w: 2).options)
+        end
+      end
+    end
   end
 
   describe '#find_one' do
