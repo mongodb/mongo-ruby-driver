@@ -14,23 +14,21 @@
 
 module Mongo
   module Operation
-    module Read
-      class UsersInfo
+    class UsersInfo
 
-        # Defines custom behaviour of results when using the
-        # usersInfo command.
+      # Defines custom behaviour of results when using the
+      # usersInfo command.
+      #
+      # @since 2.1.0
+      class Result < Operation::Result
+
+        # The field name for the users document in a usersInfo result.
         #
         # @since 2.1.0
-        class Result < Operation::Result
+        USERS = 'users'.freeze
 
-          # The field name for the users document in a usersInfo result.
-          #
-          # @since 2.1.0
-          USERS = 'users'.freeze
-
-          def documents
-            reply.documents.first[USERS]
-          end
+        def documents
+          reply.documents.first[USERS]
         end
       end
     end
