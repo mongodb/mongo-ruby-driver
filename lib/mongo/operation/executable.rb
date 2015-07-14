@@ -15,8 +15,8 @@
 module Mongo
   module Operation
 
-    # This module contains common functionality for executing an operation
-    # and makes sure to instantiate the appropriate Result class for the operation.
+    # This module provides the #execute method that many operations use.
+    # It makes sure to instantiate the appropriate Result class for the operation's response.
     #
     # @since 2.0.0
     module Executable

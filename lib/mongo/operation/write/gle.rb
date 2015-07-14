@@ -16,7 +16,8 @@ module Mongo
   module Operation
     module Write
 
-      # This module contains common functionality for sending a GetLastError message.
+      # This module contains common functionality for operations that need to
+      # be followed by a GLE message.
       #
       # @since 2.1.0
       module GLE

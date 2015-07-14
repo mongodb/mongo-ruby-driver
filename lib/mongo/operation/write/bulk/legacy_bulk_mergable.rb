@@ -16,6 +16,10 @@ module Mongo
   module Operation
     module Write
 
+      # This module contains common functionality for merging results from
+      # writes during a bulk operation. Used for server versions < 2.6.
+      #
+      # @since 2.0.0
       module LegacyBulkMergable
 
         # Aggregate the write errors returned from this result.

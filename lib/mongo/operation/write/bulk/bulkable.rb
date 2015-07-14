@@ -17,6 +17,8 @@ module Mongo
     module Write
 
       # Provides common behavior for bulk write operations.
+      # Note that #validate! is not called on operation results because they are merged
+      # at a higher level.
       #
       # @since 2.1.0
       module Bulkable

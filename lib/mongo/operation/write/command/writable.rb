@@ -17,7 +17,8 @@ module Mongo
     module Write
       module Command
 
-        # Provides common behavior for all write commands.
+        # Provides common behavior for write commands.
+        # Assigns an operation id when executed.
         #
         # @since 2.0.0
         module Writable

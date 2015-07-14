@@ -16,8 +16,9 @@ module Mongo
   module Operation
     module Write
 
-      # This module contains common functionality for sending a write command, if on
-      # server version >= 2.6 or write protocol message.
+      # This module contains common functionality for operations that send either
+      # a write command or a specific wire protocol message, depending on server version.
+      # For server versions >= 2.6, a write command is sent.
       #
       # @since 2.1.0
       module WriteCommandEnabled
@@ -31,7 +32,7 @@ module Mongo
         #
         # @return [ Result ] The operation result.
         #
-        # @since 2.0.0
+        # @since 2.1.0
         def execute(context)
           if context.features.write_command_enabled?
             execute_write_command(context)

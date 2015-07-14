@@ -15,6 +15,11 @@
 module Mongo
   module Operation
     module Write
+
+      # This module provides functionality to ensure that documents contain
+      # an id field. Used by insert operations (Bulk, legacy, write command inserts).
+      #
+      # @since 2.1.0
       module Idable
 
         private
