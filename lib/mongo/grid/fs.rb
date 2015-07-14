@@ -26,10 +26,15 @@ module Mongo
       # @since 2.0.0
       DEFAULT_ROOT = 'fs'.freeze
 
-      # The specification for the chunks index.
+      # The specification for the chunks collection index.
       #
       # @since 2.0.0
-      INDEX_SPEC = { :files_id => 1, :n => 1 }.freeze
+      CHUNKS_INDEX = { :files_id => 1, :n => 1 }.freeze
+
+      # The specification for the files collection index.
+      #
+      # @since 2.1.0
+      FILES_INDEX = { filename: 1, uploadDate: 1 }.freeze
 
       # @return [ Collection ] chunks_collection The chunks collection.
       attr_reader :chunks_collection
@@ -97,7 +102,9 @@ module Mongo
         @options = options
         @chunks_collection = database[chunks_name]
         @files_collection = database[files_name]
-        chunks_collection.indexes.create_one(INDEX_SPEC, :unique => true)
+        chunks_collection.indexes.create_one(CHUNKS_INDEX, :unique => true)
+        files_collection.indexes.create_one(FILES_INDEX)
+      rescue Error::OperationFailure
       end
 
       # Get the prefix for the GridFS
