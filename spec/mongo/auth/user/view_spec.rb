@@ -134,7 +134,7 @@ describe Mongo::Auth::User::View do
 
     context 'when a user does not exist in the database' do
 
-      it 'returns false' do
+      it 'returns nil' do
         expect(view.info('emily')).to be_nil
       end
     end
