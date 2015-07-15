@@ -68,6 +68,21 @@ describe Mongo::Grid::FS do
           expect(fs.send(:write_concern).options).to eq(Mongo::WriteConcern.get(w: 2).options)
         end
       end
+
+      context 'when a read preference is set' do
+
+        let(:options) do
+          { read: { mode: :secondary, server_selection_timeout: 10 } }
+        end
+
+        let(:read_pref) do
+          Mongo::ServerSelector.get(options[:read].merge(authorized_client.options))
+        end
+
+        it 'sets the read preference' do
+          expect(fs.send(:read_preference)).to eq(read_pref)
+        end
+      end
     end
   end
 
