@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require 'mongo/operation/write/bulk/bulkable'
 require 'mongo/operation/write/bulk/bulk_delete'
 require 'mongo/operation/write/bulk/bulk_insert'
 require 'mongo/operation/write/bulk/bulk_update'

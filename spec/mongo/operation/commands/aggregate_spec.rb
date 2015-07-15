@@ -81,47 +81,5 @@ describe Mongo::Operation::Aggregate do
         }.to raise_error(Mongo::Error::OperationFailure)
       end
     end
-
-    context 'rerouting' do
-
-      before do
-        allow_any_instance_of(Mongo::Operation::Aggregate::Result).to receive(:validate!) do
-          true
-        end
-      end
-
-      context 'when out is specified and server is a secondary' do
-        let(:selector) do
-          { :aggregate => 'test_coll',
-            :pipeline => [{ '$out' => 'test_coll' }],
-          }
-        end
-
-        it 'raises an error' do
-          allow_any_instance_of(Mongo::ServerSelector::Primary).to receive(:server) do
-            primary_server
-          end
-          expect {
-            op.execute(secondary_context)
-          }.to raise_error(Mongo::Error::NeedPrimaryServer)
-        end
-      end
-
-      context 'when out is specified and server is a primary' do
-        let(:selector) do
-          { :aggregate => 'test_coll',
-            :pipeline => [{ '$out' => 'test_coll' }],
-          }
-        end
-
-        it 'sends the operation to the primary' do
-          allow_any_instance_of(Mongo::ServerSelector::Primary).to receive(:server) do
-            primary_server
-          end
-          expect(primary_context).to receive(:with_connection)
-          op.execute(primary_context)
-        end
-      end
-    end
   end
 end

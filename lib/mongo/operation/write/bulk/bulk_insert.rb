@@ -47,26 +47,9 @@ module Mongo
       #
       # @since 2.0.0
       class BulkInsert
+        include Bulkable
         include Specifiable
         include Idable
-
-        # Execute the bulk insert operation.
-        #
-        # @example Execute the operation.
-        #   operation.execute(context)
-        #
-        # @param [ Mongo::Server::Context ] context The context for this operation.
-        #
-        # @return [ Result ] The operation result.
-        #
-        # @since 2.0.0
-        def execute(context)
-          if context.features.write_command_enabled?
-            execute_write_command(context)
-          else
-            execute_message(context)
-          end
-        end
 
         private
 
@@ -87,34 +70,6 @@ module Mongo
             end
           end
           LegacyResult.new(replies.compact.empty? ? nil : replies, @ids)
-        end
-
-        def stop_sending?(result)
-          ordered? && !result.successful?
-        end
-
-        # @todo put this somewhere else
-        def ordered?
-          @spec.fetch(:ordered, true)
-        end
-
-        def initialize_copy(original)
-          @spec = original.spec.dup
-          @spec[DOCUMENTS] = original.spec[DOCUMENTS].clone
-        end
-
-        def gle
-          gle_message = ( ordered? && write_concern.get_last_error.nil? ) ?
-                           Mongo::WriteConcern.get(:w => 1).get_last_error :
-                           write_concern.get_last_error
-          if gle_message
-            Protocol::Query.new(
-              db_name,
-              Database::COMMAND,
-              gle_message,
-              options.merge(limit: -1)
-            )
-          end
         end
 
         def messages

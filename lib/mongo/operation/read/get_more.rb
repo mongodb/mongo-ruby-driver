@@ -38,32 +38,12 @@ module Mongo
       #
       # @since 2.0.0
       class GetMore
-        include Executable
         include Specifiable
-
-        # Execute the get more operation.
-        #
-        # @example Execute the operation.
-        #   operation.execute(context)
-        #
-        # @param [ Mongo::Server::Context ] context The context for this operation.
-        #
-        # @return [ Result ] The operation response, if there is one.
-        #
-        # @since 2.0.0
-        def execute(context)
-          execute_message(context)
-        end
+        include Executable
 
         private
 
-        def execute_message(context)
-          context.with_connection do |connection|
-            Result.new(connection.dispatch([ message ]))
-          end
-        end
-
-        def message
+        def message(context)
           Protocol::GetMore.new(db_name, coll_name, to_return, cursor_id)
         end
       end

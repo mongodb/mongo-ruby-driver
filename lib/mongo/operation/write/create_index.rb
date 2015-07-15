@@ -42,37 +42,14 @@ module Mongo
       #
       # @since 2.0.0
       class CreateIndex
-        include Executable
+        include GLE
+        include WriteCommandEnabled
         include Specifiable
-
-        # Execute the ensure index operation.
-        #
-        # @example Execute the operation.
-        #   operation.execute(context)
-        #
-        # @param [ Mongo::Server::Context ] context The context for this operation.
-        #
-        # @return [ Result ] The result of the operation.
-        #
-        # @since 2.0.0
-        def execute(context)
-          if context.features.write_command_enabled?
-            execute_write_command(context)
-          else
-            execute_message(context)
-          end
-        end
 
         private
 
-        def execute_write_command(context)
-          Result.new(Command::CreateIndex.new(spec).execute(context)).validate!
-        end
-
-        def execute_message(context)
-          context.with_connection do |connection|
-            Result.new(connection.dispatch([ message, gle ].compact)).validate!
-          end
+        def write_command_op
+          Command::CreateIndex.new(spec)
         end
 
         def index_documents

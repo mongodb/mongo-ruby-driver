@@ -15,11 +15,23 @@
 module Mongo
   module Operation
 
-    # This module provides the #execute method that many operations use.
-    # It makes sure to instantiate the appropriate Result class for the operation's response.
+    # A MongoDB get indexes operation.
+    #
+    # Initialize the get indexes operation.
+    #
+    # @example Instantiate the operation.
+    #   Read::Indexes.new(:db_name => 'test', :coll_name => 'test_coll')
+    #
+    # Initialization:
+    #   param [ Hash ] spec The specifications for the insert.
+    #
+    #   option spec :db_name [ String ] The name of the database.
+    #   option spec :coll_name [ String ] The name of the collection.
     #
     # @since 2.0.0
-    module Executable
+    class Indexes
+      include Specifiable
+      include ReadPreference
 
       # Execute the operation.
       # The context gets a connection on which the operation
@@ -27,14 +39,31 @@ module Mongo
       #
       # @param [ Mongo::Server::Context ] context The context for this operation.
       #
-      # @return [ Result ] The operation response, if there is one.
+      # @return [ Result ] The indexes operation response.
       #
       # @since 2.0.0
       def execute(context)
-        context.with_connection do |connection|
-          result_class = defined?(self.class::Result) ? self.class::Result : Result
-          result_class.new(connection.dispatch([ message(context) ], operation_id)).validate!
+        if context.features.list_indexes_enabled?
+          ListIndexes.new(spec).execute(context)
+        else
+          execute_message(context)
         end
+      end
+
+      private
+
+      def execute_message(context)
+        context.with_connection do |connection|
+          Result.new(connection.dispatch([ message(context) ]))
+        end
+      end
+
+      def selector
+        { ns: namespace }
+      end
+
+      def query_coll
+        Index::COLLECTION
       end
     end
   end

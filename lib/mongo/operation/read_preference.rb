@@ -15,10 +15,11 @@
 module Mongo
   module Operation
 
-    # Adds behaviour for queries that need to take read preference into account.
+    # Adds behaviour for updating the options and the selector for operations
+    # that need to take read preference into account.
     #
     # @since 2.0.0
-    module ReadPreferrable
+    module ReadPreference
 
       # The constant for slave ok flags.
       #

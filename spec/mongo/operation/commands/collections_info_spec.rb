@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe Mongo::Operation::Read::CollectionsInfo do
+describe Mongo::Operation::CollectionsInfo do
 
   let(:spec) do
     { :db_name => TEST_DB }

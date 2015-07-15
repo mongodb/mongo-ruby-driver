@@ -14,9 +14,3 @@
 
 require 'mongo/operation/read/query'
 require 'mongo/operation/read/get_more'
-require 'mongo/operation/read/indexes'
-require 'mongo/operation/read/list_indexes'
-require 'mongo/operation/read/list_collections'
-require 'mongo/operation/read/collections_info'
-require 'mongo/operation/read/user_query'
-require 'mongo/operation/read/users_info'

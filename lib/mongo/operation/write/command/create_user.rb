@@ -23,7 +23,6 @@ module Mongo
         # @since 2.0.0
         class CreateUser
           include Specifiable
-          include Executable
           include Writable
 
           private

@@ -55,42 +55,8 @@ module Mongo
       #
       # @since 2.0.0
       class BulkUpdate
-        include Executable
+        include Bulkable
         include Specifiable
-
-        # Execute the update operation.
-        #
-        # @example Execute the operation.
-        #   operation.execute(context)
-        #
-        # @param [ Mongo::Server::Context ] context The context for this operation.
-        #
-        # @return [ Result ] The operation result.
-        #
-        # @since 2.0.0
-        def execute(context)
-          if context.features.write_command_enabled?
-            execute_write_command(context)
-          else
-            execute_message(context)
-          end
-        end
-
-        # Set the write concern on this operation.
-        #
-        # @example Set a write concern.
-        #   new_op = operation.write_concern(:w => 2)
-        #
-        # @param [ Hash ] wc The write concern.
-        #
-        # @since 2.0.0
-        def write_concern(wc = nil)
-          if wc
-            self.class.new(spec.merge(write_concern: WriteConcern.get(wc)))
-          else
-            spec[WRITE_CONCERN]
-          end
-        end
 
         private
 
@@ -98,47 +64,6 @@ module Mongo
           Result.new(Command::Update.new(spec).execute(context))
         end
 
-        def execute_message(context)
-          replies = messages.map do |m|
-            context.with_connection do |connection|
-              result = LegacyResult.new(connection.dispatch([ m, gle ].compact, operation_id))
-              if stop_sending?(result)
-                return result
-              else
-                result.reply
-              end
-            end
-          end
-          LegacyResult.new(replies.compact.empty? ? nil : replies)
-        end
-
-        def stop_sending?(result)
-          ordered? && !result.successful?
-        end
-
-        # @todo put this somewhere else
-        def ordered?
-          @spec.fetch(:ordered, true)
-        end
-
-        def gle
-          gle_message = ( ordered? && write_concern.get_last_error.nil? ) ?
-                           Mongo::WriteConcern.get(:w => 1).get_last_error :
-                           write_concern.get_last_error
-          if gle_message
-            Protocol::Query.new(
-              db_name,
-              Database::COMMAND,
-              gle_message,
-              options.merge(limit: -1)
-            )
-          end
-        end
-
-        def initialize_copy(original)
-          @spec = original.spec.dup
-          @spec[UPDATES] = original.spec[UPDATES].dup
-        end
 
         def messages
           updates.collect do |u|

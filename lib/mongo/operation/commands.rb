@@ -12,27 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-module Mongo
-  module Operation
-    module Read
-      class UsersInfo
-
-        # Defines custom behaviour of results when using the
-        # usersInfo command.
-        #
-        # @since 2.1.0
-        class Result < Operation::Result
-
-          # The field name for the users document in a usersInfo result.
-          #
-          # @since 2.1.0
-          USERS = 'users'.freeze
-
-          def documents
-            reply.documents.first[USERS]
-          end
-        end
-      end
-    end
-  end
-end
+require 'mongo/operation/commands/command'
+require 'mongo/operation/commands/parallel_scan'
+require 'mongo/operation/commands/aggregate'
+require 'mongo/operation/commands/map_reduce'
+require 'mongo/operation/commands/collections_info'
+require 'mongo/operation/commands/indexes'
+require 'mongo/operation/commands/list_collections'
+require 'mongo/operation/commands/list_indexes'
+require 'mongo/operation/commands/user_query'
+require 'mongo/operation/commands/users_info'

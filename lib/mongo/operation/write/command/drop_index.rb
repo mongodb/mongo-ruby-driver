@@ -30,7 +30,6 @@ module Mongo
         # @since 2.0.0
         class DropIndex
           include Specifiable
-          include Executable
           include Writable
 
           private

@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/operation/aggregate/result'
+require 'mongo/operation/commands/aggregate/result'
 
 module Mongo
   module Operation
@@ -41,50 +41,12 @@ module Mongo
     #
     # @since 2.0.0
     class Aggregate
-      include Executable
       include Specifiable
       include Limited
-      include ReadPreferrable
-
-      # The need primary error message.
-      #
-      # @since 2.0.0
-      ERROR_MESSAGE = "The pipeline contains the '$out' operator so the primary must be used.".freeze
-
-      # Execute the operation.
-      # The context gets a connection on which the operation
-      # is sent in the block.
-      # If the aggregation will be written to an output collection and the
-      # server is not primary, the operation will be rerouted to the primary
-      # with a warning.
-      #
-      # @param [ Server::Context ] context The context for this operation.
-      #
-      # @return [ Result ] The operation response, if there is one.
-      #
-      # @since 2.0.0
-      def execute(context)
-        unless valid_context?(context)
-          raise Error::NeedPrimaryServer.new(ERROR_MESSAGE)
-        end
-        execute_message(context)
-      end
+      include Executable
+      include ReadPreference
 
       private
-
-      def execute_message(context)
-        context.with_connection do |connection|
-          Result.new(connection.dispatch([ message(context) ])).validate!
-        end
-      end
-
-      def valid_context?(context)
-        context.standalone? || context.mongos? || context.primary? || secondary_ok?
-      end
-
-      def secondary_ok?
-        selector[:pipeline].none? { |op| op.key?('$out') || op.key?(:$out) }
-      end
 
       def query_coll
         Database::COMMAND

@@ -12,11 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/operation/map_reduce/result'
+require 'mongo/operation/commands/map_reduce/result'
 
 module Mongo
   module Operation
-
     # A MongoDB map reduce operation.
     #
     # @note A map/reduce operation can behave like a read and
@@ -43,49 +42,12 @@ module Mongo
     #
     # @since 2.0.0
     class MapReduce
-      include Executable
       include Specifiable
       include Limited
-      include ReadPreferrable
-
-      # The error message for needing a primary.
-      #
-      # @since 2.0.
-      ERROR_MESSAGE = "If 'out' is specified as a collection, the primary server must be used.".freeze
-
-      # Execute the map/reduce operation.
-      #
-      # @example Execute the operation.
-      #   operation.execute(context)
-      #
-      # @param [ Server::Context ] context The context for this operation.
-      #
-      # @return [ Result ] The operation response, if there is one.
-      #
-      # @since 2.0.0
-      def execute(context)
-        unless valid_context?(context)
-          raise Error::NeedPrimaryServer.new(ERROR_MESSAGE)
-        end
-        execute_message(context)
-      end
+      include ReadPreference
+      include Executable
 
       private
-
-      def valid_context?(context)
-        context.standalone? || context.mongos? || context.primary? || secondary_ok?
-      end
-
-      def execute_message(context)
-        context.with_connection do |connection|
-          Result.new(connection.dispatch([ message(context) ])).validate!
-        end
-      end
-
-      def secondary_ok?
-        selector[:out].respond_to?(:keys) &&
-          selector[:out].keys.first.to_s.downcase == 'inline'
-      end
 
       def query_coll
         Database::COMMAND

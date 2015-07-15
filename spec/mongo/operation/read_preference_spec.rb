@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe Mongo::Operation::ReadPreferrable do
+describe Mongo::Operation::ReadPreference do
 
   let(:selector) do
     { name: 'test' }
@@ -26,9 +26,9 @@ describe Mongo::Operation::ReadPreferrable do
     Mongo::ServerSelector.get
   end
 
-  let(:read_preferrable) do
+  let(:read_preference) do
     Class.new do
-      include Mongo::Operation::ReadPreferrable
+      include Mongo::Operation::ReadPreference
     end.new.tap do |rp|
       allow(rp).to receive(:read).and_return(read_pref)
       allow(rp).to receive(:selector).and_return(selector)
@@ -55,7 +55,7 @@ describe Mongo::Operation::ReadPreferrable do
     end
 
     it 'returns a special selector' do
-      expect(read_preferrable.send(:update_selector, context)).to eq(expected)
+      expect(read_preference.send(:update_selector, context)).to eq(expected)
     end
 
     context 'when the selector already has $query in it' do
@@ -70,7 +70,7 @@ describe Mongo::Operation::ReadPreferrable do
       end
 
       it 'returns an unaltered special selector' do
-        expect(read_preferrable.send(:update_selector, context)).to eq(expected)
+        expect(read_preference.send(:update_selector, context)).to eq(expected)
       end
     end
   end
@@ -82,7 +82,7 @@ describe Mongo::Operation::ReadPreferrable do
     end
 
     it 'returns a selector' do
-      expect(read_preferrable.send(:update_selector, context)).to eq(selector)
+      expect(read_preference.send(:update_selector, context)).to eq(selector)
     end
   end
 
@@ -168,7 +168,7 @@ describe Mongo::Operation::ReadPreferrable do
       end
 
       it 'does not set the slave_ok flag' do
-        expect(read_preferrable.send(:update_options, context)).to eq(expected)
+        expect(read_preference.send(:update_options, context)).to eq(expected)
       end
     end
 
@@ -183,7 +183,7 @@ describe Mongo::Operation::ReadPreferrable do
       end
 
       it 'sets the slave_ok flag' do
-        expect(read_preferrable.send(:update_options, context)).to eq(expected)
+        expect(read_preference.send(:update_options, context)).to eq(expected)
       end
     end
   end
@@ -205,7 +205,7 @@ describe Mongo::Operation::ReadPreferrable do
       end
 
       it 'does not set the slave_ok flag' do
-        expect(read_preferrable.send(:update_options, context)).to eq(expected)
+        expect(read_preference.send(:update_options, context)).to eq(expected)
       end
     end
 
@@ -222,7 +222,7 @@ describe Mongo::Operation::ReadPreferrable do
         end
 
         it 'sets the slave_ok flag' do
-          expect(read_preferrable.send(:update_options, context)).to eq(expected)
+          expect(read_preference.send(:update_options, context)).to eq(expected)
         end
       end
 
@@ -237,7 +237,7 @@ describe Mongo::Operation::ReadPreferrable do
         end
 
         it 'does not set the slave_ok flag' do
-          expect(read_preferrable.send(:update_options, context)).to eq(expected)
+          expect(read_preference.send(:update_options, context)).to eq(expected)
         end
       end
     end

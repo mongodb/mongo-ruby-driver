@@ -17,34 +17,29 @@ module Mongo
     module Write
       module Command
 
-        # Provides common behavior for all write commands.
+        # Provides common behavior for write commands.
+        # Assigns an operation id when executed.
         #
         # @since 2.0.0
         module Writable
           include Limited
 
-          private
-
-          # Whether this operation may be executed on a secondary server.
+          # Execute the operation.
+          # The context gets a connection on which the operation
+          # is sent in the block.
           #
-          # @return [ false ] A write command may not be executed on a secondary.
-          def secondary_ok?
-            false
-          end
-
-          # Whether the batch writes should be applied in the same order the
-          # items appear, ie. sequentially. 
-          # If ordered is false, the server applies the batch items in no particular
-          # order, and possibly in parallel. Execution halts after the first error.
-          # The default value is true, which means the batch items are applied
-          # sequentially.
+          # @param [ Mongo::Server::Context ] context The context for this operation.
           #
-          # @return [ true, false ] Whether batch items are applied sequentially. 
+          # @return [ Result ] The operation response, if there is one.
           #
           # @since 2.0.0
-          def ordered?
-            @spec.fetch(:ordered, true)
+          def execute(context)
+            context.with_connection do |connection|
+              connection.dispatch([ message ], operation_id)
+            end
           end
+
+          private
 
           # The wire protocol message for this write operation.
           #

@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/operation/parallel_scan/result'
+require 'mongo/operation/commands/parallel_scan/result'
 
 module Mongo
   module Operation
@@ -37,32 +37,12 @@ module Mongo
     #
     # @since 2.0.0
     class ParallelScan
-      include Executable
       include Specifiable
       include Limited
-      include ReadPreferrable
-
-      # Execute the parallel scan operation.
-      #
-      # @example Execute the operation.
-      #   operation.execute(context)
-      #
-      # @param [ Mongo::Server::Context ] context The context for this operation.
-      #
-      # @return [ Result ] The operation response, if there is one.
-      #
-      # @since 2.0.0
-      def execute(context)
-        execute_message(context)
-      end
+      include ReadPreference
+      include Executable
 
       private
-
-      def execute_message(context)
-        context.with_connection do |connection|
-          Result.new(connection.dispatch([ message(context) ])).validate!
-        end
-      end
 
       def selector
         { :parallelCollectionScan => coll_name, :numCursors => cursor_count }

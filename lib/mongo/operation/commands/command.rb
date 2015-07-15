@@ -15,25 +15,30 @@
 module Mongo
   module Operation
 
-    # A MongoDB kill cursors operation.
+    # A MongoDB command operation.
     #
-    # @example Create the kill cursors operation.
-    #   Mongo::Operation::KillCursor.new({ :cursor_ids => [1, 2] })
+    # @example Create the command operation.
+    #   Mongo::Operation::Command.new({ :selector => { :isMaster => 1 } })
     #
     # Initialization:
-    #   param [ Hash ] spec The specifications for the operation.
+    #   param [ Hash ] spec The specifications for the command.
     #
-    #   option spec :cursor_ids [ Array ] The ids of cursors to kill.
+    #   option spec :selector [ Hash ] The command selector.
+    #   option spec :db_name [ String ] The name of the database on which
+    #   the command should be executed.
+    #   option spec :options [ Hash ] Options for the command.
     #
     # @since 2.0.0
-    class KillCursors
+    class Command
       include Specifiable
+      include Limited
+      include ReadPreference
       include Executable
 
       private
 
-      def message(context)
-        Protocol::KillCursors.new(cursor_ids)
+      def query_coll
+        Database::COMMAND
       end
     end
   end

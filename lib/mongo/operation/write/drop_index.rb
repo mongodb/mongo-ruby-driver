@@ -35,7 +35,7 @@ module Mongo
       #
       # @since 2.0.0
       class DropIndex
-        include Executable
+        include WriteCommandEnabled
         include Specifiable
 
         # Execute the drop index operation.
@@ -54,8 +54,8 @@ module Mongo
 
         private
 
-        def execute_write_command(context)
-          Result.new(Command::DropIndex.new(spec).execute(context)).validate!
+        def write_command_op
+          Command::DropIndex.new(spec)
         end
       end
     end

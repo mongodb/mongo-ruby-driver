@@ -106,16 +106,16 @@ module Mongo
         #
         # @since 2.1.0
         def info(name)
-          user_query(name).first
+          user_query(name).documents
         end
 
         private
 
         def user_query(name)
-          Operation::Read::UserQuery.new(
+          Operation::UserQuery.new(
             user_name: name,
             db_name: database.name
-          ).execute(next_primary.context).documents
+          ).execute(next_primary.context)
         end
 
         def generate(user, options)

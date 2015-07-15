@@ -77,24 +77,6 @@ describe Mongo::Operation::MapReduce do
     end
   end
 
-  describe '#merge' do
-
-    let(:other_op) { described_class.new(spec) }
-
-    it 'is not allowed' do
-      expect{ op.merge(other_op) }.to raise_exception
-    end
-  end
-
-  describe '#merge!' do
-
-    let(:other_op) { described_class.new(spec) }
-
-    it 'is not allowed' do
-      expect{ op.merge!(other_op) }.to raise_exception
-    end
-  end
-
   describe '#execute' do
 
     let(:documents) do

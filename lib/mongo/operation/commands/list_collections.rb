@@ -12,49 +12,42 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require 'mongo/operation/commands/list_collections/result'
+
 module Mongo
   module Operation
 
-    # A MongoDB command operation.
+    # A MongoDB listCollections command operation.
     #
-    # @example Create the command operation.
-    #   Mongo::Operation::Command.new({ :selector => { :isMaster => 1 } })
+    # @example Create the listCollections command operation.
+    #   Mongo::Operation::Read::ListCollections.new(db_name: 'test')
+    #
+    # @note A command is actually a query on the virtual '$cmd' collection.
     #
     # Initialization:
     #   param [ Hash ] spec The specifications for the command.
     #
-    #   option spec :selector [ Hash ] The command selector.
-    #   option spec :db_name [ String ] The name of the database on which
-    #   the command should be executed.
+    #   option spec :db_name [ String ] The name of the database whose list of
+    #     collection names is requested.
     #   option spec :options [ Hash ] Options for the command.
     #
     # @since 2.0.0
-    class Command
-      include Executable
+    class ListCollections
       include Specifiable
       include Limited
-      include ReadPreferrable
-
-      # Execute the command operation.
-      #
-      # @example Execute the operation.
-      #   operation.execute(context)
-      #
-      # @param [ Server::Context ] context The context for this operation.
-      #
-      # @return [ Result ] The operation result.
-      #
-      # @since 2.0.0
-      def execute(context)
-        context.with_connection do |connection|
-          Result.new(connection.dispatch([ message(context) ])).validate!
-        end
-      end
+      include Executable
+      include ReadPreference
 
       private
 
       def query_coll
         Database::COMMAND
+      end
+
+      def selector
+        (spec[SELECTOR] || {}).merge(
+          listCollections: 1, filter: { name: { '$not' => /system\.|\$/ }}
+        )
       end
     end
   end

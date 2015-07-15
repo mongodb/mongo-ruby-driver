@@ -16,28 +16,30 @@ module Mongo
   module Operation
     module Write
 
-      # This module provides functionality to ensure that documents contain
-      # an id field. Used by insert operations (Bulk, legacy, write command inserts).
+      # This module contains common functionality for operations that need to
+      # be followed by a GLE message.
       #
       # @since 2.1.0
-      module Idable
+      module GLE
 
         private
 
-        def id(doc)
-          doc.respond_to?(:id) ? doc.id : (doc['_id'] || doc[:_id])
+        def execute_message(context)
+          context.with_connection do |connection|
+            result_class = defined?(self.class::LegacyResult) ? self.class::LegacyResult :
+                defined?(self.class::Result) ? self.class::Result : Result
+            result_class.new(connection.dispatch([ message, gle ].compact)).validate!
+          end
         end
 
-        def has_id?(doc)
-          !!id(doc)
-        end
-
-        def ensure_ids(documents)
-          @ids ||= []
-          documents.collect do |doc|
-            doc_with_id = has_id?(doc) ? doc : doc.merge(_id: BSON::ObjectId.new)
-            @ids << id(doc_with_id)
-            doc_with_id
+        def gle
+          if gle_message = write_concern.get_last_error
+            Protocol::Query.new(
+                db_name,
+                Database::COMMAND,
+                gle_message,
+                options.merge(limit: -1)
+            )
           end
         end
       end
