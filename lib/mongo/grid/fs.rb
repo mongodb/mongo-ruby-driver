@@ -139,9 +139,10 @@ module Mongo
         "#{prefix}.#{Grid::File::Metadata::COLLECTION}"
       end
 
-      def write_concern
-        @options[:write] ? WriteConcern.get(@options[:write]) :
-            database.write_concern
+      def read_preference
+        @read_preference ||= @options[:read] ?
+            ServerSelector.get((@options[:read] || {}).merge(database.options)) :
+              database.read_preference
       end
 
       def write_concern
