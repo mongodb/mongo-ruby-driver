@@ -2,30 +2,37 @@ require 'spec_helper'
 
 describe Mongo::ServerSelector::Nearest do
 
+  let(:name) { :nearest }
+
   include_context 'server selector'
 
-  it_behaves_like 'a read preference mode' do
-    let(:name) { :nearest }
+  it_behaves_like 'a server selector mode' do
     let(:slave_ok) { true }
   end
 
-  it_behaves_like 'a read preference mode accepting tag sets'
+  it_behaves_like 'a server selector accepting tag sets'
 
   describe '#to_mongos' do
 
     context 'tag set not provided' do
+
+      let(:expected) do
+        { :mode => 'nearest' }
+      end
+
       it 'returns a read preference formatted for mongos' do
-        expect(read_pref.to_mongos).to eq({ :mode => 'nearest' })
+        expect(selector.to_mongos).to eq(expected)
       end
     end
 
     context 'tag set provided' do
+
       let(:tag_sets) do
         [tag_set]
       end
 
       it 'returns a read preference formatted for mongos' do
-        expect(read_pref.to_mongos).to eq(
+        expect(selector.to_mongos).to eq(
           { :mode => 'nearest', :tags => tag_sets }
         )
       end
@@ -38,7 +45,7 @@ describe Mongo::ServerSelector::Nearest do
       let(:candidates) { [] }
 
       it 'returns an empty array' do
-        expect(read_pref.send(:select, candidates)).to be_empty
+        expect(selector.send(:select, candidates)).to be_empty
       end
     end
 
@@ -46,7 +53,7 @@ describe Mongo::ServerSelector::Nearest do
       let(:candidates) { [primary] }
 
       it 'returns an array with the primary' do
-        expect(read_pref.send(:select, candidates)).to eq([primary])
+        expect(selector.send(:select, candidates)).to eq([primary])
       end
     end
 
@@ -54,7 +61,7 @@ describe Mongo::ServerSelector::Nearest do
       let(:candidates) { [secondary] }
 
       it 'returns an array with the secondary' do
-        expect(read_pref.send(:select, candidates)).to eq([secondary])
+        expect(selector.send(:select, candidates)).to eq([secondary])
       end
     end
 
@@ -62,7 +69,7 @@ describe Mongo::ServerSelector::Nearest do
       let(:candidates) { [primary, secondary] }
 
       it 'returns an array with the primary and secondary' do
-        expect(read_pref.send(:select, candidates)).to match_array([primary, secondary])
+        expect(selector.send(:select, candidates)).to match_array([primary, secondary])
       end
     end
 
@@ -70,7 +77,7 @@ describe Mongo::ServerSelector::Nearest do
       let(:candidates) { [secondary, secondary] }
 
       it 'returns an array with the secondaries' do
-        expect(read_pref.send(:select, candidates)).to match_array([secondary, secondary])
+        expect(selector.send(:select, candidates)).to match_array([secondary, secondary])
       end
     end
 
@@ -89,7 +96,7 @@ describe Mongo::ServerSelector::Nearest do
           let(:candidates) { [primary] }
 
           it 'returns an empty array' do
-            expect(read_pref.send(:select, candidates)).to be_empty
+            expect(selector.send(:select, candidates)).to be_empty
           end
         end
 
@@ -97,7 +104,7 @@ describe Mongo::ServerSelector::Nearest do
           let(:candidates) { [matching_primary] }
 
           it 'returns an array with the primary' do
-            expect(read_pref.send(:select, candidates)).to eq([matching_primary])
+            expect(selector.send(:select, candidates)).to eq([matching_primary])
           end
         end
 
@@ -105,7 +112,7 @@ describe Mongo::ServerSelector::Nearest do
           let(:candidates) { [secondary] }
 
           it 'returns an empty array' do
-            expect(read_pref.send(:select, candidates)).to be_empty
+            expect(selector.send(:select, candidates)).to be_empty
           end
         end
 
@@ -113,7 +120,7 @@ describe Mongo::ServerSelector::Nearest do
           let(:candidates) { [matching_secondary] }
 
           it 'returns an array with the matching secondary' do
-            expect(read_pref.send(:select, candidates)).to eq([matching_secondary])
+            expect(selector.send(:select, candidates)).to eq([matching_secondary])
           end
         end
       end
@@ -124,7 +131,7 @@ describe Mongo::ServerSelector::Nearest do
           let(:candidates) { [primary, secondary, secondary] }
 
           it 'returns an empty array' do
-            expect(read_pref.send(:select, candidates)).to be_empty
+            expect(selector.send(:select, candidates)).to be_empty
           end
         end
 
@@ -132,7 +139,7 @@ describe Mongo::ServerSelector::Nearest do
           let(:candidates) { [matching_primary, secondary, secondary] }
 
           it 'returns an array with the matching primary' do
-            expect(read_pref.send(:select, candidates)).to eq([matching_primary])
+            expect(selector.send(:select, candidates)).to eq([matching_primary])
           end
         end
 
@@ -140,7 +147,7 @@ describe Mongo::ServerSelector::Nearest do
           let(:candidates) { [primary, matching_secondary, secondary] }
 
           it 'returns an array with the matching secondary' do
-            expect(read_pref.send(:select, candidates)).to eq([matching_secondary])
+            expect(selector.send(:select, candidates)).to eq([matching_secondary])
           end
         end
 
@@ -149,7 +156,7 @@ describe Mongo::ServerSelector::Nearest do
           let(:expected) { [matching_secondary, matching_secondary] }
 
           it 'returns an array with the matching secondaries' do
-            expect(read_pref.send(:select, candidates)).to eq(expected)
+            expect(selector.send(:select, candidates)).to eq(expected)
           end
         end
 
@@ -158,7 +165,7 @@ describe Mongo::ServerSelector::Nearest do
           let(:expected) { [matching_primary, matching_secondary] }
 
           it 'returns an array with the matching primary and secondary' do
-            expect(read_pref.send(:select, candidates)).to match_array(expected)
+            expect(selector.send(:select, candidates)).to match_array(expected)
           end
         end
       end
@@ -174,7 +181,7 @@ describe Mongo::ServerSelector::Nearest do
           let(:candidates) { [far_primary] }
 
           it 'returns array with far primary' do
-            expect(read_pref.send(:select, candidates)).to eq([far_primary])
+            expect(selector.send(:select, candidates)).to eq([far_primary])
           end
         end
 
@@ -182,7 +189,7 @@ describe Mongo::ServerSelector::Nearest do
           let(:candidates) { [far_secondary] }
 
           it 'returns array with far primary' do
-            expect(read_pref.send(:select, candidates)).to eq([far_secondary])
+            expect(selector.send(:select, candidates)).to eq([far_secondary])
           end
         end
       end
@@ -193,7 +200,7 @@ describe Mongo::ServerSelector::Nearest do
           let(:candidates) { [primary, secondary] }
 
           it 'returns array with primary and secondary' do
-            expect(read_pref.send(:select, candidates)).to match_array(
+            expect(selector.send(:select, candidates)).to match_array(
               [primary, secondary]
             )
           end
@@ -203,7 +210,7 @@ describe Mongo::ServerSelector::Nearest do
           let(:candidates) { [primary, far_secondary] }
 
           it 'returns array with local primary' do
-            expect(read_pref.send(:select, candidates)).to eq([primary])
+            expect(selector.send(:select, candidates)).to eq([primary])
           end
         end
 
@@ -211,7 +218,7 @@ describe Mongo::ServerSelector::Nearest do
           let(:candidates) { [far_primary, secondary] }
 
           it 'returns array with local secondary' do
-            expect(read_pref.send(:select, candidates)).to eq([secondary])
+            expect(selector.send(:select, candidates)).to eq([secondary])
           end
         end
 
@@ -220,7 +227,7 @@ describe Mongo::ServerSelector::Nearest do
           let(:expected) { [far_primary, far_secondary] }
 
           it 'returns array with both servers' do
-            expect(read_pref.send(:select, candidates)).to match_array(expected)
+            expect(selector.send(:select, candidates)).to match_array(expected)
           end
         end
 
@@ -231,7 +238,7 @@ describe Mongo::ServerSelector::Nearest do
             let(:expected) { [primary, secondary] }
 
             it 'returns array with local primary and local secondary' do
-              expect(read_pref.send(:select, candidates)).to match_array(expected)
+              expect(selector.send(:select, candidates)).to match_array(expected)
             end
           end
 
@@ -240,7 +247,7 @@ describe Mongo::ServerSelector::Nearest do
             let(:expected) { [secondary, secondary] }
 
             it 'returns array with the two local secondaries' do
-              expect(read_pref.send(:select, candidates)).to match_array(expected)
+              expect(selector.send(:select, candidates)).to match_array(expected)
             end
           end
         end
