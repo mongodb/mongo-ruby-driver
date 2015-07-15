@@ -18,7 +18,7 @@ module Mongo
     # Represents a view of the GridFS in the database.
     #
     # @since 2.0.0
-    class FS
+    class FSBucket
 
       # The default root prefix.
       #
@@ -83,12 +83,14 @@ module Mongo
       # Create the GridFS.
       #
       # @example Create the GridFS.
-      #   Grid::FS.new(database)
+      #   Grid::FSBucket.new(database)
       #
       # @param [ Database ] database The database the files reside in.
       # @param [ Hash ] options The GridFS options.
       #
       # @option options [ String ] :fs_name The prefix for the files and chunks
+      #   collections.
+      # @option options [ String ] :bucket_name The prefix for the files and chunks
       #   collections.
       #
       # @since 2.0.0
@@ -111,7 +113,7 @@ module Mongo
       #
       # @since 2.0.0
       def prefix
-        @options[:fs_name] || DEFAULT_ROOT
+        @options[:fs_name] || @options[:bucket_name]|| DEFAULT_ROOT
       end
 
       # Remove a single file from the GridFS.

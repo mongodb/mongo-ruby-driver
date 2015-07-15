@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe Mongo::Grid::FS do
+describe Mongo::Grid::FSBucket do
 
   describe '#initialize' do
 
@@ -40,7 +40,7 @@ describe Mongo::Grid::FS do
 
       before do
         chunks_collection.drop
-        chunks_collection.indexes.create_one(Mongo::Grid::FS::CHUNKS_INDEX, unique: false)
+        chunks_collection.indexes.create_one(Mongo::Grid::FSBucket::CHUNKS_INDEX, unique: false)
       end
 
       after do

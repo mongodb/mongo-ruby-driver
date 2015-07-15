@@ -195,7 +195,7 @@ describe Mongo::Database do
       end
 
       let(:client) do
-        authorized_client.with(server_selection_timeout: 2)
+        authorized_client.with(server_selection_timeout: 0.1)
       end
 
       let(:database) do
@@ -278,7 +278,7 @@ describe Mongo::Database do
     shared_context 'a GridFS database' do
 
       it 'returns a Grid::FS for the db' do
-        expect(fs).to be_a(Mongo::Grid::FS)
+        expect(fs).to be_a(Mongo::Grid::FSBucket)
       end
 
       context 'when operating on the fs' do
@@ -317,15 +317,31 @@ describe Mongo::Database do
 
     context 'when a custom prefix is provided' do
 
-      let(:fs) do
-        database.fs(:fs_name => 'grid')
+      context 'when the option is fs_name' do
+
+        let(:fs) do
+          database.fs(:fs_name => 'grid')
+        end
+
+        it 'sets the custom prefix' do
+          expect(fs.prefix).to eq('grid')
+        end
+
+        it_behaves_like 'a GridFS database'
       end
 
-      it 'sets the custom prefix' do
-        expect(fs.prefix).to eq('grid')
-      end
+      context 'when the option is bucket_name' do
 
-      it_behaves_like 'a GridFS database'
+        let(:fs) do
+          database.fs(:bucket_name => 'grid')
+        end
+
+        it 'sets the custom prefix' do
+          expect(fs.prefix).to eq('grid')
+        end
+
+        it_behaves_like 'a GridFS database'
+      end
     end
   end
 end
