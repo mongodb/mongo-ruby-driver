@@ -86,6 +86,117 @@ describe Mongo::Grid::FSBucket do
     end
   end
 
+  describe '#find' do
+
+    let(:fs) do
+      described_class.new(authorized_client.database)
+    end
+
+    context 'when there is no selector provided' do
+
+      let(:files) do
+        [
+            Mongo::Grid::File.new('hello world!', :filename => 'test.txt'),
+            Mongo::Grid::File.new('goodbye world!', :filename => 'test1.txt')
+        ]
+      end
+
+      before do
+        files.each do |file|
+          fs.insert_one(file)
+        end
+      end
+
+      after do
+        fs.files_collection.delete_many
+        fs.chunks_collection.delete_many
+      end
+
+      it 'returns a collection view' do
+        expect(fs.find).to be_a(Mongo::Collection::View)
+      end
+
+      it 'iterates over the documents in the result' do
+        fs.find.each do |document|
+          expect(document).to_not be_nil
+        end
+      end
+    end
+
+    context 'when provided a selector' do
+
+      let(:view) do
+        fs.find(filename: 'test.txt')
+      end
+
+      it 'returns a collection view for the selector' do
+        expect(view.selector).to eq(filename: 'test.txt')
+      end
+    end
+
+    context 'when options are provided' do
+
+      let(:view) do
+        fs.find({filename: 'test.txt'}, options)
+      end
+
+      context 'when provided batch_size' do
+
+        let(:options) do
+          { batch_size: 5 }
+        end
+
+        it 'sets the batch_size on the view' do
+          expect(view.batch_size).to eq(options[:batch_size])
+        end
+      end
+
+      context 'when provided limit' do
+
+        let(:options) do
+          { limit: 5 }
+        end
+
+        it 'sets the limit on the view' do
+          expect(view.limit).to eq(options[:limit])
+        end
+      end
+
+      context 'when provided no_cursor_timeout' do
+
+        let(:options) do
+          { no_cursor_timeout: true }
+        end
+
+        it 'sets the no_cursor_timeout on the view' do
+          expect(view.options[:no_cursor_timeout]).to eq(options[:no_cursor_timeout])
+        end
+      end
+
+      context 'when provided skip' do
+
+        let(:options) do
+          { skip: 5 }
+        end
+
+        it 'sets the skip on the view' do
+          expect(view.skip).to eq(options[:skip])
+        end
+      end
+
+      context 'when provided sort' do
+
+        let(:options) do
+          { sort:  { 'x' => Mongo::Index::ASCENDING } }
+        end
+
+        it 'sets the sort on the view' do
+          expect(view.sort).to eq(options[:sort])
+        end
+      end
+    end
+  end
+
   describe '#find_one' do
 
     let(:fs) do

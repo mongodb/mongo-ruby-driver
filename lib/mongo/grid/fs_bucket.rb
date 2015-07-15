@@ -44,6 +44,31 @@ module Mongo
       # @return [ Collection ] files_collection The files collection.
       attr_reader :files_collection
 
+      # Find files collection documents matching a given selector.
+      #
+      # @example Find files collection documents by a filename.
+      #   fs.find(filename: 'file.txt')
+      #
+      # @param [ Hash ] selector The selector to use in the find.
+      # @param [ Hash ] options The options for the find.
+      #
+      # @option options [ Integer ] :batch_size The number of documents returned in each batch
+      #   of results from MongoDB.
+      # @option options [ Integer ] :limit The max number of docs to return from the query.
+      # @option options [ true, false ] :no_cursor_timeout The server normally times out idle
+      #   cursors after an inactivity period (10 minutes) to prevent excess memory use.
+      #   Set this option to prevent that.
+      # @option options [ Integer ] :skip The number of docs to skip before returning results.
+      # @option options [ Hash ] :sort The key and direction pairs by which the result set
+      #   will be sorted.
+      #
+      # @return [ CollectionView ] The collection view.
+      #
+      # @since 2.1.0
+      def find(selector = nil, options = {})
+        files_collection.find(selector, options)
+      end
+
       # Find a file in the GridFS.
       #
       # @example Find a file by its id.
