@@ -13,4 +13,4 @@
 # limitations under the License.
 
 require 'mongo/grid/file'
-require 'mongo/grid/fs'
+require 'mongo/grid/fs_bucket'
