@@ -27,6 +27,17 @@ module Mongo
   module ServerSelector
     extend self
 
+    # The max latency in seconds between the closest server and other servers
+    # considered for selection.
+    #
+    # @since 2.0.0
+    LOCAL_THRESHOLD = 0.015.freeze
+
+    # How long to block for server selection before throwing an exception.
+    #
+    # @since 2.0.0
+    SERVER_SELECTION_TIMEOUT = 30.freeze
+
     # Hash lookup for the selector classes based off the symbols
     #   provided in configuration.
     #
@@ -43,7 +54,7 @@ module Mongo
     #
     # @example Get a server selector object for selecting a secondary with
     #   specific tag sets.
-    #   Mongo::ServerSelector.get({ :mode => :secondary, :tag_sets => [{'dc' => 'nyc'}] })
+    #   Mongo::ServerSelector.get(:mode => :secondary, :tag_sets => [{'dc' => 'nyc'}])
     #
     # @param [ Hash ] preference The server preference.
     # @param [ Hash ] options The preference options.
@@ -52,11 +63,8 @@ module Mongo
     # @option preference :tag_sets [ Array<Hash> ] The tag sets.
     #
     # @since 2.0.0
-    def get(preference = {}, options = {})
-      PREFERENCES.fetch(preference[:mode] || :primary).new(
-        preference[:tag_sets] || [],
-        options
-      )
+    def get(preference = {})
+      PREFERENCES.fetch(preference[:mode] || :primary).new(preference)
     end
   end
 end

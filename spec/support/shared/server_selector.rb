@@ -22,7 +22,7 @@ def server(mode, options = {})
 end
 
 shared_context 'server selector' do
-  let(:read_pref) { described_class.new(tag_sets) }
+
   let(:tag_sets) { [] }
   let(:tag_set) do
     { 'test' => 'tag' }
@@ -32,37 +32,43 @@ shared_context 'server selector' do
   end
   let(:primary) { server(:primary) }
   let(:secondary) { server(:secondary) }
+  let(:selector) { described_class.new(:mode => name, :tag_sets => tag_sets) }
 end
 
-shared_examples 'a read preference mode' do
+shared_examples 'a server selector mode' do
 
   describe '#name' do
 
     it 'returns the name' do
-      expect(read_pref.name).to eq(name)
+      expect(selector.name).to eq(name)
     end
   end
 
   describe '#slave_ok?' do
 
     it 'returns whether the slave_ok bit should be set' do
-      expect(read_pref.slave_ok?).to eq(slave_ok)
+      expect(selector.slave_ok?).to eq(slave_ok)
     end
   end
 
   describe '#==' do
 
     context 'when mode is the same' do
-      let(:other) { described_class.new }
+
+      let(:other) do
+        described_class.new
+      end
 
       context 'tag sets are the same' do
+
         it 'returns true' do
-          expect(read_pref).to eq(other)
+          expect(selector).to eq(other)
         end
       end
     end
 
     context 'mode is different' do
+
       let(:other) do
         double('selectable').tap do |mode|
           allow(mode).to receive(:name).and_return(:other)
@@ -70,28 +76,31 @@ shared_examples 'a read preference mode' do
       end
 
       it 'returns false' do
-        expect(read_pref).not_to eq(other)
+        expect(selector).not_to eq(other)
       end
     end
   end
 end
 
-shared_examples 'a read preference mode accepting tag sets' do
+shared_examples 'a server selector accepting tag sets' do
 
   describe '#tag_sets' do
 
     context 'tags not provided' do
 
       it 'returns an empty array' do
-        expect(read_pref.tag_sets).to be_empty
+        expect(selector.tag_sets).to be_empty
       end
     end
 
     context 'tag sets provided' do
-      let(:tag_sets) { [tag_set] }
+
+      let(:tag_sets) do
+        [ tag_set ]
+      end
 
       it 'returns the tag sets' do
-        expect(read_pref.tag_sets).to eq(tag_sets)
+        expect(selector.tag_sets).to eq(tag_sets)
       end
     end
   end
@@ -104,7 +113,7 @@ shared_examples 'a read preference mode accepting tag sets' do
         let(:tag_sets) { { 'other' => 'tag'  } }
 
         it 'returns false' do
-          expect(read_pref).not_to eq(other)
+          expect(selector).not_to eq(other)
         end
       end
     end

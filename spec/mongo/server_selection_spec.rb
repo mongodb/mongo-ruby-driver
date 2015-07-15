@@ -54,9 +54,9 @@ describe 'Server Selection' do
       end
 
       let(:server_selector) do
-        Mongo::ServerSelector.get({ :mode => spec.read_preference['mode'],
-                                    :tag_sets => spec.read_preference['tag_sets'] },
-                                    :server_selection_timeout => 1)
+        Mongo::ServerSelector.get(:mode => spec.read_preference['mode'],
+                                  :tag_sets => spec.read_preference['tag_sets'],
+                                  :server_selection_timeout => 1)
       end
 
       before do

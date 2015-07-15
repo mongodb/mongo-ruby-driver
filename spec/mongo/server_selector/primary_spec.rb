@@ -2,10 +2,11 @@ require 'spec_helper'
 
 describe Mongo::ServerSelector::Primary do
 
+  let(:name) { :primary }
+
   include_context 'server selector'
 
-  it_behaves_like 'a read preference mode' do
-    let(:name) { :primary }
+  it_behaves_like 'a server selector mode' do
     let(:slave_ok) { false }
   end
 
@@ -14,7 +15,7 @@ describe Mongo::ServerSelector::Primary do
     context 'tags not provided' do
 
       it 'returns an empty array' do
-        expect(read_pref.tag_sets).to be_empty
+        expect(selector.tag_sets).to be_empty
       end
     end
 
@@ -22,7 +23,7 @@ describe Mongo::ServerSelector::Primary do
       let(:tag_sets) { [tag_set] }
 
       it 'raises an error' do
-        expect{read_pref.tag_sets}.to raise_error
+        expect{selector.tag_sets}.to raise_error
       end
     end
   end
@@ -30,7 +31,7 @@ describe Mongo::ServerSelector::Primary do
   describe '#to_mongos' do
 
     it 'returns nil' do
-      expect(read_pref.to_mongos).to be_nil
+      expect(selector.to_mongos).to be_nil
     end
   end
 
@@ -40,7 +41,7 @@ describe Mongo::ServerSelector::Primary do
       let(:candidates) { [] }
 
       it 'returns an empty array' do
-        expect(read_pref.send(:select, candidates)).to be_empty
+        expect(selector.send(:select, candidates)).to be_empty
       end
     end
 
@@ -48,7 +49,7 @@ describe Mongo::ServerSelector::Primary do
       let(:candidates) { [secondary] }
 
       it 'returns an empty array' do
-        expect(read_pref.send(:select, candidates)).to be_empty
+        expect(selector.send(:select, candidates)).to be_empty
       end
     end
 
@@ -56,7 +57,7 @@ describe Mongo::ServerSelector::Primary do
       let(:candidates) { [primary] }
 
       it 'returns an array with the primary' do
-        expect(read_pref.send(:select, candidates)).to eq([primary])
+        expect(selector.send(:select, candidates)).to eq([primary])
       end
     end
 
@@ -64,7 +65,7 @@ describe Mongo::ServerSelector::Primary do
       let(:candidates) { [secondary, primary] }
 
       it 'returns an array with the primary' do
-        expect(read_pref.send(:select, candidates)).to eq([primary])
+        expect(selector.send(:select, candidates)).to eq([primary])
       end
     end
 
@@ -78,7 +79,7 @@ describe Mongo::ServerSelector::Primary do
           let(:candidates) { [far_primary] }
 
           it 'returns array with the primary' do
-            expect(read_pref.send(:select, candidates)).to eq([far_primary])
+            expect(selector.send(:select, candidates)).to eq([far_primary])
           end
         end
 
@@ -86,7 +87,7 @@ describe Mongo::ServerSelector::Primary do
           let(:candidates) { [far_secondary] }
 
           it 'returns empty array' do
-            expect(read_pref.send(:select, candidates)).to be_empty
+            expect(selector.send(:select, candidates)).to be_empty
           end
         end
       end
@@ -97,7 +98,7 @@ describe Mongo::ServerSelector::Primary do
           let(:candidates) { [far_primary, far_secondary] }
 
           it 'returns an array with the primary' do
-            expect(read_pref.send(:select, candidates)).to eq([far_primary])
+            expect(selector.send(:select, candidates)).to eq([far_primary])
           end
         end
 
@@ -105,7 +106,7 @@ describe Mongo::ServerSelector::Primary do
           let(:candidates) { [far_primary, far_secondary] }
 
           it 'returns an array with the primary' do
-            expect(read_pref.send(:select, candidates)).to eq([far_primary])
+            expect(selector.send(:select, candidates)).to eq([far_primary])
           end
         end
       end

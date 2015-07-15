@@ -180,7 +180,7 @@ module Mongo
               log_warn([
                 'Rerouting the MapReduce operation to the primary server.'
               ])
-              server = ServerSelector.get(mode: :primary).select_server(cluster)
+              server = cluster.next_primary
               initial_query_op.execute(server.context)
             end
           if inline?

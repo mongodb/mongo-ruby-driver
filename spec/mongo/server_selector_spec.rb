@@ -6,66 +6,125 @@ describe Mongo::ServerSelector do
 
   describe '.get' do
 
-    let(:read_pref) do
-      described_class.get({ :mode => name })
+    let(:selector) do
+      described_class.get(:mode => name, :tag_sets => tag_sets)
     end
 
-    let(:name) { :secondary }
-    let(:tag_sets) { [{ 'test' => 'tag' }] }
-
     context 'when the mode is primary' do
-      let(:name) { :primary }
+
+      let(:name) do
+        :primary
+      end
 
       it 'returns a read preference of class Primary' do
-        expect(read_pref).to be_a(Mongo::ServerSelector::Primary)
+        expect(selector).to be_a(Mongo::ServerSelector::Primary)
       end
     end
 
     context 'when the mode is primary_preferred' do
-      let(:name) { :primary_preferred }
+      let(:name) do
+        :primary_preferred
+      end
 
       it 'returns a read preference of class PrimaryPreferred' do
-        expect(read_pref).to be_a(Mongo::ServerSelector::PrimaryPreferred)
+        expect(selector).to be_a(Mongo::ServerSelector::PrimaryPreferred)
       end
     end
 
     context 'when the mode is secondary' do
-      let(:name) { :secondary }
+      let(:name) do
+        :secondary
+      end
 
       it 'returns a read preference of class Secondary' do
-        expect(read_pref).to be_a(Mongo::ServerSelector::Secondary)
+        expect(selector).to be_a(Mongo::ServerSelector::Secondary)
       end
     end
 
     context 'when the mode is secondary_preferred' do
-      let(:name) { :secondary_preferred }
+      let(:name) do
+        :secondary_preferred
+      end
 
       it 'returns a read preference of class SecondaryPreferred' do
-        expect(read_pref).to be_a(Mongo::ServerSelector::SecondaryPreferred)
+        expect(selector).to be_a(Mongo::ServerSelector::SecondaryPreferred)
       end
     end
 
     context 'when the mode is nearest' do
-      let(:name) { :nearest }
+      let(:name) do
+        :nearest
+      end
 
       it 'returns a read preference of class Nearest' do
-        expect(read_pref).to be_a(Mongo::ServerSelector::Nearest)
+        expect(selector).to be_a(Mongo::ServerSelector::Nearest)
       end
     end
 
     context 'when a mode is not provided' do
-      let(:read_pref) { described_class.get }
+      let(:selector) { described_class.get }
 
       it 'returns a read preference of class Primary' do
-        expect(read_pref).to be_a(Mongo::ServerSelector::Primary)
+        expect(selector).to be_a(Mongo::ServerSelector::Primary)
       end
     end
 
-    context 'when tag sets provided' do
-      let(:read_pref) { described_class.get(:mode => name, :tag_sets => tag_sets) }
+    context 'when tag sets are provided' do
+
+      let(:selector) do
+        described_class.get(:mode => :secondary, :tag_sets => tag_sets)
+      end
+
+      let(:tag_sets) do
+        [{ 'test' => 'tag' }]
+      end
 
       it 'sets tag sets on the read preference object' do
-        expect(read_pref.tag_sets).to eq(tag_sets)
+        expect(selector.tag_sets).to eq(tag_sets)
+      end
+    end
+
+    context 'when server_selection_timeout is specified' do
+
+      let(:selector) do
+        described_class.get(:mode => :secondary, :server_selection_timeout => 1)
+      end
+
+      it 'sets server selection timeout on the read preference object' do
+        expect(selector.server_selection_timeout).to eq(1)
+      end
+    end
+
+    context 'when server_selection_timeout is not specified' do
+
+      let(:selector) do
+        described_class.get(:mode => :secondary)
+      end
+
+      it 'sets server selection timeout to the default' do
+        expect(selector.server_selection_timeout).to eq(Mongo::ServerSelector::SERVER_SELECTION_TIMEOUT)
+      end
+    end
+
+    context 'when local_threshold is specified' do
+
+      let(:selector) do
+        described_class.get(:mode => :secondary, :local_threshold => 0.010)
+      end
+
+      it 'sets local_threshold on the read preference object' do
+        expect(selector.local_threshold).to eq(0.010)
+      end
+    end
+
+    context 'when local_threshold is not specified' do
+
+      let(:selector) do
+        described_class.get(:mode => :secondary)
+      end
+
+      it 'sets local threshold to the default' do
+        expect(selector.local_threshold).to eq(Mongo::ServerSelector::LOCAL_THRESHOLD)
       end
     end
   end
@@ -74,7 +133,9 @@ describe Mongo::ServerSelector do
 
     context 'when #select returns a list of nils' do
 
-      let(:servers) { [ server(:primary) ] }
+      let(:servers) do
+        [ server(:primary) ]
+      end
 
       let(:cluster) do
         double('cluster').tap do |c|
@@ -86,7 +147,7 @@ describe Mongo::ServerSelector do
       end
 
       let(:read_pref) do
-        described_class.get({ mode: :primary }, server_selection_timeout: 1).tap do |pref|
+        described_class.get(mode: :primary, server_selection_timeout: 0.1).tap do |pref|
           allow(pref).to receive(:select).and_return([ nil, nil ])
         end
       end
@@ -103,7 +164,9 @@ describe Mongo::ServerSelector do
 
     context 'when cluster#servers is empty' do
 
-      let(:servers) { [] }
+      let(:servers) do
+        []
+      end
 
       let(:cluster) do
         double('cluster').tap do |c|
@@ -115,7 +178,7 @@ describe Mongo::ServerSelector do
       end
 
       let(:read_pref) do
-        described_class.get({ mode: :primary }, server_selection_timeout: 1)
+        described_class.get(mode: :primary, server_selection_timeout: 0.1)
       end
 
       it 'raises a NoServerAvailable error' do

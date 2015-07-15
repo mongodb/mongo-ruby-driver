@@ -20,17 +20,6 @@ module Mongo
     # @since 2.0.0
     module Selectable
 
-      # The max latency in seconds between the closest server and other servers
-      # considered for selection.
-      #
-      # @since 2.0.0
-      LOCAL_THRESHOLD = 0.015.freeze
-
-      # How long to block for server selection before throwing an exception.
-      #
-      # @since 2.0.0
-      SERVER_SELECTION_TIMEOUT = 30.freeze
-
       # @return [ Hash ] options The options.
       attr_reader :options
 
@@ -65,10 +54,9 @@ module Mongo
       # @raise [ Exception ] If tag sets are specified but not allowed.
       #
       # @since 2.0.0
-      def initialize(tag_sets = [], options = {})
-        if !tag_sets.all? { |set| set.empty? } && !tags_allowed?
-          raise Error::InvalidServerPreference.new(name)
-        end
+      def initialize(options = {})
+        tag_sets = options[:tag_sets] || []
+        validate_tag_sets!(tag_sets)
         @tag_sets = tag_sets
         @options = options
       end
@@ -109,7 +97,7 @@ module Mongo
       # @since 2.0.0
       def server_selection_timeout
         @server_selection_timeout ||=
-          (options[:server_selection_timeout] || SERVER_SELECTION_TIMEOUT)
+          (options[:server_selection_timeout] || ServerSelector::SERVER_SELECTION_TIMEOUT)
       end
 
       # Get the local threshold boundary for nearest selection in seconds.
@@ -121,7 +109,7 @@ module Mongo
       #
       # @since 2.0.0
       def local_threshold
-        @local_threshold ||= (options[:local_threshold] || LOCAL_THRESHOLD)
+        @local_threshold ||= (options[:local_threshold] || ServerSelector::LOCAL_THRESHOLD)
       end
 
       private
@@ -185,6 +173,14 @@ module Mongo
           !matches.empty?
         end
         matches || []
+      end
+
+      private
+
+      def validate_tag_sets!(tag_sets)
+        if !tag_sets.all? { |set| set.empty? } && !tags_allowed?
+          raise Error::InvalidServerPreference.new(name)
+        end
       end
     end
   end
