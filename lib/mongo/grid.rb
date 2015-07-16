@@ -14,3 +14,4 @@
 
 require 'mongo/grid/file'
 require 'mongo/grid/fs_bucket'
+require 'mongo/grid/stream'
