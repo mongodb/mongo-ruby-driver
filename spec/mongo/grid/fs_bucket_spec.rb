@@ -60,12 +60,26 @@ describe Mongo::Grid::FSBucket do
 
       context 'when a write concern is set' do
 
-        let(:options) do
-          { write: { w: 2 } }
+        context 'when the option :write is provided' do
+
+          let(:options) do
+            { write: { w: 2 } }
+          end
+
+          it 'set the write concern' do
+            expect(fs.send(:write_concern).options).to eq(Mongo::WriteConcern.get(w: 2).options)
+          end
         end
 
-        it 'set the write concern' do
-          expect(fs.send(:write_concern).options).to eq(Mongo::WriteConcern.get(w: 2).options)
+        context 'when the option :write_concern is provided' do
+
+          let(:options) do
+            { write_concern: { w: 2 } }
+          end
+
+          it 'set the write concern' do
+            expect(fs.send(:write_concern).options).to eq(Mongo::WriteConcern.get(w: 2).options)
+          end
         end
       end
 

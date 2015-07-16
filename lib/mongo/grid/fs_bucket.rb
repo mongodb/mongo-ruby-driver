@@ -174,7 +174,8 @@ module Mongo
 
       def write_concern
         @write_concern ||= @options[:write] ? WriteConcern.get(@options[:write]) :
-                             database.write_concern
+                             @options[:write_concern] ? WriteConcern.get(@options[:write_concern]) :
+                               database.write_concern
       end
 
       def validate_md5!(file)
