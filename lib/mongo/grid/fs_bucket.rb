@@ -156,6 +156,41 @@ module Mongo
         chunks_collection.find(:files_id => file.id).delete_many
       end
 
+      # Provides a stream that the contents of a file can be written to.
+      #
+      # @param [ String ] filename The name of the file to be uploaded.
+      # @param [ BSON::Document, Hash ] options The metadata options for the file.
+      #
+      # @option options [ String ] :content_type The content type of the file.
+      # @option options [ String ] :metadata Optional file metadata.
+      # @option options [ Integer ] :chunk_size Override the default chunk
+      #   size.
+      #
+      # @return [ Grid::FSBucket::Stream ] The stream.
+      #
+      # @since 2.1.0
+      def open_upload_stream(filename, options = {})
+        Stream.new(self, filename, options)
+      end
+
+      # Uploads a user file to a GridFS bucket.
+      #
+      # @param [ String ] filename The name of the file to be uploaded.
+      # @param [ IO ] io The source stream to be read from.
+      # @param [ BSON::Document, Hash ] options The metadata options for the file.
+      #
+      # @option options [ String ] :content_type The content type of the file.
+      # @option options [ String ] :metadata Optional file metadata.
+      # @option options [ Integer ] :chunk_size Override the default chunk
+      #   size.
+      #
+      # @return [ BSON::ObjectId ] The uploaded file id.
+      #
+      # @since 2.1.0
+      def upload_from_stream(filename, io, options = {})
+        Stream.new(self, filename, options).write(io.read)
+      end
+
       private
 
       def chunks_name

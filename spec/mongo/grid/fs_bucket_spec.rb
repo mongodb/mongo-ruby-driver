@@ -343,4 +343,73 @@ describe Mongo::Grid::FSBucket do
       expect(from_db).to be_nil
     end
   end
+
+  describe '#open_upload_stream' do
+
+    let(:fs) do
+      described_class.new(authorized_client.database)
+    end
+
+    let(:file) do
+      File.open(__FILE__)
+    end
+
+    let(:filename) do
+      File.basename(file.path)
+    end
+
+    let(:options) do
+      {
+          :chunk_size => 100,
+          :content_type => 'text/plain'
+      }
+    end
+
+    let(:stream) do
+      fs.open_upload_stream(filename, options)
+    end
+
+    it 'returns a stream object' do
+      expect(stream).to be_a(Mongo::Grid::FSBucket::Stream)
+    end
+
+    it 'sets the filename on the stream object' do
+      expect(stream.filename).to be(filename)
+    end
+
+    it 'sets the options on the stream object' do
+      expect(stream.options).to be(options)
+    end
+
+    it 'returns the file id' do
+      expect(stream.id).not_to be(nil)
+    end
+  end
+
+  describe '#upload_from_stream' do
+
+    let(:fs) do
+      described_class.new(authorized_client.database)
+    end
+
+    let(:file) do
+      File.open(__FILE__)
+    end
+
+    let(:filename) do
+      File.basename(file.path)
+    end
+
+    let(:from_db) do
+      fs.find_one(:filename => filename)
+    end
+
+    before do
+      fs.upload_from_stream(filename, file)
+    end
+
+    it 'uploads from the io object' do
+      expect(from_db.data.size).to eq(file.size)
+    end
+  end
 end
