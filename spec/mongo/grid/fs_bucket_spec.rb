@@ -288,7 +288,7 @@ describe Mongo::Grid::FSBucket do
         expect {
           fs.insert_one(file)
           fs.insert_one(file)
-        }.to raise_error(Mongo::Error::OperationFailure)
+        }.to raise_error(Mongo::Error::BulkWriteError)
       end
     end
 
