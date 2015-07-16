@@ -100,8 +100,8 @@ module Mongo
       #
       # @since 2.0.0
       def insert_one(file)
+        chunks_collection.insert_many(file.chunks)
         files_collection.insert_one(file.metadata)
-        result = chunks_collection.insert_many(file.chunks)
         file.id
       end
 
