@@ -12,6 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require 'mongo/grid/stream/read'
+require 'mongo/grid/stream/write'
+
 module Mongo
   module Grid
     class FSBucket
@@ -19,53 +22,28 @@ module Mongo
       # A stream that reads and writes files from/to the FSBucket.
       #
       # @since 2.1.0
-      class Stream
+      module Stream
+        extend self
 
-        # @return [ FSBucket ] fs The fs bucket to which this stream reads/writes.
-        attr_reader :fs
+        MODE_MAP = {
+            FSBucket::READ_MODE => Read,
+            FSBucket::WRITE_MODE => Write
+        }
 
-        # @return [ String ] filename The filename.
-        attr_reader :filename
-
-        # @return [ BSON::ObjectId ] The file id.
-        attr_reader :id
-
-        # @return [ BSON::Document, Hash ] The options for the file read/write.
-        attr_reader :options
-
-        # Create a stream for reading/writing files from/to the FSBucket.
+        # Get a stream for reading/writing files from/to the FSBucket.
         #
-        # @example Create the stream.
-        #   FSBucket::Stream.new('file.txt')
+        # @example Get a stream.
+        #   FSBucket::Stream.get(id, 'r')
         #
         # @param [ FSBucket ] fs The GridFS bucket object.
-        # @param [ String ] filename The name of the file to be streamed.
-        # @param [ BSON::Document, Hash ] options The file metadata options.
+        # @param [ FSBucket::READ_MODE, FSBucket::WRITE_MODE ] mode The stream mode.
+        # @param [ Hash ] options The stream options.
         #
-        # @option options [ String ] :content_type The content type of the file.
-        # @option options [ String ] :metadata Optional file metadata.
-        # @option options [ Integer ] :chunk_size Override the default chunk
-        #   size.
+        # @return [ Stream::Read, Stream::Write ] The stream object.
         #
         # @since 2.1.0
-        def initialize(fs, filename, options = {})
-          @fs = fs
-          @filename = filename
-          @id = BSON::ObjectId.new
-          @options = options
-        end
-
-        # Write the data to the FSBucket.
-        #
-        # @example Write to the FSBucket.
-        #   stream.write(file.read)
-        #
-        # @param [ Object ] data The data to write.
-        #
-        # @since 2.1.0
-        def write(data)
-          file = File.new(data, options.merge(:_id => @id, :filename => @filename))
-          fs.insert_one(file)
+        def get(fs, mode, options)
+          MODE_MAP[mode].new(fs, options)
         end
       end
     end

@@ -344,72 +344,68 @@ describe Mongo::Grid::FSBucket do
     end
   end
 
-  describe '#open_upload_stream' do
+  context 'when a read stream is opened' do
 
     let(:fs) do
       described_class.new(authorized_client.database)
     end
 
     let(:file) do
-      File.open(__FILE__)
-    end
-
-    let(:filename) do
-      File.basename(file.path)
-    end
-
-    let(:options) do
-      {
-          :chunk_size => 100,
-          :content_type => 'text/plain'
-      }
-    end
-
-    let(:stream) do
-      fs.open_upload_stream(filename, options)
-    end
-
-    it 'returns a stream object' do
-      expect(stream).to be_a(Mongo::Grid::FSBucket::Stream)
-    end
-
-    it 'sets the filename on the stream object' do
-      expect(stream.filename).to be(filename)
-    end
-
-    it 'sets the options on the stream object' do
-      expect(stream.options).to be(options)
-    end
-
-    it 'returns the file id' do
-      expect(stream.id).not_to be(nil)
-    end
-  end
-
-  describe '#upload_from_stream' do
-
-    let(:fs) do
-      described_class.new(authorized_client.database)
-    end
-
-    let(:file) do
-      File.open(__FILE__)
-    end
-
-    let(:filename) do
-      File.basename(file.path)
-    end
-
-    let(:from_db) do
-      fs.find_one(:filename => filename)
+      Mongo::Grid::File.new(File.open(__FILE__).read, :filename => 'specs.rb')
     end
 
     before do
-      fs.upload_from_stream(filename, file)
+      fs.insert_one(file)
     end
 
-    it 'uploads from the io object' do
-      expect(from_db.data.size).to eq(file.size)
+    after do
+      fs.files_collection.delete_many
+      fs.chunks_collection.delete_many
+    end
+
+    describe '#open_download_stream' do
+
+      it 'returns a Stream::Read object' do
+        expect(fs.open_download_stream(file.id)).to be_a(Mongo::Grid::FSBucket::Stream::Read)
+      end
+    end
+
+    describe '#download_to_stream' do
+
+      let(:io) do
+        StringIO.new
+      end
+
+      before do
+        fs.download_to_stream(file.id, io)
+      end
+
+      it 'writes to the provided stream' do
+        expect(io.size).to eq(file.data.size)
+      end
+
+      it 'does not close the stream' do
+        expect(io.closed?).to be(false)
+      end
+    end
+
+    context 'when a read preference is specified' do
+
+      let(:fs) do
+        described_class.new(authorized_client.database, options)
+      end
+
+      let(:options) do
+        { read: { mode: :secondary } }
+      end
+
+      let(:stream) do
+        fs.open_download_stream(file.id)
+      end
+
+      it 'sets the read preference on the Stream::Read object' do
+        expect(stream.options[:read]).to eq(options[:read])
+      end
     end
   end
 end
