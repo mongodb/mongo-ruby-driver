@@ -237,11 +237,6 @@ module Mongo
                              @options[:write_concern] ? WriteConcern.get(@options[:write_concern]) :
                                database.write_concern
       end
-
-      def validate_md5!(file)
-        md5 = database.command(:filemd5 => file.id, :root => prefix).documents[0][:md5]
-        raise Error::InvalidFile.new(file.md5, md5) unless file.md5 == md5
-      end
     end
   end
 end
