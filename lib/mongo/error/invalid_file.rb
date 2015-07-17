@@ -21,9 +21,9 @@ module Mongo
     # @since 2.0.0
     class InvalidFile < Error
 
-      # Create the nex exception.
+      # Create the new exception.
       #
-      # @example Create the mew exception.
+      # @example Create the new exception.
       #   Mongo::Error::InvalidFile.new(file_md5, server_md5)
       #
       # @param [ String ] client_md5 The client side file md5.
