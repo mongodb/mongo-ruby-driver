@@ -387,7 +387,7 @@ module Mongo
 
         private
 
-        def default_read(read = nil)
+        def default_read
           options[:read] || read_preference
         end
 
