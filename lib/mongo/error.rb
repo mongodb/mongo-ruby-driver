@@ -67,6 +67,7 @@ end
 
 require 'mongo/error/parser'
 require 'mongo/error/bulk_write_error'
+require 'mongo/error/closed_stream'
 require 'mongo/error/operation_failure'
 require 'mongo/error/invalid_bulk_operation'
 require 'mongo/error/invalid_bulk_operation_type'
@@ -87,4 +88,5 @@ require 'mongo/error/need_primary_server'
 require 'mongo/error/no_server_available'
 require 'mongo/error/socket_error'
 require 'mongo/error/socket_timeout_error'
+require 'mongo/error/unexpected_chunk_n'
 require 'mongo/error/unsupported_features'

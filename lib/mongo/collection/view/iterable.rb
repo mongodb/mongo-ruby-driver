@@ -36,12 +36,21 @@ module Mongo
         # @yieldparam [ Hash ] Each matching document.
         def each
           server = read.select_server(cluster)
-          initial_query = send_initial_query(server)
-          cursor = Cursor.new(view, initial_query, server).to_enum
-          cursor.each do |doc|
+          @cursor = Cursor.new(view, send_initial_query(server), server)
+          @cursor.each do |doc|
             yield doc
           end if block_given?
-          cursor
+          @cursor.to_enum
+        end
+
+        # Stop the iteration by sending a KillCursors command to the server.
+        #
+        # @example Stop the iteration.
+        #   view.close_query
+        #
+        # @since 2.1.0
+        def close_query
+          @cursor.send(:kill_cursors) if @cursor
         end
       end
     end

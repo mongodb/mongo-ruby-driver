@@ -582,6 +582,24 @@ describe Mongo::Collection::View do
         end
       end
     end
+
+    describe '#close_query' do
+
+      let(:options) do
+        { :batch_size => 1 }
+      end
+
+      before do
+        e = view.to_enum
+        e.next
+        cursor = view.instance_variable_get(:@cursor)
+        expect(cursor).to receive(:kill_cursors).and_call_original
+      end
+
+      it 'sends a kill cursors command for the cursor' do
+        view.close_query
+      end
+    end
   end
 
   describe '#hash' do

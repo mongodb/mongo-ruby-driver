@@ -35,14 +35,35 @@ module Mongo
       # @since 2.1.0
       FILES_INDEX = { filename: 1, uploadDate: 1 }.freeze
 
+      # The symbol for opening a read stream.
+      #
+      # @since 2.1.0
+      READ_MODE = :r
+
+      # The symbol for opening a write stream.
+      #
+      # @since 2.1.0
+      WRITE_MODE = :w
+
       # @return [ Collection ] chunks_collection The chunks collection.
+      #
+      # @since 2.0.0
       attr_reader :chunks_collection
 
       # @return [ Database ] database The database.
+      #
+      # @since 2.0.0
       attr_reader :database
 
       # @return [ Collection ] files_collection The files collection.
+      #
+      # @since 2.0.0
       attr_reader :files_collection
+
+      # @return [ Hash ] options The FSBucket options.
+      #
+      # @since 2.1.0
+      attr_reader :options
 
       # Find files collection documents matching a given selector.
       #
@@ -66,7 +87,7 @@ module Mongo
       #
       # @since 2.1.0
       def find(selector = nil, options = {})
-        files_collection.find(selector, options)
+        files_collection.find(selector, options.merge(read: read_preference))
       end
 
       # Find a file in the GridFS.
@@ -117,6 +138,11 @@ module Mongo
       #   collections.
       # @option options [ String ] :bucket_name The prefix for the files and chunks
       #   collections.
+      # @option options [ Integer ] :chunk_size Override the default chunk
+      #   size.
+      # @option options [ String ] :write The write concern.
+      # @option options [ String ] :write_concern The write concern.
+      # @option options [ String ] :read The read preference.
       #
       # @since 2.0.0
       def initialize(database, options = {})
@@ -156,42 +182,41 @@ module Mongo
         chunks_collection.find(:files_id => file.id).delete_many
       end
 
-      # Provides a stream that the contents of a file can be written to.
+      # Opens a stream from which a file can be downloaded, specified by id.
       #
-      # @param [ String ] filename The name of the file to be uploaded.
-      # @param [ BSON::Document, Hash ] options The metadata options for the file.
+      # @example Open a stream from which a file can be downloaded.
+      #   fs.open_download_stream(id)
       #
-      # @option options [ String ] :content_type The content type of the file.
-      # @option options [ String ] :metadata Optional file metadata.
-      # @option options [ Integer ] :chunk_size Override the default chunk
-      #   size.
+      # @param [ BSON::ObjectId, Object ] The id of the file to read.
       #
-      # @return [ Grid::FSBucket::Stream ] The stream.
+      # @return [ Stream::Read ] The stream to read from.
       #
       # @since 2.1.0
-      def open_upload_stream(filename, options = {})
-        Stream.new(self, filename, options)
+      def open_download_stream(id)
+        read_stream(id)
       end
 
-      # Uploads a user file to a GridFS bucket.
+      # Downloads the contents of the file specified by id and writes them to
+      # the destination io object.
       #
-      # @param [ String ] filename The name of the file to be uploaded.
-      # @param [ IO ] io The source stream to be read from.
-      # @param [ BSON::Document, Hash ] options The metadata options for the file.
+      # @example Download the file and write it to the io object.
+      #   fs.download_to_stream(id, io)
       #
-      # @option options [ String ] :content_type The content type of the file.
-      # @option options [ String ] :metadata Optional file metadata.
-      # @option options [ Integer ] :chunk_size Override the default chunk
-      #   size.
-      #
-      # @return [ BSON::ObjectId ] The uploaded file id.
+      # @param [ BSON::ObjectId, Object ] The id of the file to read.
+      # @param [ IO ] The io object to write to.
       #
       # @since 2.1.0
-      def upload_from_stream(filename, io, options = {})
-        Stream.new(self, filename, options).write(io.read)
+      def download_to_stream(id, io)
+        read_stream(id).each do |chunk|
+          io.puts(chunk)
+        end
       end
 
       private
+
+      def read_stream(id)
+        Stream.get(self, READ_MODE, { id: id }.merge!(options))
+      end
 
       def chunks_name
         "#{prefix}.#{Grid::File::Chunk::COLLECTION}"
