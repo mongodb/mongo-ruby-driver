@@ -165,8 +165,8 @@ module Mongo
           # @return [ Array<Chunk> ] The chunks of the data.
           #
           # @since 2.0.0
-          def split(data, metadata)
-            chunks, index, n = [], 0, 0
+          def split(data, metadata, offset = 0)
+            chunks, index, n = [], 0, offset
             while index < data.length
               bytes = data.slice(index, metadata.chunk_size)
               metadata.md5.update(bytes)
