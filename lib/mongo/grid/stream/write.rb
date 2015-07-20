@@ -17,31 +17,30 @@ module Mongo
     class FSBucket
 
       module Stream
-        # A stream that reads files from the FSBucket.
+        # A stream that writes files to the FSBucket.
         #
         # @since 2.1.0
         class Write
-          include Enumerable
 
-          # @return [ FSBucket ] fs The fs bucket from which this stream reads.
+          # @return [ FSBucket ] fs The fs bucket to which this stream writes.
           #
           # @since 2.1.0
           attr_reader :fs
 
-          # @return [ BSON::ObjectId, Object ] The file id.
+          # @return [ BSON::ObjectId ] id The id of the file being uploaded.
           #
           # @since 2.1.0
-          attr_reader :id
+          attr_reader :file_id
 
-          # @return [ Hash ] The read stream options.
+          # @return [ Hash ] The write stream options.
           #
           # @since 2.1.0
           attr_reader :options
 
-          # Create a stream for reading files from the FSBucket.
+          # Create a stream for writing files to the FSBucket.
           #
           # @example Create the stream.
-          #   Stream::Read.new(fs, options)
+          #   Stream::Write.new(fs, options)
           #
           # @param [ FSBucket ] fs The GridFS bucket object.
           # @param [ Hash ] options The read stream options.
@@ -49,8 +48,69 @@ module Mongo
           # @since 2.1.0
           def initialize(fs, options)
             @fs = fs
+            @length = 0
+            @n = 0
+            @file_id ||= BSON::ObjectId.new
             @options = options
-            @closed = false
+            @open = true
+          end
+
+          def write(io)
+            ensure_open!
+            data = io.read
+            @length += data.length
+            chunks = File::Chunk.split(data, metadata, @n)
+            @n += chunks.size
+            # TODO write concern needs to be passed to operation
+            fs.chunks_collection.insert_many(chunks)
+            self
+          end
+
+          # Close the write stream.
+          #
+          # @example Close the stream.
+          #   stream.close
+          #
+          # @return [ BSON::ObjectId, Object ] The file id.
+          #
+          # @raise [ Error::ClosedStream ] If the stream is already closed.
+          #
+          # @since 2.1.0
+          def close
+            ensure_open!
+            update_length
+            fs.files_collection.insert_one(metadata)
+            @open = false
+            file_id
+          end
+
+          # Get the write concern used when uploading.
+          #
+          # @example Get the write concern.
+          #   stream.write_concern
+          #
+          # @return [ Mongo::WriteConcern] The write concern.
+          #
+          # @since 2.1.0
+          def write_concern
+            @write_concern ||= @options[:write] ? WriteConcern.get(@options[:write]) :
+                @options[:write_concern] ? WriteConcern.get(@options[:write_concern]) :
+                    fs.write_concern
+          end
+
+          private
+
+          def update_length
+            metadata.document[:length] = @length
+          end
+
+          def metadata
+            doc = options[:metadata] || { length: @length, _id: file_id }
+            @metadata ||= File::Metadata.new(doc.merge(options))
+          end
+
+          def ensure_open!
+            raise Error::ClosedStream.new unless @open
           end
         end
       end

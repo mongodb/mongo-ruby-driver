@@ -187,7 +187,7 @@ module Mongo
       # @example Open a stream from which a file can be downloaded.
       #   fs.open_download_stream(id)
       #
-      # @param [ BSON::ObjectId, Object ] The id of the file to read.
+      # @param [ BSON::ObjectId, Object ] id The id of the file to read.
       #
       # @return [ Stream::Read ] The stream to read from.
       #
@@ -202,7 +202,7 @@ module Mongo
       # @example Download the file and write it to the io object.
       #   fs.download_to_stream(id, io)
       #
-      # @param [ BSON::ObjectId, Object ] The id of the file to read.
+      # @param [ BSON::ObjectId, Object ] id The id of the file to read.
       # @param [ IO ] The io object to write to.
       #
       # @since 2.1.0
@@ -212,10 +212,63 @@ module Mongo
         end
       end
 
+      # Opens a stream to which the contents of a file came be written.
+      #
+      # @example Open a stream to which the contents of a file came be written.
+      #   fs.open_upload_stream('a-file.txt')
+      #
+      # @param [ String ] filename The filename of the file to upload.
+      # @param [ Hash ] opts The options for the write stream.
+      #
+      # @option opts [ Integer ] :chunk_size Override the default chunk size.
+      # @option opts [ Hash ] :write The write concern.
+      # @option opts [ Hash ] :write_concern The write concern.
+      # @option opts [ Hash ] :metadata User data for the 'metadata' field of the files collection document.
+      # @option opts [ String ] :content_type The content type of the file.
+      # @option opts [ Array<String> ] :aliases A list of aliases.
+      #
+      # @return [ Stream::Write ] The stream to write to.
+      #
+      # @since 2.1.0
+      def open_upload_stream(filename, opts = {})
+        write_stream(filename, opts)
+      end
+
+      # Uploads a user file to a GridFS bucket.
+      # Read the contents of the user file from the source stream and uploads it as chunks in the
+      # chunks collection. After all the chunks have been uploaded, it creates a files collection
+      # document for the filename in the files collection.
+      #
+      # @example Open a stream to which the contents of a file came be written.
+      #   fs.open_upload_stream('a-file.txt')
+      #
+      # @param [ String ] filename The filename of the file to upload.
+      # @param [ Hash ] opts The options for the write stream.
+      #
+      # @option opts [ Integer ] :chunk_size Override the default chunk size.
+      # @option opts [ Hash ] :write The write concern.
+      # @option opts [ Hash ] :write_concern The write concern.
+      # @option opts [ Hash ] :metadata User data for the 'metadata' field of the files collection document.
+      # @option opts [ String ] :content_type The content type of the file.
+      # @option opts [ Array<String> ] :aliases A list of aliases.
+      #
+      # @return [ Stream::Write ] The stream to write to.
+      #
+      # @since 2.1.0
+      def upload_from_stream(filename, io, opts = {})
+        stream = write_stream(filename, opts)
+        stream.write(io).close
+        stream.file_id
+      end
+
       private
 
       def read_stream(id)
-        Stream.get(self, READ_MODE, { id: id }.merge!(options))
+        Stream.get(self, READ_MODE, { file_id: id }.merge!(options))
+      end
+
+      def write_stream(filename, opts)
+        Stream.get(self, WRITE_MODE, { filename: filename }.merge!(opts).merge!(options))
       end
 
       def chunks_name

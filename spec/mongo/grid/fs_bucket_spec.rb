@@ -66,7 +66,7 @@ describe Mongo::Grid::FSBucket do
             { write: { w: 2 } }
           end
 
-          it 'set the write concern' do
+          it 'sets the write concern' do
             expect(fs.send(:write_concern).options).to eq(Mongo::WriteConcern.get(w: 2).options)
           end
         end
@@ -86,7 +86,7 @@ describe Mongo::Grid::FSBucket do
       context 'when a read preference is set' do
 
         let(:options) do
-          { read: { mode: :secondary, server_selection_timeout: 10 } }
+          { read: { mode: :secondary, server_selection_timeout: 0.1 } }
         end
 
         let(:read_pref) do
@@ -95,6 +95,39 @@ describe Mongo::Grid::FSBucket do
 
         it 'sets the read preference' do
           expect(fs.send(:read_preference)).to eq(read_pref)
+        end
+      end
+
+      context 'when a write stream is opened' do
+
+        let(:stream) do
+          fs.open_upload_stream('test.txt')
+        end
+
+        let(:fs) do
+          described_class.new(authorized_client.database, options)
+        end
+
+        context 'when a write option is specified' do
+
+          let(:options) do
+            { write: { w: 2 } }
+          end
+
+          it 'passes the write concern down to the write stream' do
+            expect(stream.write_concern.options).to eq(Mongo::WriteConcern.get(options[:write]).options)
+          end
+        end
+
+        context 'when a write concern option is specified' do
+
+          let(:options) do
+            { write_concern: { w: 2 } }
+          end
+
+          it 'passes the write concern down to the write stream' do
+            expect(stream.write_concern.options).to eq(Mongo::WriteConcern.get(options[:write_concern]).options)
+          end
         end
       end
     end
@@ -404,7 +437,137 @@ describe Mongo::Grid::FSBucket do
       end
 
       it 'sets the read preference on the Stream::Read object' do
-        expect(stream.options[:read]).to eq(options[:read])
+        expect(stream.read_preference).to eq(Mongo::ServerSelector.get(options[:read]))
+      end
+    end
+  end
+
+  context 'when a write stream is opened' do
+
+    let(:fs) do
+      described_class.new(authorized_client.database)
+    end
+
+    let(:filename) do
+      'specs.rb'
+    end
+
+    let(:file) do
+      File.open(__FILE__)
+    end
+
+    let(:stream) do
+      fs.open_upload_stream(filename)
+    end
+
+    after do
+      fs.files_collection.delete_many
+      fs.chunks_collection.delete_many
+    end
+
+    describe '#open_upload_stream' do
+
+      it 'returns a Stream::Write object' do
+        expect(stream).to be_a(Mongo::Grid::FSBucket::Stream::Write)
+      end
+
+      it 'creates an ObjectId for the file' do
+        expect(stream.file_id).not_to be(nil)
+      end
+    end
+
+    describe 'upload_from_stream' do
+
+      before do
+        fs.upload_from_stream(filename, file)
+      end
+
+      let(:file_from_db) do
+        fs.find_one(:filename => filename)
+      end
+
+      it 'writes to the provided stream' do
+        expect(file_from_db.data.length).to eq(file.size)
+      end
+
+      it 'does not close the stream' do
+        expect(file.closed?).to be(false)
+      end
+
+      it 'returns the id of the file' do
+
+      end
+    end
+
+    context 'when options are provided when opening the write stream' do
+
+      let(:stream) do
+        fs.open_upload_stream(filename, stream_options)
+      end
+
+      context 'when a write option is specified' do
+
+        let(:stream_options) do
+          { write: { w: 2 } }
+        end
+
+        it 'sets the write concern on the write stream' do
+          expect(stream.write_concern.options).to eq(Mongo::WriteConcern.get(stream_options[:write]).options)
+        end
+      end
+
+       context 'when a write concern option is specified' do
+         let(:stream_options) do
+           { write_concern: { w: 2 } }
+         end
+
+         it 'sets the write concern on the write stream' do
+           expect(stream.write_concern.options).to eq(Mongo::WriteConcern.get(stream_options[:write_concern]).options)
+         end
+       end
+
+      context 'when a chunk size option is specified' do
+
+        let(:stream_options) do
+          { chunk_size: 100 }
+        end
+
+        it 'sets the chunk size on the write stream' do
+          expect(stream.options[:chunk_size]).to eq(stream_options[:chunk_size])
+        end
+      end
+
+      context 'when a metadata option is specified' do
+
+        let(:stream_options) do
+          { metadata: { _id: 1 } }
+        end
+
+        it 'sets the metadata on the write stream' do
+          expect(stream.options[:metadata]).to eq(stream_options[:metadata])
+        end
+      end
+
+      context 'when a content type option is specified' do
+
+        let(:stream_options) do
+          { content_type: 'text/plain' }
+        end
+
+        it 'sets the write concern on the write stream' do
+          expect(stream.options[:content_type]).to eq(stream_options[:content_type])
+        end
+      end
+
+      context 'when a aliases option is specified' do
+
+        let(:stream_options) do
+          { aliases: [ 'another-name.txt' ] }
+        end
+
+        it 'sets the write concern on the write stream' do
+          expect(stream.options[:aliases]).to eq(stream_options[:aliases])
+        end
       end
     end
   end
