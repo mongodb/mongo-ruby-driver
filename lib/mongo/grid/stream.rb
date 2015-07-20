@@ -42,7 +42,7 @@ module Mongo
         # @return [ Stream::Read, Stream::Write ] The stream object.
         #
         # @since 2.1.0
-        def get(fs, mode, options)
+        def get(fs, mode, options = {})
           MODE_MAP[mode].new(fs, options)
         end
       end
