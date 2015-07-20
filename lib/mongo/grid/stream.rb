@@ -33,7 +33,7 @@ module Mongo
         # Get a stream for reading/writing files from/to the FSBucket.
         #
         # @example Get a stream.
-        #   FSBucket::Stream.get(id, 'r')
+        #   FSBucket::Stream.get(fs, FSBucket::READ_MODE, options)
         #
         # @param [ FSBucket ] fs The GridFS bucket object.
         # @param [ FSBucket::READ_MODE, FSBucket::WRITE_MODE ] mode The stream mode.
