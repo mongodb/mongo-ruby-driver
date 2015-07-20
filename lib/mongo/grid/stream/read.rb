@@ -126,7 +126,10 @@ module Mongo
           end
 
           def validate_n!(index, chunk)
-            raise UnexpectedChunkN.new(index, chunk) unless chunk.n == index
+            unless index == chunk.n
+              close
+              raise Error::UnexpectedChunkN.new(index, chunk)
+            end
           end
         end
       end
