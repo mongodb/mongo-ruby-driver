@@ -261,6 +261,34 @@ module Mongo
         stream.file_id
       end
 
+      # Get the read preference.
+      #
+      # @example Get the read preference.
+      #   fs.read_preference
+      #
+      # @return [ Mongo::ServerSelector] The read preference.
+      #
+      # @since 2.1.0
+      def read_preference
+        @read_preference ||= @options[:read] ?
+            ServerSelector.get((@options[:read] || {}).merge(database.options)) :
+            database.read_preference
+      end
+
+      # Get the write concern.
+      #
+      # @example Get the write concern.
+      #   stream.write_concern
+      #
+      # @return [ Mongo::WriteConcern] The write concern.
+      #
+      # @since 2.1.0
+      def write_concern
+        @write_concern ||= @options[:write] ? WriteConcern.get(@options[:write]) :
+            @options[:write_concern] ? WriteConcern.get(@options[:write_concern]) :
+                database.write_concern
+      end
+
       private
 
       def read_stream(id)
@@ -277,18 +305,6 @@ module Mongo
 
       def files_name
         "#{prefix}.#{Grid::File::Metadata::COLLECTION}"
-      end
-
-      def read_preference
-        @read_preference ||= @options[:read] ?
-            ServerSelector.get((@options[:read] || {}).merge(database.options)) :
-              database.read_preference
-      end
-
-      def write_concern
-        @write_concern ||= @options[:write] ? WriteConcern.get(@options[:write]) :
-                             @options[:write_concern] ? WriteConcern.get(@options[:write_concern]) :
-                               database.write_concern
       end
     end
   end
