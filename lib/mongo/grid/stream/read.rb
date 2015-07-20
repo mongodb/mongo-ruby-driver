@@ -28,15 +28,20 @@ module Mongo
           # @since 2.1.0
           attr_reader :fs
 
-          # @return [ BSON::ObjectId, Object ] The file id.
-          #
-          # @since 2.1.0
-          attr_reader :id
-
-          # @return [ Hash ] The read stream options.
+          # @return [ Hash ] The stream options.
           #
           # @since 2.1.0
           attr_reader :options
+
+          # @return [ BSON::ObjectId, Object ] The id of the file being read.
+          #
+          # @since 2.1.0
+          attr_reader :file_id
+
+          # @return [ Hash ] The stream read preference.
+          #
+          # @since 2.1.0
+          attr_reader :read_preference
 
           # Create a stream for reading files from the FSBucket.
           #
@@ -50,7 +55,8 @@ module Mongo
           def initialize(fs, options)
             @fs = fs
             @options = options
-            @closed = false
+            @file_id = options[:file_id]
+            @open = true
           end
 
           # Iterate through chunk data streamed from the FSBucket.
@@ -66,12 +72,12 @@ module Mongo
           #
           # @since 2.1.0
           #
-          # @yieldparam [ Hash ] Each matching document.
+          # @yieldparam [ Hash ] Each chunk data.
           def each
             ensure_open!
             view.each_with_index do |doc, index|
               chunk = Grid::File::Chunk.new(doc)
-              validate_n!(chunk, index)
+              validate_n!(index, chunk)
               data = Grid::File::Chunk.assemble([ chunk ])
               yield data
             end if block_given?
@@ -91,24 +97,35 @@ module Mongo
           def close
             ensure_open!
             view.close_query
-            @closed = true
+            @open = false
+            file_id
+          end
+
+          # Get the read preference used when streaming.
+          #
+          # @example Get the read preference.
+          #   stream.read_preference
+          #
+          # @return [ Mongo::ServerSelector] The read preference.
+          #
+          # @since 2.1.0
+          def read_preference
+            @read_preference ||= @options[:read] ?
+                ServerSelector.get((@options[:read] || {}).merge(fs.options)) :
+                fs.read_preference
           end
 
           private
 
           def view
-            @view ||= fs.chunks_collection.find({ :files_id => id }, options).sort(:n => 1)
+            @view ||= fs.chunks_collection.find({ :files_id => file_id }, options).sort(:n => 1)
           end
 
           def ensure_open!
-            raise Error::ClosedStream.new if @closed
+            raise Error::ClosedStream.new unless @open
           end
 
-          def id
-            @id ||= options[:id]
-          end
-
-          def validate_n!(chunk, index)
+          def validate_n!(index, chunk)
             raise UnexpectedChunkN.new(index, chunk) unless chunk.n == index
           end
         end
