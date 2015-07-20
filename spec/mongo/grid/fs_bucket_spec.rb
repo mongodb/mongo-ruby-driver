@@ -478,7 +478,7 @@ describe Mongo::Grid::FSBucket do
 
     describe 'upload_from_stream' do
 
-      before do
+      let!(:result) do
         fs.upload_from_stream(filename, file)
       end
 
@@ -495,7 +495,7 @@ describe Mongo::Grid::FSBucket do
       end
 
       it 'returns the id of the file' do
-
+        expect(result).to be_a(BSON::ObjectId)
       end
     end
 
