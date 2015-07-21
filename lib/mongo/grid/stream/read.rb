@@ -28,20 +28,15 @@ module Mongo
           # @since 2.1.0
           attr_reader :fs
 
-          # @return [ Hash ] The stream options.
+          # @return [ Hash ] options The stream options.
           #
           # @since 2.1.0
           attr_reader :options
 
-          # @return [ BSON::ObjectId, Object ] The id of the file being read.
+          # @return [ BSON::ObjectId, Object ] file_id The id of the file being read.
           #
           # @since 2.1.0
           attr_reader :file_id
-
-          # @return [ Hash ] The stream read preference.
-          #
-          # @since 2.1.0
-          attr_reader :read_preference
 
           # Create a stream for reading files from the FSBucket.
           #
@@ -118,7 +113,7 @@ module Mongo
           private
 
           def view
-            @view ||= fs.chunks_collection.find({ :files_id => file_id }, options).sort(:n => 1)
+            @view ||= fs.chunks_collection.find({ :files_id => file_id }, options).read(read_preference).sort(:n => 1)
           end
 
           def ensure_open!
