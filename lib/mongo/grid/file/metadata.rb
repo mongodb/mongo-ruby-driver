@@ -183,7 +183,7 @@ module Mongo
           document[:md5] || @client_md5
         end
 
-        # Conver the metadata to BSON for storage.
+        # Convert the metadata to BSON for storage.
         #
         # @note If no md5 exists in the metadata (it was loaded from the server
         #   and is not a new file) then we digest the md5 and set it.

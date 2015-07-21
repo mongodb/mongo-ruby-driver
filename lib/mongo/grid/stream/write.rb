@@ -27,12 +27,17 @@ module Mongo
           # @since 2.1.0
           attr_reader :fs
 
-          # @return [ BSON::ObjectId ] id The id of the file being uploaded.
+          # @return [ BSON::ObjectId ] file_id The id of the file being uploaded.
           #
           # @since 2.1.0
           attr_reader :file_id
 
-          # @return [ Hash ] The write stream options.
+          # @return [ String ] filename The name of the file being uploaded.
+          #
+          # @since 2.1.0
+          attr_reader :filename
+
+          # @return [ Hash ] options The write stream options.
           #
           # @since 2.1.0
           attr_reader :options
@@ -45,12 +50,20 @@ module Mongo
           # @param [ FSBucket ] fs The GridFS bucket object.
           # @param [ Hash ] options The read stream options.
           #
+          # @option opts [ Integer ] :chunk_size Override the default chunk size.
+          # @option opts [ Hash ] :write The write concern.
+          # @option opts [ Hash ] :write_concern The write concern.
+          # @option opts [ Hash ] :metadata User data for the 'metadata' field of the files collection document.
+          # @option opts [ String ] :content_type The content type of the file.
+          # @option opts [ Array<String> ] :aliases A list of aliases.
+          #
           # @since 2.1.0
           def initialize(fs, options)
             @fs = fs
             @length = 0
             @n = 0
-            @file_id ||= BSON::ObjectId.new
+            @file_id = BSON::ObjectId.new
+            @filename = options[:filename]
             @options = options
             @open = true
           end
@@ -61,8 +74,7 @@ module Mongo
             @length += data.length
             chunks = File::Chunk.split(data, metadata, @n)
             @n += chunks.size
-            # TODO write concern needs to be passed to operation
-            fs.chunks_collection.insert_many(chunks)
+            chunks_collection.insert_many(chunks)
             self
           end
 
@@ -79,7 +91,7 @@ module Mongo
           def close
             ensure_open!
             update_length
-            fs.files_collection.insert_one(metadata)
+            files_collection.insert_one(metadata)
             @open = false
             file_id
           end
@@ -100,12 +112,29 @@ module Mongo
 
           private
 
+          def chunks_collection
+            with_write_concern(fs.chunks_collection)
+          end
+
+          def files_collection
+            with_write_concern(fs.files_collection)
+          end
+
+          def with_write_concern(collection)
+            if collection.write_concern.options == write_concern.options
+              collection
+            else
+              collection.client.with(write: write_concern.options)[collection.name]
+            end
+          end
+
           def update_length
             metadata.document[:length] = @length
           end
 
           def metadata
-            doc = options[:metadata] || { length: @length, _id: file_id }
+            # TODO Metadata is not the same as user-provided metadata
+            doc = { length: @length, _id: file_id, filename: filename }
             @metadata ||= File::Metadata.new(doc.merge(options))
           end
 

@@ -63,6 +63,10 @@ describe Mongo::Grid::FSBucket::Stream::Read do
         it 'sets the read preference' do
           expect(stream.read_preference).to eq(Mongo::ServerSelector.get(options[:read]))
         end
+
+        it 'sets the read preference on the view' do
+          expect(stream.send(:view).read).to eq(Mongo::ServerSelector.get(options[:read]))
+        end
       end
 
       context 'when provided a file_id' do
