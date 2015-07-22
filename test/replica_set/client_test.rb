@@ -40,6 +40,21 @@ class ReplicaSetClientTest < Test::Unit::TestCase
     assert_equal @client.local_manager, manager
   end
 
+  def test_reconnect_method
+    @client = MongoReplicaSetClient.from_uri(@uri, :op_timeout => TEST_OP_TIMEOUT)
+    assert @client.connected?
+
+    manager = @client.local_manager
+
+    @client.close
+    assert !@client.connected?
+    assert !@client.local_manager
+
+    @client.reconnect
+    assert @client.connected?
+    assert_equal @client.local_manager, manager
+  end
+
   # TODO: test connect timeout.
 
   def test_connect_with_deprecated_multi
