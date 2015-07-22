@@ -37,7 +37,7 @@ module Mongo
         #
         # @since 2.0.0
         attr_reader :name
-  
+
         # Instantiate the operation.
         #
         # @return [ Hash ] spec The operation spec.
@@ -91,7 +91,7 @@ module Mongo
         end
 
         private
-  
+
         def count(collection)
           options = ARGUMENT_MAP.reduce({}) do |opts, (key, value)|
             opts.merge!(key => arguments[value]) if arguments[value]
@@ -99,15 +99,15 @@ module Mongo
           end
           collection.count(filter, options)
         end
-  
+
         def aggregate(collection)
           collection.aggregate(pipeline, options).to_a
         end
-  
+
         def distinct(collection)
           collection.distinct(field_name, filter, options)
         end
-  
+
         def find(collection)
           collection.find(filter, options).to_a
         end
@@ -117,7 +117,7 @@ module Mongo
             arguments[value] ? opts.merge!(key => arguments[value]) : opts
           end
         end
-  
+
         def batch_size
           arguments['batchSize']
         end
@@ -125,7 +125,7 @@ module Mongo
         def filter
           arguments['filter']
         end
-  
+
         def pipeline
           arguments['pipeline']
         end
