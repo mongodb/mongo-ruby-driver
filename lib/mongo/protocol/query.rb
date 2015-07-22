@@ -65,6 +65,7 @@ module Mongo
       #   +:no_cursor_timeout+, +:await_data+, +:exhaust+, +:partial+
       def initialize(database, collection, selector, options = {})
         @database    = database
+        @collection  = collection
         @namespace   = "#{database}.#{collection}"
         @selector    = selector
         @options     = options
@@ -129,9 +130,9 @@ module Mongo
       # @since 2.1.0
       def arguments
         if command?
-          selector
+          BSON::Document.new.merge!(selector)
         else
-          { filter: selector }.merge(@options)
+          BSON::Document.new({ find: @collection, filter: selector }.merge!(@options))
         end
       end
 

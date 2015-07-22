@@ -1,3 +1,24 @@
+# Copyright (C) 2014-2015 MongoDB, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+RSpec::Matchers.define :match_expected_event do |expectation|
+
+  match do |event|
+    expectation.matches?(event)
+  end
+end
+
 module Mongo
   module CommandMonitoring
 
@@ -55,6 +76,33 @@ module Mongo
       def initialize(expectation)
         @event_type = expectation.keys.first
         @event_data = expectation[@event_type]
+      end
+
+      def matches?(event)
+        case event_type
+        when 'command_started_event'
+          matches_started_event?(event)
+        when 'command_succeeded_event'
+          matches_succeeded_event?(event)
+        when 'command_failed_event'
+          matches_failed_event?(event)
+        end
+      end
+
+      def matches_started_event?(event)
+        event.command_name.to_s == command_name &&
+          event.database_name.to_s == database_name &&
+          event.command == @event_data['command']
+      end
+
+      def matches_succeeded_event?(event)
+        event.command_name.to_s == command_name &&
+          event.database_name.to_s == database_name
+      end
+
+      def matches_failed_event?(event)
+        event.command_name.to_s == command_name &&
+          event.database_name.to_s == database_name
       end
     end
 
