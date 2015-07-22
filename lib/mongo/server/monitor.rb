@@ -140,7 +140,7 @@ module Mongo
       #
       # @since 2.0.0
       def stop!
-        @thread.kill && @thread.stop?
+        connection.disconnect! && @thread.kill && @thread.stop?
       end
 
       # Restarts the server monitor unless the current thread is alive.
