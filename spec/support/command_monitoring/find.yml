@@ -5,8 +5,8 @@ data:
   - { _id: 4, x: 44 }
   - { _id: 5, x: 55 }
 
-collection_name: &collection_name "values"
-database_name: &database_name "command-monitoring-tests"
+collection_name: &collection_name "test"
+database_name: &database_name "ruby-driver"
 
 tests:
   -
