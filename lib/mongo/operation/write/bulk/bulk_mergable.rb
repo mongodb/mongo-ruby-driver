@@ -35,11 +35,11 @@ module Mongo
         # @since 2.0.0
         def aggregate_write_errors(indexes)
           @replies.reduce(nil) do |errors, reply|
-            if reply.documents.first['writeErrors']
-              write_errors = reply.documents.first[Error::WRITE_ERRORS].collect do |we|
+            if write_errors = reply.documents.first[Error::WRITE_ERRORS]
+              wes = write_errors.collect do |we|
                 we.merge!('index' => indexes[we['index']])
               end
-              (errors || []) << write_errors if write_errors
+              (errors || []) << wes if wes
             end
           end
         end
