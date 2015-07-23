@@ -6,6 +6,10 @@ describe Mongo::Collection do
     authorized_collection.delete_many
   end
 
+  let(:collection_invalid_write_concern) do
+    authorized_collection.client.with(write: { w: (WRITE_CONCERN[:w] + 1) })[authorized_collection.name]
+  end
+
   describe '#==' do
 
     let(:database) do
@@ -446,6 +450,19 @@ describe Mongo::Collection do
     it 'contains the ids in the result' do
       expect(result.inserted_ids.size).to eq(2)
     end
+
+    context 'when the inserts fail' do
+
+      let(:result) do
+        authorized_collection.insert_many([{ _id: 1 }, { _id: 1 }])
+      end
+
+      it 'raises an OperationFailure' do
+        expect {
+          result.to raise_exception(Mongo::Error::OperationFailure)
+        }
+      end
+    end
   end
 
   describe '#insert_one' do
@@ -468,6 +485,20 @@ describe Mongo::Collection do
 
     it 'contains the id in the result' do
       expect(result.inserted_id).to_not be_nil
+    end
+
+    context 'when the insert fails' do
+
+      let(:result) do
+        authorized_collection.insert_one(_id: 1)
+        authorized_collection.insert_one(_id: 1)
+      end
+
+      it 'raises an OperationFailure' do
+        expect {
+          result.to raise_exception(Mongo::Error::OperationFailure)
+        }
+      end
     end
   end
 
@@ -636,6 +667,19 @@ describe Mongo::Collection do
         expect(response.deleted_count).to eq(1)
       end
     end
+
+    context 'when the delete fails' do
+
+      let(:result) do
+        collection_invalid_write_concern.delete_one
+      end
+
+      it 'raises an OperationFailure' do
+        expect {
+          result.to raise_exception(Mongo::Error::OperationFailure)
+        }
+      end
+    end
   end
 
   describe '#delete_many' do
@@ -663,6 +707,19 @@ describe Mongo::Collection do
 
       it 'deletes all the documents in the collection' do
         expect(authorized_collection.delete_many.deleted_count).to eq(2)
+      end
+    end
+
+    context 'when the deletes fail' do
+
+      let(:result) do
+        collection_invalid_write_concern.delete_many
+      end
+
+      it 'raises an OperationFailure' do
+        expect {
+          result.to raise_exception(Mongo::Error::OperationFailure)
+        }
       end
     end
   end
@@ -760,6 +817,19 @@ describe Mongo::Collection do
         expect(updated).to be_empty
       end
     end
+
+    context 'when the replace fails' do
+
+      let(:result) do
+        collection_invalid_write_concern.replace_one(selector, { field: 'test1' })
+      end
+
+      it 'raises an OperationFailure' do
+        expect {
+          result.to raise_exception(Mongo::Error::OperationFailure)
+        }
+      end
+    end
   end
 
   describe '#update_many' do
@@ -853,6 +923,19 @@ describe Mongo::Collection do
         expect(updated).to be_empty
       end
     end
+
+    context 'when the updates fail' do
+
+      let(:result) do
+        collection_invalid_write_concern.update_many(selector, { '$set'=> { field: 'testing' } })
+      end
+
+      it 'raises an OperationFailure' do
+        expect {
+          result.to raise_exception(Mongo::Error::OperationFailure)
+        }
+      end
+    end
   end
 
   describe '#update_one' do
@@ -942,6 +1025,19 @@ describe Mongo::Collection do
         expect(updated).to be_empty
       end
     end
+
+    context 'when the updates fail' do
+
+      let(:result) do
+        collection_invalid_write_concern.update_one(selector, { '$set'=> { field: 'testing' } })
+      end
+
+      it 'raises an OperationFailure' do
+        expect {
+          result.to raise_exception(Mongo::Error::OperationFailure)
+        }
+      end
+    end
   end
 
   describe '#find_one_and_delete' do
@@ -1024,6 +1120,19 @@ describe Mongo::Collection do
 
       it 'returns nil' do
         expect(document).to be_nil
+      end
+    end
+
+    context 'when the operation fails' do
+
+      let(:result) do
+        collection_invalid_write_concern.find_one_and_delete(selector)
+      end
+
+      it 'raises an OperationFailure' do
+        expect {
+          result.to raise_exception(Mongo::Error::OperationFailure)
+        }
       end
     end
   end
@@ -1167,6 +1276,19 @@ describe Mongo::Collection do
         end
       end
     end
+
+    context 'when the operation fails' do
+
+      let(:result) do
+        collection_invalid_write_concern.find_one_and_update(selector, { '$set' => { field: 'testing' }})
+      end
+
+      it 'raises an OperationFailure' do
+        expect {
+          result.to raise_exception(Mongo::Error::OperationFailure)
+        }
+      end
+    end
   end
 
   describe '#find_one_and_replace' do
@@ -1281,6 +1403,19 @@ describe Mongo::Collection do
           authorized_collection.find_one_and_replace(selector, { field: 'testing' }, max_time_ms: 0.1)
         }.to raise_error(Mongo::Error::OperationFailure)
       end
+    end
+  end
+
+  context 'when the operation fails' do
+
+    let(:result) do
+      collection_invalid_write_concern.find_one_and_replace(selector, { field: 'testing' }, :upsert => true, :return_document => :after)
+    end
+
+    it 'raises an OperationFailure' do
+      expect {
+        result.to raise_exception(Mongo::Error::OperationFailure)
+      }
     end
   end
 end
