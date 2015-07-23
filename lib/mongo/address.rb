@@ -149,7 +149,7 @@ module Mongo
       ::Socket.getaddrinfo(host, nil, family, ::Socket::SOCK_STREAM).each do |info|
         begin
           res = FAMILY_MAP[info[4]].new(info[3], port, host)
-          res.socket(timeout, ssl_options).connect!
+          res.socket(timeout, ssl_options).connect!.close
           return res
         rescue IOError, SystemCallError, Error::SocketError => e
           error = e
