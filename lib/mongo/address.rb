@@ -144,9 +144,8 @@ module Mongo
     private
 
     def initialize_resolver!(timeout, ssl_options)
-      family = (host == 'localhost') ? ::Socket::AF_INET : ::Socket::AF_UNSPEC
       error = nil
-      ::Socket.getaddrinfo(host, nil, family, ::Socket::SOCK_STREAM).each do |info|
+      ::Socket.getaddrinfo(host, nil, ::Socket::AF_UNSPEC, ::Socket::SOCK_STREAM).each do |info|
         begin
           res = FAMILY_MAP[info[4]].new(info[3], port, host)
           res.socket(timeout, ssl_options).connect!
