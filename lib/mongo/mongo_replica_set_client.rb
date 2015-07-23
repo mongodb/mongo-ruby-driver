@@ -223,6 +223,16 @@ module Mongo
       end
     end
 
+    # Reconnect the replica set client.
+    #
+    # @return [Boolean] +true+ unless the refresh lock can't be acquired.
+    #
+    # @since 1.12.4
+    def reconnect
+      close
+      refresh
+    end
+
     # Determine whether a replica set refresh is
     # required. If so, run a hard refresh. You can
     # force a hard refresh by running
