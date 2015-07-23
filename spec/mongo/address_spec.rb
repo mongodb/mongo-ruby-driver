@@ -205,15 +205,21 @@ describe Mongo::Address do
   end
 
   describe "#socket" do
+
     context 'when providing a DNS entry that resolves to both IPv6 and IPv4' do
+
       let(:address) do
-        described_class.new('localhost:27017')
+        described_class.new(DEFAULT_ADDRESS)
+      end
+
+      let(:host) do
+        DEFAULT_ADDRESS.split(':').first
       end
 
       before do
         allow(::Socket).to receive(:getaddrinfo).and_return(
-          [ ["AF_INET6", 0, "::1", "::1", ::Socket::AF_INET6, 1, 6],
-            ["AF_INET", 0, "127.0.0.1", "127.0.0.1", ::Socket::AF_INET, 1, 6]]
+          [ ["AF_INET6", 0, '::1', '::1', ::Socket::AF_INET6, 1, 6],
+            ["AF_INET", 0, host, host, ::Socket::AF_INET, 1, 6]]
         )
       end
 
