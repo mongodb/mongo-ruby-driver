@@ -41,10 +41,10 @@ module Mongo
         command_started(address, operation_id, payload)
         begin
           result = yield(messages)
-          command_completed(result, address, operation_id, payload, start)
+          command_completed(result, address, operation_id, payload, duration(start))
           result
         rescue Exception => e
-          command_failed(address, operation_id, payload, e.message, start)
+          command_failed(address, operation_id, payload, e.message, duration(start))
           raise e
         end
       end
@@ -58,17 +58,17 @@ module Mongo
         )
       end
 
-      def command_completed(result, address, operation_id, payload, start)
+      def command_completed(result, address, operation_id, payload, duration)
         document = result ? (result.documents || []).first : nil
         parser = Error::Parser.new(document)
         if parser.message.empty?
-          command_succeeded(result, address, operation_id, payload, start)
+          command_succeeded(result, address, operation_id, payload, duration)
         else
-          command_failed(address, operation_id, payload, parser.message, start)
+          command_failed(address, operation_id, payload, parser.message, duration)
         end
       end
 
-      def command_succeeded(result, address, operation_id, payload, start)
+      def command_succeeded(result, address, operation_id, payload, duration)
         monitoring.succeeded(
           Monitoring::COMMAND,
           Event::CommandSucceeded.generate(
@@ -76,15 +76,15 @@ module Mongo
             operation_id,
             payload,
             result ? result.payload : nil,
-            duration(start)
+            duration
           )
         )
       end
 
-      def command_failed(address, operation_id, payload, message, start)
+      def command_failed(address, operation_id, payload, message, duration)
         monitoring.failed(
           Monitoring::COMMAND,
-          Event::CommandFailed.generate(address, operation_id, payload, message, duration(start))
+          Event::CommandFailed.generate(address, operation_id, payload, message, duration)
         )
       end
 
