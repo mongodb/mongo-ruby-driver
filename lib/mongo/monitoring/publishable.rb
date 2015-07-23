@@ -38,13 +38,17 @@ module Mongo
       def publish_command(messages, operation_id = Monitoring.next_operation_id)
         start = Time.now
         payload = messages.first.payload
+        send_duration = duration(start)
         command_started(address, operation_id, payload)
+        receive_start = Time.now
         begin
           result = yield(messages)
-          command_completed(result, address, operation_id, payload, duration(start))
+          total_duration = duration(receive_start) + send_duration
+          command_completed(result, address, operation_id, payload, total_duration)
           result
         rescue Exception => e
-          command_failed(address, operation_id, payload, e.message, duration(start))
+          total_duration = duration(receive_start) + send_duration
+          command_failed(address, operation_id, payload, e.message, total_duration)
           raise e
         end
       end
