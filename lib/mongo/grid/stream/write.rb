@@ -55,7 +55,9 @@ module Mongo
           # @option opts [ Hash ] :write_concern The write concern.
           # @option opts [ Hash ] :metadata User data for the 'metadata' field of the files collection document.
           # @option opts [ String ] :content_type The content type of the file.
+          #   Deprecated, please use the metadata document instead.
           # @option opts [ Array<String> ] :aliases A list of aliases.
+          #   Deprecated, please use the metadata document instead.
           #
           # @since 2.1.0
           def initialize(fs, options)
@@ -74,7 +76,7 @@ module Mongo
             @length += data.length
             chunks = File::Chunk.split(data, metadata, @n)
             @n += chunks.size
-            chunks_collection.insert_many(chunks)
+            chunks_collection.insert_many(chunks) unless chunks.empty?
             self
           end
 

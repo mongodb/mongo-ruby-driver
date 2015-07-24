@@ -224,8 +224,8 @@ module Mongo
       # @option opts [ Hash ] :write The write concern.
       # @option opts [ Hash ] :write_concern The write concern.
       # @option opts [ Hash ] :metadata User data for the 'metadata' field of the files collection document.
-      # @option opts [ String ] :content_type The content type of the file.
-      # @option opts [ Array<String> ] :aliases A list of aliases.
+      # @option opts [ String ] :content_type The content type of the file. Deprecated, please use the metadata document instead.
+      # @option opts [ Array<String> ] :aliases A list of aliases. Deprecated, please use the metadata document instead.
       #
       # @return [ Stream::Write ] The stream to write to.
       #
@@ -256,9 +256,10 @@ module Mongo
       #
       # @since 2.1.0
       def upload_from_stream(filename, io, opts = {})
-        stream = write_stream(filename, opts)
-        stream.write(io).close
-        stream.file_id
+        write_stream(filename, opts).tap do |stream|
+          stream.write(io)
+          stream.close
+        end.file_id
       end
 
       # Get the read preference.
@@ -296,7 +297,7 @@ module Mongo
       end
 
       def write_stream(filename, opts)
-        Stream.get(self, WRITE_MODE, { filename: filename }.merge!(opts).merge!(options))
+        Stream.get(self, WRITE_MODE, { filename: filename }.merge!(options).merge!(opts))
       end
 
       def chunks_name

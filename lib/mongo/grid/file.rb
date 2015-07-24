@@ -62,9 +62,12 @@ module Mongo
       #
       # @option options [ String ] :filename Required name of the file.
       # @option options [ String ] :content_type The content type of the file.
+      #   Deprecated, please use the metadata document instead.
       # @option options [ String ] :metadata Optional file metadata.
       # @option options [ Integer ] :chunk_size Override the default chunk
       #   size.
+      # @option opts [ Array<String> ] :aliases A list of aliases.
+      #   Deprecated, please use the metadata document instead.
       #
       # @since 2.0.0
       def initialize(data, options = {})

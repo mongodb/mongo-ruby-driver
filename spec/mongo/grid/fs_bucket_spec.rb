@@ -2,11 +2,15 @@ require 'spec_helper'
 
 describe Mongo::Grid::FSBucket do
 
-  describe '#initialize' do
+  let(:fs) do
+    described_class.new(authorized_client.database, options)
+  end
 
-    let(:fs) do
-      described_class.new(authorized_client.database)
-    end
+  let(:options) do
+    { }
+  end
+
+  describe '#initialize' do
 
     let(:chunks_index) do
       fs.chunks_collection.indexes.get(:files_id => 1, :n => 1)
@@ -444,10 +448,6 @@ describe Mongo::Grid::FSBucket do
 
   context 'when a write stream is opened' do
 
-    let(:fs) do
-      described_class.new(authorized_client.database)
-    end
-
     let(:filename) do
       'specs.rb'
     end
@@ -472,7 +472,7 @@ describe Mongo::Grid::FSBucket do
       end
 
       it 'creates an ObjectId for the file' do
-        expect(stream.file_id).not_to be(nil)
+        expect(stream.file_id).to be_a(BSON::ObjectId)
       end
     end
 
@@ -526,14 +526,47 @@ describe Mongo::Grid::FSBucket do
          end
        end
 
+      context 'when there is a chunk size set on the FSBucket' do
+
+        let(:stream_options) do
+          {  }
+        end
+
+        let(:options) do
+          { chunk_size: 100 }
+        end
+
+        it 'sets the chunk size as the default on the write stream' do
+          expect(stream.options[:chunk_size]).to eq(options[:chunk_size])
+        end
+      end
+
       context 'when a chunk size option is specified' do
 
         let(:stream_options) do
-          { chunk_size: 100 }
+          {
+              chunk_size: 50
+          }
         end
 
         it 'sets the chunk size on the write stream' do
           expect(stream.options[:chunk_size]).to eq(stream_options[:chunk_size])
+        end
+
+        context 'when there is a chunk size set on the FSBucket' do
+
+          let(:options) do
+            { chunk_size: 100 }
+          end
+
+          let(:fs) do
+            described_class.new(authorized_client.database, options)
+          end
+
+          it 'uses the chunk size set on the write stream' do
+            expect(stream.options[:chunk_size]).to eq(stream_options[:chunk_size])
+          end
+
         end
       end
 
