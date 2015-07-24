@@ -457,10 +457,10 @@ describe Mongo::Collection do
         authorized_collection.insert_many([{ _id: 1 }, { _id: 1 }])
       end
 
-      it 'raises an OperationFailure' do
+      it 'raises an BulkWriteError' do
         expect {
-          result.to raise_exception(Mongo::Error::OperationFailure)
-        }
+          result
+        }.to raise_exception(Mongo::Error::BulkWriteError)
       end
     end
   end
@@ -496,8 +496,8 @@ describe Mongo::Collection do
 
       it 'raises an OperationFailure' do
         expect {
-          result.to raise_exception(Mongo::Error::OperationFailure)
-        }
+          result
+        }.to raise_exception(Mongo::Error::OperationFailure)
       end
     end
   end
@@ -668,7 +668,7 @@ describe Mongo::Collection do
       end
     end
 
-    context 'when the delete fails' do
+    context 'when the delete fails', if: standalone? do
 
       let(:result) do
         collection_invalid_write_concern.delete_one
@@ -676,8 +676,8 @@ describe Mongo::Collection do
 
       it 'raises an OperationFailure' do
         expect {
-          result.to raise_exception(Mongo::Error::OperationFailure)
-        }
+          result
+        }.to raise_exception(Mongo::Error::OperationFailure)
       end
     end
   end
@@ -710,7 +710,7 @@ describe Mongo::Collection do
       end
     end
 
-    context 'when the deletes fail' do
+    context 'when the deletes fail', if: standalone?  do
 
       let(:result) do
         collection_invalid_write_concern.delete_many
@@ -718,8 +718,8 @@ describe Mongo::Collection do
 
       it 'raises an OperationFailure' do
         expect {
-          result.to raise_exception(Mongo::Error::OperationFailure)
-        }
+          result
+        }.to raise_exception(Mongo::Error::OperationFailure)
       end
     end
   end
@@ -821,13 +821,13 @@ describe Mongo::Collection do
     context 'when the replace fails' do
 
       let(:result) do
-        collection_invalid_write_concern.replace_one(selector, { field: 'test1' })
+        authorized_collection.replace_one(selector, { '$s' => 'test1' })
       end
 
       it 'raises an OperationFailure' do
         expect {
-          result.to raise_exception(Mongo::Error::OperationFailure)
-        }
+          result
+        }.to raise_exception(Mongo::Error::OperationFailure)
       end
     end
   end
@@ -927,13 +927,13 @@ describe Mongo::Collection do
     context 'when the updates fail' do
 
       let(:result) do
-        collection_invalid_write_concern.update_many(selector, { '$set'=> { field: 'testing' } })
+        authorized_collection.update_many(selector, { '$s'=> { field: 'testing' } })
       end
 
       it 'raises an OperationFailure' do
         expect {
-          result.to raise_exception(Mongo::Error::OperationFailure)
-        }
+          result
+        }.to raise_exception(Mongo::Error::OperationFailure)
       end
     end
   end
@@ -1026,16 +1026,16 @@ describe Mongo::Collection do
       end
     end
 
-    context 'when the updates fail' do
+    context 'when the update fails' do
 
       let(:result) do
-        collection_invalid_write_concern.update_one(selector, { '$set'=> { field: 'testing' } })
+        authorized_collection.update_one(selector, { '$s'=> { field: 'testing' } })
       end
 
       it 'raises an OperationFailure' do
         expect {
-          result.to raise_exception(Mongo::Error::OperationFailure)
-        }
+          result
+        }.to raise_exception(Mongo::Error::OperationFailure)
       end
     end
   end
@@ -1046,11 +1046,11 @@ describe Mongo::Collection do
       authorized_collection.insert_many([{ field: 'test1' }])
     end
 
-    context 'when a matching document is found' do
+    let(:selector) do
+      { field: 'test1' }
+    end
 
-      let(:selector) do
-        { field: 'test1' }
-      end
+    context 'when a matching document is found' do
 
       context 'when no options are provided' do
 
@@ -1123,28 +1123,28 @@ describe Mongo::Collection do
       end
     end
 
-    context 'when the operation fails' do
+    context 'when the operation fails', if: write_command_enabled? do
 
       let(:result) do
-        collection_invalid_write_concern.find_one_and_delete(selector)
+        authorized_collection.find_one_and_delete(selector, max_time_ms: 0.1)
       end
 
       it 'raises an OperationFailure' do
         expect {
-          result.to raise_exception(Mongo::Error::OperationFailure)
-        }
+          result
+        }.to raise_exception(Mongo::Error::OperationFailure)
       end
     end
   end
 
   describe '#find_one_and_update' do
 
-    before do
-      authorized_collection.insert_many([{ field: 'test1' }])
-    end
-
     let(:selector) do
       { field: 'test1' }
+    end
+
+    before do
+      authorized_collection.insert_many([{ field: 'test1' }])
     end
 
     context 'when a matching document is found' do
@@ -1277,16 +1277,16 @@ describe Mongo::Collection do
       end
     end
 
-    context 'when the operation fails' do
+    context 'when the operation fails', if: write_command_enabled? do
 
       let(:result) do
-        collection_invalid_write_concern.find_one_and_update(selector, { '$set' => { field: 'testing' }})
+        authorized_collection.find_one_and_update(selector, { '$set' => { field: 'testing' }}, max_time_ms: 0.1)
       end
 
       it 'raises an OperationFailure' do
         expect {
-          result.to raise_exception(Mongo::Error::OperationFailure)
-        }
+          result
+        }.to raise_exception(Mongo::Error::OperationFailure)
       end
     end
   end
@@ -1404,18 +1404,18 @@ describe Mongo::Collection do
         }.to raise_error(Mongo::Error::OperationFailure)
       end
     end
-  end
 
-  context 'when the operation fails' do
+    context 'when the operation fails', if: write_command_enabled? do
 
-    let(:result) do
-      collection_invalid_write_concern.find_one_and_replace(selector, { field: 'testing' }, :upsert => true, :return_document => :after)
-    end
+      let(:result) do
+        authorized_collection.find_one_and_replace(selector, { field: 'testing' }, max_time_ms: 0.1)
+      end
 
-    it 'raises an OperationFailure' do
-      expect {
-        result.to raise_exception(Mongo::Error::OperationFailure)
-      }
+      it 'raises an OperationFailure' do
+        expect {
+          result
+        }.to raise_exception(Mongo::Error::OperationFailure)
+      end
     end
   end
 end
