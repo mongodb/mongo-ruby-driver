@@ -171,4 +171,25 @@ describe Mongo::Server::Monitor do
       end
     end
   end
+
+  describe '#stop' do
+
+    let(:monitor) do
+      described_class.new(address, listeners, TEST_OPTIONS)
+    end
+
+    let!(:thread) do
+      monitor.run!
+    end
+
+    before do
+      expect(monitor.connection).to receive(:disconnect!).and_call_original
+      monitor.stop!
+      sleep(1)
+    end
+
+    it 'kills the monitor thread' do
+      expect(thread.stop?).to be(true)
+    end
+  end
 end
