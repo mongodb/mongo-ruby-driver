@@ -60,7 +60,7 @@ shared_examples 'a bulk write object' do
 
         context 'when the server version is < 2.6' do
 
-          it 'raises a BulkWriteFailure', if: !write_command_enabled?  && standalone? do
+          it 'raises a BulkWriteError', if: !write_command_enabled?  && standalone? do
             expect {
               bulk_invalid_write_concern.execute
             }.to raise_error(Mongo::Error::BulkWriteError)
@@ -140,7 +140,7 @@ shared_examples 'a bulk write object' do
 
         context 'when the server version is < 2.6' do
 
-          it 'raises a BulkWriteFailure', if: !write_command_enabled? && standalone? do
+          it 'raises a BulkWriteError', if: !write_command_enabled? && standalone? do
             expect {
               bulk_invalid_write_concern.execute
             }.to raise_error(Mongo::Error::BulkWriteError)
@@ -203,7 +203,7 @@ shared_examples 'a bulk write object' do
 
           context 'when the server version is < 2.6' do
 
-            it 'raises a BulkWriteFailure', if: !write_command_enabled? && standalone? do
+            it 'raises a BulkWriteError', if: !write_command_enabled? && standalone? do
               expect {
                 bulk_invalid_write_concern.execute
               }.to raise_error(Mongo::Error::BulkWriteError)
@@ -321,7 +321,7 @@ shared_examples 'a bulk write object' do
 
         context 'when the server version is < 2.6' do
 
-          it 'raises a BulkWriteFailure', if: !write_command_enabled? && standalone? do
+          it 'raises a BulkWriteError', if: !write_command_enabled? && standalone? do
             expect {
               bulk_invalid_write_concern.execute
             }.to raise_error(Mongo::Error::BulkWriteError)
@@ -468,7 +468,7 @@ shared_examples 'a bulk write object' do
 
         context 'when the server version is < 2.6' do
 
-          it 'raises a BulkWriteFailure', if: !write_command_enabled? && standalone? do
+          it 'raises a BulkWriteError', if: !write_command_enabled? && standalone? do
             expect {
               bulk_invalid_write_concern.execute
             }.to raise_error(Mongo::Error::BulkWriteError)
@@ -560,7 +560,7 @@ shared_examples 'a bulk write object' do
          }]
       end
 
-      it 'raises an OperationFailure' do
+      it 'raises an BulkWriteError' do
         expect {
           bulk.execute
         }.to raise_error(Mongo::Error::BulkWriteError)
@@ -622,7 +622,7 @@ shared_examples 'a bulk write object' do
 
         context 'when the server version is < 2.6' do
 
-          it 'raises a BulkWriteFailure', if: !write_command_enabled? && standalone? do
+          it 'raises a BulkWriteError', if: !write_command_enabled? && standalone? do
             expect {
               bulk_invalid_write_concern.execute
             }.to raise_error(Mongo::Error::BulkWriteError)
@@ -711,7 +711,7 @@ shared_examples 'a bulk write object' do
 
       context 'when the server version is < 2.6' do
 
-        it 'raises a BulkWriteFailure', if: !write_command_enabled? && standalone? do
+        it 'raises a BulkWriteError', if: !write_command_enabled? && standalone? do
           expect {
             bulk_invalid_write_concern.execute
           }.to raise_error(Mongo::Error::BulkWriteError)
