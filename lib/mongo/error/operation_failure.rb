@@ -15,7 +15,7 @@
 module Mongo
   class Error
 
-    # Raised when a command failes for some reason.
+    # Raised when an operation fails for some reason.
     #
     # @since 2.0.0
     class OperationFailure < Error; end

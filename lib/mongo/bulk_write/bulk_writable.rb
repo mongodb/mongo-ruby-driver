@@ -217,6 +217,7 @@ module Mongo
       def combine_results(result, indexes)
         @results ||= {}
         write_errors = result.aggregate_write_errors(indexes)
+        result.validate! unless write_errors
 
         # The Bulk API only returns the first write concern error encountered.
         @write_concern_errors ||= result.aggregate_write_concern_errors(indexes)

@@ -28,6 +28,19 @@ shared_examples 'a bulk write object' do
 
   context 'when an insert_one operation is provided' do
 
+    context 'when there is a write failure' do
+
+      let(:operations) do
+        [{ insert_one: { _id: 1 }}, { insert_one: { _id: 1 }}]
+      end
+
+      it 'raises a BulkWriteError' do
+        expect {
+          bulk.execute
+        }.to raise_error(Mongo::Error::BulkWriteError)
+      end
+    end
+
     context 'when a document is provided' do
 
       let(:operations) do
@@ -41,6 +54,27 @@ shared_examples 'a bulk write object' do
       it 'only inserts that document' do
         bulk.execute
         expect(authorized_collection.find.first['name']).to eq('test')
+      end
+
+      context 'when there is a write concern error' do
+
+        context 'when the server version is < 2.6' do
+
+          it 'raises a BulkWriteError', if: !write_command_enabled?  && standalone? do
+            expect {
+              bulk_invalid_write_concern.execute
+            }.to raise_error(Mongo::Error::BulkWriteError)
+          end
+        end
+
+        context 'when the server version has write commands enabled' do
+
+          it 'raises an OperationFailure', if: write_command_enabled? && standalone? do
+            expect {
+              bulk_invalid_write_concern.execute
+            }.to raise_error(Mongo::Error::OperationFailure)
+          end
+        end
       end
     end
 
@@ -101,6 +135,27 @@ shared_examples 'a bulk write object' do
         bulk.execute
         expect(authorized_collection.find.projection(_id: 0).to_a).to eq(expected)
       end
+
+      context 'when there is a write concern error' do
+
+        context 'when the server version is < 2.6' do
+
+          it 'raises a BulkWriteError', if: !write_command_enabled? && standalone? do
+            expect {
+              bulk_invalid_write_concern.execute
+            }.to raise_error(Mongo::Error::BulkWriteError)
+          end
+        end
+
+        context 'when the server version has write commands enabled' do
+
+          it 'raises an OperationFailure', if: write_command_enabled? && standalone? do
+            expect {
+              bulk_invalid_write_concern.execute
+            }.to raise_error(Mongo::Error::OperationFailure)
+          end
+        end
+      end
     end
   end
 
@@ -142,6 +197,27 @@ shared_examples 'a bulk write object' do
         it 'deletes all matching documents' do
           bulk.execute
           expect(authorized_collection.find.to_a).to be_empty
+        end
+
+        context 'when there is a write concern error' do
+
+          context 'when the server version is < 2.6' do
+
+            it 'raises a BulkWriteError', if: !write_command_enabled? && standalone? do
+              expect {
+                bulk_invalid_write_concern.execute
+              }.to raise_error(Mongo::Error::BulkWriteError)
+            end
+          end
+
+          context 'when the server version has write commands enabled' do
+
+            it 'raises an OperationFailure', if: write_command_enabled? && standalone? do
+              expect {
+                bulk_invalid_write_concern.execute
+              }.to raise_error(Mongo::Error::OperationFailure)
+            end
+          end
         end
       end
 
@@ -241,6 +317,27 @@ shared_examples 'a bulk write object' do
         expect(authorized_collection.find.projection(_id: 0).to_a).to eq(expected)
       end
 
+      context 'when there is a write concern error' do
+
+        context 'when the server version is < 2.6' do
+
+          it 'raises a BulkWriteError', if: !write_command_enabled? && standalone? do
+            expect {
+              bulk_invalid_write_concern.execute
+            }.to raise_error(Mongo::Error::BulkWriteError)
+          end
+        end
+
+        context 'when the server version has write commands enabled' do
+
+          it 'raises an OperationFailure', if: write_command_enabled? && standalone? do
+            expect {
+              bulk_invalid_write_concern.execute
+            }.to raise_error(Mongo::Error::OperationFailure)
+          end
+        end
+      end
+
       context 'when upsert is true' do
 
         let(:operations) do
@@ -296,6 +393,22 @@ shared_examples 'a bulk write object' do
       [{ 'a' => 2 },  { 'a' => 1 }]
     end
 
+    context 'when there is a write failure' do
+
+      let(:operations) do
+        [{ update_one: { find: { a: 1 },
+                         update: { '$st' => { field: 'blah' } },
+                         upsert: false }
+         }]
+      end
+
+      it 'raises a BulkWriteError' do
+        expect {
+          bulk.execute
+        }.to raise_error(Mongo::Error::BulkWriteError)
+      end
+    end
+
     context 'when an update document is not specified' do
 
       let(:operations) do
@@ -349,6 +462,27 @@ shared_examples 'a bulk write object' do
       it 'applies the correct writes' do
         bulk.execute
         expect(authorized_collection.find.projection(_id: 0).to_a).to eq(expected)
+      end
+
+      context 'when there is a write concern error' do
+
+        context 'when the server version is < 2.6' do
+
+          it 'raises a BulkWriteError', if: !write_command_enabled? && standalone? do
+            expect {
+              bulk_invalid_write_concern.execute
+            }.to raise_error(Mongo::Error::BulkWriteError)
+          end
+        end
+
+        context 'when the server version has write commands enabled' do
+
+          it 'raises an OperationFailure', if: write_command_enabled? && standalone? do
+            expect {
+              bulk_invalid_write_concern.execute
+            }.to raise_error(Mongo::Error::OperationFailure)
+          end
+        end
       end
 
       context 'when upsert is true' do
@@ -417,6 +551,22 @@ shared_examples 'a bulk write object' do
       authorized_collection.insert_many(docs)
     end
 
+    context 'when there is a write failure' do
+
+      let(:operations) do
+        [{ update_many: { find: { a: 1 },
+                          update: { '$st' => { field: 'blah' } },
+                          upsert: false }
+         }]
+      end
+
+      it 'raises an BulkWriteError' do
+        expect {
+          bulk.execute
+        }.to raise_error(Mongo::Error::BulkWriteError)
+      end
+    end
+
     context 'when an update document is not specified' do
 
       let(:operations) do
@@ -466,6 +616,27 @@ shared_examples 'a bulk write object' do
       it 'applies the correct writes' do
         bulk.execute
         expect(authorized_collection.find.projection(_id: 0).to_a).to eq(expected)
+      end
+
+      context 'when there is a write concern error' do
+
+        context 'when the server version is < 2.6' do
+
+          it 'raises a BulkWriteError', if: !write_command_enabled? && standalone? do
+            expect {
+              bulk_invalid_write_concern.execute
+            }.to raise_error(Mongo::Error::BulkWriteError)
+          end
+        end
+
+        context 'when the server version has write commands enabled' do
+
+          it 'raises an OperationFailure', if: write_command_enabled? && standalone? do
+            expect {
+              bulk_invalid_write_concern.execute
+            }.to raise_error(Mongo::Error::OperationFailure)
+          end
+        end
       end
 
       context 'when upsert is true' do
@@ -534,6 +705,27 @@ shared_examples 'a bulk write object' do
     it 'completes all operations' do
       bulk.execute
       expect(authorized_collection.find(x: { '$lte' => 3000 }).to_a.size).to eq(3000)
+    end
+
+    context 'when there is a write concern error' do
+
+      context 'when the server version is < 2.6' do
+
+        it 'raises a BulkWriteError', if: !write_command_enabled? && standalone? do
+          expect {
+            bulk_invalid_write_concern.execute
+          }.to raise_error(Mongo::Error::BulkWriteError)
+        end
+      end
+
+      context 'when the server version has write commands enabled' do
+
+        it 'raises an OperationFailure', if: write_command_enabled? && standalone? do
+          expect {
+            bulk_invalid_write_concern.execute
+          }.to raise_error(Mongo::Error::OperationFailure)
+        end
+      end
     end
   end
 end

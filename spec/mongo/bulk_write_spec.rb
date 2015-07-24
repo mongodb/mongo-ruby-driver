@@ -14,6 +14,14 @@ describe Mongo::BulkWrite do
     described_class.get(authorized_collection, operations, options)
   end
 
+  let(:collection_invalid_write_concern) do
+    authorized_collection.client.with(write: { w: (WRITE_CONCERN[:w] + 1) })[authorized_collection.name]
+  end
+
+  let(:bulk_invalid_write_concern) do
+    described_class.get(collection_invalid_write_concern, operations, options)
+  end
+
   describe '#get' do
 
     let(:operations) do
