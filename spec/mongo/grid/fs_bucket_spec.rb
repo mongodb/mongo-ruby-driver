@@ -36,23 +36,51 @@ describe Mongo::Grid::FSBucket do
       expect(files_index[:name]).to eq('filename_1_uploadDate_1')
     end
 
-    context 'when there is an OperationFailure' do
+    context 'when the user is not authorized to create an index' do
 
-      let(:chunks_collection) do
-        authorized_client.database["fs.#{Mongo::Grid::File::Chunk::COLLECTION}"]
+      let(:authorized_fs) do
+        described_class.new(authorized_client.database, options)
+      end
+
+      let(:read_user) do
+        Mongo::Auth::User.new(
+            user: 'read-only',
+            password: 'reading',
+            roles: [ Mongo::Auth::Roles::READ ]
+        )
+      end
+
+      let(:filename) do
+        'some-file'
       end
 
       before do
-        chunks_collection.drop
-        chunks_collection.indexes.create_one(Mongo::Grid::FSBucket::CHUNKS_INDEX, unique: false)
+        authorized_fs.upload_from_stream(filename, StringIO.new('hello!'))
+        root_authorized_client.database.users.create(read_user)
       end
 
       after do
-        chunks_collection.drop
+        authorized_fs.files_collection.delete_many
+        authorized_fs.chunks_collection.delete_many
+        root_authorized_client.database.users.remove(read_user.name)
+      end
+
+      let(:read_db) do
+        authorized_client.with(user: read_user.name, password: read_user.password).database
+      end
+
+      let(:fs) do
+        described_class.new(read_db, options)
       end
 
       it 'recovers and does not raise an exception' do
-        expect(fs.chunks_collection).to eq(chunks_collection)
+        expect{
+          fs
+        }.not_to raise_exception
+      end
+
+      it 'allows the user to read from the GridFS anyway' do
+        expect(fs.find_one(filename: filename)).to be_a(Mongo::Grid::File)
       end
     end
 
