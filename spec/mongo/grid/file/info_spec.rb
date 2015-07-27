@@ -89,4 +89,16 @@ describe Mongo::Grid::File::Info do
       expect(info.inspect).to include(info.id.to_s)
     end
   end
+
+  context 'when there are extra options' do
+
+    let(:info) do
+      described_class.new(:filename => 'test.txt', :extra_field => 'extra')
+    end
+
+    it 'does not include them in the document written to the database' do
+      expect(info.document['extra_field']).to be_nil
+      expect(info.document[:extra_field]).to be_nil
+    end
+  end
 end

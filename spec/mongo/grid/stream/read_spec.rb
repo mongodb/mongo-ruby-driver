@@ -137,6 +137,26 @@ describe Mongo::Grid::FSBucket::Stream::Read do
         end
       end
     end
+
+    context 'when there is no files document found' do
+
+      before do
+        fs.files_collection.delete_many
+      end
+
+      it 'raises an Exception' do
+        expect{
+          stream.to_a
+        }.to raise_exception(Mongo::Error::NoFileInfo)
+      end
+    end
+  end
+
+  describe '#file_info' do
+
+    it 'returns a files information document' do
+      expect(stream.file_info).not_to be_nil
+    end
   end
 
   describe '#close' do
