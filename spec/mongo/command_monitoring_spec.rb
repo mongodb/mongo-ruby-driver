@@ -35,7 +35,8 @@ describe 'Command Monitoring Events' do
               results = test.run(authorized_collection)
               event = subscriber.send(expectation.event_type)[expectation.command_name]
               expect(event).to match_expected_event(expectation)
-            rescue Mongo::Error::OperationFailure
+            rescue Mongo::Error::OperationFailure => e
+              p e
             end
           end
         end

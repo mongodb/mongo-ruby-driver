@@ -43,7 +43,7 @@ tests:
         command_started_event:
           command:
             find: *collection_name
-            filter: { _id: { $gt : 2 }}
+            filter: { _id: 1 }
             sort: { _id: 1 }
             skip: 2
             limit: 2
@@ -60,7 +60,7 @@ tests:
     operation:
       name: "find"
       arguments:
-        filter: { _id: 1 }
+        filter: { _id: { $gte: 1 }}
         sort: { _id: 1 }
         batchSize: 3
     expectations:
@@ -70,7 +70,7 @@ tests:
             find: *collection_name
             filter: { _id: { $gte : 1 }}
             sort: { _id: 1 }
-            batchSize: 3
+            limit: 3
           command_name: "find"
           database_name: *database_name
       -

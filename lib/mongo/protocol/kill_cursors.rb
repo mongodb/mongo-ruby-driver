@@ -30,7 +30,9 @@ module Mongo
       #
       # @param cursor_ids [Array<Fixnum>] The cursor ids to kill.
       # @param options [Hash] The additional kill cursors options.
-      def initialize(cursor_ids, options = {})
+      def initialize(collection, database, cursor_ids)
+        @collection = collection
+        @database = database
         @cursor_ids = cursor_ids
         @id_count   = @cursor_ids.size
       end
@@ -44,7 +46,12 @@ module Mongo
       #
       # @since 2.1.0
       def payload
-        { command_name: 'killcursors', command: { cursor_ids: cursor_ids }, request_id: request_id }
+        {
+          command_name: 'killCursors',
+          database_name: @database,
+          command: BSON::Document.new(killCursors: @collection, cursors: cursor_ids),
+          request_id: request_id
+        }
       end
 
       private

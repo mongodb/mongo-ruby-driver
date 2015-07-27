@@ -76,10 +76,12 @@ module Mongo
     # @since 2.0.0
     def each
       process(@initial_result).each { |doc| yield doc }
+      killable = false
       while more?
-        return kill_cursors if exhausted?
+        killable = true
         get_more.each { |doc| yield doc }
       end
+      kill_cursors if killable
     end
 
     private
@@ -118,7 +120,11 @@ module Mongo
     end
 
     def kill_cursors_spec
-      { :cursor_ids => [ @cursor_id ]}
+      {
+        :coll_name => @coll_name || collection.name,
+        :db_name => database.name,
+        :cursor_ids => [ @cursor_id ]
+      }
     end
 
     def limited?

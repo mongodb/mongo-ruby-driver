@@ -38,6 +38,7 @@ module Mongo
       # @param cursor_id [Integer] The cursor id returned in a reply.
       def initialize(database, collection, number_to_return, cursor_id)
         @database = database
+        @collection = collection
         @namespace = "#{database}.#{collection}"
         @number_to_return = number_to_return
         @cursor_id = cursor_id
@@ -53,9 +54,11 @@ module Mongo
       # @since 2.1.0
       def payload
         {
-          command_name: 'getmore',
+          command_name: 'getMore',
           database_name: @database,
-          command: { cursor_id: cursor_id, number_to_return: number_to_return },
+          command: BSON::Document.new(
+            getMore: cursor_id, batchSize: number_to_return, collection: @collection
+          ),
           request_id: request_id
         }
       end

@@ -92,7 +92,7 @@ module Mongo
       def matches_started_event?(event)
         event.command_name.to_s == command_name &&
           event.database_name.to_s == database_name &&
-          event.command == @event_data['command']
+          matches_command?(event)
       end
 
       def matches_succeeded_event?(event)
@@ -103,6 +103,13 @@ module Mongo
       def matches_failed_event?(event)
         event.command_name.to_s == command_name &&
           event.database_name.to_s == database_name
+      end
+
+      def matches_command?(event)
+        @event_data['command'].each do |key, value|
+          return false if event.command[key] != value
+        end
+        true
       end
     end
 

@@ -166,16 +166,17 @@ module Mongo
           # “returnKey”: <bool>,
         }
 
-          # :$query => :filter,
-          # :$readPreference => :readPreference,
-          # :$orderby => :sort,
-          # :$hint => :hint,
-          # :$comment => :comment,
-          # :$snapshot => :snapshot,
-          # :$maxScan => :maxScan,
-          # :$maxTimeMS => :maxTimeMS,
-          # :$showDiskLoc => :showRecordId,
-          # :$explain => :explain
+        SPECIAL_FIELD_MAPPINGS = {
+          :$readPreference => :readPreference,
+          :$orderby => :sort,
+          :$hint => :hint,
+          :$comment => :comment,
+          :$snapshot => :snapshot,
+          :$maxScan => :maxScan,
+          :$maxTimeMS => :maxTimeMS,
+          :$showDiskLoc => :showRecordId,
+          :$explain => :explain
+        }
 
         # Mapping of flags to find command options.
         #
@@ -208,7 +209,6 @@ module Mongo
         #
         # @since 2.1.0
         def initialize(collection, filter, options)
-          p filter
           @collection = collection
           @filter = filter
           @options = options
@@ -252,20 +252,17 @@ module Mongo
         def find_command
           document = BSON::Document.new
           document[:find] = collection
-          document[:filter] = filter
+          document[:filter] = filter.key?(:$query) ? filter[:$query] : filter
           OPTION_MAPPINGS.each do |legacy, option|
             document[option] = options[legacy] if options[legacy]
+          end
+          SPECIAL_FIELD_MAPPINGS.each do |special, normal|
+            document[normal] = filter[special] if filter[special]
           end
           FLAG_MAPPINGS.each do |legacy, flag|
             document[flag] = true if options[:flags].include?(legacy)
           end
           document
-        end
-
-        def normalize_filter
-          Collection::View::Readable::SPECIAL_FIELDS.each do |special, normal|
-
-          end
         end
       end
     end

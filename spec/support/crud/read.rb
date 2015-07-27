@@ -27,7 +27,7 @@ module Mongo
         # @since 2.0.0
         ARGUMENT_MAP = { :sort => 'sort',
                          :skip => 'skip',
-                         :batch_size => 'batch_size',
+                         :batch_size => 'batchSize',
                          :limit => 'limit'
                        }
 
