@@ -467,6 +467,11 @@ describe Mongo::Grid::FSBucket do
         fs.download_to_stream(file.id, io)
       end
 
+      after do
+        fs.chunks_collection.delete_many
+        fs.files_collection.delete_many
+      end
+
       it 'writes to the provided stream' do
         expect(io.size).to eq(file.data.size)
       end
@@ -485,6 +490,19 @@ describe Mongo::Grid::FSBucket do
           expect{
             fs.download_to_stream(file.id, io)
           }.to raise_exception(Mongo::Error::NoFileInfo)
+        end
+      end
+
+      context 'when a file has an id that is not ab ObjectId' do
+
+        let(:file) do
+          Mongo::Grid::File.new(File.open(__FILE__).read,
+                                :filename => 'some-file.txt',
+                                :_id => 'testing-id')
+        end
+
+        it 'reads the file successfully' do
+          expect(io.size).to eq(file.data.size)
         end
       end
     end
