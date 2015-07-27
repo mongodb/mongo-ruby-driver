@@ -36,6 +36,28 @@ describe Mongo::Grid::FSBucket do
       expect(files_index[:name]).to eq('filename_1_uploadDate_1')
     end
 
+    context 'when there is an OperationFailure', if: write_command_enabled? do
+
+      let(:chunks_collection) do
+        authorized_client.database["fs.#{Mongo::Grid::File::Chunk::COLLECTION}"]
+      end
+
+      before do
+        chunks_collection.drop
+        chunks_collection.indexes.create_one(Mongo::Grid::FSBucket::CHUNKS_INDEX, unique: false)
+      end
+
+      after do
+        chunks_collection.drop
+      end
+
+      it 'raises the exception' do
+        expect {
+          fs
+        }.to raise_exception(Mongo::Error::OperationFailure)
+      end
+    end
+
     context 'when the user is not authorized to create an index' do
 
       let(:authorized_fs) do
