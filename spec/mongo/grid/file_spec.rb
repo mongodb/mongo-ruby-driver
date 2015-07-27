@@ -51,7 +51,7 @@ describe Mongo::Grid::File do
       (1..data_size).each{ |i| data << '1' }
     end
 
-    context 'when provided data and metadata' do
+    context 'when provided data and file information' do
 
       let(:file) do
         described_class.new(data, :filename => 'test.txt')
@@ -118,31 +118,31 @@ describe Mongo::Grid::File do
       end
     end
 
-    context 'when provided chunks and metadata' do
+    context 'when provided chunks and file information' do
 
       let(:file_id) do
         BSON::ObjectId.new
       end
 
-      let(:metadata) do
+      let(:info) do
         BSON::Document.new(
           :_id => file_id,
           :uploadDate => Time.now.utc,
           :filename => 'test.txt',
           :chunkSize => Mongo::Grid::File::Chunk::DEFAULT_SIZE,
           :length => data.length,
-          :contentType => Mongo::Grid::File::Metadata::DEFAULT_CONTENT_TYPE
+          :contentType => Mongo::Grid::File::Info::DEFAULT_CONTENT_TYPE
         )
       end
 
       let(:chunks) do
         Mongo::Grid::File::Chunk.split(
-          data, Mongo::Grid::File::Metadata.new(metadata)
+          data, Mongo::Grid::File::Info.new(info)
         ).map{ |chunk| chunk.document }
       end
 
       let(:file) do
-        described_class.new(chunks, metadata)
+        described_class.new(chunks, info)
       end
 
       it 'sets the chunks' do
@@ -153,8 +153,8 @@ describe Mongo::Grid::File do
         expect(file.data).to eq(data)
       end
 
-      it 'sets the metadata' do
-        expect(file.metadata.id).to eq(metadata[:_id])
+      it 'sets the file information' do
+        expect(file.info.id).to eq(info[:_id])
       end
     end
   end

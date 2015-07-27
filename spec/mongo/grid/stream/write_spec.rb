@@ -135,7 +135,7 @@ describe Mongo::Grid::FSBucket::Stream::Write do
         end
 
         it 'sets the metadata document' do
-          expect(stream.send(:metadata).metadata).to eq(options[:metadata])
+          expect(stream.send(:file_info).metadata).to eq(options[:metadata])
         end
       end
 
@@ -148,7 +148,7 @@ describe Mongo::Grid::FSBucket::Stream::Write do
         end
 
         it 'sets the chunk size' do
-          expect(stream.send(:metadata).chunk_size).to eq(options[:chunk_size])
+          expect(stream.send(:file_info).chunk_size).to eq(options[:chunk_size])
         end
 
         context 'when chunk size is also set on the FSBucket object' do
@@ -160,7 +160,7 @@ describe Mongo::Grid::FSBucket::Stream::Write do
           end
 
           it 'uses the write stream options' do
-            expect(stream.send(:metadata).chunk_size).to eq(options[:chunk_size])
+            expect(stream.send(:file_info).chunk_size).to eq(options[:chunk_size])
           end
         end
       end
@@ -174,7 +174,7 @@ describe Mongo::Grid::FSBucket::Stream::Write do
         end
 
         it 'sets the content type' do
-          expect(stream.send(:metadata).content_type).to eq(options[:content_type])
+          expect(stream.send(:file_info).content_type).to eq(options[:content_type])
         end
       end
 
@@ -187,7 +187,7 @@ describe Mongo::Grid::FSBucket::Stream::Write do
         end
 
         it 'sets the aliases' do
-          expect(stream.send(:metadata).document[:aliases]).to eq(options[:aliases])
+          expect(stream.send(:file_info).document[:aliases]).to eq(options[:aliases])
         end
       end
     end
@@ -339,15 +339,15 @@ describe Mongo::Grid::FSBucket::Stream::Write do
       end
 
       it 'inserts a file documents in the files collection' do
-        expect(files_coll_doc['_id']).to eq(stream.send(:metadata).document['_id'])
+        expect(files_coll_doc['_id']).to eq(stream.send(:file_info).document['_id'])
       end
 
       it 'updates the length in the files collection file document' do
-        expect(stream.send(:metadata).document[:length]).to eq(file.size)
+        expect(stream.send(:file_info).document[:length]).to eq(file.size)
       end
 
       it 'updates the md5 in the files collection file document' do
-        expect(stream.send(:metadata).document[:md5]).to eq(md5)
+        expect(stream.send(:file_info).document[:md5]).to eq(md5)
       end
     end
 

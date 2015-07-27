@@ -272,7 +272,7 @@ describe Mongo::Grid::FSBucket do
     end
 
     it 'returns the assembled file from the db' do
-      expect(from_db.filename).to eq(file.metadata.filename)
+      expect(from_db.filename).to eq(file.info.filename)
     end
   end
 
@@ -302,7 +302,7 @@ describe Mongo::Grid::FSBucket do
       end
 
       it 'inserts the file into the database' do
-        expect(from_db.filename).to eq(file.metadata.filename)
+        expect(from_db.filename).to eq(file.info.filename)
       end
 
       it 'includes the chunks and data with the file' do
@@ -570,13 +570,13 @@ describe Mongo::Grid::FSBucket do
         end
       end
 
-      context 'when a metadata option is specified' do
+      context 'when a file metadata option is specified' do
 
         let(:stream_options) do
-          { metadata: { _id: 1 } }
+          { metadata: { some_field: 1 } }
         end
 
-        it 'sets the metadata on the write stream' do
+        it 'sets the file metadata option on the write stream' do
           expect(stream.options[:metadata]).to eq(stream_options[:metadata])
         end
       end
@@ -587,7 +587,7 @@ describe Mongo::Grid::FSBucket do
           { content_type: 'text/plain' }
         end
 
-        it 'sets the write concern on the write stream' do
+        it 'sets the content type on the write stream' do
           expect(stream.options[:content_type]).to eq(stream_options[:content_type])
         end
       end
@@ -598,7 +598,7 @@ describe Mongo::Grid::FSBucket do
           { aliases: [ 'another-name.txt' ] }
         end
 
-        it 'sets the write concern on the write stream' do
+        it 'sets the alias option on the write stream' do
           expect(stream.options[:aliases]).to eq(stream_options[:aliases])
         end
       end

@@ -16,10 +16,10 @@ module Mongo
   module Grid
     class File
 
-      # Encapsulates behaviour around GridFS file metadata.
+      # Encapsulates behaviour around GridFS files collection file document.
       #
       # @since 2.0.0
-      class Metadata
+      class Info
 
         # Name of the files collection.
         #
@@ -44,13 +44,13 @@ module Mongo
         # @since 2.0.0
         DEFAULT_CONTENT_TYPE = 'binary/octet-stream'.freeze
 
-        # @return [ BSON::Document ] document The file metadata document.
+        # @return [ BSON::Document ] document The files collection document.
         attr_reader :document
 
-        # Is this metadata equal to another?
+        # Is this file information document equal to another?
         #
-        # @example Check metadata equality.
-        #   metadata == other
+        # @example Check file information document equality.
+        #   file_info == other
         #
         # @param [ Object ] other The object to check against.
         #
@@ -58,14 +58,14 @@ module Mongo
         #
         # @since 2.0.0
         def ==(other)
-          return false unless other.is_a?(Metadata)
+          return false unless other.is_a?(Info)
           document == other.document
         end
 
-        # Get the BSON type for a metadata document.
+        # Get the BSON type for a files information document.
         #
         # @example Get the BSON type.
-        #   metadata.bson_type
+        #   file_info.bson_type
         #
         # @return [ Integer ] The BSON type.
         #
@@ -74,10 +74,10 @@ module Mongo
           BSON::Hash::BSON_TYPE
         end
 
-        # Get the metadata chunk size.
+        # Get the file chunk size.
         #
         # @example Get the chunk size.
-        #   metadata.chunk_size
+        #   file_info.chunk_size
         #
         # @return [ Integer ] The chunksize in bytes.
         #
@@ -86,10 +86,10 @@ module Mongo
           document[:chunkSize]
         end
 
-        # Get the metadata content type.
+        # Get the file information content type.
         #
         # @example Get the content type.
-        #   metadata.content_type
+        #   file_info.content_type
         #
         # @return [ String ] The content type.
         #
@@ -98,32 +98,32 @@ module Mongo
           document[:contentType]
         end
 
-        # Get the metadata filename.
+        # Get the filename from the file information.
         #
         # @example Get the filename.
-        #   metadata.filename
+        #   file_info.filename
         #
         # @return [ String ] The filename.
         def filename
           document[:filename]
         end
 
-        # Get the metadata id.
+        # Get the file if from the file information.
         #
-        # @example Get the metadata id.
-        #   metadata.id
+        # @example Get the file id.
+        #   file_info.id
         #
-        # @return [ BSON::ObjectId ] The metadata id.
+        # @return [ BSON::ObjectId ] The file id.
         #
         # @since 2.0.0
         def id
           document[:_id]
         end
 
-        # Create the new metadata document.
+        # Create the new file information document.
         #
-        # @example Create the new metadata document.
-        #   Metadata.new(:filename => 'test.txt')
+        # @example Create the new file information document.
+        #   Info.new(:filename => 'test.txt')
         #
         # @param [ BSON::Document ] document The document to create from.
         #
@@ -135,23 +135,23 @@ module Mongo
 
         # Get a readable inspection for the object.
         #
-        # @example Inspect the metadata.
-        #   metadata.inspect
+        # @example Inspect the file information.
+        #   file_info.inspect
         #
         # @return [ String ] The nice inspection.
         #
         # @since 2.0.0
         def inspect
-          "#<Mongo::Grid::File::Metadata:0x#{object_id} chunk_size=#{chunk_size} " +
+          "#<Mongo::Grid::File::Info:0x#{object_id} chunk_size=#{chunk_size} " +
             "filename=#{filename} content_type=#{content_type} id=#{id} md5=#{md5}>"
         end
 
         # Get the length of the document in bytes.
         #
-        # @example Get the length
-        #   metadata.length
+        # @example Get the file length from the file information document.
+        #   file_info.length
         #
-        # @return [ Integer ] The length.
+        # @return [ Integer ] The file length.
         #
         # @since 2.0.0
         def length
@@ -159,12 +159,12 @@ module Mongo
         end
         alias :size :length
 
-        # Get the additional metadata.
+        # Get the additional metadata from the file information document.
         #
         # @example Get additional metadata.
-        #   metadata.metadata
+        #   file_info.metadata
         #
-        # @return [ String ] The additional metadata.
+        # @return [ String ] The additional metadata from file information document.
         #
         # @since 2.0.0
         def metadata
@@ -174,7 +174,7 @@ module Mongo
         # Get the md5 hash.
         #
         # @example Get the md5 hash.
-        #   metadata.md5
+        #   file_info.md5
         #
         # @return [ String ] The md5 hash as a string.
         #
@@ -183,13 +183,13 @@ module Mongo
           document[:md5] || @client_md5
         end
 
-        # Convert the metadata to BSON for storage.
+        # Convert the file information document to BSON for storage.
         #
-        # @note If no md5 exists in the metadata (it was loaded from the server
-        #   and is not a new file) then we digest the md5 and set it.
+        # @note If no md5 exists in the file information document (it was loaded
+        #   from the server and is not a new file) then we digest the md5 and set it.
         #
-        # @example Convert the metadata to BSON.
-        #   metadata.to_bson
+        # @example Convert the file information document to BSON.
+        #   file_info.to_bson
         #
         # @param [ String ] encoded The encoded data to append to.
         #
@@ -204,7 +204,7 @@ module Mongo
         # Get the upload date.
         #
         # @example Get the upload date.
-        #   metadata.upload_date
+        #   file_info.upload_date
         #
         # @return [ Time ] The upload date.
         #

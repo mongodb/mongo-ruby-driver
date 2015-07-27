@@ -104,10 +104,10 @@ module Mongo
       #
       # @since 2.0.0
       def find_one(selector = nil)
-        metadata = files_collection.find(selector).first
-        return nil unless metadata
-        chunks = chunks_collection.find(:files_id => metadata[:_id]).sort(:n => 1)
-        Grid::File.new(chunks.to_a, metadata)
+        file_info = files_collection.find(selector).first
+        return nil unless file_info
+        chunks = chunks_collection.find(:files_id => file_info[:_id]).sort(:n => 1)
+        Grid::File.new(chunks.to_a, file_info)
       end
 
       # Insert a single file into the GridFS.
@@ -122,7 +122,7 @@ module Mongo
       # @since 2.0.0
       def insert_one(file)
         chunks_collection.insert_many(file.chunks)
-        files_collection.insert_one(file.metadata)
+        files_collection.insert_one(file.info)
         file.id
       end
 
@@ -223,9 +223,12 @@ module Mongo
       # @option opts [ Integer ] :chunk_size Override the default chunk size.
       # @option opts [ Hash ] :write The write concern.
       # @option opts [ Hash ] :write_concern The write concern.
-      # @option opts [ Hash ] :metadata User data for the 'metadata' field of the files collection document.
-      # @option opts [ String ] :content_type The content type of the file. Deprecated, please use the metadata document instead.
-      # @option opts [ Array<String> ] :aliases A list of aliases. Deprecated, please use the metadata document instead.
+      # @option opts [ Hash ] :metadata User data for the 'metadata' field of the files
+      #   collection document.
+      # @option opts [ String ] :content_type The content type of the file.
+      #   Deprecated, please use the metadata document instead.
+      # @option opts [ Array<String> ] :aliases A list of aliases.
+      #   Deprecated, please use the metadata document instead.
       #
       # @return [ Stream::Write ] The stream to write to.
       #
@@ -248,9 +251,12 @@ module Mongo
       # @option opts [ Integer ] :chunk_size Override the default chunk size.
       # @option opts [ Hash ] :write The write concern.
       # @option opts [ Hash ] :write_concern The write concern.
-      # @option opts [ Hash ] :metadata User data for the 'metadata' field of the files collection document.
-      # @option opts [ String ] :content_type The content type of the file.
-      # @option opts [ Array<String> ] :aliases A list of aliases.
+      # @option opts [ Hash ] :metadata User data for the 'metadata' field of the files
+      #   collection document.
+      # @option opts [ String ] :content_type The content type of the file. Deprecated, please
+      #   use the metadata document instead.
+      # @option opts [ Array<String> ] :aliases A list of aliases. Deprecated, please use the
+      #   metadata document instead.
       #
       # @return [ Stream::Write ] The stream to write to.
       #
@@ -305,7 +311,7 @@ module Mongo
       end
 
       def files_name
-        "#{prefix}.#{Grid::File::Metadata::COLLECTION}"
+        "#{prefix}.#{Grid::File::Info::COLLECTION}"
       end
     end
   end
