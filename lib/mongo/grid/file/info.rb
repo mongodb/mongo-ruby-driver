@@ -36,7 +36,8 @@ module Mongo
           :_id => :_id,
           :md5 => :md5,
           :metadata => :metadata,
-          :upload_date => :uploadDate
+          :upload_date => :uploadDate,
+          :aliases => :aliases
         }.freeze
 
         # Default content type for stored files.
