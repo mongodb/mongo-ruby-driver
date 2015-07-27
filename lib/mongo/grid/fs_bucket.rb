@@ -152,7 +152,8 @@ module Mongo
         @files_collection = database[files_name]
         chunks_collection.indexes.create_one(CHUNKS_INDEX, :unique => true)
         files_collection.indexes.create_one(FILES_INDEX)
-      rescue Error::OperationFailure
+      rescue => ex
+        raise ex unless unauthorized_error?(ex)
       end
 
       # Get the prefix for the GridFS
@@ -297,6 +298,11 @@ module Mongo
       end
 
       private
+
+      def unauthorized_error?(ex)
+        ex.is_a?(Error::OperationFailure) &&
+            ( ex.message =~ /not authorized/ || ex.message =~ /(13)/ )
+      end
 
       def read_stream(id)
         Stream.get(self, READ_MODE, { file_id: id }.merge!(options))
