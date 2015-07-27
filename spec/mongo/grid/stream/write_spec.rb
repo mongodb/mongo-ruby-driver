@@ -49,7 +49,7 @@ describe Mongo::Grid::FSBucket::Stream::Write do
       expect(stream.close).to be_a(BSON::ObjectId)
     end
 
-    context 'when the fs has a write concern' do
+    context 'when the fs has a write concern', if: standalone? do
 
       let(:fs_options) do
         { write: { w: (WRITE_CONCERN[:w] + 1) } }
