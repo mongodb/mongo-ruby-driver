@@ -301,7 +301,7 @@ describe Mongo::Database do
         end
 
         it 'returns the assembled file from the db' do
-          expect(from_db.filename).to eq(file.metadata.filename)
+          expect(from_db.filename).to eq(file.info.filename)
         end
       end
     end

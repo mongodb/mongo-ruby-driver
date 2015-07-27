@@ -74,7 +74,7 @@ module Mongo
             ensure_open!
             data = io.read
             @length += data.length
-            chunks = File::Chunk.split(data, metadata, @n)
+            chunks = File::Chunk.split(data, file_info, @n)
             @n += chunks.size
             chunks_collection.insert_many(chunks) unless chunks.empty?
             self
@@ -93,7 +93,7 @@ module Mongo
           def close
             ensure_open!
             update_length
-            files_collection.insert_one(metadata)
+            files_collection.insert_one(file_info)
             @open = false
             file_id
           end
@@ -131,13 +131,13 @@ module Mongo
           end
 
           def update_length
-            metadata.document[:length] = @length
+            file_info.document[:length] = @length
           end
 
-          def metadata
+          def file_info
             # TODO Metadata is not the same as user-provided metadata
             doc = { length: @length, _id: file_id, filename: filename }
-            @metadata ||= File::Metadata.new(doc.merge(options))
+            @file_info ||= File::Info.new(options.merge(doc))
           end
 
           def ensure_open!
