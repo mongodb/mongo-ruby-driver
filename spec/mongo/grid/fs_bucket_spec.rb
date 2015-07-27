@@ -474,6 +474,19 @@ describe Mongo::Grid::FSBucket do
       it 'does not close the stream' do
         expect(io.closed?).to be(false)
       end
+
+      context 'when there is no files collection document found' do
+
+        before do
+          fs.files_collection.delete_many
+        end
+
+        it 'raises an exception' do
+          expect{
+            fs.download_to_stream(file.id, io)
+          }.to raise_exception(Mongo::Error::NoFileInfo)
+        end
+      end
     end
 
     context 'when a read preference is specified' do

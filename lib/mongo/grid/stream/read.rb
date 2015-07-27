@@ -69,7 +69,7 @@ module Mongo
           #
           # @yieldparam [ Hash ] Each chunk data.
           def each
-            ensure_open!
+            ensure_readable!
             view.each_with_index do |doc, index|
               chunk = Grid::File::Chunk.new(doc)
               validate_n!(index, chunk)
@@ -110,14 +110,35 @@ module Mongo
                 fs.read_preference
           end
 
-          private
-
-          def view
-            @view ||= fs.chunks_collection.find({ :files_id => file_id }, options).read(read_preference).sort(:n => 1)
+          # Get the files collection file information document for the file being read.
+          #
+          # @example Get the file info document.
+          #   stream.file_info
+          #
+          # @return [ Hash ] The file info document.
+          #
+          # @since 2.1.0
+          def file_info
+            @file_info ||= fs.files_collection.find(_id: file_id).first
           end
+
+          private
 
           def ensure_open!
             raise Error::ClosedStream.new unless @open
+          end
+
+          def ensure_file_info!
+            raise Error::NoFileInfo.new unless file_info
+          end
+
+          def ensure_readable!
+            ensure_open!
+            ensure_file_info!
+          end
+
+          def view
+            @view ||= fs.chunks_collection.find({ :files_id => file_id }, options).read(read_preference).sort(:n => 1)
           end
 
           def validate_n!(index, chunk)
