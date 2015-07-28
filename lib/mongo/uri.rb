@@ -216,7 +216,7 @@ module Mongo
       return {} unless parsed_options
       parsed_options.split('&').reduce({}) do |options, option|
         key, value = option.split('=')
-        strategy = OPTION_MAP[key]
+        strategy = OPTION_MAP[key.downcase]
         if strategy.nil?
           log_warn("Unsupported URI option '#{key}' on URI '#{@string}'. It will be ignored.")
         else
@@ -243,28 +243,28 @@ module Mongo
     end
 
     # Replica Set Options
-    option 'replicaSet', :replica_set, :type => :replica_set
+    option 'replicaset', :replica_set, :type => :replica_set
 
     # Timeout Options
-    option 'connectTimeoutMS', :connect_timeout, :type => :ms_convert
-    option 'socketTimeoutMS', :socket_timeout, :type => :ms_convert
-    option 'serverSelectionTimeoutMS', :server_selection_timeout, :type => :ms_convert
-    option 'localThresholdMS', :local_threshold, :type => :ms_convert
+    option 'connecttimeoutms', :connect_timeout, :type => :ms_convert
+    option 'sockettimeoutms', :socket_timeout, :type => :ms_convert
+    option 'serverselectiontimeoutms', :server_selection_timeout, :type => :ms_convert
+    option 'localthresholdms', :local_threshold, :type => :ms_convert
 
     # Write Options
     option 'w', :w, :group => :write
     option 'journal', :j, :group => :write
     option 'fsync', :fsync, :group => :write
-    option 'wtimeoutMS', :timeout, :group => :write
+    option 'wtimeoutms', :timeout, :group => :write
 
     # Read Options
-    option 'readPreference', :mode, :group => :read, :type => :read_mode
-    option 'readPreferenceTags', :tag_sets, :group => :read, :type => :read_tags
+    option 'readpreference', :mode, :group => :read, :type => :read_mode
+    option 'readpreferencetags', :tag_sets, :group => :read, :type => :read_tags
 
     # Pool options
-    option 'minPoolSize', :min_pool_size
-    option 'maxPoolSize', :max_pool_size
-    option 'waitQueueTimeoutMS', :wait_queue_timeout, :type => :ms_convert
+    option 'minpoolsize', :min_pool_size
+    option 'maxpoolsize', :max_pool_size
+    option 'waitqueuetimeoutms', :wait_queue_timeout, :type => :ms_convert
 
     # Security Options
     option 'ssl', :ssl
@@ -273,9 +273,9 @@ module Mongo
     option 'connect', :connect
 
     # Auth Options
-    option 'authSource', :source, :group => :auth, :type => :auth_source
-    option 'authMechanism', :mechanism, :group => :auth, :type => :auth_mech
-    option 'authMechanismProperties', :auth_mech_properties, :group => :auth,
+    option 'authsource', :source, :group => :auth, :type => :auth_source
+    option 'authmechanism', :auth_mech, :type => :auth_mech
+    option 'authmechanismproperties', :auth_mech_properties, :group => :auth,
            :type => :auth_mech_props
 
     # Gets the user provided in the URI
