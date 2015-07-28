@@ -12,6 +12,7 @@ describe 'ConnectionString' do
       before(:all) do
 
         class Mongo::Address
+
           private
 
           def initialize_resolver!(timeout, ssl_options)
@@ -66,11 +67,22 @@ describe 'ConnectionString' do
         end
 
         class Mongo::Address
+
           private
 
-          def family(host)
-            fam = host == 'localhost' ? ::Socket::AF_INET : ::Socket::AF_UNSPEC
-            ::Socket.getaddrinfo(host, nil, fam, ::Socket::SOCK_STREAM).first[4]
+          def initialize_resolver!(timeout, ssl_options)
+            family = (host == 'localhost') ? ::Socket::AF_INET : ::Socket::AF_UNSPEC
+            error = nil
+            ::Socket.getaddrinfo(host, nil, family, ::Socket::SOCK_STREAM).each do |info|
+              begin
+                res = FAMILY_MAP[info[4]].new(info[3], port, host)
+                res.socket(timeout, ssl_options).connect!.close
+                return res
+              rescue IOError, SystemCallError, Error::SocketError => e
+                error = e
+              end
+            end
+            raise error
           end
         end
       end
