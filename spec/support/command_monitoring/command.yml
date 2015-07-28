@@ -25,21 +25,21 @@ tests:
             - { ok: 1, n: 1 }
           command_name: "count"
           database_name: *database_name
-  -
-    description: "A failed command event"
-    operation:
-      name: "count"
-      arguments:
-        filter: { $nothing: true }
-    expectations:
-      -
-        command_started_event:
-          command:
-            count: *collection_name
-            query: { $nothing: true }
-          command_name: "count"
-          database_name: *database_name
-      -
-        command_failed_event:
-          command_name: "count"
-          database_name: *database_name
+  # -
+    # description: "A failed command event"
+    # operation:
+      # name: "count"
+      # arguments:
+        # filter: { $nothing: true }
+    # expectations:
+      # -
+        # command_started_event:
+          # command:
+            # count: *collection_name
+            # query: { $nothing: true }
+          # command_name: "count"
+          # database_name: *database_name
+      # -
+        # command_failed_event:
+          # command_name: "count"
+          # database_name: *database_name

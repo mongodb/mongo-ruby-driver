@@ -72,7 +72,12 @@ module Mongo
         {
           command_name: 'update',
           database_name: @database,
-          command: BSON::Document.new(update: @collection, updates: update),
+          command: BSON::Document.new(
+            update: @collection,
+            updates: [
+              BSON::Document.new(q: selector, u: update, multi: false, upsert: false)
+            ]
+          ),
           request_id: request_id
         }
       end

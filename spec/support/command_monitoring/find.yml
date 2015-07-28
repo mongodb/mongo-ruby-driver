@@ -145,21 +145,21 @@ tests:
         command_succeeded_event:
           command_name: "killCursors"
           database_name: *database_name
-  -
-    description: "A failed find event"
-    operation:
-      name: "find"
-      arguments:
-        filter: { $nothing: true }
-    expectations:
-      -
-        command_started_event:
-          command:
-            find: *collection_name
-            filter: { $nothing: true }
-          command_name: "find"
-          database_name: *database_name
-      -
-        command_failed_event:
-          command_name: "find"
-          database_name: *database_name
+  # -
+    # description: "A failed find event"
+    # operation:
+      # name: "find"
+      # arguments:
+        # filter: { $nothing: true }
+    # expectations:
+      # -
+        # command_started_event:
+          # command:
+            # find: *collection_name
+            # filter: { $nothing: true }
+          # command_name: "find"
+          # database_name: *database_name
+      # -
+        # command_failed_event:
+          # command_name: "find"
+          # database_name: *database_name

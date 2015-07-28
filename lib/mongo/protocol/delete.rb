@@ -42,6 +42,7 @@ module Mongo
       #   Supported flags: +:single_remove+
       def initialize(database, collection, selector, options = {})
         @database = database
+        @collection = collection
         @namespace = "#{database}.#{collection}"
         @selector  = selector
         @flags     = options[:flags] || []
@@ -56,7 +57,17 @@ module Mongo
       #
       # @since 2.1.0
       def payload
-        { command_name: 'delete', database_name: @database, command: selector, request_id: request_id }
+        {
+          command_name: 'delete',
+          database_name: @database,
+          command: BSON::Document.new(
+            delete: @collection,
+            deletes: [ BSON::Document.new(q: selector, limit: 1) ],
+            writeConcern: { w: 1 }, # @todo
+            ordered: true
+          ),
+          request_id: request_id
+        }
       end
 
       private
