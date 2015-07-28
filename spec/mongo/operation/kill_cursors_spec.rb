@@ -48,7 +48,7 @@ describe Mongo::Operation::KillCursors do
     context 'message' do
 
       it 'creates a kill cursors wire protocol message with correct specs' do
-        expect(Mongo::Protocol::KillCursors).to receive(:new) do |ids|
+        expect(Mongo::Protocol::KillCursors).to receive(:new) do |collection, database, ids|
           expect(ids).to eq(spec[:cursor_ids])
         end
         op.execute(primary_context)

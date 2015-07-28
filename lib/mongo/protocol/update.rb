@@ -53,6 +53,7 @@ module Mongo
       #   Supported flags: +:upsert+, +:multi_update+
       def initialize(database, collection, selector, update, options = {})
         @database    = database
+        @collection  = collection
         @namespace   = "#{database}.#{collection}"
         @selector    = selector
         @update      = update
@@ -71,7 +72,7 @@ module Mongo
         {
           command_name: 'update',
           database_name: @database,
-          command: { filter: selector, update: update },
+          command: BSON::Document.new(update: @collection, updates: update),
           request_id: request_id
         }
       end

@@ -76,12 +76,10 @@ module Mongo
     # @since 2.0.0
     def each
       process(@initial_result).each { |doc| yield doc }
-      killable = false
       while more?
-        killable = true
+        return kill_cursors if exhausted?
         get_more.each { |doc| yield doc }
       end
-      kill_cursors if killable
     end
 
     private

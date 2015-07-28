@@ -95,6 +95,46 @@ tests:
             - { _id: 5, x: 55 }
           command_name: "getMore"
           database_name: *database_name
+  -
+    description: "A successful find event with a getmore and killcursors"
+    operation:
+      name: "find"
+      arguments:
+        filter: { _id: { $gte: 1 }}
+        sort: { _id: 1 }
+        batchSize: 3
+        limit: 4
+    expectations:
+      -
+        command_started_event:
+          command:
+            find: *collection_name
+            filter: { _id: { $gte : 1 }}
+            sort: { _id: 1 }
+            limit: 3
+          command_name: "find"
+          database_name: *database_name
+      -
+        command_succeeded_event:
+          reply:
+            - { _id: 1, x: 11 }
+            - { _id: 2, x: 22 }
+            - { _id: 3, x: 33 }
+          command_name: "find"
+          database_name: *database_name
+      -
+        command_started_event:
+          command:
+            collection: *collection_name
+            batchSize: 1
+          command_name: "getMore"
+          database_name: *database_name
+      -
+        command_succeeded_event:
+          reply:
+            - { _id: 4, x: 44 }
+          command_name: "getMore"
+          database_name: *database_name
       -
         command_started_event:
           command:

@@ -36,7 +36,6 @@ describe 'Command Monitoring Events' do
               event = subscriber.send(expectation.event_type)[expectation.command_name]
               expect(event).to match_expected_event(expectation)
             rescue Mongo::Error::OperationFailure => e
-              p e
             end
           end
         end
