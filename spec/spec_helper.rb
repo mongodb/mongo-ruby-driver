@@ -25,6 +25,7 @@ SERVER_SELECTION_RTT_TESTS = Dir.glob("#{CURRENT_PATH}/support/server_selection/
 SERVER_SELECTION_TESTS = Dir.glob("#{CURRENT_PATH}/support/server_selection/selection/**/*.yml")
 CRUD_TESTS = Dir.glob("#{CURRENT_PATH}/support/crud_tests/**/*.yml")
 COMMAND_MONITORING_TESTS = Dir.glob("#{CURRENT_PATH}/support/command_monitoring/**/*.yml")
+CONNECTION_STRING_TESTS = Dir.glob("#{CURRENT_PATH}/support/connection_string_tests/*.yml")
 
 SSL_CERTS_DIR = "#{CURRENT_PATH}/support/certificates"
 CLIENT_PEM = "#{SSL_CERTS_DIR}/client.pem"
@@ -44,7 +45,14 @@ require 'support/server_discovery_and_monitoring'
 require 'support/server_selection_rtt'
 require 'support/server_selection'
 require 'support/crud'
+<<<<<<< HEAD
 require 'support/command_monitoring'
+=======
+require 'support/connection_string'
+
+Mongo::Logger.logger = Logger.new($stdout)
+Mongo::Logger.logger.level = Logger::INFO
+>>>>>>> RUBY-951 test runner for ConnectionString spec tests
 
 RSpec.configure do |config|
   config.color     = true

@@ -293,28 +293,29 @@ describe Mongo::URI do
 
       context 'plain' do
         let(:mechanism) { 'PLAIN' }
-        let(:auth) { { :mechanism => :plain } }
+        let(:expected) { :plain }
 
         it 'sets the auth mechanism to :plain' do
-          expect(uri.uri_options[:auth]).to eq(auth)
+          expect(uri.options[:auth_mech]).to eq(expected)
         end
       end
 
       context 'mongodb-cr' do
         let(:mechanism) { 'MONGODB-CR' }
-        let(:auth) { { :mechanism => :mongodb_cr } }
+        let(:expected) { :mongodb_cr }
 
         it 'sets the auth mechanism to :mongodb_cr' do
-          expect(uri.uri_options[:auth]).to eq(auth)
+          expect(uri.options[:auth_mech]).to eq(expected)
         end
       end
 
       context 'gssapi' do
         let(:mechanism) { 'GSSAPI' }
-        let(:auth) { { :mechanism => :gssapi } }
+        let(:expected) { :gssapi }
+
 
         it 'sets the auth mechanism to :gssapi' do
-          expect(uri.uri_options[:auth]).to eq(auth)
+          expect(uri.options[:auth_mech]).to eq(expected)
         end
       end
     end
