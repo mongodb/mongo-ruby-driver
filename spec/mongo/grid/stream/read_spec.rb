@@ -3,7 +3,7 @@ require 'spec_helper'
 describe Mongo::Grid::FSBucket::Stream::Read do
 
   let(:fs_options) do
-    { read: { mode: :secondary } }
+    { }
   end
 
   let(:fs) do
@@ -41,8 +41,15 @@ describe Mongo::Grid::FSBucket::Stream::Read do
       expect(stream.fs).to eq(fs)
     end
 
-    it 'uses the read preference of the fs as a default' do
-      expect(stream.read_preference).to eq(fs.read_preference)
+    context 'when there is a read preference set on the FSBucket' do
+
+      let(:fs_options) do
+        { read: { mode: :secondary } }
+      end
+
+      it 'uses the read preference of the fs as a default' do
+        expect(stream.read_preference).to eq(fs.read_preference)
+      end
     end
 
     it 'opens a stream' do
@@ -179,7 +186,7 @@ describe Mongo::Grid::FSBucket::Stream::Read do
   describe '#file_info' do
 
     it 'returns a files information document' do
-      expect(stream.file_info).not_to be_nil
+      expect(stream.file_info).to be_a(Hash)
     end
   end
 
@@ -201,11 +208,11 @@ describe Mongo::Grid::FSBucket::Stream::Read do
 
       before do
         stream.to_a
+        expect(view).to receive(:close_query).and_call_original
       end
 
       it 'calls close_query on the view' do
-        expect(view).to receive(:close_query).and_call_original
-        stream.close
+        expect(stream.close).to be_a(BSON::ObjectId)
       end
     end
 

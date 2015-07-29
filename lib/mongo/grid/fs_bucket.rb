@@ -35,16 +35,6 @@ module Mongo
       # @since 2.1.0
       FILES_INDEX = { filename: 1, uploadDate: 1 }.freeze
 
-      # The symbol for opening a read stream.
-      #
-      # @since 2.1.0
-      READ_MODE = :r
-
-      # The symbol for opening a write stream.
-      #
-      # @since 2.1.0
-      WRITE_MODE = :w
-
       # @return [ Collection ] chunks_collection The chunks collection.
       #
       # @since 2.0.0
@@ -211,7 +201,7 @@ module Mongo
       #   fs.download_to_stream(id, io)
       #
       # @param [ BSON::ObjectId, Object ] id The id of the file to read.
-      # @param [ IO ] The io object to write to.
+      # @param [ IO ] io The io object to write to.
       #
       # @since 2.1.0
       def download_to_stream(id, io)
@@ -222,7 +212,7 @@ module Mongo
         end
       end
 
-      # Opens a stream to which the contents of a file came be written.
+      # Opens an upload stream to GridFS to which the contents of a user file came be written.
       #
       # @example Open a stream to which the contents of a file came be written.
       #   fs.open_upload_stream('a-file.txt')
@@ -255,7 +245,7 @@ module Mongo
       end
 
       # Uploads a user file to a GridFS bucket.
-      # Read the contents of the user file from the source stream and uploads it as chunks in the
+      # Reads the contents of the user file from the source stream and uploads it as chunks in the
       # chunks collection. After all the chunks have been uploaded, it creates a files collection
       # document for the filename in the files collection.
       #
@@ -290,7 +280,7 @@ module Mongo
       # @example Get the read preference.
       #   fs.read_preference
       #
-      # @return [ Mongo::ServerSelector] The read preference.
+      # @return [ Mongo::ServerSelector ] The read preference.
       #
       # @since 2.1.0
       def read_preference
@@ -304,13 +294,12 @@ module Mongo
       # @example Get the write concern.
       #   stream.write_concern
       #
-      # @return [ Mongo::WriteConcern] The write concern.
+      # @return [ Mongo::WriteConcern ] The write concern.
       #
       # @since 2.1.0
       def write_concern
         @write_concern ||= @options[:write] ? WriteConcern.get(@options[:write]) :
-            @options[:write_concern] ? WriteConcern.get(@options[:write_concern]) :
-                database.write_concern
+            database.write_concern
       end
 
       private
@@ -321,11 +310,11 @@ module Mongo
       end
 
       def read_stream(id)
-        Stream.get(self, READ_MODE, { file_id: id }.merge!(options))
+        Stream.get(self, Stream::READ_MODE, { file_id: id }.merge!(options))
       end
 
       def write_stream(filename, opts)
-        Stream.get(self, WRITE_MODE, { filename: filename }.merge!(options).merge!(opts))
+        Stream.get(self, Stream::WRITE_MODE, { filename: filename }.merge!(options).merge!(opts))
       end
 
       def chunks_name

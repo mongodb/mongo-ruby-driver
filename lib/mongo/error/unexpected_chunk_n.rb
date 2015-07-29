@@ -24,7 +24,10 @@ module Mongo
       # Create the new exception.
       #
       # @example Create the new exception.
-      #   Mongo::Error::UnexpectedChunkN.new
+      #   Mongo::Error::UnexpectedChunkN.new(n, chunk)
+      #
+      # @param [ Integer ] expected_n The expected index value.
+      # @param [ Grid::File::Chunk ] chunk The chunk read from GridFS.
       #
       # @since 2.1.0
       def initialize(expected_n, chunk)

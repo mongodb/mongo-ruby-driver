@@ -65,8 +65,8 @@ module Mongo
             @length = 0
             @n = 0
             @file_id = BSON::ObjectId.new
-            @filename = options[:filename]
             @options = options
+            @filename = @options[:filename]
             @open = true
           end
 
@@ -75,7 +75,7 @@ module Mongo
           # @example Write to GridFS.
           #   stream.write(io)
           #
-          # @param [ IO ] io The source io stream to write from.
+          # @param [ IO ] io The source io stream to upload from.
           #
           # @return [ Stream::Write ] self The write stream itself.
           #
@@ -113,7 +113,7 @@ module Mongo
           # @example Get the write concern.
           #   stream.write_concern
           #
-          # @return [ Mongo::WriteConcern] The write concern.
+          # @return [ Mongo::WriteConcern ] The write concern.
           #
           # @since 2.1.0
           def write_concern
@@ -157,7 +157,6 @@ module Mongo
           end
 
           def file_info
-            # TODO Metadata is not the same as user-provided metadata
             doc = { length: @length, _id: file_id, filename: filename }
             @file_info ||= File::Info.new(options.merge(doc))
           end

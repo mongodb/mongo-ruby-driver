@@ -15,7 +15,7 @@ describe Mongo::Grid::FSBucket::Stream do
     context 'when mode is read' do
 
       let(:mode) do
-        Mongo::Grid::FSBucket::READ_MODE
+        Mongo::Grid::FSBucket::Stream::READ_MODE
       end
 
       it 'returns a Stream::Read object' do
@@ -26,7 +26,7 @@ describe Mongo::Grid::FSBucket::Stream do
     context 'when mode is write' do
 
       let(:mode) do
-        Mongo::Grid::FSBucket::WRITE_MODE
+        Mongo::Grid::FSBucket::Stream::WRITE_MODE
       end
 
       it 'returns a Stream::Write object' do

@@ -95,37 +95,6 @@ describe Mongo::Grid::FSBucket::Stream::Write do
         end
       end
 
-      context 'when provided a write concern option' do
-
-        let(:options) do
-          {
-              write_concern: { w: 2 }
-          }
-        end
-
-        let(:expected) do
-          Mongo::WriteConcern.get(options[:write_concern]).options
-        end
-
-        it 'sets the write concern' do
-          expect(stream.write_concern.options).to eq(expected)
-        end
-
-        context 'when chunks are inserted' do
-
-          it 'uses that write concern' do
-            expect(stream.send(:chunks_collection).write_concern.options).to eq(expected)
-          end
-        end
-
-        context 'when a files document is inserted' do
-
-          it 'uses that write concern' do
-            expect(stream.send(:files_collection).write_concern.options).to eq(expected)
-          end
-        end
-      end
-
       context 'when provided a metadata document' do
 
         let(:options) do
@@ -227,7 +196,7 @@ describe Mongo::Grid::FSBucket::Stream::Write do
       end
 
       it 'updates the length written' do
-        expect(stream.instance_variable_get(:@length)).to eq(file.size)
+        expect(stream.send(:file_info).document['length']).to eq(file.size)
       end
 
       it 'updates the position (n)' do
@@ -260,7 +229,6 @@ describe Mongo::Grid::FSBucket::Stream::Write do
           expect(file_from_db.data.size).to eq(file.size)
         end
       end
-
     end
 
     context 'when the stream is written to multiple times' do
@@ -280,7 +248,7 @@ describe Mongo::Grid::FSBucket::Stream::Write do
       end
 
       it 'updates the length written' do
-        expect(stream.instance_variable_get(:@length)).to eq(file.size * 2)
+        expect(stream.send(:file_info).document['length']).to eq(file.size * 2)
       end
 
       it 'updates the position (n)' do
@@ -294,7 +262,7 @@ describe Mongo::Grid::FSBucket::Stream::Write do
         stream.close
       end
 
-      it 'does not allow further write' do
+      it 'does not allow further writes' do
         expect {
           stream.write(file)
         }.to raise_error(Mongo::Error::ClosedStream)
@@ -339,7 +307,7 @@ describe Mongo::Grid::FSBucket::Stream::Write do
       end
 
       it 'inserts a file documents in the files collection' do
-        expect(files_coll_doc['_id']).to eq(stream.send(:file_info).document['_id'])
+        expect(files_coll_doc['_id']).to eq(stream.file_id)
       end
 
       it 'updates the length in the files collection file document' do

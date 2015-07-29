@@ -124,17 +124,6 @@ describe Mongo::Grid::FSBucket do
             expect(fs.send(:write_concern).options).to eq(Mongo::WriteConcern.get(w: 2).options)
           end
         end
-
-        context 'when the option :write_concern is provided' do
-
-          let(:options) do
-            { write_concern: { w: 2 } }
-          end
-
-          it 'set the write concern' do
-            expect(fs.send(:write_concern).options).to eq(Mongo::WriteConcern.get(w: 2).options)
-          end
-        end
       end
 
       context 'when a read preference is set' do
@@ -168,7 +157,7 @@ describe Mongo::Grid::FSBucket do
             { write: { w: 2 } }
           end
 
-          it 'passes the write concern down to the write stream' do
+          it 'passes the write concern to the write stream' do
             expect(stream.write_concern.options).to eq(Mongo::WriteConcern.get(options[:write]).options)
           end
         end
@@ -179,7 +168,7 @@ describe Mongo::Grid::FSBucket do
             { write_concern: { w: 2 } }
           end
 
-          it 'passes the write concern down to the write stream' do
+          it 'passes the write concern to the write stream' do
             expect(stream.write_concern.options).to eq(Mongo::WriteConcern.get(options[:write_concern]).options)
           end
         end
@@ -568,14 +557,8 @@ describe Mongo::Grid::FSBucket do
         { read: { mode: :secondary } }
       end
 
-      let!(:file_id) do
-        fs.open_upload_stream(filename) do |stream|
-          stream.write(file)
-        end.file_id
-      end
-
       let(:stream) do
-        fs.open_download_stream(file_id)
+        fs.open_download_stream(BSON::ObjectId)
       end
 
       it 'sets the read preference on the Stream::Read object' do
@@ -714,9 +697,7 @@ describe Mongo::Grid::FSBucket do
       context 'when a chunk size option is specified' do
 
         let(:stream_options) do
-          {
-              chunk_size: 50
-          }
+          { chunk_size: 50 }
         end
 
         it 'sets the chunk size on the write stream' do

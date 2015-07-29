@@ -25,10 +25,23 @@ module Mongo
       module Stream
         extend self
 
+        # The symbol for opening a read stream.
+        #
+        # @since 2.1.0
+        READ_MODE = :r
+
+        # The symbol for opening a write stream.
+        #
+        # @since 2.1.0
+        WRITE_MODE = :w
+
+        # Mapping from mode to stream class.
+        #
+        # @since 2.1.0
         MODE_MAP = {
-            FSBucket::READ_MODE => Read,
-            FSBucket::WRITE_MODE => Write
-        }
+            READ_MODE => Read,
+            WRITE_MODE => Write
+        }.freeze
 
         # Get a stream for reading/writing files from/to the FSBucket.
         #
