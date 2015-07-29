@@ -66,7 +66,7 @@ module Mongo
         @skip        = options[:skip]  || 0
         @limit       = options[:limit] || 0
         @flags       = options[:flags] || []
-        @upconverter = Upconverter.new(collection, selector, options)
+        @upconverter = Upconverter.new(collection, selector, options, flags)
       end
 
       # Return the event payload for monitoring.
@@ -196,6 +196,9 @@ module Mongo
         # @return [ BSON::Document, Hash ] options The options.
         attr_reader :options
 
+        # @return [ Array<Symbol> ] flags The flags.
+        attr_reader :flags
+
         # Instantiate the upconverter.
         #
         # @example Instantiate the upconverter.
@@ -204,12 +207,14 @@ module Mongo
         # @param [ String ] collection The name of the collection.
         # @param [ BSON::Document, Hash ] filter The filter or command.
         # @param [ BSON::Document, Hash ] options The options.
+        # @param [ Array<Symbol> ] flags The flags.
         #
         # @since 2.1.0
-        def initialize(collection, filter, options)
+        def initialize(collection, filter, options, flags)
           @collection = collection
           @filter = filter
           @options = options
+          @flags = flags
         end
 
         # Get the upconverted command.
@@ -258,7 +263,7 @@ module Mongo
             document[normal] = filter[special] if filter[special]
           end
           FLAG_MAPPINGS.each do |legacy, flag|
-            document[flag] = true if options[:flags].include?(legacy)
+            document[flag] = true if flags.include?(legacy)
           end
           document
         end
