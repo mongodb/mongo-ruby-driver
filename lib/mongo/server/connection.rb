@@ -105,9 +105,12 @@ module Mongo
       #
       # @since 2.0.0
       def dispatch(messages, operation_id = nil)
-        publish_command(messages, operation_id || Monitoring.next_operation_id) do |msgs|
-          write(msgs)
-          msgs.last.replyable? ? read : nil
+        if monitoring.subscribers?(Monitoring::COMMAND)
+          publish_command(messages, operation_id || Monitoring.next_operation_id) do |msgs|
+            deliver(msgs)
+          end
+        else
+          deliver(messages)
         end
       end
 
@@ -137,6 +140,11 @@ module Mongo
       end
 
       private
+
+      def deliver(messages)
+        write(messages)
+        messages.last.replyable? ? read : nil
+      end
 
       def setup_authentication!
         if options[:user]
