@@ -152,6 +152,30 @@ describe Mongo::Grid::FSBucket::Stream::Read do
     end
   end
 
+  describe '#read' do
+
+    let(:filename) do
+      'specs.rb'
+    end
+
+    let(:file) do
+      File.open(__FILE__)
+    end
+
+    let(:file_id) do
+      fs.upload_from_stream(filename, file)
+    end
+
+    after do
+      fs.files_collection.delete_many
+      fs.chunks_collection.delete_many
+    end
+
+    it 'returns a string of all data' do
+      expect(stream.read.size).to eq(file.size)
+    end
+  end
+
   describe '#file_info' do
 
     it 'returns a files information document' do
@@ -195,6 +219,27 @@ describe Mongo::Grid::FSBucket::Stream::Read do
         expect {
           stream.close
         }.to raise_error(Mongo::Error::ClosedStream)
+      end
+    end
+  end
+
+  describe '#closed?' do
+
+    context 'when the stream is closed' do
+
+      before do
+        stream.close
+      end
+
+      it 'returns true' do
+        expect(stream.closed?).to be(true)
+      end
+    end
+
+    context 'when the stream is still open' do
+
+      it 'returns false' do
+        expect(stream.closed?).to be(false)
       end
     end
   end

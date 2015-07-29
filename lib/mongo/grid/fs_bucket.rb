@@ -192,9 +192,16 @@ module Mongo
       #
       # @return [ Stream::Read ] The stream to read from.
       #
+      # @yieldparam [ Hash ] The read stream.
+      #
       # @since 2.1.0
       def open_download_stream(id)
-        read_stream(id)
+        read_stream(id).tap do |stream|
+          if block_given?
+            yield stream
+            stream.close
+          end
+        end
       end
 
       # Downloads the contents of the file specified by id and writes them to
@@ -208,8 +215,10 @@ module Mongo
       #
       # @since 2.1.0
       def download_to_stream(id, io)
-        read_stream(id).each do |chunk|
-          io.puts(chunk)
+        open_download_stream(id) do |stream|
+          stream.each do |chunk|
+            io.puts(chunk)
+          end
         end
       end
 
@@ -231,11 +240,18 @@ module Mongo
       # @option opts [ Array<String> ] :aliases A list of aliases.
       #   Deprecated, please use the metadata document instead.
       #
-      # @return [ Stream::Write ] The stream to write to.
+      # @return [ Stream::Write ] The write stream.
+      #
+      # @yieldparam [ Hash ] The write stream.
       #
       # @since 2.1.0
       def open_upload_stream(filename, opts = {})
-        write_stream(filename, opts)
+        write_stream(filename, opts).tap do |stream|
+          if block_given?
+            yield stream
+            stream.close
+          end
+        end
       end
 
       # Uploads a user file to a GridFS bucket.
@@ -247,6 +263,7 @@ module Mongo
       #   fs.open_upload_stream('a-file.txt')
       #
       # @param [ String ] filename The filename of the file to upload.
+      # @param [ IO ] io The source io stream to upload from.
       # @param [ Hash ] opts The options for the write stream.
       #
       # @option opts [ Integer ] :chunk_size Override the default chunk size.
@@ -259,13 +276,12 @@ module Mongo
       # @option opts [ Array<String> ] :aliases A list of aliases. Deprecated, please use the
       #   metadata document instead.
       #
-      # @return [ Stream::Write ] The stream to write to.
+      # @return [ BSON::ObjectId ] The ObjectId file id.
       #
       # @since 2.1.0
       def upload_from_stream(filename, io, opts = {})
-        write_stream(filename, opts).tap do |stream|
+        open_upload_stream(filename, opts) do |stream|
           stream.write(io)
-          stream.close
         end.file_id
       end
 

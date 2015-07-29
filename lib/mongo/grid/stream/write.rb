@@ -48,7 +48,7 @@ module Mongo
           #   Stream::Write.new(fs, options)
           #
           # @param [ FSBucket ] fs The GridFS bucket object.
-          # @param [ Hash ] options The read stream options.
+          # @param [ Hash ] options The write stream options.
           #
           # @option opts [ Integer ] :chunk_size Override the default chunk size.
           # @option opts [ Hash ] :write The write concern.
@@ -70,6 +70,16 @@ module Mongo
             @open = true
           end
 
+          # Write to the GridFS bucket from the source stream.
+          #
+          # @example Write to GridFS.
+          #   stream.write(io)
+          #
+          # @param [ IO ] io The source io stream to write from.
+          #
+          # @return [ Stream::Write ] self The write stream itself.
+          #
+          # @since 2.1.0
           def write(io)
             ensure_open!
             data = io.read
@@ -112,6 +122,18 @@ module Mongo
                     fs.write_concern
           end
 
+          # Is the stream closed.
+          #
+          # @example Is the stream closed.
+          #   stream.closed?
+          #
+          # @return [ true, false ] Whether the stream is closed.
+          #
+          # @since 2.1.0
+          def closed?
+            !@open
+          end
+
           private
 
           def chunks_collection
@@ -141,7 +163,7 @@ module Mongo
           end
 
           def ensure_open!
-            raise Error::ClosedStream.new unless @open
+            raise Error::ClosedStream.new if closed?
           end
         end
       end
