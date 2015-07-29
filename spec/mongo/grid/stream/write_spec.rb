@@ -364,4 +364,25 @@ describe Mongo::Grid::FSBucket::Stream::Write do
       end
     end
   end
+
+  describe '#closed?' do
+
+    context 'when the stream is closed' do
+
+      before do
+        stream.close
+      end
+
+      it 'returns true' do
+        expect(stream.closed?).to be(true)
+      end
+    end
+
+    context 'when the stream is still open' do
+
+      it 'returns false' do
+        expect(stream.closed?).to be(false)
+      end
+    end
+  end
 end

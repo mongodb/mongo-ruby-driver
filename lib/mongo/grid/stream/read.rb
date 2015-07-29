@@ -57,7 +57,7 @@ module Mongo
           # Iterate through chunk data streamed from the FSBucket.
           #
           # @example Iterate through the chunk data.
-          #   read.each do |data|
+          #   stream.each do |data|
           #     buffer << data
           #   end
           #
@@ -65,9 +65,9 @@ module Mongo
           #
           # @raise [ Error::UnexpectedChunkN ] If a chunk is found out of sequence.
           #
-          # @since 2.1.0
-          #
           # @yieldparam [ Hash ] Each chunk data.
+          #
+          # @since 2.1.0
           def each
             ensure_readable!
             view.each_with_index do |doc, index|
@@ -77,6 +77,20 @@ module Mongo
               yield data
             end if block_given?
             view.to_enum
+          end
+
+          # Read all file data.
+          #
+          # @example Read the file data.
+          #   stream.read
+          #
+          # @return [ String ] The file data.
+          #
+          # @raise [ Error::UnexpectedChunkN ] If a chunk is found out of sequence.
+          #
+          # @since 2.1.0
+          def read
+            to_a.join
           end
 
           # Close the read stream.
@@ -94,6 +108,18 @@ module Mongo
             view.close_query
             @open = false
             file_id
+          end
+
+          # Is the stream closed.
+          #
+          # @example Is the stream closd.
+          #   stream.closed?
+          #
+          # @return [ true, false ] Whether the stream is closed.
+          #
+          # @since 2.1.0
+          def closed?
+            !@open
           end
 
           # Get the read preference used when streaming.
@@ -125,7 +151,7 @@ module Mongo
           private
 
           def ensure_open!
-            raise Error::ClosedStream.new unless @open
+            raise Error::ClosedStream.new if closed?
           end
 
           def ensure_file_info!

@@ -437,12 +437,16 @@ describe Mongo::Grid::FSBucket do
       described_class.new(authorized_client.database)
     end
 
-    let(:file) do
-      Mongo::Grid::File.new(File.open(__FILE__).read, :filename => 'specs.rb')
+    let(:io) do
+      StringIO.new
     end
 
-    before do
-      fs.insert_one(file)
+    let(:file) do
+      File.open(__FILE__)
+    end
+
+    let(:filename) do
+      'specs.rb'
     end
 
     after do
@@ -452,53 +456,100 @@ describe Mongo::Grid::FSBucket do
 
     describe '#open_download_stream' do
 
-      it 'returns a Stream::Read object' do
-        expect(fs.open_download_stream(file.id)).to be_a(Mongo::Grid::FSBucket::Stream::Read)
+      let!(:file_id) do
+        fs.open_upload_stream(filename) do |stream|
+          stream.write(file)
+        end.file_id
+      end
+
+      context 'when a block is provided' do
+
+        let!(:stream) do
+          fs.open_download_stream(file_id) do |stream|
+            io.write(stream.read)
+          end
+        end
+
+        it 'returns a Stream::Read object' do
+          expect(stream).to be_a(Mongo::Grid::FSBucket::Stream::Read)
+        end
+
+        it 'closes the stream after the block completes' do
+          expect(stream.closed?).to be(true)
+        end
+
+        it 'yields the stream to the block' do
+          expect(io.size).to eq(file.size)
+        end
+      end
+
+      context 'when a block is not provided' do
+
+        let!(:stream) do
+          fs.open_download_stream(file_id)
+        end
+
+        it 'returns a Stream::Read object' do
+          expect(stream).to be_a(Mongo::Grid::FSBucket::Stream::Read)
+        end
+
+        it 'does not close the stream' do
+          expect(stream.closed?).to be(false)
+        end
+
+        it 'does not yield the stream to the block' do
+          expect(io.size).to eq(0)
+        end
       end
     end
 
     describe '#download_to_stream' do
 
-      let(:io) do
-        StringIO.new
-      end
+      context 'when the file is found' do
 
-      before do
-        fs.download_to_stream(file.id, io)
-      end
+        let!(:file_id) do
+          fs.open_upload_stream(filename) do |stream|
+            stream.write(file)
+          end.file_id
+        end
 
-      after do
-        fs.chunks_collection.delete_many
-        fs.files_collection.delete_many
-      end
+        before do
+          fs.download_to_stream(file_id, io)
+        end
 
-      it 'writes to the provided stream' do
-        expect(io.size).to eq(file.data.size)
-      end
+        it 'writes to the provided stream' do
+          expect(io.size).to eq(file.size)
+        end
 
-      it 'does not close the stream' do
-        expect(io.closed?).to be(false)
+        it 'does not close the stream' do
+          expect(io.closed?).to be(false)
+        end
       end
 
       context 'when there is no files collection document found' do
 
-        before do
-          fs.files_collection.delete_many
-        end
-
         it 'raises an exception' do
           expect{
-            fs.download_to_stream(file.id, io)
+            fs.download_to_stream(BSON::ObjectId.new, io)
           }.to raise_exception(Mongo::Error::NoFileInfo)
         end
       end
 
-      context 'when a file has an id that is not ab ObjectId' do
+      context 'when a file has an id that is not an ObjectId' do
+
+        before do
+          fs.insert_one(file)
+          fs.download_to_stream(file_id, io)
+        end
+
+        let(:file_id) do
+          'non-object-id'
+        end
 
         let(:file) do
           Mongo::Grid::File.new(File.open(__FILE__).read,
-                                :filename => 'some-file.txt',
-                                :_id => 'testing-id')
+                                :filename => filename,
+                                :_id => file_id)
         end
 
         it 'reads the file successfully' do
@@ -517,8 +568,14 @@ describe Mongo::Grid::FSBucket do
         { read: { mode: :secondary } }
       end
 
+      let!(:file_id) do
+        fs.open_upload_stream(filename) do |stream|
+          stream.write(file)
+        end.file_id
+      end
+
       let(:stream) do
-        fs.open_download_stream(file.id)
+        fs.open_download_stream(file_id)
       end
 
       it 'sets the read preference on the Stream::Read object' do
@@ -548,12 +605,44 @@ describe Mongo::Grid::FSBucket do
 
     describe '#open_upload_stream' do
 
-      it 'returns a Stream::Write object' do
-        expect(stream).to be_a(Mongo::Grid::FSBucket::Stream::Write)
+      context 'when a block is not provided' do
+
+        it 'returns a Stream::Write object' do
+          expect(stream).to be_a(Mongo::Grid::FSBucket::Stream::Write)
+        end
+
+        it 'creates an ObjectId for the file' do
+          expect(stream.file_id).to be_a(BSON::ObjectId)
+        end
       end
 
-      it 'creates an ObjectId for the file' do
-        expect(stream.file_id).to be_a(BSON::ObjectId)
+      context 'when a block is provided' do
+
+        let!(:stream) do
+          fs.open_upload_stream(filename) do |stream|
+            stream.write(file)
+          end
+        end
+
+        let(:result) do
+          fs.find_one(filename: filename)
+        end
+
+        it 'returns the stream' do
+          expect(stream).to be_a(Mongo::Grid::FSBucket::Stream::Write)
+        end
+
+        it 'creates an ObjectId for the file' do
+          expect(stream.file_id).to be_a(BSON::ObjectId)
+        end
+
+        it 'yields the stream to the block' do
+          expect(result.data.size).to eq(file.size)
+        end
+
+        it 'closes the stream when the block completes' do
+          expect(stream.closed?).to be(true)
+        end
       end
     end
 
