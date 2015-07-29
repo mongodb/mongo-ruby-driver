@@ -59,7 +59,6 @@ module Mongo
       #   +:no_cursor_timeout+, +:await_data+, +:exhaust+, +:partial+
       def initialize(database, collection, selector, options = {})
         @database    = database
-        @collection  = collection
         @namespace   = "#{database}.#{collection}"
         @selector    = selector
         @options     = options
@@ -67,6 +66,7 @@ module Mongo
         @skip        = options[:skip]  || 0
         @limit       = options[:limit] || 0
         @flags       = options[:flags] || []
+        @upconverter = Upconverter.new(collection, selector, options)
       end
 
       # Return the event payload for monitoring.
@@ -100,14 +100,12 @@ module Mongo
 
       private
 
+      attr_reader :upconverter
+
       # The operation code required to specify a Query message.
       # @return [Fixnum] the operation code.
       def op_code
         2004
-      end
-
-      def upconverter
-        @upconverter ||= Upconverter.new(@collection, @selector, @options)
       end
 
       # Available flags for a Query message.

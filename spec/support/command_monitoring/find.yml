@@ -7,6 +7,7 @@ data:
 
 collection_name: &collection_name "test"
 database_name: &database_name "ruby-driver"
+namespace: &namespace "ruby-driver.test"
 
 tests:
   -
@@ -26,7 +27,12 @@ tests:
       -
         command_succeeded_event:
           reply:
-            - { _id: 1, x: 11 }
+            ok: 1
+            cursor:
+              id: 0
+              ns: *namespace
+              firstBatch:
+                - { _id: 1, x: 11 }
           command_name: "find"
           database_name: *database_name
   -
@@ -52,7 +58,12 @@ tests:
       -
         command_succeeded_event:
           reply:
-            - { _id: 1, x: 11 }
+            ok: 1
+            cursor:
+              id: 0
+              ns: *namespace
+              firstBatch:
+                - { _id: 1, x: 11 }
           command_name: "find"
           database_name: *database_name
   -
@@ -76,14 +87,19 @@ tests:
       -
         command_succeeded_event:
           reply:
-            - { _id: 1, x: 11 }
-            - { _id: 2, x: 22 }
-            - { _id: 3, x: 33 }
+            ok: 1
+            cursor:
+              ns: *namespace
+              firstBatch:
+                - { _id: 1, x: 11 }
+                - { _id: 2, x: 22 }
+                - { _id: 3, x: 33 }
           command_name: "find"
           database_name: *database_name
       -
         command_started_event:
           command:
+            # getMore: test should verify this cursor id matches the find.
             collection: *collection_name
             batchSize: 3
           command_name: "getMore"
@@ -91,8 +107,13 @@ tests:
       -
         command_succeeded_event:
           reply:
-            - { _id: 4, x: 44 }
-            - { _id: 5, x: 55 }
+            ok: 1
+            cursor:
+              # id: test should verify this cursor id matches the find.
+              ns: *namespace
+              nextBatch:
+                - { _id: 4, x: 44 }
+                - { _id: 5, x: 55 }
           command_name: "getMore"
           database_name: *database_name
   -
@@ -117,14 +138,19 @@ tests:
       -
         command_succeeded_event:
           reply:
-            - { _id: 1, x: 11 }
-            - { _id: 2, x: 22 }
-            - { _id: 3, x: 33 }
+            ok: 1
+            cursor:
+              ns: *namespace
+              firstBatch:
+                - { _id: 1, x: 11 }
+                - { _id: 2, x: 22 }
+                - { _id: 3, x: 33 }
           command_name: "find"
           database_name: *database_name
       -
         command_started_event:
           command:
+            # getMore: test should verify this cursor id matches the find.
             collection: *collection_name
             batchSize: 1
           command_name: "getMore"
@@ -132,34 +158,41 @@ tests:
       -
         command_succeeded_event:
           reply:
-            - { _id: 4, x: 44 }
+            ok: 1
+            cursor:
+              # id: test should verify this cursor id matches the find.
+              ns: *namespace
+              nextBatch:
+                - { _id: 4, x: 44 }
           command_name: "getMore"
           database_name: *database_name
       -
         command_started_event:
           command:
             killCursors: *collection_name
+            # cursors:
+              # - test should verify this cursor id matches the find.
           command_name: "killCursors"
           database_name: *database_name
       -
         command_succeeded_event:
           command_name: "killCursors"
           database_name: *database_name
-  # -
-    # description: "A failed find event"
-    # operation:
-      # name: "find"
-      # arguments:
-        # filter: { $nothing: true }
-    # expectations:
-      # -
-        # command_started_event:
-          # command:
-            # find: *collection_name
-            # filter: { $nothing: true }
-          # command_name: "find"
-          # database_name: *database_name
-      # -
-        # command_failed_event:
-          # command_name: "find"
-          # database_name: *database_name
+  -
+    description: "A failed find event"
+    operation:
+      name: "find"
+      arguments:
+        filter: { $or: true }
+    expectations:
+      -
+        command_started_event:
+          command:
+            find: *collection_name
+            filter: { $or: true }
+          command_name: "find"
+          database_name: *database_name
+      -
+        command_failed_event:
+          command_name: "find"
+          database_name: *database_name

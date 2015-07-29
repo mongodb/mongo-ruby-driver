@@ -37,7 +37,9 @@ module Mongo
       # @since 2.1.0
       def publish_command(messages, operation_id = Monitoring.next_operation_id)
         start = Time.now
-        payload = messages.first.payload
+        message = messages.first
+        message.set_request_id
+        payload = message.payload
         send_duration = duration(start)
         command_started(address, operation_id, payload)
         receive_start = Time.now

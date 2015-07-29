@@ -31,10 +31,10 @@ module Mongo
       # @param cursor_ids [Array<Fixnum>] The cursor ids to kill.
       # @param options [Hash] The additional kill cursors options.
       def initialize(collection, database, cursor_ids)
-        @collection = collection
         @database = database
         @cursor_ids = cursor_ids
         @id_count   = @cursor_ids.size
+        @upconverter = Upconverter.new(collection, cursor_ids)
       end
 
       # Return the event payload for monitoring.
@@ -49,12 +49,14 @@ module Mongo
         {
           command_name: 'killCursors',
           database_name: @database,
-          command: BSON::Document.new(killCursors: @collection, cursors: cursor_ids),
+          command: upconverter.command,
           request_id: request_id
         }
       end
 
       private
+
+      attr_reader :upconverter
 
       # The operation code required to specify +KillCursors+ message.
       # @return [Fixnum] the operation code.
@@ -72,6 +74,45 @@ module Mongo
       # @!attribute
       # @return [Array<Fixnum>] Cursors to kill.
       field :cursor_ids, Int64, true
+
+      # Converts legacy insert messages to the appropriare OP_COMMAND style
+      # message.
+      #
+      # @since 2.1.0
+      class Upconverter
+
+        # @return [ String ] collection The name of the collection.
+        attr_reader :collection
+
+        # @return [ Array<Integer> ] cursor_ids The cursor ids.
+        attr_reader :cursor_ids
+
+        # Instantiate the upconverter.
+        #
+        # @example Instantiate the upconverter.
+        #   Upconverter.new('users', [ 1, 2, 3 ])
+        #
+        # @param [ String ] collection The name of the collection.
+        # @param [ Array<Integer> ] cursor_ids The cursor ids.
+        #
+        # @since 2.1.0
+        def initialize(collection, cursor_ids)
+          @collection = collection
+          @cursor_ids = cursor_ids
+        end
+
+        # Get the upconverted command.
+        #
+        # @example Get the command.
+        #   upconverter.command
+        #
+        # @return [ BSON::Document ] The upconverted command.
+        #
+        # @since 2.1.0
+        def command
+          BSON::Document.new(killCursors: collection, cursors: cursor_ids)
+        end
+      end
     end
   end
 end

@@ -42,10 +42,10 @@ module Mongo
       #   Supported flags: +:single_remove+
       def initialize(database, collection, selector, options = {})
         @database = database
-        @collection = collection
         @namespace = "#{database}.#{collection}"
-        @selector  = selector
-        @flags     = options[:flags] || []
+        @selector = selector
+        @flags = options[:flags] || []
+        @upconverter = Upconverter.new(collection, selector)
       end
 
       # Return the event payload for monitoring.
@@ -60,17 +60,14 @@ module Mongo
         {
           command_name: 'delete',
           database_name: @database,
-          command: BSON::Document.new(
-            delete: @collection,
-            deletes: [ BSON::Document.new(q: selector, limit: 1) ],
-            writeConcern: { w: 1 }, # @todo
-            ordered: true
-          ),
+          command: upconverter.command,
           request_id: request_id
         }
       end
 
       private
+
+      attr_reader :upconverter
 
       # The operation code required to specify a Delete message.
       # @return [Fixnum] the operation code.
@@ -95,6 +92,50 @@ module Mongo
       # @!attribute
       # @return [Hash] The selector for this Delete message.
       field :selector, Document
+
+      # Converts legacy delete messages to the appropriare OP_COMMAND style
+      # message.
+      #
+      # @since 2.1.0
+      class Upconverter
+
+        # @return [ String ] collection The name of the collection.
+        attr_reader :collection
+
+        # @return [ BSON::Document, Hash ] filter The query filter or command.
+        attr_reader :filter
+
+        # Instantiate the upconverter.
+        #
+        # @example Instantiate the upconverter.
+        #   Upconverter.new('users', { name: 'test' })
+        #
+        # @param [ String ] collection The name of the collection.
+        # @param [ BSON::Document, Hash ] filter The filter or command.
+        #
+        # @since 2.1.0
+        def initialize(collection, filter)
+          @collection = collection
+          @filter = filter
+        end
+
+        # Get the upconverted command.
+        #
+        # @example Get the command.
+        #   upconverter.command
+        #
+        # @return [ BSON::Document ] The upconverted command.
+        #
+        # @since 2.1.0
+        def command
+          BSON::Document.new(
+            delete: collection,
+            deletes: [ BSON::Document.new(q: filter, limit: 1) ],
+            writeConcern: { w: 1 },
+            ordered: true
+          )
+        end
+      end
     end
   end
 end

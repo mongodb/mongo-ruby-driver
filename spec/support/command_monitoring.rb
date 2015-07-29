@@ -22,15 +22,31 @@ end
 module Mongo
   module CommandMonitoring
 
+    # Represents a command monitoring spec in its entirety.
+    #
+    # @since 2.1.0
     class Spec
 
-
+      # Create the spec.
+      #
+      # @example Create the spec.
+      #   Spec.new('/path/to/test')
+      #
+      # @param [ String ] file The yaml test file.
+      #
+      # @since 2.1.0
       def initialize(file)
         @spec = YAML.load(ERB.new(File.new(file).read).result)
         @data = @spec['data']
         @tests = @spec['tests']
       end
 
+      # Get all the tests in the spec.
+      #
+      # @example Get all the tests.
+      #   spec.tests
+      #
+      # @return [ Array<Test> ] The tests.
       def tests
         @tests.map do |test|
           Test.new(@data, test)
@@ -38,12 +54,26 @@ module Mongo
       end
     end
 
+    # Represents an individual command monitoring test.
+    #
+    # @since 2.1.0
     class Test
 
+      # @return [ String ] description The test description.
       attr_reader :description
 
+      # @return [ Array<Expectation> ] The expectations.
       attr_reader :expectations
 
+      # Create the new test.
+      #
+      # @example Create the test.
+      #   Test.new(data, test)
+      #
+      # @param [ Array<Hash> ] data The test data.
+      # @param [ Hash ] The test itself.
+      #
+      # @since 2.1.0
       def initialize(data, test)
         @data = data
         @description = test['description']
@@ -51,33 +81,87 @@ module Mongo
         @expectations = test['expectations'].map{ |e| Expectation.new(e) }
       end
 
+      # Run the test against the provided collection.
+      #
+      # @example Run the test.
+      #   test.run(collection)
+      #
+      # @param [ Mongo::Collection ] collection The collection.
+      #
+      # @since 2.1.0
       def run(collection)
         collection.insert_many(@data)
         @operation.execute(collection)
       end
     end
 
+    # Encapsulates expectation behaviour.
+    #
+    # @since 2.1.0
     class Expectation
 
+      # @return [ String ] event_type The type of expected event.
       attr_reader :event_type
 
+      # Get the expected command name.
+      #
+      # @example Get the expected command name.
+      #   expectation.command_name
+      #
+      # @return [ String ] The command name.
+      #
+      # @since 2.1.0
       def command_name
         @event_data['command_name']
       end
 
+      # Get the expected database name.
+      #
+      # @example Get the expected database name.
+      #   expectation.database_name
+      #
+      # @return [ String ] The database name.
+      #
+      # @since 2.1.0
       def database_name
         @event_data['database_name']
       end
 
+      # Get a readable event name.
+      #
+      # @example Get the event name.
+      #   expectation.event_name
+      #
+      # @return [ String ] The event name.
+      #
+      # @since 2.1.0
       def event_name
         event_type.gsub('_', ' ')
       end
 
+      # Create the new expectation.
+      #
+      # @example Create the new expectation.
+      #   Expectation.new(expectation)
+      #
+      # @param [ Hash ] expectation The expectation.
+      #
+      # @since 2.1.0
       def initialize(expectation)
         @event_type = expectation.keys.first
         @event_data = expectation[@event_type]
       end
 
+      # Determine if the event matches the expectation.
+      #
+      # @example Does the event match the expectation?
+      #   expecation.matches?(event)
+      #
+      # @param [ Event ] The monitoring event.
+      #
+      # @return [ true, false ] If they match.
+      #
+      # @since 2.1.0
       def matches?(event)
         case event_type
         when 'command_started_event'
@@ -89,6 +173,8 @@ module Mongo
         end
       end
 
+      private
+
       def matches_started_event?(event)
         event.command_name.to_s == command_name &&
           event.database_name.to_s == database_name &&
@@ -96,23 +182,37 @@ module Mongo
       end
 
       def matches_succeeded_event?(event)
-        event.command_name.to_s == command_name &&
-          event.database_name.to_s == database_name
+        matches_common_attributes?(event)
       end
 
       def matches_failed_event?(event)
+        matches_common_attributes?(event)
+      end
+
+      def matches_common_attributes?(event)
         event.command_name.to_s == command_name &&
-          event.database_name.to_s == database_name
+          event.database_name.to_s == database_name &&
+          event.operation_id >= 0 &&
+          event.request_id >= 0
       end
 
       def matches_command?(event)
         @event_data['command'].each do |key, value|
           return false if event.command[key] != value
         end
+        case event.command_name
+        when 'getMore'
+          return false if event.command['getMore'] <= 0
+        when 'killCursors'
+          return false if event.command['cursors'].first <= 0
+        end
         true
       end
     end
 
+    # The test subscriber to track the events.
+    #
+    # @since 2.1.0
     class TestSubscriber
 
       def started(event)

@@ -38,10 +38,10 @@ module Mongo
       # @param cursor_id [Integer] The cursor id returned in a reply.
       def initialize(database, collection, number_to_return, cursor_id)
         @database = database
-        @collection = collection
         @namespace = "#{database}.#{collection}"
         @number_to_return = number_to_return
         @cursor_id = cursor_id
+        @upconverter = Upconverter.new(collection, cursor_id, number_to_return)
       end
 
       # Return the event payload for monitoring.
@@ -56,9 +56,7 @@ module Mongo
         {
           command_name: 'getMore',
           database_name: @database,
-          command: BSON::Document.new(
-            getMore: cursor_id, batchSize: number_to_return, collection: @collection
-          ),
+          command: upconverter.command,
           request_id: request_id
         }
       end
@@ -76,6 +74,8 @@ module Mongo
       end
 
       private
+
+      attr_reader :upconverter
 
       # The operation code required to specify a GetMore message.
       # @return [Fixnum] the operation code.
@@ -97,6 +97,55 @@ module Mongo
       # @!attribute
       # @return [Fixnum] The cursor id to get more documents from.
       field :cursor_id, Int64
+
+      # Converts legacy getmore messages to the appropriare OP_COMMAND style
+      # message.
+      #
+      # @since 2.1.0
+      class Upconverter
+
+        # @return [ String ] collection The name of the collection.
+        attr_reader :collection
+
+        # @return [ Integer ] cursor_id The cursor id.
+        attr_reader :cursor_id
+
+        # @return [ Integer ] number_to_return The number of docs to return.
+        attr_reader :number_to_return
+
+        # Instantiate the upconverter.
+        #
+        # @example Instantiate the upconverter.
+        #   Upconverter.new('users', 1, 1)
+        #
+        # @param [ String ] collection The name of the collection.
+        # @param [ Integer ] cursor_id The cursor id.
+        # @param [ Integer ] number_to_return The number of documents to
+        #   return.
+        #
+        # @since 2.1.0
+        def initialize(collection, cursor_id, number_to_return)
+          @collection = collection
+          @cursor_id = cursor_id
+          @number_to_return = number_to_return
+        end
+
+        # Get the upconverted command.
+        #
+        # @example Get the command.
+        #   upconverter.command
+        #
+        # @return [ BSON::Document ] The upconverted command.
+        #
+        # @since 2.1.0
+        def command
+          BSON::Document.new(
+            getMore: cursor_id,
+            batchSize: number_to_return,
+            collection: collection
+          )
+        end
+      end
     end
   end
 end

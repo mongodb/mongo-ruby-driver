@@ -58,6 +58,7 @@ module Mongo
         @selector    = selector
         @update      = update
         @flags       = options[:flags] || []
+        @upconverter = Upconverter.new(collection, selector, update, flags)
       end
 
       # Return the event payload for monitoring.
@@ -72,17 +73,14 @@ module Mongo
         {
           command_name: 'update',
           database_name: @database,
-          command: BSON::Document.new(
-            update: @collection,
-            updates: [
-              BSON::Document.new(q: selector, u: update, multi: false, upsert: false)
-            ]
-          ),
+          command: upconverter.command,
           request_id: request_id
         }
       end
 
       private
+
+      attr_reader :upconverter
 
       # The operation code required to specify an Update message.
       # @return [Fixnum] the operation code.
@@ -111,6 +109,70 @@ module Mongo
       # @!attribute
       # @return [Hash] The update for this Delete message.
       field :update, Document
+
+      # Converts legacy update messages to the appropriare OP_COMMAND style
+      # message.
+      #
+      # @since 2.1.0
+      class Upconverter
+
+        # @return [ String ] collection The name of the collection.
+        attr_reader :collection
+
+        # @return [ Hash ] filter The filter.
+        attr_reader :filter
+
+        # @return [ Hash ] update The update.
+        attr_reader :update
+
+        # @return [ Array<Symbol> ] flags The flags.
+        attr_reader :flags
+
+        # Instantiate the upconverter.
+        #
+        # @example Instantiate the upconverter.
+        #   Upconverter.new(
+        #     'users',
+        #     { name: 'test' },
+        #     { '$set' => { 'name' => 't' }},
+        #     []
+        #   )
+        #
+        # @param [ String ] collection The name of the collection.
+        # @param [ Hash ] filter The filter.
+        # @param [ Hash ] udpate The update.
+        # @param [ Array<Symbol> ] flags The flags.
+        #
+        # @since 2.1.0
+        def initialize(collection, filter, update, flags)
+          @collection = collection
+          @filter = filter
+          @update = update
+          @flags = flags
+        end
+
+        # Get the upconverted command.
+        #
+        # @example Get the command.
+        #   upconverter.command
+        #
+        # @return [ BSON::Document ] The upconverted command.
+        #
+        # @since 2.1.0
+        def command
+          BSON::Document.new(
+            update: collection,
+            updates: [
+              BSON::Document.new(
+                q: filter,
+                u: update,
+                multi: flags.include?(:multi_update),
+                upsert: flags.include?(:upsert)
+              )
+            ]
+          )
+        end
+      end
     end
   end
 end

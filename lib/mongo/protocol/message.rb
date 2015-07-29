@@ -114,6 +114,17 @@ module Mongo
         fields.map { |field| instance_variable_get(field[:name]) }.hash
       end
 
+      # Generates a request id for a message
+      #
+      # @return [Fixnum] a request id used for sending a message to the
+      #   server. The server will put this id in the response_to field of
+      #   a reply.
+      def set_request_id
+        @@id_lock.synchronize do
+          @request_id = @@request_id += 1
+        end
+      end
+
       private
 
       @@request_id = 0
@@ -158,17 +169,6 @@ module Mongo
         end
       end
 
-      # Generates a request id for a message
-      #
-      # @return [Fixnum] a request id used for sending a message to the
-      #   server. The server will put this id in the response_to field of
-      #   a reply.
-      def set_request_id
-        @@id_lock.synchronize do
-          @request_id = @@request_id += 1
-        end
-      end
-
       # Serializes the header of the message consisting of 4 32bit integers
       #
       # The integers represent a message length placeholder (calculation of
@@ -181,7 +181,7 @@ module Mongo
       # @param buffer [String] Buffer to receive the header
       # @return [String] Serialized header
       def serialize_header(buffer)
-        set_request_id
+        set_request_id unless @request_id
         Header.serialize(buffer, [0, request_id, 0, op_code])
       end
 
