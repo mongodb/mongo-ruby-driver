@@ -109,7 +109,7 @@ module Mongo
           document[:filename]
         end
 
-        # Get the file if from the file information.
+        # Get the file id from the file information.
         #
         # @example Get the file id.
         #   file_info.id

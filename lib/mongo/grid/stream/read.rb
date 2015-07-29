@@ -65,7 +65,7 @@ module Mongo
           #
           # @raise [ Error::UnexpectedChunkN ] If a chunk is found out of sequence.
           #
-          # @yieldparam [ Hash ] Each chunk data.
+          # @yieldparam [ Hash ] Each chunk of file data.
           #
           # @since 2.1.0
           def each
@@ -98,7 +98,7 @@ module Mongo
           # @example Close the stream.
           #   stream.close
           #
-          # @return [ true ] true.
+          # @return [ BSON::ObjectId, Object ] The file id.
           #
           # @raise [ Error::ClosedStream ] If the stream is already closed.
           #
@@ -127,7 +127,7 @@ module Mongo
           # @example Get the read preference.
           #   stream.read_preference
           #
-          # @return [ Mongo::ServerSelector] The read preference.
+          # @return [ Mongo::ServerSelector ] The read preference.
           #
           # @since 2.1.0
           def read_preference
