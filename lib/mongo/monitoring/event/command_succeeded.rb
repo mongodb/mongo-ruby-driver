@@ -86,7 +86,7 @@ module Mongo
             address,
             command_payload[:request_id],
             operation_id,
-            reply_payload ? reply_payload[:reply] : nil,
+            reply_payload ? reply_payload[:reply] : BSON::Document.new(ok: 1),
             duration
           )
         end

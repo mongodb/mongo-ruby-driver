@@ -7,7 +7,6 @@ data:
 
 collection_name: &collection_name "test"
 database_name: &database_name "ruby-driver"
-namespace: &namespace "ruby-driver.test"
 
 tests:
   -
@@ -30,7 +29,6 @@ tests:
             ok: 1
             cursor:
               id: 0
-              ns: *namespace
               firstBatch:
                 - { _id: 1, x: 11 }
           command_name: "find"
@@ -61,7 +59,6 @@ tests:
             ok: 1
             cursor:
               id: 0
-              ns: *namespace
               firstBatch:
                 - { _id: 1, x: 11 }
           command_name: "find"
@@ -89,7 +86,6 @@ tests:
           reply:
             ok: 1
             cursor:
-              ns: *namespace
               firstBatch:
                 - { _id: 1, x: 11 }
                 - { _id: 2, x: 22 }
@@ -110,7 +106,6 @@ tests:
             ok: 1
             cursor:
               # id: test should verify this cursor id matches the find.
-              ns: *namespace
               nextBatch:
                 - { _id: 4, x: 44 }
                 - { _id: 5, x: 55 }
@@ -140,7 +135,6 @@ tests:
           reply:
             ok: 1
             cursor:
-              ns: *namespace
               firstBatch:
                 - { _id: 1, x: 11 }
                 - { _id: 2, x: 22 }
@@ -161,7 +155,6 @@ tests:
             ok: 1
             cursor:
               # id: test should verify this cursor id matches the find.
-              ns: *namespace
               nextBatch:
                 - { _id: 4, x: 44 }
           command_name: "getMore"
@@ -176,6 +169,8 @@ tests:
           database_name: *database_name
       -
         command_succeeded_event:
+          reply:
+            ok: 1
           command_name: "killCursors"
           database_name: *database_name
   -

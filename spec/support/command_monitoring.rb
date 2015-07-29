@@ -176,13 +176,11 @@ module Mongo
       private
 
       def matches_started_event?(event)
-        event.command_name.to_s == command_name &&
-          event.database_name.to_s == database_name &&
-          matches_command?(event)
+        matches_common_attributes?(event) && matches_command?(event)
       end
 
       def matches_succeeded_event?(event)
-        matches_common_attributes?(event)
+        matches_common_attributes?(event) && matches_reply?(event)
       end
 
       def matches_failed_event?(event)
@@ -205,6 +203,24 @@ module Mongo
           return false if event.command['getMore'] <= 0
         when 'killCursors'
           return false if event.command['cursors'].first <= 0
+        end
+        true
+      end
+
+      def matches_reply?(event)
+        @event_data['reply'].each do |key, value|
+          if key == 'cursor'
+            return false unless matches_cursor?(event.reply[key], value)
+          else
+            return false if event.reply[key] != value
+          end
+        end
+        true
+      end
+
+      def matches_cursor?(event_cursor, cursor)
+        cursor.each do |key, value|
+          return false if event_cursor[key] != value
         end
         true
       end
