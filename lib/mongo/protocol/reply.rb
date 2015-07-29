@@ -53,7 +53,7 @@ module Mongo
       private
 
       def upconverter
-        Upconverter.new(documents, cursor_id, starting_from)
+        @upconverter ||= Upconverter.new(documents, cursor_id, starting_from)
       end
 
       # The operation code required to specify a Reply message.
@@ -145,7 +145,7 @@ module Mongo
         end
 
         def command?
-          documents.first.key?('ok')
+          !documents.empty? && documents.first.key?('ok')
         end
 
         def find_command

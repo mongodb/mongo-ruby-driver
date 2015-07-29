@@ -40,7 +40,6 @@ tests:
       arguments:
         filter: { _id: 1 }
         sort: { _id: 1 }
-        skip: 2
         limit: 2
     expectations:
       -
@@ -49,7 +48,6 @@ tests:
             find: *collection_name
             filter: { _id: 1 }
             sort: { _id: 1 }
-            skip: 2
             limit: 2
           command_name: "find"
           database_name: *database_name
