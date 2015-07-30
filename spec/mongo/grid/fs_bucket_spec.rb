@@ -12,98 +12,12 @@ describe Mongo::Grid::FSBucket do
 
   describe '#initialize' do
 
-    let(:chunks_index) do
-      fs.chunks_collection.indexes.get(:files_id => 1, :n => 1)
-    end
-
-    let(:files_index) do
-      fs.files_collection.indexes.get(:filename => 1, :uploadDate => 1)
-    end
-
     it 'sets the files collection' do
       expect(fs.files_collection.name).to eq('fs.files')
     end
 
     it 'sets the chunks collection' do
       expect(fs.chunks_collection.name).to eq('fs.chunks')
-    end
-
-    it 'creates the index on the chunks collection' do
-      expect(chunks_index[:name]).to eq('files_id_1_n_1')
-    end
-
-    it 'creates the index on the files collection' do
-      expect(files_index[:name]).to eq('filename_1_uploadDate_1')
-    end
-
-    context 'when there is an OperationFailure', if: write_command_enabled? do
-
-      let(:chunks_collection) do
-        authorized_client.database["fs.#{Mongo::Grid::File::Chunk::COLLECTION}"]
-      end
-
-      before do
-        chunks_collection.drop
-        chunks_collection.indexes.create_one(Mongo::Grid::FSBucket::CHUNKS_INDEX, unique: false)
-      end
-
-      after do
-        chunks_collection.drop
-      end
-
-      it 'raises the exception' do
-        expect {
-          fs
-        }.to raise_exception(Mongo::Error::OperationFailure)
-      end
-    end
-
-    context 'when the user is not authorized to create an index' do
-
-      let(:authorized_fs) do
-        described_class.new(authorized_client.database, options)
-      end
-
-      let(:read_user) do
-        Mongo::Auth::User.new(
-            user: 'read-only',
-            password: 'reading',
-            roles: [ Mongo::Auth::Roles::READ ]
-        )
-      end
-
-      let(:filename) do
-        'some-file'
-      end
-
-      before do
-        authorized_fs.upload_from_stream(filename, StringIO.new('hello!'))
-        root_authorized_client.database.users.create(read_user)
-      end
-
-      after do
-        authorized_fs.files_collection.delete_many
-        authorized_fs.chunks_collection.delete_many
-        root_authorized_client.database.users.remove(read_user.name)
-      end
-
-      let(:read_db) do
-        authorized_client.with(user: read_user.name, password: read_user.password).database
-      end
-
-      let(:fs) do
-        described_class.new(read_db, options)
-      end
-
-      it 'recovers and does not raise an exception' do
-        expect{
-          fs
-        }.not_to raise_exception
-      end
-
-      it 'allows the user to read from the GridFS anyway' do
-        expect(fs.find_one(filename: filename)).to be_a(Mongo::Grid::File)
-      end
     end
 
     context 'when options are provided' do
@@ -350,6 +264,81 @@ describe Mongo::Grid::FSBucket do
 
       it 'returns the file id' do
         expect(result).to eq(file.id)
+      end
+    end
+
+    context 'when the files collection is empty' do
+
+      before do
+        fs.files_collection.delete_many
+        fs.chunks_collection.delete_many
+        expect(fs.files_collection).to receive(:indexes).and_call_original
+        expect(fs.chunks_collection).to receive(:indexes).and_call_original
+        fs.insert_one(file)
+      end
+
+      after do
+        fs.files_collection.delete_many
+        fs.chunks_collection.delete_many
+      end
+
+      let(:chunks_index) do
+        fs.database[fs.chunks_collection.name].indexes.get(:files_id => 1, :n => 1)
+      end
+
+      let(:files_index) do
+        fs.database[fs.files_collection.name].indexes.get(:filename => 1, :uploadDate => 1)
+      end
+
+      it 'creates an index on the files collection' do
+        expect(files_index[:name]).to eq('filename_1_uploadDate_1')
+      end
+
+      it 'creates an index on the chunks collection' do
+        expect(chunks_index[:name]).to eq('files_id_1_n_1')
+      end
+    end
+
+    context 'when the index creation encounters an error', if: write_command_enabled? do
+
+      before do
+        fs.chunks_collection.drop
+        fs.chunks_collection.indexes.create_one(Mongo::Grid::FSBucket::CHUNKS_INDEX, :unique => false)
+        expect(fs.chunks_collection).to receive(:indexes).and_call_original
+        expect(fs.files_collection).not_to receive(:indexes)
+      end
+
+      after do
+        fs.database[fs.chunks_collection.name].indexes.drop_one('files_id_1_n_1')
+      end
+
+      it 'raises the error to the user' do
+        expect {
+          fs.insert_one(file)
+        }.to raise_error(Mongo::Error::OperationFailure)
+      end
+    end
+
+    context 'when the files collection is not empty' do
+
+      before do
+        fs.files_collection.insert_one(a: 1)
+        expect(fs.files_collection).not_to receive(:indexes)
+        expect(fs.chunks_collection).not_to receive(:indexes)
+        fs.insert_one(file)
+      end
+
+      after do
+        fs.files_collection.delete_many
+        fs.chunks_collection.delete_many
+      end
+
+      let(:files_index) do
+        fs.database[fs.files_collection.name].indexes.get(:filename => 1, :uploadDate => 1)
+      end
+
+      it 'assumes indexes already exist' do
+        expect(files_index[:name]).to eq('filename_1_uploadDate_1')
       end
     end
 
