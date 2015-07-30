@@ -122,7 +122,7 @@ module Mongo
     #   attempt a connection.
     # @option options [ Hash ] :read The read preference options. They consist of a
     #   mode specified as a symbol, an array of hashes known as tag_sets,
-    #   and two timing options: local_threshold and server_selection_timeout.
+    #   and local_threshold.
     #   :mode can be one of :secondary, :secondary_preferred, :primary,
     #   :primary_preferred, :nearest.
     # @option options [ Array<Hash, String> ] :roles The list of roles for the

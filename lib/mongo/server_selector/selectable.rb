@@ -42,16 +42,22 @@ module Mongo
 
       # Initialize the server selector.
       #
-      # @example Initialize the preference with tag sets.
-      #   Mongo::ServerSelector::Secondary.new([{ 'tag' => 'set' }])
+      # @example Initialize the selector.
+      #   Mongo::ServerSelector::Secondary.new(:tag_sets => [{'dc' => 'nyc'}])
       #
       # @example Initialize the preference with no options.
       #   Mongo::ServerSelector::Secondary.new
       #
-      # @param [ Array ] tag_sets The tag sets used to select servers.
+      # @param [ Hash ] options The server preference options.
       #
-      # @todo: document specific error
-      # @raise [ Exception ] If tag sets are specified but not allowed.
+      # @option options [ Integer ] :server_selection_timeout The timeout in seconds
+      #   for selecting a server.
+      #
+      # @option options [ Integer ] :local_threshold The local threshold boundary for
+      #  nearest selection in seconds.
+      #
+      # @raise [ Error::InvalidServerPreference ] If tag sets are specified
+      #   but not allowed.
       #
       # @since 2.0.0
       def initialize(options = {})

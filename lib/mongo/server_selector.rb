@@ -57,10 +57,6 @@ module Mongo
     #   Mongo::ServerSelector.get(:mode => :secondary, :tag_sets => [{'dc' => 'nyc'}])
     #
     # @param [ Hash ] preference The server preference.
-    # @param [ Hash ] options The preference options.
-    #
-    # @option preference :mode [ Symbol ] The preference mode.
-    # @option preference :tag_sets [ Array<Hash> ] The tag sets.
     #
     # @since 2.0.0
     def get(preference = {})
