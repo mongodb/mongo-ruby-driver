@@ -166,8 +166,22 @@ module Mongo
       #
       # @since 2.0.0
       def delete_one(file)
-        files_collection.find(:_id => file.id).delete_one
-        chunks_collection.find(:files_id => file.id).delete_many
+        delete(file.id)
+      end
+
+      # Remove a single file, identified by its id from the GridFS.
+      #
+      # @example Remove a file from the GridFS.
+      #   fs.delete(id)
+      #
+      # @param [ BSON::ObjectId, Object ] id The id of the file to remove.
+      #
+      # @return [ Result ] The result of the remove.
+      #
+      # @since 2.1.0
+      def delete(id)
+        files_collection.find(:_id => id).delete_one
+        chunks_collection.find(:files_id => id).delete_many
       end
 
       # Opens a stream from which a file can be downloaded, specified by id.
