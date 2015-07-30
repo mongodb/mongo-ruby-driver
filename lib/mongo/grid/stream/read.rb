@@ -70,7 +70,7 @@ module Mongo
           # @since 2.1.0
           def each
             ensure_readable!
-            num_chunks = (file_info[:length] + file_info[:chunkSize] - 1) / file_info[:chunkSize]
+            num_chunks = (file_info.length + file_info.chunk_size - 1) / file_info.chunk_size
             view.each_with_index do |doc, index|
               chunk = Grid::File::Chunk.new(doc)
               validate!(index, num_chunks, chunk)
@@ -146,7 +146,10 @@ module Mongo
           #
           # @since 2.1.0
           def file_info
-            @file_info ||= fs.files_collection.find(_id: file_id).first
+            doc = fs.files_collection.find(_id: file_id).first
+            if doc
+              @file_info ||= File::Info.new(Options::Mapper.transform(doc, File::Info::MAPPINGS.invert))
+            end
           end
 
           private
@@ -174,9 +177,9 @@ module Mongo
           end
 
           def validate_length!(index, num_chunks, chunk)
-            unless (chunk.data.data.size == file_info['chunkSize']) || (index == num_chunks - 1)
+            unless (chunk.data.data.size == file_info.chunk_size) || (index == num_chunks - 1)
               close
-              raise Error::UnexpectedChunkLength.new(file_info['chunkSize'], chunk)
+              raise Error::UnexpectedChunkLength.new(file_info.chunk_size, chunk)
             end
           end
 
