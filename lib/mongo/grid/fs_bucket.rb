@@ -111,6 +111,7 @@ module Mongo
       #
       # @since 2.0.0
       def insert_one(file)
+        ensure_indexes!
         chunks_collection.insert_many(file.chunks)
         files_collection.insert_one(file.info)
         file.id
@@ -140,10 +141,6 @@ module Mongo
         @options = options
         @chunks_collection = database[chunks_name]
         @files_collection = database[files_name]
-        chunks_collection.indexes.create_one(CHUNKS_INDEX, :unique => true)
-        files_collection.indexes.create_one(FILES_INDEX)
-      rescue => ex
-        raise ex unless unauthorized_error?(ex)
       end
 
       # Get the prefix for the GridFS
@@ -304,11 +301,6 @@ module Mongo
 
       private
 
-      def unauthorized_error?(ex)
-        ex.is_a?(Error::OperationFailure) &&
-            ( ex.message =~ /not authorized/ || ex.message =~ /(13)/ )
-      end
-
       def read_stream(id)
         Stream.get(self, Stream::READ_MODE, { file_id: id }.merge!(options))
       end
@@ -323,6 +315,13 @@ module Mongo
 
       def files_name
         "#{prefix}.#{Grid::File::Info::COLLECTION}"
+      end
+
+      def ensure_indexes!
+        if files_collection.find({}, projection: { _id: 1 }).to_a.empty?
+          chunks_collection.indexes.create_one(FSBucket::CHUNKS_INDEX, :unique => true)
+          files_collection.indexes.create_one(FSBucket::FILES_INDEX)
+        end
       end
     end
   end

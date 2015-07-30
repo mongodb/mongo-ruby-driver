@@ -82,6 +82,7 @@ module Mongo
           # @since 2.1.0
           def write(io)
             ensure_open!
+            ensure_indexes!
             data = io.read
             @length += data.length
             chunks = File::Chunk.split(data, file_info, @n)
@@ -159,6 +160,10 @@ module Mongo
           def file_info
             doc = { length: @length, _id: file_id, filename: filename }
             @file_info ||= File::Info.new(options.merge(doc))
+          end
+
+          def ensure_indexes!
+            fs.send(:ensure_indexes!)
           end
 
           def ensure_open!

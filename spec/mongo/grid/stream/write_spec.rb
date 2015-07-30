@@ -184,6 +184,79 @@ describe Mongo::Grid::FSBucket::Stream::Write do
       end
     end
 
+    context 'when indexes need to be ensured' do
+
+      context 'when the files collection is empty' do
+
+        before do
+          fs.files_collection.delete_many
+          fs.chunks_collection.delete_many
+          expect(fs.files_collection).to receive(:indexes).and_call_original
+          expect(fs.chunks_collection).to receive(:indexes).and_call_original
+          stream.write(file)
+        end
+
+        let(:chunks_index) do
+          fs.database[fs.chunks_collection.name].indexes.get(:files_id => 1, :n => 1)
+        end
+
+        let(:files_index) do
+          fs.database[fs.files_collection.name].indexes.get(:filename => 1, :uploadDate => 1)
+        end
+
+        it 'creates an index on the files collection' do
+          expect(files_index[:name]).to eq('filename_1_uploadDate_1')
+        end
+
+        it 'creates an index on the chunks collection' do
+          expect(chunks_index[:name]).to eq('files_id_1_n_1')
+        end
+      end
+
+      context 'when the files collection is not empty' do
+
+        before do
+          fs.files_collection.insert_one(a: 1)
+          expect(fs.files_collection).not_to receive(:indexes)
+          expect(fs.chunks_collection).not_to receive(:indexes)
+          stream.write(file)
+        end
+
+        after do
+          fs.files_collection.delete_many
+          fs.chunks_collection.delete_many
+        end
+
+        let(:files_index) do
+          fs.database[fs.files_collection.name].indexes.get(:filename => 1, :uploadDate => 1)
+        end
+
+        it 'assumes indexes already exist' do
+          expect(files_index[:name]).to eq('filename_1_uploadDate_1')
+        end
+      end
+
+      context 'when the index creation encounters an error', if: write_command_enabled? do
+
+        before do
+          fs.chunks_collection.drop
+          fs.chunks_collection.indexes.create_one(Mongo::Grid::FSBucket::CHUNKS_INDEX, :unique => false)
+          expect(fs.chunks_collection).to receive(:indexes).and_call_original
+          expect(fs.files_collection).not_to receive(:indexes)
+        end
+
+        after do
+          fs.database[fs.chunks_collection.name].indexes.drop_one('files_id_1_n_1')
+        end
+
+        it 'raises the error to the user' do
+          expect {
+            stream.write(file)
+          }.to raise_error(Mongo::Error::OperationFailure)
+        end
+      end
+    end
+
     context 'when provided an io stream' do
 
       before do
