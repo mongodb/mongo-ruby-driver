@@ -149,7 +149,7 @@ describe Mongo::Grid::FSBucket::Stream::Read do
 
       before do
         stream.send(:file_info)
-        stream.instance_variable_get(:@file_info)[:chunkSize] = 4
+        stream.instance_variable_get(:@file_info).document['chunkSize'] = 4
         expect(stream).to receive(:close)
       end
 
@@ -208,7 +208,7 @@ describe Mongo::Grid::FSBucket::Stream::Read do
   describe '#file_info' do
 
     it 'returns a files information document' do
-      expect(stream.file_info).to be_a(BSON::Document)
+      expect(stream.file_info).to be_a(Mongo::Grid::File::Info)
     end
   end
 
