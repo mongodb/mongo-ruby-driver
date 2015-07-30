@@ -86,9 +86,28 @@ module Mongo
             address,
             command_payload[:request_id],
             operation_id,
-            reply_payload ? reply_payload[:reply] : BSON::Document.new(ok: 1),
+            generate_reply(command_payload, reply_payload),
             duration
           )
+        end
+
+        private
+
+        def self.generate_reply(command_payload, reply_payload)
+          if reply_payload
+            reply = reply_payload[:reply]
+            if cursor = reply[:cursor]
+              reply = reply.merge(cursor: cursor.merge(ns: namespace(command_payload)))
+            end
+            reply
+          else
+            BSON::Document.new(ok: 1)
+          end
+        end
+
+        def self.namespace(payload)
+          command = payload[:command]
+          "#{command[:collection] || command.values.first}.#{payload[:database_name]}"
         end
       end
     end
