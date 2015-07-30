@@ -83,11 +83,6 @@ module Mongo
       end
     end
 
-    # Adds our internal command logging to the global subscribers.
-    #
-    # @since 2.1.0
-    Global.subscribe(COMMAND, CommandLogSubscriber.new)
-
     # Initialize the monitoring.
     #
     # @api private
@@ -105,6 +100,7 @@ module Mongo
             subscribe(topic, subscriber)
           end
         end
+        subscribe(COMMAND, CommandLogSubscriber.new(options))
       end
     end
 

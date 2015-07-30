@@ -148,6 +148,7 @@ module Mongo
     #   Integer, :fsync => Boolean, :j => Boolean.
     # @option options [ true, false ] :monitoring Initializes a client without
     #   any default monitoring if false is provided.
+    # @option options [ Logger ] :logger A custom logger if desired.
     #
     # @since 2.0.0
     def initialize(addresses_or_uri, options = {})
@@ -295,7 +296,7 @@ module Mongo
     end
 
     def create_from_uri(connection_string, opts = {})
-      uri = URI.new(connection_string)
+      uri = URI.new(connection_string, options)
       @options = Database::DEFAULT_OPTIONS.merge(uri.client_options.merge(opts)).freeze
       @cluster = Cluster.new(uri.servers, @monitoring, options)
       @database = Database.new(self, options[:database], options)
@@ -303,6 +304,7 @@ module Mongo
 
     def initialize_copy(original)
       @options = original.options.dup
+      @monitoring = Monitoring.new(@options)
       @database = nil
       @read_preference = nil
       @write_concern = nil

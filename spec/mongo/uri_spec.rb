@@ -138,7 +138,7 @@ describe Mongo::URI do
     end
   end
 
-  describe '#options' do
+  describe '#uri_options' do
     let(:servers)  { 'localhost' }
     let(:string) { "#{scheme}#{servers}/?#{options}" }
 
@@ -146,7 +146,7 @@ describe Mongo::URI do
       let(:string) { "#{scheme}#{servers}" }
 
       it 'returns an empty hash' do
-        expect(uri.options).to be_empty
+        expect(uri.uri_options).to be_empty
       end
     end
 
@@ -157,7 +157,7 @@ describe Mongo::URI do
         let(:concern) { { :w => 1 } }
 
         it 'sets the write concern options' do
-          expect(uri.options[:write]).to eq(concern)
+          expect(uri.uri_options[:write]).to eq(concern)
         end
       end
 
@@ -166,7 +166,7 @@ describe Mongo::URI do
         let(:concern) { { :w => :majority } }
 
         it 'sets the write concern options' do
-          expect(uri.options[:write]).to eq(concern)
+          expect(uri.uri_options[:write]).to eq(concern)
         end
       end
 
@@ -175,7 +175,7 @@ describe Mongo::URI do
         let(:concern) { { :j => true } }
 
         it 'sets the write concern options' do
-          expect(uri.options[:write]).to eq(concern)
+          expect(uri.uri_options[:write]).to eq(concern)
         end
       end
 
@@ -184,7 +184,7 @@ describe Mongo::URI do
         let(:concern) { { :fsync => true } }
 
         it 'sets the write concern options' do
-          expect(uri.options[:write]).to eq(concern)
+          expect(uri.uri_options[:write]).to eq(concern)
         end
       end
 
@@ -194,7 +194,7 @@ describe Mongo::URI do
         let(:concern) { { :w => 2, :timeout => timeout } }
 
         it 'sets the write concern options' do
-          expect(uri.options[:write]).to eq(concern)
+          expect(uri.uri_options[:write]).to eq(concern)
         end
       end
     end
@@ -207,7 +207,7 @@ describe Mongo::URI do
         let(:read) { { :mode => :primary } }
 
         it 'sets the read preference' do
-          expect(uri.options[:read]).to eq(read)
+          expect(uri.uri_options[:read]).to eq(read)
         end
       end
 
@@ -216,7 +216,7 @@ describe Mongo::URI do
         let(:read) { { :mode => :primary_preferred } }
 
         it 'sets the read preference' do
-          expect(uri.options[:read]).to eq(read)
+          expect(uri.uri_options[:read]).to eq(read)
         end
       end
 
@@ -225,7 +225,7 @@ describe Mongo::URI do
         let(:read) { { :mode => :secondary } }
 
         it 'sets the read preference' do
-          expect(uri.options[:read]).to eq(read)
+          expect(uri.uri_options[:read]).to eq(read)
         end
       end
 
@@ -234,7 +234,7 @@ describe Mongo::URI do
         let(:read) { { :mode => :secondary_preferred } }
 
         it 'sets the read preference' do
-          expect(uri.options[:read]).to eq(read)
+          expect(uri.uri_options[:read]).to eq(read)
         end
       end
 
@@ -243,7 +243,7 @@ describe Mongo::URI do
         let(:read) { { :mode => :nearest } }
 
         it 'sets the read preference' do
-          expect(uri.options[:read]).to eq(read)
+          expect(uri.uri_options[:read]).to eq(read)
         end
       end
     end
@@ -260,7 +260,7 @@ describe Mongo::URI do
         end
 
         it 'sets the read preference tag set' do
-          expect(uri.options[:read]).to eq(read)
+          expect(uri.uri_options[:read]).to eq(read)
         end
       end
 
@@ -274,7 +274,7 @@ describe Mongo::URI do
         end
 
         it 'sets the read preference tag sets' do
-          expect(uri.options[:read]).to eq(read)
+          expect(uri.uri_options[:read]).to eq(read)
         end
       end
     end
@@ -284,7 +284,7 @@ describe Mongo::URI do
       let(:options) { "replicaSet=#{rs_name}" }
 
       it 'sets the replica set option' do
-        expect(uri.options[:replica_set]).to eq(rs_name)
+        expect(uri.uri_options[:replica_set]).to eq(rs_name)
       end
     end
 
@@ -296,7 +296,7 @@ describe Mongo::URI do
         let(:auth) { { :mechanism => :plain } }
 
         it 'sets the auth mechanism to :plain' do
-          expect(uri.options[:auth]).to eq(auth)
+          expect(uri.uri_options[:auth]).to eq(auth)
         end
       end
 
@@ -305,7 +305,7 @@ describe Mongo::URI do
         let(:auth) { { :mechanism => :mongodb_cr } }
 
         it 'sets the auth mechanism to :mongodb_cr' do
-          expect(uri.options[:auth]).to eq(auth)
+          expect(uri.uri_options[:auth]).to eq(auth)
         end
       end
 
@@ -314,7 +314,7 @@ describe Mongo::URI do
         let(:auth) { { :mechanism => :gssapi } }
 
         it 'sets the auth mechanism to :gssapi' do
-          expect(uri.options[:auth]).to eq(auth)
+          expect(uri.uri_options[:auth]).to eq(auth)
         end
       end
     end
@@ -327,7 +327,7 @@ describe Mongo::URI do
         let(:auth) { { :source => 'foo' } }
 
         it 'sets the auth source to the database' do
-          expect(uri.options[:auth]).to eq(auth)
+          expect(uri.uri_options[:auth]).to eq(auth)
         end
       end
 
@@ -336,7 +336,7 @@ describe Mongo::URI do
         let(:auth) { { :source => :external } }
 
         it 'sets the auth source to :external' do
-          expect(uri.options[:auth]).to eq(auth)
+          expect(uri.uri_options[:auth]).to eq(auth)
         end
       end
     end
@@ -354,7 +354,7 @@ describe Mongo::URI do
         end
 
         it 'sets the auth mechanism properties' do
-          expect(uri.options[:auth]).to eq(auth)
+          expect(uri.uri_options[:auth]).to eq(auth)
         end
       end
 
@@ -369,7 +369,7 @@ describe Mongo::URI do
         end
 
         it 'sets the auth mechanism properties' do
-          expect(uri.options[:auth]).to eq(auth)
+          expect(uri.uri_options[:auth]).to eq(auth)
         end
       end
 
@@ -384,7 +384,7 @@ describe Mongo::URI do
         end
 
         it 'sets the auth mechanism properties' do
-          expect(uri.options[:auth]).to eq(auth)
+          expect(uri.uri_options[:auth]).to eq(auth)
         end
       end
 
@@ -406,7 +406,7 @@ describe Mongo::URI do
         end
 
         it 'sets the auth mechanism properties' do
-          expect(uri.options[:auth]).to eq(auth)
+          expect(uri.uri_options[:auth]).to eq(auth)
         end
       end
     end
@@ -415,7 +415,7 @@ describe Mongo::URI do
       let(:options) { "connectTimeoutMS=4567" }
 
       it 'sets the the connect timeout' do
-        expect(uri.options[:connect_timeout]).to eq(4.567)
+        expect(uri.uri_options[:connect_timeout]).to eq(4.567)
       end
     end
 
@@ -423,7 +423,7 @@ describe Mongo::URI do
       let(:options) { "socketTimeoutMS=8910" }
 
       it 'sets the socket timeout' do
-        expect(uri.options[:socket_timeout]).to eq(8.910)
+        expect(uri.uri_options[:socket_timeout]).to eq(8.910)
       end
     end
 
@@ -432,7 +432,7 @@ describe Mongo::URI do
       let(:options) { "serverSelectionTimeoutMS=3561" }
 
       it 'sets the the connect timeout' do
-        expect(uri.options[:server_selection_timeout]).to eq(3.561)
+        expect(uri.uri_options[:server_selection_timeout]).to eq(3.561)
       end
     end
 
@@ -441,7 +441,7 @@ describe Mongo::URI do
       let(:options) { "localThresholdMS=3561" }
 
       it 'sets the the connect timeout' do
-        expect(uri.options[:local_threshold]).to eq(3.561)
+        expect(uri.uri_options[:local_threshold]).to eq(3.561)
       end
     end
 
@@ -451,7 +451,7 @@ describe Mongo::URI do
       let(:options) { "maxPoolSize=#{max_pool_size}" }
 
       it 'sets the max pool size option' do
-        expect(uri.options[:max_pool_size]).to eq(max_pool_size)
+        expect(uri.uri_options[:max_pool_size]).to eq(max_pool_size)
       end
     end
 
@@ -461,7 +461,7 @@ describe Mongo::URI do
       let(:options) { "minPoolSize=#{min_pool_size}" }
 
       it 'sets the min pool size option' do
-        expect(uri.options[:min_pool_size]).to eq(min_pool_size)
+        expect(uri.uri_options[:min_pool_size]).to eq(min_pool_size)
       end
     end
 
@@ -471,7 +471,7 @@ describe Mongo::URI do
       let(:options) { "waitQueueTimeoutMS=#{wait_queue_timeout}" }
 
       it 'sets the wait queue timeout option' do
-        expect(uri.options[:wait_queue_timeout]).to eq(0.5)
+        expect(uri.uri_options[:wait_queue_timeout]).to eq(0.5)
       end
     end
 
@@ -482,7 +482,7 @@ describe Mongo::URI do
         let(:ssl) { true }
 
         it 'sets the ssl option to true' do
-          expect(uri.options[:ssl]).to be true
+          expect(uri.uri_options[:ssl]).to be true
         end
       end
 
@@ -490,7 +490,7 @@ describe Mongo::URI do
         let(:ssl) { false }
 
         it 'sets the ssl option to false' do
-          expect(uri.options[:ssl]).to be false
+          expect(uri.uri_options[:ssl]).to be false
         end
       end
     end
@@ -499,7 +499,7 @@ describe Mongo::URI do
       let(:options) { 'w=1&ssl=true' }
 
       it 'do not overshadow top level options' do
-        expect(uri.options).not_to be_empty
+        expect(uri.uri_options).not_to be_empty
       end
     end
 
@@ -508,7 +508,7 @@ describe Mongo::URI do
       let(:options) { 'invalidOption=10' }
 
       let(:uri_options) do
-        uri.options
+        uri.uri_options
       end
 
       it 'does not raise an exception' do

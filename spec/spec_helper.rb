@@ -34,6 +34,9 @@ CRL_PEM = "#{SSL_CERTS_DIR}/crl.pem"
 
 require 'mongo'
 
+Mongo::Logger.logger = Logger.new($stdout)
+Mongo::Logger.logger.level = Logger::INFO
+
 require 'support/travis'
 require 'support/matchers'
 require 'support/authorization'
@@ -42,9 +45,6 @@ require 'support/server_selection_rtt'
 require 'support/server_selection'
 require 'support/crud'
 require 'support/command_monitoring'
-
-Mongo::Logger.logger = Logger.new($stdout)
-Mongo::Logger.logger.level = Logger::INFO
 
 RSpec.configure do |config|
   config.color     = true
@@ -59,6 +59,7 @@ RSpec.configure do |config|
       # database. This user will need to be authenticated in order to add any
       # more users to any other databases.
       ADMIN_UNAUTHORIZED_CLIENT.database.users.create(ROOT_USER)
+      ADMIN_UNAUTHORIZED_CLIENT.close
     rescue Exception => e
     end
     begin
