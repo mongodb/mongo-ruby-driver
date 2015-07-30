@@ -70,9 +70,10 @@ module Mongo
           # @since 2.1.0
           def each
             ensure_readable!
+            num_chunks = (file_info[:length] + file_info[:chunkSize] - 1) / file_info[:chunkSize]
             view.each_with_index do |doc, index|
               chunk = Grid::File::Chunk.new(doc)
-              validate_n!(index, chunk)
+              validate!(index, num_chunks, chunk)
               data = Grid::File::Chunk.assemble([ chunk ])
               yield data
             end if block_given?
@@ -165,6 +166,18 @@ module Mongo
 
           def view
             @view ||= fs.chunks_collection.find({ :files_id => file_id }, options).read(read_preference).sort(:n => 1)
+          end
+
+          def validate!(index, num_chunks, chunk)
+            validate_n!(index, chunk)
+            validate_length!(index, num_chunks, chunk)
+          end
+
+          def validate_length!(index, num_chunks, chunk)
+            unless (chunk.data.data.size == file_info['chunkSize']) || (index == num_chunks - 1)
+              close
+              raise Error::UnexpectedChunkLength.new(file_info['chunkSize'], chunk)
+            end
           end
 
           def validate_n!(index, chunk)

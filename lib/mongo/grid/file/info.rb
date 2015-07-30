@@ -35,6 +35,7 @@ module Mongo
           :filename => :filename,
           :_id => :_id,
           :md5 => :md5,
+          :length => :length,
           :metadata => :metadata,
           :upload_date => :uploadDate,
           :aliases => :aliases

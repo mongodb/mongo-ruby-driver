@@ -145,6 +145,28 @@ describe Mongo::Grid::FSBucket::Stream::Read do
       end
     end
 
+    context 'when a chunk does not have the expected length' do
+
+      before do
+        stream.send(:file_info)
+        stream.instance_variable_get(:@file_info)[:chunkSize] = 4
+        expect(stream).to receive(:close)
+      end
+
+      it 'raises an exception' do
+        expect {
+          stream.to_a
+        }.to raise_error(Mongo::Error::UnexpectedChunkLength)
+      end
+
+      it 'closes the query' do
+        begin
+          stream.to_a
+        rescue Mongo::Error::UnexpectedChunkLength
+        end
+      end
+    end
+
     context 'when there is no files document found' do
 
       before do
@@ -186,7 +208,7 @@ describe Mongo::Grid::FSBucket::Stream::Read do
   describe '#file_info' do
 
     it 'returns a files information document' do
-      expect(stream.file_info).to be_a(Hash)
+      expect(stream.file_info).to be_a(BSON::Document)
     end
   end
 
