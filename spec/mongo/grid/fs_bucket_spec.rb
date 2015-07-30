@@ -517,6 +517,22 @@ describe Mongo::Grid::FSBucket do
         it 'does not close the stream' do
           expect(io.closed?).to be(false)
         end
+
+        context 'when the file has length 0' do
+
+          let(:file) do
+            StringIO.new('')
+          end
+
+          let(:from_db) do
+            fs.open_upload_stream(filename) { |s| s.write(file) }
+            fs.find_one(:filename => filename)
+          end
+
+          it 'can read the file back' do
+            expect(from_db.data.size).to eq(file.size)
+          end
+        end
       end
 
       context 'when there is no files collection document found' do
