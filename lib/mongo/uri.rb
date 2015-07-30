@@ -29,6 +29,9 @@ module Mongo
   class URI
     include Loggable
 
+    # @return [ Hash ] options Any options provided to the parser.
+    attr_reader :options
+
     # Scheme Regex: non-capturing, matches scheme.
     #
     # @since 2.0.0
@@ -119,12 +122,14 @@ module Mongo
     #   URI.new('mongodb://localhost:27017')
     #
     # @param [ String ] string The uri string.
+    # @param [ Hash ] options The options.
     #
     # @raise [ BadURI ] If the uri does not match the spec.
     #
     # @since 2.0.0
-    def initialize(string)
+    def initialize(string, options = {})
       @string = string
+      @options = options
       @match = @string.match(URI)
       raise Error::InvalidURI.new(string) unless @match
     end
@@ -152,7 +157,7 @@ module Mongo
     #
     # @since 2.0.0
     def client_options
-      opts = options.merge(:database => database)
+      opts = uri_options.merge(:database => database)
       user ? opts.merge(credentials) : opts
     end
 
@@ -206,16 +211,14 @@ module Mongo
     #   * :tag_sets [Array<Hash>] read tag sets
     #
     # @since 2.0.0
-    def options
+    def uri_options
       parsed_options = @match[5]
       return {} unless parsed_options
       parsed_options.split('&').reduce({}) do |options, option|
         key, value = option.split('=')
         strategy = OPTION_MAP[key]
         if strategy.nil?
-          log_warn([
-                       "Unsupported URI option '#{key}' on URI '#{@string}'. It will be ignored."
-                   ])
+          log_warn("Unsupported URI option '#{key}' on URI '#{@string}'. It will be ignored.")
         else
           add_option(strategy, value, options)
         end

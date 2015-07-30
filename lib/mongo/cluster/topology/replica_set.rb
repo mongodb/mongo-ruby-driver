@@ -61,7 +61,7 @@ module Mongo
         def elect_primary(description, servers)
           if description.replica_set_name == replica_set_name
             unless detect_stale_primary!(description)
-              log_debug([ "Server #{description.address.to_s} elected as primary in #{replica_set_name}." ])
+              log_debug("Server #{description.address.to_s} elected as primary in #{replica_set_name}.")
               servers.each do |server|
                 if server.primary? && server.address != description.address
                   server.description.unknown!
@@ -70,9 +70,9 @@ module Mongo
               update_max_election_id(description)
             end
           else
-            log_warn([
+            log_warn(
               "Server #{description.address.to_s} in incorrect replica set: #{description.replica_set_name}."
-            ])
+            )
           end
           self
         end

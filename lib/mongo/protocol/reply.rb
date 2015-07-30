@@ -47,10 +47,14 @@ module Mongo
       #
       # @since 2.1.0
       def payload
-        { reply: documents, request_id: request_id }
+        { reply: upconverter.command, request_id: request_id }
       end
 
       private
+
+      def upconverter
+        @upconverter ||= Upconverter.new(documents, cursor_id, starting_from)
+      end
 
       # The operation code required to specify a Reply message.
       # @return [Fixnum] the operation code.
@@ -91,6 +95,70 @@ module Mongo
       # @!attribute
       # @return [Array<Hash>] The documents in this Reply.
       field :documents, Document, :@number_returned
+
+      # Upconverts legacy replies to new op command replies.
+      #
+      # @since 2.1.0
+      class Upconverter
+
+        # @return [ Array<BSON::Document> ] documents The documents.
+        attr_reader :documents
+
+        # @return [ Integer ] cursor_id The cursor id.
+        attr_reader :cursor_id
+
+        # @return [ Integer ] starting_from The starting point in the cursor.
+        attr_reader :starting_from
+
+        # Initialize the new upconverter.
+        #
+        # @example Create the upconverter.
+        #   Upconverter.new(docs, 1, 3)
+        #
+        # @param [ Array<BSON::Document> document The documents.
+        # @param [ Integer ] cursor_id The cursor id.
+        # @param [ Integer ] starting_from The starting position.
+        #
+        # @sincce 2.1.0
+        def initialize(documents, cursor_id, starting_from)
+          @documents = documents
+          @cursor_id = cursor_id
+          @starting_from = starting_from
+        end
+
+        # Get the upconverted command.
+        #
+        # @example Get the command.
+        #   upconverter.command
+        #
+        # @return [ BSON::Document ] The command.
+        #
+        # @since 2.1.0
+        def command
+          command? ? op_command : find_command
+        end
+
+        private
+
+        def batch_field
+          starting_from > 0 ? :nextBatch : :firstBatch
+        end
+
+        def command?
+          !documents.empty? && documents.first.key?('ok')
+        end
+
+        def find_command
+          BSON::Document.new(
+            ok: 1,
+            cursor: BSON::Document.new(id: cursor_id, batch_field => documents)
+          )
+        end
+
+        def op_command
+          documents.first
+        end
+      end
     end
   end
 end

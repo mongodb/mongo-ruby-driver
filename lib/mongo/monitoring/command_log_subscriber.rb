@@ -19,12 +19,30 @@ module Mongo
     #
     # @since 2.1.0
     class CommandLogSubscriber
+      include Loggable
+
+      # @return [ Hash ] options The options.
+      attr_reader :options
 
       # Constant for the max number of characters to print when inspecting
       # a query field.
       #
       # @since 2.1.0
       LOG_STRING_LIMIT = 250
+
+      # Create the new log subscriber.
+      #
+      # @example Create the log subscriber.
+      #   CommandLogSubscriber.new
+      #
+      # @param [ Hash ] options The options.
+      #
+      # @option options [ Logger ] :logger An optional custom logger.
+      #
+      # @since 2.1.0
+      def initialize(options = {})
+        @options = options
+      end
 
       # Handle the command started event.
       #
@@ -35,9 +53,7 @@ module Mongo
       #
       # @since 2.1.0
       def started(event)
-        if Logger.logger.debug?
-          log("#{prefix(event)} | STARTED | #{format(event.command)}")
-        end
+        log_debug("#{prefix(event)} | STARTED | #{format_command(event.command)}")
       end
 
       # Handle the command succeeded event.
@@ -49,9 +65,7 @@ module Mongo
       #
       # @since 2.1.0
       def succeeded(event)
-        if Logger.logger.debug?
-          log("#{prefix(event)} | SUCCEEDED | #{event.duration}s")
-        end
+        log_debug("#{prefix(event)} | SUCCEEDED | #{event.duration}s")
       end
 
       # Handle the command failed event.
@@ -63,25 +77,19 @@ module Mongo
       #
       # @since 2.1.0
       def failed(event)
-        if Logger.logger.debug?
-          log("#{prefix(event)} | FAILED | #{event.message} | #{event.duration}s")
-        end
+        log_debug("#{prefix(event)} | FAILED | #{event.message} | #{event.duration}s")
       end
 
       private
 
-      def format(args)
+      def format_command(args)
         ((s = args.inspect).length > LOG_STRING_LIMIT) ? "#{s[0..LOG_STRING_LIMIT]}..." : s
       rescue ArgumentError
         '<Unable to inspect arguments>'
       end
 
-      def log(message)
-        Logger.logger.debug(message)
-      end
-
       def prefix(event)
-        "MONGODB | #{event.address.to_s} | #{event.database_name}.#{event.command_name}"
+        "#{event.address.to_s} | #{event.database_name}.#{event.command_name}"
       end
     end
   end

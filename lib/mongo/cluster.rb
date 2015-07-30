@@ -65,7 +65,7 @@ module Mongo
       address = Address.new(host)
       if !addresses.include?(address)
         if addition_allowed?(address)
-          log_debug([ "Adding #{address.to_s} to the cluster." ])
+          log_debug("Adding #{address.to_s} to the cluster.")
           @update_lock.synchronize { @addresses.push(address) }
           server = Server.new(address, self, @monitoring, event_listeners, options)
           @update_lock.synchronize { @servers.push(server) }
@@ -166,7 +166,7 @@ module Mongo
     #
     # @since 2.0.0
     def remove(host)
-      log_debug([ "#{host} being removed from the cluster." ])
+      log_debug("#{host} being removed from the cluster.")
       address = Address.new(host)
       removed_servers = @servers.select { |s| s.address == address }
       @update_lock.synchronize { @servers = @servers - removed_servers }

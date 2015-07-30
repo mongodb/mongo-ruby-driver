@@ -30,12 +30,6 @@ module Mongo
     # @api semipublic
     class Query < Message
 
-      # Constant for the max number of characters to print when inspecting
-      # a query field.
-      #
-      # @since 2.0.3
-      LOG_STRING_LIMIT = 250
-
       # Creates a new Query message
       #
       # @example Find all users named Tyler.
@@ -72,6 +66,7 @@ module Mongo
         @skip        = options[:skip]  || 0
         @limit       = options[:limit] || 0
         @flags       = options[:flags] || []
+        @upconverter = Upconverter.new(collection, selector, options, flags)
       end
 
       # Return the event payload for monitoring.
@@ -84,55 +79,11 @@ module Mongo
       # @since 2.1.0
       def payload
         {
-          command_name: command_name,
+          command_name: upconverter.command_name,
           database_name: @database,
-          command: arguments,
+          command: upconverter.command,
           request_id: request_id
         }
-      end
-
-      # If the message a command?
-      #
-      # @example Is the message a command?
-      #   message.command?
-      #
-      # @return [ true, false ] If the message is a command.
-      #
-      # @since 2.1.0
-      def command?
-        namespace.include?(Database::COMMAND)
-      end
-
-      # Returns the name of the command.
-      #
-      # @example Get the command name.
-      #   message.command_name
-      #
-      # @return [ String ] The name of the command, or 'find' if a query.
-      #
-      # @since 2.1.0
-      def command_name
-        if command?
-          selector.keys.first
-        else
-          'find'
-        end
-      end
-
-      # Get the command arguments.
-      #
-      # @example Get the command arguments.
-      #   message.arguments
-      #
-      # @return [ Hash ] The command arguments.
-      #
-      # @since 2.1.0
-      def arguments
-        if command?
-          selector
-        else
-          { filter: selector }.merge(@options)
-        end
       end
 
       # Query messages require replies from the database.
@@ -149,17 +100,12 @@ module Mongo
 
       private
 
+      attr_reader :upconverter
+
       # The operation code required to specify a Query message.
       # @return [Fixnum] the operation code.
       def op_code
         2004
-      end
-
-      def formatted_selector
-        ( (str = selector.inspect).length > LOG_STRING_LIMIT ) ?
-          "#{str[0..LOG_STRING_LIMIT]}..." : str
-      rescue ArgumentError
-        '<Unable to inspect selector>'
       end
 
       # Available flags for a Query message.
@@ -197,6 +143,131 @@ module Mongo
       # @!attribute
       # @return [Hash] The projection.
       field :project, Document
+
+      # Converts legacy query messages to the appropriare OP_COMMAND style
+      # message.
+      #
+      # @since 2.1.0
+      class Upconverter
+
+        # Mappings of the options to the find command options.
+        #
+        # @since 2.1.0
+        OPTION_MAPPINGS = {
+          :project => :projection,
+          :skip => :skip,
+          :limit => :limit,
+          :batch_size => :batchSize
+          # “singleBatch”: <bool>,
+          # “max”: { ... },
+          # “min”: { ... },
+          # “returnKey”: <bool>,
+        }
+
+        SPECIAL_FIELD_MAPPINGS = {
+          :$readPreference => :readPreference,
+          :$orderby => :sort,
+          :$hint => :hint,
+          :$comment => :comment,
+          :$snapshot => :snapshot,
+          :$maxScan => :maxScan,
+          :$maxTimeMS => :maxTimeMS,
+          :$showDiskLoc => :showRecordId,
+          :$explain => :explain
+        }
+
+        # Mapping of flags to find command options.
+        #
+        # @since 2.1.0
+        FLAG_MAPPINGS = {
+          :tailable_cursor => :tailable,
+          :oplog_replay => :oplogReplay,
+          :no_cursor_timeout => :noCursorTimeout,
+          :await_data => :awaitData,
+          :partial => :allowPartialResults
+        }
+
+        # @return [ String ] collection The name of the collection.
+        attr_reader :collection
+
+        # @return [ BSON::Document, Hash ] filter The query filter or command.
+        attr_reader :filter
+
+        # @return [ BSON::Document, Hash ] options The options.
+        attr_reader :options
+
+        # @return [ Array<Symbol> ] flags The flags.
+        attr_reader :flags
+
+        # Instantiate the upconverter.
+        #
+        # @example Instantiate the upconverter.
+        #   Upconverter.new('users', { name: 'test' }, { skip: 10 })
+        #
+        # @param [ String ] collection The name of the collection.
+        # @param [ BSON::Document, Hash ] filter The filter or command.
+        # @param [ BSON::Document, Hash ] options The options.
+        # @param [ Array<Symbol> ] flags The flags.
+        #
+        # @since 2.1.0
+        def initialize(collection, filter, options, flags)
+          @collection = collection
+          @filter = filter
+          @options = options
+          @flags = flags
+        end
+
+        # Get the upconverted command.
+        #
+        # @example Get the command.
+        #   upconverter.command
+        #
+        # @return [ BSON::Document ] The upconverted command.
+        #
+        # @since 2.1.0
+        def command
+          command? ? op_command : find_command
+        end
+
+        # Get the name of the command. If the collection is $cmd then it's the
+        # first key in the filter, otherwise it's a find.
+        #
+        # @example Get the command name.
+        #   upconverter.command_name
+        #
+        # @return [ String, Symbol ] The command name.
+        #
+        # @since 2.1.0
+        def command_name
+          command? ? filter.keys.first : 'find'
+        end
+
+        private
+
+        def command?
+          collection == Database::COMMAND
+        end
+
+        def op_command
+          BSON::Document.new(filter)
+        end
+
+        def find_command
+          document = BSON::Document.new
+          document[:find] = collection
+          document[:filter] = filter.key?(:$query) ? filter[:$query] : filter
+          OPTION_MAPPINGS.each do |legacy, option|
+            document[option] = options[legacy] if options[legacy]
+          end
+          SPECIAL_FIELD_MAPPINGS.each do |special, normal|
+            document[normal] = filter[special] if filter[special]
+          end
+          FLAG_MAPPINGS.each do |legacy, flag|
+            document[flag] = true if flags.include?(legacy)
+          end
+          document
+        end
+      end
     end
   end
 end

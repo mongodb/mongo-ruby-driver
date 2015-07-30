@@ -144,8 +144,7 @@ AUTHORIZED_CLIENT = Mongo::Client.new(
 # @since 2.0.0
 UNAUTHORIZED_CLIENT = Mongo::Client.new(
   ADDRESSES,
-  TEST_OPTIONS.merge(
-    database: TEST_DB)
+  TEST_OPTIONS.merge(database: TEST_DB, monitoring: false)
 )
 
 # Provides an unauthorized mongo client on the admin database, for use in
@@ -154,8 +153,7 @@ UNAUTHORIZED_CLIENT = Mongo::Client.new(
 # @since 2.0.0
 ADMIN_UNAUTHORIZED_CLIENT = Mongo::Client.new(
   ADDRESSES,
-  TEST_OPTIONS.merge(
-    database: Mongo::Database::ADMIN)
+  TEST_OPTIONS.merge(database: Mongo::Database::ADMIN, monitoring: false)
 )
 
 # Get an authorized client on the test database logged in as the admin
@@ -166,7 +164,8 @@ ADMIN_AUTHORIZED_TEST_CLIENT = ADMIN_UNAUTHORIZED_CLIENT.with(
   user: ROOT_USER.name,
   password: ROOT_USER.password,
   database: TEST_DB,
-  auth_source: Mongo::Database::ADMIN
+  auth_source: Mongo::Database::ADMIN,
+  monitoring: false
 )
 
 module Authorization

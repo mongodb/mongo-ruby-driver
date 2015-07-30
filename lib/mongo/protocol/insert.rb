@@ -53,6 +53,7 @@ module Mongo
         @namespace = "#{database}.#{collection}"
         @documents = documents
         @flags = options[:flags] || []
+        @upconverter = Upconverter.new(collection, documents)
       end
 
       # Return the event payload for monitoring.
@@ -64,10 +65,17 @@ module Mongo
       #
       # @since 2.1.0
       def payload
-        { command_name: 'insert', database_name: @database, command: documents, request_id: request_id }
+        {
+          command_name: 'insert',
+          database_name: @database,
+          command: upconverter.command,
+          request_id: request_id
+        }
       end
 
       private
+
+      attr_reader :upconverter
 
       # The operation code required to specify an Insert message.
       # @return [Fixnum] the operation code.
@@ -89,6 +97,45 @@ module Mongo
       # @!attribute
       # @return [Array<Hash>] The documents to insert.
       field :documents, Document, true
+
+      # Converts legacy insert messages to the appropriare OP_COMMAND style
+      # message.
+      #
+      # @since 2.1.0
+      class Upconverter
+
+        # @return [ String ] collection The name of the collection.
+        attr_reader :collection
+
+        # @return [ Array<BSON::Document> ] documents The documents to insert.
+        attr_reader :documents
+
+        # Instantiate the upconverter.
+        #
+        # @example Instantiate the upconverter.
+        #   Upconverter.new('users', documents)
+        #
+        # @param [ String ] collection The name of the collection.
+        # @param [ Array<BSON::Document> ] document The documents.
+        #
+        # @since 2.1.0
+        def initialize(collection, documents)
+          @collection = collection
+          @documents = documents
+        end
+
+        # Get the upconverted command.
+        #
+        # @example Get the command.
+        #   upconverter.command
+        #
+        # @return [ BSON::Document ] The upconverted command.
+        #
+        # @since 2.1.0
+        def command
+          BSON::Document.new(insert: collection, documents: documents)
+        end
+      end
     end
   end
 end

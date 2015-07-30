@@ -118,7 +118,11 @@ module Mongo
     end
 
     def kill_cursors_spec
-      { :cursor_ids => [ @cursor_id ]}
+      {
+        :coll_name => @coll_name || collection.name,
+        :db_name => database.name,
+        :cursor_ids => [ @cursor_id ]
+      }
     end
 
     def limited?

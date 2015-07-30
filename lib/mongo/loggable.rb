@@ -24,105 +24,82 @@ module Mongo
     # @since 2.0.0
     PREFIX = 'MONGODB'.freeze
 
-    # Log the operations. If a block is provided it will be yielded to,
-    # otherwise only the logging will take place.
-    #
-    # @example Log a query operation.
-    #   loggable.log(:debug, "MONGO.query", operations)
-    #
-    # @param [ Symbol ] level The log level.
-    # @param [ String ] prefix The prefix for the log line.
-    # @param [ Array<Object> ] operations The operations to log. The must
-    #   respond to #log_message.
-    #
-    # @return [ Object ] The result of the block or nil if no block given.
-    #
-    # @since 2.0.0
-    def log(level, prefix, operations)
-      started = Time.new
-      begin
-        yield(operations) if block_given?
-      rescue Exception => e
-        raise e
-      ensure
-        if Logger.allow?(level)
-          runtime = format("%.4fms", (Time.now.to_f - started.to_f) * 1000.0)
-          operations.each do |operation|
-            Logger.log(level, prefix, log_inspect(operation), runtime)
-          end
-        end
-      end
-    end
-
     # Convenience method to log debug messages with the standard prefix.
     #
     # @example Log a debug message.
-    #   log_debug([ 'Message' ])
+    #   log_debug('Message')
     #
-    # @param [ Array<Operation, String> ] operations The operations or messages
-    #   to log.
+    # @param [ String> ] message The message to log.
     #
     # @since 2.0.0
-    def log_debug(operations, &block)
-      log(:debug, PREFIX, operations, &block)
+    def log_debug(message)
+      logger.debug(format_message(message)) if logger.debug?
     end
 
     # Convenience method to log error messages with the standard prefix.
     #
     # @example Log a error message.
-    #   log_error([ 'Message' ])
+    #   log_error('Message')
     #
-    # @param [ Array<Operation, String> ] operations The operations or messages
-    #   to log.
+    # @param [ String> ] message The message to log.
     #
     # @since 2.0.0
-    def log_error(operations, &block)
-      log(:error, PREFIX, operations, &block)
+    def log_error(message)
+      logger.error(format_message(message)) if logger.error?
     end
 
     # Convenience method to log fatal messages with the standard prefix.
     #
     # @example Log a fatal message.
-    #   log_fatal([ 'Message' ])
+    #   log_fatal('Message')
     #
-    # @param [ Array<Operation, String> ] operations The operations or messages
-    #   to log.
+    # @param [ String> ] message The message to log.
     #
     # @since 2.0.0
-    def log_fatal(operations, &block)
-      log(:fatal, PREFIX, operations, &block)
+    def log_fatal(message)
+      logger.fatal(format_message(message)) if logger.fatal?
     end
 
     # Convenience method to log info messages with the standard prefix.
     #
     # @example Log a info message.
-    #   log_info([ 'Message' ])
+    #   log_info('Message')
     #
-    # @param [ Array<Operation, String> ] operations The operations or messages
-    #   to log.
+    # @param [ String> ] message The message to log.
     #
     # @since 2.0.0
-    def log_info(operations, &block)
-      log(:info, PREFIX, operations, &block)
+    def log_info(message)
+      logger.info(format_message(message)) if logger.info?
     end
 
     # Convenience method to log warn messages with the standard prefix.
     #
     # @example Log a warn message.
-    #   log_warn([ 'Message' ])
+    #   log_warn('Message')
     #
-    # @param [ Array<Operation, String> ] operations The operations or messages
-    #   to log.
+    # @param [ String> ] message The message to log.
     #
     # @since 2.0.0
-    def log_warn(operations, &block)
-      log(:warn, PREFIX, operations, &block)
+    def log_warn(message)
+      logger.warn(format_message(message)) if logger.warn?
+    end
+
+    # Get the logger instance.
+    #
+    # @example Get the logger instance.
+    #   loggable.logger
+    #
+    # @return [ Logger ] The logger.
+    #
+    # @since 2.1.0
+    def logger
+      @logger ||= (options[:logger] || Logger.logger)
     end
 
     private
 
-    def log_inspect(operation)
-      operation.respond_to?(:log_message) ? operation.log_message : operation
+    def format_message(message)
+      format("%s | %s".freeze, PREFIX, message)
     end
   end
 end

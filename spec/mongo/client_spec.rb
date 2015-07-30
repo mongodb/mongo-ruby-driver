@@ -222,6 +222,27 @@ describe Mongo::Client do
           expect(client[:users].name).to eq('users')
         end
       end
+
+      context 'when providing a custom logger' do
+
+        let(:logger) do
+          Logger.new($stdout).tap do |l|
+            l.level = Logger::FATAL
+          end
+        end
+
+        let(:client) do
+          authorized_client.with(logger: logger)
+        end
+
+        after do
+          client.close
+        end
+
+        it 'does not use the global logger' do
+          expect(client.cluster.logger).to_not eq(Mongo::Logger.logger)
+        end
+      end
     end
 
     context 'when providing a connection string' do

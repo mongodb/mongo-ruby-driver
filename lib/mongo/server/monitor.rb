@@ -173,7 +173,7 @@ module Mongo
             result = connection.dispatch([ ISMASTER ]).documents[0]
             return result, calculate_average_round_trip_time(start)
           rescue Exception => e
-            log_debug([ e.message ])
+            log_debug(e.message)
             return {}, calculate_average_round_trip_time(start)
           end
         end

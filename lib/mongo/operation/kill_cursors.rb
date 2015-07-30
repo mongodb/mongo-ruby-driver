@@ -33,7 +33,7 @@ module Mongo
       private
 
       def message(context)
-        Protocol::KillCursors.new(cursor_ids)
+        Protocol::KillCursors.new(coll_name, db_name, cursor_ids)
       end
     end
   end

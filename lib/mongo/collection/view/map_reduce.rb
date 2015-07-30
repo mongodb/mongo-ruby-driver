@@ -184,7 +184,7 @@ module Mongo
 
         def send_initial_query(server)
           unless valid_server?(server)
-            log_warn([ 'Rerouting the MapReduce operation to the primary server.' ])
+            log_warn('Rerouting the MapReduce operation to the primary server.')
             server = cluster.next_primary
           end
           result = initial_query_op.execute(server.context)

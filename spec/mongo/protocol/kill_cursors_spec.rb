@@ -5,8 +5,10 @@ describe Mongo::Protocol::KillCursors do
   let(:opcode)     { 2007 }
   let(:cursor_ids) { [123, 456, 789] }
   let(:id_count)   { cursor_ids.size }
+  let(:collection) { TEST_COLL }
+  let(:database)   { TEST_DB }
   let(:message) do
-    described_class.new(cursor_ids)
+    described_class.new(collection, database, cursor_ids)
   end
 
   describe '#initialize' do
@@ -26,7 +28,7 @@ describe Mongo::Protocol::KillCursors do
 
       context 'when the cursor ids are equal' do
         let(:other) do
-          described_class.new(cursor_ids)
+          described_class.new(collection, database, cursor_ids)
         end
 
         it 'returns true' do
@@ -36,7 +38,7 @@ describe Mongo::Protocol::KillCursors do
 
       context 'when the cursor ids are not equal' do
         let(:other) do
-          described_class.new([123, 456])
+          described_class.new(collection, database, [123, 456])
         end
 
         it 'returns false' do
