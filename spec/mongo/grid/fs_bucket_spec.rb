@@ -10,6 +10,14 @@ describe Mongo::Grid::FSBucket do
     { }
   end
 
+  let(:filename) do
+    'specs.rb'
+  end
+
+  let(:file) do
+    File.open(__FILE__)
+  end
+
   describe '#initialize' do
 
     it 'sets the files collection' do
@@ -387,10 +395,6 @@ describe Mongo::Grid::FSBucket do
 
   describe '#delete_one' do
 
-    let(:fs) do
-      described_class.new(authorized_client.database)
-    end
-
     let(:file) do
       Mongo::Grid::File.new('Hello!', :filename => 'test.txt')
     end
@@ -409,6 +413,25 @@ describe Mongo::Grid::FSBucket do
     end
   end
 
+  describe '#delete' do
+
+    let(:file_id) do
+      fs.upload_from_stream(filename, file)
+    end
+
+    before do
+      fs.delete(file_id)
+    end
+
+    let(:from_db) do
+      fs.find_one(:filename => filename)
+    end
+
+    it 'removes the file from the db' do
+      expect(from_db).to be_nil
+    end
+  end
+
   context 'when a read stream is opened' do
 
     let(:fs) do
@@ -417,14 +440,6 @@ describe Mongo::Grid::FSBucket do
 
     let(:io) do
       StringIO.new
-    end
-
-    let(:file) do
-      File.open(__FILE__)
-    end
-
-    let(:filename) do
-      'specs.rb'
     end
 
     after do
@@ -557,14 +572,6 @@ describe Mongo::Grid::FSBucket do
   end
 
   context 'when a write stream is opened' do
-
-    let(:filename) do
-      'specs.rb'
-    end
-
-    let(:file) do
-      File.open(__FILE__)
-    end
 
     let(:stream) do
       fs.open_upload_stream(filename)
