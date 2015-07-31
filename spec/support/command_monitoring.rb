@@ -196,6 +196,9 @@ module Mongo
 
       def matches_command?(event)
         @event_data['command'].each do |key, value|
+          if key == 'writeConcern'
+            return false if event.command[key] != BSON::Document.new(WRITE_CONCERN)
+          end
           return false if event.command[key] != value
         end
         case event.command_name
