@@ -84,7 +84,7 @@ RSpec::Matchers.define :match_options do |test|
 
   failure_message do |client|
     "With URI: #{test.uri_string}\n" +
-      "Expected that test options: #{options.options} would match client options: #{client.options}"
+      "Expected that test options: #{test.options.options} would match client options: #{client.options}"
   end
 end
 

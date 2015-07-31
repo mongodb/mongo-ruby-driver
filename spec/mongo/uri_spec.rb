@@ -4,6 +4,226 @@ describe Mongo::URI do
   let(:scheme) { 'mongodb://' }
   let(:uri) { described_class.new(string) }
 
+describe 'invalid uris' do
+
+    context 'string is not uri' do
+
+      let(:string) { 'tyler' }
+
+      it 'raises an error' do
+        expect { uri }.to raise_error(Mongo::Error::InvalidURI)
+      end
+    end
+
+    context 'empty string' do
+
+      let(:string) { '' }
+
+      it 'raises an error' do
+        expect { uri }.to raise_error(Mongo::Error::InvalidURI)
+      end
+    end
+
+    context 'mongo://localhost:27017' do
+
+      let(:string) { 'mongo://localhost:27017' }
+
+      it 'raises an error' do
+        expect { uri }.to raise_error(Mongo::Error::InvalidURI)
+      end
+    end
+
+    context 'mongodb://' do
+
+      let(:string) { 'mongodb://' }
+
+      it 'raises an error' do
+        expect { uri }.to raise_error(Mongo::Error::InvalidURI)
+      end
+    end
+
+    context 'mongodb://localhost::27017' do
+
+      let(:string) { 'mongodb://localhost::27017' }
+
+      it 'raises an error' do
+        expect { uri }.to raise_error(Mongo::Error::InvalidURI)
+      end
+    end
+
+    context 'mongodb://localhost::27017/' do
+
+      let(:string) { 'mongodb://localhost::27017/' }
+
+      it 'raises an error' do
+        expect { uri }.to raise_error(Mongo::Error::InvalidURI)
+      end
+    end
+
+    context 'mongodb://::' do
+
+      let(:string) { 'mongodb://::' }
+
+      it 'raises an error' do
+        expect { uri }.to raise_error(Mongo::Error::InvalidURI)
+      end
+    end
+
+    context 'mongodb://localhost,localhost::' do
+
+      let(:string) { 'mongodb://localhost,localhost::' }
+
+      it 'raises an error' do
+        expect { uri }.to raise_error(Mongo::Error::InvalidURI)
+      end
+    end
+
+    context 'mongodb://localhost::27017,abc' do
+
+      let(:string) { 'mongodb://localhost::27017,abc' }
+
+      it 'raises an error' do
+        expect { uri }.to raise_error(Mongo::Error::InvalidURI)
+      end
+    end
+
+    context 'mongodb://localhost:-1' do
+
+      let(:string) { 'mongodb://localhost:-1' }
+
+      it 'raises an error' do
+        expect { uri }.to raise_error(Mongo::Error::InvalidURI)
+      end
+    end
+
+    context 'mongodb://localhost:0/' do
+
+      let(:string) { 'mongodb://localhost:0/' }
+
+      it 'raises an error' do
+        expect { uri }.to raise_error(Mongo::Error::InvalidURI)
+      end
+    end
+
+    context 'mongodb://localhost:65536' do
+
+      let(:string) { 'mongodb://localhost:65536' }
+
+      it 'raises an error' do
+        expect { uri }.to raise_error(Mongo::Error::InvalidURI)
+      end
+    end
+
+    context 'mongodb://localhost:65536/' do
+
+      let(:string) { 'mongodb://localhost:65536/' }
+
+      it 'raises an error' do
+        expect { uri }.to raise_error(Mongo::Error::InvalidURI)
+      end
+    end
+
+    context 'mongodb://localhost:foo' do
+
+      let(:string) { 'mongodb://localhost:foo' }
+
+      it 'raises an error' do
+        expect { uri }.to raise_error(Mongo::Error::InvalidURI)
+      end
+    end
+
+    context 'mongodb://[::1]:-1' do
+
+      let(:string) { 'mongodb://[::1]:-1' }
+
+      it 'raises an error' do
+        expect { uri }.to raise_error(Mongo::Error::InvalidURI)
+      end
+    end
+
+    context 'mongodb://[::1]:0/' do
+
+      let(:string) { 'mongodb://[::1]:0/' }
+
+      it 'raises an error' do
+        expect { uri }.to raise_error(Mongo::Error::InvalidURI)
+      end
+    end
+
+    context 'mongodb://[::1]:65536' do
+
+      let(:string) { 'mongodb://[::1]:65536' }
+
+      it 'raises an error' do
+        expect { uri }.to raise_error(Mongo::Error::InvalidURI)
+      end
+    end
+
+    context 'mongodb://[::1]:65536/' do
+
+      let(:string) { 'mongodb://[::1]:65536/' }
+
+      it 'raises an error' do
+        expect { uri }.to raise_error(Mongo::Error::InvalidURI)
+      end
+    end
+
+    context 'mongodb://[::1]:foo' do
+
+      let(:string) { 'mongodb://[::1]:foo' }
+
+      it 'raises an error' do
+        expect { uri }.to raise_error(Mongo::Error::InvalidURI)
+      end
+    end
+
+    context 'mongodb://example.com?w=1' do
+
+      let(:string) { 'mongodb://example.com?w=1' }
+
+      it 'raises an error' do
+        expect { uri }.to raise_error
+      end
+    end
+
+    context 'mongodb://example.com/?w' do
+
+      let(:string) { 'mongodb://example.com/?w' }
+
+      it 'raises an error' do
+        expect { uri }.to raise_error
+      end
+    end
+
+    context 'mongodb://alice:foo:bar@127.0.0.1' do
+
+      let(:string) { 'mongodb://alice:foo:bar@127.0.0.1' }
+
+      it 'raises an error' do
+        expect { uri }.to raise_error(Mongo::Error::InvalidURI)
+      end
+    end
+
+    context 'mongodb://alice@@127.0.0.1' do
+
+      let(:string) { 'mongodb://alice@@127.0.0.1' }
+
+      it 'raises an error' do
+        expect { uri }.to raise_error(Mongo::Error::InvalidURI)
+      end
+    end
+
+    context 'mongodb://alice@foo:bar@127.0.0.1' do
+
+      let(:string) { 'mongodb://alice@foo:bar@127.0.0.1' }
+
+      it 'raises an error' do
+        expect { uri }.to raise_error(Mongo::Error::InvalidURI)
+      end
+    end
+
+  end
+
   describe '#initialize' do
     context 'string is not uri' do
       let(:string) { 'tyler' }
@@ -296,7 +516,7 @@ describe Mongo::URI do
         let(:expected) { :plain }
 
         it 'sets the auth mechanism to :plain' do
-          expect(uri.options[:auth_mech]).to eq(expected)
+          expect(uri.uri_options[:auth_mech]).to eq(expected)
         end
       end
 
@@ -305,7 +525,7 @@ describe Mongo::URI do
         let(:expected) { :mongodb_cr }
 
         it 'sets the auth mechanism to :mongodb_cr' do
-          expect(uri.options[:auth_mech]).to eq(expected)
+          expect(uri.uri_options[:auth_mech]).to eq(expected)
         end
       end
 
@@ -315,7 +535,7 @@ describe Mongo::URI do
 
 
         it 'sets the auth mechanism to :gssapi' do
-          expect(uri.options[:auth_mech]).to eq(expected)
+          expect(uri.uri_options[:auth_mech]).to eq(expected)
         end
       end
     end

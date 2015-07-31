@@ -29,61 +29,19 @@ module Mongo
   class URI
     include Loggable
 
-    # @return [ Hash ] options Any options provided to the parser.
     attr_reader :options
 
-    # Scheme Regex: non-capturing, matches scheme.
-    #
-    # @since 2.0.0
-    SCHEME = %r{(?:mongodb://)}.freeze
+    attr_reader :uri_options
+    attr_reader :user
+    attr_reader :password
+    attr_reader :servers
 
-    # User Regex: capturing, group 1, matches anything but ':'
-    #
-    # @since 2.0.0
-    USER = /([^:]+)/.freeze
+    UNSAFE = /[\:\/\+\@]/
 
-    # Password Regex: capturing, group 2, matches anything but '@'
+    # The mongodb connection string scheme.
     #
-    # @since 2.0.0
-    PASSWORD = /([^@]+)/.freeze
-
-    # Credentials Regex: non capturing, matches 'user:password@'
-    #
-    # @since 2.0.0
-    CREDENTIALS = /(?:#{USER}:#{PASSWORD}?@)?/.freeze
-
-    # Host and port server Regex: matches anything but a forward slash
-    #
-    # @since 2.0.0
-    HOSTPORT = /[^\/]+/.freeze
-
-    # Unix socket server Regex: matches unix socket server
-    #
-    # @since 2.0.0
-    UNIX = /\/.+.sock?/.freeze
-
-    # server Regex: capturing, matches host and port server or unix server
-    #
-    # @since 2.0.0
-    SERVERS = /((?:(?:#{HOSTPORT}|#{UNIX}),?)+)/.freeze
-
-    # Database Regex: matches anything but the characters that cannot
-    # be part of any MongoDB database name.
-    #
-    # @since 2.0.0
-    DATABASE = %r{(?:/([^/\.\ "*<>:\|\?]*))?}.freeze
-
-    # Option Regex: only matches the ampersand separator and does
-    # not allow for semicolon to be used to separate options.
-    #
-    # @since 2.0.0
-    OPTIONS = /(?:\?(?:(.+=.+)&?)+)*/.freeze
-
-    # Complete URI Regex: matches all of the combined components
-    #
-    # @since 2.0.0
-    URI = /#{SCHEME}#{CREDENTIALS}#{SERVERS}#{DATABASE}#{OPTIONS}/.freeze
-
+    # @since 2.1.0
+    SCHEME = 'mongodb://'.freeze
 
     # MongoDB URI format specification.
     #
@@ -130,8 +88,9 @@ module Mongo
     def initialize(string, options = {})
       @string = string
       @options = options
-      @match = @string.match(URI)
-      raise Error::InvalidURI.new(string) unless @match
+      @remaining = @string.split(SCHEME)[1]
+      raise Error::InvalidURI.new(@string) unless @remaining
+      setup!
     end
 
     # Get the servers provided in the URI.
@@ -142,8 +101,24 @@ module Mongo
     # @return [ Array<String> ] The servers.
     #
     # @since 2.0.0
-    def servers
-      @match[3].split(',')
+    def parse_servers!
+      raise Error::InvalidURI.new(@string) unless @remaining.size > 0
+      @servers ||= @remaining.split(',').reduce([]) do |servers, host|
+        if host[0] == '['
+          if host.index(']:')
+            h, p = host.split(']:')
+          raise Error::InvalidURI.new(@string) unless p.length > 0
+          raise Error::InvalidURI.new(@string) unless p.to_i > 0 && p.to_i <= 65535
+          end
+        elsif host.index(':')
+          raise Error::InvalidURI.new(@string) unless host.count(':') == 1
+          h, p = host.split(':')
+          raise Error::InvalidURI.new(@string) unless h
+          raise Error::InvalidURI.new(@string) unless p.length > 0
+          raise Error::InvalidURI.new(@string) unless p.to_i > 0 && p.to_i <= 65535
+        end
+        servers << host
+      end
     end
 
     # Gets the options hash that needs to be passed to a Mongo::Client on
@@ -184,7 +159,7 @@ module Mongo
     #
     # @since 2.0.0
     def database
-      @match[4].nil? ? Database::ADMIN : @match[4]
+      @database || Database::ADMIN
     end
 
     # Get the options provided in the URI.
@@ -211,10 +186,12 @@ module Mongo
     #   * :tag_sets [Array<Hash>] read tag sets
     #
     # @since 2.0.0
-    def uri_options
-      parsed_options = @match[5]
-      return {} unless parsed_options
-      parsed_options.split('&').reduce({}) do |options, option|
+
+
+    def parse_options!
+      return {} unless @options_part
+      @options_part.split('&').reduce({}) do |options, option|
+        raise Error::InvalidURI.new(@string) unless option.index('=')
         key, value = option.split('=')
         strategy = OPTION_MAP[key.downcase]
         if strategy.nil?
@@ -227,6 +204,66 @@ module Mongo
     end
 
     private
+
+    def extract_options!
+      if @remaining.index('?')
+        @options_part = @remaining[@remaining.index('?')+1..-1]
+        @remaining = @remaining[0...@remaining.index('?')]
+      end
+      parse_options!
+    end
+
+    def parse_user!
+      if (@auth_part && user = @auth_part.partition(':')[0])
+        escaped = ::URI.encode(user)
+        raise Error::InvalidURI.new(@string) if user =~ UNSAFE
+        user
+      end
+    end
+
+    def parse_password!
+      if (@auth_part && pwd = @auth_part.partition(':')[2])
+        raise Error::InvalidURI.new(@string) if pwd =~ UNSAFE
+        pwd
+      end
+    end
+
+    def extract_auth!
+      if @remaining.index('@')
+        @auth_part = @remaining[0...-(@remaining.reverse.index('@')+1)]
+        @remaining = @remaining[@auth_part.size+1..-1]
+      end
+      [ parse_user!, parse_password! ]
+    end
+
+    def extract_database!
+      if @remaining.index('/')
+        if @remaining.reverse.index('/') == 0
+            @database_part = nil
+            @remaining = @remaining[0...-1]
+        else
+          db = @remaining[-(@remaining.reverse.index('/'))..-1]
+          unless db.end_with?('.sock')
+            @database_part = db
+            @remaining = @remaining[0..-(@database_part.size+2)]
+          end
+        end
+      elsif @options_part
+        raise Exception 'Need a slash before options'
+      end
+      @database_part
+    end
+
+    def extract_servers!
+      parse_servers!
+    end
+
+    def setup!
+      @uri_options = extract_options!
+      @user, @password = extract_auth!
+      @database = extract_database!
+      @servers = extract_servers!
+    end
 
     # Hash for storing map of URI option parameters to conversion strategies
     OPTION_MAP = {}
@@ -277,20 +314,6 @@ module Mongo
     option 'authmechanism', :auth_mech, :type => :auth_mech
     option 'authmechanismproperties', :auth_mech_properties, :group => :auth,
            :type => :auth_mech_props
-
-    # Gets the user provided in the URI
-    #
-    # @return [String] The user.
-    def user
-      @match[1]
-    end
-
-    # Gets the password provided in the URI
-    #
-    # @return [String] The password.
-    def password
-      @match[2]
-    end
 
     # Casts option values that do not have a specifically provided
     # transofrmation to the appropriate type.
