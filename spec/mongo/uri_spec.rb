@@ -182,7 +182,7 @@ describe 'invalid uris' do
       let(:string) { 'mongodb://example.com?w=1' }
 
       it 'raises an error' do
-        expect { uri }.to raise_error
+        expect { uri }.to raise_error(Mongo::Error::InvalidURI)
       end
     end
 
@@ -191,7 +191,7 @@ describe 'invalid uris' do
       let(:string) { 'mongodb://example.com/?w' }
 
       it 'raises an error' do
-        expect { uri }.to raise_error
+        expect { uri }.to raise_error(Mongo::Error::InvalidURI)
       end
     end
 

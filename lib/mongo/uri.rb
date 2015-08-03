@@ -30,10 +30,7 @@ module Mongo
     include Loggable
 
     attr_reader :options
-
     attr_reader :uri_options
-    attr_reader :user
-    attr_reader :password
     attr_reader :servers
 
     UNSAFE = /[\:\/\+\@]/
@@ -42,6 +39,24 @@ module Mongo
     #
     # @since 2.1.0
     SCHEME = 'mongodb://'.freeze
+
+    HOST_DELIM = ','.freeze
+    HOST_PORT_DELIM = ':'.freeze
+    DATABSE_DELIM = '/'.freeze
+    URI_OPTS_DELIM = '?'.freeze
+    INDIV_URI_OPTS_DELIM = '&'.freeze
+    URI_OPTS_VALUE_DELIM = '='.freeze
+    AUTH_USER_PWD_DELIM = ':'.freeze
+    AUTH_DELIM = '@'.freeze
+
+    INVALID_SCHEME = "Invalid scheme. Scheme must be '#{SCHEME}'".freeze
+    INVALID_OPTS_VALUE_DELIM = "Options and their values must be deliminited" +
+      " by '#{URI_OPTS_VALUE_DELIM}'".freeze
+    UNESCAPED_USER_PWD = "User name and password must be URI-escaped.".freeze
+    INVALID_DB_DELIM = "Database must be delimited by a #{DATABSE_DELIM}.".freeze
+    INVALID_HOST = "At least one host must be specified.".freeze
+    INVALID_PORT = "Invalid port. Port must be greater than 0 and less than 65536".freeze
+    INVALID_HOST_PORT= "Invalid host:port format.".freeze
 
     # MongoDB URI format specification.
     #
@@ -88,37 +103,9 @@ module Mongo
     def initialize(string, options = {})
       @string = string
       @options = options
-      @remaining = @string.split(SCHEME)[1]
-      raise Error::InvalidURI.new(@string) unless @remaining
-      setup!
-    end
-
-    # Get the servers provided in the URI.
-    #
-    # @example Get the servers.
-    #   uri.servers
-    #
-    # @return [ Array<String> ] The servers.
-    #
-    # @since 2.0.0
-    def parse_servers!
-      raise Error::InvalidURI.new(@string) unless @remaining.size > 0
-      @servers ||= @remaining.split(',').reduce([]) do |servers, host|
-        if host[0] == '['
-          if host.index(']:')
-            h, p = host.split(']:')
-          raise Error::InvalidURI.new(@string) unless p.length > 0
-          raise Error::InvalidURI.new(@string) unless p.to_i > 0 && p.to_i <= 65535
-          end
-        elsif host.index(':')
-          raise Error::InvalidURI.new(@string) unless host.count(':') == 1
-          h, p = host.split(':')
-          raise Error::InvalidURI.new(@string) unless h
-          raise Error::InvalidURI.new(@string) unless p.length > 0
-          raise Error::InvalidURI.new(@string) unless p.to_i > 0 && p.to_i <= 65535
-        end
-        servers << host
-      end
+      remaining = @string.split(SCHEME)[1]
+      raise_error!(INVALID_SCHEME) unless remaining
+      setup!(remaining)
     end
 
     # Gets the options hash that needs to be passed to a Mongo::Client on
@@ -133,7 +120,7 @@ module Mongo
     # @since 2.0.0
     def client_options
       opts = uri_options.merge(:database => database)
-      user ? opts.merge(credentials) : opts
+      @user ? opts.merge(credentials) : opts
     end
 
     # Get the credentials provided in the URI.
@@ -147,7 +134,7 @@ module Mongo
     #
     # @since 2.0.0
     def credentials
-      { :user => user, :password => password }
+      { :user => @user, :password => @password }
     end
 
     # Get the database provided in the URI.
@@ -162,37 +149,13 @@ module Mongo
       @database || Database::ADMIN
     end
 
-    # Get the options provided in the URI.
-    #
-    # @example Get The options.
-    #   uri.options
-    #
-    # @return [Hash] The options.
-    #
-    #   Generic Options
-    #   * :replica_set [String] replica set name
-    #   * :connect_timeout [Fixnum] connect timeout
-    #   * :socket_timeout [Fixnum] socket timeout
-    #   * :ssl [true, false] ssl enabled?
-    #
-    #   Write Options (returned in a hash under the :write key)
-    #   * :w [String, Fixnum] write concern value
-    #   * :j [true, false] journal
-    #   * :fsync [true, false] fsync
-    #   * :timeout [Fixnum] timeout for write operation
-    #
-    #   Read Options (returned in a hash under the :read key)
-    #   * :mode [Symbol]  read mode
-    #   * :tag_sets [Array<Hash>] read tag sets
-    #
-    # @since 2.0.0
+    private
 
-
-    def parse_options!
-      return {} unless @options_part
-      @options_part.split('&').reduce({}) do |options, option|
-        raise Error::InvalidURI.new(@string) unless option.index('=')
-        key, value = option.split('=')
+    def parse_uri_options!(part, remaining)
+      return {} unless part
+      part.split(INDIV_URI_OPTS_DELIM).reduce({}) do |options, option|
+        raise_error!(INVALID_OPTS_VALUE_DELIM) unless option.index(URI_OPTS_VALUE_DELIM)
+        key, value = option.split(URI_OPTS_VALUE_DELIM)
         strategy = OPTION_MAP[key.downcase]
         if strategy.nil?
           log_warn("Unsupported URI option '#{key}' on URI '#{@string}'. It will be ignored.")
@@ -203,66 +166,91 @@ module Mongo
       end
     end
 
-    private
-
-    def extract_options!
-      if @remaining.index('?')
-        @options_part = @remaining[@remaining.index('?')+1..-1]
-        @remaining = @remaining[0...@remaining.index('?')]
+    def extract_uri_options!(remaining)
+      if index = remaining.index(URI_OPTS_DELIM)
+        part = remaining[index+1..-1]
+        remaining = remaining[0...index]
       end
-      parse_options!
+      [ parse_uri_options!(part, remaining), remaining ]
     end
 
-    def parse_user!
-      if (@auth_part && user = @auth_part.partition(':')[0])
-        escaped = ::URI.encode(user)
-        raise Error::InvalidURI.new(@string) if user =~ UNSAFE
-        user
+    def parse_user!(part)
+      if (part && user = part.partition(AUTH_USER_PWD_DELIM)[0])
+        raise_error!(UNESCAPED_USER_PWD) if user =~ UNSAFE
+        ::URI.encode(user)
       end
     end
 
-    def parse_password!
-      if (@auth_part && pwd = @auth_part.partition(':')[2])
-        raise Error::InvalidURI.new(@string) if pwd =~ UNSAFE
-        pwd
+    def parse_password!(part)
+      if (part && pwd = part.partition(AUTH_USER_PWD_DELIM)[2])
+        raise_error!(UNESCAPED_USER_PWD) if pwd =~ UNSAFE
+        ::URI.encode(pwd)
       end
     end
 
-    def extract_auth!
-      if @remaining.index('@')
-        @auth_part = @remaining[0...-(@remaining.reverse.index('@')+1)]
-        @remaining = @remaining[@auth_part.size+1..-1]
+    def extract_auth!(remaining)
+      if index = remaining.reverse.index(AUTH_DELIM)
+        part = remaining[0...-(index+1)]
+        remaining = remaining[part.size+1..-1]
       end
-      [ parse_user!, parse_password! ]
+      [ parse_user!(part), parse_password!(part), remaining ]
     end
 
-    def extract_database!
-      if @remaining.index('/')
-        if @remaining.reverse.index('/') == 0
-            @database_part = nil
-            @remaining = @remaining[0...-1]
+    def extract_database!(remaining)
+      if index = remaining.reverse.index(DATABSE_DELIM)
+        if index == 0
+            part = nil
+            remaining = remaining[0...-1]
         else
-          db = @remaining[-(@remaining.reverse.index('/'))..-1]
+          db = remaining[-index..-1]
           unless db.end_with?('.sock')
-            @database_part = db
-            @remaining = @remaining[0..-(@database_part.size+2)]
+            part = db
+            remaining = remaining[0..-(part.size+2)]
           end
         end
-      elsif @options_part
-        raise Exception 'Need a slash before options'
+      elsif !@uri_options.empty?
+        raise_error!(INVALID_DB_DELIM)
       end
-      @database_part
+      [ part, remaining ]
     end
 
-    def extract_servers!
-      parse_servers!
+    def validate_port_string!(port)
+      unless port.nil? || (port.length > 0 && port.to_i > 0 && port.to_i <= 65535)
+        raise_error!(INVALID_PORT)
+      end
     end
 
-    def setup!
-      @uri_options = extract_options!
-      @user, @password = extract_auth!
-      @database = extract_database!
-      @servers = extract_servers!
+    def parse_servers!(remaining)
+      raise_error!(INVALID_HOST) unless remaining.size > 0
+      remaining.split(HOST_DELIM).reduce([]) do |servers, host|
+        if host[0] == '['
+          if host.index(']:')
+            h, p = host.split(']:')
+            validate_port_string!(p)
+          end
+        elsif host.index(HOST_PORT_DELIM)
+          raise_error!(INVALID_HOST_PORT) unless host.count(HOST_PORT_DELIM) == 1
+          h, p = host.split(HOST_PORT_DELIM)
+          raise_error!(INVALID_HOST) unless h
+          validate_port_string!(p)
+        end
+        servers << host
+      end
+    end
+
+    def extract_servers!(remaining)
+      [ parse_servers!(remaining), remaining ]
+    end
+
+    def raise_error!(details)
+      raise Error::InvalidURI.new(@string, details)
+    end
+
+    def setup!(remaining)
+      @uri_options, remaining = extract_uri_options!(remaining)
+      @user, @password, remaining = extract_auth!(remaining) if remaining
+      @database, remaining = extract_database!(remaining) if remaining
+      @servers, remaining = extract_servers!(remaining) if remaining
     end
 
     # Hash for storing map of URI option parameters to conversion strategies

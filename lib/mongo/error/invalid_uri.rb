@@ -27,10 +27,11 @@ module Mongo
       #   Mongo::Error::InvalidURI.new(uri)
       #
       # @since 2.0.0
-      def initialize(uri)
-        super("MongoDB URI must be in the following format: #{Mongo::URI::FORMAT}\n" +
-        "Please see the following URL for more information: #{Mongo::URI::HELP}\n" +
-        "Bad URI: #{uri}")
+      def initialize(uri, details)
+        super("Bad URI: #{uri}\n" +
+        "#{details}\n" +
+        "MongoDB URI must be in the following format: #{Mongo::URI::FORMAT}\n" +
+        "Please see the following URL for more information: #{Mongo::URI::HELP}\n")
       end
     end
   end
