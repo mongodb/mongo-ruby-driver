@@ -296,7 +296,7 @@ module Mongo
     end
 
     def create_from_uri(connection_string, opts = {})
-      uri = URI.new(connection_string, options)
+      uri = URI.new(connection_string, opts)
       @options = Database::DEFAULT_OPTIONS.merge(uri.client_options.merge(opts)).freeze
       @cluster = Cluster.new(uri.servers, @monitoring, options)
       @database = Database.new(self, options[:database], options)
