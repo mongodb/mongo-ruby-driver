@@ -29,33 +29,105 @@ module Mongo
   class URI
     include Loggable
 
+    # The uri parser object options.
+    #
+    # @since 2.1.0
     attr_reader :options
+
+    # The options specified in the uri.
+    #
+    # @since 2.1.0
     attr_reader :uri_options
+
+    # The servers specified in the uri.
+    #
+    # @since 2.1.0
     attr_reader :servers
 
+    # Unsafe characters that must be URI-escaped.
+    #
+    # @since 2.1.0
     UNSAFE = /[\:\/\+\@]/
 
     # The mongodb connection string scheme.
     #
-    # @since 2.1.0
+    # @since 2.0.0
     SCHEME = 'mongodb://'.freeze
 
+    # The character delimiting hosts.
+    #
+    # @since 2.1.0
     HOST_DELIM = ','.freeze
+
+    # The character separating a host and port.
+    #
+    # @since 2.1.0
     HOST_PORT_DELIM = ':'.freeze
+
+    # The character delimiting a database.
+    #
+    # @since 2.1.0
     DATABSE_DELIM = '/'.freeze
+
+    # The character delimiting options.
+    #
+    # @since 2.1.0
     URI_OPTS_DELIM = '?'.freeze
+
+    # The character delimiting multiple options.
+    #
+    # @since 2.1.0
     INDIV_URI_OPTS_DELIM = '&'.freeze
+
+    # The character delimiting an option and its value.
+    #
+    # @since 2.1.0
     URI_OPTS_VALUE_DELIM = '='.freeze
+
+    # The character separating a username from the password.
+    #
+    # @since 2.1.0
     AUTH_USER_PWD_DELIM = ':'.freeze
+
+    # The character delimiting auth credentials.
+    #
+    # @since 2.1.0
     AUTH_DELIM = '@'.freeze
 
+    # Error details for an invalid scheme.
+    #
+    # @since 2.1.0
     INVALID_SCHEME = "Invalid scheme. Scheme must be '#{SCHEME}'".freeze
-    INVALID_OPTS_VALUE_DELIM = "Options and their values must be deliminited" +
+
+    # Error details for an invalid options format.
+    #
+    # @since 2.1.0
+    INVALID_OPTS_VALUE_DELIM = "Options and their values must be delimited" +
       " by '#{URI_OPTS_VALUE_DELIM}'".freeze
+
+    # Error details for an un-escaped user name or password.
+    #
+    # @since 2.1.0
     UNESCAPED_USER_PWD = "User name and password must be URI-escaped.".freeze
+
+    # Error details for a non-delimited database name.
+    #
+    # @since 2.1.0
     INVALID_DB_DELIM = "Database must be delimited by a #{DATABSE_DELIM}.".freeze
+
+    # Error details for a missing host.
+    #
+    # @since 2.1.0
     INVALID_HOST = "At least one host must be specified.".freeze
+
+    # Error details for an invalid port.
+    #
+    # @since 2.1.0
     INVALID_PORT = "Invalid port. Port must be greater than 0 and less than 65536".freeze
+
+    # Error details for an invalid host:port format.
+    #
+    # @since 2.1.0
     INVALID_HOST_PORT= "Invalid host:port format.".freeze
 
     # MongoDB URI format specification.
@@ -97,14 +169,14 @@ module Mongo
     # @param [ String ] string The uri string.
     # @param [ Hash ] options The options.
     #
-    # @raise [ BadURI ] If the uri does not match the spec.
+    # @raise [ Error::InvalidURI ] If the uri does not match the spec.
     #
     # @since 2.0.0
     def initialize(string, options = {})
       @string = string
       @options = options
       remaining = @string.split(SCHEME)[1]
-      raise_error!(INVALID_SCHEME) unless remaining
+      raise_invalid_error!(INVALID_SCHEME) unless remaining
       setup!(remaining)
     end
 
@@ -154,7 +226,7 @@ module Mongo
     def parse_uri_options!(part, remaining)
       return {} unless part
       part.split(INDIV_URI_OPTS_DELIM).reduce({}) do |uri_options, opt|
-        raise_error!(INVALID_OPTS_VALUE_DELIM) unless opt.index(URI_OPTS_VALUE_DELIM)
+        raise_invalid_error!(INVALID_OPTS_VALUE_DELIM) unless opt.index(URI_OPTS_VALUE_DELIM)
         key, value = opt.split(URI_OPTS_VALUE_DELIM)
         strategy = URI_OPTION_MAP[key.downcase]
         if strategy.nil?
@@ -176,14 +248,14 @@ module Mongo
 
     def parse_user!(part)
       if (part && user = part.partition(AUTH_USER_PWD_DELIM)[0])
-        raise_error!(UNESCAPED_USER_PWD) if user =~ UNSAFE
+        raise_invalid_error!(UNESCAPED_USER_PWD) if user =~ UNSAFE
         ::URI.decode(user)
       end
     end
 
     def parse_password!(part)
       if (part && pwd = part.partition(AUTH_USER_PWD_DELIM)[2])
-        raise_error!(UNESCAPED_USER_PWD) if pwd =~ UNSAFE
+        raise_invalid_error!(UNESCAPED_USER_PWD) if pwd =~ UNSAFE
         ::URI.decode(pwd) unless pwd.length == 0
       end
     end
@@ -209,19 +281,19 @@ module Mongo
           end
         end
       elsif !@uri_options.empty?
-        raise_error!(INVALID_DB_DELIM)
+        raise_invalid_error!(INVALID_DB_DELIM)
       end
       [ part, remaining ]
     end
 
     def validate_port_string!(port)
       unless port.nil? || (port.length > 0 && port.to_i > 0 && port.to_i <= 65535)
-        raise_error!(INVALID_PORT)
+        raise_invalid_error!(INVALID_PORT)
       end
     end
 
     def parse_servers!(remaining)
-      raise_error!(INVALID_HOST) unless remaining.size > 0
+      raise_invalid_error!(INVALID_HOST) unless remaining.size > 0
       remaining.split(HOST_DELIM).reduce([]) do |servers, host|
         if host[0] == '['
           if host.index(']:')
@@ -229,9 +301,9 @@ module Mongo
             validate_port_string!(p)
           end
         elsif host.index(HOST_PORT_DELIM)
-          raise_error!(INVALID_HOST_PORT) unless host.count(HOST_PORT_DELIM) == 1
+          raise_invalid_error!(INVALID_HOST_PORT) unless host.count(HOST_PORT_DELIM) == 1
           h, p = host.split(HOST_PORT_DELIM)
-          raise_error!(INVALID_HOST) unless h
+          raise_invalid_error!(INVALID_HOST) unless h
           validate_port_string!(p)
         end
         servers << host
@@ -242,7 +314,7 @@ module Mongo
       [ parse_servers!(remaining), remaining ]
     end
 
-    def raise_error!(details)
+    def raise_invalid_error!(details)
       raise Error::InvalidURI.new(@string, details)
     end
 
