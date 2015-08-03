@@ -153,25 +153,25 @@ tests:
                 port: ~
         auth: ~
         options: ~
-#    -
-#        description: "Multiple Unix domain sockets with auth DB resembling a path (absolute path)"
-#        uri: "mongodb:///tmp/mongodb-27017.sock,/tmp/mongodb-27018.sock/admin.shoe"
-#        valid: true
-#        warning: false
-#        hosts:
-#            -
-#                type: "unix"
-#                host: "/tmp/mongodb-27017.sock"
-#                port: ~
-#            -
-#                type: "unix"
-#                host: "/tmp/mongodb-27018.sock"
-#                port: ~
-#        auth:
-#            username: ~
-#            password: ~
-#            db: "admin.shoe"
-#        options: ~
+    -
+        description: "Multiple Unix domain sockets with auth DB resembling a path (absolute path)"
+        uri: "mongodb:///tmp/mongodb-27017.sock,/tmp/mongodb-27018.sock/admin.shoe"
+        valid: true
+        warning: false
+        hosts:
+            -
+                type: "unix"
+                host: "/tmp/mongodb-27017.sock"
+                port: ~
+            -
+                type: "unix"
+                host: "/tmp/mongodb-27018.sock"
+                port: ~
+        auth:
+            username: ~
+            password: ~
+            db: "admin.shoe"
+        options: ~
     -
         description: "Multiple Unix domain sockets with auth and query string (absolute path)"
         uri: "mongodb://bob:bar@/tmp/mongodb-27017.sock,/tmp/mongodb-27018.sock/admin?w=1"

@@ -60,11 +60,16 @@ RSpec::Matchers.define :match_auth do |test|
     client.options[:database] == auth.database || !auth.database
   end
 
+  def match_password?(client, auth)
+    client.options[:password] == auth.password ||
+      client.options[:password].nil? && auth.password == ''
+  end
+
   match do |client|
     auth = test.auth
     return true unless auth
     client.options[:user] == auth.username &&
-      client.options[:password] == auth.password &&
+      match_password?(client, auth) &&
         match_database?(client, auth)
   end
 

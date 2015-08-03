@@ -146,23 +146,23 @@ module Mongo
     #
     # @since 2.0.0
     def database
-      @database || Database::ADMIN
+      @database ? ::URI.decode(@database) : Database::ADMIN
     end
 
     private
 
     def parse_uri_options!(part, remaining)
       return {} unless part
-      part.split(INDIV_URI_OPTS_DELIM).reduce({}) do |options, option|
-        raise_error!(INVALID_OPTS_VALUE_DELIM) unless option.index(URI_OPTS_VALUE_DELIM)
-        key, value = option.split(URI_OPTS_VALUE_DELIM)
-        strategy = OPTION_MAP[key.downcase]
+      part.split(INDIV_URI_OPTS_DELIM).reduce({}) do |uri_options, opt|
+        raise_error!(INVALID_OPTS_VALUE_DELIM) unless opt.index(URI_OPTS_VALUE_DELIM)
+        key, value = opt.split(URI_OPTS_VALUE_DELIM)
+        strategy = URI_OPTION_MAP[key.downcase]
         if strategy.nil?
           log_warn("Unsupported URI option '#{key}' on URI '#{@string}'. It will be ignored.")
         else
-          add_option(strategy, value, options)
+          add_uri_option(strategy, value, uri_options)
         end
-        options
+        uri_options
       end
     end
 
@@ -177,14 +177,14 @@ module Mongo
     def parse_user!(part)
       if (part && user = part.partition(AUTH_USER_PWD_DELIM)[0])
         raise_error!(UNESCAPED_USER_PWD) if user =~ UNSAFE
-        ::URI.encode(user)
+        ::URI.decode(user)
       end
     end
 
     def parse_password!(part)
       if (part && pwd = part.partition(AUTH_USER_PWD_DELIM)[2])
         raise_error!(UNESCAPED_USER_PWD) if pwd =~ UNSAFE
-        ::URI.encode(pwd)
+        ::URI.decode(pwd) unless pwd.length == 0
       end
     end
 
@@ -254,53 +254,53 @@ module Mongo
     end
 
     # Hash for storing map of URI option parameters to conversion strategies
-    OPTION_MAP = {}
+    URI_OPTION_MAP = {}
 
-    # Simple internal dsl to register a MongoDB URI option in the OPTION_MAP.
+    # Simple internal dsl to register a MongoDB URI option in the URI_OPTION_MAP.
     #
     # @param uri_key [String] The MongoDB URI option to register.
     # @param name [Symbol] The name of the option in the driver.
     # @param extra [Hash] Extra options.
     #   * :group [Symbol] Nested hash where option will go.
     #   * :type [Symbol] Name of function to transform value.
-    def self.option(uri_key, name, extra = {})
-      OPTION_MAP[uri_key] = { :name => name }.merge(extra)
+    def self.uri_option(uri_key, name, extra = {})
+      URI_OPTION_MAP[uri_key] = { :name => name }.merge(extra)
     end
 
     # Replica Set Options
-    option 'replicaset', :replica_set, :type => :replica_set
+    uri_option 'replicaset', :replica_set, :type => :replica_set
 
     # Timeout Options
-    option 'connecttimeoutms', :connect_timeout, :type => :ms_convert
-    option 'sockettimeoutms', :socket_timeout, :type => :ms_convert
-    option 'serverselectiontimeoutms', :server_selection_timeout, :type => :ms_convert
-    option 'localthresholdms', :local_threshold, :type => :ms_convert
+    uri_option 'connecttimeoutms', :connect_timeout, :type => :ms_convert
+    uri_option 'sockettimeoutms', :socket_timeout, :type => :ms_convert
+    uri_option 'serverselectiontimeoutms', :server_selection_timeout, :type => :ms_convert
+    uri_option 'localthresholdms', :local_threshold, :type => :ms_convert
 
     # Write Options
-    option 'w', :w, :group => :write
-    option 'journal', :j, :group => :write
-    option 'fsync', :fsync, :group => :write
-    option 'wtimeoutms', :timeout, :group => :write
+    uri_option 'w', :w, :group => :write
+    uri_option 'journal', :j, :group => :write
+    uri_option 'fsync', :fsync, :group => :write
+    uri_option 'wtimeoutms', :timeout, :group => :write
 
     # Read Options
-    option 'readpreference', :mode, :group => :read, :type => :read_mode
-    option 'readpreferencetags', :tag_sets, :group => :read, :type => :read_tags
+    uri_option 'readpreference', :mode, :group => :read, :type => :read_mode
+    uri_option 'readpreferencetags', :tag_sets, :group => :read, :type => :read_tags
 
     # Pool options
-    option 'minpoolsize', :min_pool_size
-    option 'maxpoolsize', :max_pool_size
-    option 'waitqueuetimeoutms', :wait_queue_timeout, :type => :ms_convert
+    uri_option 'minpoolsize', :min_pool_size
+    uri_option 'maxpoolsize', :max_pool_size
+    uri_option 'waitqueuetimeoutms', :wait_queue_timeout, :type => :ms_convert
 
     # Security Options
-    option 'ssl', :ssl
+    uri_option 'ssl', :ssl
 
     # Topology options
-    option 'connect', :connect
+    uri_option 'connect', :connect
 
     # Auth Options
-    option 'authsource', :source, :group => :auth, :type => :auth_source
-    option 'authmechanism', :auth_mech, :type => :auth_mech
-    option 'authmechanismproperties', :auth_mech_properties, :group => :auth,
+    uri_option 'authsource', :source, :group => :auth, :type => :auth_source
+    uri_option 'authmechanism', :auth_mech, :type => :auth_mech
+    uri_option 'authmechanismproperties', :auth_mech_properties, :group => :auth,
            :type => :auth_mech_props
 
     # Casts option values that do not have a specifically provided
@@ -340,11 +340,11 @@ module Mongo
     # @param group [Symbol] Group subtarget.
     #
     # @return [Hash] The target for the option.
-    def select_target(options, group = nil)
+    def select_target(uri_options, group = nil)
       if group
-        options[group] ||= {}
+        uri_options[group] ||= {}
       else
-        options
+        uri_options
       end
     end
 
@@ -359,7 +359,7 @@ module Mongo
     # @param target [Hash] The destination.
     # @param value [Object] The value to be merged.
     # @param name [Symbol] The name of the option.
-    def merge_option(target, value, name)
+    def merge_uri_option(target, value, name)
       if target.key?(name)
         target[name] += value
       else
@@ -367,7 +367,7 @@ module Mongo
       end
     end
 
-    # Adds an option to the options hash via the supplied strategy.
+    # Adds an option to the uri options hash via the supplied strategy.
     #
     #   Acquires a target for the option based on group.
     #   Transforms the value.
@@ -376,10 +376,10 @@ module Mongo
     # @param strategy [Symbol] The strategy for this option.
     # @param value [String] The value of the option.
     # @param options [Hash] The base option target.
-    def add_option(strategy, value, options)
-      target = select_target(options, strategy[:group])
+    def add_uri_option(strategy, value, uri_options)
+      target = select_target(uri_options, strategy[:group])
       value = apply_transform(value, strategy[:type])
-      merge_option(target, value, strategy[:name])
+      merge_uri_option(target, value, strategy[:name])
     end
 
     # Replica set transformation, avoid converting to Symbol.
@@ -388,7 +388,7 @@ module Mongo
     #
     # @return [String] Same value to avoid cast to Symbol.
     def replica_set(value)
-      value
+      ::URI.decode(value)
     end
 
     # Auth source transformation, either db string or :external.
@@ -472,7 +472,7 @@ module Mongo
     def hash_extractor(value)
       value.split(',').reduce({}) do |set, tag|
         k, v = tag.split(':')
-        set.merge(k.downcase.to_sym => v)
+        set.merge(::URI.decode(k).downcase.to_sym => ::URI.decode(v))
       end
     end
   end
