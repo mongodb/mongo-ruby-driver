@@ -149,6 +149,8 @@ module Mongo
     # @option options [ true, false ] :monitoring Initializes a client without
     #   any default monitoring if false is provided.
     # @option options [ Logger ] :logger A custom logger if desired.
+    # @option options [ true, false ] :truncate_logs Whether to truncate the
+    #   logs at the default 250 characters.
     #
     # @since 2.0.0
     def initialize(addresses_or_uri, options = {})

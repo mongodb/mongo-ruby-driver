@@ -83,13 +83,23 @@ module Mongo
       private
 
       def format_command(args)
-        ((s = args.inspect).length > LOG_STRING_LIMIT) ? "#{s[0..LOG_STRING_LIMIT]}..." : s
-      rescue ArgumentError
-        '<Unable to inspect arguments>'
+        begin
+          truncating? ? truncate(args) : args.inspect
+        rescue ArgumentError
+          '<Unable to inspect arguments>'
+        end
       end
 
       def prefix(event)
         "#{event.address.to_s} | #{event.database_name}.#{event.command_name}"
+      end
+
+      def truncate(command)
+        ((s = command.inspect).length > LOG_STRING_LIMIT) ? "#{s[0..LOG_STRING_LIMIT]}..." : s
+      end
+
+      def truncating?
+        @truncating ||= (options[:truncate_logs] != false)
       end
     end
   end
