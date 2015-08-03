@@ -31,7 +31,7 @@ module Mongo
 
     # The uri parser object options.
     #
-    # @since 2.1.0
+    # @since 2.0.0
     attr_reader :options
 
     # The options specified in the uri.
@@ -41,7 +41,7 @@ module Mongo
 
     # The servers specified in the uri.
     #
-    # @since 2.1.0
+    # @since 2.0.0
     attr_reader :servers
 
     # Unsafe characters that must be URI-escaped.

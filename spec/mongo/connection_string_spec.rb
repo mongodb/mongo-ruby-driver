@@ -97,7 +97,7 @@ describe 'ConnectionString' do
             it 'raises an error' do
               expect{
                 test.uri
-              }.to raise_exception#(Mongo::Error::InvalidURI)
+              }.to raise_exception(Mongo::Error::InvalidURI)
             end
           end
 
