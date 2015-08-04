@@ -85,7 +85,7 @@ module Mongo
       def format_command(args)
         begin
           truncating? ? truncate(args) : args.inspect
-        rescue ArgumentError
+        rescue Exception
           '<Unable to inspect arguments>'
         end
       end
