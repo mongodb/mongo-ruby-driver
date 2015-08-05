@@ -13,14 +13,11 @@ describe 'GridFS' do
 
         context(test.description) do
 
-          before do
-            test.arrange
-          end
-
           after do
             fs.files_collection.delete_many
             fs.chunks_collection.delete_many
-            test.clear_collections
+            test.expected_files_collection.delete_many
+            test.expected_chunks_collection.delete_many
           end
 
           let!(:result) do
@@ -32,11 +29,11 @@ describe 'GridFS' do
           end
 
           it "raises the correct error", if: test.error? do
-            expect(result).to be_a(test.error)
+            expect(result).to match_error(test.error)
           end
 
           it 'completes successfully', unless: test.error? do
-            expect(result).to completes_successfully
+            expect(result).to completes_successfully(test)
           end
 
           it 'has the correct documents in the files collection' do
