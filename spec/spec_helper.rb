@@ -26,6 +26,7 @@ SERVER_SELECTION_TESTS = Dir.glob("#{CURRENT_PATH}/support/server_selection/sele
 CRUD_TESTS = Dir.glob("#{CURRENT_PATH}/support/crud_tests/**/*.yml")
 COMMAND_MONITORING_TESTS = Dir.glob("#{CURRENT_PATH}/support/command_monitoring/**/*.yml")
 CONNECTION_STRING_TESTS = Dir.glob("#{CURRENT_PATH}/support/connection_string_tests/*.yml")
+GRIDFS_TESTS = Dir.glob("#{CURRENT_PATH}/support/gridfs_tests/*.yml")
 
 SSL_CERTS_DIR = "#{CURRENT_PATH}/support/certificates"
 CLIENT_PEM = "#{SSL_CERTS_DIR}/client.pem"
@@ -47,9 +48,7 @@ require 'support/server_selection'
 require 'support/crud'
 require 'support/command_monitoring'
 require 'support/connection_string'
-
-Mongo::Logger.logger = Logger.new($stdout)
-Mongo::Logger.logger.level = Logger::INFO
+require 'support/gridfs'
 
 RSpec.configure do |config|
   config.color     = true
