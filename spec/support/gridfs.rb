@@ -21,20 +21,18 @@
 # test's expected collection data.
 #
 # @since 2.1.0
+
 RSpec::Matchers.define :completes_successfully do |test|
 
   match do |actual|
-    if actual.is_a?(Exception)
-      raise actual
-    else
-      actual.is_a?(BSON::ObjectId)
-    end
+    actual == test.expected_result || test.expected_result.nil?
   end
 end
 
 RSpec::Matchers.define :match_chunks_collection do |expected|
 
   match do |actual|
+    return true if expected.nil?
     if expected
       actual.find.all? do |doc|
         if matching_doc = expected.find(files_id: doc['files_id'], n: doc['n']).first
@@ -51,16 +49,21 @@ RSpec::Matchers.define :match_chunks_collection do |expected|
   end
 end
 
-RSpec::Matchers.define :raise_correct_error do |test|
+RSpec::Matchers.define :match_error do |error|
 
   match do |actual|
-    
+
+    mapping = {
+      'FileNotFound' => Mongo::Error::FileNotFound
+    }
+    mapping[error] == actual.class
   end
 end
 
 RSpec::Matchers.define :match_files_collection do |expected|
 
   match do |actual|
+    return true if expected.nil?
     actual.find.all? do |doc|
       if matching_doc = expected.find(_id: doc['_id']).first
         matching_doc.all? do |k, v|
@@ -116,10 +119,56 @@ module Mongo
       end
     end
 
+    module Convertible
+    
+      def limit(int)
+        int == 0 ? 'many' : 'one'
+      end
+
+      def convert__id(v)
+        to_oid(v)
+      end
+
+      def convert_uploadDate(v)
+        upload_date
+      end
+
+      def convert_files_id(v)
+        to_oid(v)
+      end
+
+      def transform_docs(docs)
+        docs.collect do |doc|
+          doc.keys.each do |k|
+            doc[k] = send("convert_#{k}", doc[k]) if respond_to?("convert_#{k}")
+          end
+          doc
+        end
+      end
+    
+      def to_hex(string)
+        [ string ].pack('H*')
+      end
+    
+      def to_oid(value)
+        if value.is_a?(BSON::ObjectId)
+          value
+        elsif value['$oid']
+          BSON::ObjectId.from_string(value['$oid'])
+        else
+          BSON::ObjectId.new
+        end
+      end
+    end
+
     # Represents a single GridFS test.
     #
     # @since 2.1.0
     class GridFSTest
+      include Convertible
+      extend Forwardable
+
+      def_delegators :@operation, :expected_files_collection, :expected_chunks_collection
 
       # The test description.
       #
@@ -127,8 +176,7 @@ module Mongo
       #
       # @since 2.1.0
       attr_reader :description
-      attr_reader :expected_files_collection
-      attr_reader :expected_chunks_collection
+      attr_reader :upload_date
 
       # Instantiate the new GridFSTest.
       #
@@ -143,106 +191,154 @@ module Mongo
       def initialize(data, test)
         @data = data
         @description = test['description']
-        @act = test['act']
-        @arrange = test['arrange']
-        @assertion = test['assert']
-      end
-
-      def error?
-        @assertion['error']
-      end
-
-      def run(fs)
-        begin
-          @files_id = send(@act['operation'], fs)
-        rescue => ex
-          ex
-        ensure
-          prepare_expected_data(fs)
+        @upload_date = Time.now
+        @expected_result = test['assert']['result']
+        if test['assert']['error']
+          @operation = UnsuccessfulOp.new(test)
+        else
+          @operation = SuccessfulOp.new(test)
         end
       end
 
-      def arrange
+      def expected_result
+        @expected_result unless @expected_result == 'void'
       end
 
-      def clear_collections
-        expected_files_collection.delete_many if expected_files_collection
-        expected_chunks_collection.delete_many if expected_chunks_collection
+      def error?
+        @operation.is_a?(UnsuccessfulOp)
+      end
+
+      def result
+        @operation.result
+      end
+
+      def error
+        @operation.error
+      end
+
+      def run(fs)
+        setup(fs)
+        @operation.run(fs)
+      end
+
+      def match_result?(result)
+        @operation.match_result?(result)
+      end
+
+      def clear_collections(fs)
+        fs.files_collection.delete_many
+        fs.chunks_collection.delete_many
+        @operation.clear_collections(fs)
       end
 
       private
 
-      def to_hex(string)
-        [ string ].pack('H*')
+      def setup(fs)
+        insert_data(fs)
+        @operation.arrange(fs)
       end
 
-      def transform_files_docs(docs)
-        @expected_files = docs.collect do |doc|
-          doc['_id'] = @files_id if @files_id 
-          doc['uploadDate'] = upload_date
-          doc
+      def files_data
+        transform_docs(@data['files'])
+      end
+
+      def chunks_data
+        transform_docs(@data['chunks'])
+      end
+
+      def insert_data(fs)
+        fs.files_collection.insert_many(files_data)
+        fs.chunks_collection.insert_many(chunks_data)
+        fs.database['expected.files'].insert_many(files_data)
+        fs.database['expected.chunks'].insert_many(chunks_data)
+      end
+
+      module Operable
+  
+        attr_reader :op
+        attr_reader :result
+        attr_reader :expected_files_collection
+        attr_reader :expected_chunks_collection
+    
+        def initialize(test)
+          @arrange = test['arrange']
+          @act = test['act']
+          @op = @act['operation']
+          @arguments = @act['arguments']
+          @assert = test['assert']
+        end
+    
+        def prepare_expected_collections(fs)
+          if @assert['data']
+            @assert['data'].each do |data|
+              op = "#{data.keys.first}_data"
+              send(op, fs, data)
+            end
+          end
+        end
+    
+        def delete_data(fs, data)
+          coll = fs.database[data['delete']]
+          data['deletes'].each do |del|
+            id = del['q'].keys.first
+            coll.find(id => to_oid(del['q'][id])).send("delete_#{limit(del['limit'])}")
+          end
+        end
+
+        def arrange(fs)
+          if @arrange
+            @arrange['data'].each do |data|
+              op = "#{data.keys.first}_data"
+              send(op, fs, data)
+            end
+          end
+        end
+    
+        def delete(fs)
+          fs.delete(to_oid(@arguments['id']))
+        end
+
+        def run(fs)
+          @expected_files_collection = fs.database['expected.files']
+          @expected_chunks_collection = fs.database['expected.chunks']
+          act(fs)
+          prepare_expected_collections(fs)
+          result
+        end
+
+        def error
+          @assert['error']
+        end
+    
+        def clear_collections(fs)
+          @manipulated_collections.each { |col| col.delete_many }
         end
       end
 
-      def to_binary(data)
-        data.is_a?(BSON::Binary) ? data : BSON::Binary.new(to_hex(data['$hex']), :generic)
-      end
-
-      def transform_chunks_docs(docs)
-        @expected_chunks = docs.collect do |doc|
-          doc['_id'] = BSON::ObjectId.new
-          doc['files_id'] = @files_id if @files_id
-          doc['data'] = to_binary(doc['data']) if doc['data']
-          doc
+      class SuccessfulOp
+        include Convertible
+        include GridFSTest::Operable
+  
+        def act(fs)
+          @result = send(op, fs)
+        end
+  
+        def match_result?(result)
+          result == @files_id
         end
       end
-
-      def insert_expected_files(fs, data)
-        if data['insert'] =~ /\.files/
-          @expected_files_collection ||= fs.database['expected.files']
-          @expected_files_collection.insert_many(transform_files_docs(data['documents']))
+  
+      class UnsuccessfulOp
+        include Convertible
+        include GridFSTest::Operable
+  
+        def act(fs)
+          begin
+            send(op, fs)
+          rescue => ex
+            @result = ex
+          end
         end
-      end
-
-      def insert_expected_chunks(fs, data)
-        if data['insert'] =~ /\.chunks/
-          @expected_chunks_collection ||= fs.database['expected.chunks']
-          @expected_chunks_collection.insert_many(transform_chunks_docs(data['documents']))
-        end
-      end
-
-      def prepare_collections(fs, data)
-        insert_expected_files(fs, data)
-        insert_expected_chunks(fs, data)
-      end
-
-      def prepare_expected_data(fs)
-        @assertion['data'].each do |data|
-          prepare_collections(fs, data)
-        end
-      end
-
-      def options
-        @act['arguments']['options'].reduce({}) do |opts, (k, v)|
-          opts.merge!(chunk_size: v) if k == "chunkSizeBytes"
-          opts.merge!(upload_date: upload_date)
-          opts.merge!(content_type: v) if k == "contentType"
-          opts.merge!(metadata: v) if k == "metadata"
-          opts
-        end
-      end
-
-      def upload_date
-        @upload_date ||= Time.now
-      end
-
-      def filename
-        @act['arguments']['filename']
-      end
-
-      def upload(fs)
-        io = StringIO.new(to_hex(@act['arguments']['source']['$hex']))
-        fs.upload_from_stream(filename, io, options)
       end
     end
   end

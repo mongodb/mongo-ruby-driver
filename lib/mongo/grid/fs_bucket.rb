@@ -180,8 +180,10 @@ module Mongo
       #
       # @since 2.1.0
       def delete(id)
-        files_collection.find(:_id => id).delete_one
+        result = files_collection.find(:_id => id).delete_one
         chunks_collection.find(:files_id => id).delete_many
+        raise Error::FileNotFound.new(id) if result.n == 0
+        result
       end
 
       # Opens a stream from which a file can be downloaded, specified by id.
