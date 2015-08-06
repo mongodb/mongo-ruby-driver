@@ -144,6 +144,8 @@ module Mongo
     private
 
     def initialize_resolver!(timeout, ssl_options)
+      return Unix.new(seed.downcase) if seed.downcase =~ Unix::MATCH
+
       family = (host == 'localhost') ? ::Socket::AF_INET : ::Socket::AF_UNSPEC
       error = nil
       ::Socket.getaddrinfo(host, nil, family, ::Socket::SOCK_STREAM).each do |info|

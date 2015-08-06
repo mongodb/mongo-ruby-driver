@@ -38,25 +38,22 @@ module Mongo
       #
       # @since 2.0.0
       def connect!
-        Timeout.timeout(timeout, Error::SocketTimeoutError) do
-          handle_errors { socket.connect(path) }
-          self
-        end
+        self
       end
 
       # Initializes a new Unix socket.
       #
       # @example Create the Unix socket.
-      #   Unix.new('/path/to.sock', 27017, 30)
+      #   Unix.new('/path/to.sock', 5)
       #
       # @param [ String ] path The path.
       # @param [ Float ] timeout The socket timeout value.
-      # @param [ Integer ] family The socket family.
       #
       # @since 2.0.0
-      def initialize(path, timeout, family)
+      def initialize(path, timeout)
         @path, @timeout = path, timeout
-        super(family)
+        @socket = ::UNIXSocket.new(path)
+        set_socket_options(@socket)
       end
     end
   end

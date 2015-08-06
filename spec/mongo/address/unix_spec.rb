@@ -27,7 +27,7 @@ describe Mongo::Address::Unix do
   describe '#socket' do
 
     let(:address) do
-      '/path/to/socket.sock'
+      '/tmp/mongodb-27017.sock'
     end
 
     let(:socket) do
