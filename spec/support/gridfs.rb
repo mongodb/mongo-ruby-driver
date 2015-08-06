@@ -33,7 +33,7 @@ RSpec::Matchers.define :match_chunks_collection do |expected|
 
   match do |actual|
     return true if expected.nil?
-    if expected
+    if !expected.find.to_a.empty?
       actual.find.all? do |doc|
         if matching_doc = expected.find(files_id: doc['files_id'], n: doc['n']).first
           matching_doc.all? do |k, v|
@@ -125,38 +125,59 @@ module Mongo
         int == 0 ? 'many' : 'one'
       end
 
-      def convert__id(v)
-        to_oid(v)
+      def convert__id(v, opts = {})
+        to_oid(v, opts[:id])
       end
 
-      def convert_uploadDate(v)
+      def convert_uploadDate(v, opts = {})
         upload_date
       end
 
-      def convert_files_id(v)
-        to_oid(v)
+      def convert_files_id(v, opts = {})
+        to_oid(v, opts[:files_id])
       end
 
-      def transform_docs(docs)
+      def convert_data(v, opts = {})
+        if v.is_a?(BSON::Binary)
+          v
+        else
+          BSON::Binary.new(to_hex(v['$hex'], opts), :generic)
+        end
+      end
+
+      def transform_docs(docs, opts = {})
+        # cannot alter original list
         docs.collect do |doc|
-          doc.keys.each do |k|
-            doc[k] = send("convert_#{k}", doc[k]) if respond_to?("convert_#{k}")
+          doc.each do |k, v|
+            doc[k] = send("convert_#{k}", v, opts) if respond_to?("convert_#{k}")
           end
           doc
         end
       end
     
-      def to_hex(string)
+      def to_hex(string, opts = {})
         [ string ].pack('H*')
       end
     
-      def to_oid(value)
-        if value.is_a?(BSON::ObjectId)
+      def to_oid(value, id = nil)
+        if id
+          id
+        elsif value.is_a?(BSON::ObjectId)
           value
         elsif value['$oid']
           BSON::ObjectId.from_string(value['$oid'])
-        else
+        else          
           BSON::ObjectId.new
+        end
+      end
+
+      def options
+        @act['arguments']['options'].reduce({}) do |opts, (k, v)|
+          opts.merge!(chunk_size: v) if k == "chunkSizeBytes"
+          opts.merge!(upload_date: upload_date)
+          opts.merge!(content_type: v) if k == "contentType"
+          opts.merge!(metadata: v) if k == "metadata"
+          opts
         end
       end
     end
@@ -194,14 +215,14 @@ module Mongo
         @upload_date = Time.now
         @expected_result = test['assert']['result']
         if test['assert']['error']
-          @operation = UnsuccessfulOp.new(test)
+          @operation = UnsuccessfulOp.new(self, test)
         else
-          @operation = SuccessfulOp.new(test)
+          @operation = SuccessfulOp.new(self, test)
         end
       end
 
       def expected_result
-        @expected_result unless @expected_result == 'void'
+        @operation.result unless @expected_result == 'void'
       end
 
       def error?
@@ -234,50 +255,68 @@ module Mongo
       private
 
       def setup(fs)
-        insert_data(fs)
+        insert_pre_data(fs)
         @operation.arrange(fs)
       end
 
       def files_data
-        transform_docs(@data['files'])
+        @files_data ||= transform_docs(@data['files'])
       end
 
       def chunks_data
-        transform_docs(@data['chunks'])
+        @chunks_data ||= transform_docs(@data['chunks'])
       end
 
-      def insert_data(fs)
-        fs.files_collection.insert_many(files_data)
-        fs.chunks_collection.insert_many(chunks_data)
-        fs.database['expected.files'].insert_many(files_data)
-        fs.database['expected.chunks'].insert_many(chunks_data)
+      def insert_pre_data(fs)
+        unless files_data.empty?
+          fs.files_collection.insert_many(files_data)
+          fs.database['expected.files'].insert_many(files_data)
+        end
+        unless chunks_data.empty?
+          fs.chunks_collection.insert_many(chunks_data)
+          fs.database['expected.chunks'].insert_many(chunks_data)
+        end
       end
 
       module Operable
+        extend Forwardable
+
+        def_delegators :@test, :upload_date
   
         attr_reader :op
         attr_reader :result
         attr_reader :expected_files_collection
         attr_reader :expected_chunks_collection
     
-        def initialize(test)
-          @arrange = test['arrange']
-          @act = test['act']
+        def initialize(test, spec)
+          @test = test
+          @arrange = spec['arrange']
+          @act = spec['act']
           @op = @act['operation']
           @arguments = @act['arguments']
-          @assert = test['assert']
+          @assert = spec['assert']
         end
     
         def prepare_expected_collections(fs)
           if @assert['data']
             @assert['data'].each do |data|
-              op = "#{data.keys.first}_data"
+              op = "#{data.keys.first}_exp_data"
               send(op, fs, data)
             end
           end
         end
+
+        def insert_exp_data(fs, data)
+          coll = fs.database[data['insert']]
+          if coll.name =~ /.files/
+            opts = { id: @result }
+          else
+            opts = { files_id: @result }
+          end
+          coll.insert_many(transform_docs(data['documents'], opts))
+        end
     
-        def delete_data(fs, data)
+        def delete_exp_data(fs, data)
           coll = fs.database[data['delete']]
           data['deletes'].each do |del|
             id = del['q'].keys.first
@@ -288,7 +327,7 @@ module Mongo
         def arrange(fs)
           if @arrange
             @arrange['data'].each do |data|
-              op = "#{data.keys.first}_data"
+              op = "#{data.keys.first}_exp_data"
               send(op, fs, data)
             end
           end
@@ -296,6 +335,15 @@ module Mongo
     
         def delete(fs)
           fs.delete(to_oid(@arguments['id']))
+        end
+
+        def filename
+          @act['arguments']['filename']
+        end
+
+        def upload(fs)
+          io = StringIO.new(to_hex(@act['arguments']['source']['$hex']))
+          fs.upload_from_stream(filename, io, options)
         end
 
         def run(fs)
