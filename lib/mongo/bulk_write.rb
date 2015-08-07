@@ -20,6 +20,16 @@ module Mongo
   class BulkWrite
     extend Forwardable
 
+    # The delete many model constant.
+    #
+    # @since 2.1.0
+    DELETE_MANY = :delete_many.freeze
+
+    # The delete one model constant.
+    #
+    # @since 2.1.0
+    DELETE_ONE = :delete_one.freeze
+
     # The insert many model constant.
     #
     # @since 2.1.0
@@ -113,6 +123,15 @@ module Mongo
 
     private
 
+    def base_spec
+      {
+        :db_name => database.name,
+        :coll_name => collection.name,
+        :write_concern => write_concern,
+        :ordered => ordered?
+      }
+    end
+
     def operations
       if ordered?
         OrderedCombiner.new(requests).combine
@@ -121,14 +140,30 @@ module Mongo
       end
     end
 
+    def delete_one(documents, server, operation_id)
+      Operation::Write::BulkDelete.new(
+        base_spec.merge(
+          :deletes => documents.map{ |doc| { q: doc, limit: 1 }},
+          :operation_id => operation_id
+        )
+      ).execute(server.context)
+    end
+
+    def delete_many(documents, server, operation_id)
+      Operation::Write::BulkDelete.new(
+        base_spec.merge(
+          :deletes => documents.map{ |doc| { q: doc, limit: 0 }},
+          :operation_id => operation_id
+        )
+      ).execute(server.context)
+    end
+
     def insert_many(documents, server, operation_id)
       Operation::Write::BulkInsert.new(
-        :documents => documents,
-        :db_name => database.name,
-        :coll_name => collection.name,
-        :write_concern => write_concern,
-        :ordered => ordered?,
-        :operation_id => operation_id
+        base_spec.merge(
+          :documents => documents,
+          :operation_id => operation_id
+        )
       ).execute(server.context)
     end
   end

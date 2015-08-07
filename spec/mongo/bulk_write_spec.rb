@@ -14,46 +14,210 @@ describe Mongo::BulkWrite do
 
     context 'when the bulk write is ordered' do
 
-      context 'when provided a single insert one' do
+      context 'when the operations do not need to be split' do
 
-        let(:requests) do
-          [{ insert_one: { _id: 0 }}]
+        context 'when provided a single insert one' do
+
+          let(:requests) do
+            [{ insert_one: { _id: 0 }}]
+          end
+
+          let(:bulk_write) do
+            described_class.new(authorized_collection, requests, ordered: true)
+          end
+
+          let(:result) do
+            bulk_write.execute
+          end
+
+          it 'inserts the document' do
+            expect(result.inserted_count).to eq(1)
+          end
         end
 
-        let(:bulk_write) do
-          described_class.new(authorized_collection, requests, ordered: true)
+        context 'when provided multiple insert ones' do
+
+          let(:requests) do
+            [
+              { insert_one: { _id: 0 }},
+              { insert_one: { _id: 1 }},
+              { insert_one: { _id: 2 }}
+            ]
+          end
+
+          let(:bulk_write) do
+            described_class.new(authorized_collection, requests, ordered: true)
+          end
+
+          let(:result) do
+            bulk_write.execute
+          end
+
+          it 'inserts the documents' do
+            expect(result.inserted_count).to eq(3)
+          end
         end
 
-        let(:result) do
-          bulk_write.execute
+        context 'when provided a single insert many' do
+
+          let(:requests) do
+            [{ insert_many: [{ _id: 0 }, { _id: 1 }]}]
+          end
+
+          let(:bulk_write) do
+            described_class.new(authorized_collection, requests, ordered: true)
+          end
+
+          let(:result) do
+            bulk_write.execute
+          end
+
+          it 'inserts the documents' do
+            expect(result.inserted_count).to eq(2)
+          end
         end
 
-        it 'inserts the document' do
-          expect(result.inserted_count).to eq(1)
+        context 'when provided multiple insert many ops' do
+
+          let(:requests) do
+            [
+              { insert_many: [{ _id: 0 }, { _id: 1 }]},
+              { insert_many: [{ _id: 2 }, { _id: 3 }]},
+              { insert_many: [{ _id: 4 }, { _id: 5 }]}
+            ]
+          end
+
+          let(:bulk_write) do
+            described_class.new(authorized_collection, requests, ordered: true)
+          end
+
+          let(:result) do
+            bulk_write.execute
+          end
+
+          it 'inserts the documents' do
+            expect(result.inserted_count).to eq(6)
+          end
+        end
+
+        context 'when provided a single delete one' do
+
+          let(:requests) do
+            [{ delete_one: { _id: 0 }}]
+          end
+
+          let(:bulk_write) do
+            described_class.new(authorized_collection, requests, ordered: true)
+          end
+
+          let(:result) do
+            bulk_write.execute
+          end
+
+          before do
+            authorized_collection.insert_one({ _id: 0 })
+          end
+
+          it 'deletes the document' do
+            expect(result.deleted_count).to eq(1)
+          end
+        end
+
+        context 'when provided multipls delete ones' do
+
+          let(:requests) do
+            [
+              { delete_one: { _id: 0 }},
+              { delete_one: { _id: 1 }},
+              { delete_one: { _id: 2 }}
+            ]
+          end
+
+          let(:bulk_write) do
+            described_class.new(authorized_collection, requests, ordered: true)
+          end
+
+          let(:result) do
+            bulk_write.execute
+          end
+
+          before do
+            authorized_collection.insert_many([
+              { _id: 0 }, { _id: 1 }, { _id: 2 }
+            ])
+          end
+
+          it 'deletes the documents' do
+            expect(result.deleted_count).to eq(3)
+          end
+        end
+
+        context 'when provided a single delete many' do
+
+          let(:requests) do
+            [{ delete_many: { _id: 0 }}]
+          end
+
+          let(:bulk_write) do
+            described_class.new(authorized_collection, requests, ordered: true)
+          end
+
+          let(:result) do
+            bulk_write.execute
+          end
+
+          before do
+            authorized_collection.insert_one({ _id: 0 })
+          end
+
+          it 'deletes the documents' do
+            expect(result.deleted_count).to eq(1)
+          end
+        end
+
+        context 'when provided multiple delete many ops' do
+
+          let(:requests) do
+            [
+              { delete_many: { _id: 0 }},
+              { delete_many: { _id: 1 }},
+              { delete_many: { _id: 2 }}
+            ]
+          end
+
+          let(:bulk_write) do
+            described_class.new(authorized_collection, requests, ordered: true)
+          end
+
+          let(:result) do
+            bulk_write.execute
+          end
+
+          before do
+            authorized_collection.insert_many([
+              { _id: 0 }, { _id: 1 }, { _id: 2 }
+            ])
+          end
+
+          it 'deletes the documents' do
+            expect(result.deleted_count).to eq(3)
+          end
+        end
+
+        context 'when providing a single replace one' do
+
+        end
+
+        context 'when providing a single update one' do
+
+        end
+
+        context 'when providing a single update many' do
+
         end
       end
 
-      context 'when provided a single insert many' do
-
-      end
-
-      context 'when provided a single delete one' do
-
-      end
-
-      context 'when provided a single delete many' do
-
-      end
-
-      context 'when providing a single replace one' do
-
-      end
-
-      context 'when providing a single update one' do
-
-      end
-
-      context 'when providing a single update many' do
+      context 'when the operations need to be split' do
 
       end
     end
