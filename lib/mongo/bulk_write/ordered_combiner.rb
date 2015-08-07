@@ -59,7 +59,7 @@ module Mongo
 
       def add(operations, name, document)
         operations.push({ name => []}) if next_group?(name, operations)
-        operations[-1][name].concat(wrap(document))
+        operations[-1][name].concat(process(name, document))
         operations
       end
 
@@ -71,8 +71,16 @@ module Mongo
         !operations[-1] || !operations[-1].key?(name)
       end
 
-      def wrap(document)
-        document.respond_to?(:to_ary) ? document.to_ary : [ document ]
+      def process(name, document)
+        document.respond_to?(:to_ary) ? document.to_ary : [ validate(name, document) ]
+      end
+
+      def validate(name, document)
+        if document.respond_to?(:keys)
+          document
+        else
+          raise Error::InvalidBulkOperation.new(name, document)
+        end
       end
     end
   end
