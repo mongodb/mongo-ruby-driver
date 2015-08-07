@@ -51,7 +51,7 @@ module Mongo
       # @since 2.1.0
       def combine
         requests.reduce([]) do |operations, request|
-          add(operations, convert(request.keys.first), request.values.first)
+          add(operations, request.keys.first, request.values.first)
         end
       end
 
@@ -61,10 +61,6 @@ module Mongo
         operations.push({ name => []}) if next_group?(name, operations)
         operations[-1][name].concat(process(name, document))
         operations
-      end
-
-      def convert(name)
-        name == BulkWrite::INSERT_ONE ? BulkWrite::INSERT_MANY : name
       end
 
       def next_group?(name, operations)

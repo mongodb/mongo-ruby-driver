@@ -81,6 +81,16 @@ module Mongo
     # @example Create an unordered bulk write.
     #   Mongo::BulkWrite.new(collection, [{ insert_one: { _id: 1 }}], ordered: false)
     #
+    # @example Create an ordered mixed bulk write.
+    #   Mongo::BulkWrite.new(
+    #     collection,
+    #     [
+    #       { insert_one: { _id: 1 }},
+    #       { update_one: { filter: { _id: 0 }, update: { '$set' => { name: 'test' }}}},
+    #       { delete_one: { filter: { _id: 2 }}}
+    #     ]
+    #   )
+    #
     # @param [ Mongo::Collection ] collection The collection.
     # @param [ Array<Hash, BSON::Document> ] requests The requests.
     # @param [ Hash, BSON::Document ] options The options.
@@ -123,12 +133,13 @@ module Mongo
 
     private
 
-    def base_spec
+    def base_spec(operation_id)
       {
         :db_name => database.name,
         :coll_name => collection.name,
         :write_concern => write_concern,
-        :ordered => ordered?
+        :ordered => ordered?,
+        :operation_id => operation_id
       }
     end
 
@@ -142,27 +153,32 @@ module Mongo
 
     def delete_one(documents, server, operation_id)
       Operation::Write::BulkDelete.new(
-        base_spec.merge(
-          :deletes => documents.map{ |doc| { q: doc, limit: 1 }},
-          :operation_id => operation_id
+        base_spec(operation_id).merge(
+          :deletes => documents.map{ |doc| { q: doc[:filter], limit: 1 }}
         )
       ).execute(server.context)
     end
 
     def delete_many(documents, server, operation_id)
       Operation::Write::BulkDelete.new(
-        base_spec.merge(
-          :deletes => documents.map{ |doc| { q: doc, limit: 0 }},
-          :operation_id => operation_id
+        base_spec(operation_id).merge(
+          :deletes => documents.map{ |doc| { q: doc[:filter], limit: 0 }}
         )
       ).execute(server.context)
     end
 
-    def insert_many(documents, server, operation_id)
+    def insert_one(documents, server, operation_id)
       Operation::Write::BulkInsert.new(
-        base_spec.merge(
-          :documents => documents,
-          :operation_id => operation_id
+        base_spec(operation_id).merge(:documents => documents)
+      ).execute(server.context)
+    end
+
+    def update_one(documents, server, operation_id)
+      Operation::Write::BulkUpdate.new(
+        base_spec(operation_id).merge(
+          :updates => documents.map do |doc|
+            { q: doc[:filter], u: doc[:update], multi: false, upsert: doc.fetch(:upsert, false) }
+          end
         )
       ).execute(server.context)
     end

@@ -58,10 +58,10 @@ describe Mongo::BulkWrite do
           end
         end
 
-        context 'when provided a single insert many' do
+        context 'when provided a single insert one with an array of documents' do
 
           let(:requests) do
-            [{ insert_many: [{ _id: 0 }, { _id: 1 }]}]
+            [{ insert_one: [{ _id: 0 }, { _id: 1 }]}]
           end
 
           let(:bulk_write) do
@@ -77,13 +77,13 @@ describe Mongo::BulkWrite do
           end
         end
 
-        context 'when provided multiple insert many ops' do
+        context 'when provided multiple insert ones with arrays of documents' do
 
           let(:requests) do
             [
-              { insert_many: [{ _id: 0 }, { _id: 1 }]},
-              { insert_many: [{ _id: 2 }, { _id: 3 }]},
-              { insert_many: [{ _id: 4 }, { _id: 5 }]}
+              { insert_one: [{ _id: 0 }, { _id: 1 }]},
+              { insert_one: [{ _id: 2 }, { _id: 3 }]},
+              { insert_one: [{ _id: 4 }, { _id: 5 }]}
             ]
           end
 
@@ -103,7 +103,7 @@ describe Mongo::BulkWrite do
         context 'when provided a single delete one' do
 
           let(:requests) do
-            [{ delete_one: { _id: 0 }}]
+            [{ delete_one: { filter: { _id: 0 }}}]
           end
 
           let(:bulk_write) do
@@ -123,13 +123,13 @@ describe Mongo::BulkWrite do
           end
         end
 
-        context 'when provided multipls delete ones' do
+        context 'when provided multiple delete ones' do
 
           let(:requests) do
             [
-              { delete_one: { _id: 0 }},
-              { delete_one: { _id: 1 }},
-              { delete_one: { _id: 2 }}
+              { delete_one: { filter: { _id: 0 }}},
+              { delete_one: { filter: { _id: 1 }}},
+              { delete_one: { filter: { _id: 2 }}}
             ]
           end
 
@@ -155,7 +155,7 @@ describe Mongo::BulkWrite do
         context 'when provided a single delete many' do
 
           let(:requests) do
-            [{ delete_many: { _id: 0 }}]
+            [{ delete_many: { filter: { _id: 0 }}}]
           end
 
           let(:bulk_write) do
@@ -179,9 +179,9 @@ describe Mongo::BulkWrite do
 
           let(:requests) do
             [
-              { delete_many: { _id: 0 }},
-              { delete_many: { _id: 1 }},
-              { delete_many: { _id: 2 }}
+              { delete_many: { filter: { _id: 0 }}},
+              { delete_many: { filter: { _id: 1 }}},
+              { delete_many: { filter: { _id: 2 }}}
             ]
           end
 
@@ -210,6 +210,25 @@ describe Mongo::BulkWrite do
 
         context 'when providing a single update one' do
 
+          let(:requests) do
+            [{ update_one: { filter: { _id: 0 }, update: { "$set" => { name: 'test' }}}}]
+          end
+
+          let(:bulk_write) do
+            described_class.new(authorized_collection, requests, ordered: true)
+          end
+
+          let(:result) do
+            bulk_write.execute
+          end
+
+          before do
+            authorized_collection.insert_one({ _id: 0 })
+          end
+
+          it 'updates the document' do
+            expect(result.modified_count).to eq(1)
+          end
         end
 
         context 'when providing a single update many' do

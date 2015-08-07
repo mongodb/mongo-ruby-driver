@@ -12,14 +12,30 @@ describe Mongo::BulkWrite::OrderedCombiner do
 
       context 'when the documents are valid' do
 
-        let(:requests) do
-          [{ insert_one: { _id: 0 }}, { insert_one: { _id: 1 }}]
+        context 'when provided single documents' do
+
+          let(:requests) do
+            [{ insert_one: { _id: 0 }}, { insert_one: { _id: 1 }}]
+          end
+
+          it 'returns a single insert one' do
+            expect(combiner.combine).to eq(
+              [{ insert_one: [{ _id: 0 }, { _id: 1 }]}]
+            )
+          end
         end
 
-        it 'returns a single insert many' do
-          expect(combiner.combine).to eq(
-            [{ insert_many: [{ _id: 0 }, { _id: 1 }]}]
-          )
+        context 'when provided multiple documents' do
+
+          let(:requests) do
+            [{ insert_one: [{ _id: 0 }, { _id: 1 }]}]
+          end
+
+          it 'returns a single insert one' do
+            expect(combiner.combine).to eq(
+              [{ insert_one: [{ _id: 0 }, { _id: 1 }]}]
+            )
+          end
         end
       end
 
@@ -37,35 +53,22 @@ describe Mongo::BulkWrite::OrderedCombiner do
       end
     end
 
-    context 'when provided a series of insert many' do
-
-      let(:requests) do
-        [{ insert_many: [{ _id: 0 }]}, { insert_many: [{ _id: 1 }]}]
-      end
-
-      it 'returns a single insert many' do
-        expect(combiner.combine).to eq(
-          [{ insert_many: [{ _id: 0 }, { _id: 1 }]}]
-        )
-      end
-    end
-
     context 'when provided a mix of operations' do
 
       let(:requests) do
         [
           { insert_one: { _id: 0 }},
-          { delete_one: { _id: 0 }},
-          { insert_many: [{ _id: 1 }]}
+          { delete_one: { filter: { _id: 0 }}},
+          { insert_one: [{ _id: 1 }]}
         ]
       end
 
       it 'returns an ordered grouping' do
         expect(combiner.combine).to eq(
           [
-            { insert_many: [{ _id: 0 }]},
-            { delete_one: [{ _id: 0 }]},
-            { insert_many: [{ _id: 1 }]}
+            { insert_one: [{ _id: 0 }]},
+            { delete_one: [{ filter: { _id: 0 }}]},
+            { insert_one: [{ _id: 1 }]}
           ]
         )
       end
