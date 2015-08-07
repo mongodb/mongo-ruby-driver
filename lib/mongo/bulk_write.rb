@@ -14,6 +14,7 @@
 
 require 'mongo/bulk_write/result'
 require 'mongo/bulk_write/ordered_combiner'
+require 'mongo/bulk_write/result_combiner'
 
 module Mongo
   class BulkWrite
@@ -28,41 +29,6 @@ module Mongo
     #
     # @since 2.1.0
     INSERT_ONE = :insert_one.freeze
-
-    # Constant for number removed.
-    #
-    # @since 2.1.0
-    REMOVED_COUNT = 'n_removed'.freeze
-
-    # Constant for number inserted.
-    #
-    # @since 2.1.0
-    INSERTED_COUNT = 'n_inserted'.freeze
-
-    # Constant for inserted ids.
-    #
-    # @since 2.1.0
-    INSERTED_IDS = 'inserted_ids'.freeze
-
-    # Constant for number matched.
-    #
-    # @since 2.1.0
-    MATCHED_COUNT = 'n_matched'.freeze
-
-    # Constant for number modified.
-    #
-    # @since 2.1.0
-    MODIFIED_COUNT = 'n_modified'.freeze
-
-    # Constant for number upserted.
-    #
-    # @since 2.1.0
-    UPSERTED_COUNT = 'n_upserted'.freeze
-
-    # Constant for upserted ids.
-    #
-    # @since 2.1.0
-    UPSERTED_IDS = 'upserted_ids'.freeze
 
     # @return [ Mongo::Collection ] collection The collection.
     attr_reader :collection
@@ -87,12 +53,12 @@ module Mongo
     def execute
       server = next_primary
       operation_id = Monitoring.next_operation_id
+      result_combiner = ResultCombiner.new
       operations.each do |operation|
         result = send(operation.keys.first, operation.values.first, server, operation_id)
-        p result
-        # combine the results here.
+        result_combiner.combine!(result)
       end
-      BulkWrite::Result.new({})
+      result_combiner.result
     end
 
     # Create the new bulk write operation.

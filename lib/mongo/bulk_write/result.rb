@@ -20,6 +20,53 @@ module Mongo
     # @since 2.0.6
     class Result
 
+      # Constant for number removed.
+      #
+      # @since 2.1.0
+      REMOVED_COUNT = 'n_removed'.freeze
+
+      # Constant for number inserted.
+      #
+      # @since 2.1.0
+      INSERTED_COUNT = 'n_inserted'.freeze
+
+      # Constant for inserted ids.
+      #
+      # @since 2.1.0
+      INSERTED_IDS = 'inserted_ids'.freeze
+
+      # Constant for number matched.
+      #
+      # @since 2.1.0
+      MATCHED_COUNT = 'n_matched'.freeze
+
+      # Constant for number modified.
+      #
+      # @since 2.1.0
+      MODIFIED_COUNT = 'n_modified'.freeze
+
+      # Constant for number upserted.
+      #
+      # @since 2.1.0
+      UPSERTED_COUNT = 'n_upserted'.freeze
+
+      # Constant for upserted ids.
+      #
+      # @since 2.1.0
+      UPSERTED_IDS = 'upserted_ids'.freeze
+
+      # The fields contained in the result document returned from executing the
+      # operations.
+      #
+      # @since 2.1.0.
+      FIELDS = [
+        INSERTED_COUNT,
+        REMOVED_COUNT,
+        MODIFIED_COUNT,
+        UPSERTED_COUNT,
+        MATCHED_COUNT
+      ].freeze
+
       # Returns the number of documents deleted.
       #
       # @example Get the number of deleted documents.
@@ -29,7 +76,7 @@ module Mongo
       #
       # @since 2.1.0
       def deleted_count
-        @results[BulkWrite::REMOVED_COUNT]
+        @results[REMOVED_COUNT]
       end
 
       # Create the new result object from the results document.
@@ -53,7 +100,7 @@ module Mongo
       #
       # @since 2.1.0
       def inserted_count
-        @results[BulkWrite::INSERTED_COUNT]
+        @results[INSERTED_COUNT]
       end
 
       # Get the inserted document ids, if the operation has inserts.
@@ -65,7 +112,7 @@ module Mongo
       #
       # @since 2.1.0
       def inserted_ids
-        @results[BulkWrite::INSERTED_IDS]
+        @results[INSERTED_IDS]
       end
 
       # Returns the number of documents matched.
@@ -77,7 +124,7 @@ module Mongo
       #
       # @since 2.1.0
       def matched_count
-        @results[BulkWrite::MATCHED_COUNT]
+        @results[MATCHED_COUNT]
       end
 
       # Returns the number of documents modified.
@@ -89,7 +136,7 @@ module Mongo
       #
       # @since 2.1.0
       def modified_count
-        @results[BulkWrite::MODIFIED_COUNT]
+        @results[MODIFIED_COUNT]
       end
 
       # Returns the number of documents upserted.
@@ -101,7 +148,7 @@ module Mongo
       #
       # @since 2.1.0
       def upserted_count
-        @results[BulkWrite::UPSERTED_COUNT]
+        @results[UPSERTED_COUNT]
       end
 
       # Get the upserted document ids, if the operation has inserts.
@@ -113,7 +160,7 @@ module Mongo
       #
       # @since 2.1.0
       def upserted_ids
-        @results[BulkWrite::UPSERTED_IDS]
+        @results[UPSERTED_IDS]
       end
 
       # Validates the bulk write result.
