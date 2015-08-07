@@ -49,6 +49,7 @@ module Mongo
       # @since 2.1.0
       def combine!(result)
         combine_counts!(result)
+        combine_ids!(result)
       end
 
       # Get the final result.
@@ -72,6 +73,12 @@ module Mongo
           if result.respond_to?(field)
             results.merge!(field => (results[field] || 0) + result.send(field))
           end
+        end
+      end
+
+      def combine_ids!(result)
+        if result.respond_to?(Result::INSERTED_IDS)
+          results.merge!(Result::INSERTED_IDS => result.inserted_ids)
         end
       end
     end

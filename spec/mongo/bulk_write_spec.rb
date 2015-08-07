@@ -58,48 +58,6 @@ describe Mongo::BulkWrite do
           end
         end
 
-        context 'when provided a single insert one with an array of documents' do
-
-          let(:requests) do
-            [{ insert_one: [{ _id: 0 }, { _id: 1 }]}]
-          end
-
-          let(:bulk_write) do
-            described_class.new(authorized_collection, requests, ordered: true)
-          end
-
-          let(:result) do
-            bulk_write.execute
-          end
-
-          it 'inserts the documents' do
-            expect(result.inserted_count).to eq(2)
-          end
-        end
-
-        context 'when provided multiple insert ones with arrays of documents' do
-
-          let(:requests) do
-            [
-              { insert_one: [{ _id: 0 }, { _id: 1 }]},
-              { insert_one: [{ _id: 2 }, { _id: 3 }]},
-              { insert_one: [{ _id: 4 }, { _id: 5 }]}
-            ]
-          end
-
-          let(:bulk_write) do
-            described_class.new(authorized_collection, requests, ordered: true)
-          end
-
-          let(:result) do
-            bulk_write.execute
-          end
-
-          it 'inserts the documents' do
-            expect(result.inserted_count).to eq(6)
-          end
-        end
-
         context 'when provided a single delete one' do
 
           let(:requests) do

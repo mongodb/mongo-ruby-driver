@@ -20,26 +20,6 @@ module Mongo
   class BulkWrite
     extend Forwardable
 
-    # The delete many model constant.
-    #
-    # @since 2.1.0
-    DELETE_MANY = :delete_many.freeze
-
-    # The delete one model constant.
-    #
-    # @since 2.1.0
-    DELETE_ONE = :delete_one.freeze
-
-    # The insert many model constant.
-    #
-    # @since 2.1.0
-    INSERT_MANY = :insert_many.freeze
-
-    # The insert one model constant.
-    #
-    # @since 2.1.0
-    INSERT_ONE = :insert_one.freeze
-
     # @return [ Mongo::Collection ] collection The collection.
     attr_reader :collection
 
@@ -153,17 +133,13 @@ module Mongo
 
     def delete_one(documents, server, operation_id)
       Operation::Write::BulkDelete.new(
-        base_spec(operation_id).merge(
-          :deletes => documents.map{ |doc| { q: doc[:filter], limit: 1 }}
-        )
+        base_spec(operation_id).merge(:deletes => documents)
       ).execute(server.context)
     end
 
     def delete_many(documents, server, operation_id)
       Operation::Write::BulkDelete.new(
-        base_spec(operation_id).merge(
-          :deletes => documents.map{ |doc| { q: doc[:filter], limit: 0 }}
-        )
+        base_spec(operation_id).merge(:deletes => documents)
       ).execute(server.context)
     end
 
@@ -175,11 +151,7 @@ module Mongo
 
     def update_one(documents, server, operation_id)
       Operation::Write::BulkUpdate.new(
-        base_spec(operation_id).merge(
-          :updates => documents.map do |doc|
-            { q: doc[:filter], u: doc[:update], multi: false, upsert: doc.fetch(:upsert, false) }
-          end
-        )
+        base_spec(operation_id).merge(:updates => documents)
       ).execute(server.context)
     end
   end

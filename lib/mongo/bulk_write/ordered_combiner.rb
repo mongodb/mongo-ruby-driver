@@ -22,6 +22,38 @@ module Mongo
     # @since 2.1.0
     class OrderedCombiner
 
+      # The delete many model constant.
+      #
+      # @since 2.1.0
+      DELETE_MANY = :delete_many.freeze
+
+      # The delete one model constant.
+      #
+      # @since 2.1.0
+      DELETE_ONE = :delete_one.freeze
+
+      # The insert one model constant.
+      #
+      # @since 2.1.0
+      INSERT_ONE = :insert_one.freeze
+
+      # The update one model constant.
+      #
+      # @since 2.1.0
+      UPDATE_ONE = :update_one.freeze
+
+      # Document mappers from the bulk api input into proper commands.
+      #
+      # @since 2.1.0
+      MAPPERS = {
+        DELETE_MANY => ->(doc){{ q: doc[:filter], limit: 0 }},
+        DELETE_ONE  => ->(doc){{ q: doc[:filter], limit: 1 }},
+        INSERT_ONE  => ->(doc){ doc },
+        UPDATE_ONE  => ->(doc){
+          { q: doc[:filter], u: doc[:update], multi: false, upsert: doc.fetch(:upsert, false) }
+        }
+      }.freeze
+
       # @return [ Array<Hash, BSON::Document> ] requests The provided requests.
       attr_reader :requests
 
@@ -59,7 +91,7 @@ module Mongo
 
       def add(operations, name, document)
         operations.push({ name => []}) if next_group?(name, operations)
-        operations[-1][name].concat(process(name, document))
+        operations[-1][name].push(transform(name, document))
         operations
       end
 
@@ -67,8 +99,10 @@ module Mongo
         !operations[-1] || !operations[-1].key?(name)
       end
 
-      def process(name, document)
-        document.respond_to?(:to_ary) ? document.to_ary : [ validate(name, document) ]
+      def transform(name, document)
+        # VALIDATORS[name].call(name, document)
+        validate(name, document)
+        MAPPERS[name].call(document)
       end
 
       def validate(name, document)
