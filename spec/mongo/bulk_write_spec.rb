@@ -10,259 +10,142 @@ describe Mongo::BulkWrite do
     authorized_collection.delete_many
   end
 
-  let(:bulk) do
-    described_class.get(authorized_collection, operations, options)
-  end
+  describe '#execute' do
 
-  let(:collection_invalid_write_concern) do
-    authorized_collection.client.with(write: { w: (WRITE_CONCERN[:w] + 1) })[authorized_collection.name]
-  end
+    context 'when the bulk write is ordered' do
 
-  let(:bulk_invalid_write_concern) do
-    described_class.get(collection_invalid_write_concern, operations, options)
-  end
+      context 'when provided a single insert one' do
 
-  describe '#get' do
+        let(:requests) do
+          [{ insert_one: { _id: 0 }}]
+        end
 
-    let(:operations) do
-      [{ insert_one: { _id: 0 } }]
-    end
+        let(:bulk_write) do
+          described_class.new(authorized_collection, requests, ordered: true)
+        end
 
-    context 'When an ordered bulk write object is created' do
+        let(:result) do
+          bulk_write.execute
+        end
 
-      let(:options) do
-        { ordered: true }
+        it 'inserts the document' do
+          expect(result.inserted_count).to eq(1)
+        end
       end
 
-      it 'returns an OrderedBulkWrite object' do
-        expect(bulk).to be_a(Mongo::BulkWrite::OrderedBulkWrite)
-      end
-    end
+      context 'when provided a single insert many' do
 
-    context 'When an unordered bulk write object is created' do
-
-      let(:options) do
-        { ordered: false }
       end
 
-      it 'returns an UnorderedBulkWrite object' do
-        expect(bulk).to be_a(Mongo::BulkWrite::UnorderedBulkWrite)
-      end
-    end
+      context 'when provided a single delete one' do
 
-    context 'When ordered is not specified in options' do
-
-      let(:options) do
-        { }
       end
 
-      it 'returns an OrderedBulkWrite object' do
-        expect(bulk).to be_a(Mongo::BulkWrite::OrderedBulkWrite)
+      context 'when provided a single delete many' do
+
+      end
+
+      context 'when providing a single replace one' do
+
+      end
+
+      context 'when providing a single update one' do
+
+      end
+
+      context 'when providing a single update many' do
+
       end
     end
   end
 
-  describe 'Ordered bulk write' do
+  describe '#initialize' do
 
-    let(:options) do
-       { ordered: true }
+    let(:requests) do
+      [{ insert_one: { _id: 0 }}]
     end
 
-    it_behaves_like 'a bulk write object'
+    shared_examples_for 'a bulk write initializer' do
 
-    context 'when the batch requires splitting' do
-
-      context 'when the operations are the same type' do
-
-        let(:error) do
-          begin
-            bulk.execute
-          rescue => ex
-            ex
-          end
-        end
-
-        let(:operations) do
-          [].tap do |ops|
-            3000.times do |i|
-              ops << { insert_one: { _id: i } }
-            end
-            ops << { insert_one: { _id: 0 } }
-            ops << { insert_one: { _id: 3001 } }
-          end
-        end
-
-        it 'raises a BulkWriteError' do
-          expect(error).to be_a(Mongo::Error::BulkWriteError)
-        end
-
-        it 'halts execution after first error and reports correct index' do
-          expect(error.result[Mongo::Error::WRITE_ERRORS].first['index']).to eq(3000)
-          expect(authorized_collection.find.count).to eq(3000)
-        end
+      it 'sets the collection' do
+        expect(bulk_write.collection).to eq(authorized_collection)
       end
 
-      context 'when operations are mixed types' do
+      it 'sets the requests' do
+        expect(bulk_write.requests).to eq(requests)
+      end
+    end
 
-        let(:error) do
-          begin
-            bulk.execute
-          rescue => ex
-            ex
-          end
-        end
+    context 'when no options are provided' do
 
-        let(:operations) do
-          [].tap do |ops|
-            2000.times do |i|
-              ops << { insert_one: { _id: i } }
-            end
-            ops << { delete_one: { _id: 0 } }
-            ops << { insert_one: { _id: 1 } }
-            ops << { insert_one: { _id: 2000 } }
-          end
-        end
-
-        it 'raises a BulkWriteError error' do
-          expect(error).to be_a(Mongo::Error::BulkWriteError)
-        end
-
-        it 'halts execution after first error and reports correct index' do
-          expect(error.result[Mongo::Error::WRITE_ERRORS].first['index']).to eq(2001)
-          expect(authorized_collection.find.count).to eq(1999)
-        end
+      let(:bulk_write) do
+        described_class.new(authorized_collection, requests)
       end
 
-      context 'when the operations exceed the max bson size' do
+      it 'sets empty options' do
+        expect(bulk_write.options).to be_empty
+      end
 
-        let(:error) do
-          begin
-            bulk.execute
-          rescue => ex
-            ex
-          end
-        end
+      it_behaves_like 'a bulk write initializer'
+    end
 
-        let(:operations) do
-          [].tap do |ops|
-            6.times do |i|
-              ops << { insert_one: { _id: i, x: 'y'*4000000 } }
-            end
-            ops << { insert_one: { _id: 0 } }
-            ops << { insert_one: { _id: 100 } }
-          end
-        end
+    context 'when options are provided' do
 
-        it 'raises a BulkWriteError error' do
-          expect(error).to be_a(Mongo::Error::BulkWriteError)
-        end
+      let(:bulk_write) do
+        described_class.new(authorized_collection, requests, ordered: true)
+      end
 
-        it 'splits messages into multiple messages' do
-          error
-          expect(authorized_collection.find.count).to eq(6)
-        end
+      it 'sets the options' do
+        expect(bulk_write.options).to eq(ordered: true)
+      end
+    end
+
+    context 'when nil options are provided' do
+
+      let(:bulk_write) do
+        described_class.new(authorized_collection, requests, nil)
+      end
+
+      it 'sets empty options' do
+        expect(bulk_write.options).to be_empty
       end
     end
   end
 
-  describe 'Unordered bulk write' do
+  describe '#ordered?' do
 
-    let(:options) do
-       { ordered: false }
+    context 'when no option provided' do
+
+      let(:bulk_write) do
+        described_class.new(authorized_collection, [])
+      end
+
+      it 'returns true' do
+        expect(bulk_write).to be_ordered
+      end
     end
 
-    it_behaves_like 'a bulk write object'
+    context 'when the option is provided' do
 
-    context 'when the operations exceed the max batch size' do
+      context 'when the option is true' do
 
-      context 'when operations are all the same type' do
-
-        let(:error) do
-          begin
-            bulk.execute
-          rescue => ex
-            ex
-          end
+        let(:bulk_write) do
+          described_class.new(authorized_collection, [], ordered: true)
         end
 
-        let(:operations) do
-          [].tap do |ops|
-            3000.times do |i|
-              ops << { insert_one: { _id: i } }
-            end
-            ops << { insert_one: { _id: 0 } }
-            ops << { insert_one: { _id: 3001 } }
-          end
-        end
-
-        it 'raises a BulkWriteError error' do
-          expect(error).to be_a(Mongo::Error::BulkWriteError)
-        end
-
-        it 'does not halt execution after first error' do
-          expect(error.result[Mongo::Error::WRITE_ERRORS].first['index']).to eq(3000)
-          expect(authorized_collection.find.count).to eq(3001)
+        it 'returns true' do
+          expect(bulk_write).to be_ordered
         end
       end
 
-      context 'when operations are mixed types' do
+      context 'when the option is false' do
 
-        let(:error) do
-          begin
-            bulk.execute
-          rescue => ex
-            ex
-          end
+        let(:bulk_write) do
+          described_class.new(authorized_collection, [], ordered: false)
         end
 
-        let(:operations) do
-          [].tap do |ops|
-            2000.times do |i|
-              ops << { insert_one: { _id: i } }
-            end
-            ops << { delete_one: { _id: 0 } }
-            ops << { insert_one: { _id: 1 } }
-            ops << { insert_one: { _id: 2000 } }
-          end
-        end
-
-        it 'raises a BulkWriteError error' do
-          expect(error).to be_a(Mongo::Error::BulkWriteError)
-        end
-
-        it 'does not halt execution after first error' do
-          expect(error.result[Mongo::Error::WRITE_ERRORS].first['index']).to eq(2001)
-          expect(authorized_collection.find.count).to eq(2000)
-        end
-      end
-
-      context 'when the operations exceed the max bson size' do
-
-        let(:error) do
-          begin
-            bulk.execute
-          rescue => ex
-            ex
-          end
-        end
-
-        let(:operations) do
-          [].tap do |ops|
-            15.times do |i|
-              ops << { insert_one: { _id: i, x: 'y'*4000000 } }
-            end
-            ops << { insert_one: { _id: 0 } }
-            ops << { insert_one: { _id: 100 } }
-          end
-        end
-
-        it 'raises a BulkWriteError error' do
-          expect(error).to be_a(Mongo::Error::BulkWriteError)
-        end
-
-        it 'splits messages into multiple messages' do
-          error
-          expect(authorized_collection.find.count).to eq(16)
+        it 'returns false' do
+          expect(bulk_write).to_not be_ordered
         end
       end
     end

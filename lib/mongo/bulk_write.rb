@@ -12,42 +12,158 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/bulk_write/bulk_writable'
-require 'mongo/bulk_write/ordered_bulk_write'
-require 'mongo/bulk_write/unordered_bulk_write'
 require 'mongo/bulk_write/result'
+require 'mongo/bulk_write/ordered_combiner'
 
 module Mongo
-  module BulkWrite
-    extend self
+  class BulkWrite
+    extend Forwardable
 
-    # Get a bulk write object either of type ordered or unordered.
+    # The insert many model constant.
     #
-    # @example Get a bulk write object.
-    #   Mongo::BulkWrite.get(collection, operations, ordered: true)
+    # @since 2.1.0
+    INSERT_MANY = :insert_many.freeze
+
+    # The insert one model constant.
     #
-    # @param [ Collection ] collection The collection on which the operations
-    #   will be executed.
+    # @since 2.1.0
+    INSERT_ONE = :insert_one.freeze
+
+    # Constant for number removed.
     #
-    # @param [ Array<Hash> ] operations The operations to execute.
+    # @since 2.1.0
+    REMOVED_COUNT = 'n_removed'.freeze
+
+    # Constant for number inserted.
     #
-    # @param [ Hash ] options The options for the bulk write object.
+    # @since 2.1.0
+    INSERTED_COUNT = 'n_inserted'.freeze
+
+    # Constant for inserted ids.
     #
-    # @option options [ true, false ] :ordered Whether the operations
-    #   should be executed in order.
-    # @option options [ Hash ] :write_concern The write concern options.
-    #   Can be :w => Integer, :fsync => Boolean, :j => Boolean.
+    # @since 2.1.0
+    INSERTED_IDS = 'inserted_ids'.freeze
+
+    # Constant for number matched.
     #
-    # @return [ OrderedBulkWrite, UnorderedBulkWrite ] The appropriate bulk
-    #   write object.
+    # @since 2.1.0
+    MATCHED_COUNT = 'n_matched'.freeze
+
+    # Constant for number modified.
     #
-    # @since 2.0.0
-    def get(collection, operations, options)
-      if options.fetch(:ordered, true)
-        OrderedBulkWrite.new(collection, operations, options)
-      else
-        UnorderedBulkWrite.new(collection, operations, options)
+    # @since 2.1.0
+    MODIFIED_COUNT = 'n_modified'.freeze
+
+    # Constant for number upserted.
+    #
+    # @since 2.1.0
+    UPSERTED_COUNT = 'n_upserted'.freeze
+
+    # Constant for upserted ids.
+    #
+    # @since 2.1.0
+    UPSERTED_IDS = 'upserted_ids'.freeze
+
+    # @return [ Mongo::Collection ] collection The collection.
+    attr_reader :collection
+
+    # @return [ Array<Hash, BSON::Document> ] requests The requests.
+    attr_reader :requests
+
+    # @return [ Hash, BSON::Document ] options The options.
+    attr_reader :options
+
+    # Delegate various methods to the collection.
+    def_delegators :@collection, :database, :cluster, :next_primary
+
+    # Execute the bulk write operation.
+    #
+    # @example Execute the bulk write.
+    #   bulk_write.execute
+    #
+    # @return [ Mongo::BulkWrite::Result ] The result.
+    #
+    # @since 2.1.0
+    def execute
+      server = next_primary
+      operation_id = Monitoring.next_operation_id
+      operations.each do |operation|
+        result = send(operation.keys.first, operation.values.first, server, operation_id)
+        p result
+        # combine the results here.
       end
+      BulkWrite::Result.new({})
+    end
+
+    # Create the new bulk write operation.
+    #
+    # @api private
+    #
+    # @example Create an ordered bulk write.
+    #   Mongo::BulkWrite.new(collection, [{ insert_one: { _id: 1 }}])
+    #
+    # @example Create an unordered bulk write.
+    #   Mongo::BulkWrite.new(collection, [{ insert_one: { _id: 1 }}], ordered: false)
+    #
+    # @param [ Mongo::Collection ] collection The collection.
+    # @param [ Array<Hash, BSON::Document> ] requests The requests.
+    # @param [ Hash, BSON::Document ] options The options.
+    #
+    # @since 2.1.0
+    def initialize(collection, requests, options = {})
+      @collection = collection
+      @requests = requests
+      @options = options || {}
+    end
+
+    # Is the bulk write ordered?
+    #
+    # @api private
+    #
+    # @example Is the bulk write ordered?
+    #   bulk_write.ordered?
+    #
+    # @return [ true, false ] If the bulk write is ordered.
+    #
+    # @since 2.1.0
+    def ordered?
+      @ordered ||= options.fetch(:ordered, true)
+    end
+
+    # Get the write concern for the bulk write.
+    #
+    # @api private
+    #
+    # @example Get the write concern.
+    #   bulk_write.write_concern
+    #
+    # @return [ WriteConcern ] The write concern.
+    #
+    # @since 2.1.0
+    def write_concern
+      @write_concern ||= options[:write_concern] ?
+        WriteConcern.get(options[:write_concern]) : collection.write_concern
+    end
+
+    private
+
+    def operations
+      if ordered?
+        OrderedCombiner.new(requests).combine
+      else
+        UnorderedCombiner.new(requests).combine
+      end
+    end
+
+    def insert_many(documents, server, operation_id)
+      Operation::Write::BulkInsert.new(
+        :documents => documents,
+        :db_name => database.name,
+        :coll_name => collection.name,
+        :write_concern => write_concern,
+        :ordered => ordered?,
+        :operation_id => operation_id
+      ).execute(server.context)
     end
   end
 end

@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require 'mongo/bulk_write'
 require 'mongo/collection/view'
 
 module Mongo
@@ -286,7 +287,7 @@ module Mongo
     # @example Execute a bulk write.
     #   collection.bulk_write(operations, options)
     #
-    # @param [ Array<Hash> ] operations The operations.
+    # @param [ Array<Hash> ] requests The bulk write requests.
     # @param [ Hash ] options The options.
     #
     # @option options [ true, false ] :ordered Whether the operations
@@ -297,8 +298,8 @@ module Mongo
     # @return [ BulkWrite::Result ] The result of the operation.
     #
     # @since 2.0.0
-    def bulk_write(operations, options = {})
-      BulkWrite.get(self, operations, options).execute
+    def bulk_write(requests, options = {})
+      BulkWrite.new(self, requests, options).execute
     end
 
     # Remove a document from the collection.

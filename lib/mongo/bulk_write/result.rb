@@ -13,7 +13,7 @@
 # limitations under the License.
 
 module Mongo
-  module BulkWrite
+  class BulkWrite
 
     # Wraps a series of bulk write operations in a result object.
     #
@@ -29,7 +29,7 @@ module Mongo
       #
       # @since 2.1.0
       def deleted_count
-        @results[BulkWritable::REMOVED_COUNT]
+        @results[BulkWrite::REMOVED_COUNT]
       end
 
       # Create the new result object from the results document.
@@ -53,7 +53,7 @@ module Mongo
       #
       # @since 2.1.0
       def inserted_count
-        @results[BulkWritable::INSERTED_COUNT]
+        @results[BulkWrite::INSERTED_COUNT]
       end
 
       # Get the inserted document ids, if the operation has inserts.
@@ -65,7 +65,7 @@ module Mongo
       #
       # @since 2.1.0
       def inserted_ids
-        @results[BulkWritable::INSERTED_IDS]
+        @results[BulkWrite::INSERTED_IDS]
       end
 
       # Returns the number of documents matched.
@@ -77,7 +77,7 @@ module Mongo
       #
       # @since 2.1.0
       def matched_count
-        @results[BulkWritable::MATCHED_COUNT]
+        @results[BulkWrite::MATCHED_COUNT]
       end
 
       # Returns the number of documents modified.
@@ -89,7 +89,7 @@ module Mongo
       #
       # @since 2.1.0
       def modified_count
-        @results[BulkWritable::MODIFIED_COUNT]
+        @results[BulkWrite::MODIFIED_COUNT]
       end
 
       # Returns the number of documents upserted.
@@ -101,7 +101,7 @@ module Mongo
       #
       # @since 2.1.0
       def upserted_count
-        @results[BulkWritable::UPSERTED_COUNT]
+        @results[BulkWrite::UPSERTED_COUNT]
       end
 
       # Get the upserted document ids, if the operation has inserts.
@@ -113,7 +113,7 @@ module Mongo
       #
       # @since 2.1.0
       def upserted_ids
-        @results[BulkWritable::UPSERTED_IDS]
+        @results[BulkWrite::UPSERTED_IDS]
       end
 
       # Validates the bulk write result.
