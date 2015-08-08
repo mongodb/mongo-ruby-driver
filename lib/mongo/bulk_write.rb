@@ -139,7 +139,7 @@ module Mongo
         else
           combiner.combine!(send(name, values, server, operation_id))
         end
-      rescue Error::MaxBSONSize => e
+      rescue Error::MaxBSONSize, Error::MaxMessageSize => e
         split_execute(name, values, server, operation_id, combiner)
       end
     end

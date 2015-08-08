@@ -214,6 +214,27 @@ describe Mongo::BulkWrite do
           expect(result.inserted_count).to eq(1001)
         end
       end
+
+      context 'when an operation exceeds the max bson size' do
+
+        let(:requests) do
+          5.times.map do |i|
+            { insert_one: { _id: i, x: 'y' * 4000000 }}
+          end
+        end
+
+        let(:result) do
+          bulk_write.execute
+        end
+
+        before do
+          expect(bulk_write).to receive(:insert_one).exactly(3).times.and_call_original
+        end
+
+        it 'inserts the documents' do
+          expect(result.inserted_count).to eq(5)
+        end
+      end
     end
 
     context 'when the bulk write is unordered' do
