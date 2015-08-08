@@ -14,6 +14,7 @@
 
 require 'mongo/bulk_write/result'
 require 'mongo/bulk_write/transformable'
+require 'mongo/bulk_write/validatable'
 require 'mongo/bulk_write/ordered_combiner'
 require 'mongo/bulk_write/unordered_combiner'
 require 'mongo/bulk_write/result_combiner'

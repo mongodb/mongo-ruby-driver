@@ -22,6 +22,7 @@ module Mongo
     # @since 2.1.0
     class UnorderedCombiner
       include Transformable
+      include Validatable
 
       # @return [ Array<Hash, BSON::Document> ] requests The provided requests.
       attr_reader :requests
@@ -63,14 +64,6 @@ module Mongo
       def add(operations, name, document)
         (operations[name] ||= []).push(transform(name, document))
         operations
-      end
-
-      def validate(name, document)
-        if document.respond_to?(:keys) || document.respond_to?(:data)
-          document
-        else
-          raise Error::InvalidBulkOperation.new(name, document)
-        end
       end
     end
   end
