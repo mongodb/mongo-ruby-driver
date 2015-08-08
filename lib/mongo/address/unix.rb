@@ -60,7 +60,7 @@ module Mongo
       # Get a socket for the provided address type, given the options.
       #
       # @example Get a Unix socket.
-      #   ipv4.socket(5)
+      #   address.socket(5)
       #
       # @param [ Float ] timeout The socket timeout.
       # @param [ Hash ] ssl_options SSL options - ignored.
@@ -69,7 +69,7 @@ module Mongo
       #
       # @since 2.0.0
       def socket(timeout, ssl_options = {})
-        Socket::Unix.new(host, timeout, Socket::AF_UNIX)
+        Socket::Unix.new(host, timeout)
       end
     end
   end

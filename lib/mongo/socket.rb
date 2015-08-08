@@ -173,10 +173,13 @@ module Mongo
     end
 
     def set_socket_options(sock)
-      encoded_timeout = [ timeout, 0 ].pack(TIMEOUT_PACK)
       sock.set_encoding(BSON::BINARY)
-      sock.setsockopt(SOL_SOCKET, SO_RCVTIMEO, encoded_timeout)
-      sock.setsockopt(SOL_SOCKET, SO_SNDTIMEO, encoded_timeout)
+
+      unless sock.is_a?(UNIXSocket) && BSON::Environment.jruby?
+        encoded_timeout = [ timeout, 0 ].pack(TIMEOUT_PACK)
+        sock.setsockopt(SOL_SOCKET, SO_RCVTIMEO, encoded_timeout)
+        sock.setsockopt(SOL_SOCKET, SO_SNDTIMEO, encoded_timeout)
+      end
     end
 
     def handle_errors
