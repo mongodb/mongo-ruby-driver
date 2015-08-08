@@ -37,6 +37,11 @@ module Mongo
       # @since 2.1.0
       INSERT_ONE = :insert_one.freeze
 
+      # The replace one model constant.
+      #
+      # @since 2.1.0
+      REPLACE_ONE = :replace_one.freeze
+
       # The update many model constant.
       #
       # @since 2.1.0
@@ -47,19 +52,58 @@ module Mongo
       # @since 2.1.0
       UPDATE_ONE = :update_one.freeze
 
+      # Proc to transform delete many ops.
+      #
+      # @since 2.1.0
+      DELETE_MANY_TRANSFORM = ->(doc){
+        { q: doc[:filter], limit: 0 }
+      }
+
+      # Proc to transform delete one ops.
+      #
+      # @since 2.1.0
+      DELETE_ONE_TRANSFORM = ->(doc){
+        { q: doc[:filter], limit: 1 }
+      }
+
+      # Proc to transform insert one ops.
+      #
+      # @since 2.1.0
+      INSERT_ONE_TRANSFORM = ->(doc){
+        doc
+      }
+
+      # Proc to transfor replace one ops.
+      #
+      # @since 2.1.0
+      REPLACE_ONE_TRANSFORM = ->(doc){
+        { q: doc[:filter], u: doc[:replacement], multi: false, upsert: doc.fetch(:upsert, false) }
+      }
+
+      # Proc to transform update many ops.
+      #
+      # @since 2.1.0
+      UPDATE_MANY_TRANSFORM = ->(doc){
+        { q: doc[:filter], u: doc[:update], multi: true, upsert: doc.fetch(:upsert, false) }
+      }
+
+      # Proc to transform update one ops.
+      #
+      # @since 2.1.0
+      UPDATE_ONE_TRANSFORM = ->(doc){
+        { q: doc[:filter], u: doc[:update], multi: false, upsert: doc.fetch(:upsert, false) }
+      }
+
       # Document mappers from the bulk api input into proper commands.
       #
       # @since 2.1.0
       MAPPERS = {
-        DELETE_MANY => ->(doc){{ q: doc[:filter], limit: 0 }},
-        DELETE_ONE  => ->(doc){{ q: doc[:filter], limit: 1 }},
-        INSERT_ONE  => ->(doc){ doc },
-        UPDATE_MANY  => ->(doc){
-          { q: doc[:filter], u: doc[:update], multi: true, upsert: doc.fetch(:upsert, false) }
-        },
-        UPDATE_ONE  => ->(doc){
-          { q: doc[:filter], u: doc[:update], multi: false, upsert: doc.fetch(:upsert, false) }
-        }
+        DELETE_MANY => DELETE_MANY_TRANSFORM,
+        DELETE_ONE  => DELETE_ONE_TRANSFORM,
+        INSERT_ONE  => INSERT_ONE_TRANSFORM,
+        REPLACE_ONE => REPLACE_ONE_TRANSFORM,
+        UPDATE_MANY => UPDATE_MANY_TRANSFORM,
+        UPDATE_ONE  => UPDATE_ONE_TRANSFORM
       }.freeze
 
       private
