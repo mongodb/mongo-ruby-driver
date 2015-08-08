@@ -50,6 +50,7 @@ module Mongo
       def combine!(result)
         combine_counts!(result)
         combine_ids!(result)
+        combine_errors!(result)
       end
 
       # Get the final result.
@@ -79,6 +80,24 @@ module Mongo
       def combine_ids!(result)
         if result.respond_to?(Result::INSERTED_IDS)
           results.merge!(Result::INSERTED_IDS => result.inserted_ids)
+        end
+        if result.respond_to?(Result::UPSERTED)
+          results.merge!(Result::UPSERTED_IDS => result.upserted.map{ |doc| doc['_id'] })
+        end
+      end
+
+      def combine_errors!(result, indexes = [])
+        write_errors = result.aggregate_write_errors(indexes)
+        result.validate! unless write_errors
+        # The Bulk API only returns the first write concern error encountered.
+        write_concern_errors = result.aggregate_write_concern_errors(indexes)
+        if write_errors
+          results.merge!(
+            Error::WRITE_ERRORS => ((results[Error::WRITE_ERRORS] || []) << write_errors).flatten
+          )
+        end
+        if write_concern_errors
+          results.merge!(Error::WRITE_CONCERN_ERRORS => write_concern_errors)
         end
       end
     end

@@ -45,6 +45,11 @@ module Mongo
       # @since 2.1.0
       MODIFIED_COUNT = 'n_modified'.freeze
 
+      # Constant for upserted.
+      #
+      # @since 2.1.0
+      UPSERTED = 'upserted'.freeze
+
       # Constant for number upserted.
       #
       # @since 2.1.0

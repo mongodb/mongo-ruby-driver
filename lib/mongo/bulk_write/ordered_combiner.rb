@@ -108,13 +108,12 @@ module Mongo
       end
 
       def transform(name, document)
-        # VALIDATORS[name].call(name, document)
         validate(name, document)
         MAPPERS[name].call(document)
       end
 
       def validate(name, document)
-        if document.respond_to?(:keys)
+        if document.respond_to?(:keys) || document.respond_to?(:data)
           document
         else
           raise Error::InvalidBulkOperation.new(name, document)
