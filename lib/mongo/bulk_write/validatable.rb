@@ -38,10 +38,23 @@ module Mongo
       #
       # @since 2.1.0
       def validate(name, document)
+        validate_operation(name)
+        validate_document(name, document)
+      end
+
+      private
+
+      def validate_document(name, document)
         if document.respond_to?(:keys) || document.respond_to?(:data)
           document
         else
           raise Error::InvalidBulkOperation.new(name, document)
+        end
+      end
+
+      def validate_operation(name)
+        unless Transformable::MAPPERS.key?(name)
+          raise Error::InvalidBulkOperationType.new(name)
         end
       end
     end

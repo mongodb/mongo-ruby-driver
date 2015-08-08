@@ -14,6 +14,19 @@ describe Mongo::BulkWrite do
 
     shared_examples_for 'an executable bulk write' do
 
+      context 'when providing a bad operation' do
+
+          let(:requests) do
+            [{ not_an_operation: { _id: 0 }}]
+          end
+
+          it 'raises an exception' do
+            expect {
+              bulk_write.execute
+            }.to raise_error(Mongo::Error::InvalidBulkOperationType)
+          end
+      end
+
       context 'when the operations do not need to be split' do
 
         context 'when provided a single insert one' do
