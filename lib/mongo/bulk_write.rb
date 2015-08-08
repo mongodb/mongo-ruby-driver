@@ -45,13 +45,13 @@ module Mongo
       operation_id = Monitoring.next_operation_id
       result_combiner = ResultCombiner.new
       operations.each do |operation|
-        result = execute_operation(
+        execute_operation(
           operation.keys.first,
           operation.values.first,
           server,
-          operation_id
+          operation_id,
+          result_combiner
         )
-        result_combiner.combine!(result)
       end
       result_combiner.result
     end
@@ -128,12 +128,15 @@ module Mongo
       }
     end
 
-    def execute_operation(name, values, server, operation_id)
+    def execute_operation(name, values, server, operation_id, combiner)
       begin
-        send(name, values, server, operation_id)
+        if values.size > server.max_write_batch_size
+          split_execute(name, values, server, operation_id, combiner)
+        else
+          combiner.combine!(send(name, values, server, operation_id))
+        end
       rescue Error::MaxBSONSize => e
-        execute_operation(name, values.shift(values.size / 2), server, operation_id)
-        execute_operation(name, values, server, operation_id)
+        split_execute(name, values, server, operation_id, combiner)
       end
     end
 
@@ -143,6 +146,11 @@ module Mongo
       else
         UnorderedCombiner.new(requests).combine
       end
+    end
+
+    def split_execute(name, values, server, operation_id, combiner)
+      execute_operation(name, values.shift(values.size / 2), server, operation_id, combiner)
+      execute_operation(name, values, server, operation_id, combiner)
     end
 
     def delete(documents, server, operation_id)
