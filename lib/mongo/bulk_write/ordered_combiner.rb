@@ -23,23 +23,7 @@ module Mongo
     class OrderedCombiner
       include Transformable
       include Validatable
-
-      # @return [ Array<Hash, BSON::Document> ] requests The provided requests.
-      attr_reader :requests
-
-      # Create the ordered combiner.
-      #
-      # @api private
-      #
-      # @example Create the ordered combiner.
-      #   OrderedCombiner.new([{ insert_one: { _id: 0 }}])
-      #
-      # @param [ Array<Hash, BSON::Document> ] requests The bulk requests.
-      #
-      # @since 2.1.0
-      def initialize(requests)
-        @requests = requests
-      end
+      include Combineable
 
       # Combine the requests in order.
       #
@@ -52,9 +36,7 @@ module Mongo
       #
       # @since 2.1.0
       def combine
-        requests.reduce([]) do |operations, request|
-          add(operations, request.keys.first, request.values.first)
-        end
+        combine_requests([])
       end
 
       private

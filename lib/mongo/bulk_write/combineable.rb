@@ -15,15 +15,12 @@
 module Mongo
   class BulkWrite
 
-    # Combines groups of bulk write operations in no order.
+    # Defines behaviour around combiners
     #
     # @api private
     #
     # @since 2.1.0
-    class UnorderedCombiner
-      include Transformable
-      include Validatable
-      include Combineable
+    module Combineable
 
       # @return [ Array<Hash, BSON::Document> ] requests The provided requests.
       attr_reader :requests
@@ -42,27 +39,12 @@ module Mongo
         @requests = requests
       end
 
-      # Combine the requests in order.
-      #
-      # @api private
-      #
-      # @example Combine the requests.
-      #   combiner.combine
-      #
-      # @return [ Array<Hash> ] The combined requests.
-      #
-      # @since 2.1.0
-      def combine
-        combine_requests({}).map do |name, ops|
-          { name => ops }
-        end
-      end
-
       private
 
-      def add(operations, name, document)
-        (operations[name] ||= []).push(transform(name, document))
-        operations
+      def combine_requests(ops)
+        requests.reduce(ops) do |operations, request|
+          add(operations, request.keys.first, request.values.first)
+        end
       end
     end
   end
