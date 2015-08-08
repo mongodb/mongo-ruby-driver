@@ -12,7 +12,7 @@ describe Mongo::BulkWrite do
 
   describe '#execute' do
 
-    context 'when the bulk write is ordered' do
+    shared_examples_for 'an executable bulk write' do
 
       context 'when the operations do not need to be split' do
 
@@ -20,10 +20,6 @@ describe Mongo::BulkWrite do
 
           let(:requests) do
             [{ insert_one: { _id: 0 }}]
-          end
-
-          let(:bulk_write) do
-            described_class.new(authorized_collection, requests, ordered: true)
           end
 
           let(:result) do
@@ -45,10 +41,6 @@ describe Mongo::BulkWrite do
             ]
           end
 
-          let(:bulk_write) do
-            described_class.new(authorized_collection, requests, ordered: true)
-          end
-
           let(:result) do
             bulk_write.execute
           end
@@ -62,10 +54,6 @@ describe Mongo::BulkWrite do
 
           let(:requests) do
             [{ delete_one: { filter: { _id: 0 }}}]
-          end
-
-          let(:bulk_write) do
-            described_class.new(authorized_collection, requests, ordered: true)
           end
 
           let(:result) do
@@ -91,10 +79,6 @@ describe Mongo::BulkWrite do
             ]
           end
 
-          let(:bulk_write) do
-            described_class.new(authorized_collection, requests, ordered: true)
-          end
-
           let(:result) do
             bulk_write.execute
           end
@@ -114,10 +98,6 @@ describe Mongo::BulkWrite do
 
           let(:requests) do
             [{ delete_many: { filter: { _id: 0 }}}]
-          end
-
-          let(:bulk_write) do
-            described_class.new(authorized_collection, requests, ordered: true)
           end
 
           let(:result) do
@@ -141,10 +121,6 @@ describe Mongo::BulkWrite do
               { delete_many: { filter: { _id: 1 }}},
               { delete_many: { filter: { _id: 2 }}}
             ]
-          end
-
-          let(:bulk_write) do
-            described_class.new(authorized_collection, requests, ordered: true)
           end
 
           let(:result) do
@@ -172,10 +148,6 @@ describe Mongo::BulkWrite do
             [{ update_one: { filter: { _id: 0 }, update: { "$set" => { name: 'test' }}}}]
           end
 
-          let(:bulk_write) do
-            described_class.new(authorized_collection, requests, ordered: true)
-          end
-
           let(:result) do
             bulk_write.execute
           end
@@ -193,10 +165,6 @@ describe Mongo::BulkWrite do
 
           let(:requests) do
             [{ update_many: { filter: { _id: 0 }, update: { "$set" => { name: 'test' }}}}]
-          end
-
-          let(:bulk_write) do
-            described_class.new(authorized_collection, requests, ordered: true)
           end
 
           let(:result) do
@@ -221,10 +189,6 @@ describe Mongo::BulkWrite do
           end
         end
 
-        let(:bulk_write) do
-          described_class.new(authorized_collection, requests, ordered: true)
-        end
-
         let(:result) do
           bulk_write.execute
         end
@@ -237,6 +201,24 @@ describe Mongo::BulkWrite do
           expect(result.inserted_count).to eq(1001)
         end
       end
+    end
+
+    context 'when the bulk write is unordered' do
+
+      let(:bulk_write) do
+        described_class.new(authorized_collection, requests, ordered: false)
+      end
+
+      it_behaves_like 'an executable bulk write'
+    end
+
+    context 'when the bulk write is ordered' do
+
+      let(:bulk_write) do
+        described_class.new(authorized_collection, requests, ordered: true)
+      end
+
+      it_behaves_like 'an executable bulk write'
     end
   end
 
