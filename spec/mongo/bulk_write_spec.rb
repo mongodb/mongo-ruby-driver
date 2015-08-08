@@ -215,6 +215,27 @@ describe Mongo::BulkWrite do
 
       context 'when the operations need to be split' do
 
+        let(:requests) do
+          1001.times.map do |i|
+            { insert_one: { _id: i }}
+          end
+        end
+
+        let(:bulk_write) do
+          described_class.new(authorized_collection, requests, ordered: true)
+        end
+
+        let(:result) do
+          bulk_write.execute
+        end
+
+        before do
+          expect(bulk_write).to receive(:insert_one).exactly(2).times.and_call_original
+        end
+
+        it 'inserts the documents' do
+          expect(result.inserted_count).to eq(1001)
+        end
       end
     end
   end
