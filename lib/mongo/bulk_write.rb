@@ -45,7 +45,12 @@ module Mongo
       operation_id = Monitoring.next_operation_id
       result_combiner = ResultCombiner.new
       operations.each do |operation|
-        result = send(operation.keys.first, operation.values.first, server, operation_id)
+        result = execute_operation(
+          operation.keys.first,
+          operation.values.first,
+          server,
+          operation_id
+        )
         result_combiner.combine!(result)
       end
       result_combiner.result
@@ -121,6 +126,15 @@ module Mongo
         :ordered => ordered?,
         :operation_id => operation_id
       }
+    end
+
+    def execute_operation(name, values, server, operation_id)
+      begin
+        send(name, values, server, operation_id)
+      rescue Error::MaxBSONSize => e
+        execute_operation(name, values.shift(values.size / 2), server, operation_id)
+        execute_operation(name, values, server, operation_id)
+      end
     end
 
     def operations
