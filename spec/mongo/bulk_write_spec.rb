@@ -191,6 +191,25 @@ describe Mongo::BulkWrite do
 
         context 'when providing a single update many' do
 
+          let(:requests) do
+            [{ update_many: { filter: { _id: 0 }, update: { "$set" => { name: 'test' }}}}]
+          end
+
+          let(:bulk_write) do
+            described_class.new(authorized_collection, requests, ordered: true)
+          end
+
+          let(:result) do
+            bulk_write.execute
+          end
+
+          before do
+            authorized_collection.insert_one({ _id: 0 })
+          end
+
+          it 'updates the documents' do
+            expect(result.modified_count).to eq(1)
+          end
         end
       end
 

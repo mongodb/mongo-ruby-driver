@@ -149,10 +149,13 @@ module Mongo
       ).execute(server.context)
     end
 
-    def update_one(documents, server, operation_id)
+    def update(documents, server, operation_id)
       Operation::Write::BulkUpdate.new(
         base_spec(operation_id).merge(:updates => documents)
       ).execute(server.context)
     end
+
+    alias :update_one :update
+    alias :update_many :update
   end
 end

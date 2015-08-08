@@ -37,6 +37,11 @@ module Mongo
       # @since 2.1.0
       INSERT_ONE = :insert_one.freeze
 
+      # The update many model constant.
+      #
+      # @since 2.1.0
+      UPDATE_MANY = :update_many.freeze
+
       # The update one model constant.
       #
       # @since 2.1.0
@@ -49,6 +54,9 @@ module Mongo
         DELETE_MANY => ->(doc){{ q: doc[:filter], limit: 0 }},
         DELETE_ONE  => ->(doc){{ q: doc[:filter], limit: 1 }},
         INSERT_ONE  => ->(doc){ doc },
+        UPDATE_MANY  => ->(doc){
+          { q: doc[:filter], u: doc[:update], multi: true, upsert: doc.fetch(:upsert, false) }
+        },
         UPDATE_ONE  => ->(doc){
           { q: doc[:filter], u: doc[:update], multi: false, upsert: doc.fetch(:upsert, false) }
         }
