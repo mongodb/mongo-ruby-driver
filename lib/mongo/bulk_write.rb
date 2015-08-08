@@ -131,17 +131,14 @@ module Mongo
       end
     end
 
-    def delete_one(documents, server, operation_id)
+    def delete(documents, server, operation_id)
       Operation::Write::BulkDelete.new(
         base_spec(operation_id).merge(:deletes => documents)
       ).execute(server.context)
     end
 
-    def delete_many(documents, server, operation_id)
-      Operation::Write::BulkDelete.new(
-        base_spec(operation_id).merge(:deletes => documents)
-      ).execute(server.context)
-    end
+    alias :delete_one :delete
+    alias :delete_many :delete
 
     def insert_one(documents, server, operation_id)
       Operation::Write::BulkInsert.new(
