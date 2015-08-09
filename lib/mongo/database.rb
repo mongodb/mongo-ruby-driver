@@ -196,11 +196,11 @@ module Mongo
     # @example Get the GridFS.
     #   database.fs
     #
-    # @return [ Grid::FS ] The GridFS for the database.
+    # @return [ Grid::FSBucket ] The GridFS for the database.
     #
     # @since 2.0.0
     def fs(options = {})
-      Grid::FS.new(self, options)
+      Grid::FSBucket.new(self, options)
     end
 
     # Get the user view for this database.

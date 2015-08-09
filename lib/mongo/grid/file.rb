@@ -13,7 +13,7 @@
 # limitations under the License.
 
 require 'mongo/grid/file/chunk'
-require 'mongo/grid/file/metadata'
+require 'mongo/grid/file/info'
 
 module Mongo
   module Grid
@@ -24,8 +24,8 @@ module Mongo
     class File
       extend Forwardable
 
-      # Delegate to metadata for convenience.
-      def_delegators :metadata, :chunk_size, :content_type, :filename, :id, :md5, :upload_date
+      # Delegate to file info for convenience.
+      def_delegators :info, :chunk_size, :content_type, :filename, :id, :md5, :upload_date
 
       # @return [ Array<Chunk> ] chunks The file chunks.
       attr_reader :chunks
@@ -33,8 +33,8 @@ module Mongo
       # @return [ IO ] data The raw data for the file.
       attr_reader :data
 
-      # @return [ Metadata ] metadata The file metadata.
-      attr_reader :metadata
+      # @return [ File::Info ] info The file information.
+      attr_reader :info
 
       # Check equality of files.
       #
@@ -48,7 +48,7 @@ module Mongo
       # @since 2.0.0
       def ==(other)
         return false unless other.is_a?(File)
-        chunks == other.chunks && data == other.data && metadata == other.metadata
+        chunks == other.chunks && data == other.data && info == other.info
       end
 
       # Initialize the file.
@@ -58,17 +58,20 @@ module Mongo
       #
       # @param [ IO, Array<BSON::Document> ] data The file or IO object or
       #   chunks.
-      # @param [ BSON::Document, Hash ] options The metadata options.
+      # @param [ BSON::Document, Hash ] options The info options.
       #
       # @option options [ String ] :filename Required name of the file.
       # @option options [ String ] :content_type The content type of the file.
+      #   Deprecated, please use the metadata document instead.
       # @option options [ String ] :metadata Optional file metadata.
       # @option options [ Integer ] :chunk_size Override the default chunk
       #   size.
+      # @option opts [ Array<String> ] :aliases A list of aliases.
+      #   Deprecated, please use the metadata document instead.
       #
       # @since 2.0.0
       def initialize(data, options = {})
-        @metadata = Metadata.new({ :length => data.length }.merge(options))
+        @info = Info.new(options.merge(:length => data.length))
         initialize_chunks!(data)
       end
 
@@ -97,7 +100,7 @@ module Mongo
           @chunks = chks
           @data = Chunk.assemble(chks)
         else
-          @chunks = Chunk.split(value, metadata)
+          @chunks = Chunk.split(value, info)
           @data = value
         end
       end

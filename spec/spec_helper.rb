@@ -25,6 +25,7 @@ SERVER_SELECTION_RTT_TESTS = Dir.glob("#{CURRENT_PATH}/support/server_selection/
 SERVER_SELECTION_TESTS = Dir.glob("#{CURRENT_PATH}/support/server_selection/selection/**/*.yml")
 CRUD_TESTS = Dir.glob("#{CURRENT_PATH}/support/crud_tests/**/*.yml")
 COMMAND_MONITORING_TESTS = Dir.glob("#{CURRENT_PATH}/support/command_monitoring/**/*.yml")
+GRIDFS_TESTS = Dir.glob("#{CURRENT_PATH}/support/gridfs_tests/*.yml")
 
 SSL_CERTS_DIR = "#{CURRENT_PATH}/support/certificates"
 CLIENT_PEM = "#{SSL_CERTS_DIR}/client.pem"
@@ -45,6 +46,8 @@ require 'support/server_selection_rtt'
 require 'support/server_selection'
 require 'support/crud'
 require 'support/command_monitoring'
+require 'support/gridfs'
+
 
 RSpec.configure do |config|
   config.color     = true

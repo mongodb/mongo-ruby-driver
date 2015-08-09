@@ -12,6 +12,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/grid/file'
-require 'mongo/grid/fs_bucket'
-require 'mongo/grid/stream'
+module Mongo
+  class Error
+
+    # Raised if the GridFS::Stream object is closed and an operation is attempted.
+    #
+    # @since 2.1.0
+    class ClosedStream < Error
+
+      # Create the new exception.
+      #
+      # @example Create the new exception.
+      #   Mongo::Error::ClosedStream.new
+      #
+      # @since 2.1.0
+      def initialize
+        super("The stream is closed and cannot be written to or read from.")
+      end
+    end
+  end
+end

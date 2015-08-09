@@ -12,6 +12,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/grid/file'
-require 'mongo/grid/fs_bucket'
-require 'mongo/grid/stream'
+module Mongo
+  class Error
+
+    # Raised if a file is deleted from a GridFS but it is not found.
+    #
+    # @since 2.1.0
+    class FileNotFound < Error
+
+      # Create the new exception.
+      #
+      # @example Create the new exception.
+      #   Mongo::Error::ClosedStream.new
+      #
+      # @since 2.1.0
+      def initialize(id)
+        super("File with id #{id} not found.")
+      end
+    end
+  end
+end

@@ -160,17 +160,17 @@ module Mongo
           #   Chunks.split(data)
           #
           # @param [ String ] data The raw bytes.
-          # @param [ Metadata ] metadata The file metadata.
+          # @param [ File::Info ] file_info The files collection file doc.
           #
           # @return [ Array<Chunk> ] The chunks of the data.
           #
           # @since 2.0.0
-          def split(data, metadata)
-            chunks, index, n = [], 0, 0
+          def split(data, file_info, offset = 0)
+            chunks, index, n = [], 0, offset
             while index < data.length
-              bytes = data.slice(index, metadata.chunk_size)
-              metadata.md5.update(bytes)
-              chunk = Chunk.new(:data => BSON::Binary.new(bytes), :files_id => metadata.id, :n => n)
+              bytes = data.slice(index, file_info.chunk_size)
+              file_info.md5.update(bytes)
+              chunk = Chunk.new(:data => BSON::Binary.new(bytes), :files_id => file_info.id, :n => n)
               chunks.push(chunk)
               index += bytes.length
               n += 1

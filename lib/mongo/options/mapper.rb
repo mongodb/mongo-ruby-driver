@@ -34,8 +34,10 @@ module Mongo
       #
       # @since 2.0.0
       def transform(options, mappings)
-        options.reduce({}) do |transformed, (key, value)|
-          transformed[mappings[key] || key] = value
+        map = transform_keys_to_strings(mappings)
+        opts = transform_keys_to_strings(options)
+        opts.reduce({}) do |transformed, (key, value)|
+          transformed[map[key]] = value if map[key]
           transformed
         end
       end
