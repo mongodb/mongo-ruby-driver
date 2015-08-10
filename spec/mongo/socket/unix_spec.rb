@@ -12,6 +12,10 @@ describe Mongo::Socket::Unix do
       socket.connect!
     end
 
+    after do
+      socket.close
+    end
+
     it 'connects to the server' do
       expect(socket).to be_alive
     end
@@ -23,6 +27,10 @@ describe Mongo::Socket::Unix do
 
       before do
         socket.connect!
+      end
+
+      after do
+        socket.close
       end
 
       it 'returns true' do

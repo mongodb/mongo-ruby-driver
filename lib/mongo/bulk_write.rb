@@ -12,42 +12,174 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/bulk_write/bulk_writable'
-require 'mongo/bulk_write/ordered_bulk_write'
-require 'mongo/bulk_write/unordered_bulk_write'
 require 'mongo/bulk_write/result'
+require 'mongo/bulk_write/transformable'
+require 'mongo/bulk_write/validatable'
+require 'mongo/bulk_write/combineable'
+require 'mongo/bulk_write/ordered_combiner'
+require 'mongo/bulk_write/unordered_combiner'
+require 'mongo/bulk_write/result_combiner'
 
 module Mongo
-  module BulkWrite
-    extend self
+  class BulkWrite
+    extend Forwardable
 
-    # Get a bulk write object either of type ordered or unordered.
+    # @return [ Mongo::Collection ] collection The collection.
+    attr_reader :collection
+
+    # @return [ Array<Hash, BSON::Document> ] requests The requests.
+    attr_reader :requests
+
+    # @return [ Hash, BSON::Document ] options The options.
+    attr_reader :options
+
+    # Delegate various methods to the collection.
+    def_delegators :@collection, :database, :cluster, :next_primary
+
+    # Execute the bulk write operation.
     #
-    # @example Get a bulk write object.
-    #   Mongo::BulkWrite.get(collection, operations, ordered: true)
+    # @example Execute the bulk write.
+    #   bulk_write.execute
     #
-    # @param [ Collection ] collection The collection on which the operations
-    #   will be executed.
+    # @return [ Mongo::BulkWrite::Result ] The result.
     #
-    # @param [ Array<Hash> ] operations The operations to execute.
+    # @since 2.1.0
+    def execute
+      server = next_primary
+      operation_id = Monitoring.next_operation_id
+      result_combiner = ResultCombiner.new
+      operations.each do |operation|
+        execute_operation(
+          operation.keys.first,
+          operation.values.first,
+          server,
+          operation_id,
+          result_combiner
+        )
+      end
+      result_combiner.result
+    end
+
+    # Create the new bulk write operation.
     #
-    # @param [ Hash ] options The options for the bulk write object.
+    # @api private
     #
-    # @option options [ true, false ] :ordered Whether the operations
-    #   should be executed in order.
-    # @option options [ Hash ] :write_concern The write concern options.
-    #   Can be :w => Integer, :fsync => Boolean, :j => Boolean.
+    # @example Create an ordered bulk write.
+    #   Mongo::BulkWrite.new(collection, [{ insert_one: { _id: 1 }}])
     #
-    # @return [ OrderedBulkWrite, UnorderedBulkWrite ] The appropriate bulk
-    #   write object.
+    # @example Create an unordered bulk write.
+    #   Mongo::BulkWrite.new(collection, [{ insert_one: { _id: 1 }}], ordered: false)
     #
-    # @since 2.0.0
-    def get(collection, operations, options)
-      if options.fetch(:ordered, true)
-        OrderedBulkWrite.new(collection, operations, options)
-      else
-        UnorderedBulkWrite.new(collection, operations, options)
+    # @example Create an ordered mixed bulk write.
+    #   Mongo::BulkWrite.new(
+    #     collection,
+    #     [
+    #       { insert_one: { _id: 1 }},
+    #       { update_one: { filter: { _id: 0 }, update: { '$set' => { name: 'test' }}}},
+    #       { delete_one: { filter: { _id: 2 }}}
+    #     ]
+    #   )
+    #
+    # @param [ Mongo::Collection ] collection The collection.
+    # @param [ Array<Hash, BSON::Document> ] requests The requests.
+    # @param [ Hash, BSON::Document ] options The options.
+    #
+    # @since 2.1.0
+    def initialize(collection, requests, options = {})
+      @collection = collection
+      @requests = requests
+      @options = options || {}
+    end
+
+    # Is the bulk write ordered?
+    #
+    # @api private
+    #
+    # @example Is the bulk write ordered?
+    #   bulk_write.ordered?
+    #
+    # @return [ true, false ] If the bulk write is ordered.
+    #
+    # @since 2.1.0
+    def ordered?
+      @ordered ||= options.fetch(:ordered, true)
+    end
+
+    # Get the write concern for the bulk write.
+    #
+    # @api private
+    #
+    # @example Get the write concern.
+    #   bulk_write.write_concern
+    #
+    # @return [ WriteConcern ] The write concern.
+    #
+    # @since 2.1.0
+    def write_concern
+      @write_concern ||= options[:write_concern] ?
+        WriteConcern.get(options[:write_concern]) : collection.write_concern
+    end
+
+    private
+
+    def base_spec(operation_id)
+      {
+        :db_name => database.name,
+        :coll_name => collection.name,
+        :write_concern => write_concern,
+        :ordered => ordered?,
+        :operation_id => operation_id
+      }
+    end
+
+    def execute_operation(name, values, server, operation_id, combiner)
+      begin
+        if values.size > server.max_write_batch_size
+          split_execute(name, values, server, operation_id, combiner)
+        else
+          combiner.combine!(send(name, values, server, operation_id), values.size)
+        end
+      rescue Error::MaxBSONSize, Error::MaxMessageSize => e
+        split_execute(name, values, server, operation_id, combiner)
       end
     end
+
+    def operations
+      if ordered?
+        OrderedCombiner.new(requests).combine
+      else
+        UnorderedCombiner.new(requests).combine
+      end
+    end
+
+    def split_execute(name, values, server, operation_id, combiner)
+      execute_operation(name, values.shift(values.size / 2), server, operation_id, combiner)
+      execute_operation(name, values, server, operation_id, combiner)
+    end
+
+    def delete(documents, server, operation_id)
+      Operation::Write::BulkDelete.new(
+        base_spec(operation_id).merge(:deletes => documents)
+      ).execute(server.context)
+    end
+
+    alias :delete_one :delete
+    alias :delete_many :delete
+
+    def insert_one(documents, server, operation_id)
+      Operation::Write::BulkInsert.new(
+        base_spec(operation_id).merge(:documents => documents)
+      ).execute(server.context)
+    end
+
+    def update(documents, server, operation_id)
+      Operation::Write::BulkUpdate.new(
+        base_spec(operation_id).merge(:updates => documents)
+      ).execute(server.context)
+    end
+
+    alias :replace_one :update
+    alias :update_one :update
+    alias :update_many :update
   end
 end

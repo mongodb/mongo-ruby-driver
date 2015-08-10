@@ -157,6 +157,7 @@ module Mongo
               end
             end
           end
+          alias :n_modified :n_matched
 
           private
 
