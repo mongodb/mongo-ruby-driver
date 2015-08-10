@@ -25,19 +25,18 @@ module Mongo
         # Aggregate the write errors returned from this result.
         #
         # @example Aggregate the write errors.
-        #   result.aggregate_write_errors([0, 1, 2, 3])
+        #   result.aggregate_write_errors(0)
         #
-        # @param [ Array ] indexes The indexes of each operation as they
-        #   were listed in the Bulk API.
+        # @param [ Integer ] count The number of documents already executed.
         #
         # @return [ Array ] The aggregate write errors.
         #
         # @since 2.0.0
-        def aggregate_write_errors(indexes)
+        def aggregate_write_errors(count)
           @replies.reduce(nil) do |errors, reply|
             if write_errors = reply.documents.first[Error::WRITE_ERRORS]
               wes = write_errors.collect do |we|
-                we.merge!('index' => indexes[we['index']])
+                we.merge!('index' => count + we['index'])
               end
               (errors || []) << wes if wes
             end
@@ -47,19 +46,18 @@ module Mongo
         # Aggregate the write concern errors returned from this result.
         #
         # @example Aggregate the write concern errors.
-        #   result.aggregate_write_concern_errors([0, 1, 2, 3])
+        #   result.aggregate_write_concern_errors(100)
         #
-        # @param [ Array ] indexes The indexes of each operation as they
-        #   were listed in the Bulk API.
+        # @param [ Integer ] count The number of documents already executed.
         #
         # @return [ Array ] The aggregate write concern errors.
         #
         # @since 2.0.0
-        def aggregate_write_concern_errors(indexes)
+        def aggregate_write_concern_errors(count)
           @replies.each_with_index.reduce(nil) do |errors, (reply, i)|
             if write_concern_errors = reply.documents.first[Error::WRITE_CONCERN_ERRORS]
               (errors || []) << write_concern_errors.reduce(nil) do |errs, wce|
-                  wce.merge!('index' => indexes[wce['index']])
+                  wce.merge!('index' => count + wce['index'])
                   (errs || []) << write_concern_error
               end
             end

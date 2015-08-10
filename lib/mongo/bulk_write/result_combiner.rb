@@ -22,6 +22,9 @@ module Mongo
     # @since 2.1.0
     class ResultCombiner
 
+      # @return [ Integer ] count The count of documents in the entire batch.
+      attr_reader :count
+
       # @return [ Hash ] results The results hash.
       attr_reader :results
 
@@ -35,6 +38,7 @@ module Mongo
       # @since 2.1.0
       def initialize
         @results = {}
+        @count = 0
       end
 
       # Combines a result into the overall results.
@@ -42,15 +46,17 @@ module Mongo
       # @api private
       #
       # @example Combine the result.
-      #   combiner.combine!(result)
+      #   combiner.combine!(result, count)
       #
       # @param [ Operation::Result ] result The result to combine.
+      # @param [ Integer ] count The count of requests in the batch.
       #
       # @since 2.1.0
-      def combine!(result)
+      def combine!(result, count)
         combine_counts!(result)
         combine_ids!(result)
         combine_errors!(result)
+        @count += count
       end
 
       # Get the final result.
@@ -91,8 +97,8 @@ module Mongo
         combine_write_concern_errors!(result)
       end
 
-      def combine_write_errors!(result, indexes = [])
-        if write_errors = result.aggregate_write_errors(indexes)
+      def combine_write_errors!(result)
+        if write_errors = result.aggregate_write_errors(count)
           results.merge!(
             Error::WRITE_ERRORS => ((results[Error::WRITE_ERRORS] || []) << write_errors).flatten
           )
@@ -101,8 +107,8 @@ module Mongo
         end
       end
 
-      def combine_write_concern_errors!(result, indexes = [])
-        if write_concern_errors = result.aggregate_write_concern_errors(indexes)
+      def combine_write_concern_errors!(result)
+        if write_concern_errors = result.aggregate_write_concern_errors(count)
           results.merge!(Error::WRITE_CONCERN_ERRORS => write_concern_errors)
         end
       end

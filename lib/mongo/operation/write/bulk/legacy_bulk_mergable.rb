@@ -25,20 +25,19 @@ module Mongo
         # Aggregate the write errors returned from this result.
         #
         # @example Aggregate the write errors.
-        #   result.aggregate_write_errors([0, 1, 2, 3])
+        #   result.aggregate_write_errors(0)
         #
-        # @param [ Array ] indexes The indexes of each operation as they
-        #   were listed in the Bulk API.
+        # @param [ Integer ] count The number of documents already executed.
         #
         # @return [ Array ] The aggregate write errors.
         #
         # @since 2.0.0
-        def aggregate_write_errors(indexes)
+        def aggregate_write_errors(count)
           @replies.each_with_index.reduce(nil) do |errors, (reply, i)|
             if reply_write_errors?(reply)
               errors ||= []
               errors << { 'errmsg' => reply.documents.first[Error::ERROR],
-                          'index' => indexes[i],
+                          'index' => count + i,
                           'code' => reply.documents.first[Error::CODE] }
             end
             errors
@@ -48,15 +47,14 @@ module Mongo
         # Aggregate the write concern errors returned from this result.
         #
         # @example Aggregate the write concern errors.
-        #   result.aggregate_write_concern_errors([0, 1, 2, 3])
+        #   result.aggregate_write_concern_errors(4)
         #
-        # @param [ Array ] indexes The indexes of each operation as they
-        #   were listed in the Bulk API.
+        # @param [ Integer ] count The number of documents already executed.
         #
         # @return [ Array ] The aggregate write concern errors.
         #
         # @since 2.0.0
-        def aggregate_write_concern_errors(indexes)
+        def aggregate_write_concern_errors(count)
           @replies.each_with_index.reduce(nil) do |errors, (reply, i)|
             if error = reply_write_errors?(reply)
               errors ||= []
@@ -68,7 +66,7 @@ module Mongo
                 error_string = "#{code}: #{error}"
               end
               errors << { 'errmsg' => error_string,
-                          'index' => indexes[i],
+                          'index' => count + i,
                           'code' => code } if error_string
             end
             errors

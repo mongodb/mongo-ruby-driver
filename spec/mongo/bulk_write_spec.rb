@@ -16,18 +16,48 @@ describe Mongo::BulkWrite do
 
       context 'when providing a bad operation' do
 
+        let(:requests) do
+          [{ not_an_operation: { _id: 0 }}]
+        end
+
+        it 'raises an exception' do
+          expect {
+            bulk_write.execute
+          }.to raise_error(Mongo::Error::InvalidBulkOperationType)
+        end
+      end
+
+      context 'when the operations do not need to be split' do
+
+        context 'when a write error occurs' do
+
           let(:requests) do
-            [{ not_an_operation: { _id: 0 }}]
+            [
+              { insert_one: { _id: 0 }},
+              { insert_one: { _id: 1 }},
+              { insert_one: { _id: 0 }},
+              { insert_one: { _id: 1 }}
+            ]
+          end
+
+          let(:error) do
+            begin
+              bulk_write.execute
+            rescue => e
+              e
+            end
           end
 
           it 'raises an exception' do
             expect {
               bulk_write.execute
-            }.to raise_error(Mongo::Error::InvalidBulkOperationType)
+            }.to raise_error(Mongo::Error::BulkWriteError)
           end
-      end
 
-      context 'when the operations do not need to be split' do
+          it 'sets the document index on the error' do
+            expect(error.result[Mongo::Error::WRITE_ERRORS].first['index']).to eq(2)
+          end
+        end
 
         context 'when provided a single insert one' do
 
@@ -220,22 +250,54 @@ describe Mongo::BulkWrite do
 
       context 'when the operations need to be split' do
 
-        let(:requests) do
-          1001.times.map do |i|
-            { insert_one: { _id: i }}
+        context 'when a write error occurs' do
+
+          let(:requests) do
+            1001.times.map do |i|
+              { insert_one: { _id: i }}
+            end
+          end
+
+          let(:error) do
+            begin
+              bulk_write.execute
+            rescue => e
+              e
+            end
+          end
+
+          it 'raises an exception' do
+            expect {
+              requests.push({ insert_one: { _id: 5 }})
+              bulk_write.execute
+            }.to raise_error(Mongo::Error::BulkWriteError)
+          end
+
+          it 'sets the document index on the error' do
+            requests.push({ insert_one: { _id: 5 }})
+            expect(error.result[Mongo::Error::WRITE_ERRORS].first['index']).to eq(1001)
           end
         end
 
-        let(:result) do
-          bulk_write.execute
-        end
+        context 'when no write errors occur' do
 
-        before do
-          expect(bulk_write).to receive(:insert_one).exactly(2).times.and_call_original
-        end
+          let(:requests) do
+            1001.times.map do |i|
+              { insert_one: { _id: i }}
+            end
+          end
 
-        it 'inserts the documents' do
-          expect(result.inserted_count).to eq(1001)
+          let(:result) do
+            bulk_write.execute
+          end
+
+          before do
+            expect(bulk_write).to receive(:insert_one).exactly(2).times.and_call_original
+          end
+
+          it 'inserts the documents' do
+            expect(result.inserted_count).to eq(1001)
+          end
         end
       end
 
