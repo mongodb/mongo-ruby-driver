@@ -29,61 +29,106 @@ module Mongo
   class URI
     include Loggable
 
-    # @return [ Hash ] options Any options provided to the parser.
+    # The uri parser object options.
+    #
+    # @since 2.0.0
     attr_reader :options
 
-    # Scheme Regex: non-capturing, matches scheme.
+    # The options specified in the uri.
+    #
+    # @since 2.1.0
+    attr_reader :uri_options
+
+    # The servers specified in the uri.
     #
     # @since 2.0.0
-    SCHEME = %r{(?:mongodb://)}.freeze
+    attr_reader :servers
 
-    # User Regex: capturing, group 1, matches anything but ':'
+    # Unsafe characters that must be URI-escaped.
+    #
+    # @since 2.1.0
+    UNSAFE = /[\:\/\+\@]/
+
+    # The mongodb connection string scheme.
     #
     # @since 2.0.0
-    USER = /([^:]+)/.freeze
+    SCHEME = 'mongodb://'.freeze
 
-    # Password Regex: capturing, group 2, matches anything but '@'
+    # The character delimiting hosts.
     #
-    # @since 2.0.0
-    PASSWORD = /([^@]+)/.freeze
+    # @since 2.1.0
+    HOST_DELIM = ','.freeze
 
-    # Credentials Regex: non capturing, matches 'user:password@'
+    # The character separating a host and port.
     #
-    # @since 2.0.0
-    CREDENTIALS = /(?:#{USER}:#{PASSWORD}?@)?/.freeze
+    # @since 2.1.0
+    HOST_PORT_DELIM = ':'.freeze
 
-    # Host and port server Regex: matches anything but a forward slash
+    # The character delimiting a database.
     #
-    # @since 2.0.0
-    HOSTPORT = /[^\/]+/.freeze
+    # @since 2.1.0
+    DATABSE_DELIM = '/'.freeze
 
-    # Unix socket server Regex: matches unix socket server
+    # The character delimiting options.
     #
-    # @since 2.0.0
-    UNIX = /\/.+.sock?/.freeze
+    # @since 2.1.0
+    URI_OPTS_DELIM = '?'.freeze
 
-    # server Regex: capturing, matches host and port server or unix server
+    # The character delimiting multiple options.
     #
-    # @since 2.0.0
-    SERVERS = /((?:(?:#{HOSTPORT}|#{UNIX}),?)+)/.freeze
+    # @since 2.1.0
+    INDIV_URI_OPTS_DELIM = '&'.freeze
 
-    # Database Regex: matches anything but the characters that cannot
-    # be part of any MongoDB database name.
+    # The character delimiting an option and its value.
     #
-    # @since 2.0.0
-    DATABASE = %r{(?:/([^/\.\ "*<>:\|\?]*))?}.freeze
+    # @since 2.1.0
+    URI_OPTS_VALUE_DELIM = '='.freeze
 
-    # Option Regex: only matches the ampersand separator and does
-    # not allow for semicolon to be used to separate options.
+    # The character separating a username from the password.
     #
-    # @since 2.0.0
-    OPTIONS = /(?:\?(?:(.+=.+)&?)+)*/.freeze
+    # @since 2.1.0
+    AUTH_USER_PWD_DELIM = ':'.freeze
 
-    # Complete URI Regex: matches all of the combined components
+    # The character delimiting auth credentials.
     #
-    # @since 2.0.0
-    URI = /#{SCHEME}#{CREDENTIALS}#{SERVERS}#{DATABASE}#{OPTIONS}/.freeze
+    # @since 2.1.0
+    AUTH_DELIM = '@'.freeze
 
+    # Error details for an invalid scheme.
+    #
+    # @since 2.1.0
+    INVALID_SCHEME = "Invalid scheme. Scheme must be '#{SCHEME}'".freeze
+
+    # Error details for an invalid options format.
+    #
+    # @since 2.1.0
+    INVALID_OPTS_VALUE_DELIM = "Options and their values must be delimited" +
+      " by '#{URI_OPTS_VALUE_DELIM}'".freeze
+
+    # Error details for an un-escaped user name or password.
+    #
+    # @since 2.1.0
+    UNESCAPED_USER_PWD = "User name and password must be URI-escaped.".freeze
+
+    # Error details for a non-delimited database name.
+    #
+    # @since 2.1.0
+    INVALID_DB_DELIM = "Database must be delimited by a #{DATABSE_DELIM}.".freeze
+
+    # Error details for a missing host.
+    #
+    # @since 2.1.0
+    INVALID_HOST = "At least one host must be specified.".freeze
+
+    # Error details for an invalid port.
+    #
+    # @since 2.1.0
+    INVALID_PORT = "Invalid port. Port must be greater than 0 and less than 65536".freeze
+
+    # Error details for an invalid host:port format.
+    #
+    # @since 2.1.0
+    INVALID_HOST_PORT= "Invalid host:port format.".freeze
 
     # MongoDB URI format specification.
     #
@@ -124,26 +169,15 @@ module Mongo
     # @param [ String ] string The uri string.
     # @param [ Hash ] options The options.
     #
-    # @raise [ BadURI ] If the uri does not match the spec.
+    # @raise [ Error::InvalidURI ] If the uri does not match the spec.
     #
     # @since 2.0.0
     def initialize(string, options = {})
       @string = string
       @options = options
-      @match = @string.match(URI)
-      raise Error::InvalidURI.new(string) unless @match
-    end
-
-    # Get the servers provided in the URI.
-    #
-    # @example Get the servers.
-    #   uri.servers
-    #
-    # @return [ Array<String> ] The servers.
-    #
-    # @since 2.0.0
-    def servers
-      @match[3].split(',')
+      remaining = @string.split(SCHEME)[1]
+      raise_invalid_error!(INVALID_SCHEME) unless remaining
+      setup!(remaining)
     end
 
     # Gets the options hash that needs to be passed to a Mongo::Client on
@@ -158,7 +192,7 @@ module Mongo
     # @since 2.0.0
     def client_options
       opts = uri_options.merge(:database => database)
-      user ? opts.merge(credentials) : opts
+      @user ? opts.merge(credentials) : opts
     end
 
     # Get the credentials provided in the URI.
@@ -172,7 +206,7 @@ module Mongo
     #
     # @since 2.0.0
     def credentials
-      { :user => user, :password => password }
+      { :user => @user, :password => @password }
     end
 
     # Get the database provided in the URI.
@@ -184,113 +218,162 @@ module Mongo
     #
     # @since 2.0.0
     def database
-      @match[4].nil? ? Database::ADMIN : @match[4]
-    end
-
-    # Get the options provided in the URI.
-    #
-    # @example Get The options.
-    #   uri.options
-    #
-    # @return [Hash] The options.
-    #
-    #   Generic Options
-    #   * :replica_set [String] replica set name
-    #   * :connect_timeout [Fixnum] connect timeout
-    #   * :socket_timeout [Fixnum] socket timeout
-    #   * :ssl [true, false] ssl enabled?
-    #
-    #   Write Options (returned in a hash under the :write key)
-    #   * :w [String, Fixnum] write concern value
-    #   * :j [true, false] journal
-    #   * :fsync [true, false] fsync
-    #   * :timeout [Fixnum] timeout for write operation
-    #
-    #   Read Options (returned in a hash under the :read key)
-    #   * :mode [Symbol]  read mode
-    #   * :tag_sets [Array<Hash>] read tag sets
-    #
-    # @since 2.0.0
-    def uri_options
-      parsed_options = @match[5]
-      return {} unless parsed_options
-      parsed_options.split('&').reduce({}) do |options, option|
-        key, value = option.split('=')
-        strategy = OPTION_MAP[key]
-        if strategy.nil?
-          log_warn("Unsupported URI option '#{key}' on URI '#{@string}'. It will be ignored.")
-        else
-          add_option(strategy, value, options)
-        end
-        options
-      end
+      @database ? ::URI.decode(@database) : Database::ADMIN
     end
 
     private
 
-    # Hash for storing map of URI option parameters to conversion strategies
-    OPTION_MAP = {}
+    def parse_uri_options!(part, remaining)
+      return {} unless part
+      part.split(INDIV_URI_OPTS_DELIM).reduce({}) do |uri_options, opt|
+        raise_invalid_error!(INVALID_OPTS_VALUE_DELIM) unless opt.index(URI_OPTS_VALUE_DELIM)
+        key, value = opt.split(URI_OPTS_VALUE_DELIM)
+        strategy = URI_OPTION_MAP[key.downcase]
+        if strategy.nil?
+          log_warn("Unsupported URI option '#{key}' on URI '#{@string}'. It will be ignored.")
+        else
+          add_uri_option(strategy, value, uri_options)
+        end
+        uri_options
+      end
+    end
 
-    # Simple internal dsl to register a MongoDB URI option in the OPTION_MAP.
+    def extract_uri_options!(remaining)
+      if index = remaining.index(URI_OPTS_DELIM)
+        part = remaining[index+1..-1]
+        remaining = remaining[0...index]
+      end
+      [ parse_uri_options!(part, remaining), remaining ]
+    end
+
+    def parse_user!(part)
+      if (part && user = part.partition(AUTH_USER_PWD_DELIM)[0])
+        raise_invalid_error!(UNESCAPED_USER_PWD) if user =~ UNSAFE
+        ::URI.decode(user)
+      end
+    end
+
+    def parse_password!(part)
+      if (part && pwd = part.partition(AUTH_USER_PWD_DELIM)[2])
+        raise_invalid_error!(UNESCAPED_USER_PWD) if pwd =~ UNSAFE
+        ::URI.decode(pwd) unless pwd.length == 0
+      end
+    end
+
+    def extract_auth!(remaining)
+      if index = remaining.reverse.index(AUTH_DELIM)
+        part = remaining[0...-(index+1)]
+        remaining = remaining[part.size+1..-1]
+      end
+      [ parse_user!(part), parse_password!(part), remaining ]
+    end
+
+    def extract_database!(remaining)
+      if index = remaining.reverse.index(DATABSE_DELIM)
+        if index == 0
+            part = nil
+            remaining = remaining[0...-1]
+        else
+          db = remaining[-index..-1]
+          unless db.end_with?('.sock')
+            part = db
+            remaining = remaining[0..-(part.size+2)]
+          end
+        end
+      elsif !@uri_options.empty?
+        raise_invalid_error!(INVALID_DB_DELIM)
+      end
+      [ part, remaining ]
+    end
+
+    def validate_port_string!(port)
+      unless port.nil? || (port.length > 0 && port.to_i > 0 && port.to_i <= 65535)
+        raise_invalid_error!(INVALID_PORT)
+      end
+    end
+
+    def parse_servers!(remaining)
+      raise_invalid_error!(INVALID_HOST) unless remaining.size > 0
+      remaining.split(HOST_DELIM).reduce([]) do |servers, host|
+        if host[0] == '['
+          if host.index(']:')
+            h, p = host.split(']:')
+            validate_port_string!(p)
+          end
+        elsif host.index(HOST_PORT_DELIM)
+          raise_invalid_error!(INVALID_HOST_PORT) unless host.count(HOST_PORT_DELIM) == 1
+          h, p = host.split(HOST_PORT_DELIM)
+          raise_invalid_error!(INVALID_HOST) unless h
+          validate_port_string!(p)
+        end
+        servers << host
+      end
+    end
+
+    def extract_servers!(remaining)
+      [ parse_servers!(remaining), remaining ]
+    end
+
+    def raise_invalid_error!(details)
+      raise Error::InvalidURI.new(@string, details)
+    end
+
+    def setup!(remaining)
+      @uri_options, remaining = extract_uri_options!(remaining)
+      @user, @password, remaining = extract_auth!(remaining) if remaining
+      @database, remaining = extract_database!(remaining) if remaining
+      @servers, remaining = extract_servers!(remaining) if remaining
+    end
+
+    # Hash for storing map of URI option parameters to conversion strategies
+    URI_OPTION_MAP = {}
+
+    # Simple internal dsl to register a MongoDB URI option in the URI_OPTION_MAP.
     #
     # @param uri_key [String] The MongoDB URI option to register.
     # @param name [Symbol] The name of the option in the driver.
     # @param extra [Hash] Extra options.
     #   * :group [Symbol] Nested hash where option will go.
     #   * :type [Symbol] Name of function to transform value.
-    def self.option(uri_key, name, extra = {})
-      OPTION_MAP[uri_key] = { :name => name }.merge(extra)
+    def self.uri_option(uri_key, name, extra = {})
+      URI_OPTION_MAP[uri_key] = { :name => name }.merge(extra)
     end
 
     # Replica Set Options
-    option 'replicaSet', :replica_set, :type => :replica_set
+    uri_option 'replicaset', :replica_set, :type => :replica_set
 
     # Timeout Options
-    option 'connectTimeoutMS', :connect_timeout, :type => :ms_convert
-    option 'socketTimeoutMS', :socket_timeout, :type => :ms_convert
-    option 'serverSelectionTimeoutMS', :server_selection_timeout, :type => :ms_convert
-    option 'localThresholdMS', :local_threshold, :type => :ms_convert
+    uri_option 'connecttimeoutms', :connect_timeout, :type => :ms_convert
+    uri_option 'sockettimeoutms', :socket_timeout, :type => :ms_convert
+    uri_option 'serverselectiontimeoutms', :server_selection_timeout, :type => :ms_convert
+    uri_option 'localthresholdms', :local_threshold, :type => :ms_convert
 
     # Write Options
-    option 'w', :w, :group => :write
-    option 'journal', :j, :group => :write
-    option 'fsync', :fsync, :group => :write
-    option 'wtimeoutMS', :timeout, :group => :write
+    uri_option 'w', :w, :group => :write
+    uri_option 'journal', :j, :group => :write
+    uri_option 'fsync', :fsync, :group => :write
+    uri_option 'wtimeoutms', :timeout, :group => :write
 
     # Read Options
-    option 'readPreference', :mode, :group => :read, :type => :read_mode
-    option 'readPreferenceTags', :tag_sets, :group => :read, :type => :read_tags
+    uri_option 'readpreference', :mode, :group => :read, :type => :read_mode
+    uri_option 'readpreferencetags', :tag_sets, :group => :read, :type => :read_tags
 
     # Pool options
-    option 'minPoolSize', :min_pool_size
-    option 'maxPoolSize', :max_pool_size
-    option 'waitQueueTimeoutMS', :wait_queue_timeout, :type => :ms_convert
+    uri_option 'minpoolsize', :min_pool_size
+    uri_option 'maxpoolsize', :max_pool_size
+    uri_option 'waitqueuetimeoutms', :wait_queue_timeout, :type => :ms_convert
 
     # Security Options
-    option 'ssl', :ssl
+    uri_option 'ssl', :ssl
 
     # Topology options
-    option 'connect', :connect
+    uri_option 'connect', :connect
 
     # Auth Options
-    option 'authSource', :source, :group => :auth, :type => :auth_source
-    option 'authMechanism', :mechanism, :group => :auth, :type => :auth_mech
-    option 'authMechanismProperties', :auth_mech_properties, :group => :auth,
+    uri_option 'authsource', :source, :group => :auth, :type => :auth_source
+    uri_option 'authmechanism', :auth_mech, :type => :auth_mech
+    uri_option 'authmechanismproperties', :auth_mech_properties, :group => :auth,
            :type => :auth_mech_props
-
-    # Gets the user provided in the URI
-    #
-    # @return [String] The user.
-    def user
-      @match[1]
-    end
-
-    # Gets the password provided in the URI
-    #
-    # @return [String] The password.
-    def password
-      @match[2]
-    end
 
     # Casts option values that do not have a specifically provided
     # transofrmation to the appropriate type.
@@ -329,11 +412,11 @@ module Mongo
     # @param group [Symbol] Group subtarget.
     #
     # @return [Hash] The target for the option.
-    def select_target(options, group = nil)
+    def select_target(uri_options, group = nil)
       if group
-        options[group] ||= {}
+        uri_options[group] ||= {}
       else
-        options
+        uri_options
       end
     end
 
@@ -348,7 +431,7 @@ module Mongo
     # @param target [Hash] The destination.
     # @param value [Object] The value to be merged.
     # @param name [Symbol] The name of the option.
-    def merge_option(target, value, name)
+    def merge_uri_option(target, value, name)
       if target.key?(name)
         target[name] += value
       else
@@ -356,7 +439,7 @@ module Mongo
       end
     end
 
-    # Adds an option to the options hash via the supplied strategy.
+    # Adds an option to the uri options hash via the supplied strategy.
     #
     #   Acquires a target for the option based on group.
     #   Transforms the value.
@@ -365,10 +448,10 @@ module Mongo
     # @param strategy [Symbol] The strategy for this option.
     # @param value [String] The value of the option.
     # @param options [Hash] The base option target.
-    def add_option(strategy, value, options)
-      target = select_target(options, strategy[:group])
+    def add_uri_option(strategy, value, uri_options)
+      target = select_target(uri_options, strategy[:group])
       value = apply_transform(value, strategy[:type])
-      merge_option(target, value, strategy[:name])
+      merge_uri_option(target, value, strategy[:name])
     end
 
     # Replica set transformation, avoid converting to Symbol.
@@ -377,7 +460,7 @@ module Mongo
     #
     # @return [String] Same value to avoid cast to Symbol.
     def replica_set(value)
-      value
+      ::URI.decode(value)
     end
 
     # Auth source transformation, either db string or :external.
@@ -461,7 +544,7 @@ module Mongo
     def hash_extractor(value)
       value.split(',').reduce({}) do |set, tag|
         k, v = tag.split(':')
-        set.merge(k.downcase.to_sym => v)
+        set.merge(::URI.decode(k).downcase.to_sym => ::URI.decode(v))
       end
     end
   end
