@@ -41,6 +41,7 @@ describe Mongo::BulkWrite do
 
           it 'inserts the document' do
             expect(result.inserted_count).to eq(1)
+            expect(authorized_collection.find(_id: 0).count).to eq(1)
           end
         end
 
@@ -60,6 +61,7 @@ describe Mongo::BulkWrite do
 
           it 'inserts the documents' do
             expect(result.inserted_count).to eq(3)
+            expect(authorized_collection.find(_id: { '$in'=> [ 0, 1, 2 ]}).count).to eq(3)
           end
         end
 
@@ -79,6 +81,7 @@ describe Mongo::BulkWrite do
 
           it 'deletes the document' do
             expect(result.deleted_count).to eq(1)
+            expect(authorized_collection.find(_id: 0).count).to eq(0)
           end
         end
 
@@ -104,6 +107,7 @@ describe Mongo::BulkWrite do
 
           it 'deletes the documents' do
             expect(result.deleted_count).to eq(3)
+            expect(authorized_collection.find(_id: { '$in'=> [ 0, 1, 2 ]}).count).to eq(0)
           end
         end
 
@@ -123,6 +127,7 @@ describe Mongo::BulkWrite do
 
           it 'deletes the documents' do
             expect(result.deleted_count).to eq(1)
+            expect(authorized_collection.find(_id: 0).count).to eq(0)
           end
         end
 
@@ -148,11 +153,28 @@ describe Mongo::BulkWrite do
 
           it 'deletes the documents' do
             expect(result.deleted_count).to eq(3)
+            expect(authorized_collection.find(_id: { '$in'=> [ 0, 1, 2 ]}).count).to eq(0)
           end
         end
 
         context 'when providing a single replace one' do
 
+          let(:requests) do
+            [{ replace_one: { filter: { _id: 0 }, replacement: { name: 'test' }}}]
+          end
+
+          let(:result) do
+            bulk_write.execute
+          end
+
+          before do
+            authorized_collection.insert_one({ _id: 0 })
+          end
+
+          it 'replaces the document' do
+            expect(result.modified_count).to eq(1)
+            expect(authorized_collection.find(_id: 0).first[:name]).to eq('test')
+          end
         end
 
         context 'when providing a single update one' do
@@ -171,6 +193,7 @@ describe Mongo::BulkWrite do
 
           it 'updates the document' do
             expect(result.modified_count).to eq(1)
+            expect(authorized_collection.find(_id: 0).first[:name]).to eq('test')
           end
         end
 
@@ -190,6 +213,7 @@ describe Mongo::BulkWrite do
 
           it 'updates the documents' do
             expect(result.modified_count).to eq(1)
+            expect(authorized_collection.find(_id: 0).first[:name]).to eq('test')
           end
         end
       end

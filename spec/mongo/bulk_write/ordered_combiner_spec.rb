@@ -121,6 +121,48 @@ describe Mongo::BulkWrite::OrderedCombiner do
       end
     end
 
+    context 'when provided a series of replace one' do
+
+      context 'when the documents are valid' do
+
+        let(:requests) do
+          [
+            { replace_one: { filter: { _id: 0 }, replacement: { name: 'test' }}},
+            { replace_one: { filter: { _id: 1 }, replacement: { name: 'test' }}}
+          ]
+        end
+
+        it 'returns a single replace one' do
+          expect(combiner.combine).to eq(
+            [
+              {
+                replace_one: [
+                  { q: { _id: 0 }, u: { name: 'test' }, multi: false, upsert: false },
+                  { q: { _id: 1 }, u: { name: 'test' }, multi: false, upsert: false }
+                ]
+              }
+            ]
+          )
+        end
+      end
+
+      context 'when a document is not valid' do
+
+        let(:requests) do
+          [
+            { replace_one: { filter: { _id: 0 }, replacement: { name: 'test' }}},
+            { replace_one: 'whoami' }
+          ]
+        end
+
+        it 'raises an exception' do
+          expect {
+            combiner.combine
+          }.to raise_error(Mongo::Error::InvalidBulkOperation)
+        end
+      end
+    end
+
     context 'when provided a series of update one' do
 
       context 'when the documents are valid' do

@@ -178,6 +178,7 @@ module Mongo
       ).execute(server.context)
     end
 
+    alias :replace_one :update
     alias :update_one :update
     alias :update_many :update
   end
