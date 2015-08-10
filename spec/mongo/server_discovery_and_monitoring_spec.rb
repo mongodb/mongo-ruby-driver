@@ -54,6 +54,7 @@ describe 'Server Discovery and Monitoring' do
       end
 
       after(:all) do
+        @client.close
 
         # Return the server implementation to its original for the other
         # tests in the suite.

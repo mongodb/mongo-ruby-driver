@@ -20,6 +20,10 @@ describe Mongo::Client do
       )
     end
 
+    after do
+      client.close
+    end
+
     context 'when the other is a client' do
 
       context 'when the options and cluster are equal' do
