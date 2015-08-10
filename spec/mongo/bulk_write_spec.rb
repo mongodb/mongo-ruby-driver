@@ -291,10 +291,6 @@ describe Mongo::BulkWrite do
             bulk_write.execute
           end
 
-          before do
-            expect(bulk_write).to receive(:insert_one).exactly(2).times.and_call_original
-          end
-
           it 'inserts the documents' do
             expect(result.inserted_count).to eq(1001)
           end
@@ -311,10 +307,6 @@ describe Mongo::BulkWrite do
 
         let(:result) do
           bulk_write.execute
-        end
-
-        before do
-          expect(bulk_write).to receive(:insert_one).exactly(3).times.and_call_original
         end
 
         it 'inserts the documents' do

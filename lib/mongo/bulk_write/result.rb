@@ -69,7 +69,8 @@ module Mongo
         REMOVED_COUNT,
         MODIFIED_COUNT,
         UPSERTED_COUNT,
-        MATCHED_COUNT
+        MATCHED_COUNT,
+        Operation::Result::N
       ].freeze
 
       # Returns the number of documents deleted.
