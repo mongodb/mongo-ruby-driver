@@ -329,6 +329,24 @@ module Mongo
       find(filter).delete_many
     end
 
+    # Execute a parallel scan on the collection view.
+    #
+    # Returns a list of up to cursor_count cursors that can be iterated concurrently.
+    # As long as the collection is not modified during scanning, each document appears once
+    # in one of the cursors' result sets.
+    #
+    # @example Execute a parallel collection scan.
+    #   collection.parallel_scan(2)
+    #
+    # @param [ Integer ] cursor_count The max number of cursors to return.
+    #
+    # @return [ Array<Cursor> ] An array of cursors.
+    #
+    # @since 2.1
+    def parallel_scan(cursor_count)
+      find.send(:parallel_scan, cursor_count)
+    end
+
     # Replaces a single document in the collection with the new document.
     #
     # @example Replace a single document.

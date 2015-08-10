@@ -65,35 +65,6 @@ module Mongo
           Aggregation.new(self, pipeline, options)
         end
 
-        # Execute a parallel scan on the collection view.
-        # Returns a list of up to cursor_count cursors that can be iterated concurrently.
-        # As long as the collection is not modified during scanning, each document appears once
-        # in one of the cursors' result sets.
-        #
-        # @example Execute a parallel collection scan.
-        #   view.parallel_scan(2)
-        #
-        # @param [ Integer ] cursor_count The max number of cursors to return.
-        #
-        # @return [ Array<Cursor> ] An array of cursors.
-        #
-        # @since 2.1
-        def parallel_scan(cursor_count)
-          server = read.select_server(cluster)
-          Operation::ParallelScan.new(
-            :coll_name => collection.name,
-            :db_name => database.name,
-            :cursor_count => cursor_count
-          ).execute(server.context).cursor_ids.map do |cursor_id|
-            result = Operation::Read::GetMore.new({ :to_return => 0,
-                                                    :cursor_id => cursor_id,
-                                                    :db_name   => database.name,
-                                                    :coll_name => collection.name
-              }).execute(server.context)
-            Cursor.new(self, result, server)
-          end
-        end
-
         # Allows the query to get partial results if some shards are down.
         #
         # @example Allow partial results.
@@ -403,6 +374,22 @@ module Mongo
         def has_special_fields?
           modifiers || sort || hint || comment || max_time_ms || max_scan ||
               show_disk_loc || snapshot || explained? || cluster.sharded?
+        end
+
+        def parallel_scan(cursor_count)
+          server = read.select_server(cluster)
+          Operation::ParallelScan.new(
+            :coll_name => collection.name,
+            :db_name => database.name,
+            :cursor_count => cursor_count
+          ).execute(server.context).cursor_ids.map do |cursor_id|
+            result = Operation::Read::GetMore.new({ :to_return => 0,
+                                                    :cursor_id => cursor_id,
+                                                    :db_name   => database.name,
+                                                    :coll_name => collection.name
+              }).execute(server.context)
+            Cursor.new(self, result, server)
+          end
         end
 
         def query_options
