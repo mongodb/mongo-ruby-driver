@@ -80,7 +80,9 @@ module Mongo
       #
       # @since 2.0.0
       def initialize(file)
-        @test = YAML.load(ERB.new(File.new(file).read).result)
+        file = File.new(file)
+        @test = YAML.load(ERB.new(file.read).result)
+        file.close
         @description = @test['description']
         @uri_string = @test['uri']
         @uri = URI.new(uri_string)

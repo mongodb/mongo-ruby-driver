@@ -70,7 +70,9 @@ module Mongo
         #
         # @since 2.0.0
         def initialize(file)
-          @test = YAML.load(ERB.new(File.new(file).read).result)
+          file = File.new(file)
+          @test = YAML.load(ERB.new(file.read).result)
+          file.close
           @description = "#{@test['topology_description']['type']}: #{File.basename(file)}"
           @read_preference = @test['read_preference']
           @read_preference['mode'] = READ_PREFERENCES[@read_preference['mode']]

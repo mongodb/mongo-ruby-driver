@@ -36,7 +36,9 @@ module Mongo
       #
       # @since 2.1.0
       def initialize(file)
-        @spec = YAML.load(ERB.new(File.new(file).read).result)
+        file = File.new(file)
+        @spec = YAML.load(ERB.new(file.read).result)
+        file.close
         @data = @spec['data']
         @tests = @spec['tests']
       end
