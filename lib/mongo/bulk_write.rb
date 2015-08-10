@@ -36,27 +36,6 @@ module Mongo
     # Delegate various methods to the collection.
     def_delegators :@collection, :database, :cluster, :next_primary
 
-    # 3000
-    #
-    # 1000 (5)  -> 5
-    # 1000 (10) -> 1010
-    # 1000 (33) -> 2033
-    #
-    # 3000
-    #
-    # 750 (0) -> 0
-    # 750 (0) -> 750
-    # 750 (0) -> 1500
-    # 750 (749) -> 2999
-    #
-    # 2000
-    #
-    # 1000 (0) -> 0
-    # 500 (0) -> 1000
-    # 500 (0) -> 1500
-
-    # (already executed operations) + error index
-
     # Execute the bulk write operation.
     #
     # @example Execute the bulk write.
@@ -69,9 +48,7 @@ module Mongo
       server = next_primary
       operation_id = Monitoring.next_operation_id
       result_combiner = ResultCombiner.new
-      # requests.size -> total number of requests.
       operations.each do |operation|
-        # operation.values.size -> number of reqests in this batch.
         execute_operation(
           operation.keys.first,
           operation.values.first,
