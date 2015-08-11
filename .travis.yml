@@ -1,12 +1,13 @@
 language: ruby
 
+sudo: false
+
 rvm:
   - 1.9.3
   - 2.0.0
   - 2.1
   - 2.2
   - jruby-19mode
-  - rbx-2
 
 jdk:
   - oraclejdk7
@@ -42,8 +43,6 @@ branches:
     - 1.x-stable
 
 matrix:
-  allow_failures:
-    - rbx-2
   exclude:
     - rvm: 1.9.3
       jdk: openjdk7
@@ -64,8 +63,4 @@ matrix:
     - rvm: ruby-head
       jdk: openjdk7
     - rvm: ruby-head
-      jdk: oraclejdk8
-    - rvm: rbx-2
-      jdk: openjdk7
-    - rvm: rbx-2
       jdk: oraclejdk8
