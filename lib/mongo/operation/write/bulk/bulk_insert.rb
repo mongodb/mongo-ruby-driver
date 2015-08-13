@@ -75,10 +75,17 @@ module Mongo
         def messages
           if ordered? || gle
             documents.collect do |doc|
-              Protocol::Insert.new(db_name, coll_name, ensure_ids([ doc ]), options)
+              Protocol::Insert.new(db_name, coll_name, ensure_ids([ doc ]), spec)
             end
           else
-            [ Protocol::Insert.new(db_name, coll_name, ensure_ids(documents), { :flags => [:continue_on_error] }) ]
+            [
+              Protocol::Insert.new(
+                db_name,
+                coll_name,
+                ensure_ids(documents),
+                spec.merge({ :flags => [:continue_on_error] })
+              )
+            ]
           end
         end
       end

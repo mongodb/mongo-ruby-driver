@@ -53,7 +53,7 @@ module Mongo
         @namespace = "#{database}.#{collection}"
         @documents = documents
         @flags = options[:flags] || []
-        @upconverter = Upconverter.new(collection, documents)
+        @upconverter = Upconverter.new(collection, documents, options)
       end
 
       # Return the event payload for monitoring.
@@ -110,6 +110,9 @@ module Mongo
         # @return [ Array<BSON::Document> ] documents The documents to insert.
         attr_reader :documents
 
+        # @return [ Hash ] options The options.
+        attr_reader :options
+
         # Instantiate the upconverter.
         #
         # @example Instantiate the upconverter.
@@ -117,11 +120,13 @@ module Mongo
         #
         # @param [ String ] collection The name of the collection.
         # @param [ Array<BSON::Document> ] document The documents.
+        # @param [ Hash ] options The options.
         #
         # @since 2.1.0
-        def initialize(collection, documents)
+        def initialize(collection, documents, options)
           @collection = collection
           @documents = documents
+          @options = options
         end
 
         # Get the upconverted command.
@@ -133,7 +138,13 @@ module Mongo
         #
         # @since 2.1.0
         def command
-          BSON::Document.new(insert: collection, documents: documents)
+          document = BSON::Document.new(
+            insert: collection,
+            documents: documents,
+            ordered: options.fetch(:ordered, true)
+          )
+          document.merge!(writeConcern: options[:write_concern].options) if options[:write_concern]
+          document
         end
       end
     end
