@@ -171,6 +171,8 @@ module Mongo
           :$comment => :comment,
           :$snapshot => :snapshot,
           :$maxScan => :maxScan,
+          :$max => :max,
+          :$min => :min,
           :$maxTimeMS => :maxTimeMS,
           :$showDiskLoc => :showRecordId,
           :$explain => :explain

@@ -465,6 +465,28 @@ describe Mongo::Collection::View::Readable do
     end
   end
 
+  describe '#max_value' do
+
+    let(:new_view) do
+      view.max_value(_id: 1)
+    end
+
+    it 'sets the value in the options' do
+      expect(new_view.max_value).to eq(_id: 1)
+    end
+  end
+
+  describe '#min_value' do
+
+    let(:new_view) do
+      view.min_value(_id: 1)
+    end
+
+    it 'sets the value in the options' do
+      expect(new_view.min_value).to eq(_id: 1)
+    end
+  end
+
   describe '#no_cursor_timeout' do
 
     let(:new_view) do

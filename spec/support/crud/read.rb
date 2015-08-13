@@ -92,6 +92,10 @@ module Mongo
 
         private
 
+        def bulkWrite(collection)
+          collection.bulk_write(requests, options)
+        end
+
         def count(collection)
           options = ARGUMENT_MAP.reduce({}) do |opts, (key, value)|
             opts.merge!(key => arguments[value]) if arguments[value]
@@ -109,7 +113,7 @@ module Mongo
         end
 
         def find(collection)
-          collection.find(filter, options).to_a
+          collection.find(filter, options.merge(modifiers: BSON::Document.new(modifiers) || {})).to_a
         end
 
         def options
@@ -128,6 +132,22 @@ module Mongo
 
         def pipeline
           arguments['pipeline']
+        end
+
+        def modifiers
+          arguments['modifiers']
+        end
+
+        def requests
+          arguments['requests'].map do |request|
+            case request.keys.first
+            when 'insertOne' then
+              { insert_one: request['insertOne']['document'] }
+            when 'updateOne' then
+              update = request['updateOne']
+              { update_one: { filter: update['filter'], update: update['update'] }}
+            end
+          end
         end
 
         def field_name

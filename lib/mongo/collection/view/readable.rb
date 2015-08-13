@@ -32,6 +32,8 @@ module Mongo
           :$comment => :comment,
           :$snapshot => :snapshot,
           :$maxScan => :max_scan,
+          :$max => :max_value,
+          :$min => :min_value,
           :$maxTimeMS => :max_time_ms,
           :$showDiskLoc => :show_disk_loc,
           :$explain => :explained?
@@ -218,6 +220,34 @@ module Mongo
         # @since 2.0.0
         def max_scan(value = nil)
           configure(:max_scan, value)
+        end
+
+        # Set the maximum value to search.
+        #
+        # @example Set the max value.
+        #   view.max_value(_id: 1)
+        #
+        # @param [ Hash ] value The max field and value.
+        #
+        # @return [ Hash, View ] The value or a new +View+.
+        #
+        # @since 2.0.0
+        def max_value(value = nil)
+          configure(:max_value, value)
+        end
+
+        # Set the minimum value to search.
+        #
+        # @example Set the min value.
+        #   view.min_value(_id: 1)
+        #
+        # @param [ Hash ] value The min field and value.
+        #
+        # @return [ Hash, View ] The value or a new +View+.
+        #
+        # @since 2.0.0
+        def min_value(value = nil)
+          configure(:min_value, value)
         end
 
         # The server normally times out idle cursors after an inactivity period
