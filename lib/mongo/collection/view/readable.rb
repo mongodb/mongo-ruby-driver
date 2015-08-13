@@ -40,6 +40,11 @@ module Mongo
           :$explain => :explained?
         }.freeze
 
+        # Get just the names of the special fields.
+        #
+        # @since 2.1.0
+        SPECIAL_FIELD_OPTION_NAMES = SPECIAL_FIELDS.values.freeze
+
         # Options to cursor flags mapping.
         #
         # @since 2.1.0
@@ -416,10 +421,8 @@ module Mongo
           end
         end
 
-        # @todo: Durran refactor.
         def has_special_fields?
-          modifiers || sort || hint || comment || max_time_ms || max_scan ||
-              show_disk_loc || snapshot || explained? || cluster.sharded?
+          contains_modifiers? || explained? || cluster.sharded?
         end
 
         def parallel_scan(cursor_count)
@@ -471,6 +474,12 @@ module Mongo
 
         def validate_doc!(doc)
           raise Error::InvalidDocument.new unless doc.respond_to?(:keys)
+        end
+
+        def contains_modifiers?
+          modifiers || options.keys.any? do |key|
+            SPECIAL_FIELD_OPTION_NAMES.include?(key)
+          end
         end
       end
     end
