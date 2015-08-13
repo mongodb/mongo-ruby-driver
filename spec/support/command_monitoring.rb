@@ -12,15 +12,129 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-RSpec::Matchers.define :match_expected_event do |expectation|
+RSpec::Matchers.define :match_command_name do |expectation|
 
   match do |event|
-    expectation.matches?(event)
+    expect(event.command_name.to_s).to eq(expectation.command_name.to_s)
+  end
+end
+
+RSpec::Matchers.define :match_database_name do |expectation|
+
+  match do |event|
+    expect(event.database_name.to_s).to eq(expectation.database_name.to_s)
+  end
+end
+
+RSpec::Matchers.define :generate_request_id do |expectation|
+
+  match do |event|
+    expect(event.request_id).to be > 0
+  end
+end
+
+RSpec::Matchers.define :generate_operation_id do |expectation|
+
+  match do |event|
+    expect(event.request_id).to be > 0
+  end
+end
+
+RSpec::Matchers.define :match_command do |expectation|
+  include Mongo::CommandMonitoring::Matchable
+
+  match do |event|
+    data_matches?(event.command, expectation.event_data['command'])
+  end
+end
+
+RSpec::Matchers.define :match_reply do |expectation|
+  include Mongo::CommandMonitoring::Matchable
+
+  match do |event|
+    data_matches?(event.reply, expectation.event_data['reply'])
+  end
+end
+
+RSpec::Matchers.define :match_command_started_event do |expectation|
+
+  match do |event|
+    expect(event).to match_command_name(expectation)
+    expect(event).to match_database_name(expectation)
+    expect(event).to generate_operation_id
+    expect(event).to generate_request_id
+    expect(event).to match_command(expectation)
+  end
+end
+
+RSpec::Matchers.define :match_command_succeeded_event do |expectation|
+
+  match do |event|
+    expect(event).to match_command_name(expectation)
+    expect(event).to generate_operation_id
+    expect(event).to generate_request_id
+    expect(event).to match_reply(expectation)
+  end
+end
+
+RSpec::Matchers.define :match_command_failed_event do |expectation|
+
+  match do |event|
+    expect(event).to match_command_name(expectation)
+    expect(event).to generate_operation_id
+    expect(event).to generate_request_id
   end
 end
 
 module Mongo
   module CommandMonitoring
+
+    # Matchers common behaviour.
+    #
+    # @since 2.1.0
+    module Matchable
+
+      # Determine if the data matches.
+      #
+      # @example Does the data match?
+      #   matchable.data_matches?(actual, expected)
+      #
+      # @param [ Object ] actual The actual data.
+      # @param [ Object ] expected The expected data.
+      #
+      # @return [ true, false ] If the data matches.
+      #
+      # @since 2.1.0
+      def data_matches?(actual, expected)
+        expected.each do |key, value|
+          if value.respond_to?(:keys)
+            hash_matches?(actual[key], value)
+          else
+            actual[key] == value
+          end
+        end
+      end
+
+      # Determine if the hash matches.
+      #
+      # @example Does the hash match?
+      #   matchable.hash_matches?(actual, expected)
+      #
+      # @param [ Hash ] actual The actual hash.
+      # @param [ Hash ] expected The expected hash.
+      #
+      # @return [ true, false ] If the hash matches.
+      #
+      # @since 2.1.0
+      def hash_matches?(actual, expected)
+        if expected.keys.first == '$numberLong'
+          converted = expected.values.first.to_i
+          (actual == converted) || actual >= 0
+        else
+          data_matches?(actual, expected)
+        end
+      end
+    end
 
     # Represents a command monitoring spec in its entirety.
     #
@@ -105,6 +219,9 @@ module Mongo
       # @return [ String ] event_type The type of expected event.
       attr_reader :event_type
 
+      # @return [ Hash ] event_data The event data.
+      attr_reader :event_data
+
       # Get the expected command name.
       #
       # @example Get the expected command name.
@@ -154,81 +271,16 @@ module Mongo
         @event_data = expectation[@event_type]
       end
 
-      # Determine if the event matches the expectation.
+      # Get the name of the matcher.
       #
-      # @example Does the event match the expectation?
-      #   expecation.matches?(event)
+      # @example Get the matcher name.
+      #   expectation.matcher
       #
-      # @param [ Event ] The monitoring event.
-      #
-      # @return [ true, false ] If they match.
+      # @return [ String ] The matcher name.
       #
       # @since 2.1.0
-      def matches?(event)
-        case event_type
-        when 'command_started_event'
-          matches_started_event?(event)
-        when 'command_succeeded_event'
-          matches_succeeded_event?(event)
-        when 'command_failed_event'
-          matches_failed_event?(event)
-        end
-      end
-
-      private
-
-      def matches_started_event?(event)
-        matches_common_attributes?(event) && matches_command?(event)
-      end
-
-      def matches_succeeded_event?(event)
-        matches_common_attributes?(event) && matches_reply?(event)
-      end
-
-      def matches_failed_event?(event)
-        matches_common_attributes?(event)
-      end
-
-      def matches_common_attributes?(event)
-        event.command_name.to_s == command_name &&
-          event.database_name.to_s == database_name &&
-          event.operation_id >= 0 &&
-          event.request_id >= 0
-      end
-
-      def matches_command?(event)
-        @event_data['command'].each do |key, value|
-          if key == 'writeConcern'
-            return false if event.command[key] != BSON::Document.new(WRITE_CONCERN)
-          else
-            return false if event.command[key] != value
-          end
-        end
-        case event.command_name
-        when 'getMore'
-          return false if event.command['getMore'] <= 0
-        when 'killCursors'
-          return false if event.command['cursors'].first <= 0
-        end
-        true
-      end
-
-      def matches_reply?(event)
-        @event_data['reply'].each do |key, value|
-          if key == 'cursor'
-            return false unless matches_cursor?(event.reply[key], value)
-          else
-            return false if event.reply[key] != value
-          end
-        end
-        true
-      end
-
-      def matches_cursor?(event_cursor, cursor)
-        cursor.each do |key, value|
-          return false if event_cursor[key] != value
-        end
-        true
+      def matcher
+        "match_#{event_type}"
       end
     end
 

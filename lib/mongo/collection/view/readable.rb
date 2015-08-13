@@ -393,7 +393,7 @@ module Mongo
         end
 
         def query_options
-          { :project => projection, :skip => skip, :limit => to_return, :flags => flags }
+          { :project => projection, :skip => skip, :limit => to_return, :flags => flags, :batch_size => batch_size }
         end
 
         def query_spec
