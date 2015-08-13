@@ -186,7 +186,7 @@ module Mongo
         when '42', 42 then
           actual > 0
         when '' then
-          !actual.empty?
+          !actual.nil?
         else
           actual == expected
         end
