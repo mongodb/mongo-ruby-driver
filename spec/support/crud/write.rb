@@ -21,7 +21,7 @@ module Mongo
       #
       # @since 2.0.0
       class Write
-  
+
         # Map of CRUD operation names to method names.
         #
         # @since 2.0.0
@@ -34,7 +34,8 @@ module Mongo
                        'updateOne' => :update_one,
                        'findOneAndDelete' => :find_one_and_delete,
                        'findOneAndReplace' => :find_one_and_replace,
-                       'findOneAndUpdate' => :find_one_and_update
+                       'findOneAndUpdate' => :find_one_and_update,
+                       'bulkWrite' => :bulk_write
                      }
 
         # Map of operation options to method names.
@@ -44,7 +45,9 @@ module Mongo
                         :sort => 'sort',
                         :projection => 'projection',
                         :return_document => 'returnDocument',
-                        :upsert => 'upsert'
+                        :upsert => 'upsert',
+                        :ordered => 'ordered',
+                        :write_concern => 'writeConcern'
                        }
 
         # Operations that need a check if results on < 2.6 will match.
@@ -54,7 +57,7 @@ module Mongo
                         'updateMany',
                         'updateOne',
                         'replaceOne']
-  
+
         # The operation name.
         #
         # @return [ String ] name The operation name.
@@ -109,9 +112,13 @@ module Mongo
         def requires_2_6?(collection)
           REQUIRES_2_6.include?(name) && upsert
         end
-  
+
         private
-  
+
+        def bulk_write(collection)
+          collection.bulk_write(requests, options)
+        end
+
         def delete_many(collection)
           result = collection.delete_many(filter)
           { 'deletedCount' => result.deleted_count }
@@ -167,7 +174,7 @@ module Mongo
 
         def options
           ARGUMENT_MAP.reduce({}) do |opts, (key, value)|
-            arguments[value] ? opts.merge!(key => send(key)) : opts
+            arguments.key?(value) ? opts.merge!(key => send(key)) : opts
           end
         end
 
@@ -191,8 +198,28 @@ module Mongo
           arguments['document']
         end
 
+        def write_concern
+          arguments['writeConcern']
+        end
+
+        def ordered
+          arguments['ordered']
+        end
+
         def filter
           arguments['filter']
+        end
+
+        def requests
+          arguments['requests'].map do |request|
+            case request.keys.first
+            when 'insertOne' then
+              { insert_one: request['insertOne']['document'] }
+            when 'updateOne' then
+              update = request['updateOne']
+              { update_one: { filter: update['filter'], update: update['update'] }}
+            end
+          end
         end
 
         def upsert

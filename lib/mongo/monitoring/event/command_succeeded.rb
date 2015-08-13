@@ -107,7 +107,7 @@ module Mongo
 
         def self.namespace(payload)
           command = payload[:command]
-          "#{command[:collection] || command.values.first}.#{payload[:database_name]}"
+          "#{payload[:database_name]}.#{command[:collection] || command.values.first}"
         end
       end
     end

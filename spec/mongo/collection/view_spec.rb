@@ -165,7 +165,7 @@ describe Mongo::Collection::View do
         end
 
         it 'sets the batch size on the initial query' do
-          expect(query_spec[:options][:limit]).to eq(options[:batch_size])
+          expect(query_spec[:options][:batch_size]).to eq(options[:batch_size])
         end
 
         it 'returns all the documents' do
@@ -232,7 +232,11 @@ describe Mongo::Collection::View do
         end
 
         it 'sets the batch size on the initial query' do
-          expect(query_spec[:options][:limit]).to eq(options[:batch_size])
+          expect(query_spec[:options][:batch_size]).to eq(options[:batch_size])
+        end
+
+        it 'sets the limit on the initial query' do
+          expect(query_spec[:options][:limit]).to eq(options[:limit])
         end
 
         it 'returns the limit of documents' do

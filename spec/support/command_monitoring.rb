@@ -11,6 +11,18 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+#
+
+
+    # Write: Ordered = false
+
+    # Write: Different write concerns
+
+    # Write: DeleteMany
+
+    # Write: UpdateMany
+
+    # Write: Upsert = true
 
 RSpec::Matchers.define :match_command_name do |expectation|
 
@@ -106,12 +118,13 @@ module Mongo
       #
       # @since 2.1.0
       def data_matches?(actual, expected)
-        expected.each do |key, value|
-          if value.respond_to?(:keys)
-            hash_matches?(actual[key], value)
-          else
-            actual[key] == value
-          end
+        case expected
+        when ::Hash, BSON::Document then
+          hash_matches?(actual, expected)
+        when ::Array
+          array_matches?(actual, expected)
+        else
+          value_matches?(actual, expected)
         end
       end
 
@@ -131,7 +144,51 @@ module Mongo
           converted = expected.values.first.to_i
           (actual == converted) || actual >= 0
         else
-          data_matches?(actual, expected)
+          expected.each do |key, value|
+            return false unless data_matches?(actual[key], value)
+          end
+        end
+      end
+
+      # Determine if an array matches.
+      #
+      # @example Does the array match?
+      #   matchable.array_matches?(actual, expected)
+      #
+      # @param [ Array ] actual The actual array.
+      # @param [ Array ] expected The expected array.
+      #
+      # @return [ true, false ] If the array matches.
+      #
+      # @since 2.1.0
+      def array_matches?(actual, expected)
+        expected.each_with_index do |value, i|
+          # @todo: Durran: fix for kill cursors replies
+          if actual
+            return false unless data_matches?(actual[i], value)
+          end
+        end
+      end
+
+      # Check if a value matches.
+      #
+      # @example Does a value match.
+      #   matchable.value_matches?(actual, expected)
+      #
+      # @param [ Object ] actual The actual value.
+      # @param [ Object ] expected The expected object.
+      #
+      # @return [ true, false ] If the value matches.
+      #
+      # @since 2.1.0
+      def value_matches?(actual, expected)
+        case expected
+        when '42', 42 then
+          actual > 0
+        when '' then
+          !actual.empty?
+        else
+          actual == expected
         end
       end
     end

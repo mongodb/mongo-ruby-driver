@@ -35,6 +35,7 @@ module Mongo
           :$max => :max_value,
           :$min => :min_value,
           :$maxTimeMS => :max_time_ms,
+          :$returnKey => :return_key,
           :$showDiskLoc => :show_disk_loc,
           :$explain => :explained?
         }.freeze
@@ -231,7 +232,7 @@ module Mongo
         #
         # @return [ Hash, View ] The value or a new +View+.
         #
-        # @since 2.0.0
+        # @since 2.1.0
         def max_value(value = nil)
           configure(:max_value, value)
         end
@@ -245,7 +246,7 @@ module Mongo
         #
         # @return [ Hash, View ] The value or a new +View+.
         #
-        # @since 2.0.0
+        # @since 2.1.0
         def min_value(value = nil)
           configure(:min_value, value)
         end
@@ -296,6 +297,20 @@ module Mongo
         def read(value = nil)
           return default_read if value.nil?
           configure(:read, value.is_a?(Hash) ? ServerSelector.get(value) : value)
+        end
+
+        # Set whether to return only the indexed field or fields.
+        #
+        # @example Set the return key value.
+        #   view.return_key(true)
+        #
+        # @param [ true, false ] value The return key value.
+        #
+        # @return [ true, false, View ] The value or a new +View+.
+        #
+        # @since 2.1.0
+        def return_key(value = nil)
+          configure(:return_key, value)
         end
 
         # Set whether the disk location should be shown for each document.
@@ -401,6 +416,7 @@ module Mongo
           end
         end
 
+        # @todo: Durran refactor.
         def has_special_fields?
           modifiers || sort || hint || comment || max_time_ms || max_scan ||
               show_disk_loc || snapshot || explained? || cluster.sharded?
@@ -423,7 +439,13 @@ module Mongo
         end
 
         def query_options
-          { :project => projection, :skip => skip, :limit => to_return, :flags => flags, :batch_size => batch_size }
+          {
+            :project => projection,
+            :skip => skip,
+            :limit => limit,
+            :flags => flags,
+            :batch_size => batch_size
+          }
         end
 
         def query_spec
@@ -442,13 +464,9 @@ module Mongo
         def special_selector
           SPECIAL_FIELDS.reduce({}) do |hash, (key, method)|
             value = send(method) || (options[:modifiers] && options[:modifiers][key])
-            hash[key] = value if value
+            hash[key] = value unless value.nil?
             hash
           end
-        end
-
-        def to_return
-          [ limit || batch_size, batch_size || limit ].min
         end
 
         def validate_doc!(doc)

@@ -66,11 +66,11 @@ module Mongo
 
       def command_completed(result, address, operation_id, payload, duration)
         document = result ? (result.documents || []).first : nil
-        parser = Error::Parser.new(document)
-        if parser.message.empty?
-          command_succeeded(result, address, operation_id, payload, duration)
-        else
+        if error?(document)
+          parser = Error::Parser.new(document)
           command_failed(address, operation_id, payload, parser.message, duration)
+        else
+          command_succeeded(result, address, operation_id, payload, duration)
         end
       end
 
@@ -96,6 +96,10 @@ module Mongo
 
       def duration(start)
         Time.now - start
+      end
+
+      def error?(document)
+        document && (document['ok'] == 0 || document.key?('$err'))
       end
     end
   end

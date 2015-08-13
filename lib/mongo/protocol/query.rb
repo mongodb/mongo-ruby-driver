@@ -58,14 +58,14 @@ module Mongo
       #   Supported flags: +:tailable_cursor+, +:slave_ok+, +:oplog_replay+,
       #   +:no_cursor_timeout+, +:await_data+, +:exhaust+, +:partial+
       def initialize(database, collection, selector, options = {})
-        @database    = database
-        @namespace   = "#{database}.#{collection}"
-        @selector    = selector
-        @options     = options
-        @project     = options[:project]
-        @skip        = options[:skip]  || 0
-        @limit       = options[:limit] || 0
-        @flags       = options[:flags] || []
+        @database = database
+        @namespace = "#{database}.#{collection}"
+        @selector = selector
+        @options = options
+        @project = options[:project]
+        @limit = determine_limit
+        @skip = options[:skip]  || 0
+        @flags = options[:flags] || []
         @upconverter = Upconverter.new(collection, selector, options, flags)
       end
 
@@ -106,6 +106,10 @@ module Mongo
       # @return [Fixnum] the operation code.
       def op_code
         2004
+      end
+
+      def determine_limit
+        [ @options[:limit] || @options[:batch_size], @options[:batch_size] || @options[:limit] ].min || 0
       end
 
       # Available flags for a Query message.
@@ -158,10 +162,6 @@ module Mongo
           :skip => :skip,
           :limit => :limit,
           :batch_size => :batchSize
-          # “singleBatch”: <bool>,
-          # “max”: { ... },
-          # “min”: { ... },
-          # “returnKey”: <bool>,
         }
 
         SPECIAL_FIELD_MAPPINGS = {
@@ -169,6 +169,7 @@ module Mongo
           :$orderby => :sort,
           :$hint => :hint,
           :$comment => :comment,
+          :$returnKey => :returnKey,
           :$snapshot => :snapshot,
           :$maxScan => :maxScan,
           :$max => :max,
@@ -259,10 +260,10 @@ module Mongo
           document[:find] = collection
           document[:filter] = filter.key?(:$query) ? filter[:$query] : filter
           OPTION_MAPPINGS.each do |legacy, option|
-            document[option] = options[legacy] if options[legacy]
+            document[option] = options[legacy] unless options[legacy].nil?
           end
           SPECIAL_FIELD_MAPPINGS.each do |special, normal|
-            document[normal] = filter[special] if filter[special]
+            document[normal] = filter[special] unless filter[special].nil?
           end
           FLAG_MAPPINGS.each do |legacy, flag|
             document[flag] = true if flags.include?(legacy)

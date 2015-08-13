@@ -32,10 +32,12 @@ describe 'Command Monitoring Events' do
 
           it "generates a #{expectation.event_name} for #{expectation.command_name}" do
             begin
-              results = test.run(authorized_collection)
+              test.run(authorized_collection)
               event = subscriber.send(expectation.event_type)[expectation.command_name]
               expect(event).to send(expectation.matcher, expectation)
-            rescue Mongo::Error::OperationFailure => e
+            rescue Mongo::Error::OperationFailure, Mongo::Error::BulkWriteError => e
+              event = subscriber.send(expectation.event_type)[expectation.command_name]
+              expect(event).to send(expectation.matcher, expectation)
             end
           end
         end
