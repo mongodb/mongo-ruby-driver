@@ -1,5 +1,9 @@
 require 'spec_helper'
 
+def runnable?(file)
+  !write_command_enabled? && (file.include?('bulkWrite') || file.include?('insert'))
+end
+
 describe 'Command Monitoring Events' do
 
   COMMAND_MONITORING_TESTS.each do |file|
@@ -30,7 +34,7 @@ describe 'Command Monitoring Events' do
 
         test.expectations.each do |expectation|
 
-          it "generates a #{expectation.event_name} for #{expectation.command_name}" do
+          it "generates a #{expectation.event_name} for #{expectation.command_name}", unless: runnable?(file) do
             begin
               test.run(authorized_collection)
               event = subscriber.send(expectation.event_type)[expectation.command_name]

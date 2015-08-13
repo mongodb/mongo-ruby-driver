@@ -45,7 +45,7 @@ module Mongo
         @namespace = "#{database}.#{collection}"
         @selector = selector
         @flags = options[:flags] || []
-        @upconverter = Upconverter.new(collection, selector)
+        @upconverter = Upconverter.new(collection, selector, options)
       end
 
       # Return the event payload for monitoring.
@@ -105,6 +105,9 @@ module Mongo
         # @return [ BSON::Document, Hash ] filter The query filter or command.
         attr_reader :filter
 
+        # @return [ Hash ] options The options.
+        attr_reader :options
+
         # Instantiate the upconverter.
         #
         # @example Instantiate the upconverter.
@@ -114,9 +117,10 @@ module Mongo
         # @param [ BSON::Document, Hash ] filter The filter or command.
         #
         # @since 2.1.0
-        def initialize(collection, filter)
+        def initialize(collection, filter, options)
           @collection = collection
           @filter = filter
+          @options = options
         end
 
         # Get the upconverted command.
@@ -130,10 +134,19 @@ module Mongo
         def command
           BSON::Document.new(
             delete: collection,
-            deletes: [ BSON::Document.new(q: filter, limit: 1) ],
-            writeConcern: { w: 1 },
+            deletes: [ BSON::Document.new(q: filter, limit: limit) ],
             ordered: true
           )
+        end
+
+        private
+
+        def limit
+          if options.key?(:flags)
+            options[:flags].include?(:single_remove) ? 1 : 0
+          else
+            0
+          end
         end
       end
     end

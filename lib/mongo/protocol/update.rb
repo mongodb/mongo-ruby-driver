@@ -162,12 +162,13 @@ module Mongo
         def command
           BSON::Document.new(
             update: collection,
+            ordered: true,
             updates: [
               BSON::Document.new(
                 q: filter,
                 u: update,
                 multi: flags.include?(:multi_update),
-                upsert: flags.include?(:upsert)
+                upsert: flags.include?(:upsert),
               )
             ]
           )
