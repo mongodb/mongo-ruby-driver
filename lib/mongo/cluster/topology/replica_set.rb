@@ -68,7 +68,8 @@ module Mongo
             end
           else
             log_warn([
-              "Server #{description.address.to_s} in incorrect replica set: #{description.replica_set_name}."
+              "Server #{description.address.to_s} has incorrect replica set name: " +
+              "'#{description.replica_set_name}'. The current replica set name is '#{replica_set_name}'."
             ])
           end
           self
