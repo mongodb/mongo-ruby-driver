@@ -23,6 +23,7 @@ require 'mongo/bulk_write/result_combiner'
 module Mongo
   class BulkWrite
     extend Forwardable
+    include Retryable
 
     # @return [ Mongo::Collection ] collection The collection.
     attr_reader :collection
@@ -45,17 +46,19 @@ module Mongo
     #
     # @since 2.1.0
     def execute
-      server = next_primary
       operation_id = Monitoring.next_operation_id
       result_combiner = ResultCombiner.new
-      operations.each do |operation|
-        execute_operation(
-          operation.keys.first,
-          operation.values.first,
-          server,
-          operation_id,
-          result_combiner
-        )
+      write_with_retry do
+        server = next_primary
+        operations.each do |operation|
+          execute_operation(
+            operation.keys.first,
+            operation.values.first,
+            server,
+            operation_id,
+            result_combiner
+          )
+        end
       end
       result_combiner.result
     end
