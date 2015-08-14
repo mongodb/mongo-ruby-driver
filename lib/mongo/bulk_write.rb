@@ -158,7 +158,7 @@ module Mongo
     end
 
     def delete(documents, server, operation_id)
-      Operation::Write::BulkDelete.new(
+      Operation::Write::Bulk::Delete.new(
         base_spec(operation_id).merge(:deletes => documents)
       ).execute(server.context)
     end
@@ -167,13 +167,13 @@ module Mongo
     alias :delete_many :delete
 
     def insert_one(documents, server, operation_id)
-      Operation::Write::BulkInsert.new(
+      Operation::Write::Bulk::Insert.new(
         base_spec(operation_id).merge(:documents => documents)
       ).execute(server.context)
     end
 
     def update(documents, server, operation_id)
-      Operation::Write::BulkUpdate.new(
+      Operation::Write::Bulk::Update.new(
         base_spec(operation_id).merge(:updates => documents)
       ).execute(server.context)
     end

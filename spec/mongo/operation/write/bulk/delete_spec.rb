@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe Mongo::Operation::Write::BulkDelete do
+describe Mongo::Operation::Write::Bulk::Delete do
   include_context 'operation'
 
   let(:documents) do

@@ -15,63 +15,65 @@
 module Mongo
   module Operation
     module Write
+      module Bulk
 
-      # Provides common behavior for bulk write operations.
-      # Note that #validate! is not called on operation results because they are merged
-      # at a higher level.
-      #
-      # @since 2.1.0
-      module Bulkable
+        # Provides common behavior for bulk write operations.
+        # Note that #validate! is not called on operation results because they are merged
+        # at a higher level.
+        #
+        # @since 2.1.0
+        module Bulkable
 
-        # Execute the bulk operation.
-        #
-        # @example Execute the operation.
-        #   operation.execute(context)
-        #
-        # @param [ Mongo::Server::Context ] context The context for this operation.
-        #
-        # @return [ Result ] The operation result.
-        #
-        # @since 2.0.0
-        def execute(context)
-          if context.features.write_command_enabled?
-            execute_write_command(context)
-          else
-            execute_message(context)
-          end
-        end
-
-        private
-
-        def execute_message(context)
-          replies = messages.map do |m|
-            context.with_connection do |connection|
-              result = self.class::LegacyResult.new(connection.dispatch([ m, gle ].compact, operation_id))
-              if stop_sending?(result)
-                return result
-              else
-                result.reply
-              end
+          # Execute the bulk operation.
+          #
+          # @example Execute the operation.
+          #   operation.execute(context)
+          #
+          # @param [ Mongo::Server::Context ] context The context for this operation.
+          #
+          # @return [ Result ] The operation result.
+          #
+          # @since 2.0.0
+          def execute(context)
+            if context.features.write_command_enabled?
+              execute_write_command(context)
+            else
+              execute_message(context)
             end
           end
-          self.class::LegacyResult.new(replies.compact.empty? ? nil : replies)
-        end
 
-        def stop_sending?(result)
-          ordered? && !result.successful?
-        end
+          private
 
-        def gle
-          gle_message = ( ordered? && write_concern.get_last_error.nil? ) ?
-              Mongo::WriteConcern.get(:w => 1).get_last_error :
-              write_concern.get_last_error
-          if gle_message
-            Protocol::Query.new(
-                db_name,
-                Database::COMMAND,
-                gle_message,
-                options.merge(limit: -1)
-            )
+          def execute_message(context)
+            replies = messages.map do |m|
+              context.with_connection do |connection|
+                result = self.class::LegacyResult.new(connection.dispatch([ m, gle ].compact, operation_id))
+                if stop_sending?(result)
+                  return result
+                else
+                  result.reply
+                end
+              end
+            end
+            self.class::LegacyResult.new(replies.compact.empty? ? nil : replies)
+          end
+
+          def stop_sending?(result)
+            ordered? && !result.successful?
+          end
+
+          def gle
+            gle_message = ( ordered? && write_concern.get_last_error.nil? ) ?
+                Mongo::WriteConcern.get(:w => 1).get_last_error :
+                write_concern.get_last_error
+            if gle_message
+              Protocol::Query.new(
+                  db_name,
+                  Database::COMMAND,
+                  gle_message,
+                  options.merge(limit: -1)
+              )
+            end
           end
         end
       end

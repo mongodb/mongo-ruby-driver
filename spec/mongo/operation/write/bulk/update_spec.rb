@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe Mongo::Operation::Write::BulkUpdate do
+describe Mongo::Operation::Write::Bulk::Update do
   include_context 'operation'
 
   let(:documents) do
