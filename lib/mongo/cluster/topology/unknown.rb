@@ -204,7 +204,10 @@ module Mongo
         private
 
         def initialize_replica_set(description, servers)
-          log_debug("Server #{description.address.to_s} discovered as primary.")
+          log_debug(
+            "Server #{description.address.to_s} discovered as primary in replica set: " +
+            "'#{description.replica_set_name}'. Changing topology to replica set."
+          )
           servers.each do |server|
             if server.standalone? && server.address != description.address
               server.description.unknown!
