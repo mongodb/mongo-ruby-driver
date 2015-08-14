@@ -13,17 +13,6 @@
 # limitations under the License.
 #
 
-
-    # Write: Ordered = false
-
-    # Write: Different write concerns
-
-    # Write: DeleteMany
-
-    # Write: UpdateMany
-
-    # Write: Upsert = true
-
 RSpec::Matchers.define :match_command_name do |expectation|
 
   match do |event|

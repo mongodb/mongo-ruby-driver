@@ -130,7 +130,7 @@ module Mongo
         end
 
         def insert_many(collection)
-          result = collection.insert_many(documents)
+          result = collection.insert_many(documents, options)
           { 'insertedIds' => result.inserted_ids }
         end
 
