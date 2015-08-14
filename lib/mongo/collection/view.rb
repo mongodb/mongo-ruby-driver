@@ -44,6 +44,7 @@ module Mongo
       include Immutable
       include Iterable
       include Readable
+      include Retryable
       include Explainable
       include Writable
 

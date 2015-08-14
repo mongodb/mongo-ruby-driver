@@ -35,7 +35,9 @@ module Mongo
           cmd[:fields] = projection if projection
           cmd[:sort] = sort if sort
           cmd[:maxTimeMS] = max_time_ms if max_time_ms
-          database.command(cmd).first['value']
+          write_with_retry do
+            database.command(cmd).first['value']
+          end
         end
 
         # Finds a single document and replaces it.
@@ -81,8 +83,10 @@ module Mongo
           cmd[:new] = !!(opts[:return_document] && opts[:return_document] == :after)
           cmd[:upsert] = opts[:upsert] if opts[:upsert]
           cmd[:maxTimeMS] = max_time_ms if max_time_ms
-          value = database.command(cmd).first['value']
-          value unless value.nil? || value.empty?
+          write_with_retry do
+            value = database.command(cmd).first['value']
+            value unless value.nil? || value.empty?
+          end
         end
 
         # Remove documents from the collection.
@@ -166,24 +170,28 @@ module Mongo
         private
 
         def remove(value)
-          Operation::Write::Delete.new(
-            :delete => { q: selector, limit: value },
-            :db_name => collection.database.name,
-            :coll_name => collection.name,
-            :write_concern => collection.write_concern
-          ).execute(next_primary.context)
+          write_with_retry do
+            Operation::Write::Delete.new(
+              :delete => { q: selector, limit: value },
+              :db_name => collection.database.name,
+              :coll_name => collection.name,
+              :write_concern => collection.write_concern
+            ).execute(next_primary.context)
+          end
         end
 
         def update(spec, multi, opts)
-          Operation::Write::Update.new(
-            :update => { q: selector,
-                         u: spec,
-                         multi: multi,
-                         upsert: !!opts[:upsert] },
-            :db_name => collection.database.name,
-            :coll_name => collection.name,
-            :write_concern => collection.write_concern
-          ).execute(next_primary.context)
+          write_with_retry do
+            Operation::Write::Update.new(
+              :update => { q: selector,
+                           u: spec,
+                           multi: multi,
+                           upsert: !!opts[:upsert] },
+              :db_name => collection.database.name,
+              :coll_name => collection.name,
+              :write_concern => collection.write_concern
+            ).execute(next_primary.context)
+          end
         end
       end
     end

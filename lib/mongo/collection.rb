@@ -23,6 +23,7 @@ module Mongo
   # @since 2.0.0
   class Collection
     extend Forwardable
+    include Retryable
 
     # @return [ Mongo::Database ] The database the collection resides in.
     attr_reader :database
@@ -309,13 +310,15 @@ module Mongo
     #
     # @since 2.0.0
     def insert_one(document, options = {})
-      Operation::Write::Insert.new(
-        :documents => [ document ],
-        :db_name => database.name,
-        :coll_name => name,
-        :write_concern => write_concern,
-        :options => options
-      ).execute(next_primary.context)
+      write_with_retry do
+        Operation::Write::Insert.new(
+          :documents => [ document ],
+          :db_name => database.name,
+          :coll_name => name,
+          :write_concern => write_concern,
+          :options => options
+        ).execute(next_primary.context)
+      end
     end
 
     # Insert the provided documents into the collection.
