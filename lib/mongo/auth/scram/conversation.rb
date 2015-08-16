@@ -429,7 +429,7 @@ module Mongo
           first.bytes.zip(second.bytes).map{ |(a,b)| (a ^ b).chr }.join('')
         end
 
-        def secure_compare(a, b)
+        def compare_digest(a, b)
           check = a.bytesize ^ b.bytesize
           a.bytes.zip(b.bytes){ |x, y| check |= x ^ y.to_i }
           check == 0
@@ -437,7 +437,7 @@ module Mongo
 
         def validate_final_message!(reply)
           validate!(reply)
-          unless secure_compare(verifier, server_signature)
+          unless compare_digest(verifier, server_signature)
             raise Error::InvalidSignature.new(verifier, server_signature)
           end
         end
