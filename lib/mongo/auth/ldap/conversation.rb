@@ -25,7 +25,7 @@ module Mongo
         # The login message.
         #
         # @since 2.0.0
-        LOGIN = { authenticate: 1, digestPassword: false }.freeze
+        LOGIN = { saslStart: 1, autoAuthorize: 1 }.freeze
 
         # @return [ Protocol::Reply ] reply The current reply in the
         #   conversation.
@@ -63,7 +63,7 @@ module Mongo
           Protocol::Query.new(
             Auth::EXTERNAL,
             Database::COMMAND,
-            LOGIN.merge(user: user.name, password: user.password, mechanism: LDAP::MECHANISM),
+            LOGIN.merge(payload: payload, mechanism: LDAP::MECHANISM),
             limit: -1
           )
         end
@@ -81,6 +81,10 @@ module Mongo
         end
 
         private
+
+        def payload
+          BSON::Binary.new("\x00#{user.name}\x00#{user.password}")
+        end
 
         def validate!(reply)
           raise Unauthorized.new(user) if reply.documents[0]['ok'] != 1
