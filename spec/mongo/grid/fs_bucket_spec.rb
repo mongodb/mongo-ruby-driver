@@ -666,6 +666,45 @@ describe Mongo::Grid::FSBucket do
       it 'returns the id of the file' do
         expect(result).to be_a(BSON::ObjectId)
       end
+
+      context 'when the io stream raises an error' do
+
+        let(:stream) do
+          fs.open_upload_stream(filename)
+        end
+
+        before do
+          allow(fs).to receive(:open_upload_stream).and_yield(stream)
+        end
+
+        context 'when stream#abort does not raise an OperationFailure' do
+
+          before do
+            expect(stream).to receive(:abort).and_call_original
+            file.close
+          end
+
+          it 'raises the original IOError' do
+            expect {
+              fs.upload_from_stream(filename, file)
+            }.to raise_exception(IOError)
+          end
+        end
+
+        context 'when stream#abort raises an OperationFailure' do
+
+          before do
+            allow(stream).to receive(:abort).and_raise(Mongo::Error::OperationFailure)
+            file.close
+          end
+
+          it 'raises the original IOError' do
+            expect {
+              fs.upload_from_stream(filename, file)
+            }.to raise_exception(IOError)
+          end
+        end
+      end
     end
 
     context 'when options are provided when opening the write stream' do

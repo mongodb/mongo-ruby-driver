@@ -281,7 +281,15 @@ module Mongo
       # @since 2.1.0
       def upload_from_stream(filename, io, opts = {})
         open_upload_stream(filename, opts) do |stream|
-          stream.write(io)
+          begin
+            stream.write(io)
+          rescue IOError
+            begin
+              stream.abort
+            rescue Error::OperationFailure
+            end
+            raise
+          end
         end.file_id
       end
 
