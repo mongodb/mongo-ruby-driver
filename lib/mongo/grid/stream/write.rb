@@ -82,7 +82,7 @@ module Mongo
           # @since 2.1.0
           def write(io)
             ensure_open!
-            ensure_indexes!
+            @indexes ||= ensure_indexes!
             data = io.read
             @length += data.length
             chunks = File::Chunk.split(data, file_info, @n)

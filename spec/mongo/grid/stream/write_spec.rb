@@ -6,6 +6,10 @@ describe Mongo::Grid::FSBucket::Stream::Write do
     File.open(__FILE__)
   end
 
+  let(:file2) do
+    File.open(__FILE__)
+  end
+
   let(:fs_options) do
     { }
   end
@@ -211,6 +215,17 @@ describe Mongo::Grid::FSBucket::Stream::Write do
         it 'creates an index on the chunks collection' do
           expect(chunks_index[:name]).to eq('files_id_1_n_1')
         end
+
+        context 'when write is called more than once' do
+
+          before do
+            expect(fs).not_to receive(:ensure_indexes!)
+          end
+
+          it 'only creates the indexes the first time' do
+            stream.write(file2)
+          end
+        end
       end
 
       context 'when the files collection is not empty' do
@@ -305,10 +320,6 @@ describe Mongo::Grid::FSBucket::Stream::Write do
     end
 
     context 'when the stream is written to multiple times' do
-
-      let(:file2) do
-        File.open(__FILE__)
-      end
 
       before do
         stream.write(file)
