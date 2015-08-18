@@ -132,7 +132,6 @@ module Mongo
       # @option options [ Integer ] :chunk_size Override the default chunk
       #   size.
       # @option options [ String ] :write The write concern.
-      # @option options [ String ] :write_concern The write concern.
       # @option options [ String ] :read The read preference.
       #
       # @since 2.0.0
@@ -235,7 +234,6 @@ module Mongo
       #
       # @option opts [ Integer ] :chunk_size Override the default chunk size.
       # @option opts [ Hash ] :write The write concern.
-      # @option opts [ Hash ] :write_concern The write concern.
       # @option opts [ Hash ] :metadata User data for the 'metadata' field of the files
       #   collection document.
       # @option opts [ String ] :content_type The content type of the file.
@@ -271,7 +269,6 @@ module Mongo
       #
       # @option opts [ Integer ] :chunk_size Override the default chunk size.
       # @option opts [ Hash ] :write The write concern.
-      # @option opts [ Hash ] :write_concern The write concern.
       # @option opts [ Hash ] :metadata User data for the 'metadata' field of the files
       #   collection document.
       # @option opts [ String ] :content_type The content type of the file. Deprecated, please

@@ -83,17 +83,6 @@ describe Mongo::Grid::FSBucket do
             expect(stream.write_concern.options).to eq(Mongo::WriteConcern.get(options[:write]).options)
           end
         end
-
-        context 'when a write concern option is specified' do
-
-          let(:options) do
-            { write_concern: { w: 2 } }
-          end
-
-          it 'passes the write concern to the write stream' do
-            expect(stream.write_concern.options).to eq(Mongo::WriteConcern.get(options[:write_concern]).options)
-          end
-        end
       end
     end
   end
@@ -695,16 +684,6 @@ describe Mongo::Grid::FSBucket do
           expect(stream.write_concern.options).to eq(Mongo::WriteConcern.get(stream_options[:write]).options)
         end
       end
-
-       context 'when a write concern option is specified' do
-         let(:stream_options) do
-           { write_concern: { w: 2 } }
-         end
-
-         it 'sets the write concern on the write stream' do
-           expect(stream.write_concern.options).to eq(Mongo::WriteConcern.get(stream_options[:write_concern]).options)
-         end
-       end
 
       context 'when there is a chunk size set on the FSBucket' do
 

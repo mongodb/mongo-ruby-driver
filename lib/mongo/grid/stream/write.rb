@@ -52,7 +52,6 @@ module Mongo
           #
           # @option opts [ Integer ] :chunk_size Override the default chunk size.
           # @option opts [ Hash ] :write The write concern.
-          # @option opts [ Hash ] :write_concern The write concern.
           # @option opts [ Hash ] :metadata User data for the 'metadata' field of the files collection document.
           # @option opts [ String ] :content_type The content type of the file.
           #   Deprecated, please use the metadata document instead.
@@ -119,8 +118,7 @@ module Mongo
           # @since 2.1.0
           def write_concern
             @write_concern ||= @options[:write] ? WriteConcern.get(@options[:write]) :
-                @options[:write_concern] ? WriteConcern.get(@options[:write_concern]) :
-                    fs.write_concern
+              fs.write_concern
           end
 
           # Is the stream closed.
