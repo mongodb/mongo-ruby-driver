@@ -305,6 +305,21 @@ describe Mongo::Grid::FSBucket do
       it 'creates an index on the chunks collection' do
         expect(chunks_index[:name]).to eq('files_id_1_n_1')
       end
+
+      context 'when a write operation is called more than once' do
+
+        before do
+          expect(fs).not_to receive(:ensure_indexes!)
+        end
+
+        let(:file2) do
+          Mongo::Grid::File.new('Goodbye!', :filename => 'test2.txt')
+        end
+
+        it 'only creates the indexes the first time' do
+          expect(fs.insert_one(file2)).to be_a(BSON::ObjectId)
+        end
+      end
     end
 
     context 'when the index creation encounters an error', if: write_command_enabled? do

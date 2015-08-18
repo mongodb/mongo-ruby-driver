@@ -111,7 +111,7 @@ module Mongo
       #
       # @since 2.0.0
       def insert_one(file)
-        ensure_indexes!
+        @indexes ||= ensure_indexes!
         chunks_collection.insert_many(file.chunks)
         files_collection.insert_one(file.info)
         file.id
