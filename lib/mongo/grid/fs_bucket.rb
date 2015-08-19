@@ -219,7 +219,7 @@ module Mongo
       def download_to_stream(id, io)
         open_download_stream(id) do |stream|
           stream.each do |chunk|
-            io.puts(chunk)
+            io << chunk
           end
         end
       end
