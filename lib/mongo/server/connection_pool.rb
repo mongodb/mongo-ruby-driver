@@ -54,9 +54,16 @@ module Mongo
         queue.dequeue
       end
 
-      # @todo: Implement
+      # Disconnect the connection pool.
+      #
+      # @example Disconnect the connection pool.
+      #   pool.disconnect!
+      #
+      # @return [ true ] true.
+      #
+      # @since 2.1.0
       def disconnect!
-
+        queue.disconnect!
       end
 
       # Create the new connection pool.

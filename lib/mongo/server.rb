@@ -116,10 +116,7 @@ module Mongo
     #
     # @since 2.0.0
     def disconnect!
-      # @todo: Disconnect all connections.
-      context.with_connection do |connection|
-        connection.disconnect!
-      end
+      pool.disconnect!
       monitor.stop! and true
     end
 
