@@ -28,6 +28,10 @@ describe Mongo::Server::ConnectionPool do
       described_class.get(server)
     end
 
+    after do
+      server.disconnect!
+    end
+
     context 'when a connection is checked out on the thread' do
 
       let!(:connection) do
@@ -96,6 +100,26 @@ describe Mongo::Server::ConnectionPool do
     end
   end
 
+  describe '#disconnect!' do
+
+    let(:server) do
+      Mongo::Server.new(address, double('cluster'), monitoring, listeners, options)
+    end
+
+    let!(:pool) do
+      described_class.get(server)
+    end
+
+    after do
+      server.disconnect!
+    end
+
+    it 'disconnects the queue' do
+      expect(pool.send(:queue)).to receive(:disconnect!).and_call_original
+      pool.disconnect!
+    end
+  end
+
   describe '.get' do
 
     let(:server) do
@@ -104,6 +128,10 @@ describe Mongo::Server::ConnectionPool do
 
     let!(:pool) do
       described_class.get(server)
+    end
+
+    after do
+      server.disconnect!
     end
 
     it 'returns the pool for the server' do
@@ -119,6 +147,10 @@ describe Mongo::Server::ConnectionPool do
 
     let!(:pool) do
       described_class.get(server)
+    end
+
+    after do
+      server.disconnect!
     end
 
     it 'includes the object id' do

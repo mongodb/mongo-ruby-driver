@@ -63,9 +63,19 @@ module Mongo
           end
         end
 
-        # @todo: Implement
+        # Disconnect all connections in the queue.
+        #
+        # @example Disconnect all connections.
+        #   queue.disconnect!
+        #
+        # @return [ true ] Always true.
+        #
+        # @since 2.1.0
         def disconnect!
-
+          mutex.synchronize do
+            queue.each{ |connection| connection.disconnect! }
+            true
+          end
         end
 
         # Enqueue a connection in the queue.

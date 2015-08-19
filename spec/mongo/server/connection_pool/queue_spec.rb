@@ -47,10 +47,19 @@ describe Mongo::Server::ConnectionPool::Queue do
     end
   end
 
-  describe '#disconnect' do
+  describe '#disconnect!' do
+
+    let(:connection) do
+      double('connection')
+    end
+
+    let(:queue) do
+      described_class.new(:max_pool_size => 1) { connection }
+    end
 
     it 'disconnects all connections in the queue' do
-
+      expect(connection).to receive(:disconnect!)
+      queue.disconnect!
     end
   end
 
