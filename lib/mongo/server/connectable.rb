@@ -88,7 +88,7 @@ module Mongo
         connect! if socket.nil? || !socket.alive?
         begin
           yield socket
-        rescue Error::SocketError, Error::SocketTimeoutError => e
+        rescue Exception => e
           disconnect!
           raise e
         end
