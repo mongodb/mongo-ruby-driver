@@ -80,14 +80,11 @@ module Mongo
       def select_server(cluster)
         deadline = Time.now + server_selection_timeout
         while (deadline - Time.now) > 0
-          if cluster.single?
-            servers = cluster.servers
-          elsif cluster.sharded?
-            servers = near_servers(cluster.servers)
-          else
-            servers = select(cluster.servers)
+          servers = candidates(cluster)
+          if servers && !servers.compact.empty?
+            server = servers.first
+            return server if server.connectable?
           end
-          return servers.first if servers && !servers.compact.empty?
           cluster.scan!
         end
         raise Error::NoServerAvailable.new(self)
@@ -119,6 +116,16 @@ module Mongo
       end
 
       private
+
+      def candidates(cluster)
+        if cluster.single?
+          cluster.servers
+        elsif cluster.sharded?
+          near_servers(cluster.servers)
+        else
+          select(cluster.servers)
+        end
+      end
 
       # Select the primary from a list of provided candidates.
       #

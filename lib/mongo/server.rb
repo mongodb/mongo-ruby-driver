@@ -92,6 +92,21 @@ module Mongo
       Context.new(self)
     end
 
+    # Determine if a connection to the server is able to be established and
+    # messages can be sent to it.
+    #
+    # @example Is the server connectable?
+    #   server.connectable?
+    #
+    # @return [ true, false ] If the server is connectable.
+    #
+    # @since 2.1.0
+    def connectable?
+      context.with_connection do |connection|
+        connection.connectable?
+      end
+    end
+
     # Disconnect the server from the connection.
     #
     # @example Disconnect the server.
@@ -101,6 +116,7 @@ module Mongo
     #
     # @since 2.0.0
     def disconnect!
+      # @todo: Disconnect all connections.
       context.with_connection do |connection|
         connection.disconnect!
       end

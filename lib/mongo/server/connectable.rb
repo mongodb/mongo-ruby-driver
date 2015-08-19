@@ -34,6 +34,23 @@ module Mongo
       # @return [ Integer ] pid The process id when the connection was created.
       attr_reader :pid
 
+      # Determine if the server is connectable. This will check not only if the
+      # connection exists, but if messages can sent to it successfully.
+      #
+      # @example Is the server connectable?
+      #   connection.connectable?
+      #
+      # @return [ true, false ] If the connection is connectable.
+      #
+      # @since 2.1.0
+      def connectable?
+        begin
+          ensure_connected do |socket|
+            socket.alive?
+          end
+        rescue; false; end
+      end
+
       # Determine if the connection is currently connected.
       #
       # @example Is the connection connected?

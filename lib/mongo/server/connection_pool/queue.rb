@@ -63,6 +63,11 @@ module Mongo
           end
         end
 
+        # @todo: Implement
+        def disconnect!
+
+        end
+
         # Enqueue a connection in the queue.
         #
         # @example Enqueue a connection.

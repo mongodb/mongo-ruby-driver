@@ -47,6 +47,13 @@ describe Mongo::Server::ConnectionPool::Queue do
     end
   end
 
+  describe '#disconnect' do
+
+    it 'disconnects all connections in the queue' do
+
+    end
+  end
+
   describe '#enqueue' do
 
     let(:connection) do

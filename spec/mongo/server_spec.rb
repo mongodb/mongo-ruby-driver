@@ -24,6 +24,10 @@ describe Mongo::Server do
       described_class.new(address, cluster, monitoring, listeners, TEST_OPTIONS)
     end
 
+    after do
+      server.disconnect!
+    end
+
     context 'when the other is not a server' do
 
       let(:other) do
@@ -65,6 +69,43 @@ describe Mongo::Server do
     end
   end
 
+  describe '#connectable?' do
+
+    context 'when the server is connectable' do
+
+      let(:server) do
+        described_class.new(address, cluster, monitoring, listeners, TEST_OPTIONS)
+      end
+
+      after do
+        server.disconnect!
+      end
+
+      it 'returns true' do
+        expect(server).to be_connectable
+      end
+    end
+
+    context 'when the server is not connectable' do
+
+      let(:bad_address) do
+        Mongo::Address.new('127.0.0.1:27016')
+      end
+
+      let(:server) do
+        described_class.new(bad_address, cluster, monitoring, listeners, TEST_OPTIONS)
+      end
+
+      before do
+        server.disconnect!
+      end
+
+      it 'returns false' do
+        expect(server).to_not be_connectable
+      end
+    end
+  end
+
   describe '#context' do
 
     let(:server) do
@@ -73,6 +114,10 @@ describe Mongo::Server do
 
     let(:context) do
       server.context
+    end
+
+    after do
+      server.disconnect!
     end
 
     it 'returns a new server context' do
@@ -95,7 +140,17 @@ describe Mongo::Server do
   describe '#initialize' do
 
     let(:server) do
-      described_class.new(address, cluster, monitoring, listeners, TEST_OPTIONS.merge(:heartbeat_frequency => 5))
+      described_class.new(
+        address,
+        cluster,
+        monitoring,
+        listeners,
+        TEST_OPTIONS.merge(:heartbeat_frequency => 5)
+      )
+    end
+
+    after do
+      server.disconnect!
     end
 
     it 'sets the address host' do
@@ -121,6 +176,10 @@ describe Mongo::Server do
       server.pool
     end
 
+    after do
+      server.disconnect!
+    end
+
     it 'returns the connection pool for the server' do
       expect(pool).to be_a(Mongo::Server::ConnectionPool)
     end
@@ -130,6 +189,10 @@ describe Mongo::Server do
 
     let(:server) do
       described_class.new(address, cluster, monitoring, listeners, TEST_OPTIONS)
+    end
+
+    after do
+      server.disconnect!
     end
 
     it 'forces a scan on the monitor' do
@@ -145,6 +208,10 @@ describe Mongo::Server do
 
     before do
       expect(server.monitor).to receive(:restart!).and_call_original
+    end
+
+    after do
+      server.disconnect!
     end
 
     it 'restarts the monitor and returns true' do
