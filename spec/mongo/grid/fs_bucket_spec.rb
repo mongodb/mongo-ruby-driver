@@ -544,7 +544,7 @@ describe Mongo::Grid::FSBucket do
         it 'raises an exception' do
           expect{
             fs.download_to_stream(BSON::ObjectId.new, io)
-          }.to raise_exception(Mongo::Error::NoFileInfo)
+          }.to raise_exception(Mongo::Error::FileNotFound)
         end
       end
 

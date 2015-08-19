@@ -15,21 +15,23 @@
 module Mongo
   class Error
 
-    # Raised if GridFS tries to do a read but there is no file information document
-    #   found in the files collection.
+    # Raised if the next chunk when reading from a GridFSBucket does not have the
+    # expected sequence number (n).
     #
     # @since 2.1.0
-    class NoFileInfo < Error
+    class MissingFileChunk < Error
 
       # Create the new exception.
       #
       # @example Create the new exception.
-      #   Mongo::Error::NoFileInfo.new
+      #   Mongo::Error::MissingFileChunk.new(expected_n, chunk)
+      #
+      # @param [ Integer ] expected_n The expected index value.
+      # @param [ Grid::File::Chunk ] chunk The chunk read from GridFS.
       #
       # @since 2.1.0
-      def initialize
-        super("No files information document found for the file requested. " +
-                "The file either never existed, is in the process of being deleted, or has been corrupted.")
+      def initialize(expected_n, chunk)
+        super("Unexpected chunk in sequence. Expected next chunk to have index #{expected_n} but it has index #{chunk.n}")
       end
     end
   end

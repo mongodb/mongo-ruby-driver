@@ -33,7 +33,9 @@ RSpec::Matchers.define :match_chunks_collection do |expected|
 
   match do |actual|
     return true if expected.nil?
-    if !expected.find.to_a.empty?
+    if expected.find.to_a.empty?
+      actual.find.to_a.empty?
+    else
       actual.find.all? do |doc|
         if matching_doc = expected.find(files_id: doc['files_id'], n: doc['n']).first
           matching_doc.all? do |k, v|
@@ -43,8 +45,6 @@ RSpec::Matchers.define :match_chunks_collection do |expected|
           false
         end
       end
-    else
-      actual.find.to_a.empty?
     end
   end
 end
@@ -54,7 +54,10 @@ RSpec::Matchers.define :match_error do |error|
   match do |actual|
 
     mapping = {
-      'FileNotFound' => Mongo::Error::FileNotFound
+      'FileNotFound' => Mongo::Error::FileNotFound,
+      'ChunkIsMissing' => Mongo::Error::MissingFileChunk,
+      'ChunkIsWrongSize' => Mongo::Error::UnexpectedChunkLength,
+      'ExtraChunk' => Mongo::Error::ExtraFileChunk
     }
     mapping[error] == actual.class
   end
@@ -138,11 +141,7 @@ module Mongo
       end
 
       def convert_data(v, opts = {})
-        if v.is_a?(BSON::Binary)
-          v
-        else
-          BSON::Binary.new(to_hex(v['$hex'], opts), :generic)
-        end
+        v.is_a?(BSON::Binary) ? v : BSON::Binary.new(to_hex(v['$hex'], opts), :generic)
       end
 
       def transform_docs(docs, opts = {})
@@ -213,7 +212,6 @@ module Mongo
         @data = data
         @description = test['description']
         @upload_date = Time.now
-        @expected_result = test['assert']['result']
         if test['assert']['error']
           @operation = UnsuccessfulOp.new(self, test)
         else
@@ -222,11 +220,15 @@ module Mongo
       end
 
       def expected_result
-        @operation.result unless @expected_result == 'void'
+        @operation.expected_result
       end
 
       def error?
         @operation.is_a?(UnsuccessfulOp)
+      end
+
+      def assert_data?
+        @operation.assert['data']
       end
 
       def result
@@ -284,6 +286,7 @@ module Mongo
         def_delegators :@test, :upload_date
   
         attr_reader :op
+        attr_reader :assert
         attr_reader :result
         attr_reader :expected_files_collection
         attr_reader :expected_chunks_collection
@@ -324,11 +327,20 @@ module Mongo
           end
         end
 
+        def update_exp_data(fs, data)
+          coll = fs.database[data['update']]
+          data['updates'].each do |update|
+            sel = update['q'].merge('files_id' => to_oid(update['q']['files_id']))
+            data = BSON::Binary.new(to_hex(update['u']['$set']['data']['$hex']), :generic)
+            u = update['u'].merge('$set' => { 'data' => data })
+            coll.find(sel).update_one(u)
+          end
+        end
+
         def arrange(fs)
           if @arrange
             @arrange['data'].each do |data|
-              op = "#{data.keys.first}_exp_data"
-              send(op, fs, data)
+              send("#{data.keys.first}_exp_data", fs, data)
             end
           end
         end
@@ -338,12 +350,18 @@ module Mongo
         end
 
         def filename
-          @act['arguments']['filename']
+          @arguments['filename']
         end
 
         def upload(fs)
           io = StringIO.new(to_hex(@act['arguments']['source']['$hex']))
           fs.upload_from_stream(filename, io, options)
+        end
+
+        def download(fs)
+          io = StringIO.new.set_encoding(BSON::BINARY)
+          fs.download_to_stream(to_oid(@arguments['id']), io)
+          io.string
         end
 
         def run(fs)
@@ -366,7 +384,15 @@ module Mongo
       class SuccessfulOp
         include Convertible
         include GridFSTest::Operable
-  
+
+        def expected_result
+          if @assert['result'] == '&result'
+            @operation.result
+          elsif @assert['result'] != 'void'
+            to_hex(@assert['result']['$hex'])
+          end
+        end
+
         def act(fs)
           @result = send(op, fs)
         end

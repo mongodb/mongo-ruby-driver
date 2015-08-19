@@ -23,7 +23,7 @@ module Mongo
       # Create the new exception.
       #
       # @example Create the new exception.
-      #   Mongo::Error::ClosedStream.new
+      #   Mongo::Error::FileNotFound.new(id)
       #
       # @since 2.1.0
       def initialize(id)

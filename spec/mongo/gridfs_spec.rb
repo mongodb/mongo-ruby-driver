@@ -36,11 +36,11 @@ describe 'GridFS' do
             expect(result).to completes_successfully(test)
           end
 
-          it 'has the correct documents in the files collection' do
+          it 'has the correct documents in the files collection', if: test.assert_data? do
             expect(fs.files_collection).to match_files_collection(test.expected_files_collection)
           end
 
-          it 'has the correct documents in the chunks collection' do
+          it 'has the correct documents in the chunks collection', if: test.assert_data? do
             expect(fs.chunks_collection).to match_chunks_collection(test.expected_chunks_collection)
           end
         end
