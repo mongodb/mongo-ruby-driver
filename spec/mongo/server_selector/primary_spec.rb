@@ -20,10 +20,15 @@ describe Mongo::ServerSelector::Primary do
     end
 
     context 'tag sets provided' do
-      let(:tag_sets) { [tag_set] }
+
+      let(:tag_sets) do
+        [ tag_set ]
+      end
 
       it 'raises an error' do
-        expect{selector.tag_sets}.to raise_error
+        expect {
+          selector.tag_sets
+        }.to raise_error(Mongo::Error::InvalidServerPreference)
       end
     end
   end
