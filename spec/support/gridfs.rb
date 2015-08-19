@@ -387,7 +387,7 @@ module Mongo
 
         def expected_result
           if @assert['result'] == '&result'
-            @operation.result
+            @result
           elsif @assert['result'] != 'void'
             to_hex(@assert['result']['$hex'])
           end
