@@ -293,7 +293,7 @@ module Mongo
           'RevisionNotFound' => Mongo::Error::InvalidFileRevision
       }
 
-      # Instantiate the new GridFSTest.
+      # Instantiate the new GridFS::Test.
       #
       # @example Create the test.
       #   Test.new(data, test)
@@ -314,7 +314,7 @@ module Mongo
         end
       end
 
-      # Whether the expected collections and actual collections be compared after the test runs.
+      # Whether the expected  and actual collections should be compared after the test runs.
       #
       # @return [ true, false ] Whether the actual and expected collections should be compared.
       #
@@ -367,12 +367,12 @@ module Mongo
 
       def insert_pre_files_data(fs)
         fs.files_collection.insert_many(files_data)
-        fs.database['expected.files'].insert_many(files_data)
+        fs.database['expected.files'].insert_many(files_data) if assert_data?
       end
 
       def insert_pre_chunks_data(fs)
         fs.chunks_collection.insert_many(chunks_data)
-        fs.database['expected.chunks'].insert_many(chunks_data)
+        fs.database['expected.chunks'].insert_many(chunks_data) if assert_data?
       end
 
       def insert_pre_data(fs)
@@ -461,8 +461,8 @@ module Mongo
 
         # Run the test operation.
         #
-        # @example Arrange the data.
-        #   operation.fun(fs)
+        # @example Execute the operation.
+        #   operation.run(fs)
         #
         # @param [ Grid::FSBucket ] fs The FSBucket used in the test.
         #
