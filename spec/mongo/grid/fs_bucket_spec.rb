@@ -659,7 +659,7 @@ describe Mongo::Grid::FSBucket do
 
         it 'raises a FileNotFound error' do
           expect {
-            fs.download_to_stream_by_name('non-existent.txt', io, revision: 1)
+            fs.download_to_stream_by_name('test.txt', io, revision: 100)
           }.to raise_exception(Mongo::Error::InvalidFileRevision)
         end
       end
@@ -772,7 +772,7 @@ describe Mongo::Grid::FSBucket do
 
           it 'raises a FileNotFound error' do
             expect {
-              fs.open_download_stream_by_name('non-existent.txt', revision: 0)
+              fs.open_download_stream_by_name('test.txt', revision: 100)
             }.to raise_exception(Mongo::Error::InvalidFileRevision)
           end
         end
@@ -805,7 +805,6 @@ describe Mongo::Grid::FSBucket do
           expect(io.size).to eq(0)
         end
       end
-
     end
   end
 
