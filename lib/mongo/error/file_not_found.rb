@@ -25,6 +25,9 @@ module Mongo
       # @example Create the new exception.
       #   Mongo::Error::FileNotFound.new(id, :id)
       #
+      # @param [ Object ] value The property value used to find the file.
+      # @param [ String, Symbol ] property The name of the property used to find the file.
+      #
       # @since 2.1.0
       def initialize(value, property)
         super("File with #{property} '#{value}' not found.")

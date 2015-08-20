@@ -23,7 +23,10 @@ module Mongo
       # Create the new exception.
       #
       # @example Create the new exception.
-      #   Mongo::Error::InvalidFileRevision.new(filename, revision)
+      #   Mongo::Error::InvalidFileRevision.new('some-file.txt', 3)
+      #
+      # @param [ String ] filename The name of the file.
+      # @param [ Integer ] revision The requested revision.
       #
       # @since 2.1.0
       def initialize(filename, revision)
