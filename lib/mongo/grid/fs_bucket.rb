@@ -224,6 +224,49 @@ module Mongo
         end
       end
 
+      # Opens a stream from which the application can read the contents of the stored file
+      # specified by filename and the revision in options.
+      #
+      # Revision numbers are defined as follows:
+      # 0 = the original stored file
+      # 1 = the first revision
+      # 2 = the second revision
+      # etc…
+      # -2 = the second most recent revision
+      # -1 = the most recent revision
+      #
+      # @example Open a stream to download the most recent revision.
+      #   fs.open_download_stream_by_name('some-file.txt')
+      #
+      # # @example Open a stream to download the original file.
+      #   fs.open_download_stream_by_name('some-file.txt', revision: 0)
+      #
+      # @example Open a stream to download the second revision of the stored file.
+      #   fs.open_download_stream_by_name('some-file.txt', revision: 2)
+      #
+      # @param [ String ] filename The file's name.
+      # @param [ Hash ] opts Options for the download.
+      #
+      # @option opts [ Integer ] :revision The revision number of the file to download.
+      #   Defaults to -1, the most recent version.
+      #
+      # @return [ Stream::Read ] The stream to read from.
+      #
+      # @yieldparam [ Hash ] The read stream.
+      #
+      # @since 2.1.0
+      def open_download_stream_by_name(filename, opts = {}, &block)
+        view = files_collection.find(:filename => filename).projection(_id: 1).limit(-1)
+        revision = opts.fetch(:revision, -1)
+        if revision < 0
+          file_doc = view.skip(revision.abs - 1).sort('uploadDate' => Mongo::Index::DESCENDING).first
+        else
+          file_doc = view.skip(revision).sort('uploadDate' => Mongo::Index::ASCENDING).first
+        end
+        raise Error::FileNotFound.new(filename, :filename) unless file_doc
+        open_download_stream(file_doc[:_id], &block)
+      end
+
       # Downloads the contents of the stored file specified by filename and by the
       # revision in options and writes the contents to the destination io object.
       #
@@ -235,7 +278,7 @@ module Mongo
       # -2 = the second most recent revision
       # -1 = the most recent revision
       #
-      # @example Download the most recent version.
+      # @example Download the most recent revision.
       #   fs.download_to_stream_by_name('some-file.txt', io)
       #
       # # @example Download the original file.
@@ -253,15 +296,7 @@ module Mongo
       #
       # @since 2.1.0
       def download_to_stream_by_name(filename, io, opts = {})
-        view = files_collection.find(:filename => filename).projection({ _id: 1 }).limit(-1)
-        revision = opts.fetch(:revision, -1)
-        if revision < 0
-          file_doc = view.skip(revision.abs - 1).sort('uploadDate' => Mongo::Index::DESCENDING).first
-        else
-          file_doc = view.skip(revision).sort('uploadDate' => Mongo::Index::ASCENDING).first
-        end
-        raise Error::FileNotFound.new(filename, :filename) unless file_doc
-        download_to_stream(file_doc[:_id], io)
+        download_to_stream(open_download_stream_by_name(filename, opts).file_id, io)
       end
 
       # Opens an upload stream to GridFS to which the contents of a user file came be written.

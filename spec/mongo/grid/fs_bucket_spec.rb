@@ -589,85 +589,205 @@ describe Mongo::Grid::FSBucket do
         expect(stream.read_preference).to eq(Mongo::ServerSelector.get(options[:read]))
       end
     end
-  end
 
-  describe '#download_to_stream_by_name' do
+    describe '#download_to_stream_by_name' do
 
-    let(:files) do
-      [
-          StringIO.new('hello 1'),
-          StringIO.new('hello 2'),
-          StringIO.new('hello 3'),
-          StringIO.new('hello 4')
-      ]
-    end
+      let(:files) do
+        [
+            StringIO.new('hello 1'),
+            StringIO.new('hello 2'),
+            StringIO.new('hello 3'),
+            StringIO.new('hello 4')
+        ]
+      end
 
-    before do
-      files.each do |file|
-        fs.upload_from_stream('test.txt', file)
+      before do
+        files.each do |file|
+          fs.upload_from_stream('test.txt', file)
+        end
+      end
+
+      let(:io) do
+        StringIO.new
+      end
+
+      context 'when revision is not specified' do
+
+        let!(:result) do
+          fs.download_to_stream_by_name('test.txt', io)
+        end
+
+        it 'returns the most recent version' do
+          expect(io.string).to eq('hello 4')
+        end
+      end
+
+      context 'when revision is 0' do
+
+        let!(:result) do
+          fs.download_to_stream_by_name('test.txt', io, revision: 0)
+        end
+
+        it 'returns the original stored file' do
+          expect(io.string).to eq('hello 1')
+        end
+      end
+
+      context 'when revision is negative' do
+
+        let!(:result) do
+          fs.download_to_stream_by_name('test.txt', io, revision: -2)
+        end
+
+        it 'returns that number of versions from the most recent' do
+          expect(io.string).to eq('hello 3')
+        end
+      end
+
+      context 'when revision is positive' do
+
+        let!(:result) do
+          fs.download_to_stream_by_name('test.txt', io, revision: 1)
+        end
+
+        it 'returns that number revision' do
+          expect(io.string).to eq('hello 2')
+        end
+      end
+
+      context 'when the file is not found' do
+
+        it 'raises a FileNotFound error' do
+          expect {
+            fs.download_to_stream_by_name('non-existent.txt', io, revision: 1)
+          }.to raise_exception(Mongo::Error::FileNotFound)
+        end
       end
     end
 
-    after do
-      fs.files_collection.delete_many
-      fs.chunks_collection.delete_many
-    end
+    describe '#open_download_stream_by_name' do
 
-    let(:io) do
-      StringIO.new
-    end
-
-    context 'when revision is not specified' do
-
-      let!(:result) do
-        fs.download_to_stream_by_name('test.txt', io)
+      let(:files) do
+        [
+            StringIO.new('hello 1'),
+            StringIO.new('hello 2'),
+            StringIO.new('hello 3'),
+            StringIO.new('hello 4')
+        ]
       end
 
-      it 'returns the most recent version' do
-        expect(io.string).to eq('hello 4')
-      end
-    end
-
-    context 'when revision is 0' do
-
-      let!(:result) do
-        fs.download_to_stream_by_name('test.txt', io, revision: 0)
+      before do
+        files.each do |file|
+          fs.upload_from_stream('test.txt', file)
+        end
       end
 
-      it 'returns the original stored file' do
-        expect(io.string).to eq('hello 1')
-      end
-    end
-
-    context 'when revision is negative' do
-
-      let!(:result) do
-        fs.download_to_stream_by_name('test.txt', io, revision: -2)
+      let(:io) do
+        StringIO.new
       end
 
-      it 'returns that number of versions from the most recent' do
-        expect(io.string).to eq('hello 3')
+      context 'when a block is provided' do
+
+        let(:stream) do
+          fs.open_download_stream_by_name('test.txt') do |stream|
+            io.write(stream.read)
+          end
+        end
+
+        it 'returns a Stream::Read object' do
+          expect(stream).to be_a(Mongo::Grid::FSBucket::Stream::Read)
+        end
+
+        it 'closes the stream after the block completes' do
+          expect(stream.closed?).to be(true)
+        end
+
+        it 'yields the stream to the block' do
+          stream
+          expect(io.size).to eq(files[0].size)
+        end
+
+        context 'when revision is not specified' do
+
+          let!(:result) do
+            fs.open_download_stream_by_name('test.txt') do |stream|
+              io.write(stream.read)
+            end
+          end
+
+          it 'returns the most recent version' do
+            expect(io.string).to eq('hello 4')
+          end
+        end
+
+        context 'when revision is 0' do
+
+          let!(:result) do
+            fs.open_download_stream_by_name('test.txt', revision: 0) do |stream|
+              io.write(stream.read)
+            end
+          end
+
+          it 'returns the original stored file' do
+            expect(io.string).to eq('hello 1')
+          end
+        end
+
+        context 'when revision is negative' do
+
+          let!(:result) do
+            fs.open_download_stream_by_name('test.txt', revision: -2) do |stream|
+              io.write(stream.read)
+            end
+          end
+
+          it 'returns that number of versions from the most recent' do
+            expect(io.string).to eq('hello 3')
+          end
+        end
+
+        context 'when revision is positive' do
+
+          let!(:result) do
+            fs.open_download_stream_by_name('test.txt', revision: 1) do |stream|
+              io.write(stream.read)
+            end
+          end
+
+          it 'returns that number revision' do
+            expect(io.string).to eq('hello 2')
+          end
+        end
+
+        context 'when the file is not found' do
+
+          it 'raises a FileNotFound error' do
+            expect {
+              fs.open_download_stream_by_name('non-existent.txt', revision: 0)
+            }.to raise_exception(Mongo::Error::FileNotFound)
+          end
+        end
       end
-    end
 
-    context 'when revision is positive' do
+      context 'when a block is not provided' do
 
-      let!(:result) do
-        fs.download_to_stream_by_name('test.txt', io, revision: 1)
+        let!(:stream) do
+          fs.open_download_stream_by_name('test.txt')
+        end
+
+        it 'returns a Stream::Read object' do
+          expect(stream).to be_a(Mongo::Grid::FSBucket::Stream::Read)
+        end
+
+        it 'does not close the stream' do
+          expect(stream.closed?).to be(false)
+        end
+
+        it 'does not yield the stream to the block' do
+          expect(io.size).to eq(0)
+        end
       end
 
-      it 'returns that number revision' do
-        expect(io.string).to eq('hello 2')
-      end
-    end
-
-    context 'when the file is not found' do
-
-      it 'raises a FileNotFound error' do
-        expect {
-          fs.download_to_stream_by_name('non-existent.txt', io, revision: 1)
-        }.to raise_exception(Mongo::Error::FileNotFound)
-      end
     end
   end
 
@@ -725,7 +845,7 @@ describe Mongo::Grid::FSBucket do
       end
     end
 
-    describe 'upload_from_stream' do
+    describe '#upload_from_stream' do
 
       let!(:result) do
         fs.upload_from_stream(filename, file)
