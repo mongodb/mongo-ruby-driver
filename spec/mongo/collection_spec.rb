@@ -90,6 +90,141 @@ describe Mongo::Collection do
     end
   end
 
+  describe '#with' do
+
+    let(:client) do
+      Mongo::Client.new(ADDRESSES)
+    end
+
+    let(:database) do
+      Mongo::Database.new(client, :test)
+    end
+
+    let(:collection) do
+      database.collection(:users)
+    end
+
+    let(:new_collection) do
+      collection.with(new_options)
+    end
+
+    context 'when new read options are provided' do
+
+      let(:new_options) do
+        { read: { mode: :secondary } }
+      end
+
+      it 'returns a new collection' do
+        expect(new_collection).not_to be(collection)
+      end
+
+      it 'sets the new read options on the new collection' do
+        expect(new_collection.read_preference).to eq(Mongo::ServerSelector.get(new_options[:read]))
+      end
+
+      context 'when the client has a server selection timeout setting' do
+
+        let(:client) do
+          Mongo::Client.new(ADDRESSES, server_selection_timeout: 2)
+        end
+
+        let(:server_selection_timeout) do
+          new_collection.read_preference.server_selection_timeout
+        end
+
+        it 'keeps the server_selection_timeout setting from client' do
+          expect(server_selection_timeout).to eq(client.options[:server_selection_timeout])
+        end
+      end
+    end
+
+    context 'when new write options are provided' do
+
+      let(:new_options) do
+        { write: { w: 5 } }
+      end
+
+      it 'returns a new collection' do
+        expect(new_collection).not_to be(collection)
+      end
+
+      it 'sets the new write options on the new collection' do
+        expect(new_collection.write_concern.options).to eq(Mongo::WriteConcern.get(new_options[:write]).options)
+      end
+    end
+
+    context 'when new read and write options are provided' do
+
+      let(:new_options) do
+        {
+          read: { mode: :secondary },
+          write: { w: 4}
+        }
+      end
+
+      it 'returns a new collection' do
+        expect(new_collection).not_to be(collection)
+      end
+
+      it 'sets the new read options on the new collection' do
+        expect(new_collection.read_preference).to eq(Mongo::ServerSelector.get(new_options[:read]))
+      end
+
+      it 'sets the new write options on the new collection' do
+        expect(new_collection.write_concern.options).to eq(Mongo::WriteConcern.get(new_options[:write]).options)
+      end
+
+      context 'when the client has a server selection timeout setting' do
+
+        let(:client) do
+          Mongo::Client.new(ADDRESSES, server_selection_timeout: 2)
+        end
+
+        let(:server_selection_timeout) do
+          new_collection.read_preference.server_selection_timeout
+        end
+
+        it 'keeps the server_selection_timeout setting from client' do
+          expect(server_selection_timeout).to eq(client.options[:server_selection_timeout])
+        end
+      end
+    end
+
+    context 'when neither read nor write options are provided' do
+
+      let(:new_options) do
+        { some_option: 'invalid' }
+      end
+
+      it 'returns a new collection' do
+        expect(new_collection).not_to be(collection)
+      end
+
+      it 'keeps the read options on the new collection' do
+        expect(new_collection.read_preference).to eq(collection.read_preference)
+      end
+
+      it 'keeps the write options on the new collection' do
+        expect(new_collection.write_concern.options).to eq(collection.write_concern.options)
+      end
+
+      context 'when the client has a server selection timeout setting' do
+
+        let(:client) do
+          Mongo::Client.new(ADDRESSES, server_selection_timeout: 2)
+        end
+
+        let(:server_selection_timeout) do
+          new_collection.read_preference.server_selection_timeout
+        end
+
+        it 'keeps the server_selection_timeout setting from client' do
+          expect(server_selection_timeout).to eq(client.options[:server_selection_timeout])
+        end
+      end
+    end
+  end
+
   describe '#capped?' do
 
     let(:database) do

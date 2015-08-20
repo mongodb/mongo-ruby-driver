@@ -34,7 +34,7 @@ module Mongo
     attr_reader :options
 
     # Get client, cluster, read preference, and write concern from client.
-    def_delegators :database, :client, :cluster, :read_preference, :write_concern
+    def_delegators :database, :client, :cluster
 
     # Delegate to the cluster for the next primary.
     def_delegators :cluster, :next_primary
@@ -73,6 +73,55 @@ module Mongo
       @database = database
       @name = name.to_s.freeze
       @options = options.freeze
+    end
+
+    # Get the read preference on this collection.
+    #
+    # @example Get the read preference.
+    #   collection.read_preference
+    #
+    # @return [ Mongo::ServerSelector ] The read preference.
+    #
+    # @since 2.0.0
+    def read_preference
+      @read_preference ||= options[:read] ? ServerSelector.get((options[:read]).merge(options)) :
+        database.read_preference
+    end
+
+    # Get the write concern on this collection.
+    #
+    # @example Get the write concern.
+    #   collection.write_concern
+    #
+    # @return [ Mongo::WriteConcern ] The write concern.
+    #
+    # @since 2.0.0
+    def write_concern
+      @write_concern ||= options[:write] ? WriteConcern.get(options[:write]) :
+        database.write_concern
+    end
+
+    # Provides a new collection with either a new read preference or new write concern
+    # merged over the existing read preference / write concern.
+    #
+    # @example Get a collection with changed read preference.
+    #   collection.with(:read => { :mode => :primary_preferred })
+    #
+    # @example Get a collection with changed write concern.
+    #   collection.with(:write => { w:  3 })
+
+    # @param [ Hash ] new_options The new options to use.
+    #
+    # @return [ Mongo::Collection ] A new collection instance.
+    #
+    # @since 2.1.0
+    def with(new_options)
+      clone.tap do |collection|
+        opts = {}
+        opts[:read] = new_options[:read] if new_options[:read]
+        opts[:write] = new_options[:write] if new_options[:write]
+        collection.instance_variable_set(:@options, options.merge(opts.merge(client.options)))
+      end
     end
 
     # Is the collection capped?
