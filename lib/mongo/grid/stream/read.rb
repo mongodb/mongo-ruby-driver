@@ -63,7 +63,7 @@ module Mongo
           #
           # @return [ Enumerator ] The enumerator.
           #
-          # @raise [ Error::UnexpectedChunkN ] If a chunk is found out of sequence.
+          # @raise [ Error::MissingFileChunk ] If a chunk is found out of sequence.
           #
           # @yieldparam [ Hash ] Each chunk of file data.
           #
@@ -71,11 +71,12 @@ module Mongo
           def each
             ensure_readable!
             num_chunks = (file_info.length + file_info.chunk_size - 1) / file_info.chunk_size
-            view.each_with_index do |doc, index|
+            view.each_with_index.reduce(0) do |length_read, (doc, index)|
               chunk = Grid::File::Chunk.new(doc)
-              validate!(index, num_chunks, chunk)
+              validate!(index, num_chunks, chunk, length_read)
               data = Grid::File::Chunk.assemble([ chunk ])
               yield data
+              length_read += data.size
             end if block_given?
             view.to_enum
           end
@@ -87,7 +88,7 @@ module Mongo
           #
           # @return [ String ] The file data.
           #
-          # @raise [ Error::UnexpectedChunkN ] If a chunk is found out of sequence.
+          # @raise [ Error::MissingFileChunk ] If a chunk is found out of sequence.
           #
           # @since 2.1.0
           def read
@@ -159,7 +160,7 @@ module Mongo
           end
 
           def ensure_file_info!
-            raise Error::NoFileInfo.new unless file_info
+            raise Error::FileNotFound.new(file_id, :id) unless file_info
           end
 
           def ensure_readable!
@@ -171,22 +172,33 @@ module Mongo
             @view ||= fs.chunks_collection.find({ :files_id => file_id }, options).read(read_preference).sort(:n => 1)
           end
 
-          def validate!(index, num_chunks, chunk)
+          def validate!(index, num_chunks, chunk, length_read)
             validate_n!(index, chunk)
-            validate_length!(index, num_chunks, chunk)
+            validate_length!(index, num_chunks, chunk, length_read)
           end
 
-          def validate_length!(index, num_chunks, chunk)
-            unless (chunk.data.data.size == file_info.chunk_size) || (index == num_chunks - 1)
-              close
-              raise Error::UnexpectedChunkLength.new(file_info.chunk_size, chunk)
+          def raise_unexpected_chunk_length!(chunk)
+            close
+            raise Error::UnexpectedChunkLength.new(file_info.chunk_size, chunk)
+          end
+
+          def validate_length!(index, num_chunks, chunk, length_read)
+            if num_chunks > 0 && chunk.data.data.size > 0
+              raise Error::ExtraFileChunk.new unless index < num_chunks
+              if index == num_chunks - 1
+                unless chunk.data.data.size + length_read == file_info.length
+                  raise_unexpected_chunk_length!(chunk)
+                end
+              elsif chunk.data.data.size != file_info.chunk_size
+                raise_unexpected_chunk_length!(chunk)
+              end
             end
           end
 
           def validate_n!(index, chunk)
             unless index == chunk.n
               close
-              raise Error::UnexpectedChunkN.new(index, chunk)
+              raise Error::MissingFileChunk.new(index, chunk)
             end
           end
         end

@@ -15,23 +15,19 @@
 module Mongo
   class Error
 
-    # Raised if the next chunk when reading from a GridFSBucket does not have the
-    # expected sequence number (n).
+    # Raised if an extra chunk is found.
     #
     # @since 2.1.0
-    class UnexpectedChunkN < Error
+    class ExtraFileChunk < Error
 
       # Create the new exception.
       #
       # @example Create the new exception.
-      #   Mongo::Error::UnexpectedChunkN.new(n, chunk)
-      #
-      # @param [ Integer ] expected_n The expected index value.
-      # @param [ Grid::File::Chunk ] chunk The chunk read from GridFS.
+      #   Mongo::Error::ExtraFileChunk.new
       #
       # @since 2.1.0
-      def initialize(expected_n, chunk)
-        super("Unexpected chunk in sequence. Expected next chunk to have index #{expected_n} but it has index #{chunk.n}")
+      def initialize
+        super("Extra file chunk found.")
       end
     end
   end

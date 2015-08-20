@@ -15,22 +15,23 @@
 module Mongo
   class Error
 
-    # Raised if a file is deleted from a GridFS but it is not found.
+    # Raised if the next chunk when reading from a GridFSBucket does not have the
+    # expected sequence number (n).
     #
     # @since 2.1.0
-    class FileNotFound < Error
+    class MissingFileChunk < Error
 
       # Create the new exception.
       #
       # @example Create the new exception.
-      #   Mongo::Error::FileNotFound.new(id, :id)
+      #   Mongo::Error::MissingFileChunk.new(expected_n, chunk)
       #
-      # @param [ Object ] value The property value used to find the file.
-      # @param [ String, Symbol ] property The name of the property used to find the file.
+      # @param [ Integer ] expected_n The expected index value.
+      # @param [ Grid::File::Chunk ] chunk The chunk read from GridFS.
       #
       # @since 2.1.0
-      def initialize(value, property)
-        super("File with #{property} '#{value}' not found.")
+      def initialize(expected_n, chunk)
+        super("Unexpected chunk in sequence. Expected next chunk to have index #{expected_n} but it has index #{chunk.n}")
       end
     end
   end

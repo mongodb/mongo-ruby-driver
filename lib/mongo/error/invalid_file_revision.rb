@@ -15,21 +15,22 @@
 module Mongo
   class Error
 
-    # Raised if GridFS tries to do a read but there is no file information document
-    #   found in the files collection.
+    # Raised if the requested file revision is not found.
     #
     # @since 2.1.0
-    class NoFileInfo < Error
+    class InvalidFileRevision < Error
 
       # Create the new exception.
       #
       # @example Create the new exception.
-      #   Mongo::Error::NoFileInfo.new
+      #   Mongo::Error::InvalidFileRevision.new('some-file.txt', 3)
+      #
+      # @param [ String ] filename The name of the file.
+      # @param [ Integer ] revision The requested revision.
       #
       # @since 2.1.0
-      def initialize
-        super("No files information document found for the file requested. " +
-                "The file either never existed, is in the process of being deleted, or has been corrupted.")
+      def initialize(filename, revision)
+        super("No revision #{revision} found for file '#{filename}'.")
       end
     end
   end

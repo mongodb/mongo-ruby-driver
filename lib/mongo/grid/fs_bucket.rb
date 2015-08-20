@@ -177,11 +177,13 @@ module Mongo
       #
       # @return [ Result ] The result of the remove.
       #
+      # @raise [ Error::FileNotFound ] If the file is not found.
+      #
       # @since 2.1.0
       def delete(id)
         result = files_collection.find(:_id => id).delete_one
         chunks_collection.find(:files_id => id).delete_many
-        raise Error::FileNotFound.new(id) if result.n == 0
+        raise Error::FileNotFound.new(id, :id) if result.n == 0
         result
       end
 
@@ -222,6 +224,90 @@ module Mongo
             io << chunk
           end
         end
+      end
+
+      # Opens a stream from which the application can read the contents of the stored file
+      # specified by filename and the revision in options.
+      #
+      # Revision numbers are defined as follows:
+      # 0 = the original stored file
+      # 1 = the first revision
+      # 2 = the second revision
+      # etc…
+      # -2 = the second most recent revision
+      # -1 = the most recent revision
+      #
+      # @example Open a stream to download the most recent revision.
+      #   fs.open_download_stream_by_name('some-file.txt')
+      #
+      # # @example Open a stream to download the original file.
+      #   fs.open_download_stream_by_name('some-file.txt', revision: 0)
+      #
+      # @example Open a stream to download the second revision of the stored file.
+      #   fs.open_download_stream_by_name('some-file.txt', revision: 2)
+      #
+      # @param [ String ] filename The file's name.
+      # @param [ Hash ] opts Options for the download.
+      #
+      # @option opts [ Integer ] :revision The revision number of the file to download.
+      #   Defaults to -1, the most recent version.
+      #
+      # @return [ Stream::Read ] The stream to read from.
+      #
+      # @raise [ Error::FileNotFound ] If the file is not found.
+      # @raise [ Error::InvalidFileRevision ] If the requested revision is not found for the file.
+      #
+      # @yieldparam [ Hash ] The read stream.
+      #
+      # @since 2.1.0
+      def open_download_stream_by_name(filename, opts = {}, &block)
+        view = files_collection.find(:filename => filename).projection(_id: 1)
+        revision = opts.fetch(:revision, -1)
+        if revision < 0
+          file_doc = view.sort('uploadDate' => Mongo::Index::DESCENDING).skip(revision.abs - 1).limit(-1).first
+        else
+          file_doc = view.sort('uploadDate' => Mongo::Index::ASCENDING).skip(revision).limit(-1).first
+        end
+        unless file_doc
+          raise Error::FileNotFound.new(filename, :filename) unless opts[:revision]
+          raise Error::InvalidFileRevision.new(filename, opts[:revision])
+        end
+        open_download_stream(file_doc[:_id], &block)
+      end
+
+      # Downloads the contents of the stored file specified by filename and by the
+      # revision in options and writes the contents to the destination io object.
+      #
+      # Revision numbers are defined as follows:
+      # 0 = the original stored file
+      # 1 = the first revision
+      # 2 = the second revision
+      # etc…
+      # -2 = the second most recent revision
+      # -1 = the most recent revision
+      #
+      # @example Download the most recent revision.
+      #   fs.download_to_stream_by_name('some-file.txt', io)
+      #
+      # # @example Download the original file.
+      #   fs.download_to_stream_by_name('some-file.txt', io, revision: 0)
+      #
+      # @example Download the second revision of the stored file.
+      #   fs.download_to_stream_by_name('some-file.txt', io, revision: 2)
+      #
+      # @param [ String ] filename The file's name.
+      # @param [ IO ] io The io object to write to.
+      # @param [ Hash ] opts Options for the download.
+      #
+      # @option opts [ Integer ] :revision The revision number of the file to download.
+      #   Defaults to -1, the most recent version.
+      #
+      # @raise [ Error::FileNotFound ] If the file is not found.
+      # @raise [ Error::InvalidFileRevision ] If the requested revision is not found for the file.
+      #
+      # @since 2.1.0
+      def download_to_stream_by_name(filename, io, opts = {})
+        download_to_stream(open_download_stream_by_name(filename, opts).file_id, io)
       end
 
       # Opens an upload stream to GridFS to which the contents of a user file came be written.
@@ -281,7 +367,15 @@ module Mongo
       # @since 2.1.0
       def upload_from_stream(filename, io, opts = {})
         open_upload_stream(filename, opts) do |stream|
-          stream.write(io)
+          begin
+            stream.write(io)
+          rescue IOError
+            begin
+              stream.abort
+            rescue Error::OperationFailure
+            end
+            raise
+          end
         end.file_id
       end
 

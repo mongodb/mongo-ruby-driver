@@ -133,6 +133,19 @@ module Mongo
             !@open
           end
 
+          # Abort the upload by deleting all chunks already inserted.
+          #
+          # @example Abort the write operation.
+          #   stream.abort
+          #
+          # @return [ true ] True if the operation was aborted and the stream is closed.
+          #
+          # @since 2.1.0
+          def abort
+            fs.chunks_collection.find(:files_id => file_id).delete_many
+            @open = false || true
+          end
+
           private
 
           def chunks_collection

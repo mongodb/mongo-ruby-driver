@@ -134,13 +134,13 @@ describe Mongo::Grid::FSBucket::Stream::Read do
       it 'raises an exception' do
         expect {
           stream.to_a
-        }.to raise_error(Mongo::Error::UnexpectedChunkN)
+        }.to raise_error(Mongo::Error::MissingFileChunk)
       end
 
       it 'closes the query' do
         begin
           stream.to_a
-        rescue Mongo::Error::UnexpectedChunkN
+        rescue Mongo::Error::MissingFileChunk
         end
       end
     end
@@ -176,7 +176,7 @@ describe Mongo::Grid::FSBucket::Stream::Read do
       it 'raises an Exception' do
         expect{
           stream.to_a
-        }.to raise_exception(Mongo::Error::NoFileInfo)
+        }.to raise_exception(Mongo::Error::FileNotFound)
       end
     end
   end
