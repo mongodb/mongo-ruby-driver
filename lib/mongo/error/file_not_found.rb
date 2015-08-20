@@ -23,11 +23,11 @@ module Mongo
       # Create the new exception.
       #
       # @example Create the new exception.
-      #   Mongo::Error::FileNotFound.new(id)
+      #   Mongo::Error::FileNotFound.new(id, :id)
       #
       # @since 2.1.0
-      def initialize(id)
-        super("File with id #{id} not found.")
+      def initialize(value, property)
+        super("File with #{property} '#{value}' not found.")
       end
     end
   end

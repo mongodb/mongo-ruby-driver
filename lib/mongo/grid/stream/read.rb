@@ -160,7 +160,7 @@ module Mongo
           end
 
           def ensure_file_info!
-            raise Error::FileNotFound.new(file_id) unless file_info
+            raise Error::FileNotFound.new(file_id, :id) unless file_info
           end
 
           def ensure_readable!

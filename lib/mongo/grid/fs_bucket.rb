@@ -181,7 +181,7 @@ module Mongo
       def delete(id)
         result = files_collection.find(:_id => id).delete_one
         chunks_collection.find(:files_id => id).delete_many
-        raise Error::FileNotFound.new(id) if result.n == 0
+        raise Error::FileNotFound.new(id, :id) if result.n == 0
         result
       end
 
@@ -222,6 +222,46 @@ module Mongo
             io << chunk
           end
         end
+      end
+
+      # Downloads the contents of the stored file specified by filename and by the
+      # revision in options and writes the contents to the destination io object.
+      #
+      # Revision numbers are defined as follows:
+      # 0 = the original stored file
+      # 1 = the first revision
+      # 2 = the second revision
+      # etc…
+      # -2 = the second most recent revision
+      # -1 = the most recent revision
+      #
+      # @example Download the most recent version.
+      #   fs.download_to_stream_by_name('some-file.txt', io)
+      #
+      # # @example Download the original file.
+      #   fs.download_to_stream_by_name('some-file.txt', io, revision: 0)
+      #
+      # @example Download the second revision of the stored file.
+      #   fs.download_to_stream_by_name('some-file.txt', io, revision: 2)
+      #
+      # @param [ String ] filename The file's name.
+      # @param [ IO ] io The io object to write to.
+      # @param [ Hash ] opts Options for the download.
+      #
+      # @option opts [ Integer ] :revision The revision number of the file to download.
+      #   Defaults to -1, the most recent version.
+      #
+      # @since 2.1.0
+      def download_to_stream_by_name(filename, io, opts = {})
+        view = files_collection.find(:filename => filename).projection({ _id: 1 }).limit(-1)
+        revision = opts.fetch(:revision, -1)
+        if revision < 0
+          file_doc = view.skip(revision.abs - 1).sort('uploadDate' => Mongo::Index::DESCENDING).first
+        else
+          file_doc = view.skip(revision).sort('uploadDate' => Mongo::Index::ASCENDING).first
+        end
+        raise Error::FileNotFound.new(filename, :filename) unless file_doc
+        download_to_stream(file_doc[:_id], io)
       end
 
       # Opens an upload stream to GridFS to which the contents of a user file came be written.
