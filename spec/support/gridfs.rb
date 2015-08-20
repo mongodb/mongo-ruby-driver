@@ -57,7 +57,8 @@ RSpec::Matchers.define :match_error do |error|
       'FileNotFound' => Mongo::Error::FileNotFound,
       'ChunkIsMissing' => Mongo::Error::MissingFileChunk,
       'ChunkIsWrongSize' => Mongo::Error::UnexpectedChunkLength,
-      'ExtraChunk' => Mongo::Error::ExtraFileChunk
+      'ExtraChunk' => Mongo::Error::ExtraFileChunk,
+      'RevisionNotFound' => Mongo::Error::InvalidFileRevision
     }
     mapping[error] == actual.class
   end
@@ -133,7 +134,7 @@ module Mongo
       end
 
       def convert_uploadDate(v, opts = {})
-        upload_date
+        v.is_a?(Time) ? v : v['$date'] ? Time.parse(v['$date']) : upload_date
       end
 
       def convert_files_id(v, opts = {})
@@ -284,7 +285,7 @@ module Mongo
         extend Forwardable
 
         def_delegators :@test, :upload_date
-  
+
         attr_reader :op
         attr_reader :assert
         attr_reader :result
@@ -361,6 +362,16 @@ module Mongo
         def download(fs)
           io = StringIO.new.set_encoding(BSON::BINARY)
           fs.download_to_stream(to_oid(@arguments['id']), io)
+          io.string
+        end
+
+        def download_by_name(fs)
+          io = StringIO.new.set_encoding(BSON::BINARY)
+          if @arguments['options']
+            fs.download_to_stream_by_name(@arguments['filename'], io, revision: @arguments['options']['revision'])
+          else
+            fs.download_to_stream_by_name(@arguments['filename'], io)
+          end
           io.string
         end
 

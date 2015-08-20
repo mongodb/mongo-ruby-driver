@@ -256,14 +256,17 @@ module Mongo
       #
       # @since 2.1.0
       def open_download_stream_by_name(filename, opts = {}, &block)
-        view = files_collection.find(:filename => filename).projection(_id: 1).limit(-1)
+        view = files_collection.find(:filename => filename).projection(_id: 1)
         revision = opts.fetch(:revision, -1)
         if revision < 0
-          file_doc = view.skip(revision.abs - 1).sort('uploadDate' => Mongo::Index::DESCENDING).first
+          file_doc = view.sort('uploadDate' => Mongo::Index::DESCENDING).skip(revision.abs - 1).limit(-1).first
         else
-          file_doc = view.skip(revision).sort('uploadDate' => Mongo::Index::ASCENDING).first
+          file_doc = view.sort('uploadDate' => Mongo::Index::ASCENDING).skip(revision).limit(-1).first
         end
-        raise Error::FileNotFound.new(filename, :filename) unless file_doc
+        unless file_doc
+          raise Error::FileNotFound.new(filename, :filename) unless opts[:revision]
+          raise Error::InvalidFileRevision.new(filename, opts[:revision])
+        end
         open_download_stream(file_doc[:_id], &block)
       end
 
