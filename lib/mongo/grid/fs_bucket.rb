@@ -177,6 +177,8 @@ module Mongo
       #
       # @return [ Result ] The result of the remove.
       #
+      # @raise [ Error::FileNotFound ] If the file is not found.
+      #
       # @since 2.1.0
       def delete(id)
         result = files_collection.find(:_id => id).delete_one
@@ -252,6 +254,9 @@ module Mongo
       #
       # @return [ Stream::Read ] The stream to read from.
       #
+      # @raise [ Error::FileNotFound ] If the file is not found.
+      # @raise [ Error::InvalidFileRevision ] If the requested revision is not found for the file.
+      #
       # @yieldparam [ Hash ] The read stream.
       #
       # @since 2.1.0
@@ -296,6 +301,9 @@ module Mongo
       #
       # @option opts [ Integer ] :revision The revision number of the file to download.
       #   Defaults to -1, the most recent version.
+      #
+      # @raise [ Error::FileNotFound ] If the file is not found.
+      # @raise [ Error::InvalidFileRevision ] If the requested revision is not found for the file.
       #
       # @since 2.1.0
       def download_to_stream_by_name(filename, io, opts = {})
