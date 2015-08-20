@@ -12,16 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Matcher for determining if the results of the opeartion match the
-# test's expected results.
-#
-# @since 2.0.0
 
-# Matcher for determining if the collection's data matches the
-# test's expected collection data.
+# Matcher for determining whether the operation completed successfully.
 #
 # @since 2.1.0
-
 RSpec::Matchers.define :completes_successfully do |test|
 
   match do |actual|
@@ -29,6 +23,10 @@ RSpec::Matchers.define :completes_successfully do |test|
   end
 end
 
+# Matcher for determining whether the actual chunks collection matches
+# the expected chunks collection.
+#
+# @since 2.1.0
 RSpec::Matchers.define :match_chunks_collection do |expected|
 
   match do |actual|
@@ -49,21 +47,10 @@ RSpec::Matchers.define :match_chunks_collection do |expected|
   end
 end
 
-RSpec::Matchers.define :match_error do |error|
-
-  match do |actual|
-
-    mapping = {
-      'FileNotFound' => Mongo::Error::FileNotFound,
-      'ChunkIsMissing' => Mongo::Error::MissingFileChunk,
-      'ChunkIsWrongSize' => Mongo::Error::UnexpectedChunkLength,
-      'ExtraChunk' => Mongo::Error::ExtraFileChunk,
-      'RevisionNotFound' => Mongo::Error::InvalidFileRevision
-    }
-    mapping[error] == actual.class
-  end
-end
-
+# Matcher for determining whether the actual files collection matches
+# the expected files collection.
+#
+# @since 2.1.0
 RSpec::Matchers.define :match_files_collection do |expected|
 
   match do |actual|
@@ -80,18 +67,28 @@ RSpec::Matchers.define :match_files_collection do |expected|
   end
 end
 
+# Matcher for determining whether the operation raised the correct error.
+#
+# @since 2.1.0
+RSpec::Matchers.define :match_error do |error|
+
+  match do |actual|
+    Mongo::GridFS::Test::ERROR_MAPPING[error] == actual.class
+  end
+end
+
 
 module Mongo
   module GridFS
 
     # Represents a GridFS specification test.
     #
-    # @since 2.0.0
+    # @since 2.1.0
     class Spec
 
       # @return [ String ] description The spec description.
       #
-      # @since 2.0.0
+      # @since 2.1.0
       attr_reader :description
 
       # Instantiate the new spec.
@@ -108,45 +105,98 @@ module Mongo
         @data = @spec['data']
       end
 
-      # Get a list of CRUDTests for each test definition.
+      # Get a list of Tests for each test definition.
       #
-      # @example Get the list of CRUDTests.
+      # @example Get the list of Tests.
       #   spec.tests
       #
-      # @return [ Array<CRUDTest> ] The list of CRUDTests.
+      # @return [ Array<Test> ] The list of Tests.
       #
       # @since 2.1.0
       def tests
         @tests ||= @spec['tests'].collect do |test|
-          Mongo::GridFS::GridFSTest.new(@data, test)
+          Test.new(@data, test)
         end
       end
     end
 
+    # Contains shared helper functions for converting YAML test values to Ruby objects.
+    #
+    # @since 2.1.0
     module Convertible
-    
+
+      # Convert an integer to the corresponding CRUD method suffix.
+      #
+      # @param [ Integer ] int The limit.
+      #
+      # @return [ String ] The CRUD method suffix.
+      #
+      # @since 2.1.0
       def limit(int)
         int == 0 ? 'many' : 'one'
       end
 
+      # Convert an id value to a BSON::ObjectId.
+      #
+      # @param [ Object ] v The value to convert.
+      # @param [ Hash ] opts The options.
+      #
+      # @option opts [ BSON::ObjectId ] :id The id override.
+      #
+      # @return [ BSON::ObjectId ] The object id.
+      #
+      # @since 2.1.0
       def convert__id(v, opts = {})
         to_oid(v, opts[:id])
       end
 
+      # Convert a value to a date.
+      #
+      # @param [ Object ] v The value to convert.
+      # @param [ Hash ] opts The options.
+      #
+      # @return [ Time ] The upload date time value.
+      #
+      # @since 2.1.0
       def convert_uploadDate(v, opts = {})
         v.is_a?(Time) ? v : v['$date'] ? Time.parse(v['$date']) : upload_date
       end
 
+      # Convert an file id value to a BSON::ObjectId.
+      #
+      # @param [ Object ] v The value to convert.
+      # @param [ Hash ] opts The options.
+      #
+      # @option opts [ BSON::ObjectId ] :id The id override.
+      #
+      # @return [ BSON::ObjectId ] The object id.
+      #
+      # @since 2.1.0
       def convert_files_id(v, opts = {})
         to_oid(v, opts[:files_id])
       end
 
+      # Convert a value to BSON::Binary data.
+      #
+      # @param [ Object ] v The value to convert.
+      # @param [ Hash ] opts The options.
+      #
+      # @return [ BSON::Binary ] The converted data.
+      #
+      # @since 2.1.0
       def convert_data(v, opts = {})
         v.is_a?(BSON::Binary) ? v : BSON::Binary.new(to_hex(v['$hex'], opts), :generic)
       end
 
+      # Transform documents to have the correct object types for serialization.
+      #
+      # @param [ Array<Hash> ] docs The documents to transform.
+      # @param [ Hash ] opts The options.
+      #
+      # @return [ Array<Hash> ] The transformed documents.
+      #
+      # @since 2.1.0
       def transform_docs(docs, opts = {})
-        # cannot alter original list
         docs.collect do |doc|
           doc.each do |k, v|
             doc[k] = send("convert_#{k}", v, opts) if respond_to?("convert_#{k}")
@@ -154,11 +204,28 @@ module Mongo
           doc
         end
       end
-    
+
+      # Convert a string to a hex value.
+      #
+      # @param [ String ] string The value to convert.
+      # @param [ Hash ] opts The options.
+      #
+      # @return [ String ] The hex value.
+      #
+      # @since 2.1.0
       def to_hex(string, opts = {})
         [ string ].pack('H*')
       end
-    
+
+      # Convert an object id represented in json to a BSON::ObjectId.
+      # A new BSON::ObjectId is returned if the json document is empty.
+      #
+      # @param [ Object ] value The value to convert.
+      # @param [ Object ] id The id override.
+      #
+      # @return [ BSON::ObjectId ] The object id.
+      #
+      # @since 2.1.0
       def to_oid(value, id = nil)
         if id
           id
@@ -171,6 +238,11 @@ module Mongo
         end
       end
 
+      # Convert options.
+      #
+      # @return [ Hash ] The options.
+      #
+      # @since 2.1.0
       def options
         @act['arguments']['options'].reduce({}) do |opts, (k, v)|
           opts.merge!(chunk_size: v) if k == "chunkSizeBytes"
@@ -185,32 +257,54 @@ module Mongo
     # Represents a single GridFS test.
     #
     # @since 2.1.0
-    class GridFSTest
+    class Test
       include Convertible
       extend Forwardable
 
-      def_delegators :@operation, :expected_files_collection, :expected_chunks_collection
+      def_delegators :@operation, :expected_files_collection,
+                                  :expected_chunks_collection,
+                                  :result,
+                                  :expected_error,
+                                  :expected_result,
+                                  :error?
 
       # The test description.
       #
-      # @return [ String ] description The test description.
+      # @return [ String ] The test description.
       #
       # @since 2.1.0
       attr_reader :description
+
+      # The upload date to use in the test.
+      #
+      # @return [ Time ] The upload date.
+      #
+      # @since 2.1.0
       attr_reader :upload_date
+
+      # Mapping of test error strings to driver classes.
+      #
+      # @since 2.1.0
+      ERROR_MAPPING = {
+          'FileNotFound' => Mongo::Error::FileNotFound,
+          'ChunkIsMissing' => Mongo::Error::MissingFileChunk,
+          'ChunkIsWrongSize' => Mongo::Error::UnexpectedChunkLength,
+          'ExtraChunk' => Mongo::Error::ExtraFileChunk,
+          'RevisionNotFound' => Mongo::Error::InvalidFileRevision
+      }
 
       # Instantiate the new GridFSTest.
       #
       # @example Create the test.
-      #   GridFSTest.new(data, test)
+      #   Test.new(data, test)
       #
       # @param [ Array<Hash> ] data The documents the files and chunks
-      # collections must have before the test runs.
+      #   collections must have before the test runs.
       # @param [ Hash ] test The test specification.
       #
-      # @since 2.0.0
+      # @since 2.1.0
       def initialize(data, test)
-        @data = data
+        @pre_data = data
         @description = test['description']
         @upload_date = Time.now
         if test['assert']['error']
@@ -220,35 +314,36 @@ module Mongo
         end
       end
 
-      def expected_result
-        @operation.expected_result
-      end
-
-      def error?
-        @operation.is_a?(UnsuccessfulOp)
-      end
-
+      # Whether the expected collections and actual collections be compared after the test runs.
+      #
+      # @return [ true, false ] Whether the actual and expected collections should be compared.
+      #
+      # @since 2.1.0
       def assert_data?
         @operation.assert['data']
       end
 
-      def result
-        @operation.result
-      end
-
-      def error
-        @operation.error
-      end
-
+      # Run the test.
+      #
+      # @example Run the test
+      #   test.run(fs)
+      #
+      # @param [ Mongo::Grid::FSBucket ] fs The Grid::FSBucket to use in the test.
+      #
+      # @since 2.1.0
       def run(fs)
         setup(fs)
         @operation.run(fs)
       end
 
-      def match_result?(result)
-        @operation.match_result?(result)
-      end
-
+      # Clear the files and chunks collection in the FSBucket and other collections used in the test.
+      #
+      # @example Clear the test collections
+      #   test.clear_collections(fs)
+      #
+      # @param [ Mongo::Grid::FSBucket ] fs The Grid::FSBucket whose collections should be cleared.
+      #
+      # @since 2.1.0
       def clear_collections(fs)
         fs.files_collection.delete_many
         fs.chunks_collection.delete_many
@@ -263,35 +358,81 @@ module Mongo
       end
 
       def files_data
-        @files_data ||= transform_docs(@data['files'])
+        @files_data ||= transform_docs(@pre_data['files'])
       end
 
       def chunks_data
-        @chunks_data ||= transform_docs(@data['chunks'])
+        @chunks_data ||= transform_docs(@pre_data['chunks'])
+      end
+
+      def insert_pre_files_data(fs)
+        fs.files_collection.insert_many(files_data)
+        fs.database['expected.files'].insert_many(files_data)
+      end
+
+      def insert_pre_chunks_data(fs)
+        fs.chunks_collection.insert_many(chunks_data)
+        fs.database['expected.chunks'].insert_many(chunks_data)
       end
 
       def insert_pre_data(fs)
-        unless files_data.empty?
-          fs.files_collection.insert_many(files_data)
-          fs.database['expected.files'].insert_many(files_data)
-        end
-        unless chunks_data.empty?
-          fs.chunks_collection.insert_many(chunks_data)
-          fs.database['expected.chunks'].insert_many(chunks_data)
-        end
+        insert_pre_files_data(fs) unless files_data.empty?
+        insert_pre_chunks_data(fs) unless chunks_data.empty?
       end
 
+      # Contains logic and helper methods shared between a successful and
+      # non-successful GridFS test operation.
+      #
+      # @since 2.1.0
       module Operable
         extend Forwardable
 
         def_delegators :@test, :upload_date
 
+        # The test operation name.
+        #
+        # @return [ String ] The operation name.
+        #
+        # @since 2.1.0
         attr_reader :op
+
+        # The test assertion.
+        #
+        # @return [ Hash ] The test assertion definition.
+        #
+        # @since 2.1.0
         attr_reader :assert
+
+        # The operation result.
+        #
+        # @return [ Object ] The operation result.
+        #
+        # @since 2.1.0
         attr_reader :result
+
+        # The collection containing the expected files.
+        #
+        # @return [ Mongo::Collection ] The expected files collection.
+        #
+        # @since 2.1.0
         attr_reader :expected_files_collection
+
+        # The collection containing the expected chunks.
+        #
+        # @return [ Mongo::Collection ] The expected chunks collection.
+        #
+        # @since 2.1.0
         attr_reader :expected_chunks_collection
-    
+
+        # Instantiate the new test operation.
+        #
+        # @example Create the test operation.
+        #   Test.new(data, test)
+        #
+        # @param [ Test ] test The test.
+        # @param [ Hash ] spec The test specification.
+        #
+        # @since 2.1.0
         def initialize(test, spec)
           @test = test
           @arrange = spec['arrange']
@@ -300,9 +441,46 @@ module Mongo
           @arguments = @act['arguments']
           @assert = spec['assert']
         end
-    
+
+        # Arrange the data before running the operation.
+        # This sets up the correct scenario for the test.
+        #
+        # @example Arrange the data.
+        #   operation.arrange(fs)
+        #
+        # @param [ Grid::FSBucket ] fs The FSBucket used in the test.
+        #
+        # @since 2.1.0
+        def arrange(fs)
+          if @arrange
+            @arrange['data'].each do |data|
+              send("#{data.keys.first}_exp_data", fs, data)
+            end
+          end
+        end
+
+        # Run the test operation.
+        #
+        # @example Arrange the data.
+        #   operation.fun(fs)
+        #
+        # @param [ Grid::FSBucket ] fs The FSBucket used in the test.
+        #
+        # @result [ Object ] The operation result.
+        #
+        # @since 2.1.0
+        def run(fs)
+          @expected_files_collection = fs.database['expected.files']
+          @expected_chunks_collection = fs.database['expected.chunks']
+          act(fs)
+          prepare_expected_collections(fs)
+          result
+        end
+
+        private
+
         def prepare_expected_collections(fs)
-          if @assert['data']
+          if @test.assert_data?
             @assert['data'].each do |data|
               op = "#{data.keys.first}_exp_data"
               send(op, fs, data)
@@ -338,25 +516,9 @@ module Mongo
           end
         end
 
-        def arrange(fs)
-          if @arrange
-            @arrange['data'].each do |data|
-              send("#{data.keys.first}_exp_data", fs, data)
-            end
-          end
-        end
-    
-        def delete(fs)
-          fs.delete(to_oid(@arguments['id']))
-        end
-
-        def filename
-          @arguments['filename']
-        end
-
         def upload(fs)
-          io = StringIO.new(to_hex(@act['arguments']['source']['$hex']))
-          fs.upload_from_stream(filename, io, options)
+          io = StringIO.new(to_hex(@arguments['source']['$hex']))
+          fs.upload_from_stream(@arguments['filename'], io, options)
         end
 
         def download(fs)
@@ -375,27 +537,26 @@ module Mongo
           io.string
         end
 
-        def run(fs)
-          @expected_files_collection = fs.database['expected.files']
-          @expected_chunks_collection = fs.database['expected.chunks']
-          act(fs)
-          prepare_expected_collections(fs)
-          result
-        end
-
-        def error
-          @assert['error']
-        end
-    
-        def clear_collections(fs)
-          @manipulated_collections.each { |col| col.delete_many }
+        def delete(fs)
+          fs.delete(to_oid(@arguments['id']))
         end
       end
 
+      # A GridFS test operation that is expected to succeed.
+      #
+      # @since 2.1.0
       class SuccessfulOp
         include Convertible
-        include GridFSTest::Operable
+        include Test::Operable
 
+        # The expected result of executing the operation.
+        #
+        # @example Get the expected result.
+        #   operation.expected_result
+        #
+        # @result [ Object ] The operation result.
+        #
+        # @since 2.1.0
         def expected_result
           if @assert['result'] == '&result'
             @result
@@ -404,19 +565,65 @@ module Mongo
           end
         end
 
+        # Execute the operation.
+        #
+        # @example Execute the operation.
+        #   operation.act(fs)
+        #
+        # @param [ Grid::FSBucket ] fs The FSBucket used in the test.
+        #
+        # @result [ Object ] The operation result.
+        #
+        # @since 2.1.0
         def act(fs)
           @result = send(op, fs)
         end
-  
-        def match_result?(result)
-          result == @files_id
+
+        # Whether this operation is expected to raise an error.
+        #
+        # @return [ false ] The operation is expected to succeed.
+        #
+        # @since 2.1.0
+        def error?
+          false
         end
       end
   
       class UnsuccessfulOp
         include Convertible
-        include GridFSTest::Operable
-  
+        include Test::Operable
+
+        # Whether this operation is expected to raise an error.
+        #
+        # @return [ true ] The operation is expected to fail.
+        #
+        # @since 2.1.0
+        def error?
+          true
+        end
+
+        # The expected error.
+        #
+        # @example Execute the operation.
+        #   operation.expected_error
+        #
+        # @return [ String ] The expected error name.
+        #
+        # @since 2.1.0
+        def expected_error
+          @assert['error']
+        end
+
+        # Execute the operation.
+        #
+        # @example Execute the operation.
+        #   operation.act(fs)
+        #
+        # @param [ Grid::FSBucket ] fs The FSBucket used in the test.
+        #
+        # @result [ Mongo::Error ] The error encountered.
+        #
+        # @since 2.1.0
         def act(fs)
           begin
             send(op, fs)

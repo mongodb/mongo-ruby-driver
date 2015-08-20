@@ -29,7 +29,7 @@ describe 'GridFS' do
           end
 
           it "raises the correct error", if: test.error? do
-            expect(result).to match_error(test.error)
+            expect(result).to match_error(test.expected_error)
           end
 
           it 'completes successfully', unless: test.error? do
