@@ -183,3 +183,11 @@ tests:
         hosts: ~
         auth: ~
         options: ~
+    -
+        description: "Host with unescaped slash"
+        uri: "mongodb:///tmp/mongodb-27017.sock/"
+        valid: false
+        warning: ~
+        hosts: ~
+        auth: ~
+        options: ~
