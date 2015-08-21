@@ -25,7 +25,7 @@ module Mongo
         #
         # @since 2.0.0
         SPECIAL_FIELDS = {
-          :$query => :selector,
+          :$query => :query_selector,
           :$readPreference => :read_pref_formatted,
           :$orderby => :sort,
           :$hint => :hint,
@@ -389,7 +389,8 @@ module Mongo
         #
         # @since 2.1.0
         def modifiers(doc = nil)
-          configure(:modifiers, doc)
+          return @modifiers if doc.nil?
+          new(options.merge(modifiers: doc))
         end
 
         # A cumulative time limit in milliseconds for processing operations on a cursor.
@@ -408,6 +409,10 @@ module Mongo
 
         private
 
+        def query_selector
+          @modifiers[:$query]
+        end
+
         def default_read
           options[:read] || read_preference
         end
@@ -419,10 +424,6 @@ module Mongo
             end
             flags
           end
-        end
-
-        def has_special_fields?
-          contains_modifiers? || explained? || cluster.sharded?
         end
 
         def parallel_scan(cursor_count)
@@ -451,9 +452,29 @@ module Mongo
           }
         end
 
+        def convert_special_fields
+          SPECIAL_FIELDS.reduce({}) do |hash, (key, method)|
+            value = send(method) || @modifiers[key]
+            hash[key] = value unless value.nil?
+            hash
+          end
+        end
+
+        def extra_options
+          @options.reduce({}) do |opts, (k, v)|
+            opts[k] = v if k[0] == '$'
+            opts
+          end
+        end
+
+        def setup_selector
+          sel = convert_special_fields
+          sel.merge!(:$query => selector) if !sel.empty? || explained? || cluster.sharded?
+          (sel.empty? ? selector : sel).merge(extra_options)
+        end
+
         def query_spec
-          sel = has_special_fields? ? special_selector : selector
-          { :selector  => sel,
+          { :selector  => setup_selector,
             :read      => read,
             :options   => query_options,
             :db_name   => database.name,
@@ -464,22 +485,8 @@ module Mongo
           read.to_mongos
         end
 
-        def special_selector
-          SPECIAL_FIELDS.reduce({}) do |hash, (key, method)|
-            value = send(method) || (options[:modifiers] && options[:modifiers][key])
-            hash[key] = value unless value.nil?
-            hash
-          end
-        end
-
         def validate_doc!(doc)
           raise Error::InvalidDocument.new unless doc.respond_to?(:keys)
-        end
-
-        def contains_modifiers?
-          modifiers || options.keys.any? do |key|
-            SPECIAL_FIELD_OPTION_NAMES.include?(key)
-          end
         end
       end
     end

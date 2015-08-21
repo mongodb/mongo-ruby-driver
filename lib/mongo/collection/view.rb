@@ -110,6 +110,8 @@ module Mongo
       #   returned docs.
       # @option options :hint [ Hash ] Override default index selection and force
       #   MongoDB to use a specific index for the query.
+      # @option options [ Hash ] :modifiers A document containing meta-operators modifying the
+      #   output or behavior of a query.
       # @option options :limit [ Integer ] Max number of docs to return.
       # @option options :max_scan [ Integer ] Constrain the query to only scan the
       #   specified number of docs. Use to prevent queries from running too long.
@@ -129,6 +131,7 @@ module Mongo
         @collection = collection
         @selector = selector.dup
         @options = options.dup
+        @modifiers = @options.delete(:modifiers) || {}
       end
 
       # Get a human-readable string representation of +View+.

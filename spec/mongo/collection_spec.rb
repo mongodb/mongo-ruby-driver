@@ -538,7 +538,7 @@ describe Mongo::Collection do
         end
 
         it 'returns a view with modifiers set' do
-          expect(view.options[:modifiers]).to be(options[:modifiers])
+          expect(view.modifiers).to be(options[:modifiers])
         end
       end
 
