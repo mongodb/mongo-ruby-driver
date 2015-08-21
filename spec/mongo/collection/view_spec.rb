@@ -252,14 +252,35 @@ describe Mongo::Collection::View do
 
       context 'when the selector has special fields' do
 
-        context 'when a snapshot option is specified' do
+        context 'when a selector is specified' do
 
           let(:options) do
             { :snapshot => true }
           end
 
-          before do
-            expect(view).to receive(:special_selector).and_call_original
+          let(:selector) do
+            { y: 1 }
+          end
+
+          it 'creates a special query selector' do
+            expect(query_spec[:selector][:$snapshot]).to eq(options[:snapshot])
+          end
+
+          it 'sets the $query field in the selector' do
+            expect(query_spec[:selector][:$query]).to eq(selector)
+          end
+
+          it 'iterates over all of the documents' do
+            returned.each do |doc|
+              expect(doc).to have_key('field')
+            end
+          end
+        end
+
+        context 'when a snapshot option is specified' do
+
+          let(:options) do
+            { :snapshot => true }
           end
 
           it 'creates a special query selector' do
@@ -279,10 +300,6 @@ describe Mongo::Collection::View do
             { :max_scan => 100 }
           end
 
-          before do
-            expect(view).to receive(:special_selector).and_call_original
-          end
-
           it 'creates a special query selector' do
             expect(query_spec[:selector][:$maxScan]).to eq(options[:max_scan])
           end
@@ -298,10 +315,6 @@ describe Mongo::Collection::View do
 
           let(:options) do
             { :max_time_ms => 100 }
-          end
-
-          before do
-            expect(view).to receive(:special_selector).and_call_original
           end
 
           it 'creates a special query selector' do
@@ -321,10 +334,6 @@ describe Mongo::Collection::View do
             { :show_disk_loc => true }
           end
 
-          before do
-            expect(view).to receive(:special_selector).and_call_original
-          end
-
           it 'creates a special query selector' do
             expect(query_spec[:selector][:$showDiskLoc]).to eq(options[:show_disk_loc])
           end
@@ -341,10 +350,6 @@ describe Mongo::Collection::View do
 
         let(:options) do
           { :sort => {'x' => Mongo::Index::ASCENDING }}
-        end
-
-        before do
-          expect(view).to receive(:special_selector).and_call_original
         end
 
         it 'creates a special query selector' do
@@ -366,10 +371,6 @@ describe Mongo::Collection::View do
             { :hint => { 'x' => Mongo::Index::ASCENDING }}
           end
 
-          before do
-            expect(view).to receive(:special_selector).and_call_original
-          end
-
           it 'creates a special query selector' do
             expect(query_spec[:selector][:$hint]).to eq(options[:hint])
           end
@@ -380,10 +381,6 @@ describe Mongo::Collection::View do
 
         let(:options) do
           { :comment => 'query1' }
-        end
-
-        before do
-          expect(view).to receive(:special_selector).and_call_original
         end
 
         it 'creates a special query selector' do
@@ -401,7 +398,6 @@ describe Mongo::Collection::View do
 
         before do
           allow(authorized_collection.cluster).to receive(:sharded?).and_return(true)
-          expect(view).to receive(:special_selector).and_call_original
         end
 
         it 'iterates over all of the documents' do
@@ -418,10 +414,6 @@ describe Mongo::Collection::View do
                             :$orderby => {'x' => Mongo::Index::ASCENDING }
                           }
           }
-        end
-
-        before do
-          expect(view).to receive(:special_selector).and_call_original
         end
 
         it 'creates a special query selector' do
