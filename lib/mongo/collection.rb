@@ -42,6 +42,11 @@ module Mongo
     # Convenience delegators to find.
     def_delegators :find, :parallel_scan
 
+    # Options that can be updated on a new Collection instance via the #with method.
+    #
+    # @since 2.1.0
+    CHANGEABLE_OPTIONS = [ :read, :write ]
+
     # Check if a collection is equal to another object. Will check the name and
     # the database for equality.
     #
@@ -84,7 +89,7 @@ module Mongo
     #
     # @since 2.0.0
     def read_preference
-      @read_preference ||= options[:read] ? ServerSelector.get((options[:read]).merge(options)) :
+      @read_preference ||= options[:read] ? ServerSelector.get(client.options.merge(options[:read])) :
         database.read_preference
     end
 
@@ -116,12 +121,10 @@ module Mongo
     #
     # @since 2.1.0
     def with(new_options)
-      clone.tap do |collection|
-        opts = {}
-        opts[:read] = new_options[:read] if new_options[:read]
-        opts[:write] = new_options[:write] if new_options[:write]
-        collection.instance_variable_set(:@options, options.merge(opts.merge(client.options)))
+      new_options.keys.each do |k|
+        raise Error::UnchangeableCollectionOption.new(k) unless CHANGEABLE_OPTIONS.include?(k)
       end
+      Collection.new(database, name, options.merge(new_options))
     end
 
     # Is the collection capped?
