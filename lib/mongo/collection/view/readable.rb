@@ -25,6 +25,7 @@ module Mongo
         #
         # @since 2.0.0
         SPECIAL_FIELDS = {
+          :$query => :query_selector,
           :$readPreference => :read_pref_formatted,
           :$orderby => :sort,
           :$hint => :hint,
@@ -408,6 +409,10 @@ module Mongo
 
         private
 
+        def query_selector
+          @modifiers[:$query]
+        end
+
         def default_read
           options[:read] || read_preference
         end
@@ -447,9 +452,9 @@ module Mongo
           }
         end
 
-        def special_selector
+        def convert_special_fields
           SPECIAL_FIELDS.reduce({}) do |hash, (key, method)|
-            value = send(method) || (@modifiers && @modifiers[key])
+            value = send(method) || @modifiers[key]
             hash[key] = value unless value.nil?
             hash
           end
@@ -462,13 +467,9 @@ module Mongo
           end
         end
 
-        def merge_special_query_modifier?(sel)
-          (@modifiers && @modifiers[:$query]) || !sel.empty? || explained? || cluster.sharded?
-        end
-
         def setup_selector
-          sel = special_selector
-          sel.merge!(:$query => selector) if merge_special_query_modifier?(sel)
+          sel = convert_special_fields
+          sel.merge!(:$query => selector) if !sel.empty? || explained? || cluster.sharded?
           (sel.empty? ? selector : sel).merge(extra_options)
         end
 

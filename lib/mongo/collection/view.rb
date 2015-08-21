@@ -131,7 +131,7 @@ module Mongo
         @collection = collection
         @selector = selector.dup
         @options = options.dup
-        @modifiers = @options.delete(:modifiers)
+        @modifiers = @options.delete(:modifiers) || {}
       end
 
       # Get a human-readable string representation of +View+.
