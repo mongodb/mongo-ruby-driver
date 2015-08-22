@@ -540,7 +540,7 @@ describe Mongo::Collection::View do
         end
       end
 
-      context 'when the cluster is sharded', if: sharded? do
+      context 'when the cluster is sharded' do
 
         before do
           allow(authorized_collection.cluster).to receive(:sharded?).and_return(true)
@@ -550,6 +550,40 @@ describe Mongo::Collection::View do
         it 'iterates over all of the documents' do
           view.each do |doc|
             expect(doc).to have_key('field')
+          end
+        end
+
+        context 'when there is a read preference' do
+
+          let(:collection) do
+            authorized_collection.with(read: { mode: :secondary})
+          end
+
+          let(:view) do
+            described_class.new(collection, selector, options)
+          end
+
+          let(:formatted_read_pref) do
+            Mongo::ServerSelector.get(mode: :secondary).to_mongos
+          end
+
+          it 'adds the formatted read preference to the selector' do
+            expect(view.send(:query_spec)[:selector][:$readPreference]).to eq(formatted_read_pref)
+          end
+        end
+
+        context 'when the read preference is primary' do
+
+          let(:collection) do
+            authorized_collection.with(read: { mode: :primary})
+          end
+
+          let(:view) do
+            described_class.new(collection, selector, options)
+          end
+
+          it 'does not add the formatted read preference to the selector' do
+            expect(view.send(:query_spec)[:selector][:$readPreference]).to be(nil)
           end
         end
       end
