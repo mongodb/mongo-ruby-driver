@@ -505,7 +505,7 @@ describe Mongo::Collection do
         end
 
         it 'returns a view with :comment set' do
-          expect(view.options[:comment]).to be(options[:comment])
+          expect(view.modifiers[:$comment]).to be(options[:comment])
         end
       end
 
@@ -527,7 +527,7 @@ describe Mongo::Collection do
         end
 
         it 'returns a view with :max_time_ms set' do
-          expect(view.options[:max_time_ms]).to be(options[:max_time_ms])
+          expect(view.modifiers[:$maxTimeMS]).to be(options[:max_time_ms])
         end
       end
 
@@ -593,7 +593,7 @@ describe Mongo::Collection do
         end
 
         it 'returns a view with :sort set' do
-          expect(view.options[:sort]).to be(options[:sort])
+          expect(view.modifiers[:$orderby]).to be(options[:sort])
         end
       end
     end

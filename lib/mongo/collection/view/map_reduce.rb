@@ -159,7 +159,7 @@ module Mongo
               :mapreduce => collection.name,
               :map => map,
               :reduce => reduce,
-              :query => view.selector[:$query] || view.selector,
+              :query => view.modifiers[:$query] || view.selector,
               :out => { inline: 1 }
             }.merge(options).merge(view.options)
           }

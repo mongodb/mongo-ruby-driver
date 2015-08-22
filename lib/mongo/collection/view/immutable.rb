@@ -22,14 +22,14 @@ module Mongo
 
         private
 
-        # @api private
-        #
-        # @note In the including class, the method #immutable needs to be
-        #   implemented in order to define how a new class of that type needs to
-        #   be instantiated.
         def configure(field, value)
           return options[field] if value.nil?
           new(options.merge(field => value))
+        end
+
+        def configure_modifier(field, value)
+          return @modifiers[Readable::SPECIAL_FIELDS[field]] if value.nil?
+          new(options.merge(:modifiers => @modifiers.merge(Readable::SPECIAL_FIELDS[field] => value)))
         end
 
         def configure_flag(flag)

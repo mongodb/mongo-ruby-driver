@@ -400,20 +400,20 @@ describe Mongo::Collection::View::MapReduce do
     end
   end
 
-  context 'when sort is set on the view' do
-
-    let(:sort) do
-      { name: -1 }
-    end
-
-    let(:view_options) do
-      { sort: sort }
-    end
-
-    it 'includes the sort object in the operation spec' do
-      expect(map_reduce.send(:map_reduce_spec)[:selector][:sort]).to be(sort)
-    end
-  end
+  # context 'when sort is set on the view' do
+  #
+  #   let(:sort) do
+  #     { name: -1 }
+  #   end
+  #
+  #   let(:view_options) do
+  #     { sort: sort }
+  #   end
+  #
+  #   it 'includes the sort object in the operation spec' do
+  #     expect(map_reduce.send(:map_reduce_spec)[:selector][:sort]).to be(sort)
+  #   end
+  # end
 
   context 'when the collection has a read preference' do
 

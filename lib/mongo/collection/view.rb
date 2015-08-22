@@ -127,8 +127,9 @@ module Mongo
       def initialize(collection, selector = {}, options = {})
         validate_doc!(selector)
         @collection = collection
-        @selector = selector.dup
-        @options = options.dup
+        @modifiers = options[:modifiers] ? options[:modifiers].dup : {}
+        @selector = selector[:$query] ? parse_selector(selector) : selector.dup
+        @options = parse_options(options)
       end
 
       # Get a human-readable string representation of +View+.

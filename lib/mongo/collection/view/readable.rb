@@ -21,29 +21,22 @@ module Mongo
       # @since 2.0.0
       module Readable
 
-        # Special fields and their getters for the query selector.
+        # Special fields and their option names for the query selector.
         #
         # @since 2.0.0
         SPECIAL_FIELDS = {
-          :$query => :selector,
-          :$readPreference => :read_pref_formatted,
-          :$orderby => :sort,
-          :$hint => :hint,
-          :$comment => :comment,
-          :$snapshot => :snapshot,
-          :$maxScan => :max_scan,
-          :$max => :max_value,
-          :$min => :min_value,
-          :$maxTimeMS => :max_time_ms,
-          :$returnKey => :return_key,
-          :$showDiskLoc => :show_disk_loc,
-          :$explain => :explained?
+            :sort => :$orderby,
+            :hint => :$hint,
+            :comment => :$comment,
+            :snapshot => :$snapshot,
+            :max_scan => :$maxScan,
+            :max_value => :$max,
+            :min_value => :$min,
+            :max_time_ms => :$maxTimeMS,
+            :return_key => :$returnKey,
+            :show_disk_loc => :$showDiskLoc,
+            :explain => :$explain
         }.freeze
-
-        # Get just the names of the special fields.
-        #
-        # @since 2.1.0
-        SPECIAL_FIELD_OPTION_NAMES = SPECIAL_FIELDS.values.freeze
 
         # Options to cursor flags mapping.
         #
@@ -117,7 +110,7 @@ module Mongo
         #
         # @since 2.0.0
         def comment(comment = nil)
-          configure(:comment, comment)
+          configure_modifier(:comment, comment)
         end
 
         # Get a count of matching documents in the collection.
@@ -181,7 +174,7 @@ module Mongo
         #
         # @since 2.0.0
         def hint(hint = nil)
-          configure(:hint, hint)
+          configure_modifier(:hint, hint)
         end
 
         # The max number of docs to return from the query.
@@ -225,7 +218,7 @@ module Mongo
         #
         # @since 2.0.0
         def max_scan(value = nil)
-          configure(:max_scan, value)
+          configure_modifier(:max_scan, value)
         end
 
         # Set the maximum value to search.
@@ -239,7 +232,7 @@ module Mongo
         #
         # @since 2.1.0
         def max_value(value = nil)
-          configure(:max_value, value)
+          configure_modifier(:max_value, value)
         end
 
         # Set the minimum value to search.
@@ -253,7 +246,7 @@ module Mongo
         #
         # @since 2.1.0
         def min_value(value = nil)
-          configure(:min_value, value)
+          configure_modifier(:min_value, value)
         end
 
         # The server normally times out idle cursors after an inactivity period
@@ -315,7 +308,7 @@ module Mongo
         #
         # @since 2.1.0
         def return_key(value = nil)
-          configure(:return_key, value)
+          configure_modifier(:return_key, value)
         end
 
         # Set whether the disk location should be shown for each document.
@@ -330,7 +323,7 @@ module Mongo
         #
         # @since 2.0.0
         def show_disk_loc(value = nil)
-          configure(:show_disk_loc, value)
+          configure_modifier(:show_disk_loc, value)
         end
 
         # The number of docs to skip before returning results.
@@ -360,7 +353,7 @@ module Mongo
         #
         # @since 2.0.0
         def snapshot(value = nil)
-          configure(:snapshot, value)
+          configure_modifier(:snapshot, value)
         end
 
         # The key and direction pairs by which the result set will be sorted.
@@ -375,7 +368,7 @@ module Mongo
         #
         # @since 2.0.0
         def sort(spec = nil)
-          configure(:sort, spec)
+          configure_modifier(:sort, spec)
         end
 
         # “meta” operators that let you modify the output or behavior of a query.
@@ -389,7 +382,8 @@ module Mongo
         #
         # @since 2.1.0
         def modifiers(doc = nil)
-          configure(:modifiers, doc)
+          return @modifiers if doc.nil?
+          new(options.merge(:modifiers => doc))
         end
 
         # A cumulative time limit in milliseconds for processing operations on a cursor.
@@ -403,7 +397,7 @@ module Mongo
         #
         # @since 2.1.0
         def max_time_ms(max = nil)
-          configure(:max_time_ms, max)
+          configure_modifier(:max_time_ms, max)
         end
 
         private
@@ -419,10 +413,6 @@ module Mongo
             end
             flags
           end
-        end
-
-        def has_special_fields?
-          contains_modifiers? || explained? || cluster.sharded?
         end
 
         def parallel_scan(cursor_count)
@@ -441,6 +431,28 @@ module Mongo
           end
         end
 
+        def parse_options(opts)
+          opts.each.reduce({}) do |o, (k, v)|
+            if SPECIAL_FIELDS[k]
+              @modifiers[SPECIAL_FIELDS[k]] = v
+            else
+              o[k] = v
+            end
+            o
+          end
+        end
+
+        def parse_selector(sel)
+          sel.each.reduce({}) do |s, (k, v)|
+            if k[0] == '$'
+              @modifiers[k] = v
+            else
+              s[k] = v
+            end
+            s
+          end
+        end
+
         def query_options
           {
             :project => projection,
@@ -451,8 +463,12 @@ module Mongo
           }
         end
 
+        def requires_special_selector?
+          !modifiers.empty? || cluster.sharded?
+        end
+
         def query_spec
-          sel = has_special_fields? ? special_selector : selector
+          sel = requires_special_selector? ? special_selector : selector
           { :selector  => sel,
             :read      => read,
             :options   => query_options,
@@ -461,25 +477,17 @@ module Mongo
         end
 
         def read_pref_formatted
-          read.to_mongos
+          @read_formatted ||= read.to_mongos
         end
 
         def special_selector
-          SPECIAL_FIELDS.reduce({}) do |hash, (key, method)|
-            value = send(method) || (options[:modifiers] && options[:modifiers][key])
-            hash[key] = value unless value.nil?
-            hash
-          end
+          sel = { :$query => selector }.merge(modifiers)
+          sel[:$readPreference] = read_pref_formatted unless read_pref_formatted.nil?
+          sel
         end
 
         def validate_doc!(doc)
           raise Error::InvalidDocument.new unless doc.respond_to?(:keys)
-        end
-
-        def contains_modifiers?
-          modifiers || options.keys.any? do |key|
-            SPECIAL_FIELD_OPTION_NAMES.include?(key)
-          end
         end
       end
     end
