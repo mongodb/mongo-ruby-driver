@@ -161,8 +161,12 @@ module Mongo
               :reduce => reduce,
               :query => view.modifiers[:$query] || view.selector,
               :out => { inline: 1 }
-            }.merge(options).merge(view.options)
+            }.merge(options).merge(view_options)
           }
+        end
+
+        def view_options
+          view.sort ? view.options.merge(:sort => view.sort) : view.options
         end
 
         def new(options)
