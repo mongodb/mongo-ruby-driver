@@ -687,9 +687,9 @@ describe Mongo::Collection::View do
               }
             end
 
-            # it 'overrides the modifier value with the option value' do
-            #   expect(query_spec[:selector][:$query]).to eq(selector)
-            # end
+            it 'overrides the modifier value with the option value' do
+              expect(query_spec[:selector][:$query]).to eq(options[:modifiers][:$query])
+            end
           end
         end
       end
