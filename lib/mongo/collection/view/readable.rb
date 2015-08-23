@@ -431,20 +431,20 @@ module Mongo
           end
         end
 
-        def setup
-          setup_options(options)
-          setup_selector(selector)
+        def setup(sel, opts)
+          setup_options(opts)
+          setup_selector(sel)
         end
 
         def setup_options(opts)
-          @options = opts.dup
+          @options = opts ? opts.dup : {}
           @modifiers = @options[:modifiers] ? @options.delete(:modifiers).dup : {}
           @options.keys.each { |k| @modifiers.merge!(SPECIAL_FIELDS[k] => @options.delete(k)) if SPECIAL_FIELDS[k] }
           @options.freeze
         end
 
         def setup_selector(sel)
-          @selector = sel.dup
+          @selector = sel ? sel.dup : {}
           if @selector[:$query]
             @selector.keys.each { |k| @modifiers.merge!(k => @selector.delete(k)) if k[0] == '$' }
           end
