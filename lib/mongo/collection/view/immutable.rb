@@ -24,7 +24,7 @@ module Mongo
 
         def configure(field, value)
           return options[field] if value.nil?
-          new(options.merge(field => value))
+          new(options.merge(field => value, :modifiers => @modifiers))
         end
 
         def configure_modifier(field, value)
