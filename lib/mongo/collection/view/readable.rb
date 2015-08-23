@@ -431,26 +431,22 @@ module Mongo
           end
         end
 
-        def parse_options(opts)
-          opts.each.reduce({}) do |o, (k, v)|
-            if SPECIAL_FIELDS[k]
-              @modifiers[SPECIAL_FIELDS[k]] = v
-            else
-              o[k] = v
-            end
-            o
-          end
+        def setup
+          setup_options
+          setup_selector
         end
 
-        def parse_selector(sel)
-          sel.each.reduce({}) do |s, (k, v)|
-            if k[0] == '$'
-              @modifiers[k] = v
-            else
-              s[k] = v
-            end
-            s
+        def setup_options
+          @modifiers = @options[:modifiers] ? @options.delete(:modifiers).dup : {}
+          @options.keys.each { |k| @modifiers.merge!(SPECIAL_FIELDS[k] => @options.delete(k)) if SPECIAL_FIELDS[k] }
+          @options.freeze
+        end
+
+        def setup_selector
+          if @selector[:$query]
+            @selector.keys.each { |k| @modifiers.merge!(k => @selector.delete(k)) if k[0] == '$' }
           end
+          @selector.freeze
         end
 
         def query_options
