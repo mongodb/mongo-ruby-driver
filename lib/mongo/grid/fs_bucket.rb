@@ -261,13 +261,19 @@ module Mongo
       #
       # @since 2.1.0
       def open_download_stream_by_name(filename, opts = {}, &block)
-        view = files_collection.find(:filename => filename).projection(_id: 1)
         revision = opts.fetch(:revision, -1)
         if revision < 0
-          file_doc = view.sort('uploadDate' => Mongo::Index::DESCENDING).skip(revision.abs - 1).limit(-1).first
+          skip = revision.abs - 1
+          sort = { 'uploadDate' => Mongo::Index::DESCENDING }
         else
-          file_doc = view.sort('uploadDate' => Mongo::Index::ASCENDING).skip(revision).limit(-1).first
+          skip = revision
+          sort = { 'uploadDate' => Mongo::Index::ASCENDING }
         end
+        file_doc = files_collection.find({ filename: filename} ,
+                                           projection: { _id: 1 },
+                                           sort: sort,
+                                           skip: skip,
+                                           limit: -1).first
         unless file_doc
           raise Error::FileNotFound.new(filename, :filename) unless opts[:revision]
           raise Error::InvalidFileRevision.new(filename, opts[:revision])
