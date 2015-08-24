@@ -479,7 +479,7 @@ module Mongo
         end
 
         def special_selector
-          sel = { :$query => selector }.merge(modifiers)
+          sel = BSON::Document.new(:$query => selector).merge!(modifiers)
           sel[:$readPreference] = read_pref_formatted unless read_pref_formatted.nil?
           sel
         end

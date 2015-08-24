@@ -39,7 +39,7 @@ describe Mongo::Collection::View do
       end
 
       let(:query_selector) do
-        { :$query => { a: 1 }, :$someMod => 100 }
+        BSON::Document.new(:$query => { a: 1 }, :$someMod => 100)
       end
 
       it 'sets the modifiers' do
@@ -74,7 +74,7 @@ describe Mongo::Collection::View do
       end
 
       let(:query_selector) do
-        { :$query => { a: 1 }, :$someMod => 100 }
+        BSON::Document.new(:$query => { a: 1 }, :$someMod => 100)
       end
 
       it 'sets the modifiers' do
@@ -108,7 +108,7 @@ describe Mongo::Collection::View do
         end
 
         let(:query_selector) do
-          { :$query => { a: 1 }, :$orderby => { a: Mongo::Index::ASCENDING } }
+          BSON::Document.new(:$query => { a: 1 }, :$orderby => { a: Mongo::Index::ASCENDING })
         end
 
         it 'sets the modifiers' do
@@ -142,7 +142,7 @@ describe Mongo::Collection::View do
           end
 
           let(:query_selector) do
-            { :$query => { a: 1 }, :$someMod => 100, :$orderby => { a: Mongo::Index::ASCENDING } }
+            BSON::Document.new(:$query => { a: 1 }, :$someMod => 100, :$orderby => { a: Mongo::Index::ASCENDING })
           end
 
           it 'sets the modifiers' do
@@ -564,7 +564,7 @@ describe Mongo::Collection::View do
           end
 
           let(:formatted_read_pref) do
-            Mongo::ServerSelector.get(mode: :secondary).to_mongos
+            BSON::Document.new(Mongo::ServerSelector.get(mode: :secondary).to_mongos)
           end
 
           it 'adds the formatted read preference to the selector' do
