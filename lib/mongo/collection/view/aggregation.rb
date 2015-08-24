@@ -26,6 +26,7 @@ module Mongo
         include Iterable
         include Explainable
         include Loggable
+        include Retryable
 
         # @return [ View ] view The collection view.
         attr_reader :view
