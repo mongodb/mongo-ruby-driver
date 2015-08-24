@@ -140,7 +140,7 @@ module Mongo
         #
         # @param [ String ] collection The name of the collection.
         # @param [ Hash ] filter The filter.
-        # @param [ Hash ] udpate The update.
+        # @param [ Hash ] update The update.
         # @param [ Array<Symbol> ] flags The flags.
         #
         # @since 2.1.0

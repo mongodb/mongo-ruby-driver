@@ -28,8 +28,9 @@ module Mongo
       # @example Kill the cursor on the server with id 1.
       #   KillCursors.new([1])
       #
-      # @param cursor_ids [Array<Fixnum>] The cursor ids to kill.
-      # @param options [Hash] The additional kill cursors options.
+      # @param [ Mongo::Database ] collection The collection.
+      # @param [ Mongo::Database ] database The database.
+      # @param [ Array<Fixnum> ] cursor_ids The cursor ids to kill.
       def initialize(collection, database, cursor_ids)
         @database = database
         @cursor_ids = cursor_ids

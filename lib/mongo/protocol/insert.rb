@@ -119,7 +119,7 @@ module Mongo
         #   Upconverter.new('users', documents)
         #
         # @param [ String ] collection The name of the collection.
-        # @param [ Array<BSON::Document> ] document The documents.
+        # @param [ Array<BSON::Document> ] documents The documents.
         # @param [ Hash ] options The options.
         #
         # @since 2.1.0

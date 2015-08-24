@@ -115,11 +115,11 @@ module Mongo
         # @example Create the upconverter.
         #   Upconverter.new(docs, 1, 3)
         #
-        # @param [ Array<BSON::Document> document The documents.
+        # @param [ Array<BSON::Document> ] documents The documents.
         # @param [ Integer ] cursor_id The cursor id.
         # @param [ Integer ] starting_from The starting position.
         #
-        # @sincce 2.1.0
+        # @since 2.1.0
         def initialize(documents, cursor_id, starting_from)
           @documents = documents
           @cursor_id = cursor_id

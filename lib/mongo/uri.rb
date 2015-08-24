@@ -422,8 +422,8 @@ module Mongo
 
     # Selects the output destination for an option.
     #
-    # @param options [Hash] The base target.
-    # @param group [Symbol] Group subtarget.
+    # @param [Hash] uri_options The base target.
+    # @param [Symbol] group Group subtarget.
     #
     # @return [Hash] The target for the option.
     def select_target(uri_options, group = nil)
@@ -465,7 +465,7 @@ module Mongo
     #
     # @param strategy [Symbol] The strategy for this option.
     # @param value [String] The value of the option.
-    # @param options [Hash] The base option target.
+    # @param uri_options [Hash] The base option target.
     def add_uri_option(strategy, value, uri_options)
       target = select_target(uri_options, strategy[:group])
       value = apply_transform(value, strategy[:type])

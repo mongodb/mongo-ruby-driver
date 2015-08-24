@@ -29,7 +29,7 @@ module Mongo
     # @example Log a debug message.
     #   log_debug('Message')
     #
-    # @param [ String> ] message The message to log.
+    # @param [ String ] message The message to log.
     #
     # @since 2.0.0
     def log_debug(message)
@@ -41,7 +41,7 @@ module Mongo
     # @example Log a error message.
     #   log_error('Message')
     #
-    # @param [ String> ] message The message to log.
+    # @param [ String ] message The message to log.
     #
     # @since 2.0.0
     def log_error(message)
@@ -53,7 +53,7 @@ module Mongo
     # @example Log a fatal message.
     #   log_fatal('Message')
     #
-    # @param [ String> ] message The message to log.
+    # @param [ String ] message The message to log.
     #
     # @since 2.0.0
     def log_fatal(message)
@@ -65,7 +65,7 @@ module Mongo
     # @example Log a info message.
     #   log_info('Message')
     #
-    # @param [ String> ] message The message to log.
+    # @param [ String ] message The message to log.
     #
     # @since 2.0.0
     def log_info(message)
@@ -77,7 +77,7 @@ module Mongo
     # @example Log a warn message.
     #   log_warn('Message')
     #
-    # @param [ String> ] message The message to log.
+    # @param [ String ] message The message to log.
     #
     # @since 2.0.0
     def log_warn(message)
