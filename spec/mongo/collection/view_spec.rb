@@ -563,10 +563,9 @@ describe Mongo::Collection::View do
         end
       end
 
-      context 'when the cluster is sharded' do
+      context 'when the cluster is sharded', if: sharded? do
 
         before do
-          allow(authorized_collection.cluster).to receive(:sharded?).and_return(true)
           expect(view).to receive(:special_selector).and_call_original
         end
 
