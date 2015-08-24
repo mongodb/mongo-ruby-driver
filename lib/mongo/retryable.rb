@@ -19,6 +19,11 @@ module Mongo
   # @since 2.1.0
   module Retryable
 
+    # The not master error message.
+    #
+    # @since 2.1.0
+    NOT_MASTER = 'not master'.freeze
+
     # Execute a read operation with a retry.
     #
     # @example Execute the read.
@@ -60,7 +65,7 @@ module Mongo
       begin
         block.call
       rescue Error::OperationFailure => e
-        if e.message.include?('not master')
+        if e.message.include?(NOT_MASTER)
           retry_operation(&block)
         else
           raise e

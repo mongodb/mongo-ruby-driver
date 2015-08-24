@@ -25,6 +25,11 @@ module Mongo
     extend Forwardable
     include Retryable
 
+    # The capped option.
+    #
+    # @since 2.1.0
+    CAPPED = 'capped'.freeze
+
     # @return [ Mongo::Database ] The database the collection resides in.
     attr_reader :database
 
@@ -137,7 +142,7 @@ module Mongo
     #
     # @since 2.0.0
     def capped?
-      database.command(:collstats => name).documents[0]['capped']
+      database.command(:collstats => name).documents[0][CAPPED]
     end
 
     # Force the collection to be created in the database.

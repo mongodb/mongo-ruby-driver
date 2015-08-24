@@ -35,6 +35,11 @@ module Mongo
       # @since 2.0.0
       MATCH = Regexp.new('/\./').freeze
 
+      # Split value constant.
+      #
+      # @since 2.1.0
+      SPLIT = ':'.freeze
+
       # Parse an IPv4 address into its host and port.
       #
       # @example Parse the address.
@@ -46,7 +51,7 @@ module Mongo
       #
       # @since 2.0.0
       def self.parse(address)
-        parts = address.split(':')
+        parts = address.split(SPLIT)
         host = parts[0]
         port = (parts[1] || 27017).to_i
         [ host, port ]

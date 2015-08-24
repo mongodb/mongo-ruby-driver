@@ -28,6 +28,16 @@ module Mongo
         include Loggable
         include Retryable
 
+        # The inline option.
+        #
+        # @since 2.1.0
+        INLINE = 'inline'.freeze
+
+        # Reroute message.
+        #
+        # @since 2.1.0
+        REROUTE = 'Rerouting the MapReduce operation to the primary server.'.freeze
+
         # @return [ View ] view The collection view.
         attr_reader :view
 
@@ -149,7 +159,7 @@ module Mongo
         private
 
         def inline?
-          out.nil? || out == { inline: 1 } || out == { 'inline' => 1 }
+          out.nil? || out == { inline: 1 } || out == { INLINE => 1 }
         end
 
         def map_reduce_spec
@@ -183,13 +193,12 @@ module Mongo
         end
 
         def secondary_ok?
-          out.respond_to?(:keys) &&
-              out.keys.first.to_s.downcase == 'inline'
+          out.respond_to?(:keys) && out.keys.first.to_s.downcase == INLINE
         end
 
         def send_initial_query(server)
           unless valid_server?(server)
-            log_warn('Rerouting the MapReduce operation to the primary server.')
+            log_warn(REROUTE)
             server = cluster.next_primary
           end
           result = initial_query_op.execute(server.context)
