@@ -92,7 +92,7 @@ module Mongo
         #
         # @since 2.0.0
         def batch_size(batch_size = nil)
-          configure(:batch_size, batch_size)
+          configure(__method__, batch_size)
         end
 
         # Associate a comment with the query.
@@ -110,7 +110,7 @@ module Mongo
         #
         # @since 2.0.0
         def comment(comment = nil)
-          configure_modifier(:comment, comment)
+          configure_modifier(__method__, comment)
         end
 
         # Get a count of matching documents in the collection.
@@ -174,7 +174,7 @@ module Mongo
         #
         # @since 2.0.0
         def hint(hint = nil)
-          configure_modifier(:hint, hint)
+          configure_modifier(__method__, hint)
         end
 
         # The max number of docs to return from the query.
@@ -188,7 +188,7 @@ module Mongo
         #
         # @since 2.0.0
         def limit(limit = nil)
-          configure(:limit, limit)
+          configure(__method__, limit)
         end
 
         # Execute a map/reduce operation on the collection view.
@@ -218,7 +218,7 @@ module Mongo
         #
         # @since 2.0.0
         def max_scan(value = nil)
-          configure_modifier(:max_scan, value)
+          configure_modifier(__method__, value)
         end
 
         # Set the maximum value to search.
@@ -232,7 +232,7 @@ module Mongo
         #
         # @since 2.1.0
         def max_value(value = nil)
-          configure_modifier(:max_value, value)
+          configure_modifier(__method__, value)
         end
 
         # Set the minimum value to search.
@@ -246,7 +246,7 @@ module Mongo
         #
         # @since 2.1.0
         def min_value(value = nil)
-          configure_modifier(:min_value, value)
+          configure_modifier(__method__, value)
         end
 
         # The server normally times out idle cursors after an inactivity period
@@ -259,7 +259,7 @@ module Mongo
         #
         # @since 2.0.0
         def no_cursor_timeout
-          configure_flag(:no_cursor_timeout)
+          configure_flag(__method__)
         end
 
         # The fields to include or exclude from each doc in the result set.
@@ -278,7 +278,7 @@ module Mongo
         # @since 2.0.0
         def projection(document = nil)
           validate_doc!(document) if document
-          configure(:projection, document)
+          configure(__method__, document)
         end
 
         # The read preference to use for the query.
@@ -294,7 +294,7 @@ module Mongo
         # @since 2.0.0
         def read(value = nil)
           return default_read if value.nil?
-          configure(:read, value.is_a?(Hash) ? ServerSelector.get(value) : value)
+          configure(__method__, value.is_a?(Hash) ? ServerSelector.get(value) : value)
         end
 
         # Set whether to return only the indexed field or fields.
@@ -308,7 +308,7 @@ module Mongo
         #
         # @since 2.1.0
         def return_key(value = nil)
-          configure_modifier(:return_key, value)
+          configure_modifier(__method__, value)
         end
 
         # Set whether the disk location should be shown for each document.
@@ -323,7 +323,7 @@ module Mongo
         #
         # @since 2.0.0
         def show_disk_loc(value = nil)
-          configure_modifier(:show_disk_loc, value)
+          configure_modifier(__method__, value)
         end
 
         # The number of docs to skip before returning results.
@@ -338,7 +338,7 @@ module Mongo
         #
         # @since 2.0.0
         def skip(number = nil)
-          configure(:skip, number)
+          configure(__method__, number)
         end
 
         # Set the snapshot value for the view.
@@ -353,7 +353,7 @@ module Mongo
         #
         # @since 2.0.0
         def snapshot(value = nil)
-          configure_modifier(:snapshot, value)
+          configure_modifier(__method__, value)
         end
 
         # The key and direction pairs by which the result set will be sorted.
@@ -368,7 +368,7 @@ module Mongo
         #
         # @since 2.0.0
         def sort(spec = nil)
-          configure_modifier(:sort, spec)
+          configure_modifier(__method__, spec)
         end
 
         # “meta” operators that let you modify the output or behavior of a query.
@@ -383,7 +383,7 @@ module Mongo
         # @since 2.1.0
         def modifiers(doc = nil)
           return @modifiers if doc.nil?
-          new(options.merge(:modifiers => doc))
+          new(options.merge(__method__ => doc))
         end
 
         # A cumulative time limit in milliseconds for processing operations on a cursor.
@@ -397,7 +397,7 @@ module Mongo
         #
         # @since 2.1.0
         def max_time_ms(max = nil)
-          configure_modifier(:max_time_ms, max)
+          configure_modifier(__method__, max)
         end
 
         private
