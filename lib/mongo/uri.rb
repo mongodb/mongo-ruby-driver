@@ -44,10 +44,15 @@ module Mongo
     # @since 2.0.0
     attr_reader :servers
 
-    # Unsafe characters that must be URI-escaped.
+    # Unsafe characters that must be urlencoded.
     #
     # @since 2.1.0
     UNSAFE = /[\:\/\+\@]/
+
+    # Unix socket suffix.
+    #
+    # @since 2.1.0
+    UNIX_SOCKET = /.sock/
 
     # The mongodb connection string scheme.
     #
@@ -67,7 +72,7 @@ module Mongo
     # The character delimiting a database.
     #
     # @since 2.1.0
-    DATABSE_DELIM = '/'.freeze
+    DATABASE_DELIM = '/'.freeze
 
     # The character delimiting options.
     #
@@ -105,30 +110,35 @@ module Mongo
     INVALID_OPTS_VALUE_DELIM = "Options and their values must be delimited" +
       " by '#{URI_OPTS_VALUE_DELIM}'".freeze
 
-    # Error details for an un-escaped user name or password.
+    # Error details for an non-urlencoded user name or password.
     #
     # @since 2.1.0
-    UNESCAPED_USER_PWD = "User name and password must be URI-escaped.".freeze
+    UNESCAPED_USER_PWD = "User name and password must be urlencoded.".freeze
 
-    # Error details for a non-delimited database name.
+    # Error details for a non-urlencoded unix socket path.
     #
     # @since 2.1.0
-    INVALID_DB_DELIM = "Database must be delimited by a #{DATABSE_DELIM}.".freeze
+    UNESCAPED_UNIX_SOCKET = "UNIX domain sockets must be urlencoded.".freeze
+
+    # Error details for a non-urlencoded auth databsae name.
+    #
+    # @since 2.1.0
+    UNESCAPED_DATABASE = "Auth database must be urlencoded.".freeze
+
+    # Error details for providing options without a database delimiter.
+    #
+    # @since 2.1.0
+    INVALID_OPTS_DELIM = "Database delimiter '#{DATABASE_DELIM}' must be present if options are specified.".freeze
 
     # Error details for a missing host.
     #
     # @since 2.1.0
-    INVALID_HOST = "At least one host must be specified.".freeze
+    INVALID_HOST = "Missing host; at least one must be provided.".freeze
 
     # Error details for an invalid port.
     #
     # @since 2.1.0
-    INVALID_PORT = "Invalid port. Port must be greater than 0 and less than 65536".freeze
-
-    # Error details for an invalid host:port format.
-    #
-    # @since 2.1.0
-    INVALID_HOST_PORT= "Invalid host:port format.".freeze
+    INVALID_PORT = "Invalid port. Port must be an integer greater than 0 and less than 65536".freeze
 
     # MongoDB URI format specification.
     #
@@ -161,6 +171,11 @@ module Mongo
       'GSSAPI'     => :gssapi
     }.freeze
 
+    # Options that are allowed to appear more than once in the uri.
+    #
+    # @since 2.1.0
+    REPEATABLE_OPTIONS = [ :tag_sets ]
+
     # Create the new uri from the provided string.
     #
     # @example Create the new URI.
@@ -175,8 +190,8 @@ module Mongo
     def initialize(string, options = {})
       @string = string
       @options = options
-      remaining = @string.split(SCHEME)[1]
-      raise_invalid_error!(INVALID_SCHEME) unless remaining
+      empty, scheme, remaining = @string.partition(SCHEME)
+      raise_invalid_error!(INVALID_SCHEME) unless scheme == SCHEME
       setup!(remaining)
     end
 
@@ -218,14 +233,48 @@ module Mongo
     #
     # @since 2.0.0
     def database
-      @database ? ::URI.decode(@database) : Database::ADMIN
+      @database ? @database : Database::ADMIN
     end
 
     private
 
-    def parse_uri_options!(part, remaining)
-      return {} unless part
-      part.split(INDIV_URI_OPTS_DELIM).reduce({}) do |uri_options, opt|
+    def setup!(remaining)
+      creds_hosts, db_opts = extract_db_opts!(remaining)
+      parse_creds_hosts!(creds_hosts)
+      parse_db_opts!(db_opts)
+    end
+
+    def extract_db_opts!(string)
+      db_opts, d, creds_hosts = string.reverse.partition(DATABASE_DELIM)
+      db_opts, creds_hosts = creds_hosts, db_opts if creds_hosts.empty?
+      if db_opts.empty? && creds_hosts.include?(URI_OPTS_DELIM)
+        raise_invalid_error!(INVALID_OPTS_DELIM)
+      end
+      [ creds_hosts, db_opts ].map { |s| s.reverse }
+    end
+
+    def parse_creds_hosts!(string)
+      hosts, creds = split_creds_hosts(string)
+      @servers = parse_servers!(hosts)
+      @user = parse_user!(creds)
+      @password = parse_password!(creds)
+    end
+
+    def split_creds_hosts(string)
+      hosts, d, creds = string.reverse.partition(AUTH_DELIM)
+      hosts, creds = creds, hosts if hosts.empty?
+      [ hosts, creds ].map { |s| s.reverse }
+    end
+
+    def parse_db_opts!(string)
+      auth_db, d, uri_opts = string.partition(URI_OPTS_DELIM)
+      @uri_options = parse_uri_options!(uri_opts)
+      @database = parse_database!(auth_db)
+    end
+
+    def parse_uri_options!(string)
+      return {} unless string
+      string.split(INDIV_URI_OPTS_DELIM).reduce({}) do |uri_options, opt|
         raise_invalid_error!(INVALID_OPTS_VALUE_DELIM) unless opt.index(URI_OPTS_VALUE_DELIM)
         key, value = opt.split(URI_OPTS_VALUE_DELIM)
         strategy = URI_OPTION_MAP[key.downcase]
@@ -238,52 +287,23 @@ module Mongo
       end
     end
 
-    def extract_uri_options!(remaining)
-      if index = remaining.index(URI_OPTS_DELIM)
-        part = remaining[index+1..-1]
-        remaining = remaining[0...index]
-      end
-      [ parse_uri_options!(part, remaining), remaining ]
-    end
-
-    def parse_user!(part)
-      if (part && user = part.partition(AUTH_USER_PWD_DELIM)[0])
+    def parse_user!(string)
+      if (string && user = string.partition(AUTH_USER_PWD_DELIM)[0])
         raise_invalid_error!(UNESCAPED_USER_PWD) if user =~ UNSAFE
-        ::URI.decode(user)
+        decode(user) if user.length > 0
       end
     end
 
-    def parse_password!(part)
-      if (part && pwd = part.partition(AUTH_USER_PWD_DELIM)[2])
+    def parse_password!(string)
+      if (string && pwd = string.partition(AUTH_USER_PWD_DELIM)[2])
         raise_invalid_error!(UNESCAPED_USER_PWD) if pwd =~ UNSAFE
-        ::URI.decode(pwd) unless pwd.length == 0
+        decode(pwd) if pwd.length > 0
       end
     end
 
-    def extract_auth!(remaining)
-      if index = remaining.reverse.index(AUTH_DELIM)
-        part = remaining[0...-(index+1)]
-        remaining = remaining[part.size+1..-1]
-      end
-      [ parse_user!(part), parse_password!(part), remaining ]
-    end
-
-    def extract_database!(remaining)
-      if index = remaining.reverse.index(DATABSE_DELIM)
-        if index == 0
-            part = nil
-            remaining = remaining[0...-1]
-        else
-          db = remaining[-index..-1]
-          unless db.end_with?('.sock')
-            part = db
-            remaining = remaining[0..-(part.size+2)]
-          end
-        end
-      elsif !@uri_options.empty?
-        raise_invalid_error!(INVALID_DB_DELIM)
-      end
-      [ part, remaining ]
+    def parse_database!(string)
+      raise_invalid_error!(UNESCAPED_DATABASE) if string =~ UNSAFE
+      decode(string) if string.length > 0
     end
 
     def validate_port_string!(port)
@@ -292,37 +312,31 @@ module Mongo
       end
     end
 
-    def parse_servers!(remaining)
-      raise_invalid_error!(INVALID_HOST) unless remaining.size > 0
-      remaining.split(HOST_DELIM).reduce([]) do |servers, host|
+    def parse_servers!(string)
+      raise_invalid_error!(INVALID_HOST) unless string.size > 0
+      string.split(HOST_DELIM).reduce([]) do |servers, host|
         if host[0] == '['
           if host.index(']:')
             h, p = host.split(']:')
             validate_port_string!(p)
           end
         elsif host.index(HOST_PORT_DELIM)
-          raise_invalid_error!(INVALID_HOST_PORT) unless host.count(HOST_PORT_DELIM) == 1
-          h, p = host.split(HOST_PORT_DELIM)
-          raise_invalid_error!(INVALID_HOST) unless h
+          h, d, p = host.partition(HOST_PORT_DELIM)
+          raise_invalid_error!(INVALID_HOST) unless h.size > 0
           validate_port_string!(p)
+        elsif host =~ UNIX_SOCKET
+          raise_invalid_error!(UNESCAPED_UNIX_SOCKET) if host =~ UNSAFE
         end
         servers << host
       end
-    end
-
-    def extract_servers!(remaining)
-      [ parse_servers!(remaining), remaining ]
     end
 
     def raise_invalid_error!(details)
       raise Error::InvalidURI.new(@string, details)
     end
 
-    def setup!(remaining)
-      @uri_options, remaining = extract_uri_options!(remaining)
-      @user, @password, remaining = extract_auth!(remaining) if remaining
-      @database, remaining = extract_database!(remaining) if remaining
-      @servers, remaining = extract_servers!(remaining) if remaining
+    def decode(value)
+      ::URI.decode(value)
     end
 
     # Hash for storing map of URI option parameters to conversion strategies
@@ -373,7 +387,7 @@ module Mongo
     uri_option 'authsource', :source, :group => :auth, :type => :auth_source
     uri_option 'authmechanism', :auth_mech, :type => :auth_mech
     uri_option 'authmechanismproperties', :auth_mech_properties, :group => :auth,
-           :type => :auth_mech_props
+                 :type => :auth_mech_props
 
     # Casts option values that do not have a specifically provided
     # transofrmation to the appropriate type.
@@ -389,7 +403,7 @@ module Mongo
       elsif value =~ /[\d]/
         value.to_i
       else
-        value.to_sym
+        decode(value).to_sym
       end
     end
 
@@ -433,7 +447,11 @@ module Mongo
     # @param name [Symbol] The name of the option.
     def merge_uri_option(target, value, name)
       if target.key?(name)
-        target[name] += value
+        if REPEATABLE_OPTIONS.include?(name)
+          target[name] += value
+        else
+          log_warn("Repeated option key: #{name}.")
+        end
       else
         target.merge!(name => value)
       end
@@ -460,7 +478,7 @@ module Mongo
     #
     # @return [String] Same value to avoid cast to Symbol.
     def replica_set(value)
-      ::URI.decode(value)
+      decode(value)
     end
 
     # Auth source transformation, either db string or :external.
@@ -470,7 +488,7 @@ module Mongo
     # @return [String] If auth source is database name.
     # @return [:external] If auth source is external authentication.
     def auth_source(value)
-      value == '$external' ? :external : value
+      value == '$external' ? :external : decode(value)
     end
 
     # Authentication mechanism transformation.
@@ -544,7 +562,7 @@ module Mongo
     def hash_extractor(value)
       value.split(',').reduce({}) do |set, tag|
         k, v = tag.split(':')
-        set.merge(::URI.decode(k).downcase.to_sym => ::URI.decode(v))
+        set.merge(decode(k).downcase.to_sym => decode(v))
       end
     end
   end

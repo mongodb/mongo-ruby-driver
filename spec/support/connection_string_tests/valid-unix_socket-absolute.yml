@@ -1,7 +1,7 @@
 tests:
     -
         description: "Unix domain socket (absolute path with trailing slash)"
-        uri: "mongodb:///tmp/mongodb-27017.sock/"
+        uri: "mongodb://%2Ftmp%2Fmongodb-27017.sock/"
         valid: true
         warning: false
         hosts:
@@ -13,7 +13,7 @@ tests:
         options: ~
     -
         description: "Unix domain socket (absolute path without trailing slash)"
-        uri: "mongodb:///tmp/mongodb-27017.sock"
+        uri: "mongodb://%2Ftmp%2Fmongodb-27017.sock"
         valid: true
         warning: false
         hosts:
@@ -25,7 +25,7 @@ tests:
         options: ~
     -
         description: "Unix domain socket (absolute path with spaces in path)"
-        uri: "mongodb:///tmp/ /mongodb-27017.sock"
+        uri: "mongodb://%2Ftmp%2F %2Fmongodb-27017.sock"
         valid: true
         warning: false
         hosts:
@@ -37,7 +37,7 @@ tests:
         options: ~
     -
         description: "Multiple Unix domain sockets (absolute paths)"
-        uri: "mongodb:///tmp/mongodb-27017.sock,/tmp/mongodb-27018.sock"
+        uri: "mongodb://%2Ftmp%2Fmongodb-27017.sock,%2Ftmp%2Fmongodb-27018.sock"
         valid: true
         warning: false
         hosts:
@@ -53,7 +53,7 @@ tests:
         options: ~
     -
         description: "Multiple hosts (absolute path and ipv4)"
-        uri: "mongodb://127.0.0.1:27017,/tmp/mongodb-27017.sock"
+        uri: "mongodb://127.0.0.1:27017,%2Ftmp%2Fmongodb-27017.sock"
         valid: true
         warning: false
         hosts:
@@ -69,7 +69,7 @@ tests:
         options: ~
     -
         description: "Multiple hosts (absolute path and hostname resembling relative path)"
-        uri: "mongodb://mongodb-27017.sock,/tmp/mongodb-27018.sock"
+        uri: "mongodb://mongodb-27017.sock,%2Ftmp%2Fmongodb-27018.sock"
         valid: true
         warning: false
         hosts:
@@ -85,7 +85,7 @@ tests:
         options: ~
     -
         description: "Unix domain socket with auth database (absolute path)"
-        uri: "mongodb://alice:foo@/tmp/mongodb-27017.sock/admin"
+        uri: "mongodb://alice:foo@%2Ftmp%2Fmongodb-27017.sock/admin"
         valid: true
         warning: false
         hosts:
@@ -100,7 +100,7 @@ tests:
         options: ~
     -
         description: "Unix domain socket with path resembling socket file (absolute path with trailing slash)"
-        uri: "mongodb:///tmp/path.to.sock/mongodb-27017.sock/"
+        uri: "mongodb://%2Ftmp%2Fpath.to.sock%2Fmongodb-27017.sock/"
         valid: true
         warning: false
         hosts:
@@ -112,7 +112,7 @@ tests:
         options: ~
     -
         description: "Unix domain socket with path resembling socket file (absolute path without trailing slash)"
-        uri: "mongodb:///tmp/path.to.sock/mongodb-27017.sock"
+        uri: "mongodb://%2Ftmp%2Fpath.to.sock%2Fmongodb-27017.sock"
         valid: true
         warning: false
         hosts:
@@ -124,7 +124,7 @@ tests:
         options: ~
     -
         description: "Unix domain socket with path resembling socket file and auth (absolute path)"
-        uri: "mongodb://bob:bar@/tmp/path.to.sock/mongodb-27017.sock/admin"
+        uri: "mongodb://bob:bar@%2Ftmp%2Fpath.to.sock%2Fmongodb-27017.sock/admin"
         valid: true
         warning: false
         hosts:
@@ -138,8 +138,8 @@ tests:
             db: "admin"
         options: ~
     -
-        description: "Multiple Unix domain sockets with path resembling auth DB (absolute path)"
-        uri: "mongodb:///tmp/mongodb-27017.sock,/tmp/mongodb-27018.sock/admin.sock"
+        description: "Multiple Unix domain sockets and auth DB resembling a socket (absolute path)"
+        uri: "mongodb://%2Ftmp%2Fmongodb-27017.sock,%2Ftmp%2Fmongodb-27018.sock/admin.sock"
         valid: true
         warning: false
         hosts:
@@ -149,13 +149,16 @@ tests:
                 port: ~
             -
                 type: "unix"
-                host: "/tmp/mongodb-27018.sock/admin.sock"
+                host: "/tmp/mongodb-27018.sock"
                 port: ~
-        auth: ~
+        auth:
+            username: ~
+            password: ~
+            db: "admin.sock"
         options: ~
     -
         description: "Multiple Unix domain sockets with auth DB resembling a path (absolute path)"
-        uri: "mongodb:///tmp/mongodb-27017.sock,/tmp/mongodb-27018.sock/admin.shoe"
+        uri: "mongodb://%2Ftmp%2Fmongodb-27017.sock,%2Ftmp%2Fmongodb-27018.sock/admin.shoe"
         valid: true
         warning: false
         hosts:
@@ -174,7 +177,7 @@ tests:
         options: ~
     -
         description: "Multiple Unix domain sockets with auth and query string (absolute path)"
-        uri: "mongodb://bob:bar@/tmp/mongodb-27017.sock,/tmp/mongodb-27018.sock/admin?w=1"
+        uri: "mongodb://bob:bar@%2Ftmp%2Fmongodb-27017.sock,%2Ftmp%2Fmongodb-27018.sock/admin?w=1"
         valid: true
         warning: false
         hosts:

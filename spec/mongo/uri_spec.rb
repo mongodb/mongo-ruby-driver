@@ -114,15 +114,6 @@ describe 'invalid uris' do
       end
     end
 
-    context 'mongodb://localhost:65536/' do
-
-      let(:string) { 'mongodb://localhost:65536/' }
-
-      it 'raises an error' do
-        expect { uri }.to raise_error(Mongo::Error::InvalidURI)
-      end
-    end
-
     context 'mongodb://localhost:foo' do
 
       let(:string) { 'mongodb://localhost:foo' }
@@ -269,7 +260,7 @@ describe 'invalid uris' do
     end
 
     context 'unix socket server' do
-      let(:servers) { '/tmp/mongodb-27017.sock' }
+      let(:servers) { '%2Ftmp%2Fmongodb-27017.sock' }
 
       it 'returns an array with the parsed server' do
         expect(uri.servers).to eq([servers])

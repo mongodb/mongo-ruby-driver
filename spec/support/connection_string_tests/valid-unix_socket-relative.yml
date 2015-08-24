@@ -1,7 +1,7 @@
 tests:
     -
         description: "Unix domain socket (relative path with trailing slash)"
-        uri: "mongodb://rel/mongodb-27017.sock/"
+        uri: "mongodb://rel%2Fmongodb-27017.sock/"
         valid: true
         warning: false
         hosts:
@@ -13,7 +13,7 @@ tests:
         options: ~
     -
         description: "Unix domain socket (relative path without trailing slash)"
-        uri: "mongodb://rel/mongodb-27017.sock"
+        uri: "mongodb://rel%2Fmongodb-27017.sock"
         valid: true
         warning: false
         hosts:
@@ -25,7 +25,7 @@ tests:
         options: ~
     -
         description: "Unix domain socket (relative path with spaces)"
-        uri: "mongodb://rel/ /mongodb-27017.sock"
+        uri: "mongodb://rel%2F %2Fmongodb-27017.sock"
         valid: true
         warning: false
         hosts:
@@ -37,7 +37,7 @@ tests:
         options: ~
     -
         description: "Multiple Unix domain sockets (relative paths)"
-        uri: "mongodb://rel/mongodb-27017.sock,rel/mongodb-27018.sock"
+        uri: "mongodb://rel%2Fmongodb-27017.sock,rel%2Fmongodb-27018.sock"
         valid: true
         warning: false
         hosts:
@@ -53,7 +53,7 @@ tests:
         options: ~
     -
         description: "Multiple Unix domain sockets (relative and absolute paths)"
-        uri: "mongodb://rel/mongodb-27017.sock,/tmp/mongodb-27018.sock"
+        uri: "mongodb://rel%2Fmongodb-27017.sock,%2Ftmp%2Fmongodb-27018.sock"
         valid: true
         warning: false
         hosts:
@@ -69,7 +69,7 @@ tests:
         options: ~
     -
         description: "Multiple hosts (relative path and ipv4)"
-        uri: "mongodb://127.0.0.1:27017,rel/mongodb-27017.sock"
+        uri: "mongodb://127.0.0.1:27017,rel%2Fmongodb-27017.sock"
         valid: true
         warning: false
         hosts:
@@ -85,7 +85,7 @@ tests:
         options: ~
     -
         description: "Multiple hosts (relative path and hostname resembling relative path)"
-        uri: "mongodb://mongodb-27017.sock,rel/mongodb-27018.sock"
+        uri: "mongodb://mongodb-27017.sock,rel%2Fmongodb-27018.sock"
         valid: true
         warning: false
         hosts:
@@ -101,7 +101,7 @@ tests:
         options: ~
     -
         description: "Unix domain socket with auth database (relative path)"
-        uri: "mongodb://alice:foo@rel/mongodb-27017.sock/admin"
+        uri: "mongodb://alice:foo@rel%2Fmongodb-27017.sock/admin"
         valid: true
         warning: false
         hosts:
@@ -116,7 +116,7 @@ tests:
         options: ~
     -
         description: "Unix domain socket with path resembling socket file (relative path with trailing slash)"
-        uri: "mongodb://rel/path.to.sock/mongodb-27017.sock/"
+        uri: "mongodb://rel%2Fpath.to.sock%2Fmongodb-27017.sock/"
         valid: true
         warning: false
         hosts:
@@ -128,7 +128,7 @@ tests:
         options: ~
     -
         description: "Unix domain socket with path resembling socket file (relative path without trailing slash)"
-        uri: "mongodb://rel/path.to.sock/mongodb-27017.sock"
+        uri: "mongodb://rel%2Fpath.to.sock%2Fmongodb-27017.sock"
         valid: true
         warning: false
         hosts:
@@ -140,7 +140,7 @@ tests:
         options: ~
     -
         description: "Unix domain socket with path resembling socket file and auth (relative path)"
-        uri: "mongodb://bob:bar@rel/path.to.sock/mongodb-27017.sock/admin"
+        uri: "mongodb://bob:bar@rel%2Fpath.to.sock%2Fmongodb-27017.sock/admin"
         valid: true
         warning: false
         hosts:
@@ -154,8 +154,8 @@ tests:
             db: "admin"
         options: ~
     -
-        description: "Multiple Unix domain sockets with path resembling auth DB (relative path)"
-        uri: "mongodb://rel/mongodb-27017.sock,rel/mongodb-27018.sock/admin.sock"
+        description: "Multiple Unix domain sockets and auth DB resembling a socket (relative path)"
+        uri: "mongodb://rel%2Fmongodb-27017.sock,rel%2Fmongodb-27018.sock/admin.sock"
         valid: true
         warning: false
         hosts:
@@ -165,13 +165,16 @@ tests:
                 port: ~
             -
                 type: "unix"
-                host: "rel/mongodb-27018.sock/admin.sock"
+                host: "rel/mongodb-27018.sock"
                 port: ~
-        auth: ~
+        auth:
+            username: ~
+            password: ~
+            db: "admin.sock"
         options: ~
     -
         description: "Multiple Unix domain sockets with auth DB resembling a path (relative path)"
-        uri: "mongodb://rel/mongodb-27017.sock,rel/mongodb-27018.sock/admin.shoe"
+        uri: "mongodb://rel%2Fmongodb-27017.sock,rel%2Fmongodb-27018.sock/admin.shoe"
         valid: true
         warning: false
         hosts:
@@ -190,7 +193,7 @@ tests:
         options: ~
     -
         description: "Multiple Unix domain sockets with auth and query string (relative path)"
-        uri: "mongodb://bob:bar@rel/mongodb-27017.sock,rel/mongodb-27018.sock/admin?w=1"
+        uri: "mongodb://bob:bar@rel%2Fmongodb-27017.sock,rel%2Fmongodb-27018.sock/admin?w=1"
         valid: true
         warning: false
         hosts:
