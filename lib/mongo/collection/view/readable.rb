@@ -445,7 +445,7 @@ module Mongo
 
         def setup_selector(sel)
           @selector = sel ? sel.dup : {}
-          if @selector[:$query] || @selector["$query"]
+          if @selector[:$query] || @selector['$query']
             @selector.keys.each { |k| @modifiers.merge!(k => @selector.delete(k)) if k[0] == '$' }
           end
           @selector.freeze

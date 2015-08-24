@@ -749,7 +749,6 @@ describe Mongo::Collection::View do
           end
         end
       end
-
     end
 
     context 'when there are no special fields' do
