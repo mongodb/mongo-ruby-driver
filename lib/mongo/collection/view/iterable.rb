@@ -35,8 +35,12 @@ module Mongo
         #
         # @yieldparam [ Hash ] Each matching document.
         def each
-          server = read.select_server(cluster)
-          @cursor = Cursor.new(view, send_initial_query(server), server)
+          @cursor = nil
+          read_with_retry do
+            server = read.select_server(cluster)
+            result = send_initial_query(server)
+            @cursor = Cursor.new(view, result, server)
+          end
           @cursor.each do |doc|
             yield doc
           end if block_given?

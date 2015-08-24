@@ -160,6 +160,8 @@ module Mongo
       # @example Ping the connection.
       #   connection.ping
       #
+      # @note This uses a pre-serialized ping message for optimization.
+      #
       # @return [ true, false ] If the server is accepting connections.
       #
       # @since 2.1.0
