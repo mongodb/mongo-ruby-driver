@@ -115,15 +115,15 @@ module Mongo
     # @since 2.1.0
     UNESCAPED_USER_PWD = "User name and password must be urlencoded.".freeze
 
-    # Error details for an non-urlencoded unix socket path.
+    # Error details for a non-urlencoded unix socket path.
     #
     # @since 2.1.0
     UNESCAPED_UNIX_SOCKET = "UNIX domain sockets must be urlencoded.".freeze
 
-    # Error details for a non-delimited database name.
+    # Error details for a non-urlencoded auth databsae name.
     #
     # @since 2.1.0
-    INVALID_DB_DELIM = "Database must be delimited by a #{DATABASE_DELIM}.".freeze
+    UNESCAPED_DATABASE = "Auth database must be urlencoded.".freeze
 
     # Error details for providing options without a database delimiter.
     #
@@ -139,11 +139,6 @@ module Mongo
     #
     # @since 2.1.0
     INVALID_PORT = "Invalid port. Port must be an integer greater than 0 and less than 65536".freeze
-
-    # Error details for an invalid host:port format.
-    #
-    # @since 2.1.0
-    INVALID_HOST_PORT= "Invalid host:port format.".freeze
 
     # MongoDB URI format specification.
     #
@@ -302,7 +297,7 @@ module Mongo
     end
 
     def parse_database!(string)
-      raise_invalid_error!(UNESCAPED_UNIX_SOCKET) if string =~ UNSAFE
+      raise_invalid_error!(UNESCAPED_DATABASE) if string =~ UNSAFE
       decode(string) if string.length > 0
     end
 
