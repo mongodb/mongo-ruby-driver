@@ -540,7 +540,7 @@ describe Mongo::Collection do
         end
 
         it 'returns a view with modifiers set' do
-          expect(view.modifiers).to eq(BSON::Document.new(options[:modifiers]))
+          expect(view.modifiers).to eq(options[:modifiers])
         end
 
         it 'dups the modifiers hash' do

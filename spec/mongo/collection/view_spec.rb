@@ -44,6 +44,10 @@ describe Mongo::Collection::View do
           { "$query" => { a: 1 }, :$someMod => 100 }
         end
 
+        let(:expected_modifiers) do
+          BSON::Document.new(selector)
+        end
+
         it 'sets the modifiers' do
           expect(view.instance_variable_get(:@modifiers)).to eq(expected_modifiers)
         end
@@ -62,6 +66,10 @@ describe Mongo::Collection::View do
 
         let(:selector) do
           { :$query => { a: 1 }, :$someMod => 100 }
+        end
+
+        let(:expected_modifiers) do
+          BSON::Document.new(selector)
         end
 
         it 'sets the modifiers' do
@@ -89,7 +97,7 @@ describe Mongo::Collection::View do
       end
 
       let(:expected_modifiers) do
-        BSON::Document.new(options[:modifiers])
+        options[:modifiers]
       end
 
       let(:parsed_selector) do
@@ -123,7 +131,7 @@ describe Mongo::Collection::View do
         end
 
         let(:expected_modifiers) do
-          BSON::Document.new(:$orderby => options[:sort])
+          { :$orderby => options[:sort] }
         end
 
         let(:parsed_selector) do
@@ -158,7 +166,7 @@ describe Mongo::Collection::View do
         end
 
         let(:expected_modifiers) do
-          BSON::Document.new(:$query => { a: 1 }, :$orderby => { a: Mongo::Index::ASCENDING }, :$someMod => 100)
+          { :$query => { a: 1 }, :$orderby => { a: Mongo::Index::ASCENDING }, :$someMod => 100 }
         end
 
         let(:parsed_selector) do

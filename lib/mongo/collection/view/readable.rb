@@ -438,7 +438,7 @@ module Mongo
 
         def setup_options(opts)
           @options = opts ? opts.dup : {}
-          @modifiers = @options[:modifiers] ? BSON::Document.new(@options.delete(:modifiers)) : BSON::Document.new
+          @modifiers = @options[:modifiers] ? @options.delete(:modifiers).dup : BSON::Document.new
           @options.keys.each { |k| @modifiers.merge!(SPECIAL_FIELDS[k] => @options.delete(k)) if SPECIAL_FIELDS[k] }
           @options.freeze
         end

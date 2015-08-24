@@ -638,7 +638,7 @@ describe Mongo::Collection::View::Readable do
     context 'when a modifiers document is specified' do
 
       let(:new_modifiers) do
-        BSON::Document.new(:modifiers => { :$orderby => Mongo::Index::DESCENDING })
+        { :modifiers => { :$orderby => Mongo::Index::DESCENDING } }
       end
 
       it 'sets the new_modifiers document' do
@@ -654,7 +654,7 @@ describe Mongo::Collection::View::Readable do
     context 'when a modifiers document is not specified' do
 
       it 'returns the modifiers value' do
-        expect(view.modifiers).to eq(BSON::Document.new(options[:modifiers]))
+        expect(view.modifiers).to eq(options[:modifiers])
       end
     end
   end
