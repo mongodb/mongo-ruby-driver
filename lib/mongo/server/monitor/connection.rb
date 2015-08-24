@@ -96,7 +96,7 @@ module Mongo
         def initialize(address, options = {})
           @address = address
           @options = options.freeze
-          @ssl_options = options.reject { |k, v| !k.to_s.start_with?('ssl') }
+          @ssl_options = options.reject { |k, v| !k.to_s.start_with?(SSL) }
           @socket = nil
           @pid = Process.pid
         end

@@ -148,7 +148,7 @@ module Mongo
         @monitoring = server.monitoring
         @options = options.freeze
         @server = server
-        @ssl_options = options.reject { |k, v| !k.to_s.start_with?('ssl') }
+        @ssl_options = options.reject { |k, v| !k.to_s.start_with?(SSL) }
         @socket = nil
         @pid = Process.pid
         setup_authentication!

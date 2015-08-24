@@ -28,10 +28,16 @@ module Mongo
     # Mapping from socket family to resolver class.
     #
     # @since 2.0.0
-    FAMILY_MAP = { ::Socket::PF_UNIX => Unix,
-                   ::Socket::AF_INET6 => IPv6,
-                   ::Socket::AF_INET => IPv4
-                 }
+    FAMILY_MAP = {
+      ::Socket::PF_UNIX => Unix,
+      ::Socket::AF_INET6 => IPv6,
+      ::Socket::AF_INET => IPv4
+    }.freeze
+
+    # The localhost constant.
+    #
+    # @since 2.1.0
+    LOCALHOST = 'localhost'.freeze
 
     # @return [ String ] seed The seed address.
     attr_reader :seed
@@ -146,7 +152,7 @@ module Mongo
     def initialize_resolver!(timeout, ssl_options)
       return Unix.new(seed.downcase) if seed.downcase =~ Unix::MATCH
 
-      family = (host == 'localhost') ? ::Socket::AF_INET : ::Socket::AF_UNSPEC
+      family = (host == LOCALHOST) ? ::Socket::AF_INET : ::Socket::AF_UNSPEC
       error = nil
       ::Socket.getaddrinfo(host, nil, family, ::Socket::SOCK_STREAM).each do |info|
         begin

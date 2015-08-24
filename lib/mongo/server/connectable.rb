@@ -20,6 +20,11 @@ module Mongo
     # @since 2.0.0
     module Connectable
 
+      # The ssl option prefix.
+      #
+      # @since 2.1.0
+      SSL = 'ssl'.freeze
+
       # The default time in seconds to timeout a connection attempt.
       #
       # @since 2.0.0
