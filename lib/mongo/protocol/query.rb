@@ -258,7 +258,7 @@ module Mongo
         def find_command
           document = BSON::Document.new
           document[:find] = collection
-          document[:filter] = filter.key?(:$query) ? filter[:$query] : filter
+          document[:filter] = filter[:$query] ? filter[:$query] : filter
           OPTION_MAPPINGS.each do |legacy, option|
             document[option] = options[legacy] unless options[legacy].nil?
           end

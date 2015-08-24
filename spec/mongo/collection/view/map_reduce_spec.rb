@@ -213,7 +213,7 @@ describe Mongo::Collection::View::MapReduce do
         end
 
         it 'includes the selector in the operation spec' do
-          expect(map_reduce.send(:map_reduce_spec)[:selector][:query]).to eq(selector[:$query])
+          expect(map_reduce.send(:map_reduce_spec)[:selector][:query]).to eq(BSON::Document.new(selector[:$query]))
         end
       end
     end
@@ -411,7 +411,7 @@ describe Mongo::Collection::View::MapReduce do
     end
 
     it 'includes the sort object in the operation spec' do
-      expect(map_reduce.send(:map_reduce_spec)[:selector][:sort]).to be(sort)
+      expect(map_reduce.send(:map_reduce_spec)[:selector][:sort][:name]).to eq(sort[:name])
     end
   end
 

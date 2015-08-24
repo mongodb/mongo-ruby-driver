@@ -49,8 +49,8 @@ module Mongo
           # @since 2.1.0
           def initialize(fs, options)
             @fs = fs
-            @options = options
-            @file_id = options[:file_id]
+            @options = options.dup
+            @file_id = @options.delete(:file_id)
             @open = true
           end
 

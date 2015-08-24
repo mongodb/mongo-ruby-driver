@@ -18,6 +18,180 @@ describe Mongo::Collection::View do
     authorized_collection.delete_many
   end
 
+  context 'when query modifiers are provided' do
+
+    context 'when a selector has a query modifier' do
+
+      let(:options) do
+        {}
+      end
+
+      let(:expected_modifiers) do
+        BSON::Document.new(selector)
+      end
+
+      let(:parsed_selector) do
+        {}
+      end
+
+      let(:query_selector) do
+        BSON::Document.new(selector)
+      end
+
+      context 'when the $query key is a string' do
+
+        let(:selector) do
+          { "$query" => { a: 1 }, :$someMod => 100 }
+        end
+
+        let(:expected_modifiers) do
+          BSON::Document.new(selector)
+        end
+
+        it 'sets the modifiers' do
+          expect(view.instance_variable_get(:@modifiers)).to eq(expected_modifiers)
+        end
+
+        it 'removes the modifiers from the selector' do
+          expect(view.selector).to eq(parsed_selector)
+        end
+
+        it 'creates the correct query selector' do
+          expect(view.send(:query_spec)[:selector]).to eq(query_selector)
+        end
+
+      end
+
+      context 'when the $query key is a symbol' do
+
+        let(:selector) do
+          { :$query => { a: 1 }, :$someMod => 100 }
+        end
+
+        let(:expected_modifiers) do
+          BSON::Document.new(selector)
+        end
+
+        it 'sets the modifiers' do
+          expect(view.instance_variable_get(:@modifiers)).to eq(expected_modifiers)
+        end
+
+        it 'removes the modifiers from the selector' do
+          expect(view.selector).to eq(parsed_selector)
+        end
+
+        it 'creates the correct query selector' do
+          expect(view.send(:query_spec)[:selector]).to eq(query_selector)
+        end
+      end
+    end
+
+    context 'when a modifiers document is provided in the options' do
+
+      let(:selector) do
+        { a: 1 }
+      end
+
+      let(:options) do
+        { :modifiers => { :$someMod => 100 } }
+      end
+
+      let(:expected_modifiers) do
+        options[:modifiers]
+      end
+
+      let(:parsed_selector) do
+        { a: 1 }
+      end
+
+      let(:query_selector) do
+        BSON::Document.new(:$query => { a: 1 }, :$someMod => 100)
+      end
+
+      it 'sets the modifiers' do
+        expect(view.instance_variable_get(:@modifiers)).to eq(expected_modifiers)
+      end
+
+      it 'removes the modifiers from the selector' do
+        expect(view.selector).to eq(parsed_selector)
+      end
+
+      it 'creates the correct query selector' do
+        expect(view.send(:query_spec)[:selector]).to eq(query_selector)
+      end
+
+      context 'when modifiers and options are both provided' do
+
+        let(:selector) do
+          { a: 1 }
+        end
+
+        let(:options) do
+          { :sort =>  { a: Mongo::Index::ASCENDING }, :modifiers => { :$orderby => { a: Mongo::Index::DESCENDING } } }
+        end
+
+        let(:expected_modifiers) do
+          { :$orderby => options[:sort] }
+        end
+
+        let(:parsed_selector) do
+          { a: 1 }
+        end
+
+        let(:query_selector) do
+          BSON::Document.new(:$query => selector, :$orderby => { a: Mongo::Index::ASCENDING })
+        end
+
+        it 'sets the modifiers' do
+          expect(view.instance_variable_get(:@modifiers)).to eq(expected_modifiers)
+        end
+
+        it 'removes the modifiers from the selector' do
+          expect(view.selector).to eq(parsed_selector)
+        end
+
+        it 'creates the correct query selector' do
+          expect(view.send(:query_spec)[:selector]).to eq(query_selector)
+        end
+      end
+
+      context 'when modifiers, options and a query modifier are provided' do
+
+        let(:selector) do
+          { b: 2, :$query => { a: 1 }, :$someMod => 100 }
+        end
+
+        let(:options) do
+          { :sort =>  { a: Mongo::Index::ASCENDING }, :modifiers => { :$someMod => true, :$orderby => { a: Mongo::Index::DESCENDING } } }
+        end
+
+        let(:expected_modifiers) do
+          { :$query => { a: 1 }, :$orderby => { a: Mongo::Index::ASCENDING }, :$someMod => 100 }
+        end
+
+        let(:parsed_selector) do
+          { b: 2 }
+        end
+
+        let(:query_selector) do
+          BSON::Document.new(:$query => { a: 1 }, :$someMod => 100, :$orderby => { a: Mongo::Index::ASCENDING })
+        end
+
+        it 'sets the modifiers' do
+          expect(view.instance_variable_get(:@modifiers)).to eq(expected_modifiers)
+        end
+
+        it 'removes the modifiers from the selector' do
+          expect(view.selector).to eq(parsed_selector)
+        end
+
+        it 'creates the correct query selector' do
+          expect(view.send(:query_spec)[:selector]).to eq(query_selector)
+        end
+      end
+    end
+  end
+
   describe '#==' do
 
     context 'when the other object is not a collection view' do
@@ -400,13 +574,46 @@ describe Mongo::Collection::View do
       context 'when the cluster is sharded', if: sharded? do
 
         before do
-          allow(authorized_collection.cluster).to receive(:sharded?).and_return(true)
           expect(view).to receive(:special_selector).and_call_original
         end
 
         it 'iterates over all of the documents' do
           view.each do |doc|
             expect(doc).to have_key('field')
+          end
+        end
+
+        context 'when there is a read preference' do
+
+          let(:collection) do
+            authorized_collection.with(read: { mode: :secondary})
+          end
+
+          let(:view) do
+            described_class.new(collection, selector, options)
+          end
+
+          let(:formatted_read_pref) do
+            BSON::Document.new(Mongo::ServerSelector.get(mode: :secondary).to_mongos)
+          end
+
+          it 'adds the formatted read preference to the selector' do
+            expect(view.send(:query_spec)[:selector][:$readPreference]).to eq(formatted_read_pref)
+          end
+        end
+
+        context 'when the read preference is primary' do
+
+          let(:collection) do
+            authorized_collection.with(read: { mode: :primary})
+          end
+
+          let(:view) do
+            described_class.new(collection, selector, options)
+          end
+
+          it 'does not add the formatted read preference to the selector' do
+            expect(view.send(:query_spec)[:selector][:$readPreference]).to be(nil)
           end
         end
       end
@@ -545,14 +752,11 @@ describe Mongo::Collection::View do
             end
 
             it 'overrides the modifier value with the option value' do
-              expect(query_spec[:selector][:$query]).to eq(selector)
+              expect(query_spec[:selector][:$query]).to eq(options[:modifiers][:$query])
             end
           end
-
-
         end
       end
-
     end
 
     context 'when there are no special fields' do

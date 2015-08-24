@@ -494,7 +494,7 @@ describe Mongo::Collection do
         end
 
         it 'returns a view with :batch_size set' do
-          expect(view.options[:batch_size]).to be(options[:batch_size])
+          expect(view.options[:batch_size]).to eq(options[:batch_size])
         end
       end
 
@@ -505,7 +505,7 @@ describe Mongo::Collection do
         end
 
         it 'returns a view with :comment set' do
-          expect(view.options[:comment]).to be(options[:comment])
+          expect(view.modifiers[:$comment]).to eq(options[:comment])
         end
       end
 
@@ -516,9 +516,11 @@ describe Mongo::Collection do
         end
 
         it 'returns a view with :cursor_type set' do
-          expect(view.options[:cursor_type]).to be(options[:cursor_type])
+          expect(view.options[:cursor_type]).to eq(options[:cursor_type])
         end
       end
+
+      #limit
 
       context 'when provided :max_time_ms' do
 
@@ -527,7 +529,7 @@ describe Mongo::Collection do
         end
 
         it 'returns a view with :max_time_ms set' do
-          expect(view.options[:max_time_ms]).to be(options[:max_time_ms])
+          expect(view.modifiers[:$maxTimeMS]).to eq(options[:max_time_ms])
         end
       end
 
@@ -538,7 +540,11 @@ describe Mongo::Collection do
         end
 
         it 'returns a view with modifiers set' do
-          expect(view.options[:modifiers]).to be(options[:modifiers])
+          expect(view.modifiers).to eq(options[:modifiers])
+        end
+
+        it 'dups the modifiers hash' do
+          expect(view.modifiers).not_to be(options[:modifiers])
         end
       end
 
@@ -549,7 +555,7 @@ describe Mongo::Collection do
         end
 
         it 'returns a view with :no_cursor_timeout set' do
-          expect(view.options[:no_cursor_timeout]).to be(options[:no_cursor_timeout])
+          expect(view.options[:no_cursor_timeout]).to eq(options[:no_cursor_timeout])
         end
       end
 
@@ -560,7 +566,7 @@ describe Mongo::Collection do
         end
 
         it 'returns a view with :oplog_replay set' do
-          expect(view.options[:oplog_replay]).to be(options[:oplog_replay])
+          expect(view.options[:oplog_replay]).to eq(options[:oplog_replay])
         end
       end
 
@@ -571,7 +577,7 @@ describe Mongo::Collection do
         end
 
         it 'returns a view with :projection set' do
-          expect(view.options[:projection]).to be(options[:projection])
+          expect(view.options[:projection]).to eq(options[:projection])
         end
       end
 
@@ -582,7 +588,7 @@ describe Mongo::Collection do
         end
 
         it 'returns a view with :skip set' do
-          expect(view.options[:skip]).to be(options[:skip])
+          expect(view.options[:skip]).to eq(options[:skip])
         end
       end
 
@@ -593,7 +599,7 @@ describe Mongo::Collection do
         end
 
         it 'returns a view with :sort set' do
-          expect(view.options[:sort]).to be(options[:sort])
+          expect(view.modifiers[:$orderby]).to eq(options[:sort])
         end
       end
     end
