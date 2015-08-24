@@ -472,7 +472,7 @@ describe Mongo::Collection::View::Readable do
     end
 
     it 'sets the value in the options' do
-      expect(new_view.max_value).to eq(_id: 1)
+      expect(new_view.max_value).to eq('_id' => 1)
     end
   end
 
@@ -483,7 +483,7 @@ describe Mongo::Collection::View::Readable do
     end
 
     it 'sets the value in the options' do
-      expect(new_view.min_value).to eq(_id: 1)
+      expect(new_view.min_value).to eq('_id' => 1)
     end
   end
 
@@ -638,7 +638,7 @@ describe Mongo::Collection::View::Readable do
     context 'when a modifiers document is specified' do
 
       let(:new_modifiers) do
-        { :modifiers => { :$orderby => Mongo::Index::DESCENDING } }
+        BSON::Document.new(:modifiers => { :$orderby => Mongo::Index::DESCENDING })
       end
 
       it 'sets the new_modifiers document' do
@@ -654,7 +654,7 @@ describe Mongo::Collection::View::Readable do
     context 'when a modifiers document is not specified' do
 
       it 'returns the modifiers value' do
-        expect(view.modifiers).to eq(options[:modifiers])
+        expect(view.modifiers).to eq(BSON::Document.new(options[:modifiers]))
       end
     end
   end

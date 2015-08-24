@@ -438,14 +438,14 @@ module Mongo
 
         def setup_options(opts)
           @options = opts ? opts.dup : {}
-          @modifiers = @options[:modifiers] ? @options.delete(:modifiers).dup : {}
+          @modifiers = @options[:modifiers] ? BSON::Document.new(@options.delete(:modifiers)) : BSON::Document.new
           @options.keys.each { |k| @modifiers.merge!(SPECIAL_FIELDS[k] => @options.delete(k)) if SPECIAL_FIELDS[k] }
           @options.freeze
         end
 
         def setup_selector(sel)
           @selector = sel ? sel.dup : {}
-          if @selector[:$query]
+          if @selector[:$query] || @selector["$query"]
             @selector.keys.each { |k| @modifiers.merge!(k => @selector.delete(k)) if k[0] == '$' }
           end
           @selector.freeze
