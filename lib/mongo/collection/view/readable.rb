@@ -448,6 +448,7 @@ module Mongo
           if @selector[:$query] || @selector['$query']
             @selector.keys.each { |k| @modifiers.merge!(k => @selector.delete(k)) if k[0] == '$' }
           end
+          @modifiers.freeze
           @selector.freeze
         end
 
