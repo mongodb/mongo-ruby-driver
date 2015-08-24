@@ -20,11 +20,6 @@ module Mongo
     # @since 2.0.0
     module Connectable
 
-      # Ping command to test connections.
-      #
-      # @since 2.1.0
-      PING = Protocol::Query.new(Database::ADMIN, Database::COMMAND, { :ping => 1 }, :limit => -1)
-
       # The default time in seconds to timeout a connection attempt.
       #
       # @since 2.0.0
@@ -49,9 +44,7 @@ module Mongo
       #
       # @since 2.1.0
       def connectable?
-        begin
-          deliver([ PING ]).documents[0]['ok'] == 1
-        rescue; false; end
+        begin; ping; rescue; false; end
       end
 
       # Determine if the connection is currently connected.

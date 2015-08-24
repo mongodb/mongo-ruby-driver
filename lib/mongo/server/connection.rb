@@ -23,6 +23,21 @@ module Mongo
       include Monitoring::Publishable
       extend Forwardable
 
+      # The ping command.
+      #
+      # @since 2.1.0
+      PING = { :ping => 1 }.freeze
+
+      # Ping message.
+      #
+      # @since 2.1.0
+      PING_MESSAGE = Protocol::Query.new(Database::ADMIN, Database::COMMAND, PING, :limit => -1)
+
+      # The ping message as raw bytes.
+      #
+      # @since 2.1.0
+      PING_BYTES = PING_MESSAGE.serialize.freeze
+
       # @return [ Mongo::Auth::CR, Mongo::Auth::X509, Mongo::Auth:LDAP, Mongo::Auth::SCRAM ]
       #   authenticator The authentication strategy.
       attr_reader :authenticator
@@ -137,6 +152,23 @@ module Mongo
         @socket = nil
         @pid = Process.pid
         setup_authentication!
+      end
+
+      # Ping the connection to see if the server is responding to commands.
+      # This is non-blocking on the server side.
+      #
+      # @example Ping the connection.
+      #   connection.ping
+      #
+      # @return [ true, false ] If the server is accepting connections.
+      #
+      # @since 2.1.0
+      def ping
+        ensure_connected do |socket|
+          socket.write(PING_BYTES)
+          reply = Protocol::Reply.deserialize(socket)
+          reply.documents[0][Operation::Result::OK] == 1
+        end
       end
 
       private
