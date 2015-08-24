@@ -11,6 +11,8 @@ tests:
                 port: ~
         auth: ~
         options: ~
+#
+# A Mongo::Client doesn't validate option values when initialized so the uri doesn't either.
 #    -
 #        description: "Unsupported option values are ignored"
 #        uri: "mongodb://example.com/?fsync=ifPossible"
@@ -24,18 +26,20 @@ tests:
 #        auth: ~
 #        options: ~
 #    -
-#        description: "Repeated option keys"
-#        uri: "mongodb://example.com/?replicaSet=test&replicaSet=test"
-#        valid: true
-#        warning: true
-#        hosts:
-#            -
-#                type: "hostname"
-#                host: "example.com"
-#                port: ~
-#        auth: ~
-#        options:
-#            replicaset: "test"
+        description: "Repeated option keys"
+        uri: "mongodb://example.com/?replicaSet=test&replicaSet=test"
+        valid: true
+        warning: true
+        hosts:
+            -
+                type: "hostname"
+                host: "example.com"
+                port: ~
+        auth: ~
+        options:
+            replicaset: "test"
+#
+# Change this test in the future if there is a deprecated option in driver 2.0
 #    -
 #        description: "Deprecated (or unknown) options are ignored if replacement exists"
 #        uri: "mongodb://example.com/?wtimeout=5&wtimeoutMS=10"

@@ -171,6 +171,11 @@ module Mongo
       'GSSAPI'     => :gssapi
     }.freeze
 
+    # Options that are allowed to appear more than once in the uri.
+    #
+    # @since 2.1.0
+    REPEATABLE_OPTIONS = [ :tag_sets ]
+
     # Create the new uri from the provided string.
     #
     # @example Create the new URI.
@@ -442,7 +447,11 @@ module Mongo
     # @param name [Symbol] The name of the option.
     def merge_uri_option(target, value, name)
       if target.key?(name)
-        target[name] += value
+        if REPEATABLE_OPTIONS.include?(name)
+          target[name] += value
+        else
+          log_warn("Repeated option key: #{name}.")
+        end
       else
         target.merge!(name => value)
       end
