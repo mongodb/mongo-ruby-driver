@@ -190,10 +190,14 @@ module Mongo
       def successful?
         return true if !acknowledged?
         if first_document.has_key?(OK)
-          first_document[OK] == 1 && parser.message.empty?
+          ok? && parser.message.empty?
         else
           !query_failure? && parser.message.empty?
         end
+      end
+
+      def ok?
+        first_document[OK] == 1
       end
 
       # Validate the result by checking for any errors.
