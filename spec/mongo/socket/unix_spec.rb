@@ -45,7 +45,7 @@ describe Mongo::Socket::Unix do
       end
 
       it 'raises error' do
-        expect { socket.alive? }.to raise_error(IOError)
+        expect(socket).to_not be_alive
       end
     end
   end

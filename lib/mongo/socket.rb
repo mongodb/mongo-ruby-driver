@@ -56,12 +56,9 @@ module Mongo
     #
     # @since 2.0.0
     def alive?
-      sock_arr = [ @socket ]
-      if Kernel::select(sock_arr, nil, sock_arr, 0)
-        eof?
-      else
-        true
-      end
+      begin
+        @socket.getpeername; true
+      rescue; false; end
     end
 
     # Close the socket.
@@ -155,15 +152,6 @@ module Mongo
     # @since 2.0.0
     def write(*args)
       handle_errors { @socket.write(*args) }
-    end
-
-    # Tests if this socket has reached EOF. Primarily used for liveness checks.
-    #
-    # @since 2.0.5
-    def eof?
-      @socket.eof?
-    rescue IOError, SystemCallError => e
-      true
     end
 
     private
