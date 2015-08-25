@@ -24,7 +24,6 @@ module Mongo
         extend Forwardable
         include Enumerable
         include Immutable
-        include Iterable
         include Loggable
         include Retryable
 
@@ -52,6 +51,31 @@ module Mongo
 
         # Delegate necessary operations to the collection.
         def_delegators :collection, :database
+
+        # Iterate through documents returned by the map/reduce.
+        #
+        # @example Iterate through the result of the map/reduce.
+        #   map_reduce.each do |document|
+        #     p document
+        #   end
+        #
+        # @return [ Enumerator ] The enumerator.
+        #
+        # @since 2.0.0
+        #
+        # @yieldparam [ Hash ] Each matching document.
+        def each
+          @cursor = nil
+          write_with_retry do
+            server = read.select_server(cluster)
+            result = send_initial_query(server)
+            @cursor = Cursor.new(view, result, server)
+          end
+          @cursor.each do |doc|
+            yield doc
+          end if block_given?
+          @cursor.to_enum
+        end
 
         # Set or get the finalize function for the operation.
         #
