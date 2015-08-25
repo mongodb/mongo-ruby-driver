@@ -74,7 +74,7 @@ module Mongo
         # @param value [String] The string to be serialized.
         # @return [String] Buffer with serialized value.
         def self.serialize(buffer, value)
-          buffer << value
+          buffer << value.force_encoding(BSON::BINARY)
           buffer << NULL
         end
       end

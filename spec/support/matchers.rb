@@ -20,7 +20,7 @@ end
 
 RSpec::Matchers.define :be_cstring do |string|
   match do |actual|
-    actual == "#{string}\0"
+    actual == "#{string.force_encoding(BSON::BINARY)}\0"
   end
 end
 

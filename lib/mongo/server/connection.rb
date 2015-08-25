@@ -188,7 +188,7 @@ module Mongo
         end
       end
 
-      def write(messages, buffer = '')
+      def write(messages, buffer = ''.force_encoding(BSON::BINARY))
         start_size = 0
         messages.each do |message|
           message.serialize(buffer, max_bson_object_size)
