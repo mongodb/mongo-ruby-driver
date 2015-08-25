@@ -38,6 +38,16 @@ module Mongo
     # @since 2.0.0
     DEFAULT_OPTIONS = { :database => ADMIN }.freeze
 
+    # Database name field constant.
+    #
+    # @since 2.1.0
+    NAME = 'name'.freeze
+
+    # Databases constant.
+    #
+    # @since 2.1.0
+    DATABASES = 'databases'.freeze
+
     # The name of the collection that holds all the collection names.
     #
     # @since 2.0.0

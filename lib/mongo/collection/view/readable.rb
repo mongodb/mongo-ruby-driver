@@ -25,17 +25,17 @@ module Mongo
         #
         # @since 2.0.0
         SPECIAL_FIELDS = {
-            :sort => :$orderby,
-            :hint => :$hint,
-            :comment => :$comment,
-            :snapshot => :$snapshot,
-            :max_scan => :$maxScan,
-            :max_value => :$max,
-            :min_value => :$min,
-            :max_time_ms => :$maxTimeMS,
-            :return_key => :$returnKey,
-            :show_disk_loc => :$showDiskLoc,
-            :explain => :$explain
+          :sort => :$orderby,
+          :hint => :$hint,
+          :comment => :$comment,
+          :snapshot => :$snapshot,
+          :max_scan => :$maxScan,
+          :max_value => :$max,
+          :min_value => :$min,
+          :max_time_ms => :$maxTimeMS,
+          :return_key => :$returnKey,
+          :show_disk_loc => :$showDiskLoc,
+          :explain => :$explain
         }.freeze
 
         # Options to cursor flags mapping.

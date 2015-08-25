@@ -90,8 +90,8 @@ module Mongo
         def update(user_or_name, options = {})
           user = generate(user_or_name, options)
           Operation::Write::UpdateUser.new(
-              user: user,
-              db_name: database.name
+            user: user,
+            db_name: database.name
           ).execute(next_primary.context)
         end
 

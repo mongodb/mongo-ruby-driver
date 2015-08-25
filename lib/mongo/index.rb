@@ -21,6 +21,11 @@ module Mongo
   # @since 2.0.0
   module Index
 
+    # Wildcard constant for all.
+    #
+    # @since 2.1.0
+    ALL = '*'.freeze
+
     # Specify ascending order for an index.
     #
     # @since 2.0.0
