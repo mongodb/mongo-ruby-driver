@@ -196,6 +196,14 @@ module Mongo
         end
       end
 
+      # Check the first document's ok field.
+      #
+      # @example Check the ok field.
+      #   result.ok?
+      #
+      # @return [ true, false ] If the command returned ok.
+      #
+      # @since 2.1.0
       def ok?
         first_document[OK] == 1
       end
