@@ -53,7 +53,7 @@ module Mongo
         server = next_primary
         collections_info(server).collect do |info|
           server.context.features.list_collections_enabled? ?
-            info['name'] : info['name'].sub("#{@database.name}.", '')
+            info[Database::NAME] : info[Database::NAME].sub("#{@database.name}.", '')
         end
       end
 

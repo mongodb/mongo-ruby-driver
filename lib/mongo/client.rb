@@ -274,7 +274,7 @@ module Mongo
     #
     # @since 2.0.5
     def database_names
-      list_databases.collect{ |info| info['name'] }
+      list_databases.collect{ |info| info[Database::NAME] }
     end
 
     # Get info for each database.
@@ -286,7 +286,7 @@ module Mongo
     #
     # @since 2.0.5
     def list_databases
-      use(Database::ADMIN).command(listDatabases: 1).first['databases']
+      use(Database::ADMIN).command(listDatabases: 1).first[Database::DATABASES]
     end
 
     private

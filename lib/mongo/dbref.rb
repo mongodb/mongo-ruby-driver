@@ -53,8 +53,8 @@ module Mongo
     #
     # @since 2.1.0
     def as_json(*args)
-      document = { '$ref' => collection, '$id' => id }
-      document.merge!('$db' => database) if database
+      document = { COLLECTION => collection, ID => id }
+      document.merge!(DATABASE => database) if database
       document
     end
 
@@ -101,8 +101,8 @@ module Mongo
       # @since 2.0.0
       def from_bson(bson)
         decoded = super
-        if ref = decoded['$ref']
-          decoded = DBRef.new(ref, decoded['$id'], decoded['$db'])
+        if ref = decoded[COLLECTION]
+          decoded = DBRef.new(ref, decoded[ID], decoded[DATABASE])
         end
         decoded
       end

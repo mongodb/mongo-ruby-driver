@@ -43,10 +43,10 @@ module Mongo
         #
         # @since 2.1.0
         OPTIONS_MAP = {
-                       :allow_disk_use => :allowDiskUse,
-                       :max_time_ms => :maxTimeMS,
-                       :explain => :explain
-                      }
+          :allow_disk_use => :allowDiskUse,
+          :max_time_ms => :maxTimeMS,
+          :explain => :explain
+        }.freeze
 
         # The reroute message.
         #

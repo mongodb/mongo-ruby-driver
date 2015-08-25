@@ -76,7 +76,7 @@ module Mongo
       #
       # @since 2.0.0
       def drop_one(name)
-        raise Error::MultiIndexDrop.new if name == '*'
+        raise Error::MultiIndexDrop.new if name == Index::ALL
         drop_by_name(name)
       end
 
@@ -89,7 +89,7 @@ module Mongo
       #
       # @since 2.0.0
       def drop_all
-        drop_by_name('*')
+        drop_by_name(Index::ALL)
       end
 
       # Creates an index on the collection.
