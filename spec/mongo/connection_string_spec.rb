@@ -11,78 +11,84 @@ describe 'ConnectionString' do
 
       before(:all) do
 
-        class Mongo::Address
+        module Mongo
+          class Address
 
-          private
+            private
 
-          def initialize_resolver!(timeout, ssl_options)
-            family = (host == 'localhost') ? ::Socket::AF_INET : ::Socket::AF_UNSPEC
-            info = ::Socket.getaddrinfo(host, nil, family, ::Socket::SOCK_STREAM)
-            FAMILY_MAP[info.first[4]].new(info[3], port, host)
-          end
-        end
-
-        class Mongo::Server
-
-          # The constructor keeps the same API, but does not instantiate a
-          # monitor and run it.
-          def initialize(address, cluster, monitoring, event_listeners, options = {})
-            @address = address
-            @cluster = cluster
-            @monitoring = monitoring
-            @options = options.freeze
-            @monitor = Monitor.new(address, event_listeners, options)
+            def initialize_resolver!(timeout, ssl_options)
+              family = (host == 'localhost') ? ::Socket::AF_INET : ::Socket::AF_UNSPEC
+              info = ::Socket.getaddrinfo(host, nil, family, ::Socket::SOCK_STREAM)
+              FAMILY_MAP[info.first[4]].new(info[3], port, host)
+            end
           end
 
-          # Disconnect simply needs to return true since we have no monitor and
-          # no connection.
-          def disconnect!; true; end
+          class Server
+
+            # The constructor keeps the same API, but does not instantiate a
+            # monitor and run it.
+            def initialize(address, cluster, monitoring, event_listeners, options = {})
+              @address = address
+              @cluster = cluster
+              @monitoring = monitoring
+              @options = options.freeze
+              @monitor = Monitor.new(address, event_listeners, options)
+            end
+
+            # Disconnect simply needs to return true since we have no monitor and
+            # no connection.
+            def disconnect!; true; end
+          end
         end
       end
 
       after(:all) do
 
-        # Return the server implementation to its original for the other
-        # tests in the suite.
-        class Mongo::Server
+        module Mongo
+          # Return the server implementation to its original for the other
+          # tests in the suite.
+          class Server
 
-          # Returns the constructor to its original implementation.
-          def initialize(address, cluster, monitoring, event_listeners, options = {})
-            @address = address
-            @cluster = cluster
-            @monitoring = monitoring
-            @options = options.freeze
-            @monitor = Monitor.new(address, event_listeners, options)
-            @monitor.scan!
-            @monitor.run!
-          end
-
-          # Returns disconnect! to its original implementation.
-          def disconnect!
-            context.with_connection do |connection|
-              connection.disconnect!
+            # Returns the constructor to its original implementation.
+            def initialize(address, cluster, monitoring, event_listeners, options = {})
+              @address = address
+              @cluster = cluster
+              @monitoring = monitoring
+              @options = options.freeze
+              @monitor = Monitor.new(address, event_listeners, options)
+              @monitor.scan!
+              @monitor.run!
             end
-            @monitor.stop! and true
-          end
-        end
 
-        class Mongo::Address
-
-          private
-
-          def initialize_resolver!(timeout, ssl_options)
-            family = (host == 'localhost') ? ::Socket::AF_INET : ::Socket::AF_UNSPEC
-            error = nil
-            ::Socket.getaddrinfo(host, nil, family, ::Socket::SOCK_STREAM).each do |info|
-              begin
-                res = FAMILY_MAP[info[4]].new(info[3], port, host)
-                res.socket(timeout, ssl_options).connect!.close
-                return res
-              rescue IOError, SystemCallError, Error::SocketError => e
-                error = e
+            # Returns disconnect! to its original implementation.
+            def disconnect!
+              context.with_connection do |connection|
+                connection.disconnect!
               end
+              @monitor.stop! and true
             end
-            raise error
+          end
+
+          class Address
+
+            private
+
+            def initialize_resolver!(timeout, ssl_options)
+              return Unix.new(seed.downcase) if seed.downcase =~ Unix::MATCH
+
+              family = (host == LOCALHOST) ? ::Socket::AF_INET : ::Socket::AF_UNSPEC
+              error = nil
+              ::Socket.getaddrinfo(host, nil, family, ::Socket::SOCK_STREAM).each do |info|
+                begin
+                  res = FAMILY_MAP[info[4]].new(info[3], port, host)
+                  res.socket(timeout, ssl_options).connect!.close
+                  return res
+                rescue IOError, SystemCallError, Error::SocketError => e
+                  error = e
+                end
+              end
+              raise error
+            end
           end
         end
       end
