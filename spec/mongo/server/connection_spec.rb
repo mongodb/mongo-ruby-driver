@@ -38,7 +38,7 @@ describe Mongo::Server::Connection do
     context 'when the connection is not connectable' do
 
       let(:bad_address) do
-        Mongo::Address.new('127.0.0.1:27016')
+        Mongo::Address.new('127.0.0.1:666')
       end
 
       let(:bad_server) do
