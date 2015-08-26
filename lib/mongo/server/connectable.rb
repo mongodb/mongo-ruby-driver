@@ -49,7 +49,12 @@ module Mongo
       #
       # @since 2.1.0
       def connectable?
-        begin; ping; rescue; false; end
+        begin
+          ping
+        rescue Exception => e
+          p e
+          false
+        end
       end
 
       # Determine if the connection is currently connected.
