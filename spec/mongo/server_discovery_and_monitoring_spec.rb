@@ -19,7 +19,7 @@ describe 'Server Discovery and Monitoring' do
           # @since 2.0.0
           class Server
 
-            alias original_initialize initialize
+            alias :original_initialize :initialize
             def initialize(address, cluster, monitoring, event_listeners, options = {})
               @address = address
               @cluster = cluster
@@ -28,7 +28,7 @@ describe 'Server Discovery and Monitoring' do
               @monitor = Monitor.new(address, event_listeners, options)
             end
 
-            alias original_disconnect! disconnect!
+            alias :original_disconnect! :disconnect!
             def disconnect!; true; end
           end
         end
@@ -46,10 +46,10 @@ describe 'Server Discovery and Monitoring' do
         # tests in the suite.
         module Mongo
           class Server
-            alias initialize original_initialize
+            alias :initialize :original_initialize
             remove_method(:original_initialize)
 
-            alias disconnect! original_disconnect!
+            alias :disconnect! :original_disconnect!
             remove_method(:original_disconnect!)
           end
         end
