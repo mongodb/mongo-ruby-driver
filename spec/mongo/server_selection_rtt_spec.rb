@@ -19,6 +19,7 @@ describe 'Server Selection moving average round trip time calculation' do
           # @since 2.0.0
           class Monitor
 
+            alias original_initialize initialize
             def initialize(address, listeners, options = {})
               @description = Mongo::Server::Description.new(address, {})
               @inspector = Mongo::Server::Description::Inspector.new(listeners)
@@ -28,11 +29,10 @@ describe 'Server Selection moving average round trip time calculation' do
               @mutex = Mutex.new
             end
 
-            private
-
             # We monkey patch this method to use an instance variable instead of calculating time elapsed.
             #
             # @since 2.0.0
+            alias original_average_round_trip_time average_round_trip_time
             def average_round_trip_time(start)
               new_rtt = @new_rtt_ms
               RTT_WEIGHT_FACTOR * new_rtt + (1 - RTT_WEIGHT_FACTOR) * (@last_round_trip_time || new_rtt)
@@ -51,31 +51,11 @@ describe 'Server Selection moving average round trip time calculation' do
           # tests in the suite.
           class Monitor
 
-            # Create the new server monitor.
-            #
-            # @example Create the server monitor.
-            #   Mongo::Server::Monitor.new(address, listeners)
-            #
-            # @param [ Address ] address The address to monitor.
-            # @param [ Event::Listeners ] listeners The event listeners.
-            # @param [ Hash ] options The options.
-            #
-            # @since 2.0.0
-            def initialize(address, listeners, options = {})
-              @description = Description.new(address, {})
-              @inspector = Description::Inspector.new(listeners)
-              @options = options.freeze
-              @connection = Connection.new(address, options)
-              @last_round_trip_time = nil
-              @mutex = Mutex.new
-            end
+            alias initialize original_initialize
+            remove_method(:original_initialize)
 
-            private
-
-            def average_round_trip_time(start)
-              new_rtt = Time.now - start
-              RTT_WEIGHT_FACTOR * new_rtt + (1 - RTT_WEIGHT_FACTOR) * (@last_round_trip_time || new_rtt)
-            end
+            alias average_round_trip_time original_average_round_trip_time
+            remove_method(:original_average_round_trip_time)
           end
         end
       end
