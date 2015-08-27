@@ -115,7 +115,7 @@ describe Mongo::Server::ConnectionPool do
     end
 
     it 'disconnects the queue' do
-      expect(pool.send(:queue)).to receive(:disconnect!).and_call_original
+      expect(pool.send(:queue)).to receive(:disconnect!).twice.and_call_original
       pool.disconnect!
     end
   end

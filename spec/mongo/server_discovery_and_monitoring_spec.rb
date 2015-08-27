@@ -11,40 +11,26 @@ describe 'Server Discovery and Monitoring' do
 
       before(:all) do
 
-        # We monkey-patch the address, so that looking up the spec's hostname does
-        # not throw an error.
-        #
-        # @since 2.0.0
-        class Mongo::Address
-          private
+        module Mongo
+          # We monkey-patch the server here, so the monitors do not run and no
+          # real TCP connection is attempted. Thus we can control the server
+          # descriptions per-phase.
+          #
+          # @since 2.0.0
+          class Server
 
-          def family(host)
-            fam = host == 'localhost' ? ::Socket::AF_INET : ::Socket::AF_UNSPEC
-            ::Socket.getaddrinfo(host, nil, fam, ::Socket::SOCK_STREAM).first[4]
-          rescue SocketError
+            alias :original_initialize :initialize
+            def initialize(address, cluster, monitoring, event_listeners, options = {})
+              @address = address
+              @cluster = cluster
+              @monitoring = monitoring
+              @options = options.freeze
+              @monitor = Monitor.new(address, event_listeners, options)
+            end
+
+            alias :original_disconnect! :disconnect!
+            def disconnect!; true; end
           end
-        end
-
-        # We monkey-patch the server here, so the monitors do not run and no
-        # real TCP connection is attempted. Thus we can control the server
-        # descriptions per-phase.
-        #
-        # @since 2.0.0
-        class Mongo::Server
-
-          # The constructor keeps the same API, but does not instantiate a
-          # monitor and run it.
-          def initialize(address, cluster, monitoring, event_listeners, options = {})
-            @address = address
-            @cluster = cluster
-            @monitoring = monitoring
-            @options = options.freeze
-            @monitor = Monitor.new(address, event_listeners, options)
-          end
-
-          # Disconnect simply needs to return true since we have no monitor and
-          # no connection.
-          def disconnect!; true; end
         end
 
         # Client is set as an instance variable inside the scope of the spec to
@@ -58,34 +44,13 @@ describe 'Server Discovery and Monitoring' do
 
         # Return the server implementation to its original for the other
         # tests in the suite.
-        class Mongo::Server
+        module Mongo
+          class Server
+            alias :initialize :original_initialize
+            remove_method(:original_initialize)
 
-          # Returns the constructor to its original implementation.
-          def initialize(address, cluster, monitoring, event_listeners, options = {})
-            @address = address
-            @cluster = cluster
-            @monitoring = monitoring
-            @options = options.freeze
-            @monitor = Monitor.new(address, event_listeners, options)
-            @monitor.scan!
-            @monitor.run!
-          end
-
-          # Returns disconnect! to its original implementation.
-          def disconnect!
-            context.with_connection do |connection|
-              connection.disconnect!
-            end
-            @monitor.stop! and true
-          end
-        end
-
-        class Mongo::Address
-          private
-
-          def family(host)
-            fam = host == 'localhost' ? ::Socket::AF_INET : ::Socket::AF_UNSPEC
-            ::Socket.getaddrinfo(host, nil, fam, ::Socket::SOCK_STREAM).first[4]
+            alias :disconnect! :original_disconnect!
+            remove_method(:original_disconnect!)
           end
         end
       end
