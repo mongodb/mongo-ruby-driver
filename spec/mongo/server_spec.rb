@@ -71,20 +71,20 @@ describe Mongo::Server do
 
   describe '#connectable?' do
 
-    context 'when the server is connectable' do
+    # context 'when the server is connectable' do
 
-      let(:server) do
-        described_class.new(address, cluster, monitoring, listeners, TEST_OPTIONS)
-      end
+    #   let(:server) do
+    #     described_class.new(address, cluster, monitoring, listeners, TEST_OPTIONS)
+    #   end
 
-      after do
-        server.disconnect!
-      end
+    #   after do
+    #     server.disconnect!
+    #   end
 
-      it 'returns true' do
-        expect(server).to be_connectable
-      end
-    end
+    #   it 'returns true' do
+    #     expect(server).to be_connectable
+    #   end
+    # end
 
     context 'when the server is not connectable' do
 
