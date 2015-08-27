@@ -15,7 +15,7 @@ describe Mongo::Protocol::Query do
 
   describe '#initialize' do
 
-    it 'sets the namepsace' do
+    it 'sets the namespace' do
       expect(message.namespace).to eq(ns)
     end
 
