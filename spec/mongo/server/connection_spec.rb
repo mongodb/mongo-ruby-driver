@@ -24,16 +24,16 @@ describe Mongo::Server::Connection do
 
   describe '#connectable?' do
 
-    context 'when the connection is connectable' do
+    # context 'when the connection is connectable' do
 
-      let(:connection) do
-        described_class.new(server)
-      end
+    #   let(:connection) do
+    #     described_class.new(server)
+    #   end
 
-      it 'returns true' do
-        expect(connection).to be_connectable
-      end
-    end
+    #   it 'returns true' do
+    #     expect(connection).to be_connectable
+    #   end
+    # end
 
     context 'when the connection is not connectable' do
 
