@@ -1,3 +1,4 @@
+# encoding: UTF-8
 require 'spec_helper'
 
 describe Mongo::Protocol::Query do
@@ -219,6 +220,19 @@ describe Mongo::Protocol::Query do
       let(:field) { bytes[20..36] }
       it 'serializes the namespace' do
         expect(field).to be_cstring(ns)
+      end
+
+      context 'when the namespace contains unicode characters' do
+        let(:field) { bytes[20..40] }
+
+        let(:coll) do
+          'områder'
+        end
+
+        it 'serializes the namespace' do
+          expect(field).to be_cstring(ns)
+        end
+
       end
     end
 
