@@ -218,7 +218,32 @@ describe Mongo::Socket::SSL do
       end
     end
 
+  end
+
+  describe '#eof?', if: running_ssl? do
+
+    context 'when raising SSL Error' do
+
+      let(:options) do
+        {
+            :ssl => true,
+            :ssl_cert => CLIENT_PEM,
+            :ssl_key => CLIENT_PEM,
+            :ssl_verify => false
+        }
+      end
+
+      before do
+        socket.connect!
+        expect(socket.socket).to receive(:eof?).and_raise(OpenSSL::SSL::SSLError)
+      end
+
+      it 'is not alive' do
+        expect(socket).to be_eof
+      end
+    end
 
   end
+
 
 end

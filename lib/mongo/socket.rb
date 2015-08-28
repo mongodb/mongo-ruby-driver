@@ -165,7 +165,7 @@ module Mongo
     # @since 2.0.5
     def eof?
       @socket.eof?
-    rescue IOError, SystemCallError => e
+    rescue IOError, SystemCallError, OpenSSL::SSL::SSLError => e
       true
     end
 
