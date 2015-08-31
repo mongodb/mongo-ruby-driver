@@ -137,7 +137,9 @@ module Mongo
           cmd[:hint] = options[:hint] if options[:hint]
           cmd[:limit] = options[:limit] if options[:limit]
           cmd[:maxTimeMS] = options[:max_time_ms] if options[:max_time_ms]
-          database.command(cmd, options).n
+          read_with_retry do
+            database.command(cmd, options).n
+          end
         end
 
         # Get a list of distinct values for a specific field.
@@ -160,7 +162,9 @@ module Mongo
                   :key => field_name.to_s,
                   :query => selector }
           cmd[:maxTimeMS] = options[:max_time_ms] if options[:max_time_ms]
-          database.command(cmd, options).first['values']
+          read_with_retry do
+            database.command(cmd, options).first['values']
+          end
         end
 
         # The index that MongoDB will be forced to use for the query.
