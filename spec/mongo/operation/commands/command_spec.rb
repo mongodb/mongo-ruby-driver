@@ -38,24 +38,6 @@ describe Mongo::Operation::Command do
     end
   end
 
-  context '#merge' do
-
-    let(:other_op) { described_class.new(spec) }
-
-    it 'raises an exception' do
-      expect{ op.merge(other_op) }.to raise_exception
-    end
-  end
-
-  context '#merge!' do
-
-    let(:other_op) { described_class.new(spec) }
-
-    it 'raises an exception' do
-      expect{ op.merge!(other_op) }.to raise_exception
-    end
-  end
-
   describe '#execute' do
 
     context 'when the command succeeds' do

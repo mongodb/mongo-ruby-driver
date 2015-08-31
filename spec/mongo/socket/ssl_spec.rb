@@ -42,7 +42,7 @@ describe Mongo::Socket::SSL do
       it 'raises an exception' do
         expect {
           socket.connect!
-        }.to raise_error
+        }.to raise_exception(OpenSSL::PKey::RSAError)
       end
     end
 
