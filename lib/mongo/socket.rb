@@ -54,7 +54,7 @@ module Mongo
     #
     # @return [ true, false ] If the socket is alive.
     #
-    # @since 2.0.0
+    # @deprecated Use #connectable? on the connection instead.
     def alive?
       sock_arr = [ @socket ]
       if Kernel::select(sock_arr, nil, sock_arr, 0)
