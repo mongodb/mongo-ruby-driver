@@ -86,7 +86,7 @@ module Mongo
 
       def ensure_connected
         ensure_same_process!
-        connect! if socket.nil? || !socket.alive?
+        connect!
         begin
           yield socket
         rescue Exception => e

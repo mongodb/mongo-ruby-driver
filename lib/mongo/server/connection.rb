@@ -75,7 +75,7 @@ module Mongo
       def connect!
         unless socket
           @socket = address.socket(timeout, ssl_options)
-          @socket.connect!
+          socket.connect!
           if authenticator
             authenticator.login(self)
             @authenticated = true
