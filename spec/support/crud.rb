@@ -144,7 +144,13 @@ module Mongo
       #
       # @since 2.0.0
       def compare_collection_data
-        actual_collection_data == outcome_collection_data
+        if actual_collection_data.nil?
+          outcome_collection_data.nil?
+        else
+          actual_collection_data.all? do |doc|
+            outcome_collection_data.include?(doc)
+          end
+        end
       end
 
       # Whether this test requires server version >= 2.6 for its results to match
