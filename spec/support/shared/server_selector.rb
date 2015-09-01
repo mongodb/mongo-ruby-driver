@@ -12,7 +12,7 @@ def server(mode, options = {})
 
   listeners = Mongo::Event::Listeners.new
   monitoring = Mongo::Monitoring.new
-  address = Mongo::Address.new('127.0.0.1:27017')
+  address = Mongo::Address.new(DEFAULT_ADDRESS)
 
   server = Mongo::Server.new(address, double('cluster'), monitoring, listeners, TEST_OPTIONS)
   description = Mongo::Server::Description.new(address, ismaster, average_round_trip_time)
@@ -33,6 +33,44 @@ shared_context 'server selector' do
   let(:primary) { server(:primary) }
   let(:secondary) { server(:secondary) }
   let(:selector) { described_class.new(:mode => name, :tag_sets => tag_sets) }
+
+  before(:all) do
+    module Mongo
+      # We monkey-patch the server here, so the monitors do not run and no
+      # real TCP connection is attempted.
+      #
+      # @since 2.1.0
+      class Server
+
+        alias :original_initialize :initialize
+        def initialize(address, cluster, monitoring, event_listeners, options = {})
+          @address = address
+          @cluster = cluster
+          @monitoring = monitoring
+          @options = options.freeze
+          @monitor = Monitor.new(address, event_listeners, options)
+        end
+
+        alias :original_disconnect! :disconnect!
+        def disconnect!; true; end
+      end
+    end
+  end
+
+  after(:all) do
+
+    # Return the server implementation to its original for the other
+    # tests in the suite.
+    module Mongo
+      class Server
+        alias :initialize :original_initialize
+        remove_method(:original_initialize)
+
+        alias :disconnect! :original_disconnect!
+        remove_method(:original_disconnect!)
+      end
+    end
+  end
 end
 
 shared_examples 'a server selector mode' do
