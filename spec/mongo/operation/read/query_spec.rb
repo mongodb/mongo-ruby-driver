@@ -82,6 +82,25 @@ describe Mongo::Operation::Read::Query do
         op.execute(primary_context)
       end
     end
+
+    context "when the document contains an 'ok' field" do
+
+      before do
+        authorized_collection.insert_one(ok: false)
+      end
+
+      after do
+        authorized_collection.delete_many
+      end
+
+      let(:context) do
+        authorized_client.cluster.next_primary.context
+      end
+
+      it 'does not raise an exception' do
+        expect(op.execute(context)).to be_a(Mongo::Operation::Read::Query::Result)
+      end
+    end
   end
 end
 
