@@ -36,7 +36,7 @@ module Mongo
         def connect!
           unless socket
             @socket = address.socket(timeout, ssl_options)
-            @socket.connect!
+            socket.connect!
           end
           true
         end

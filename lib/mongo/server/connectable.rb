@@ -40,7 +40,7 @@ module Mongo
       attr_reader :pid
 
       # Determine if the server is connectable. This will check not only if the
-      # connection exists, but if messages can sent to it successfully.
+      # connection exists, but if messages can send to it successfully.
       #
       # @example Is the server connectable?
       #   connection.connectable?
@@ -59,7 +59,7 @@ module Mongo
       #
       # @return [ true, false ] If connected.
       #
-      # @since 2.0.0
+      # @deprecated Use #connectable? instead
       def connected?
         !!@socket && @socket.alive?
       end
@@ -86,7 +86,7 @@ module Mongo
 
       def ensure_connected
         ensure_same_process!
-        connect! if socket.nil? || !socket.alive?
+        connect!
         begin
           yield socket
         rescue Exception => e
