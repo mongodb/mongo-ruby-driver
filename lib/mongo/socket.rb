@@ -56,12 +56,15 @@ module Mongo
     #
     # @since 2.0.0
     def alive?
+      return false if @socket.nil?
       sock_arr = [ @socket ]
       if Kernel::select(sock_arr, nil, sock_arr, 0)
         eof?
       else
         true
       end
+    rescue IOError
+      false
     end
 
     # Close the socket.
@@ -162,7 +165,7 @@ module Mongo
     # @since 2.0.5
     def eof?
       @socket.eof?
-    rescue IOError, SystemCallError => e
+    rescue IOError, SystemCallError, OpenSSL::SSL::SSLError => e
       true
     end
 

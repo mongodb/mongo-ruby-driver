@@ -1,9 +1,9 @@
 require 'spec_helper'
 
-describe Mongo::Socket::Unix do
+describe Mongo::Socket::TCP do
 
   let(:socket) do
-    described_class.new("/tmp/mongodb-27017.sock", 5)
+    described_class.new('127.0.0.1', 27017, 30, Socket::PF_INET)
   end
 
   describe '#connect!' do
