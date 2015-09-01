@@ -19,12 +19,40 @@ describe Mongo::Socket::SSL do
         }
       end
 
-      before do
-        socket.connect!
+
+      context 'when connecting the tcp socket is successful' do
+
+        before do
+          socket.connect!
+        end
+
+        it 'connects to the server' do
+          expect(socket).to be_alive
+        end
       end
 
-      it 'connects to the server' do
-        expect(socket).to be_alive
+      context 'when connecting the tcp socket raises an exception' do
+
+        before do
+          tcp_socket = socket.instance_variable_get(:@tcp_socket)
+          allow(tcp_socket).to receive(:connect).and_raise(Mongo::Error::SocketTimeoutError)
+        end
+
+        let!(:result) do
+          begin
+            socket.connect!
+          rescue => e
+            e
+          end
+        end
+
+        it 'raises an exception' do
+          expect(result).to be_a(Mongo::Error::SocketTimeoutError)
+        end
+
+        it 'has a @socket instance variable' do
+          expect(socket.instance_variable_get(:@socket)).to be_a(OpenSSL::SSL::SSLSocket)
+        end
       end
     end
 
