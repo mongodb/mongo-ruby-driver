@@ -49,10 +49,6 @@ describe Mongo::Socket::SSL do
         it 'raises an exception' do
           expect(result).to be_a(Mongo::Error::SocketTimeoutError)
         end
-
-        it 'has a @socket instance variable' do
-          expect(socket.instance_variable_get(:@socket)).to be_a(OpenSSL::SSL::SSLSocket)
-        end
       end
     end
 

@@ -54,8 +54,8 @@ module Mongo
       # @since 2.0.0
       def connect!
         Timeout.timeout(timeout, Error::SocketTimeoutError) do
-          @socket = OpenSSL::SSL::SSLSocket.new(@tcp_socket, context)
           handle_errors { @tcp_socket.connect(::Socket.pack_sockaddr_in(port, host)) }
+          @socket = OpenSSL::SSL::SSLSocket.new(@tcp_socket, context)
           @socket.sync_close = true
           handle_errors { @socket.connect }
           verify_certificate!(@socket)
