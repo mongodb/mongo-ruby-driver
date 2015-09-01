@@ -24,6 +24,10 @@ module Mongo
     # @since 2.1.0
     NOT_MASTER = 'not master'.freeze
 
+    # Error codes received around reconfiguration
+    CONNECTION_ERRORS_RECONFIGURATION_CODES = [ 15988, 10276, 11600, 9001, 13639, 10009, 11002, 7 ].map(&:to_s).freeze
+    CONNECTION_ERRORS_MAGIC_STRINGS = [ 'could not get last error', 'connection attempt failed' ].freeze
+
     # Execute a read operation with a retry.
     #
     # @example Execute the read.
@@ -43,6 +47,12 @@ module Mongo
         block.call
       rescue Error::SocketError, Error::SocketTimeoutError
         retry_operation(&block)
+      rescue Error::OperationFailure => e
+        if CONNECTION_ERRORS_RECONFIGURATION_CODES.any? {|code| e.message.include?(code) } || CONNECTION_ERRORS_MAGIC_STRINGS.any? {|str| e.message.include?(str)}
+          retry_operation(&block)
+        else
+          raise e
+        end
       end
     end
 

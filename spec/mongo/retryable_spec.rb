@@ -66,6 +66,58 @@ describe Mongo::Retryable do
       end
     end
 
+    context 'when an operation error occurs that could not get last error' do
+
+      before do
+        expect(operation).to receive(:execute).and_raise(Mongo::Error::OperationFailure.new("could not get last error")).ordered
+        expect(cluster).to receive(:scan!).and_return(true).ordered
+        expect(operation).to receive(:execute).and_return(true).ordered
+      end
+
+      it 'executes the operation twice' do
+        expect(retryable.read).to be true
+      end
+    end
+
+    context 'when an operation error occurs that had a connection attempt failed' do
+
+      before do
+        expect(operation).to receive(:execute).and_raise(Mongo::Error::OperationFailure.new("connection attempt failed")).ordered
+        expect(cluster).to receive(:scan!).and_return(true).ordered
+        expect(operation).to receive(:execute).and_return(true).ordered
+      end
+
+      it 'executes the operation twice' do
+        expect(retryable.read).to be true
+      end
+    end
+
+    context 'when an operation error occurs with code 15988' do
+
+      before do
+        expect(operation).to receive(:execute).and_raise(Mongo::Error::OperationFailure.new("error querying server (15988)")).ordered
+        expect(cluster).to receive(:scan!).and_return(true).ordered
+        expect(operation).to receive(:execute).and_return(true).ordered
+      end
+
+      it 'executes the operation twice' do
+        expect(retryable.read).to be true
+      end
+    end
+
+    context 'when an operation error occurs with code 13639' do
+
+      before do
+        expect(operation).to receive(:execute).and_raise(Mongo::Error::OperationFailure.new("connection attempt failed (13639)")).ordered
+        expect(cluster).to receive(:scan!).and_return(true).ordered
+        expect(operation).to receive(:execute).and_return(true).ordered
+      end
+
+      it 'executes the operation twice' do
+        expect(retryable.read).to be true
+      end
+    end
+
     context 'when a socket timeout error occurs' do
 
       before do
