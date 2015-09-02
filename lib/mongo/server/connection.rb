@@ -183,7 +183,7 @@ module Mongo
       def setup_authentication!
         if options[:user]
           default_mechanism = @server.features.scram_sha_1_enabled? ? :scram : :mongodb_cr
-          user = Auth::User.new({ :auth_mech => default_mechanism }.merge(options))
+          user = Auth::User.new(Options::SensitiveOptions.new(:auth_mech => default_mechanism).merge(options))
           @authenticator = Auth.get(user)
         end
       end

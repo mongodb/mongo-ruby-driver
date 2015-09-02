@@ -12,5 +12,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/options/mapper'
-require 'mongo/options/sensitive_options'
+module Mongo
+  module Options
+
+    SENSITIVE_OPTIONS = [:password, :pwd]
+    REDACTED_STRING = '<REDACTED>'
+
+    class SensitiveOptions < BSON::Document
+
+      def inspect
+        '{' + reduce('') do |string, (k, v)|
+          string << "#{k}=>#{redact(k,v)}"
+        end + '}'
+      end
+
+      private
+
+      def redact(k, v)
+        return REDACTED_STRING if SENSITIVE_OPTIONS.include?(k.to_sym)
+        v.inspect
+      end
+    end
+  end
+end
