@@ -22,15 +22,21 @@ module Mongo
 
       def inspect
         '{' + reduce('') do |string, (k, v)|
-          string << "#{k}=>#{redact(k,v)}"
+          string << "#{k.inspect}=>#{redact(k, v, __method__)}"
+        end + '}'
+      end
+
+      def to_s
+        '{' + reduce('') do |string, (k, v)|
+          string << "#{k.to_s}=>#{redact(k, v, __method__)}"
         end + '}'
       end
 
       private
 
-      def redact(k, v)
+      def redact(k, v, method)
         return REDACTED_STRING if SENSITIVE_OPTIONS.include?(k.to_sym)
-        v.inspect
+        v.send(method)
       end
     end
   end
