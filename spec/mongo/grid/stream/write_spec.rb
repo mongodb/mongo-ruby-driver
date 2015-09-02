@@ -87,14 +87,14 @@ describe Mongo::Grid::FSBucket::Stream::Write do
         context 'when chunks are inserted' do
 
           it 'uses that write concern' do
-            expect(stream.send(:chunks_collection).write_concern.options).to eq(expected)
+            expect(stream.send(:chunks_collection).write_concern.options[:w]).to eq(expected[:w])
           end
         end
 
         context 'when a files document is inserted' do
 
           it 'uses that write concern' do
-            expect(stream.send(:files_collection).write_concern.options).to eq(expected)
+            expect(stream.send(:files_collection).write_concern.options[:w]).to eq(expected[:w])
           end
         end
       end

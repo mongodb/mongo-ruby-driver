@@ -15,27 +15,31 @@
 module Mongo
   module Options
 
-    SENSITIVE_OPTIONS = [:password, :pwd]
+    REDACTED_OPTIONS = [:password, :pwd]
     REDACTED_STRING = '<REDACTED>'
 
-    class SensitiveOptions < BSON::Document
+    class Redacted < BSON::Document
 
       def inspect
-        '{' + reduce('') do |string, (k, v)|
-          string << "#{k.inspect}=>#{redact(k, v, __method__)}"
-        end + '}'
+        '{' + reduce([]) do |list, (k, v)|
+          list << "#{k.inspect}=>#{redact(k, v, __method__)}"
+        end.join(', ') + '}'
       end
 
       def to_s
-        '{' + reduce('') do |string, (k, v)|
-          string << "#{k.to_s}=>#{redact(k, v, __method__)}"
-        end + '}'
+        '{' + reduce([]) do |list, (k, v)|
+          list << "#{k.to_s}=>#{redact(k, v, __method__)}"
+        end.join(', ') + '}'
+      end
+
+      def has_key?(key)
+        super(convert_key(key))
       end
 
       private
 
       def redact(k, v, method)
-        return REDACTED_STRING if SENSITIVE_OPTIONS.include?(k.to_sym)
+        return REDACTED_STRING if REDACTED_OPTIONS.include?(k.to_sym)
         v.send(method)
       end
     end

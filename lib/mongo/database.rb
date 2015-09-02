@@ -148,7 +148,12 @@ module Mongo
     #
     # @return [ Hash ] The result of the command execution.
     def command(operation, opts = {})
-      preference = opts[:read] ? ServerSelector.get(opts[:read].merge(options)) : read_preference
+      if opts[:read]
+        preference = ServerSelector.get(Options::Redacted.new(
+                                            opts[:read]).merge(options))
+      else
+        preference = read_preference
+      end
       server = preference.select_server(cluster)
       Operation::Command.new({
         :selector => operation,

@@ -172,11 +172,15 @@ describe Mongo::Client do
       )
     end
 
+    let(:options) do
+      Mongo::Options::Redacted.new(:read => { :mode => :primary },
+                                    :local_threshold_ms => 10,
+                                    :server_selection_timeout_ms => 10000,
+                                    :database => TEST_DB)
+    end
+
     let(:expected) do
-      [client.cluster, { :read => { :mode => :primary },
-                         :local_threshold_ms => 10,
-                         :server_selection_timeout_ms => 10000,
-                         :database => TEST_DB }].hash
+      [client.cluster, options].hash
     end
 
     it 'returns a hash of the cluster and options' do
@@ -291,8 +295,12 @@ describe Mongo::Client do
           described_class.new(uri)
         end
 
+        let(:expected_options) do
+          Mongo::Options::Redacted.new(:write => { :w => 3 }, :database => 'testdb')
+        end
+
         it 'sets the options' do
-          expect(client.options).to eq(:write => { :w => 3 }, :database => 'testdb')
+          expect(client.options).to eq(expected_options)
         end
       end
 
@@ -306,8 +314,12 @@ describe Mongo::Client do
           described_class.new(uri, :write => { :w => 3 })
         end
 
+        let(:expected_options) do
+          Mongo::Options::Redacted.new(:write => { :w => 3 }, :database => 'testdb')
+        end
+
         it 'sets the options' do
-          expect(client.options).to eq(:write => { :w => 3 }, :database => 'testdb')
+          expect(client.options).to eq(expected_options)
         end
       end
 
@@ -321,8 +333,12 @@ describe Mongo::Client do
           described_class.new(uri, :write => { :w => 4 })
         end
 
+        let(:expected_options) do
+          Mongo::Options::Redacted.new(:write => { :w => 4 }, :database => 'testdb')
+        end
+
         it 'allows explicit options to take preference' do
-          expect(client.options).to eq(:write => { :w => 4 }, :database => 'testdb')
+          expect(client.options).to eq(expected_options)
         end
       end
 
@@ -497,20 +513,28 @@ describe Mongo::Client do
         client.with(:read => { :mode => :primary })
       end
 
+      let(:new_options) do
+        Mongo::Options::Redacted.new(:read => { :mode => :primary },
+                                             :write => { :w => 1 },
+                                             :database => TEST_DB)
+      end
+
+      let(:original_options) do
+        Mongo::Options::Redacted.new(:read => { :mode => :secondary },
+                                             :write => { :w => 1 },
+                                             :database => TEST_DB)
+      end
+
       it 'returns a new client' do
         expect(new_client).not_to equal(client)
       end
 
       it 'replaces the existing options' do
-        expect(new_client.options).to eq({
-          :read => { :mode => :primary }, :write => { :w => 1 }, :database => TEST_DB
-        })
+        expect(new_client.options).to eq(new_options)
       end
 
       it 'does not modify the original client' do
-        expect(client.options).to eq({
-          :read => { :mode => :secondary }, :write => { :w => 1 }, :database => TEST_DB
-        })
+        expect(client.options).to eq(original_options)
       end
 
       it 'keeps the same cluster' do
@@ -579,7 +603,7 @@ describe Mongo::Client do
         end
 
         it 'returns a acknowledged write concern' do
-          expect(concern.get_last_error).to eq(:getlasterror => 1, :j => true)
+          expect(concern.get_last_error).to eq(:getlasterror => 1, 'j' => true)
         end
       end
 

@@ -13,4 +13,4 @@
 # limitations under the License.
 
 require 'mongo/options/mapper'
-require 'mongo/options/sensitive_options'
+require 'mongo/options/redacted'

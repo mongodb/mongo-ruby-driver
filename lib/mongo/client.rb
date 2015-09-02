@@ -217,7 +217,7 @@ module Mongo
     # @since 2.0.0
     def with(new_options = {})
       clone.tap do |client|
-        opts = new_options || {}
+        opts = Options::Redacted.new(new_options) || Options::Redacted.new
         client.options.update(opts)
         Database.create(client)
         # We can't use the same cluster if some options that would affect it
@@ -292,14 +292,14 @@ module Mongo
     private
 
     def create_from_addresses(addresses, opts = {})
-      @options = Options::SensitiveOptions.new.merge(Database::DEFAULT_OPTIONS.merge(opts)).freeze
+      @options = Options::Redacted.new.merge(Database::DEFAULT_OPTIONS.merge(opts)).freeze
       @cluster = Cluster.new(addresses, @monitoring, options)
       @database = Database.new(self, options[:database], options)
     end
 
     def create_from_uri(connection_string, opts = {})
       uri = URI.new(connection_string, opts)
-      @options = Options::SensitiveOptions.new.merge(Database::DEFAULT_OPTIONS.merge(uri.client_options.merge(opts))).freeze
+      @options = Options::Redacted.new.merge(Database::DEFAULT_OPTIONS.merge(uri.client_options.merge(opts))).freeze
       @cluster = Cluster.new(uri.servers, @monitoring, options)
       @database = Database.new(self, options[:database], options)
     end
@@ -314,7 +314,7 @@ module Mongo
 
     def cluster_modifying?(new_options)
       cluster_options = new_options.reject do |name|
-        CRUD_OPTIONS.include?(name)
+        CRUD_OPTIONS.include?(name.to_sym)
       end
       cluster_options.any? do |name, value|
         options[name] != value
