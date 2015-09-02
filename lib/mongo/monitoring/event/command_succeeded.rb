@@ -20,6 +20,7 @@ module Mongo
       #
       # @since 2.1.0
       class CommandSucceeded
+        include Secure
 
         # @return [ Server::Address ] address The server address.
         attr_reader :address
@@ -61,7 +62,7 @@ module Mongo
           @address = address
           @request_id = request_id
           @operation_id = operation_id
-          @reply = reply
+          @reply = redacted(command_name, reply)
           @duration = duration
         end
 

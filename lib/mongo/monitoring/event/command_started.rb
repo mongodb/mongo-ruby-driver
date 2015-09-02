@@ -20,6 +20,7 @@ module Mongo
       #
       # @since 2.1.0
       class CommandStarted
+        include Secure
 
         # @return [ Server::Address ] address The server address.
         attr_reader :address
@@ -57,7 +58,7 @@ module Mongo
           @address = address
           @request_id = request_id
           @operation_id = operation_id
-          @command = command
+          @command = redacted(command_name, command)
         end
 
         # Create the event from a wire protocol message payload.
