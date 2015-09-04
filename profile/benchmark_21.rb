@@ -14,7 +14,7 @@ client = Mongo::Client.new(
 collection = client[:test]
 
 documents = 50000.times.map do |i|
-  { name: 'user', index: i }
+  { name: 'user', index: i, embedded: [{ n: i }] }
 end
 
 Benchmark.bm do |bm|
