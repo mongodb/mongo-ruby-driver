@@ -31,7 +31,7 @@ module Mongo
           #
           # @since 2.0.0
           def successful?
-            !query_failure? && parser.message.empty?
+            !query_failure?
           end
         end
       end

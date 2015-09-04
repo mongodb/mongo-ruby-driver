@@ -470,6 +470,41 @@ describe Mongo::Collection do
       end
     end
 
+    context 'when the user is not authorized' do
+
+    end
+
+    context 'when documents contain potential error message fields' do
+
+      [ Mongo::Error::ERRMSG, Mongo::Error::ERROR, Mongo::Operation::Result::OK ].each do |field|
+
+        context "when the document contains a '#{field}' field" do
+
+          let(:value) do
+            'testing'
+          end
+
+          let(:view) do
+            authorized_collection.find
+          end
+
+          before do
+            authorized_collection.insert_one({ field => value })
+          end
+
+          after do
+            authorized_collection.delete_many
+          end
+
+          it 'iterates over the documents' do
+            view.each do |document|
+              expect(document[field]).to eq(value)
+            end
+          end
+        end
+      end
+    end
+
     context 'when provided options' do
 
       let(:view) do
