@@ -472,6 +472,15 @@ describe Mongo::Collection do
 
     context 'when the user is not authorized' do
 
+      let(:view) do
+        unauthorized_collection.find
+      end
+
+      it 'iterates over the documents' do
+        expect {
+          view.each{ |document| document }
+        }.to raise_error(Mongo::Error::OperationFailure)
+      end
     end
 
     context 'when documents contain potential error message fields' do
