@@ -167,7 +167,7 @@ describe Mongo::Client do
         ['127.0.0.1:27017'],
         :read => { :mode => :primary },
         :local_threshold_ms => 10,
-        :server_selection_timeout_ms => 10000,
+        :server_selection_timeout => 10000,
         :database => TEST_DB
       )
     end
@@ -175,7 +175,7 @@ describe Mongo::Client do
     let(:options) do
       Mongo::Options::Redacted.new(:read => { :mode => :primary },
                                     :local_threshold_ms => 10,
-                                    :server_selection_timeout_ms => 10000,
+                                    :server_selection_timeout => 10000,
                                     :database => TEST_DB)
     end
 
@@ -364,7 +364,8 @@ describe Mongo::Client do
     let(:client) do
       described_class.new(['127.0.0.1:27017'],
                           :database => TEST_DB,
-                          :read => mode)
+                          :read => mode,
+                          :server_selection_timeout => 2)
     end
 
     let(:preference) do
@@ -382,7 +383,7 @@ describe Mongo::Client do
       end
 
       it 'passes the options to the read preference' do
-        expect(preference.options[:database]).to eq(TEST_DB)
+        expect(preference.options[:server_selection_timeout]).to eq(2)
       end
     end
 
@@ -438,6 +439,33 @@ describe Mongo::Client do
 
       it 'returns a primary read preference' do
         expect(preference).to be_a(Mongo::ServerSelector::Primary)
+      end
+    end
+
+    context 'when the read preference is printed' do
+
+      let(:client) do
+        described_class.new([ DEFAULT_ADDRESS ], options)
+      end
+
+      let(:options) do
+        { user: 'Emily', password: 'sensitive_data', server_selection_timeout: 0.1 }
+      end
+
+      before do
+        allow(client.database.cluster).to receive(:single?).and_return(false)
+      end
+
+      let(:error) do
+        begin
+          client.database.command(ping: 1)
+        rescue => e
+          e
+        end
+      end
+
+      it 'redacts sensitive client options' do
+        expect(error.message).not_to match(options[:password])
       end
     end
   end

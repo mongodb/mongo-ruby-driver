@@ -185,7 +185,7 @@ module Mongo
     #
     # @since 2.0.0
     def read_preference
-      @read_preference ||= ServerSelector.get((options[:read] || {}).merge(options))
+      @read_preference ||= ServerSelector.get(Options::Redacted.new(options[:read] || {}).merge(options))
     end
 
     # Use the database with the provided name. This will switch the current

@@ -298,7 +298,8 @@ module Mongo
         # @since 2.0.0
         def read(value = nil)
           return default_read if value.nil?
-          configure(:read, value.is_a?(Hash) ? ServerSelector.get(value) : value)
+          selector = value.is_a?(Hash) ? ServerSelector.get(Options::Redacted.new(value.merge(client.options))) : value
+          configure(:read, selector)
         end
 
         # Set whether to return only the indexed field or fields.

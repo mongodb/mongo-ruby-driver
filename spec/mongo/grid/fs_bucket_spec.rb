@@ -55,7 +55,7 @@ describe Mongo::Grid::FSBucket do
         end
 
         let(:read_pref) do
-          Mongo::ServerSelector.get(options[:read].merge(authorized_client.options))
+          Mongo::ServerSelector.get(Mongo::Options::Redacted.new(options[:read].merge(authorized_client.options)))
         end
 
         it 'sets the read preference' do

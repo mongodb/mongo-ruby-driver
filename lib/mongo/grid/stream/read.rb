@@ -134,7 +134,7 @@ module Mongo
           # @since 2.1.0
           def read_preference
             @read_preference ||= @options[:read] ?
-                ServerSelector.get((@options[:read] || {}).merge(fs.options)) :
+                ServerSelector.get(Options::Redacted.new((@options[:read] || {}).merge(fs.options))) :
                 fs.read_preference
           end
 
