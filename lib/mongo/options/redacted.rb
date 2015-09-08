@@ -38,9 +38,7 @@ module Mongo
       #
       # @since 2.1.0
       def inspect
-        '{' + reduce([]) do |list, (k, v)|
-          list << "#{k.inspect}=>#{redact(k, v, __method__)}"
-        end.join(', ') + '}'
+        redacted_string(__method__)
       end
 
       # Get a string representation of the options.
@@ -49,9 +47,7 @@ module Mongo
       #
       # @since 2.1.0
       def to_s
-        '{' + reduce([]) do |list, (k, v)|
-          list << "#{k.to_s}=>#{redact(k, v, __method__)}"
-        end.join(', ') + '}'
+        redacted_string(__method__)
       end
 
       # Whether these options contain a given key.
@@ -69,6 +65,12 @@ module Mongo
       end
 
       private
+
+      def redacted_string(method)
+        '{' + reduce([]) do |list, (k, v)|
+          list << "#{k.send(method)}=>#{redact(k, v, method)}"
+        end.join(', ') + '}'
+      end
 
       def redact(k, v, method)
         return STRING_REPLACEMENT if SENSITIVE_OPTIONS.include?(k.to_sym)
