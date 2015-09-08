@@ -15,23 +15,55 @@
 module Mongo
   module Options
 
-    REDACTED_OPTIONS = [:password, :pwd]
-    REDACTED_STRING = '<REDACTED>'
-
+    # Class for wrapping options that could be sensitive.
+    # When printed, the sensitive values will be redacted.
+    #
+    # @since 2.1.0
     class Redacted < BSON::Document
 
+      # The options whose values will be redacted.
+      #
+      # @since 2.1.0
+      SENSITIVE_OPTIONS = [ :password,
+                            :pwd ]
+
+      # The replacement string used in place of the value for sensitive keys.
+      #
+      # @since 2.1.0
+      STRING_REPLACEMENT = '<REDACTED>'
+
+      # Get a string representation of the options.
+      #
+      # @return [ String ] The string representation of the options.
+      #
+      # @since 2.1.0
       def inspect
         '{' + reduce([]) do |list, (k, v)|
           list << "#{k.inspect}=>#{redact(k, v, __method__)}"
         end.join(', ') + '}'
       end
 
+      # Get a string representation of the options.
+      #
+      # @return [ String ] The string representation of the options.
+      #
+      # @since 2.1.0
       def to_s
         '{' + reduce([]) do |list, (k, v)|
           list << "#{k.to_s}=>#{redact(k, v, __method__)}"
         end.join(', ') + '}'
       end
 
+      # Whether these options contain a given key.
+      #
+      # @example Determine if the options contain a given key.
+      #   options.has_key?(:name)
+      #
+      # @param [ String, Symbol ] key The key to check for existence.
+      #
+      # @return [ true, false ] If the options contain the given key.
+      #
+      # @since 2.1.0
       def has_key?(key)
         super(convert_key(key))
       end
@@ -39,7 +71,7 @@ module Mongo
       private
 
       def redact(k, v, method)
-        return REDACTED_STRING if REDACTED_OPTIONS.include?(k.to_sym)
+        return STRING_REPLACEMENT if SENSITIVE_OPTIONS.include?(k.to_sym)
         v.send(method)
       end
     end

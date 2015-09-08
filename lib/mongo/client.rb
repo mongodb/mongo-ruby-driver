@@ -292,14 +292,14 @@ module Mongo
     private
 
     def create_from_addresses(addresses, opts = {})
-      @options = Options::Redacted.new.merge(Database::DEFAULT_OPTIONS.merge(opts)).freeze
+      @options = Options::Redacted.new(Database::DEFAULT_OPTIONS.merge(opts)).freeze
       @cluster = Cluster.new(addresses, @monitoring, options)
       @database = Database.new(self, options[:database], options)
     end
 
     def create_from_uri(connection_string, opts = {})
       uri = URI.new(connection_string, opts)
-      @options = Options::Redacted.new.merge(Database::DEFAULT_OPTIONS.merge(uri.client_options.merge(opts))).freeze
+      @options = Options::Redacted.new(Database::DEFAULT_OPTIONS.merge(uri.client_options.merge(opts))).freeze
       @cluster = Cluster.new(uri.servers, @monitoring, options)
       @database = Database.new(self, options[:database], options)
     end
