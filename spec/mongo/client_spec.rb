@@ -656,7 +656,6 @@ describe Mongo::Client do
 
     it 'reconnects the cluster and returns true' do
       expect(client.reconnect).to be(true)
-      sleep(2)
     end
   end
 end
