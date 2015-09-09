@@ -203,6 +203,23 @@ describe Mongo::Client do
         "<Mongo::Client:0x#{client.object_id} cluster=127.0.0.1:27017"
       )
     end
+
+    context 'when there is sensitive data in the options' do
+
+      let(:client) do
+        described_class.new(
+            ['127.0.0.1:27017'],
+            :read => { :mode => :primary },
+            :database => TEST_DB,
+            :password => '123',
+            :user => 'emily'
+        )
+      end
+
+      it 'does not print out sensitive data' do
+        expect(client.inspect).not_to match('123')
+      end
+    end
   end
 
   describe '#initialize' do
@@ -708,6 +725,21 @@ describe Mongo::Client do
 
     it 'reconnects the cluster and returns true' do
       expect(client.reconnect).to be(true)
+    end
+  end
+
+  describe '#dup' do
+
+    let(:client) do
+      described_class.new(
+          ['127.0.0.1:27017'],
+          :read => { :mode => :primary },
+          :database => TEST_DB
+      )
+    end
+
+    it 'creates a client with Redacted options' do
+      expect(client.dup.options).to be_a(Mongo::Options::Redacted)
     end
   end
 end

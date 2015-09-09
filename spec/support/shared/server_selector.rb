@@ -32,7 +32,8 @@ shared_context 'server selector' do
   end
   let(:primary) { server(:primary) }
   let(:secondary) { server(:secondary) }
-  let(:selector) { described_class.new(:mode => name, :tag_sets => tag_sets) }
+  let(:options) { { :mode => name, :tag_sets => tag_sets } }
+  let(:selector) { described_class.new(options) }
 
   before(:all) do
     module Mongo
@@ -153,6 +154,23 @@ shared_examples 'a server selector accepting tag sets' do
         it 'returns false' do
           expect(selector).not_to eq(other)
         end
+      end
+    end
+  end
+end
+
+shared_examples 'a server selector with sensitive data in its options' do
+
+  describe '#inspect' do
+
+    context 'when there is sensitive data in the options' do
+
+      let(:options) do
+        Mongo::Options::Redacted.new(:mode => name, :password => '123')
+      end
+
+      it 'does not print out sensitive data' do
+        expect(selector.inspect).not_to match(options[:password])
       end
     end
   end
