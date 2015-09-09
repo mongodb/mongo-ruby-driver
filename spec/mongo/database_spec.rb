@@ -93,6 +93,26 @@ describe Mongo::Database do
         expect(database.collection_names(batch_size: 1).to_a).to include('users')
       end
     end
+
+    context 'when there are more collections than the initial batch size' do
+
+      before do
+        200.times do |i|
+          database["#{i}_dalmatians"].create
+        end
+      end
+
+      after do
+        200.times do |i|
+          database["#{i}_dalmatians"].drop
+        end
+      end
+
+      it 'returns all collections' do
+        expect(database.collection_names.select { |c| c =~ /dalmatians/}.size).to eq(200)
+      end
+
+    end
   end
 
   describe '#list_collections' do
