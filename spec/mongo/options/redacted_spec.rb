@@ -11,11 +11,11 @@ describe Mongo::Options::Redacted do
     context 'when the hash contains a sensitive key' do
 
       let(:original_opts) do
-        { password: '123' }
+        { password: 'sensitive_data' }
       end
 
       it 'replaces the value with the redacted string' do
-        expect(options.to_s).not_to match(/123/)
+        expect(options.to_s).not_to match(original_opts[:password])
       end
 
       it 'replaces the value with the redacted string' do
@@ -36,11 +36,11 @@ describe Mongo::Options::Redacted do
     context 'when the hash contains a sensitive key' do
 
       let(:original_opts) do
-        { password: '123' }
+        { password: 'sensitive_data' }
       end
 
       it 'replaces the value with the redacted string' do
-        expect(options.inspect).not_to match(/123/)
+        expect(options.inspect).not_to match(original_opts[:password])
       end
 
       it 'replaces the value with the redacted string' do
@@ -51,11 +51,11 @@ describe Mongo::Options::Redacted do
     context 'when the hash does not contain a sensitive key' do
 
       let(:original_opts) do
-        { name: '123' }
+        { name: 'some_name' }
       end
 
       it 'does not replace the value with the redacted string' do
-        expect(options.inspect).to match(/123/)
+        expect(options.inspect).to match(original_opts[:name])
       end
 
       it 'does not replace the value with the redacted string' do

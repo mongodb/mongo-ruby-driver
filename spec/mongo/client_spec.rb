@@ -211,13 +211,13 @@ describe Mongo::Client do
             ['127.0.0.1:27017'],
             :read => { :mode => :primary },
             :database => TEST_DB,
-            :password => '123',
+            :password => 'some_password',
             :user => 'emily'
         )
       end
 
       it 'does not print out sensitive data' do
-        expect(client.inspect).not_to match('123')
+        expect(client.inspect).not_to match('some_password')
       end
     end
   end
