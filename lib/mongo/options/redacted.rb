@@ -38,7 +38,7 @@ module Mongo
       #
       # @since 2.1.0
       def inspect
-        redacted_string(__method__)
+        redacted_string(:inspect)
       end
 
       # Get a string representation of the options.
@@ -47,7 +47,7 @@ module Mongo
       #
       # @since 2.1.0
       def to_s
-        redacted_string(__method__)
+        redacted_string(:to_s)
       end
 
       # Whether these options contain a given key.
@@ -63,6 +63,7 @@ module Mongo
       def has_key?(key)
         super(convert_key(key))
       end
+      alias_method :key?, :has_key?
 
       private
 

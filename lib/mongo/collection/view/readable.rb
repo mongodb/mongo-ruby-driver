@@ -298,7 +298,7 @@ module Mongo
         # @since 2.0.0
         def read(value = nil)
           return default_read if value.nil?
-          selector = value.is_a?(Hash) ? ServerSelector.get(Options::Redacted.new(value.merge(client.options))) : value
+          selector = value.is_a?(Hash) ? ServerSelector.get(client.options.merge(value)) : value
           configure(:read, selector)
         end
 

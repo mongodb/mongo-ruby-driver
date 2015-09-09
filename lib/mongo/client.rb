@@ -153,7 +153,7 @@ module Mongo
     #   logs at the default 250 characters.
     #
     # @since 2.0.0
-    def initialize(addresses_or_uri, options = {})
+    def initialize(addresses_or_uri, options = Options::Redacted.new)
       @monitoring = Monitoring.new(options)
       if addresses_or_uri.is_a?(::String)
         create_from_uri(addresses_or_uri, options)
@@ -215,7 +215,7 @@ module Mongo
     # @return [ Mongo::Client ] A new client instance.
     #
     # @since 2.0.0
-    def with(new_options = {})
+    def with(new_options = Options::Redacted.new)
       clone.tap do |client|
         opts = Options::Redacted.new(new_options) || Options::Redacted.new
         client.options.update(opts)
@@ -291,13 +291,13 @@ module Mongo
 
     private
 
-    def create_from_addresses(addresses, opts = {})
+    def create_from_addresses(addresses, opts = Options::Redacted.new)
       @options = Options::Redacted.new(Database::DEFAULT_OPTIONS.merge(opts)).freeze
       @cluster = Cluster.new(addresses, @monitoring, options)
       @database = Database.new(self, options[:database], options)
     end
 
-    def create_from_uri(connection_string, opts = {})
+    def create_from_uri(connection_string, opts = Options::Redacted.new)
       uri = URI.new(connection_string, opts)
       @options = Options::Redacted.new(Database::DEFAULT_OPTIONS.merge(uri.client_options.merge(opts))).freeze
       @cluster = Cluster.new(uri.servers, @monitoring, options)
