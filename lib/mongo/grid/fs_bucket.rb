@@ -57,6 +57,8 @@ module Mongo
       attr_reader :options
 
       # Get client from the database.
+      #
+      # @since 2.1.0
       def_delegators :database,
                      :client
 
@@ -400,7 +402,7 @@ module Mongo
       # @since 2.1.0
       def read_preference
         @read_preference ||= @options[:read] ?
-            ServerSelector.get(client.options.merge(@options[:read] || {})) :
+            ServerSelector.get(Options::Redacted.new((@options[:read] || {}).merge(client.options))) :
             database.read_preference
       end
 
