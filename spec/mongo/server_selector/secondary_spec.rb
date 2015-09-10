@@ -9,6 +9,7 @@ describe Mongo::ServerSelector::Secondary do
   it_behaves_like 'a server selector mode' do
     let(:slave_ok) { true }
   end
+  it_behaves_like 'a server selector with sensitive data in its options'
 
   it_behaves_like 'a server selector accepting tag sets'
 

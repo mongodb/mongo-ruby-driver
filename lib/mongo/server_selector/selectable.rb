@@ -61,10 +61,10 @@ module Mongo
       #
       # @since 2.0.0
       def initialize(options = {})
+        @options = (options || {}).freeze
         tag_sets = options[:tag_sets] || []
         validate_tag_sets!(tag_sets)
-        @tag_sets = tag_sets
-        @options = options
+        @tag_sets = tag_sets.freeze
       end
 
       # Select a server from eligible candidates.

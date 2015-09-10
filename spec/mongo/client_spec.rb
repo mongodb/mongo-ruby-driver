@@ -167,16 +167,20 @@ describe Mongo::Client do
         ['127.0.0.1:27017'],
         :read => { :mode => :primary },
         :local_threshold_ms => 10,
-        :server_selection_timeout_ms => 10000,
+        :server_selection_timeout => 10000,
         :database => TEST_DB
       )
     end
 
+    let(:options) do
+      Mongo::Options::Redacted.new(:read => { :mode => :primary },
+                                    :local_threshold_ms => 10,
+                                    :server_selection_timeout => 10000,
+                                    :database => TEST_DB)
+    end
+
     let(:expected) do
-      [client.cluster, { :read => { :mode => :primary },
-                         :local_threshold_ms => 10,
-                         :server_selection_timeout_ms => 10000,
-                         :database => TEST_DB }].hash
+      [client.cluster, options].hash
     end
 
     it 'returns a hash of the cluster and options' do
@@ -198,6 +202,23 @@ describe Mongo::Client do
       expect(client.inspect).to include(
         "<Mongo::Client:0x#{client.object_id} cluster=127.0.0.1:27017"
       )
+    end
+
+    context 'when there is sensitive data in the options' do
+
+      let(:client) do
+        described_class.new(
+            ['127.0.0.1:27017'],
+            :read => { :mode => :primary },
+            :database => TEST_DB,
+            :password => 'some_password',
+            :user => 'emily'
+        )
+      end
+
+      it 'does not print out sensitive data' do
+        expect(client.inspect).not_to match('some_password')
+      end
     end
   end
 
@@ -291,8 +312,12 @@ describe Mongo::Client do
           described_class.new(uri)
         end
 
+        let(:expected_options) do
+          Mongo::Options::Redacted.new(:write => { :w => 3 }, :database => 'testdb')
+        end
+
         it 'sets the options' do
-          expect(client.options).to eq(:write => { :w => 3 }, :database => 'testdb')
+          expect(client.options).to eq(expected_options)
         end
       end
 
@@ -306,8 +331,12 @@ describe Mongo::Client do
           described_class.new(uri, :write => { :w => 3 })
         end
 
+        let(:expected_options) do
+          Mongo::Options::Redacted.new(:write => { :w => 3 }, :database => 'testdb')
+        end
+
         it 'sets the options' do
-          expect(client.options).to eq(:write => { :w => 3 }, :database => 'testdb')
+          expect(client.options).to eq(expected_options)
         end
       end
 
@@ -321,8 +350,12 @@ describe Mongo::Client do
           described_class.new(uri, :write => { :w => 4 })
         end
 
+        let(:expected_options) do
+          Mongo::Options::Redacted.new(:write => { :w => 4 }, :database => 'testdb')
+        end
+
         it 'allows explicit options to take preference' do
-          expect(client.options).to eq(:write => { :w => 4 }, :database => 'testdb')
+          expect(client.options).to eq(expected_options)
         end
       end
 
@@ -348,7 +381,8 @@ describe Mongo::Client do
     let(:client) do
       described_class.new(['127.0.0.1:27017'],
                           :database => TEST_DB,
-                          :read => mode)
+                          :read => mode,
+                          :server_selection_timeout => 2)
     end
 
     let(:preference) do
@@ -366,7 +400,7 @@ describe Mongo::Client do
       end
 
       it 'passes the options to the read preference' do
-        expect(preference.options[:database]).to eq(TEST_DB)
+        expect(preference.options[:server_selection_timeout]).to eq(2)
       end
     end
 
@@ -422,6 +456,33 @@ describe Mongo::Client do
 
       it 'returns a primary read preference' do
         expect(preference).to be_a(Mongo::ServerSelector::Primary)
+      end
+    end
+
+    context 'when the read preference is printed' do
+
+      let(:client) do
+        described_class.new([ DEFAULT_ADDRESS ], options)
+      end
+
+      let(:options) do
+        { user: 'Emily', password: 'sensitive_data', server_selection_timeout: 0.1 }
+      end
+
+      before do
+        allow(client.database.cluster).to receive(:single?).and_return(false)
+      end
+
+      let(:error) do
+        begin
+          client.database.command(ping: 1)
+        rescue => e
+          e
+        end
+      end
+
+      it 'redacts sensitive client options' do
+        expect(error.message).not_to match(options[:password])
       end
     end
   end
@@ -497,20 +558,28 @@ describe Mongo::Client do
         client.with(:read => { :mode => :primary })
       end
 
+      let(:new_options) do
+        Mongo::Options::Redacted.new(:read => { :mode => :primary },
+                                             :write => { :w => 1 },
+                                             :database => TEST_DB)
+      end
+
+      let(:original_options) do
+        Mongo::Options::Redacted.new(:read => { :mode => :secondary },
+                                             :write => { :w => 1 },
+                                             :database => TEST_DB)
+      end
+
       it 'returns a new client' do
         expect(new_client).not_to equal(client)
       end
 
       it 'replaces the existing options' do
-        expect(new_client.options).to eq({
-          :read => { :mode => :primary }, :write => { :w => 1 }, :database => TEST_DB
-        })
+        expect(new_client.options).to eq(new_options)
       end
 
       it 'does not modify the original client' do
-        expect(client.options).to eq({
-          :read => { :mode => :secondary }, :write => { :w => 1 }, :database => TEST_DB
-        })
+        expect(client.options).to eq(original_options)
       end
 
       it 'keeps the same cluster' do
@@ -579,7 +648,7 @@ describe Mongo::Client do
         end
 
         it 'returns a acknowledged write concern' do
-          expect(concern.get_last_error).to eq(:getlasterror => 1, :j => true)
+          expect(concern.get_last_error).to eq(:getlasterror => 1, 'j' => true)
         end
       end
 
@@ -656,6 +725,21 @@ describe Mongo::Client do
 
     it 'reconnects the cluster and returns true' do
       expect(client.reconnect).to be(true)
+    end
+  end
+
+  describe '#dup' do
+
+    let(:client) do
+      described_class.new(
+          ['127.0.0.1:27017'],
+          :read => { :mode => :primary },
+          :database => TEST_DB
+      )
+    end
+
+    it 'creates a client with Redacted options' do
+      expect(client.dup.options).to be_a(Mongo::Options::Redacted)
     end
   end
 end

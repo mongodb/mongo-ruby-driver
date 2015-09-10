@@ -88,7 +88,7 @@ module Mongo
     # @param [ Hash ] options The options.
     #
     # @since 2.0.0
-    def initialize(seeds, monitoring, options = {})
+    def initialize(seeds, monitoring, options = Options::Redacted.new)
       @addresses = []
       @servers = []
       @monitoring = monitoring
@@ -125,7 +125,7 @@ module Mongo
     #
     # @since 2.0.0
     def next_primary
-      ServerSelector.get({ mode: :primary }.merge(options)).select_server(self)
+      ServerSelector.get(ServerSelector::PRIMARY.merge(options)).select_server(self)
     end
 
     # Elect a primary server from the description that has just changed to a

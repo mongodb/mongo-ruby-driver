@@ -9,6 +9,7 @@ describe Mongo::ServerSelector::Primary do
   it_behaves_like 'a server selector mode' do
     let(:slave_ok) { false }
   end
+  it_behaves_like 'a server selector with sensitive data in its options'
 
   describe '#tag_sets' do
 

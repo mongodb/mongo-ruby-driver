@@ -153,7 +153,7 @@ module Mongo
     #   logs at the default 250 characters.
     #
     # @since 2.0.0
-    def initialize(addresses_or_uri, options = {})
+    def initialize(addresses_or_uri, options = Options::Redacted.new)
       @monitoring = Monitoring.new(options)
       if addresses_or_uri.is_a?(::String)
         create_from_uri(addresses_or_uri, options)
@@ -185,7 +185,7 @@ module Mongo
     #
     # @since 2.0.0
     def read_preference
-      @read_preference ||= ServerSelector.get((options[:read] || {}).merge(options))
+      @read_preference ||= ServerSelector.get(Options::Redacted.new(options[:read] || {}).merge(options))
     end
 
     # Use the database with the provided name. This will switch the current
@@ -215,9 +215,9 @@ module Mongo
     # @return [ Mongo::Client ] A new client instance.
     #
     # @since 2.0.0
-    def with(new_options = {})
+    def with(new_options = Options::Redacted.new)
       clone.tap do |client|
-        opts = new_options || {}
+        opts = Options::Redacted.new(new_options) || Options::Redacted.new
         client.options.update(opts)
         Database.create(client)
         # We can't use the same cluster if some options that would affect it
@@ -291,15 +291,15 @@ module Mongo
 
     private
 
-    def create_from_addresses(addresses, opts = {})
-      @options = Database::DEFAULT_OPTIONS.merge(opts).freeze
+    def create_from_addresses(addresses, opts = Options::Redacted.new)
+      @options = Options::Redacted.new(Database::DEFAULT_OPTIONS.merge(opts)).freeze
       @cluster = Cluster.new(addresses, @monitoring, options)
       @database = Database.new(self, options[:database], options)
     end
 
-    def create_from_uri(connection_string, opts = {})
+    def create_from_uri(connection_string, opts = Options::Redacted.new)
       uri = URI.new(connection_string, opts)
-      @options = Database::DEFAULT_OPTIONS.merge(uri.client_options.merge(opts)).freeze
+      @options = Options::Redacted.new(Database::DEFAULT_OPTIONS.merge(uri.client_options.merge(opts))).freeze
       @cluster = Cluster.new(uri.servers, @monitoring, options)
       @database = Database.new(self, options[:database], options)
     end
@@ -314,7 +314,7 @@ module Mongo
 
     def cluster_modifying?(new_options)
       cluster_options = new_options.reject do |name|
-        CRUD_OPTIONS.include?(name)
+        CRUD_OPTIONS.include?(name.to_sym)
       end
       cluster_options.any? do |name, value|
         options[name] != value

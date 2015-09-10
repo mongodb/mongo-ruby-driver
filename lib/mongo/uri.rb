@@ -268,7 +268,7 @@ module Mongo
 
     def parse_db_opts!(string)
       auth_db, d, uri_opts = string.partition(URI_OPTS_DELIM)
-      @uri_options = parse_uri_options!(uri_opts)
+      @uri_options = Options::Redacted.new(parse_uri_options!(uri_opts))
       @database = parse_database!(auth_db)
     end
 

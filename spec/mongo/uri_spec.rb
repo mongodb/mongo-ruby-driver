@@ -365,7 +365,7 @@ describe 'invalid uris' do
 
       context 'numerical w value' do
         let(:options) { 'w=1' }
-        let(:concern) { { :w => 1 } }
+        let(:concern) { Mongo::Options::Redacted.new(:w => 1)}
 
         it 'sets the write concern options' do
           expect(uri.uri_options[:write]).to eq(concern)
@@ -374,7 +374,7 @@ describe 'invalid uris' do
 
       context 'w=majority' do
         let(:options) { 'w=majority' }
-        let(:concern) { { :w => :majority } }
+        let(:concern) { Mongo::Options::Redacted.new(:w => :majority) }
 
         it 'sets the write concern options' do
           expect(uri.uri_options[:write]).to eq(concern)
@@ -383,7 +383,7 @@ describe 'invalid uris' do
 
       context 'journal' do
         let(:options) { 'journal=true' }
-        let(:concern) { { :j => true } }
+        let(:concern) { Mongo::Options::Redacted.new(:j => true) }
 
         it 'sets the write concern options' do
           expect(uri.uri_options[:write]).to eq(concern)
@@ -392,7 +392,7 @@ describe 'invalid uris' do
 
       context 'fsync' do
         let(:options) { 'fsync=true' }
-        let(:concern) { { :fsync => true } }
+        let(:concern) { Mongo::Options::Redacted.new(:fsync => true) }
 
         it 'sets the write concern options' do
           expect(uri.uri_options[:write]).to eq(concern)
@@ -402,7 +402,7 @@ describe 'invalid uris' do
       context 'wtimeoutMS' do
         let(:timeout) { 1234 }
         let(:options) { "w=2&wtimeoutMS=#{timeout}" }
-        let(:concern) { { :w => 2, :timeout => timeout } }
+        let(:concern) { Mongo::Options::Redacted.new(:w => 2, :timeout => timeout) }
 
         it 'sets the write concern options' do
           expect(uri.uri_options[:write]).to eq(concern)
@@ -415,7 +415,7 @@ describe 'invalid uris' do
 
       context 'primary' do
         let(:mode) { 'primary' }
-        let(:read) { { :mode => :primary } }
+        let(:read) { Mongo::Options::Redacted.new(:mode => :primary) }
 
         it 'sets the read preference' do
           expect(uri.uri_options[:read]).to eq(read)
@@ -424,7 +424,7 @@ describe 'invalid uris' do
 
       context 'primaryPreferred' do
         let(:mode) { 'primaryPreferred' }
-        let(:read) { { :mode => :primary_preferred } }
+        let(:read) { Mongo::Options::Redacted.new(:mode => :primary_preferred) }
 
         it 'sets the read preference' do
           expect(uri.uri_options[:read]).to eq(read)
@@ -433,7 +433,7 @@ describe 'invalid uris' do
 
       context 'secondary' do
         let(:mode) { 'secondary' }
-        let(:read) { { :mode => :secondary } }
+        let(:read) { Mongo::Options::Redacted.new(:mode => :secondary) }
 
         it 'sets the read preference' do
           expect(uri.uri_options[:read]).to eq(read)
@@ -442,7 +442,7 @@ describe 'invalid uris' do
 
       context 'secondaryPreferred' do
         let(:mode) { 'secondaryPreferred' }
-        let(:read) { { :mode => :secondary_preferred } }
+        let(:read) { Mongo::Options::Redacted.new(:mode => :secondary_preferred) }
 
         it 'sets the read preference' do
           expect(uri.uri_options[:read]).to eq(read)
@@ -451,7 +451,7 @@ describe 'invalid uris' do
 
       context 'nearest' do
         let(:mode) { 'nearest' }
-        let(:read) { { :mode => :nearest } }
+        let(:read) { Mongo::Options::Redacted.new(:mode => :nearest) }
 
         it 'sets the read preference' do
           expect(uri.uri_options[:read]).to eq(read)
@@ -467,7 +467,7 @@ describe 'invalid uris' do
         end
 
         let(:read) do
-          { :tag_sets => [{ :dc => 'ny', :rack => '1' }] }
+          Mongo::Options::Redacted.new(:tag_sets => [{ 'dc' => 'ny', 'rack' => '1' }])
         end
 
         it 'sets the read preference tag set' do
@@ -481,7 +481,7 @@ describe 'invalid uris' do
         end
 
         let(:read) do
-          { :tag_sets => [{ :dc => 'ny' }, { :dc => 'bos' }] }
+          Mongo::Options::Redacted.new(:tag_sets => [{ 'dc' => 'ny' }, { 'dc' => 'bos' }])
         end
 
         it 'sets the read preference tag sets' do
@@ -536,7 +536,7 @@ describe 'invalid uris' do
 
       context 'regular db' do
         let(:source) { 'foo' }
-        let(:auth) { { :source => 'foo' } }
+        let(:auth) { Mongo::Options::Redacted.new(:source => 'foo') }
 
         it 'sets the auth source to the database' do
           expect(uri.uri_options[:auth]).to eq(auth)
@@ -545,7 +545,7 @@ describe 'invalid uris' do
 
       context '$external' do
         let(:source) { '$external' }
-        let(:auth) { { :source => :external } }
+        let(:auth) { Mongo::Options::Redacted.new(:source => :external) }
 
         it 'sets the auth source to :external' do
           expect(uri.uri_options[:auth]).to eq(auth)
@@ -562,7 +562,7 @@ describe 'invalid uris' do
 
         let(:service_name) { 'foo' }
         let(:auth) do
-          { auth_mech_properties: { service_name: service_name } }
+          Mongo::Options::Redacted.new(auth_mech_properties: { service_name: service_name })
         end
 
         it 'sets the auth mechanism properties' do
@@ -577,7 +577,7 @@ describe 'invalid uris' do
 
         let(:canonicalize_host_name) { 'true' }
         let(:auth) do
-          { auth_mech_properties: { canonicalize_host_name: true } }
+          Mongo::Options::Redacted.new(auth_mech_properties: { canonicalize_host_name: true })
         end
 
         it 'sets the auth mechanism properties' do
@@ -592,7 +592,7 @@ describe 'invalid uris' do
 
         let(:service_realm) { 'dumdum' }
         let(:auth) do
-          { auth_mech_properties: { service_realm: service_realm } }
+          Mongo::Options::Redacted.new(auth_mech_properties: { service_realm: service_realm })
         end
 
         it 'sets the auth mechanism properties' do
@@ -612,9 +612,9 @@ describe 'invalid uris' do
         let(:service_realm) { 'dumdum' }
 
         let(:auth) do
-          { auth_mech_properties: { service_name: service_name,
-                                    canonicalize_host_name: true,
-                                    service_realm: service_realm } }
+          Mongo::Options::Redacted.new(auth_mech_properties: { service_name: service_name,
+                                                               canonicalize_host_name: true,
+                                                               service_realm: service_realm })
         end
 
         it 'sets the auth mechanism properties' do

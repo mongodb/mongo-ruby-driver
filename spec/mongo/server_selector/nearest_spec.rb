@@ -11,6 +11,7 @@ describe Mongo::ServerSelector::Nearest do
   end
 
   it_behaves_like 'a server selector accepting tag sets'
+  it_behaves_like 'a server selector with sensitive data in its options'
 
   describe '#to_mongos' do
 

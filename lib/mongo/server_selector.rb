@@ -38,6 +38,11 @@ module Mongo
     # @since 2.0.0
     SERVER_SELECTION_TIMEOUT = 30.freeze
 
+    # Primary read preference.
+    #
+    # @since 2.1.0
+    PRIMARY = Options::Redacted.new(mode: :primary).freeze
+
     # Hash lookup for the selector classes based off the symbols
     #   provided in configuration.
     #

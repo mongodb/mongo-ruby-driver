@@ -36,7 +36,7 @@ module Mongo
     # The default database options.
     #
     # @since 2.0.0
-    DEFAULT_OPTIONS = { :database => ADMIN }.freeze
+    DEFAULT_OPTIONS = Options::Redacted.new(:database => ADMIN).freeze
 
     # Database name field constant.
     #
@@ -148,7 +148,7 @@ module Mongo
     #
     # @return [ Hash ] The result of the command execution.
     def command(operation, opts = {})
-      preference = opts[:read] ? ServerSelector.get(opts[:read].merge(options)) : read_preference
+      preference = opts[:read] ? ServerSelector.get(client.options.merge(opts[:read])) : read_preference
       server = preference.select_server(cluster)
       Operation::Command.new({
         :selector => operation,

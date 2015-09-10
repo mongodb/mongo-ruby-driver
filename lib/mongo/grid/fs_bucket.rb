@@ -19,6 +19,7 @@ module Mongo
     #
     # @since 2.0.0
     class FSBucket
+      extend Forwardable
 
       # The default root prefix.
       #
@@ -54,6 +55,12 @@ module Mongo
       #
       # @since 2.1.0
       attr_reader :options
+
+      # Get client from the database.
+      #
+      # @since 2.1.0
+      def_delegators :database,
+                     :client
 
       # Find files collection documents matching a given selector.
       #
@@ -395,7 +402,7 @@ module Mongo
       # @since 2.1.0
       def read_preference
         @read_preference ||= @options[:read] ?
-            ServerSelector.get((@options[:read] || {}).merge(database.options)) :
+            ServerSelector.get(Options::Redacted.new((@options[:read] || {}).merge(client.options))) :
             database.read_preference
       end
 
