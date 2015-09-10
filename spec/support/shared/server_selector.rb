@@ -166,7 +166,7 @@ shared_examples 'a server selector with sensitive data in its options' do
     context 'when there is sensitive data in the options' do
 
       let(:options) do
-        Mongo::Options::Redacted.new(:mode => name, :password => '123')
+        Mongo::Options::Redacted.new(:mode => name, :password => 'sensitive_data')
       end
 
       it 'does not print out sensitive data' do
