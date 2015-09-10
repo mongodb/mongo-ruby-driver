@@ -51,8 +51,9 @@ module Mongo
       def collection_names(options = {})
         @batch_size = options[:batch_size]
         server = next_primary
+        @limit = -1 if server.features.list_collections_enabled?
         collections_info(server).collect do |info|
-          server.context.features.list_collections_enabled? ?
+          server.features.list_collections_enabled? ?
             info[Database::NAME] : info[Database::NAME].sub("#{@database.name}.", '')
         end
       end
@@ -80,7 +81,7 @@ module Mongo
       def initialize(database)
         @database = database
         @batch_size =  nil
-        @limit = -1
+        @limit = nil
         @collection = @database[Database::COMMAND]
       end
 
