@@ -98,7 +98,7 @@ module Mongo
           if reply_payload
             reply = reply_payload[:reply]
             if cursor = reply[:cursor]
-              reply = reply.merge(cursor: cursor.merge(ns: namespace(command_payload)))
+              cursor.merge!('ns' => namespace(command_payload)) if !cursor.key?('ns')
             end
             reply
           else
