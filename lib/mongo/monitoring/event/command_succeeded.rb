@@ -98,11 +98,13 @@ module Mongo
           if reply_payload
             reply = reply_payload[:reply]
             if cursor = reply[:cursor]
-              cursor.merge!('ns' => namespace(command_payload)) if !cursor.key?('ns')
+              if !cursor.key?(Collection::NS)
+                cursor.merge!(Collection::NS => namespace(command_payload))
+              end
             end
             reply
           else
-            BSON::Document.new(ok: 1)
+            BSON::Document.new(Operation::Result::OK => 1)
           end
         end
 

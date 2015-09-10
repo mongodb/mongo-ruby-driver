@@ -30,6 +30,11 @@ module Mongo
     # @since 2.1.0
     CAPPED = 'capped'.freeze
 
+    # The ns field constant.
+    #
+    # @since 2.1.0
+    NS = 'ns'.freeze
+
     # @return [ Mongo::Database ] The database the collection resides in.
     attr_reader :database
 
