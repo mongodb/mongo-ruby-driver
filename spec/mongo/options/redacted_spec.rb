@@ -129,4 +129,218 @@ describe Mongo::Options::Redacted do
       end
     end
   end
+
+  describe '#reject' do
+
+    let(:options) do
+      described_class.new(a: 1, b: 2, c: 3)
+    end
+
+    context 'when no block is provided' do
+
+      it 'returns an enumerable' do
+        expect(options.reject).to be_a(Enumerator)
+      end
+    end
+
+    context 'when a block is provided' do
+
+      context 'when the block evaluates to true for some pairs' do
+
+        let(:result) do
+          options.reject { |k,v| k == 'a' }
+        end
+
+        it 'returns an object consisting of only the remaining pairs' do
+          expect(result).to eq(described_class.new(b: 2, c: 3))
+        end
+
+        it 'returns a new object' do
+          expect(result).not_to be(options)
+        end
+      end
+
+      context 'when the block does not evaluate to true for any pairs' do
+
+        let(:result) do
+          options.reject { |k,v| k == 'd' }
+        end
+
+        it 'returns an object with all pairs intact' do
+          expect(result).to eq(described_class.new(a: 1, b: 2, c: 3))
+        end
+
+        it 'returns a new object' do
+          expect(result).not_to be(options)
+        end
+      end
+    end
+  end
+
+  describe '#reject!' do
+
+    let(:options) do
+      described_class.new(a: 1, b: 2, c: 3)
+    end
+
+    context 'when no block is provided' do
+
+      it 'returns an enumerable' do
+        expect(options.reject).to be_a(Enumerator)
+      end
+    end
+
+    context 'when a block is provided' do
+
+      context 'when the block evaluates to true for some pairs' do
+
+        let(:result) do
+          options.reject! { |k,v| k == 'a' }
+        end
+
+        it 'returns an object consisting of only the remaining pairs' do
+          expect(result).to eq(described_class.new(b: 2, c: 3))
+        end
+
+        it 'returns the same object' do
+          expect(result).to be(options)
+        end
+      end
+
+      context 'when the block does not evaluate to true for any pairs' do
+
+        let(:result) do
+          options.reject! { |k,v| k == 'd' }
+        end
+
+        it 'returns nil' do
+          expect(result).to be(nil)
+        end
+      end
+    end
+  end
+
+  describe '#select' do
+
+    let(:options) do
+      described_class.new(a: 1, b: 2, c: 3)
+    end
+
+    context 'when no block is provided' do
+
+      it 'returns an enumerable' do
+        expect(options.reject).to be_a(Enumerator)
+      end
+    end
+
+    context 'when a block is provided' do
+
+      context 'when the block evaluates to true for some pairs' do
+
+        let(:result) do
+          options.select { |k,v| k == 'a' }
+        end
+
+        it 'returns an object consisting of those pairs' do
+          expect(result).to eq(described_class.new(a: 1))
+        end
+
+        it 'returns a new object' do
+          expect(result).not_to be(options)
+        end
+      end
+
+      context 'when the block does not evaluate to true for any pairs' do
+
+        let(:result) do
+          options.select { |k,v| k == 'd' }
+        end
+
+        it 'returns an object with no pairs' do
+          expect(result).to eq(described_class.new)
+        end
+
+        it 'returns a new object' do
+          expect(result).not_to be(options)
+        end
+      end
+
+      context 'when the object is unchanged' do
+
+        let(:options) do
+          described_class.new(a: 1, b: 2, c: 3)
+        end
+
+        let(:result) do
+          options.select { |k,v| ['a', 'b', 'c'].include?(k) }
+        end
+
+        it 'returns a new object' do
+          expect(result).to eq(described_class.new(a: 1, b: 2, c: 3))
+        end
+      end
+    end
+  end
+
+  describe '#select!' do
+
+    let(:options) do
+      described_class.new(a: 1, b: 2, c: 3)
+    end
+
+    context 'when no block is provided' do
+
+      it 'returns an enumerable' do
+        expect(options.reject).to be_a(Enumerator)
+      end
+    end
+
+    context 'when a block is provided' do
+
+      context 'when the block evaluates to true for some pairs' do
+
+        let(:result) do
+          options.select! { |k,v| k == 'a' }
+        end
+
+        it 'returns an object consisting of those pairs' do
+          expect(result).to eq(described_class.new(a: 1))
+        end
+
+        it 'returns the same object' do
+          expect(result).to be(options)
+        end
+      end
+
+      context 'when the block does not evaluate to true for any pairs' do
+
+        let(:result) do
+          options.select! { |k,v| k == 'd' }
+        end
+
+        it 'returns an object with no pairs' do
+          expect(result).to eq(described_class.new)
+        end
+
+        it 'returns the same object' do
+          expect(result).to be(options)
+        end
+      end
+
+      context 'when the object is unchanged' do
+
+        let(:options) do
+          described_class.new(a: 1, b: 2, c: 3)
+        end
+
+        let(:result) do
+          options.select! { |k,v| ['a', 'b', 'c'].include?(k) }
+        end
+
+        it 'returns nil' do
+          expect(result).to be(nil)
+        end
+      end
+    end
+  end
 end

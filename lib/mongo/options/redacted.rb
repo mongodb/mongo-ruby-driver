@@ -65,6 +65,80 @@ module Mongo
       end
       alias_method :key?, :has_key?
 
+      # Returns a new options object consisting of pairs for which the block returns false.
+      #
+      # @example Get a new options object with pairs for which the block returns false.
+      #   new_options = options.reject { |k, v| k == 'database' }
+      #
+      # @yieldparam [ String, Object ] The key as a string and its value.
+      #
+      # @return [ Options::Redacted ] A new options object.
+      #
+      # @since 2.1.0
+      def reject(&block)
+        new_options = dup
+        new_options.reject!(&block) || new_options
+      end
+
+      # Only keeps pairs for which the block returns false.
+      #
+      # @example Remove pairs from this object for which the block returns true.
+      #   options.reject! { |k, v| k == 'database' }
+      #
+      # @yieldparam [ String, Object ] The key as a string and its value.
+      #
+      # @return [ Options::Redacted ] This object.
+      #
+      # @since 2.1.0
+      def reject!
+        if block_given?
+          n_keys = keys.size
+          self.keys.each do |key|
+            self.delete(key) if yield(key, self[key])
+          end
+          n_keys == keys.size ? nil : self
+        else
+          self.to_enum
+        end
+      end
+
+      # Returns a new options object consisting of pairs for which the block returns true.
+      #
+      # @example Get a new options object with pairs for which the block returns true.
+      #   ssl_options = options.select { |k, v| k =~ /ssl/ }
+      #
+      # @yieldparam [ String, Object ] The key as a string and its value.
+      #
+      # @return [ Options::Redacted ] A new options object.
+      #
+      # @since 2.1.0
+      def select(&block)
+        new_options = dup
+        new_options.select!(&block) || new_options
+      end
+
+      # Only keeps pairs for which the block returns true.
+      #
+      # @example Remove pairs from this object for which the block does not return true.
+      #   options.select! { |k, v| k =~ /ssl/ }
+      #
+      # @yieldparam [ String, Object ] The key as a string and its value.
+      #
+      # @return [ Options::Redacted ] This object.
+      #
+      # @since 2.1.0
+      def select!
+        if block_given?
+          n_keys = keys.size
+          self.keys.each do |key|
+            self.delete(key) unless yield(key, self[key])
+          end
+          n_keys == keys.size ? nil : self
+        else
+          self.to_enum
+        end
+      end
+
       private
 
       def redacted_string(method)
