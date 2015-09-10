@@ -87,7 +87,7 @@ module Mongo
       #
       # @yieldparam [ String, Object ] The key as a string and its value.
       #
-      # @return [ Options::Redacted ] This object.
+      # @return [ Options::Redacted, nil ] This object or nil if no changes were made.
       #
       # @since 2.1.0
       def reject!
@@ -124,7 +124,7 @@ module Mongo
       #
       # @yieldparam [ String, Object ] The key as a string and its value.
       #
-      # @return [ Options::Redacted ] This object.
+      # @return [ Options::Redacted, nil ] This object or nil if no changes were made.
       #
       # @since 2.1.0
       def select!
