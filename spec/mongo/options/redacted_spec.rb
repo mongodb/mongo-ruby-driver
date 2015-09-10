@@ -78,7 +78,7 @@ describe Mongo::Options::Redacted do
 
       context 'when the method argument is a String' do
 
-        it 'returns true when ' do
+        it 'returns true' do
           expect(options.has_key?('name')).to be(true)
         end
       end
@@ -99,7 +99,7 @@ describe Mongo::Options::Redacted do
 
       context 'when the method argument is a String' do
 
-        it 'returns true when ' do
+        it 'returns true' do
           expect(options.has_key?('name')).to be(true)
         end
       end
@@ -120,14 +120,14 @@ describe Mongo::Options::Redacted do
 
       context 'when the method argument is a String' do
 
-        it 'returns true when ' do
+        it 'returns false' do
           expect(options.has_key?('name')).to be(false)
         end
       end
 
       context 'when method argument is a Symbol' do
 
-        it 'returns true' do
+        it 'returns false' do
           expect(options.has_key?(:name)).to be(false)
         end
       end
