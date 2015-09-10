@@ -158,37 +158,47 @@ module Mongo
         #
         # @since 2.1.0
         OPTION_MAPPINGS = {
-          :project => :projection,
-          :skip => :skip,
-          :limit => :limit,
-          :batch_size => :batchSize
-        }
+          :project => 'projection',
+          :skip => 'skip',
+          :limit => 'limit',
+          :batch_size => 'batchSize'
+        }.freeze
 
         SPECIAL_FIELD_MAPPINGS = {
-          :$readPreference => :readPreference,
-          :$orderby => :sort,
-          :$hint => :hint,
-          :$comment => :comment,
-          :$returnKey => :returnKey,
-          :$snapshot => :snapshot,
-          :$maxScan => :maxScan,
-          :$max => :max,
-          :$min => :min,
-          :$maxTimeMS => :maxTimeMS,
-          :$showDiskLoc => :showRecordId,
-          :$explain => :explain
-        }
+          :$readPreference => 'readPreference',
+          :$orderby => 'sort',
+          :$hint => 'hint',
+          :$comment => 'comment',
+          :$returnKey => 'returnKey',
+          :$snapshot => 'snapshot',
+          :$maxScan => 'maxScan',
+          :$max => 'max',
+          :$min => 'min',
+          :$maxTimeMS => 'maxTimeMS',
+          :$showDiskLoc => 'showRecordId',
+          :$explain => 'explain'
+        }.freeze
 
         # Mapping of flags to find command options.
         #
         # @since 2.1.0
         FLAG_MAPPINGS = {
-          :tailable_cursor => :tailable,
-          :oplog_replay => :oplogReplay,
-          :no_cursor_timeout => :noCursorTimeout,
-          :await_data => :awaitData,
-          :partial => :allowPartialResults
-        }
+          :tailable_cursor => 'tailable',
+          :oplog_replay => 'oplogReplay',
+          :no_cursor_timeout => 'noCursorTimeout',
+          :await_data => 'awaitData',
+          :partial => 'allowPartialResults'
+        }.freeze
+
+        # Find command constant.
+        #
+        # @since 2.1.0
+        FIND = 'find'.freeze
+
+        # Filter attribute constant.
+        #
+        # @since 2.1.0
+        FILTER = 'filter'.freeze
 
         # @return [ String ] collection The name of the collection.
         attr_reader :collection
@@ -242,7 +252,7 @@ module Mongo
         #
         # @since 2.1.0
         def command_name
-          command? ? filter.keys.first : 'find'
+          command? ? filter.keys.first : FIND
         end
 
         private
@@ -257,16 +267,16 @@ module Mongo
 
         def find_command
           document = BSON::Document.new
-          document[:find] = collection
-          document[:filter] = filter[:$query] ? filter[:$query] : filter
+          document.store(FIND, collection)
+          document.store(FILTER, filter[:$query] ? filter[:$query] : filter)
           OPTION_MAPPINGS.each do |legacy, option|
-            document[option] = options[legacy] unless options[legacy].nil?
+            document.store(option, options[legacy]) unless options[legacy].nil?
           end
           SPECIAL_FIELD_MAPPINGS.each do |special, normal|
-            document[normal] = filter[special] unless filter[special].nil?
+            document.store(normal, filter[special]) unless filter[special].nil?
           end
           FLAG_MAPPINGS.each do |legacy, flag|
-            document[flag] = true if flags.include?(legacy)
+            document.store(flag, true) if flags.include?(legacy)
           end
           document
         end
