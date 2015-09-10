@@ -25,12 +25,12 @@ module Mongo
       #
       # @since 2.1.0
       SENSITIVE_OPTIONS = [ :password,
-                            :pwd ]
+                            :pwd ].freeze
 
       # The replacement string used in place of the value for sensitive keys.
       #
       # @since 2.1.0
-      STRING_REPLACEMENT = '<REDACTED>'
+      STRING_REPLACEMENT = '<REDACTED>'.freeze
 
       # Get a string representation of the options.
       #
@@ -93,12 +93,12 @@ module Mongo
       def reject!
         if block_given?
           n_keys = keys.size
-          self.keys.each do |key|
-            self.delete(key) if yield(key, self[key])
+          keys.each do |key|
+            delete(key) if yield(key, self[key])
           end
           n_keys == keys.size ? nil : self
         else
-          self.to_enum
+          to_enum
         end
       end
 
@@ -130,12 +130,12 @@ module Mongo
       def select!
         if block_given?
           n_keys = keys.size
-          self.keys.each do |key|
-            self.delete(key) unless yield(key, self[key])
+          keys.each do |key|
+            delete(key) unless yield(key, self[key])
           end
           n_keys == keys.size ? nil : self
         else
-          self.to_enum
+          to_enum
         end
       end
 

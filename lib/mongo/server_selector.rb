@@ -41,7 +41,7 @@ module Mongo
     # Primary read preference.
     #
     # @since 2.1.0
-    PRIMARY = Options::Redacted.new(mode: :primary)
+    PRIMARY = Options::Redacted.new(mode: :primary).freeze
 
     # Hash lookup for the selector classes based off the symbols
     #   provided in configuration.

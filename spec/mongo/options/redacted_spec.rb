@@ -25,8 +25,12 @@ describe Mongo::Options::Redacted do
 
     context 'when the hash does not contain a sensitive key' do
 
-      it 'prints all the values' do
+      let(:original_opts) do
+        { user: 'emily' }
+      end
 
+      it 'prints all the values' do
+        expect(options.to_s).to match(original_opts[:user])
       end
     end
   end
