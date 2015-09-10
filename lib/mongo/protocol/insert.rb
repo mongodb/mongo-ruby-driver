@@ -104,6 +104,26 @@ module Mongo
       # @since 2.1.0
       class Upconverter
 
+        # Insert field constant.
+        #
+        # @since 2.1.0
+        INSERT = 'insert'.freeze
+
+        # Documents field constant.
+        #
+        # @since 2.1.0
+        DOCUMENTS = 'documents'.freeze
+
+        # Ordered field constant.
+        #
+        # @since 2.1.0
+        ORDERED = 'ordered'.freeze
+
+        # Write concern field constant.
+        #
+        # @since 2.1.0
+        WRITE_CONCERN = 'writeConcern'.freeze
+
         # @return [ String ] collection The name of the collection.
         attr_reader :collection
 
@@ -138,12 +158,11 @@ module Mongo
         #
         # @since 2.1.0
         def command
-          document = BSON::Document.new(
-            insert: collection,
-            documents: documents,
-            ordered: options.fetch(:ordered, true)
-          )
-          document.merge!(writeConcern: options[:write_concern].options) if options[:write_concern]
+          document = BSON::Document.new
+          document.store(INSERT, collection)
+          document.store(DOCUMENTS, documents)
+          document.store(ORDERED, options.fetch(:ordered, true))
+          document.merge!(WRITE_CONCERN => options[:write_concern].options) if options[:write_concern]
           document
         end
       end
