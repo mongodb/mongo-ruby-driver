@@ -141,7 +141,7 @@ module Mongo
         private
 
         def batch_field
-          starting_from > 0 ? :nextBatch : :firstBatch
+          starting_from > 0 ? 'nextBatch' : 'firstBatch'
         end
 
         def command?
@@ -149,10 +149,13 @@ module Mongo
         end
 
         def find_command
-          BSON::Document.new(
-            ok: 1,
-            cursor: BSON::Document.new(id: cursor_id, batch_field => documents)
-          )
+          document = BSON::Document.new
+          cursor_document = BSON::Document.new
+          cursor_document.store('id', cursor_id)
+          cursor_document.store(batch_field, documents)
+          document.store('ok', 1)
+          document.store('cursor', cursor_document)
+          document
         end
 
         def op_command
