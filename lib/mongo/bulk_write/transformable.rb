@@ -56,14 +56,14 @@ module Mongo
       #
       # @since 2.1.0
       DELETE_MANY_TRANSFORM = ->(doc){
-        { q: doc[:filter], limit: 0 }
+        { Operation::Q => doc[:filter], Operation::LIMIT => 0 }
       }
 
       # Proc to transform delete one ops.
       #
       # @since 2.1.0
       DELETE_ONE_TRANSFORM = ->(doc){
-        { q: doc[:filter], limit: 1 }
+        { Operation::Q => doc[:filter], Operation::LIMIT => 1 }
       }
 
       # Proc to transform insert one ops.
@@ -77,21 +77,36 @@ module Mongo
       #
       # @since 2.1.0
       REPLACE_ONE_TRANSFORM = ->(doc){
-        { q: doc[:filter], u: doc[:replacement], multi: false, upsert: doc.fetch(:upsert, false) }
+        {
+          Operation::Q => doc[:filter],
+          Operation::U => doc[:replacement],
+          Operation::MULTI => false,
+          Operation::UPSERT => doc.fetch(:upsert, false)
+        }
       }
 
       # Proc to transform update many ops.
       #
       # @since 2.1.0
       UPDATE_MANY_TRANSFORM = ->(doc){
-        { q: doc[:filter], u: doc[:update], multi: true, upsert: doc.fetch(:upsert, false) }
+        {
+          Operation::Q => doc[:filter],
+          Operation::U => doc[:update],
+          Operation::MULTI => true,
+          Operation::UPSERT => doc.fetch(:upsert, false)
+        }
       }
 
       # Proc to transform update one ops.
       #
       # @since 2.1.0
       UPDATE_ONE_TRANSFORM = ->(doc){
-        { q: doc[:filter], u: doc[:update], multi: false, upsert: doc.fetch(:upsert, false) }
+        {
+          Operation::Q => doc[:filter],
+          Operation::U => doc[:update],
+          Operation::MULTI => false,
+          Operation::UPSERT => doc.fetch(:upsert, false)
+        }
       }
 
       # Document mappers from the bulk api input into proper commands.

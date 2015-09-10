@@ -95,7 +95,7 @@ describe Mongo::Operation::Write::Update do
       context 'when the update succeeds' do
 
         let(:document) do
-          { q: { name: 'test' }, u: { '$set' => { field: 'blah' }}, limit: 1 }
+          { 'q' => { name: 'test' }, 'u' => { '$set' => { field: 'blah' }}, limit: 1 }
         end
 
         let(:result) do
@@ -122,7 +122,7 @@ describe Mongo::Operation::Write::Update do
       context 'when the update fails' do
 
         let(:document) do
-          { q: { name: 'test' }, u: { '$st' => { field: 'blah' } } }
+          { 'q' => { name: 'test' }, 'u' => { '$st' => { field: 'blah' } } }
         end
 
         it 'raises an exception' do
@@ -147,7 +147,7 @@ describe Mongo::Operation::Write::Update do
       context 'when the updates succeed' do
 
         let(:document) do
-          { q: { field: 'test' }, u: { '$set' => { other: 'blah' }}, multi: true }
+          { 'q' => { field: 'test' }, 'u' => { '$set' => { other: 'blah' }}, 'multi' => true }
         end
 
         let(:result) do
@@ -174,7 +174,7 @@ describe Mongo::Operation::Write::Update do
       context 'when an update fails' do
 
         let(:document) do
-          { q: { name: 'test' }, u: { '$st' => { field: 'blah' } }, multi: true }
+          { 'q' => { name: 'test' }, 'u' => { '$st' => { field: 'blah' } }, 'multi' => true }
         end
 
         it 'raises an exception' do
@@ -187,7 +187,7 @@ describe Mongo::Operation::Write::Update do
       context 'when a document exceeds max bson size' do
 
         let(:document) do
-          { q: { name: 't'*17000000}, u: { '$set' => { field: 'blah' } } }
+          { 'q' => { name: 't'*17000000}, 'u' => { '$set' => { field: 'blah' } } }
         end
 
         it 'raises an error' do
@@ -200,7 +200,7 @@ describe Mongo::Operation::Write::Update do
       context 'when upsert is true' do
 
         let(:document) do
-          { q: { field: 'non-existent' }, u: { '$set' => { other: 'blah' }}, upsert: true }
+          { 'q' => { field: 'non-existent' }, 'u' => { '$set' => { other: 'blah' }}, 'upsert' => true }
         end
 
         let(:result) do

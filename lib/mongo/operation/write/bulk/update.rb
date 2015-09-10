@@ -69,9 +69,9 @@ module Mongo
           def messages
             updates.collect do |u|
               opts = { :flags => [] }
-              opts[:flags] << :multi_update if !!u[:multi]
-              opts[:flags] << :upsert if !!u[:upsert]
-              Protocol::Update.new(db_name, coll_name, u[:q], u[:u], opts)
+              opts[:flags] << :multi_update if !!u[Operation::MULTI]
+              opts[:flags] << :upsert if !!u[Operation::UPSERT]
+              Protocol::Update.new(db_name, coll_name, u[Operation::Q], u[Operation::U], opts)
             end
           end
         end

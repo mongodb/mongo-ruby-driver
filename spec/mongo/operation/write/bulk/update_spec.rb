@@ -90,7 +90,7 @@ describe Mongo::Operation::Write::Bulk::Update do
       context 'when the update passes' do
 
         let(:documents) do
-          [{ q: { other: 'test' }, u: { '$set' => { field: 'blah' }}, multi: false }]
+          [{ 'q' => { other: 'test' }, 'u' => { '$set' => { field: 'blah' }}, 'multi' => false }]
         end
 
         it 'updates the document' do
@@ -114,7 +114,7 @@ describe Mongo::Operation::Write::Bulk::Update do
       context 'when the updates succeed' do
 
         let(:documents) do
-          [{ q: { other: 'test' }, u: { '$set' => { field: 'blah' }}, multi: true }]
+          [{ 'q' => { other: 'test' }, 'u' => { '$set' => { field: 'blah' }}, 'multi' => true }]
         end
 
         it 'updates the documents' do
@@ -127,8 +127,8 @@ describe Mongo::Operation::Write::Bulk::Update do
     context 'when the updates are ordered' do
 
       let(:documents) do
-        [ { q: { name: 'test' }, u: { '$st' => { field: 'blah' }}, multi: true},
-          { q: { field: 'test' }, u: { '$set' => { other: 'blah' }}, multi: true }
+        [ { 'q' => { name: 'test' }, 'u' => { '$st' => { field: 'blah' }}, 'multi' => true},
+          { 'q' => { field: 'test' }, 'u' => { '$set' => { other: 'blah' }}, 'multi' => true }
         ]
       end
 
@@ -176,8 +176,8 @@ describe Mongo::Operation::Write::Bulk::Update do
     context 'when the updates are unordered' do
 
       let(:documents) do
-        [ { q: { name: 'test' }, u: { '$st' => { field: 'blah' }}, multi: true},
-          { q: { field: 'test' }, u: { '$set' => { other: 'blah' }}, multi: false }
+        [ { 'q' => { name: 'test' }, 'u' => { '$st' => { field: 'blah' }}, 'multi' => true},
+          { 'q' => { field: 'test' }, 'u' => { '$set' => { other: 'blah' }}, 'multi' => false }
         ]
       end
 

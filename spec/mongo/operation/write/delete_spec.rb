@@ -89,7 +89,7 @@ describe Mongo::Operation::Write::Delete do
       context 'when the delete succeeds' do
 
         let(:document) do
-          { q: { field: 'test' }, limit: 1 }
+          { 'q' => { field: 'test' }, 'limit' => 1 }
         end
 
         let(:result) do
@@ -133,7 +133,7 @@ describe Mongo::Operation::Write::Delete do
       context 'when the deletes succeed' do
 
         let(:document) do
-          { q: { field: 'test' }, limit: 0 }
+          { 'q' => { field: 'test' }, 'limit' => 0 }
         end
 
         let(:result) do
@@ -172,7 +172,7 @@ describe Mongo::Operation::Write::Delete do
       context 'when a document exceeds max bson size' do
 
         let(:document) do
-          { q: { field: 't'*17000000 }, limit: 0 }
+          { 'q' => { field: 't'*17000000 }, 'limit' => 0 }
         end
 
         it 'raises an error' do

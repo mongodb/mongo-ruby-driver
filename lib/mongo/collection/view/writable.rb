@@ -172,7 +172,7 @@ module Mongo
         def remove(value)
           write_with_retry do
             Operation::Write::Delete.new(
-              :delete => { q: selector, limit: value },
+              :delete => { Operation::Q => selector, Operation::LIMIT => value },
               :db_name => collection.database.name,
               :coll_name => collection.name,
               :write_concern => collection.write_concern
@@ -183,10 +183,10 @@ module Mongo
         def update(spec, multi, opts)
           write_with_retry do
             Operation::Write::Update.new(
-              :update => { q: selector,
-                           u: spec,
-                           multi: multi,
-                           upsert: !!opts[:upsert] },
+              :update => { Operation::Q => selector,
+                           Operation::U => spec,
+                           Operation::MULTI => multi,
+                           Operation::UPSERT => !!opts[:upsert] },
               :db_name => collection.database.name,
               :coll_name => collection.name,
               :write_concern => collection.write_concern

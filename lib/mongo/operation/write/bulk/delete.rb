@@ -60,8 +60,8 @@ module Mongo
 
           def messages
             deletes.collect do |del|
-              opts = ( del[:limit] || 0 ) <= 0 ? {} : { :flags => [ :single_remove ] }
-              Protocol::Delete.new(db_name, coll_name, del[:q], opts)
+              opts = ( del[Operation::LIMIT] || 0 ) <= 0 ? {} : { :flags => [ :single_remove ] }
+              Protocol::Delete.new(db_name, coll_name, del[Operation::Q], opts)
             end
           end
         end

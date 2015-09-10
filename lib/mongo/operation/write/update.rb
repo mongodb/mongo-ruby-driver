@@ -65,10 +65,15 @@ module Mongo
 
         def message
           flags = []
-          flags << :multi_update if update[:multi]
-          flags << :upsert if update[:upsert]
-          Protocol::Update.new(db_name, coll_name, update[:q], update[:u],
-                               flags.empty? ? {} : { flags: flags })
+          flags << :multi_update if update[Operation::MULTI]
+          flags << :upsert if update[Operation::UPSERT]
+          Protocol::Update.new(
+            db_name,
+            coll_name,
+            update[Operation::Q],
+            update[Operation::U],
+            flags.empty? ? {} : { flags: flags }
+          )
         end
       end
     end

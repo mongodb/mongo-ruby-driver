@@ -262,7 +262,11 @@ module Mongo
         end
 
         def op_command
-          BSON::Document.new(filter)
+          document = BSON::Document.new
+          filter.each do |field, value|
+            document.store(field.to_s, value)
+          end
+          document
         end
 
         def find_command

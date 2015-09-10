@@ -21,3 +21,33 @@ require 'mongo/operation/read'
 require 'mongo/operation/write'
 require 'mongo/operation/commands'
 require 'mongo/operation/kill_cursors'
+
+module Mongo
+  module Operation
+
+    # The q field constant.
+    #
+    # @since 2.1.0
+    Q = 'q'.freeze
+
+    # The u field constant.
+    #
+    # @since 2.1.0
+    U = 'u'.freeze
+
+    # The limit field constant.
+    #
+    # @since 2.1.0
+    LIMIT = 'limit'.freeze
+
+    # The multi field constant.
+    #
+    # @since 2.1.0
+    MULTI = 'multi'.freeze
+
+    # The upsert field constant.
+    #
+    # @since 2.1.0
+    UPSERT = 'upsert'.freeze
+  end
+end

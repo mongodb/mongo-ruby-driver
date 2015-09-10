@@ -4,7 +4,7 @@ describe Mongo::Operation::Write::Bulk::Delete do
   include_context 'operation'
 
   let(:documents) do
-    [ { q: { foo: 1 }, limit: 1 } ]
+    [ { 'q' => { foo: 1 }, 'limit' => 1 } ]
   end
 
   let(:spec) do
@@ -42,7 +42,7 @@ describe Mongo::Operation::Write::Bulk::Delete do
 
       context 'when two ops have different specs' do
         let(:other_docs) do
-          [ { q: { bar: 1 }, limit: 1 } ]
+          [ { 'q' => { bar: 1 }, 'limit' => 1 } ]
         end
 
         let(:other_spec) do
@@ -89,7 +89,7 @@ describe Mongo::Operation::Write::Bulk::Delete do
       context 'when the delete succeeds' do
 
         let(:documents) do
-          [{ q: { field: 'test' }, limit: 1 }]
+          [{ 'q' => { field: 'test' }, 'limit' => 1 }]
         end
 
         it 'deletes the document from the database' do
@@ -113,7 +113,7 @@ describe Mongo::Operation::Write::Bulk::Delete do
       context 'when the deletes succeed' do
 
         let(:documents) do
-          [{ q: { field: 'test' }, limit: 0 }]
+          [{ 'q' => { field: 'test' }, 'limit' => 0 }]
         end
 
         it 'deletes the documents from the database' do
@@ -127,10 +127,10 @@ describe Mongo::Operation::Write::Bulk::Delete do
 
       let(:documents) do
         [ failing_delete_doc,
-          { q: { field: 'test' }, limit: 1 }
+          { 'q' => { field: 'test' }, 'limit' => 1 }
         ]
       end
-  
+
       let(:spec) do
         { :deletes       => documents,
           :db_name       => TEST_DB,
@@ -139,7 +139,7 @@ describe Mongo::Operation::Write::Bulk::Delete do
           :ordered       => true
         }
       end
-  
+
       let(:failing_delete) do
         described_class.new(spec)
       end
@@ -151,7 +151,7 @@ describe Mongo::Operation::Write::Bulk::Delete do
           let(:write_concern) do
             Mongo::WriteConcern.get(w: 1)
           end
-        
+
           it 'aborts after first error' do
             failing_delete.execute(authorized_primary.context)
             expect(authorized_collection.find.count).to eq(2)
@@ -159,11 +159,11 @@ describe Mongo::Operation::Write::Bulk::Delete do
         end
 
         context 'when write concern is unacknowledged' do
-          
+
           let(:write_concern) do
             Mongo::WriteConcern.get(w: 0)
           end
-      
+
           it 'aborts after first error' do
             failing_delete.execute(authorized_primary.context)
             expect(authorized_collection.find.count).to eq(2)
@@ -176,10 +176,10 @@ describe Mongo::Operation::Write::Bulk::Delete do
 
       let(:documents) do
         [ failing_delete_doc,
-          { q: { field: 'test' }, limit: 1 }
+          { 'q' => { field: 'test' }, 'limit' => 1 }
         ]
       end
-  
+
       let(:spec) do
         { :deletes       => documents,
           :db_name       => TEST_DB,
@@ -188,7 +188,7 @@ describe Mongo::Operation::Write::Bulk::Delete do
           :ordered       => false
         }
       end
-  
+
       let(:failing_delete) do
         described_class.new(spec)
       end
@@ -200,7 +200,7 @@ describe Mongo::Operation::Write::Bulk::Delete do
           let(:write_concern) do
             Mongo::WriteConcern.get(w: 1)
           end
-        
+
           it 'does not abort after first error' do
             failing_delete.execute(authorized_primary.context)
             expect(authorized_collection.find.count).to eq(1)
@@ -208,11 +208,11 @@ describe Mongo::Operation::Write::Bulk::Delete do
         end
 
         context 'when write concern is unacknowledged' do
-          
+
           let(:write_concern) do
             Mongo::WriteConcern.get(w: 0)
           end
-      
+
           it 'does not abort after first error' do
             failing_delete.execute(authorized_primary.context)
             sleep(1)

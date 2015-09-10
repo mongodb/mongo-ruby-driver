@@ -24,8 +24,8 @@ describe Mongo::BulkWrite::UnorderedCombiner do
             [
               {
                 delete_one: [
-                  { q: { _id: 0 }, limit: 1 },
-                  { q: { _id: 1 }, limit: 1 }
+                  { 'q' => { _id: 0 }, 'limit' => 1 },
+                  { 'q' => { _id: 1 }, 'limit' => 1 }
                 ]
               }
             ]
@@ -66,8 +66,8 @@ describe Mongo::BulkWrite::UnorderedCombiner do
             [
               {
                 delete_many: [
-                  { q: { _id: 0 }, limit: 0 },
-                  { q: { _id: 1 }, limit: 0 }
+                  { 'q' => { _id: 0 }, 'limit' => 0 },
+                  { 'q' => { _id: 1 }, 'limit' => 0 }
                 ]
               }
             ]
@@ -137,8 +137,8 @@ describe Mongo::BulkWrite::UnorderedCombiner do
             [
               {
                 update_one: [
-                  { q: { _id: 0 }, u: { '$set' => { name: 'test' }}, multi: false, upsert: false },
-                  { q: { _id: 1 }, u: { '$set' => { name: 'test' }}, multi: false, upsert: false }
+                  { 'q' => { _id: 0 }, 'u' => { '$set' => { name: 'test' }}, 'multi' => false, 'upsert' => false },
+                  { 'q' => { _id: 1 }, 'u' => { '$set' => { name: 'test' }}, 'multi' => false, 'upsert' => false }
                 ]
               }
             ]
@@ -179,8 +179,8 @@ describe Mongo::BulkWrite::UnorderedCombiner do
             [
               {
                 update_many: [
-                  { q: { _id: 0 }, u: { '$set' => { name: 'test' }}, multi: true, upsert: false },
-                  { q: { _id: 1 }, u: { '$set' => { name: 'test' }}, multi: true, upsert: false }
+                  { 'q' => { _id: 0 }, 'u' => { '$set' => { name: 'test' }}, 'multi' => true, 'upsert' => false },
+                  { 'q' => { _id: 1 }, 'u' => { '$set' => { name: 'test' }}, 'multi' => true, 'upsert' => false }
                 ]
               }
             ]
@@ -227,8 +227,8 @@ describe Mongo::BulkWrite::UnorderedCombiner do
             },
             {
               delete_one: [
-                { q: { _id: 0 }, limit: 1 },
-                { q: { _id: 1 }, limit: 1 }
+                { 'q' => { _id: 0 }, 'limit' => 1 },
+                { 'q' => { _id: 1 }, 'limit' => 1 }
               ]
             }
           ]

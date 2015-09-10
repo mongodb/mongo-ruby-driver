@@ -61,8 +61,8 @@ module Mongo
         end
 
         def message
-          selector = delete[:q]
-          opts     = (delete[:limit] || 0) <= 0 ? {} : { :flags => [ :single_remove ] }
+          selector = delete[Operation::Q]
+          opts     = (delete[Operation::LIMIT] || 0) <= 0 ? {} : { :flags => [ :single_remove ] }
           Protocol::Delete.new(db_name, coll_name, selector, opts)
         end
       end
