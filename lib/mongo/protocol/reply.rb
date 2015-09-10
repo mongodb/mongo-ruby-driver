@@ -101,6 +101,26 @@ module Mongo
       # @since 2.1.0
       class Upconverter
 
+        # Next batch constant.
+        #
+        # @since 2.1.0
+        NEXT_BATCH = 'nextBatch'.freeze
+
+        # First batch constant.
+        #
+        # @since 2.1.0
+        FIRST_BATCH = 'firstBatch'.freeze
+
+        # Cursor field constant.
+        #
+        # @since 2.1.0
+        CURSOR = 'cursor'.freeze
+
+        # Id field constant.
+        #
+        # @since 2.1.0
+        ID = 'id'.freeze
+
         # @return [ Array<BSON::Document> ] documents The documents.
         attr_reader :documents
 
@@ -141,20 +161,20 @@ module Mongo
         private
 
         def batch_field
-          starting_from > 0 ? 'nextBatch' : 'firstBatch'
+          starting_from > 0 ? NEXT_BATCH : FIRST_BATCH
         end
 
         def command?
-          !documents.empty? && documents.first.key?('ok')
+          !documents.empty? && documents.first.key?(Operation::Result::OK)
         end
 
         def find_command
           document = BSON::Document.new
           cursor_document = BSON::Document.new
-          cursor_document.store('id', cursor_id)
+          cursor_document.store(ID, cursor_id)
           cursor_document.store(batch_field, documents)
-          document.store('ok', 1)
-          document.store('cursor', cursor_document)
+          document.store(Operation::Result::OK, 1)
+          document.store(CURSOR, cursor_document)
           document
         end
 
