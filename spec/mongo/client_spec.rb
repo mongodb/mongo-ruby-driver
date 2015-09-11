@@ -742,4 +742,24 @@ describe Mongo::Client do
       expect(client.dup.options).to be_a(Mongo::Options::Redacted)
     end
   end
+
+  describe '#collections' do
+
+    before do
+      authorized_client.database[:users].create
+    end
+
+    after do
+      authorized_client.database[:users].drop
+    end
+
+    let(:collection) do
+      Mongo::Collection.new(authorized_client.database, 'users')
+    end
+
+    it 'refers the current database collections' do
+      expect(authorized_client.collections).to include(collection)
+      expect(authorized_client.collections).to all(be_a(Mongo::Collection))
+    end
+  end
 end
