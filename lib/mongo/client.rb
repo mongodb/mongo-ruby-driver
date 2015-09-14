@@ -36,8 +36,8 @@ module Mongo
     # @return [ Hash ] options The configuration options.
     attr_reader :options
 
-    # Delegate command execution to the current database.
-    def_delegators :@database, :command
+    # Delegate command and collections execution to the current database.
+    def_delegators :@database, :command, :collections
 
     # Delegate subscription to monitoring.
     def_delegators :@monitoring, :subscribe, :unsubscribe
