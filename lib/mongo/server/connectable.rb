@@ -20,6 +20,10 @@ module Mongo
     # @since 2.0.0
     module Connectable
 
+      def self.included(base)
+        base.__send__(:include, Mongo::Retryable)
+      end
+
       # The ssl option prefix.
       #
       # @since 2.1.0
@@ -103,7 +107,9 @@ module Mongo
       end
 
       def read
-        ensure_connected{ |socket| Protocol::Reply.deserialize(socket) }
+        read_with_retry do
+          ensure_connected{ |socket| Protocol::Reply.deserialize(socket) }
+        end
       end
     end
   end
