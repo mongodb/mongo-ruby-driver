@@ -227,6 +227,10 @@ describe Mongo::Collection::View::Readable do
       it 'returns the count of matching documents' do
         expect(view.count).to eq(1)
       end
+
+      it 'returns an integer' do
+        expect(view.count).to be_a(Integer)
+      end
     end
 
     context 'when no selector is provided' do
