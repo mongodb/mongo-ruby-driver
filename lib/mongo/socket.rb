@@ -192,6 +192,7 @@ module Mongo
       rescue Errno::ETIMEDOUT
         raise Error::SocketTimeoutError, TIMEOUT_ERROR
       rescue IOError, SystemCallError => e
+        p "--------------------------------------------------- IO Error"
         raise Error::SocketError, e.message
       rescue OpenSSL::SSL::SSLError
         raise Error::SocketError, SSL_ERROR

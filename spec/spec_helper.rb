@@ -65,6 +65,7 @@ RSpec.configure do |config|
       ADMIN_UNAUTHORIZED_CLIENT.database.users.create(ROOT_USER)
       ADMIN_UNAUTHORIZED_CLIENT.close
     rescue Exception => e
+      raise e
     end
     begin
       # Adds the test user to the test database with permissions on all

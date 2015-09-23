@@ -115,7 +115,7 @@ describe Mongo::Protocol::GetMore do
     include_examples 'message with a header'
 
     describe 'zero' do
-      let(:field) { bytes[16..19] }
+      let(:field) { bytes.to_s[16..19] }
 
       it 'does not set any bits' do
         expect(field).to be_int32(0)
@@ -123,21 +123,21 @@ describe Mongo::Protocol::GetMore do
     end
 
     describe 'namespace' do
-      let(:field) { bytes[20..36] }
+      let(:field) { bytes.to_s[20..36] }
       it 'serializes the namespace' do
         expect(field).to be_cstring(ns)
       end
     end
 
     describe 'number to return' do
-      let(:field) { bytes[37..40] }
+      let(:field) { bytes.to_s[37..40] }
       it 'serializes the number to return' do
         expect(field).to be_int32(limit)
       end
     end
 
     describe 'cursor id' do
-      let(:field) { bytes[41..48] }
+      let(:field) { bytes.to_s[41..48] }
       it 'serializes the cursor id' do
         expect(field).to be_int64(cursor_id)
       end

@@ -79,7 +79,7 @@ describe Mongo::Protocol::KillCursors do
     include_examples 'message with a header'
 
     describe 'zero' do
-      let(:field) { bytes[16..19] }
+      let(:field) { bytes.to_s[16..19] }
 
       it 'serializes a zero' do
         expect(field).to be_int32(0)
@@ -87,14 +87,14 @@ describe Mongo::Protocol::KillCursors do
     end
 
     describe 'number of cursors' do
-      let(:field) { bytes[20..23] }
+      let(:field) { bytes.to_s[20..23] }
       it 'serializes the cursor count' do
         expect(field).to be_int32(id_count)
       end
     end
 
     describe 'cursor ids' do
-      let(:field) { bytes[24..-1] }
+      let(:field) { bytes.to_s[24..-1] }
       it 'serializes the selector' do
         expect(field).to be_int64_sequence(cursor_ids)
       end

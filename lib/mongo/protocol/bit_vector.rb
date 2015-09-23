@@ -40,15 +40,15 @@ module Mongo
         def serialize(buffer, value)
           bits = 0
           value.each { |flag| bits |= @masks[flag] }
-          buffer << [bits].pack(INT32_PACK)
+          buffer.put_int32(bits)
         end
 
         # Deserializes vector by decoding the symbol according to its mask
         #
         # @param io [IO] Stream containing the vector to be deserialized
         # @return [Array<Symbol>] Flags contained in the vector
-        def deserialize(io)
-          vector = io.read(4).unpack(INT32_PACK).first
+        def deserialize(buffer)
+          vector = buffer.get_int32
           flags = []
           @masks.each do |flag, mask|
             flags << flag if mask & vector != 0

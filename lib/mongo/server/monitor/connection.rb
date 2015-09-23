@@ -120,9 +120,9 @@ module Mongo
 
         private
 
-        def write(messages, buffer = '')
+        def write(messages, buffer = BSON::ByteBuffer.new)
           messages.each{ |message| message.serialize(buffer) }
-          ensure_connected{ |socket| socket.write(buffer) }
+          ensure_connected{ |socket| socket.write(buffer.to_s) }
         end
       end
     end

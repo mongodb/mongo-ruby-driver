@@ -1,6 +1,7 @@
 source 'https://rubygems.org'
 
 gemspec
+gem 'bson', path: '~/work/bson-ruby'
 gem 'rake'
 gem 'yard'
 
