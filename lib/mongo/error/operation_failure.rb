@@ -18,6 +18,35 @@ module Mongo
     # Raised when an operation fails for some reason.
     #
     # @since 2.0.0
-    class OperationFailure < Error; end
+    class OperationFailure < Error
+
+      # These are magic error messages that could indicate a cluster
+      # reconfiguration behind a mongos. We cannot check error codes as they
+      # change between versions, for example 15988 which has 2 completely
+      # different meanings between 2.4 and 3.0.
+      #
+      # @since 2.1.1
+      RETRY_MESSAGES = [
+        'transport error',
+        'socket exception',
+        "can't connect",
+        'no master',
+        'not master',
+        'connect failed',
+        'error querying'
+      ].freeze
+
+      # Can the operation that caused the error be retried?
+      #
+      # @example Is the error retryable?
+      #   error.retryable?
+      #
+      # @return [ true, false ] If the error is retryable.
+      #
+      # @since 2.1.1
+      def retryable?
+        RETRY_MESSAGES.any?{ |m| message.include?(m) }
+      end
+    end
   end
 end

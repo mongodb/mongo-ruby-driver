@@ -26,6 +26,8 @@ module Mongo
 
     # Execute a read operation with a retry.
     #
+    # @api private
+    #
     # @example Execute the read.
     #   read_with_retry do
     #     ...
@@ -33,20 +35,34 @@ module Mongo
     #
     # @note This only retries read operations on socket errors.
     #
+    # @param [ Integer ] attempt The retry attempt count - for internal use.
     # @param [ Proc ] block The block to execute.
     #
     # @return [ Result ] The result of the operation.
     #
     # @since 2.1.0
-    def read_with_retry(&block)
+    def read_with_retry(attempt = 0, &block)
       begin
         block.call
       rescue Error::SocketError, Error::SocketTimeoutError
         retry_operation(&block)
+      rescue Error::OperationFailure => e
+        if cluster.sharded? && e.retryable?
+          if attempt < max_read_retries
+            # We don't scan the cluster in this case as Mongos always returns
+            # ready after a ping whether no matter what the state behind it is.
+            sleep(read_retry_interval)
+            read_with_retry(attempt - 1, &block)
+          end
+        else
+          raise e
+        end
       end
     end
 
     # Execute a write operation with a retry.
+    #
+    # @api private
     #
     # @example Execute the write.
     #   write_with_retry do
