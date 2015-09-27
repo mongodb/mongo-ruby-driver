@@ -151,6 +151,10 @@ module Mongo
     # @option options [ Logger ] :logger A custom logger if desired.
     # @option options [ true, false ] :truncate_logs Whether to truncate the
     #   logs at the default 250 characters.
+    # @option options [ Integer ] :max_read_retries The maximum number of read
+    #   retries on mongos query failures.
+    # @option options [ Float ] :read_retry_interval The interval, in seconds,
+    #   in which reads on a mongos are retried.
     #
     # @since 2.0.0
     def initialize(addresses_or_uri, options = Options::Redacted.new)
