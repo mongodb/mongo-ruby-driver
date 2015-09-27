@@ -25,6 +25,16 @@ module Mongo
     include Event::Subscriber
     include Loggable
 
+    # The default number of mongos read retries.
+    #
+    # @since 2.1.1
+    MAX_READ_RETRIES = 1
+
+    # The default mongos read retry interval, in seconds.
+    #
+    # @since 2.1.1
+    READ_RETRY_INTERVAL = 5
+
     # @return [ Hash ] The options hash.
     attr_reader :options
 
@@ -141,6 +151,32 @@ module Mongo
     # @since 2.0.0
     def elect_primary!(description)
       @topology = topology.elect_primary(description, servers_list)
+    end
+
+    # Get the maximum number of times the cluster can retry a read operation on
+    # a mongos.
+    #
+    # @example Get the max read retries.
+    #   cluster.max_read_retries
+    #
+    # @return [ Integer ] The maximum retries.
+    #
+    # @since 2.1.1
+    def max_read_retries
+      options[:max_read_retries] || MAX_READ_RETRIES
+    end
+
+    # Get the interval, in seconds, in which a mongos read operation is
+    # retried.
+    #
+    # @example Get the read retry interval.
+    #   cluster.read_retry_interval
+    #
+    # @return [ Float ] The interval.
+    #
+    # @since 2.1.1
+    def read_retry_interval
+      options[:read_retry_interval] || READ_RETRY_INTERVAL
     end
 
     # Notify the cluster that a standalone server was discovered so that the
