@@ -69,7 +69,7 @@ describe Mongo::DBRef do
     end
 
     it 'converts the underlying document to bson' do
-      expect(dbref.to_bson).to eq(dbref.as_json.to_bson)
+      expect(dbref.to_bson.to_s).to eq(dbref.as_json.to_bson.to_s)
     end
   end
 
@@ -100,12 +100,12 @@ describe Mongo::DBRef do
 
   describe '#from_bson' do
 
-    let(:bson) do
-      StringIO.new(dbref.to_bson)
+    let(:buffer) do
+      dbref.to_bson
     end
 
     let(:decoded) do
-      BSON::Document.from_bson(bson)
+      BSON::Document.from_bson(buffer)
     end
 
     context 'when a database exists' do
