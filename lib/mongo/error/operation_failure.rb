@@ -33,7 +33,9 @@ module Mongo
         'no master',
         'not master',
         'connect failed',
-        'error querying'
+        'error querying',
+        'could not get last error',
+        'connection attempt failed'
       ].freeze
 
       # Can the operation that caused the error be retried?
