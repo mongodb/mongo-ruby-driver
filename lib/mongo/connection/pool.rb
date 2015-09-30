@@ -148,7 +148,8 @@ module Mongo
 
     def ping
       begin
-        return self.client['admin'].command({:ping => 1}, :socket => @node.socket, :timeout => MAX_PING_TIME)
+        return self.client['admin'].command({:ping => 1}, :socket => @node.socket,
+                                                          :timeout => client.op_timeout || MongoClient::DEFAULT_OP_TIMEOUT)
       rescue ConnectionFailure, OperationFailure, SocketError, SystemCallError, IOError
         return false
       end
