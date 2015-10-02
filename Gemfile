@@ -7,6 +7,7 @@ gem 'mime-types', '~> 1.25'
 gem 'i18n', '0.6.11'
 
 if RUBY_VERSION < '1.9.3'
+  gem 'multi_json', '1.10.1'
   gem 'activesupport', '~>3.0'
 else
   gem 'activesupport'
