@@ -146,6 +146,18 @@ class ReplicaSetRefreshTest < Test::Unit::TestCase
     end
   end
 
+  def test_ping_with_op_timeout
+    [nil, 10].each do |op_timeout|
+      client = MongoReplicaSetClient.new(@rs.repl_set_seeds, :op_timeout => op_timeout)
+      pool = client.primary_pool
+      admin_db = pool.client['admin']
+      admin_db.expects(:command).with({:ping => 1}, :socket => pool.node.socket,
+                                      :timeout => op_timeout || MongoClient::DEFAULT_OP_TIMEOUT).returns({'ok' => 1})
+      client.expects(:[]).with('admin').returns(admin_db)
+      assert pool.ping
+    end
+  end
+
 =begin
   def test_automated_refresh_with_removed_node
     client = MongoReplicaSetClient.new(@rs.repl_set_seeds,
