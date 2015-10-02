@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe Mongo::Collection::View do
 
-  let(:selector) do
+  let(:filter) do
     {}
   end
 
@@ -11,7 +11,7 @@ describe Mongo::Collection::View do
   end
 
   let(:view) do
-    described_class.new(authorized_collection, selector, options)
+    described_class.new(authorized_collection, filter, options)
   end
 
   after do
@@ -20,75 +20,75 @@ describe Mongo::Collection::View do
 
   context 'when query modifiers are provided' do
 
-    context 'when a selector has a query modifier' do
+    context 'when a filter has a query modifier' do
 
       let(:options) do
         {}
       end
 
       let(:expected_modifiers) do
-        BSON::Document.new(selector)
+        BSON::Document.new(filter)
       end
 
-      let(:parsed_selector) do
+      let(:parsed_filter) do
         {}
       end
 
-      let(:query_selector) do
-        BSON::Document.new(selector)
+      let(:query_filter) do
+        BSON::Document.new(filter)
       end
 
       context 'when the $query key is a string' do
 
-        let(:selector) do
+        let(:filter) do
           { "$query" => { a: 1 }, :$someMod => 100 }
         end
 
         let(:expected_modifiers) do
-          BSON::Document.new(selector)
+          BSON::Document.new(filter)
         end
 
         it 'sets the modifiers' do
           expect(view.instance_variable_get(:@modifiers)).to eq(expected_modifiers)
         end
 
-        it 'removes the modifiers from the selector' do
-          expect(view.selector).to eq(parsed_selector)
+        it 'removes the modifiers from the filter' do
+          expect(view.filter).to eq(parsed_filter)
         end
 
-        it 'creates the correct query selector' do
-          expect(view.send(:query_spec)[:selector]).to eq(query_selector)
+        it 'creates the correct query filter' do
+          expect(view.send(:query_spec)[:selector]).to eq(query_filter)
         end
 
       end
 
       context 'when the $query key is a symbol' do
 
-        let(:selector) do
+        let(:filter) do
           { :$query => { a: 1 }, :$someMod => 100 }
         end
 
         let(:expected_modifiers) do
-          BSON::Document.new(selector)
+          BSON::Document.new(filter)
         end
 
         it 'sets the modifiers' do
           expect(view.instance_variable_get(:@modifiers)).to eq(expected_modifiers)
         end
 
-        it 'removes the modifiers from the selector' do
-          expect(view.selector).to eq(parsed_selector)
+        it 'removes the modifiers from the filter' do
+          expect(view.filter).to eq(parsed_filter)
         end
 
         it 'creates the correct query selector' do
-          expect(view.send(:query_spec)[:selector]).to eq(query_selector)
+          expect(view.send(:query_spec)[:selector]).to eq(query_filter)
         end
       end
     end
 
     context 'when a modifiers document is provided in the options' do
 
-      let(:selector) do
+      let(:filter) do
         { a: 1 }
       end
 
@@ -100,11 +100,11 @@ describe Mongo::Collection::View do
         options[:modifiers]
       end
 
-      let(:parsed_selector) do
+      let(:parsed_filter) do
         { a: 1 }
       end
 
-      let(:query_selector) do
+      let(:query_filter) do
         BSON::Document.new(:$query => { a: 1 }, :$someMod => 100)
       end
 
@@ -112,17 +112,17 @@ describe Mongo::Collection::View do
         expect(view.instance_variable_get(:@modifiers)).to eq(expected_modifiers)
       end
 
-      it 'removes the modifiers from the selector' do
-        expect(view.selector).to eq(parsed_selector)
+      it 'removes the modifiers from the filter' do
+        expect(view.filter).to eq(parsed_filter)
       end
 
-      it 'creates the correct query selector' do
-        expect(view.send(:query_spec)[:selector]).to eq(query_selector)
+      it 'creates the correct query filter' do
+        expect(view.send(:query_spec)[:selector]).to eq(query_filter)
       end
 
       context 'when modifiers and options are both provided' do
 
-        let(:selector) do
+        let(:filter) do
           { a: 1 }
         end
 
@@ -134,30 +134,30 @@ describe Mongo::Collection::View do
           { :$orderby => options[:sort] }
         end
 
-        let(:parsed_selector) do
+        let(:parsed_filter) do
           { a: 1 }
         end
 
-        let(:query_selector) do
-          BSON::Document.new(:$query => selector, :$orderby => { a: Mongo::Index::ASCENDING })
+        let(:query_filter) do
+          BSON::Document.new(:$query => filter, :$orderby => { a: Mongo::Index::ASCENDING })
         end
 
         it 'sets the modifiers' do
           expect(view.instance_variable_get(:@modifiers)).to eq(expected_modifiers)
         end
 
-        it 'removes the modifiers from the selector' do
-          expect(view.selector).to eq(parsed_selector)
+        it 'removes the modifiers from the filter' do
+          expect(view.filter).to eq(parsed_filter)
         end
 
-        it 'creates the correct query selector' do
-          expect(view.send(:query_spec)[:selector]).to eq(query_selector)
+        it 'creates the correct query filter' do
+          expect(view.send(:query_spec)[:selector]).to eq(query_filter)
         end
       end
 
       context 'when modifiers, options and a query modifier are provided' do
 
-        let(:selector) do
+        let(:filter) do
           { b: 2, :$query => { a: 1 }, :$someMod => 100 }
         end
 
@@ -169,11 +169,11 @@ describe Mongo::Collection::View do
           { :$query => { a: 1 }, :$orderby => { a: Mongo::Index::ASCENDING }, :$someMod => 100 }
         end
 
-        let(:parsed_selector) do
+        let(:parsed_filter) do
           { b: 2 }
         end
 
-        let(:query_selector) do
+        let(:query_filter) do
           BSON::Document.new(:$query => { a: 1 }, :$someMod => 100, :$orderby => { a: Mongo::Index::ASCENDING })
         end
 
@@ -181,12 +181,12 @@ describe Mongo::Collection::View do
           expect(view.instance_variable_get(:@modifiers)).to eq(expected_modifiers)
         end
 
-        it 'removes the modifiers from the selector' do
-          expect(view.selector).to eq(parsed_selector)
+        it 'removes the modifiers from the filter' do
+          expect(view.filter).to eq(parsed_filter)
         end
 
-        it 'creates the correct query selector' do
-          expect(view.send(:query_spec)[:selector]).to eq(query_selector)
+        it 'creates the correct query filter' do
+          expect(view.send(:query_spec)[:selector]).to eq(query_filter)
         end
       end
     end
@@ -203,10 +203,10 @@ describe Mongo::Collection::View do
       end
     end
 
-    context 'when the views have the same collection, selector, and options' do
+    context 'when the views have the same collection, filter, and options' do
 
       let(:other) do
-        described_class.new(authorized_collection, selector, options)
+        described_class.new(authorized_collection, filter, options)
       end
 
       it 'returns true' do
@@ -221,7 +221,7 @@ describe Mongo::Collection::View do
       end
 
       let(:other) do
-        described_class.new(other_collection, selector, options)
+        described_class.new(other_collection, filter, options)
       end
 
       it 'returns false' do
@@ -229,14 +229,14 @@ describe Mongo::Collection::View do
       end
     end
 
-    context 'when two views have a different selector' do
+    context 'when two views have a different filter' do
 
-      let(:other_selector) do
+      let(:other_filter) do
         { 'name' => 'Emily' }
       end
 
       let(:other) do
-        described_class.new(authorized_collection, other_selector, options)
+        described_class.new(authorized_collection, other_filter, options)
       end
 
       it 'returns false' do
@@ -251,7 +251,7 @@ describe Mongo::Collection::View do
       end
 
       let(:other) do
-        described_class.new(authorized_collection, selector, other_options)
+        described_class.new(authorized_collection, filter, other_options)
       end
 
       it 'returns false' do
@@ -270,8 +270,8 @@ describe Mongo::Collection::View do
       expect(view.options).not_to be(view_clone.options)
     end
 
-    it 'dups the selector' do
-      expect(view.selector).not_to be(view_clone.selector)
+    it 'dups the filter' do
+      expect(view.filter).not_to be(view_clone.filter)
     end
 
     it 'references the same collection' do
@@ -424,7 +424,7 @@ describe Mongo::Collection::View do
         end
       end
 
-      context 'when the selector has special fields' do
+      context 'when the filter has special fields' do
 
         context 'when a snapshot option is specified' do
 
@@ -433,10 +433,10 @@ describe Mongo::Collection::View do
           end
 
           before do
-            expect(view).to receive(:special_selector).and_call_original
+            expect(view).to receive(:special_filter).and_call_original
           end
 
-          it 'creates a special query selector' do
+          it 'creates a special query filter' do
             expect(query_spec[:selector][:$snapshot]).to eq(options[:snapshot])
           end
 
@@ -454,10 +454,10 @@ describe Mongo::Collection::View do
           end
 
           before do
-            expect(view).to receive(:special_selector).and_call_original
+            expect(view).to receive(:special_filter).and_call_original
           end
 
-          it 'creates a special query selector' do
+          it 'creates a special query filter' do
             expect(query_spec[:selector][:$maxScan]).to eq(options[:max_scan])
           end
 
@@ -475,10 +475,10 @@ describe Mongo::Collection::View do
           end
 
           before do
-            expect(view).to receive(:special_selector).and_call_original
+            expect(view).to receive(:special_filter).and_call_original
           end
 
-          it 'creates a special query selector' do
+          it 'creates a special query filter' do
             expect(query_spec[:selector][:$maxTimeMS]).to eq(options[:max_time_ms])
           end
 
@@ -496,10 +496,10 @@ describe Mongo::Collection::View do
           end
 
           before do
-            expect(view).to receive(:special_selector).and_call_original
+            expect(view).to receive(:special_filter).and_call_original
           end
 
-          it 'creates a special query selector' do
+          it 'creates a special query filter' do
             expect(query_spec[:selector][:$showDiskLoc]).to eq(options[:show_disk_loc])
           end
 
@@ -518,10 +518,10 @@ describe Mongo::Collection::View do
         end
 
         before do
-          expect(view).to receive(:special_selector).and_call_original
+          expect(view).to receive(:special_filter).and_call_original
         end
 
-        it 'creates a special query selector' do
+        it 'creates a special query filter' do
           expect(query_spec[:selector][:$orderby]).to eq(options[:sort])
         end
 
@@ -541,10 +541,10 @@ describe Mongo::Collection::View do
           end
 
           before do
-            expect(view).to receive(:special_selector).and_call_original
+            expect(view).to receive(:special_filter).and_call_original
           end
 
-          it 'creates a special query selector' do
+          it 'creates a special query filter' do
             expect(query_spec[:selector][:$hint]).to eq(options[:hint])
           end
         end
@@ -557,10 +557,10 @@ describe Mongo::Collection::View do
         end
 
         before do
-          expect(view).to receive(:special_selector).and_call_original
+          expect(view).to receive(:special_filter).and_call_original
         end
 
-        it 'creates a special query selector' do
+        it 'creates a special query filter' do
           expect(query_spec[:selector][:$comment]).to eq(options[:comment])
         end
 
@@ -574,7 +574,7 @@ describe Mongo::Collection::View do
       context 'when the cluster is sharded', if: sharded? do
 
         before do
-          expect(view).to receive(:special_selector).and_call_original
+          expect(view).to receive(:special_filter).and_call_original
         end
 
         it 'iterates over all of the documents' do
@@ -590,14 +590,14 @@ describe Mongo::Collection::View do
           end
 
           let(:view) do
-            described_class.new(collection, selector, options)
+            described_class.new(collection, filter, options)
           end
 
           let(:formatted_read_pref) do
             BSON::Document.new(Mongo::ServerSelector.get(mode: :secondary).to_mongos)
           end
 
-          it 'adds the formatted read preference to the selector' do
+          it 'adds the formatted read preference to the filter' do
             expect(view.send(:query_spec)[:selector][:$readPreference]).to eq(formatted_read_pref)
           end
         end
@@ -609,10 +609,10 @@ describe Mongo::Collection::View do
           end
 
           let(:view) do
-            described_class.new(collection, selector, options)
+            described_class.new(collection, filter, options)
           end
 
-          it 'does not add the formatted read preference to the selector' do
+          it 'does not add the formatted read preference to the filter' do
             expect(view.send(:query_spec)[:selector][:$readPreference]).to be(nil)
           end
         end
@@ -628,10 +628,10 @@ describe Mongo::Collection::View do
         end
 
         before do
-          expect(view).to receive(:special_selector).and_call_original
+          expect(view).to receive(:special_filter).and_call_original
         end
 
-        it 'creates a special query selector' do
+        it 'creates a special query filter' do
           expect(query_spec[:selector][:$orderby]).to eq(options[:modifiers][:$orderby])
         end
 
@@ -738,9 +738,9 @@ describe Mongo::Collection::View do
             end
           end
 
-          context 'when $query and a selector are specified' do
+          context 'when $query and a filter are specified' do
 
-            let(:selector) do
+            let(:filter) do
               { 'y' => 1 }
             end
 
@@ -763,7 +763,7 @@ describe Mongo::Collection::View do
 
       before do
         expect(Mongo::Operation::Read::Query).to receive(:new) do |spec|
-          expect(spec[:selector]).to eq(selector)
+          expect(spec[:filter]).to eq(filter)
         end.and_call_original
       end
 
@@ -809,10 +809,10 @@ describe Mongo::Collection::View do
   describe '#hash' do
 
     let(:other) do
-      described_class.new(authorized_collection, selector, options)
+      described_class.new(authorized_collection, filter, options)
     end
 
-    it 'returns a unique value based on collection, selector, options' do
+    it 'returns a unique value based on collection, filter, options' do
       expect(view.hash).to eq(other.hash)
     end
 
@@ -823,7 +823,7 @@ describe Mongo::Collection::View do
       end
 
       let(:other) do
-        described_class.new(other_collection, selector, options)
+        described_class.new(other_collection, filter, options)
       end
 
       it 'returns different hash values' do
@@ -831,14 +831,14 @@ describe Mongo::Collection::View do
       end
     end
 
-    context 'when two views only have different selectors' do
+    context 'when two views only have different filter' do
 
-      let(:other_selector) do
+      let(:other_filter) do
         { 'name' => 'Emily' }
       end
 
       let(:other) do
-        described_class.new(authorized_collection, other_selector, options)
+        described_class.new(authorized_collection, other_filter, options)
       end
 
       it 'returns different hash values' do
@@ -853,7 +853,7 @@ describe Mongo::Collection::View do
       end
 
       let(:other) do
-        described_class.new(authorized_collection, selector, other_options)
+        described_class.new(authorized_collection, filter, other_options)
       end
 
       it 'returns different hash values' do
@@ -872,12 +872,12 @@ describe Mongo::Collection::View do
       expect(view.collection).to eq(authorized_collection)
     end
 
-    it 'sets the selector' do
-      expect(view.selector).to eq(selector)
+    it 'sets the filter' do
+      expect(view.filter).to eq(filter)
     end
 
-    it 'dups the selector' do
-      expect(view.selector).not_to be(selector)
+    it 'dups the filter' do
+      expect(view.filter).not_to be(filter)
     end
 
     it 'sets the options' do
@@ -888,9 +888,9 @@ describe Mongo::Collection::View do
       expect(view.options).not_to be(options)
     end
 
-    context 'when the selector is not a valid document' do
+    context 'when the filter is not a valid document' do
 
-      let(:selector) do
+      let(:filter) do
         'y'
       end
 
@@ -904,13 +904,13 @@ describe Mongo::Collection::View do
 
   describe '#inspect' do
 
-    context 'when there is a namespace, selector, and options' do
+    context 'when there is a namespace, filter, and options' do
 
       let(:options) do
         { :limit => 5 }
       end
 
-      let(:selector) do
+      let(:filter) do
         { 'name' => 'Emily' }
       end
 
@@ -922,8 +922,8 @@ describe Mongo::Collection::View do
         expect(view.inspect).to match(/.*#{authorized_collection.namespace}.*/)
       end
 
-      it 'returns a string containing the selector' do
-        expect(view.inspect).to match(/.*#{selector.inspect}.*/)
+      it 'returns a string containing the filter' do
+        expect(view.inspect).to match(/.*#{filter.inspect}.*/)
       end
 
       it 'returns a string containing the options' do

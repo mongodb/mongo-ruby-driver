@@ -21,7 +21,7 @@ module Mongo
       # @since 2.0.0
       module Readable
 
-        # Special fields and their option names for the query selector.
+        # Special fields and their option names for the query filter.
         #
         # @since 2.0.0
         SPECIAL_FIELDS = {
@@ -132,7 +132,7 @@ module Mongo
         #
         # @since 2.0.0
         def count(options = {})
-          cmd = { :count => collection.name, :query => selector }
+          cmd = { :count => collection.name, :query => filter }
           cmd[:skip] = options[:skip] if options[:skip]
           cmd[:hint] = options[:hint] if options[:hint]
           cmd[:limit] = options[:limit] if options[:limit]
@@ -160,7 +160,7 @@ module Mongo
         def distinct(field_name, options={})
           cmd = { :distinct => collection.name,
                   :key => field_name.to_s,
-                  :query => selector }
+                  :query => filter }
           cmd[:maxTimeMS] = options[:max_time_ms] if options[:max_time_ms]
           read_with_retry do
             database.command(cmd, options).first['values']
@@ -436,9 +436,9 @@ module Mongo
           end
         end
 
-        def setup(sel, opts)
+        def setup(fil, opts)
           setup_options(opts)
-          setup_selector(sel)
+          setup_filter(fil)
         end
 
         def setup_options(opts)
@@ -448,13 +448,13 @@ module Mongo
           @options.freeze
         end
 
-        def setup_selector(sel)
-          @selector = sel ? sel.dup : {}
-          if @selector[:$query] || @selector['$query']
-            @selector.keys.each { |k| @modifiers.merge!(k => @selector.delete(k)) if k[0] == '$' }
+        def setup_filter(fil)
+          @filter = fil ? fil.dup : {}
+          if @filter[:$query] || @filter['$query']
+            @filter.keys.each { |k| @modifiers.merge!(k => @filter.delete(k)) if k[0] == '$' }
           end
           @modifiers.freeze
-          @selector.freeze
+          @filter.freeze
         end
 
         def query_options
@@ -467,13 +467,13 @@ module Mongo
           }
         end
 
-        def requires_special_selector?
+        def requires_special_filter?
           !modifiers.empty? || cluster.sharded?
         end
 
         def query_spec
-          sel = requires_special_selector? ? special_selector : selector
-          { :selector  => sel,
+          fil = requires_special_filter? ? special_filter : filter
+          { :selector  => fil,
             :read      => read,
             :options   => query_options,
             :db_name   => database.name,
@@ -484,8 +484,8 @@ module Mongo
           @read_formatted ||= read.to_mongos
         end
 
-        def special_selector
-          sel = BSON::Document.new(:$query => selector).merge!(modifiers)
+        def special_filter
+          sel = BSON::Document.new(:$query => filter).merge!(modifiers)
           sel[:$readPreference] = read_pref_formatted unless read_pref_formatted.nil?
           sel
         end
