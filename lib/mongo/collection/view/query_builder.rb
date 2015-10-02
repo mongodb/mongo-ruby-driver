@@ -21,17 +21,16 @@ module Mongo
       # @since 2.2.0
       class QueryBuilder
 
-        OPTION_MAPPINGS = BSON::Document.new(
-
-        ).freeze
-
-        MODIFIER_MAPPINGS = BSON::Document.new(
-
-        ).freeze
-
-        FLAG_FIELDS = [
-
-        ].freeze
+        # Options to cursor flags mapping.
+        #
+        # @since 2.1.0
+        CURSOR_FLAGS_MAP = {
+          :allow_partial_results => [ :partial ],
+          :oplog_replay => [ :oplog_replay ],
+          :no_cursor_timeout => [ :no_cursor_timeout ],
+          :tailable => [ :tailable_cursor ],
+          :tailable_await => [ :await_data, :tailable_cursor]
+        }.freeze
 
         # @return [ Collection ] collection The collection.
         attr_reader :collection
@@ -71,6 +70,75 @@ module Mongo
             :db_name   => database.name,
             :coll_name => collection.name
           }
+        end
+
+        private
+
+        def default_read
+          options[:read] || read_preference
+        end
+
+        def flags
+          @flags ||= CURSOR_FLAGS_MAP.each.reduce([]) do |flags, (key, value)|
+            if options[key] || (options[:cursor_type] && options[:cursor_type] == key)
+              flags.push(*value)
+            end
+            flags
+          end
+        end
+
+        def setup(fil, opts)
+          setup_options(opts)
+          setup_filter(fil)
+        end
+
+        def setup_options(opts)
+          @options = opts ? opts.dup : {}
+          @modifiers = @options[:modifiers] ? @options.delete(:modifiers).dup : BSON::Document.new
+          @options.keys.each { |k| @modifiers.merge!(SPECIAL_FIELDS[k] => @options.delete(k)) if SPECIAL_FIELDS[k] }
+          @options.freeze
+        end
+
+        def setup_filter(fil)
+          @filter = fil ? fil.dup : {}
+          if @filter[:$query] || @filter['$query']
+            @filter.keys.each { |k| @modifiers.merge!(k => @filter.delete(k)) if k[0] == '$' }
+          end
+          @modifiers.freeze
+          @filter.freeze
+        end
+
+        def query_options
+          {
+            :project => projection,
+            :skip => skip,
+            :limit => limit,
+            :flags => flags,
+            :batch_size => batch_size
+          }
+        end
+
+        def requires_special_filter?
+          !modifiers.empty? || cluster.sharded?
+        end
+
+        def query_spec
+          fil = requires_special_filter? ? special_filter : filter
+          { :selector  => fil,
+            :read      => read,
+            :options   => query_options,
+            :db_name   => database.name,
+            :coll_name => collection.name }
+        end
+
+        def read_pref_formatted
+          @read_formatted ||= read.to_mongos
+        end
+
+        def special_filter
+          sel = BSON::Document.new(:$query => filter).merge!(modifiers)
+          sel[:$readPreference] = read_pref_formatted unless read_pref_formatted.nil?
+          sel
         end
       end
     end

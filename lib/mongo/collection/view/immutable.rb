@@ -15,6 +15,10 @@
 module Mongo
   class Collection
     class View
+
+      # Defines behaviour around views being configurable and immutable.
+      #
+      # @since 2.0.0
       module Immutable
 
         # @return [ Hash ] options The additional query options.
@@ -24,18 +28,7 @@ module Mongo
 
         def configure(field, value)
           return options[field] if value.nil?
-          new(options.merge(field => value, :modifiers => @modifiers))
-        end
-
-        def configure_modifier(field, value)
-          return @modifiers[Readable::SPECIAL_FIELDS[field]] if value.nil?
-          new(options.merge(:modifiers => @modifiers.merge(Readable::SPECIAL_FIELDS[field] => value)))
-        end
-
-        def configure_flag(flag)
-          new(options.dup).tap do |view|
-            view.send(:flags).push(flag)
-          end
+          new(options.merge(field => value))
         end
       end
     end

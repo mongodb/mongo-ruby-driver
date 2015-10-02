@@ -24,7 +24,7 @@ module Mongo
         # The mappings from ruby options to the find command.
         #
         # @since 2.2.0
-        MAPPINGS = BSON::Document.new(
+        MAPPINGS = {
           sort: 'sort',
           projection: 'projection',
           hint: 'hint',
@@ -45,7 +45,7 @@ module Mongo
           no_cursor_timeout: 'noCursorTimeout',
           await_data: 'awaitData',
           allow_partial_results: 'allowPartialResults'
-        ).freeze
+        }.freeze
 
         # @return [ Collection ] collection The collection.
         attr_reader :collection
@@ -92,11 +92,8 @@ module Mongo
         private
 
         def find_command
-          options.reduce({ 'find' => collection.name, 'filter' => filter }) do |command, (key, value)|
-            name = MAPPINGS[key]
-            command[name] = value if name && !value.nil?
-            command
-          end
+          document = BSON::Document.new('find' => collection.name, 'filter' => filter)
+          Options::Mapper.transform_documents(options, MAPPINGS, document)
         end
       end
     end

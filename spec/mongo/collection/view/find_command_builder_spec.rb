@@ -5,7 +5,7 @@ describe Mongo::Collection::View::FindCommandBuilder do
   describe '#specification' do
 
     let(:filter) do
-      { name: 'test' }
+      { 'name' => 'test' }
     end
 
     let(:options) do
@@ -59,15 +59,15 @@ describe Mongo::Collection::View::FindCommandBuilder do
     end
 
     it 'maps sort' do
-      expect(selector['sort']).to eq(_id: 1)
+      expect(selector['sort']).to eq('_id' => 1)
     end
 
     it 'maps projection' do
-      expect(selector['projection']).to eq(name: 1)
+      expect(selector['projection']).to eq('name' => 1)
     end
 
     it 'maps hint' do
-      expect(selector['hint']).to eq(name: 1)
+      expect(selector['hint']).to eq('name' => 1)
     end
 
     it 'maps skip' do
@@ -99,11 +99,11 @@ describe Mongo::Collection::View::FindCommandBuilder do
     end
 
     it 'maps max' do
-      expect(selector['max']).to eq(name: 'joe')
+      expect(selector['max']).to eq('name' => 'joe')
     end
 
     it 'maps min' do
-      expect(selector['min']).to eq(name: 'albert')
+      expect(selector['min']).to eq('name' => 'albert')
     end
 
     it 'maps return key' do

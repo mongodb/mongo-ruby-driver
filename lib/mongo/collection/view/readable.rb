@@ -21,34 +21,6 @@ module Mongo
       # @since 2.0.0
       module Readable
 
-        # Special fields and their option names for the query filter.
-        #
-        # @since 2.0.0
-        SPECIAL_FIELDS = {
-          :sort => :$orderby,
-          :hint => :$hint,
-          :comment => :$comment,
-          :snapshot => :$snapshot,
-          :max_scan => :$maxScan,
-          :max_value => :$max,
-          :min_value => :$min,
-          :max_time_ms => :$maxTimeMS,
-          :return_key => :$returnKey,
-          :show_disk_loc => :$showDiskLoc,
-          :explain => :$explain
-        }.freeze
-
-        # Options to cursor flags mapping.
-        #
-        # @since 2.1.0
-        CURSOR_FLAGS_MAP = {
-          :allow_partial_results => [ :partial ],
-          :oplog_replay => [ :oplog_replay ],
-          :no_cursor_timeout => [ :no_cursor_timeout ],
-          :tailable => [ :tailable_cursor ],
-          :tailable_await => [ :await_data, :tailable_cursor]
-        }.freeze
-
         # Execute an aggregation on the collection view.
         #
         # @example Aggregate documents.
@@ -75,7 +47,7 @@ module Mongo
         #
         # @since 2.0.0
         def allow_partial_results
-          configure_flag(:partial)
+          configure(:allow_partial_results, true)
         end
 
         # The number of documents returned in each batch of results from MongoDB.
@@ -110,7 +82,7 @@ module Mongo
         #
         # @since 2.0.0
         def comment(comment = nil)
-          configure_modifier(:comment, comment)
+          configure(:comment, comment)
         end
 
         # Get a count of matching documents in the collection.
@@ -178,7 +150,7 @@ module Mongo
         #
         # @since 2.0.0
         def hint(hint = nil)
-          configure_modifier(:hint, hint)
+          configure(:hint, hint)
         end
 
         # The max number of docs to return from the query.
@@ -222,7 +194,7 @@ module Mongo
         #
         # @since 2.0.0
         def max_scan(value = nil)
-          configure_modifier(:max_scan, value)
+          configure(:max_scan, value)
         end
 
         # Set the maximum value to search.
@@ -236,7 +208,7 @@ module Mongo
         #
         # @since 2.1.0
         def max_value(value = nil)
-          configure_modifier(:max_value, value)
+          configure(:max_value, value)
         end
 
         # Set the minimum value to search.
@@ -250,7 +222,7 @@ module Mongo
         #
         # @since 2.1.0
         def min_value(value = nil)
-          configure_modifier(:min_value, value)
+          configure(:min_value, value)
         end
 
         # The server normally times out idle cursors after an inactivity period
@@ -263,7 +235,7 @@ module Mongo
         #
         # @since 2.0.0
         def no_cursor_timeout
-          configure_flag(:no_cursor_timeout)
+          configure(:no_cursor_timeout, true)
         end
 
         # The fields to include or exclude from each doc in the result set.
@@ -313,7 +285,7 @@ module Mongo
         #
         # @since 2.1.0
         def return_key(value = nil)
-          configure_modifier(:return_key, value)
+          configure(:return_key, value)
         end
 
         # Set whether the disk location should be shown for each document.
@@ -328,8 +300,9 @@ module Mongo
         #
         # @since 2.0.0
         def show_disk_loc(value = nil)
-          configure_modifier(:show_disk_loc, value)
+          configure(:show_disk_loc, value)
         end
+        alias :show_record_id :show_disk_loc
 
         # The number of docs to skip before returning results.
         #
@@ -358,7 +331,7 @@ module Mongo
         #
         # @since 2.0.0
         def snapshot(value = nil)
-          configure_modifier(:snapshot, value)
+          configure(:snapshot, value)
         end
 
         # The key and direction pairs by which the result set will be sorted.
@@ -373,7 +346,7 @@ module Mongo
         #
         # @since 2.0.0
         def sort(spec = nil)
-          configure_modifier(:sort, spec)
+          configure(:sort, spec)
         end
 
         # “meta” operators that let you modify the output or behavior of a query.
@@ -387,8 +360,8 @@ module Mongo
         #
         # @since 2.1.0
         def modifiers(doc = nil)
-          return @modifiers if doc.nil?
-          new(options.merge(:modifiers => doc))
+          return Modifiers.map_server_modifiers(options) if doc.nil?
+          new(options.merge(Modifiers.map_driver_options(doc)))
         end
 
         # A cumulative time limit in milliseconds for processing operations on a cursor.
@@ -402,23 +375,10 @@ module Mongo
         #
         # @since 2.1.0
         def max_time_ms(max = nil)
-          configure_modifier(:max_time_ms, max)
+          configure(:max_time_ms, max)
         end
 
         private
-
-        def default_read
-          options[:read] || read_preference
-        end
-
-        def flags
-          @flags ||= CURSOR_FLAGS_MAP.each.reduce([]) do |flags, (key, value)|
-            if options[key] || (options[:cursor_type] && options[:cursor_type] == key)
-              flags.push(*value)
-            end
-            flags
-          end
-        end
 
         def parallel_scan(cursor_count)
           server = read.select_server(cluster)
@@ -427,67 +387,14 @@ module Mongo
             :db_name => database.name,
             :cursor_count => cursor_count
           ).execute(server.context).cursor_ids.map do |cursor_id|
-            result = Operation::Read::GetMore.new({ :to_return => 0,
-                                                    :cursor_id => cursor_id,
-                                                    :db_name   => database.name,
-                                                    :coll_name => collection.name
+            result = Operation::Read::GetMore.new({
+                :to_return => 0,
+                :cursor_id => cursor_id,
+                :db_name   => database.name,
+                :coll_name => collection.name
               }).execute(server.context)
             Cursor.new(self, result, server)
           end
-        end
-
-        def setup(fil, opts)
-          setup_options(opts)
-          setup_filter(fil)
-        end
-
-        def setup_options(opts)
-          @options = opts ? opts.dup : {}
-          @modifiers = @options[:modifiers] ? @options.delete(:modifiers).dup : BSON::Document.new
-          @options.keys.each { |k| @modifiers.merge!(SPECIAL_FIELDS[k] => @options.delete(k)) if SPECIAL_FIELDS[k] }
-          @options.freeze
-        end
-
-        def setup_filter(fil)
-          @filter = fil ? fil.dup : {}
-          if @filter[:$query] || @filter['$query']
-            @filter.keys.each { |k| @modifiers.merge!(k => @filter.delete(k)) if k[0] == '$' }
-          end
-          @modifiers.freeze
-          @filter.freeze
-        end
-
-        def query_options
-          {
-            :project => projection,
-            :skip => skip,
-            :limit => limit,
-            :flags => flags,
-            :batch_size => batch_size
-          }
-        end
-
-        def requires_special_filter?
-          !modifiers.empty? || cluster.sharded?
-        end
-
-        def query_spec
-          fil = requires_special_filter? ? special_filter : filter
-          { :selector  => fil,
-            :read      => read,
-            :options   => query_options,
-            :db_name   => database.name,
-            :coll_name => collection.name }
-        end
-
-        def read_pref_formatted
-          @read_formatted ||= read.to_mongos
-        end
-
-        def special_filter
-          sel = BSON::Document.new(:$query => filter).merge!(modifiers)
-          sel[:$readPreference] = read_pref_formatted unless read_pref_formatted.nil?
-          sel
         end
 
         def validate_doc!(doc)
