@@ -19,6 +19,8 @@ require 'mongo/collection/view/aggregation'
 require 'mongo/collection/view/map_reduce'
 require 'mongo/collection/view/readable'
 require 'mongo/collection/view/writable'
+require 'mongo/collection/view/query_builder'
+require 'mongo/collection/view/find_command_builder'
 
 module Mongo
   class Collection
