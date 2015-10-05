@@ -213,7 +213,7 @@ describe Mongo::Collection::View::MapReduce do
         end
 
         it 'includes the selector in the operation spec' do
-          expect(map_reduce.send(:map_reduce_spec)[:selector][:query]).to eq(BSON::Document.new(selector[:$query]))
+          expect(map_reduce.send(:map_reduce_spec)[:selector][:query]).to eq(selector[:$query])
         end
       end
     end

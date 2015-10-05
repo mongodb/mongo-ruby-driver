@@ -25,7 +25,7 @@ describe Mongo::Collection::View::Readable do
     end
 
     it 'sets the flag' do
-      expect(new_view.send(:flags)).to include(:partial)
+      expect(new_view.options[:allow_partial_results]).to be true
     end
 
     it 'returns a new View' do
@@ -476,7 +476,7 @@ describe Mongo::Collection::View::Readable do
     end
 
     it 'sets the value in the options' do
-      expect(new_view.max_value).to eq('_id' => 1)
+      expect(new_view.max_value).to eq(_id: 1)
     end
   end
 
@@ -487,7 +487,7 @@ describe Mongo::Collection::View::Readable do
     end
 
     it 'sets the value in the options' do
-      expect(new_view.min_value).to eq('_id' => 1)
+      expect(new_view.min_value).to eq(_id: 1)
     end
   end
 
@@ -498,7 +498,7 @@ describe Mongo::Collection::View::Readable do
     end
 
     it 'sets the flag' do
-      expect(new_view.send(:flags)).to include(:no_cursor_timeout)
+      expect(new_view.options[:no_cursor_timeout]).to be true
     end
 
     it 'returns a new View' do
@@ -636,13 +636,13 @@ describe Mongo::Collection::View::Readable do
   describe '#modifiers' do
 
     let(:options) do
-      { :modifiers => { :$orderby => Mongo::Index::ASCENDING } }
+      { :modifiers => { '$orderby' => 1 } }
     end
 
     context 'when a modifiers document is specified' do
 
       let(:new_modifiers) do
-        { :modifiers => { :$orderby => Mongo::Index::DESCENDING } }
+        { '$orderby' => -1 }
       end
 
       it 'sets the new_modifiers document' do

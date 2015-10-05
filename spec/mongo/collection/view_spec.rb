@@ -49,7 +49,7 @@ describe Mongo::Collection::View do
         end
 
         it 'sets the modifiers' do
-          expect(view.instance_variable_get(:@modifiers)).to eq(expected_modifiers)
+          expect(view.modifiers).to eq(expected_modifiers)
         end
 
         it 'removes the modifiers from the filter' do
