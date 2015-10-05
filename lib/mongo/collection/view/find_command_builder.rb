@@ -20,6 +20,7 @@ module Mongo
       #
       # @since 2.2.0
       class FindCommandBuilder
+        extend Forwardable
 
         # The mappings from ruby options to the find command.
         #
@@ -47,34 +48,18 @@ module Mongo
           allow_partial_results: 'allowPartialResults'
         }.freeze
 
-        # @return [ Collection ] collection The collection.
-        attr_reader :collection
-
-        # @return [ Database ] database The database.
-        attr_reader :database
-
-        # @return [ Hash, BSON::Documnet ] filter The filter.
-        attr_reader :filter
-
-        # @return [ Hash, BSON::Document ] options The options.
-        attr_reader :options
+        def_delegators :@view, :collection, :database, :filter, :options
 
         # Create the new legacy query builder.
         #
         # @example Create the query builder.
         #   QueryBuilder.new(collection, database, {}, {})
         #
-        # @param [ Collection ] collection The collection.
-        # @param [ Database ] database The database.
-        # @param [ Hash, BSON::Document ] filter The filter.
-        # @param [ Hash, BSON::Document ] options The options.
+        # @param [ Collection::View ] view The collection view.
         #
         # @since 2.2.2
-        def initialize(collection, database, filter, options)
-          @collection = collection
-          @database = database
-          @filter = filter
-          @options = options
+        def initialize(view)
+          @view = view
         end
 
         # Get the specification to pass to the find command operation.

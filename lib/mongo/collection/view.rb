@@ -134,7 +134,8 @@ module Mongo
       def initialize(collection, filter = {}, options = {})
         validate_doc!(filter)
         @collection = collection
-        setup(filter, options)
+        @filter = filter
+        @options = options
       end
 
       # Get a human-readable string representation of +View+.

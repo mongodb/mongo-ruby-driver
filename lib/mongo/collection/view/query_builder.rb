@@ -87,27 +87,6 @@ module Mongo
           end
         end
 
-        def setup(fil, opts)
-          setup_options(opts)
-          setup_filter(fil)
-        end
-
-        def setup_options(opts)
-          @options = opts ? opts.dup : {}
-          @modifiers = @options[:modifiers] ? @options.delete(:modifiers).dup : BSON::Document.new
-          @options.keys.each { |k| @modifiers.merge!(SPECIAL_FIELDS[k] => @options.delete(k)) if SPECIAL_FIELDS[k] }
-          @options.freeze
-        end
-
-        def setup_filter(fil)
-          @filter = fil ? fil.dup : {}
-          if @filter[:$query] || @filter['$query']
-            @filter.keys.each { |k| @modifiers.merge!(k => @filter.delete(k)) if k[0] == '$' }
-          end
-          @modifiers.freeze
-          @filter.freeze
-        end
-
         def query_options
           {
             :project => projection,

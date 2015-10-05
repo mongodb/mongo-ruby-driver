@@ -33,13 +33,12 @@ describe Mongo::Collection::View::FindCommandBuilder do
       }
     end
 
+    let(:view) do
+      Mongo::Collection::View.new(authorized_collection, filter, options)
+    end
+
     let(:builder) do
-      described_class.new(
-        authorized_collection,
-        authorized_collection.database,
-        filter,
-        options
-      )
+      described_class.new(view)
     end
 
     let(:specification) do
