@@ -21,6 +21,7 @@ require 'mongo/collection/view/readable'
 require 'mongo/collection/view/writable'
 require 'mongo/collection/view/query_builder'
 require 'mongo/collection/view/find_command_builder'
+require 'mongo/collection/view/flags'
 require 'mongo/collection/view/modifiers'
 
 module Mongo

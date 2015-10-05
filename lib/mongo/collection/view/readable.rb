@@ -380,6 +380,10 @@ module Mongo
 
         private
 
+        def default_read
+          options[:read] || read_preference
+        end
+
         def parallel_scan(cursor_count)
           server = read.select_server(cluster)
           Operation::ParallelScan.new(

@@ -48,12 +48,12 @@ module Mongo
           allow_partial_results: 'allowPartialResults'
         }.freeze
 
-        def_delegators :@view, :collection, :database, :filter, :options
+        def_delegators :@view, :collection, :database, :filter, :options, :read
 
-        # Create the new legacy query builder.
+        # Create the find command builder.
         #
-        # @example Create the query builder.
-        #   QueryBuilder.new(collection, database, {}, {})
+        # @example Create the find command builder.
+        #   FindCommandBuilder.new(view)
         #
         # @param [ Collection::View ] view The collection view.
         #
@@ -71,7 +71,7 @@ module Mongo
         #
         # @since 2.2.0
         def specification
-          { selector: find_command, db_name: database.name, read: options[:read] }
+          { selector: find_command, db_name: database.name, read: read }
         end
 
         private

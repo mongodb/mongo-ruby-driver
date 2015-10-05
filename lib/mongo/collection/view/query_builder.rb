@@ -20,6 +20,7 @@ module Mongo
       #
       # @since 2.2.0
       class QueryBuilder
+        extend Forwardable
 
         # Options to cursor flags mapping.
         #
@@ -32,41 +33,28 @@ module Mongo
           :tailable_await => [ :await_data, :tailable_cursor]
         }.freeze
 
-        # @return [ Collection ] collection The collection.
-        attr_reader :collection
+        def_delegators :@view, :cluster, :collection, :database, :filter, :options, :read
 
-        # @return [ Database ] database The database.
-        attr_reader :database
-
-        # @return [ Hash, BSON::Documnet ] filter The filter.
-        attr_reader :filter
-
-        # @return [ Hash, BSON::Document ] options The options.
-        attr_reader :options
+        attr_reader :modifiers
 
         # Create the new legacy query builder.
         #
         # @example Create the query builder.
-        #   QueryBuilder.new(collection, database, {}, {})
+        #   QueryBuilder.new(view)
         #
-        # @param [ Collection ] collection The collection.
-        # @param [ Database ] database The database.
-        # @param [ Hash, BSON::Document ] filter The filter.
-        # @param [ Hash, BSON::Document ] options The options.
+        # @param [ Collection::View ] view The collection view.
         #
         # @since 2.2.2
-        def initialize(collection, database, filter, options)
-          @collection = collection
-          @database = database
-          @filter = filter
-          @options = options
+        def initialize(view)
+          @view = view
+          @modifiers = Modifiers.map_server_modifiers(options)
         end
 
         def specification
           {
-            :selector  => filter,
+            :selector  => requires_special_filter? ? special_filter : filter,
             :read      => read,
-            :options   => options,
+            :options   => query_options,
             :db_name   => database.name,
             :coll_name => collection.name
           }
@@ -74,40 +62,18 @@ module Mongo
 
         private
 
-        def default_read
-          options[:read] || read_preference
-        end
-
-        def flags
-          @flags ||= CURSOR_FLAGS_MAP.each.reduce([]) do |flags, (key, value)|
-            if options[key] || (options[:cursor_type] && options[:cursor_type] == key)
-              flags.push(*value)
-            end
-            flags
-          end
-        end
-
         def query_options
-          {
-            :project => projection,
-            :skip => skip,
-            :limit => limit,
-            :flags => flags,
-            :batch_size => batch_size
-          }
+          BSON::Document.new(
+            projection: options[:projection],
+            skip: options[:skip],
+            limit: options[:limit],
+            flags: Flags.map_flags(options),
+            batch_size: options[:batch_size]
+          )
         end
 
         def requires_special_filter?
           !modifiers.empty? || cluster.sharded?
-        end
-
-        def query_spec
-          fil = requires_special_filter? ? special_filter : filter
-          { :selector  => fil,
-            :read      => read,
-            :options   => query_options,
-            :db_name   => database.name,
-            :coll_name => collection.name }
         end
 
         def read_pref_formatted
