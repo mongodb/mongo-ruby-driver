@@ -52,7 +52,7 @@ module Mongo
             # We don't scan the cluster in this case as Mongos always returns
             # ready after a ping no matter what the state behind it is.
             sleep(cluster.read_retry_interval)
-            read_with_retry(attempt - 1, &block)
+            read_with_retry(attempt + 1, &block)
           end
         else
           raise e
