@@ -21,6 +21,16 @@ module Mongo
       # @since 2.0.0
       module Readable
 
+        # The query modifier constant.
+        #
+        # @since 2.2.0
+        QUERY = '$query'.freeze
+
+        # The modifiers option constant.
+        #
+        # @since 2.2.0
+        MODIFIERS = 'modifiers'.freeze
+
         # Execute an aggregation on the collection view.
         #
         # @example Aggregate documents.

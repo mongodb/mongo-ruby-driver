@@ -476,7 +476,7 @@ describe Mongo::Collection::View::Readable do
     end
 
     it 'sets the value in the options' do
-      expect(new_view.max_value).to eq(_id: 1)
+      expect(new_view.max_value).to eq('_id' => 1)
     end
   end
 
@@ -487,7 +487,7 @@ describe Mongo::Collection::View::Readable do
     end
 
     it 'sets the value in the options' do
-      expect(new_view.min_value).to eq(_id: 1)
+      expect(new_view.min_value).to eq('_id' => 1)
     end
   end
 

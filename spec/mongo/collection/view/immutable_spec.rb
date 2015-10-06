@@ -43,7 +43,7 @@ describe Mongo::Collection::View::Immutable do
       end
 
       it 'sets the option' do
-        expect(new_view.projection).to eq(_id: 1)
+        expect(new_view.projection).to eq('_id' => 1)
       end
 
       it 'creates a new modifiers document' do

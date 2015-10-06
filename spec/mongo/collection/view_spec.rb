@@ -41,11 +41,11 @@ describe Mongo::Collection::View do
       context 'when the $query key is a string' do
 
         let(:filter) do
-          { "$query" => { a: 1 }, :$someMod => 100 }
+          { "$query" => { a: 1 }, :$comment => 'test' }
         end
 
         let(:expected_modifiers) do
-          BSON::Document.new(filter)
+          { '$comment' => 'test' }
         end
 
         it 'sets the modifiers' do
@@ -53,7 +53,7 @@ describe Mongo::Collection::View do
         end
 
         it 'removes the modifiers from the filter' do
-          expect(view.filter).to eq(parsed_filter)
+          expect(view.filter).to eq('a' => 1)
         end
 
         it 'creates the correct query filter' do
@@ -65,19 +65,19 @@ describe Mongo::Collection::View do
       context 'when the $query key is a symbol' do
 
         let(:filter) do
-          { :$query => { a: 1 }, :$someMod => 100 }
+          { :$query => { a: 1 }, :$comment => 'test' }
         end
 
         let(:expected_modifiers) do
-          BSON::Document.new(filter)
+          { '$comment' => 'test' }
         end
 
         it 'sets the modifiers' do
-          expect(view.instance_variable_get(:@modifiers)).to eq(expected_modifiers)
+          expect(view.modifiers).to eq(expected_modifiers)
         end
 
         it 'removes the modifiers from the filter' do
-          expect(view.filter).to eq(parsed_filter)
+          expect(view.filter).to eq('a' => 1)
         end
 
         it 'creates the correct query selector' do
@@ -93,7 +93,7 @@ describe Mongo::Collection::View do
       end
 
       let(:options) do
-        { :modifiers => { :$someMod => 100 } }
+        { :modifiers => { '$comment' => 'test' } }
       end
 
       let(:expected_modifiers) do
@@ -101,15 +101,15 @@ describe Mongo::Collection::View do
       end
 
       let(:parsed_filter) do
-        { a: 1 }
+        { 'a' => 1 }
       end
 
       let(:query_filter) do
-        BSON::Document.new(:$query => { a: 1 }, :$someMod => 100)
+        BSON::Document.new(:$query => { a: 1 }, :$comment => 'test')
       end
 
       it 'sets the modifiers' do
-        expect(view.instance_variable_get(:@modifiers)).to eq(expected_modifiers)
+        expect(view.modifiers).to eq(expected_modifiers)
       end
 
       it 'removes the modifiers from the filter' do
@@ -127,15 +127,15 @@ describe Mongo::Collection::View do
         end
 
         let(:options) do
-          { :sort =>  { a: Mongo::Index::ASCENDING }, :modifiers => { :$orderby => { a: Mongo::Index::DESCENDING } } }
+          { 'sort' =>  { a: Mongo::Index::ASCENDING }, :modifiers => { :$orderby => { a: Mongo::Index::DESCENDING }}}
         end
 
         let(:expected_modifiers) do
-          { :$orderby => options[:sort] }
+          { '$orderby' => { 'a' => 1 }}
         end
 
         let(:parsed_filter) do
-          { a: 1 }
+          { 'a' => 1 }
         end
 
         let(:query_filter) do
@@ -143,7 +143,7 @@ describe Mongo::Collection::View do
         end
 
         it 'sets the modifiers' do
-          expect(view.instance_variable_get(:@modifiers)).to eq(expected_modifiers)
+          expect(view.modifiers).to eq(expected_modifiers)
         end
 
         it 'removes the modifiers from the filter' do
@@ -158,7 +158,7 @@ describe Mongo::Collection::View do
       context 'when modifiers, options and a query modifier are provided' do
 
         let(:filter) do
-          { b: 2, :$query => { a: 1 }, :$someMod => 100 }
+          { :$query => { a: 1 }, :$someMod => 100 }
         end
 
         let(:options) do
@@ -166,19 +166,19 @@ describe Mongo::Collection::View do
         end
 
         let(:expected_modifiers) do
-          { :$query => { a: 1 }, :$orderby => { a: Mongo::Index::ASCENDING }, :$someMod => 100 }
+          { '$orderby' => { 'a' => Mongo::Index::ASCENDING } }
         end
 
         let(:parsed_filter) do
-          { b: 2 }
+          { 'a' => 1 }
         end
 
         let(:query_filter) do
-          BSON::Document.new(:$query => { a: 1 }, :$someMod => 100, :$orderby => { a: Mongo::Index::ASCENDING })
+          BSON::Document.new(:$query => { a: 1 }, :$orderby => { a: Mongo::Index::ASCENDING })
         end
 
         it 'sets the modifiers' do
-          expect(view.instance_variable_get(:@modifiers)).to eq(expected_modifiers)
+          expect(view.modifiers).to eq(expected_modifiers)
         end
 
         it 'removes the modifiers from the filter' do
@@ -432,10 +432,6 @@ describe Mongo::Collection::View do
             { :snapshot => true }
           end
 
-          before do
-            expect(view).to receive(:special_filter).and_call_original
-          end
-
           it 'creates a special query filter' do
             expect(query_spec[:selector][:$snapshot]).to eq(options[:snapshot])
           end
@@ -451,10 +447,6 @@ describe Mongo::Collection::View do
 
           let(:options) do
             { :max_scan => 100 }
-          end
-
-          before do
-            expect(view).to receive(:special_filter).and_call_original
           end
 
           it 'creates a special query filter' do
@@ -474,10 +466,6 @@ describe Mongo::Collection::View do
             { :max_time_ms => 100 }
           end
 
-          before do
-            expect(view).to receive(:special_filter).and_call_original
-          end
-
           it 'creates a special query filter' do
             expect(query_spec[:selector][:$maxTimeMS]).to eq(options[:max_time_ms])
           end
@@ -493,10 +481,6 @@ describe Mongo::Collection::View do
 
           let(:options) do
             { :show_disk_loc => true }
-          end
-
-          before do
-            expect(view).to receive(:special_filter).and_call_original
           end
 
           it 'creates a special query filter' do
@@ -515,10 +499,6 @@ describe Mongo::Collection::View do
 
         let(:options) do
           { :sort => {'x' => Mongo::Index::ASCENDING }}
-        end
-
-        before do
-          expect(view).to receive(:special_filter).and_call_original
         end
 
         it 'creates a special query filter' do
@@ -540,10 +520,6 @@ describe Mongo::Collection::View do
             { :hint => { 'x' => Mongo::Index::ASCENDING }}
           end
 
-          before do
-            expect(view).to receive(:special_filter).and_call_original
-          end
-
           it 'creates a special query filter' do
             expect(query_spec[:selector][:$hint]).to eq(options[:hint])
           end
@@ -554,10 +530,6 @@ describe Mongo::Collection::View do
 
         let(:options) do
           { :comment => 'query1' }
-        end
-
-        before do
-          expect(view).to receive(:special_filter).and_call_original
         end
 
         it 'creates a special query filter' do
@@ -572,10 +544,6 @@ describe Mongo::Collection::View do
       end
 
       context 'when the cluster is sharded', if: sharded? do
-
-        before do
-          expect(view).to receive(:special_filter).and_call_original
-        end
 
         it 'iterates over all of the documents' do
           view.each do |doc|
@@ -625,10 +593,6 @@ describe Mongo::Collection::View do
                             :$orderby => {'x' => Mongo::Index::ASCENDING }
                           }
           }
-        end
-
-        before do
-          expect(view).to receive(:special_filter).and_call_original
         end
 
         it 'creates a special query filter' do
@@ -745,14 +709,11 @@ describe Mongo::Collection::View do
             end
 
             let(:options) do
-              { :modifiers => {
-                                :$query => { 'field' => 1 }
-                              }
-              }
+              { :modifiers => { :$query => { 'field' => 1 }}}
             end
 
             it 'overrides the modifier value with the option value' do
-              expect(query_spec[:selector][:$query]).to eq(options[:modifiers][:$query])
+              expect(query_spec[:selector]).to eq(filter)
             end
           end
         end
@@ -864,40 +825,98 @@ describe Mongo::Collection::View do
 
   describe '#initialize' do
 
-    let(:options) do
-      { :limit => 5 }
-    end
-
-    it 'sets the collection' do
-      expect(view.collection).to eq(authorized_collection)
-    end
-
-    it 'sets the filter' do
-      expect(view.filter).to eq(filter)
-    end
-
-    it 'dups the filter' do
-      expect(view.filter).not_to be(filter)
-    end
-
-    it 'sets the options' do
-      expect(view.options).to eq(options)
-    end
-
-    it 'dups the options' do
-      expect(view.options).not_to be(options)
-    end
-
     context 'when the filter is not a valid document' do
 
       let(:filter) do
         'y'
       end
 
+      let(:options) do
+        { limit: 5 }
+      end
+
       it 'raises an error' do
         expect do
           view
         end.to raise_error(Mongo::Error::InvalidDocument)
+      end
+    end
+
+    context 'when the filter and options are standard' do
+
+      let(:filter) do
+        { 'name' => 'test' }
+      end
+
+      let(:options) do
+        { 'sort' => { 'name' => 1 }}
+      end
+
+      it 'parses a standard filter' do
+        expect(view.filter).to eq(filter)
+      end
+
+      it 'parses standard options' do
+        expect(view.options).to eq(options)
+      end
+    end
+
+    context 'when the filter contains modifiers' do
+
+      let(:filter) do
+        { :$query => { :name => 'test' }, :$comment => 'testing' }
+      end
+
+      let(:options) do
+        { :sort => { name: 1 }}
+      end
+
+      it 'parses a standard filter' do
+        expect(view.filter).to eq('name' => 'test')
+      end
+
+      it 'parses standard options' do
+        expect(view.options).to eq('sort' => { 'name' => 1 }, 'comment' => 'testing')
+      end
+    end
+
+    context 'when the options contain modifiers' do
+
+      let(:filter) do
+        { 'name' => 'test' }
+      end
+
+      let(:options) do
+        { :sort => { name: 1 }, :modifiers => { :$comment => 'testing'}}
+      end
+
+      it 'parses a standard filter' do
+        expect(view.filter).to eq('name' => 'test')
+      end
+
+      it 'parses standard options' do
+        expect(view.options).to eq('sort' => { 'name' => 1 }, 'comment' => 'testing')
+      end
+    end
+
+    context 'when the filter and options both contain modifiers' do
+
+      let(:filter) do
+        { :$query => { 'name' => 'test' }, :$hint => { name: 1 }}
+      end
+
+      let(:options) do
+        { :sort => { name: 1 }, :modifiers => { :$comment => 'testing' }}
+      end
+
+      it 'parses a standard filter' do
+        expect(view.filter).to eq('name' => 'test')
+      end
+
+      it 'parses standard options' do
+        expect(view.options).to eq(
+          'sort' => { 'name' => 1 }, 'comment' => 'testing', 'hint' => { 'name' => 1 }
+        )
       end
     end
   end
@@ -907,7 +926,7 @@ describe Mongo::Collection::View do
     context 'when there is a namespace, filter, and options' do
 
       let(:options) do
-        { :limit => 5 }
+        { 'limit' => 5 }
       end
 
       let(:filter) do

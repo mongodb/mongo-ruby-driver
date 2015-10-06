@@ -124,14 +124,14 @@ describe Mongo::Grid::FSBucket do
       end
     end
 
-    context 'when provided a selector' do
+    context 'when provided a filter' do
 
       let(:view) do
         fs.find(filename: 'test.txt')
       end
 
-      it 'returns a collection view for the selector' do
-        expect(view.selector).to eq(filename: 'test.txt')
+      it 'returns a collection view for the filter' do
+        expect(view.filter).to eq('filename' => 'test.txt')
       end
     end
 

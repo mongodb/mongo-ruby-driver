@@ -51,7 +51,7 @@ module Mongo
         # @return [ BSON::Document ] The driver options.
         #
         # @since 2.2.0
-        def map_driver_options(modifiers)
+        def self.map_driver_options(modifiers)
           Options::Mapper.transform_documents(modifiers, SERVER_MAPPINGS)
         end
 
@@ -66,7 +66,7 @@ module Mongo
         # @return [ BSON::Document ] The modifiers.
         #
         # @since 2.2.0
-        def map_server_modifiers(options)
+        def self.map_server_modifiers(options)
           Options::Mapper.transform_documents(options, DRIVER_MAPPINGS)
         end
       end

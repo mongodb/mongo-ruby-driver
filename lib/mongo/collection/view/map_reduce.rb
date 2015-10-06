@@ -187,21 +187,17 @@ module Mongo
         end
 
         def map_reduce_spec
-          {
+          BSON::Document.new(
             :db_name => database.name,
             :read => read,
             :selector => {
               :mapreduce => collection.name,
               :map => map,
               :reduce => reduce,
-              :query => view.modifiers[:$query] || view.filter[:$query] || view.filter,
+              :query => view.filter,
               :out => { inline: 1 }
-            }.merge(options).merge(view_options)
-          }
-        end
-
-        def view_options
-          view.sort ? view.options.merge(:sort => view.sort) : view.options
+            }.merge(options).merge(view.options)
+          )
         end
 
         def new(options)

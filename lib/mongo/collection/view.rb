@@ -135,16 +135,7 @@ module Mongo
       def initialize(collection, filter = {}, options = {})
         validate_doc!(filter)
         @collection = collection
-        @filter = filter
-        if options[:modifiers]
-          # When legacy modifier options are passed into the constructor, we want
-          # the options in the view to be converted to a find command style view.
-          new_options = options.dup
-          mods = new_options.delete(:modifiers)
-          @options = new_options.merge(Modifiers.map_driver_options(mods))
-        else
-          @options = options
-        end
+        parse_parameters!(BSON::Document.new(filter.freeze), BSON::Document.new(options.freeze))
       end
 
       # Get a human-readable string representation of +View+.
@@ -156,8 +147,8 @@ module Mongo
       #
       # @since 2.0.0
       def inspect
-        "#<Mongo::Collection::View:0x#{object_id} namespace='#{collection.namespace}" +
-            " @filter=#{filter.inspect} @options=#{options.inspect}>"
+        "#<Mongo::Collection::View:0x#{object_id} namespace='#{collection.namespace}'" +
+            " @filter=#{filter.to_s} @options=#{options.to_s}>"
       end
 
       private
@@ -170,6 +161,14 @@ module Mongo
 
       def initial_query_op
         Operation::Read::Query.new(query_spec)
+      end
+
+      def parse_parameters!(filter, options)
+        # @todo: BSON::Document#delete use string or symbol key.
+        query = filter.delete(QUERY)
+        modifiers = (filter || {}).merge(options.delete(MODIFIERS) || {})
+        @filter = query || filter
+        @options = Modifiers.map_driver_options(modifiers).merge!(options)
       end
 
       def query_spec

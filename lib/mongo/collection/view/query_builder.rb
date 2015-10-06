@@ -25,13 +25,13 @@ module Mongo
         # Options to cursor flags mapping.
         #
         # @since 2.1.0
-        CURSOR_FLAGS_MAP = {
+        CURSOR_FLAGS_MAP = BSON::Document.new(
           :allow_partial_results => [ :partial ],
           :oplog_replay => [ :oplog_replay ],
           :no_cursor_timeout => [ :no_cursor_timeout ],
           :tailable => [ :tailable_cursor ],
           :tailable_await => [ :await_data, :tailable_cursor]
-        }.freeze
+        ).freeze
 
         def_delegators :@view, :cluster, :collection, :database, :filter, :options, :read
 

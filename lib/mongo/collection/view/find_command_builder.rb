@@ -25,7 +25,7 @@ module Mongo
         # The mappings from ruby options to the find command.
         #
         # @since 2.2.0
-        MAPPINGS = {
+        MAPPINGS = BSON::Document.new(
           sort: 'sort',
           projection: 'projection',
           hint: 'hint',
@@ -46,7 +46,7 @@ module Mongo
           no_cursor_timeout: 'noCursorTimeout',
           await_data: 'awaitData',
           allow_partial_results: 'allowPartialResults'
-        }.freeze
+        ).freeze
 
         def_delegators :@view, :collection, :database, :filter, :options, :read
 
