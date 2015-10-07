@@ -23,20 +23,10 @@ module Mongo
         # @since 2.0.0
         class Result < Operation::Result
 
-          # Get the name of the cursor field.
-          #
-          # @since 2.0.0
-          CURSOR = 'cursor'.freeze
-
           # The name of the cursors field in the result.
           #
           # @since 2.0.0
           CURSORS = 'cursors'.freeze
-
-          # Get the name of the id field.
-          #
-          # @since 2.0.0
-          ID = 'id'.freeze
 
           # Get all the cursor ids from the result.
           #
@@ -47,7 +37,7 @@ module Mongo
           #
           # @since 2.0.0
           def cursor_ids
-            documents.map{ |doc| doc[CURSOR][ID] }
+            documents.map{ |doc| doc[CURSOR][CURSOR_ID] }
           end
 
           # Get the documents from parallel scan.

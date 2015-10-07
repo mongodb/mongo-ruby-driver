@@ -26,16 +26,6 @@ module Mongo
         # @since 2.0.0
         class Result < Operation::Result
 
-          # The field name for the cursor document in an aggregation.
-          #
-          # @since 2.0.0
-          CURSOR = 'cursor'.freeze
-
-          # The cursor id field in the cursor document.
-          #
-          # @since 2.0.0
-          CURSOR_ID = 'id'.freeze
-
           # The field name for the aggregation explain information.
           #
           # @since 2.0.5
@@ -45,16 +35,6 @@ module Mongo
           #
           # @since 2.0.5
           EXPLAIN_LEGACY = 'serverPipeline'.freeze
-
-          # The field name for the first batch of a cursor.
-          #
-          # @since 2.0.0
-          FIRST_BATCH = 'firstBatch'.freeze
-
-          # The field name for a result without a cursor.
-          #
-          # @since 2.0.0
-          RESULT = 'result'.freeze
 
           # Get the cursor id for the result.
           #

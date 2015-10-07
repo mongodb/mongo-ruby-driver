@@ -27,11 +27,6 @@ module Mongo
           # @since 2.0.0
           COUNTS = 'counts'.freeze
 
-          # The result field for when output is a collection.
-          #
-          # @since 2.0.0
-          RESULT = 'result'.freeze
-
           # The field name for a result without a cursor.
           #
           # @since 2.0.0

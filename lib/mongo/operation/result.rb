@@ -22,6 +22,31 @@ module Mongo
       extend Forwardable
       include Enumerable
 
+      # The field name for the cursor document in an aggregation.
+      #
+      # @since 2.2.0
+      CURSOR = 'cursor'.freeze
+
+      # The cursor id field in the cursor document.
+      #
+      # @since 2.2.0
+      CURSOR_ID = 'id'.freeze
+
+      # The field name for the first batch of a cursor.
+      #
+      # @since 2.2.0
+      FIRST_BATCH = 'firstBatch'.freeze
+
+      # The field name for the next batch of a cursor.
+      #
+      # @since 2.2.0
+      NEXT_BATCH = 'nextBatch'.freeze
+
+      # The namespace field in the cursor document.
+      #
+      # @since 2.2.0
+      NAMESPACE = 'ns'.freeze
+
       # The number of documents updated in the write.
       #
       # @since 2.0.0
@@ -31,6 +56,11 @@ module Mongo
       #
       # @since 2.0.0
       OK = 'ok'.freeze
+
+      # The result field constant.
+      #
+      # @since 2.2.0
+      RESULT = 'result'.freeze
 
       # @return [ Array<Protocol::Reply> ] replies The wrapped wire protocol replies.
       attr_reader :replies

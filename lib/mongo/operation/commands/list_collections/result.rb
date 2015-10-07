@@ -23,26 +23,6 @@ module Mongo
         # @since 2.0.0
         class Result < Operation::Result
 
-          # The field name for the cursor document in a listCollections result.
-          #
-          # @since 2.0.0
-          CURSOR = 'cursor'.freeze
-
-          # The cursor id field in the cursor document.
-          #
-          # @since 2.0.0
-          CURSOR_ID = 'id'.freeze
-
-          # The namespace field in the cursor document.
-          #
-          # @since 2.0.0
-          NAMESPACE = 'ns'.freeze
-
-          # The field name for the first batch of a cursor.
-          #
-          # @since 2.0.0
-          FIRST_BATCH = 'firstBatch'.freeze
-
           # Get the cursor id for the result.
           #
           # @example Get the cursor id.
