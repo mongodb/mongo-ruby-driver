@@ -159,20 +159,19 @@ module Mongo
         @filter = other.filter.dup
       end
 
-      def initial_query_op
-        Operation::Read::Query.new(query_spec)
+      def initial_query_op(server)
+        if server.features.find_command_enabled?
+          Operation::Find.new(FindCommandBuilder.new(self).specification)
+        else
+          Operation::Read::Query.new(QueryBuilder.new(self).specification)
+        end
       end
 
       def parse_parameters!(filter, options)
-        # @todo: BSON::Document#delete use string or symbol key.
         query = filter.delete(QUERY)
         modifiers = (filter || {}).merge(options.delete(MODIFIERS) || {})
         @filter = query || filter
         @options = Modifiers.map_driver_options(modifiers).merge!(options)
-      end
-
-      def query_spec
-        QueryBuilder.new(self).specification
       end
 
       def new(options)
@@ -180,7 +179,7 @@ module Mongo
       end
 
       def send_initial_query(server)
-        initial_query_op.execute(server.context)
+        initial_query_op(server).execute(server.context)
       end
 
       def view; self; end

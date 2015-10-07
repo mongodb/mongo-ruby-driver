@@ -18,7 +18,7 @@ describe Mongo::Collection::View::Explainable do
     authorized_collection.delete_many
   end
 
-  describe '#explain' do
+  pending '#explain' do
 
     let(:explain) do
       view.explain
