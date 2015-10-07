@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require 'mongo/collection/view/builder'
 require 'mongo/collection/view/immutable'
 require 'mongo/collection/view/iterable'
 require 'mongo/collection/view/explainable'
@@ -19,10 +20,6 @@ require 'mongo/collection/view/aggregation'
 require 'mongo/collection/view/map_reduce'
 require 'mongo/collection/view/readable'
 require 'mongo/collection/view/writable'
-require 'mongo/collection/view/query_builder'
-require 'mongo/collection/view/find_command_builder'
-require 'mongo/collection/view/flags'
-require 'mongo/collection/view/modifiers'
 
 module Mongo
   class Collection
@@ -163,7 +160,7 @@ module Mongo
         query = filter.delete(QUERY)
         modifiers = (filter || {}).merge(options.delete(MODIFIERS) || {})
         @filter = query || filter
-        @options = Modifiers.map_driver_options(modifiers).merge!(options)
+        @options = Builder::Modifiers.map_driver_options(modifiers).merge!(options)
       end
 
       def new(options)

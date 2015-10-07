@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe Mongo::Collection::View::Modifiers do
+describe Mongo::Collection::View::Builder::Modifiers do
 
   describe '.map_driver_options' do
 

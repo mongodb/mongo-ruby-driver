@@ -370,8 +370,8 @@ module Mongo
         #
         # @since 2.1.0
         def modifiers(doc = nil)
-          return Modifiers.map_server_modifiers(options) if doc.nil?
-          new(options.merge(Modifiers.map_driver_options(doc)))
+          return Builder::Modifiers.map_server_modifiers(options) if doc.nil?
+          new(options.merge(Builder::Modifiers.map_driver_options(doc)))
         end
 
         # A cumulative time limit in milliseconds for processing operations on a cursor.

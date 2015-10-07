@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe Mongo::Collection::View::FindCommandBuilder do
+describe Mongo::Collection::View::Builder::FindCommand do
 
   describe '#specification' do
 

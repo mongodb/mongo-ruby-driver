@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe Mongo::Collection::View::QueryBuilder do
+describe Mongo::Collection::View::Builder::OpQuery do
 
   describe '#specification' do
 

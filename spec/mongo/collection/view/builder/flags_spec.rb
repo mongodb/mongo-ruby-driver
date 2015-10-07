@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe Mongo::Collection::View::Flags do
+describe Mongo::Collection::View::Builder::Flags do
 
   describe '.map_flags' do
 
