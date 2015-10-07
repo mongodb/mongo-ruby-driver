@@ -96,6 +96,18 @@ module Mongo
       @view.batch_size && @view.batch_size > 0 ? @view.batch_size : limit
     end
 
+    # Is the cursor closed?
+    #
+    # @example Is the cursor closed?
+    #   cursor.closed?
+    #
+    # @return [ true, false ] If the cursor is closed.
+    #
+    # @since 2.2.0
+    def closed?
+      !more?
+    end
+
     # Get the parsed collection name.
     #
     # @example Get the parsed collection name.
@@ -158,7 +170,11 @@ module Mongo
     end
 
     def kill_cursors_operation
-      Operation::KillCursors.new(Builder::OpKillCursors.new(self).specification)
+      if @server.features.find_command_enabled?
+        Operation::Commands::Command.new(Builder::KillCursorsCommand.new(self).specification)
+      else
+        Operation::KillCursors.new(Builder::OpKillCursors.new(self).specification)
+      end
     end
 
     def limited?
