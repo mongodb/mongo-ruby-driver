@@ -37,6 +37,9 @@ module Mongo
     def_delegators :@view, :collection, :limit
     def_delegators :collection, :client, :database
 
+    # @return [ Collection::View ] view The collection view.
+    attr_reader :view
+
     # Creates a +Cursor+ object.
     #
     # @example Instantiate the cursor.

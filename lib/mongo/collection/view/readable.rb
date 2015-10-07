@@ -60,6 +60,18 @@ module Mongo
           configure(:allow_partial_results, true)
         end
 
+        # Tell the query's cursor to stay open and wait for data.
+        #
+        # @example Await data on the cursor.
+        #   view.await_data
+        #
+        # @return [ View ] The new view.
+        #
+        # @since 2.0.0
+        def await_data
+          configure(:await_data, true)
+        end
+
         # The number of documents returned in each batch of results from MongoDB.
         #
         # @example Set the batch size.
