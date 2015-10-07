@@ -144,7 +144,7 @@ end
 # @since 2.0.0
 def find_command_enabled?
   $mongo_client ||= initialize_scanned_client!
-  $write_command_enabled ||= $mongo_client.cluster.servers.first.features.find_command_enabled?
+  $find_command_enabled ||= $mongo_client.cluster.servers.first.features.find_command_enabled?
 end
 
 # For instances where behaviour is different on different versions, we need to
