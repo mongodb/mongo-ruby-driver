@@ -13,4 +13,6 @@
 # limitations under the License.
 
 require 'mongo/cursor/builder/op_get_more'
+require 'mongo/cursor/builder/op_kill_cursors'
 require 'mongo/cursor/builder/get_more_command'
+require 'mongo/cursor/builder/kill_cursors_command'

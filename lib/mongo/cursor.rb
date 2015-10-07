@@ -158,15 +158,7 @@ module Mongo
     end
 
     def kill_cursors_operation
-      Operation::KillCursors.new(kill_cursors_spec)
-    end
-
-    def kill_cursors_spec
-      {
-        :coll_name => @coll_name || collection.name,
-        :db_name => database.name,
-        :cursor_ids => [ @cursor_id ]
-      }
+      Operation::KillCursors.new(Builder::OpKillCursors.new(self).specification)
     end
 
     def limited?
