@@ -104,8 +104,8 @@ module Mongo
     # @return [ String ] The collection name.
     #
     # @since 2.2.0
-    def coll_name
-      @coll_name
+    def collection_name
+      @coll_name || collection.name
     end
 
     # Get the cursor id.

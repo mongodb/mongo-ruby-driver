@@ -25,7 +25,7 @@ module Mongo
         # @return [ Cursor ] cursor The cursor.
         attr_reader :cursor
 
-        def_delegators :@cursor, :collection, :coll_name, :database, :to_return
+        def_delegators :@cursor, :collection_name, :database, :to_return
 
         # Create the new builder.
         #
@@ -52,7 +52,7 @@ module Mongo
             :to_return => to_return,
             :cursor_id => cursor.id,
             :db_name   => database.name,
-            :coll_name => coll_name || collection.name
+            :coll_name => collection_name
           }
         end
       end

@@ -25,7 +25,7 @@ module Mongo
         # @return [ Cursor ] cursor The cursor.
         attr_reader :cursor
 
-        def_delegators :@cursor, :batch_size, :collection, :coll_name, :database
+        def_delegators :@cursor, :batch_size, :collection_name, :database
 
         # Create the new builder.
         #
@@ -55,7 +55,7 @@ module Mongo
 
         def get_more_command
           # @todo: :maxTimeMS
-          spec = { :getMore => cursor.id, :collection => coll_name || collection.name }
+          spec = { :getMore => cursor.id, :collection => collection_name }
           spec[:batchSize] = batch_size if batch_size
           spec
         end
