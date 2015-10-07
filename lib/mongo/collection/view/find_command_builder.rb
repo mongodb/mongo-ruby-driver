@@ -50,6 +50,19 @@ module Mongo
 
         def_delegators :@view, :collection, :database, :filter, :options, :read
 
+        # Get the specification for an explain command that wraps the find
+        # command.
+        #
+        # @example Get the explain spec.
+        #   builder.explain_specification
+        #
+        # @return [ Hash ] The specification.
+        #
+        # @since 2.2.0
+        def explain_specification
+          { selector: { explain: find_command }, db_name: database.name, read: read }
+        end
+
         # Create the find command builder.
         #
         # @example Create the find command builder.

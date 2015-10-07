@@ -159,14 +159,6 @@ module Mongo
         @filter = other.filter.dup
       end
 
-      def initial_query_op(server)
-        if server.features.find_command_enabled?
-          Operation::Find.new(FindCommandBuilder.new(self).specification)
-        else
-          Operation::Read::Query.new(QueryBuilder.new(self).specification)
-        end
-      end
-
       def parse_parameters!(filter, options)
         query = filter.delete(QUERY)
         modifiers = (filter || {}).merge(options.delete(MODIFIERS) || {})
@@ -176,10 +168,6 @@ module Mongo
 
       def new(options)
         View.new(collection, filter, options)
-      end
-
-      def send_initial_query(server)
-        initial_query_op(server).execute(server.context)
       end
 
       def view; self; end

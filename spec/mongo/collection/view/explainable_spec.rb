@@ -18,15 +18,14 @@ describe Mongo::Collection::View::Explainable do
     authorized_collection.delete_many
   end
 
-  pending '#explain' do
+  describe '#explain' do
 
     let(:explain) do
       view.explain
     end
 
     it 'executes an explain' do
-      expect(explain[:cursor] == 'BasicCursor' ||
-             explain[:queryPlanner]).to be_truthy
+      expect(explain[:cursor] == 'BasicCursor' || explain[:queryPlanner]).to be_truthy
     end
   end
 end

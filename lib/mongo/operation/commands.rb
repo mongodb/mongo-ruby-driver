@@ -13,7 +13,6 @@
 # limitations under the License.
 
 require 'mongo/operation/commands/command'
-require 'mongo/operation/commands/explain'
 require 'mongo/operation/commands/find'
 require 'mongo/operation/commands/parallel_scan'
 require 'mongo/operation/commands/aggregate'
