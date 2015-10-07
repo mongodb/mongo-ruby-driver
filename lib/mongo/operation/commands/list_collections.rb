@@ -12,43 +12,37 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/operation/commands/list_collections/result'
-
 module Mongo
   module Operation
+    module Commands
 
-    # A MongoDB listCollections command operation.
-    #
-    # @example Create the listCollections command operation.
-    #   Mongo::Operation::Read::ListCollections.new(db_name: 'test')
-    #
-    # @note A command is actually a query on the virtual '$cmd' collection.
-    #
-    # Initialization:
-    #   param [ Hash ] spec The specifications for the command.
-    #
-    #   option spec :db_name [ String ] The name of the database whose list of
-    #     collection names is requested.
-    #   option spec :options [ Hash ] Options for the command.
-    #
-    # @since 2.0.0
-    class ListCollections
-      include Specifiable
-      include Limited
-      include Executable
-      include ReadPreference
+      # A MongoDB listCollections command operation.
+      #
+      # @example Create the listCollections command operation.
+      #   Mongo::Operation::Read::ListCollections.new(db_name: 'test')
+      #
+      # @note A command is actually a query on the virtual '$cmd' collection.
+      #
+      # Initialization:
+      #   param [ Hash ] spec The specifications for the command.
+      #
+      #   option spec :db_name [ String ] The name of the database whose list of
+      #     collection names is requested.
+      #   option spec :options [ Hash ] Options for the command.
+      #
+      # @since 2.0.0
+      class ListCollections < Command
 
-      private
+        private
 
-      def query_coll
-        Database::COMMAND
-      end
-
-      def selector
-        (spec[SELECTOR] || {}).merge(
-          listCollections: 1, filter: { name: { '$not' => /system\.|\$/ }}
-        )
+        def selector
+          (spec[SELECTOR] || {}).merge(
+            listCollections: 1, filter: { name: { '$not' => /system\.|\$/ }}
+          )
+        end
       end
     end
   end
 end
+
+require 'mongo/operation/commands/list_collections/result'

@@ -147,7 +147,7 @@ module Mongo
 
     def get_more_operation
       if @server.features.find_command_enabled?
-        Operation::GetMore.new(Builder::GetMoreCommand.new(self).specification)
+        Operation::Commands::GetMore.new(Builder::GetMoreCommand.new(self).specification)
       else
         Operation::Read::GetMore.new(Builder::OpGetMore.new(self).specification)
       end

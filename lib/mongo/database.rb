@@ -150,7 +150,7 @@ module Mongo
     def command(operation, opts = {})
       preference = opts[:read] ? ServerSelector.get(client.options.merge(opts[:read])) : read_preference
       server = preference.select_server(cluster)
-      Operation::Command.new({
+      Operation::Commands::Command.new({
         :selector => operation,
         :db_name => name,
         :options => { :limit => -1 },

@@ -14,31 +14,33 @@
 
 module Mongo
   module Operation
+    module Commands
 
-    # A MongoDB command operation.
-    #
-    # @example Create the command operation.
-    #   Mongo::Operation::Command.new({ :selector => { :isMaster => 1 } })
-    #
-    # Initialization:
-    #   param [ Hash ] spec The specifications for the command.
-    #
-    #   option spec :selector [ Hash ] The command selector.
-    #   option spec :db_name [ String ] The name of the database on which
-    #   the command should be executed.
-    #   option spec :options [ Hash ] Options for the command.
-    #
-    # @since 2.0.0
-    class Command
-      include Specifiable
-      include Limited
-      include ReadPreference
-      include Executable
+      # A MongoDB command operation.
+      #
+      # @example Create the command operation.
+      #   Mongo::Operation::Command.new({ :selector => { :isMaster => 1 } })
+      #
+      # Initialization:
+      #   param [ Hash ] spec The specifications for the command.
+      #
+      #   option spec :selector [ Hash ] The command selector.
+      #   option spec :db_name [ String ] The name of the database on which
+      #   the command should be executed.
+      #   option spec :options [ Hash ] Options for the command.
+      #
+      # @since 2.0.0
+      class Command
+        include Specifiable
+        include Limited
+        include ReadPreference
+        include Executable
 
-      private
+        private
 
-      def query_coll
-        Database::COMMAND
+        def query_coll
+          Database::COMMAND
+        end
       end
     end
   end

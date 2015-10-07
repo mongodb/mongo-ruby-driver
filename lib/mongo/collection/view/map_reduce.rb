@@ -205,7 +205,7 @@ module Mongo
         end
 
         def initial_query_op
-          Operation::MapReduce.new(map_reduce_spec)
+          Operation::Commands::MapReduce.new(map_reduce_spec)
         end
 
         def valid_server?(server)

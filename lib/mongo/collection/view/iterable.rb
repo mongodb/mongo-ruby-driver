@@ -69,9 +69,9 @@ module Mongo
 
         def initial_command_op
           if explained?
-            Operation::Command.new(Builder::FindCommand.new(self).explain_specification)
+            Operation::Commands::Command.new(Builder::FindCommand.new(self).explain_specification)
           else
-            Operation::Find.new(Builder::FindCommand.new(self).specification)
+            Operation::Commands::Find.new(Builder::FindCommand.new(self).specification)
           end
         end
 

@@ -12,45 +12,39 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/operation/commands/parallel_scan/result'
-
 module Mongo
   module Operation
+    module Commands
 
-    # A MongoDB parallel scan operation.
-    #
-    # @example Create the parallel scan operation.
-    #   ParallelScan.new({
-    #     :db_name  => 'test_db',
-    #     :coll_name = > 'test_collection',
-    #     :cursor_count => 5
-    #   })
-    #
-    # Initialization:
-    #   param [ Hash ] spec The specifications for the operation.
-    #
-    #   option spec :db_name [ String ] The name of the database on which
-    #     the operation should be executed.
-    #   option spec :coll_name [ String ] The collection to scan.
-    #   option spec :cursor_count [ Integer ] The number of cursors to use.
-    #   option spec :options [ Hash ] Options for the command.
-    #
-    # @since 2.0.0
-    class ParallelScan
-      include Specifiable
-      include Limited
-      include ReadPreference
-      include Executable
+      # A MongoDB parallel scan operation.
+      #
+      # @example Create the parallel scan operation.
+      #   ParallelScan.new({
+      #     :db_name  => 'test_db',
+      #     :coll_name = > 'test_collection',
+      #     :cursor_count => 5
+      #   })
+      #
+      # Initialization:
+      #   param [ Hash ] spec The specifications for the operation.
+      #
+      #   option spec :db_name [ String ] The name of the database on which
+      #     the operation should be executed.
+      #   option spec :coll_name [ String ] The collection to scan.
+      #   option spec :cursor_count [ Integer ] The number of cursors to use.
+      #   option spec :options [ Hash ] Options for the command.
+      #
+      # @since 2.0.0
+      class ParallelScan < Command
 
-      private
+        private
 
-      def selector
-        { :parallelCollectionScan => coll_name, :numCursors => cursor_count }
-      end
-
-      def query_coll
-        Database::COMMAND
+        def selector
+          { :parallelCollectionScan => coll_name, :numCursors => cursor_count }
+        end
       end
     end
   end
 end
+
+require 'mongo/operation/commands/parallel_scan/result'

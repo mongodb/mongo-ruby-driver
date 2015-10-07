@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe Mongo::Operation::Aggregate::Result do
+describe Mongo::Operation::Commands::Aggregate::Result do
 
   let(:result) do
     described_class.new(reply)

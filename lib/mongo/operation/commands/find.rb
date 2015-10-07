@@ -14,11 +14,13 @@
 
 module Mongo
   module Operation
+    module Commands
 
-    # Encapsulates behaviour for executing a find command.
-    #
-    # @since 2.2.0
-    class Find < Command; end
+      # Encapsulates behaviour for executing a find command.
+      #
+      # @since 2.2.0
+      class Find < Command; end
+    end
   end
 end
 

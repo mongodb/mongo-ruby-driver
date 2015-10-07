@@ -14,11 +14,13 @@
 
 module Mongo
   module Operation
+    module Commands
 
-    # Encapsulates behaviour for executing a getmore command.
-    #
-    # @since 2.2.0
-    class GetMore < Command; end
+      # Encapsulates behaviour for executing a getmore command.
+      #
+      # @since 2.2.0
+      class GetMore < Command; end
+    end
   end
 end
 

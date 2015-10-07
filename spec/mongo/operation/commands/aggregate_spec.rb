@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe Mongo::Operation::Aggregate do
+describe Mongo::Operation::Commands::Aggregate do
   include_context 'operation'
 
   let(:selector) do

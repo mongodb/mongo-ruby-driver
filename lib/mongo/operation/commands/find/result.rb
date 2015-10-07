@@ -14,60 +14,62 @@
 
 module Mongo
   module Operation
-    class Find
+    module Commands
+      class Find
 
-      # Defines custom behaviour of results in find command.
-      #
-      # @since 2.2.0
-      class Result < Operation::Result
-
-        # The field name for the cursor document in an aggregation.
-        #
-        # @since 2.0.0
-        CURSOR = 'cursor'.freeze
-
-        # The cursor id field in the cursor document.
-        #
-        # @since 2.0.0
-        CURSOR_ID = 'id'.freeze
-
-        # The field name for the first batch of a cursor.
-        #
-        # @since 2.0.0
-        FIRST_BATCH = 'firstBatch'.freeze
-
-        # Get the cursor id.
-        #
-        # @example Get the cursor id.
-        #   result.cursor_id
-        #
-        # @return [ Integer ] The cursor id.
+        # Defines custom behaviour of results in find command.
         #
         # @since 2.2.0
-        def cursor_id
-          cursor_document ? cursor_document[CURSOR_ID] : super
-        end
+        class Result < Operation::Result
 
-        # Get the documents in the result.
-        #
-        # @example Get the documents.
-        #   result.documents
-        #
-        # @return [ Array<BSON::Document> ] The documents.
-        #
-        # @since 2.2.0
-        def documents
-          cursor_document[FIRST_BATCH]
-        end
+          # The field name for the cursor document in an aggregation.
+          #
+          # @since 2.0.0
+          CURSOR = 'cursor'.freeze
 
-        private
+          # The cursor id field in the cursor document.
+          #
+          # @since 2.0.0
+          CURSOR_ID = 'id'.freeze
 
-        def cursor_document
-          @cursor_document ||= reply.documents[0][CURSOR]
-        end
+          # The field name for the first batch of a cursor.
+          #
+          # @since 2.0.0
+          FIRST_BATCH = 'firstBatch'.freeze
 
-        def first_document
-          @first_document ||= reply.documents[0]
+          # Get the cursor id.
+          #
+          # @example Get the cursor id.
+          #   result.cursor_id
+          #
+          # @return [ Integer ] The cursor id.
+          #
+          # @since 2.2.0
+          def cursor_id
+            cursor_document ? cursor_document[CURSOR_ID] : super
+          end
+
+          # Get the documents in the result.
+          #
+          # @example Get the documents.
+          #   result.documents
+          #
+          # @return [ Array<BSON::Document> ] The documents.
+          #
+          # @since 2.2.0
+          def documents
+            cursor_document[FIRST_BATCH]
+          end
+
+          private
+
+          def cursor_document
+            @cursor_document ||= reply.documents[0][CURSOR]
+          end
+
+          def first_document
+            @first_document ||= reply.documents[0]
+          end
         end
       end
     end

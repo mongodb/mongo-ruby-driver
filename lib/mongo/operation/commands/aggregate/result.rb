@@ -14,88 +14,94 @@
 
 module Mongo
   module Operation
-    class Aggregate
+    module Commands
 
-      # Defines custom behaviour of results in an aggregation context.
+      # Aggregate result wrapper.
       #
       # @since 2.0.0
-      class Result < Operation::Result
+      class Aggregate
 
-        # The field name for the cursor document in an aggregation.
+        # Defines custom behaviour of results in an aggregation context.
         #
         # @since 2.0.0
-        CURSOR = 'cursor'.freeze
+        class Result < Operation::Result
 
-        # The cursor id field in the cursor document.
-        #
-        # @since 2.0.0
-        CURSOR_ID = 'id'.freeze
+          # The field name for the cursor document in an aggregation.
+          #
+          # @since 2.0.0
+          CURSOR = 'cursor'.freeze
 
-        # The field name for the aggregation explain information.
-        #
-        # @since 2.0.5
-        EXPLAIN = 'stages'.freeze
+          # The cursor id field in the cursor document.
+          #
+          # @since 2.0.0
+          CURSOR_ID = 'id'.freeze
 
-        # The legacy field name for the aggregation explain information.
-        #
-        # @since 2.0.5
-        EXPLAIN_LEGACY = 'serverPipeline'.freeze
+          # The field name for the aggregation explain information.
+          #
+          # @since 2.0.5
+          EXPLAIN = 'stages'.freeze
 
-        # The field name for the first batch of a cursor.
-        #
-        # @since 2.0.0
-        FIRST_BATCH = 'firstBatch'.freeze
+          # The legacy field name for the aggregation explain information.
+          #
+          # @since 2.0.5
+          EXPLAIN_LEGACY = 'serverPipeline'.freeze
 
-        # The field name for a result without a cursor.
-        #
-        # @since 2.0.0
-        RESULT = 'result'.freeze
+          # The field name for the first batch of a cursor.
+          #
+          # @since 2.0.0
+          FIRST_BATCH = 'firstBatch'.freeze
 
-        # Get the cursor id for the result.
-        #
-        # @example Get the cursor id.
-        #   result.cursor_id
-        #
-        # @note Even though the wire protocol has a cursor_id field for all
-        #   messages of type reply, it is always zero when using the
-        #   aggregation framework and must be retrieved from the cursor
-        #   document itself. Wahnsinn!
-        #
-        # @return [ Integer ] The cursor id.
-        #
-        # @since 2.0.0
-        def cursor_id
-          cursor_document ? cursor_document[CURSOR_ID] : super
-        end
+          # The field name for a result without a cursor.
+          #
+          # @since 2.0.0
+          RESULT = 'result'.freeze
 
-        # Get the documents for the aggregation result. This is either the
-        # first document's 'result' field, or if a cursor option was selected
-        # it is the 'firstBatch' field in the 'cursor' field of the first
-        # document returned.
-        #
-        # @example Get the documents.
-        #   result.documents
-        #
-        # @return [ Array<BSON::Document> ] The documents.
-        #
-        # @since 2.0.0
-        def documents
-          reply.documents[0][RESULT] || explain_document ||
-              cursor_document[FIRST_BATCH]
-        end
+          # Get the cursor id for the result.
+          #
+          # @example Get the cursor id.
+          #   result.cursor_id
+          #
+          # @note Even though the wire protocol has a cursor_id field for all
+          #   messages of type reply, it is always zero when using the
+          #   aggregation framework and must be retrieved from the cursor
+          #   document itself. Wahnsinn!
+          #
+          # @return [ Integer ] The cursor id.
+          #
+          # @since 2.0.0
+          def cursor_id
+            cursor_document ? cursor_document[CURSOR_ID] : super
+          end
 
-        private
+          # Get the documents for the aggregation result. This is either the
+          # first document's 'result' field, or if a cursor option was selected
+          # it is the 'firstBatch' field in the 'cursor' field of the first
+          # document returned.
+          #
+          # @example Get the documents.
+          #   result.documents
+          #
+          # @return [ Array<BSON::Document> ] The documents.
+          #
+          # @since 2.0.0
+          def documents
+            reply.documents[0][RESULT] || explain_document ||
+                cursor_document[FIRST_BATCH]
+          end
 
-        def explain_document
-          first_document[EXPLAIN] || first_document[EXPLAIN_LEGACY]
-        end
+          private
 
-        def cursor_document
-          @cursor_document ||= reply.documents[0][CURSOR]
-        end
+          def explain_document
+            first_document[EXPLAIN] || first_document[EXPLAIN_LEGACY]
+          end
 
-        def first_document
-          @first_document ||= reply.documents[0]
+          def cursor_document
+            @cursor_document ||= reply.documents[0][CURSOR]
+          end
+
+          def first_document
+            @first_document ||= reply.documents[0]
+          end
         end
       end
     end
