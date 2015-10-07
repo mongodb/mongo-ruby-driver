@@ -175,11 +175,11 @@ describe Mongo::Retryable do
             before do
               expect(operation).to receive(:execute).and_raise(error).ordered
               expect(cluster).to receive(:sharded?).and_return(true)
-              expect(cluster).to receive(:max_read_retries).and_return(1).ordered
+              expect(cluster).to receive(:max_read_retries).and_return(2).ordered
               expect(cluster).to receive(:read_retry_interval).and_return(0.1).ordered
               expect(operation).to receive(:execute).and_raise(error).ordered
               expect(cluster).to receive(:sharded?).and_return(true)
-              expect(cluster).to receive(:max_read_retries).and_return(1).ordered
+              expect(cluster).to receive(:max_read_retries).and_return(2).ordered
               expect(cluster).to receive(:read_retry_interval).and_return(0.1).ordered
               expect(operation).to receive(:execute).and_return(true).ordered
             end
