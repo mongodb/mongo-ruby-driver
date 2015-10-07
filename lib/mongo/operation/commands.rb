@@ -14,6 +14,7 @@
 
 require 'mongo/operation/commands/command'
 require 'mongo/operation/commands/find'
+require 'mongo/operation/commands/get_more'
 require 'mongo/operation/commands/parallel_scan'
 require 'mongo/operation/commands/aggregate'
 require 'mongo/operation/commands/map_reduce'

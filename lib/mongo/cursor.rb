@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require 'mongo/cursor/builder'
+
 module Mongo
 
   # Client-side representation of an iterator over a query result set on
@@ -82,11 +84,58 @@ module Mongo
       end
     end
 
-    private
-
+    # Get the batch size.
+    #
+    # @example Get the batch size.
+    #   cursor.batch_size
+    #
+    # @return [ Integer ] The batch size.
+    #
+    # @since 2.2.0
     def batch_size
       @view.batch_size && @view.batch_size > 0 ? @view.batch_size : limit
     end
+
+    # Get the parsed collection name.
+    #
+    # @example Get the parsed collection name.
+    #   cursor.coll_name
+    #
+    # @return [ String ] The collection name.
+    #
+    # @since 2.2.0
+    def coll_name
+      @coll_name
+    end
+
+    # Get the cursor id.
+    #
+    # @example Get the cursor id.
+    #   cursor.id
+    #
+    # @note A cursor id of 0 means the cursor was closed on the server.
+    #
+    # @return [ Integer ] The cursor id.
+    #
+    # @since 2.2.0
+    def id
+      @cursor_id
+    end
+
+    # Get the number of documents to return. Used on 3.0 and lower server
+    # versions.
+    #
+    # @example Get the number to return.
+    #   cursor.to_return
+    #
+    # @return [ Integer ] The number of documents to return.
+    #
+    # @since 2.2.0
+    def to_return
+      use_limit? ? @remaining : (batch_size || 0)
+    end
+
+    private
 
     def exhausted?
       limited? ? @remaining <= 0 : false
@@ -97,16 +146,11 @@ module Mongo
     end
 
     def get_more_operation
-      Operation::Read::GetMore.new(get_more_spec)
-    end
-
-    def get_more_spec
-      {
-        :to_return => to_return,
-        :cursor_id => @cursor_id,
-        :db_name   => database.name,
-        :coll_name => @coll_name || collection.name
-      }
+      if @server.features.find_command_enabled?
+        Operation::GetMore.new(Builder::GetMoreCommand.new(self).specification)
+      else
+        Operation::Read::GetMore.new(Builder::OpGetMore.new(self).specification)
+      end
     end
 
     def kill_cursors
@@ -138,10 +182,6 @@ module Mongo
       @cursor_id = result.cursor_id
       @coll_name ||= result.namespace.sub("#{database.name}.", '') if result.namespace
       result.documents
-    end
-
-    def to_return
-      use_limit? ? @remaining : (batch_size || 0)
     end
 
     def use_limit?

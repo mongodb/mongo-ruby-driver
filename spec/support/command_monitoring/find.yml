@@ -236,7 +236,7 @@ tests:
           command:
             getMore: { $numberLong: "42" }
             collection: *collection_name
-            batchSize: 1
+            batchSize: 3
           command_name: "getMore"
           database_name: *database_name
       -

@@ -92,7 +92,16 @@ module Mongo
 
           def find_command
             document = BSON::Document.new('find' => collection.name, 'filter' => filter)
-            Options::Mapper.transform_documents(options, MAPPINGS, document)
+            command = Options::Mapper.transform_documents(options, MAPPINGS, document)
+            convert_negative_limit(command)
+          end
+
+          def convert_negative_limit(command)
+            if command[:limit] && command[:limit] < 0
+              command.delete('limit')
+              command[:singleBatch] = true
+            end
+            command
           end
         end
       end

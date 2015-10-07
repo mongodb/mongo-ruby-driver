@@ -14,9 +14,9 @@
 
 module Mongo
   module Operation
-    class Find
+    class GetMore
 
-      # Defines custom behaviour of results in find command.
+      # Defines custom behaviour of results for the get more command.
       #
       # @since 2.2.0
       class Result < Operation::Result
@@ -31,10 +31,10 @@ module Mongo
         # @since 2.0.0
         CURSOR_ID = 'id'.freeze
 
-        # The field name for the first batch of a cursor.
+        # The field name for the next batch of a cursor.
         #
         # @since 2.0.0
-        FIRST_BATCH = 'firstBatch'.freeze
+        NEXT_BATCH = 'nextBatch'.freeze
 
         # Get the cursor id.
         #
@@ -57,7 +57,7 @@ module Mongo
         #
         # @since 2.2.0
         def documents
-          cursor_document[FIRST_BATCH]
+          cursor_document[NEXT_BATCH]
         end
 
         private

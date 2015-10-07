@@ -5,7 +5,7 @@ describe Mongo::Cursor do
   describe '#each' do
 
     let(:reply) do
-      Mongo::Operation::Read::Query.new(query_spec).execute(authorized_primary.context)
+      view.send(:send_initial_query, authorized_client.cluster.servers.first)
     end
 
     let(:cursor) do
@@ -16,10 +16,6 @@ describe Mongo::Cursor do
 
       let(:view) do
         Mongo::Collection::View.new(authorized_collection)
-      end
-
-      let(:query_spec) do
-        { :selector => {}, :options => {}, :db_name => TEST_DB, :coll_name => TEST_COLL }
       end
 
       context 'when the initial query retieves all documents' do
@@ -97,15 +93,6 @@ describe Mongo::Cursor do
               Mongo::Collection::View.new(authorized_collection, {}, :limit => 2)
             end
 
-            let(:query_spec) do
-              {
-                :selector => {},
-                :options => { :limit => 2 },
-                :db_name => TEST_DB,
-                :coll_name => TEST_COLL
-              }
-            end
-
             it 'returns the correct amount' do
               expect(cursor.to_a.count).to eq(2)
             end
@@ -123,17 +110,12 @@ describe Mongo::Cursor do
               Mongo::Collection::View.new(authorized_collection, {}, :limit => -2)
             end
 
-            let(:query_spec) do
-              {
-                :selector => {},
-                :options => { :limit => -2 },
-                :db_name => TEST_DB,
-                :coll_name => TEST_COLL
-              }
+            it 'returns the positive number of documents', unless: find_command_enabled? do
+              expect(cursor.to_a.count).to eq(2)
             end
 
-            it 'returns the positive number of documents' do
-              expect(cursor.to_a.count).to eq(2)
+            it 'returns all documents', if: find_command_enabled? do
+              expect(cursor.to_a.count).to eq(10)
             end
 
             it 'iterates the documents' do
@@ -147,15 +129,6 @@ describe Mongo::Cursor do
 
             let(:view) do
               Mongo::Collection::View.new(authorized_collection, {}, :limit => 0)
-            end
-
-            let(:query_spec) do
-              {
-                :selector => {},
-                :options => { :limit => 0 },
-                :db_name => TEST_DB,
-                :coll_name => TEST_COLL
-              }
             end
 
             it 'returns all documents' do
@@ -182,15 +155,6 @@ describe Mongo::Cursor do
               )
             end
 
-            let(:query_spec) do
-              {
-                :selector => {},
-                :options => { :limit => 5, :batch_size => 3 },
-                :db_name => TEST_DB,
-                :coll_name => TEST_COLL
-              }
-            end
-
             it 'returns the limited number of documents' do
               expect(cursor.to_a.count).to eq(5)
             end
@@ -212,15 +176,6 @@ describe Mongo::Cursor do
               )
             end
 
-            let(:query_spec) do
-              {
-                :selector => {},
-                :options => { :limit => 5, :batch_size => 7 },
-                :db_name => TEST_DB,
-                :coll_name => TEST_COLL
-              }
-            end
-
             it 'returns the limited number of documents' do
               expect(cursor.to_a.count).to eq(5)
             end
@@ -240,15 +195,6 @@ describe Mongo::Cursor do
                 {},
                 :limit => 5, :batch_size => 5
               )
-            end
-
-            let(:query_spec) do
-              {
-                :selector => {},
-                :options => { :limit => 5, :batch_size => 5 },
-                :db_name => TEST_DB,
-                :coll_name => TEST_COLL
-              }
             end
 
             it 'returns the limited number of documents' do
