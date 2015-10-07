@@ -48,10 +48,11 @@ module Mongo
         retry_operation(&block)
       rescue Error::OperationFailure => e
         if cluster.sharded? && (e.retryable? || e.unauthorized?)
-          if e.unauthorized?
-            cluster.servers.each {|server| server.context.with_connection {|conn| conn.authenticate! } }
-          end
           if attempt < cluster.max_read_retries
+            if e.unauthorized?
+              cluster.servers.each {|server| server.context.with_connection {|conn| conn.authenticate! } }
+            end
+
             # We don't scan the cluster in this case as Mongos always returns
             # ready after a ping no matter what the state behind it is.
             sleep(cluster.read_retry_interval)
