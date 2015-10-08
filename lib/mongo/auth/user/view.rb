@@ -112,7 +112,7 @@ module Mongo
         private
 
         def user_query(name)
-          Operation::UserQuery.new(
+          Operation::Commands::UserQuery.new(
             user_name: name,
             db_name: database.name
           ).execute(next_primary.context)

@@ -103,7 +103,7 @@ module Mongo
       end
 
       def initial_query_op
-        Operation::CollectionsInfo.new(collections_info_spec)
+        Operation::Commands::CollectionsInfo.new(collections_info_spec)
       end
 
       def send_initial_query(server)

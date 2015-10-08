@@ -14,24 +14,26 @@
 
 module Mongo
   module Operation
-    class CollectionsInfo
+    module Commands
+      class CollectionsInfo
 
-      # Defines custom behaviour of results when query the system.namespaces
-      # collection.
-      #
-      # @since 2.1.0
-      class Result < Operation::Result
-
-        # Get the namespace for the cursor.
-        #
-        # @example Get the namespace.
-        #   result.namespace
-        #
-        # @return [ String ] The namespace.
+        # Defines custom behaviour of results when query the system.namespaces
+        # collection.
         #
         # @since 2.1.0
-        def namespace
-          Database::NAMESPACES
+        class Result < Operation::Result
+
+          # Get the namespace for the cursor.
+          #
+          # @example Get the namespace.
+          #   result.namespace
+          #
+          # @return [ String ] The namespace.
+          #
+          # @since 2.1.0
+          def namespace
+            Database::NAMESPACES
+          end
         end
       end
     end

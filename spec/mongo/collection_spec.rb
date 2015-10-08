@@ -414,29 +414,29 @@ describe Mongo::Collection do
 
   describe '#find' do
 
-    context 'when provided a selector' do
+    context 'when provided a filter' do
 
       let(:view) do
         authorized_collection.find(name: 1)
       end
 
-      it 'returns a authorized_collection view for the selector' do
-        expect(view.selector).to eq(name: 1)
+      it 'returns a authorized_collection view for the filter' do
+        expect(view.filter).to eq('name' => 1)
       end
     end
 
-    context 'when provided no selector' do
+    context 'when provided no filter' do
 
       let(:view) do
         authorized_collection.find
       end
 
-      it 'returns a authorized_collection view with an empty selector' do
-        expect(view.selector).to be_empty
+      it 'returns a authorized_collection view with an empty filter' do
+        expect(view.filter).to be_empty
       end
     end
 
-    context 'when providing a bad selector' do
+    context 'when providing a bad filter' do
 
       let(:view) do
         authorized_collection.find('$or' => [])
@@ -580,7 +580,7 @@ describe Mongo::Collection do
       context 'when provided :modifiers' do
 
         let(:options) do
-          { modifiers: { :$orderby => Mongo::Index::ASCENDING } }
+          { modifiers: { '$orderby' => Mongo::Index::ASCENDING } }
         end
 
         it 'returns a view with modifiers set' do

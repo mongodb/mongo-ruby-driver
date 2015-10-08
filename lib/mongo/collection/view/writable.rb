@@ -31,7 +31,7 @@ module Mongo
         #
         # @since 2.0.0
         def find_one_and_delete
-          cmd = { :findandmodify => collection.name, :query => selector, :remove => true }
+          cmd = { :findandmodify => collection.name, :query => filter, :remove => true }
           cmd[:fields] = projection if projection
           cmd[:sort] = sort if sort
           cmd[:maxTimeMS] = max_time_ms if max_time_ms
@@ -76,7 +76,7 @@ module Mongo
         #
         # @since 2.0.0
         def find_one_and_update(document, opts = {})
-          cmd = { :findandmodify => collection.name, :query => selector }
+          cmd = { :findandmodify => collection.name, :query => filter }
           cmd[:update] = document
           cmd[:fields] = projection if projection
           cmd[:sort] = sort if sort
@@ -172,7 +172,7 @@ module Mongo
         def remove(value)
           write_with_retry do
             Operation::Write::Delete.new(
-              :delete => { Operation::Q => selector, Operation::LIMIT => value },
+              :delete => { Operation::Q => filter, Operation::LIMIT => value },
               :db_name => collection.database.name,
               :coll_name => collection.name,
               :write_concern => collection.write_concern
@@ -183,7 +183,7 @@ module Mongo
         def update(spec, multi, opts)
           write_with_retry do
             Operation::Write::Update.new(
-              :update => { Operation::Q => selector,
+              :update => { Operation::Q => filter,
                            Operation::U => spec,
                            Operation::MULTI => multi,
                            Operation::UPSERT => !!opts[:upsert] },

@@ -186,7 +186,7 @@ describe Mongo::Collection::View::MapReduce do
       context 'when the selector is basic' do
 
         let(:selector) do
-          { name: 'Berlin' }
+          { 'name' => 'Berlin' }
         end
 
         it 'applies the selector to the map/reduce' do
@@ -203,7 +203,7 @@ describe Mongo::Collection::View::MapReduce do
       context 'when the selector is advanced' do
 
         let(:selector) do
-          { :$query => { name: 'Berlin' }}
+          { :$query => { 'name' => 'Berlin' }}
         end
 
         it 'applies the selector to the map/reduce' do
@@ -213,7 +213,7 @@ describe Mongo::Collection::View::MapReduce do
         end
 
         it 'includes the selector in the operation spec' do
-          expect(map_reduce.send(:map_reduce_spec)[:selector][:query]).to eq(BSON::Document.new(selector[:$query]))
+          expect(map_reduce.send(:map_reduce_spec)[:selector][:query]).to eq(selector[:$query])
         end
       end
     end
@@ -273,7 +273,7 @@ describe Mongo::Collection::View::MapReduce do
   describe '#out' do
 
     let(:location) do
-      { replace: 'testing' }
+      { 'replace' => 'testing' }
     end
 
     let(:new_map_reduce) do
@@ -285,20 +285,20 @@ describe Mongo::Collection::View::MapReduce do
     end
 
     it 'includes the out value in the operation spec' do
-      expect(new_map_reduce.send(:map_reduce_spec)[:selector][:out]).to be(location)
+      expect(new_map_reduce.send(:map_reduce_spec)[:selector][:out]).to eq(location)
     end
 
     context 'when out is not defined' do
 
       it 'defaults to inline' do
-        expect(map_reduce.send(:map_reduce_spec)[:selector][:out]).to eq(inline: 1)
+        expect(map_reduce.send(:map_reduce_spec)[:selector][:out]).to eq('inline' => 1)
       end
     end
 
     context 'when out is specified in the options' do
 
       let(:location) do
-        { replace: 'testing' }
+        { 'replace' => 'testing' }
       end
 
       let(:options) do
@@ -310,14 +310,14 @@ describe Mongo::Collection::View::MapReduce do
       end
 
       it 'includes the out value in the operation spec' do
-        expect(map_reduce.send(:map_reduce_spec)[:selector][:out]).to be(location)
+        expect(map_reduce.send(:map_reduce_spec)[:selector][:out]).to eq(location)
       end
     end
 
     context 'when out is not inline' do
 
       let(:location) do
-        { replace: 'testing' }
+        { 'replace' => 'testing' }
       end
 
       let(:options) do
@@ -325,7 +325,7 @@ describe Mongo::Collection::View::MapReduce do
       end
 
       it 'does not allow the operation on a secondary' do
-        expect(map_reduce.send(:secondary_ok?)).to be(false)
+        expect(map_reduce.send(:secondary_ok?)).to be false
       end
 
       context 'when the context is not a valid server for writing' do
@@ -350,7 +350,7 @@ describe Mongo::Collection::View::MapReduce do
   describe '#scope' do
 
     let(:object) do
-      { value: 'testing' }
+      { 'value' => 'testing' }
     end
 
     let(:new_map_reduce) do
@@ -362,7 +362,7 @@ describe Mongo::Collection::View::MapReduce do
     end
 
     it 'includes the scope object in the operation spec' do
-      expect(new_map_reduce.send(:map_reduce_spec)[:selector][:scope]).to be(object)
+      expect(new_map_reduce.send(:map_reduce_spec)[:selector][:scope]).to eq(object)
     end
   end
 

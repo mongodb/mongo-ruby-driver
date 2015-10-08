@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require 'mongo/collection/view/builder'
 require 'mongo/collection/view/immutable'
 require 'mongo/collection/view/iterable'
 require 'mongo/collection/view/explainable'
@@ -48,10 +49,11 @@ module Mongo
       include Explainable
       include Writable
 
-      # @return [ View ] The +View+ to query.
+      # @return [ Collection ] The +Collection+ to query.
       attr_reader :collection
-      # @return [ Hash ] The query selector.
-      attr_reader :selector
+
+      # @return [ Hash ] The query filter.
+      attr_reader :filter
 
       # Delegate necessary operations to the collection.
       def_delegators :collection, :client, :cluster, :database, :read_preference, :write_concern
@@ -59,25 +61,27 @@ module Mongo
       # Delegate to the cluster for the next primary.
       def_delegators :cluster, :next_primary
 
+      alias :selector :filter
+
       # Compare two +View+ objects.
       #
       # @example Compare the view with another object.
       #   view == other
       #
-      # @return [ true, false ] Equal if collection, selector, and options of two
+      # @return [ true, false ] Equal if collection, filter, and options of two
       #   +View+ match.
       #
       # @since 2.0.0
       def ==(other)
         return false unless other.is_a?(View)
         collection == other.collection &&
-            selector == other.selector &&
+            filter == other.filter &&
             options == other.options
       end
       alias_method :eql?, :==
 
       # A hash value for the +View+ composed of the collection namespace,
-      # hash of the options and hash of the selector.
+      # hash of the options and hash of the filter.
       #
       # @example Get the hash value.
       #   view.hash
@@ -86,7 +90,7 @@ module Mongo
       #
       # @since 2.0.0
       def hash
-        [ collection.namespace, options.hash, selector.hash ].hash
+        [ collection.namespace, options.hash, filter.hash ].hash
       end
 
       # Creates a new +View+.
@@ -101,7 +105,7 @@ module Mongo
       #   View.new(collection, {:name => 'Emily'}, :read => :secondary_preferred)
       #
       # @param [ Collection ] collection The +Collection+ to query.
-      # @param [ Hash ] selector The query selector.
+      # @param [ Hash ] filter The query filter.
       # @param [ Hash ] options The additional query options.
       #
       # @option options :comment [ String ] Associate a comment with the query.
@@ -125,10 +129,10 @@ module Mongo
       #   results.
       #
       # @since 2.0.0
-      def initialize(collection, selector = {}, options = {})
-        validate_doc!(selector)
+      def initialize(collection, filter = {}, options = {})
+        validate_doc!(filter)
         @collection = collection
-        setup(selector, options)
+        parse_parameters!(BSON::Document.new(filter.freeze), BSON::Document.new(options.freeze))
       end
 
       # Get a human-readable string representation of +View+.
@@ -140,8 +144,8 @@ module Mongo
       #
       # @since 2.0.0
       def inspect
-        "#<Mongo::Collection::View:0x#{object_id} namespace='#{collection.namespace}" +
-            " @selector=#{selector.inspect} @options=#{options.inspect}>"
+        "#<Mongo::Collection::View:0x#{object_id} namespace='#{collection.namespace}'" +
+            " @filter=#{filter.to_s} @options=#{options.to_s}>"
       end
 
       private
@@ -149,19 +153,18 @@ module Mongo
       def initialize_copy(other)
         @collection = other.collection
         @options = other.options.dup
-        @selector = other.selector.dup
+        @filter = other.filter.dup
       end
 
-      def initial_query_op
-        Operation::Read::Query.new(query_spec)
+      def parse_parameters!(filter, options)
+        query = filter.delete(QUERY)
+        modifiers = (filter || {}).merge(options.delete(MODIFIERS) || {})
+        @filter = query || filter
+        @options = Builder::Modifiers.map_driver_options(modifiers).merge!(options)
       end
 
       def new(options)
-        View.new(collection, selector, options)
-      end
-
-      def send_initial_query(server)
-        initial_query_op.execute(server.context)
+        View.new(collection, filter, options)
       end
 
       def view; self; end

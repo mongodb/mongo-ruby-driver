@@ -42,6 +42,28 @@ module Mongo
         end
       end
 
+      # Transforms the provided options to a new set of options given the
+      # provided mapping. Expects BSON::Documents in and out so no explicit
+      # string conversion needs to happen.
+      #
+      # @example Transform the options.
+      #   Mapper.transform_documents({ name: 1 }, { :name => :nombre })
+      #
+      # @param [ BSON::Document ] options The options to transform
+      # @param [ BSON::Document ] mappings The key mappings.
+      # @param [ BSON::Document ] document The output document.
+      #
+      # @return [ BSON::Document ] The transformed options.
+      #
+      # @since 2.0.0
+      def transform_documents(options, mappings, document = BSON::Document.new)
+        options.reduce(document) do |transformed, (key, value)|
+          name = mappings[key]
+          transformed[name] = value if name && !value.nil?
+          transformed
+        end
+      end
+
       # Coverts all the keys of the options to strings.
       #
       # @example Convert all option keys to strings.

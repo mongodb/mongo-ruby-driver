@@ -54,7 +54,29 @@ module Mongo
         #
         # @since 2.1.0
         def close_query
-          @cursor.send(:kill_cursors) if @cursor
+          @cursor.send(:kill_cursors) if @cursor && !@cursor.closed?
+        end
+
+        private
+
+        def initial_query_op(server)
+          if server.features.find_command_enabled?
+            initial_command_op
+          else
+            Operation::Read::Query.new(Builder::OpQuery.new(self).specification)
+          end
+        end
+
+        def initial_command_op
+          if explained?
+            Operation::Commands::Command.new(Builder::FindCommand.new(self).explain_specification)
+          else
+            Operation::Commands::Find.new(Builder::FindCommand.new(self).specification)
+          end
+        end
+
+        def send_initial_query(server)
+          initial_query_op(server).execute(server.context)
         end
       end
     end

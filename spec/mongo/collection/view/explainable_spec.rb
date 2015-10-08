@@ -25,8 +25,7 @@ describe Mongo::Collection::View::Explainable do
     end
 
     it 'executes an explain' do
-      expect(explain[:cursor] == 'BasicCursor' ||
-             explain[:queryPlanner]).to be_truthy
+      expect(explain[:cursor] == 'BasicCursor' || explain[:queryPlanner]).to be_truthy
     end
   end
 end

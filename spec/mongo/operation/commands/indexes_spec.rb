@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe Mongo::Operation::Indexes do
+describe Mongo::Operation::Commands::Indexes do
 
   describe '#execute' do
 

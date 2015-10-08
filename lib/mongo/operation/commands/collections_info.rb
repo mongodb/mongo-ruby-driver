@@ -16,52 +16,54 @@ require 'mongo/operation/commands/collections_info/result'
 
 module Mongo
   module Operation
+    module Commands
 
-    # A MongoDB operation to get a list of collection names in a database.
-    #
-    # @example Create the collection names operation.
-    #   Read::CollectionNames.new(:db_name => 'test-db')
-    #
-    # Initialization:
-    #   param [ Hash ] spec The specifications for the collection names operation.
-    #
-    #   option spec :db_name [ String ] The name of the database whose collection
-    #     names is requested.
-    #   option spec :options [ Hash ] Options for the operation.
-    #
-    # @since 2.0.0
-    class CollectionsInfo
-      include Specifiable
-      include ReadPreference
-      include Executable
-
-      # Execute the operation.
-      # The context gets a connection on which the operation
-      # is sent in the block.
+      # A MongoDB operation to get a list of collection names in a database.
       #
-      # @param [ Mongo::Server::Context ] context The context for this operation.
+      # @example Create the collection names operation.
+      #   Read::CollectionNames.new(:db_name => 'test-db')
       #
-      # @return [ Result ] The operation response, if there is one.
+      # Initialization:
+      #   param [ Hash ] spec The specifications for the collection names operation.
+      #
+      #   option spec :db_name [ String ] The name of the database whose collection
+      #     names is requested.
+      #   option spec :options [ Hash ] Options for the operation.
       #
       # @since 2.0.0
-      def execute(context)
-        if context.features.list_collections_enabled?
-          ListCollections.new(spec).execute(context)
-        else
-          context.with_connection do |connection|
-            Result.new(connection.dispatch([ message(context) ])).validate!
+      class CollectionsInfo
+        include Specifiable
+        include ReadPreference
+        include Executable
+
+        # Execute the operation.
+        # The context gets a connection on which the operation
+        # is sent in the block.
+        #
+        # @param [ Mongo::Server::Context ] context The context for this operation.
+        #
+        # @return [ Result ] The operation response, if there is one.
+        #
+        # @since 2.0.0
+        def execute(context)
+          if context.features.list_collections_enabled?
+            ListCollections.new(spec).execute(context)
+          else
+            context.with_connection do |connection|
+              Result.new(connection.dispatch([ message(context) ])).validate!
+            end
           end
         end
-      end
 
-      private
+        private
 
-      def selector
-        { :name => { '$not' => /system\.|\$/ } }
-      end
+        def selector
+          { :name => { '$not' => /system\.|\$/ } }
+        end
 
-      def query_coll
-        Database::NAMESPACES
+        def query_coll
+          Database::NAMESPACES
+        end
       end
     end
   end

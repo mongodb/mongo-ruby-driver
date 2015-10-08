@@ -14,97 +14,79 @@
 
 module Mongo
   module Operation
-    class ListCollections
+    module Commands
+      class ListCollections
 
-      # Defines custom behaviour of results when using the
-      # listCollections command.
-      #
-      # @since 2.0.0
-      class Result < Operation::Result
-
-        # The field name for the cursor document in a listCollections result.
+        # Defines custom behaviour of results when using the
+        # listCollections command.
         #
         # @since 2.0.0
-        CURSOR = 'cursor'.freeze
+        class Result < Operation::Result
 
-        # The cursor id field in the cursor document.
-        #
-        # @since 2.0.0
-        CURSOR_ID = 'id'.freeze
+          # Get the cursor id for the result.
+          #
+          # @example Get the cursor id.
+          #   result.cursor_id
+          #
+          # @note Even though the wire protocol has a cursor_id field for all
+          #   messages of type reply, it is always zero when using the
+          #   listCollections command and must be retrieved from the cursor
+          #   document itself.
+          #
+          # @return [ Integer ] The cursor id.
+          #
+          # @since 2.0.0
+          def cursor_id
+            cursor_document ? cursor_document[CURSOR_ID] : super
+          end
 
-        # The namespace field in the cursor document.
-        #
-        # @since 2.0.0
-        NAMESPACE = 'ns'.freeze
+          # Get the namespace for the cursor.
+          #
+          # @example Get the namespace.
+          #   result.namespace
+          #
+          # @return [ String ] The namespace.
+          #
+          # @since 2.0.0
+          def namespace
+            cursor_document ? cursor_document[NAMESPACE] : super
+          end
 
-        # The field name for the first batch of a cursor.
-        #
-        # @since 2.0.0
-        FIRST_BATCH = 'firstBatch'.freeze
+          # Get the documents for the listCollections result. It is the 'firstBatch'
+          #   field in the 'cursor' field of the first document returned.
+          #
+          # @example Get the documents.
+          #   result.documents
+          #
+          # @return [ Array<BSON::Document> ] The documents.
+          #
+          # @since 2.0.0
+          def documents
+            cursor_document[FIRST_BATCH]
+          end
 
-        # Get the cursor id for the result.
-        #
-        # @example Get the cursor id.
-        #   result.cursor_id
-        #
-        # @note Even though the wire protocol has a cursor_id field for all
-        #   messages of type reply, it is always zero when using the
-        #   listCollections command and must be retrieved from the cursor
-        #   document itself.
-        #
-        # @return [ Integer ] The cursor id.
-        #
-        # @since 2.0.0
-        def cursor_id
-          cursor_document ? cursor_document[CURSOR_ID] : super
-        end
+          # Validate the result. In the case where an unauthorized client tries
+          # to run the command we need to generate the proper error.
+          #
+          # @example Validate the result.
+          #   result.validate!
+          #
+          # @return [ Result ] Self if successful.
+          #
+          # @since 2.0.0
+          def validate!
+            !successful? ? raise(Error::OperationFailure.new(parser.message)) : self
+          end
 
-        # Get the namespace for the cursor.
-        #
-        # @example Get the namespace.
-        #   result.namespace
-        #
-        # @return [ String ] The namespace.
-        #
-        # @since 2.0.0
-        def namespace
-          cursor_document ? cursor_document[NAMESPACE] : super
-        end
+          private
 
-        # Get the documents for the listCollections result. It is the 'firstBatch'
-        #   field in the 'cursor' field of the first document returned.
-        #
-        # @example Get the documents.
-        #   result.documents
-        #
-        # @return [ Array<BSON::Document> ] The documents.
-        #
-        # @since 2.0.0
-        def documents
-          cursor_document[FIRST_BATCH]
-        end
+          def cursor_document
+            @cursor_document ||= first_document[CURSOR]
+          end
 
-        # Validate the result. In the case where an unauthorized client tries
-        # to run the command we need to generate the proper error.
-        #
-        # @example Validate the result.
-        #   result.validate!
-        #
-        # @return [ Result ] Self if successful.
-        #
-        # @since 2.0.0
-        def validate!
-          !successful? ? raise(Error::OperationFailure.new(parser.message)) : self
-        end
-
-        private
-
-        def cursor_document
-          @cursor_document ||= first_document[CURSOR]
-        end
-
-        def first_document
-          @first_document ||= reply.documents[0]
+          def first_document
+            @first_document ||= reply.documents[0]
+          end
         end
       end
     end

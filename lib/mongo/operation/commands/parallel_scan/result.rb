@@ -15,56 +15,48 @@
 
 module Mongo
   module Operation
-    class ParallelScan
+    module Commands
+      class ParallelScan
 
-      # Defines custom behaviour of results in a parallel scan.
-      #
-      # @since 2.0.0
-      class Result < Operation::Result
-
-        # Get the name of the cursor field.
+        # Defines custom behaviour of results in a parallel scan.
         #
         # @since 2.0.0
-        CURSOR = 'cursor'.freeze
+        class Result < Operation::Result
 
-        # The name of the cursors field in the result.
-        #
-        # @since 2.0.0
-        CURSORS = 'cursors'.freeze
+          # The name of the cursors field in the result.
+          #
+          # @since 2.0.0
+          CURSORS = 'cursors'.freeze
 
-        # Get the name of the id field.
-        #
-        # @since 2.0.0
-        ID = 'id'.freeze
+          # Get all the cursor ids from the result.
+          #
+          # @example Get the cursor ids.
+          #   result.cursor_ids
+          #
+          # @return [ Array<Integer> ] The cursor ids.
+          #
+          # @since 2.0.0
+          def cursor_ids
+            documents.map{ |doc| doc[CURSOR][CURSOR_ID] }
+          end
 
-        # Get all the cursor ids from the result.
-        #
-        # @example Get the cursor ids.
-        #   result.cursor_ids
-        #
-        # @return [ Array<Integer> ] The cursor ids.
-        #
-        # @since 2.0.0
-        def cursor_ids
-          documents.map{ |doc| doc[CURSOR][ID] }
-        end
+          # Get the documents from parallel scan.
+          #
+          # @example Get the documents.
+          #   result.documents
+          #
+          # @return [ Array<BSON::Document> ] The documents.
+          #
+          # @since 2.0.0
+          def documents
+            reply.documents[0][CURSORS]
+          end
 
-        # Get the documents from parallel scan.
-        #
-        # @example Get the documents.
-        #   result.documents
-        #
-        # @return [ Array<BSON::Document> ] The documents.
-        #
-        # @since 2.0.0
-        def documents
-          reply.documents[0][CURSORS]
-        end
+          private
 
-        private
-
-        def first
-          @first ||= reply.documents[0] || {}
+          def first
+            @first ||= reply.documents[0] || {}
+          end
         end
       end
     end

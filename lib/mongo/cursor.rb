@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require 'mongo/cursor/builder'
+
 module Mongo
 
   # Client-side representation of an iterator over a query result set on
@@ -34,6 +36,9 @@ module Mongo
 
     def_delegators :@view, :collection, :limit
     def_delegators :collection, :client, :database
+
+    # @return [ Collection::View ] view The collection view.
+    attr_reader :view
 
     # Creates a +Cursor+ object.
     #
@@ -82,11 +87,70 @@ module Mongo
       end
     end
 
-    private
-
+    # Get the batch size.
+    #
+    # @example Get the batch size.
+    #   cursor.batch_size
+    #
+    # @return [ Integer ] The batch size.
+    #
+    # @since 2.2.0
     def batch_size
       @view.batch_size && @view.batch_size > 0 ? @view.batch_size : limit
     end
+
+    # Is the cursor closed?
+    #
+    # @example Is the cursor closed?
+    #   cursor.closed?
+    #
+    # @return [ true, false ] If the cursor is closed.
+    #
+    # @since 2.2.0
+    def closed?
+      !more?
+    end
+
+    # Get the parsed collection name.
+    #
+    # @example Get the parsed collection name.
+    #   cursor.coll_name
+    #
+    # @return [ String ] The collection name.
+    #
+    # @since 2.2.0
+    def collection_name
+      @coll_name || collection.name
+    end
+
+    # Get the cursor id.
+    #
+    # @example Get the cursor id.
+    #   cursor.id
+    #
+    # @note A cursor id of 0 means the cursor was closed on the server.
+    #
+    # @return [ Integer ] The cursor id.
+    #
+    # @since 2.2.0
+    def id
+      @cursor_id
+    end
+
+    # Get the number of documents to return. Used on 3.0 and lower server
+    # versions.
+    #
+    # @example Get the number to return.
+    #   cursor.to_return
+    #
+    # @return [ Integer ] The number of documents to return.
+    #
+    # @since 2.2.0
+    def to_return
+      use_limit? ? @remaining : (batch_size || 0)
+    end
+
+    private
 
     def exhausted?
       limited? ? @remaining <= 0 : false
@@ -97,16 +161,11 @@ module Mongo
     end
 
     def get_more_operation
-      Operation::Read::GetMore.new(get_more_spec)
-    end
-
-    def get_more_spec
-      {
-        :to_return => to_return,
-        :cursor_id => @cursor_id,
-        :db_name   => database.name,
-        :coll_name => @coll_name || collection.name
-      }
+      if @server.features.find_command_enabled?
+        Operation::Commands::GetMore.new(Builder::GetMoreCommand.new(self).specification)
+      else
+        Operation::Read::GetMore.new(Builder::OpGetMore.new(self).specification)
+      end
     end
 
     def kill_cursors
@@ -114,15 +173,11 @@ module Mongo
     end
 
     def kill_cursors_operation
-      Operation::KillCursors.new(kill_cursors_spec)
-    end
-
-    def kill_cursors_spec
-      {
-        :coll_name => @coll_name || collection.name,
-        :db_name => database.name,
-        :cursor_ids => [ @cursor_id ]
-      }
+      if @server.features.find_command_enabled?
+        Operation::Commands::Command.new(Builder::KillCursorsCommand.new(self).specification)
+      else
+        Operation::KillCursors.new(Builder::OpKillCursors.new(self).specification)
+      end
     end
 
     def limited?
@@ -138,10 +193,6 @@ module Mongo
       @cursor_id = result.cursor_id
       @coll_name ||= result.namespace.sub("#{database.name}.", '') if result.namespace
       result.documents
-    end
-
-    def to_return
-      use_limit? ? @remaining : (batch_size || 0)
     end
 
     def use_limit?

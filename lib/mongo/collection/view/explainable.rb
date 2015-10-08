@@ -21,6 +21,21 @@ module Mongo
       # @since 2.0.0
       module Explainable
 
+        # The query planner verbosity constant.
+        #
+        # @since 2.2.0
+        QUERY_PLANNER = 'queryPlanner'.freeze
+
+        # The execution stats verbosity constant.
+        #
+        # @since 2.2.0
+        EXECUTION_STATS = 'executionStats'.freeze
+
+        # The all plans execution verbosity constant.
+        #
+        # @since 2.2.0
+        ALL_PLANS_EXECUTION = 'allPlansExecution'.freeze
+
         # Get the explain plan for the query.
         #
         # @example Get the explain plan for the query.

@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe Mongo::Operation::MapReduce do
+describe Mongo::Operation::Commands::MapReduce do
 
   let(:map) do
   %Q{

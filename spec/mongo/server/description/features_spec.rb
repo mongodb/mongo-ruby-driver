@@ -56,6 +56,31 @@ describe Mongo::Server::Description::Features do
     end
   end
 
+  describe '#find_command_enabled?' do
+
+    context 'when the wire range includes 4' do
+
+      let(:features) do
+        described_class.new(0..4)
+      end
+
+      it 'returns true' do
+        expect(features).to be_find_command_enabled
+      end
+    end
+
+    context 'when the wire range does not include 4' do
+
+      let(:features) do
+        described_class.new(0..2)
+      end
+
+      it 'returns false' do
+        expect(features).to_not be_find_command_enabled
+      end
+    end
+  end
+
   describe '#list_collections_enabled?' do
 
     context 'when the wire range includes 3' do

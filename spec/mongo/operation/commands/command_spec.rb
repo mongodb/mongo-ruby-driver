@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe Mongo::Operation::Command do
+describe Mongo::Operation::Commands::Command do
 
   let(:selector) { { :ismaster => 1 } }
   let(:options) { { :limit => -1 } }

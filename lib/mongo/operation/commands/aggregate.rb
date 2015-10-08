@@ -12,59 +12,53 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/operation/commands/aggregate/result'
-
 module Mongo
   module Operation
+    module Commands
 
-    # A MongoDB aggregate operation.
-    #
-    # @note An aggregate operation can behave like a read and return a 
-    #   result set, or can behave like a write operation and
-    #   output results to a user-specified collection.
-    #
-    # @example Create the aggregate operation.
-    #   Aggregate.new({
-    #     :selector => {
-    #       :aggregate => 'test_coll', :pipeline => [{ '$out' => 'test-out' }]
-    #     },
-    #     :db_name => 'test_db'
-    #   })
-    #
-    # Initialization:
-    #   param [ Hash ] spec The specifications for the operation.
-    #
-    #   option spec :selector [ Hash ] The aggregate selector.
-    #   option spec :db_name [ String ] The name of the database on which
-    #     the operation should be executed.
-    #   option spec :options [ Hash ] Options for the aggregate command.
-    #
-    # @since 2.0.0
-    class Aggregate
-      include Specifiable
-      include Limited
-      include Executable
-      include ReadPreference
+      # A MongoDB aggregate operation.
+      #
+      # @note An aggregate operation can behave like a read and return a 
+      #   result set, or can behave like a write operation and
+      #   output results to a user-specified collection.
+      #
+      # @example Create the aggregate operation.
+      #   Aggregate.new({
+      #     :selector => {
+      #       :aggregate => 'test_coll', :pipeline => [{ '$out' => 'test-out' }]
+      #     },
+      #     :db_name => 'test_db'
+      #   })
+      #
+      # Initialization:
+      #   param [ Hash ] spec The specifications for the operation.
+      #
+      #   option spec :selector [ Hash ] The aggregate selector.
+      #   option spec :db_name [ String ] The name of the database on which
+      #     the operation should be executed.
+      #   option spec :options [ Hash ] Options for the aggregate command.
+      #
+      # @since 2.0.0
+      class Aggregate < Command
 
-      private
+        private
 
-      def query_coll
-        Database::COMMAND
-      end
+        def filter_selector(context)
+          return selector if context.features.write_command_enabled?
+          selector.reject{ |option, value| option.to_s == 'cursor' }
+        end
 
-      def filter_selector(context)
-        return selector if context.features.write_command_enabled?
-        selector.reject{ |option, value| option.to_s == 'cursor' }
-      end
-
-      def update_selector(context)
-        if context.mongos? && read_pref = read.to_mongos
-          sel = selector[:$query] ? filter_selector(context) : { :$query => filter_selector(context) }
-          sel.merge(:$readPreference => read_pref)
-        else
-          filter_selector(context)
+        def update_selector(context)
+          if context.mongos? && read_pref = read.to_mongos
+            sel = selector[:$query] ? filter_selector(context) : { :$query => filter_selector(context) }
+            sel.merge(:$readPreference => read_pref)
+          else
+            filter_selector(context)
+          end
         end
       end
     end
   end
 end
+
+require 'mongo/operation/commands/aggregate/result'

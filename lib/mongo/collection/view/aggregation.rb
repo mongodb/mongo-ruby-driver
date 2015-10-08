@@ -136,7 +136,7 @@ module Mongo
         end
 
         def initial_query_op
-          Operation::Aggregate.new(aggregate_spec)
+          Operation::Commands::Aggregate.new(aggregate_spec)
         end
 
         def valid_server?(server)

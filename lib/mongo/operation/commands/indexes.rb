@@ -14,56 +14,58 @@
 
 module Mongo
   module Operation
+    module Commands
 
-    # A MongoDB get indexes operation.
-    #
-    # Initialize the get indexes operation.
-    #
-    # @example Instantiate the operation.
-    #   Read::Indexes.new(:db_name => 'test', :coll_name => 'test_coll')
-    #
-    # Initialization:
-    #   param [ Hash ] spec The specifications for the insert.
-    #
-    #   option spec :db_name [ String ] The name of the database.
-    #   option spec :coll_name [ String ] The name of the collection.
-    #
-    # @since 2.0.0
-    class Indexes
-      include Specifiable
-      include ReadPreference
-
-      # Execute the operation.
-      # The context gets a connection on which the operation
-      # is sent in the block.
+      # A MongoDB get indexes operation.
       #
-      # @param [ Mongo::Server::Context ] context The context for this operation.
+      # Initialize the get indexes operation.
       #
-      # @return [ Result ] The indexes operation response.
+      # @example Instantiate the operation.
+      #   Read::Indexes.new(:db_name => 'test', :coll_name => 'test_coll')
+      #
+      # Initialization:
+      #   param [ Hash ] spec The specifications for the insert.
+      #
+      #   option spec :db_name [ String ] The name of the database.
+      #   option spec :coll_name [ String ] The name of the collection.
       #
       # @since 2.0.0
-      def execute(context)
-        if context.features.list_indexes_enabled?
-          ListIndexes.new(spec).execute(context)
-        else
-          execute_message(context)
+      class Indexes
+        include Specifiable
+        include ReadPreference
+
+        # Execute the operation.
+        # The context gets a connection on which the operation
+        # is sent in the block.
+        #
+        # @param [ Mongo::Server::Context ] context The context for this operation.
+        #
+        # @return [ Result ] The indexes operation response.
+        #
+        # @since 2.0.0
+        def execute(context)
+          if context.features.list_indexes_enabled?
+            ListIndexes.new(spec).execute(context)
+          else
+            execute_message(context)
+          end
         end
-      end
 
-      private
+        private
 
-      def execute_message(context)
-        context.with_connection do |connection|
-          Result.new(connection.dispatch([ message(context) ]))
+        def execute_message(context)
+          context.with_connection do |connection|
+            Result.new(connection.dispatch([ message(context) ]))
+          end
         end
-      end
 
-      def selector
-        { ns: namespace }
-      end
+        def selector
+          { ns: namespace }
+        end
 
-      def query_coll
-        Index::COLLECTION
+        def query_coll
+          Index::COLLECTION
+        end
       end
     end
   end

@@ -12,46 +12,38 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/operation/commands/map_reduce/result'
-
 module Mongo
   module Operation
-    # A MongoDB map reduce operation.
-    #
-    # @note A map/reduce operation can behave like a read and
-    #   return a result set, or can behave like a write operation and
-    #   output results to a user-specified collection.
-    #
-    # @example Create the map/reduce operation.
-    #   MapReduce.new({
-    #     :selector => {
-    #       :mapreduce => 'test_coll',
-    #       :map => '',
-    #       :reduce => ''
-    #     },
-    #     :db_name  => 'test_db'
-    #   })
-    #
-    # Initialization:
-    #   param [ Hash ] spec The specifications for the operation.
-    #
-    #   option spec :selector [ Hash ] The map reduce selector.
-    #   option spec :db_name [ String ] The name of the database on which
-    #     the operation should be executed.
-    #   option spec :options [ Hash ] Options for the map reduce command.
-    #
-    # @since 2.0.0
-    class MapReduce
-      include Specifiable
-      include Limited
-      include ReadPreference
-      include Executable
+    module Commands
 
-      private
-
-      def query_coll
-        Database::COMMAND
-      end
+      # A MongoDB map reduce operation.
+      #
+      # @note A map/reduce operation can behave like a read and
+      #   return a result set, or can behave like a write operation and
+      #   output results to a user-specified collection.
+      #
+      # @example Create the map/reduce operation.
+      #   MapReduce.new({
+      #     :selector => {
+      #       :mapreduce => 'test_coll',
+      #       :map => '',
+      #       :reduce => ''
+      #     },
+      #     :db_name  => 'test_db'
+      #   })
+      #
+      # Initialization:
+      #   param [ Hash ] spec The specifications for the operation.
+      #
+      #   option spec :selector [ Hash ] The map reduce selector.
+      #   option spec :db_name [ String ] The name of the database on which
+      #     the operation should be executed.
+      #   option spec :options [ Hash ] Options for the map reduce command.
+      #
+      # @since 2.0.0
+      class MapReduce < Command; end
     end
   end
 end
+
+require 'mongo/operation/commands/map_reduce/result'

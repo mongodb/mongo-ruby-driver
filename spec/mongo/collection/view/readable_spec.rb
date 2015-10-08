@@ -25,7 +25,7 @@ describe Mongo::Collection::View::Readable do
     end
 
     it 'sets the flag' do
-      expect(new_view.send(:flags)).to include(:partial)
+      expect(new_view.options[:allow_partial_results]).to be true
     end
 
     it 'returns a new View' do
@@ -498,7 +498,7 @@ describe Mongo::Collection::View::Readable do
     end
 
     it 'sets the flag' do
-      expect(new_view.send(:flags)).to include(:no_cursor_timeout)
+      expect(new_view.options[:no_cursor_timeout]).to be true
     end
 
     it 'returns a new View' do
@@ -636,13 +636,13 @@ describe Mongo::Collection::View::Readable do
   describe '#modifiers' do
 
     let(:options) do
-      { :modifiers => { :$orderby => Mongo::Index::ASCENDING } }
+      { :modifiers => { '$orderby' => 1 } }
     end
 
     context 'when a modifiers document is specified' do
 
       let(:new_modifiers) do
-        { :modifiers => { :$orderby => Mongo::Index::DESCENDING } }
+        { '$orderby' => -1 }
       end
 
       it 'sets the new_modifiers document' do
@@ -768,82 +768,6 @@ describe Mongo::Collection::View::Readable do
 
       it 'returns the sort' do
         expect(view.sort).to eq(options[:sort])
-      end
-    end
-
-    context 'when an option is a cursor flag' do
-
-      let(:query_spec_options) do
-        view.send(:query_spec)[:options]
-      end
-
-      context 'when allow_partial_results is set as an option' do
-
-        let(:options) do
-          { :allow_partial_results => true }
-        end
-
-        it 'sets the cursor flag' do
-          expect(query_spec_options[:flags]).to eq([:partial])
-        end
-
-        context 'when allow_partial_results is also called as a method' do
-
-          before do
-            view.allow_partial_results
-          end
-
-          it 'sets only one cursor flag' do
-            expect(query_spec_options[:flags]).to eq([:partial])
-          end
-        end
-      end
-
-      context 'when oplog_replay is set as an option' do
-
-        let(:options) do
-          { :oplog_replay => true }
-        end
-
-        it 'sets the cursor flag' do
-          expect(query_spec_options[:flags]).to eq([:oplog_replay])
-        end
-      end
-
-      context 'when no_cursor_timeout is set as an option' do
-
-        let(:options) do
-          { :no_cursor_timeout => true }
-        end
-
-        it 'sets the cursor flag' do
-          expect(query_spec_options[:flags]).to eq([:no_cursor_timeout])
-        end
-      end
-
-      context 'when cursor_type is set as an option' do
-
-        context 'when :tailable is the cursor type' do
-
-          let(:options) do
-            { :cursor_type => :tailable }
-          end
-
-          it 'sets the cursor flag' do
-            expect(query_spec_options[:flags]).to eq([:tailable_cursor])
-          end
-        end
-
-        context 'when :tailable_await is the cursor type' do
-
-          let(:options) do
-            { :cursor_type => :tailable_await }
-          end
-
-          it 'sets the cursor flags' do
-            expect(query_spec_options[:flags]).to eq([:await_data, :tailable_cursor])
-          end
-        end
       end
     end
   end
