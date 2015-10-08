@@ -93,7 +93,10 @@ module Mongo
       #
       # @since 2.0.0
       def readbyte
-        handle_errors { socket.read(1) }
+        handle_errors do
+          byte = socket.read(1).bytes[0]
+          byte.nil? ? raise(EOFError) : byte
+        end
       end
 
       private
