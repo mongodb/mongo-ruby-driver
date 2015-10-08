@@ -40,10 +40,6 @@ module Mongo
       #
       # @since 2.0.0
       class Aggregate < Command
-        include Specifiable
-        include Limited
-        include Executable
-        include ReadPreference
 
         private
 
