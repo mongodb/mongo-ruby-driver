@@ -67,6 +67,19 @@ module Mongo
         @tag_sets = tag_sets.freeze
       end
 
+      # Inspect the server selector.
+      #
+      # @example Inspect the server selector.
+      #   selector.inspect
+      #
+      # @return [ String ] The inspection.
+      #
+      # @since 2.2.0
+      def inspect
+        "#<#{self.class.name}:0x#{object_id} tag_sets=#{tag_sets.inspect} " +
+        "server_selection_timeout=#{server_selection_timeout} local_threshold=#{local_threshold}>"
+      end
+
       # Select a server from eligible candidates.
       #
       # @example Select a server from the cluster.
