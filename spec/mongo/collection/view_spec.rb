@@ -308,9 +308,6 @@ describe Mongo::Collection::View do
     end
   end
 
-  pending '#initialize'
-  # overriding options tests.
-
   describe '#inspect' do
 
     context 'when there is a namespace, filter, and options' do
