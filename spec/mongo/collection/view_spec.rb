@@ -144,7 +144,7 @@ describe Mongo::Collection::View do
 
       before do
         view.to_enum.next
-        cursor.instance_variable_set(:@cursor_id, 1)
+        cursor.instance_variable_set(:@cursor_id, 1) unless find_command_enabled?
       end
 
       it 'sends a kill cursors command for the cursor' do
