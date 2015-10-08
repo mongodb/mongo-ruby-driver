@@ -174,4 +174,43 @@ describe Mongo::Socket::SSL do
       end
     end
   end
+
+  describe '#readbyte' do
+
+    before do
+      allow_message_expectations_on_nil
+
+      allow(socket.socket).to receive(:read) do |length|
+        socket_content[0, length]
+      end
+    end
+
+    context 'with the socket providing "abc"' do
+
+      let(:socket_content) { "abc" }
+
+      it 'should return 97 (the byte for "a")' do
+        expect(socket.readbyte).to eq(97)
+      end
+    end
+
+    context 'with the socket providing "\x00" (NULL_BYTE)' do
+
+      let(:socket_content) { "\x00" }
+
+      it 'should return 0' do
+        expect(socket.readbyte).to eq(0)
+      end
+    end
+
+    context 'with the socket providing no data' do
+
+      let(:socket_content) { "" }
+
+      it 'should raise EOFError' do
+        expect { socket.readbyte }
+          .to raise_error(Mongo::Error::SocketError).with_message("EOFError")
+      end
+    end
+  end
 end
