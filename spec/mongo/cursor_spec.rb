@@ -4,8 +4,12 @@ describe Mongo::Cursor do
 
   describe '#each' do
 
+    let(:server) do
+      view.read.select_server(authorized_client.cluster)
+    end
+
     let(:reply) do
-      view.send(:send_initial_query, authorized_client.cluster.servers.first)
+      view.send(:send_initial_query, server)
     end
 
     let(:cursor) do
