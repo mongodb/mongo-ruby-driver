@@ -20,3 +20,4 @@ Gemfile.lock
 gem-private_key.pem
 nbproject
 tmp
+sandbox/*
