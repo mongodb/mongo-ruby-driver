@@ -138,14 +138,17 @@ describe Mongo::Collection::View do
         { :batch_size => 1 }
       end
 
+      let(:cursor) do
+        view.instance_variable_get(:@cursor)
+      end
+
       before do
-        e = view.to_enum
-        e.next
-        cursor = view.instance_variable_get(:@cursor)
-        expect(cursor).to receive(:kill_cursors).and_call_original
+        view.to_enum.next
+        cursor.instance_variable_set(:@cursor_id, 1)
       end
 
       it 'sends a kill cursors command for the cursor' do
+        expect(cursor).to receive(:kill_cursors).and_call_original
         view.close_query
       end
     end
