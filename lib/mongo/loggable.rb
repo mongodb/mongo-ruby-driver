@@ -93,7 +93,7 @@ module Mongo
     #
     # @since 2.1.0
     def logger
-      (options[:logger] || Logger.logger)
+      ((options && options[:logger]) || Logger.logger)
     end
 
     private
