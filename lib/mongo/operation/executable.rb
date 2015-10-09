@@ -32,7 +32,7 @@ module Mongo
       # @since 2.0.0
       def execute(context)
         context.with_connection do |connection|
-          result_class = defined?(self.class::Result) ? self.class::Result : Result
+          result_class = self.class.const_defined?(:Result, false) ? self.class::Result : Result
           result_class.new(connection.dispatch([ message(context) ], operation_id)).validate!
         end
       end
