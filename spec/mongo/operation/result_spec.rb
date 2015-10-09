@@ -278,7 +278,7 @@ describe Mongo::Operation::Result do
     before do
       class Result
         def get_result
-          Mongo::Client.new([DEFAULT_ADDRESS]).database.command(:ping => 1)
+          Mongo::Client.new([DEFAULT_ADDRESS], TEST_OPTIONS).database.command(:ping => 1)
         end
       end
     end
