@@ -131,6 +131,11 @@ module Mongo
       # @since 2.0.0
       READ = :read.freeze
 
+      # Whether to bypass document level validation.
+      #
+      # @since 2.2.0
+      BYPASS_DOC_VALIDATION = :bypass_document_validation.freeze
+
       # @return [ Hash ] spec The specification for the operation.
       attr_reader :spec
 
@@ -332,6 +337,18 @@ module Mongo
       # @since 2.2.0
       def read_concern
         spec[READ_CONCERN]
+      end
+
+      # Whether or not to bypass document level validation.
+      #
+      # @example Get the bypass_document_validation option.
+      #   specifiable.bypass_documentation_validation.
+      #
+      # @return [ true, false ] Whether to bypass document level validation.
+      #
+      # @since 2.2.0
+      def bypass_document_validation
+        spec[BYPASS_DOC_VALIDATION]
       end
 
       # The selector for from the specification.

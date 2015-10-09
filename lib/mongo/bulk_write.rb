@@ -131,7 +131,8 @@ module Mongo
         :coll_name => collection.name,
         :write_concern => write_concern,
         :ordered => ordered?,
-        :operation_id => operation_id
+        :operation_id => operation_id,
+        :bypass_document_validation => !!options[:bypass_document_validation]
       }
     end
 

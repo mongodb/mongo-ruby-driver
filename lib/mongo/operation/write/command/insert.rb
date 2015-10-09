@@ -40,11 +40,14 @@ module Mongo
           #
           # @since 2.0.0
           def selector
-            { insert: coll_name,
-              documents: documents,
-              writeConcern: write_concern.options,
-              ordered: ordered?
+            cmd = {
+                insert: coll_name,
+                documents: documents,
+                writeConcern: write_concern.options,
+                ordered: ordered?
             }
+            bypass_document_validation ? cmd.merge!(
+                :bypassDocumentValidation => true) : cmd
           end
         end
       end

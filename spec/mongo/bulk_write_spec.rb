@@ -8,6 +8,14 @@ describe Mongo::BulkWrite do
 
   after do
     authorized_collection.delete_many
+    collection_with_validator.drop()
+  end
+
+  let(:collection_with_validator) do
+    authorized_client[:validating,
+                      :validator => { :a => { '$exists' => true } }].tap do |c|
+      c.create
+    end
   end
 
   describe '#execute' do
@@ -421,6 +429,56 @@ describe Mongo::BulkWrite do
 
         it 'returns false' do
           expect(bulk_write).to_not be_ordered
+        end
+      end
+    end
+  end
+
+  describe 'when the collection has a validator', if: find_command_enabled? do
+
+    before do
+      collection_with_validator.insert_many([{ :a => 1 }, { :a => 2 }])
+    end
+
+    after do
+      collection_with_validator.delete_many
+    end
+
+    context 'when the documents are invalid' do
+
+      let(:ops) do
+        [
+            { insert_one: { :x => 1 } },
+            { update_one: { filter: { :a => 1 },
+                            update: { '$unset' => { :a => '' } } } },
+            { replace_one: { filter: { :a => 2 },
+                             replacement: { :x => 2 } } }
+        ]
+      end
+
+      context 'when bypass_document_validation is not set' do
+
+        let(:result) do
+          collection_with_validator.bulk_write(ops)
+        end
+
+        it 'raises BulkWriteError' do
+          expect {
+            result
+          }.to raise_exception(Mongo::Error::BulkWriteError)
+        end
+      end
+
+      context 'when bypass_document_validation is true' do
+
+        let(:result2) do
+          collection_with_validator.bulk_write(
+              ops, :bypass_document_validation => true)
+        end
+
+        it 'executes successfully' do
+          expect(result2.modified_count).to eq(2)
+          expect(result2.inserted_count).to eq(1)
         end
       end
     end
