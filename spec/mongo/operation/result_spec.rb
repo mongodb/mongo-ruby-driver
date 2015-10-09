@@ -272,4 +272,23 @@ describe Mongo::Operation::Result do
       end
     end
   end
+
+  context 'when there is a top-level Result class defined' do
+
+    before do
+      class Result
+        def get_result
+          Mongo::Client.new([DEFAULT_ADDRESS]).database.command(:ping => 1)
+        end
+      end
+    end
+
+    let(:result) do
+      Result.new.get_result
+    end
+
+    it 'uses the Result class of the operation' do
+      expect(result).to be_a(Mongo::Operation::Result)
+    end
+  end
 end
