@@ -438,7 +438,7 @@ module Mongo
       end
 
       def ensure_indexes!
-        if files_collection.find({}).count == 0
+        if files_collection.find({}, limit: -1).to_a.empty?
           chunks_collection.indexes.create_one(FSBucket::CHUNKS_INDEX, :unique => true)
           files_collection.indexes.create_one(FSBucket::FILES_INDEX)
         end
