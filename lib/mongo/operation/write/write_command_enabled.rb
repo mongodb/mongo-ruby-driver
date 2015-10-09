@@ -44,7 +44,7 @@ module Mongo
         private
 
         def execute_write_command(context)
-          result_class = defined?(self.class::Result) ? self.class::Result : Result
+          result_class = self.class.const_defined?(:Result, false) ? self.class::Result : Result
           result_class.new(write_command_op.execute(context)).validate!
         end
       end
