@@ -46,7 +46,8 @@ module Mongo
             oplog_replay: 'oplogReplay',
             no_cursor_timeout: 'noCursorTimeout',
             await_data: 'awaitData',
-            allow_partial_results: 'allowPartialResults'
+            allow_partial_results: 'allowPartialResults',
+            read_concern: 'readConcern'
           ).freeze
 
           def_delegators :@view, :collection, :database, :filter, :options, :read
