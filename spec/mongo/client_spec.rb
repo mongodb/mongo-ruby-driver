@@ -166,7 +166,7 @@ describe Mongo::Client do
       described_class.new(
         ['127.0.0.1:27017'],
         :read => { :mode => :primary },
-        :local_threshold_ms => 10,
+        :local_threshold => 10,
         :server_selection_timeout => 10000,
         :database => TEST_DB
       )
@@ -174,7 +174,7 @@ describe Mongo::Client do
 
     let(:options) do
       Mongo::Options::Redacted.new(:read => { :mode => :primary },
-                                    :local_threshold_ms => 10,
+                                    :local_threshold => 10,
                                     :server_selection_timeout => 10000,
                                     :database => TEST_DB)
     end
@@ -371,6 +371,26 @@ describe Mongo::Client do
 
         it 'sets the correct cluster topology' do
           expect(client.cluster.topology).to be_a(Mongo::Cluster::Topology::ReplicaSet)
+        end
+      end
+
+      context 'when an invalid option is provided' do
+
+        let(:client) do
+          described_class.new(['127.0.0.1:27017'], :ssl => false, :invalid => :test)
+        end
+
+        it 'does not set the option' do
+          expect(client.options.keys).not_to include('invalid')
+        end
+
+        it 'sets the valid options' do
+          expect(client.options.keys).to include('ssl')
+        end
+
+        it 'warns that an invalid option has been specified' do
+          expect(Mongo::Logger.logger).to receive(:warn)
+          expect(client.options.keys).not_to include('invalid')
         end
       end
     end
@@ -622,6 +642,26 @@ describe Mongo::Client do
         it 'returns the correct write concern' do
           expect(get_last_error).to be_nil
         end
+      end
+    end
+
+    context 'when an invalid option is provided' do
+
+      let(:new_client) do
+        client.with(invalid: :option, ssl: false)
+      end
+
+      it 'does not set the invalid option' do
+        expect(new_client.options.keys).not_to include('invalid')
+      end
+
+      it 'sets the valid options' do
+        expect(new_client.options.keys).to include('ssl')
+      end
+
+      it 'warns that an invalid option has been specified' do
+        expect(Mongo::Logger.logger).to receive(:warn)
+        expect(new_client.options.keys).not_to include('invalid')
       end
     end
   end

@@ -20,12 +20,47 @@ module Mongo
   # @since 2.0.0
   class Client
     extend Forwardable
+    include Loggable
 
     # The options that do not affect the behaviour of a cluster and its
     # subcomponents.
     #
     # @since 2.1.0
     CRUD_OPTIONS = [ :database, :read, :write ].freeze
+
+    # Valid client options.
+    #
+    # @since 2.1.2
+    VALID_OPTIONS = [
+      :auth_mech,
+      :auth_source,
+      :connect,
+      :database,
+      :auth_mech_properties,
+      :heartbeat_frequency,
+      :local_threshold,
+      :server_selection_timeout,
+      :password,
+      :max_pool_size,
+      :min_pool_size,
+      :wait_queue_timeout,
+      :connect_timeout,
+      :read,
+      :roles,
+      :replica_set,
+      :ssl,
+      :ssl_cert,
+      :ssl_key,
+      :ssl_key_pass_phrase,
+      :ssl_verify,
+      :ssl_ca_cert,
+      :socket_timeout,
+      :user,
+      :write,
+      :monitoring,
+      :logger,
+      :truncate_logs
+    ].freeze
 
     # @return [ Mongo::Cluster ] cluster The cluster of servers for the client.
     attr_reader :cluster
@@ -160,9 +195,9 @@ module Mongo
     def initialize(addresses_or_uri, options = Options::Redacted.new)
       @monitoring = Monitoring.new(options)
       if addresses_or_uri.is_a?(::String)
-        create_from_uri(addresses_or_uri, options)
+        create_from_uri(addresses_or_uri, validate_options(options))
       else
-        create_from_addresses(addresses_or_uri, options)
+        create_from_addresses(addresses_or_uri, validate_options(options))
       end
       yield(self) if block_given?
     end
@@ -221,7 +256,7 @@ module Mongo
     # @since 2.0.0
     def with(new_options = Options::Redacted.new)
       clone.tap do |client|
-        opts = Options::Redacted.new(new_options) || Options::Redacted.new
+        opts = validate_options(new_options)
         client.options.update(opts)
         Database.create(client)
         # We can't use the same cluster if some options that would affect it
@@ -296,14 +331,14 @@ module Mongo
     private
 
     def create_from_addresses(addresses, opts = Options::Redacted.new)
-      @options = Options::Redacted.new(Database::DEFAULT_OPTIONS.merge(opts)).freeze
+      @options = Database::DEFAULT_OPTIONS.merge(opts).freeze
       @cluster = Cluster.new(addresses, @monitoring, options)
       @database = Database.new(self, options[:database], options)
     end
 
     def create_from_uri(connection_string, opts = Options::Redacted.new)
       uri = URI.new(connection_string, opts)
-      @options = Options::Redacted.new(Database::DEFAULT_OPTIONS.merge(uri.client_options.merge(opts))).freeze
+      @options = Database::DEFAULT_OPTIONS.merge(uri.client_options.merge(opts)).freeze
       @cluster = Cluster.new(uri.servers, @monitoring, options)
       @database = Database.new(self, options[:database], options)
     end
@@ -323,6 +358,18 @@ module Mongo
       cluster_options.any? do |name, value|
         options[name] != value
       end
+    end
+
+    def validate_options(opts = Options::Redacted.new)
+      return Options::Redacted.new unless opts
+      Options::Redacted.new(opts.select do |o|
+        if VALID_OPTIONS.include?(o)
+          true
+        else
+          log_warn("Unsupported client option '#{o}'. It will be ignored.")
+          false
+        end
+      end)
     end
   end
 end
