@@ -157,6 +157,7 @@ module Mongo
                   :key => field_name.to_s,
                   :query => filter }
           cmd[:maxTimeMS] = options[:max_time_ms] if options[:max_time_ms]
+          cmd[:readConcern] = options[:read_concern] if options[:read_concern]
           read_with_retry do
             database.command(cmd, options).first['values']
           end

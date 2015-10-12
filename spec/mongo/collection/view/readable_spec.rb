@@ -311,6 +311,15 @@ describe Mongo::Collection::View::Readable do
 
   describe '#distinct' do
 
+    context 'when incorporating read concern' do
+
+      let(:result) do
+        view.distinct(:field, options)
+      end
+
+      it_behaves_like 'a read concern aware operation'
+    end
+
     context 'when a selector is provided' do
 
       let(:selector) do
