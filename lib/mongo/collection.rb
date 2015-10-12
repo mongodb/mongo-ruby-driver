@@ -409,8 +409,8 @@ module Mongo
     # @return [ Array<Cursor> ] An array of cursors.
     #
     # @since 2.1
-    def parallel_scan(cursor_count)
-      find.send(:parallel_scan, cursor_count)
+    def parallel_scan(cursor_count, options = {})
+      find.send(:parallel_scan, cursor_count, options)
     end
 
     # Replaces a single document in the collection with the new document.

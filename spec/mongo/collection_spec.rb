@@ -973,6 +973,37 @@ describe Mongo::Collection do
         cursors
       }.to raise_error(Mongo::Error::OperationFailure)
     end
+
+    context 'when a read concern is provided', if: find_command_enabled? do
+
+      let(:result) do
+        authorized_collection.parallel_scan(2, options)
+      end
+
+      context 'when the read concern is valid' do
+
+        let(:options) do
+          { read_concern: { level: 'local' }}
+        end
+
+        it 'sends the read concern' do
+          expect { result }.to_not raise_error
+        end
+      end
+
+      context 'when the read concern is not valid' do
+
+        let(:options) do
+          { read_concern: { level: 'idontknow' }}
+        end
+
+        it 'raises an exception' do
+          expect {
+            result
+          }.to raise_error(Mongo::Error::OperationFailure)
+        end
+      end
+    end
   end
 
   describe '#replace_one' do
