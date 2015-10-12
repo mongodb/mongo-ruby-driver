@@ -90,6 +90,15 @@ describe Mongo::Collection::View::Readable do
       view.aggregate(pipeline)
     end
 
+    context 'when incorporating read concern' do
+
+      let(:result) do
+        view.aggregate(pipeline, options).to_a
+      end
+
+      it_behaves_like 'a read concern aware operation'
+    end
+
     context 'when not iterating the aggregation' do
 
       it 'returns the aggregation object' do
