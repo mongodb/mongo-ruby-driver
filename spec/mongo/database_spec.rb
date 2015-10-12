@@ -204,6 +204,27 @@ describe Mongo::Database do
       expect(database.command(:ismaster => 1).written_count).to eq(0)
     end
 
+    context 'when a read concern is provided', if: find_command_enabled? do
+
+      context 'when the read concern is valid' do
+
+        it 'sends the read concern' do
+          expect {
+            database.command(:ismaster => 1, readConcern: { level: 'local' })
+          }.to_not raise_error
+        end
+      end
+
+      context 'when the read concern is not valid' do
+
+        it 'raises an exception' do
+          expect {
+            database.command(:ismaster => 1, readConcern: { level: 'yay' })
+          }.to raise_error(Mongo::Error::OperationFailure)
+        end
+      end
+    end
+
     context 'when an alternate read preference is specified' do
 
       before do
