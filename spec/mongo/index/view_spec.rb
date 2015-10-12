@@ -196,6 +196,47 @@ describe Mongo::Index::View do
         expect(view.get('random_name')).to_not be_nil
       end
     end
+
+    context 'when providing an invalid partial index filter', if: find_command_enabled? do
+
+      it 'raises an exception' do
+        expect {
+          view.create_one({'x' => 1}, partial_filter_expression: 5)
+        }.to raise_error(Mongo::Error::OperationFailure)
+      end
+    end
+
+    context 'when providing a valid partial index filter', if: find_command_enabled? do
+
+      let(:expression) do
+        {'a' => {'$lte' => 1.5}}
+      end
+
+      let!(:result) do
+        view.create_one({'x' => 1}, partial_filter_expression: expression)
+      end
+
+      let(:indexes) do
+        authorized_collection.indexes.get('x_1')
+      end
+
+      after do
+        view.drop_one('x_1')
+      end
+
+      it 'returns ok' do
+        expect(result).to be_successful
+      end
+
+      it 'creates an index' do
+        expect(indexes).to_not be_nil
+      end
+
+      it 'passes partialFilterExpression correctly' do
+        expect(indexes[:partialFilterExpression]).to eq(expression)
+      end
+
+    end
   end
 
   describe '#get' do

@@ -56,6 +56,7 @@ module Mongo
         :max => :max,
         :min => :min,
         :name => :name,
+        :partial_filter_expression => :partialFilterExpression,
         :sparse => :sparse,
         :sphere_version => :'2dsphereIndexVersion',
         :storage_engine => :storageEngine,
@@ -114,6 +115,8 @@ module Mongo
       #   a geo index.
       # @option options [ Integer ] :min (nil) Specify the min latitude and longitude for
       #   a geo index.
+      # @option options [ Hash ] :partial_filter_expression  Specify a filter for a partial
+      #   index.
       #
       # @note Note that the options listed may be subset of those available.
       # See the MongoDB documentation for a full list of supported options by server version.
