@@ -131,6 +131,7 @@ module Mongo
           cmd[:hint] = options[:hint] if options[:hint]
           cmd[:limit] = options[:limit] if options[:limit]
           cmd[:maxTimeMS] = options[:max_time_ms] if options[:max_time_ms]
+          cmd[:readConcern] = options[:read_concern] if options[:read_concern]
           read_with_retry do
             database.command(cmd, options).n.to_i
           end
