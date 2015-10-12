@@ -52,6 +52,18 @@ module Mongo
         # Delegate necessary operations to the collection.
         def_delegators :collection, :database
 
+        # Mapping options.
+        #
+        # @since 2.2.0
+        MAPPINGS = {
+          finalize: 'finalize',
+          js_mode: 'jsMode',
+          out: 'out',
+          scope: 'scope',
+          read_concern: 'readConcern',
+          verbose: 'verbose'
+        }.freeze
+
         # Iterate through documents returned by the map/reduce.
         #
         # @example Iterate through the result of the map/reduce.
@@ -122,7 +134,7 @@ module Mongo
         #
         # @since 2.0.0
         def js_mode(value = nil)
-          configure(:jsMode, value)
+          configure(:js_mode, value)
         end
 
         # Set or get the output location for the operation.
@@ -196,7 +208,7 @@ module Mongo
               :reduce => reduce,
               :query => view.filter,
               :out => { inline: 1 }
-            }.merge(options).merge(view.options)
+            }.merge(Options::Mapper.transform(options, MAPPINGS)).merge(view.options)
           )
         end
 
