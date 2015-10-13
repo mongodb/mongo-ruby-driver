@@ -94,7 +94,7 @@ module Mongo
       # @since 2.0.0
       def readbyte
         handle_errors do
-          byte = socket.read(1).bytes[0]
+          byte = socket.read(1).bytes.to_a[0]
           byte.nil? ? raise(EOFError) : byte
         end
       end
