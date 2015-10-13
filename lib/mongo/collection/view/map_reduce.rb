@@ -216,10 +216,7 @@ module Mongo
         end
 
         def fetch_query_spec
-          { :selector  => {},
-            :options   => {},
-            :db_name   => database.name,
-            :coll_name => out.respond_to?(:keys) ? out.values.first : out }
+          Builder::MapReduce.new(map, reduce, view, options).query_specification
         end
 
         def fetch_query_op

@@ -66,6 +66,18 @@ module Mongo
             @options = options
           end
 
+          # Get the specification for the document query after a map/reduce.
+          #
+          # @example Get the query specification.
+          #   builder.query_specification
+          #
+          # @return [ Hash ] The specification.
+          #
+          # @since 2.2.0
+          def query_specification
+            { selector: {}, options: {}, db_name: database.name, coll_name: query_collection }
+          end
+
           # Get the specification to pass to the map/reduce operation.
           #
           # @example Get the specification.
@@ -92,6 +104,10 @@ module Mongo
             command.merge!(Options::Mapper.transform_documents(options, MAPPINGS))
             command.merge!(view.options)
             command
+          end
+
+          def query_collection
+            options[:out].respond_to?(:keys) ? options[:out].values.first : options[:out]
           end
         end
       end
