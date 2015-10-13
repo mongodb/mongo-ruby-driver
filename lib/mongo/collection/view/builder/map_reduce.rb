@@ -66,6 +66,19 @@ module Mongo
             @options = options
           end
 
+          # Get the specification for issuing a find command on the map/reduce
+          # results.
+          #
+          # @example Get the command specification.
+          #   builder.command_specification
+          #
+          # @return [ Hash ] The specification.
+          #
+          # @since 2.2.0
+          def command_specification
+            { selector: find_command, db_name: database.name, read: read }
+          end
+
           # Get the specification for the document query after a map/reduce.
           #
           # @example Get the query specification.
@@ -91,6 +104,10 @@ module Mongo
           end
 
           private
+
+          def find_command
+            BSON::Document.new('find' => query_collection, 'filter' => {})
+          end
 
           def map_reduce_command
             command = BSON::Document.new(

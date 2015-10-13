@@ -219,12 +219,20 @@ module Mongo
           Builder::MapReduce.new(map, reduce, view, options).query_specification
         end
 
-        def fetch_query_op
-          Operation::Read::Query.new(fetch_query_spec)
+        def find_command_spec
+          Builder::MapReduce.new(map, reduce, view, options).command_specification
+        end
+
+        def fetch_query_op(server)
+          if server.features.find_command_enabled?
+            Operation::Commands::Find.new(find_command_spec)
+          else
+            Operation::Read::Query.new(fetch_query_spec)
+          end
         end
 
         def send_fetch_query(server)
-          fetch_query_op.execute(server.context)
+          fetch_query_op(server).execute(server.context)
         end
       end
     end
