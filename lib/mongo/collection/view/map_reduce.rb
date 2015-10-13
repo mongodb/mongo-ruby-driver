@@ -52,18 +52,6 @@ module Mongo
         # Delegate necessary operations to the collection.
         def_delegators :collection, :database
 
-        # Mapping options.
-        #
-        # @since 2.2.0
-        MAPPINGS = {
-          finalize: 'finalize',
-          js_mode: 'jsMode',
-          out: 'out',
-          scope: 'scope',
-          read_concern: 'readConcern',
-          verbose: 'verbose'
-        }.freeze
-
         # Iterate through documents returned by the map/reduce.
         #
         # @example Iterate through the result of the map/reduce.
@@ -119,7 +107,7 @@ module Mongo
           @view = view
           @map = map.freeze
           @reduce = reduce.freeze
-          @options = options.dup
+          @options = options.freeze
         end
 
         # Set or get the jsMode flag for the operation.
@@ -199,17 +187,7 @@ module Mongo
         end
 
         def map_reduce_spec
-          BSON::Document.new(
-            :db_name => database.name,
-            :read => read,
-            :selector => {
-              :mapreduce => collection.name,
-              :map => map,
-              :reduce => reduce,
-              :query => view.filter,
-              :out => { inline: 1 }
-            }.merge(Options::Mapper.transform(options, MAPPINGS)).merge(view.options)
-          )
+          Builder::MapReduce.new(map, reduce, view, options).specification
         end
 
         def new(options)

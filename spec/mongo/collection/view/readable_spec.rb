@@ -22,10 +22,14 @@ describe Mongo::Collection::View::Readable do
 
     context 'when a read concern is provided', if: find_command_enabled? do
 
+      let(:new_view) do
+        Mongo::Collection::View.new(new_collection, selector, options)
+      end
+
       context 'when the read concern is valid' do
 
-        let(:options) do
-          { read_concern: { level: 'local' }}
+        let(:new_collection) do
+          authorized_collection.with(read_concern: { level: 'local' })
         end
 
         it 'sends the read concern' do
@@ -35,8 +39,8 @@ describe Mongo::Collection::View::Readable do
 
       context 'when the read concern is not valid' do
 
-        let(:options) do
-          { read_concern: { level: 'idontknow' }}
+        let(:new_collection) do
+          authorized_collection.with(read_concern: { level: 'na' })
         end
 
         it 'raises an exception' do
@@ -93,7 +97,7 @@ describe Mongo::Collection::View::Readable do
     context 'when incorporating read concern' do
 
       let(:result) do
-        view.aggregate(pipeline, options).to_a
+        new_view.aggregate(pipeline, options).to_a
       end
 
       it_behaves_like 'a read concern aware operation'
@@ -169,7 +173,7 @@ describe Mongo::Collection::View::Readable do
     context 'when incorporating read concern' do
 
       let(:result) do
-        view.map_reduce(map, reduce, options).to_a
+        new_view.map_reduce(map, reduce, options).to_a
       end
 
       it_behaves_like 'a read concern aware operation'
@@ -270,7 +274,14 @@ describe Mongo::Collection::View::Readable do
       view.count(options)
     end
 
-    it_behaves_like 'a read concern aware operation'
+    context 'when incorporating read concern' do
+
+      let(:result) do
+        new_view.count(options)
+      end
+
+      it_behaves_like 'a read concern aware operation'
+    end
 
     context 'when a selector is provided' do
 
@@ -314,7 +325,7 @@ describe Mongo::Collection::View::Readable do
     context 'when incorporating read concern' do
 
       let(:result) do
-        view.distinct(:field, options)
+        new_view.distinct(:field, options)
       end
 
       it_behaves_like 'a read concern aware operation'

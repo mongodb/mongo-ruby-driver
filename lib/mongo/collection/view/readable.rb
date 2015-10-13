@@ -131,7 +131,7 @@ module Mongo
           cmd[:hint] = options[:hint] if options[:hint]
           cmd[:limit] = options[:limit] if options[:limit]
           cmd[:maxTimeMS] = options[:max_time_ms] if options[:max_time_ms]
-          cmd[:readConcern] = options[:read_concern] if options[:read_concern]
+          cmd[:readConcern] = collection.read_concern if collection.read_concern
           read_with_retry do
             database.command(cmd, options).n.to_i
           end
@@ -157,7 +157,7 @@ module Mongo
                   :key => field_name.to_s,
                   :query => filter }
           cmd[:maxTimeMS] = options[:max_time_ms] if options[:max_time_ms]
-          cmd[:readConcern] = options[:read_concern] if options[:read_concern]
+          cmd[:readConcern] = collection.read_concern if collection.read_concern
           read_with_retry do
             database.command(cmd, options).first['values']
           end
@@ -408,13 +408,13 @@ module Mongo
           options[:read] || read_preference
         end
 
-        def parallel_scan(cursor_count, options = {})
+        def parallel_scan(cursor_count)
           server = read.select_server(cluster)
           Operation::Commands::ParallelScan.new(
             :coll_name => collection.name,
             :db_name => database.name,
             :cursor_count => cursor_count,
-            :read_concern => options[:read_concern]
+            :read_concern => collection.read_concern
           ).execute(server.context).cursor_ids.map do |cursor_id|
             result = if server.features.find_command_enabled?
               Operation::Commands::GetMore.new({

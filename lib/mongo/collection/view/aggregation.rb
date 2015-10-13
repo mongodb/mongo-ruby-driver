@@ -39,16 +39,6 @@ module Mongo
         # Delegate necessary operations to the collection.
         def_delegators :collection, :database
 
-        # Options mapping for an aggregation.
-        #
-        # @since 2.1.0
-        OPTIONS_MAP = {
-          :allow_disk_use => :allowDiskUse,
-          :max_time_ms => :maxTimeMS,
-          :explain => :explain,
-          :read_concern => :readConcern
-        }.freeze
-
         # The reroute message.
         #
         # @since 2.1.0
@@ -66,7 +56,7 @@ module Mongo
         #
         # @since 2.0.0
         def allow_disk_use(value = nil)
-          configure(__method__, value)
+          configure(:allow_disk_use, value)
         end
 
         # Initialize the aggregation for the provided collection view, pipeline
@@ -95,41 +85,13 @@ module Mongo
         #
         # @since 2.0.0
         def explain
-          self.class.new(view, pipeline, options.merge(explain_options)).first
+          self.class.new(view, pipeline, options.merge(explain: true)).first
         end
 
         private
 
         def aggregate_spec
-          { :db_name => database.name,
-            :read => read,
-            :selector => {
-              :aggregate => collection.name,
-              :pipeline => pipeline,
-              :cursor => cursor,
-            }.merge!(agg_options)
-          }
-        end
-
-        def agg_options
-          @agg_options ||= options.each.reduce({}) do |opts, (key, value)|
-            OPTIONS_MAP[key] ? opts.merge!(OPTIONS_MAP[key] => value) : opts
-          end
-        end
-
-        def cursor
-          if options[:use_cursor] == true || options[:use_cursor].nil?
-            batch_size_doc
-          end
-        end
-
-        def batch_size_doc
-          (value = options[:batch_size] || view.batch_size) ?
-              { :batchSize => value } : {}
-        end
-
-        def explain_options
-          { :explain => true }
+          Builder::Aggregation.new(pipeline, view, options).specification
         end
 
         def new(options)

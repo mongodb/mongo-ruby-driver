@@ -977,7 +977,7 @@ describe Mongo::Collection do
     context 'when a read concern is provided', if: find_command_enabled? do
 
       let(:result) do
-        authorized_collection.parallel_scan(2, options)
+        authorized_collection.with(options).parallel_scan(2)
       end
 
       context 'when the read concern is valid' do
