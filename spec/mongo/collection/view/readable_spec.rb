@@ -322,7 +322,7 @@ describe Mongo::Collection::View::Readable do
         end
 
         it 'returns the distinct values' do
-          expect(distinct).to eq([ 'test1', 'test2', 'test3' ])
+          expect(distinct.sort).to eq([ 'test1', 'test2', 'test3' ])
         end
       end
 
@@ -333,7 +333,7 @@ describe Mongo::Collection::View::Readable do
         end
 
         it 'returns the distinct values' do
-          expect(distinct).to eq([ 'test1', 'test2', 'test3' ])
+          expect(distinct.sort).to eq([ 'test1', 'test2', 'test3' ])
         end
       end
 
@@ -364,7 +364,7 @@ describe Mongo::Collection::View::Readable do
       end
 
       it 'returns the distinct values' do
-        expect(distinct).to eq([ 'test1', 'test2', 'test3' ])
+        expect(distinct.sort).to eq([ 'test1', 'test2', 'test3' ])
       end
     end
 
