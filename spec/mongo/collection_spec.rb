@@ -822,7 +822,7 @@ describe Mongo::Collection do
     end
 
     it 'returns the distinct values' do
-      expect(authorized_collection.distinct(:field)).to eq([ 'test1', 'test2', 'test3' ])
+      expect(authorized_collection.distinct(:field).sort).to eq([ 'test1', 'test2', 'test3' ])
     end
 
     context 'when a selector is provided' do
@@ -835,7 +835,7 @@ describe Mongo::Collection do
     context 'when options are provided' do
 
       it 'passes the options to the distinct command' do
-        expect(authorized_collection.distinct(:field, {}, max_time_ms: 100)).to eq([ 'test1', 'test2', 'test3' ])
+        expect(authorized_collection.distinct(:field, {}, max_time_ms: 100).sort).to eq([ 'test1', 'test2', 'test3' ])
       end
     end
   end
