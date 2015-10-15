@@ -249,6 +249,18 @@ describe Mongo::Database do
         end.to raise_error(Mongo::Error::NoServerAvailable)
       end
     end
+
+    context 'when there is a read preference set on the client' do
+
+      let(:database) do
+        described_class.new(authorized_client.with(read: { mode: :secondary }), TEST_DB)
+      end
+
+      it 'does not use the read preference' do
+        expect(database.client.cluster).to receive(:next_primary).and_call_original
+        database.command(ping: 1)
+      end
+    end
   end
 
   describe '#drop' do
