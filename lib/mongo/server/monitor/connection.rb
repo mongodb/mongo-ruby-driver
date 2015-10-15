@@ -22,6 +22,23 @@ module Mongo
       class Connection
         include Connectable
 
+        # The default time in seconds to timeout a connection attempt.
+        #
+        # @since 2.1.2
+        CONNECT_TIMEOUT = 10.freeze
+
+        # Get the connection timeout.
+        #
+        # @example Get the connection timeout.
+        #   connection.timeout
+        #
+        # @return [ Float ] The connection timeout in seconds.
+        #
+        # @since 2.0.0
+        def timeout
+          @timeout ||= options[:connect_timeout] || CONNECT_TIMEOUT
+        end
+
         # Tell the underlying socket to establish a connection to the host.
         #
         # @example Connect to the host.

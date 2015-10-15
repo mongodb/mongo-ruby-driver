@@ -25,7 +25,7 @@ module Mongo
       # @since 2.1.0
       SSL = 'ssl'.freeze
 
-      # The default time in seconds to timeout a connection attempt.
+      # The default time in seconds to timeout an operation executed on a socket.
       #
       # @since 2.0.0
       TIMEOUT = 5.freeze
@@ -64,12 +64,12 @@ module Mongo
         !!@socket && @socket.alive?
       end
 
-      # Get the connection timeout.
+      # Get the timeout to execute an operation on a socket.
       #
-      # @example Get the connection timeout.
+      # @example Get the timeout to execute an operation on a socket.
       #   connection.timeout
       #
-      # @return [ Float ] The connection timeout in seconds.
+      # @return [ Float ] The operation timeout in seconds.
       #
       # @since 2.0.0
       def timeout
