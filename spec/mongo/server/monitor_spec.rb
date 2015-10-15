@@ -192,4 +192,27 @@ describe Mongo::Server::Monitor do
       expect(thread.stop?).to be(true)
     end
   end
+
+  describe '#connection' do
+
+    context 'when there is a connect_timeout option set' do
+
+      let(:connect_timeout) do
+        1
+      end
+
+      let(:monitor) do
+        described_class.new(address, listeners, TEST_OPTIONS.merge(connect_timeout: connect_timeout))
+      end
+
+      it 'sets the value as the timeout on the connection' do
+        expect(monitor.connection.timeout).to eq(connect_timeout)
+      end
+
+      it 'set the value as the timeout on the socket' do
+        monitor.connection.connect!
+        expect(monitor.connection.send(:socket).timeout).to eq(connect_timeout)
+      end
+    end
+  end
 end
