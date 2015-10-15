@@ -107,7 +107,7 @@ module Mongo
           @view = view
           @map = map.freeze
           @reduce = reduce.freeze
-          @options = options.dup
+          @options = options.freeze
         end
 
         # Set or get the jsMode flag for the operation.
@@ -122,7 +122,7 @@ module Mongo
         #
         # @since 2.0.0
         def js_mode(value = nil)
-          configure(:jsMode, value)
+          configure(:js_mode, value)
         end
 
         # Set or get the output location for the operation.
@@ -187,17 +187,7 @@ module Mongo
         end
 
         def map_reduce_spec
-          BSON::Document.new(
-            :db_name => database.name,
-            :read => read,
-            :selector => {
-              :mapreduce => collection.name,
-              :map => map,
-              :reduce => reduce,
-              :query => view.filter,
-              :out => { inline: 1 }
-            }.merge(options).merge(view.options)
-          )
+          Builder::MapReduce.new(map, reduce, view, options).specification
         end
 
         def new(options)
@@ -226,18 +216,23 @@ module Mongo
         end
 
         def fetch_query_spec
-          { :selector  => {},
-            :options   => {},
-            :db_name   => database.name,
-            :coll_name => out.respond_to?(:keys) ? out.values.first : out }
+          Builder::MapReduce.new(map, reduce, view, options).query_specification
         end
 
-        def fetch_query_op
-          Operation::Read::Query.new(fetch_query_spec)
+        def find_command_spec
+          Builder::MapReduce.new(map, reduce, view, options).command_specification
+        end
+
+        def fetch_query_op(server)
+          if server.features.find_command_enabled?
+            Operation::Commands::Find.new(find_command_spec)
+          else
+            Operation::Read::Query.new(fetch_query_spec)
+          end
         end
 
         def send_fetch_query(server)
-          fetch_query_op.execute(server.context)
+          fetch_query_op(server).execute(server.context)
         end
       end
     end

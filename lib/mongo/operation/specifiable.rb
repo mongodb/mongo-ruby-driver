@@ -86,6 +86,11 @@ module Mongo
       # @since 2.0.0
       OPTIONS = :options.freeze
 
+      # The read concern option.
+      #
+      # @since 2.2.0
+      READ_CONCERN = :read_concern.freeze
+
       # The field for a selector.
       #
       # @since 2.0.0
@@ -315,6 +320,18 @@ module Mongo
       # @since 2.0.0
       def options
         spec[OPTIONS] || {}
+      end
+
+      # Get the read concern from the spec.
+      #
+      # @example Get the read concern.
+      #   specifiable.read_concern
+      #
+      # @return [ Hash ] The read concern.
+      #
+      # @since 2.2.0
+      def read_concern
+        spec[READ_CONCERN]
       end
 
       # The selector for from the specification.

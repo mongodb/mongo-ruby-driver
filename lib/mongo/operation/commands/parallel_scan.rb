@@ -40,7 +40,9 @@ module Mongo
         private
 
         def selector
-          { :parallelCollectionScan => coll_name, :numCursors => cursor_count }
+          command = { :parallelCollectionScan => coll_name, :numCursors => cursor_count }
+          command[:readConcern] = read_concern if read_concern
+          command
         end
       end
     end

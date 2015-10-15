@@ -43,7 +43,8 @@ describe Mongo::Collection::View::Builder::OpQuery do
           oplog_replay: true,
           no_cursor_timeout: true,
           tailable_await: true,
-          allow_partial_results: true
+          allow_partial_results: true,
+          read_concern: { level: 'local' }
         }
       end
 
@@ -109,6 +110,12 @@ describe Mongo::Collection::View::Builder::OpQuery do
 
       it 'maps min' do
         expect(selector['$min']).to eq('name' => 'albert')
+      end
+
+      it 'does not map read concern' do
+        expect(selector['$readConcern']).to be_nil
+        expect(selector['readConcern']).to be_nil
+        expect(opts['readConcern']).to be_nil
       end
 
       it 'maps return key' do

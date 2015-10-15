@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require 'mongo/collection/view/builder/aggregation'
+require 'mongo/collection/view/builder/map_reduce'
 require 'mongo/collection/view/builder/op_query'
 require 'mongo/collection/view/builder/find_command'
 require 'mongo/collection/view/builder/flags'

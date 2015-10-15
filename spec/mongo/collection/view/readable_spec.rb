@@ -18,6 +18,40 @@ describe Mongo::Collection::View::Readable do
     authorized_collection.delete_many
   end
 
+  shared_examples_for 'a read concern aware operation' do
+
+    context 'when a read concern is provided', if: find_command_enabled? do
+
+      let(:new_view) do
+        Mongo::Collection::View.new(new_collection, selector, options)
+      end
+
+      context 'when the read concern is valid' do
+
+        let(:new_collection) do
+          authorized_collection.with(read_concern: { level: 'local' })
+        end
+
+        it 'sends the read concern' do
+          expect { result }.to_not raise_error
+        end
+      end
+
+      context 'when the read concern is not valid' do
+
+        let(:new_collection) do
+          authorized_collection.with(read_concern: { level: 'na' })
+        end
+
+        it 'raises an exception' do
+          expect {
+            result
+          }.to raise_error(Mongo::Error::OperationFailure)
+        end
+      end
+    end
+  end
+
   describe '#allow_partial_results' do
 
     let(:new_view) do
@@ -58,6 +92,15 @@ describe Mongo::Collection::View::Readable do
 
     let(:aggregation) do
       view.aggregate(pipeline)
+    end
+
+    context 'when incorporating read concern' do
+
+      let(:result) do
+        new_view.aggregate(pipeline, options).to_a
+      end
+
+      it_behaves_like 'a read concern aware operation'
     end
 
     context 'when not iterating the aggregation' do
@@ -125,6 +168,15 @@ describe Mongo::Collection::View::Readable do
 
     let(:map_reduce) do
       view.map_reduce(map, reduce)
+    end
+
+    context 'when incorporating read concern' do
+
+      let(:result) do
+        new_view.map_reduce(map, reduce, options).to_a
+      end
+
+      it_behaves_like 'a read concern aware operation'
     end
 
     context 'when not iterating the map/reduce' do
@@ -218,6 +270,19 @@ describe Mongo::Collection::View::Readable do
       authorized_collection.delete_many
     end
 
+    let(:result) do
+      view.count(options)
+    end
+
+    context 'when incorporating read concern' do
+
+      let(:result) do
+        new_view.count(options)
+      end
+
+      it_behaves_like 'a read concern aware operation'
+    end
+
     context 'when a selector is provided' do
 
       let(:selector) do
@@ -256,6 +321,15 @@ describe Mongo::Collection::View::Readable do
   end
 
   describe '#distinct' do
+
+    context 'when incorporating read concern' do
+
+      let(:result) do
+        new_view.distinct(:field, options)
+      end
+
+      it_behaves_like 'a read concern aware operation'
+    end
 
     context 'when a selector is provided' do
 

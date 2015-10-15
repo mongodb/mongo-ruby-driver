@@ -47,7 +47,8 @@ describe Mongo::Collection::View::Builder::FindCommand do
           oplog_replay: true,
           no_cursor_timeout: true,
           await_data: true,
-          allow_partial_results: true
+          allow_partial_results: true,
+          read_concern: { level: 'local' }
         }
       end
 
@@ -105,6 +106,10 @@ describe Mongo::Collection::View::Builder::FindCommand do
 
       it 'maps min' do
         expect(selector['min']).to eq('name' => 'albert')
+      end
+
+      it 'maps read concern' do
+        expect(selector['readConcern']).to eq('level' => 'local')
       end
 
       it 'maps return key' do

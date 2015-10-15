@@ -56,7 +56,7 @@ module Mongo
     # Options that can be updated on a new Collection instance via the #with method.
     #
     # @since 2.1.0
-    CHANGEABLE_OPTIONS = [ :read, :write ]
+    CHANGEABLE_OPTIONS = [ :read, :read_concern, :write ].freeze
 
     # Check if a collection is equal to another object. Will check the name and
     # the database for equality.
@@ -89,6 +89,18 @@ module Mongo
       @database = database
       @name = name.to_s.freeze
       @options = options.freeze
+    end
+
+    # Get the read concern for this collection instance.
+    #
+    # @example Get the read concern.
+    #   collection.read_concern
+    #
+    # @return [ Hash ] The read concern.
+    #
+    # @since 2.2.0
+    def read_concern
+      @read_concern ||= options[:read_concern]
     end
 
     # Get the read preference on this collection.
