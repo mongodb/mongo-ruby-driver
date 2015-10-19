@@ -4,7 +4,6 @@ require 'mongo/version'
 
 Gem::Specification.new do |s|
   s.name              = 'mongo'
-  s.rubyforge_project = 'mongo'
   s.version           = Mongo::VERSION
   s.platform          = Gem::Platform::RUBY
 
