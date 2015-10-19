@@ -108,7 +108,7 @@ describe Mongo::Retryable do
         context 'when the operation failure is not retryable' do
 
           let(:error) do
-            Mongo::Error::OperationFailure.new('not authorized')
+            Mongo::Error::OperationFailure.new('cursor not found')
           end
 
           before do
@@ -120,6 +120,32 @@ describe Mongo::Retryable do
             expect {
               retryable.read
             }.to raise_error(Mongo::Error::OperationFailure)
+          end
+        end
+
+        context 'when there is an authentication failure' do
+
+          let(:error) do
+            Mongo::Error::OperationFailure.new('not authorized')
+          end
+
+          before do
+            expect(operation).to receive(:execute).and_raise(error).ordered
+            expect(cluster).to receive(:sharded?).and_return(true)
+            expect(cluster).to receive(:max_read_retries).and_return(1).ordered
+            expect(cluster).to receive(:read_retry_interval).and_return(0.1).ordered
+            expect(operation).to receive(:execute).and_return(true).ordered
+
+            mock_context = double(Mongo::Server::Context)
+            mock_connection = double(Mongo::Server::Connection)
+            mock_server = double(Mongo::Server, :context => mock_context)
+            expect(mock_context).to receive(:with_connection).and_yield(mock_connection)
+            expect(cluster).to receive(:servers).and_return([mock_server])
+            expect(mock_connection).to receive(:authenticate!)
+          end
+
+          it 're-authenticates and retries the operation' do
+            expect(retryable.read).to be true
           end
         end
 
