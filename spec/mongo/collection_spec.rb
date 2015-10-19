@@ -340,6 +340,10 @@ describe Mongo::Collection do
             collection.create
           end
 
+          let(:options) do
+            { :capped => true, :size => 1024 }
+          end
+
           after do
             collection.drop
           end
@@ -357,22 +361,62 @@ describe Mongo::Collection do
           end
         end
 
+        shared_examples 'a validated collection command' do
+
+          let!(:response) do
+            collection.create
+          end
+
+          let(:options) do
+            { :validator => { fieldName: { '$gte' =>  1024 } },
+              :validationLevel => 'strict' }
+          end
+
+          let(:collection_info) do
+            database.list_collections.find { |i| i['name'] == 'specs' }
+          end
+
+          after do
+            collection.drop
+          end
+
+          it 'executes the command' do
+            expect(response).to be_successful
+          end
+
+          it 'sets the collection with validators' do
+            expect(collection_info['options']['validator']).to eq({ 'fieldName' => { '$gte' => 1024 } })
+          end
+
+          it 'creates the collection in the database' do
+            expect(database.collection_names).to include('specs')
+          end
+        end
+
         context 'when instantiating a collection directly' do
 
           let(:collection) do
-            described_class.new(database, :specs, :capped => true, :size => 1024)
+            described_class.new(database, :specs, options)
           end
 
           it_behaves_like 'a capped collection command'
+
+          context 'when validators can be set', if: find_command_enabled? do
+            it_behaves_like 'a validated collection command'
+          end
         end
 
         context 'when instantiating a collection through the database' do
 
           let(:collection) do
-            authorized_client[:specs, :capped => true, :size => 1024]
+            authorized_client[:specs, options]
           end
 
           it_behaves_like 'a capped collection command'
+
+          context 'when validators can be set', if: find_command_enabled? do
+            it_behaves_like 'a validated collection command'
+          end
         end
       end
     end
