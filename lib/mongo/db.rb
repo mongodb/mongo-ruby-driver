@@ -453,6 +453,8 @@ module Mongo
     # @param [Integer, Hash] args any additional argument to be passed to the +code+ expression when
     #   it's run on the server.
     #
+    # @note the eval command is deprecated in MongoDB 3.0 and will be removed in a future server version.
+    #
     # @return [String] the return value of the function.
     def eval(code, *args)
       unless code.is_a?(BSON::Code)
