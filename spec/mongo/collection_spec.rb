@@ -1710,6 +1710,16 @@ describe Mongo::Collection do
         }.to raise_exception(Mongo::Error::OperationFailure)
       end
     end
+
+    context 'when write_concern is provided', if: find_command_enabled? && standalone? do
+
+      it 'uses the write concern' do
+        expect {
+          authorized_collection.find_one_and_delete(selector,
+                                                    write_concern: { w: 2 })
+        }.to raise_error(Mongo::Error::OperationFailure)
+      end
+    end
   end
 
   describe '#find_one_and_update' do
@@ -1918,6 +1928,16 @@ describe Mongo::Collection do
         end
       end
     end
+
+    context 'when write_concern is provided', if: find_command_enabled? && standalone? do
+
+      it 'uses the write concern' do
+        expect {
+          authorized_collection.find_one_and_delete(selector,
+                                                    write_concern: { w: 2 })
+        }.to raise_error(Mongo::Error::OperationFailure)
+      end
+    end
   end
 
   describe '#find_one_and_replace' do
@@ -2098,6 +2118,16 @@ describe Mongo::Collection do
             expect(result3[:a]).to be_nil
           end
         end
+      end
+    end
+
+    context 'when write_concern is provided', if: find_command_enabled? && standalone? do
+
+      it 'uses the write concern' do
+        expect {
+          authorized_collection.find_one_and_delete(selector,
+                                                    write_concern: { w: 2 })
+        }.to raise_error(Mongo::Error::OperationFailure)
       end
     end
   end
