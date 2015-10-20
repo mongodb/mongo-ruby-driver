@@ -105,7 +105,7 @@ describe Mongo::DBRef do
     end
 
     let(:decoded) do
-      BSON::Document.from_bson(buffer)
+      BSON::Document.from_bson(BSON::ByteBuffer.new(buffer.to_s))
     end
 
     context 'when a database exists' do

@@ -99,7 +99,7 @@ module Mongo
       # @see http://bsonspec.org/#/specification
       #
       # @since 2.0.0
-      def from_bson(bson)
+      def from_bson(buffer)
         decoded = super
         if ref = decoded[COLLECTION]
           decoded = DBRef.new(ref, decoded[ID], decoded[DATABASE])
