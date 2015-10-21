@@ -29,7 +29,8 @@ module Mongo
           MAPPINGS = BSON::Document.new(
             :allow_disk_use => 'allowDiskUse',
             :max_time_ms => 'maxTimeMS',
-            :explain => 'explain'
+            :explain => 'explain',
+            :bypass_document_validation => 'bypassDocumentValidation'
           ).freeze
 
           def_delegators :@view, :collection, :database, :read

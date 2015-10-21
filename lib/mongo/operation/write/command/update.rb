@@ -31,7 +31,8 @@ module Mongo
         #     :db_name => 'test',
         #     :coll_name => 'test_coll',
         #     :write_concern => write_concern,
-        #     :ordered => true
+        #     :ordered => true,
+        #     :bypass_document_validation => true
         #   })
         #
         # @since 2.0.0
@@ -45,11 +46,14 @@ module Mongo
           #
           # @return [ Hash ] The selector describing this update operation.
           def selector
-            { update: coll_name,
-              updates: updates,
-              writeConcern: write_concern.options,
-              ordered: ordered?
+            cmd = {
+                update: coll_name,
+                updates: updates,
+                writeConcern: write_concern.options,
+                ordered: ordered?
             }
+            bypass_document_validation ? cmd.merge!(
+                :bypassDocumentValidation => true) : cmd
           end
         end
       end

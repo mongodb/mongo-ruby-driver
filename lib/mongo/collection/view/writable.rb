@@ -83,6 +83,7 @@ module Mongo
           cmd[:new] = !!(opts[:return_document] && opts[:return_document] == :after)
           cmd[:upsert] = opts[:upsert] if opts[:upsert]
           cmd[:maxTimeMS] = max_time_ms if max_time_ms
+          cmd[:bypassDocumentValidation] = !!opts[:bypass_document_validation]
           write_with_retry do
             value = database.command(cmd).first['value']
             value unless value.nil? || value.empty?
@@ -189,7 +190,8 @@ module Mongo
                            Operation::UPSERT => !!opts[:upsert] },
               :db_name => collection.database.name,
               :coll_name => collection.name,
-              :write_concern => collection.write_concern
+              :write_concern => collection.write_concern,
+              :bypass_document_validation => !!opts[:bypass_document_validation]
             ).execute(next_primary.context)
           end
         end

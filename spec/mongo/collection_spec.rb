@@ -4,10 +4,17 @@ describe Mongo::Collection do
 
   after do
     authorized_collection.delete_many
+    collection_with_validator.drop()
   end
 
   let(:collection_invalid_write_concern) do
     authorized_collection.client.with(write: { w: (WRITE_CONCERN[:w] + 1) })[authorized_collection.name]
+  end
+  let(:collection_with_validator) do
+    authorized_client[:validating,
+                      :validator => { :a => { '$exists' => true } }].tap do |c|
+      c.create
+    end
   end
 
   describe '#==' do
@@ -697,6 +704,7 @@ describe Mongo::Collection do
 
     after do
       authorized_collection.delete_many
+      collection_with_validator.delete_many
     end
 
     let(:result) do
@@ -723,12 +731,55 @@ describe Mongo::Collection do
         }.to raise_exception(Mongo::Error::BulkWriteError)
       end
     end
+
+    context 'when collection has a validator', if: find_command_enabled? do
+
+      context 'when the document is valid' do
+
+        let(:result) do
+          collection_with_validator.insert_many([{ a: 1 }, { a: 2 }])
+        end
+
+        it 'inserts successfully' do
+          expect(result.inserted_count).to eq(2)
+        end
+      end
+
+      context 'when the document is invalid' do
+
+        context 'when bypass_document_validation is not set' do
+
+          let(:result2) do
+            collection_with_validator.insert_many([{ x: 1 }, { x: 2 }])
+          end
+
+          it 'raises a BulkWriteError' do
+            expect {
+              result2
+            }.to raise_exception(Mongo::Error::BulkWriteError)
+          end
+        end
+
+        context 'when bypass_document_validation is true' do
+
+          let(:result3) do
+            collection_with_validator.insert_many(
+                [{ x: 1 }, { x: 2 }], :bypass_document_validation => true)
+          end
+
+          it 'inserts successfully' do
+            expect(result3.inserted_count).to eq(2)
+          end
+        end
+      end
+    end
   end
 
   describe '#insert_one' do
 
     after do
       authorized_collection.delete_many
+      collection_with_validator.delete_many
     end
 
     let(:result) do
@@ -758,6 +809,48 @@ describe Mongo::Collection do
         expect {
           result
         }.to raise_exception(Mongo::Error::OperationFailure)
+      end
+    end
+
+    context 'when collection has a validator', if: find_command_enabled? do
+
+      context 'when the document is valid' do
+
+        let(:result) do
+          collection_with_validator.insert_one({ a: 1 })
+        end
+
+        it 'inserts successfully' do
+          expect(result.written_count).to eq(1)
+        end
+      end
+
+      context 'when the document is invalid' do
+
+        context 'when bypass_document_validation is not set' do
+
+          let(:result2) do
+            collection_with_validator.insert_one({ x: 1 })
+          end
+
+          it 'raises a OperationFailure' do
+            expect {
+              result2
+            }.to raise_exception(Mongo::Error::OperationFailure)
+          end
+        end
+
+        context 'when bypass_document_validation is true' do
+
+          let(:result3) do
+            collection_with_validator.insert_one(
+                { x: 1 }, :bypass_document_validation => true)
+          end
+
+          it 'inserts successfully' do
+            expect(result3.written_count).to eq(1)
+          end
+        end
       end
     end
   end
@@ -816,7 +909,7 @@ describe Mongo::Collection do
     context 'when options are provided' do
 
       let(:options) do
-        { :allow_disk_use => true }
+        { :allow_disk_use => true, :bypass_document_validation => true }
       end
 
       it 'sets the options on the Aggregation object' do
@@ -1156,6 +1249,56 @@ describe Mongo::Collection do
         }.to raise_exception(Mongo::Error::OperationFailure)
       end
     end
+
+    context 'when collection has a validator', if: find_command_enabled? do
+
+      before do
+        collection_with_validator.insert_one({ a: 1 })
+      end
+
+      after do
+        collection_with_validator.delete_many
+      end
+
+      context 'when the document is valid' do
+
+        let(:result) do
+          collection_with_validator.replace_one({ a: 1 }, { a: 5 })
+        end
+
+        it 'replaces successfully' do
+          expect(result.modified_count).to eq(1)
+        end
+      end
+
+      context 'when the document is invalid' do
+
+        context 'when bypass_document_validation is not set' do
+
+          let(:result2) do
+            collection_with_validator.replace_one({ a: 1 }, { x: 5 })
+          end
+
+          it 'raises OperationFailure' do
+            expect {
+              result2
+            }.to raise_exception(Mongo::Error::OperationFailure)
+          end
+        end
+
+        context 'when bypass_document_validation is true' do
+
+          let(:result3) do
+            collection_with_validator.replace_one(
+                { a: 1 }, { x: 1 }, :bypass_document_validation => true)
+          end
+
+          it 'replaces successfully' do
+            expect(result3.written_count).to eq(1)
+          end
+        end
+      end
+    end
   end
 
   describe '#update_many' do
@@ -1262,6 +1405,59 @@ describe Mongo::Collection do
         }.to raise_exception(Mongo::Error::OperationFailure)
       end
     end
+
+    context 'when collection has a validator', if: find_command_enabled? do
+
+      before do
+        collection_with_validator.insert_many([{ a: 1 }, { a: 2 }])
+      end
+
+      after do
+        collection_with_validator.delete_many
+      end
+
+      context 'when the document is valid' do
+
+        let(:result) do
+          collection_with_validator.update_many(
+              { :a => { '$gt' => 0 } }, '$inc' => { :a => 1 } )
+        end
+
+        it 'updates successfully' do
+          expect(result.modified_count).to eq(2)
+        end
+      end
+
+      context 'when the document is invalid' do
+
+        context 'when bypass_document_validation is not set' do
+
+          let(:result2) do
+            collection_with_validator.update_many(
+                { :a => { '$gt' => 0 } }, '$unset' => { :a => '' })
+          end
+
+          it 'raises OperationFailure' do
+            expect {
+              result2
+            }.to raise_exception(Mongo::Error::OperationFailure)
+          end
+        end
+
+        context 'when bypass_document_validation is true' do
+
+          let(:result3) do
+            collection_with_validator.update_many(
+                { :a => { '$gt' => 0 } }, { '$unset' => { :a => '' } },
+                :bypass_document_validation => true)
+          end
+
+          it 'updates successfully' do
+            expect(result3.written_count).to eq(2)
+          end
+        end
+      end
+    end
   end
 
   describe '#update_one' do
@@ -1362,6 +1558,59 @@ describe Mongo::Collection do
         expect {
           result
         }.to raise_exception(Mongo::Error::OperationFailure)
+      end
+    end
+
+    context 'when collection has a validator', if: find_command_enabled? do
+
+      before do
+        collection_with_validator.insert_one({ a: 1 })
+      end
+
+      after do
+        collection_with_validator.delete_many
+      end
+
+      context 'when the document is valid' do
+
+        let(:result) do
+          collection_with_validator.update_one(
+              { :a => { '$gt' => 0 } }, '$inc' => { :a => 1 } )
+        end
+
+        it 'updates successfully' do
+          expect(result.modified_count).to eq(1)
+        end
+      end
+
+      context 'when the document is invalid' do
+
+        context 'when bypass_document_validation is not set' do
+
+          let(:result2) do
+            collection_with_validator.update_one(
+                { :a => { '$gt' => 0 } }, '$unset' => { :a => '' })
+          end
+
+          it 'raises OperationFailure' do
+            expect {
+              result2
+            }.to raise_exception(Mongo::Error::OperationFailure)
+          end
+        end
+
+        context 'when bypass_document_validation is true' do
+
+          let(:result3) do
+            collection_with_validator.update_one(
+                { :a => { '$gt' => 0 } }, { '$unset' => { :a => '' } },
+                :bypass_document_validation => true)
+          end
+
+          it 'updates successfully' do
+            expect(result3.written_count).to eq(1)
+          end
+        end
       end
     end
   end
@@ -1615,6 +1864,60 @@ describe Mongo::Collection do
         }.to raise_exception(Mongo::Error::OperationFailure)
       end
     end
+
+    context 'when collection has a validator', if: find_command_enabled? do
+
+      before do
+        collection_with_validator.insert_one({ a: 1 })
+      end
+
+      after do
+        collection_with_validator.delete_many
+      end
+
+      context 'when the document is valid' do
+
+        let(:result) do
+          collection_with_validator.find_one_and_update(
+              { a: 1 }, { '$inc' => { :a => 1 } }, :return_document => :after)
+        end
+
+        it 'updates successfully' do
+          expect(result['a']).to eq(2)
+        end
+      end
+
+      context 'when the document is invalid' do
+
+        context 'when bypass_document_validation is not set' do
+
+          let(:result2) do
+            collection_with_validator.find_one_and_update(
+                { a: 1 }, { '$unset' => { :a => '' } }, :return_document => :after)
+          end
+
+          it 'raises OperationFailure' do
+            expect {
+              result2
+            }.to raise_exception(Mongo::Error::OperationFailure)
+          end
+        end
+
+        context 'when bypass_document_validation is true' do
+
+          let(:result3) do
+            collection_with_validator.find_one_and_update(
+                { a: 1 }, { '$unset' => { :a => '' } },
+                :bypass_document_validation => true,
+                :return_document => :after)
+          end
+
+          it 'updates successfully' do
+            expect(result3['a']).to be_nil
+          end
+        end
+      end
+    end
   end
 
   describe '#find_one_and_replace' do
@@ -1741,6 +2044,60 @@ describe Mongo::Collection do
         expect {
           result
         }.to raise_exception(Mongo::Error::OperationFailure)
+      end
+    end
+
+    context 'when collection has a validator', if: find_command_enabled? do
+
+      before do
+        collection_with_validator.insert_one({ a: 1 })
+      end
+
+      after do
+        collection_with_validator.delete_many
+      end
+
+      context 'when the document is valid' do
+
+        let(:result) do
+          collection_with_validator.find_one_and_replace(
+              { a: 1 }, { a: 5 }, :return_document => :after)
+        end
+
+        it 'replaces successfully when document is valid' do
+          expect(result[:a]).to eq(5)
+        end
+      end
+
+      context 'when the document is invalid' do
+
+        context 'when bypass_document_validation is not set' do
+
+          let(:result2) do
+            collection_with_validator.find_one_and_replace(
+                { a: 1 }, { x: 5 }, :return_document => :after)
+          end
+
+          it 'raises OperationFailure' do
+            expect {
+              result2
+            }.to raise_exception(Mongo::Error::OperationFailure)
+          end
+        end
+
+        context 'when bypass_document_validation is true' do
+
+          let(:result3) do
+            collection_with_validator.find_one_and_replace(
+                { a: 1 }, { x: 1 }, :bypass_document_validation => true,
+                :return_document => :after)
+          end
+
+          it 'replaces successfully' do
+            expect(result3[:x]).to eq(1)
+            expect(result3[:a]).to be_nil
+          end
+        end
       end
     end
   end

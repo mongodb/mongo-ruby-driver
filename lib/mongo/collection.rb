@@ -247,6 +247,8 @@ module Mongo
     #   aggregation to run.
     # @option options [ true, false ] :use_cursor Indicates whether the command will request that the server
     #   provide results using a cursor.
+    # @option options [ true, false ] :bypass_document_validation Whether or
+    #   not to skip document level validation.
     #
     # @return [ Aggregation ] The aggregation object.
     #
@@ -338,6 +340,7 @@ module Mongo
           :db_name => database.name,
           :coll_name => name,
           :write_concern => write_concern,
+          :bypass_document_validation => !!options[:bypass_document_validation],
           :options => options
         ).execute(next_primary.context)
       end
@@ -371,6 +374,8 @@ module Mongo
     #   should be executed in order.
     # @option options [ Hash ] :write_concern The write concern options.
     #   Can be :w => Integer, :fsync => Boolean, :j => Boolean.
+    # @option options [ true, false ] :bypass_document_validation Whether or
+    #   not to skip document level validation.
     #
     # @return [ BulkWrite::Result ] The result of the operation.
     #
@@ -436,6 +441,8 @@ module Mongo
     #
     # @option options [ true, false ] :upsert Whether to upsert if the
     #   document doesn't exist.
+    # @option options [ true, false ] :bypass_document_validation Whether or
+    #   not to skip document level validation.
     #
     # @return [ Result ] The response from the database.
     #
@@ -455,6 +462,8 @@ module Mongo
     #
     # @option options [ true, false ] :upsert Whether to upsert if the
     #   document doesn't exist.
+    # @option options [ true, false ] :bypass_document_validation Whether or
+    #   not to skip document level validation.
     #
     # @return [ Result ] The response from the database.
     #
@@ -474,6 +483,8 @@ module Mongo
     #
     # @option options [ true, false ] :upsert Whether to upsert if the
     #   document doesn't exist.
+    # @option options [ true, false ] :bypass_document_validation Whether or
+    #   not to skip document level validation.
     #
     # @return [ Result ] The response from the database.
     #
@@ -524,6 +535,8 @@ module Mongo
     #   will be sorted.
     # @option options [ Symbol ] :return_document Either :before or :after.
     # @option options [ true, false ] :upsert Whether to upsert if the document doesn't exist.
+    # @option options [ true, false ] :bypass_document_validation Whether or
+    #   not to skip document level validation.
     #
     # @return [ BSON::Document ] The document.
     #
@@ -552,6 +565,8 @@ module Mongo
     #   will be sorted.
     # @option options [ Symbol ] :return_document Either :before or :after.
     # @option options [ true, false ] :upsert Whether to upsert if the document doesn't exist.
+    # @option options [ true, false ] :bypass_document_validation Whether or
+    #   not to skip document level validation.
     #
     # @return [ BSON::Document ] The document.
     #

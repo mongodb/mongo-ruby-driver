@@ -31,7 +31,8 @@ module Mongo
             js_mode: 'jsMode',
             out: 'out',
             scope: 'scope',
-            verbose: 'verbose'
+            verbose: 'verbose',
+            bypass_document_validation: 'bypassDocumentValidation'
           ).freeze
 
           def_delegators :@view, :collection, :database, :filter, :read
