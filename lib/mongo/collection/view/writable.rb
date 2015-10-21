@@ -52,8 +52,9 @@ module Mongo
         # @param [ Hash ] opts The options.
         #
         # @option opts [ Symbol ] :return_document Either :before or :after.
-        # @option opts [ true, false ] :upsert Whether to upsert if the
-        #   document doesn't exist.
+        # @option opts [ true, false ] :upsert Whether to upsert if the document doesn't exist.
+        # @option opts [ true, false ] :bypass_document_validation Whether or
+        #   not to skip document level validation.
         #
         # @return [ BSON::Document ] The document.
         #
@@ -71,6 +72,9 @@ module Mongo
         # @param [ Hash ] opts The options.
         #
         # @option opts [ Symbol ] :return_document Either :before or :after.
+        # @option opts [ true, false ] :upsert Whether to upsert if the document doesn't exist.
+        # @option opts [ true, false ] :bypass_document_validation Whether or
+        #   not to skip document level validation.
         #
         # @return [ BSON::Document ] The document.
         #
