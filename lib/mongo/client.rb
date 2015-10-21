@@ -46,7 +46,6 @@ module Mongo
       :wait_queue_timeout,
       :connect_timeout,
       :read,
-      :roles,
       :replica_set,
       :ssl,
       :ssl_cert,
@@ -160,8 +159,6 @@ module Mongo
     #   and local_threshold.
     #   :mode can be one of :secondary, :secondary_preferred, :primary,
     #   :primary_preferred, :nearest.
-    # @option options [ Array<Hash, String> ] :roles The list of roles for the
-    #   user.
     # @option options [ Symbol ] :replica_set The name of the replica set to
     #   connect to. Servers not in this replica set will be ignored.
     # @option options [ true, false ] :ssl Whether to use SSL.
