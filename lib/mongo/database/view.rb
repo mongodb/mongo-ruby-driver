@@ -53,8 +53,12 @@ module Mongo
         server = next_primary
         @limit = -1 if server.features.list_collections_enabled?
         collections_info(server).collect do |info|
-          server.features.list_collections_enabled? ?
-            info[Database::NAME] : info[Database::NAME].sub("#{@database.name}.", '')
+          if server.features.list_collections_enabled?
+            info[Database::NAME]
+          else
+            (info[Database::NAME] &&
+              info[Database::NAME].sub("#{@database.name}.", ''))
+          end
         end
       end
 
