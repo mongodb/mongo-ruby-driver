@@ -1,7 +1,11 @@
 # Create a single field index
 
-result = client[:restaurants].indexes.create(cuisine: Mongo::Index::ASCENDING)
+result = client[:restaurants].indexes.create_one(cuisine: Mongo::Index::ASCENDING)
 
 # Create a compound index
 
-result = client[:restaurants].indexes.create(cuisine: 1, zipcode: Mongo::Index::DESCENDING)
+result = client[:restaurants].indexes.create_one(cuisine: 1, zipcode: Mongo::Index::DESCENDING)
+
+# Create a single field unique index
+
+result = client[:restaurants].indexes.create_one({ cuisine: Mongo::Index::ASCENDING }, unique: true)
