@@ -35,6 +35,7 @@ module Mongo
           cmd[:fields] = projection if projection
           cmd[:sort] = sort if sort
           cmd[:maxTimeMS] = max_time_ms if max_time_ms
+          cmd[:writeConcern] = options[:write_concern] || collection.write_concern.options
           write_with_retry do
             database.command(cmd).first['value']
           end
@@ -55,6 +56,8 @@ module Mongo
         # @option opts [ true, false ] :upsert Whether to upsert if the document doesn't exist.
         # @option opts [ true, false ] :bypass_document_validation Whether or
         #   not to skip document level validation.
+        # @option options [ Hash ] :write_concern The write concern options.
+        #   Defaults to the collection's write concern.
         #
         # @return [ BSON::Document ] The document.
         #
@@ -75,6 +78,8 @@ module Mongo
         # @option opts [ true, false ] :upsert Whether to upsert if the document doesn't exist.
         # @option opts [ true, false ] :bypass_document_validation Whether or
         #   not to skip document level validation.
+        # @option options [ Hash ] :write_concern The write concern options.
+        #   Defaults to the collection's write concern.
         #
         # @return [ BSON::Document ] The document.
         #
@@ -88,6 +93,7 @@ module Mongo
           cmd[:upsert] = opts[:upsert] if opts[:upsert]
           cmd[:maxTimeMS] = max_time_ms if max_time_ms
           cmd[:bypassDocumentValidation] = !!opts[:bypass_document_validation]
+          cmd[:writeConcern] = opts[:write_concern] || collection.write_concern.options
           write_with_retry do
             value = database.command(cmd).first['value']
             value unless value.nil? || value.empty?

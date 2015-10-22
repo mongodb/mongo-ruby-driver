@@ -507,6 +507,8 @@ module Mongo
     # @option options [ Hash ] :projection The fields to include or exclude in the returned doc.
     # @option options [ Hash ] :sort The key and direction pairs by which the result set
     #   will be sorted.
+    # @option options [ Hash ] :write_concern The write concern options.
+    #   Defaults to the collection's write concern.
     #
     # @return [ BSON::Document, nil ] The document, if found.
     #
@@ -537,6 +539,8 @@ module Mongo
     # @option options [ true, false ] :upsert Whether to upsert if the document doesn't exist.
     # @option options [ true, false ] :bypass_document_validation Whether or
     #   not to skip document level validation.
+    # @option options [ Hash ] :write_concern The write concern options.
+    #   Defaults to the collection's write concern.
     #
     # @return [ BSON::Document ] The document.
     #
@@ -567,6 +571,8 @@ module Mongo
     # @option options [ true, false ] :upsert Whether to upsert if the document doesn't exist.
     # @option options [ true, false ] :bypass_document_validation Whether or
     #   not to skip document level validation.
+    # @option options [ Hash ] :write_concern The write concern options.
+    #   Defaults to the collection's write concern.
     #
     # @return [ BSON::Document ] The document.
     #
