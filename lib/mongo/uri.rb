@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require 'uri'
+
 module Mongo
 
   # The URI class provides a way for users to parse the MongoDB uri as
