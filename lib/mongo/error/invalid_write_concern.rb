@@ -27,7 +27,8 @@ module Mongo
       #
       # @since 2.2.0
       def initialize
-        super('Invalid write concern options.')
+        super('Invalid write concern options. If w is an Integer, it must be greater than or equal to 0. ' +
+              'If w is 0, it cannot be combined with a true value for fsync or j (journal).')
       end
     end
   end
