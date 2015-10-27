@@ -1733,6 +1733,20 @@ describe Mongo::Collection do
         }.to raise_error(Mongo::Error::OperationFailure)
       end
     end
+
+    context 'when the collection has a write concern', if: find_command_enabled? && standalone? do
+
+      let(:collection) do
+        authorized_collection.with(write: { w: 2 })
+      end
+
+      it 'uses the write concern' do
+        expect {
+          collection.find_one_and_delete(selector,
+                                         write_concern: { w: 2 })
+        }.to raise_error(Mongo::Error::OperationFailure)
+      end
+    end
   end
 
   describe '#find_one_and_update' do
@@ -1946,8 +1960,24 @@ describe Mongo::Collection do
 
       it 'uses the write concern' do
         expect {
-          authorized_collection.find_one_and_delete(selector,
-                                                    write_concern: { w: 2 })
+          authorized_collection.find_one_and_update(selector,
+                                         { '$set' => { field: 'testing' }},
+                                         write_concern: { w: 2 })
+        }.to raise_error(Mongo::Error::OperationFailure)
+      end
+    end
+
+    context 'when the collection has a write concern', if: find_command_enabled? && standalone? do
+
+      let(:collection) do
+        authorized_collection.with(write: { w: 2 })
+      end
+
+      it 'uses the write concern' do
+        expect {
+          collection.find_one_and_update(selector,
+                                         { '$set' => { field: 'testing' }},
+                                         write_concern: { w: 2 })
         }.to raise_error(Mongo::Error::OperationFailure)
       end
     end
@@ -2138,8 +2168,24 @@ describe Mongo::Collection do
 
       it 'uses the write concern' do
         expect {
-          authorized_collection.find_one_and_delete(selector,
-                                                    write_concern: { w: 2 })
+          authorized_collection.find_one_and_replace(selector,
+                                                     { field: 'testing' },
+                                                     write_concern: { w: 2 })
+        }.to raise_error(Mongo::Error::OperationFailure)
+      end
+    end
+
+    context 'when the collection has a write concern', if: find_command_enabled? && standalone? do
+
+      let(:collection) do
+        authorized_collection.with(write: { w: 2 })
+      end
+
+      it 'uses the write concern' do
+        expect {
+          collection.find_one_and_replace(selector,
+                                          { field: 'testing' },
+                                          write_concern: { w: 2 })
         }.to raise_error(Mongo::Error::OperationFailure)
       end
     end
