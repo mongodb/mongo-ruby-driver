@@ -81,5 +81,31 @@ describe Mongo::WriteConcern do
         }.to raise_error(Mongo::Error::InvalidWriteConcern)
       end
     end
+
+    context 'when options are empty' do
+
+      let(:options) do
+        { }
+      end
+
+      it 'returns nil' do
+        expect(Mongo::WriteConcern.get(options)).to be_nil
+      end
+    end
+
+    context 'when w is greater than 0' do
+
+      let(:options) do
+        { w: 2, journal: true }
+      end
+
+      it 'returns an Acknowledged write concern object' do
+        expect(Mongo::WriteConcern.get(options)).to be_a(Mongo::WriteConcern::Acknowledged)
+      end
+
+      it 'sets the options' do
+        expect(Mongo::WriteConcern.get(options).options).to eq(options)
+      end
+    end
   end
 end

@@ -674,8 +674,8 @@ describe Mongo::Client do
 
       let(:client) { described_class.new(['127.0.0.1:27017'], :database => TEST_DB) }
 
-      it 'returns a acknowledged write concern' do
-        expect(concern.get_last_error).to eq(:getlasterror => 1, :w => 1)
+      it 'does not set the write concern' do
+        expect(concern).to be_nil
       end
     end
 
@@ -711,8 +711,10 @@ describe Mongo::Client do
             described_class.new(['127.0.0.1:27017'], :write => { :w => -1 }, :database => TEST_DB)
           end
 
-          it 'returns an unacknowledged write concern' do
-            expect(concern.get_last_error).to be_nil
+          it 'raises an error' do
+            expect {
+              concern
+            }.to raise_error(Mongo::Error::InvalidWriteConcern)
           end
         end
       end

@@ -76,12 +76,12 @@ module Mongo
     #
     # @since 2.0.0
     def get(options)
-      if options
+      if options && !options.empty?
         validate!(options)
         if unacknowledged?(options)
           Unacknowledged.new(options)
         else
-          Acknowledged.new(options || DEFAULT)
+          Acknowledged.new(options)
         end
       end
     end
