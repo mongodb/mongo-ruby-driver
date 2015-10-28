@@ -177,7 +177,7 @@ module Mongo
     #   execute operations on a socket.
     # @option options [ String ] :user The user name.
     # @option options [ Hash ] :write The write concern options. Can be :w =>
-    #   Integer, :fsync => Boolean, :j => Boolean.
+    #   Integer|String, :fsync => Boolean, :j => Boolean.
     # @option options [ true, false ] :monitoring Initializes a client without
     #   any default monitoring if false is provided.
     # @option options [ Logger ] :logger A custom logger if desired.
