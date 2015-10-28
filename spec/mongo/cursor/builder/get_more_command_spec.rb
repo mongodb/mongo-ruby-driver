@@ -116,11 +116,11 @@ describe Mongo::Cursor::Builder::GetMoreCommand do
 
           it_behaves_like 'a getmore command builder'
 
-          it 'does not include max time' do
+          it 'includes max time' do
             expect(selector[:maxTimeMS]).to eq(100)
           end
 
-          it 'includes max await time' do
+          it 'does not include max await time' do
             expect(selector[:maxAwaitTimeMS]).to be_nil
           end
 
