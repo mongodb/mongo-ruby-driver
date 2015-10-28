@@ -43,9 +43,10 @@ module Mongo
           def selector
             { delete: coll_name,
               deletes: deletes,
-              writeConcern: write_concern.options,
               ordered: ordered?
-            }
+            }.tap do |cmd|
+              cmd.merge!(writeConcern: write_concern.options) if write_concern
+            end
           end
         end
       end

@@ -430,7 +430,7 @@ module Mongo
       #
       # @since 2.0.0
       def write_concern
-        @spec[WRITE_CONCERN] || WriteConcern.get(WriteConcern::DEFAULT)
+        @spec[WRITE_CONCERN]
       end
 
       # The read preference for this operation.

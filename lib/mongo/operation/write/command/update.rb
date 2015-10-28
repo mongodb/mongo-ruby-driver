@@ -46,14 +46,13 @@ module Mongo
           #
           # @return [ Hash ] The selector describing this update operation.
           def selector
-            cmd = {
-                update: coll_name,
-                updates: updates,
-                writeConcern: write_concern.options,
-                ordered: ordered?
-            }
-            bypass_document_validation ? cmd.merge!(
-                :bypassDocumentValidation => true) : cmd
+            { update: coll_name,
+              updates: updates,
+              ordered: ordered?
+            }.tap do |cmd|
+              cmd.merge!(writeConcern: write_concern.options) if write_concern
+              cmd.merge!(:bypassDocumentValidation => true) if bypass_document_validation
+            end
           end
         end
       end

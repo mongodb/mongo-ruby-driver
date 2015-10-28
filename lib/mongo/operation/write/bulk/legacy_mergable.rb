@@ -42,7 +42,7 @@ module Mongo
                             'code' => reply.documents.first[Error::CODE] }
               end
               errors
-            end
+            end if @replies
           end
 
           # Aggregate the write concern errors returned from this result.
@@ -71,7 +71,7 @@ module Mongo
                             'code' => code } if error_string
               end
               errors
-            end
+            end if @replies
           end
 
           private

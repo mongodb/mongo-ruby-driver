@@ -52,7 +52,7 @@ module Mongo
     # The default write concern is to acknowledge on a single server.
     #
     # @since 2.0.0
-    DEFAULT = { W => 1 }.freeze
+    DEFAULT = { }.freeze
 
     # Get a write concern mode for the provided options.
     #
@@ -72,16 +72,31 @@ module Mongo
     #
     # @return [ Unacknowledged, Acknowledged ] The appropriate concern.
     #
+    # @raise [ Error::InvalidWriteConcern ] If the write concern is invalid.
+    #
     # @since 2.0.0
     def get(options)
-      if unacknowledged?(options)
-        Unacknowledged.new(options)
-      else
-        Acknowledged.new(options || DEFAULT)
+      if options
+        validate!(options)
+        if unacknowledged?(options)
+          Unacknowledged.new(options)
+        else
+          Acknowledged.new(options)
+        end
       end
     end
 
     private
+
+    def validate!(options)
+      if options[W]
+        if options[W] == 0 && (options[J] || options[FSYNC])
+          raise Mongo::Error::InvalidWriteConcern.new
+        elsif options[W] < 0
+          raise Mongo::Error::InvalidWriteConcern.new
+        end
+      end
+    end
 
     # Determine if the options are for an unacknowledged write concern.
     #
@@ -93,7 +108,7 @@ module Mongo
     #
     # @since 2.0.0
     def unacknowledged?(options)
-      options && (options[W] == 0 || options[W] == -1)
+      options[W] == 0
     end
   end
 end

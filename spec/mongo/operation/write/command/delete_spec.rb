@@ -56,6 +56,31 @@ describe Mongo::Operation::Write::Command::Delete do
     end
   end
 
+  describe 'write concern' do
+
+    context 'when write concern is not specified' do
+
+      let(:spec) do
+        { :deletes       => deletes,
+          :db_name       => db_name,
+          :coll_name     => coll_name,
+          :ordered       => true
+        }
+      end
+
+      it 'does not include write concern in the selector' do
+        expect(op.send(:selector)[:writeConcern]).to be_nil
+      end
+    end
+
+    context 'when write concern is specified' do
+
+      it 'includes write concern in the selector' do
+        expect(op.send(:selector)[:writeConcern]).to eq(write_concern.options)
+      end
+    end
+  end
+
   describe '#execute' do
 
     context 'server' do

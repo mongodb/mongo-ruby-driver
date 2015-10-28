@@ -35,7 +35,9 @@ module Mongo
           cmd[:fields] = projection if projection
           cmd[:sort] = sort if sort
           cmd[:maxTimeMS] = max_time_ms if max_time_ms
-          cmd[:writeConcern] = options[:write_concern] || collection.write_concern.options
+          wc = options[:write_concern] || (collection.write_concern &&
+                                           collection.write_concern.options)
+          cmd[:writeConcern] = wc if wc
           write_with_retry do
             database.command(cmd).first['value']
           end
@@ -93,7 +95,9 @@ module Mongo
           cmd[:upsert] = opts[:upsert] if opts[:upsert]
           cmd[:maxTimeMS] = max_time_ms if max_time_ms
           cmd[:bypassDocumentValidation] = !!opts[:bypass_document_validation]
-          cmd[:writeConcern] = opts[:write_concern] || collection.write_concern.options
+          wc = options[:write_concern] || (collection.write_concern &&
+                                           collection.write_concern.options)
+          cmd[:writeConcern] = wc if wc
           write_with_retry do
             value = database.command(cmd).first['value']
             value unless value.nil? || value.empty?
