@@ -679,6 +679,19 @@ describe Mongo::Collection do
         }.to raise_exception(Mongo::Error::BulkWriteError)
       end
     end
+
+    context "when the documents exceed the max bson size" do
+
+      let(:documents) do
+        [{ '_id' => 1, 'name' => '1'*17000000 }]
+      end
+
+      it 'raise s MaxBSONSize error' do
+        expect {
+          authorized_collection.insert_many(documents)
+        }.to raise_error(Mongo::Error::MaxBSONSize)
+      end
+    end
   end
 
   describe '#insert_one' do
