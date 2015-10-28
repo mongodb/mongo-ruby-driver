@@ -77,18 +77,22 @@ describe Mongo::Cursor::Builder::GetMoreCommand do
       end
     end
 
-    context 'when a max time is specified' do
+    context 'when a max await time is specified' do
 
       context 'when the cursor is not tailable' do
 
         let(:view) do
-          Mongo::Collection::View.new(authorized_collection, {}, max_time_ms: 100)
+          Mongo::Collection::View.new(authorized_collection, {}, max_await_time_ms: 100)
         end
 
         it_behaves_like 'a getmore command builder'
 
         it 'does not include max time' do
           expect(selector[:maxTimeMS]).to be_nil
+        end
+
+        it 'does not include max await time' do
+          expect(selector[:maxAwaitTimeMS]).to be_nil
         end
 
         it 'does not include batch size' do
@@ -106,7 +110,7 @@ describe Mongo::Cursor::Builder::GetMoreCommand do
               {},
               await_data: true,
               tailable: true,
-              max_time_ms: 100
+              max_await_time_ms: 100
             )
           end
 
@@ -114,6 +118,10 @@ describe Mongo::Cursor::Builder::GetMoreCommand do
 
           it 'includes max time' do
             expect(selector[:maxTimeMS]).to eq(100)
+          end
+
+          it 'does not include max await time' do
+            expect(selector[:maxAwaitTimeMS]).to be_nil
           end
 
           it 'does not include batch size' do
@@ -128,7 +136,7 @@ describe Mongo::Cursor::Builder::GetMoreCommand do
               authorized_collection,
               {},
               tailable: true,
-              max_time_ms: 100
+              max_await_time_ms: 100
             )
           end
 
@@ -136,6 +144,10 @@ describe Mongo::Cursor::Builder::GetMoreCommand do
 
           it 'does not include max time' do
             expect(selector[:maxTimeMS]).to be_nil
+          end
+
+          it 'does not include max await time' do
+            expect(selector[:maxAwaitTimeMS]).to be_nil
           end
 
           it 'does not include batch size' do

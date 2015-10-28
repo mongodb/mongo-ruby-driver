@@ -56,10 +56,11 @@ module Mongo
         def get_more_command
           command = { :getMore => cursor.id, :collection => collection_name }
           command[:batchSize] = batch_size if batch_size
-          # @see http://bit.ly/1OY26LL on this behaviour.
-          if view.respond_to?(:max_time_ms)
-            if (max_time_ms = view.max_time_ms) && view.options[:await_data]
-              command[:maxTimeMS] = max_time_ms
+          # If the max_await_time_ms option is set, then we set maxTimeMS on
+          # the get more command.
+          if view.respond_to?(:max_await_time_ms)
+            if view.max_await_time_ms && view.options[:await_data]
+              command[:maxTimeMS] = view.max_await_time_ms
             end
           end
           command
