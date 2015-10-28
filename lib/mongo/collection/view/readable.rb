@@ -388,6 +388,21 @@ module Mongo
           new(options.merge(Builder::Modifiers.map_driver_options(doc)))
         end
 
+        # A cumulative time limit in milliseconds for processing get more operations
+        # on a cursor.
+        #
+        # @example Set the max await time ms value.
+        #   view.max_await_time_ms(500)
+        #
+        # @param [ Integer ] max The max time in milliseconds.
+        #
+        # @return [ Integer, View ] Either the max await time ms value or a new +View+.
+        #
+        # @since 2.1.0
+        def max_await_time_ms(max = nil)
+          configure(:max_await_time_ms, max)
+        end
+
         # A cumulative time limit in milliseconds for processing operations on a cursor.
         #
         # @example Set the max time ms value.
