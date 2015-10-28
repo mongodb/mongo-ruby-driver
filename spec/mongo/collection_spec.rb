@@ -738,13 +738,10 @@ describe Mongo::Collection do
         [{ '_id' => 1, 'name' => '1'*17000000 }]
       end
 
-      context 'insert_many' do
-
-        it 'raise MaxBSONSize' do
-          expect {
-            authorized_collection.insert_many(documents)
-          }.to raise_error(Mongo::Error::MaxBSONSize)
-        end
+      it 'raises a MaxBSONSize error' do
+        expect {
+          authorized_collection.insert_many(documents)
+        }.to raise_error(Mongo::Error::MaxBSONSize)
       end
     end
 
