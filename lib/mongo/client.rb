@@ -58,7 +58,9 @@ module Mongo
       :write,
       :monitoring,
       :logger,
-      :truncate_logs
+      :truncate_logs,
+      :max_read_retries,
+      :read_retry_interval
     ].freeze
 
     # @return [ Mongo::Cluster ] cluster The cluster of servers for the client.
