@@ -52,7 +52,7 @@ module Mongo
     # The default write concern is to acknowledge on a single server.
     #
     # @since 2.0.0
-    DEFAULT = { W => 1 }.freeze
+    DEFAULT = { }.freeze
 
     # Get a write concern mode for the provided options.
     #
@@ -76,7 +76,7 @@ module Mongo
     #
     # @since 2.0.0
     def get(options)
-      if options && !options.empty?
+      if options
         validate!(options)
         if unacknowledged?(options)
           Unacknowledged.new(options)

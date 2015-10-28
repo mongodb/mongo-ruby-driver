@@ -4,6 +4,17 @@ describe Mongo::WriteConcern do
 
   describe '#get' do
 
+    context 'when no options are set' do
+
+      let(:options) do
+        { }
+      end
+
+      it 'returns an Acknowledged write concern object' do
+        expect(Mongo::WriteConcern.get(options)).to be_a(Mongo::WriteConcern::Acknowledged)
+      end
+    end
+
     context 'when w is 0' do
 
       context 'when no other options are provided' do
@@ -79,17 +90,6 @@ describe Mongo::WriteConcern do
         expect {
           Mongo::WriteConcern.get(options)
         }.to raise_error(Mongo::Error::InvalidWriteConcern)
-      end
-    end
-
-    context 'when options are empty' do
-
-      let(:options) do
-        { }
-      end
-
-      it 'returns nil' do
-        expect(Mongo::WriteConcern.get(options)).to be_nil
       end
     end
 
