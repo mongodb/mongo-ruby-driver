@@ -732,6 +732,22 @@ describe Mongo::Collection do
       end
     end
 
+    context "when the documents exceed the max bson size" do
+
+      let(:documents) do
+        [{ '_id' => 1, 'name' => '1'*17000000 }]
+      end
+
+      context 'insert_many' do
+
+        it 'raise MaxBSONSize' do
+          expect {
+            authorized_collection.insert_many(documents)
+          }.to raise_error(Mongo::Error::MaxBSONSize)
+        end
+      end
+    end
+
     context 'when collection has a validator', if: find_command_enabled? do
 
       context 'when the document is valid' do
