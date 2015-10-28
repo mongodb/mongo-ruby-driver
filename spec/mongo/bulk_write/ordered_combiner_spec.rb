@@ -94,6 +94,19 @@ describe Mongo::BulkWrite::OrderedCombiner do
 
     context 'when provided a series of insert one' do
 
+      context 'when providing only one operation' do
+
+        let(:requests) do
+          [{ insert_one: { _id: 0 }}]
+        end
+
+        it 'returns a single insert one' do
+          expect(combiner.combine).to eq(
+            [{ insert_one: [{ _id: 0 }]}]
+          )
+        end
+      end
+
       context 'when the documents are valid' do
 
         let(:requests) do
