@@ -92,7 +92,7 @@ module Mongo
       if options[W]
         if options[W] == 0 && (options[J] || options[FSYNC])
           raise Mongo::Error::InvalidWriteConcern.new
-        elsif options[W] < 0
+        elsif options[W].is_a?(Integer) && options[W] < 0
           raise Mongo::Error::InvalidWriteConcern.new
         end
       end
