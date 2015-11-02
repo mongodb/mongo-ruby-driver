@@ -13,7 +13,7 @@ describe Mongo::Cursor do
     end
 
     let(:cursor) do
-      described_class.new(view, reply, authorized_primary)
+      described_class.new(view, reply, server)
     end
 
     context 'when no options are provided to the view' do
