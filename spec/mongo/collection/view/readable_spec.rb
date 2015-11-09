@@ -600,6 +600,11 @@ describe Mongo::Collection::View::Readable do
       it 'returns a new View' do
         expect(view.projection(new_projection)).not_to be(view)
       end
+
+      it 'returns only that field on the collection' do
+        authorized_collection.insert_one({v: 'value', a: 'other_value'})
+        view.projection(new_projection).first.keys.should =~ ['_id', 'v']
+      end
     end
 
     context 'when projection is not specified' do
