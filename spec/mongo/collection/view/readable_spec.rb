@@ -592,6 +592,10 @@ describe Mongo::Collection::View::Readable do
         { 'y' => 1 }
       end
 
+      before do
+        authorized_collection.insert_one(y: 'value', a: 'other_value')
+      end
+
       it 'sets the projection' do
         new_view = view.projection(new_projection)
         expect(new_view.projection).to eq(new_projection)
@@ -599,6 +603,10 @@ describe Mongo::Collection::View::Readable do
 
       it 'returns a new View' do
         expect(view.projection(new_projection)).not_to be(view)
+      end
+
+      it 'returns only that field on the collection' do
+        expect(view.projection(new_projection).first.keys).to match_array(['_id', 'y'])
       end
     end
 

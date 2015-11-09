@@ -73,7 +73,7 @@ describe Mongo::Collection::View::Builder::OpQuery do
       end
 
       it 'maps projection' do
-        expect(opts['projection']).to eq('name' => 1)
+        expect(opts['project']).to eq('name' => 1)
       end
 
       it 'maps hint' do
