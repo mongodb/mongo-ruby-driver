@@ -55,7 +55,7 @@ module Mongo
 
           def query_options
             BSON::Document.new(
-              projection: options[:projection],
+              project: options[:projection],
               skip: options[:skip],
               limit: options[:limit],
               flags: Flags.map_flags(options),
