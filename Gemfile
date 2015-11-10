@@ -17,18 +17,6 @@ group :development, :testing do
 end
 
 group :development do
-  if RUBY_VERSION > '1.9'
-    gem 'rb-fchange', :require => false # Windows
-    gem 'rb-fsevent', :require => false # OS X
-    gem 'rb-inotify', :require => false # Linux
-    gem 'terminal-notifier-guard'
-
-    gem 'guard-bundler'
-    gem 'guard-rspec', :platforms => :mri
-    gem 'guard-jruby-rspec', :platforms => :jruby
-    gem 'guard-yard', :platforms => [:mri_19, :mri_20]
-  end
-
   gem 'ruby-prof', :platforms => :mri
   gem 'pry-rescue'
   gem 'pry-nav'
