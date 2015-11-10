@@ -10,10 +10,6 @@ group :development, :testing do
   gem 'rspec', '~> 3.0'
   gem 'mime-types', '~> 1.25'
   gem 'httparty'
-
-  platforms :ruby_20, :ruby_21, :jruby do
-    gem 'coveralls', :require => false
-  end
 end
 
 group :development do

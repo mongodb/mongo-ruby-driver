@@ -1,22 +1,3 @@
-if RUBY_VERSION > '1.9' && RUBY_VERSION < '2.2'
-  require 'simplecov'
-  require 'coveralls'
-
-  SimpleCov.formatter = SimpleCov::Formatter::MultiFormatter[
-    SimpleCov::Formatter::HTMLFormatter,
-    Coveralls::SimpleCov::Formatter
-  ]
-
-  SimpleCov.start do
-    # report groups
-    add_group 'Wire Protocol', 'lib/mongo/protocol'
-    # filters
-    add_filter 'tasks'
-    add_filter 'spec'
-    add_filter 'bin'
-  end
-end
-
 TEST_SET = 'ruby-driver-rs'
 COVERAGE_MIN = 90
 CURRENT_PATH = File.expand_path(File.dirname(__FILE__))

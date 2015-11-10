@@ -19,13 +19,7 @@ RSpec::Core::RakeTask.new(:spec)
 task :default => :spec
 
 namespace :spec do
-  if RUBY_VERSION > '2.0'
-    require 'coveralls/rake/task'
-    Coveralls::RakeTask.new
-    task :ci => [:spec, 'coveralls:push']
-  else
-    task :ci => [:spec]
-  end
+  task :ci => [:spec]
 end
 
 task :release => :spec do
