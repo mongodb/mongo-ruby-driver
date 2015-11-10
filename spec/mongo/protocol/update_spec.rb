@@ -127,7 +127,7 @@ describe Mongo::Protocol::Update do
     include_examples 'message with a header'
 
     describe 'zero' do
-      let(:field) { bytes[16..19] }
+      let(:field) { bytes.to_s[16..19] }
 
       it 'serializes a zero' do
         expect(field).to be_int32(0)
@@ -135,14 +135,14 @@ describe Mongo::Protocol::Update do
     end
 
     describe 'namespace' do
-      let(:field) { bytes[20..36] }
+      let(:field) { bytes.to_s[20..36] }
       it 'serializes the namespace' do
         expect(field).to be_cstring(ns)
       end
     end
 
     describe 'flags' do
-      let(:field) { bytes[37..40] }
+      let(:field) { bytes.to_s[37..40] }
 
       context 'when no flags are provided' do
         it 'does not set any bits' do
@@ -170,14 +170,14 @@ describe Mongo::Protocol::Update do
     end
 
     describe 'selector' do
-      let(:field) { bytes[41..61] }
+      let(:field) { bytes.to_s[41..61] }
       it 'serializes the selector' do
         expect(field).to be_bson(selector)
       end
     end
 
     describe 'update' do
-      let(:field) { bytes[62..80] }
+      let(:field) { bytes.to_s[62..80] }
       it 'serializes the update' do
         expect(field).to be_bson(update_doc)
       end

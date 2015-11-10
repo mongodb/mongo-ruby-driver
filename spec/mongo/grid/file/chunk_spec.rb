@@ -140,7 +140,7 @@ describe Mongo::Grid::File::Chunk do
     end
 
     it 'returns the document as bson' do
-      expect(chunk.to_bson).to eq(document.to_bson)
+      expect(chunk.to_bson.to_s).to eq(document.to_bson.to_s)
     end
   end
 

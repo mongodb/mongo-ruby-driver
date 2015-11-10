@@ -147,7 +147,7 @@ describe Mongo::Protocol::Query do
     include_examples 'message with a header'
 
     describe 'flags' do
-      let(:field) { bytes[16..19] }
+      let(:field) { bytes.to_s[16..19] }
 
       context 'when no flags are provided' do
         it 'does not set any bits' do
@@ -217,13 +217,13 @@ describe Mongo::Protocol::Query do
     end
 
     describe 'namespace' do
-      let(:field) { bytes[20..36] }
+      let(:field) { bytes.to_s[20..36] }
       it 'serializes the namespace' do
         expect(field).to be_cstring(ns)
       end
 
       context 'when the namespace contains unicode characters' do
-        let(:field) { bytes[20..40] }
+        let(:field) { bytes.to_s[20..40] }
 
         let(:coll) do
           'områder'
@@ -237,7 +237,7 @@ describe Mongo::Protocol::Query do
     end
 
     describe 'skip' do
-      let(:field) { bytes[37..40] }
+      let(:field) { bytes.to_s[37..40] }
 
       context 'when no skip is provided' do
         it 'serializes a zero' do
@@ -255,7 +255,7 @@ describe Mongo::Protocol::Query do
     end
 
     describe 'limit' do
-      let(:field) { bytes[41..44] }
+      let(:field) { bytes.to_s[41..44] }
 
       context 'when no limit is provided' do
         it 'serializes a zero' do
@@ -272,14 +272,14 @@ describe Mongo::Protocol::Query do
     end
 
     describe 'selector' do
-      let(:field) { bytes[45..65] }
+      let(:field) { bytes.to_s[45..65] }
       it 'serializes the selector' do
         expect(field).to be_bson(selector)
       end
     end
 
     describe 'project' do
-      let(:field) { bytes[66..-1] }
+      let(:field) { bytes.to_s[66..-1] }
       context 'when no projection is provided' do
         it 'does not serialize a projection' do
           expect(field).to be_empty

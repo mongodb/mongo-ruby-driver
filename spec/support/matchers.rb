@@ -26,7 +26,7 @@ end
 
 RSpec::Matchers.define :be_bson do |hash|
   match do |actual|
-    actual == hash.to_bson
+    actual == hash.to_bson.to_s
   end
 end
 

@@ -133,8 +133,8 @@ module Mongo
         # @return [ String ] The raw BSON data.
         #
         # @since 2.0.0
-        def to_bson(encoded = ''.force_encoding(BSON::BINARY))
-          document.to_bson(encoded)
+        def to_bson(buffer = BSON::ByteBuffer.new)
+          document.to_bson(buffer)
         end
 
         class << self

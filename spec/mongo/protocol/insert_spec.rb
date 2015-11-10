@@ -124,7 +124,7 @@ describe Mongo::Protocol::Insert do
     include_examples 'message with a header'
 
     describe 'flags' do
-      let(:field) { bytes[16..19] }
+      let(:field) { bytes.to_s[16..19] }
 
       context 'when no flags are provided' do
         it 'does not set any bits' do
@@ -145,14 +145,14 @@ describe Mongo::Protocol::Insert do
     end
 
     describe 'namespace' do
-      let(:field) { bytes[20..36] }
+      let(:field) { bytes.to_s[20..36] }
       it 'serializes the namespace' do
         expect(field).to be_cstring(ns)
       end
     end
 
     describe 'documents' do
-      let(:field) { bytes[37..-1] }
+      let(:field) { bytes.to_s[37..-1] }
       it 'serializes the documents' do
         expect(field).to be_bson_sequence(docs)
       end

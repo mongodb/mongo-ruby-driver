@@ -50,7 +50,7 @@ module Mongo
         # @param value [String] Header value to be serialized.
         # @return [String] Buffer with serialized value.
         def self.serialize(buffer, value)
-          buffer << value.pack(HEADER_PACK)
+          buffer.put_bytes(value.pack(HEADER_PACK))
         end
 
         # Deserializes the header value from the IO stream
@@ -58,8 +58,8 @@ module Mongo
         # @param io [IO] IO stream containing the message header.
         # @return [Array<Fixnum>] Array consisting of the deserialized
         #   length, request id, response id, and op code.
-        def self.deserialize(io)
-          io.read(16).unpack(HEADER_PACK)
+        def self.deserialize(buffer)
+          buffer.get_bytes(16).unpack(HEADER_PACK)
         end
       end
 
@@ -74,8 +74,7 @@ module Mongo
         # @param value [String] The string to be serialized.
         # @return [String] Buffer with serialized value.
         def self.serialize(buffer, value)
-          buffer << value.force_encoding(BSON::BINARY)
-          buffer << NULL
+          buffer.put_cstring(value)
         end
       end
 
@@ -90,7 +89,7 @@ module Mongo
         # @param value [Fixnum] Ignored value.
         # @return [String] Buffer with serialized value.
         def self.serialize(buffer, value)
-          buffer << [ZERO].pack(INT32_PACK)
+          buffer.put_int32(ZERO)
         end
       end
 
@@ -105,15 +104,15 @@ module Mongo
         # @param value [Fixnum] 32-bit integer to be serialized.
         # @return [String] Buffer with serialized value.
         def self.serialize(buffer, value)
-          buffer << [value].pack(INT32_PACK)
+          buffer.put_int32(value)
         end
 
         # Deserializes a 32-bit Fixnum from the IO stream
         #
         # @param io [IO] IO stream containing the 32-bit integer
         # @return [Fixnum] Deserialized Int32
-        def self.deserialize(io)
-          io.read(4).unpack(INT32_PACK).first
+        def self.deserialize(buffer)
+          buffer.get_int32
         end
       end
 
@@ -128,15 +127,15 @@ module Mongo
         # @param value [Fixnum] 64-bit integer to be serialized.
         # @return [String] Buffer with serialized value.
         def self.serialize(buffer, value)
-          buffer << [value].pack(INT64_PACK)
+          buffer.put_int64(value)
         end
 
         # Deserializes a 64-bit Fixnum from the IO stream
         #
         # @param io [IO] IO stream containing the 64-bit integer.
         # @return [Fixnum] Deserialized Int64.
-        def self.deserialize(io)
-          io.read(8).unpack(INT64_PACK).first
+        def self.deserialize(buffer)
+          buffer.get_int64
         end
       end
 
@@ -151,9 +150,9 @@ module Mongo
         # @param value [Hash] Document to serialize as BSON.
         # @return [String] Buffer with serialized value.
         def self.serialize(buffer, value, max_bson_size = nil)
-          start_size = buffer.size
+          start_size = buffer.length
           value.to_bson(buffer)
-          if max_bson_size && buffer.size - start_size > max_bson_size
+          if max_bson_size && buffer.length - start_size > max_bson_size
             raise Error::MaxBSONSize.new(max_bson_size)
           end
         end
@@ -162,8 +161,8 @@ module Mongo
         #
         # @param io [IO] IO stream containing the BSON encoded document.
         # @return [Hash] The decoded BSON document.
-        def self.deserialize(io)
-          BSON::Document.from_bson(io)
+        def self.deserialize(buffer)
+          BSON::Document.from_bson(buffer)
         end
 
         # Whether there can be a size limit on this type after serialization.

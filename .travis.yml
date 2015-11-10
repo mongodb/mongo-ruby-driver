@@ -21,9 +21,10 @@ env:
     - CI="travis"
     - JRUBY_OPTS="--server -J-Xms512m -J-Xmx1024m"
   matrix:
-    - MONGODB=2.4.13
-    - MONGODB=2.6.9
-    - MONGODB=3.0.1
+    - MONGODB=2.4.14
+    - MONGODB=2.6.11
+    - MONGODB=3.0.7
+    - MONGODB=3.2.0-rc1
 
 before_script:
   - wget http://fastdl.mongodb.org/linux/mongodb-linux-x86_64-${MONGODB}.tgz -O /tmp/mongodb.tgz
@@ -52,13 +53,13 @@ matrix:
       jdk: openjdk7
     - rvm: 2.0.0
       jdk: oraclejdk8
-    - rvm: 2.1.5
+    - rvm: 2.1
       jdk: openjdk7
-    - rvm: 2.1.5
+    - rvm: 2.1
       jdk: oraclejdk8
-    - rvm: 2.2.0
+    - rvm: 2.2
       jdk: openjdk7
-    - rvm: 2.2.0
+    - rvm: 2.2
       jdk: oraclejdk8
     - rvm: ruby-head
       jdk: openjdk7

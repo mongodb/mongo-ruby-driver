@@ -64,13 +64,11 @@ module Mongo
       #
       # @param buffer [String] buffer where the message should be inserted
       # @return [String] buffer containing the serialized message
-      def serialize(buffer = ''.force_encoding('BINARY'), max_bson_size = nil)
-        start = buffer.bytesize
+      def serialize(buffer = BSON::ByteBuffer.new, max_bson_size = nil)
+        start = buffer.length
         serialize_header(buffer)
         serialize_fields(buffer, max_bson_size)
-        length = buffer.bytesize - start
-        buffer[start, 4] = Int32.serialize('', length)
-        buffer
+        buffer.replace_int32(start, buffer.length - start)
       end
 
       alias_method :to_s, :serialize
@@ -80,13 +78,14 @@ module Mongo
       # @param io [IO] Stream containing a message
       # @return [Message] Instance of a Message class
       def self.deserialize(io)
-        deserialize_header(io)
+        length = deserialize_header(BSON::ByteBuffer.new(io.read(16))).first
+        buffer = BSON::ByteBuffer.new(io.read(length - 16))
         message = allocate
         fields.each do |field|
           if field[:multi]
-            deserialize_array(message, io, field)
+            deserialize_array(message, buffer, field)
           else
-            deserialize_field(message, io, field)
+            deserialize_field(message, buffer, field)
           end
         end
         message

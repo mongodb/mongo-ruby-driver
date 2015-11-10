@@ -188,17 +188,17 @@ module Mongo
         end
       end
 
-      def write(messages, buffer = ''.force_encoding(BSON::BINARY))
+      def write(messages, buffer = BSON::ByteBuffer.new)
         start_size = 0
         messages.each do |message|
           message.serialize(buffer, max_bson_object_size)
           if max_message_size &&
-            (buffer.size - start_size) > max_message_size
+            (buffer.length - start_size) > max_message_size
             raise Error::MaxMessageSize.new(max_message_size)
-            start_size = buffer.size
+            start_size = buffer.length
           end
         end
-        ensure_connected{ |socket| socket.write(buffer) }
+        ensure_connected{ |socket| socket.write(buffer.to_s) }
       end
     end
   end
