@@ -22,6 +22,23 @@ module Mongo
       # @since 2.1.0
       module Idable
 
+        # The option for a custom id generator.
+        #
+        # @since 2.2.0
+        ID_GENERATOR = :id_generator.freeze
+
+        # Get the id generator.
+        #
+        # @example Get the id generator.
+        #   idable.id_generator
+        #
+        # @return [ IdGenerator ] The default or custom id generator.
+        #
+        # @since 2.2.0
+        def id_generator
+          @id_generator ||= (spec[ID_GENERATOR] || ObjectIdGenerator.new)
+        end
+
         private
 
         def id(doc)
@@ -35,7 +52,7 @@ module Mongo
         def ensure_ids(documents)
           @ids ||= []
           documents.collect do |doc|
-            doc_with_id = has_id?(doc) ? doc : doc.merge(_id: BSON::ObjectId.new)
+            doc_with_id = has_id?(doc) ? doc : doc.merge(_id: id_generator.generate)
             @ids << id(doc_with_id)
             doc_with_id
           end

@@ -719,6 +719,37 @@ describe Mongo::Collection do
       expect(result.inserted_ids.size).to eq(2)
     end
 
+    context 'when the client has a custom id generator' do
+
+      let(:generator) do
+        Class.new do
+          def generate
+            1
+          end
+        end.new
+      end
+
+      let(:custom_client) do
+        authorized_client.with(id_generator: generator)
+      end
+
+      let(:custom_collection) do
+        custom_client[TEST_COLL]
+      end
+
+      before do
+        custom_collection.insert_many([{ name: 'testing' }])
+      end
+
+      after do
+        custom_client.close
+      end
+
+      it 'inserts with the custom id' do
+        expect(custom_collection.find.first[:_id]).to eq(1)
+      end
+    end
+
     context 'when the inserts fail' do
 
       let(:result) do
@@ -822,6 +853,37 @@ describe Mongo::Collection do
         expect {
           result
         }.to raise_exception(Mongo::Error::OperationFailure)
+      end
+    end
+
+    context 'when the client has a custom id generator' do
+
+      let(:generator) do
+        Class.new do
+          def generate
+            1
+          end
+        end.new
+      end
+
+      let(:custom_client) do
+        authorized_client.with(id_generator: generator)
+      end
+
+      let(:custom_collection) do
+        custom_client[TEST_COLL]
+      end
+
+      before do
+        custom_collection.insert_one({ name: 'testing' })
+      end
+
+      after do
+        custom_client.close
+      end
+
+      it 'inserts with the custom id' do
+        expect(custom_collection.find.first[:_id]).to eq(1)
       end
     end
 
