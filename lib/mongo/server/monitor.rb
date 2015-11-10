@@ -35,16 +35,6 @@ module Mongo
       # @since 2.0.0
       MIN_SCAN_FREQUENCY = 0.5.freeze
 
-      # The command used for determining server status.
-      #
-      # @since 2.0.0
-      STATUS = { :ismaster => 1 }.freeze
-
-      # The constant for the ismaster command.
-      #
-      # @since 2.0.0
-      ISMASTER = Protocol::Query.new(Database::ADMIN, Database::COMMAND, STATUS, :limit => -1)
-
       # The weighting factor (alpha) for calculating the average moving round trip time.
       #
       # @since 2.0.0
@@ -170,8 +160,7 @@ module Mongo
         @mutex.synchronize do
           start = Time.now
           begin
-            result = connection.dispatch([ ISMASTER ]).documents[0]
-            return result, calculate_average_round_trip_time(start)
+            return connection.ismaster, calculate_average_round_trip_time(start)
           rescue Exception => e
             log_debug(e.message)
             return {}, calculate_average_round_trip_time(start)

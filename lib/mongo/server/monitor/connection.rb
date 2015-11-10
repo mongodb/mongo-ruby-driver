@@ -22,10 +22,40 @@ module Mongo
       class Connection
         include Connectable
 
+        # The command used for determining server status.
+        #
+        # @since 2.2.0
+        ISMASTER = { :ismaster => 1 }.freeze
+
+        # The constant for the ismaster command.
+        #
+        # @since 2.2.0
+        ISMASTER_MESSAGE = Protocol::Query.new(Database::ADMIN, Database::COMMAND, ISMASTER, :limit => -1)
+
+        # The raw bytes for the ismaster message.
+        #
+        # @since 2.2.0
+        ISMASTER_BYTES = ISMASTER_MESSAGE.serialize.to_s.freeze
+
         # The default time in seconds to timeout a connection attempt.
         #
         # @since 2.1.2
         CONNECT_TIMEOUT = 10.freeze
+
+        # Send the preserialized ismaster call.
+        #
+        # @example Send a preserialized ismaster message.
+        #   connection.ismaster
+        #
+        # @return [ BSON::Document ] The ismaster result.
+        #
+        # @since 2.2.0
+        def ismaster
+          ensure_connected do |socket|
+            socket.write(ISMASTER_BYTES)
+            Protocol::Reply.deserialize(socket).documents[0]
+          end
+        end
 
         # Get the connection timeout.
         #

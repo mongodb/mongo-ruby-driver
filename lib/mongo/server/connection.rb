@@ -36,7 +36,7 @@ module Mongo
       # The ping message as raw bytes.
       #
       # @since 2.1.0
-      PING_BYTES = PING_MESSAGE.serialize.freeze
+      PING_BYTES = PING_MESSAGE.serialize.to_s.freeze
 
       # @return [ Mongo::Auth::CR, Mongo::Auth::X509, Mongo::Auth:LDAP, Mongo::Auth::SCRAM ]
       #   authenticator The authentication strategy.
