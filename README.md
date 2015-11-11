@@ -1,4 +1,4 @@
-MongoDB Ruby Driver [![Build Status][travis-img]][travis-url] [![Code Climate][codeclimate-img]][codeclimate-url] [![Coverage Status][coveralls-img]][coveralls-url] [![Gem Version][rubygems-img]][rubygems-url]
+MongoDB Ruby Driver [![Build Status][travis-img]][travis-url] [![Code Climate][codeclimate-img]][codeclimate-url] [![Gem Version][rubygems-img]][rubygems-url]
 -----
 The officially supported Ruby driver for [MongoDB](http://www.mongodb.org).
 
@@ -40,6 +40,15 @@ When reporting an issue, please keep in mind that all information in JIRA for al
 * Provide any sensitive data or server logs.
 * Report potential security issues publicly (see 'Security Issues').
 
+Running Tests
+-----
+
+The driver uses RSpec as it's primary testing tool. To run all tests simple run `rspec`.
+
+To run a test at a specific location (where `42` is the line number), use:
+
+    rspec path/to/spec.rb:42
+
 Security Issues
 -----
 
@@ -74,5 +83,3 @@ License
 [travis-url]: http://travis-ci.org/mongodb/mongo-ruby-driver?branch=master
 [codeclimate-img]: https://codeclimate.com/github/mongodb/mongo-ruby-driver.png?branch=master
 [codeclimate-url]: https://codeclimate.com/github/mongodb/mongo-ruby-driver?branch=master
-[coveralls-img]: https://coveralls.io/repos/mongodb/mongo-ruby-driver/badge.png?branch=master
-[coveralls-url]: https://coveralls.io/r/mongodb/mongo-ruby-driver?branch=master
