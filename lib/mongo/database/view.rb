@@ -50,7 +50,7 @@ module Mongo
       # @since 2.0.0
       def collection_names(options = {})
         @batch_size = options[:batch_size]
-        server = next_primary
+        server = next_primary(false)
         @limit = -1 if server.features.list_collections_enabled?
         collections_info(server).collect do |info|
           if server.features.list_collections_enabled?
@@ -71,7 +71,7 @@ module Mongo
       #
       # @since 2.0.5
       def list_collections
-        collections_info(next_primary)
+        collections_info(next_primary(false))
       end
 
       # Create the new database view.

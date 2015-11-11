@@ -182,7 +182,7 @@ module Mongo
       #
       # @since 2.0.0
       def each(&block)
-        server = next_primary
+        server = next_primary(false)
         cursor = Cursor.new(self, send_initial_query(server), server).to_enum
         cursor.each do |doc|
           yield doc
