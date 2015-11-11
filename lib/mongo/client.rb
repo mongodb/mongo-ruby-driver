@@ -33,34 +33,35 @@ module Mongo
     # @since 2.1.2
     VALID_OPTIONS = [
       :auth_mech,
+      :auth_mech_properties,
       :auth_source,
       :connect,
-      :database,
-      :auth_mech_properties,
-      :heartbeat_frequency,
-      :local_threshold,
-      :server_selection_timeout,
-      :password,
-      :max_pool_size,
-      :min_pool_size,
-      :wait_queue_timeout,
       :connect_timeout,
+      :database,
+      :heartbeat_frequency,
+      :id_generator,
+      :local_threshold,
+      :logger,
+      :max_pool_size,
+      :max_read_retries,
+      :min_pool_size,
+      :monitoring,
+      :password,
       :read,
+      :read_retry_interval,
       :replica_set,
+      :server_selection_timeout,
+      :socket_timeout,
       :ssl,
+      :ssl_ca_cert,
       :ssl_cert,
       :ssl_key,
       :ssl_key_pass_phrase,
       :ssl_verify,
-      :ssl_ca_cert,
-      :socket_timeout,
-      :user,
-      :write,
-      :monitoring,
-      :logger,
       :truncate_logs,
-      :max_read_retries,
-      :read_retry_interval
+      :user,
+      :wait_queue_timeout,
+      :write
     ].freeze
 
     # @return [ Mongo::Cluster ] cluster The cluster of servers for the client.
@@ -189,6 +190,8 @@ module Mongo
     #   retries on mongos query failures.
     # @option options [ Float ] :read_retry_interval The interval, in seconds,
     #   in which reads on a mongos are retried.
+    # @option options [ Object ] :id_generator A custom object to generate ids
+    #   for documents. Must respond to #generate.
     #
     # @since 2.0.0
     def initialize(addresses_or_uri, options = Options::Redacted.new)

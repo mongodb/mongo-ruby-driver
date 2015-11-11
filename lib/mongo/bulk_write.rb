@@ -37,6 +37,8 @@ module Mongo
     # Delegate various methods to the collection.
     def_delegators :@collection, :database, :cluster, :next_primary
 
+    def_delegators :database, :client
+
     # Execute the bulk write operation.
     #
     # @example Execute the bulk write.
@@ -132,7 +134,9 @@ module Mongo
         :write_concern => write_concern,
         :ordered => ordered?,
         :operation_id => operation_id,
-        :bypass_document_validation => !!options[:bypass_document_validation]
+        :bypass_document_validation => !!options[:bypass_document_validation],
+        :options => options,
+        :id_generator => client.options[:id_generator]
       }
     end
 

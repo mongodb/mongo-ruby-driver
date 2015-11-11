@@ -341,7 +341,8 @@ module Mongo
           :coll_name => name,
           :write_concern => write_concern,
           :bypass_document_validation => !!options[:bypass_document_validation],
-          :options => options
+          :options => options,
+          :id_generator => client.options[:id_generator]
         ).execute(next_primary.context)
       end
     end
