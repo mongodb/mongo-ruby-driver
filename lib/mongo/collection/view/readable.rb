@@ -424,7 +424,7 @@ module Mongo
         end
 
         def parallel_scan(cursor_count)
-          server = read.select_server(cluster)
+          server = read.select_server(cluster, false)
           Operation::Commands::ParallelScan.new(
             :coll_name => collection.name,
             :db_name => database.name,

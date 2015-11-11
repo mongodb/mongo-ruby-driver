@@ -67,7 +67,7 @@ module Mongo
         def each
           @cursor = nil
           write_with_retry do
-            server = read.select_server(cluster)
+            server = read.select_server(cluster, false)
             result = send_initial_query(server)
             @cursor = Cursor.new(view, result, server)
           end
@@ -209,7 +209,7 @@ module Mongo
         def send_initial_query(server)
           unless valid_server?(server)
             log_warn(REROUTE)
-            server = cluster.next_primary
+            server = cluster.next_primary(false)
           end
           result = initial_query_op.execute(server.context)
           inline? ? result : send_fetch_query(server)

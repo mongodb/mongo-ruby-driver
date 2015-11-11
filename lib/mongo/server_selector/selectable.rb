@@ -90,13 +90,17 @@ module Mongo
       # @return [ Mongo::Server ] A server matching the server preference.
       #
       # @since 2.0.0
-      def select_server(cluster)
+      def select_server(cluster, ping = true)
         deadline = Time.now + server_selection_timeout
         while (deadline - Time.now) > 0
           servers = candidates(cluster)
           if servers && !servers.compact.empty?
             server = servers.first
-            return server if server.connectable?
+            if ping
+              return server if server.connectable?
+            else
+              return server
+            end
           end
           cluster.scan!
         end

@@ -113,7 +113,7 @@ module Mongo
         def send_initial_query(server)
           unless valid_server?(server)
             log_warn(REROUTE)
-            server = cluster.next_primary
+            server = cluster.next_primary(false)
           end
           initial_query_op.execute(server.context)
         end
