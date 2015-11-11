@@ -207,8 +207,6 @@ module Mongo
         matches || []
       end
 
-      private
-
       def validate_tag_sets!(tag_sets)
         if !tag_sets.all? { |set| set.empty? } && !tags_allowed?
           raise Error::InvalidServerPreference.new(name)
