@@ -96,7 +96,9 @@ module Mongo
           servers = candidates(cluster)
           if servers && !servers.compact.empty?
             server = servers.first
-            if ping
+            # There is no point pinging a standalone as the subsequent scan is
+            # not going to change anything about the cluster.
+            if ping && !cluster.single?
               return server if server.connectable?
             else
               return server
