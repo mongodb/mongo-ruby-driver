@@ -22,7 +22,13 @@
 
 #include "ruby.h"
 #include "version.h"
-#include <arpa/inet.h>
+
+#if (defined(_WIN16) || defined(_WIN32) || defined(_WIN64)) && !defined(__WINDOWS__)
+# define __WINDOWS__
+# include <winsock2.h>
+#else
+# include <arpa/inet.h>
+#endif
 
 /* Ensure compatibility with early releases of Ruby 1.8.5 */
 #ifndef RSTRING_PTR
