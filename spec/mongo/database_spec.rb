@@ -97,19 +97,19 @@ describe Mongo::Database do
     context 'when there are more collections than the initial batch size' do
 
       before do
-        200.times do |i|
+        2.times do |i|
           database["#{i}_dalmatians"].create
         end
       end
 
       after do
-        200.times do |i|
+        2.times do |i|
           database["#{i}_dalmatians"].drop
         end
       end
 
       it 'returns all collections' do
-        expect(database.collection_names.select { |c| c =~ /dalmatians/}.size).to eq(200)
+        expect(database.collection_names(batch_size: 1).select { |c| c =~ /dalmatians/}.size).to eq(2)
       end
 
     end
