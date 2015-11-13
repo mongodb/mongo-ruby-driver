@@ -143,9 +143,9 @@ module Mongo
         # @since 2.1.0
         def command
           document = BSON::Document.new
-          document.store(DELETE => collection)
-          document.store(DELETES => [ BSON::Document.new(Message::Q => filter, Message::LIMIT => limit) ])
-          document.store(Message::ORDERED => true)
+          document.store(DELETE, collection)
+          document.store(DELETES, [ BSON::Document.new(Message::Q => filter, Message::LIMIT => limit) ])
+          document.store(Message::ORDERED, true)
           document
         end
 

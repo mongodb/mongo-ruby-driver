@@ -122,8 +122,8 @@ module Mongo
         # @since 2.1.0
         def command
           document = BSON::Document.new
-          document.store(KILL_CURSORS => collection)
-          document.store(CURSORS => cursor_ids)
+          document.store(KILL_CURSORS, collection)
+          document.store(CURSORS, cursor_ids)
           document
         end
       end

@@ -145,9 +145,9 @@ module Mongo
         # @since 2.1.0
         def command
           document = BSON::Document.new
-          document.store(GET_MORE => cursor_id)
-          document.store(Message::BATCH_SIZE => number_to_return)
-          document.store(Message::COLLECTION => collection)
+          document.store(GET_MORE, cursor_id)
+          document.store(Message::BATCH_SIZE, number_to_return)
+          document.store(Message::COLLECTION, collection)
           document
         end
       end

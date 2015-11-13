@@ -187,13 +187,13 @@ module Mongo
         def command
           document = BSON::Document.new
           updates = BSON::Document.new
-          updates.store(Message::Q => filter)
-          updates.store(U => update)
-          updates.store(MULTI => flags.include?(:multi_update))
-          updates.store(UPSERT => flags.include?(:upsert))
-          document.store(UPDATE => collection)
-          document.store(Message::ORDERED => true)
-          document.store(UPDATES => [ updates ])
+          updates.store(Message::Q, filter)
+          updates.store(U, update)
+          updates.store(MULTI, flags.include?(:multi_update))
+          updates.store(UPSERT, flags.include?(:upsert))
+          document.store(UPDATE, collection)
+          document.store(Message::ORDERED, true)
+          document.store(UPDATES, [ updates ])
           document
         end
       end
