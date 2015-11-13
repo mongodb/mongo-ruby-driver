@@ -142,7 +142,7 @@ module Mongo
       # Fields to exclude when comparing two descriptions.
       #
       # @since 2.0.6
-      EXCLUDE_FOR_COMPARISON = [ LOCAL_TIME, ELECTION_ID ]
+      EXCLUDE_FOR_COMPARISON = [ LOCAL_TIME, ELECTION_ID ].freeze
 
       # @return [ Address ] address The server's address.
       attr_reader :address
@@ -553,11 +553,17 @@ module Mongo
       def ==(other)
         return false if self.class != other.class
         return true if config == other.config
+        compare_config(other)
+      end
+      alias_method :eql?, :==
+
+      private
+
+      def compare_config(other)
         !config.keys.empty? && config.keys.all? do |k|
           config[k] == other.config[k] || EXCLUDE_FOR_COMPARISON.include?(k)
         end
       end
-      alias_method :eql?, :==
     end
   end
 end
