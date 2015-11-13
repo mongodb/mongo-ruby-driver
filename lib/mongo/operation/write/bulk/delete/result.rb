@@ -18,16 +18,10 @@ module Mongo
       module Bulk
         class Delete
 
-          # Defines custom behaviour of results when deleting.
+          # Defines common r_removed aggreation behaviour.
           #
-          # @since 2.0.0
-          class Result < Operation::Result
-            include Mergable
-
-            # The aggregate number of deleted docs reported in the replies.
-            #
-            # @since 2.0.0
-            REMOVED = 'nRemoved'.freeze
+          # @since 2.2.0
+          module Aggregatable
 
             # Gets the number of documents deleted.
             #
@@ -40,9 +34,22 @@ module Mongo
             def n_removed
               return 0 unless acknowledged?
               @replies.reduce(0) do |n, reply|
-                n += reply.documents.first[N]
+                n += reply.documents.first[Result::N]
               end
             end
+          end
+
+          # Defines custom behaviour of results when deleting.
+          #
+          # @since 2.0.0
+          class Result < Operation::Result
+            include Mergable
+            include Aggregatable
+
+            # The aggregate number of deleted docs reported in the replies.
+            #
+            # @since 2.0.0
+            REMOVED = 'nRemoved'.freeze
           end
 
           # Defines custom behaviour of results when deleting.
@@ -51,21 +58,7 @@ module Mongo
           # @since 2.0.0
           class LegacyResult < Operation::Result
             include LegacyMergable
-
-            # Gets the number of documents deleted.
-            #
-            # @example Get the deleted count.
-            #   result.n_removed
-            #
-            # @return [ Integer ] The number of documents deleted.
-            #
-            # @since 2.0.0
-            def n_removed
-              return 0 unless acknowledged?
-              @replies.reduce(0) do |n, reply|
-                n += reply.documents.first[N]
-              end
-            end
+            include Aggregatable
           end
         end
       end
