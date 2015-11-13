@@ -104,6 +104,11 @@ module Mongo
       # @since 2.1.0
       class Upconverter
 
+        # The get more constant.
+        #
+        # @since 2.2.0
+        GET_MORE = 'getMore'.freeze
+
         # @return [ String ] collection The name of the collection.
         attr_reader :collection
 
@@ -139,11 +144,11 @@ module Mongo
         #
         # @since 2.1.0
         def command
-          BSON::Document.new(
-            getMore: cursor_id,
-            batchSize: number_to_return,
-            collection: collection
-          )
+          document = BSON::Document.new
+          document.store(GET_MORE => cursor_id)
+          document.store(Message::BATCH_SIZE => number_to_return)
+          document.store(Message::COLLECTION => collection)
+          document
         end
       end
     end

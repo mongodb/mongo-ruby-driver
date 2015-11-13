@@ -114,11 +114,6 @@ module Mongo
         # @since 2.1.0
         DOCUMENTS = 'documents'.freeze
 
-        # Ordered field constant.
-        #
-        # @since 2.1.0
-        ORDERED = 'ordered'.freeze
-
         # Write concern field constant.
         #
         # @since 2.1.0
@@ -161,7 +156,7 @@ module Mongo
           document = BSON::Document.new
           document.store(INSERT, collection)
           document.store(DOCUMENTS, documents)
-          document.store(ORDERED, options.fetch(:ordered, true))
+          document.store(Message::ORDERED, options.fetch(:ordered, true))
           document.merge!(WRITE_CONCERN => options[:write_concern].options) if options[:write_concern]
           document
         end

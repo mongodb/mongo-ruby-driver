@@ -42,6 +42,31 @@ module Mongo
     class Message
       include Serializers
 
+      # The batch size constant.
+      #
+      # @since 2.2.0
+      BATCH_SIZE = 'batchSize'.freeze
+
+      # The collection constant.
+      #
+      # @since 2.2.0
+      COLLECTION = 'collection'.freeze
+
+      # The limit constant.
+      #
+      # @since 2.2.0
+      LIMIT = 'limit'.freeze
+
+      # The ordered constant.
+      #
+      # @since 2.2.0
+      ORDERED = 'ordered'.freeze
+
+      # The q constant.
+      #
+      # @since 2.2.0
+      Q = 'q'.freeze
+
       # Returns the request id for the message
       #
       # @return [Fixnum] The request id for this message

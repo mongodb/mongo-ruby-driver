@@ -82,6 +82,16 @@ module Mongo
       # @since 2.1.0
       class Upconverter
 
+        # The kill cursors constant.
+        #
+        # @since 2.2.0
+        KILL_CURSORS = 'killCursors'.freeze
+
+        # The cursors constant.
+        #
+        # @since 2.2.0
+        CURSORS = 'cursors'.freeze
+
         # @return [ String ] collection The name of the collection.
         attr_reader :collection
 
@@ -111,7 +121,10 @@ module Mongo
         #
         # @since 2.1.0
         def command
-          BSON::Document.new(killCursors: collection, cursors: cursor_ids)
+          document = BSON::Document.new
+          document.store(KILL_CURSORS => collection)
+          document.store(CURSORS => cursor_ids)
+          document
         end
       end
     end

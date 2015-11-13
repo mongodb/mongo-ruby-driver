@@ -116,6 +116,31 @@ module Mongo
       # @since 2.1.0
       class Upconverter
 
+        # The multi constant.
+        #
+        # @since 2.2.0
+        MULTI = 'multi'.freeze
+
+        # The u constant.
+        #
+        # @since 2.2.0
+        U = 'u'.freeze
+
+        # The update constant.
+        #
+        # @since 2.2.0
+        UPDATE = 'update'.freeze
+
+        # The updates constant.
+        #
+        # @since 2.2.0
+        UPDATES = 'updates'.freeze
+
+        # The upsert constant.
+        #
+        # @since 2.2.0
+        UPSERT = 'upsert'.freeze
+
         # @return [ String ] collection The name of the collection.
         attr_reader :collection
 
@@ -160,18 +185,16 @@ module Mongo
         #
         # @since 2.1.0
         def command
-          BSON::Document.new(
-            update: collection,
-            ordered: true,
-            updates: [
-              BSON::Document.new(
-                q: filter,
-                u: update,
-                multi: flags.include?(:multi_update),
-                upsert: flags.include?(:upsert),
-              )
-            ]
-          )
+          document = BSON::Document.new
+          updates = BSON::Document.new
+          updates.store(Message::Q => filter)
+          updates.store(U => update)
+          updates.store(MULTI => flags.include?(:multi_update))
+          updates.store(UPSERT => flags.include?(:upsert))
+          document.store(UPDATE => collection)
+          document.store(Message::ORDERED => true)
+          document.store(UPDATES => [ updates ])
+          document
         end
       end
     end

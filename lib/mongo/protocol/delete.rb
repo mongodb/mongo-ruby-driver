@@ -99,6 +99,16 @@ module Mongo
       # @since 2.1.0
       class Upconverter
 
+        # The delete command constant.
+        #
+        # @since 2.2.0
+        DELETE = 'delete'.freeze
+
+        # The deletes command constant.
+        #
+        # @since 2.2.0
+        DELETES = 'deletes'.freeze
+
         # @return [ String ] collection The name of the collection.
         attr_reader :collection
 
@@ -132,11 +142,11 @@ module Mongo
         #
         # @since 2.1.0
         def command
-          BSON::Document.new(
-            delete: collection,
-            deletes: [ BSON::Document.new(q: filter, limit: limit) ],
-            ordered: true
-          )
+          document = BSON::Document.new
+          document.store(DELETE => collection)
+          document.store(DELETES => [ BSON::Document.new(Message::Q => filter, Message::LIMIT => limit) ])
+          document.store(Message::ORDERED => true)
+          document
         end
 
         private
