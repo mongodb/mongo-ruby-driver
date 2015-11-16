@@ -46,17 +46,19 @@ module Mongo
 
         # Serializes the header value into the buffer
         #
-        # @param buffer [String] Buffer to receive the serialized value.
-        # @param value [String] Header value to be serialized.
-        # @return [String] Buffer with serialized value.
+        # @param buffer [ String ] Buffer to receive the serialized value.
+        # @param value [ String ] Header value to be serialized.
+        #
+        # @return [ String ] Buffer with serialized value.
         def self.serialize(buffer, value)
           buffer.put_bytes(value.pack(HEADER_PACK))
         end
 
         # Deserializes the header value from the IO stream
         #
-        # @param io [IO] IO stream containing the message header.
-        # @return [Array<Fixnum>] Array consisting of the deserialized
+        # @param [ String ] buffer Buffer containing the message header.
+        #
+        # @return [ Array<Fixnum> ] Array consisting of the deserialized
         #   length, request id, response id, and op code.
         def self.deserialize(buffer)
           buffer.get_bytes(16).unpack(HEADER_PACK)
@@ -70,9 +72,10 @@ module Mongo
 
         # Serializes a C style string into the buffer
         #
-        # @param buffer [String] Buffer to receive the serialized CString.
-        # @param value [String] The string to be serialized.
-        # @return [String] Buffer with serialized value.
+        # @param buffer [ String ] Buffer to receive the serialized CString.
+        # @param value [ String ] The string to be serialized.
+        #
+        # @return [ String ] Buffer with serialized value.
         def self.serialize(buffer, value)
           buffer.put_cstring(value)
         end
@@ -85,9 +88,10 @@ module Mongo
 
         # Serializes a 32-bit Zero into the buffer
         #
-        # @param buffer [String] Buffer to receive the serialized Zero.
-        # @param value [Fixnum] Ignored value.
-        # @return [String] Buffer with serialized value.
+        # @param buffer [ String ] Buffer to receive the serialized Zero.
+        # @param value [ Fixnum ] Ignored value.
+        #
+        # @return [ String ] Buffer with serialized value.
         def self.serialize(buffer, value)
           buffer.put_int32(ZERO)
         end
@@ -100,8 +104,9 @@ module Mongo
 
         # Serializes a fixnum to a 4-byte 32-bit integer
         #
-        # @param buffer [String] Buffer to receive the serialized Int32.
-        # @param value [Fixnum] 32-bit integer to be serialized.
+        # @param buffer [ String ] Buffer to receive the serialized Int32.
+        # @param value [ Fixnum ] 32-bit integer to be serialized.
+        #
         # @return [String] Buffer with serialized value.
         def self.serialize(buffer, value)
           buffer.put_int32(value)
@@ -109,8 +114,9 @@ module Mongo
 
         # Deserializes a 32-bit Fixnum from the IO stream
         #
-        # @param io [IO] IO stream containing the 32-bit integer
-        # @return [Fixnum] Deserialized Int32
+        # @param [ String ] buffer Buffer containing the 32-bit integer
+        #
+        # @return [ Fixnum ] Deserialized Int32
         def self.deserialize(buffer)
           buffer.get_int32
         end
@@ -123,16 +129,18 @@ module Mongo
 
         # Serializes a fixnum to an 8-byte 64-bit integer
         #
-        # @param buffer [String] Buffer to receive the serialized Int64.
-        # @param value [Fixnum] 64-bit integer to be serialized.
-        # @return [String] Buffer with serialized value.
+        # @param buffer [ String ] Buffer to receive the serialized Int64.
+        # @param value [ Fixnum ] 64-bit integer to be serialized.
+        #
+        # @return [ String ] Buffer with serialized value.
         def self.serialize(buffer, value)
           buffer.put_int64(value)
         end
 
         # Deserializes a 64-bit Fixnum from the IO stream
         #
-        # @param io [IO] IO stream containing the 64-bit integer.
+        # @param [ String ] buffer Buffer containing the 64-bit integer.
+        #
         # @return [Fixnum] Deserialized Int64.
         def self.deserialize(buffer)
           buffer.get_int64
@@ -146,9 +154,10 @@ module Mongo
 
         # Serializes a document into the buffer
         #
-        # @param buffer [String] Buffer to receive the BSON encoded document.
-        # @param value [Hash] Document to serialize as BSON.
-        # @return [String] Buffer with serialized value.
+        # @param buffer [ String ] Buffer to receive the BSON encoded document.
+        # @param value [ Hash ] Document to serialize as BSON.
+        #
+        # @return [ String ] Buffer with serialized value.
         def self.serialize(buffer, value, max_bson_size = nil)
           start_size = buffer.length
           value.to_bson(buffer)
@@ -159,8 +168,9 @@ module Mongo
 
         # Deserializes a document from the IO stream
         #
-        # @param io [IO] IO stream containing the BSON encoded document.
-        # @return [Hash] The decoded BSON document.
+        # @param [ String ] buffer Buffer containing the BSON encoded document.
+        #
+        # @return [ Hash ] The decoded BSON document.
         def self.deserialize(buffer)
           BSON::Document.from_bson(buffer)
         end

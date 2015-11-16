@@ -128,7 +128,7 @@ module Mongo
         # @example Convert the chunk to BSON.
         #   chunk.to_bson
         #
-        # @param [ String ] encoded The encoded data to append to.
+        # @param [ String ] buffer The encoded data buffer to append to.
         #
         # @return [ String ] The raw BSON data.
         #

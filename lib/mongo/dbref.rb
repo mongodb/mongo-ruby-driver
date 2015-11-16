@@ -79,7 +79,7 @@ module Mongo
     # @example Convert the DBRef to raw BSON.
     #   dbref.to_bson
     #
-    # @param [ String ] encoded The encoded BSON to append to.
+    # @param [ String ] buffer The encoded BSON buffer to append to.
     #
     # @return [ String ] The raw BSON.
     #
@@ -92,7 +92,7 @@ module Mongo
 
       # Deserialize the hash from BSON, converting to a DBRef if appropriate.
       #
-      # @param [ IO ] bson The bson representing a hash.
+      # @param [ String ] buffer The bson representing a hash.
       #
       # @return [ Hash, DBRef ] The decoded hash or DBRef.
       #

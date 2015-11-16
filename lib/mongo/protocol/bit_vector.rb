@@ -24,7 +24,7 @@ module Mongo
 
         # Initializes a BitVector with a layout
         #
-        # @param layout [Array<Symbol>] the array of fields in the bit vector
+        # @param layout [ Array<Symbol> ] the array of fields in the bit vector
         def initialize(layout)
           @masks = {}
           layout.each_with_index do |field, index|
@@ -34,9 +34,10 @@ module Mongo
 
         # Serializes vector by encoding each symbol according to its mask
         #
-        # @param buffer [IO] Buffer to receive the serialized vector
-        # @param value [Array<Symbol>] Array of flags to encode
-        # @return [IO] Buffer that received the serialized vector
+        # @param buffer [ String ] Buffer to receive the serialized vector
+        # @param value [ Array<Symbol> ] Array of flags to encode
+        #
+        # @return [ String ] Buffer that received the serialized vector
         def serialize(buffer, value)
           bits = 0
           value.each { |flag| bits |= @masks[flag] }
@@ -45,8 +46,9 @@ module Mongo
 
         # Deserializes vector by decoding the symbol according to its mask
         #
-        # @param io [IO] Stream containing the vector to be deserialized
-        # @return [Array<Symbol>] Flags contained in the vector
+        # @param [ String ] buffer Buffer containing the vector to be deserialized.
+        #
+        # @return [ Array<Symbol> ] Flags contained in the vector
         def deserialize(buffer)
           vector = buffer.get_int32
           flags = []
