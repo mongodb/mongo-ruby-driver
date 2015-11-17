@@ -41,3 +41,26 @@ namespace :docs do
     system "yardoc -o #{out} --title mongo-#{Mongo::VERSION}"
   end
 end
+
+require_relative "profile/feather_weight_benchmark.rb"
+require_relative "profile/light_weight_benchmark.rb"
+require_relative "profile/middle_weight_benchmark.rb"
+require_relative "profile/heavy_weight_benchmark.rb"
+
+namespace :benchmark do
+
+  task :run_benchmarks do
+    puts "Running MMABench benchmarks..."
+    p "FEATHERWEIGHT BENCHMARK"
+    featherweight_benchmark!
+    print "\n\n\n\n"
+    p "LIGHTWEIGHT BENCHMARK"
+    lightweight_benchmark!
+    print "\n\n\n\n"
+    p "MIDDLEWEIGHT BENCHMARK"
+    middleweight_benchmark!
+    print "\n\n\n\n"
+    p "HEAVYWEIGHT BENCHMARK"
+    heavyweight_benchmark!
+  end
+end

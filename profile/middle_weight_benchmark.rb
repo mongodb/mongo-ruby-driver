@@ -15,80 +15,80 @@ require_relative 'benchmark_helper'
 # GridFS download
 #
 ##
+def middleweight_benchmark!
 
-#bench_helper = BenchmarkHelper.new('perftest','corpus')
-bench_helper = BenchmarkHelper.new('foo','bar')
-database = bench_helper.database
-collection = bench_helper.collection
-print "\n\n\n"
-print "\n\n\n"
+  #bench_helper = BenchmarkHelper.new('perftest','corpus')
+  bench_helper = BenchmarkHelper.new('foo','bar')
+  database = bench_helper.database
+  collection = bench_helper.collection
+  print "\n\n\n"
+  print "\n\n\n"
 
 
 
-##
-# Find many and empty the cursor
-#
-#
-#
-#
-##
-first = Benchmark.bmbm do |bm|
-  bm.report('Middleweight::Find many and empty the cursor') do
+  ##
+  # Find many and empty the cursor
+  #
+  #
+  #
+  #
+  ##
+  first = Benchmark.bmbm do |bm|
+    bm.report('Middleweight::Find many and empty the cursor') do
 
+    end
   end
-end
-print "\n\n\n"
+  print "\n\n\n"
 
 
 
-##
-# Small doc bulk insert
-#
-##
-second = Benchmark.bmbm do |bm|
-  bm.report('Middleweight::Small doc bulk insert') do
+  ##
+  # Small doc bulk insert
+  #
+  ##
+  second = Benchmark.bmbm do |bm|
+    bm.report('Middleweight::Small doc bulk insert') do
 
+    end
   end
-end
-print "\n\n\n"
+  print "\n\n\n"
 
 
 
-##
-# Large doc bulk insert
-#
-##
-third = Benchmark.bmbm do |bm|
-  bm.report('Middleweight::Large doc bulk insert') do
+  ##
+  # Large doc bulk insert
+  #
+  ##
+  third = Benchmark.bmbm do |bm|
+    bm.report('Middleweight::Large doc bulk insert') do
 
+    end
   end
-end
-print "\n\n\n"
+  print "\n\n\n"
 
 
 
-##
-# GridFS upload
-#
-##
-fourth = Benchmark.bmbm do |bm|
-  bm.report('Middleweight::GridFS upload') do
+  ##
+  # GridFS upload
+  #
+  ##
+  fourth = Benchmark.bmbm do |bm|
+    bm.report('Middleweight::GridFS upload') do
 
+    end
   end
-end
-print "\n\n\n"
+  print "\n\n\n"
 
 
 
-##
-# GridFS download
-#
-##
-fifth = Benchmark.bmbm do |bm|
-  bm.report('Middleweight::GridFS download') do
+  ##
+  # GridFS download
+  #
+  ##
+  fifth = Benchmark.bmbm do |bm|
+    bm.report('Middleweight::GridFS download') do
 
+    end
   end
+  print "\n\n\n"
 end
-print "\n\n\n"
-
-

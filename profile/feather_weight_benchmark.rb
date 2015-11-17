@@ -13,51 +13,53 @@ require_relative 'benchmark_helper'
 # All BSON Types
 #
 ##
+def featherweight_benchmark!
 
-#bench_helper = BenchmarkHelper.new('perftest','corpus')
-bench_helper = BenchmarkHelper.new('foo','bar')
-database = bench_helper.database
-collection = bench_helper.collection
-print "\n\n\n"
+  #bench_helper = BenchmarkHelper.new('perftest','corpus')
+  bench_helper = BenchmarkHelper.new('foo','bar')
+  database = bench_helper.database
+  collection = bench_helper.collection
+  print "\n\n\n"
 
 
 
-##
-# Common Flat BSON
-#
-#
-#
-#
-##
-first = Benchmark.bmbm do |bm|
-  bm.report('Featherweight::Common Flat BSON') do
+  ##
+  # Common Flat BSON
+  #
+  #
+  #
+  #
+  ##
+  first = Benchmark.bmbm do |bm|
+    bm.report('Featherweight::Common Flat BSON') do
 
+    end
   end
-end
-print "\n\n\n"
+  print "\n\n\n"
 
 
 
-##
-# Common Nested BSON
-#
-##
-second = Benchmark.bmbm do |bm|
-  bm.report('Featherweight::Common Flat BSON') do
+  ##
+  # Common Nested BSON
+  #
+  ##
+  second = Benchmark.bmbm do |bm|
+    bm.report('Featherweight::Common Flat BSON') do
 
+    end
   end
-end
-print "\n\n\n"
+  print "\n\n\n"
 
 
 
-##
-# All BSON Types
-#
-##
-third = Benchmark.bmbm do |bm|
-  bm.report('Featherweight::ALL BSON Types') do
+  ##
+  # All BSON Types
+  #
+  ##
+  third = Benchmark.bmbm do |bm|
+    bm.report('Featherweight::ALL BSON Types') do
 
+    end
   end
+  print "\n\n\n"
 end
-print "\n\n\n"

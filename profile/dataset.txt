@@ -1,4 +1,0 @@
-{"username": "Joe Fish", "profile_picture": "jo.jpg"}
-{"username": "Sarah Liss", "profile_picture": "sarahl.jpg"}
-{"username": "Bob Flin", "profile_picture": "bflin.jpg"}
-{"username": "Sam Right", "profile_picture": "rote.jpg"}
