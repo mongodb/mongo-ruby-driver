@@ -364,7 +364,8 @@ module Mongo
       #
       # @since 2.0.0
       def other?
-        !primary? && !secondary? && !passive? && !arbiter?
+        (!primary? && !secondary? && !passive? && !arbiter?) ||
+          (hidden? && !replica_set_name.nil?)
       end
 
       # Will return true if the server is passive.
