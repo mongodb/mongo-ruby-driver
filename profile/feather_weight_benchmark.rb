@@ -26,13 +26,18 @@ def featherweight_benchmark!
   ##
   # Common Flat BSON
   #
+  # - Load FLAT_BSON dataset
   #
-  #
+  # Measure: Encode each document to a BSON byte-string and decode the BSON byte-string back.
   #
   ##
+  flat_data = BenchmarkHelper.load_array_from_file('FLAT_BSON.txt')
+
   first = Benchmark.bmbm do |bm|
     bm.report('Featherweight::Common Flat BSON') do
-
+      flat_data.each do |doc|
+        BSON::Document.from_bson(  BSON::Document.new(doc).to_bson  )
+      end
     end
   end
   print "\n\n\n"
@@ -42,10 +47,18 @@ def featherweight_benchmark!
   ##
   # Common Nested BSON
   #
+  # - Load DEEP_BSON dataset
+  #
+  # Measure: Encode each document to a BSON byte-string and decode the BSON byte-string back.
+  #
   ##
+  deep_data = BenchmarkHelper.load_array_from_file('DEEP_BSON.txt')
+
   second = Benchmark.bmbm do |bm|
     bm.report('Featherweight::Common Flat BSON') do
-
+      deep_data.each do |doc|
+        BSON::Document.from_bson(  BSON::Document.new(doc).to_bson  )
+      end
     end
   end
   print "\n\n\n"
@@ -55,10 +68,18 @@ def featherweight_benchmark!
   ##
   # All BSON Types
   #
+  # - Load FULL_BSON dataset
+  #
+  # Measure: Encode each document to a BSON byte-string and decode the BSON byte-string back.
+  #
   ##
+  full_data = BenchmarkHelper.load_array_from_file('FULL_BSON.txt')
+
   third = Benchmark.bmbm do |bm|
     bm.report('Featherweight::ALL BSON Types') do
-
+      full_data.each do |doc|
+        BSON::Document.from_bson(  BSON::Document.new(doc).to_bson  )
+      end
     end
   end
   print "\n\n\n"

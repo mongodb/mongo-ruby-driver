@@ -3,6 +3,8 @@ require 'json'
 
 class BenchmarkHelper
 
+  # TODO: do these helper methods need tests? Do the benchmarks need tests?
+
   attr_accessor :database, :collection
   # Initializes a client connection and create a collection.
   #
@@ -30,7 +32,7 @@ class BenchmarkHelper
   # Load JSON document data from a file line by line into an array
   #
   # @example Load the file into an array
-  #   BenchmarkHelper.load_array_from_file("TWITTER.json")
+  #   BenchmarkHelper.load_array_from_file("TWITTER.txt")
   #
   # @param [ String ] data_file_name The name of the data file.
   #
@@ -40,12 +42,30 @@ class BenchmarkHelper
   def self.load_array_from_file(data_file_name)
     # TODO: there must be an agreed upon format for datasets in order to load it from the file correctly
     data_array = []
-    File.open('dataset.txt', "r") do |f|
+    File.open('dataset.txt', "r") do |f| # TODO: change 'dataset.txt' to data_file_name parameter
       f.each_line do |line|
         data_array << JSON.parse(line)
       end
     end
     data_array
+  end
+
+
+  # Load a file into a string
+  #
+  # @example Load a file into a string
+  #   BenchmarkHelper.load_string_from_file("GRIDFS_LARGE.txt")
+  #
+  # @param [ String ] data_file_name The name of the data file.
+  #
+  # @return [ String ] A string of all the file data.
+  #
+  # @since 2.2.1
+  def self.load_string_from_file(data_file_name)
+    file = File.open('dataset.txt', "rb") # TODO: change 'dataset.txt' to data_file_name parameter
+    contents = file.read
+    file.close
+    contents
   end
 
 

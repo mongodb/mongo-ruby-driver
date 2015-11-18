@@ -49,18 +49,34 @@ require_relative "profile/heavy_weight_benchmark.rb"
 
 namespace :benchmark do
 
-  task :run_benchmarks do
-    puts "Running MMABench benchmarks..."
+  task :featherweight do
     p "FEATHERWEIGHT BENCHMARK"
     featherweight_benchmark!
-    print "\n\n\n\n"
+  end
+
+  task :lightweight do
     p "LIGHTWEIGHT BENCHMARK"
     lightweight_benchmark!
-    print "\n\n\n\n"
+  end
+
+  task :middleweight do
     p "MIDDLEWEIGHT BENCHMARK"
     middleweight_benchmark!
-    print "\n\n\n\n"
+  end
+
+  task :heavyweight do
     p "HEAVYWEIGHT BENCHMARK"
     heavyweight_benchmark!
+  end
+
+  task :run_all_benchmarks do
+    puts "Running MMABench benchmarks..."
+    Rake::Task['benchmark:featherweight'].execute
+    print "\n\n\n\n"
+    Rake::Task['benchmark:lightweight'].execute
+    print "\n\n\n\n"
+    Rake::Task['benchmark:middleweight'].execute
+    print "\n\n\n\n"
+    Rake::Task['benchmark:heavyweight'].execute
   end
 end

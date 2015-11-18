@@ -49,7 +49,7 @@ def lightweight_benchmark!
   #   sequential _id fields to each before upload
   #
   # Measure: for each of the 10,000 sequential _id numbers, issue a find command
-  # for that _id on the 'corpus' collection and retrieve the single-document result.
+  #          for that _id on the 'corpus' collection and retrieve the single-document result.
   #
   # - Drop 'perftest' database
   ##
@@ -84,7 +84,7 @@ def lightweight_benchmark!
   # - Drop the 'corpus' collection.
   #
   # Measure: insert the first 10,000 documents individually into the 'corpus' collection
-  # using insert_one. DO NOT manually add an _id field.
+  #          using insert_one. DO NOT manually add an _id field.
   #
   # - Drop 'perftest' database
   ##
@@ -114,7 +114,7 @@ def lightweight_benchmark!
   # - Drop the 'corpus' collection.
   #
   # Measure: insert the first 1,000 documents individually into the 'corpus' collection
-  # using insert_one. DO NOT manually add an _id field.
+  #          using insert_one. DO NOT manually add an _id field.
   #
   # - Drop 'perftest' database
   ##
