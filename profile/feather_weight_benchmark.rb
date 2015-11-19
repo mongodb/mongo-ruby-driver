@@ -12,15 +12,14 @@ require_relative 'benchmark_helper'
 # Common Nested BSON
 # All BSON Types
 #
+# The featherweight benchmark is intended to test BSON serialization/deserialization
+#
 ##
 def featherweight_benchmark!
-
   #bench_helper = BenchmarkHelper.new('perftest','corpus')
   bench_helper = BenchmarkHelper.new('foo','bar')
   database = bench_helper.database
   collection = bench_helper.collection
-  print "\n\n\n"
-
 
 
   ##
@@ -33,15 +32,13 @@ def featherweight_benchmark!
   ##
   flat_data = BenchmarkHelper.load_array_from_file('FLAT_BSON.txt')
 
-  first = Benchmark.bmbm do |bm|
+  first = Benchmark.bm do |bm|
     bm.report('Featherweight::Common Flat BSON') do
       flat_data.each do |doc|
         BSON::Document.from_bson(  BSON::Document.new(doc).to_bson  )
       end
     end
   end
-  print "\n\n\n"
-
 
 
   ##
@@ -54,15 +51,13 @@ def featherweight_benchmark!
   ##
   deep_data = BenchmarkHelper.load_array_from_file('DEEP_BSON.txt')
 
-  second = Benchmark.bmbm do |bm|
+  second = Benchmark.bm do |bm|
     bm.report('Featherweight::Common Flat BSON') do
       deep_data.each do |doc|
         BSON::Document.from_bson(  BSON::Document.new(doc).to_bson  )
       end
     end
   end
-  print "\n\n\n"
-
 
 
   ##
@@ -75,12 +70,14 @@ def featherweight_benchmark!
   ##
   full_data = BenchmarkHelper.load_array_from_file('FULL_BSON.txt')
 
-  third = Benchmark.bmbm do |bm|
+  third = Benchmark.bm do |bm|
     bm.report('Featherweight::ALL BSON Types') do
       full_data.each do |doc|
         BSON::Document.from_bson(  BSON::Document.new(doc).to_bson  )
       end
     end
   end
-  print "\n\n\n"
+
+
+  return first, second, third
 end

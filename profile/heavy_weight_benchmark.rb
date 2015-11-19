@@ -14,16 +14,14 @@ require 'thread'
 # GridFS multi-file upload
 # GridFS multi-file download
 #
+# The heavyweight benchmark is intended to test concurrency performance.
+#
 ##
 def heavyweight_benchmark!
-
-  # The heavyweight benchmark is intended to test concurrency performance,
-  # so increase allowed DB connections
   #bench_helper = BenchmarkHelper.new('perftest','corpus', 200)
   bench_helper = BenchmarkHelper.new('foo','bar', 200)
   database = bench_helper.database
   collection = bench_helper.collection
-  print "\n\n\n"
 
 
 
@@ -33,7 +31,6 @@ def heavyweight_benchmark!
   # Dataset: LDJSON_MULTI
   #
   # - Drop the 'perftest' database.
-  # - Drop the 'corpus' collection.
   # - Construct whatever objects, threads, etc. are required for importing the dataset but
   #   do not read any data from disk.
   #
@@ -44,16 +41,19 @@ def heavyweight_benchmark!
   # - Drop the 'perftest' database
   ##
   database.drop
-  collection.drop
+
+  # The directory name, or path to the directory, in which the LDJSON files are expected to be
+  ldjson_data_files_directory = "LDJSON_data_file_directory"
+  # Array of expected file names
   ldjson_multi_files = Array.new(100) {|i| "LDJSON%02d.txt" % (i+1) }
 
-  first = Benchmark.bmbm do |bm|
+  first = Benchmark.bm do |bm|
     bm.report('Heavyweight::LDJSON multi-file import') do
 
       threads = []
       ldjson_multi_files.each do |file_name|
         threads << Thread.new do
-          ldjson_multi_data = BenchmarkHelper.load_array_from_file(file_name)
+          ldjson_multi_data = BenchmarkHelper.load_array_from_file("#{ldjson_data_files_directory}/#{file_name}")
           collection.insert_many(ldjson_multi_data, ordered: false)
         end
       end
@@ -63,7 +63,6 @@ def heavyweight_benchmark!
   end
 
   database.drop
-  print "\n\n\n"
 
 
 
@@ -71,7 +70,6 @@ def heavyweight_benchmark!
   # LDJSON multi-file export
   #
   # - Drop the 'perftest' database.
-  # - Drop the 'corpus' collection.
   # - Do an unordered insert of all 1,000,000 documents in the dataset into the 'corpus' collection.
   #
   # Measure: Dump all 1,000,000 documents in the dataset into 100 LDJSON files of 10,000 documents
@@ -81,10 +79,14 @@ def heavyweight_benchmark!
   # - Drop the 'perftest' database.
   ##
   database.drop
-  collection.drop
 
-  # Array of file names from which to read data, and tmp file names to which to write data
-  ldjson_multi_files = Array.new(100) {|i| "LDJSON%03d.txt" % (i+1) }
+  # Temporary directory in which to store temporary data files into which document data will be dumped
+  ldjson_data_files_tmp_directory = "LDJSON_data_file_tmp_directory"
+  BenchmarkHelper.make_directory(ldjson_tmp_directory)
+
+  # Array of expected file names
+  ldjson_multi_files = Array.new(100) {|i| "LDJSON%02d.txt" % (i+1) }
+  # Array of temporary file names to which to dump document data
   ldjson_multi_files_tmp = Array.new(100) {|i| "TMP_LDJSON%03d.txt" % (i+1) }
 
   ldjson_multi_files.each do |file_name|
@@ -92,18 +94,15 @@ def heavyweight_benchmark!
     collection.insert_many(ldjson_multi_data, ordered: false)
   end
 
-  ldjson_tmp_directory = "benchmark_tmp_directory_ldjson"
-  BenchmarkHelper.make_directory(ldjson_tmp_directory)
-
-  second = Benchmark.bmbm do |bm|
+  second = Benchmark.bm do |bm|
     bm.report('Heavyweight::LDJSON multi-file export') do
-      threads = []
       all_data = collection.find.to_a
 
+      threads = []
       ldjson_multi_files_tmp.each_with_index do |file_name, index|
         data_partition = all_data[index*10000, index*10000 + 10000-1]
         threads << Thread.new do
-          BenchmarkHelper.write_documents_to_file("#{ldjson_tmp_directory}/#{file_name}", data_partition)
+          BenchmarkHelper.write_documents_to_file("#{ldjson_data_files_tmp_directory}/#{file_name}", data_partition)
         end
       end
 
@@ -111,9 +110,8 @@ def heavyweight_benchmark!
     end
   end
 
-  FileUtils.remove_dir(ldjson_tmp_directory)
+  FileUtils.remove_dir(ldjson_data_files_tmp_directory)
   database.drop
-  print "\n\n\n"
 
 
 
@@ -130,25 +128,29 @@ def heavyweight_benchmark!
   ##
   database.drop
 
+  # The directory name, or path to the directory, in which the GridFS files are expected to be
+  gridfs_data_files_directory = "GridFS_data_file_directory"
+  # Array of expected file names
   gridfs_multi_files = Array.new(100) {|i| "GridFS%03d.txt" % (i+1) }
 
-  third = Benchmark.bmbm do |bm|
+  third = Benchmark.bm do |bm|
     bm.report('Heavyweight::GridFS multi-file upload') do
+
       threads = []
       gridfs_multi_files.each do |file_name|
         threads << Thread.new do
-          gridfs_multi_data = BenchmarkHelper.load_string_from_file(file_name)
+          gridfs_multi_data = BenchmarkHelper.load_string_from_file("#{gridfs_data_files_directory}/#{file_name}")
           database.fs.insert_one(
               Mongo::Grid::File.new(gridfs_multi_data, :filename => file_name)
           )
         end
       end
+
       threads.each { |t| t.join }
     end
   end
 
   database.drop
-  print "\n\n\n"
 
 
 
@@ -169,37 +171,42 @@ def heavyweight_benchmark!
   ##
   database.drop
 
-  gridfs_tmp_directory = "benchmark_tmp_directory_gridfs"
+  # Temporary directory in which to store temporary data files into which document data will be dumped
+  gridfs_data_files_tmp_directory = "GridFS_data_file_tmp_directory"
   BenchmarkHelper.make_directory(gridfs_tmp_directory)
 
-
-  # Array of file names from which to read data, and tmp file names to which to write data
+  # The directory name, or path to the directory, in which the GridFS files are expected to be
+  gridfs_data_files_directory = "GridFS_data_file_directory"
+  # Array of expected file names
   gridfs_multi_files = Array.new(100) {|i| "GridFS%03d.txt" % (i+1) }
-  gridfs_multi_files_tmp = Array.new(100) {|i| "TMP_GridFS%03d.txt" % (i+1) }
 
+  # Load GridFS datasets into the DB.
   gridfs_multi_files.each do |file_name|
-    gridfs_multi_data = BenchmarkHelper.load_string_from_file(file_name)
+    gridfs_multi_data = BenchmarkHelper.load_string_from_file("#{gridfs_data_files_directory}/#{file_name}")
     database.fs.insert_one(
         Mongo::Grid::File.new(gridfs_multi_data, :filename => file_name)
     )
   end
 
-  fourth = Benchmark.bmbm do |bm|
+  fourth = Benchmark.bm do |bm|
     bm.report('Heavyweight::GridFS multi-file download') do
 
       threads = []
       gridfs_multi_files.each_with_index do |file_name, index|
         threads << Thread.new do
-
-          file_ptr = File.open("#{gridfs_tmp_directory}/TMP_GridFS%03d.txt" % (index+1), 'w')
+          file_ptr = File.open("#{gridfs_data_files_tmp_directory}/TMP_GridFS%03d.txt" % (index+1), 'w')
           database.fs.download_to_stream_by_name(file_name, file_ptr)
         end
       end
+
       threads.each { |t| t.join }
     end
   end
 
-  FileUtils.remove_dir(gridfs_tmp_directory)
+  FileUtils.remove_dir(gridfs_data_files_tmp_directory)
   database.drop
-  print "\n\n\n"
+
+
+
+  return first, second, third, fourth
 end

@@ -15,13 +15,10 @@ require_relative 'benchmark_helper'
 #
 ##
 def lightweight_benchmark!
-
   #bench_helper = BenchmarkHelper.new('perftest','corpus')
   bench_helper = BenchmarkHelper.new('foo','bar')
   database = bench_helper.database
   collection = bench_helper.collection
-  print "\n\n\n"
-
 
 
   ##
@@ -29,15 +26,13 @@ def lightweight_benchmark!
   #
   # Measure: run isMaster command 10,000 times
   ##
-  first = Benchmark.bmbm do |bm|
+  first = Benchmark.bm do |bm|
     bm.report('Lightweight::Run Command') do
-      10000.times do |i|
+      100000.times do |i|
         database.command(:ismaster => 1)
       end
     end
   end
-  print "\n\n\n"
-
 
 
   ##
@@ -57,22 +52,21 @@ def lightweight_benchmark!
   twitter_data = BenchmarkHelper.load_array_from_file('TWITTER.txt')
   twitter_data_size = twitter_data.size
 
-  5.times do |i|
+  10000.times do |i|
     next unless (i < twitter_data_size)
     twitter_data[i][:_id] = i
     collection.insert_one( twitter_data[i] )
   end
 
-  second = Benchmark.bmbm do |bm|
+  second = Benchmark.bm do |bm|
     bm.report('Lightweight::Find one by ID') do
-      5.times do |i|
+      10000.times do |i|
         collection.find(:_id => i).first
       end
     end
   end
 
   database.drop
-  print "\n\n\n"
 
 
 
@@ -81,7 +75,6 @@ def lightweight_benchmark!
   #
   # - Drop 'perftest' database
   # - Load SMALL_DOC dataset
-  # - Drop the 'corpus' collection.
   #
   # Measure: insert the first 10,000 documents individually into the 'corpus' collection
   #          using insert_one. DO NOT manually add an _id field.
@@ -91,18 +84,16 @@ def lightweight_benchmark!
   database.drop
   small_doc_data = BenchmarkHelper.load_array_from_file('SMALL_DOC.txt')
   small_doc_data_size = small_doc_data.size
-  collection.drop
 
-  third = Benchmark.bmbm do |bm|
+  third = Benchmark.bm do |bm|
     bm.report('Lightweight::Small doc insertOne') do
-      5.times do |i|
+      10000.times do |i|
         collection.insert_one( small_doc_data[i] ) if (i < small_doc_data_size)
       end
     end
   end
 
   database.drop
-  print "\n\n\n"
 
 
 
@@ -111,7 +102,6 @@ def lightweight_benchmark!
   #
   # - Drop 'perftest' database
   # - Load LARGE_DOC dataset
-  # - Drop the 'corpus' collection.
   #
   # Measure: insert the first 1,000 documents individually into the 'corpus' collection
   #          using insert_one. DO NOT manually add an _id field.
@@ -121,9 +111,8 @@ def lightweight_benchmark!
   database.drop
   small_doc_data = BenchmarkHelper.load_array_from_file('LARGE_DOC.txt')
   small_doc_data_size = small_doc_data.size
-  collection.drop
 
-  fourth = Benchmark.bmbm do |bm|
+  fourth = Benchmark.bm do |bm|
     bm.report('Lightweight::Large doc insertOne') do
       5.times do |i|
         collection.insert_one( small_doc_data[i] ) if (i < small_doc_data_size)
@@ -132,6 +121,8 @@ def lightweight_benchmark!
   end
 
   database.drop
-  print "\n\n\n"
 
+
+
+  return first, second, third, fourth
 end

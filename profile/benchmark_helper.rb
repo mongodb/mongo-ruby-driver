@@ -2,13 +2,14 @@ require 'mongo'
 require 'json'
 
 class BenchmarkHelper
-
   # TODO: do these helper methods need tests? Do the benchmarks need tests?
 
-  attr_accessor :database, :collection
-  # Initializes a client connection and create a collection.
+  # Accessor methods for
+  attr_reader :database, :collection
+
+  # Initializes a client connection, creating a database and a collection.
   #
-  # @example Initialize a client connection and a collection.
+  # @example Initialize a client connection.
   #   BenchmarkHelper.initialize_collection("testing")
   #
   # @param [ String, Symbol ] collection_name The name of the collection.
@@ -60,6 +61,7 @@ class BenchmarkHelper
   # @since 2.2.1
   def self.load_array_from_file(data_file_name)
     # TODO: there must be an agreed upon format for datasets in order to load it from the file correctly
+    # TODO: make sure this code can handle taking file paths, not just file names, e.g. foo_directory/foo.txt. Do the same thing for #load_string_from_file and #write_documents_to_file
     data_array = []
     File.open('dataset.txt', "r") do |f| # TODO: change 'dataset.txt' to data_file_name parameter
       f.each_line do |line|

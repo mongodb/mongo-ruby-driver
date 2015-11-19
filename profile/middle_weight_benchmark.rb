@@ -16,17 +16,10 @@ require_relative 'benchmark_helper'
 #
 ##
 def middleweight_benchmark!
-
-  # NOTE: #bmbm does a rehearsal and then the test, so it performs the action twice. This seems like a problem
-  # TODO: don't use #bmbm in any of the benchmarks, in feather, light, middle, heavy
-
-  # TODO: make sure the tests are robust enough that not having enough documents handed in by the dataset doesn't break anything. Double check all benchmark files' tests
-
   #bench_helper = BenchmarkHelper.new('perftest','corpus')
   bench_helper = BenchmarkHelper.new('foo','bar')
   database = bench_helper.database
   collection = bench_helper.collection
-  print "\n\n\n"
 
 
 
@@ -46,20 +39,17 @@ def middleweight_benchmark!
   twitter_data = BenchmarkHelper.load_array_from_file('TWITTER.txt')
   twitter_data_size = twitter_data.size
 
-  5.times do |i|
-    next unless (i < twitter_data_size)
-    twitter_data[i][:_id] = i
-    collection.insert_one( twitter_data[i] )
+  10000.times do |i|
+    collection.insert_one( twitter_data[i] ) if (i < twitter_data_size)
   end
 
-  first = Benchmark.bmbm do |bm|
+  first = Benchmark.bm do |bm|
     bm.report('Middleweight::Find many and empty the cursor') do
       collection.find.to_a
     end
   end
 
   database.drop
-  print "\n\n\n"
 
 
 
@@ -68,7 +58,6 @@ def middleweight_benchmark!
   #
   # - Drop the 'perftest' database.
   # - Load SMALL_DOC dataset
-  # - Drop the 'corpus' collection.
   #
   # Measure: Do an ordered bulk insert of all 10,000 documents.
   #          DO NOT manually add an _id field
@@ -77,16 +66,14 @@ def middleweight_benchmark!
   ##
   database.drop
   small_doc_data = BenchmarkHelper.load_array_from_file('SMALL_DOC.txt')
-  collection.drop
 
-  second = Benchmark.bmbm do |bm|
+  second = Benchmark.bm do |bm|
     bm.report('Middleweight::Small doc bulk insert') do
       collection.insert_many(small_doc_data, ordered: true)
     end
   end
 
   database.drop
-  print "\n\n\n"
 
 
 
@@ -95,7 +82,6 @@ def middleweight_benchmark!
   #
   # - Drop the 'perftest' database.
   # - Load LARGE_DOC dataset
-  # - Drop the 'corpus' collection.
   #
   # Measure: Do an ordered bulk insert of all 1,000 documents.
   #          DO NOT manually add an _id field
@@ -104,16 +90,14 @@ def middleweight_benchmark!
   ##
   database.drop
   large_doc_data = BenchmarkHelper.load_array_from_file('LARGE_DOC.txt')
-  collection.drop
 
-  third = Benchmark.bmbm do |bm|
+  third = Benchmark.bm do |bm|
     bm.report('Middleweight::Large doc bulk insert') do
       collection.insert_many(large_doc_data, ordered: true)
     end
   end
 
   database.drop
-  print "\n\n\n"
 
 
 
@@ -125,27 +109,24 @@ def middleweight_benchmark!
   #
   # Measure: Upload the GRIDFS_LARGE data as a GridFS file 100 times.  Each time, use a
   #          different filename, following the sprintf pattern "gridfstest%03d" with integers
-  #          from 1 to 100.  Use whatever upload API is most natural for each language
-  #          (e.g. open_upload_stream(), write the data to the stream and close the stream).
+  #          from 1 to 100.
   #
   # - Drop the 'perftest' database.
   ##
   database.drop
   gridfs_large_data_string = BenchmarkHelper.load_string_from_file('GRIDFS_LARGE.txt')
 
-  fourth = Benchmark.bmbm do |bm|
+  fourth = Benchmark.bm do |bm|
     bm.report('Middleweight::GridFS upload') do
       100.times do |i|
-        file_name = "gridfstest%03d" % (i+1)
         database.fs.insert_one(
-            Mongo::Grid::File.new(gridfs_large_data_string, :filename => file_name)
+            Mongo::Grid::File.new(gridfs_large_data_string, :filename => "gridfstest%03d" % (i+1))
         )
       end
     end
   end
 
   database.drop
-  print "\n\n\n"
 
 
 
@@ -166,10 +147,9 @@ def middleweight_benchmark!
   database.drop
   gridfs_large_data_string = BenchmarkHelper.load_string_from_file('GRIDFS_LARGE.txt')
   gridfs_file = Mongo::Grid::File.new( gridfs_large_data_string, :filename => "gridfstest" )
-
   database.fs.insert_one( gridfs_file )
 
-  fifth = Benchmark.bmbm do |bm|
+  fifth = Benchmark.bm do |bm|
     bm.report('Middleweight::GridFS download') do
       100.times do
         database.fs.find_one(:_id => gridfs_file.id)
@@ -178,5 +158,8 @@ def middleweight_benchmark!
   end
 
   database.drop
-  print "\n\n\n"
+
+
+
+  return first, second, third, fourth, fifth
 end
