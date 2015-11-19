@@ -81,7 +81,7 @@ def middleweight_benchmark!
 
   second = Benchmark.bmbm do |bm|
     bm.report('Middleweight::Small doc bulk insert') do
-      collection.insert_many(small_doc_data)
+      collection.insert_many(small_doc_data, ordered: true)
     end
   end
 
@@ -108,7 +108,7 @@ def middleweight_benchmark!
 
   third = Benchmark.bmbm do |bm|
     bm.report('Middleweight::Large doc bulk insert') do
-      collection.insert_many(large_doc_data)
+      collection.insert_many(large_doc_data, ordered: true)
     end
   end
 

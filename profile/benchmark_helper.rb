@@ -17,15 +17,34 @@ class BenchmarkHelper
   # @return [ Mongo::Collection ] The collection.
   #
   # @since 2.2.1
-  def initialize(database_name, collection_name)
+  def initialize(database_name, collection_name, pool_size = 5)
     Mongo::Logger.level = Logger::INFO
     @client = Mongo::Client.new(
         [ '127.0.0.1:27017' ],
         database: database_name,
-        write: { :w => 1 }
+        write: { :w => 1 },
+        max_pool_size: pool_size
     )
     @database = @client.database
     @collection = @client[collection_name]
+  end
+
+
+  # Load a file into a string
+  #
+  # @example Load a file into a string
+  #   BenchmarkHelper.load_string_from_file("GRIDFS_LARGE.txt")
+  #
+  # @param [ String ] data_file_name The name of the data file.
+  #
+  # @return [ String ] A string of all the file data.
+  #
+  # @since 2.2.1
+  def self.load_string_from_file(data_file_name)
+    file = File.open('dataset.txt', "rb") # TODO: change 'dataset.txt' to data_file_name parameter
+    contents = file.read
+    file.close
+    contents
   end
 
 
@@ -51,21 +70,35 @@ class BenchmarkHelper
   end
 
 
-  # Load a file into a string
+  # Write documents from an array into the specified file.
+  # One document written per line in the file
   #
-  # @example Load a file into a string
-  #   BenchmarkHelper.load_string_from_file("GRIDFS_LARGE.txt")
+  # @example Write the data into the specified file
+  #   BenchmarkHelper.load_array_from_file("TWITTER.txt")
   #
-  # @param [ String ] data_file_name The name of the data file.
+  # @param [ String ] file_name The name of the file to which to write the data.
+  # @param [ Array<Hash> ] data An array of document data.
   #
-  # @return [ String ] A string of all the file data.
+  # @return [ nil ]
   #
   # @since 2.2.1
-  def self.load_string_from_file(data_file_name)
-    file = File.open('dataset.txt', "rb") # TODO: change 'dataset.txt' to data_file_name parameter
-    contents = file.read
-    file.close
-    contents
+  def self.write_documents_to_file(file_name, data)
+    File.open(file_name, 'w') { |f| f.puts(data) } if data
+  end
+
+
+  # Make a file directory with the given directory name
+  #
+  # @example Make a directory
+  #   BenchmarkHelper.make_directory("tmp")
+  #
+  # @param [ String ] directory_name The name of the file directory.
+  #
+  # @return [ Array<String>, nil ] An array of directories created, or nil if none were created.
+  #
+  # @since 2.2.1
+  def self.make_directory(directory_name)
+    FileUtils.mkdir(directory_name) unless File.directory?(directory_name)
   end
 
 
