@@ -82,7 +82,7 @@ def heavyweight_benchmark!
 
   # Temporary directory in which to store temporary data files into which document data will be dumped
   ldjson_data_files_tmp_directory = "LDJSON_data_file_tmp_directory"
-  BenchmarkHelper.make_directory(ldjson_tmp_directory)
+  BenchmarkHelper.make_directory(ldjson_data_files_tmp_directory)
 
   # Array of expected file names
   ldjson_multi_files = Array.new(100) {|i| "LDJSON%02d.txt" % (i+1) }
@@ -173,7 +173,7 @@ def heavyweight_benchmark!
 
   # Temporary directory in which to store temporary data files into which document data will be dumped
   gridfs_data_files_tmp_directory = "GridFS_data_file_tmp_directory"
-  BenchmarkHelper.make_directory(gridfs_tmp_directory)
+  BenchmarkHelper.make_directory(gridfs_data_files_tmp_directory)
 
   # The directory name, or path to the directory, in which the GridFS files are expected to be
   gridfs_data_files_directory = "GridFS_data_file_directory"

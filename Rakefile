@@ -69,14 +69,5 @@ namespace :benchmark do
     heavyweight_benchmark!
   end
 
-  task :run_all_benchmarks do
-    puts "Running MMABench benchmarks..."
-    Rake::Task['benchmark:featherweight'].execute
-    print "\n\n\n\n"
-    Rake::Task['benchmark:lightweight'].execute
-    print "\n\n\n\n"
-    Rake::Task['benchmark:middleweight'].execute
-    print "\n\n\n\n"
-    Rake::Task['benchmark:heavyweight'].execute
-  end
+  task :run_all_benchmarks => [:featherweight, :lightweight, :middleweight, :heavyweight]
 end
