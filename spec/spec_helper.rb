@@ -20,6 +20,7 @@ require 'mongo'
 Mongo::Logger.logger = Logger.new($stdout)
 Mongo::Logger.logger.level = Logger::INFO
 
+require 'pry'
 require 'support/travis'
 require 'support/matchers'
 require 'support/authorization'
@@ -169,6 +170,15 @@ alias :scram_sha_1_enabled? :list_command_enabled?
 def failing_delete_doc
   write_command_enabled? ? { q: { '$set' => { a: 1 } }, limit: 0 } :
                            { que: { field: 'test' } }
+end
+
+# Try running a command on the admin database to see if the mongod was started with auth.
+#
+# @since 2.2.0
+def auth_enabled?
+  $mongo_client ||= initialize_scanned_client!
+  begin; $mongo_client.use(:admin).command(getCmdLineOpts: 1); rescue; return true; end
+  false
 end
 
 # Initializes a basic scanned client to do an ismaster check.

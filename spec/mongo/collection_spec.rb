@@ -521,7 +521,7 @@ describe Mongo::Collection do
       end
     end
 
-    context 'when the user is not authorized' do
+    context 'when the user is not authorized', if: auth_enabled? do
 
       let(:view) do
         unauthorized_collection.find
