@@ -240,6 +240,55 @@ describe Mongo::Server::Connection do
       end
     end
 
+    context 'when the message exceeds the max size' do
+
+      context 'when the message is an insert' do
+
+        before do
+          allow(connection).to receive(:max_message_size).and_return(200)
+        end
+
+        let(:documents) do
+          [{ 'name' => 'testing' } ] * 10
+        end
+
+        let(:reply) do
+          connection.dispatch([ insert ])
+        end
+
+        it 'checks the size against the max message size' do
+          expect {
+            reply
+          }.to raise_exception(Mongo::Error::MaxMessageSize)
+        end
+      end
+
+      context 'when the message is a command' do
+
+        before do
+          allow(connection).to receive(:max_bson_object_size).and_return(100)
+        end
+
+        let(:selector) do
+          { :getlasterror => '1' }
+        end
+
+        let(:command) do
+          Mongo::Protocol::Query.new(TEST_DB, '$cmd', selector, :limit => -1)
+        end
+
+        let(:reply) do
+          connection.dispatch([ command ])
+        end
+
+        it 'checks the size against the max bson size' do
+          expect {
+            reply
+          }.to raise_exception(Mongo::Error::MaxBSONSize)
+        end
+      end
+    end
+
     context 'when a network or socket error occurs' do
 
       let(:socket) do
