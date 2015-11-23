@@ -1,9 +1,8 @@
 require 'mongo'
 require 'json'
+require 'FileUtils'
 
 class BenchmarkHelper
-  # TODO: do these helper methods need tests? Do the benchmarks need tests?
-
   # Accessor methods for
   attr_reader :database, :collection
 
@@ -121,22 +120,6 @@ class BenchmarkHelper
     end
 
 
-    # Determines the percentile
-    #
-    # @example Get the median value
-    #   BenchmarkHelper.get_median(3,5,6,2)
-    #
-    # @param [ Integer ] percentile The desired percentile
-    # @param [ Array<Double> ] scores The set of scores from which to obtain the percentile.
-    #
-    # @return [ Double ] The median of the numbers.
-    #
-    # @since 2.2.1
-    def percentile_value(percentile, scores)
-      scores.sort[ ( (percentile / 100) * scores.size ) - 1 ]
-    end
-
-
     # Determines the median value of the given numbers.
     #
     # @example Get the median value
@@ -149,9 +132,43 @@ class BenchmarkHelper
     # @since 2.2.1
     def median(numbers)
       sorted_numbers = numbers.sort
-      mid_index = numbers.size / 2
+      mid_index = numbers.size / 2 - 1
       numbers.size % 2 == 0 ? (sorted_numbers[ mid_index ] + sorted_numbers[ mid_index + 1 ]) / 2 : sorted_numbers[ mid_index ]
     end
+
+
+    # Determines the percentile
+    #
+    # @example Get the median value
+    #   BenchmarkHelper.get_median(3,5,6,2)
+    #
+    # @param [ Integer ] percentile The desired percentile
+    # @param [ Array<Double> ] scores The set of scores from which to obtain the percentile.
+    #
+    # @return [ Double ] The median of the numbers.
+    #
+    # @since 2.2.1
+    def percentile_value(percentile, scores)
+      scores.sort[ ((percentile / 100.0) * scores.size  - 1).ceil ]
+    end
+
+
+    # Calculate the 10th, 25th, 50th, 75th, 90th, 95th, 98th and 99th percentiles for the
+    # given scores
+    #
+    # @example Get the median value
+    #   BenchmarkHelper.get_median(3,5,6,2)
+    #
+    # @param [ Array<Double> ] scores The set of scores from which to obtain percentiles.
+    #
+    # @return [ Array<Double> ] The 10th, 25th, 50th, 75th, 90th, 95th, 98th and 99th percentiles.
+    #
+    # @since 2.2.1
+    def percentile_values(scores)
+      percentiles = [10,20,50,75,90,95,98,99]
+      percentiles.map { |percentile| percentile_value(percentile, scores) }
+    end
+
 
   end
 

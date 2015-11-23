@@ -13,6 +13,9 @@ require_relative 'benchmark_helper'
 #   Small doc insertOne
 #   Large doc insertOne
 #
+# The lightweight benchmark is intended to measure single-document insertion and query tasks,
+# to explore basic wire protocol efficiency.
+#
 ##
 def lightweight_benchmark!
   #bench_helper = BenchmarkHelper.new('perftest','corpus')
@@ -124,5 +127,9 @@ def lightweight_benchmark!
 
 
 
-  return first, second, third, fourth
+  first_results = first.map {|res| res.real}
+  second_results = second.map {|res| res.real}
+  third_results = third.map {|res| res.real}
+  fourth_results = fourth.map {|res| res.real}
+  return first_results, second_results, third_results, fourth_results
 end

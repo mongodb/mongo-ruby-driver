@@ -14,7 +14,8 @@ require 'thread'
 # GridFS multi-file upload
 # GridFS multi-file download
 #
-# The heavyweight benchmark is intended to test concurrency performance.
+# The heavyweight benchmark is intended to test multi-process/thread ETL tasks,
+# to explore concurrent operation efficiency.
 #
 ##
 def heavyweight_benchmark!
@@ -45,7 +46,7 @@ def heavyweight_benchmark!
   # The directory name, or path to the directory, in which the LDJSON files are expected to be
   ldjson_data_files_directory = "LDJSON_data_file_directory"
   # Array of expected file names
-  ldjson_multi_files = Array.new(100) {|i| "LDJSON%02d.txt" % (i+1) }
+  ldjson_multi_files = Array.new(100) {|i| "LDJSON%03d.txt" % (i+1) }
 
   first = Benchmark.bm do |bm|
     bm.report('Heavyweight::LDJSON multi-file import') do
@@ -84,13 +85,15 @@ def heavyweight_benchmark!
   ldjson_data_files_tmp_directory = "LDJSON_data_file_tmp_directory"
   BenchmarkHelper.make_directory(ldjson_data_files_tmp_directory)
 
+  # The directory name, or path to the directory, in which the LDJSON files are expected to be
+  ldjson_data_files_directory = "LDJSON_data_file_directory"
   # Array of expected file names
-  ldjson_multi_files = Array.new(100) {|i| "LDJSON%02d.txt" % (i+1) }
+  ldjson_multi_files = Array.new(100) {|i| "LDJSON%03d.txt" % (i+1) }
   # Array of temporary file names to which to dump document data
   ldjson_multi_files_tmp = Array.new(100) {|i| "TMP_LDJSON%03d.txt" % (i+1) }
 
   ldjson_multi_files.each do |file_name|
-    ldjson_multi_data = BenchmarkHelper.load_array_from_file(file_name)
+    ldjson_multi_data = BenchmarkHelper.load_array_from_file("#{ldjson_data_files_directory}/#{file_name}")
     collection.insert_many(ldjson_multi_data, ordered: false)
   end
 
@@ -207,6 +210,9 @@ def heavyweight_benchmark!
   database.drop
 
 
-
-  return first, second, third, fourth
+  first_results = first.map {|res| res.real}
+  second_results = second.map {|res| res.real}
+  third_results = third.map {|res| res.real}
+  fourth_results = fourth.map {|res| res.real}
+  return first_results, second_results, third_results, fourth_results
 end

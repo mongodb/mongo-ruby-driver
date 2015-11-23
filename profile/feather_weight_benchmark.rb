@@ -5,6 +5,11 @@ require 'mongo'
 require 'benchmark'
 require_relative 'benchmark_helper'
 
+
+FILES = ['FLAT_BSON.txt', 'DEEP_BSON.txt', 'FULL_BSON.txt']
+# TODO: Make the tests into one test that's performed in FILES.each...
+# ^though this works less well if each test is put in a method?
+
 ##
 # Perform 'featherweight' benchmarks. This includes
 #
@@ -12,14 +17,11 @@ require_relative 'benchmark_helper'
 # Common Nested BSON
 # All BSON Types
 #
-# The featherweight benchmark is intended to test BSON serialization/deserialization
+# The featherweight benchmark is intended to measure BSON encoding/decoding tasks,
+# to explore BSON codec efficiency
 #
 ##
 def featherweight_benchmark!
-  #bench_helper = BenchmarkHelper.new('perftest','corpus')
-  bench_helper = BenchmarkHelper.new('foo','bar')
-  database = bench_helper.database
-  collection = bench_helper.collection
 
 
   ##
@@ -33,9 +35,11 @@ def featherweight_benchmark!
   flat_data = BenchmarkHelper.load_array_from_file('FLAT_BSON.txt')
 
   first = Benchmark.bm do |bm|
-    bm.report('Featherweight::Common Flat BSON') do
-      flat_data.each do |doc|
-        BSON::Document.from_bson(  BSON::Document.new(doc).to_bson  )
+    10.times do
+      bm.report('Featherweight::Common Flat BSON') do
+        flat_data.each do |doc|
+          BSON::Document.from_bson(  BSON::Document.new(doc).to_bson  )
+        end
       end
     end
   end
@@ -52,9 +56,11 @@ def featherweight_benchmark!
   deep_data = BenchmarkHelper.load_array_from_file('DEEP_BSON.txt')
 
   second = Benchmark.bm do |bm|
-    bm.report('Featherweight::Common Flat BSON') do
-      deep_data.each do |doc|
-        BSON::Document.from_bson(  BSON::Document.new(doc).to_bson  )
+    10.times do
+      bm.report('Featherweight::Common Nested BSON') do
+        deep_data.each do |doc|
+          BSON::Document.from_bson(  BSON::Document.new(doc).to_bson  )
+        end
       end
     end
   end
@@ -71,13 +77,18 @@ def featherweight_benchmark!
   full_data = BenchmarkHelper.load_array_from_file('FULL_BSON.txt')
 
   third = Benchmark.bm do |bm|
-    bm.report('Featherweight::ALL BSON Types') do
-      full_data.each do |doc|
-        BSON::Document.from_bson(  BSON::Document.new(doc).to_bson  )
+    10.times do
+      bm.report('Featherweight::ALL BSON Types') do
+        full_data.each do |doc|
+          BSON::Document.from_bson(  BSON::Document.new(doc).to_bson  )
+        end
       end
     end
   end
 
 
-  return first, second, third
+  first_results = first.map {|res| res.real}
+  second_results = second.map {|res| res.real}
+  third_results = third.map {|res| res.real}
+  return first_results, second_results, third_results
 end

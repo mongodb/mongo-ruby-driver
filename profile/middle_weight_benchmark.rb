@@ -14,6 +14,9 @@ require_relative 'benchmark_helper'
 # GridFS upload
 # GridFS download
 #
+# The featherweight benchmark is intended to measure multi-document insertion and query tasks,
+# to explore batch-write and cursor chunking efficiency.
+#
 ##
 def middleweight_benchmark!
   #bench_helper = BenchmarkHelper.new('perftest','corpus')
@@ -152,7 +155,8 @@ def middleweight_benchmark!
   fifth = Benchmark.bm do |bm|
     bm.report('Middleweight::GridFS download') do
       100.times do
-        database.fs.find_one(:_id => gridfs_file.id)
+        stream = StringIO.new
+        database.fs.download_to_stream(gridfs_file.id, stream)
       end
     end
   end
@@ -161,5 +165,10 @@ def middleweight_benchmark!
 
 
 
-  return first, second, third, fourth, fifth
+  first_results = first.map {|res| res.real}
+  second_results = second.map {|res| res.real}
+  third_results = third.map {|res| res.real}
+  fourth_results = fourth.map {|res| res.real}
+  fifth_results = fifth.map {|res| res.real}
+  return first_results, second_results, third_results, fourth_results, fifth_results
 end

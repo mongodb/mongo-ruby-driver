@@ -69,5 +69,5 @@ namespace :benchmark do
     heavyweight_benchmark!
   end
 
-  task :run_all_benchmarks => [:featherweight, :lightweight, :middleweight, :heavyweight]
+  task :all => [:featherweight, :lightweight, :middleweight, :heavyweight]
 end
