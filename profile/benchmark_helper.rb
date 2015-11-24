@@ -1,21 +1,24 @@
 require 'mongo'
 require 'json'
-require 'FileUtils'
 
+# Benchmark helper class.
+# Common operations that are used in benchmarking.
+#
+# @since 2.2.1
 class BenchmarkHelper
   # Accessor methods for
   attr_reader :database, :collection
 
 
-  # Initializes a client connection, creating a database and a collection.
+  # Initializes a client connection, creating a database and a collection,
+  # setting the max pool size, and setting the write concern to 1.
   #
   # @example Initialize a client connection.
   #   BenchmarkHelper.initialize_collection("testing")
   #
-  # @param [ String, Symbol ] collection_name The name of the collection.
   # @param [ String, Symbol ] database_name The name of the database.
-  #
-  # @return [ Mongo::Collection ] The collection.
+  # @param [ String, Symbol ] collection_name The name of the collection.
+  # @param [ Integer ] pool_size Max number of simultaneous DB connections allowed.
   #
   # @since 2.2.1
   def initialize(database_name, collection_name, pool_size = 5)
@@ -39,20 +42,15 @@ class BenchmarkHelper
     # @example Load a file into a string
     #   BenchmarkHelper.load_string_from_file("GRIDFS_LARGE.txt")
     #
-    # @param [ String ] data_file_name The name of the data file.
+    # @param [ String ] file_name The name of the data file.
     #
-    # @return [ [String, Integer] ] A string of all the file data.
+    # @return [ String ] A string of all the file data.
     #
     # @since 2.2.1
-    def load_string_from_file(data_file_name)
-      file = File.open(data_file_name, "rb")
-      contents = file.read
-      file.close
-      return contents, File.size(data_file_name)
+    def load_string_from_file(file_name)
+      File.read(file_name)
     end
 
-
-    # TODO: need Byte counts in the file uploads/downloads
 
     # Load JSON document data from a file line by line into an array
     #
@@ -61,22 +59,17 @@ class BenchmarkHelper
     #
     # @param [ String ] data_file_name The name of the data file.
     #
-    # @return [ [Array<Hash>, Integer] ] An array of document hashes.
+    # @return [ Array<Hash> ] An array of document hashes.
     #
     # @since 2.2.1
     def load_array_from_file(data_file_name)
-      # TODO: there must be an agreed upon format for datasets in order to load it from the file correctly
-      # TODO: make sure this code can handle taking file paths, not just file names, e.g. foo_directory/foo.txt. Do the same thing for #load_string_from_file and #owrite_documents_to_file
       data_array = []
       File.open(data_file_name, "r") do |f|
-        counter = 0
         f.each_line do |line|
-          next if counter > 1000
-          counter += 1
           data_array << JSON.parse(line)
         end
       end
-      return data_array, File.size(data_file_name)
+      data_array
     end
 
 
@@ -84,20 +77,15 @@ class BenchmarkHelper
     # One document written per line in the file
     #
     # @example Write the data into the specified file
-    #   BenchmarkHelper.load_array_from_file("TWITTER.txt")
+    #   BenchmarkHelper.write_documents_to_file("foo.txt", data)
     #
     # @param [ String ] path The path to the file to which to write the data.
     # @param [ Array<Hash> ] data An array of document data.
     #
-    # @return [ nil ]
-    #
     # @since 2.2.1
     def write_documents_to_file(path, data)
       dir = File.dirname(path)
-
-      unless File.directory?(dir)
-        FileUtils.mkdir_p(dir)
-      end
+      FileUtils.mkdir_p(dir) unless File.directory?(dir)
 
       File.open(path, 'w') { |f| f.puts(data) } if data
     end
@@ -114,7 +102,7 @@ class BenchmarkHelper
     #
     # @since 2.2.1
     def make_directory(directory_name)
-      FileUtils.mkdir(directory_name) unless File.directory?(directory_name)
+      FileUtils.mkdir_p(directory_name) unless File.directory?(directory_name)
     end
 
 
@@ -135,6 +123,7 @@ class BenchmarkHelper
 
 
     # Determines the median value of the given numbers.
+    # The median value is currently defined as the 50th percentile value
     #
     # @example Get the median value
     #   BenchmarkHelper.get_median(3,5,6,2)
@@ -145,9 +134,7 @@ class BenchmarkHelper
     #
     # @since 2.2.1
     def median(numbers)
-      sorted_numbers = numbers.sort
-      mid_index = numbers.size / 2 - 1
-      numbers.size % 2 == 0 ? (sorted_numbers[ mid_index ] + sorted_numbers[ mid_index + 1 ]) / 2 : sorted_numbers[ mid_index ]
+      percentile_value(50, numbers)
     end
 
 
@@ -181,6 +168,24 @@ class BenchmarkHelper
     def percentile_values(scores)
       percentiles = [10,20,50,75,90,95,98,99]
       percentiles.map { |percentile| percentile_value(percentile, scores) }
+    end
+
+
+    # Calculate MBs per Second, using the median (50th percentile) time data result.
+    #
+    # @example Get the median value
+    #   BenchmarkHelper.get_median(3,5,6,2)
+    #
+    # @param [ Array<Double> ] scores The set of scores from which to obtain percentiles.
+    # @param [ Double ] mb The number of MBs of data
+    #
+    # @return [ Array<Double> ] The 10th, 25th, 50th, 75th, 90th, 95th, 98th and 99th percentiles.
+    #
+    # @since 2.2.1
+    def MB_per_second(scores, mb)
+      data_percentiles = percentile_values(scores)
+      median = data_percentiles[2]
+      mb / median
     end
 
 

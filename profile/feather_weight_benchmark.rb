@@ -7,8 +7,8 @@ require_relative 'benchmark_helper'
 
 
 # Array of datasets
-#FILES = ['flat_bson.json', 'deep_bson.json', 'full_bson.json']
-FILES = ['dataset.txt', 'dataset.txt', 'dataset.txt']     #TODO: can't parse the MongoDB extended JSON files, so insignificant dummy data
+#FILES = ['flat_bson.json', 'deep_bson.json', 'full_bson.json'] #TODO: can't parse the MongoDB extended JSON files, so insignificant dummy data
+TESTS = [['dataset.txt', "Common Flat BSON"], ['dataset.txt', "Common Nested BSON"], ['dataset.txt', "All BSON Types"]]
 
 
 # Perform 'featherweight' benchmarks. This includes
@@ -27,8 +27,8 @@ FILES = ['dataset.txt', 'dataset.txt', 'dataset.txt']     #TODO: can't parse the
 # @since 2.2.1
 def featherweight_benchmark(benchmark_reps)
   results = []
-  FILES.each do |dataset_file_name|
-    results << encode_decode_bson_helper(dataset_file_name, benchmark_reps)
+  TESTS.each do |test|
+    results << encode_decode_bson_helper(test[0], benchmark_reps, test[1])
   end
   results
 end
@@ -39,16 +39,19 @@ end
 #
 # @param [ Integer ] data_file_name Name of dataset file.
 # @param [ Integer ] reps Number of repetitions of the benchmark to run.
+# @param [ Integer ] label Benchmark label.
 #
-# @return [ [Array<Integer>, Double] ] An array of benchmark wall clock time results and the size of the dataset in MB
+# @return [ [Array<Integer>, Double, String] ] An array of benchmark wall clock time results,
+#                                              the size of the dataset in MB, test label
 #
 # @since 2.2.1
-def encode_decode_bson_helper(data_file_name, reps)
-  data, data_file_size = BenchmarkHelper.load_array_from_file(data_file_name)
+def encode_decode_bson_helper(data_file_name, reps, label)
+  data = BenchmarkHelper.load_array_from_file(data_file_name)
+  data_file_size = File.size(data_file_name)
 
   tms_results = Benchmark.bm do |bm|
     reps.times do
-      bm.report("Featherweight::#{data_file_name}") do
+      bm.report("Featherweight::#{label}") do
         data.each do |doc|
           BSON::Document.from_bson(  BSON::Document.new(doc).to_bson  )
         end
@@ -57,7 +60,5 @@ def encode_decode_bson_helper(data_file_name, reps)
   end
 
   # Get the real time (wall clock time) from the Benchmark::Tms objects
-  return tms_results.map { |result| result.real }, data_file_size/1000000.0
+  return tms_results.map { |result| result.real }, data_file_size/1000000.0, label
 end
-
-#featherweight_benchmark(1)

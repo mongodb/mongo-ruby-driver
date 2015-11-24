@@ -5,6 +5,7 @@ require 'mongo'
 require 'benchmark'
 require_relative 'benchmark_helper'
 require 'thread'
+require 'bson'
 
 # The directory name in which the LDJSON files are expected to be
 LDJSON_DIR = "LDJSON_data_file_directory"
@@ -32,8 +33,7 @@ GRIDFS_TMP_DIR = "GridFS_data_file_tmp_directory"
 #
 # @since 2.2.1
 def heavyweight_benchmark(benchmark_reps)
-  #bench_helper = BenchmarkHelper.new('perftest','corpus', 200)
-  bench_helper = BenchmarkHelper.new('foo','bar', 200)
+  bench_helper = BenchmarkHelper.new('perftest','corpus', 200)
   database = bench_helper.database
   collection = bench_helper.collection
 
@@ -42,7 +42,6 @@ def heavyweight_benchmark(benchmark_reps)
   results << ldjson_multi_file_export(database, collection, benchmark_reps)
   results << gridfs_multi_file_upload(database, benchmark_reps)
   results << gridfs_multi_file_download(database, benchmark_reps)
-  results
 end
 
 
@@ -62,8 +61,8 @@ end
 # @param [ Mongo::Collection ] collection The collection.
 # @param [ Integer ] reps Number of repetitions of the benchmark to run.
 #
-# @return [ [Array<Integer>, Double] ] An array of benchmark wall clock time results and the size of the dataset in MB
-#
+# @return [ [Array<Integer>, Double, String] ] An array of benchmark wall clock time results,
+#                                              the size of the dataset in MB, test label
 # @since 2.2.1
 def ldjson_multi_file_import(database, collection, reps)
   # Array of expected LDJSON file names
@@ -81,7 +80,7 @@ def ldjson_multi_file_import(database, collection, reps)
         threads = []
         ldjson_multi_files.each do |file_path|
           threads << Thread.new do
-            ldjson_multi_data, data_file_size = BenchmarkHelper.load_array_from_file("#{file_path}")
+            ldjson_multi_data = BenchmarkHelper.load_array_from_file("#{file_path}")
             collection.insert_many(ldjson_multi_data, ordered: false)
           end
         end
@@ -92,7 +91,7 @@ def ldjson_multi_file_import(database, collection, reps)
   end
 
   # Get the real times (wall clock times) from the Benchmark::Tms objects
-  return tms_results.map { |result| result.real }, data_file_size/1000000.0
+  return tms_results.map { |result| result.real }, data_file_size/1000000.0, "LDJSON multi-file import"
 end
 
 
@@ -109,8 +108,8 @@ end
 # @param [ Mongo::Collection ] collection The collection.
 # @param [ Integer ] reps Number of repetitions of the benchmark to run.
 #
-# @return [ [Array<Integer>, Double] ] An array of benchmark wall clock time results and the size of the dataset in MB
-#
+# @return [ [Array<Integer>, Double, String] ] An array of benchmark wall clock time results,
+#                                              the size of the dataset in MB, test label
 # @since 2.2.1
 def ldjson_multi_file_export(database, collection, reps)
   database.drop
@@ -123,7 +122,7 @@ def ldjson_multi_file_export(database, collection, reps)
   ldjson_multi_files_tmp = Array.new(100) {|i| "TMP_LDJSON%03d.txt" % (i+1) }
 
   ldjson_multi_files.each do |file_path|
-    ldjson_multi_data, data_file_size = BenchmarkHelper.load_array_from_file("#{file_path}")
+    ldjson_multi_data = BenchmarkHelper.load_array_from_file("#{file_path}")
     collection.insert_many(ldjson_multi_data, ordered: false)
   end
 
@@ -154,7 +153,7 @@ def ldjson_multi_file_export(database, collection, reps)
   end
 
   # Get the real times (wall clock times) from the Benchmark::Tms objects
-  return tms_results.map { |result| result.real }, data_file_size/1000000.0
+  return tms_results.map { |result| result.real }, data_file_size/1000000.0, "LDJSON multi-file export"
 end
 
 
@@ -168,8 +167,8 @@ end
 # @param [ Mongo::Database ] database MongoDB Database.
 # @param [ Integer ] reps Number of repetitions of the benchmark to run.
 #
-# @return [ [Array<Integer>, Double] ] An array of benchmark wall clock time results and the size of the dataset in MB
-#
+# @return [ [Array<Integer>, Double, String] ] An array of benchmark wall clock time results,
+#                                              the size of the dataset in MB, test label
 # @since 2.2.1
 def gridfs_multi_file_upload(database, reps)
   # Array of expected GridFS data file names
@@ -187,7 +186,7 @@ def gridfs_multi_file_upload(database, reps)
         threads = []
         gridfs_multi_files.each do |file_path|
           threads << Thread.new do
-            gridfs_multi_data, data_file_size = BenchmarkHelper.load_string_from_file("#{file_path}")
+            gridfs_multi_data = BenchmarkHelper.load_string_from_file("#{file_path}")
             database.fs.insert_one(
                 Mongo::Grid::File.new(gridfs_multi_data, :filename => file_path)
             )
@@ -200,7 +199,7 @@ def gridfs_multi_file_upload(database, reps)
   end
 
   # Get the real times (wall clock times) from the Benchmark::Tms objects
-  return tms_results.map { |result| result.real }, data_file_size/1000000.0
+  return tms_results.map { |result| result.real }, data_file_size/1000000.0, "GridFS multi-file upload"
 end
 
 
@@ -216,8 +215,8 @@ end
 # @param [ Mongo::Database ] database MongoDB Database.
 # @param [ Integer ] reps Number of repetitions of the benchmark to run.
 #
-# @return [ [Array<Integer>, Double] ] An array of benchmark wall clock time results and the size of the dataset in MB
-#
+# @return [ [Array<Integer>, Double, String] ] An array of benchmark wall clock time results,
+#                                              the size of the dataset in MB, test label
 # @since 2.2.1
 def gridfs_multi_file_download(database, reps)
   database.drop
@@ -229,7 +228,7 @@ def gridfs_multi_file_download(database, reps)
 
   # Load GridFS datasets into the DB.
   gridfs_multi_files.each do |file_path|
-    gridfs_multi_data, data_file_size = BenchmarkHelper.load_string_from_file("#{file_path}")
+    gridfs_multi_data = BenchmarkHelper.load_string_from_file("#{file_path}")
     database.fs.insert_one(
         Mongo::Grid::File.new(gridfs_multi_data, :filename => file_path)
     )
@@ -261,7 +260,5 @@ def gridfs_multi_file_download(database, reps)
   end
 
   # Get the real times (wall clock times) from the Benchmark::Tms objects
-  return tms_results.map { |result| result.real }, data_file_size/1000000.0
+  return tms_results.map { |result| result.real }, data_file_size/1000000.0, "GridFS multi-file download"
 end
-
-#heavyweight_benchmark(1)
