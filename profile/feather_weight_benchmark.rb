@@ -6,11 +6,11 @@ require 'benchmark'
 require_relative 'benchmark_helper'
 
 
-FILES = ['FLAT_BSON.txt', 'DEEP_BSON.txt', 'FULL_BSON.txt']
-# TODO: Make the tests into one test that's performed in FILES.each...
-# ^though this works less well if each test is put in a method?
+# Array of datasets
+#FILES = ['flat_bson.json', 'deep_bson.json', 'full_bson.json']
+FILES = ['dataset.txt', 'dataset.txt', 'dataset.txt']     #TODO: can't parse the MongoDB extended JSON files, so insignificant dummy data
 
-##
+
 # Perform 'featherweight' benchmarks. This includes
 #
 # Common Flat BSON
@@ -18,77 +18,46 @@ FILES = ['FLAT_BSON.txt', 'DEEP_BSON.txt', 'FULL_BSON.txt']
 # All BSON Types
 #
 # The featherweight benchmark is intended to measure BSON encoding/decoding tasks,
-# to explore BSON codec efficiency
+# to explore BSON codec efficiency.
 #
-##
-def featherweight_benchmark!
-
-
-  ##
-  # Common Flat BSON
-  #
-  # - Load FLAT_BSON dataset
-  #
-  # Measure: Encode each document to a BSON byte-string and decode the BSON byte-string back.
-  #
-  ##
-  flat_data = BenchmarkHelper.load_array_from_file('FLAT_BSON.txt')
-
-  first = Benchmark.bm do |bm|
-    10.times do
-      bm.report('Featherweight::Common Flat BSON') do
-        flat_data.each do |doc|
-          BSON::Document.from_bson(  BSON::Document.new(doc).to_bson  )
-        end
-      end
-    end
+# @param [ Integer ] benchmark_reps Number of repetitions of each benchmark to run.
+#
+# @return [ Array< Array<Integer> > ] Arrays of benchmark results
+#
+# @since 2.2.1
+def featherweight_benchmark(benchmark_reps)
+  results = []
+  FILES.each do |dataset_file_name|
+    results << encode_decode_bson_helper(dataset_file_name, benchmark_reps)
   end
-
-
-  ##
-  # Common Nested BSON
-  #
-  # - Load DEEP_BSON dataset
-  #
-  # Measure: Encode each document to a BSON byte-string and decode the BSON byte-string back.
-  #
-  ##
-  deep_data = BenchmarkHelper.load_array_from_file('DEEP_BSON.txt')
-
-  second = Benchmark.bm do |bm|
-    10.times do
-      bm.report('Featherweight::Common Nested BSON') do
-        deep_data.each do |doc|
-          BSON::Document.from_bson(  BSON::Document.new(doc).to_bson  )
-        end
-      end
-    end
-  end
-
-
-  ##
-  # All BSON Types
-  #
-  # - Load FULL_BSON dataset
-  #
-  # Measure: Encode each document to a BSON byte-string and decode the BSON byte-string back.
-  #
-  ##
-  full_data = BenchmarkHelper.load_array_from_file('FULL_BSON.txt')
-
-  third = Benchmark.bm do |bm|
-    10.times do
-      bm.report('Featherweight::ALL BSON Types') do
-        full_data.each do |doc|
-          BSON::Document.from_bson(  BSON::Document.new(doc).to_bson  )
-        end
-      end
-    end
-  end
-
-
-  first_results = first.map {|res| res.real}
-  second_results = second.map {|res| res.real}
-  third_results = third.map {|res| res.real}
-  return first_results, second_results, third_results
+  results
 end
+
+
+
+# Runs encode/decode benchmark on a dataset a given number of times
+#
+# @param [ Integer ] data_file_name Name of dataset file.
+# @param [ Integer ] reps Number of repetitions of the benchmark to run.
+#
+# @return [ [Array<Integer>, Double] ] An array of benchmark wall clock time results and the size of the dataset in MB
+#
+# @since 2.2.1
+def encode_decode_bson_helper(data_file_name, reps)
+  data, data_file_size = BenchmarkHelper.load_array_from_file(data_file_name)
+
+  tms_results = Benchmark.bm do |bm|
+    reps.times do
+      bm.report("Featherweight::#{data_file_name}") do
+        data.each do |doc|
+          BSON::Document.from_bson(  BSON::Document.new(doc).to_bson  )
+        end
+      end
+    end
+  end
+
+  # Get the real time (wall clock time) from the Benchmark::Tms objects
+  return tms_results.map { |result| result.real }, data_file_size/1000000.0
+end
+
+#featherweight_benchmark(1)

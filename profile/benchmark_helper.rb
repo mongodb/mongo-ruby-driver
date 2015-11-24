@@ -6,6 +6,7 @@ class BenchmarkHelper
   # Accessor methods for
   attr_reader :database, :collection
 
+
   # Initializes a client connection, creating a database and a collection.
   #
   # @example Initialize a client connection.
@@ -29,7 +30,9 @@ class BenchmarkHelper
     @collection = @client[collection_name]
   end
 
+
   class << self
+
 
     # Load a file into a string
     #
@@ -38,16 +41,18 @@ class BenchmarkHelper
     #
     # @param [ String ] data_file_name The name of the data file.
     #
-    # @return [ String ] A string of all the file data.
+    # @return [ [String, Integer] ] A string of all the file data.
     #
     # @since 2.2.1
     def load_string_from_file(data_file_name)
-      file = File.open('dataset.txt', "rb") # TODO: change 'dataset.txt' to data_file_name parameter
+      file = File.open(data_file_name, "rb")
       contents = file.read
       file.close
-      contents
+      return contents, File.size(data_file_name)
     end
 
+
+    # TODO: need Byte counts in the file uploads/downloads
 
     # Load JSON document data from a file line by line into an array
     #
@@ -56,19 +61,22 @@ class BenchmarkHelper
     #
     # @param [ String ] data_file_name The name of the data file.
     #
-    # @return [ Array<Hash> ] An array of document hashes.
+    # @return [ [Array<Hash>, Integer] ] An array of document hashes.
     #
     # @since 2.2.1
     def load_array_from_file(data_file_name)
       # TODO: there must be an agreed upon format for datasets in order to load it from the file correctly
       # TODO: make sure this code can handle taking file paths, not just file names, e.g. foo_directory/foo.txt. Do the same thing for #load_string_from_file and #owrite_documents_to_file
       data_array = []
-      File.open('dataset.txt', "r") do |f| # TODO: change 'dataset.txt' to data_file_name parameter
+      File.open(data_file_name, "r") do |f|
+        counter = 0
         f.each_line do |line|
+          next if counter > 1000
+          counter += 1
           data_array << JSON.parse(line)
         end
       end
-      data_array
+      return data_array, File.size(data_file_name)
     end
 
 
@@ -78,14 +86,20 @@ class BenchmarkHelper
     # @example Write the data into the specified file
     #   BenchmarkHelper.load_array_from_file("TWITTER.txt")
     #
-    # @param [ String ] file_name The name of the file to which to write the data.
+    # @param [ String ] path The path to the file to which to write the data.
     # @param [ Array<Hash> ] data An array of document data.
     #
     # @return [ nil ]
     #
     # @since 2.2.1
-    def write_documents_to_file(file_name, data)
-      File.open(file_name, 'w') { |f| f.puts(data) } if data
+    def write_documents_to_file(path, data)
+      dir = File.dirname(path)
+
+      unless File.directory?(dir)
+        FileUtils.mkdir_p(dir)
+      end
+
+      File.open(path, 'w') { |f| f.puts(data) } if data
     end
 
 
@@ -171,5 +185,4 @@ class BenchmarkHelper
 
 
   end
-
 end

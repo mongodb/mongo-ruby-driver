@@ -51,22 +51,22 @@ namespace :benchmark do
 
   task :featherweight do
     p "FEATHERWEIGHT BENCHMARK"
-    featherweight_benchmark!
+    featherweight_benchmark(1)
   end
 
   task :lightweight do
     p "LIGHTWEIGHT BENCHMARK"
-    lightweight_benchmark!
+    lightweight_benchmark(1)
   end
 
   task :middleweight do
     p "MIDDLEWEIGHT BENCHMARK"
-    middleweight_benchmark!
+    middleweight_benchmark(1)
   end
 
   task :heavyweight do
     p "HEAVYWEIGHT BENCHMARK"
-    heavyweight_benchmark!
+    heavyweight_benchmark(1)
   end
 
   task :all => [:featherweight, :lightweight, :middleweight, :heavyweight]
