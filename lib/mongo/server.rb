@@ -27,7 +27,6 @@ module Mongo
   # @since 2.0.0
   class Server
     extend Forwardable
-    include Loggable
 
     # @return [ String ] The configured address for the server.
     attr_reader :address
