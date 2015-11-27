@@ -132,7 +132,7 @@ module Mongo
         # @since 2.0.0
         def get(server)
           MUTEX.synchronize do
-            pools[server.address] ||= create_pool(server)
+            pools[server.address.to_s] ||= create_pool(server)
           end
         end
 

@@ -37,6 +37,10 @@ RSpec.configure do |config|
   config.formatter = 'documentation'
   config.include(Authorization)
 
+  config.before(:each) do
+    Mongo::Server::ConnectionPool.instance_variable_set(:@pools, {})
+  end
+
   config.before(:suite) do
 
     begin
