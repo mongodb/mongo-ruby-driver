@@ -27,6 +27,7 @@ module Mongo
   # @since 2.0.0
   class Server
     extend Forwardable
+    include Loggable
 
     # @return [ String ] The configured address for the server.
     attr_reader :address
@@ -120,6 +121,19 @@ module Mongo
       monitor.stop! and true
     end
 
+    # When the server is flagged for garbage collection, stop the monitor
+    # thread.
+    #
+    # @example Finalize the object.
+    #   Server.finalize(monitor)
+    #
+    # @param [ Server::Monitor ] monitor The server monitor.
+    #
+    # @since 2.2.0
+    def self.finalize(monitor)
+      proc { monitor.stop! }
+    end
+
     # Instantiate a new server object. Will start the background refresh and
     # subscribe to the appropriate events.
     #
@@ -145,6 +159,7 @@ module Mongo
       @monitor = Monitor.new(address, event_listeners, options)
       monitor.scan!
       monitor.run!
+      ObjectSpace.define_finalizer(self, self.class.finalize(monitor))
     end
 
     # Get a pretty printed server inspection.
