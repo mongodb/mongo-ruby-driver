@@ -106,6 +106,7 @@ module Mongo
       @options = options.freeze
       @topology = Topology.initial(seeds, options)
       @update_lock = Mutex.new
+      @pool_lock = Mutex.new
 
       subscribe_to(Event::STANDALONE_DISCOVERED, Event::StandaloneDiscovered.new(self))
       subscribe_to(Event::DESCRIPTION_CHANGED, Event::DescriptionChanged.new(self))
@@ -166,6 +167,22 @@ module Mongo
     # @since 2.1.1
     def max_read_retries
       options[:max_read_retries] || MAX_READ_RETRIES
+    end
+
+    # Get the scoped connection pool for the server.
+    #
+    # @example Get the connection pool.
+    #   cluster.pool(server)
+    #
+    # @param [ Server ] server The server.
+    #
+    # @return [ Server::ConnectionPool ] The connection pool.
+    #
+    # @since 2.2.0
+    def pool(server)
+      @pool_lock.synchronize do
+        pools[server.address] ||= Server::ConnectionPool.get(server)
+      end
     end
 
     # Get the interval, in seconds, in which a mongos read operation is
@@ -337,6 +354,10 @@ module Mongo
 
     def addition_allowed?(address)
       !@topology.single? || direct_connection?(address)
+    end
+
+    def pools
+      @pools ||= {}
     end
 
     def servers_list

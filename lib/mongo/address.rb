@@ -63,6 +63,10 @@ module Mongo
       host == other.host && port == other.port
     end
 
+    def eql?(other)
+      self == other
+    end
+
     # Calculate the hash value for the address.
     #
     # @example Calculate the hash value.

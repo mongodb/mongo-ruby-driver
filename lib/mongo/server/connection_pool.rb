@@ -23,9 +23,6 @@ module Mongo
     class ConnectionPool
       include Loggable
 
-      # Used for synchronization of pools access.
-      MUTEX = Mutex.new
-
       # @return [ Hash ] options The pool options.
       attr_reader :options
 
@@ -131,21 +128,9 @@ module Mongo
         #
         # @since 2.0.0
         def get(server)
-          MUTEX.synchronize do
-            pools[server.address] ||= create_pool(server)
-          end
-        end
-
-        private
-
-        def create_pool(server)
           ConnectionPool.new(server.options) do
             Connection.new(server, server.options)
           end
-        end
-
-        def pools
-          @pools ||= {}
         end
       end
     end

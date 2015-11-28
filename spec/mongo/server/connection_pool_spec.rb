@@ -18,10 +18,14 @@ describe Mongo::Server::ConnectionPool do
     Mongo::Event::Listeners.new
   end
 
+  let(:cluster) do
+    double('cluster')
+  end
+
   describe '#checkin' do
 
     let(:server) do
-      Mongo::Server.new(address, double('cluster'), monitoring, listeners, options)
+      Mongo::Server.new(address, cluster, monitoring, listeners, options)
     end
 
     let!(:pool) do
@@ -29,6 +33,7 @@ describe Mongo::Server::ConnectionPool do
     end
 
     after do
+      expect(cluster).to receive(:pool).with(server).and_return(pool)
       server.disconnect!
     end
 
@@ -55,7 +60,7 @@ describe Mongo::Server::ConnectionPool do
   describe '#checkout' do
 
     let(:server) do
-      Mongo::Server.new(address, double('cluster'), monitoring, listeners, options)
+      Mongo::Server.new(address, cluster, monitoring, listeners, options)
     end
 
     let!(:pool) do
@@ -103,27 +108,24 @@ describe Mongo::Server::ConnectionPool do
   describe '#disconnect!' do
 
     let(:server) do
-      Mongo::Server.new(address, double('cluster'), monitoring, listeners, options)
+      Mongo::Server.new(address, cluster, monitoring, listeners, options)
     end
 
     let!(:pool) do
       described_class.get(server)
     end
 
-    after do
-      server.disconnect!
-    end
-
     it 'disconnects the queue' do
-      expect(pool.send(:queue)).to receive(:disconnect!).twice.and_call_original
-      pool.disconnect!
+      expect(cluster).to receive(:pool).with(server).and_return(pool)
+      expect(pool.send(:queue)).to receive(:disconnect!).once.and_call_original
+      server.disconnect!
     end
   end
 
   describe '.get' do
 
     let(:server) do
-      Mongo::Server.new(address, double('cluster'), monitoring, listeners, options)
+      Mongo::Server.new(address, cluster, monitoring, listeners, options)
     end
 
     let!(:pool) do
@@ -131,18 +133,19 @@ describe Mongo::Server::ConnectionPool do
     end
 
     after do
+      expect(cluster).to receive(:pool).with(server).and_return(pool)
       server.disconnect!
     end
 
     it 'returns the pool for the server' do
-      expect(pool).to eql(described_class.get(server))
+      expect(pool).to_not be_nil
     end
   end
 
   describe '#inspect' do
 
     let(:server) do
-      Mongo::Server.new(address, double('cluster'), monitoring, listeners, options)
+      Mongo::Server.new(address, cluster, monitoring, listeners, options)
     end
 
     let!(:pool) do
@@ -150,6 +153,7 @@ describe Mongo::Server::ConnectionPool do
     end
 
     after do
+      expect(cluster).to receive(:pool).with(server).and_return(pool)
       server.disconnect!
     end
 
@@ -165,7 +169,7 @@ describe Mongo::Server::ConnectionPool do
   describe '#with_connection' do
 
     let(:server) do
-      Mongo::Server.new(address, double('cluster'), monitoring, listeners, options)
+      Mongo::Server.new(address, cluster, monitoring, listeners, options)
     end
 
     let!(:pool) do

@@ -182,7 +182,7 @@ module Mongo
     #
     # @since 2.0.0
     def pool
-      @pool ||= ConnectionPool.get(self)
+      @pool ||= cluster.pool(self)
     end
 
     # Determine if the provided tags are a subset of the server's tags.
