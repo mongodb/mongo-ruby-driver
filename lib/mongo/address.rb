@@ -63,6 +63,16 @@ module Mongo
       host == other.host && port == other.port
     end
 
+    # Check equality for hashing.
+    #
+    # @example Check hashing equality.
+    #   address.eql?(other)
+    #
+    # @param [ Object ] other The other object.
+    #
+    # @return [ true, false ] If the objects are equal.
+    #
+    # @since 2.2.0
     def eql?(other)
       self == other
     end
