@@ -113,6 +113,27 @@ module Mongo
       subscribe_to(Event::PRIMARY_ELECTED, Event::PrimaryElected.new(self))
 
       seeds.each{ |seed| add(seed) }
+      ObjectSpace.define_finalizer(self, self.class.finalize(pools))
+    end
+
+    # Finalize the cluster for garbage collection. Disconnects all the scoped
+    # connection pools.
+    #
+    # @example Finalize the cluster.
+    #   Cluster.finalize(pools)
+    #
+    # @param [ Hash<Address, Server::ConnectionPool> ] pools The connection
+    #   pools.
+    #
+    # @return [ Proc ] The Finalizer.
+    #
+    # @since 2.2.0
+    def self.finalize(pools)
+      proc do
+        pools.values.each do |pool|
+          pool.disconnect!
+        end
+      end
     end
 
     # Get the nicer formatted string for use in inspection.
