@@ -18,6 +18,10 @@ describe Mongo::Server do
     Mongo::Address.new('127.0.0.1:27017')
   end
 
+  let(:pool) do
+    Mongo::Server::ConnectionPool.get(server)
+  end
+
   describe '#==' do
 
     let(:server) do
@@ -25,6 +29,7 @@ describe Mongo::Server do
     end
 
     after do
+      expect(cluster).to receive(:pool).with(server).and_return(pool)
       server.disconnect!
     end
 
@@ -81,6 +86,10 @@ describe Mongo::Server do
         server.disconnect!
       end
 
+      before do
+        expect(cluster).to receive(:pool).with(server).and_return(pool)
+      end
+
       it 'returns true' do
         expect(server).to be_connectable
       end
@@ -97,6 +106,7 @@ describe Mongo::Server do
       end
 
       before do
+        expect(cluster).to receive(:pool).with(server).and_return(pool)
         server.disconnect!
       end
 
@@ -117,6 +127,7 @@ describe Mongo::Server do
     end
 
     after do
+      expect(cluster).to receive(:pool).with(server).and_return(pool)
       server.disconnect!
     end
 
@@ -133,6 +144,7 @@ describe Mongo::Server do
 
     it 'stops the monitor instance' do
       expect(server.instance_variable_get(:@monitor)).to receive(:stop!).and_return(true)
+      expect(cluster).to receive(:pool).with(server).and_return(pool)
       server.disconnect!
     end
   end
@@ -150,6 +162,7 @@ describe Mongo::Server do
     end
 
     after do
+      expect(cluster).to receive(:pool).with(server).and_return(pool)
       server.disconnect!
     end
 
@@ -166,25 +179,6 @@ describe Mongo::Server do
     end
   end
 
-  describe '#pool' do
-
-    let(:server) do
-      described_class.new(address, cluster, monitoring, listeners, TEST_OPTIONS)
-    end
-
-    let(:pool) do
-      server.pool
-    end
-
-    after do
-      server.disconnect!
-    end
-
-    it 'returns the connection pool for the server' do
-      expect(pool).to be_a(Mongo::Server::ConnectionPool)
-    end
-  end
-
   describe '#scan!' do
 
     let(:server) do
@@ -192,6 +186,7 @@ describe Mongo::Server do
     end
 
     after do
+      expect(cluster).to receive(:pool).with(server).and_return(pool)
       server.disconnect!
     end
 
@@ -211,6 +206,7 @@ describe Mongo::Server do
     end
 
     after do
+      expect(cluster).to receive(:pool).with(server).and_return(pool)
       server.disconnect!
     end
 
