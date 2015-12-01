@@ -30,6 +30,7 @@ require 'support/crud'
 require 'support/command_monitoring'
 require 'support/connection_string'
 require 'support/gridfs'
+require 'mongo/shared_connection_pool'
 
 RSpec.configure do |config|
   config.color     = true
@@ -38,7 +39,7 @@ RSpec.configure do |config|
   config.include(Authorization)
 
   config.before(:each) do
-    Mongo::Server::ConnectionPool.instance_variable_set(:@pools, {})
+    Mongo::SharedConnectionPool.instance_variable_set(:@pools, {})
   end
 
   config.before(:suite) do

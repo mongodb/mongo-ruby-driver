@@ -61,7 +61,7 @@ module Mongo
       # @since 2.0.0
       def with_connection(&block)
         server.pool.with_connection do |conn|
-          unless conn.authentication_by_db[server.options[:database]]
+          if server.cluster.share_connection? && !conn.authentication_by_db[server.options[:database]]
             conn.authenticate!(server.options)
           end
           block.call(conn)
