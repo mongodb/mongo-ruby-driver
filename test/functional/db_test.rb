@@ -321,7 +321,7 @@ class DBTest < Test::Unit::TestCase
     end
 
     should "return profiling info" do
-      if @version >= "2.2"
+      if @version >= "2.2" && @version < "3.0"
         @db.profiling_level = :all
         @coll.find()
         @db.profiling_level = :off
