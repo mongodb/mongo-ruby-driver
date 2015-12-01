@@ -14,26 +14,25 @@ describe Mongo::Server::Connection do
     Mongo::Event::Listeners.new
   end
 
+  let(:cluster) do
+    double('cluster')
+  end
+
   let(:server) do
-    Mongo::Server.new(address, double('cluster'), monitoring, listeners, TEST_OPTIONS)
+    Mongo::Server.new(address, cluster, monitoring, listeners, TEST_OPTIONS)
+  end
+
+  let(:pool) do
+    double('pool')
   end
 
   after do
+    expect(cluster).to receive(:pool).with(server).and_return(pool)
+    expect(pool).to receive(:disconnect!).and_return(true)
     server.disconnect!
   end
 
   describe '#connectable?' do
-
-    # context 'when the connection is connectable' do
-
-    #   let(:connection) do
-    #     described_class.new(server)
-    #   end
-
-    #   it 'returns true' do
-    #     expect(connection).to be_connectable
-    #   end
-    # end
 
     context 'when the connection is not connectable' do
 
@@ -42,7 +41,7 @@ describe Mongo::Server::Connection do
       end
 
       let(:bad_server) do
-        Mongo::Server.new(bad_address, double('cluster'), monitoring, listeners, TEST_OPTIONS)
+        Mongo::Server.new(bad_address, cluster, monitoring, listeners, TEST_OPTIONS)
       end
 
       let(:connection) do
