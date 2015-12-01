@@ -141,7 +141,7 @@ describe Mongo::Server::Connection do
         end
 
         it 'sets the connection as authenticated' do
-          expect(connection).to be_authenticated
+          expect(connection.authentication_by_db[TEST_DB]).to eql(true)
         end
       end
     end
@@ -434,7 +434,9 @@ describe Mongo::Server::Connection do
       end
 
       it 'sets the authentication strategy for the connection' do
-        expect(connection.authenticator.user).to eq(user)
+        allow_any_instance_of(Mongo::Auth::CR).to receive(:login)
+        connection.connect!
+        expect(connection.instance_variable_get(:@authenticator).user).to eq(user)
       end
     end
   end

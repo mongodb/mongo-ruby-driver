@@ -130,8 +130,10 @@ module Mongo
     # @since 2.2.0
     def self.finalize(pools)
       proc do
-        pools.values.each do |pool|
-          pool.disconnect!
+        unless share_connection?
+          pools.values.each do |pool|
+            pool.disconnect!
+          end
         end
       end
     end
@@ -190,6 +192,10 @@ module Mongo
       options[:max_read_retries] || MAX_READ_RETRIES
     end
 
+    def share_connection?
+      options[:share_connection]
+    end
+
     # Get the scoped connection pool for the server.
     #
     # @example Get the connection pool.
@@ -201,8 +207,12 @@ module Mongo
     #
     # @since 2.2.0
     def pool(server)
-      @pool_lock.synchronize do
-        pools[server.address] ||= Server::ConnectionPool.get(server)
+      if share_connection?
+        SharedConnectionPool.get(server)
+      else
+        @pool_lock.synchronize do
+          pools[server.address] ||= Server::ConnectionPool.get(server)
+        end
       end
     end
 

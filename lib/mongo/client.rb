@@ -52,6 +52,7 @@ module Mongo
       :replica_set,
       :server_selection_timeout,
       :socket_timeout,
+      :share_connection,
       :ssl,
       :ssl_ca_cert,
       :ssl_cert,

@@ -378,6 +378,7 @@ module Mongo
     uri_option 'minpoolsize', :min_pool_size
     uri_option 'maxpoolsize', :max_pool_size
     uri_option 'waitqueuetimeoutms', :wait_queue_timeout, :type => :ms_convert
+    uri_option 'shareconnection', :share_connection
 
     # Security Options
     uri_option 'ssl', :ssl
