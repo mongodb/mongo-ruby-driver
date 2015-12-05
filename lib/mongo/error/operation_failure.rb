@@ -32,6 +32,7 @@ module Mongo
         "can't connect",
         'no master',
         'not master',
+        'could not contact primary',
         'connect failed',
         'error querying',
         'could not get last error',
