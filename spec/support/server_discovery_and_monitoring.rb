@@ -150,7 +150,7 @@ module Mongo
     # @since 2.0.0
     class Outcome
 
-      # @return [ Array<Array<String, Hash>>] servers The expecations for
+      # @return [ Hash ] servers The expecations for
       #   server states.
       attr_reader :servers
 
