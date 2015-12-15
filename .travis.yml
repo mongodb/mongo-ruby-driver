@@ -2,18 +2,6 @@ language: ruby
 
 sudo: false
 
-rvm:
-  - 1.9.3
-  - 2.0.0
-  - 2.1
-  - 2.2
-  - jruby-19mode
-
-jdk:
-  - oraclejdk7
-  - openjdk7
-  - oraclejdk8
-
 install: ruby -S bundle install --without release development
 
 env:
@@ -44,24 +32,30 @@ branches:
     - 1.x-stable
 
 matrix:
-  exclude:
+  fast_finish: true
+  allow_failures:
+    - rvm: ruby-head
+  include:
     - rvm: 1.9.3
-      jdk: openjdk7
-    - rvm: 1.9.3
-      jdk: oraclejdk8
     - rvm: 2.0.0
-      jdk: openjdk7
-    - rvm: 2.0.0
-      jdk: oraclejdk8
     - rvm: 2.1
-      jdk: openjdk7
-    - rvm: 2.1
-      jdk: oraclejdk8
     - rvm: 2.2
-      jdk: openjdk7
-    - rvm: 2.2
-      jdk: oraclejdk8
     - rvm: ruby-head
       jdk: openjdk7
+    - rvm: jruby-head
+      jdk: openjdk7
+    - rvm: jruby-19mode
+      jdk: openjdk7
+    - rvm: ruby-head
+      jdk: oraclejdk7
+    - rvm: jruby-head
+      jdk: oraclejdk7
+    - rvm: jruby-19mode
+      jdk: oraclejdk7
     - rvm: ruby-head
       jdk: oraclejdk8
+    - rvm: jruby-head
+      jdk: oraclejdk8
+    - rvm: jruby-19mode
+      jdk: oraclejdk8
+
