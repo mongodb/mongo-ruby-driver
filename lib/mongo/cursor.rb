@@ -33,9 +33,11 @@ module Mongo
   class Cursor
     extend Forwardable
     include Enumerable
+    include Retryable
 
     def_delegators :@view, :collection, :limit
     def_delegators :collection, :client, :database
+    def_delegators :@server, :cluster
 
     # @return [ Collection::View ] view The collection view.
     attr_reader :view
@@ -157,7 +159,9 @@ module Mongo
     end
 
     def get_more
-      process(get_more_operation.execute(@server.context))
+      read_with_retry do
+        process(get_more_operation.execute(@server.context))
+      end
     end
 
     def get_more_operation
@@ -169,7 +173,9 @@ module Mongo
     end
 
     def kill_cursors
-      kill_cursors_operation.execute(@server.context)
+      read_with_retry do
+        kill_cursors_operation.execute(@server.context)
+      end
     end
 
     def kill_cursors_operation

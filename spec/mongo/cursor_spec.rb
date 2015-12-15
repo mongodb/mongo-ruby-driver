@@ -61,13 +61,35 @@ describe Mongo::Cursor do
           authorized_collection.delete_many
         end
 
-        it 'returns the correct amount' do
-          expect(cursor.to_a.count).to eq(102)
+        context 'when a getmore gets a socket error' do
+
+          let(:op) do
+            double('operation')
+          end
+
+          before do
+            expect(cursor).to receive(:get_more_operation).and_return(op).ordered
+            expect(op).to receive(:execute).and_raise(Mongo::Error::SocketError).ordered
+            expect(cursor).to receive(:get_more_operation).and_call_original.ordered
+          end
+
+          it 'iterates the documents' do
+            cursor.each do |doc|
+              expect(doc).to have_key('field')
+            end
+          end
         end
 
-        it 'iterates the documents' do
-          cursor.each do |doc|
-            expect(doc).to have_key('field')
+        context 'when no errors occur' do
+
+          it 'returns the correct amount' do
+            expect(cursor.to_a.count).to eq(102)
+          end
+
+          it 'iterates the documents' do
+            cursor.each do |doc|
+              expect(doc).to have_key('field')
+            end
           end
         end
       end
