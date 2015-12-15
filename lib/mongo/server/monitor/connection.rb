@@ -57,18 +57,6 @@ module Mongo
           end
         end
 
-        # Get the connection timeout.
-        #
-        # @example Get the connection timeout.
-        #   connection.timeout
-        #
-        # @return [ Float ] The connection timeout in seconds.
-        #
-        # @since 2.0.0
-        def timeout
-          @timeout ||= options[:connect_timeout] || CONNECT_TIMEOUT
-        end
-
         # Tell the underlying socket to establish a connection to the host.
         #
         # @example Connect to the host.
@@ -127,6 +115,18 @@ module Mongo
           @ssl_options = options.reject { |k, v| !k.to_s.start_with?(SSL) }
           @socket = nil
           @pid = Process.pid
+        end
+
+        # Get the connection timeout.
+        #
+        # @example Get the connection timeout.
+        #   connection.timeout
+        #
+        # @return [ Float ] The connection timeout in seconds.
+        #
+        # @since 2.0.0
+        def timeout
+          @timeout ||= options[:connect_timeout] || CONNECT_TIMEOUT
         end
       end
     end

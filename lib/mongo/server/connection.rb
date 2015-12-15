@@ -168,7 +168,7 @@ module Mongo
       def ping
         ensure_connected do |socket|
           socket.write(PING_BYTES)
-          reply = Protocol::Reply.deserialize(socket)
+          reply = Protocol::Reply.deserialize(socket, max_message_size)
           reply.documents[0][Operation::Result::OK] == 1
         end
       end
