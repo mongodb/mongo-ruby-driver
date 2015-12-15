@@ -41,9 +41,11 @@ module Mongo
             result = send_initial_query(server)
             @cursor = Cursor.new(view, result, server)
           end
-          @cursor.each do |doc|
-            yield doc
-          end if block_given?
+          read_with_retry do
+            @cursor.each do |doc|
+              yield doc
+            end if block_given?
+          end
           @cursor.to_enum
         end
 

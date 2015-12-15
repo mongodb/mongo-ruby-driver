@@ -24,6 +24,11 @@ module Mongo
     # @since 2.1.0
     NOT_MASTER = 'not master'.freeze
 
+    # Could not contact primary error message, seen on stepdowns
+    #
+    # @since 2.2.0
+    COULD_NOT_CONTACT_PRIMARY = 'could not contact primary'.freeze
+
     # Execute a read operation with a retry.
     #
     # @api private
@@ -83,7 +88,7 @@ module Mongo
       begin
         block.call
       rescue Error::OperationFailure => e
-        if e.message.include?(NOT_MASTER)
+        if e.message.include?(NOT_MASTER) || e.message.include?(COULD_NOT_CONTACT_PRIMARY)
           retry_operation(&block)
         else
           raise e
