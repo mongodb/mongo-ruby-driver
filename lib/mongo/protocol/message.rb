@@ -67,6 +67,11 @@ module Mongo
       # @since 2.2.0
       Q = 'q'.freeze
 
+      # Default max message size of 48MB.
+      #
+      # @since 2.2.1
+      MAX_MESSAGE_SIZE = 50331648.freeze
+
       # Returns the request id for the message
       #
       # @return [Fixnum] The request id for this message
@@ -100,10 +105,19 @@ module Mongo
 
       # Deserializes messages from an IO stream
       #
-      # @param io [IO] Stream containing a message
-      # @return [Message] Instance of a Message class
-      def self.deserialize(io)
+      # @param [ Integer ] max_message_size The max message size.
+      # @param [ IO ] io Stream containing a message
+      #
+      # @return [ Message ] Instance of a Message class
+      def self.deserialize(io, max_message_size = MAX_MESSAGE_SIZE)
         length = deserialize_header(BSON::ByteBuffer.new(io.read(16))).first
+
+        # Protection from potential DOS man-in-the-middle attacks. See
+        # DRIVERS-276.
+        if length > max_message_size
+          raise Error::MaxMessageSize.new(max_message_size)
+        end
+
         buffer = BSON::ByteBuffer.new(io.read(length - 16))
         message = allocate
         fields.each do |field|

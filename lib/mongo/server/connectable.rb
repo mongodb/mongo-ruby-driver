@@ -104,7 +104,7 @@ module Mongo
 
       def read
         ensure_connected do |socket|
-          Protocol::Reply.deserialize(socket)
+          Protocol::Reply.deserialize(socket, max_message_size)
         end
       end
     end

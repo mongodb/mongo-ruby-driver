@@ -86,6 +86,17 @@ describe Mongo::Protocol::Reply do
 
   describe '#deserialize' do
 
+    context 'when the message size is greater than the max message size' do
+
+      let(:length) { Mongo::Protocol::Message::MAX_MESSAGE_SIZE + 1 }
+
+      it 'raises a max message size error' do
+        expect {
+          reply
+        }.to raise_error(Mongo::Error::MaxMessageSize)
+      end
+    end
+
     describe 'response flags' do
 
       context 'no flags' do
