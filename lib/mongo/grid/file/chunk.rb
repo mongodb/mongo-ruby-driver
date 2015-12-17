@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require 'stringio'
+
 module Mongo
   module Grid
     class File
@@ -159,23 +161,23 @@ module Mongo
           # @example Split the data into chunks.
           #   Chunks.split(data)
           #
-          # @param [ String ] data The raw bytes.
+          # @param [ String, IO ] data The raw bytes.
           # @param [ File::Info ] file_info The files collection file doc.
           #
           # @return [ Array<Chunk> ] The chunks of the data.
           #
           # @since 2.0.0
-          def split(data, file_info, offset = 0)
-            chunks, index, n = [], 0, offset
-            while index < data.length
-              bytes = data.slice(index, file_info.chunk_size)
+          def split(io, file_info, offset = 0)
+            io = StringIO.new(io) if io.is_a?(String)
+            parts = Enumerator.new { |y| y << io.read(file_info.chunk_size) until io.eof? }
+            parts.map.with_index do |bytes, n|
               file_info.md5.update(bytes)
-              chunk = Chunk.new(:data => BSON::Binary.new(bytes), :files_id => file_info.id, :n => n)
-              chunks.push(chunk)
-              index += bytes.length
-              n += 1
+              Chunk.new(
+                data: BSON::Binary.new(bytes),
+                files_id: file_info.id,
+                n: n + offset,
+              )
             end
-            chunks
           end
         end
       end

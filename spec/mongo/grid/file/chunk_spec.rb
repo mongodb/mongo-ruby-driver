@@ -1,4 +1,5 @@
 require 'spec_helper'
+require 'stringio'
 
 describe Mongo::Grid::File::Chunk do
 

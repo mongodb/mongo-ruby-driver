@@ -57,12 +57,12 @@ describe Mongo::Grid::File do
         described_class.new(data, :filename => 'test.txt')
       end
 
-      it 'sets the data' do
-        expect(file.data).to eq(data)
-      end
-
       it 'creates the chunks' do
         expect(file.chunks.size).to eq(4)
+      end
+
+      it 'returns data' do
+        expect(file.data).to eq(data)
       end
     end
 
@@ -80,12 +80,31 @@ describe Mongo::Grid::File do
         described_class.new(data, :filename => File.basename(ruby_file.path))
       end
 
-      it 'sets the data' do
+      it 'creates the chunks' do
+        expect(file.chunks.size).to eq(4)
+      end
+
+      it 'returns data' do
         expect(file.data).to eq(data)
+      end
+    end
+
+    context 'when data is an IO object' do
+
+      let(:io) do
+        StringIO.new('testing')
+      end
+
+      let(:file) do
+        described_class.new(io, filename: "test.txt")
       end
 
       it 'creates the chunks' do
-        expect(file.chunks.size).to eq(4)
+        expect(file.chunks).not_to be_empty
+      end
+
+      it 'returns data' do
+        expect(file.data).to eq 'testing'
       end
     end
 
