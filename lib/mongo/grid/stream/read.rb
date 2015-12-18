@@ -74,7 +74,7 @@ module Mongo
             view.each_with_index.reduce(0) do |length_read, (doc, index)|
               chunk = Grid::File::Chunk.new(doc)
               validate!(index, num_chunks, chunk, length_read)
-              data = Grid::File::Chunk.assemble([ chunk ])
+              data = chunk.data.data
               yield data
               length_read += data.size
             end if block_given?
