@@ -30,9 +30,6 @@ module Mongo
       # @return [ Array<Chunk> ] chunks The file chunks.
       attr_reader :chunks
 
-      # @return [ IO ] data The raw data for the file.
-      attr_reader :data
-
       # @return [ File::Info ] info The file information.
       attr_reader :info
 
@@ -48,7 +45,7 @@ module Mongo
       # @since 2.0.0
       def ==(other)
         return false unless other.is_a?(File)
-        chunks == other.chunks && data == other.data && info == other.info
+        chunks == other.chunks && info == other.info
       end
 
       # Initialize the file.
@@ -56,8 +53,8 @@ module Mongo
       # @example Create the file.
       #   Grid::File.new(data, :filename => 'test.txt')
       #
-      # @param [ IO, Array<BSON::Document> ] data The file or IO object or
-      #   chunks.
+      # @param [ IO, String, Array<BSON::Document> ] data The file object, file
+      #   contents or chunks.
       # @param [ BSON::Document, Hash ] options The info options.
       #
       # @option options [ String ] :filename Required name of the file.
@@ -71,8 +68,17 @@ module Mongo
       #
       # @since 2.0.0
       def initialize(data, options = {})
-        @info = Info.new(options.merge(:length => data.length))
+        @info = Info.new(options.merge(:length => data.size))
         initialize_chunks!(data)
+      end
+
+      # Joins chunks into a string.
+      #
+      # @return [ String ] The raw data for the file.
+      #
+      # @since 2.0.0
+      def data
+        @data ||= Chunk.assemble(chunks)
       end
 
       # Gets a pretty inspection of the file.
@@ -96,12 +102,9 @@ module Mongo
       #   the original data itself.
       def initialize_chunks!(value)
         if value.is_a?(Array)
-          chks = value.map{ |doc| Chunk.new(doc) }
-          @chunks = chks
-          @data = Chunk.assemble(chks)
+          @chunks = value.map{ |doc| Chunk.new(doc) }
         else
           @chunks = Chunk.split(value, info)
-          @data = value
         end
       end
     end
