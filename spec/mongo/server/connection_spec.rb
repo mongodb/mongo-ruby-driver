@@ -140,8 +140,8 @@ describe Mongo::Server::Connection do
           connection.connect!
         end
 
-        it 'sets the connection as authenticated' do
-          expect(connection).to be_authenticated
+        it 'sets the connection as connected' do
+          expect(connection).to be_connected
         end
       end
     end
@@ -433,8 +433,8 @@ describe Mongo::Server::Connection do
         )
       end
 
-      it 'sets the authentication strategy for the connection' do
-        expect(connection.authenticator.user).to eq(user)
+      it 'sets the auth options' do
+        expect(connection.options[:user]).to eq(user.name)
       end
     end
   end
