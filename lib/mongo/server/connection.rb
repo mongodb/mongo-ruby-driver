@@ -38,28 +38,11 @@ module Mongo
       # @since 2.1.0
       PING_BYTES = PING_MESSAGE.serialize.to_s.freeze
 
-      # @return [ Mongo::Auth::CR, Mongo::Auth::X509, Mongo::Auth:LDAP, Mongo::Auth::SCRAM ]
-      #   authenticator The authentication strategy.
-      attr_reader :authenticator
-
       def_delegators :@server,
                      :features,
                      :max_bson_object_size,
                      :max_message_size,
                      :mongos?
-
-      # Is this connection authenticated. Will return true if authorization
-      # details were provided and authentication passed.
-      #
-      # @example Is the connection authenticated?
-      #   connection.authenticated?
-      #
-      # @return [ true, false ] If the connection is authenticated.
-      #
-      # @since 2.0.0
-      def authenticated?
-        !!@authenticated
-      end
 
       # Tell the underlying socket to establish a connection to the host.
       #
@@ -76,10 +59,7 @@ module Mongo
         unless socket
           @socket = address.socket(timeout, ssl_options)
           socket.connect!
-          if authenticator
-            authenticator.login(self)
-            @authenticated = true
-          end
+          authenticate!
         end
         true
       end
@@ -99,7 +79,6 @@ module Mongo
         if socket
           socket.close
           @socket = nil
-          @authenticated = false
         end
         true
       end
@@ -151,7 +130,6 @@ module Mongo
         @ssl_options = options.reject { |k, v| !k.to_s.start_with?(SSL) }
         @socket = nil
         @pid = Process.pid
-        setup_authentication!
       end
 
       # Ping the connection to see if the server is responding to commands.
@@ -180,11 +158,11 @@ module Mongo
         messages.last.replyable? ? read : nil
       end
 
-      def setup_authentication!
+      def authenticate!
         if options[:user]
           default_mechanism = @server.features.scram_sha_1_enabled? ? :scram : :mongodb_cr
           user = Auth::User.new(Options::Redacted.new(:auth_mech => default_mechanism).merge(options))
-          @authenticator = Auth.get(user)
+          Auth.get(user).login(self)
         end
       end
 
