@@ -377,6 +377,17 @@ describe Mongo::Collection::View::Readable do
           expect(distinct).to be_empty
         end
       end
+
+      context 'when the field does not exist' do
+
+        let(:distinct) do
+          view.distinct(:doesnotexist)
+        end
+
+        it 'returns an empty array' do
+          expect(distinct).to be_empty
+        end
+      end
     end
 
     context 'when no selector is provided' do
@@ -460,6 +471,13 @@ describe Mongo::Collection::View::Readable do
 
       it 'sets the max_time_ms option on the command' do
         expect(view.distinct(:field, max_time_ms: 100)).to eq([ 'test' ])
+      end
+    end
+
+    context 'when the field does not exist' do
+
+      it 'returns an empty array' do
+        expect(view.distinct(:nofieldexists)).to be_empty
       end
     end
   end
