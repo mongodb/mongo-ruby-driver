@@ -37,7 +37,9 @@ module Mongo
         'error querying',
         'could not get last error',
         'connection attempt failed',
-        'interrupted at shutdown'
+        'interrupted at shutdown',
+        'unknown replica set',
+        'dbclient error communicating with server'
       ].freeze
 
       # Can the operation that caused the error be retried?
