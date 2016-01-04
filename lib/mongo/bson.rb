@@ -23,7 +23,7 @@ class Symbol
   # @example Get the bson type.
   #   :test.bson_type
   #
-  # @return [ String ] The charater 14.
+  # @return [ String ] The character 14.
   #
   # @since 2.2.1
   def bson_type
