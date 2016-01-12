@@ -132,6 +132,11 @@ module Mongo
           cmd[:limit] = options[:limit] if options[:limit]
           cmd[:maxTimeMS] = options[:max_time_ms] if options[:max_time_ms]
           cmd[:readConcern] = collection.read_concern if collection.read_concern
+
+          if !cmd[:readConcern] || cmd[:readConcern][:level] == "majority"
+            options[:read] ||= client.options[:read]
+          end
+
           read_with_retry do
             database.command(cmd, options).n.to_i
           end
