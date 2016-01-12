@@ -129,10 +129,15 @@ module Mongo
       # @since 2.0.0
       TAGS = 'tags'.freeze
 
-      # Constant for reading electionID info from config.
+      # Constant for reading electionId info from config.
       #
       # @since 2.1.0
       ELECTION_ID = 'electionId'.freeze
+
+      # Constant for reading setVersion info from config.
+      #
+      # @since 2.2.2
+      SET_VERSION = 'setVersion'.freeze
 
       # Constant for reading localTime info from config.
       #
@@ -142,7 +147,7 @@ module Mongo
       # Fields to exclude when comparing two descriptions.
       #
       # @since 2.0.6
-      EXCLUDE_FOR_COMPARISON = [ LOCAL_TIME, ELECTION_ID ].freeze
+      EXCLUDE_FOR_COMPARISON = [ LOCAL_TIME, ELECTION_ID, SET_VERSION ].freeze
 
       # @return [ Address ] address The server's address.
       attr_reader :address
@@ -341,6 +346,18 @@ module Mongo
       # @since 2.1.0
       def election_id
         config[ELECTION_ID]
+      end
+
+      # Get the setVersion from the config.
+      #
+      # @example Get the setVersion.
+      #   description.set_version
+      #
+      # @return [ Integer ] The set version.
+      #
+      # @since 2.2.2
+      def set_version
+        config[SET_VERSION]
       end
 
       # Is the server a mongos?
