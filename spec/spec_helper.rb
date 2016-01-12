@@ -20,6 +20,7 @@ require 'mongo'
 Mongo::Logger.logger = Logger.new($stdout)
 Mongo::Logger.logger.level = Logger::INFO
 
+require 'pry'
 require 'support/travis'
 require 'support/matchers'
 require 'support/authorization'
