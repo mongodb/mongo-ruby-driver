@@ -41,3 +41,29 @@ namespace :docs do
     system "yardoc -o #{out} --title mongo-#{Mongo::VERSION}"
   end
 end
+
+require_relative "profile/benchmarking"
+
+namespace :benchmark do
+  desc "Run the driver benchmark tests"
+
+  namespace :micro do
+    desc "Run the driver micro benchmark tests"
+    task :flat do
+      puts "MICRO BENCHMARK:: FLAT"
+      Mongo::Benchmarking::Micro.run(:flat)
+    end
+
+    task :deep do
+      puts "MICRO BENCHMARK:: DEEP"
+      Mongo::Benchmarking::Micro.run(:deep)
+    end
+
+    task :full do
+      puts "MICRO BENCHMARK:: FULL"
+      Mongo::Benchmarking::Micro.run(:full)
+    end
+
+    task :all => [:flat, :deep, :full ]
+  end
+end
