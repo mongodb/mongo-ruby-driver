@@ -688,7 +688,7 @@ describe Mongo::Client do
         end
 
         it 'returns a acknowledged write concern' do
-          expect(concern.get_last_error).to eq(:getlasterror => 1, 'j' => true)
+          expect(concern.get_last_error).to eq(:getlasterror => 1, :j => true)
         end
       end
 
