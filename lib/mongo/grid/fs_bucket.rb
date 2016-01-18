@@ -359,8 +359,8 @@ module Mongo
       # chunks collection. After all the chunks have been uploaded, it creates a files collection
       # document for the filename in the files collection.
       #
-      # @example Open a stream to which the contents of a file came be written.
-      #   fs.open_upload_stream('a-file.txt')
+      # @example Upload a file to the GridFS bucket.
+      #   fs.upload_from_stream('a-file.txt')
       #
       # @param [ String ] filename The filename of the file to upload.
       # @param [ IO ] io The source io stream to upload from.
