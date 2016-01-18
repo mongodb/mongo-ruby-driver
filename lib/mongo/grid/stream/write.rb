@@ -82,9 +82,8 @@ module Mongo
           def write(io)
             ensure_open!
             @indexes ||= ensure_indexes!
-            data = io.read
-            @length += data.length
-            chunks = File::Chunk.split(data, file_info, @n)
+            @length += io.size
+            chunks = File::Chunk.split(io, file_info, @n)
             @n += chunks.size
             chunks_collection.insert_many(chunks) unless chunks.empty?
             self
