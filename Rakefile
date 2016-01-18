@@ -74,10 +74,21 @@ namespace :benchmark do
       Mongo::Benchmarking::SingleDoc.run(:command)
     end
 
-    task :find_one_by_id do
+    task :find_one do
       puts "SINGLE_DOC BENCHMARK:: FIND ONE BY ID"
-      Mongo::Benchmarking::SingleDoc.run(:find_one_by_id)
+      Mongo::Benchmarking::SingleDoc.run(:find_one)
     end
 
+    task :insert_one_small do
+      puts "SINGLE_DOC BENCHMARK:: INSERT ONE SMALL DOCUMENT"
+      Mongo::Benchmarking::SingleDoc.run(:insert_one_small)
+    end
+
+    task :insert_one_large do
+      puts "SINGLE_DOC BENCHMARK:: INSERT ONE LARGE DOCUMENT"
+      Mongo::Benchmarking::SingleDoc.run(:insert_one_large)
+    end
+
+    task :all => [:command, :find_one, :insert_one_small, :insert_one_large ]
   end
 end

@@ -3,7 +3,7 @@ module Mongo
 
     CURRENT_PATH = File.expand_path(File.dirname(__FILE__))
     MICRO_TESTS_PATH = "#{CURRENT_PATH}/benchmarking/data/micro/"
-    TWEET_DOCUMENT_PATH = "#{CURRENT_PATH}/benchmarking/data/single-doc/"
+    SINGLE_DOCUMENTS_PATH = "#{CURRENT_PATH}/benchmarking/data/single-doc/"
 
     require 'benchmark'
     require_relative 'benchmarking/helper'
