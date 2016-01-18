@@ -7,5 +7,6 @@ module Mongo
     require 'benchmark'
     require_relative 'benchmarking/helper'
     require_relative 'benchmarking/micro'
+    require_relative 'benchmarking/single_doc'
   end
 end

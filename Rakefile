@@ -66,4 +66,14 @@ namespace :benchmark do
 
     task :all => [:flat, :deep, :full ]
   end
+
+  namespace :single_doc do
+    desc "Run the common driver single-document benchmarking tests"
+    task :command do
+      puts "SINGLE-DOC BENCHMARK:: COMMAND"
+      Mongo::Benchmarking::SingleDoc.run(:command)
+    end
+
+
+  end
 end
