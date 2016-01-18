@@ -1,20 +1,25 @@
+# Copyright (C) 2015 MongoDB, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 module Mongo
   module Benchmarking
+
+    # These tests focus on BSON encoding and decoding; they are client-side only and
+    # do not involve any transmission of data to or from the server.
+    #
+    # @since 2.2.2
     module Micro
-
-      # The number of repetitions of the test to do before timing.
-      #
-      # @return [ Integer ] The number of warmup repetitions.
-      #
-      # @since 2.2.2
-      WARMUP_REPETITIONS = 10
-
-      # The number of times to run and time the test.
-      #
-      # @return [ Integer ] The number of test repetitions.
-      #
-      # @since 2.2.2
-      TEST_REPETITIONS = 100
 
       extend self
 
@@ -23,55 +28,56 @@ module Mongo
       # @example Run a test.
       #   Benchmarking::Micro.run(:flat)
       #
-      # @param [ Symbol ] The type of test to run.
+      # @param [ Symbol ] type The type of test to run.
+      # @param [ Integer ] repetitions The number of test repetitions.
       #
-      # @return [ Array ] An array of results.
+      # @return [ Numeric ] The test results.
       #
       # @since 2.2.2
-      def run(type)
-        file = type.to_s << "_bson.json"
-        file_path = MICRO_TESTS_PATH + file
-        ['encode', 'decode'].collect do |method|
-          result = send(method, file_path, TEST_REPETITIONS)
-          puts "#{method} : #{result}"
+      def run(type, repetitions = Benchmarking::TEST_REPETITIONS)
+        file_name = type.to_s << "_bson.json"
+        file_path = Benchmarking::DATA_PATH + file_name
+        ['encode'].each do |task|
+          puts "#{task} : #{send(task, file_path, repetitions)}"
         end
       end
 
       # Run an encoding micro benchmark test.
       #
       # @example Run an encoding test.
-      #   Benchmarking::Micro.encode(file_name, 100)
+      #   Benchmarking::Micro.encode(file_name)
       #
-      # @param [ String ] The name of the file with data for the test.
-      # @param [ Integer ] The number of test repetitions.
+      # @param [ String ] file_name The name of the file with data for the test.
+      # @param [ Integer ] repetitions The number of test repetitions.
       #
       # @return [ Numeric ] The median of the results.
       #
       # @since 2.2.2
       def encode(file_name, repetitions)
         data = Benchmarking.load_file(file_name)
-        doc = BSON::Document.new(data.first)
+        document = BSON::Document.new(data.first)
 
         # WARMUP_REPETITIONS.times do
         #   doc.to_bson
         # end
 
-        Benchmarking.median(repetitions.times.collect do
+        results = repetitions.times.collect do
           Benchmark.realtime do
             10_000.times do
-              doc.to_bson
+              document.to_bson
             end
           end
-        end)
+        end
+        Benchmarking.median(results)
       end
 
       # Run a decoding micro benchmark test.
       #
       # @example Run an decoding test.
-      #   Benchmarking::Micro.decode(file_name, 100)
+      #   Benchmarking::Micro.decode(file_name)
       #
-      # @param [ String ] The name of the file with data for the test.
-      # @param [ Integer ] The number of test repetitions.
+      # @param [ String ] file_name The name of the file with data for the test.
+      # @param [ Integer ] repetitions The number of test repetitions.
       #
       # @return [ Numeric ] The median of the results.
       #
@@ -87,12 +93,11 @@ module Mongo
         results = repetitions.times.collect do
           Benchmark.realtime do
             10_000.times do
-              buffer.reset_read_position
+              buffer.rewind
               BSON::Document.from_bson(buffer)
             end
           end
         end
-
         Benchmarking.median(results)
       end
     end

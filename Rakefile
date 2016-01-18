@@ -48,7 +48,7 @@ namespace :benchmark do
   desc "Run the driver benchmark tests"
 
   namespace :micro do
-    desc "Run the driver micro benchmark tests"
+    desc "Run the common driver micro benchmarking tests"
     task :flat do
       puts "MICRO BENCHMARK:: FLAT"
       Mongo::Benchmarking::Micro.run(:flat)
@@ -90,5 +90,34 @@ namespace :benchmark do
     end
 
     task :all => [:command, :find_one, :insert_one_small, :insert_one_large ]
+  end
+
+  namespace :multi_doc do
+    desc "Run the common driver multi-document benchmarking tests"
+    task :find_many do
+      puts "MULTI DOCUMENT BENCHMARK:: FIND MANY"
+      Mongo::Benchmarking::MultiDoc.run(:find_many)
+    end
+
+    task :bulk_insert_small do
+      puts "MULTI DOCUMENT BENCHMARK:: BULK INSERT SMALL"
+      Mongo::Benchmarking::MultiDoc.run(:bulk_insert_small)
+    end
+
+    task :bulk_insert_large do
+      puts "MULTI DOCUMENT BENCHMARK:: BULK INSERT LARGE"
+      Mongo::Benchmarking::MultiDoc.run(:bulk_insert_large)
+    end
+
+    task :gridfs_upload do
+      puts "MULTI DOCUMENT BENCHMARK:: GRIDFS UPLOAD"
+      Mongo::Benchmarking::MultiDoc.run(:gridfs_upload)
+    end
+
+    task :gridfs_download do
+      puts "MULTI DOCUMENT BENCHMARK:: GRIDFS DOWNLOAD"
+      Mongo::Benchmarking::MultiDoc.run(:gridfs_download)
+    end
+
   end
 end

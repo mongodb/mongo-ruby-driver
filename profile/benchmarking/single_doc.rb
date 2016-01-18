@@ -1,62 +1,54 @@
+# Copyright (C) 2015 MongoDB, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 module Mongo
   module Benchmarking
+
+    # Single-doc tests focus on single-document read and write operations.
+    # They are designed to give insights into the efficiency of the driver's
+    # implementation of the basic wire protocol.
+    #
+    # @since 2.2.2
     module SingleDoc
-
-      # The number of repetitions of the test to do before timing.
-      #
-      # @return [ Integer ] The number of warmup repetitions.
-      #
-      # @since 2.2.2
-      WARMUP_REPETITIONS = 10
-
-      # The number of times to run and time the test.
-      #
-      # @return [ Integer ] The number of test repetitions.
-      #
-      # @since 2.2.2
-      TEST_REPETITIONS = 10
-
-      # The file containing the single tweet document.
-      #
-      # @return [ String ] The file containing the tweet document.
-      #
-      # @since 2.2.2
-      TWEET_DOCUMENT_FILE = SINGLE_DOCUMENTS_PATH + 'TWEET.json'
-
-      # The file containing the single small document.
-      #
-      # @return [ String ] The file containing the small document.
-      #
-      # @since 2.2.2
-      SMALL_DOCUMENT_FILE = SINGLE_DOCUMENTS_PATH + 'SMALL_DOC.json'
-
-      # The file containing the single large document.
-      #
-      # @return [ String ] The file containing the large document.
-      #
-      # @since 2.2.2
-      LARGE_DOCUMENT_FILE = SINGLE_DOCUMENTS_PATH + 'LARGE_DOC.json'
 
       extend self
 
-      # Run a micro benchmark test.
+      # Run a Single Document benchmark test.
       #
       # @example Run a test.
-      #   Benchmarking::Micro.run(:flat)
+      #   Benchmarking::SingleDoc.run(:command)
       #
-      # @param [ Symbol ] The type of test to run.
+      # @param [ Symbol ] type The type of test to run.
+      # @param [ Integer ] repetitions The number of test repetitions.
       #
-      # @return [ Array ] An array of results.
+      # @return [ Numberic ] The test results.
       #
       # @since 2.2.2
-      def run(type)
+      def run(type, repetitions = Benchmarking::TEST_REPETITIONS)
         Mongo::Logger.logger.level = ::Logger::WARN
-        puts "#{type} : #{send(type)}"
+        puts "#{type} : #{send(type, repetitions)}"
       end
 
-      private
-
-      def command(repetitions = TEST_REPETITIONS)
+      # Test sending a command to the server.
+      #
+      # @example Test sending an ismaster command.
+      #   Benchmarking::SingleDoc.command(10)
+      #
+      # @param [ Integer ] repetitions The number of test repetitions.
+      #
+      # @since 2.2.2
+      def command(repetitions)
         monitor = client.cluster.servers.first.monitor
         results = repetitions.times.collect do
           Benchmark.realtime do
@@ -68,9 +60,19 @@ module Mongo
         Benchmarking.median(results)
       end
 
-      def find_one(repetitions = TEST_REPETITIONS)
+      # Test sending find one by id.
+      #
+      # @example Test sending a find.
+      #   Benchmarking::SingleDoc.find_one(10)
+      #
+      # @param [ Integer ] repetitions The number of test repetitions.
+      #
+      # @return [ Numeric ] The median of the results.
+      #
+      # @since 2.2.2
+      def find_one(repetitions)
         client.database.drop
-        doc = tweet_document
+        doc = Benchmarking.tweet_document
 
         10_000.times do |i|
           doc[:_id] = i
@@ -87,16 +89,39 @@ module Mongo
         Benchmarking.median(results)
       end
 
-      def insert_one_large(repetitions = TEST_REPETITIONS)
-        insert_one(repetitions, 10, large_document)
+      # Test inserting a large document.
+      #
+      # @example Test inserting a large document.
+      #   Benchmarking::SingleDoc.insert_one_large(10)
+      #
+      # @param [ Integer ] repetitions The number of test repetitions.
+      #
+      # @return [ Numeric ] The median of the results.
+      #
+      # @since 2.2.2
+      def insert_one_large(repetitions)
+        insert_one(repetitions, 10, Benchmarking.large_document)
       end
 
-      def insert_one_small(repetitions = TEST_REPETITIONS)
-        insert_one(repetitions, 10_000, small_document)
+      # Test inserting a small document.
+      #
+      # @example Test inserting a small document.
+      #   Benchmarking::SingleDoc.insert_one_small(10)
+      #
+      # @param [ Integer ] repetitions The number of test repetitions.
+      #
+      # @return [ Numeric ] The median of the results.
+      #
+      # @since 2.2.2
+      def insert_one_small(repetitions)
+        insert_one(repetitions, 10_000, Benchmarking.small_document)
       end
+
+      private
 
       def insert_one(repetitions, do_repetitions, doc)
         client.database.drop
+        create_collection
 
         results = repetitions.times.collect do
           Benchmark.realtime do
@@ -115,18 +140,7 @@ module Mongo
       def collection
         @collection ||= client[:corpus].tap { |coll| coll.create }
       end
-
-      def tweet_document
-        Benchmarking.load_file(TWEET_DOCUMENT_FILE).first
-      end
-
-      def small_document
-        Benchmarking.load_file(SMALL_DOCUMENT_FILE).first
-      end
-
-      def large_document
-        Benchmarking.load_file(LARGE_DOCUMENT_FILE).first
-      end
+      alias :create_collection :collection
     end
   end
 end
