@@ -80,21 +80,17 @@ module Mongo
         data = Benchmarking.load_file(file_name)
         buffer = BSON::Document.new(data.first).to_bson
 
-        bytes = buffer.get_bytes(buffer.length)
-        buffers = Array.new((10_000 * TEST_REPETITIONS) + WARMUP_REPETITIONS)
-        buffers.fill { BSON::ByteBuffer.new(bytes) }
-
         # WARMUP_REPETITIONS.times do
         #   BSON::Document.from_bson(buffers.shift)
         # end
 
         results = repetitions.times.collect do
-          10_000.times.collect do
-            buf = buffers.shift
-            Benchmark.realtime do
-              BSON::Document.from_bson(buf)
+          Benchmark.realtime do
+            10_000.times do
+              buffer.reset_read_position
+              BSON::Document.from_bson(buffer)
             end
-          end.reduce(&:+)
+          end
         end
 
         Benchmarking.median(results)
