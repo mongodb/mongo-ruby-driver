@@ -157,7 +157,8 @@ module Mongo
           end
 
           def with_write_concern(collection)
-            if collection.write_concern.options == write_concern.options
+            if write_concern.nil? || collection.write_concern.nil? ||
+                collection.write_concern.options == write_concern.options
               collection
             else
               collection.client.with(write: write_concern.options)[collection.name]

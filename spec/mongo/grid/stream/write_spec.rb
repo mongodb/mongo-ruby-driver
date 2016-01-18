@@ -66,6 +66,17 @@ describe Mongo::Grid::FSBucket::Stream::Write do
       end
     end
 
+    context 'when the fs does not have a write concern' do
+
+      let(:fs) do
+        authorized_client.with(write: nil).database.fs
+      end
+
+      it 'uses the write concern default at the operation level' do
+        expect(stream.write(file).closed?).to eq(false)
+      end
+    end
+
     context 'when provided options' do
 
       context 'when provided a write option' do
