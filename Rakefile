@@ -74,6 +74,10 @@ namespace :benchmark do
       Mongo::Benchmarking::SingleDoc.run(:command)
     end
 
+    task :find_one_by_id do
+      puts "SINGLE_DOC BENCHMARK:: FIND ONE BY ID"
+      Mongo::Benchmarking::SingleDoc.run(:find_one_by_id)
+    end
 
   end
 end

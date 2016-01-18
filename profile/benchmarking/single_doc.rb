@@ -14,7 +14,14 @@ module Mongo
       # @return [ Integer ] The number of test repetitions.
       #
       # @since 2.2.2
-      TEST_REPETITIONS = 5
+      TEST_REPETITIONS = 1
+
+      # The file containing the single tweet document.
+      #
+      # @return [ String ] The file containing the tweet document.
+      #
+      # @since 2.2.2
+      TWEET_DOCUMENT_FILE = TWEET_DOCUMENT_PATH + 'TWEET.json'
 
       extend self
 
@@ -35,14 +42,6 @@ module Mongo
 
       private
 
-      def client
-        @client ||= Mongo::Client.new(["localhost:27017"], database: 'perftest')
-      end
-
-      def collection
-        @collection ||= client[:corpus]
-      end
-
       def command(repetitions)
         monitor = client.cluster.servers.first.monitor
         results = repetitions.times.collect do
@@ -53,6 +52,37 @@ module Mongo
           end
         end
         Benchmarking.median(results)
+      end
+
+      def find_one_by_id(repetitions)
+        client.database.drop
+        doc = tweet_document
+
+        10_000.times do |i|
+          doc[:_id] = i
+          collection.insert_one(doc)
+        end
+
+        results = repetitions.times.collect do
+          Benchmark.realtime do
+            10_000.times do |i|
+              collection.find({ _id: i }, limit: -1).first
+            end
+          end
+        end
+        Benchmarking.median(results)
+      end
+
+      def client
+        @client ||= Mongo::Client.new(["localhost:27017"], database: 'perftest')
+      end
+
+      def collection
+        @collection ||= client[:corpus]
+      end
+
+      def tweet_document
+        Benchmarking.load_file(TWEET_DOCUMENT_FILE).first
       end
     end
   end
