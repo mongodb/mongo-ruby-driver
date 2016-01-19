@@ -32,49 +32,49 @@ module Mongo
     # @return [ String ] The current path.
     #
     # @since 2.2.2
-    CURRENT_PATH = File.expand_path(File.dirname(__FILE__))
+    CURRENT_PATH = File.expand_path(File.dirname(__FILE__)).freeze
 
     # The path to data files used in Benchmarking tests.
     #
     # @return [ String ] Path to Benchmarking test files.
     #
     # @since 2.2.2
-    DATA_PATH = "#{CURRENT_PATH}/benchmarking/data/"
+    DATA_PATH = "#{CURRENT_PATH}/benchmarking/data/".freeze
 
     # The file containing the single tweet document.
     #
     # @return [ String ] The file containing the tweet document.
     #
     # @since 2.2.2
-    TWEET_DOCUMENT_FILE = "#{DATA_PATH}TWEET.json"
+    TWEET_DOCUMENT_FILE = "#{DATA_PATH}TWEET.json".freeze
 
     # The file containing the single small document.
     #
     # @return [ String ] The file containing the small document.
     #
     # @since 2.2.2
-    SMALL_DOCUMENT_FILE = "#{DATA_PATH}SMALL_DOC.json"
+    SMALL_DOCUMENT_FILE = "#{DATA_PATH}SMALL_DOC.json".freeze
 
     # The file containing the single large document.
     #
     # @return [ String ] The file containing the large document.
     #
     # @since 2.2.2
-    LARGE_DOCUMENT_FILE = "#{DATA_PATH}LARGE_DOC.json"
+    LARGE_DOCUMENT_FILE = "#{DATA_PATH}LARGE_DOC.json".freeze
 
     # The file to upload when testing GridFS.
     #
     # @return [ String ] The file containing the GridFS test data.
     #
     # @since 2.2.2
-    GRIDFS_FILE = "#{DATA_PATH}GRIDFS_LARGE"
+    GRIDFS_FILE = "#{DATA_PATH}GRIDFS_LARGE".freeze
 
     # The default number of test repetitions.
     #
     # @return [ Integer ] The number of test repetitions.
     #
     # @since 2.2.2
-    TEST_REPETITIONS = 10
+    TEST_REPETITIONS = 100.freeze
 
     # The number of default warmup repetitions of the test to do before
     # recording times.
@@ -82,7 +82,7 @@ module Mongo
     # @return [ Integer ] The default number of warmup repetitions.
     #
     # @since 2.2.2
-    WARMUP_REPETITIONS = 10
+    WARMUP_REPETITIONS = 10.freeze
 
     def tweet_document
       Benchmarking.load_file(TWEET_DOCUMENT_FILE).first
