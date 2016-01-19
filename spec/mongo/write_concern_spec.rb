@@ -122,5 +122,20 @@ describe Mongo::WriteConcern do
         expect(Mongo::WriteConcern.get(options).options).to eq(options)
       end
     end
+
+    context 'when w is a symbol' do
+
+      let(:options) do
+        { w: :majority, journal: true }
+      end
+
+      it 'returns an Acknowledged write concern object' do
+        expect(Mongo::WriteConcern.get(options)).to be_a(Mongo::WriteConcern::Acknowledged)
+      end
+
+      it 'sets w to a string' do
+        expect(Mongo::WriteConcern.get(options).options[:w]).to eq('majority')
+      end
+    end
   end
 end

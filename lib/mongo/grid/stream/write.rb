@@ -160,7 +160,7 @@ module Mongo
                 collection.write_concern.options == write_concern.options)
               collection
             else
-              collection.client.with(write: write_concern.options)[collection.name]
+              collection.with(write: write_concern.options)
             end
           end
 

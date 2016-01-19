@@ -81,6 +81,23 @@ module Mongo
         end
       end
 
+      # Coverts all the keys of the options to symbols.
+      #
+      # @example Convert all option keys to symbols.
+      #   Mapper.transform({ 'name' => 1 })
+      #
+      # @param [ Hash ] options The options to transform.
+      #
+      # @return [ Hash ] The transformed options.
+      #
+      # @since 2.2.2
+      def transform_keys_to_symbols(options)
+        options.reduce({}) do |transformed, (key, value)|
+          transformed[key.to_sym] = value
+          transformed
+        end
+      end
+
       # Coverts all the symbol values to strings.
       #
       # @example Convert all option symbol values to strings.

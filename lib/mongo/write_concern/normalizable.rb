@@ -44,7 +44,8 @@ module Mongo
       #
       # @since 2.0.0
       def initialize(options)
-        @options = options.freeze
+        opts =  Options::Mapper.transform_keys_to_symbols(options)
+        @options = Options::Mapper.transform_values_to_strings(opts).freeze
       end
     end
   end

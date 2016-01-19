@@ -129,6 +129,9 @@ module Mongo
       #
       # @since 2.1.0
       def hash_matches?(actual, expected)
+        if expected['writeConcern']
+          expected['writeConcern'] = Options::Mapper.transform_keys_to_symbols(expected['writeConcern'])
+        end
         if expected.keys.first == '$numberLong'
           converted = expected.values.first.to_i
           (actual == converted) || actual >= 0
