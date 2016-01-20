@@ -114,7 +114,7 @@ module Mongo
 
         # Protection from potential DOS man-in-the-middle attacks. See
         # DRIVERS-276.
-        if length > max_message_size
+        if length > (max_message_size || MAX_MESSAGE_SIZE)
           raise Error::MaxMessageSize.new(max_message_size)
         end
 

@@ -97,6 +97,19 @@ describe Mongo::Protocol::Reply do
       end
     end
 
+    context 'when the max message size is nil' do
+
+      let(:reply) { described_class.deserialize(io, nil) }
+
+      let(:length) { Mongo::Protocol::Message::MAX_MESSAGE_SIZE + 1 }
+
+      it 'uses the default max message size for comparison' do
+        expect {
+          reply
+        }.to raise_error(Mongo::Error::MaxMessageSize)
+      end
+    end
+
     describe 'response flags' do
 
       context 'no flags' do
