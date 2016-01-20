@@ -34,12 +34,11 @@ module Mongo
       # @return [ Numeric ] The test results.
       #
       # @since 2.2.2
-      def run(type, repetitions = Benchmarking::TEST_REPETITIONS)
+      def run(type, action, repetitions = Benchmarking::TEST_REPETITIONS)
         file_name = type.to_s << "_bson.json"
+        GC.disable
         file_path = Benchmarking::DATA_PATH + file_name
-        ['encode'].each do |task|
-          puts "#{task} : #{send(task, file_path, repetitions)}"
-        end
+        puts "#{action} : #{send(action, file_path, repetitions)}"
       end
 
       # Run an encoding micro benchmark test.
@@ -93,8 +92,8 @@ module Mongo
         results = repetitions.times.collect do
           Benchmark.realtime do
             10_000.times do
-              buffer.rewind
               BSON::Document.from_bson(buffer)
+              buffer.rewind!
             end
           end
         end

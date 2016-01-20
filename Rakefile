@@ -49,22 +49,45 @@ namespace :benchmark do
 
   namespace :micro do
     desc "Run the common driver micro benchmarking tests"
-    task :flat do
-      puts "MICRO BENCHMARK:: FLAT"
-      Mongo::Benchmarking::Micro.run(:flat)
+
+    namespace :flat do
+      desc "Benchmarking for flat bson documents"
+      task :encode do
+        puts "MICRO BENCHMARK:: FLAT:: ENCODE"
+        Mongo::Benchmarking::Micro.run(:flat, :encode)
+      end
+
+      task :decode do
+        puts "MICRO BENCHMARK:: FLAT:: DECODE"
+        Mongo::Benchmarking::Micro.run(:flat, :decode)
+      end
     end
 
-    task :deep do
-      puts "MICRO BENCHMARK:: DEEP"
-      Mongo::Benchmarking::Micro.run(:deep)
+    namespace :deep do
+      desc "Benchmarking for deep bson documents"
+      task :encode do
+        puts "MICRO BENCHMARK:: DEEP:: ENCODE"
+        Mongo::Benchmarking::Micro.run(:deep, :encode)
+      end
+
+      task :decode do
+        puts "MICRO BENCHMARK:: DEEP:: DECODE"
+        Mongo::Benchmarking::Micro.run(:deep, :decode)
+      end
     end
 
-    task :full do
-      puts "MICRO BENCHMARK:: FULL"
-      Mongo::Benchmarking::Micro.run(:full)
-    end
+    namespace :full do
+      desc "Benchmarking for full bson documents"
+      task :encode do
+        puts "MICRO BENCHMARK:: FULL:: ENCODE"
+        Mongo::Benchmarking::Micro.run(:full, :encode)
+      end
 
-    task :all => [:flat, :deep, :full ]
+      task :decode do
+        puts "MICRO BENCHMARK:: FULL:: DECODE"
+        Mongo::Benchmarking::Micro.run(:full, :decode)
+      end
+    end
   end
 
   namespace :single_doc do
@@ -88,8 +111,6 @@ namespace :benchmark do
       puts "SINGLE_DOC BENCHMARK:: INSERT ONE LARGE DOCUMENT"
       Mongo::Benchmarking::SingleDoc.run(:insert_one_large)
     end
-
-    task :all => [:command, :find_one, :insert_one_small, :insert_one_large ]
   end
 
   namespace :multi_doc do
