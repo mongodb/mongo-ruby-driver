@@ -51,6 +51,7 @@ module Mongo
         :bucket_size => :bucketSize,
         :default_language => :default_language,
         :expire_after => :expireAfterSeconds,
+        :expire_after_seconds => :expireAfterSeconds,
         :key => :key,
         :language_override => :language_override,
         :max => :max,
