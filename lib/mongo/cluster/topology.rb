@@ -46,7 +46,7 @@ module Mongo
       # @return [ ReplicaSet, Sharded, Single ] The topology.
       #
       # @since 2.0.0
-      def initial(seeds, options)
+      def initial(seeds, monitoring, options)
         if options.has_key?(:connect)
           OPTIONS.fetch(options[:connect]).new(options, seeds)
         elsif options.has_key?(:replica_set)
@@ -54,6 +54,12 @@ module Mongo
         else
           Unknown.new(options, seeds)
         end
+      end
+
+      private
+
+      def publish(monitoring, &block)
+        monitoring.completed(Monitoring::TOPOLOGY_OPENING, Monitoring::Event::TopologyOpening.new)
       end
     end
   end
