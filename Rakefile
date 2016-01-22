@@ -139,6 +139,13 @@ namespace :benchmark do
       puts "MULTI DOCUMENT BENCHMARK:: GRIDFS DOWNLOAD"
       Mongo::Benchmarking::MultiDoc.run(:gridfs_download)
     end
+  end
 
+  namespace :parallel do
+    desc "Run the common driver paralell ETL benchmarking tests"
+    task :import do
+      puts "PARALLEL ETL BENCHMARK:: IMPORT"
+      Mongo::Benchmarking::Parallel.run(:import)
+    end
   end
 end

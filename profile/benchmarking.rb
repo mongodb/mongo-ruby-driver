@@ -17,6 +17,7 @@ require_relative 'benchmarking/helper'
 require_relative 'benchmarking/micro'
 require_relative 'benchmarking/single_doc'
 require_relative 'benchmarking/multi_doc'
+require_relative 'benchmarking/parallel'
 
 module Mongo
 
@@ -68,6 +69,13 @@ module Mongo
     #
     # @since 2.2.2
     GRIDFS_FILE = "#{DATA_PATH}GRIDFS_LARGE".freeze
+
+    # The file path and base name for the LDJSON files.
+    #
+    # @return [ String ] The file path and base name for the LDJSON files.
+    #
+    # @since 2.2.2
+    LDJSON_FILE_BASE = "#{DATA_PATH}LDJSON_MULTI/LDJSON".freeze
 
     # The default number of test repetitions.
     #

@@ -167,7 +167,7 @@ module Mongo
       end
 
       def client
-        @client ||= Mongo::Client.new(["localhost:27017"], database: 'perftest')
+        @client ||= Mongo::Client.new(["localhost:27017"], database: 'perftest', monitoring: false)
       end
 
       def collection
