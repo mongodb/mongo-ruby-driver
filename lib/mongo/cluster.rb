@@ -104,7 +104,7 @@ module Mongo
       @monitoring = monitoring
       @event_listeners = Event::Listeners.new
       @options = options.freeze
-      @topology = Topology.initial(seeds, options)
+      @topology = Topology.initial(seeds, monitoring, options)
       @update_lock = Mutex.new
       @pool_lock = Mutex.new
 

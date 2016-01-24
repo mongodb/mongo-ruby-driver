@@ -24,8 +24,8 @@ module Mongo
         # @return [ Address ] address The server address.
         attr_reader :address
 
-        # @return [ Integer ] cluster_id The cluster id.
-        attr_reader :cluster_id
+        # @return [ Topology ] topology The topology.
+        attr_reader :topology
 
         # @return [ Server::Description ] old_description The old server
         #   description.
@@ -38,17 +38,17 @@ module Mongo
         # Create the event.
         #
         # @example Create the event.
-        #   ServerDescriptionChanged.new(address, 1, old, new)
+        #   ServerDescriptionChanged.new(address, topology, old, new)
         #
         # @param [ Address ] address The server address.
-        # @param [ Integer ] cluster_id The cluster id.
+        # @param [ Integer ] topology The topology.
         # @param [ Server::Description ] old_description The old description.
         # @param [ Server::Description ] new_description The new description.
         #
         # @since 2.3.0
-        def initialize(address, cluster_id, old_description, new_description)
+        def initialize(address, topology, old_description, new_description)
           @address = address
-          @cluster_id = cluster_id
+          @topology = topology
           @old_description = old_description
           @new_description = new_description
         end

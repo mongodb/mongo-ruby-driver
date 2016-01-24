@@ -6,12 +6,12 @@ describe Mongo::Cluster::Topology::Single do
     Mongo::Address.new('127.0.0.1:27017')
   end
 
-  let(:topology) do
-    described_class.new({})
-  end
-
   let(:monitoring) do
     Mongo::Monitoring.new
+  end
+
+  let(:topology) do
+    described_class.new({}, monitoring)
   end
 
   let(:listeners) do

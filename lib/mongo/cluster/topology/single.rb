@@ -21,13 +21,16 @@ module Mongo
       # @since 2.0.0
       class Single
 
-        # @return [ String ] seed The seed address.
-        attr_reader :seed
-
         # The display name for the topology.
         #
         # @since 2.0.0
         NAME = 'Single'.freeze
+
+        # @return [ String ] seed The seed address.
+        attr_reader :seed
+
+        # @return [ monitoring ] monitoring the monitoring.
+        attr_reader :monitoring
 
         # Get the display name.
         #
@@ -60,10 +63,13 @@ module Mongo
         #   Single.new(options)
         #
         # @param [ Hash ] options The options.
+        # @param [ Monitoring ] monitoring The monitoring.
+        # @param [ Array<String> ] seeds The seeds.
         #
         # @since 2.0.0
-        def initialize(options, seeds = [])
+        def initialize(options, monitoring, seeds = [])
           @options = options
+          @monitoring = monitoring
           @seed = seeds.first
         end
 
