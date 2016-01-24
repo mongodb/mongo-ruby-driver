@@ -16,15 +16,30 @@ module Mongo
   class Monitoring
     module Event
 
+      # Event fired when the topology changes.
+      #
       # @since 2.3.0
       class TopologyChanged
 
+        # @return [ Integer ] cluster_id The cluster id.
         attr_reader :cluster_id
 
+        # @return [ Cluster::Topology ] old_topology The old topology.
         attr_reader :old_topology
 
+        # @return [ Cluster::Topology ] new_topology The new topology.
         attr_reader :new_topology
 
+        # Create the event.
+        #
+        # @example Create the event.
+        #   TopologyChanged.new(1, old, new)
+        #
+        # @param [ Integer ] cluster_id The cluster id.
+        # @param [ Cluster::Topology ] old_topology The old topology.
+        # @param [ Cluster::Topology ] new_topology The new topology.
+        #
+        # @since 2.3.0
         def initialize(cluster_id, old_topology, new_topology)
           @cluster_id = cluster_id
           @old_topology = old_topology

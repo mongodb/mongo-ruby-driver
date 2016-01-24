@@ -16,11 +16,22 @@ module Mongo
   class Monitoring
     module Event
 
+      # Event fired when the topology closes.
+      #
       # @since 2.3.0
       class TopologyClosed
 
+        # @return [ Integer ] cluster_id The cluster id.
         attr_reader :cluster_id
 
+        # Create the event.
+        #
+        # @example Create the event.
+        #   TopologyClosed.new(1)
+        #
+        # @param [ Integer ] cluster_id The cluster id.
+        #
+        # @since 2.3.0
         def initialize(cluster_id)
           @cluster_id = cluster_id
         end

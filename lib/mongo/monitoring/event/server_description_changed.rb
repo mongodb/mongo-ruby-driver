@@ -16,17 +16,36 @@ module Mongo
   class Monitoring
     module Event
 
+      # Event fired when a server's description changes.
+      #
       # @since 2.3.0
       class ServerDescriptionChanged
 
+        # @return [ Address ] address The server address.
         attr_reader :address
 
+        # @return [ Integer ] cluster_id The cluster id.
         attr_reader :cluster_id
 
+        # @return [ Server::Description ] old_description The old server
+        #   description.
         attr_reader :old_description
 
+        # @return [ Server::Description ] new_description The new server
+        #   description.
         attr_reader :new_description
 
+        # Create the event.
+        #
+        # @example Create the event.
+        #   ServerDescriptionChanged.new(address, 1, old, new)
+        #
+        # @param [ Address ] address The server address.
+        # @param [ Integer ] cluster_id The cluster id.
+        # @param [ Server::Description ] old_description The old description.
+        # @param [ Server::Description ] new_description The new description.
+        #
+        # @since 2.3.0
         def initialize(address, cluster_id, old_description, new_description)
           @address = address
           @cluster_id = cluster_id
