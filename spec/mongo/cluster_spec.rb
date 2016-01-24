@@ -156,7 +156,7 @@ describe Mongo::Cluster do
       context 'when topology is Single' do
 
         let(:topology) do
-          Mongo::Cluster::Topology::Single.new({})
+          Mongo::Cluster::Topology::Single.new({}, monitoring)
         end
 
         it 'returns an empty array' do
@@ -167,7 +167,7 @@ describe Mongo::Cluster do
       context 'when topology is ReplicaSet' do
 
         let(:topology) do
-          Mongo::Cluster::Topology::ReplicaSet.new({})
+          Mongo::Cluster::Topology::ReplicaSet.new({}, monitoring)
         end
 
         it 'returns an empty array' do
@@ -178,7 +178,7 @@ describe Mongo::Cluster do
       context 'when topology is Sharded' do
 
         let(:topology) do
-          Mongo::Cluster::Topology::Sharded.new({})
+          Mongo::Cluster::Topology::Sharded.new({}, monitoring)
         end
 
         it 'returns an empty array' do
@@ -189,7 +189,7 @@ describe Mongo::Cluster do
       context 'when topology is Unknown' do
 
         let(:topology) do
-          Mongo::Cluster::Topology::Unknown.new({})
+          Mongo::Cluster::Topology::Unknown.new({}, monitoring)
         end
 
         it 'returns an empty array' do

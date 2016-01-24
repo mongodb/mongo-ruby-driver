@@ -119,9 +119,9 @@ module Mongo
       @event_listeners = Event::Listeners.new
       @options = options.freeze
       @app_metadata ||= AppMetadata.new(self)
-      @topology = Topology.initial(seeds, options)
       @update_lock = Mutex.new
       @pool_lock = Mutex.new
+      @topology = Topology.initial(seeds, monitoring, options)
 
       subscribe_to(Event::STANDALONE_DISCOVERED, Event::StandaloneDiscovered.new(self))
       subscribe_to(Event::DESCRIPTION_CHANGED, Event::DescriptionChanged.new(self))

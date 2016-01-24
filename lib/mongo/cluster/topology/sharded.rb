@@ -26,6 +26,9 @@ module Mongo
         # @since 2.0.0
         NAME = 'Sharded'.freeze
 
+        # @return [ Monitoring ] monitoring The monitoring.
+        attr_reader :monitoring
+
         # Get the display name.
         #
         # @example Get the display name.
@@ -57,10 +60,13 @@ module Mongo
         #   Sharded.new(options)
         #
         # @param [ Hash ] options The options.
+        # @param [ Monitoring ] monitoring The monitoring.
+        # @param [ Array<String> ] seeds The seeds.
         #
         # @since 2.0.0
-        def initialize(options, seeds = [])
+        def initialize(options, monitoring, seeds = [])
           @options = options
+          @monitoring = monitoring
         end
 
         # A sharded topology is not a replica set.

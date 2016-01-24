@@ -21,19 +21,19 @@ module Mongo
       # @since 2.3.0
       class TopologyClosed
 
-        # @return [ Integer ] cluster_id The cluster id.
-        attr_reader :cluster_id
+        # @return [ Topology ] topology The topology.
+        attr_reader :topology
 
         # Create the event.
         #
         # @example Create the event.
-        #   TopologyClosed.new(1)
+        #   TopologyClosed.new(topology)
         #
-        # @param [ Integer ] cluster_id The cluster id.
+        # @param [ Integer ] topology The topology.
         #
         # @since 2.3.0
-        def initialize(cluster_id)
-          @cluster_id = cluster_id
+        def initialize(topology)
+          @topology = topology
         end
       end
     end

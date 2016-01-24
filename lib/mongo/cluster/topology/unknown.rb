@@ -30,6 +30,9 @@ module Mongo
         # @return [ Hash ] options The options.
         attr_reader :options
 
+        # @return [ Monitoring ] monitoring The monitoring.
+        attr_reader :monitoring
+
         # Get the display name.
         #
         # @example Get the display name.
@@ -56,7 +59,7 @@ module Mongo
         def elect_primary(description, servers)
           if description.mongos?
             log_debug("Mongos #{description.address.to_s} discovered.")
-            Sharded.new(options)
+            Sharded.new(options, monitoring)
           else
             initialize_replica_set(description, servers)
           end
@@ -68,10 +71,13 @@ module Mongo
         #   Unknown.new(options)
         #
         # @param [ Hash ] options The options.
+        # @param [ Monitoring ] monitoring The monitoring.
+        # @param [ Array<String> ] seeds The seeds.
         #
         # @since 2.0.0
-        def initialize(options, seeds = [])
+        def initialize(options, monitoring, seeds = [])
           @options = options
+          @monitoring = monitoring
           @seeds = seeds
         end
 
@@ -195,7 +201,7 @@ module Mongo
         # @since 2.0.6
         def standalone_discovered
           if @seeds.size == 1
-            Single.new(options, @seeds)
+            Single.new(options, monitoring, @seeds)
           else
             self
           end
@@ -213,7 +219,7 @@ module Mongo
               server.description.unknown!
             end
           end
-          ReplicaSet.new(options.merge(:replica_set => description.replica_set_name))
+          ReplicaSet.new(options.merge(:replica_set => description.replica_set_name), monitoring)
         end
       end
     end

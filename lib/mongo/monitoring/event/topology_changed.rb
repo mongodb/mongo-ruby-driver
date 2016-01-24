@@ -21,8 +21,8 @@ module Mongo
       # @since 2.3.0
       class TopologyChanged
 
-        # @return [ Integer ] cluster_id The cluster id.
-        attr_reader :cluster_id
+        # @return [ Topology ] topology The topology.
+        attr_reader :topology
 
         # @return [ Cluster::Topology ] old_topology The old topology.
         attr_reader :old_topology
@@ -33,15 +33,15 @@ module Mongo
         # Create the event.
         #
         # @example Create the event.
-        #   TopologyChanged.new(1, old, new)
+        #   TopologyChanged.new(topology, old, new)
         #
-        # @param [ Integer ] cluster_id The cluster id.
+        # @param [ Integer ] topology The topology.
         # @param [ Cluster::Topology ] old_topology The old topology.
         # @param [ Cluster::Topology ] new_topology The new topology.
         #
         # @since 2.3.0
-        def initialize(cluster_id, old_topology, new_topology)
-          @cluster_id = cluster_id
+        def initialize(topology, old_topology, new_topology)
+          @topology = topology
           @old_topology = old_topology
           @new_topology = new_topology
         end

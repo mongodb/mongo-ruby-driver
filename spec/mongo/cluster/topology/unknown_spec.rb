@@ -2,8 +2,12 @@ require 'spec_helper'
 
 describe Mongo::Cluster::Topology::Unknown do
 
+  let(:monitoring) do
+    Mongo::Monitoring.new
+  end
+
   let(:topology) do
-    described_class.new({})
+    described_class.new({}, monitoring)
   end
 
   describe '.servers' do
