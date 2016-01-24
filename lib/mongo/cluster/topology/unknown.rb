@@ -58,8 +58,11 @@ module Mongo
         # @return [ Sharded, ReplicaSet ] The new topology.
         def elect_primary(description, servers)
           if description.mongos?
+            # @todo: Remove.
             log_debug("Mongos #{description.address.to_s} discovered.")
-            Sharded.new(options, monitoring)
+            sharded = Sharded.new(options, monitoring)
+            topology_changed(sharded)
+            sharded
           else
             initialize_replica_set(description, servers)
           end
@@ -201,7 +204,9 @@ module Mongo
         # @since 2.0.6
         def standalone_discovered
           if @seeds.size == 1
-            Single.new(options, monitoring, @seeds)
+            single = Single.new(options, monitoring, @seeds)
+            topology_changed(single)
+            single
           else
             self
           end
@@ -210,6 +215,7 @@ module Mongo
         private
 
         def initialize_replica_set(description, servers)
+          # @todo: Remove.
           log_debug(
             "Server #{description.address.to_s} discovered as primary in replica set: " +
             "'#{description.replica_set_name}'. Changing topology to replica set."
@@ -219,7 +225,18 @@ module Mongo
               server.description.unknown!
             end
           end
-          ReplicaSet.new(options.merge(:replica_set => description.replica_set_name), monitoring)
+          replica_set = ReplicaSet.new(options.merge(:replica_set => description.replica_set_name), monitoring)
+          topology_changed(replica_set)
+          replica_set
+        end
+
+        def topology_changed(new_topology)
+          unless options[:monitoring] == false
+            monitoring.succeeded(
+              Monitoring::TOPOLOGY_CHANGED,
+              Monitoring::Event::TopologyChanged.new(self, new_topology)
+            )
+          end
         end
       end
     end
