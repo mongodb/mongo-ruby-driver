@@ -28,6 +28,26 @@ module Mongo
     # @since 2.1.0
     COMMAND = 'Command'.freeze
 
+    # Server description changed topic.
+    #
+    # @since 2.3.0
+    SERVER_DESCRIPTION_CHANGED = 'ServerDescriptionChnaged'.freeze
+
+    # Topology changed topic.
+    #
+    # @since 2.3.0
+    TOPOLOGY_CHANGED = 'TopologyChanged'.freeze
+
+    # Topology closed topic.
+    #
+    # @since 2.3.0
+    TOPOLOGY_CLOSED = 'TopologyClosed'.freeze
+
+    # Topology opening topic.
+    #
+    # @since 2.3.0
+    TOPOLOGY_OPENING = 'TopologyOpening'.freeze
+
     @@operation_id = 0
     @@operation_id_lock = Mutex.new
 
