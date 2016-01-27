@@ -147,5 +147,10 @@ namespace :benchmark do
       puts "PARALLEL ETL BENCHMARK:: IMPORT"
       Mongo::Benchmarking::Parallel.run(:import)
     end
+
+    task :export do
+      puts "PARALLEL ETL BENCHMARK:: EXPORT"
+      Mongo::Benchmarking::Parallel.run(:export)
+    end
   end
 end

@@ -86,37 +86,73 @@ module Mongo
       #
       # @since 2.2.2
       def import
-        #require 'yajl'
-        #parser = Yajl::Parser.new
+        require 'yajl/json_gem'
+        require 'celluloid'
+
+        Mongo::Collection.send(:include, Celluloid)
+
         client.database.drop
         create_collection
         files =  [*1..100].collect { |i| "#{LDJSON_FILE_BASE}#{i.to_s.rjust(3, "0")}.txt" }
 
-        threads = []
         result = Benchmark.realtime do
-          4.times do |i|
-            threads << Thread.new do
-              10.times do |j|
-                docs = File.open(files[10 * i + j]).collect { |document| JSON.parse(document) }
-                #docs = File.open(files[10 * i + j]).collect { |document| parser.parse(document) }
-                collection.insert_many(docs)
-              end
-            end
+          Benchmarking::TEST_REPETITIONS.times do |i|
+            docs = File.open(files[i]).map{ |document| JSON.parse(document) }
+            collection.async.insert_many(docs)
           end
-          threads.collect { |t| t.join }
         end
         client.database.drop
         result
       end
 
+      def export
+        require 'ruby-prof'
+        insert_files
+        files =  [*1..Benchmarking::TEST_REPETITIONS].collect do |i|
+          name = "#{LDJSON_FILE_OUTPUT_BASE}#{i.to_s.rjust(3, "0")}.txt"
+          File.new(name, 'w')
+        end
+        #prof = nil
+        result = Benchmark.realtime do
+          Benchmarking::TEST_REPETITIONS.times do |i|
+            #prof = RubyProf.profile do
+            files[i].write(collection.find(_id: { '$gte' => (i * 5000),
+                                                  '$lt' => (i+1) * 5000 }).to_a)
+            end
+          #end
+        end
+        result
+      end
+
       private
+
+      def insert_files
+        require 'yajl/json_gem'
+        require 'celluloid'
+
+        Mongo::Collection.send(:include, Celluloid)
+
+        client.database.drop
+        create_collection
+        files =  [*1..Benchmarking::TEST_REPETITIONS].collect do |i|
+          "#{LDJSON_FILE_BASE}#{i.to_s.rjust(3, "0")}.txt"
+        end
+
+        Benchmarking::TEST_REPETITIONS.times do |i|
+          docs = File.open(files[i]).each_with_index.collect do |document, offset|
+            JSON.parse(document).merge(_id: i * 5000 + offset)
+          end
+          collection.async.insert_many(docs)
+        end
+        puts "Imported #{Benchmarking::TEST_REPETITIONS} files, #{collection.count} documents."
+      end
 
       def client
         @client ||= Mongo::Client.new(["localhost:27017"], database: 'perftest', monitoring: false)
       end
 
       def collection
-        @collection ||= client[:corpus].tap { |coll| coll.create }
+        @collection ||= begin; client[:corpus].tap { |coll| coll.create }; rescue Error::OperationFailure; client[:corpus]; end
       end
       alias :create_collection :collection
     end

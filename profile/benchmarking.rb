@@ -77,6 +77,13 @@ module Mongo
     # @since 2.2.2
     LDJSON_FILE_BASE = "#{DATA_PATH}LDJSON_MULTI/LDJSON".freeze
 
+    # The file path and base name for the outputted LDJSON files.
+    #
+    # @return [ String ] The file path and base name for the outputted LDJSON files.
+    #
+    # @since 2.2.2
+    LDJSON_FILE_OUTPUT_BASE = "#{DATA_PATH}LDJSON_MULTI/output/LDJSON".freeze
+
     # The default number of test repetitions.
     #
     # @return [ Integer ] The number of test repetitions.
