@@ -14,7 +14,7 @@ module Mongo
     #
     # @return [ Array ] A list of extended-json documents.
     #
-    # @since 2.2.2
+    # @since 2.2.3
     def load_file(file_name)
       File.open(file_name, "r") do |f|
         f.each_line.collect do |line|
@@ -33,7 +33,7 @@ module Mongo
     #
     # @return [ Hash ] An extended-json document.
     #
-    # @since 2.2.2
+    # @since 2.2.3
     def parse_json(document)
       JSON.parse(document).tap do |doc|
         if doc['_id'] && doc['_id']['$oid']
@@ -51,7 +51,7 @@ module Mongo
     #
     # @return [ Numeric ] The median of the list.
     #
-    # @since 2.2.2
+    # @since 2.2.3
     def median(values)
       values.sort![values.size/2-1]
     end

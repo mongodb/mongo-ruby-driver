@@ -24,7 +24,7 @@ module Mongo
     # simulate the sort of "real-world" pressures that a drivers would be under
     # during concurrent operation.
     #
-    # @since 2.2.2
+    # @since 2.2.3
     module Parallel
 
       extend self
@@ -38,7 +38,7 @@ module Mongo
       #
       # @return [ Numeric ] The test results.
       #
-      # @since 2.2.2
+      # @since 2.2.3
       def run(type)
         Mongo::Logger.logger.level = ::Logger::WARN
         type = type.to_s + '_jruby' if BSON::Environment.jruby?
@@ -53,7 +53,7 @@ module Mongo
       #
       # @return [ Numeric ] The test result.
       #
-      # @since 2.2.2
+      # @since 2.2.3
       def import_jruby
         #require 'jrjackson'
         client.database.drop
@@ -84,7 +84,7 @@ module Mongo
       #
       # @return [ Numeric ] The test result.
       #
-      # @since 2.2.2
+      # @since 2.2.3
       def import
         require 'yajl/json_gem'
         require 'celluloid'
@@ -105,6 +105,14 @@ module Mongo
         result
       end
 
+      # Test concurrently exporting documents from a collection to a set of files.
+      #
+      # @example Testing concurrently importing files.
+      #   Benchmarking::Parallel.export
+      #
+      # @return [ Numeric ] The test result.
+      #
+      # @since 2.2.3
       def export
         require 'ruby-prof'
         insert_files

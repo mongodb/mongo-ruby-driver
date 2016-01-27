@@ -19,7 +19,7 @@ module Mongo
     # They are designed to give insights into the efficiency of the driver's
     # implementation of the basic wire protocol.
     #
-    # @since 2.2.2
+    # @since 2.2.3
     module SingleDoc
 
       extend self
@@ -34,7 +34,7 @@ module Mongo
       #
       # @return [ Numberic ] The test results.
       #
-      # @since 2.2.2
+      # @since 2.2.3
       def run(type, repetitions = Benchmarking::TEST_REPETITIONS)
         Mongo::Logger.logger.level = ::Logger::WARN
         puts "#{type} : #{send(type, repetitions)}"
@@ -47,7 +47,7 @@ module Mongo
       #
       # @param [ Integer ] repetitions The number of test repetitions.
       #
-      # @since 2.2.2
+      # @since 2.2.3
       def command(repetitions)
         monitor = client.cluster.servers.first.monitor
         results = repetitions.times.collect do
@@ -69,7 +69,7 @@ module Mongo
       #
       # @return [ Numeric ] The median of the results.
       #
-      # @since 2.2.2
+      # @since 2.2.3
       def find_one(repetitions)
         client.database.drop
         doc = Benchmarking.tweet_document
@@ -98,7 +98,7 @@ module Mongo
       #
       # @return [ Numeric ] The median of the results.
       #
-      # @since 2.2.2
+      # @since 2.2.3
       def insert_one_large(repetitions)
         insert_one(repetitions, 10, Benchmarking.large_document)
       end
@@ -112,7 +112,7 @@ module Mongo
       #
       # @return [ Numeric ] The median of the results.
       #
-      # @since 2.2.2
+      # @since 2.2.3
       def insert_one_small(repetitions)
         insert_one(repetitions, 10_000, Benchmarking.small_document)
       end

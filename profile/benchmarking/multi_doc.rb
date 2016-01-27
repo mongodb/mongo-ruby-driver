@@ -19,7 +19,7 @@ module Mongo
     # They are designed to give insight into the efficiency of the driver's implementation
     # of bulk/batch operations such as bulk writes and cursor reads.
     #
-    # @since 2.2.2
+    # @since 2.2.3
     module MultiDoc
 
       extend self
@@ -34,7 +34,7 @@ module Mongo
       #
       # @return [ Numeric ] The test results.
       #
-      # @since 2.2.2
+      # @since 2.2.3
       def run(type, repetitions = Benchmarking::TEST_REPETITIONS)
         Mongo::Logger.logger.level = ::Logger::WARN
         puts "#{type} : #{send(type, repetitions)}"
@@ -49,7 +49,7 @@ module Mongo
       #
       # @return [ Numeric ] The median of the results.
       #
-      # @since 2.2.2
+      # @since 2.2.3
       def find_many(repetitions)
         client.database.drop
         doc = Benchmarking.tweet_document
@@ -76,7 +76,7 @@ module Mongo
       #
       # @return [ Numeric ] The median of the results.
       #
-      # @since 2.2.2
+      # @since 2.2.3
       def bulk_insert_small(repetitions)
         bulk_insert(repetitions, [Benchmarking.small_document] * 10_000)
       end
@@ -90,7 +90,7 @@ module Mongo
       #
       # @return [ Numeric ] The median of the results.
       #
-      # @since 2.2.2
+      # @since 2.2.3
       def bulk_insert_large(repetitions)
         bulk_insert(repetitions, [Benchmarking.large_document] * 10)
       end
@@ -104,7 +104,7 @@ module Mongo
       #
       # @return [ Numeric ] The median of the results.
       #
-      # @since 2.2.2
+      # @since 2.2.3
       def gridfs_upload(repetitions)
         client.database.drop
         create_collection
@@ -133,7 +133,7 @@ module Mongo
       #
       # @return [ Numeric ] The median of the results.
       #
-      # @since 2.2.2
+      # @since 2.2.3
       def gridfs_download(repetitions = Benchmarking::TEST_REPETITIONS)
         client.database.drop
         create_collection

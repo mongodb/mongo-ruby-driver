@@ -18,7 +18,7 @@ module Mongo
     # These tests focus on BSON encoding and decoding; they are client-side only and
     # do not involve any transmission of data to or from the server.
     #
-    # @since 2.2.2
+    # @since 2.2.3
     module Micro
 
       extend self
@@ -33,7 +33,7 @@ module Mongo
       #
       # @return [ Numeric ] The test results.
       #
-      # @since 2.2.2
+      # @since 2.2.3
       def run(type, action, repetitions = Benchmarking::TEST_REPETITIONS)
         file_name = type.to_s << "_bson.json"
         GC.disable
@@ -51,7 +51,7 @@ module Mongo
       #
       # @return [ Numeric ] The median of the results.
       #
-      # @since 2.2.2
+      # @since 2.2.3
       def encode(file_name, repetitions)
         data = Benchmarking.load_file(file_name)
         document = BSON::Document.new(data.first)
@@ -80,7 +80,7 @@ module Mongo
       #
       # @return [ Numeric ] The median of the results.
       #
-      # @since 2.2.2
+      # @since 2.2.3
       def decode(file_name, repetitions)
         data = Benchmarking.load_file(file_name)
         buffer = BSON::Document.new(data.first).to_bson
