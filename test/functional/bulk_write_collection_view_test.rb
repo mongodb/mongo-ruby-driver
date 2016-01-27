@@ -190,6 +190,7 @@ class BulkWriteCollectionViewTest < Test::Unit::TestCase
   context "Bulk API CollectionView" do
     setup do
       default_setup
+      @collection.remove
     end
 
     # ----- INSERT -----
