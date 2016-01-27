@@ -152,5 +152,15 @@ namespace :benchmark do
       puts "PARALLEL ETL BENCHMARK:: EXPORT"
       Mongo::Benchmarking::Parallel.run(:export)
     end
+
+    task :gridfs_upload do
+      puts "PARALLEL ETL BENCHMARK:: GRIDFS UPLOAD"
+      Mongo::Benchmarking::Parallel.run(:gridfs_upload)
+    end
+
+    task :gridfs_download do
+      puts "PARALLEL ETL BENCHMARK:: GRIDFS DOWNLOAD"
+      Mongo::Benchmarking::Parallel.run(:gridfs_download)
+    end
   end
 end

@@ -84,6 +84,20 @@ module Mongo
     # @since 2.2.3
     LDJSON_FILE_OUTPUT_BASE = "#{DATA_PATH}LDJSON_MULTI/output/LDJSON".freeze
 
+    # The file path and base name for the GRIDFS files to upload.
+    #
+    # @return [ String ] The file path and base name for the GRIDFS files to upload.
+    #
+    # @since 2.2.3
+    GRIDFS_MULTI_BASE = "#{DATA_PATH}GRIDFS_MULTI/file".freeze
+
+    # The file path and base name for the outputted GRIDFS downloaded files.
+    #
+    # @return [ String ] The file path and base name for the outputted GRIDFS downloaded files.
+    #
+    # @since 2.2.3
+    GRIDFS_MULTI_OUTPUT_BASE = "#{DATA_PATH}GRIDFS_MULTI/output/file-output".freeze
+
     # The default number of test repetitions.
     #
     # @return [ Integer ] The number of test repetitions.

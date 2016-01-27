@@ -129,8 +129,80 @@ module Mongo
             end
           #end
         end
+        client.database.drop
         result
       end
+
+      # This benchmark tests driver performance uploading files from disk to GridFS.
+      #
+      # @example Test uploading files from disk to GridFS.
+      #   Benchmarking::Parallel.gridfs_upload
+      #
+      # @return [ Numeric ] The test result.
+      #
+      # @since 2.2.3
+      def gridfs_upload
+        n = 50
+        client.database.drop
+        fs = client.database.fs
+
+        files =  [*0...n].collect do |i|
+          name = "#{GRIDFS_MULTI_BASE}#{i}.txt"
+          {
+            file: File.open(name, 'r'),
+            name: File.basename(name)
+          }
+        end
+
+        s = StringIO.new('a')
+        fs.upload_from_stream('create-indices.test', s)
+
+        Benchmark.realtime do
+          n.times do |i|
+            fs.upload_from_stream(files[i][:name], files[i][:file])
+          end
+        end
+      end
+      alias :gridfs_upload_jruby :gridfs_upload
+
+
+      # This benchmark tests driver performance downloading files from GridFS to disk.
+      #
+      # @example Test downloading files from GridFS to disk.
+      #   Benchmarking::Parallel.gridfs_download
+      #
+      # @return [ Numeric ] The test result.
+      #
+      # @since 2.2.3
+      def gridfs_download
+        n_files = 50
+        n_threads = BSON::Environment.jruby? ? 4 : 2
+        threads = []
+        client.database.drop
+        fs = client.database.fs
+
+        file_info =  [*0...n_files].collect do |i|
+          name = "#{GRIDFS_MULTI_BASE}#{i}.txt"
+          {
+            _id: fs.upload_from_stream(name, File.open(name)),
+            output_name: "#{GRIDFS_MULTI_OUTPUT_BASE}#{i}.txt"
+          }
+        end.freeze
+
+        reps = n_files/n_threads.freeze
+        Benchmark.realtime do
+          n_threads.times do |i|
+            threads << Thread.new do
+              reps.times do |j|
+                index = i * reps + j
+                fs.download_to_stream(file_info[index][:_id], File.open(file_info[index][:output_name], "w"))
+              end
+            end
+          end
+          threads.collect(&:value)
+        end
+      end
+      alias :gridfs_download_jruby :gridfs_download
 
       private
 
@@ -143,11 +215,11 @@ module Mongo
         client.database.drop
         create_collection
         files =  [*1..Benchmarking::TEST_REPETITIONS].collect do |i|
-          "#{LDJSON_FILE_BASE}#{i.to_s.rjust(3, "0")}.txt"
+          File.open("#{LDJSON_FILE_BASE}#{i.to_s.rjust(3, "0")}.txt")
         end
 
         Benchmarking::TEST_REPETITIONS.times do |i|
-          docs = File.open(files[i]).each_with_index.collect do |document, offset|
+          docs = files[i].each_with_index.collect do |document, offset|
             JSON.parse(document).merge(_id: i * 5000 + offset)
           end
           collection.async.insert_many(docs)
