@@ -211,6 +211,9 @@ class Test::Unit::TestCase
       #currently allow extra fields in actual as the following check for equality of keys is commented out
       #raise "field:#{key.inspect} - Hash keys expected:#{expected_keys.inspect} actual:#{actual_keys.inspect}" if expected_keys != actual_keys
       expected_keys.each{|k| match_document(k, expected[k], actual[k])}
+    elsif key == 'writeConcernError' && expected.is_a?(Array) && actual.is_a?(Array)
+      raise "field:#{key.inspect} - actual Array size :#{actual.size} expected to be less than or equal to expected:#{expected.size}" if expected.size > actual.size
+      (0...expected.size).each{|i| match_document(i, expected[i], actual[i])}
     elsif expected.is_a?(Array) && actual.is_a?(Array)
       raise "field:#{key.inspect} - Array size expected:#{expected.size} actual:#{actual.size}" if expected.size != actual.size
       (0...expected.size).each{|i| match_document(i, expected[i], actual[i])}
@@ -339,6 +342,10 @@ class Test::Unit::TestCase
     authenticate_client(client)
     cmd_line_args = client['admin'].command({ :getCmdLineOpts => 1 })['parsed']
     client.server_version < '2.2' && cmd_line_args.include?('auth')
+  end
+
+  def supports_query_comment?(client)
+    client.server_version <= '3.0'
   end
 
   # When testing under narrowed localhost exception, the admin user must have
