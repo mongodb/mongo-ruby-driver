@@ -234,11 +234,11 @@ describe Mongo::BulkWrite do
             expect(authorized_collection.find(_id: 0).first[:name]).to eq('test')
           end
 
-          context 'when the number of updates exceeds the max batch size' do
+          context 'when the number of updates exceeds the max batch size', if: write_command_enabled? do
 
             let(:requests) do
               1001.times.collect do |i|
-                { update_one: { filter: { _id: i }, update: { "$set" => { _id: i, a: 3 }}, upsert: true }}
+                { update_one: { filter: { a: i }, update: { "$set" => { a: i, b: 3 }}, upsert: true }}
               end
             end
 
