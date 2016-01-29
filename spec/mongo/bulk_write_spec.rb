@@ -243,8 +243,8 @@ describe Mongo::BulkWrite do
             end
 
             it 'updates the documents and reports the correct number of upserted ids' do
-              expect(result.upserted_ids.size).to eq(1000)
-              expect(authorized_collection.find(a: 3).count).to eq(1001)
+              expect(result.upserted_ids.size).to eq(1001)
+              expect(authorized_collection.find(b: 3).count).to eq(1001)
             end
           end
         end

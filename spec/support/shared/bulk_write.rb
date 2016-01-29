@@ -534,7 +534,6 @@ shared_examples 'a bulk write object' do
             end
 
             it 'reports the full number of upserted ids' do
-              binding.pry
               expect(bulk.execute.upserted_ids.size).to eq(1001)
             end
           end
