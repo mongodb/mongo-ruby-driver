@@ -85,10 +85,12 @@ module Mongo
 
       def combine_ids!(result)
         if result.respond_to?(Result::INSERTED_IDS)
-          results.merge!(Result::INSERTED_IDS => result.inserted_ids)
+          ids = result.inserted_ids
+          results[Result::INSERTED_IDS] = (results[Result::INSERTED_IDS] || []) + ids
         end
         if result.respond_to?(Result::UPSERTED)
-          results.merge!(Result::UPSERTED_IDS => result.upserted.map{ |doc| doc['_id'] })
+          ids = result.upserted.map{ |doc| doc['_id'] }
+          results[Result::UPSERTED_IDS] = (results[Result::UPSERTED_IDS] || []) + ids
         end
       end
 
@@ -109,7 +111,7 @@ module Mongo
 
       def combine_write_concern_errors!(result)
         if write_concern_errors = result.aggregate_write_concern_errors(count)
-          results.merge!(Error::WRITE_CONCERN_ERRORS => write_concern_errors)
+          results[Error::WRITE_CONCERN_ERRORS] = (results[Error::WRITE_CONCERN_ERRORS] || []) + write_concern_errors
         end
       end
     end
