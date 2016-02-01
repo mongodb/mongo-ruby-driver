@@ -233,6 +233,20 @@ describe Mongo::BulkWrite do
             expect(result.modified_count).to eq(1)
             expect(authorized_collection.find(_id: 0).first[:name]).to eq('test')
           end
+
+          context 'when the number of updates exceeds the max batch size', if: write_command_enabled? do
+
+            let(:requests) do
+              1001.times.collect do |i|
+                { update_one: { filter: { a: i }, update: { "$set" => { a: i, b: 3 }}, upsert: true }}
+              end
+            end
+
+            it 'updates the documents and reports the correct number of upserted ids' do
+              expect(result.upserted_ids.size).to eq(1001)
+              expect(authorized_collection.find(b: 3).count).to eq(1001)
+            end
+          end
         end
 
         context 'when providing a single update many' do
@@ -301,6 +315,10 @@ describe Mongo::BulkWrite do
 
           it 'inserts the documents' do
             expect(result.inserted_count).to eq(1001)
+          end
+
+          it 'combines the inserted ids' do
+            expect(result.inserted_ids.size).to eq(1001)
           end
         end
       end

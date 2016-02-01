@@ -397,7 +397,7 @@ shared_examples 'a bulk write object' do
 
       let(:operations) do
         [{ update_one: { find: { a: 1 },
-                         update: { '$st' => { field: 'blah' } },
+                         update: { '$set' => { field: 'blah' } },
                          upsert: false }
          }]
       end
@@ -521,6 +521,22 @@ shared_examples 'a bulk write object' do
         it 'applies the correct writes' do
           bulk.execute
           expect(authorized_collection.find.projection(_id: 0).to_a).to eq(expected)
+        end
+
+        context 'when the number of updates exceeds the max batch size' do
+
+          let(:operations) do
+            1001.times.collect do |i|
+              { update_one: { find: { _id: i },
+                              update: { '$set' => { _id: i } },
+                              upsert: true }
+             }
+            end
+
+            it 'reports the full number of upserted ids' do
+              expect(bulk.execute.upserted_ids.size).to eq(1001)
+            end
+          end
         end
       end
     end
