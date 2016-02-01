@@ -92,9 +92,7 @@ describe Mongo::Operation::Write::Bulk::Insert do
       end
 
       it 'adds an id to the documents' do
-        r = op.execute(authorized_primary.context)
-        ids = r.inserted_ids
-        expect(ids).to eq(collection_ids)
+        expect(inserted_ids).to eq(collection_ids)
       end
     end
   end
