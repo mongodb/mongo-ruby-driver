@@ -16,10 +16,13 @@ module Mongo
   class Monitoring
     module Event
 
-      # Event fired when the topology is opening.
+      # Event fired when the server is opening.
       #
       # @since 2.3.0
-      class TopologyOpening
+      class ServerOpening
+
+        # @return [ Address ] address The server address.
+        attr_reader :address
 
         # @return [ Topology ] topology The topology.
         attr_reader :topology
@@ -27,12 +30,14 @@ module Mongo
         # Create the event.
         #
         # @example Create the event.
-        #   TopologyOpening.new(topology)
+        #   ServerOpening.new(address)
         #
+        # @param [ Address ] address The server address.
         # @param [ Integer ] topology The topology.
         #
         # @since 2.3.0
-        def initialize(topology)
+        def initialize(address, topology)
+          @address = address
           @topology = topology
         end
       end

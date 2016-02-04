@@ -124,8 +124,8 @@ module Mongo
           end
         end
         subscribe(COMMAND, CommandLogSubscriber.new(options))
-        subscribe(TOPOLOGY_OPENING, TopologyOpeningLogSubscriber.new(options))
-        subscribe(TOPOLOGY_CHANGED, TopologyChangedLogSubscriber.new(options))
+        # subscribe(TOPOLOGY_OPENING, TopologyOpeningLogSubscriber.new(options))
+        # subscribe(TOPOLOGY_CHANGED, TopologyChangedLogSubscriber.new(options))
       end
     end
 
