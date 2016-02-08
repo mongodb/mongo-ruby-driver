@@ -31,10 +31,20 @@ module Mongo
     # @since 2.1.0
     COMMAND = 'Command'.freeze
 
+    # Server closed topic.
+    #
+    # @since 2.3.0
+    SERVER_CLOSED = 'ServerClosed'.freeze
+
     # Server description changed topic.
     #
     # @since 2.3.0
-    SERVER_DESCRIPTION_CHANGED = 'ServerDescriptionChnaged'.freeze
+    SERVER_DESCRIPTION_CHANGED = 'ServerDescriptionChanged'.freeze
+
+    # Server opening topic.
+    #
+    # @since 2.3.0
+    SERVER_OPENING = 'ServerOpening'.freeze
 
     # Topology changed topic.
     #
