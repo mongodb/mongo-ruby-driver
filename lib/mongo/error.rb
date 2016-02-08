@@ -62,6 +62,11 @@ module Mongo
     #
     # @since 2.0.0
     BAD_VALUE = 2.freeze
+
+    # Constant for a Cursor not found error.
+    #
+    # @since 2.2.3
+    CURSOR_NOT_FOUND = 'Cursor not found.'
   end
 end
 

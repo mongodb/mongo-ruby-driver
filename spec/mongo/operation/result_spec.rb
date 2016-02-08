@@ -208,6 +208,21 @@ describe Mongo::Operation::Result do
           expect(result).to_not be_successful
         end
       end
+
+      context 'when the query reply has the cursor_not_found flag set' do
+
+        let(:flags) do
+          [ :cursor_not_found ]
+        end
+
+        let(:documents) do
+          []
+        end
+
+        it 'returns false' do
+          expect(result).to_not be_successful
+        end
+      end
     end
 
     context 'when the reply is for a write command' do
