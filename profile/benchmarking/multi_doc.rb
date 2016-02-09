@@ -171,7 +171,7 @@ module Mongo
       end
 
       def collection
-        @collection ||= client[:corpus].tap { |coll| coll.create }
+        @collection ||= begin; client[:corpus].tap { |coll| coll.create }; rescue Error::OperationFailure; client[:corpus]; end
       end
       alias :create_collection :collection
     end

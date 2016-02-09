@@ -134,11 +134,11 @@ module Mongo
       end
 
       def client
-        @client ||= Mongo::Client.new(["localhost:27017"], database: 'perftest')
+        @client ||= Mongo::Client.new(["localhost:27017"], database: 'perftest', monitoring: false)
       end
 
       def collection
-        @collection ||= client[:corpus].tap { |coll| coll.create }
+        @collection ||= begin; client[:corpus].tap { |coll| coll.create }; rescue Error::OperationFailure; client[:corpus]; end
       end
       alias :create_collection :collection
     end
