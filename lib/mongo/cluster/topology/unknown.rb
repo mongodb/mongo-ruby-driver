@@ -236,12 +236,10 @@ module Mongo
         end
 
         def topology_changed(new_topology)
-          unless options[:monitoring] == false
-            monitoring.succeeded(
-              Monitoring::TOPOLOGY_CHANGED,
-              Monitoring::Event::TopologyChanged.new(self, new_topology)
-            )
-          end
+          publish_sdam_event(
+            Monitoring::TOPOLOGY_CHANGED,
+            Monitoring::Event::TopologyChanged.new(self, new_topology)
+          )
         end
       end
     end

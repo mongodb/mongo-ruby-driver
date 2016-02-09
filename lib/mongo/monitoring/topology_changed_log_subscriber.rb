@@ -24,8 +24,8 @@ module Mongo
 
       def log_event(event)
         log_debug(
-          "Topology type '#{event.previous_topology.display_name}' changed to " +
-          "type '#{event.new_topology.display_name}'."
+          "Topology type '#{event.previous_topology.display_name.downcase}' changed to " +
+          "type '#{event.new_topology.display_name.downcase}'."
         )
       end
     end
