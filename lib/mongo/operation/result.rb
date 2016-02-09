@@ -290,7 +290,7 @@ module Mongo
       end
 
       def parser
-        @parser ||= Error::Parser.new(first_document)
+        @parser ||= Error::Parser.new(first_document, replies)
       end
 
       def first_document
@@ -298,7 +298,7 @@ module Mongo
       end
 
       def query_failure?
-        replies.first && replies.first.query_failure?
+        replies.first && (replies.first.query_failure? || replies.first.cursor_not_found?)
       end
     end
   end

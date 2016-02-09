@@ -38,6 +38,18 @@ module Mongo
         flags.include?(:query_failure)
       end
 
+      # Determine if the reply had a cursor not found flag.
+      #
+      # @example Did the reply have a cursor not found flag.
+      #   reply.cursor_not_found?
+      #
+      # @return [ true, false ] If the query cursor was not found.
+      #
+      # @since 2.2.3
+      def cursor_not_found?
+        flags.include?(:cursor_not_found)
+      end
+
       # Return the event payload for monitoring.
       #
       # @example Return the event payload.

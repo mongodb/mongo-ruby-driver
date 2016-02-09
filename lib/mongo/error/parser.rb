@@ -27,6 +27,9 @@ module Mongo
       # @return [ String ] message The error message parsed from the document.
       attr_reader :message
 
+      # @return [ Array<Protocol::Reply> ] replies The message replies.
+      attr_reader :replies
+
       # Create the new parser with the returned document.
       #
       # @example Create the new parser.
@@ -35,8 +38,9 @@ module Mongo
       # @param [ BSON::Document ] document The returned document.
       #
       # @since 2.0.0
-      def initialize(document)
+      def initialize(document, replies = nil)
         @document = document || {}
+        @replies = replies
         parse!
       end
 
@@ -50,6 +54,7 @@ module Mongo
         parse_multiple(@message, WRITE_ERRORS)
         parse_single(@message, ERRMSG,
                      document[WRITE_CONCERN_ERROR]) if document[WRITE_CONCERN_ERROR]
+        parse_flag(@message)
       end
 
       def parse_single(message, key, doc = document)
@@ -63,6 +68,12 @@ module Mongo
           errors.each do |error|
             parse_single(message, ERRMSG, error)
           end
+        end
+      end
+
+      def parse_flag(message)
+        if replies && replies.first && replies.first.cursor_not_found?
+          append(message, CURSOR_NOT_FOUND)
         end
       end
 
