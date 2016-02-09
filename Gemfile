@@ -10,6 +10,8 @@ group :development, :testing do
   gem 'rspec', '~> 3.0'
   gem 'mime-types', '~> 1.25'
   gem 'httparty'
+  gem 'yajl-ruby', require: 'yajl', platforms: :mri
+  gem 'celluloid', platforms: :mri
 end
 
 group :development do
