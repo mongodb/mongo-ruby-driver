@@ -24,6 +24,7 @@ module Mongo
   # @since 2.0.0
   class Cluster
     extend Forwardable
+    include Monitoring::Publishable
     include Event::Subscriber
     include Loggable
 
@@ -266,11 +267,14 @@ module Mongo
     #
     # @since 2.0.0
     def remove(host)
-      log_debug("#{host} being removed from the cluster.")
       address = Address.new(host)
       removed_servers = @servers.select { |s| s.address == address }
       @update_lock.synchronize { @servers = @servers - removed_servers }
       removed_servers.each{ |server| server.disconnect! } if removed_servers
+      publish_sdam_event(
+        Monitoring::SERVER_CLOSED,
+        Monitoring::Event::ServerClosed.new(address, topology)
+      )
       @update_lock.synchronize { @addresses.reject! { |addr| addr == address } }
     end
 

@@ -15,15 +15,15 @@
 module Mongo
   class Monitoring
 
-    # Subscribes to Topology Openeing events and logs them.
+    # Subscribes to Server Closed events and logs them.
     #
     # @since 2.3.0
-    class TopologyOpeningLogSubscriber < SDAMLogSubscriber
+    class ServerClosedLogSubscriber < SDAMLogSubscriber
 
       private
 
       def log_event(event)
-        log_debug("Topology type '#{event.topology.display_name.downcase}' initializing.")
+        log_debug("Server #{event.address} connection closed.")
       end
     end
   end

@@ -23,7 +23,10 @@ module Mongo
       private
 
       def log_event(event)
-        log_debug("Server description for #{event.address} changed.")
+        log_debug(
+          "Server description for #{event.address} changed from " +
+          "'#{event.previous_description.server_type}' to '#{event.new_description.server_type}'."
+        )
       end
     end
   end

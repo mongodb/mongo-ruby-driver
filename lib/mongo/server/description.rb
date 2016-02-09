@@ -480,6 +480,24 @@ module Mongo
         !!config[SECONDARY] && !replica_set_name.nil?
       end
 
+      # Returns the server type as a symbol.
+      #
+      # @example Get the server type.
+      #   description.server_type
+      #
+      # @return [ Symbol ] The server type.
+      #
+      # @since 2.3.0
+      def server_type
+        return :arbiter if arbiter?
+        return :ghost if ghost?
+        return :sharded if mongos?
+        return :primary if primary?
+        return :secondary if secondary?
+        return :standalone if standalone?
+        :unknown
+      end
+
       # Is this server a standalone server?
       #
       # @example Is the server standalone?
