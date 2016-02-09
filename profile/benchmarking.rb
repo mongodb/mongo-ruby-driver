@@ -40,63 +40,63 @@ module Mongo
     # @return [ String ] Path to Benchmarking test files.
     #
     # @since 2.2.3
-    DATA_PATH = "#{CURRENT_PATH}/benchmarking/data/".freeze
+    DATA_PATH = [CURRENT_PATH, 'benchmarking', 'data'].join('/').freeze
 
     # The file containing the single tweet document.
     #
     # @return [ String ] The file containing the tweet document.
     #
     # @since 2.2.3
-    TWEET_DOCUMENT_FILE = "#{DATA_PATH}TWEET.json".freeze
+    TWEET_DOCUMENT_FILE = [DATA_PATH, 'TWEET.json'].join('/').freeze
 
     # The file containing the single small document.
     #
     # @return [ String ] The file containing the small document.
     #
     # @since 2.2.3
-    SMALL_DOCUMENT_FILE = "#{DATA_PATH}SMALL_DOC.json".freeze
+    SMALL_DOCUMENT_FILE = [DATA_PATH, 'SMALL_DOC.json'].join('/').freeze
 
     # The file containing the single large document.
     #
     # @return [ String ] The file containing the large document.
     #
     # @since 2.2.3
-    LARGE_DOCUMENT_FILE = "#{DATA_PATH}LARGE_DOC.json".freeze
+    LARGE_DOCUMENT_FILE = [DATA_PATH, 'LARGE_DOC.json'].join('/').freeze
 
     # The file to upload when testing GridFS.
     #
     # @return [ String ] The file containing the GridFS test data.
     #
     # @since 2.2.3
-    GRIDFS_FILE = "#{DATA_PATH}GRIDFS_LARGE".freeze
+    GRIDFS_FILE = [DATA_PATH, 'GRIDFS_LARGE'].join('/').freeze
 
     # The file path and base name for the LDJSON files.
     #
     # @return [ String ] The file path and base name for the LDJSON files.
     #
     # @since 2.2.3
-    LDJSON_FILE_BASE = "#{DATA_PATH}LDJSON_MULTI/LDJSON".freeze
+    LDJSON_FILE_BASE = [DATA_PATH, 'LDJSON_MULTI', 'LDJSON'].join('/').freeze
 
     # The file path and base name for the outputted LDJSON files.
     #
     # @return [ String ] The file path and base name for the outputted LDJSON files.
     #
     # @since 2.2.3
-    LDJSON_FILE_OUTPUT_BASE = "#{DATA_PATH}LDJSON_MULTI/output/LDJSON".freeze
+    LDJSON_FILE_OUTPUT_BASE = [DATA_PATH, 'LDJSON_MULTI', 'output', 'LDJSON'].join('/').freeze
 
     # The file path and base name for the GRIDFS files to upload.
     #
     # @return [ String ] The file path and base name for the GRIDFS files to upload.
     #
     # @since 2.2.3
-    GRIDFS_MULTI_BASE = "#{DATA_PATH}GRIDFS_MULTI/file".freeze
+    GRIDFS_MULTI_BASE = [DATA_PATH, 'GRIDFS_MULTI', 'file'].join('/').freeze
 
     # The file path and base name for the outputted GRIDFS downloaded files.
     #
     # @return [ String ] The file path and base name for the outputted GRIDFS downloaded files.
     #
     # @since 2.2.3
-    GRIDFS_MULTI_OUTPUT_BASE = "#{DATA_PATH}GRIDFS_MULTI/output/file-output".freeze
+    GRIDFS_MULTI_OUTPUT_BASE = [DATA_PATH, 'GRIDFS_MULTI', 'output', 'file-output'].join('/').freeze
 
     # The default number of test repetitions.
     #

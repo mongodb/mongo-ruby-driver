@@ -37,7 +37,7 @@ module Mongo
       def run(type, action, repetitions = Benchmarking::TEST_REPETITIONS)
         file_name = type.to_s << "_bson.json"
         GC.disable
-        file_path = Benchmarking::DATA_PATH + file_name
+        file_path = [Benchmarking::DATA_PATH, file_name].join('/')
         puts "#{action} : #{send(action, file_path, repetitions)}"
       end
 

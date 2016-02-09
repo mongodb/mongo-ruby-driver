@@ -114,7 +114,7 @@ module Mongo
       #
       # @since 2.2.3
       def export
-        require 'ruby-prof'
+        #require 'ruby-prof'
         insert_files
         files =  [*1..Benchmarking::TEST_REPETITIONS].collect do |i|
           name = "#{LDJSON_FILE_OUTPUT_BASE}#{i.to_s.rjust(3, "0")}.txt"
