@@ -21,6 +21,7 @@ module Mongo
       # @since 2.0.0
       class Unknown
         include Loggable
+        include Monitoring::Publishable
 
         # The display name for the topology.
         #
@@ -82,6 +83,10 @@ module Mongo
           @options = options
           @monitoring = monitoring
           @seeds = seeds
+          publish_sdam_event(
+            Monitoring::TOPOLOGY_OPENING,
+            Monitoring::Event::TopologyOpening.new(self)
+          )
         end
 
         # An unknown topology is not a replica set.

@@ -20,11 +20,15 @@ module Mongo
       #
       # @since 2.0.0
       class Single
+        include Monitoring::Publishable
 
         # The display name for the topology.
         #
         # @since 2.0.0
         NAME = 'Single'.freeze
+
+        # @return [ Hash ] options The options.
+        attr_reader :options
 
         # @return [ String ] seed The seed address.
         attr_reader :seed
@@ -71,6 +75,10 @@ module Mongo
           @options = options
           @monitoring = monitoring
           @seed = seeds.first
+          publish_sdam_event(
+            Monitoring::TOPOLOGY_OPENING,
+            Monitoring::Event::TopologyOpening.new(self)
+          )
         end
 
         # A single topology is not a replica set.

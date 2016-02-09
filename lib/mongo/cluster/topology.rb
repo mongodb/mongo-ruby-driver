@@ -55,16 +55,7 @@ module Mongo
         else
           Unknown.new(options, monitoring, seeds)
         end
-        publish(monitoring, topology) unless options[:monitoring] == false
         topology
-      end
-
-      private
-
-      def publish(monitoring, topology)
-        monitoring.succeeded(
-          Monitoring::TOPOLOGY_OPENING, Monitoring::Event::TopologyOpening.new(topology)
-        )
       end
     end
   end

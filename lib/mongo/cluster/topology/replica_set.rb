@@ -21,6 +21,7 @@ module Mongo
       # @since 2.0.0
       class ReplicaSet
         include Loggable
+        include Monitoring::Publishable
 
         # Constant for the replica set name configuration option.
         #
@@ -97,6 +98,10 @@ module Mongo
           @monitoring = monitoring
           @max_election_id = nil
           @max_set_version = nil
+          publish_sdam_event(
+            Monitoring::TOPOLOGY_OPENING,
+            Monitoring::Event::TopologyOpening.new(self)
+          )
         end
 
         # A replica set topology is a replica set.

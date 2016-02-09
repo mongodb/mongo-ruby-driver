@@ -20,6 +20,7 @@ module Mongo
       #
       # @since 2.0.0
       class Sharded
+        include Monitoring::Publishable
 
         # The display name for the topology.
         #
@@ -67,6 +68,10 @@ module Mongo
         def initialize(options, monitoring, seeds = [])
           @options = options
           @monitoring = monitoring
+          publish_sdam_event(
+            Monitoring::TOPOLOGY_OPENING,
+            Monitoring::Event::TopologyOpening.new(self)
+          )
         end
 
         # A sharded topology is not a replica set.

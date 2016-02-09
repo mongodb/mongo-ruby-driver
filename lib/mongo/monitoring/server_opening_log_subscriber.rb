@@ -15,18 +15,15 @@
 module Mongo
   class Monitoring
 
-    # Subscribes to Topology Changed events and logs them.
+    # Subscribes to Server Opening events and logs them.
     #
     # @since 2.3.0
-    class TopologyChangedLogSubscriber < SDAMLogSubscriber
+    class ServerOpeningLogSubscriber < SDAMLogSubscriber
 
       private
 
       def log_event(event)
-        log_debug(
-          "Topology type '#{event.previous_topology.display_name}' changed to " +
-          "type '#{event.new_topology.display_name}'."
-        )
+        log_debug("Server #{event.address} initializing.")
       end
     end
   end

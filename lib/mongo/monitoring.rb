@@ -16,6 +16,8 @@ require 'mongo/monitoring/event'
 require 'mongo/monitoring/publishable'
 require 'mongo/monitoring/command_log_subscriber'
 require 'mongo/monitoring/sdam_log_subscriber'
+require 'mongo/monitoring/server_description_changed_log_subscriber'
+require 'mongo/monitoring/server_opening_log_subscriber'
 require 'mongo/monitoring/topology_changed_log_subscriber'
 require 'mongo/monitoring/topology_opening_log_subscriber'
 
@@ -134,8 +136,10 @@ module Mongo
           end
         end
         subscribe(COMMAND, CommandLogSubscriber.new(options))
-        # subscribe(TOPOLOGY_OPENING, TopologyOpeningLogSubscriber.new(options))
-        # subscribe(TOPOLOGY_CHANGED, TopologyChangedLogSubscriber.new(options))
+        subscribe(SERVER_OPENING, ServerOpeningLogSubscriber.new(options))
+        subscribe(SERVER_DESCRIPTION_CHANGED, ServerDescriptionChangedLogSubscriber.new(options))
+        subscribe(TOPOLOGY_OPENING, TopologyOpeningLogSubscriber.new(options))
+        subscribe(TOPOLOGY_CHANGED, TopologyChangedLogSubscriber.new(options))
       end
     end
 
