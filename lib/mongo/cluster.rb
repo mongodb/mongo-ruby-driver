@@ -38,6 +38,9 @@ module Mongo
     # @return [ Hash ] The options hash.
     attr_reader :options
 
+    # @return [ Monitoring ] monitoring The monitoring.
+    attr_reader :monitoring
+
     # @return [ Object ] The cluster topology.
     attr_reader :topology
 
@@ -75,7 +78,6 @@ module Mongo
       address = Address.new(host)
       if !addresses.include?(address)
         if addition_allowed?(address)
-          log_debug("Adding #{address.to_s} to the cluster.")
           @update_lock.synchronize { @addresses.push(address) }
           server = Server.new(address, self, @monitoring, event_listeners, options)
           @update_lock.synchronize { @servers.push(server) }

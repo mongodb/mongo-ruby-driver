@@ -20,9 +20,16 @@ module Mongo
     #
     # @since 2.0.6
     class DescriptionChanged
+      include Monitoring::Publishable
 
       # @return [ Mongo::Cluster ] cluster The event publisher.
       attr_reader :cluster
+
+      # @return [ Hash ] options The options.
+      attr_reader :options
+
+      # @return [ Monitoring ] monitoring The monitoring.
+      attr_reader :monitoring
 
       # Initialize the new host added event handler.
       #
@@ -34,6 +41,8 @@ module Mongo
       # @since 2.0.0
       def initialize(cluster)
         @cluster = cluster
+        @options = cluster.options
+        @monitoring = cluster.monitoring
       end
 
       # This event publishes an event to add the cluster and logs the
@@ -45,7 +54,16 @@ module Mongo
       # @param [ Server::Description ] updated The changed description.
       #
       # @since 2.0.0
-      def handle(updated)
+      def handle(previous, updated)
+        publish_sdam_event(
+          Monitoring::SERVER_DESCRIPTION_CHANGED,
+          Monitoring::Event::ServerDescriptionChanged.new(
+            updated.address,
+            cluster.topology,
+            previous,
+            updated
+          )
+        )
         cluster.add_hosts(updated)
         cluster.remove_hosts(updated)
       end
