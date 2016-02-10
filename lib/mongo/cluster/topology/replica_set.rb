@@ -144,7 +144,8 @@ module Mongo
         #
         # @since 2.0.6
         def add_hosts?(description, servers)
-          !!(member_of_this_set?(description) && !has_primary?(servers))
+          !!(member_of_this_set?(description) &&
+              (!has_primary?(servers) || description.primary?))
         end
 
         # Whether a description can be used to remove hosts from the cluster.
