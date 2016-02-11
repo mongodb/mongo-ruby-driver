@@ -160,6 +160,7 @@ describe Mongo::Cluster::Topology::ReplicaSet do
         let(:description) do
           double('description').tap do |d|
             allow(d).to receive(:replica_set_member?).and_return(false)
+            allow(d).to receive(:primary?).and_return(false)
           end
         end
 
@@ -179,6 +180,7 @@ describe Mongo::Cluster::Topology::ReplicaSet do
         double('description').tap do |d|
           allow(d).to receive(:replica_set_member?).and_return(true)
           allow(d).to receive(:replica_set_name).and_return('testing')
+          allow(d).to receive(:primary?).and_return(false)
         end
       end
 
