@@ -168,9 +168,10 @@ module Mongo
     #
     # @since 2.0.0
     AUTH_MECH_MAP = {
-      'PLAIN'      => :plain,
-      'MONGODB-CR' => :mongodb_cr,
-      'GSSAPI'     => :gssapi
+      'PLAIN'       => :plain,
+      'MONGODB-CR'  => :mongodb_cr,
+      'GSSAPI'      => :gssapi,
+      'SCRAM-SHA-1' => :scram
     }.freeze
 
     # Options that are allowed to appear more than once in the uri.

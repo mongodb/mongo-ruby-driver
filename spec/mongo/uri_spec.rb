@@ -524,8 +524,16 @@ describe 'invalid uris' do
         let(:mechanism) { 'GSSAPI' }
         let(:expected) { :gssapi }
 
-
         it 'sets the auth mechanism to :gssapi' do
+          expect(uri.uri_options[:auth_mech]).to eq(expected)
+        end
+      end
+
+      context 'scram-sha-1' do
+        let(:mechanism) { 'SCRAM-SHA-1' }
+        let(:expected) { :scram }
+
+        it 'sets the auth mechanism to :scram' do
           expect(uri.uri_options[:auth_mech]).to eq(expected)
         end
       end
