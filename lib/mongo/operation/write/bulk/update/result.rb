@@ -46,9 +46,9 @@ module Mongo
               return 0 unless acknowledged?
               @replies.reduce(0) do |n, reply|
                 if upsert?(reply)
-                  n += 1
+                  n += reply.documents.first[UPSERTED].size
                 else
-                  n += 0
+                  n
                 end
               end
             end
@@ -65,9 +65,13 @@ module Mongo
               return 0 unless acknowledged?
               @replies.reduce(0) do |n, reply|
                 if upsert?(reply)
-                  n += 0
+                  n
                 else
-                  n += reply.documents.first[N]
+                  if reply.documents.first[N]
+                    n += reply.documents.first[N]
+                  else
+                    n
+                  end
                 end
               end
             end

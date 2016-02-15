@@ -166,7 +166,7 @@ module Mongo
       #
       # @since 2.1.0
       def upserted_ids
-        @results[UPSERTED_IDS]
+        @results[UPSERTED_IDS] || []
       end
 
       # Validates the bulk write result.
