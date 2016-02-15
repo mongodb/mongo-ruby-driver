@@ -34,7 +34,11 @@ module Mongo
             def n_removed
               return 0 unless acknowledged?
               @replies.reduce(0) do |n, reply|
-                n += reply.documents.first[Result::N]
+                if reply.documents.first[Result::N]
+                  n += reply.documents.first[Result::N]
+                else
+                  n
+                end
               end
             end
           end
