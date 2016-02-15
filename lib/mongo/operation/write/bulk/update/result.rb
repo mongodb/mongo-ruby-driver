@@ -65,7 +65,7 @@ module Mongo
               return 0 unless acknowledged?
               @replies.reduce(0) do |n, reply|
                 if upsert?(reply)
-                  n
+                  reply.documents.first[N] - n_upserted
                 else
                   if reply.documents.first[N]
                     n += reply.documents.first[N]
@@ -159,7 +159,25 @@ module Mongo
                 end
               end
             end
-            alias :n_modified :n_matched
+
+            # Gets the number of documents modified.
+            #
+            # @example Get the modified count.
+            #   result.n_modified
+            #
+            # @return [ Integer ] The number of documents modified.
+            #
+            # @since 2.2.3
+            def n_modified
+              return 0 unless acknowledged?
+              @replies.reduce(0) do |n, reply|
+                if upsert?(reply)
+                  n
+                else
+                  updated_existing?(reply) ? n += reply.documents.first[N] : n
+                end
+              end
+            end
 
             private
 

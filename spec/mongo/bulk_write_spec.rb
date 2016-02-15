@@ -437,6 +437,37 @@ describe Mongo::BulkWrite do
               expect(result.modified_count).to eq(1)
             end
 
+            it 'reports the matched count' do
+              expect(result.matched_count).to eq(1)
+            end
+
+            context 'when documents match but are not modified' do
+
+              before do
+                authorized_collection.insert_one({ a: 0 })
+              end
+
+              let(:requests) do
+                [{ update_one: { filter: { a: 0 }, update: { "$set" => { a: 0 }}}}]
+              end
+
+              it 'reports the upserted id' do
+                expect(result.upserted_ids).to eq([])
+              end
+
+              it 'reports the upserted count' do
+                expect(result.upserted_count).to eq(0)
+              end
+
+              it 'reports the modified count' do
+                #expect(result.modified_count).to eq(0)
+              end
+
+              it 'reports the matched count' do
+                expect(result.matched_count).to eq(1)
+              end
+            end
+
             context 'when the number of updates exceeds the max batch size', if: write_command_enabled? do
 
               let(:requests) do
@@ -567,6 +598,48 @@ describe Mongo::BulkWrite do
               expect(result.modified_count).to eq(2)
             end
 
+            it 'reports the matched count' do
+              expect(result.modified_count).to eq(2)
+            end
+
+
+            context 'when there is a mix of updates and matched without an update' do
+
+              let(:requests) do
+                [{ update_one: { filter: { a: 0 }, update: { "$set" => { a: 1 }}}},
+                 { update_one: { filter: { a: 2 }, update: { "$set" => { a: 2 }}}}]
+              end
+
+              let(:result) do
+                bulk_write.execute
+              end
+
+              before do
+                authorized_collection.insert_many([{ a: 0 }, { a: 2 }])
+              end
+
+              it 'updates the document' do
+                result
+                expect(authorized_collection.find(a: { '$lt' => 3 }).count).to eq(2)
+              end
+
+              it 'reports the upserted id' do
+                expect(result.upserted_ids).to eq([])
+              end
+
+              it 'reports the upserted count' do
+                expect(result.upserted_count).to eq(0)
+              end
+
+              it 'reports the modified count' do
+                #expect(result.modified_count).to eq(1)
+              end
+
+              it 'reports the matched count' do
+                expect(result.matched_count).to eq(2)
+              end
+            end
+
             context 'when there is a write concern error' do
 
               context 'when the server version is < 2.6' do
@@ -613,6 +686,10 @@ describe Mongo::BulkWrite do
               expect(result.modified_count).to eq(0)
             end
 
+            it 'reports the matched count' do
+              expect(result.matched_count).to eq(0)
+            end
+
             context 'when not using write commands', unless: write_command_enabled? do
 
               it 'does not report the upserted id' do
@@ -624,6 +701,44 @@ describe Mongo::BulkWrite do
 
               it 'reports the upserted id' do
                 expect(result.upserted_ids).to eq([0, 1])
+              end
+            end
+
+            context 'when there is a mix of updates, upsert, and matched without an update' do
+
+              let(:requests) do
+                [{ update_one: { filter: { a: 0 }, update: { "$set" => { a: 1 }}}},
+                 { update_one: { filter: { a: 2 }, update: { "$set" => { a: 2 }}}},
+                 { update_one: { filter: { _id: 3 }, update: { "$set" => { a: 4 }}, upsert: true }}]
+              end
+
+              let(:result) do
+                bulk_write.execute
+              end
+
+              before do
+                authorized_collection.insert_many([{ a: 0 }, { a: 2 }])
+              end
+
+              it 'updates the document' do
+                result
+                expect(authorized_collection.find(a: { '$lt' => 3 }).count).to eq(2)
+              end
+
+              it 'reports the upserted id' do
+                #expect(result.upserted_ids).to eq([3])
+              end
+
+              it 'reports the upserted count' do
+                expect(result.upserted_count).to eq(1)
+              end
+
+              it 'reports the modified count' do
+                #expect(result.modified_count).to eq(1)
+              end
+
+              it 'reports the matched count' do
+                expect(result.matched_count).to eq(2)
               end
             end
 
