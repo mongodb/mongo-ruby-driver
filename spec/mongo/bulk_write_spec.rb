@@ -459,8 +459,8 @@ describe Mongo::BulkWrite do
                 expect(result.upserted_count).to eq(0)
               end
 
-              it 'reports the modified count' do
-                #expect(result.modified_count).to eq(0)
+              it 'reports the modified count', if: write_command_enabled? do
+                expect(result.modified_count).to eq(0)
               end
 
               it 'reports the matched count' do
@@ -527,18 +527,8 @@ describe Mongo::BulkWrite do
               expect(result.modified_count).to eq(0)
             end
 
-            context 'when not using write commands', unless: write_command_enabled? do
-
-              it 'does not report the upserted id' do
-                expect(result.upserted_ids).to eq([])
-              end
-            end
-
-            context 'when using write commands', if: write_command_enabled? do
-
-              it 'reports the upserted id' do
-                expect(result.upserted_ids).to eq([0])
-              end
+            it 'reports the upserted id', if: write_command_enabled? do
+              expect(result.upserted_ids).to eq([0])
             end
 
             context 'when there is a write concern error' do
@@ -631,8 +621,12 @@ describe Mongo::BulkWrite do
                 expect(result.upserted_count).to eq(0)
               end
 
-              it 'reports the modified count' do
-                #expect(result.modified_count).to eq(1)
+              it 'reports the modified count', if: write_command_enabled? do
+                expect(result.modified_count).to eq(1)
+              end
+
+              it 'reports the modified count', unless: write_command_enabled? do
+                expect(result.modified_count).to eq(2)
               end
 
               it 'reports the matched count' do
@@ -690,18 +684,8 @@ describe Mongo::BulkWrite do
               expect(result.matched_count).to eq(0)
             end
 
-            context 'when not using write commands', unless: write_command_enabled? do
-
-              it 'does not report the upserted id' do
-                expect(result.upserted_ids).to eq([])
-              end
-            end
-
-            context 'when using write commands', if: write_command_enabled? do
-
-              it 'reports the upserted id' do
-                expect(result.upserted_ids).to eq([0, 1])
-              end
+            it 'reports the upserted id', if: write_command_enabled? do
+              expect(result.upserted_ids).to eq([0, 1])
             end
 
             context 'when there is a mix of updates, upsert, and matched without an update' do
@@ -725,16 +709,20 @@ describe Mongo::BulkWrite do
                 expect(authorized_collection.find(a: { '$lt' => 3 }).count).to eq(2)
               end
 
-              it 'reports the upserted id' do
-                #expect(result.upserted_ids).to eq([3])
+              it 'reports the upserted id', if: write_command_enabled? do
+                expect(result.upserted_ids).to eq([3])
               end
 
               it 'reports the upserted count' do
                 expect(result.upserted_count).to eq(1)
               end
 
-              it 'reports the modified count' do
-                #expect(result.modified_count).to eq(1)
+              it 'reports the modified count', if: write_command_enabled? do
+                expect(result.modified_count).to eq(1)
+              end
+
+              it 'reports the modified count', unless: write_command_enabled? do
+                expect(result.modified_count).to eq(2)
               end
 
               it 'reports the matched count' do
@@ -842,18 +830,8 @@ describe Mongo::BulkWrite do
               expect(result.modified_count).to eq(0)
             end
 
-            context 'when not using write commands', unless: write_command_enabled? do
-
-              it 'does not report the upserted id' do
-                expect(result.upserted_ids).to eq([])
-              end
-            end
-
-            context 'when using write commands', if: write_command_enabled? do
-
-              it 'reports the upserted id' do
-                expect(result.upserted_ids).to eq([0])
-              end
+            it 'reports the upserted id', if: write_command_enabled? do
+              expect(result.upserted_ids).to eq([0])
             end
 
             context 'when there is a write concern error' do

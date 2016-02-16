@@ -182,7 +182,8 @@ module Mongo
             private
 
             def upsert?(reply)
-              !updated_existing?(reply) && reply.documents.first[N] == 1
+              reply.documents.first[BulkWrite::Result::UPSERTED] ||
+                (!updated_existing?(reply) && reply.documents.first[N] == 1)
             end
 
             def updated_existing?(reply)
