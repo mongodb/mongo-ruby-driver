@@ -704,9 +704,10 @@ describe Mongo::BulkWrite do
                 authorized_collection.insert_many([{ a: 0 }, { a: 2 }])
               end
 
-              it 'updates the document' do
+              it 'updates the documents' do
                 result
                 expect(authorized_collection.find(a: { '$lt' => 3 }).count).to eq(2)
+                expect(authorized_collection.find(a: 4).count).to eq(1)
               end
 
               it 'reports the upserted id', if: write_command_enabled? do
