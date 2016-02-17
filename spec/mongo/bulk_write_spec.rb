@@ -523,6 +523,10 @@ describe Mongo::BulkWrite do
               expect(result.upserted_count).to eq(1)
             end
 
+            it 'reports the matched count' do
+              expect(result.modified_count).to eq(0)
+            end
+
             it 'reports the modified count' do
               expect(result.modified_count).to eq(0)
             end
@@ -786,6 +790,10 @@ describe Mongo::BulkWrite do
               expect(result.modified_count).to eq(2)
             end
 
+            it 'reports the matched count' do
+              expect(result.modified_count).to eq(2)
+            end
+
             context 'when there is a write concern error' do
 
               context 'when the server version is < 2.6' do
@@ -825,6 +833,10 @@ describe Mongo::BulkWrite do
 
             it 'reports the upserted count' do
               expect(result.upserted_count).to eq(1)
+            end
+
+            it 'reports the matched count' do
+              expect(result.matched_count).to eq(0)
             end
 
             it 'reports the modified count' do
