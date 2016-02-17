@@ -77,8 +77,8 @@ module Mongo
 
       def combine_counts!(result)
         Result::FIELDS.each do |field|
-          if result.respond_to?(field)
-            results.merge!(field => (results[field] || 0) + result.send(field))
+          if result.respond_to?(field) && value = result.send(field)
+            results.merge!(field => (results[field] || 0) + value)
           end
         end
       end
