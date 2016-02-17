@@ -46,9 +46,9 @@ module Mongo
               return 0 unless acknowledged?
               @replies.reduce(0) do |n, reply|
                 if upsert?(reply)
-                  n += 1
+                  n += reply.documents.first[UPSERTED].size
                 else
-                  n += 0
+                  n
                 end
               end
             end
@@ -65,14 +65,22 @@ module Mongo
               return 0 unless acknowledged?
               @replies.reduce(0) do |n, reply|
                 if upsert?(reply)
-                  n += 0
+                  reply.documents.first[N] - n_upserted
                 else
-                  n += reply.documents.first[N]
+                  if reply.documents.first[N]
+                    n += reply.documents.first[N]
+                  else
+                    n
+                  end
                 end
               end
             end
 
             # Gets the number of documents modified.
+            # Not that in a mixed sharded cluster a call to
+            # update could return nModified (>= 2.6) or not (<= 2.4).
+            # If any call does not return nModified we can't report
+            # a valid final count so set the field to nil.
             #
             # @example Get the modified count.
             #   result.n_modified
@@ -83,7 +91,11 @@ module Mongo
             def n_modified
               return 0 unless acknowledged?
               @replies.reduce(0) do |n, reply|
-                n += reply.documents.first[MODIFIED] || 0
+                if n && reply.documents.first[MODIFIED]
+                  n += reply.documents.first[MODIFIED]
+                else
+                  nil
+                end
               end
             end
 
@@ -155,12 +167,31 @@ module Mongo
                 end
               end
             end
-            alias :n_modified :n_matched
+
+            # Gets the number of documents modified.
+            #
+            # @example Get the modified count.
+            #   result.n_modified
+            #
+            # @return [ Integer ] The number of documents modified.
+            #
+            # @since 2.2.3
+            def n_modified
+              return 0 unless acknowledged?
+              @replies.reduce(0) do |n, reply|
+                if upsert?(reply)
+                  n
+                else
+                  updated_existing?(reply) ? n += reply.documents.first[N] : n
+                end
+              end
+            end
 
             private
 
             def upsert?(reply)
-              !updated_existing?(reply) && reply.documents.first[N] == 1
+              reply.documents.first[BulkWrite::Result::UPSERTED] ||
+                (!updated_existing?(reply) && reply.documents.first[N] == 1)
             end
 
             def updated_existing?(reply)
