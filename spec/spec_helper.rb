@@ -19,7 +19,7 @@ CRL_PEM = "#{SSL_CERTS_DIR}/crl.pem"
 require 'mongo'
 
 Mongo::Logger.logger = Logger.new($stdout)
-Mongo::Logger.logger.level = Logger::DEBUG
+Mongo::Logger.logger.level = Logger::INFO
 
 require 'support/travis'
 require 'support/matchers'
