@@ -22,53 +22,29 @@ phases:
             topologyId: "42"
             address: "a:27017"
             previousDescription:
-              address: "127.0.0.1:27017"
+              address: "a:27017"
               arbiters: []
-              electionId: null
-              error: null
               hosts: []
-              maxWireVersion: 0
-              me: null
-              minWireVersion: 0
               passives: []
               primary: null
               setName: null
-              setVersion: null
-              tags: []
               type: "Unknown"
             newDescription:
               address: "a:27017"
               arbiters: []
-              electionId: null
-              error: null
               hosts: []
-              maxWireVersion: 4
-              me: null
-              minWireVersion: 0
               passives: []
               primary: null
               setName: null
-              setVersion: null
-              tags: []
               type: "Standalone"
         -
           topology_description_changed_event:
             topologyId: "42"
             previousDescription:
-              type: "Unknown"
+              topologyType: "Unknown"
               setName: null
-              maxSetVersion: null
-              maxElectionId: null
-              servers: [ "127.0.0.1:27017" ]
-              stale: false
-              compatible: true
-              compatibilityError: null
+              servers: [ "a:27017" ]
             newDescription:
               topologyType: "Single"
               setName: null
-              maxSetVersion: null
-              maxElectionId: null
               servers: [ "a:27017" ]
-              stale: false
-              compatible: true
-              compatibilityError: null

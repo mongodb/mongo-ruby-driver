@@ -24,7 +24,7 @@ CLIENT_KEY_PASSPHRASE = "passphrase"
 require 'mongo'
 
 Mongo::Logger.logger = Logger.new($stdout)
-Mongo::Logger.logger.level = Logger::DEBUG
+Mongo::Logger.logger.level = Logger::INFO
 
 require 'support/travis'
 require 'support/matchers'
