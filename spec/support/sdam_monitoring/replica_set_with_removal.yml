@@ -57,7 +57,7 @@ phases:
             previousDescription:
               topologyType: "Unknown"
               setName: null
-              servers: [ "a:27017" ]
+              servers: [ "a:27017", "b:27017" ]
             newDescription:
               topologyType: "ReplicaSetWithPrimary"
               setName: "rs"
