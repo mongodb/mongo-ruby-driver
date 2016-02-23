@@ -163,5 +163,46 @@ describe Mongo::Collection::View::Builder::FindCommand do
         expect(selector['limit']).to be_nil
       end
     end
+
+    context 'when cursor_type is specified' do
+
+      let(:filter) do
+        { 'name' => 'test' }
+      end
+
+      context 'when cursor_type is :tailable' do
+
+        let(:options) do
+          {
+            cursor_type: :tailable,
+          }
+        end
+
+        it 'maps to tailable' do
+          expect(selector['tailable']).to be true
+        end
+
+        it 'does not map to awaitData' do
+          expect(selector['awaitData']).to be_nil
+        end
+      end
+
+      context 'when cursor_type is :tailable_await' do
+
+        let(:options) do
+          {
+            cursor_type: :tailable_await,
+          }
+        end
+
+        it 'maps to tailable' do
+          expect(selector['tailable']).to be true
+        end
+
+        it 'maps to awaitData' do
+          expect(selector['awaitData']).to be true
+        end
+      end
+    end
   end
 end
