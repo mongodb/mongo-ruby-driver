@@ -107,6 +107,7 @@ module Mongo
           end
 
           def convert_flags(options)
+            return options if options.empty?
             opts = options.dup
             opts.delete(:cursor_type)
             Flags.map_flags(options).reduce(opts) do |opts, key|
