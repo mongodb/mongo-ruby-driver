@@ -100,7 +100,7 @@ module Mongo
 
           def convert_negative_limit(command)
             if command[:limit] && command[:limit] < 0
-              command.delete('limit')
+              command['limit'] = command['limit'].abs
               command[:singleBatch] = true
             end
             command

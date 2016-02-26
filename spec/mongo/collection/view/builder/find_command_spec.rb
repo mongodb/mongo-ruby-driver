@@ -159,8 +159,8 @@ describe Mongo::Collection::View::Builder::FindCommand do
         expect(selector['singleBatch']).to be true
       end
 
-      it 'removes the limit from the command' do
-        expect(selector['limit']).to be_nil
+      it 'converts the limit to a positive value' do
+        expect(selector['limit']).to be(options[:limit].abs)
       end
     end
 
