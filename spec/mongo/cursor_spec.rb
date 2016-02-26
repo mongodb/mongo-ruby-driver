@@ -136,12 +136,8 @@ describe Mongo::Cursor do
               Mongo::Collection::View.new(authorized_collection, {}, :limit => -2)
             end
 
-            it 'returns the positive number of documents', unless: find_command_enabled? do
+            it 'returns the positive number of documents' do
               expect(cursor.to_a.count).to eq(2)
-            end
-
-            it 'returns all documents', if: find_command_enabled? do
-              expect(cursor.to_a.count).to eq(10)
             end
 
             it 'iterates the documents' do
