@@ -273,7 +273,7 @@ module BSON
         when EOO
           break
         else
-          raise "Unknown type #{type}, key = #{key}"
+          raise "Detected unknown BSON type #{type.chr.inspect} for fieldname \"#{key}\". Are you using the latest BSON version?"
         end
       end
       @buf.rewind

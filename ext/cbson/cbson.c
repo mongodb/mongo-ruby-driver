@@ -962,7 +962,7 @@ static VALUE get_value(const char* buffer, int* position,
         }
     default:
         {
-            rb_raise(rb_eTypeError, "no c decoder for this type yet (%d)", type);
+            rb_raise(rb_eTypeError, "Detected unknown BSON type \"\\x%d\". Are you using the latest BSON version?", type);
             break;
         }
     }
