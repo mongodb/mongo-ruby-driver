@@ -25,6 +25,7 @@ Gem::Specification.new do |s|
   s.files             += %w[mongo.gemspec LICENSE README.md CONTRIBUTING.md Rakefile]
   s.test_files        = Dir.glob('spec/**/*')
 
+  s.executables       = ['mongo_console']
   s.require_paths     = ['lib']
   s.has_rdoc          = 'yard'
   s.bindir            = 'bin'
