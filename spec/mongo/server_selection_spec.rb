@@ -11,7 +11,7 @@ describe 'Server Selection' do
     context(spec.description) do
 
       let(:monitoring) do
-        Mongo::Monitoring.new
+        Mongo::Monitoring.new(monitoring: false)
       end
 
       let(:topology) do

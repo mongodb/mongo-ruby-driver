@@ -2,8 +2,12 @@ require 'spec_helper'
 
 describe Mongo::Server do
 
+  let(:topology) do
+    double('topology')
+  end
+
   let(:cluster) do
-    double('cluster').tap do |cl|
+    double('cluster', topology: topology).tap do |cl|
       allow(cl).to receive(:app_metadata).and_return(app_metadata)
     end
   end
@@ -13,7 +17,7 @@ describe Mongo::Server do
   end
 
   let(:monitoring) do
-    Mongo::Monitoring.new
+    Mongo::Monitoring.new(monitoring: false)
   end
 
   let(:address) do

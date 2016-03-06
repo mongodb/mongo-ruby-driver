@@ -11,7 +11,11 @@ describe Mongo::Cluster::Topology::ReplicaSet do
   end
 
   let(:monitoring) do
-    Mongo::Monitoring.new
+    Mongo::Monitoring.new(monitoring: false)
+  end
+
+  let(:cluster) do
+    double('cluster', topology: topology)
   end
 
   let(:cluster) do

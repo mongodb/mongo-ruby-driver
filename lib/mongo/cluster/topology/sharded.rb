@@ -27,6 +27,9 @@ module Mongo
         # @since 2.0.0
         NAME = 'Sharded'.freeze
 
+        # @return [ Hash ] options The options.
+        attr_reader :options
+
         # @return [ Monitoring ] monitoring The monitoring.
         attr_reader :monitoring
 
