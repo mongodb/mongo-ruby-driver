@@ -11,25 +11,29 @@ describe Mongo::Cluster::Topology::ReplicaSet do
   end
 
   let(:monitoring) do
-    Mongo::Monitoring.new
+    Mongo::Monitoring.new(monitoring: false)
+  end
+
+  let(:cluster) do
+    double('cluster', topology: topology)
   end
 
   describe '#servers' do
 
     let(:mongos) do
-      Mongo::Server.new(address, double('cluster'), monitoring, listeners, TEST_OPTIONS)
+      Mongo::Server.new(address, cluster, monitoring, listeners, TEST_OPTIONS)
     end
 
     let(:standalone) do
-      Mongo::Server.new(address, double('cluster'), monitoring, listeners, TEST_OPTIONS)
+      Mongo::Server.new(address, cluster, monitoring, listeners, TEST_OPTIONS)
     end
 
     let(:replica_set) do
-      Mongo::Server.new(address, double('cluster'), monitoring, listeners, TEST_OPTIONS)
+      Mongo::Server.new(address, cluster, monitoring, listeners, TEST_OPTIONS)
     end
 
     let(:replica_set_two) do
-      Mongo::Server.new(address, double('cluster'), monitoring, listeners, TEST_OPTIONS)
+      Mongo::Server.new(address, cluster, monitoring, listeners, TEST_OPTIONS)
     end
 
     let(:mongos_description) do
@@ -110,11 +114,11 @@ describe Mongo::Cluster::Topology::ReplicaSet do
   describe '#add_hosts?' do
 
     let(:primary) do
-      Mongo::Server.new(address, double('cluster'), monitoring, listeners, TEST_OPTIONS)
+      Mongo::Server.new(address, cluster, monitoring, listeners, TEST_OPTIONS)
     end
 
     let(:secondary) do
-      Mongo::Server.new(address, double('cluster'), monitoring, listeners, TEST_OPTIONS)
+      Mongo::Server.new(address, cluster, monitoring, listeners, TEST_OPTIONS)
     end
 
     let(:primary_description) do
@@ -193,7 +197,7 @@ describe Mongo::Cluster::Topology::ReplicaSet do
   describe '#remove_hosts?' do
 
     let(:primary) do
-      Mongo::Server.new(address, double('cluster'), monitoring, listeners, TEST_OPTIONS)
+      Mongo::Server.new(address, cluster, monitoring, listeners, TEST_OPTIONS)
     end
 
     let(:primary_description) do
@@ -274,7 +278,7 @@ describe Mongo::Cluster::Topology::ReplicaSet do
   describe '#remove_server?' do
 
     let(:secondary) do
-      Mongo::Server.new(address, double('cluster'), monitoring, listeners, TEST_OPTIONS)
+      Mongo::Server.new(address, cluster, monitoring, listeners, TEST_OPTIONS)
     end
 
     let(:secondary_description) do

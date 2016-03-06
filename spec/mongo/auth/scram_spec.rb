@@ -7,15 +7,23 @@ describe Mongo::Auth::SCRAM do
   end
 
   let(:monitoring) do
-    Mongo::Monitoring.new
+    Mongo::Monitoring.new(monitoring: false)
   end
 
   let(:listeners) do
     Mongo::Event::Listeners.new
   end
 
+  let(:topology) do
+    double('topology')
+  end
+
+  let(:cluster) do
+    double('cluster', topology: topology)
+  end
+
   let(:server) do
-    Mongo::Server.new(address, double('cluster'), monitoring, listeners, TEST_OPTIONS)
+    Mongo::Server.new(address, cluster, monitoring, listeners, TEST_OPTIONS)
   end
 
   let(:connection) do

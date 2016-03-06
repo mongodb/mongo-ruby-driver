@@ -32,7 +32,15 @@ describe Mongo::Server::Description do
   end
 
   let(:monitoring) do
-    Mongo::Monitoring.new
+    Mongo::Monitoring.new(monitoring: false)
+  end
+
+  let(:topology) do
+    double('topology')
+  end
+
+  let(:cluster) do
+    double('cluster', topology: topology)
   end
 
   describe '#arbiter?' do
@@ -671,7 +679,7 @@ describe Mongo::Server::Description do
     end
 
     let(:server) do
-      Mongo::Server.new(address, double('cluster'), monitoring, listeners)
+      Mongo::Server.new(address, cluster, monitoring, listeners)
     end
 
     let(:description) do
@@ -692,7 +700,7 @@ describe Mongo::Server::Description do
       end
 
       let(:server) do
-        Mongo::Server.new(other_address, double('cluster'), monitoring, listeners)
+        Mongo::Server.new(other_address, cluster, monitoring, listeners)
       end
 
       it 'returns false' do
@@ -758,7 +766,7 @@ describe Mongo::Server::Description do
     end
 
     let(:server) do
-      Mongo::Server.new(server_address, double('cluster'), monitoring, listeners)
+      Mongo::Server.new(server_address, cluster, monitoring, listeners)
     end
 
     context 'when the server is included in the description hosts list' do
