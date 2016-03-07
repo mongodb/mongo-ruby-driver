@@ -1263,7 +1263,7 @@ describe Mongo::Collection do
       end
     end
 
-    context 'when a max time ms value is provided' do
+    context 'when a max time ms value is provided', if: (!sharded? && write_command_enabled?) do
 
       let(:result) do
         authorized_collection.parallel_scan(2, options)
