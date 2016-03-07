@@ -122,7 +122,7 @@ describe Mongo::Collection::View::Aggregation do
       end
     end
 
-    context 'when the initial response has no results but an active cursor' do
+    context 'when the initial response has no results but an active cursor', if: find_command_enabled? do
 
       let(:documents) do
         [
