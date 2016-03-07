@@ -1262,6 +1262,37 @@ describe Mongo::Collection do
         }.to raise_exception(Mongo::Error::NoServerAvailable)
       end
     end
+
+    context 'when a max time ms value is provided' do
+
+      let(:result) do
+        authorized_collection.parallel_scan(2, options)
+      end
+
+      context 'when the read concern is valid' do
+
+        let(:options) do
+          { max_time_ms: 2 }
+        end
+
+        it 'sends the max time ms value' do
+          expect { result }.to_not raise_error
+        end
+      end
+
+      context 'when the max time ms is not valid' do
+
+        let(:options) do
+          { max_time_ms: 0.1 }
+        end
+
+        it 'raises an exception' do
+          expect {
+            result
+          }.to raise_error(Mongo::Error::OperationFailure)
+        end
+      end
+    end
   end
 
   describe '#replace_one' do

@@ -424,12 +424,16 @@ module Mongo
     #   collection.parallel_scan(2)
     #
     # @param [ Integer ] cursor_count The max number of cursors to return.
+    # @param [ Hash ] options The parallel scan command options.
+    #
+    # @option options [ Integer ] :max_time_ms The maximum amount of time to allow the command
+    #   to run in milliseconds.
     #
     # @return [ Array<Cursor> ] An array of cursors.
     #
     # @since 2.1
-    def parallel_scan(cursor_count)
-      find.send(:parallel_scan, cursor_count)
+    def parallel_scan(cursor_count, options = {})
+      find.send(:parallel_scan, cursor_count, options)
     end
 
     # Replaces a single document in the collection with the new document.

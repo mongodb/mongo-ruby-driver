@@ -91,6 +91,11 @@ module Mongo
       # @since 2.2.0
       READ_CONCERN = :read_concern.freeze
 
+      # The max time ms option.
+      #
+      # @since 2.2.5
+      MAX_TIME_MS = :max_time_ms.freeze
+
       # The field for a selector.
       #
       # @since 2.0.0
@@ -337,6 +342,18 @@ module Mongo
       # @since 2.2.0
       def read_concern
         spec[READ_CONCERN]
+      end
+
+      # Get the max time ms value from the spec.
+      #
+      # @example Get the max time ms.
+      #   specifiable.max_time_ms
+      #
+      # @return [ Hash ] The max time ms value.
+      #
+      # @since 2.2.5
+      def max_time_ms
+        spec[MAX_TIME_MS]
       end
 
       # Whether or not to bypass document level validation.

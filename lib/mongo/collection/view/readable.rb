@@ -439,21 +439,22 @@ module Mongo
           options[:read] || read_preference
         end
 
-        def parallel_scan(cursor_count)
+        def parallel_scan(cursor_count, options = {})
           server = read.select_server(cluster, false)
-          Operation::Commands::ParallelScan.new(
-            :coll_name => collection.name,
-            :db_name => database.name,
-            :cursor_count => cursor_count,
-            :read_concern => collection.read_concern
-          ).execute(server).cursor_ids.map do |cursor_id|
+          cmd = Operation::Commands::ParallelScan.new({
+                  :coll_name => collection.name,
+                  :db_name => database.name,
+                  :cursor_count => cursor_count,
+                  :read_concern => collection.read_concern
+                }.merge!(options))
+          cmd.execute(server).cursor_ids.map do |cursor_id|
             result = if server.features.find_command_enabled?
-              Operation::Commands::GetMore.new({
+                Operation::Commands::GetMore.new({
                   :selector => { :getMore => cursor_id, :collection => collection.name },
                   :db_name  => database.name
                 }).execute(server)
-            else
-              Operation::Read::GetMore.new({
+              else
+                Operation::Read::GetMore.new({
                   :to_return => 0,
                   :cursor_id => cursor_id,
                   :db_name   => database.name,
