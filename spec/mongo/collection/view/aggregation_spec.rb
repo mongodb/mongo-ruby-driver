@@ -121,6 +121,28 @@ describe Mongo::Collection::View::Aggregation do
         }.to raise_error(Mongo::Error::OperationFailure)
       end
     end
+
+    context 'when the initial response has no results but an active cursor' do
+
+      let(:documents) do
+        [
+            { city: 'a'*6000000 },
+            { city: 'b'*6000000 }
+        ]
+      end
+
+      let(:options) do
+        { :use_cursor => true }
+      end
+
+      let(:pipeline) do
+        [{ '$sample' => { 'size' => 2 } }]
+      end
+
+      it 'iterates over the result documents' do
+        expect(aggregation.to_a.size).to eq(2)
+      end
+    end
   end
 
   describe '#initialize' do
