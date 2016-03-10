@@ -59,6 +59,15 @@ describe 'SDAM Monitoring' do
 
         context("Phase: #{index + 1}") do
 
+          before(:all) do
+            @subscriber = Mongo::SDAMMonitoring::TestSubscriber.new
+            @client.subscribe(Mongo::Monitoring::SERVER_OPENING, @subscriber)
+            @client.subscribe(Mongo::Monitoring::SERVER_CLOSED, @subscriber)
+            @client.subscribe(Mongo::Monitoring::SERVER_DESCRIPTION_CHANGED, @subscriber)
+            @client.subscribe(Mongo::Monitoring::TOPOLOGY_OPENING, @subscriber)
+            @client.subscribe(Mongo::Monitoring::TOPOLOGY_CHANGED, @subscriber)
+          end
+
           phase.responses.each do |response|
 
             before do
@@ -80,7 +89,12 @@ describe 'SDAM Monitoring' do
 
           phase.outcome.events.each do |event|
 
+            let(:fired_event) do
+              @subscriber.first_event(event.name)
+            end
+
             it "expects a #{event.name} to be fired" do
+              expect(fired_event).to_not be_nil
             end
           end
         end
