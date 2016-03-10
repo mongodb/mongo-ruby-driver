@@ -3,11 +3,10 @@ uri: "mongodb://a:27017"
 phases:
   -
     responses:
-      "a:27017":
-        ok: 1
-        ismaster: true
-        minWireVersion: 0
-        maxWireVersion: 4
+      -
+        - "a:27017"
+        - { ok: 1, ismaster: true, minWireVersion: 0, maxWireVersion: 4 }
+
     outcome:
       events:
         -
@@ -26,25 +25,31 @@ phases:
               arbiters: []
               hosts: []
               passives: []
-              primary: null
-              setName: null
               type: "Unknown"
             newDescription:
               address: "a:27017"
               arbiters: []
               hosts: []
               passives: []
-              primary: null
-              setName: null
               type: "Standalone"
         -
           topology_description_changed_event:
             topologyId: "42"
             previousDescription:
               topologyType: "Unknown"
-              setName: null
-              servers: [ "a:27017" ]
+              servers:
+                -
+                  address: "a:27017"
+                  arbiters: []
+                  hosts: []
+                  passives: []
+                  type: "Unknown"
             newDescription:
               topologyType: "Single"
-              setName: null
-              servers: [ "a:27017" ]
+              servers:
+                -
+                  address: "a:27017"
+                  arbiters: []
+                  hosts: []
+                  passives: []
+                  type: "Standalone"
