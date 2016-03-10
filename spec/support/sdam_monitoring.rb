@@ -13,6 +13,51 @@
 # limitations under the License.
 #
 
+RSpec::Matchers.define :match_topology_opening_event do |expectation|
+
+  match do |event|
+    event.topology != nil
+  end
+end
+
+RSpec::Matchers.define :match_topology_description_changed_event do |expectation|
+
+  match do |event|
+    event.previous_topology != nil
+    event.new_topology != nil
+  end
+end
+
+RSpec::Matchers.define :match_server_opening_event do |expectation|
+
+  match do |event|
+    true
+    # event.address != nil
+  end
+end
+
+RSpec::Matchers.define :match_server_description_changed_event do |expectation|
+
+  match do |event|
+    event.previous_description != nil
+    event.new_description != nil
+  end
+end
+
+RSpec::Matchers.define :match_server_closed_event do |expectation|
+
+  match do |event|
+    event.address != nil
+  end
+end
+
+RSpec::Matchers.define :match_sdam_monitoring_event do |expectation|
+
+  match do |event|
+    expect(event).to send("match_#{expectation.name}", expectation)
+  end
+end
+
 module Mongo
   module SDAMMonitoring
 
@@ -47,7 +92,9 @@ module Mongo
       #
       # @return [ Event ] The matching event.
       def first_event(name)
-        matching = events.find{ |event| event.is_a?(MAPPINGS[name]) }
+        matching = events.find do |event|
+          event.class == MAPPINGS[name]
+        end
         events.delete(events.find_index(matching))
         matching
       end
