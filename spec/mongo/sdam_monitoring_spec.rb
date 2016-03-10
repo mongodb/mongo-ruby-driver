@@ -87,14 +87,11 @@ describe 'SDAM Monitoring' do
             end
           end
 
-          phase.outcome.events.each do |event|
+          phase.outcome.events.each do |expectation|
 
-            let(:fired_event) do
-              @subscriber.first_event(event.name)
-            end
-
-            it "expects a #{event.name} to be fired" do
-              expect(fired_event).to_not be_nil
+            it "expects a #{expectation.name} to be fired" do
+              fired_event = @subscriber.first_event(expectation.name)
+              expect(fired_event).to match_sdam_monitoring_event(expectation)
             end
           end
         end
