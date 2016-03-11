@@ -21,10 +21,10 @@ RSpec::Matchers.define :match_topology_opening_event do |expectation|
 end
 
 RSpec::Matchers.define :match_topology_description_changed_event do |expectation|
+  include Mongo::SDAMMonitoring::Matchable
 
   match do |event|
-    event.previous_topology != nil
-    event.new_topology != nil
+    topologies_match?(event, expectation)
   end
 end
 
@@ -32,22 +32,21 @@ RSpec::Matchers.define :match_server_opening_event do |expectation|
 
   match do |event|
     true
-    # event.address != nil
   end
 end
 
 RSpec::Matchers.define :match_server_description_changed_event do |expectation|
+  include Mongo::SDAMMonitoring::Matchable
 
   match do |event|
-    event.previous_description != nil
-    event.new_description != nil
+    descriptions_match?(event, expectation)
   end
 end
 
 RSpec::Matchers.define :match_server_closed_event do |expectation|
 
   match do |event|
-    event.address != nil
+    event.address.to_s == expectation.data['address']
   end
 end
 
@@ -60,6 +59,42 @@ end
 
 module Mongo
   module SDAMMonitoring
+    module Matchable
+
+      def descriptions_match?(event, expectation)
+        description_matches?(event.previous_description, expectation.data['previousDescription']) &&
+          description_matches?(event.new_description, expectation.data['newDescription'])
+      end
+
+      def topologies_match?(event, expectation)
+        topology_matches?(event.previous_topology, expectation.data['previousDescription']) &&
+          topology_matches?(event.new_topology, expectation.data['newDescription'])
+      end
+
+      def description_matches?(actual, expected)
+        case expected['type']
+          when 'Standalone' then actual.standalone?
+          when 'RSPrimary' then actual.primary?
+          when 'RSSecondary' then actual.secondary?
+          when 'RSArbiter' then actual.arbiter?
+          when 'Mongos' then actual.mongos?
+          when 'Unknown' then actual.unknown?
+          when 'PossiblePrimary' then actual.unknown?
+          when 'RSGhost' then actual.ghost?
+          when 'RSOther' then actual.other?
+        end
+      end
+
+      def topology_matches?(actual, expected)
+        case expected['topologyType']
+          when 'ReplicaSetWithPrimary' then actual.replica_set?
+          when 'ReplicaSetNoPrimary' then actual.replica_set?
+          when 'Sharded' then actual.sharded?
+          when 'Single' then actual.single?
+          when 'Unknown' then actual.unknown?
+        end
+      end
+    end
 
     # Test subscriber for SDAM monitoring.
     #
