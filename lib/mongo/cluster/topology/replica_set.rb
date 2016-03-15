@@ -83,6 +83,14 @@ module Mongo
           self
         end
 
+        def has_readable_server?(server_selector)
+
+        end
+
+        def has_writable_server?
+
+        end
+
         # Initialize the topology with the options.
         #
         # @example Initialize the topology.
