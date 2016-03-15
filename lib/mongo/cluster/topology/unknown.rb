@@ -59,8 +59,6 @@ module Mongo
         # @return [ Sharded, ReplicaSet ] The new topology.
         def elect_primary(description, servers)
           if description.mongos?
-            # @todo: Remove.
-            log_debug("Mongos #{description.address.to_s} discovered.")
             sharded = Sharded.new(options, monitoring)
             topology_changed(sharded)
             sharded
@@ -220,11 +218,6 @@ module Mongo
         private
 
         def initialize_replica_set(description, servers)
-          # @todo: Remove.
-          log_debug(
-            "Server #{description.address.to_s} discovered as primary in replica set: " +
-            "'#{description.replica_set_name}'. Changing topology to replica set."
-          )
           servers.each do |server|
             if server.standalone? && server.address != description.address
               server.description.unknown!
