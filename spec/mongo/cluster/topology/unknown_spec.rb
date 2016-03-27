@@ -49,6 +49,20 @@ describe Mongo::Cluster::Topology::Unknown do
     end
   end
 
+  describe '#has_readable_servers?' do
+
+    it 'returns false' do
+      expect(topology).to_not have_readable_server(nil, nil)
+    end
+  end
+
+  describe '#has_writable_servers?' do
+
+    it 'returns false' do
+      expect(topology).to_not have_writable_server(nil)
+    end
+  end
+
   describe '#add_hosts?' do
 
     context 'when the description is from an unknown server' do
