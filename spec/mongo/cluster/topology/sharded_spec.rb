@@ -84,6 +84,20 @@ describe Mongo::Cluster::Topology::Sharded do
     end
   end
 
+  describe '#has_readable_servers?' do
+
+    it 'returns true' do
+      expect(topology).to have_readable_server(nil, nil)
+    end
+  end
+
+  describe '#has_writable_servers?' do
+
+    it 'returns true' do
+      expect(topology).to have_writable_server(nil)
+    end
+  end
+
   describe '#add_hosts?' do
 
     it 'returns false' do
