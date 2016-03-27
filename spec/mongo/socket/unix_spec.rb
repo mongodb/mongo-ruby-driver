@@ -16,7 +16,7 @@ describe Mongo::Socket::Unix do
       socket.close
     end
 
-    it 'connects to the server' do
+    pending 'connects to the server' do
       expect(socket).to be_alive
     end
   end
@@ -33,7 +33,7 @@ describe Mongo::Socket::Unix do
         socket.close
       end
 
-      it 'returns true' do
+      pending 'returns true' do
         expect(socket).to be_alive
       end
     end
@@ -44,7 +44,7 @@ describe Mongo::Socket::Unix do
         socket.close
       end
 
-      it 'raises error' do
+      pending 'raises error' do
         expect { socket.alive? }.to raise_error(IOError)
       end
     end

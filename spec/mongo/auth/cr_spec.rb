@@ -18,11 +18,12 @@ describe Mongo::Auth::CR do
     double('cluster', topology: topology).tap do |cl|
       allow(cl).to receive(:app_metadata).and_return(app_metadata)
     end
+  end
 
   let(:topology) do
     double('topology')
   end
-    
+
   let(:server) do
     Mongo::Server.new(address, cluster, monitoring, listeners, TEST_OPTIONS)
   end
