@@ -68,13 +68,15 @@ module Mongo
         #   topology.has_readable_server?(cluster, server_selector)
         #
         # @param [ Cluster ] cluster The cluster.
-        # @param [ ServerSelector, Symbol ] server_selector The server
+        # @param [ ServerSelector ] server_selector The server
         #   selector.
         #
         # @return [ true, false ] If a readable server is present.
         #
         # @since 2.3.0
-        def has_readable_server?(cluster, server_selector); true; end
+        def has_readable_server?(cluster, server_selector)
+          server_selector.candidates(cluster).any?
+        end
 
         # Determine if the topology would select a writable server for the
         # provided candidates.
