@@ -59,6 +59,24 @@ describe Mongo::Cluster do
     end
   end
 
+  describe '#has_readable_server?' do
+
+    let(:selector) do
+      Mongo::ServerSelector.get(mode: :primary)
+    end
+
+    it 'delegates to the topology' do
+      expect(cluster).to have_readable_server(selector)
+    end
+  end
+
+  describe '#has_writable_server?' do
+
+    it 'delegates to the topology' do
+      expect(cluster).to_not have_writable_server
+    end
+  end
+
   describe '#inspect' do
 
     let(:preference) do

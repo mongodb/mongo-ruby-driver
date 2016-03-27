@@ -87,6 +87,34 @@ module Mongo
       end
     end
 
+    # Determine if the cluster would select a readable server for the
+    # provided read preference.
+    #
+    # @example Is a readable server present?
+    #   topology.has_readable_server?(server_selector)
+    #
+    # @param [ ServerSelector ] server_selector The server
+    #   selector.
+    #
+    # @return [ true, false ] If a readable server is present.
+    #
+    # @since 2.3.0
+    def has_readable_server?(server_selector)
+      topology.has_readable_server?(self, server_selector)
+    end
+
+    # Determine if the cluster would select a writable server.
+    #
+    # @example Is a writable server present?
+    #   topology.has_writable_server?
+    #
+    # @return [ true, false ] If a writable server is present.
+    #
+    # @since 2.3.0
+    def has_writable_server?
+      topology.has_writable_server?(self)
+    end
+
     # Instantiate the new cluster.
     #
     # @api private

@@ -90,7 +90,7 @@ module Mongo
         #   topology.has_readable_server?(cluster, server_selector)
         #
         # @param [ Cluster ] cluster The cluster.
-        # @param [ ServerSelector, Symbol ] server_selector The server
+        # @param [ ServerSelector ] server_selector The server
         #   selector.
         #
         # @return [ true, false ] If a readable server is present.
