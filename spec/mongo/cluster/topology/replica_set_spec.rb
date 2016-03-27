@@ -111,6 +111,48 @@ describe Mongo::Cluster::Topology::ReplicaSet do
     end
   end
 
+  describe '#has_readable_servers?' do
+
+    let(:topology) do
+      described_class.new({}, monitoring, [])
+    end
+
+    it 'test read preference'
+  end
+
+  describe '#has_writable_servers?' do
+
+    let(:topology) do
+      described_class.new({}, monitoring, [])
+    end
+
+    context 'when a primary server exists' do
+
+      let(:primary) do
+        double('server', :primary? => true)
+      end
+
+      let(:secondary) do
+        double('server', :primary? => false)
+      end
+
+      it 'returns true' do
+        expect(topology).to have_writable_server([ primary, secondary ])
+      end
+    end
+
+    context 'when no primary server exists' do
+
+      let(:server) do
+        double('server', :primary? => false)
+      end
+
+      it 'returns false' do
+        expect(topology).to_not have_writable_server([ server ])
+      end
+    end
+  end
+
   describe '#add_hosts?' do
 
     let(:primary) do
