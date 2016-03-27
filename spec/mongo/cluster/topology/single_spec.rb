@@ -91,6 +91,38 @@ describe Mongo::Cluster::Topology::Single do
     end
   end
 
+  describe '#has_readable_servers?' do
+
+    it 'returns true' do
+      expect(topology).to have_readable_server(nil, nil)
+    end
+  end
+
+  describe '#has_writable_servers?' do
+
+    context 'when the server is a primary' do
+
+      let(:server) do
+        double('server', :primary? => true)
+      end
+
+      it 'returns true' do
+        expect(topology).to have_writable_server([ server ])
+      end
+    end
+
+    context 'when the server is not a primary (e.g. direct connect to secondary)' do
+
+      let(:server) do
+        double('server', :primary? => false)
+      end
+
+      it 'returns false' do
+        expect(topology).to_not have_writable_server([ server ])
+      end
+    end
+  end
+
   describe '#add_hosts?' do
 
     it 'returns false' do
