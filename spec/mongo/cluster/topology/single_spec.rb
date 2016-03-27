@@ -91,8 +91,6 @@ describe Mongo::Cluster::Topology::Single do
 
   describe '#has_readable_servers?' do
 
-    it 'test read preference primary with direct connection to secondary'
-
     it 'returns true' do
       expect(topology).to have_readable_server(nil, nil)
     end
@@ -106,8 +104,12 @@ describe Mongo::Cluster::Topology::Single do
         double('server', :primary? => true)
       end
 
+      let(:cluster) do
+        double('cluster', servers: [ server ])
+      end
+
       it 'returns true' do
-        expect(topology).to have_writable_server([ server ])
+        expect(topology).to have_writable_server(cluster)
       end
     end
 
@@ -117,8 +119,12 @@ describe Mongo::Cluster::Topology::Single do
         double('server', :primary? => false)
       end
 
+      let(:cluster) do
+        double('cluster', servers: [ server ])
+      end
+
       it 'returns false' do
-        expect(topology).to_not have_writable_server([ server ])
+        expect(topology).to_not have_writable_server(cluster)
       end
     end
   end
