@@ -58,6 +58,34 @@ module Mongo
         # @return [ Sharded ] The topology.
         def elect_primary(description, servers); self; end
 
+        # Determine if the topology would select a readable server for the
+        # provided candidates and read preference.
+        #
+        # @example Is a readable server present?
+        #   topology.has_readable_server?(servers, read_preference)
+        #
+        # @param [ Array<Server> ] servers The server candidates.
+        # @param [ ServerSelector, Symbol ] read_preference The read
+        #   preference.
+        #
+        # @return [ true, false ] If a readable server is present.
+        #
+        # @since 2.3.0
+        def has_readable_server?(servers, read_preference); true; end
+
+        # Determine if the topology would select a writable server for the
+        # provided candidates.
+        #
+        # @example Is a writable server present?
+        #   topology.has_writable_server?(servers)
+        #
+        # @param [ Array<Server> ] servers The server candidates.
+        #
+        # @return [ true, false ] If a writable server is present.
+        #
+        # @since 2.3.0
+        def has_writable_server?(servers); true; end
+
         # Initialize the topology with the options.
         #
         # @example Initialize the topology.
