@@ -55,6 +55,18 @@ module Mongo
         @socket = ::UNIXSocket.new(path)
         set_socket_options(@socket)
       end
+
+      # This socket can only be used if the unix socket (@socket) has been created.
+      #
+      # @example Is the socket connectable?
+      #   socket.connectable?
+      #
+      # @return [ true, false ] If the socket is connectable.
+      #
+      # @since 2.2.5
+      def connectable?
+        !!@socket
+      end
     end
   end
 end

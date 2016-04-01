@@ -99,6 +99,18 @@ module Mongo
         end
       end
 
+      # This socket can only be used if the ssl socket (@socket) has been created.
+      #
+      # @example Is the socket connectable?
+      #   socket.connectable?
+      #
+      # @return [ true, false ] If the socket is connectable.
+      #
+      # @since 2.2.5
+      def connectable?
+        !!@socket
+      end
+
       private
 
       def create_context(options)

@@ -56,7 +56,7 @@ module Mongo
       #
       # @since 2.0.0
       def connect!
-        unless socket
+        unless socket && socket.connectable?
           @socket = address.socket(timeout, ssl_options)
           socket.connect!
           authenticate!
