@@ -56,6 +56,7 @@ module Mongo
         def close_query
           @cursor.send(:kill_cursors) if @cursor && !@cursor.closed?
         end
+        alias :kill_cursors :close_query
 
         private
 
