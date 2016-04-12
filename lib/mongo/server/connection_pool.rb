@@ -23,9 +23,6 @@ module Mongo
     class ConnectionPool
       include Loggable
 
-      # @return [ Mutex ] mutex The mutex used for synchronization.
-      attr_reader :mutex
-
       # @return [ Hash ] options The pool options.
       attr_reader :options
 
@@ -107,7 +104,7 @@ module Mongo
       #
       # @since 2.0.0
       def with_connection
-        mutex.synchronize do
+        @mutex.synchronize do
           begin
             connection = checkout
             yield(connection)
