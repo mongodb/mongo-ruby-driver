@@ -170,7 +170,7 @@ module Mongo
         def dequeue_connection
           deadline = Time.now + wait_timeout
           loop do
-            return queue.pop unless queue.empty?
+            return queue.shift unless queue.empty?
             connection = create_connection
             return connection if connection
             wait_for_next!(deadline)
