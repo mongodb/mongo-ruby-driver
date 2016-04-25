@@ -50,7 +50,7 @@ module Mongo
         # @param value [ String ] Header value to be serialized.
         #
         # @return [ String ] Buffer with serialized value.
-        def self.serialize(buffer, value)
+        def self.serialize(buffer, value, validating_keys = nil)
           buffer.put_bytes(value.pack(HEADER_PACK))
         end
 
@@ -76,7 +76,7 @@ module Mongo
         # @param value [ String ] The string to be serialized.
         #
         # @return [ String ] Buffer with serialized value.
-        def self.serialize(buffer, value)
+        def self.serialize(buffer, value, validating_keys = nil)
           buffer.put_cstring(value)
         end
       end
@@ -92,7 +92,7 @@ module Mongo
         # @param value [ Fixnum ] Ignored value.
         #
         # @return [ String ] Buffer with serialized value.
-        def self.serialize(buffer, value)
+        def self.serialize(buffer, value, validating_keys = nil)
           buffer.put_int32(ZERO)
         end
       end
@@ -108,7 +108,7 @@ module Mongo
         # @param value [ Fixnum ] 32-bit integer to be serialized.
         #
         # @return [String] Buffer with serialized value.
-        def self.serialize(buffer, value)
+        def self.serialize(buffer, value, validating_keys = nil)
           buffer.put_int32(value)
         end
 
@@ -133,7 +133,7 @@ module Mongo
         # @param value [ Fixnum ] 64-bit integer to be serialized.
         #
         # @return [ String ] Buffer with serialized value.
-        def self.serialize(buffer, value)
+        def self.serialize(buffer, value, validating_keys = nil)
           buffer.put_int64(value)
         end
 
@@ -158,9 +158,9 @@ module Mongo
         # @param value [ Hash ] Document to serialize as BSON.
         #
         # @return [ String ] Buffer with serialized value.
-        def self.serialize(buffer, value, max_bson_size = nil)
+        def self.serialize(buffer, value, max_bson_size = nil, validating_keys = nil)
           start_size = buffer.length
-          value.to_bson(buffer)
+          validating_keys.nil? ? value.to_bson(buffer) : value.to_bson(buffer, validating_keys)
           if max_bson_size && buffer.length - start_size > max_bson_size
             raise Error::MaxBSONSize.new(max_bson_size)
           end
