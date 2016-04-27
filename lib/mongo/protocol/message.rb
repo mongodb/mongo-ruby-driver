@@ -294,7 +294,7 @@ module Mongo
       end
 
       def validating_keys?
-        @options ? @options[:validating_keys] : nil
+        @options[:validating_keys] if @options
       end
     end
   end
