@@ -201,7 +201,7 @@ module Mongo
         # @return [ String ] The raw BSON data.
         #
         # @since 2.0.0
-        def to_bson(buffer = BSON::ByteBuffer.new, validating_keys = nil)
+        def to_bson(buffer = BSON::ByteBuffer.new, validating_keys = BSON::Config.validating_keys?)
           document[:md5] ||= @client_md5.hexdigest
           document.to_bson(buffer)
         end
