@@ -713,7 +713,7 @@ describe Mongo::Collection do
         [ { 'first.name' => 'test1' }, { name: 'test2' } ]
       end
 
-      it 'raises an exception' do
+      it 'raises a BSON::String::IllegalKey exception' do
         expect {
           authorized_collection.insert_many(docs)
         }.to raise_exception(BSON::String::IllegalKey)
@@ -849,7 +849,7 @@ describe Mongo::Collection do
         { 'testing.test' => 'value' }
       end
 
-      it 'raises an exception' do
+      it 'raises a BSON::String::IllegalKey exception' do
         expect {
           authorized_collection.insert_one(doc)
         }.to raise_exception(BSON::String::IllegalKey)
