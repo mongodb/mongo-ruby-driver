@@ -135,7 +135,7 @@ module Mongo
         # @return [ String ] The raw BSON data.
         #
         # @since 2.0.0
-        def to_bson(buffer = BSON::ByteBuffer.new)
+        def to_bson(buffer = BSON::ByteBuffer.new, validating_keys = nil)
           document.to_bson(buffer)
         end
 

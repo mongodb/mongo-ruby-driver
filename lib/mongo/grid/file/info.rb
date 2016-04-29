@@ -198,9 +198,9 @@ module Mongo
         # @return [ String ] The raw BSON data.
         #
         # @since 2.0.0
-        def to_bson(encoded = ''.force_encoding(BSON::BINARY))
+        def to_bson(buffer = BSON::ByteBuffer.new, validating_keys = nil)
           document[:md5] ||= @client_md5.hexdigest
-          document.to_bson(encoded)
+          document.to_bson(buffer)
         end
 
         # Get the upload date.

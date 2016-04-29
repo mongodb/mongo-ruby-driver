@@ -84,7 +84,7 @@ module Mongo
     # @return [ String ] The raw BSON.
     #
     # @since 2.1.0
-    def to_bson(buffer = BSON::ByteBuffer.new)
+    def to_bson(buffer = BSON::ByteBuffer.new, validating_keys = nil)
       as_json.to_bson(buffer)
     end
 
