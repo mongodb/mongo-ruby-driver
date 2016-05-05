@@ -31,4 +31,5 @@ Gem::Specification.new do |s|
   s.bindir            = 'bin'
 
   s.add_dependency 'bson', '~> 4.0'
+  s.add_dependency 'pry'
 end
