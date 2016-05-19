@@ -34,10 +34,11 @@ module Mongo
         #
         # @since 2.1.0
         def execute(context)
-          if context.features.write_command_enabled?
-            execute_write_command(context)
-          else
+          if !context.features.write_command_enabled? ||
+               (write_concern && write_concern.get_last_error.nil?)
             execute_message(context)
+          else
+            execute_write_command(context)
           end
         end
 
