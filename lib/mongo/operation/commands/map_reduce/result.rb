@@ -82,7 +82,7 @@ module Mongo
           # @example Get the execution time.
           #   result.time
           #
-          # @return [ Integer ] The executiong time in milliseconds.
+          # @return [ Integer ] The executing time in milliseconds.
           #
           # @since 2.0.0
           def time
