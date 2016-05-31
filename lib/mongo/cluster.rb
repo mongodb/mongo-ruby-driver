@@ -13,6 +13,7 @@
 # limitations under the License.
 
 require 'mongo/cluster/topology'
+require 'mongo/cluster/cursor_manager'
 
 module Mongo
 
@@ -42,6 +43,7 @@ module Mongo
     attr_reader :topology
 
     def_delegators :topology, :replica_set?, :replica_set_name, :sharded?, :single?, :unknown?
+    def_delegators :@cursor_manager, :register_cursor, :schedule_kill_cursor, :unregister_cursor
 
     # Determine if this cluster of servers is equal to another object. Checks the
     # servers currently in the cluster, not what was configured.
@@ -113,6 +115,10 @@ module Mongo
       subscribe_to(Event::PRIMARY_ELECTED, Event::PrimaryElected.new(self))
 
       seeds.each{ |seed| add(seed) }
+
+      @cursor_manager = CursorManager.new(self)
+      @cursor_manager.run
+
       ObjectSpace.define_finalizer(self, self.class.finalize(pools))
     end
 
@@ -133,6 +139,7 @@ module Mongo
         pools.values.each do |pool|
           pool.disconnect!
         end
+        cursor_manager.kill_cursors
       end
     end
 

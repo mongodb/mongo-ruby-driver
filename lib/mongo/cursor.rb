@@ -57,6 +57,16 @@ module Mongo
       @server = server
       @initial_result = result
       @remaining = limit if limited?
+      @cursor_id = result.cursor_id
+      register_cursor
+      ObjectSpace.define_finalizer(self, self.class.finalize(result.cursor_id,
+                                                             cluster,
+                                                             kill_cursors_op_spec,
+                                                             server))
+    end
+
+    def self.finalize(cursor_id, cluster, op_spec, server)
+      proc { cluster.schedule_kill_cursor(cursor_id, op_spec, server) }
     end
 
     # Get a human-readable string representation of +Cursor+.
@@ -173,6 +183,7 @@ module Mongo
     end
 
     def kill_cursors
+      unregister_cursor
       read_with_retry do
         kill_cursors_operation.execute(@server)
       end
@@ -180,9 +191,17 @@ module Mongo
 
     def kill_cursors_operation
       if @server.features.find_command_enabled?
-        Operation::Commands::Command.new(Builder::KillCursorsCommand.new(self).specification)
+        Operation::Commands::Command.new(kill_cursors_op_spec)
       else
-        Operation::KillCursors.new(Builder::OpKillCursors.new(self).specification)
+        Operation::KillCursors.new(kill_cursors_op_spec)
+      end
+    end
+
+    def kill_cursors_op_spec
+      if @server.features.find_command_enabled?
+        Builder::KillCursorsCommand.new(self).specification
+      else
+        Builder::OpKillCursors.new(self).specification
       end
     end
 
@@ -196,13 +215,22 @@ module Mongo
 
     def process(result)
       @remaining -= result.returned_count if limited?
-      @cursor_id = result.cursor_id
       @coll_name ||= result.namespace.sub("#{database.name}.", '') if result.namespace
+      unregister_cursor if result.cursor_id == 0
+      @cursor_id = result.cursor_id
       result.documents
     end
 
     def use_limit?
       limited? && batch_size >= @remaining
+    end
+
+    def register_cursor
+      cluster.register_cursor(@cursor_id)
+    end
+
+    def unregister_cursor
+      cluster.unregister_cursor(@cursor_id)
     end
   end
 end
