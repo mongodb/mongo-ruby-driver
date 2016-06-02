@@ -95,7 +95,7 @@ describe Mongo::Operation::Write::Update do
       context 'when the update succeeds' do
 
         let(:document) do
-          { 'q' => { name: 'test' }, 'u' => { '$set' => { field: 'blah' }}, limit: 1 }
+          { 'q' => { name: 'test' }, 'u' => { '$set' => { field: 'blah' }} }
         end
 
         let(:result) do
