@@ -1,47 +1,47 @@
 require 'spec_helper'
 
-describe Mongo::Cluster::CursorManager do
+describe Mongo::Cluster::CursorReaper do
 
   after do
     authorized_collection.delete_many
   end
 
-  let(:manager) do
+  let(:reaper) do
     described_class.new(authorized_client.cluster)
   end
 
   let(:active_cursors) do
-    manager.instance_variable_get(:@active_cursors)
+    reaper.instance_variable_get(:@active_cursors)
   end
 
   describe '#intialize' do
 
     it 'initializes a hash for servers and their kill cursors ops' do
-      expect(manager.instance_variable_get(:@to_kill)).to be_a(Hash)
+      expect(reaper.instance_variable_get(:@to_kill)).to be_a(Hash)
     end
 
     it 'initializes a set for the list of active cursors' do
-      expect(manager.instance_variable_get(:@active_cursors)).to be_a(Set)
+      expect(reaper.instance_variable_get(:@active_cursors)).to be_a(Set)
     end
   end
 
   describe '#run' do
 
     it 'starts a thread calling #kill_cursors' do
-      manager.run
-      expect(manager.instance_variable_get(:@reaper)).to be_a(Thread)
+      reaper.run
+      expect(reaper.instance_variable_get(:@thread)).to be_a(Thread)
     end
 
     context 'when run is called more than once' do
 
       let!(:reaper_thread) do
-        manager.run
-        manager.instance_variable_get(:@reaper)
+        reaper.run
+        reaper.instance_variable_get(:@reaper)
       end
 
       it 'only starts a thread once' do
-        manager.run
-        expect(manager.instance_variable_get(:@reaper)).to be(reaper_thread)
+        reaper.run
+        expect(reaper.instance_variable_get(:@reaper)).to be(reaper_thread)
       end
     end
 
@@ -51,17 +51,17 @@ describe Mongo::Cluster::CursorManager do
       let(:cursor_id) { 1 }
       let(:op_spec_1) { double('op_spec_1') }
       let(:op_spec_2) { double('op_spec_2') }
-      let(:to_kill) { manager.instance_variable_get(:@to_kill)}
+      let(:to_kill) { reaper.instance_variable_get(:@to_kill)}
 
       before do
-        manager.register_cursor(cursor_id)
-        manager.schedule_kill_cursor(cursor_id, op_spec_1, server)
-        manager.run
-        sleep(Mongo::Cluster::CursorManager::FREQUENCY + 0.5)
+        reaper.register_cursor(cursor_id)
+        reaper.schedule_kill_cursor(cursor_id, op_spec_1, server)
+        reaper.run
+        sleep(Mongo::Cluster::CursorReaper::FREQUENCY + 0.5)
       end
 
       it 'executes the ops in the thread' do
-        expect(manager.instance_variable_get(:@to_kill).size).to eq(0)
+        expect(reaper.instance_variable_get(:@to_kill).size).to eq(0)
       end
     end
   end
@@ -72,18 +72,18 @@ describe Mongo::Cluster::CursorManager do
     let(:cursor_id) { 1 }
     let(:op_spec_1) { double('op_spec_1') }
     let(:op_spec_2) { double('op_spec_2') }
-    let(:to_kill) { manager.instance_variable_get(:@to_kill)}
+    let(:to_kill) { reaper.instance_variable_get(:@to_kill)}
 
     context 'when the cursor is on the list of active cursors' do
 
       before do
-        manager.register_cursor(cursor_id)
+        reaper.register_cursor(cursor_id)
       end
 
       context 'when there is not a list already for the server' do
 
         before do
-          manager.schedule_kill_cursor(cursor_id, op_spec_1, server)
+          reaper.schedule_kill_cursor(cursor_id, op_spec_1, server)
         end
 
         it 'initializes the list of op specs to a set' do
@@ -95,8 +95,8 @@ describe Mongo::Cluster::CursorManager do
       context 'when there is a list of ops already for the server' do
 
         before do
-          manager.schedule_kill_cursor(cursor_id, op_spec_1, server)
-          manager.schedule_kill_cursor(cursor_id, op_spec_2, server)
+          reaper.schedule_kill_cursor(cursor_id, op_spec_1, server)
+          reaper.schedule_kill_cursor(cursor_id, op_spec_2, server)
         end
 
         it 'adds the op to the server list' do
@@ -107,7 +107,7 @@ describe Mongo::Cluster::CursorManager do
         context 'when the same op is added more than once' do
 
           before do
-            manager.schedule_kill_cursor(cursor_id, op_spec_2, server)
+            reaper.schedule_kill_cursor(cursor_id, op_spec_2, server)
           end
 
           it 'does not allow duplicates ops for a server' do
@@ -121,7 +121,7 @@ describe Mongo::Cluster::CursorManager do
     context 'when the cursor is not on the list of active cursors' do
 
       before do
-        manager.schedule_kill_cursor(cursor_id, op_spec_1, server)
+        reaper.schedule_kill_cursor(cursor_id, op_spec_1, server)
       end
 
       it 'does not add the kill cursors op spec to the list' do
@@ -133,7 +133,7 @@ describe Mongo::Cluster::CursorManager do
   describe '#register_cursor' do
 
     before do
-      manager.register_cursor(cursor_id)
+      reaper.register_cursor(cursor_id)
     end
 
     context 'when the cursor id is nil' do
@@ -175,8 +175,8 @@ describe Mongo::Cluster::CursorManager do
     context 'when the cursor id is in the active cursors list' do
 
       before do
-        manager.register_cursor(2)
-        manager.unregister_cursor(2)
+        reaper.register_cursor(2)
+        reaper.unregister_cursor(2)
       end
 
       it 'removes the cursor id' do

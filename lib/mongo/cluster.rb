@@ -13,7 +13,7 @@
 # limitations under the License.
 
 require 'mongo/cluster/topology'
-require 'mongo/cluster/cursor_manager'
+require 'mongo/cluster/cursor_reaper'
 
 module Mongo
 
@@ -43,7 +43,7 @@ module Mongo
     attr_reader :topology
 
     def_delegators :topology, :replica_set?, :replica_set_name, :sharded?, :single?, :unknown?
-    def_delegators :@cursor_manager, :register_cursor, :schedule_kill_cursor, :unregister_cursor
+    def_delegators :@cursor_reaper, :register_cursor, :schedule_kill_cursor, :unregister_cursor
 
     # Determine if this cluster of servers is equal to another object. Checks the
     # servers currently in the cluster, not what was configured.
@@ -116,8 +116,8 @@ module Mongo
 
       seeds.each{ |seed| add(seed) }
 
-      @cursor_manager = CursorManager.new(self)
-      @cursor_manager.run
+      @cursor_reaper = CursorReaper.new(self)
+      @cursor_reaper.run
 
       ObjectSpace.define_finalizer(self, self.class.finalize(pools))
     end
@@ -136,10 +136,10 @@ module Mongo
     # @since 2.2.0
     def self.finalize(pools)
       proc do
+        cursor_reaper.kill_cursors
         pools.values.each do |pool|
           pool.disconnect!
         end
-        cursor_manager.kill_cursors
       end
     end
 

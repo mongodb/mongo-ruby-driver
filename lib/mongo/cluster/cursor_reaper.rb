@@ -21,22 +21,22 @@ module Mongo
     # cursors that have been garbage collected without being exhausted.
     #
     # @since 2.3.0
-    class CursorManager
+    class CursorReaper
       extend Forwardable
       include Retryable
 
-      # @return [ Mongo::Cluster ] The cluster associated with this cursor manager.
+      # @return [ Mongo::Cluster ] The cluster associated with this cursor reaper.
       attr_reader :cluster
 
-      # The default time interval for the cursor manager to send pending kill cursors operations.
+      # The default time interval for the cursor reaper to send pending kill cursors operations.
       #
       # @since 2.3.0
       FREQUENCY = 1.freeze
 
-      # Create a cursor manager.
+      # Create a cursor reaper.
       #
-      # @example Create a CursorManager.
-      #   Mongo::Cluster::CursorManager.new(cluster)
+      # @example Create a CursorReaper.
+      #   Mongo::Cluster::CursorReaper.new(cluster)
       #
       # @api private
       #
@@ -48,16 +48,16 @@ module Mongo
         @cluster = cluster
       end
 
-      # Start the cursor manager's reaper thread.
+      # Start the cursor reapers's thread.
       #
-      # @example Start the cursor manager's reaper thread.
-      #   manager.run
+      # @example Start the cursor reaper's thread.
+      #   reaper.run
       #
       # @api private
       #
       # @since 2.3.0
       def run
-        @reaper ||= Thread.new(FREQUENCY) do |i|
+        @thread ||= Thread.new(FREQUENCY) do |i|
           loop do
             sleep(i)
             kill_cursors
@@ -68,7 +68,7 @@ module Mongo
       # Schedule a kill cursors operation to be eventually executed.
       #
       # @example Schedule a kill cursors operation.
-      #   manager.schedule_kill_cursor(id, op_spec, server)
+      #   cursor_reaper.schedule_kill_cursor(id, op_spec, server)
       #
       # @param [ Integer ] id The id of the cursor to kill.
       # @param [ Hash ] op_spec The spec for the kill cursors op.
@@ -89,7 +89,7 @@ module Mongo
       # Register a cursor id as active.
       #
       # @example Register a cursor as active.
-      #   manager.register_cursor(id)
+      #   cursor_reaper.register_cursor(id)
       #
       # @param [ Integer ] id The id of the cursor to register as active.
       #
@@ -107,7 +107,7 @@ module Mongo
       # Unregister a cursor id, indicating that it's no longer active.
       #
       # @example Unregister a cursor.
-      #   manager.unregister_cursor(id)
+      #   cursor_reaper.unregister_cursor(id)
       #
       # @param [ Integer ] id The id of the cursor to unregister.
       #
@@ -123,7 +123,7 @@ module Mongo
       # Execute all pending kill cursors operations.
       #
       # @example Execute pending kill cursors operations.
-      #   manager.kill_cursors
+      #   cursor_reaper.kill_cursors
       #
       # @api private
       #

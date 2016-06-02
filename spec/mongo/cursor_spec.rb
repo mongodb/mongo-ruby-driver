@@ -241,7 +241,7 @@ describe Mongo::Cursor do
 
       before do
         authorized_collection.insert_many(documents)
-        cursor_manager.schedule_kill_cursor(cursor.id,
+        cursor_reaper.schedule_kill_cursor(cursor.id,
                                             cursor.send(:kill_cursors_op_spec),
                                             cursor.instance_variable_get(:@server))
       end
@@ -263,13 +263,13 @@ describe Mongo::Cursor do
         view.instance_variable_get(:@cursor)
       end
 
-      let(:cursor_manager) do
-        authorized_client.cluster.instance_variable_get(:@cursor_manager)
+      let(:cursor_reaper) do
+        authorized_client.cluster.instance_variable_get(:@cursor_reaper)
       end
 
 
       it 'schedules a kill cursors op' do
-        sleep(Mongo::Cluster::CursorManager::FREQUENCY + 0.5)
+        sleep(Mongo::Cluster::CursorReaper::FREQUENCY + 0.5)
         expect {
           cursor.to_a
         }.to raise_exception(Mongo::Error::OperationFailure)
@@ -278,7 +278,7 @@ describe Mongo::Cursor do
       context 'when the cursor is unregistered before the kill cursors operations are executed' do
 
         it 'does not send a kill cursors operation for the unregistered cursor' do
-          cursor_manager.unregister_cursor(cursor.id)
+          cursor_reaper.unregister_cursor(cursor.id)
           expect(cursor.to_a.size).to eq(documents.size)
         end
       end
@@ -312,13 +312,13 @@ describe Mongo::Cursor do
         view.to_enum
       end
 
-      let(:cursor_manager) do
-        authorized_collection.client.cluster.instance_variable_get(:@cursor_manager)
+      let(:cursor_reaper) do
+        authorized_collection.client.cluster.instance_variable_get(:@cursor_reaper)
       end
 
       it 'removes the cursor id from the active cursors tracked by the cluster cursor manager' do
         enum.next
-        expect(cursor_manager.instance_variable_get(:@active_cursors)).not_to include(cursor_id)
+        expect(cursor_reaper.instance_variable_get(:@active_cursors)).not_to include(cursor_id)
       end
     end
   end

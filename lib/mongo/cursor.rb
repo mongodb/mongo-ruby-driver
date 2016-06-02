@@ -65,6 +65,21 @@ module Mongo
                                                              server))
     end
 
+
+    # Finalize the cursor for garbage collection. Schedules this cursor to be included
+    # in a killCursors operation executed by the Cluster's CursorReaper.
+    #
+    # @example Finalize the cluster.
+    #   Cursor.finalize(id, cluster, op, server)
+    #
+    # @param [ Integer ] cursor_id The cursor's id.
+    # @param [ Mongo::Cluster ] cluster The cluster associated with this cursor and its server.
+    # @param [ Hash ] op_spec The killCursors operation specification.
+    # @param [ Mongo::Server ] server The server to send the killCursors operation to.
+    #
+    # @return [ Proc ] The Finalizer.
+    #
+    # @since 2.3.0
     def self.finalize(cursor_id, cluster, op_spec, server)
       proc { cluster.schedule_kill_cursor(cursor_id, op_spec, server) }
     end
