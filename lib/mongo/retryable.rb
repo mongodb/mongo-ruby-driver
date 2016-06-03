@@ -46,18 +46,19 @@ module Mongo
     # @return [ Result ] The result of the operation.
     #
     # @since 2.1.0
-    def read_with_retry(attempt = 0, &block)
+    def read_with_retry(attempt = 0, max_read_retries = nil, &block)
+      max_retries = max_read_retries || cluster.max_read_retries
       begin
         block.call
       rescue Error::SocketError, Error::SocketTimeoutError
         retry_operation(&block)
       rescue Error::OperationFailure => e
         if cluster.sharded? && e.retryable?
-          if attempt < cluster.max_read_retries
+          if attempt < max_retries
             # We don't scan the cluster in this case as Mongos always returns
             # ready after a ping no matter what the state behind it is.
             sleep(cluster.read_retry_interval)
-            read_with_retry(attempt + 1, &block)
+            read_with_retry(attempt + 1, max_retries, &block)
           else
             raise e
           end

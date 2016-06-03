@@ -15,7 +15,9 @@ describe Mongo::Server::Connection do
   end
 
   let(:cluster) do
-    double('cluster')
+    double('cluster').tap do |cl|
+      allow(cl).to receive(:max_read_retries).and_return(Mongo::Cluster::MAX_READ_RETRIES)
+    end
   end
 
   let(:server) do
