@@ -21,6 +21,7 @@ module Mongo
       # @since 2.0.0
       class Connection
         include Connectable
+        include Retryable
 
         # The command used for determining server status.
         #
@@ -52,8 +53,10 @@ module Mongo
         # @since 2.2.0
         def ismaster
           ensure_connected do |socket|
-            socket.write(ISMASTER_BYTES)
-            Protocol::Reply.deserialize(socket).documents[0]
+            read_with_retry(0, 1) do
+              socket.write(ISMASTER_BYTES)
+              Protocol::Reply.deserialize(socket).documents[0]
+            end
           end
         end
 
