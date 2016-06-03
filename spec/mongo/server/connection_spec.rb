@@ -438,4 +438,64 @@ describe Mongo::Server::Connection do
       end
     end
   end
+
+  describe '#auth_mechanism' do
+
+    let(:connection) do
+      described_class.new(server)
+    end
+
+    let(:reply) do
+      double('reply').tap do |r|
+        allow(r).to receive(:documents).and_return([ ismaster ])
+      end
+    end
+
+    before do
+      connection.connect!
+      socket = connection.instance_variable_get(:@socket)
+      max_message_size = connection.send(:max_message_size)
+      allow(Mongo::Protocol::Reply).to receive(:deserialize).with(socket, max_message_size).and_return(reply)
+    end
+
+    context 'when the ismaster response indicates the auth mechanism is :scram' do
+
+      let(:ismaster) do
+        {
+          'maxWireVersion' => 3,
+          'minWireVersion' => 0,
+          'ok' => 1
+        }
+      end
+
+      it 'uses scram' do
+        expect(connection.send(:default_mechanism)).to eq(:scram)
+      end
+    end
+
+    context 'when the ismaster response indicates the auth mechanism is :mongodb_cr' do
+
+      let(:ismaster) do
+        {
+          'maxWireVersion' => 2,
+          'minWireVersion' => 0,
+          'ok' => 1
+        }
+      end
+
+      context 'when the server auth mechanism is scram', if: scram_sha_1_enabled? do
+
+        it 'users scram' do
+          expect(connection.send(:default_mechanism)).to eq(:scram)
+        end
+      end
+
+      context 'when the server auth mechanism is mongodb_cr', unless: scram_sha_1_enabled?  do
+
+        it 'uses mongodb_cr' do
+          expect(connection.send(:default_mechanism)).to eq(:mongodb_cr)
+        end
+      end
+    end
+  end
 end
