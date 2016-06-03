@@ -470,8 +470,18 @@ describe Mongo::Server::Connection do
         }
       end
 
-      it 'uses scram' do
-        expect(connection.send(:default_mechanism)).to eq(:scram)
+      context 'when the server auth mechanism is scram', if: scram_sha_1_enabled? do
+
+        it 'users scram' do
+          expect(connection.send(:default_mechanism)).to eq(:scram)
+        end
+      end
+
+      context 'when the server auth mechanism is the default (mongodb_cr)', unless: scram_sha_1_enabled?  do
+
+        it 'uses scram' do
+          expect(connection.send(:default_mechanism)).to eq(:scram)
+        end
       end
     end
 
@@ -492,7 +502,7 @@ describe Mongo::Server::Connection do
         end
       end
 
-      context 'when the server auth mechanism is mongodb_cr', unless: scram_sha_1_enabled?  do
+      context 'when the server auth mechanism is the default (mongodb_cr)', unless: scram_sha_1_enabled?  do
 
         it 'uses mongodb_cr' do
           expect(connection.send(:default_mechanism)).to eq(:mongodb_cr)
