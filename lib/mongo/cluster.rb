@@ -117,7 +117,7 @@ module Mongo
       seeds.each{ |seed| add(seed) }
 
       @cursor_reaper = CursorReaper.new(self)
-      @cursor_reaper.run
+      @cursor_reaper.run!
 
       ObjectSpace.define_finalizer(self, self.class.finalize(pools))
     end
@@ -136,7 +136,8 @@ module Mongo
     # @since 2.2.0
     def self.finalize(pools)
       proc do
-        cursor_reaper.kill_cursors
+        begin; @cursor_reaper.kill_cursors; rescue; end
+        @cursor_reaper.stop!
         pools.values.each do |pool|
           pool.disconnect!
         end
@@ -295,6 +296,8 @@ module Mongo
     #
     # @since 2.1.0
     def disconnect!
+      begin; @cursor_reaper.kill_cursors; rescue; end
+      @cursor_reaper.stop!
       @servers.each { |server| server.disconnect! } and true
     end
 
@@ -308,7 +311,8 @@ module Mongo
     # @since 2.1.0
     def reconnect!
       scan!
-      servers.each { |server| server.reconnect! } and true
+      servers.each { |server| server.reconnect! }
+      @cursor_reaper.restart! and true
     end
 
     # Add hosts in a description to the cluster.

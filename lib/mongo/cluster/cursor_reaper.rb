@@ -48,22 +48,18 @@ module Mongo
         @cluster = cluster
       end
 
-      # Start the cursor reapers's thread.
+      # Start the cursor reaper's thread.
       #
       # @example Start the cursor reaper's thread.
-      #   reaper.run
+      #   reaper.run!
       #
       # @api private
       #
       # @since 2.3.0
-      def run
-        @thread ||= Thread.new(FREQUENCY) do |i|
-          loop do
-            sleep(i)
-            kill_cursors
-          end
-        end
+      def run!
+        @thread && @thread.alive? ? @thread : start!
       end
+      alias :restart! :run!
 
       # Schedule a kill cursors operation to be eventually executed.
       #
@@ -120,6 +116,18 @@ module Mongo
         end
       end
 
+      # Stop the cursor reaper's thread.
+      #
+      # @example Stop the cursor reaper's thread.
+      #   reaper.stop!
+      #
+      # @api private
+      #
+      # @since 2.3.0
+      def stop!
+        @thread.kill && @thread.stop?
+      end
+
       # Execute all pending kill cursors operations.
       #
       # @example Execute pending kill cursors operations.
@@ -140,19 +148,28 @@ module Mongo
 
         to_kill_copy.each do |server, op_specs|
           op_specs.each do |op_spec|
-            read_with_retry do
-              if server.features.find_command_enabled?
-                Cursor::Builder::KillCursorsCommand.update_cursors(op_spec, active_cursors_copy.to_a)
-                if Cursor::Builder::KillCursorsCommand.cursors(op_spec).size > 0
-                  Operation::Commands::Command.new(op_spec).execute(server.context)
-                end
-              else
-                Cursor::Builder::OpKillCursors.update_cursors(op_spec, active_cursors_copy.to_a)
-                if Cursor::Builder::OpKillCursors.cursors(op_spec).size > 0
-                  Operation::KillCursors.new(op_spec).execute(server.context)
-                end
+            if server.features.find_command_enabled?
+              Cursor::Builder::KillCursorsCommand.update_cursors(op_spec, active_cursors_copy.to_a)
+              if Cursor::Builder::KillCursorsCommand.cursors(op_spec).size > 0
+                Operation::Commands::Command.new(op_spec).execute(server.context)
+              end
+            else
+              Cursor::Builder::OpKillCursors.update_cursors(op_spec, active_cursors_copy.to_a)
+              if Cursor::Builder::OpKillCursors.cursors(op_spec).size > 0
+                Operation::KillCursors.new(op_spec).execute(server.context)
               end
             end
+          end
+        end
+      end
+
+      private
+
+      def start!
+        @thread = Thread.new(FREQUENCY) do |i|
+          loop do
+            sleep(i)
+            kill_cursors
           end
         end
       end
