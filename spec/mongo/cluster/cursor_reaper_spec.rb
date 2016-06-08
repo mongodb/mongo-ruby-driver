@@ -7,7 +7,7 @@ describe Mongo::Cluster::CursorReaper do
   end
 
   let(:reaper) do
-    described_class.new(authorized_client.cluster)
+    described_class.new
   end
 
   let(:active_cursors) do

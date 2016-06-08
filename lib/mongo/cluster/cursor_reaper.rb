@@ -25,9 +25,6 @@ module Mongo
       extend Forwardable
       include Retryable
 
-      # @return [ Mongo::Cluster ] The cluster associated with this cursor reaper.
-      attr_reader :cluster
-
       # The default time interval for the cursor reaper to send pending kill cursors operations.
       #
       # @since 2.3.0
@@ -41,11 +38,10 @@ module Mongo
       # @api private
       #
       # @since 2.3.0
-      def initialize(cluster)
+      def initialize
         @to_kill = {}
         @active_cursors = Set.new
         @mutex = Mutex.new
-        @cluster = cluster
       end
 
       # Start the cursor reaper's thread.

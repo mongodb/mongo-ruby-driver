@@ -116,7 +116,7 @@ module Mongo
 
       seeds.each{ |seed| add(seed) }
 
-      @cursor_reaper = CursorReaper.new(self)
+      @cursor_reaper = CursorReaper.new
       @cursor_reaper.run!
 
       ObjectSpace.define_finalizer(self, self.class.finalize(pools))
