@@ -3,7 +3,7 @@ require 'spec_helper'
 describe Mongo::Auth::CR do
 
   let(:address) do
-    Mongo::Address.new(DEFAULT_ADDRESS)
+    default_address
   end
 
   let(:monitoring) do

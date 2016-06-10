@@ -3,7 +3,7 @@ require 'spec_helper'
 describe Mongo::Socket::SSL, if: running_ssl? do
 
   let(:socket) do
-    described_class.new(*DEFAULT_ADDRESS.split(":"), DEFAULT_ADDRESS.split(":")[0], 5, Socket::PF_INET, options)
+    described_class.new(*default_address.to_s.split(":"), default_address.host, 5, Socket::PF_INET, options)
   end
 
   let(:options) do

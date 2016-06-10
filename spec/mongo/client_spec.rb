@@ -482,7 +482,7 @@ describe Mongo::Client do
     context 'when the read preference is printed' do
 
       let(:client) do
-        described_class.new([ DEFAULT_ADDRESS ], options)
+        described_class.new([ default_address.to_s ], options)
       end
 
       let(:options) do

@@ -209,11 +209,11 @@ describe Mongo::Address do
     context 'when providing a DNS entry that resolves to both IPv6 and IPv4' do
 
       let(:address) do
-        described_class.new(DEFAULT_ADDRESS)
+        default_address
       end
 
       let(:host) do
-        DEFAULT_ADDRESS.split(':').first
+        address.host
       end
 
       before do

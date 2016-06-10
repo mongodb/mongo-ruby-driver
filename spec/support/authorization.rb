@@ -28,11 +28,6 @@ TEST_COLL = 'test'.freeze
 ADDRESSES = ENV['MONGODB_ADDRESSES'] ? ENV['MONGODB_ADDRESSES'].split(',').freeze :
               [ '127.0.0.1:27017' ].freeze
 
-# A default address to use in tests.
-#
-# @since 2.0.0
-DEFAULT_ADDRESS = ADDRESSES.first
-
 # The topology type.
 #
 # @since 2.0.0
@@ -168,6 +163,11 @@ ADMIN_AUTHORIZED_TEST_CLIENT = ADMIN_UNAUTHORIZED_CLIENT.with(
   monitoring: false
 )
 
+# A default address constant
+#
+# @since 2.2.6
+DEFAULT_ADDRESS = AUTHORIZED_CLIENT.cluster.next_primary.address.to_s
+
 module Authorization
 
   # On inclusion provides helpers for use with testing with and without
@@ -244,6 +244,13 @@ module Authorization
     # @since 2.0.0
     context.let(:unauthorized_primary) do
       authorized_client.cluster.next_primary
+    end
+
+    # Get a default address (of the primary).
+    #
+    # @since 2.2.6
+    context.let(:default_address) do
+      authorized_client.cluster.next_primary.address
     end
   end
 end

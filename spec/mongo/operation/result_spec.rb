@@ -292,14 +292,14 @@ describe Mongo::Operation::Result do
 
     before do
       class Result
-        def get_result
-          Mongo::Client.new([DEFAULT_ADDRESS], TEST_OPTIONS).database.command(:ping => 1)
+        def get_result(address)
+          Mongo::Client.new([address], TEST_OPTIONS).database.command(:ping => 1)
         end
       end
     end
 
     let(:result) do
-      Result.new.get_result
+      Result.new.get_result(default_address.to_s)
     end
 
     it 'uses the Result class of the operation' do
