@@ -163,11 +163,6 @@ ADMIN_AUTHORIZED_TEST_CLIENT = ADMIN_UNAUTHORIZED_CLIENT.with(
   monitoring: false
 )
 
-# A default address constant
-#
-# @since 2.2.6
-DEFAULT_ADDRESS = AUTHORIZED_CLIENT.cluster.next_primary.address.to_s
-
 module Authorization
 
   # On inclusion provides helpers for use with testing with and without

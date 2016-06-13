@@ -12,7 +12,7 @@ def server(mode, options = {})
 
   listeners = Mongo::Event::Listeners.new
   monitoring = Mongo::Monitoring.new
-  address = Mongo::Address.new(DEFAULT_ADDRESS)
+  address = options[:address]
 
   server = Mongo::Server.new(address, double('cluster'), monitoring, listeners, TEST_OPTIONS)
   description = Mongo::Server::Description.new(address, ismaster, average_round_trip_time)

@@ -76,7 +76,7 @@ describe Mongo::ServerSelector::Secondary do
 
     context 'tag sets provided' do
       let(:tag_sets) { [tag_set] }
-      let(:matching_secondary) { server(:secondary, :tags => server_tags) }
+      let(:matching_secondary) { server(:secondary, :tags => server_tags, address: default_address) }
 
       context 'single candidate' do
 
@@ -134,8 +134,8 @@ describe Mongo::ServerSelector::Secondary do
     end
 
     context 'high latency servers' do
-      let(:far_primary) { server(:primary, :average_round_trip_time => 100) }
-      let(:far_secondary) { server(:secondary, :average_round_trip_time => 113) }
+      let(:far_primary) { server(:primary, :average_round_trip_time => 100, address: default_address) }
+      let(:far_secondary) { server(:secondary, :average_round_trip_time => 113, address: default_address) }
 
       context 'single candidate' do
 
