@@ -158,9 +158,9 @@ module Mongo
     # @since 2.0.0
     READ_MODE_MAP = {
       'primary'            => :primary,
-      'primaryPreferred'   => :primary_preferred,
+      'primarypreferred'   => :primary_preferred,
       'secondary'          => :secondary,
-      'secondaryPreferred' => :secondary_preferred,
+      'secondarypreferred' => :secondary_preferred,
       'nearest'            => :nearest
     }.freeze
 
@@ -389,11 +389,10 @@ module Mongo
     # Auth Options
     uri_option 'authsource', :auth_source, :type => :auth_source
     uri_option 'authmechanism', :auth_mech, :type => :auth_mech
-    uri_option 'authmechanismproperties', :auth_mech_properties, :group => :auth,
-                 :type => :auth_mech_props
+    uri_option 'authmechanismproperties', :auth_mech_properties, :type => :auth_mech_props
 
     # Casts option values that do not have a specifically provided
-    # transofrmation to the appropriate type.
+    # transformation to the appropriate type.
     #
     # @param value [String] The value to be cast.
     #
@@ -500,7 +499,7 @@ module Mongo
     #
     # @return [Symbol] The transformed authentication mechanism.
     def auth_mech(value)
-      AUTH_MECH_MAP[value]
+      AUTH_MECH_MAP[value.upcase]
     end
 
     # Read preference mode transformation.
@@ -509,7 +508,7 @@ module Mongo
     #
     # @return [Symbol] The read mode symbol.
     def read_mode(value)
-      READ_MODE_MAP[value]
+      READ_MODE_MAP[value.downcase]
     end
 
     # Read preference tags transformation.
