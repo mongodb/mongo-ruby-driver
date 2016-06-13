@@ -52,7 +52,9 @@ SSL_OPTIONS = {
                   ssl: SSL,
                   ssl_verify: false,
                   ssl_cert:  CLIENT_PEM,
-                  ssl_key:  CLIENT_PEM
+                  ssl_key:  CLIENT_PEM,
+                  heartbeat_frequency: 5,
+                  max_read_retries: 5
                 }
 
 # Base test options.
