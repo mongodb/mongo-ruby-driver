@@ -52,9 +52,7 @@ SSL_OPTIONS = {
                   ssl: SSL,
                   ssl_verify: false,
                   ssl_cert:  CLIENT_PEM,
-                  ssl_key:  CLIENT_PEM,
-                  heartbeat_frequency: 5,
-                  max_read_retries: 5
+                  ssl_key:  CLIENT_PEM
                 }
 
 # Base test options.
@@ -62,7 +60,9 @@ SSL_OPTIONS = {
 # @since 2.1.0
 BASE_OPTIONS = {
                   max_pool_size: 1,
-                  write: WRITE_CONCERN
+                  write: WRITE_CONCERN,
+                  heartbeat_frequency: 5,
+                  max_read_retries: 5
                }
 
 # Options for test suite clients.
