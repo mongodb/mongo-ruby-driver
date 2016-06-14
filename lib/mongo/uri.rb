@@ -387,7 +387,7 @@ module Mongo
     uri_option 'connect', :connect
 
     # Auth Options
-    uri_option 'authsource', :source, :group => :auth, :type => :auth_source
+    uri_option 'authsource', :auth_source, :type => :auth_source
     uri_option 'authmechanism', :auth_mech, :type => :auth_mech
     uri_option 'authmechanismproperties', :auth_mech_properties, :group => :auth,
                  :type => :auth_mech_props

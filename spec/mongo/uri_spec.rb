@@ -544,19 +544,19 @@ describe 'invalid uris' do
 
       context 'regular db' do
         let(:source) { 'foo' }
-        let(:auth) { Mongo::Options::Redacted.new(:source => 'foo') }
+        let(:auth) { Mongo::Options::Redacted.new(:auth_source => 'foo') }
 
         it 'sets the auth source to the database' do
-          expect(uri.uri_options[:auth]).to eq(auth)
+          expect(uri.uri_options).to eq(auth)
         end
       end
 
       context '$external' do
         let(:source) { '$external' }
-        let(:auth) { Mongo::Options::Redacted.new(:source => :external) }
+        let(:auth) { Mongo::Options::Redacted.new(:auth_source => :external) }
 
         it 'sets the auth source to :external' do
-          expect(uri.uri_options[:auth]).to eq(auth)
+          expect(uri.uri_options).to eq(auth)
         end
       end
     end
