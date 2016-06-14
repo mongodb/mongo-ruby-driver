@@ -4,7 +4,7 @@ describe Mongo::URI do
   let(:scheme) { 'mongodb://' }
   let(:uri) { described_class.new(string) }
 
-describe 'invalid uris' do
+  describe 'invalid uris' do
 
     context 'string is not uri' do
 
@@ -370,6 +370,10 @@ describe 'invalid uris' do
         it 'sets the write concern options' do
           expect(uri.uri_options[:write]).to eq(concern)
         end
+
+        it 'sets the options on a client created with the uri' do
+          expect(Mongo::Client.new(string).options[:write]).to eq(concern)
+        end
       end
 
       context 'w=majority' do
@@ -378,6 +382,10 @@ describe 'invalid uris' do
 
         it 'sets the write concern options' do
           expect(uri.uri_options[:write]).to eq(concern)
+        end
+
+        it 'sets the options on a client created with the uri' do
+          expect(Mongo::Client.new(string).options[:write]).to eq(concern)
         end
       end
 
@@ -388,6 +396,10 @@ describe 'invalid uris' do
         it 'sets the write concern options' do
           expect(uri.uri_options[:write]).to eq(concern)
         end
+
+        it 'sets the options on a client created with the uri' do
+          expect(Mongo::Client.new(string).options[:write]).to eq(concern)
+        end
       end
 
       context 'fsync' do
@@ -396,6 +408,10 @@ describe 'invalid uris' do
 
         it 'sets the write concern options' do
           expect(uri.uri_options[:write]).to eq(concern)
+        end
+
+        it 'sets the options on a client created with the uri' do
+          expect(Mongo::Client.new(string).options[:write]).to eq(concern)
         end
       end
 
@@ -406,6 +422,10 @@ describe 'invalid uris' do
 
         it 'sets the write concern options' do
           expect(uri.uri_options[:write]).to eq(concern)
+        end
+
+        it 'sets the options on a client created with the uri' do
+          expect(Mongo::Client.new(string).options[:write]).to eq(concern)
         end
       end
     end
@@ -420,6 +440,10 @@ describe 'invalid uris' do
         it 'sets the read preference' do
           expect(uri.uri_options[:read]).to eq(read)
         end
+
+        it 'sets the options on a client created with the uri' do
+          expect(Mongo::Client.new(string).options[:read]).to eq(read)
+        end
       end
 
       context 'primaryPreferred' do
@@ -428,6 +452,10 @@ describe 'invalid uris' do
 
         it 'sets the read preference' do
           expect(uri.uri_options[:read]).to eq(read)
+        end
+
+        it 'sets the options on a client created with the uri' do
+          expect(Mongo::Client.new(string).options[:read]).to eq(read)
         end
       end
 
@@ -438,6 +466,10 @@ describe 'invalid uris' do
         it 'sets the read preference' do
           expect(uri.uri_options[:read]).to eq(read)
         end
+
+        it 'sets the options on a client created with the uri' do
+          expect(Mongo::Client.new(string).options[:read]).to eq(read)
+        end
       end
 
       context 'secondaryPreferred' do
@@ -447,6 +479,10 @@ describe 'invalid uris' do
         it 'sets the read preference' do
           expect(uri.uri_options[:read]).to eq(read)
         end
+
+        it 'sets the options on a client created with the uri' do
+          expect(Mongo::Client.new(string).options[:read]).to eq(read)
+        end
       end
 
       context 'nearest' do
@@ -455,6 +491,10 @@ describe 'invalid uris' do
 
         it 'sets the read preference' do
           expect(uri.uri_options[:read]).to eq(read)
+        end
+
+        it 'sets the options on a client created with the uri' do
+          expect(Mongo::Client.new(string).options[:read]).to eq(read)
         end
       end
     end
@@ -473,6 +513,10 @@ describe 'invalid uris' do
         it 'sets the read preference tag set' do
           expect(uri.uri_options[:read]).to eq(read)
         end
+
+        it 'sets the options on a client created with the uri' do
+          expect(Mongo::Client.new(string).options[:read]).to eq(read)
+        end
       end
 
       context 'multiple read preference tag sets' do
@@ -487,6 +531,10 @@ describe 'invalid uris' do
         it 'sets the read preference tag sets' do
           expect(uri.uri_options[:read]).to eq(read)
         end
+
+        it 'sets the options on a client created with the uri' do
+          expect(Mongo::Client.new(string).options[:read]).to eq(read)
+        end
       end
     end
 
@@ -496,6 +544,10 @@ describe 'invalid uris' do
 
       it 'sets the replica set option' do
         expect(uri.uri_options[:replica_set]).to eq(rs_name)
+      end
+
+      it 'sets the options on a client created with the uri' do
+        expect(Mongo::Client.new(string).options[:replica_set]).to eq(rs_name)
       end
     end
 
@@ -509,6 +561,14 @@ describe 'invalid uris' do
         it 'sets the auth mechanism to :plain' do
           expect(uri.uri_options[:auth_mech]).to eq(expected)
         end
+
+        it 'sets the options on a client created with the uri' do
+          expect(Mongo::Client.new(string).options[:auth_mech]).to eq(expected)
+        end
+
+        it 'is case-insensitive' do
+          expect(Mongo::Client.new(string.downcase).options[:auth_mech]).to eq(expected)
+        end
       end
 
       context 'mongodb-cr' do
@@ -517,6 +577,14 @@ describe 'invalid uris' do
 
         it 'sets the auth mechanism to :mongodb_cr' do
           expect(uri.uri_options[:auth_mech]).to eq(expected)
+        end
+
+        it 'sets the options on a client created with the uri' do
+          expect(Mongo::Client.new(string).options[:auth_mech]).to eq(expected)
+        end
+
+        it 'is case-insensitive' do
+          expect(Mongo::Client.new(string.downcase).options[:auth_mech]).to eq(expected)
         end
       end
 
@@ -527,6 +595,14 @@ describe 'invalid uris' do
         it 'sets the auth mechanism to :gssapi' do
           expect(uri.uri_options[:auth_mech]).to eq(expected)
         end
+
+        it 'sets the options on a client created with the uri' do
+          expect(Mongo::Client.new(string).options[:auth_mech]).to eq(expected)
+        end
+
+        it 'is case-insensitive' do
+          expect(Mongo::Client.new(string.downcase).options[:auth_mech]).to eq(expected)
+        end
       end
 
       context 'scram-sha-1' do
@@ -536,6 +612,14 @@ describe 'invalid uris' do
         it 'sets the auth mechanism to :scram' do
           expect(uri.uri_options[:auth_mech]).to eq(expected)
         end
+
+        it 'sets the options on a client created with the uri' do
+          expect(Mongo::Client.new(string).options[:auth_mech]).to eq(expected)
+        end
+
+        it 'is case-insensitive' do
+          expect(Mongo::Client.new(string.downcase).options[:auth_mech]).to eq(expected)
+        end
       end
     end
 
@@ -544,19 +628,26 @@ describe 'invalid uris' do
 
       context 'regular db' do
         let(:source) { 'foo' }
-        let(:auth) { Mongo::Options::Redacted.new(:auth_source => 'foo') }
 
         it 'sets the auth source to the database' do
-          expect(uri.uri_options).to eq(auth)
+          expect(uri.uri_options[:auth_source]).to eq(source)
+        end
+
+        it 'sets the options on a client created with the uri' do
+          expect(Mongo::Client.new(string).options[:auth_source]).to eq(source)
         end
       end
 
       context '$external' do
         let(:source) { '$external' }
-        let(:auth) { Mongo::Options::Redacted.new(:auth_source => :external) }
+        let(:expected) { :external }
 
         it 'sets the auth source to :external' do
-          expect(uri.uri_options).to eq(auth)
+          expect(uri.uri_options[:auth_source]).to eq(expected)
+        end
+
+        it 'sets the options on a client created with the uri' do
+          expect(Mongo::Client.new(string).options[:auth_source]).to eq(expected)
         end
       end
     end
@@ -569,12 +660,14 @@ describe 'invalid uris' do
         end
 
         let(:service_name) { 'foo' }
-        let(:auth) do
-          Mongo::Options::Redacted.new(auth_mech_properties: { service_name: service_name })
-        end
+        let(:expected) { Mongo::Options::Redacted.new({ service_name: service_name }) }
 
         it 'sets the auth mechanism properties' do
-          expect(uri.uri_options[:auth]).to eq(auth)
+          expect(uri.uri_options[:auth_mech_properties]).to eq(expected)
+        end
+
+        it 'sets the options on a client created with the uri' do
+          expect(Mongo::Client.new(string).options[:auth_mech_properties]).to eq(expected)
         end
       end
 
@@ -582,14 +675,15 @@ describe 'invalid uris' do
         let(:options) do
           "authMechanismProperties=CANONICALIZE_HOST_NAME:#{canonicalize_host_name}"
         end
-
         let(:canonicalize_host_name) { 'true' }
-        let(:auth) do
-          Mongo::Options::Redacted.new(auth_mech_properties: { canonicalize_host_name: true })
-        end
+        let(:expected) { Mongo::Options::Redacted.new({ canonicalize_host_name: true }) }
 
         it 'sets the auth mechanism properties' do
-          expect(uri.uri_options[:auth]).to eq(auth)
+          expect(uri.uri_options[:auth_mech_properties]).to eq(expected)
+        end
+
+        it 'sets the options on a client created with the uri' do
+          expect(Mongo::Client.new(string).options[:auth_mech_properties]).to eq(expected)
         end
       end
 
@@ -599,12 +693,15 @@ describe 'invalid uris' do
         end
 
         let(:service_realm) { 'dumdum' }
-        let(:auth) do
-          Mongo::Options::Redacted.new(auth_mech_properties: { service_realm: service_realm })
-        end
+        let(:expected) { Mongo::Options::Redacted.new({ service_realm: service_realm }) }
+
 
         it 'sets the auth mechanism properties' do
-          expect(uri.uri_options[:auth]).to eq(auth)
+          expect(uri.uri_options[:auth_mech_properties]).to eq(expected)
+        end
+
+        it 'sets the options on a client created with the uri' do
+          expect(Mongo::Client.new(string).options[:auth_mech_properties]).to eq(expected)
         end
       end
 
@@ -619,14 +716,18 @@ describe 'invalid uris' do
         let(:canonicalize_host_name) { 'true' }
         let(:service_realm) { 'dumdum' }
 
-        let(:auth) do
-          Mongo::Options::Redacted.new(auth_mech_properties: { service_name: service_name,
-                                                               canonicalize_host_name: true,
-                                                               service_realm: service_realm })
+        let(:expected) do
+          Mongo::Options::Redacted.new({ service_name: service_name,
+                                         canonicalize_host_name: true,
+                                         service_realm: service_realm })
         end
 
         it 'sets the auth mechanism properties' do
-          expect(uri.uri_options[:auth]).to eq(auth)
+          expect(uri.uri_options[:auth_mech_properties]).to eq(expected)
+        end
+
+        it 'sets the options on a client created with the uri' do
+          expect(Mongo::Client.new(string).options[:auth_mech_properties]).to eq(expected)
         end
       end
     end
