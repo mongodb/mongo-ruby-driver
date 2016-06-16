@@ -67,6 +67,29 @@ module Mongo
       end
     end
 
+    # Execute a read operation with a single retry.
+    #
+    # @api private
+    #
+    # @example Execute the read.
+    #   read_with_one_retry do
+    #     ...
+    #   end
+    #
+    # @note This only retries read operations on socket errors.
+    #
+    # @param [ Proc ] block The block to execute.
+    #
+    # @return [ Result ] The result of the operation.
+    #
+    # @since 2.2.6
+    def read_with_one_retry(&block)
+      block.call
+    rescue Error::SocketError,
+           Error::SocketTimeoutError
+      block.call
+    end
+
     # Execute a write operation with a retry.
     #
     # @api private
