@@ -26,6 +26,36 @@ describe Mongo::Server::Monitor do
       end
     end
 
+    context 'when the ismaster fails the first time' do
+
+      let(:monitor) do
+        described_class.new(address, listeners, TEST_OPTIONS)
+      end
+
+      let(:socket) do
+        monitor.connection.connect!
+        monitor.connection.__send__(:socket)
+      end
+
+      before do
+        expect(socket).to receive(:write).once.and_raise(Mongo::Error::SocketError)
+        expect(socket).to receive(:write).and_call_original
+        monitor.scan!
+      end
+
+      it 'retries the ismaster', if: standalone? do
+        expect(monitor.description).to be_standalone
+      end
+
+      it 'retries the ismaster', if: replica_set? do
+        expect(monitor.description).to be_primary
+      end
+
+      it 'retries the ismaster', if: sharded? do
+        expect(monitor.description).to be_mongos
+      end
+    end
+
     context 'when the ismaster command succeeds' do
 
       let(:monitor) do
@@ -86,7 +116,7 @@ describe Mongo::Server::Monitor do
         end
 
         before do
-          expect(socket).to receive(:write).and_raise(Mongo::Error::SocketError)
+          expect(socket).to receive(:write).twice.and_raise(Mongo::Error::SocketError)
           monitor.scan!
         end
 
