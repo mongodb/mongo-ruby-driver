@@ -117,10 +117,21 @@ describe Mongo::Server::Connection do
           )
         end
 
+        let!(:error) do
+          e = begin; connection.connect!; rescue => ex; ex; end
+        end
+
         it 'raises an error' do
-          expect {
-            connection.connect!
-          }.to raise_error(Mongo::Auth::Unauthorized)
+          expect(error).to be_a(Mongo::Auth::Unauthorized)
+        end
+
+        it 'disconnects the socket' do
+          expect(connection.send(:socket)).to be(nil)
+        end
+
+        it 'marks the server as unknown' do
+          pending 'Server must be set as unknown'
+          expect(server).to be_unknown
         end
       end
 
