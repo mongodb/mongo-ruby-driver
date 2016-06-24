@@ -150,7 +150,7 @@ describe Mongo::Server::Monitor do
         described_class.new(address, listeners)
       end
 
-      it 'defaults to 5' do
+      it 'defaults to 10' do
         expect(monitor.heartbeat_frequency).to eq(10)
       end
     end

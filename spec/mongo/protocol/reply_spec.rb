@@ -4,7 +4,7 @@ describe Mongo::Protocol::Reply do
 
   let(:length)      { 78 }
   let(:request_id)  { 0 }
-  let(:response_to) { 0 }
+  let(:response_to) { 42 }
   let(:op_code)     { 1 }
   let(:flags)       { 0 }
   let(:start)       { 0 }
@@ -107,6 +107,14 @@ describe Mongo::Protocol::Reply do
         expect {
           reply
         }.to raise_error(Mongo::Error::MaxMessageSize)
+      end
+    end
+
+    describe '#response_to' do
+      let(:reply) { described_class.deserialize(io) }
+
+      it 'sets it to the correct value' do
+        expect(reply.response_to).to eq(42)
       end
     end
 

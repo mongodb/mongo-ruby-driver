@@ -26,6 +26,11 @@ module Mongo
     # @api semipublic
     class Reply < Message
 
+      # Returns the response_to for the reply
+      #
+      # @return [Fixnum] The response_to for this reply
+      attr_accessor :response_to
+
       # Determine if the reply had a query failure flag.
       #
       # @example Did the reply have a query failure.

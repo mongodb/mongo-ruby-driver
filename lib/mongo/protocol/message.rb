@@ -110,7 +110,7 @@ module Mongo
       #
       # @return [ Message ] Instance of a Message class
       def self.deserialize(io, max_message_size = MAX_MESSAGE_SIZE)
-        length = deserialize_header(BSON::ByteBuffer.new(io.read(16))).first
+        length, request_id, response_to, op_code = deserialize_header(BSON::ByteBuffer.new(io.read(16)))
 
         # Protection from potential DOS man-in-the-middle attacks. See
         # DRIVERS-276.
@@ -120,6 +120,8 @@ module Mongo
 
         buffer = BSON::ByteBuffer.new(io.read(length - 16))
         message = allocate
+        message.response_to = response_to
+
         fields.each do |field|
           if field[:multi]
             deserialize_array(message, buffer, field)
@@ -228,7 +230,7 @@ module Mongo
       # @param io [IO] Stream containing the header.
       # @return [Array<Fixnum>] Deserialized header.
       def self.deserialize_header(io)
-        @length, @request_id, @response_to, @op_code = Header.deserialize(io)
+        Header.deserialize(io)
       end
 
       # A method for declaring a message field

@@ -159,7 +159,15 @@ module Mongo
 
       def deliver(messages)
         write(messages)
-        messages.last.replyable? ? read : nil
+
+        if messages.last.replyable?
+          # Protection against returning the response to a previous request. See
+          # RUBY-1117
+          reply = read until reply && reply.response_to == messages.last.request_id
+          reply
+        else
+          nil
+        end
       end
 
       def authenticate!

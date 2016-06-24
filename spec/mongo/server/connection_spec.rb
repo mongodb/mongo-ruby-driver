@@ -250,6 +250,43 @@ describe Mongo::Server::Connection do
       end
     end
 
+    context 'when the response_to does not match the request_id' do
+
+      let(:documents) do
+        [{ 'name' => 'bob' }, { 'name' => 'alice' }]
+      end
+
+      let(:insert) do
+        Mongo::Protocol::Insert.new(TEST_DB, TEST_COLL, documents)
+      end
+
+      let(:query_bob) do
+        Mongo::Protocol::Query.new(TEST_DB, TEST_COLL, { 'name' => 'bob' })
+      end
+
+      let(:query_alice) do
+        Mongo::Protocol::Query.new(TEST_DB, TEST_COLL, { 'name' => 'alice' })
+      end
+
+      let(:reply) do
+        connection.dispatch([ query_alice ])
+      end
+
+      after do
+        authorized_collection.delete_many
+      end
+
+      it 'it dispatchs the message to the socket' do
+        # Fake a query for which we did not read the response. See RUBY-1117
+        allow(query_bob).to receive(:replyable?) { false }
+        connection.dispatch([ insert, query_bob ])
+
+        expect(reply.documents.first['name']).to eq('alice')
+        expect(reply.response_to).to eq(query_alice.request_id)
+      end
+    end
+
+
     context 'when the message exceeds the max size' do
 
       context 'when the message is an insert' do
