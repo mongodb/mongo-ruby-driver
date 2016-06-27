@@ -276,7 +276,7 @@ describe Mongo::Server::Connection do
         authorized_collection.delete_many
       end
 
-      it 'it dispatchs the message to the socket' do
+      it 'skips the orphan response and reads the next one' do
         # Fake a query for which we did not read the response. See RUBY-1117
         allow(query_bob).to receive(:replyable?) { false }
         connection.dispatch([ insert, query_bob ])
