@@ -31,6 +31,12 @@ module Mongo
           def documents
             reply.documents.first[USERS]
           end
+
+          private
+
+          def first_document
+            @first_document ||= reply.documents[0]
+          end
         end
       end
     end

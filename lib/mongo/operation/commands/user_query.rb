@@ -44,7 +44,7 @@ module Mongo
         # @since 2.1.0
         def execute(context)
           if context.features.users_info_enabled?
-            UsersInfo.new(spec).execute(context)
+            UsersInfo.new(spec).execute(context).validate!
           else
             context.with_connection do |connection|
               Result.new(connection.dispatch([ message(context) ])).validate!
