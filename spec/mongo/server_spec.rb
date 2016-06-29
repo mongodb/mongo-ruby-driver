@@ -15,7 +15,7 @@ describe Mongo::Server do
   end
 
   let(:address) do
-    Mongo::Address.new('127.0.0.1:27017')
+    default_address
   end
 
   let(:pool) do
@@ -167,11 +167,11 @@ describe Mongo::Server do
     end
 
     it 'sets the address host' do
-      expect(server.address.host).to eq('127.0.0.1')
+      expect(server.address.host).to eq(default_address.host)
     end
 
     it 'sets the address port' do
-      expect(server.address.port).to eq(27017)
+      expect(server.address.port).to eq(default_address.port)
     end
 
     it 'sets the options' do
