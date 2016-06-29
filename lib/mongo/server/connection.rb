@@ -63,6 +63,9 @@ module Mongo
           authenticate!
         end
         true
+      rescue Mongo::Auth::Unauthorized => e
+        disconnect!
+        raise e
       end
 
       # Disconnect the connection.
