@@ -139,5 +139,17 @@ describe Mongo::Auth::User::View do
       end
     end
 
+    context 'when a user is not authorized' do
+
+      let(:view) do
+        described_class.new(unauthorized_client.database)
+      end
+
+      it 'raises an OperationFailure' do
+        expect{
+          view.info('emily')
+        }.to raise_exception(Mongo::Error::OperationFailure)
+      end
+    end
   end
 end
