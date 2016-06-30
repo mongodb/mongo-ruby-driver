@@ -268,21 +268,66 @@ describe Mongo::Server::Connection do
         Mongo::Protocol::Query.new(TEST_DB, TEST_COLL, { 'name' => 'alice' })
       end
 
-      let(:reply) do
-        connection.dispatch([ query_alice ])
+      after do
+        authorized_collection.delete_many
+      end
+
+      before do
+        # Fake a query for which we did not read the response. See RUBY-1117
+        allow(query_bob).to receive(:replyable?) { false }
+        connection.dispatch([ insert, query_bob ])
+      end
+
+      it 'raises an UnexpectedResponse' do
+        expect {
+          connection.dispatch([ query_alice ])
+        }.to raise_error(Mongo::Error::UnexpectedResponse, /Unexpected response. Got response for request ID \d+ but expected response for request ID \d+/)
+      end
+
+      it "doesn't break subsequent requests" do
+        expect {
+          connection.dispatch([ query_alice ])
+        }.to raise_error(Mongo::Error::UnexpectedResponse)
+
+        expect(connection.dispatch([ query_alice ]).documents.first['name']).to eq('alice')
+      end
+    end
+
+    context 'when a request is brutaly interrupted (Thread.kill)' do
+
+      let(:documents) do
+        [{ 'name' => 'bob' }, { 'name' => 'alice' }]
+      end
+
+      let(:insert) do
+        Mongo::Protocol::Insert.new(TEST_DB, TEST_COLL, documents)
+      end
+
+      let(:query_bob) do
+        Mongo::Protocol::Query.new(TEST_DB, TEST_COLL, { 'name' => 'bob' })
+      end
+
+      let(:query_alice) do
+        Mongo::Protocol::Query.new(TEST_DB, TEST_COLL, { 'name' => 'alice' })
+      end
+
+      before do
+        connection.dispatch([ insert ])
       end
 
       after do
         authorized_collection.delete_many
       end
 
-      it 'skips the orphan response and reads the next one' do
-        # Fake a query for which we did not read the response. See RUBY-1117
-        allow(query_bob).to receive(:replyable?) { false }
-        connection.dispatch([ insert, query_bob ])
-
-        expect(reply.documents.first['name']).to eq('alice')
-        expect(reply.response_to).to eq(query_alice.request_id)
+      it "closes the socket and doesn't leak into subsequent requests" do
+        t = Thread.new {
+          # Kill the thread just before the reply is read
+          expect(Mongo::Protocol::Reply).to receive(:deserialize) { t.kill }
+          connection.dispatch([ query_bob ])
+        }
+        t.join(1)
+        allow(Mongo::Protocol::Reply).to receive(:deserialize).and_call_original
+        expect(connection.dispatch([ query_alice ]).documents.first['name']).to eq('alice')
       end
     end
 
