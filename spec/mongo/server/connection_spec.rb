@@ -118,7 +118,7 @@ describe Mongo::Server::Connection do
         end
 
         let!(:error) do
-          e = begin; connection.connect!; rescue => ex; ex; end
+          e = begin; connection.send(:ensure_connected); rescue => ex; ex; end
         end
 
         it 'raises an error' do
