@@ -170,13 +170,16 @@ module Mongo
       end
 
       def default_mechanism
-        return (@server.features.scram_sha_1_enabled? ? :scram : :mongodb_cr) unless socket
-        socket.write(Monitor::Connection::ISMASTER_BYTES)
-        ismaster = Protocol::Reply.deserialize(socket, max_message_size).documents[0]
-        min_wire_version = ismaster[Description::MIN_WIRE_VERSION] || Description::LEGACY_WIRE_VERSION
-        max_wire_version = ismaster[Description::MAX_WIRE_VERSION] || Description::LEGACY_WIRE_VERSION
-        features = Description::Features.new(min_wire_version..max_wire_version)
-        (features.scram_sha_1_enabled? || @server.features.scram_sha_1_enabled?) ? :scram : :mongodb_cr
+        if socket && socket.connectable?
+          socket.write(Monitor::Connection::ISMASTER_BYTES)
+          ismaster = Protocol::Reply.deserialize(socket, max_message_size).documents[0]
+          min_wire_version = ismaster[Description::MIN_WIRE_VERSION] || Description::LEGACY_WIRE_VERSION
+          max_wire_version = ismaster[Description::MAX_WIRE_VERSION] || Description::LEGACY_WIRE_VERSION
+          features = Description::Features.new(min_wire_version..max_wire_version)
+          (features.scram_sha_1_enabled? || @server.features.scram_sha_1_enabled?) ? :scram : :mongodb_cr
+        else
+          @server.features.scram_sha_1_enabled? ? :scram : :mongodb_cr
+        end
       end
 
       def write(messages, buffer = BSON::ByteBuffer.new)
