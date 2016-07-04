@@ -107,7 +107,10 @@ module Mongo
           connection = checkout
           yield(connection)
         ensure
-          checkin(connection) if connection
+          if connection
+            connection.disconnect! unless connection.healthy?
+            checkin(connection)
+          end
         end
       end
 

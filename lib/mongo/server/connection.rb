@@ -58,6 +58,7 @@ module Mongo
       # @since 2.0.0
       def connect!
         unless socket && socket.connectable?
+          @authenticated = false
           @socket = address.socket(timeout, ssl_options)
           socket.connect!
           authenticate!
@@ -82,6 +83,7 @@ module Mongo
       def disconnect!
         if socket
           socket.close
+          @authenticated = false
           @socket = nil
         end
         true
@@ -133,6 +135,7 @@ module Mongo
         @server = server
         @ssl_options = options.reject { |k, v| !k.to_s.start_with?(SSL) }
         @socket = nil
+        @authenticated = false
         @pid = Process.pid
       end
 
@@ -155,6 +158,23 @@ module Mongo
         end
       end
 
+      # Whether the connection's socket is authenticated if authentication is required.
+      #
+      # @example Is this connection healthy.
+      #   connection.healthy?
+      #
+      # @return [ true, false ] If the socket requires authentication and is successfully
+      #   authenticated.
+      #
+      # @since 2.2.6
+      def healthy?
+        if socket
+          !requires_authentication? || (requires_authentication? && @authenticated)
+        else
+          true
+        end
+      end
+
       private
 
       def deliver(messages)
@@ -162,10 +182,15 @@ module Mongo
         messages.last.replyable? ? read : nil
       end
 
+      def requires_authentication?
+        options[:user]
+      end
+
       def authenticate!
-        if options[:user]
+        if requires_authentication?
           user = Auth::User.new(Options::Redacted.new(:auth_mech => default_mechanism).merge(options))
           Auth.get(user).login(self)
+          @authenticated = true
         end
       end
 

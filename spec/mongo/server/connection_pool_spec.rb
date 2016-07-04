@@ -191,5 +191,29 @@ describe Mongo::Server::ConnectionPool do
         expect(queue.size).to eq(1)
       end
     end
+
+    context 'when the connection does not finish authenticating before the thread is killed' do
+
+      let(:options) do
+        { user: TEST_USER.name, password: TEST_USER.password }.merge(TEST_OPTIONS).merge(max_pool_size: 1)
+      end
+
+      before do
+        expect(Mongo::Auth).to receive(:get) { sleep(5) }
+        pool.checkin(connection)
+        thread = Thread.new { pool.with_connection { |c| c.connect! } }
+        sleep(1)
+        thread.kill
+        sleep(1)
+      end
+
+      let(:connection) do
+        pool.checkout
+      end
+
+      it 'disconnects the socket' do
+        expect(connection.send(:socket)).to be_nil
+      end
+    end
   end
 end
