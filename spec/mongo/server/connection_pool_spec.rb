@@ -204,7 +204,7 @@ describe Mongo::Server::ConnectionPool do
         thread = Thread.new { pool.with_connection { |c| c.connect! } }
         sleep(1)
         thread.kill
-        sleep(0.5)
+        sleep(1)
       end
 
       let(:connection) do
