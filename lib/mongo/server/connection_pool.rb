@@ -103,12 +103,10 @@ module Mongo
       #
       # @since 2.0.0
       def with_connection
-        begin
-          connection = checkout
-          yield(connection)
-        ensure
-          checkin(connection) if connection
-        end
+        connection = checkout
+        yield(connection)
+      ensure
+        checkin(connection) if connection
       end
 
       private

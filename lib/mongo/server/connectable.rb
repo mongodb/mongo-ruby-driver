@@ -88,10 +88,11 @@ module Mongo
         ensure_same_process!
         connect!
         begin
-          yield socket
-        rescue Exception => e
-          disconnect!
-          raise e
+          result = yield socket
+          success = true
+          result
+        ensure
+          success or disconnect!
         end
       end
 
@@ -102,9 +103,9 @@ module Mongo
         end
       end
 
-      def read
+      def read(request_id = nil)
         ensure_connected do |socket|
-          Protocol::Reply.deserialize(socket, max_message_size)
+          Protocol::Reply.deserialize(socket, max_message_size, request_id)
         end
       end
     end

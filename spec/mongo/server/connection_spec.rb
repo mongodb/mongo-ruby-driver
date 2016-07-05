@@ -250,6 +250,89 @@ describe Mongo::Server::Connection do
       end
     end
 
+    context 'when the response_to does not match the request_id' do
+
+      let(:documents) do
+        [{ 'name' => 'bob' }, { 'name' => 'alice' }]
+      end
+
+      let(:insert) do
+        Mongo::Protocol::Insert.new(TEST_DB, TEST_COLL, documents)
+      end
+
+      let(:query_bob) do
+        Mongo::Protocol::Query.new(TEST_DB, TEST_COLL, { 'name' => 'bob' })
+      end
+
+      let(:query_alice) do
+        Mongo::Protocol::Query.new(TEST_DB, TEST_COLL, { 'name' => 'alice' })
+      end
+
+      after do
+        authorized_collection.delete_many
+      end
+
+      before do
+        # Fake a query for which we did not read the response. See RUBY-1117
+        allow(query_bob).to receive(:replyable?) { false }
+        connection.dispatch([ insert, query_bob ])
+      end
+
+      it 'raises an UnexpectedResponse' do
+        expect {
+          connection.dispatch([ query_alice ])
+        }.to raise_error(Mongo::Error::UnexpectedResponse,
+          /Got response for request ID \d+ but expected response for request ID \d+/)
+      end
+
+      it "doesn't break subsequent requests" do
+        expect {
+          connection.dispatch([ query_alice ])
+        }.to raise_error(Mongo::Error::UnexpectedResponse)
+
+        expect(connection.dispatch([ query_alice ]).documents.first['name']).to eq('alice')
+      end
+    end
+
+    context 'when a request is brutaly interrupted (Thread.kill)' do
+
+      let(:documents) do
+        [{ 'name' => 'bob' }, { 'name' => 'alice' }]
+      end
+
+      let(:insert) do
+        Mongo::Protocol::Insert.new(TEST_DB, TEST_COLL, documents)
+      end
+
+      let(:query_bob) do
+        Mongo::Protocol::Query.new(TEST_DB, TEST_COLL, { 'name' => 'bob' })
+      end
+
+      let(:query_alice) do
+        Mongo::Protocol::Query.new(TEST_DB, TEST_COLL, { 'name' => 'alice' })
+      end
+
+      before do
+        connection.dispatch([ insert ])
+      end
+
+      after do
+        authorized_collection.delete_many
+      end
+
+      it "closes the socket and does not use it for subsequent requests" do
+        t = Thread.new {
+          # Kill the thread just before the reply is read
+          allow(Mongo::Protocol::Reply).to receive(:deserialize_header) { t.kill }
+          connection.dispatch([ query_bob ])
+        }
+        t.join
+        allow(Mongo::Protocol::Reply).to receive(:deserialize_header).and_call_original
+        expect(connection.dispatch([ query_alice ]).documents.first['name']).to eq('alice')
+      end
+    end
+
+
     context 'when the message exceeds the max size' do
 
       context 'when the message is an insert' do

@@ -159,7 +159,7 @@ module Mongo
 
       def deliver(messages)
         write(messages)
-        messages.last.replyable? ? read : nil
+        messages.last.replyable? ? read(messages.last.request_id) : nil
       end
 
       def authenticate!
