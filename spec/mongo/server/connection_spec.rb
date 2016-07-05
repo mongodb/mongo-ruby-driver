@@ -323,11 +323,11 @@ describe Mongo::Server::Connection do
       it "closes the socket and does not use it for subsequent requests" do
         t = Thread.new {
           # Kill the thread just before the reply is read
-          allow(Mongo::Protocol::Reply).to receive(:deserialize) { t.kill }
+          allow(Mongo::Protocol::Reply).to receive(:deserialize_header) { t.kill }
           connection.dispatch([ query_bob ])
         }
-        t.join(2)
-        allow(Mongo::Protocol::Reply).to receive(:deserialize).and_call_original
+        t.join
+        allow(Mongo::Protocol::Reply).to receive(:deserialize_header).and_call_original
         expect(connection.dispatch([ query_alice ]).documents.first['name']).to eq('alice')
       end
     end
