@@ -88,9 +88,9 @@ module Mongo
         ensure_same_process!
         connect!
         begin
-          res = yield socket
+          result = yield socket
           success = true
-          res
+          result
         ensure
           success or disconnect!
         end

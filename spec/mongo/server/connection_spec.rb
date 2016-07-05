@@ -281,7 +281,8 @@ describe Mongo::Server::Connection do
       it 'raises an UnexpectedResponse' do
         expect {
           connection.dispatch([ query_alice ])
-        }.to raise_error(Mongo::Error::UnexpectedResponse, /Unexpected response. Got response for request ID \d+ but expected response for request ID \d+/)
+        }.to raise_error(Mongo::Error::UnexpectedResponse,
+          /Got response for request ID \d+ but expected response for request ID \d+/)
       end
 
       it "doesn't break subsequent requests" do
@@ -319,13 +320,13 @@ describe Mongo::Server::Connection do
         authorized_collection.delete_many
       end
 
-      it "closes the socket and doesn't leak into subsequent requests" do
+      it "closes the socket and does not use it for subsequent requests" do
         t = Thread.new {
           # Kill the thread just before the reply is read
-          expect(Mongo::Protocol::Reply).to receive(:deserialize) { t.kill }
+          allow(Mongo::Protocol::Reply).to receive(:deserialize) { t.kill }
           connection.dispatch([ query_bob ])
         }
-        t.join(1)
+        t.join(2)
         allow(Mongo::Protocol::Reply).to receive(:deserialize).and_call_original
         expect(connection.dispatch([ query_alice ]).documents.first['name']).to eq('alice')
       end

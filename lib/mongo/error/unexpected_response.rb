@@ -28,9 +28,10 @@ module Mongo
       # @param [ Integer ] expected_response_to The last request id sent.
       # @param [ Integer ] response_to The actual response_to of the reply.
       #
-      # @since 2.1.0
+      # @since 2.2.6
       def initialize(expected_response_to, response_to)
-        super("Unexpected response. Got response for request ID #{response_to} but expected response for request ID #{expected_response_to}")
+        super("Unexpected response. Got response for request ID #{response_to} " +
+              "but expected response for request ID #{expected_response_to}")
       end
     end
   end
