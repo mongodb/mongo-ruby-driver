@@ -290,7 +290,7 @@ module Mongo
         #
         # @since 2.0.0
         def h(string)
-          DIGEST.digest(string)
+          digest.digest(string)
         end
 
         # HI algorithm implementation.
@@ -305,7 +305,7 @@ module Mongo
             data,
             Base64.strict_decode64(salt),
             iterations,
-            DIGEST.size
+            digest.size
           )
         end
 
@@ -317,7 +317,7 @@ module Mongo
         #
         # @since 2.0.0
         def hmac(data, key)
-          OpenSSL::HMAC.digest(DIGEST, data, key)
+          OpenSSL::HMAC.digest(digest, data, key)
         end
 
         # Get the iterations from the server response.
@@ -450,6 +450,12 @@ module Mongo
         def validate!(reply)
           raise Unauthorized.new(user) unless reply.documents[0][Operation::Result::OK] == 1
           @reply = reply
+        end
+
+        private
+
+        def digest
+          @digest ||= OpenSSL::Digest::SHA1.new.freeze
         end
       end
     end
