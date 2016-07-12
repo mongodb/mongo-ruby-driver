@@ -199,7 +199,7 @@ module Mongo
 
     def kill_cursors
       unregister_cursor
-      read_with_retry do
+      read_with_one_retry do
         kill_cursors_operation.execute(@server)
       end
     end
