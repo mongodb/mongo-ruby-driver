@@ -340,16 +340,13 @@ describe Mongo::Database do
           Mongo::Grid::File.new('Hello!', :filename => 'test.txt')
         end
 
-        before do
-          fs.insert_one(file)
-        end
-
         after do
           fs.files_collection.delete_many
           fs.chunks_collection.delete_many
         end
 
         let(:from_db) do
+          fs.insert_one(file)
           fs.find_one(:filename => 'test.txt')
         end
 
