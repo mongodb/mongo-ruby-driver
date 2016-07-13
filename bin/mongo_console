@@ -1,11 +1,26 @@
 #!/usr/bin/env ruby
 
 $LOAD_PATH[0, 0] = File.join(File.dirname(__FILE__), '..', 'lib')
-require 'pry'
-require 'mongo'
 
+require 'mongo'
 # include the mongo namespace
 include Mongo
 
-Pry.config.prompt_name = 'mongo'
-Pry.start
+begin
+  require 'pry'
+rescue LoadError
+end
+
+begin
+  require 'irb'
+rescue LoadError
+end
+
+if defined?(Pry)
+  Pry.config.prompt_name = 'mongo'
+  Pry.start
+elsif defined?(IRB)
+  IRB.start
+else
+  abort 'LoadError: mongo_console requires Pry or IRB'
+end
