@@ -132,7 +132,7 @@ module Mongo
       def initialize(collection, filter = {}, options = {})
         validate_doc!(filter)
         @collection = collection
-        parse_parameters!(BSON::Document.new(filter.freeze), BSON::Document.new(options.freeze))
+        parse_parameters!(BSON::Document.new(filter.dup.freeze), BSON::Document.new(options.dup.freeze))
       end
 
       # Get a human-readable string representation of +View+.
