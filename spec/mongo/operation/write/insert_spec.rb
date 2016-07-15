@@ -256,5 +256,33 @@ describe Mongo::Operation::Write::Insert do
         end
       end
     end
+
+    context 'when write concern { w: 0 } is used' do
+
+      let(:spec) do
+        { :documents     => documents,
+          :db_name       => TEST_DB,
+          :coll_name     => TEST_COLL,
+          :write_concern => Mongo::WriteConcern.get(:w => 0)
+        }
+      end
+
+      let(:documents) do
+        [{ '_id' => 1 }]
+      end
+
+      let(:op) do
+        described_class.new(spec)
+      end
+
+      before do
+        expect(op).to receive(:execute_message).and_call_original
+        op.execute(authorized_primary.context)
+      end
+
+      it 'uses op codes instead of write commands' do
+        expect(authorized_collection.find.to_a). to eq(documents)
+      end
+    end
   end
 end

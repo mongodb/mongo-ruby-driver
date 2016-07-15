@@ -182,5 +182,34 @@ describe Mongo::Operation::Write::Delete do
         end
       end
     end
+
+    context 'when write concern { w: 0 } is used' do
+
+      let(:delete) do
+        described_class.new({
+                              delete: document,
+                              db_name: TEST_DB,
+                              coll_name: TEST_COLL,
+                              write_concern: Mongo::WriteConcern.get(:w => 0)
+                            })
+      end
+
+
+      let(:document) do
+        { 'q' => { field: 'test' }, 'limit' => 1 }
+      end
+
+      let(:result) do
+        delete.execute(authorized_primary.context)
+      end
+
+      before do
+        expect(delete).to receive(:execute_message).and_call_original
+      end
+
+      it 'uses op codes instead of write commands' do
+        expect(result.written_count).to eq(0)
+      end
+    end
   end
 end
