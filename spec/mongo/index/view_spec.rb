@@ -366,6 +366,25 @@ describe Mongo::Index::View do
       it 'maps the ruby options to the server options' do
         expect(models).to eq([ expected ])
       end
+
+      context 'when using alternate names' do
+
+        let(:extended_options) do
+          options.merge!(expire_after_seconds: 5)
+        end
+
+        let(:extended_expected) do
+          expected.tap { |exp| exp[:expireAfterSeconds] = 5 }
+        end
+
+        let(:models) do
+          view.send(:normalize_models, [ extended_options ])
+        end
+
+        it 'maps the ruby options to the server options' do
+          expect(models).to eq([ extended_expected ])
+        end
+      end
     end
   end
 end
