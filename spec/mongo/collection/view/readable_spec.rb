@@ -793,6 +793,36 @@ describe Mongo::Collection::View::Readable do
     end
   end
 
+  describe '#cusor_type' do
+
+    let(:options) do
+      { :cursor_type => :tailable }
+    end
+
+    context 'when cursor_type is specified' do
+
+      let(:new_cursor_type) do
+        :tailable_await
+      end
+
+      it 'sets the cursor_type value' do
+        new_view = view.cursor_type(new_cursor_type)
+        expect(new_view.cursor_type).to eq(new_cursor_type)
+      end
+
+      it 'returns a new View' do
+        expect(view.cursor_type(new_cursor_type)).not_to be(view)
+      end
+    end
+
+    context 'when cursor_type is not specified' do
+
+      it 'returns the cursor_type value' do
+        expect(view.cursor_type).to eq(options[:cursor_type])
+      end
+    end
+  end
+
   describe '#skip' do
 
     context 'when a skip is specified' do

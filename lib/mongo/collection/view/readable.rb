@@ -416,6 +416,20 @@ module Mongo
           configure(:max_time_ms, max)
         end
 
+        # The type of cursor to use. Can be :tailable or :tailable_await.
+        #
+        # @example Set the cursor type.
+        #   view.cursor_type(:tailable)
+        #
+        # @param [ :tailable, :tailable_await ] type The cursor type.
+        #
+        # @return [ :tailable, :tailable_await, View ] Either the cursor type setting or a new +View+.
+        #
+        # @since 2.3.0
+        def cursor_type(type = nil)
+          configure(:cursor_type, type)
+        end
+
         private
 
         def default_read
