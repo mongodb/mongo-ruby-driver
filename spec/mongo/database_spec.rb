@@ -322,7 +322,7 @@ describe Mongo::Database do
     end
   end
 
-  describe '#fs' do
+  describe '#fs', unless: sharded? do
 
     let(:database) do
       described_class.new(authorized_client, TEST_DB)
