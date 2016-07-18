@@ -277,11 +277,14 @@ describe Mongo::Operation::Write::Insert do
 
       before do
         expect(op).to receive(:execute_message).and_call_original
+      end
+
+      let(:response) do
         op.execute(authorized_primary.context)
       end
 
       it 'uses op codes instead of write commands' do
-        expect(authorized_collection.find.to_a). to eq(documents)
+        expect(response.written_count).to eq(0)
       end
     end
   end

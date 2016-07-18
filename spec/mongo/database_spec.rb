@@ -347,11 +347,11 @@ describe Mongo::Database do
 
         let(:from_db) do
           fs.insert_one(file)
-          fs.find_one(:filename => 'test.txt')
+          fs.find({ filename: 'test.txt' }, limit: 1).first
         end
 
         it 'returns the assembled file from the db' do
-          expect(from_db.filename).to eq(file.info.filename)
+          expect(from_db['filename']).to eq(file.info.filename)
         end
       end
     end
