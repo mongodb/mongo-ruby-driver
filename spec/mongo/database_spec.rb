@@ -225,40 +225,81 @@ describe Mongo::Database do
       end
     end
 
-    context 'when an alternate read preference is specified' do
+    context 'when no read preference is provided' do
 
       before do
-        allow(database.cluster).to receive(:single?).and_return(false)
+        expect(Mongo::ServerSelector).to receive(:get).
+            with(authorized_client.options.merge(mode: :primary)).and_call_original
       end
 
-      let(:read) do
+      it 'uses read preference of primary' do
+        expect(database.command(ping: 1)).to be_successful
+      end
+    end
+
+    context 'when the client has a read preference set' do
+
+      let(:read_preference) do
         { :mode => :secondary, :tag_sets => [{ 'non' => 'existent' }] }
       end
 
       let(:client) do
-        authorized_client.with(server_selection_timeout: 0.1)
+        authorized_client.with(read: read_preference)
       end
 
       let(:database) do
         described_class.new(client, TEST_DB, client.options)
       end
 
-      it 'uses that read preference', unless: sharded? do
-        expect do
-          database.command({ ping: 1 }, { read: read })
-        end.to raise_error(Mongo::Error::NoServerAvailable)
+      before do
+        expect(Mongo::ServerSelector).to receive(:get).
+            with(client.options.merge(mode: :primary)).and_call_original
+      end
+
+      it 'does not use the client read preference 'do
+        expect(database.command(ping: 1)).to be_successful
       end
     end
 
-    context 'when there is a read preference set on the client' do
+    context 'when there is a read preference argument provided' do
 
-      let(:database) do
-        described_class.new(authorized_client.with(read: { mode: :secondary }), TEST_DB)
+      let(:read_preference) do
+        { :mode => :secondary, :tag_sets => [{ 'non' => 'existent' }] }
       end
 
-      it 'does not use the read preference' do
-        expect(database.client.cluster).to receive(:next_primary).and_call_original
-        database.command(ping: 1)
+      let(:client) do
+        authorized_client.with(server_selection_timeout: 0.5)
+      end
+
+      let(:database) do
+        described_class.new(client, TEST_DB, client.options)
+      end
+
+      before do
+        allow(database.cluster).to receive(:single?).and_return(false)
+      end
+
+      it 'uses the read preference argument' do
+        expect {
+          database.command({ ping: 1 }, read: read_preference)
+        }.to raise_error(Mongo::Error::NoServerAvailable)
+      end
+    end
+
+    context 'when the client has a server_selection_timeout set' do
+
+      let(:client) do
+        authorized_client.with(server_selection_timeout: 0)
+      end
+
+      let(:database) do
+        described_class.new(client, TEST_DB, client.options)
+      end
+
+      it 'uses the client server_selection_timeout' do
+        expect {
+          database.command(ping: 1)
+        }.to raise_error(Mongo::Error::NoServerAvailable)
       end
     end
   end
