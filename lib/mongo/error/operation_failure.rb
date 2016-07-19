@@ -42,6 +42,14 @@ module Mongo
         'dbclient error communicating with server'
       ].freeze
 
+      # These error messages indicate that the requests are unauthorized.
+      #
+      # @since 2.3.0
+      UNAUTHORIZED_MESSAGES = [
+        'unauthorized',
+        'not authorized'
+      ].freeze
+
       # Can the operation that caused the error be retried?
       #
       # @example Is the error retryable?
@@ -52,6 +60,15 @@ module Mongo
       # @since 2.1.1
       def retryable?
         RETRY_MESSAGES.any?{ |m| message.include?(m) }
+      end
+
+      # Is the error due to an unauthorized request?
+      #
+      # @return [ true, false ] If the error is an unauthorized request.
+      #
+      # @since 2.3.0
+      def unauthorized?
+        UNAUTHORIZED_MESSAGES.any?{ |m| message.include?(m) }
       end
     end
   end
