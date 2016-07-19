@@ -248,7 +248,7 @@ describe Mongo::Database do
 
       before do
         expect(Mongo::ServerSelector).to receive(:get).
-            with(mode: :primary).and_call_original
+            with({}).and_call_original
       end
 
       it 'uses read preference of primary' do
@@ -272,7 +272,7 @@ describe Mongo::Database do
 
       before do
         expect(Mongo::ServerSelector).to receive(:get).
-            with(mode: :primary).and_call_original
+            with({}).and_call_original
       end
 
       it 'does not use the client read preference 'do
@@ -280,7 +280,7 @@ describe Mongo::Database do
       end
     end
 
-    context 'when there is a read preference argument provided' do
+    context 'when there is a read preference argument provided', unless: sharded? do
 
       let(:read_preference) do
         { :mode => :secondary, :tag_sets => [{ 'non' => 'existent' }] }
@@ -305,7 +305,7 @@ describe Mongo::Database do
       end
     end
 
-    context 'when the client has a server_selection_timeout set' do
+    context 'when the client has a server_selection_timeout set', unless: sharded? do
 
       let(:client) do
         authorized_client.with(server_selection_timeout: 0)

@@ -1205,7 +1205,7 @@ describe Mongo::Collection do
       end
     end
 
-    context 'when the collection has a read preference' do
+    context 'when the collection has a read preference', unless: sharded? do
 
       before do
         allow(collection.client.cluster).to receive(:single?).and_return(false)

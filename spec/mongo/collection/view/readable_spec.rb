@@ -344,7 +344,7 @@ describe Mongo::Collection::View::Readable do
         end
       end
 
-      context 'when no read preference argument is provided' do
+      context 'when no read preference argument is provided', unless: sharded? do
 
         before do
           allow(view.collection.client.cluster).to receive(:single?).and_return(false)
@@ -361,7 +361,7 @@ describe Mongo::Collection::View::Readable do
         end
       end
 
-      context 'when the collection does not have a read preference set' do
+      context 'when the collection does not have a read preference set', unless: sharded? do
 
         after do
           client.close
@@ -564,7 +564,7 @@ describe Mongo::Collection::View::Readable do
         end
       end
 
-      context 'when no read preference argument is provided' do
+      context 'when no read preference argument is provided', unless: sharded? do
 
         before do
           allow(view.collection.client.cluster).to receive(:single?).and_return(false)
@@ -581,7 +581,7 @@ describe Mongo::Collection::View::Readable do
         end
       end
 
-      context 'when the collection does not have a read preference set' do
+      context 'when the collection does not have a read preference set', unless: sharded? do
 
         let(:documents) do
           (1..3).map{ |i| { field: "test#{i}" }}
