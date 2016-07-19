@@ -42,6 +42,11 @@ module Mongo
         'dbclient error communicating with server'
       ].freeze
 
+      UNAUTHORIZED_MESSAGES = [
+        'unauthorized',
+        'not authorized'
+      ].freeze
+
       # Can the operation that caused the error be retried?
       #
       # @example Is the error retryable?
@@ -52,6 +57,10 @@ module Mongo
       # @since 2.1.1
       def retryable?
         RETRY_MESSAGES.any?{ |m| message.include?(m) }
+      end
+
+      def unauthorized?
+        UNAUTHORIZED_MESSAGES.any?{ |m| message.include?(m) }
       end
     end
   end
