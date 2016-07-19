@@ -226,7 +226,7 @@ module Mongo
     #
     # @since 2.0.0
     def read_preference
-      @read_preference ||= ServerSelector.get(options[:read] || {})
+      @read_preference ||= ServerSelector.get(options[:read] || { mode: :primary })
     end
 
     # Use the database with the provided name. This will switch the current
