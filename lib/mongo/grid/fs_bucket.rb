@@ -100,6 +100,9 @@ module Mongo
       # @return [ Grid::File ] The file.
       #
       # @since 2.0.0
+      #
+      # @deprecated Please use #find instead with a limit of -1.
+      #   Will be removed in version 3.0.
       def find_one(selector = nil)
         file_info = files_collection.find(selector).first
         return nil unless file_info
@@ -117,6 +120,9 @@ module Mongo
       # @return [ BSON::ObjectId ] The file id.
       #
       # @since 2.0.0
+      #
+      # @deprecated Please use #upload_from_stream or #open_upload_stream instead.
+      #   Will be removed in version 3.0.
       def insert_one(file)
         @indexes ||= ensure_indexes!
         chunks_collection.insert_many(file.chunks)

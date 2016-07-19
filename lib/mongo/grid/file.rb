@@ -21,6 +21,9 @@ module Mongo
     # A representation of a file in the database.
     #
     # @since 2.0.0
+    #
+    # @deprecated Please use the 'stream' API on a FSBucket instead.
+    #   Will be removed in driver version 3.0.
     class File
       extend Forwardable
 
