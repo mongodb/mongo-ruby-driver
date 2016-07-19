@@ -71,7 +71,8 @@ module Mongo
       #
       # @since 2.0.0
       def initialize(data, options = {})
-        @info = Info.new(options.merge(:length => data.size))
+        options = options.merge(:length => data.size) unless options[:length]
+        @info = Info.new(options)
         initialize_chunks!(data)
       end
 

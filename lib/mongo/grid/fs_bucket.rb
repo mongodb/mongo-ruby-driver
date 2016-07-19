@@ -107,7 +107,7 @@ module Mongo
         file_info = files_collection.find(selector).first
         return nil unless file_info
         chunks = chunks_collection.find(:files_id => file_info[:_id]).sort(:n => 1)
-        Grid::File.new(chunks.to_a, file_info)
+        Grid::File.new(chunks.to_a, Options::Mapper.transform(file_info, Grid::File::Info::MAPPINGS.invert))
       end
 
       # Insert a single file into the GridFS.
