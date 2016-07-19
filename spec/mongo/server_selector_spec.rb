@@ -10,6 +10,17 @@ describe Mongo::ServerSelector do
       described_class.get(:mode => name, :tag_sets => tag_sets)
     end
 
+    context 'when a server selector object is passed' do
+
+      let(:name) do
+        :primary
+      end
+
+      it 'returns the object' do
+        expect(described_class.get(selector)).to be(selector)
+      end
+    end
+
     context 'when the mode is primary' do
 
       let(:name) do
