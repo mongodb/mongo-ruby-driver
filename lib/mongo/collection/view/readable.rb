@@ -132,8 +132,8 @@ module Mongo
           cmd[:maxTimeMS] = options[:max_time_ms] if options[:max_time_ms]
           cmd[:readConcern] = collection.read_concern if collection.read_concern
           read_with_retry do
-            opts = options[:read] ? options : options.merge(read: read)
-            database.command(cmd, opts).n.to_i
+            options = options.merge(read: read) unless options[:read]
+            database.command(cmd, options).n.to_i
           end
         end
 
@@ -159,8 +159,8 @@ module Mongo
           cmd[:maxTimeMS] = options[:max_time_ms] if options[:max_time_ms]
           cmd[:readConcern] = collection.read_concern if collection.read_concern
           read_with_retry do
-            opts = options[:read] ? options : options.merge(read: read)
-            database.command(cmd, opts).first['values']
+            options = options.merge(read: read) unless options[:read]
+            database.command(cmd, options).first['values']
           end
         end
 
