@@ -112,8 +112,7 @@ module Mongo
     #
     # @since 2.0.0
     def read_preference
-      @read_preference ||= options[:read] ? ServerSelector.get(client.options.merge(options[:read])) :
-        database.read_preference
+      @read_preference ||= ServerSelector.get(options[:read] || database.read_preference)
     end
 
     # Get the write concern on this collection.

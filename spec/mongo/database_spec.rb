@@ -63,6 +63,25 @@ describe Mongo::Database do
         end.to raise_error(Mongo::Error::InvalidCollectionName)
       end
     end
+
+    context 'when the client has options' do
+
+      let(:client) do
+        Mongo::Client.new([default_address.host], read: { mode: :secondary })
+      end
+
+      let(:database) do
+        client.database
+      end
+
+      let(:collection) do
+        database[:with_read_pref]
+      end
+
+      it 'applies the options to the collection' do
+        expect(collection.read_preference).to eq(Mongo::ServerSelector.get(mode: :secondary))
+      end
+    end
   end
 
   describe '#collection_names' do
@@ -229,7 +248,7 @@ describe Mongo::Database do
 
       before do
         expect(Mongo::ServerSelector).to receive(:get).
-            with(authorized_client.options.merge(mode: :primary)).and_call_original
+            with(mode: :primary).and_call_original
       end
 
       it 'uses read preference of primary' do
@@ -253,7 +272,7 @@ describe Mongo::Database do
 
       before do
         expect(Mongo::ServerSelector).to receive(:get).
-            with(client.options.merge(mode: :primary)).and_call_original
+            with(mode: :primary).and_call_original
       end
 
       it 'does not use the client read preference 'do
@@ -268,7 +287,7 @@ describe Mongo::Database do
       end
 
       let(:client) do
-        authorized_client.with(server_selection_timeout: 0.5)
+        authorized_client.with(server_selection_timeout: 0.2)
       end
 
       let(:database) do

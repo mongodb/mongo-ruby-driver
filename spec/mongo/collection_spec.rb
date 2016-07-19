@@ -135,12 +135,8 @@ describe Mongo::Collection do
           Mongo::Client.new(ADDRESSES, server_selection_timeout: 2)
         end
 
-        let(:server_selection_timeout) do
-          new_collection.read_preference.server_selection_timeout
-        end
-
-        it 'keeps the server_selection_timeout setting from client' do
-          expect(server_selection_timeout).to eq(client.options[:server_selection_timeout])
+        it 'passes the the server_selection_timeout to the cluster' do
+          expect(client.cluster.options[:server_selection_timeout]).to eq(client.options[:server_selection_timeout])
         end
       end
 
@@ -161,16 +157,12 @@ describe Mongo::Collection do
           Mongo::Client.new(ADDRESSES, read: { mode: :primary_preferred }, server_selection_timeout: 2)
         end
 
-        let(:server_selection_timeout) do
-          new_collection.read_preference.server_selection_timeout
-        end
-
         it 'sets the new read options on the new collection' do
           expect(new_collection.read_preference).to eq(Mongo::ServerSelector.get(new_options[:read]))
         end
 
-        it 'keeps the server_selection_timeout setting from client' do
-          expect(server_selection_timeout).to eq(client.options[:server_selection_timeout])
+        it 'passes the server_selection_timeout setting to the cluster' do
+          expect(client.cluster.options[:server_selection_timeout]).to eq(client.options[:server_selection_timeout])
         end
       end
     end
@@ -228,12 +220,8 @@ describe Mongo::Collection do
           Mongo::Client.new(ADDRESSES, server_selection_timeout: 2)
         end
 
-        let(:server_selection_timeout) do
-          new_collection.read_preference.server_selection_timeout
-        end
-
-        it 'keeps the server_selection_timeout setting from client' do
-          expect(server_selection_timeout).to eq(client.options[:server_selection_timeout])
+        it 'passes the server_selection_timeout setting to the cluster' do
+          expect(client.cluster.options[:server_selection_timeout]).to eq(client.options[:server_selection_timeout])
         end
       end
 
@@ -1228,7 +1216,7 @@ describe Mongo::Collection do
       end
 
       let(:client) do
-        authorized_client.with(server_selection_timeout: 0.5)
+        authorized_client.with(server_selection_timeout: 0.2)
       end
 
       let(:collection) do

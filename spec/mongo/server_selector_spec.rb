@@ -143,11 +143,12 @@ describe Mongo::ServerSelector do
           allow(c).to receive(:single?).and_return(false)
           allow(c).to receive(:sharded?).and_return(false)
           allow(c).to receive(:scan!).and_return(true)
+          allow(c).to receive(:options).and_return(server_selection_timeout: 0.1)
         end
       end
 
       let(:read_pref) do
-        described_class.get(mode: :primary, server_selection_timeout: 0.1).tap do |pref|
+        described_class.get(mode: :primary).tap do |pref|
           allow(pref).to receive(:select).and_return([ nil, nil ])
         end
       end
@@ -174,11 +175,12 @@ describe Mongo::ServerSelector do
           allow(c).to receive(:single?).and_return(single)
           allow(c).to receive(:sharded?).and_return(sharded)
           allow(c).to receive(:scan!).and_return(true)
+          allow(c).to receive(:options).and_return(server_selection_timeout: 0.1)
         end
       end
 
       let(:read_pref) do
-        described_class.get(mode: :primary, server_selection_timeout: 0.1)
+        described_class.get(mode: :primary)
       end
 
       it 'raises a NoServerAvailable error' do

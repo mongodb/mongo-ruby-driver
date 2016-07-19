@@ -50,9 +50,6 @@ module Mongo
       #
       # @param [ Hash ] options The server preference options.
       #
-      # @option options [ Integer ] :server_selection_timeout The timeout in seconds
-      #   for selecting a server.
-      #
       # @option options [ Integer ] :local_threshold The local threshold boundary for
       #  nearest selection in seconds.
       #
@@ -77,7 +74,7 @@ module Mongo
       # @since 2.2.0
       def inspect
         "#<#{self.class.name}:0x#{object_id} tag_sets=#{tag_sets.inspect} " +
-        "server_selection_timeout=#{server_selection_timeout} local_threshold=#{local_threshold}>"
+        "local_threshold=#{local_threshold}>"
       end
 
       # Select a server from eligible candidates.
@@ -91,7 +88,8 @@ module Mongo
       #
       # @since 2.0.0
       def select_server(cluster, ping = true)
-        deadline = Time.now + server_selection_timeout
+        timeout = cluster.options[:server_selection_timeout] || ServerSelector::SERVER_SELECTION_TIMEOUT
+        deadline = Time.now + timeout
         while (deadline - Time.now) > 0
           servers = candidates(cluster)
           if servers && !servers.compact.empty?
@@ -117,6 +115,9 @@ module Mongo
       # @return [ Float ] The timeout.
       #
       # @since 2.0.0
+      #
+      # @deprecated This setting is now taken from the cluster options when a server is selected.
+      #   Will be removed in next major release.
       def server_selection_timeout
         @server_selection_timeout ||=
           (options[:server_selection_timeout] || ServerSelector::SERVER_SELECTION_TIMEOUT)

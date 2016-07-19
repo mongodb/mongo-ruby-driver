@@ -411,8 +411,8 @@ describe Mongo::Client do
         expect(preference).to be_a(Mongo::ServerSelector::Primary)
       end
 
-      it 'passes the options to the read preference' do
-        expect(preference.options[:server_selection_timeout]).to eq(2)
+      it 'passes the options to the cluster' do
+        expect(client.cluster.options[:server_selection_timeout]).to eq(2)
       end
     end
 
