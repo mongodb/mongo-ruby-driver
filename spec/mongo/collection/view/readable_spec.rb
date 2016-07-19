@@ -309,6 +309,93 @@ describe Mongo::Collection::View::Readable do
       expect(view.count(read: { mode: :secondary })).to eq(10)
     end
 
+    context 'when the collection has a read preference set' do
+
+      after do
+        client.close
+      end
+
+      let(:client) do
+        # Set a timeout in case the collection read_preference does get used.
+        # Otherwise, the test will hang for 30 seconds.
+        authorized_client.with(server_selection_timeout: 1)
+      end
+
+      let(:read_preference) do
+        { :mode => :secondary, :tag_sets => [{ 'non' => 'existent' }] }
+      end
+
+      let(:collection) do
+        client[authorized_collection.name, read: read_preference]
+      end
+
+      let(:view) do
+        Mongo::Collection::View.new(collection, selector, options)
+      end
+
+      context 'when a read preference argument is provided' do
+
+        let(:result) do
+          view.count(read: { mode: :primary })
+        end
+
+        it 'uses the read preference passed to the method' do
+          expect(result).to eq(10)
+        end
+      end
+
+      context 'when no read preference argument is provided' do
+
+        before do
+          allow(view.collection.client.cluster).to receive(:single?).and_return(false)
+        end
+
+        let(:result) do
+          view.count
+        end
+
+        it 'uses the read preference of the collection' do
+          expect {
+            result
+          }.to raise_exception(Mongo::Error::NoServerAvailable)
+        end
+      end
+
+      context 'when the collection does not have a read preference set' do
+
+        after do
+          client.close
+        end
+
+        let(:client) do
+          authorized_client.with(server_selection_timeout: 1)
+        end
+
+        before do
+          allow(view.collection.client.cluster).to receive(:single?).and_return(false)
+        end
+
+        let(:collection) do
+          client[authorized_collection.name]
+        end
+
+        let(:view) do
+          Mongo::Collection::View.new(collection, selector, options)
+        end
+
+        let(:result) do
+          read_preference = { :mode => :secondary, :tag_sets => [{ 'non' => 'existent' }] }
+          view.count(read: read_preference)
+        end
+
+        it 'uses the read preference passed to the method' do
+          expect {
+            result
+          }.to raise_exception(Mongo::Error::NoServerAvailable)
+        end
+      end
+    end
+
     it 'takes a max_time_ms option', if: write_command_enabled? do
       expect {
         view.count(max_time_ms: 0.1)
@@ -434,7 +521,7 @@ describe Mongo::Collection::View::Readable do
       end
     end
 
-    context 'when a read preference is specified' do
+    context 'when the collection has a read preference set' do
 
       let(:documents) do
         (1..3).map{ |i| { field: "test#{i}" }}
@@ -444,12 +531,93 @@ describe Mongo::Collection::View::Readable do
         authorized_collection.insert_many(documents)
       end
 
-      let(:distinct) do
-        view.distinct(:field, read: { mode: :secondary })
+      after do
+        client.close
       end
 
-      it 'returns the distinct values' do
-        expect(distinct.sort).to eq([ 'test1', 'test2', 'test3' ])
+      let(:client) do
+        # Set a timeout in case the collection read_preference does get used.
+        # Otherwise, the test will hang for 30 seconds.
+        authorized_client.with(server_selection_timeout: 1)
+      end
+
+      let(:read_preference) do
+        { :mode => :secondary, :tag_sets => [{ 'non' => 'existent' }] }
+      end
+
+      let(:collection) do
+        client[authorized_collection.name, read: read_preference]
+      end
+
+      let(:view) do
+        Mongo::Collection::View.new(collection, selector, options)
+      end
+
+      context 'when a read preference argument is provided' do
+
+        let(:distinct) do
+          view.distinct(:field, read: { mode: :primary })
+        end
+
+        it 'uses the read preference passed to the method' do
+          expect(distinct.sort).to eq([ 'test1', 'test2', 'test3' ])
+        end
+      end
+
+      context 'when no read preference argument is provided' do
+
+        before do
+          allow(view.collection.client.cluster).to receive(:single?).and_return(false)
+        end
+
+        let(:distinct) do
+          view.distinct(:field)
+        end
+
+        it 'uses the read preference of the collection' do
+          expect {
+            distinct
+          }.to raise_exception(Mongo::Error::NoServerAvailable)
+        end
+      end
+
+      context 'when the collection does not have a read preference set' do
+
+        let(:documents) do
+          (1..3).map{ |i| { field: "test#{i}" }}
+        end
+
+        before do
+          authorized_collection.insert_many(documents)
+          allow(view.collection.client.cluster).to receive(:single?).and_return(false)
+        end
+
+        after do
+          client.close
+        end
+
+        let(:client) do
+          authorized_client.with(server_selection_timeout: 1)
+        end
+
+        let(:collection) do
+          client[authorized_collection.name]
+        end
+
+        let(:view) do
+          Mongo::Collection::View.new(collection, selector, options)
+        end
+
+        let(:distinct) do
+          read_preference = { :mode => :secondary, :tag_sets => [{ 'non' => 'existent' }] }
+          view.distinct(:field, read: read_preference)
+        end
+
+        it 'uses the read preference passed to the method' do
+          expect {
+            distinct
+          }.to raise_exception(Mongo::Error::NoServerAvailable)
+        end
       end
     end
 

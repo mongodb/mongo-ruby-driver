@@ -1216,6 +1216,36 @@ describe Mongo::Collection do
         end
       end
     end
+
+    context 'when the collection has a read preference' do
+
+      before do
+        allow(collection.client.cluster).to receive(:single?).and_return(false)
+      end
+
+      after do
+        client.close
+      end
+
+      let(:client) do
+        authorized_client.with(server_selection_timeout: 0.5)
+      end
+
+      let(:collection) do
+        client[authorized_collection.name,
+               read: { :mode => :secondary, :tag_sets => [{ 'non' => 'existent' }] }]
+      end
+
+      let(:result) do
+        collection.parallel_scan(2)
+      end
+
+      it 'uses that read preference' do
+        expect {
+          result
+        }.to raise_exception(Mongo::Error::NoServerAvailable)
+      end
+    end
   end
 
   describe '#replace_one' do
