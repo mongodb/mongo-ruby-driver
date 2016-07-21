@@ -117,7 +117,7 @@ module Mongo
       # @since 2.0.0
       #
       # @deprecated This setting is now taken from the cluster options when a server is selected.
-      #   Will be removed in next major release.
+      #   Will be removed in 3.0.
       def server_selection_timeout
         @server_selection_timeout ||=
           (options[:server_selection_timeout] || ServerSelector::SERVER_SELECTION_TIMEOUT)
