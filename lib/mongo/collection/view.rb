@@ -132,7 +132,7 @@ module Mongo
       def initialize(collection, filter = {}, options = {})
         validate_doc!(filter)
         @collection = collection
-        parse_parameters!(BSON::Document.new(filter.freeze), BSON::Document.new(options.freeze))
+        parse_parameters!(BSON::Document.new(filter), BSON::Document.new(options))
       end
 
       # Get a human-readable string representation of +View+.
@@ -159,8 +159,8 @@ module Mongo
       def parse_parameters!(filter, options)
         query = filter.delete(QUERY)
         modifiers = (filter || {}).merge(options.delete(MODIFIERS) || {})
-        @filter = query || filter
-        @options = Builder::Modifiers.map_driver_options(modifiers).merge!(options)
+        @filter = (query || filter).freeze
+        @options = Builder::Modifiers.map_driver_options(modifiers).merge!(options).freeze
       end
 
       def new(options)

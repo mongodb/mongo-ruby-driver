@@ -246,6 +246,16 @@ describe Mongo::Collection::View do
       it 'parses standard options' do
         expect(view.options).to eq(options)
       end
+
+      it 'only freezes the view filter, not the user filter' do
+        expect(view.filter.frozen?).to be(true)
+        expect(filter.frozen?).to be(false)
+      end
+
+      it 'only freezes the view options, not the user options' do
+        expect(view.options.frozen?).to be(true)
+        expect(options.frozen?).to be(false)
+      end
     end
 
     context 'when the filter contains modifiers' do
