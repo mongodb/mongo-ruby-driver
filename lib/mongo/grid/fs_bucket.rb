@@ -100,11 +100,14 @@ module Mongo
       # @return [ Grid::File ] The file.
       #
       # @since 2.0.0
+      #
+      # @deprecated Please use #find instead with a limit of -1.
+      #   Will be removed in version 3.0.
       def find_one(selector = nil)
         file_info = files_collection.find(selector).first
         return nil unless file_info
         chunks = chunks_collection.find(:files_id => file_info[:_id]).sort(:n => 1)
-        Grid::File.new(chunks.to_a, file_info)
+        Grid::File.new(chunks.to_a, Options::Mapper.transform(file_info, Grid::File::Info::MAPPINGS.invert))
       end
 
       # Insert a single file into the GridFS.
@@ -117,6 +120,9 @@ module Mongo
       # @return [ BSON::ObjectId ] The file id.
       #
       # @since 2.0.0
+      #
+      # @deprecated Please use #upload_from_stream or #open_upload_stream instead.
+      #   Will be removed in version 3.0.
       def insert_one(file)
         @indexes ||= ensure_indexes!
         chunks_collection.insert_many(file.chunks)

@@ -21,6 +21,9 @@ module Mongo
     # A representation of a file in the database.
     #
     # @since 2.0.0
+    #
+    # @deprecated Please use the 'stream' API on a FSBucket instead.
+    #   Will be removed in driver version 3.0.
     class File
       extend Forwardable
 
@@ -68,7 +71,8 @@ module Mongo
       #
       # @since 2.0.0
       def initialize(data, options = {})
-        @info = Info.new(options.merge(:length => data.size))
+        options = options.merge(:length => data.size) unless options[:length]
+        @info = Info.new(options)
         initialize_chunks!(data)
       end
 

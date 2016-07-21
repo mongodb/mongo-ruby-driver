@@ -19,6 +19,9 @@ module Mongo
       # Encapsulates behaviour around GridFS files collection file document.
       #
       # @since 2.0.0
+      #
+      # @deprecated Please use the 'stream' API on a FSBucket instead.
+      #   Will be removed in driver version 3.0.
       class Info
 
         # Name of the files collection.

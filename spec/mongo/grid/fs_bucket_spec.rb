@@ -221,8 +221,21 @@ describe Mongo::Grid::FSBucket do
       fs.find_one(:filename => 'test.txt')
     end
 
+    let(:from_db_upload_date) do
+      from_db.info.upload_date.strftime("%Y-%m-%d %H:%M:%S")
+    end
+
+    let(:file_info_upload_date) do
+      file.info.upload_date.strftime("%Y-%m-%d %H:%M:%S")
+    end
+
     it 'returns the assembled file from the db' do
       expect(from_db.filename).to eq(file.info.filename)
+    end
+
+    it 'maps the file info correctly' do
+      expect(from_db.info.length).to eq(file.info.length)
+      expect(from_db_upload_date).to eq(file_info_upload_date)
     end
   end
 
