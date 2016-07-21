@@ -268,6 +268,7 @@ module Mongo
     # @option options [ Integer ] :limit The maximum number of documents to count.
     # @option options [ Integer ] :max_time_ms The maximum amount of time to allow the command to run.
     # @option options [ Integer ] :skip The number of documents to skip before counting.
+    # @option options [ Hash ] :read The read preference options.
     #
     # @return [ Integer ] The document count.
     #
@@ -286,6 +287,7 @@ module Mongo
     # @param [ Hash ] options The distinct command options.
     #
     # @option options [ Integer ] :max_time_ms The maximum amount of time to allow the command to run.
+    # @option options [ Hash ] :read The read preference options.
     #
     # @return [ Array<Object> ] The list of distinct values.
     #
