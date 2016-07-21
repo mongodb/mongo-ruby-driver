@@ -192,4 +192,32 @@ describe Mongo::Server::ConnectionPool do
       end
     end
   end
+
+  context 'when the connection does not finish authenticating before the thread is killed' do
+
+    let(:server) do
+      Mongo::Server.new(address, cluster, monitoring, listeners, options)
+    end
+
+    let!(:pool) do
+      described_class.get(server)
+    end
+
+    let(:options) do
+      { user: ROOT_USER.name, password: ROOT_USER.password }.merge(TEST_OPTIONS).merge(max_pool_size: 1)
+    end
+
+    before do
+     t = Thread.new {
+        # Kill the thread when it's authenticating
+        allow(Mongo::Auth).to receive(:get) { t.kill }
+        pool.with_connection { |c| c.send(:ensure_connected) { |socket| socket } }
+      }
+      t.join
+    end
+
+    it 'disconnects the socket' do
+      expect(pool.checkout.send(:socket)).to be_nil
+    end
+  end
 end
