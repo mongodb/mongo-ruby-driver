@@ -120,6 +120,7 @@ module Mongo
         # @option options :limit [ Integer ] Max number of docs to return.
         # @option options :max_time_ms [ Integer ] The maximum amount of time to allow the
         #   command to run.
+        # @option options [ Hash ] :read The read preference options.
         #
         # @return [ Integer ] The document count.
         #
@@ -147,7 +148,7 @@ module Mongo
         #
         # @option options :max_time_ms [ Integer ] The maximum amount of time to allow the
         #   command to run.
-        # @option options :read [ Hash ] The read preference for this command.
+        # @option options [ Hash ] :read The read preference options.
         #
         # @return [ Array<Object> ] The list of distinct values.
         #
