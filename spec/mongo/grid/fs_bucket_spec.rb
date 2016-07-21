@@ -51,7 +51,7 @@ describe Mongo::Grid::FSBucket do
       context 'when a read preference is set' do
 
         let(:options) do
-          { read: { mode: :secondary, server_selection_timeout: 0.1 } }
+          { read: { mode: :secondary } }
         end
 
         let(:read_pref) do

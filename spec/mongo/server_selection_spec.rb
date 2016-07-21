@@ -57,12 +57,12 @@ describe 'Server Selection' do
 
       let(:server_selector) do
         Mongo::ServerSelector.get(:mode => spec.read_preference['mode'],
-                                  :tag_sets => spec.read_preference['tag_sets'],
-                                  :server_selection_timeout => 1)
+                                  :tag_sets => spec.read_preference['tag_sets'])
       end
 
       before do
         allow(cluster).to receive(:servers).and_return(candidate_servers)
+        allow(cluster).to receive(:options).and_return(:server_selection_timeout: 0.2)
         allow(cluster).to receive(:scan!).and_return(true)
       end
 

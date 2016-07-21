@@ -135,12 +135,8 @@ describe Mongo::Collection do
           Mongo::Client.new(ADDRESSES, server_selection_timeout: 2)
         end
 
-        let(:server_selection_timeout) do
-          new_collection.read_preference.server_selection_timeout
-        end
-
-        it 'keeps the server_selection_timeout setting from client' do
-          expect(server_selection_timeout).to eq(client.options[:server_selection_timeout])
+        it 'passes the the server_selection_timeout to the cluster' do
+          expect(client.cluster.options[:server_selection_timeout]).to eq(client.options[:server_selection_timeout])
         end
       end
 
@@ -161,16 +157,12 @@ describe Mongo::Collection do
           Mongo::Client.new(ADDRESSES, read: { mode: :primary_preferred }, server_selection_timeout: 2)
         end
 
-        let(:server_selection_timeout) do
-          new_collection.read_preference.server_selection_timeout
-        end
-
         it 'sets the new read options on the new collection' do
           expect(new_collection.read_preference).to eq(Mongo::ServerSelector.get(new_options[:read]))
         end
 
-        it 'keeps the server_selection_timeout setting from client' do
-          expect(server_selection_timeout).to eq(client.options[:server_selection_timeout])
+        it 'passes the server_selection_timeout setting to the cluster' do
+          expect(client.cluster.options[:server_selection_timeout]).to eq(client.options[:server_selection_timeout])
         end
       end
     end
@@ -228,12 +220,8 @@ describe Mongo::Collection do
           Mongo::Client.new(ADDRESSES, server_selection_timeout: 2)
         end
 
-        let(:server_selection_timeout) do
-          new_collection.read_preference.server_selection_timeout
-        end
-
-        it 'keeps the server_selection_timeout setting from client' do
-          expect(server_selection_timeout).to eq(client.options[:server_selection_timeout])
+        it 'passes the server_selection_timeout setting to the cluster' do
+          expect(client.cluster.options[:server_selection_timeout]).to eq(client.options[:server_selection_timeout])
         end
       end
 
@@ -1214,6 +1202,36 @@ describe Mongo::Collection do
             result
           }.to raise_error(Mongo::Error::OperationFailure)
         end
+      end
+    end
+
+    context 'when the collection has a read preference', unless: sharded? do
+
+      before do
+        allow(collection.client.cluster).to receive(:single?).and_return(false)
+      end
+
+      after do
+        client.close
+      end
+
+      let(:client) do
+        authorized_client.with(server_selection_timeout: 0.2)
+      end
+
+      let(:collection) do
+        client[authorized_collection.name,
+               read: { :mode => :secondary, :tag_sets => [{ 'non' => 'existent' }] }]
+      end
+
+      let(:result) do
+        collection.parallel_scan(2)
+      end
+
+      it 'uses that read preference' do
+        expect {
+          result
+        }.to raise_exception(Mongo::Error::NoServerAvailable)
       end
     end
   end
