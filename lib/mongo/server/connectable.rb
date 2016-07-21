@@ -86,8 +86,8 @@ module Mongo
 
       def ensure_connected
         ensure_same_process!
-        connect!
         begin
+          connect!
           result = yield socket
           success = true
           result
