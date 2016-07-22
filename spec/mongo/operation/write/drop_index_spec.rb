@@ -23,7 +23,7 @@ describe Mongo::Operation::Write::DropIndex do
       end
 
       let(:response) do
-        operation.execute(authorized_primary.context)
+        operation.execute(authorized_primary)
       end
 
       it 'removes the index' do
@@ -43,7 +43,7 @@ describe Mongo::Operation::Write::DropIndex do
 
       it 'raises an exception' do
         expect {
-          operation.execute(authorized_primary.context)
+          operation.execute(authorized_primary)
         }.to raise_error(Mongo::Error::OperationFailure)
       end
     end

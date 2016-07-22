@@ -43,13 +43,13 @@ module Mongo
         # @example Execute the operation.
         #   operation.execute(context)
         #
-        # @param [ Mongo::Server::Context ] context The context for this operation.
+        # @param [ Mongo::Server ] server The server to send this operation to.
         #
         # @return [ Result ] The result of the operation.
         #
         # @since 2.0.0
-        def execute(context)
-          execute_write_command(context)
+        def execute(server)
+          execute_write_command(server)
         end
 
         private

@@ -43,7 +43,7 @@ describe Mongo::Operation::Commands::Command do
     context 'when the command succeeds' do
 
       let(:response) do
-        op.execute(authorized_primary.context)
+        op.execute(authorized_primary)
       end
 
       it 'returns the reponse' do
@@ -59,7 +59,7 @@ describe Mongo::Operation::Commands::Command do
 
       it 'raises an exception' do
         expect {
-          op.execute(authorized_primary.context)
+          op.execute(authorized_primary)
         }.to raise_error(Mongo::Error::OperationFailure)
       end
     end
@@ -72,7 +72,7 @@ describe Mongo::Operation::Commands::Command do
 
       it 'raises an error' do
         expect {
-          op.execute(authorized_primary.context)
+          op.execute(authorized_primary)
         }.to raise_error(Mongo::Error::MaxBSONSize)
       end
     end

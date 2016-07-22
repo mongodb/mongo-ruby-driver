@@ -35,7 +35,7 @@ describe Mongo::Operation::Write::UpdateUser do
     context 'when user update was successful' do
 
       let!(:response) do
-        operation.execute(root_authorized_primary.context)
+        operation.execute(root_authorized_primary)
       end
 
       it 'updates the user in the database' do

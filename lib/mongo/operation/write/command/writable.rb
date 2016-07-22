@@ -28,13 +28,13 @@ module Mongo
           # The context gets a connection on which the operation
           # is sent in the block.
           #
-          # @param [ Mongo::Server::Context ] context The context for this operation.
+          # @param [ Mongo::Server ] server The server to send this operation to.
           #
           # @return [ Result ] The operation response, if there is one.
           #
           # @since 2.0.0
-          def execute(context)
-            context.with_connection do |connection|
+          def execute(server)
+            server.with_connection do |connection|
               connection.dispatch([ message ], operation_id)
             end
           end

@@ -44,7 +44,7 @@ module Mongo
           Operation::Write::CreateUser.new(
             user: user,
             db_name: database.name
-          ).execute(next_primary.context)
+          ).execute(next_primary)
         end
 
         # Initialize the new user view.
@@ -73,7 +73,7 @@ module Mongo
           Operation::Write::RemoveUser.new(
             user_name: name,
             db_name: database.name
-          ).execute(next_primary.context)
+          ).execute(next_primary)
         end
 
         # Update a user in the database.
@@ -92,7 +92,7 @@ module Mongo
           Operation::Write::UpdateUser.new(
             user: user,
             db_name: database.name
-          ).execute(next_primary.context)
+          ).execute(next_primary)
         end
 
         # Get info for a particular user in the database.
@@ -115,7 +115,7 @@ module Mongo
           Operation::Commands::UserQuery.new(
             user_name: name,
             db_name: database.name
-          ).execute(next_primary.context)
+          ).execute(next_primary)
         end
 
         def generate(user, options)

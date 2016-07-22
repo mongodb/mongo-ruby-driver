@@ -1,16 +1,19 @@
 require 'spec_helper'
 
 describe Mongo::Operation::Write::Bulk::Insert do
-  include_context 'operation'
 
   let(:documents) do
     [{ :name => 'test' }]
   end
 
+  let(:write_concern) do
+    Mongo::WriteConcern.get(WRITE_CONCERN)
+  end
+
   let(:spec) do
     { documents: documents,
-      db_name: db_name,
-      coll_name: coll_name,
+      db_name: authorized_collection.database.name,
+      coll_name: authorized_collection.name,
       write_concern: write_concern
     }
   end
@@ -84,7 +87,7 @@ describe Mongo::Operation::Write::Bulk::Insert do
       end
 
       let(:inserted_ids) do
-        op.execute(authorized_primary.context).inserted_ids
+        op.execute(authorized_primary).inserted_ids
       end
 
       let(:collection_ids) do
@@ -113,7 +116,7 @@ describe Mongo::Operation::Write::Bulk::Insert do
       context 'when the insert succeeds' do
 
         let(:response) do
-          op.execute(authorized_primary.context)
+          op.execute(authorized_primary)
         end
 
         it 'inserts the documents into the database', if: write_command_enabled? do
@@ -135,7 +138,7 @@ describe Mongo::Operation::Write::Bulk::Insert do
         end
 
         let(:response) do
-          op.execute(authorized_primary.context)
+          op.execute(authorized_primary)
         end
 
         it 'inserts the documents into the database', if: write_command_enabled? do
@@ -156,8 +159,8 @@ describe Mongo::Operation::Write::Bulk::Insert do
 
       let(:spec) do
         { documents: documents,
-          db_name: db_name,
-          coll_name: coll_name,
+          db_name: authorized_collection.database.name,
+          coll_name: authorized_collection.name,
           write_concern: write_concern,
           ordered: true
         }
@@ -176,7 +179,7 @@ describe Mongo::Operation::Write::Bulk::Insert do
         context 'when the insert fails' do
     
           it 'aborts after first error' do
-            failing_insert.execute(authorized_primary.context)
+            failing_insert.execute(authorized_primary)
             expect(authorized_collection.find.count).to eq(1)
           end
         end
@@ -191,7 +194,7 @@ describe Mongo::Operation::Write::Bulk::Insert do
         context 'when the insert fails' do
 
           it 'aborts after first error' do
-            failing_insert.execute(authorized_primary.context)
+            failing_insert.execute(authorized_primary)
             expect(authorized_collection.find.count).to eq(1)
           end
         end
@@ -206,8 +209,8 @@ describe Mongo::Operation::Write::Bulk::Insert do
 
       let(:spec) do
         { documents: documents,
-          db_name: db_name,
-          coll_name: coll_name,
+          db_name: authorized_collection.database.name,
+          coll_name: authorized_collection.name,
           write_concern: write_concern,
           ordered: false
         }
@@ -219,14 +222,10 @@ describe Mongo::Operation::Write::Bulk::Insert do
 
       context 'when write concern is acknowledged' do
 
-        let(:write_concern) do
-          Mongo::WriteConcern.get(w: 1)
-        end
-
         context 'when the insert fails' do
     
           it 'does not abort after first error' do
-            failing_insert.execute(authorized_primary.context)
+            failing_insert.execute(authorized_primary)
             expect(authorized_collection.find.count).to eq(2)
           end
         end
@@ -241,7 +240,7 @@ describe Mongo::Operation::Write::Bulk::Insert do
         context 'when the insert fails' do
 
           it 'does not after first error' do
-            failing_insert.execute(authorized_primary.context)
+            failing_insert.execute(authorized_primary)
             expect(authorized_collection.find.count).to eq(2)
           end
         end

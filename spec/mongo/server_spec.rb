@@ -116,26 +116,6 @@ describe Mongo::Server do
     end
   end
 
-  describe '#context' do
-
-    let(:server) do
-      described_class.new(address, cluster, monitoring, listeners, TEST_OPTIONS)
-    end
-
-    let(:context) do
-      server.context
-    end
-
-    after do
-      expect(cluster).to receive(:pool).with(server).and_return(pool)
-      server.disconnect!
-    end
-
-    it 'returns a new server context' do
-      expect(context.server).to eq(server)
-    end
-  end
-
   describe '#disconnect!' do
 
     let(:server) do

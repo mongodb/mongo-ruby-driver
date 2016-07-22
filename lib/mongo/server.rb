@@ -85,9 +85,11 @@ module Mongo
     # @example Get the server context.
     #   server.context
     #
-    # @return [ Mongo::Server::Context ] context The server context.
+    # @param [ Mongo::Server ] server The server to send this operation to.
     #
     # @since 2.0.0
+    #
+    # @deprecated Will be removed in version 3.0
     def context
       Context.new(self)
     end
@@ -102,7 +104,7 @@ module Mongo
     #
     # @since 2.1.0
     def connectable?
-      context.with_connection do |connection|
+      with_connection do |connection|
         connection.connectable?
       end
     end
@@ -211,6 +213,10 @@ module Mongo
     # @since 2.1.0
     def reconnect!
       monitor.restart! and true
+    end
+
+    def with_connection(&block)
+      pool.with_connection(&block)
     end
   end
 end

@@ -21,7 +21,7 @@ describe Mongo::Operation::Commands::Indexes do
     end
 
     let(:indexes) do
-      operation.execute(authorized_primary.context)
+      operation.execute(authorized_primary)
     end
 
     it 'returns the indexes for the collection' do

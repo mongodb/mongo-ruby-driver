@@ -38,24 +38,24 @@ module Mongo
         # The context gets a connection on which the operation
         # is sent in the block.
         #
-        # @param [ Mongo::Server::Context ] context The context for this operation.
+        # @param [ Mongo::Server ] server The server to send this operation to.
         #
         # @return [ Result ] The indexes operation response.
         #
         # @since 2.0.0
-        def execute(context)
-          if context.features.list_indexes_enabled?
-            ListIndexes.new(spec).execute(context)
+        def execute(server)
+          if server.features.list_indexes_enabled?
+            ListIndexes.new(spec).execute(server)
           else
-            execute_message(context)
+            execute_message(server)
           end
         end
 
         private
 
-        def execute_message(context)
-          context.with_connection do |connection|
-            Result.new(connection.dispatch([ message(context) ]))
+        def execute_message(server)
+          server.with_connection do |connection|
+            Result.new(connection.dispatch([ message(server) ]))
           end
         end
 

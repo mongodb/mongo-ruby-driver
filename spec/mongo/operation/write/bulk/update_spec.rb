@@ -1,7 +1,6 @@
 require 'spec_helper'
 
 describe Mongo::Operation::Write::Bulk::Update do
-  include_context 'operation'
 
   let(:documents) do
     [{ :q => { :foo => 1 },
@@ -12,11 +11,15 @@ describe Mongo::Operation::Write::Bulk::Update do
 
   let(:spec) do
     { updates: documents,
-      db_name: db_name,
-      coll_name: coll_name,
+      db_name: authorized_collection.database.name,
+      coll_name: authorized_collection.name,
       write_concern: write_concern,
       ordered: true
     }
+  end
+
+  let(:write_concern) do
+    Mongo::WriteConcern.get(WRITE_CONCERN)
   end
 
   let(:op) do
@@ -56,8 +59,8 @@ describe Mongo::Operation::Write::Bulk::Update do
 
         let(:other_spec) do
           { updates: other_docs,
-            db_name: db_name,
-            coll_name: coll_name,
+            db_name: authorized_collection.database.name,
+            coll_name: authorized_collection.name,
             write_concern: write_concern,
             ordered: true
           }
@@ -94,7 +97,7 @@ describe Mongo::Operation::Write::Bulk::Update do
         end
 
         it 'updates the document' do
-          op.execute(authorized_primary.context)
+          op.execute(authorized_primary)
           expect(authorized_collection.find(field: 'blah').count).to eq(1)
         end
       end
@@ -105,8 +108,8 @@ describe Mongo::Operation::Write::Bulk::Update do
       let(:update) do
         described_class.new({
           updates: documents,
-          db_name: db_name,
-          coll_name: coll_name,
+          db_name: authorized_collection.database.name,
+          coll_name: authorized_collection.name,
           write_concern: write_concern
         })
       end
@@ -118,7 +121,7 @@ describe Mongo::Operation::Write::Bulk::Update do
         end
 
         it 'updates the documents' do
-          op.execute(authorized_primary.context)
+          op.execute(authorized_primary)
           expect(authorized_collection.find(field: 'blah').count).to eq(2)
         end
       end
@@ -134,8 +137,8 @@ describe Mongo::Operation::Write::Bulk::Update do
 
       let(:spec) do
         { updates: documents,
-          db_name: db_name,
-          coll_name: coll_name,
+          db_name: authorized_collection.database.name,
+          coll_name: authorized_collection.name,
           write_concern: write_concern,
           ordered: true
         }
@@ -149,12 +152,8 @@ describe Mongo::Operation::Write::Bulk::Update do
 
         context 'when write concern is acknowledged' do
 
-          let(:write_concern) do
-            Mongo::WriteConcern.get(w: 1)
-          end
-
           it 'aborts after first error' do
-            failing_update.execute(authorized_primary.context)
+            failing_update.execute(authorized_primary)
             expect(authorized_collection.find(other: 'blah').count).to eq(0)
           end
         end
@@ -166,7 +165,7 @@ describe Mongo::Operation::Write::Bulk::Update do
           end
 
           it 'aborts after first error' do
-            failing_update.execute(authorized_primary.context)
+            failing_update.execute(authorized_primary)
             expect(authorized_collection.find(other: 'blah').count).to eq(0)
           end
         end
@@ -183,8 +182,8 @@ describe Mongo::Operation::Write::Bulk::Update do
 
       let(:spec) do
         { updates: documents,
-          db_name: db_name,
-          coll_name: coll_name,
+          db_name: authorized_collection.database.name,
+          coll_name: authorized_collection.name,
           write_concern: write_concern,
           ordered: false
         }
@@ -198,12 +197,8 @@ describe Mongo::Operation::Write::Bulk::Update do
 
         context 'when write concern is acknowledged' do
 
-          let(:write_concern) do
-            Mongo::WriteConcern.get(w: 1)
-          end
-
           it 'does not abort after first error' do
-            failing_update.execute(authorized_primary.context)
+            failing_update.execute(authorized_primary)
             expect(authorized_collection.find(other: 'blah').count).to eq(1)
           end
         end
@@ -215,7 +210,7 @@ describe Mongo::Operation::Write::Bulk::Update do
           end
 
           it 'does not abort after first error' do
-            failing_update.execute(authorized_primary.context)
+            failing_update.execute(authorized_primary)
             expect(authorized_collection.find(other: 'blah').count).to eq(1)
           end
         end

@@ -155,7 +155,7 @@ module Mongo
         :db_name => name,
         :options => { :limit => -1 },
         :read => preference
-      }).execute(server.context)
+      }).execute(server)
     end
 
     # Drop the database and all its associated information.

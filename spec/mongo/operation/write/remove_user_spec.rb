@@ -18,7 +18,7 @@ describe Mongo::Operation::Write::RemoveUser do
     context 'when user removal was successful' do
 
       let!(:response) do
-        operation.execute(root_authorized_primary.context)
+        operation.execute(root_authorized_primary)
       end
 
       it 'removes the user from the database' do
@@ -29,17 +29,17 @@ describe Mongo::Operation::Write::RemoveUser do
     context 'when removal was not successful' do
 
       before do
-        operation.execute(root_authorized_primary.context)
+        operation.execute(root_authorized_primary)
       end
 
       it 'raises an exception', if: write_command_enabled? do
         expect {
-          operation.execute(root_authorized_primary.context)
+          operation.execute(root_authorized_primary)
         }.to raise_error(Mongo::Error::OperationFailure)
       end
 
       it 'does not raise an exception', unless: write_command_enabled? do
-        expect(operation.execute(root_authorized_primary.context).written_count).to eq(0)
+        expect(operation.execute(root_authorized_primary).written_count).to eq(0)
       end
     end
   end

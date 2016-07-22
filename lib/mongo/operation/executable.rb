@@ -25,15 +25,15 @@ module Mongo
       # The context gets a connection on which the operation
       # is sent in the block.
       #
-      # @param [ Mongo::Server::Context ] context The context for this operation.
+      # @param [ Mongo::Server ] server The server to send this operation to.
       #
       # @return [ Result ] The operation response, if there is one.
       #
       # @since 2.0.0
-      def execute(context)
-        context.with_connection do |connection|
+      def execute(server)
+        server.with_connection do |connection|
           result_class = self.class.const_defined?(:Result, false) ? self.class::Result : Result
-          result_class.new(connection.dispatch([ message(context) ], operation_id)).validate!
+          result_class.new(connection.dispatch([ message(server) ], operation_id)).validate!
         end
       end
     end

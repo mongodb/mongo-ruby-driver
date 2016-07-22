@@ -99,7 +99,7 @@ describe Mongo::Operation::Write::Update do
         end
 
         let(:result) do
-          update.execute(authorized_primary.context)
+          update.execute(authorized_primary)
         end
 
         it 'updates the document' do
@@ -127,7 +127,7 @@ describe Mongo::Operation::Write::Update do
 
         it 'raises an exception' do
           expect {
-            update.execute(authorized_primary.context)
+            update.execute(authorized_primary)
           }.to raise_error(Mongo::Error::OperationFailure)
         end
       end
@@ -151,7 +151,7 @@ describe Mongo::Operation::Write::Update do
         end
 
         let(:result) do
-          update.execute(authorized_primary.context)
+          update.execute(authorized_primary)
         end
 
         it 'updates the documents' do
@@ -179,7 +179,7 @@ describe Mongo::Operation::Write::Update do
 
         it 'raises an exception' do
           expect {
-            update.execute(authorized_primary.context)
+            update.execute(authorized_primary)
           }.to raise_error(Mongo::Error::OperationFailure)
         end
       end
@@ -192,7 +192,7 @@ describe Mongo::Operation::Write::Update do
 
         it 'raises an error' do
           expect {
-            update.execute(authorized_primary.context)
+            update.execute(authorized_primary)
           }.to raise_error(Mongo::Error::MaxBSONSize)
         end
       end
@@ -204,7 +204,7 @@ describe Mongo::Operation::Write::Update do
         end
 
         let(:result) do
-          update.execute(authorized_primary.context)
+          update.execute(authorized_primary)
         end
 
         it 'inserts the document' do
@@ -241,7 +241,7 @@ describe Mongo::Operation::Write::Update do
       end
 
       let(:result) do
-        update.execute(authorized_primary.context)
+        update.execute(authorized_primary)
       end
 
       before do
