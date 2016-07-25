@@ -485,4 +485,94 @@ describe Mongo::Collection::View::MapReduce do
       expect(map_reduce.send(:map_reduce_spec)[:read]).to eq(read_preference)
     end
   end
+
+  context 'when collation is specified' do
+
+    let(:map) do
+      %Q{
+         function() {
+           emit(this.name, 1);
+        }}
+    end
+
+    let(:reduce) do
+      %Q{
+         function(key, values) {
+           return Array.sum(values);
+        }}
+    end
+
+    before do
+      authorized_collection.insert_many([ { name: 'bang' }, { name: 'bang' }])
+    end
+
+    let(:options) do
+      { collation: { locale: 'en_US', strength: 2 } }
+    end
+
+    let(:selector) do
+      { name: 'BANG' }
+    end
+
+    context 'when the server selected supports collations', if: collation_enabled? do
+
+      it 'applies the collation' do
+        expect(map_reduce.first['value']).to eq(2)
+      end
+    end
+
+    context 'when the server selected does not support collations', unless: collation_enabled? do
+
+      it 'raises an exception' do
+        expect {
+          map_reduce.to_a
+        }.to raise_exception(Mongo::Error::UnsupportedCollation)
+      end
+    end
+  end
+
+  context 'when the map reduce has a collation option' do
+
+    let(:map) do
+      %Q{
+         function() {
+           emit(this.name, 1);
+        }}
+    end
+
+    let(:reduce) do
+      %Q{
+         function(key, values) {
+           return Array.sum(values);
+        }}
+    end
+
+    before do
+      authorized_collection.insert_many([ { name: 'bang' }, { name: 'bang' }])
+    end
+
+    let(:options) do
+      { collation: { locale: 'en_US', strength: 2 } }
+    end
+
+    let(:selector) do
+      { name: 'BANG' }
+    end
+
+    context 'when the server selected supports collations', if: collation_enabled? do
+
+      it 'applies the collation' do
+        expect(map_reduce.first['value']).to eq(2)
+      end
+    end
+
+    context 'when the server selected does not support collations', unless: collation_enabled? do
+
+      it 'raises an exception' do
+        expect {
+          map_reduce.to_a
+        }.to raise_exception(Mongo::Error::UnsupportedCollation)
+      end
+    end
+  end
 end

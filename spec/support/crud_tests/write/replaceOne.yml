@@ -2,6 +2,7 @@ data:
     - {_id: 1, x: 11}
     - {_id: 2, x: 22}
     - {_id: 3, x: 33}
+    - {_id: 4, x: 'ping'}
 
 tests:
     -
@@ -9,7 +10,7 @@ tests:
         operation:
             name: "replaceOne"
             arguments:
-                filter: 
+                filter:
                     _id: {$gt: 1}
                 replacement: {x: 111}
 
@@ -36,13 +37,33 @@ tests:
                     - {_id: 1, x: 111}
                     - {_id: 2, x: 22}
                     - {_id: 3, x: 33}
+                    - {_id: 4, x: 'ping'}
+    -
+        description: "ReplaceOne when one document matches with collation"
+        operation:
+            name: "replaceOne"
+            arguments:
+                filter: {x: 'PING'}
+                replacement: {_id: 4, x: 'pong'}
+                collation: {locale: 'en_US', strength: 2}
+
+        outcome:
+            result:
+                matchedCount: 1
+                modifiedCount: 1
+            collection:
+                data:
+                    - {_id: 1, x: 11}
+                    - {_id: 2, x: 22}
+                    - {_id: 3, x: 33}
+                    - {_id: 4, x: 'pong'}
     -
         description: "ReplaceOne when no documents match"
         operation:
             name: "replaceOne"
             arguments:
-                filter: {_id: 4}
-                replacement: {_id: 4, x: 1}
+                filter: {_id: 5}
+                replacement: {_id: 5, x: 1}
 
         outcome:
             result:
@@ -53,12 +74,13 @@ tests:
                     - {_id: 1, x: 11}
                     - {_id: 2, x: 22}
                     - {_id: 3, x: 33}
+                    - {_id: 4, x: 'ping'}
     -
         description: "ReplaceOne with upsert when no documents match without an id specified"
         operation:
             name: "replaceOne"
             arguments:
-                filter: {_id: 4}
+                filter: {_id: 5}
                 replacement: {x: 1}
                 upsert: true
 
@@ -66,31 +88,33 @@ tests:
             result:
                 matchedCount: 0
                 modifiedCount: 0
-                upsertedId: 4
+                upsertedId: 5
             collection:
                 data:
                     - {_id: 1, x: 11}
                     - {_id: 2, x: 22}
                     - {_id: 3, x: 33}
-                    - {_id: 4, x: 1}
+                    - {_id: 4, x: 'ping'}
+                    - {_id: 5, x: 1}
     -
         description: "ReplaceOne with upsert when no documents match with an id specified"
         operation:
             name: "replaceOne"
             arguments:
-                filter: {_id: 4}
-                replacement: {_id: 4, x: 1}
+                filter: {_id: 5}
+                replacement: {_id: 5, x: 1}
                 upsert: true
 
         outcome:
             result:
                 matchedCount: 0
                 modifiedCount: 0
-                upsertedId: 4
+                upsertedId: 5
             collection:
                 data:
                     - {_id: 1, x: 11}
                     - {_id: 2, x: 22}
                     - {_id: 3, x: 33}
-                    - {_id: 4, x: 1}
+                    - {_id: 4, x: 'ping'}
+                    - {_id: 5, x: 1}
   

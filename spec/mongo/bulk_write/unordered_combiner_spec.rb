@@ -5,7 +5,7 @@ describe Mongo::BulkWrite::UnorderedCombiner do
   describe '#combine' do
 
     let(:combiner) do
-      described_class.new(requests)
+      described_class.new(requests, double('server'))
     end
 
     context 'when provided a series of delete one' do

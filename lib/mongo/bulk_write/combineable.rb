@@ -25,6 +25,9 @@ module Mongo
       # @return [ Array<Hash, BSON::Document> ] requests The provided requests.
       attr_reader :requests
 
+      # @return [ Mongo::Server ] server The server receiving the requests.
+      attr_reader :server
+
       # Create the ordered combiner.
       #
       # @api private
@@ -35,8 +38,9 @@ module Mongo
       # @param [ Array<Hash, BSON::Document> ] requests The bulk requests.
       #
       # @since 2.1.0
-      def initialize(requests)
+      def initialize(requests, server)
         @requests = requests
+        @server = server
       end
 
       private

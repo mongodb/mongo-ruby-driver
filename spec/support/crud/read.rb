@@ -28,7 +28,8 @@ module Mongo
         ARGUMENT_MAP = { :sort => 'sort',
                          :skip => 'skip',
                          :batch_size => 'batchSize',
-                         :limit => 'limit'
+                         :limit => 'limit',
+                         :collation => 'collation'
                        }
 
         # The operation name.

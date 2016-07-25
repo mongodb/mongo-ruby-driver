@@ -64,7 +64,8 @@ module Mongo
         :text_version => :textIndexVersion,
         :unique => :unique,
         :version => :v,
-        :weights => :weights
+        :weights => :weights,
+        :collation => :collation
       }.freeze
 
       # Drop an index by its name.
@@ -147,12 +148,13 @@ module Mongo
       #
       # @since 2.0.0
       def create_many(*models)
+        server = next_primary
         spec = {
-                indexes: normalize_models(models.flatten),
+                indexes: normalize_models(models.flatten, server),
                 db_name: database.name,
                 coll_name: collection.name
                }
-        server = next_primary
+
         spec[:write_concern] = write_concern if server.features.collation_enabled?
         Operation::Write::CreateIndex.new(spec).execute(server)
       end
@@ -249,8 +251,8 @@ module Mongo
         Options::Mapper.transform_keys_to_strings(spec)
       end
 
-      def normalize_models(models)
-        with_generated_names(models).map do |model|
+      def normalize_models(models, server)
+        with_generated_names(models, server).map do |model|
           Options::Mapper.transform(model, OPTIONS)
         end
       end
@@ -259,12 +261,17 @@ module Mongo
         initial_query_op.execute(server)
       end
 
-      def with_generated_names(models)
+      def with_generated_names(models, server)
         models.dup.each do |model|
+          validate_collation!(model, server)
           unless model[:name]
             model[:name] = index_name(model[:key])
           end
         end
+      end
+
+      def validate_collation!(model, server)
+        raise Error::UnsupportedCollation.new if model[:collation] && !server.features.collation_enabled?
       end
     end
   end

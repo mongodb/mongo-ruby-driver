@@ -35,7 +35,10 @@ module Mongo
     attr_reader :options
 
     # Delegate various methods to the collection.
-    def_delegators :@collection, :database, :cluster, :next_primary
+    def_delegators :@collection,
+                   :database,
+                   :cluster,
+                   :next_primary
 
     def_delegators :database, :client
 
@@ -52,7 +55,7 @@ module Mongo
       result_combiner = ResultCombiner.new
       write_with_retry do
         server = next_primary
-        operations.each do |operation|
+        operations(server).each do |operation|
           execute_operation(
             operation.keys.first,
             operation.values.first,
@@ -153,11 +156,11 @@ module Mongo
       end
     end
 
-    def operations
+    def operations(server)
       if ordered?
-        OrderedCombiner.new(requests).combine
+        OrderedCombiner.new(requests, server).combine
       else
-        UnorderedCombiner.new(requests).combine
+        UnorderedCombiner.new(requests, server).combine
       end
     end
 

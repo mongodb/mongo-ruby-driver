@@ -47,7 +47,8 @@ module Mongo
                         :return_document => 'returnDocument',
                         :upsert => 'upsert',
                         :ordered => 'ordered',
-                        :write_concern => 'writeConcern'
+                        :write_concern => 'writeConcern',
+                        :collation => 'collation'
                        }
 
         # Operations that need a check if results on < 2.6 will match.
@@ -120,12 +121,12 @@ module Mongo
         end
 
         def delete_many(collection)
-          result = collection.delete_many(filter)
+          result = collection.delete_many(filter, options)
           { 'deletedCount' => result.deleted_count }
         end
 
         def delete_one(collection)
-          result = collection.delete_one(filter)
+          result = collection.delete_one(filter, options)
           { 'deletedCount' => result.deleted_count }
         end
 
@@ -176,6 +177,10 @@ module Mongo
           ARGUMENT_MAP.reduce({}) do |opts, (key, value)|
             arguments.key?(value) ? opts.merge!(key => send(key)) : opts
           end
+        end
+
+        def collation
+          arguments['collation']
         end
 
         def replacement

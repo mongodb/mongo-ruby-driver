@@ -12,6 +12,7 @@ describe Mongo::BulkWrite do
   end
 
   let(:collection_with_validator) do
+    begin; authorized_client[:validating].drop; rescue; end
     authorized_client[:validating,
                       :validator => { :a => { '$exists' => true } }].tap do |c|
       c.create
@@ -20,6 +21,10 @@ describe Mongo::BulkWrite do
 
   let(:collection_invalid_write_concern) do
     authorized_collection.client.with(write: { w: (WRITE_CONCERN[:w] + 1) })[authorized_collection.name]
+  end
+
+  let(:collation) do
+    { locale: 'en_US', strength: 2 }
   end
 
   describe '#execute' do
@@ -205,6 +210,64 @@ describe Mongo::BulkWrite do
                 }.to raise_error(Mongo::Error::OperationFailure)
               end
             end
+
+            context 'when the write has a collation specified' do
+
+              before do
+                authorized_collection.insert_one(name: 'bang')
+              end
+
+              let(:requests) do
+                [{ delete_one: { filter: { name: 'BANG' }, collation: collation } }]
+              end
+
+              context 'when the server selected supports collations', if: collation_enabled? do
+
+                let!(:result) do
+                  bulk_write.execute
+                end
+
+                it 'applies the collation' do
+                  expect(authorized_collection.find(name: 'bang').count).to eq(0)
+                end
+
+                it 'reports the deleted count' do
+                  expect(result.deleted_count).to eq(1)
+                end
+              end
+
+              context 'when the server selected does not support collations', unless: collation_enabled? do
+
+                it 'raises an exception' do
+                  expect {
+                    bulk_write.execute
+                  }.to raise_exception(Mongo::Error::UnsupportedCollation)
+                end
+              end
+            end
+
+            context 'when the collection does not have a collation specified' do
+
+              before do
+                authorized_collection.insert_one(name: 'bang')
+              end
+
+              let(:requests) do
+                [{ delete_one: { filter: { name: 'BANG' }}}]
+              end
+
+              let!(:result) do
+                bulk_write.execute
+              end
+
+              it 'does not apply the collation' do
+                expect(authorized_collection.find(name: 'bang').count).to eq(1)
+              end
+
+              it 'reports the deleted count' do
+                expect(result.deleted_count).to eq(0)
+              end
+            end
           end
 
           context 'when multiple documents match delete selector' do
@@ -273,6 +336,68 @@ describe Mongo::BulkWrite do
               end
             end
           end
+
+          context 'when the write has a collation specified' do
+
+            before do
+              authorized_collection.insert_one(name: 'bang')
+              authorized_collection.insert_one(name: 'doink')
+            end
+
+            let(:requests) do
+              [{ delete_one: { filter: { name: 'BANG' }, collation: collation }},
+               { delete_one: { filter: { name: 'DOINK' }, collation: collation }}]
+            end
+
+            context 'when the server selected supports collations', if: collation_enabled? do
+
+              let!(:result) do
+                bulk_write.execute
+              end
+
+              it 'applies the collation' do
+                expect(authorized_collection.find(name: { '$in' => ['bang', 'doink']}).count).to eq(0)
+              end
+
+              it 'reports the deleted count' do
+                expect(result.deleted_count).to eq(2)
+              end
+            end
+
+            context 'when the server selected does not support collations', unless: collation_enabled? do
+
+              it 'raises an exception' do
+                expect {
+                  bulk_write.execute
+                }.to raise_exception(Mongo::Error::UnsupportedCollation)
+              end
+            end
+          end
+
+          context 'when the write does not have a collation specified' do
+
+            before do
+              authorized_collection.insert_one(name: 'bang')
+              authorized_collection.insert_one(name: 'doink')
+            end
+
+            let(:requests) do
+              [{ delete_one: { filter: { name: 'BANG' }}},
+               { delete_one: { filter: { name: 'DOINK' }}}]
+            end
+
+            let!(:result) do
+              bulk_write.execute
+            end
+
+            it 'does not apply the collation' do
+              expect(authorized_collection.find(name: { '$in' => ['bang', 'doink']}).count).to eq(2)
+            end
+
+            it 'reports the deleted count' do
+              expect(result.deleted_count).to eq(0)
+            end
+          end
         end
 
         context 'when provided a single delete many' do
@@ -312,6 +437,66 @@ describe Mongo::BulkWrite do
                   bulk_write_invalid_write_concern.execute
                 }.to raise_error(Mongo::Error::OperationFailure)
               end
+            end
+          end
+
+          context 'when the write has a collation specified' do
+
+            before do
+              authorized_collection.insert_one(name: 'bang')
+              authorized_collection.insert_one(name: 'bang')
+            end
+
+            let(:requests) do
+              [{ delete_many: { filter: { name: 'BANG' }, collation: collation }}]
+            end
+
+            context 'when the server selected supports collations', if: collation_enabled? do
+
+              let!(:result) do
+                bulk_write.execute
+              end
+
+              it 'applies the collation' do
+                expect(authorized_collection.find(name: 'bang').count).to eq(0)
+              end
+
+              it 'reports the deleted count' do
+                expect(result.deleted_count).to eq(2)
+              end
+            end
+
+            context 'when the server selected does not support collations', unless: collation_enabled? do
+
+              it 'raises an exception' do
+                expect {
+                  bulk_write.execute
+                }.to raise_exception(Mongo::Error::UnsupportedCollation)
+              end
+            end
+          end
+
+          context 'when the collection does not have a collation specified' do
+
+            before do
+              authorized_collection.insert_one(name: 'bang')
+              authorized_collection.insert_one(name: 'bang')
+            end
+
+            let(:requests) do
+              [{ delete_many: { filter: { name: 'BANG' }}}]
+            end
+
+            let!(:result) do
+              bulk_write.execute
+            end
+
+            it 'does not apply the collation' do
+              expect(authorized_collection.find(name: 'bang').count).to eq(2)
+            end
+
+            it 'reports the deleted count' do
+              expect(result.deleted_count).to eq(0)
             end
           end
         end
@@ -361,6 +546,70 @@ describe Mongo::BulkWrite do
               end
             end
           end
+
+          context 'when the write has a collation specified' do
+
+            before do
+              authorized_collection.insert_one(name: 'bang')
+              authorized_collection.insert_one(name: 'bang')
+              authorized_collection.insert_one(name: 'doink')
+            end
+
+            let(:requests) do
+              [{ delete_many: { filter: { name: 'BANG' },  collation: collation }},
+               { delete_many: { filter: { name: 'DOINK' },  collation: collation }}]
+            end
+
+            context 'when the server selected supports collations', if: collation_enabled? do
+
+              let!(:result) do
+                bulk_write.execute
+              end
+
+              it 'applies the collation' do
+                expect(authorized_collection.find(name: { '$in' => ['bang', 'doink'] }).count).to eq(0)
+              end
+
+              it 'reports the deleted count' do
+                expect(result.deleted_count).to eq(3)
+              end
+            end
+
+            context 'when the server selected does not support collations', unless: collation_enabled? do
+
+              it 'raises an exception' do
+                expect {
+                  bulk_write.execute
+                }.to raise_exception(Mongo::Error::UnsupportedCollation)
+              end
+            end
+          end
+
+          context 'when the collection does not have a collation specified' do
+
+            before do
+              authorized_collection.insert_one(name: 'bang')
+              authorized_collection.insert_one(name: 'bang')
+              authorized_collection.insert_one(name: 'doink')
+            end
+
+            let(:requests) do
+              [{ delete_many: { filter: { name: 'BANG' }}},
+               { delete_many: { filter: { name: 'DOINK' }}}]
+            end
+
+            let!(:result) do
+              bulk_write.execute
+            end
+
+            it 'does not apply the collation' do
+              expect(authorized_collection.find(name: { '$in' => ['bang', 'doink'] }).count).to eq(3)
+            end
+
+            it 'reports the deleted count' do
+              expect(result.deleted_count).to eq(0)
+            end
+          end
         end
 
         context 'when providing a single replace one' do
@@ -400,6 +649,90 @@ describe Mongo::BulkWrite do
                   bulk_write_invalid_write_concern.execute
                 }.to raise_error(Mongo::Error::OperationFailure)
               end
+            end
+          end
+
+          context 'when the write has a collation specified' do
+
+            before do
+              authorized_collection.insert_one(name: 'bang')
+            end
+
+            let(:requests) do
+              [{ replace_one: { filter: { name: 'BANG' },
+                                replacement: { other: 'pong' },
+                                collation: collation }}]
+            end
+
+            context 'when the server selected supports collations', if: collation_enabled? do
+
+              let!(:result) do
+                bulk_write.execute
+              end
+
+              it 'applies the collation' do
+                expect(authorized_collection.find(other: 'pong').count).to eq(1)
+              end
+
+              it 'reports the upserted id' do
+                expect(result.upserted_ids).to eq([])
+              end
+
+              it 'reports the upserted count' do
+                expect(result.upserted_count).to eq(0)
+              end
+
+              it 'reports the modified count' do
+                expect(result.modified_count).to eq(1)
+              end
+
+              it 'reports the matched count' do
+                expect(result.matched_count).to eq(1)
+              end
+            end
+
+            context 'when the server selected does not support collations', unless: collation_enabled? do
+
+              it 'raises an exception' do
+                expect {
+                  bulk_write.execute
+                }.to raise_exception(Mongo::Error::UnsupportedCollation)
+              end
+            end
+          end
+
+          context 'when the write does not have a collation specified' do
+
+            before do
+              authorized_collection.insert_one(name: 'bang')
+            end
+
+            let(:requests) do
+              [{ replace_one: { filter: { name: 'BANG' }, replacement: { other: 'pong' }}}]
+            end
+
+            let!(:result) do
+              bulk_write.execute
+            end
+
+            it 'does not apply the collation' do
+              expect(authorized_collection.find(other: 'pong').count).to eq(0)
+            end
+
+            it 'reports the upserted id' do
+              expect(result.upserted_ids).to eq([])
+            end
+
+            it 'reports the upserted count' do
+              expect(result.upserted_count).to eq(0)
+            end
+
+            it 'reports the modified count' do
+              expect(result.modified_count).to eq(0)
+            end
+
+            it 'reports the matched count' do
+              expect(result.matched_count).to eq(0)
             end
           end
         end
@@ -523,12 +856,12 @@ describe Mongo::BulkWrite do
               expect(result.upserted_count).to eq(1)
             end
 
-            it 'reports the matched count' do
+            it 'reports the modified_count count' do
               expect(result.modified_count).to eq(0)
             end
 
-            it 'reports the modified count' do
-              expect(result.modified_count).to eq(0)
+            it 'reports the matched count' do
+              expect(result.matched_count).to eq(0)
             end
 
             it 'reports the upserted id', if: write_command_enabled? do
@@ -556,9 +889,183 @@ describe Mongo::BulkWrite do
               end
             end
           end
+
+          context 'when the write has a collation specified' do
+
+            before do
+              authorized_collection.insert_one(name: 'bang')
+            end
+
+            let(:requests) do
+              [{ update_one: { filter: { name: 'BANG' },
+                               update: { "$set" => { name: 'pong' }},
+                               collation: collation }}]
+            end
+
+            context 'when the server selected supports collations', if: collation_enabled? do
+
+              let!(:result) do
+                bulk_write.execute
+              end
+
+              it 'applies the collation' do
+                expect(authorized_collection.find(name: 'pong').count).to eq(1)
+              end
+
+              it 'reports the upserted id' do
+                expect(result.upserted_ids).to eq([])
+              end
+
+              it 'reports the upserted count' do
+                expect(result.upserted_count).to eq(0)
+              end
+
+              it 'reports the modified count' do
+                expect(result.modified_count).to eq(1)
+              end
+
+              it 'reports the matched count' do
+                expect(result.matched_count).to eq(1)
+              end
+            end
+
+            context 'when the server selected does not support collations', unless: collation_enabled? do
+
+              it 'raises an exception' do
+                expect {
+                  bulk_write.execute
+                }.to raise_exception(Mongo::Error::UnsupportedCollation)
+              end
+            end
+          end
+
+          context 'when the write does not have a collation specified' do
+
+            before do
+              authorized_collection.insert_one(name: 'bang')
+            end
+
+            let(:requests) do
+              [{ update_one: { filter: { name: 'BANG' }, update: { "$set" => { name: 'pong' }}}}]
+            end
+
+            let!(:result) do
+              bulk_write.execute
+            end
+
+            it 'does not apply the collation' do
+              expect(authorized_collection.find(name: 'pong').count).to eq(0)
+            end
+
+            it 'reports the upserted id' do
+              expect(result.upserted_ids).to eq([])
+            end
+
+            it 'reports the upserted count' do
+              expect(result.upserted_count).to eq(0)
+            end
+
+            it 'reports the modified count' do
+              expect(result.modified_count).to eq(0)
+            end
+
+            it 'reports the matched count' do
+              expect(result.matched_count).to eq(0)
+            end
+          end
         end
 
         context 'when providing multiple update ones' do
+
+          context 'when the write has a collation specified' do
+
+            before do
+              authorized_collection.insert_one(name: 'bang')
+              authorized_collection.insert_one(name: 'doink')
+            end
+
+            let(:requests) do
+              [{ update_one: { filter: { name: 'BANG' },
+                               update: { "$set" => { name: 'pong' }},
+                               collation: collation }},
+               { update_one: { filter: { name: 'DOINK' },
+                               update: { "$set" => { name: 'pong' }},
+                               collation: collation }}]
+            end
+
+            context 'when the server selected supports collations', if: collation_enabled? do
+
+              let!(:result) do
+                bulk_write.execute
+              end
+
+              it 'applies the collation' do
+                expect(authorized_collection.find(name: 'pong').count).to eq(2)
+              end
+
+              it 'reports the upserted id' do
+                expect(result.upserted_ids).to eq([])
+              end
+
+              it 'reports the upserted count' do
+                expect(result.upserted_count).to eq(0)
+              end
+
+              it 'reports the modified count' do
+                expect(result.modified_count).to eq(2)
+              end
+
+              it 'reports the matched count' do
+                expect(result.matched_count).to eq(2)
+              end
+            end
+
+            context 'when the server selected does not support collations', unless: collation_enabled? do
+
+              it 'raises an exception' do
+                expect {
+                  bulk_write.execute
+                }.to raise_exception(Mongo::Error::UnsupportedCollation)
+              end
+            end
+          end
+
+          context 'when the write does not have a collation specified' do
+
+            before do
+              authorized_collection.insert_one(name: 'bang')
+              authorized_collection.insert_one(name: 'doink')
+            end
+
+            let(:requests) do
+              [{ update_one: { filter: { name: 'BANG' }, update: { "$set" => { name: 'pong' }}}},
+               { update_one: { filter: { name: 'DOINK' }, update: { "$set" => { name: 'pong' }}}}]
+            end
+
+            let!(:result) do
+              bulk_write.execute
+            end
+
+            it 'does not apply the collation' do
+              expect(authorized_collection.find(name: 'pong').count).to eq(0)
+            end
+
+            it 'reports the upserted id' do
+              expect(result.upserted_ids).to eq([])
+            end
+
+            it 'reports the upserted count' do
+              expect(result.upserted_count).to eq(0)
+            end
+
+            it 'reports the modified count' do
+              expect(result.modified_count).to eq(0)
+            end
+
+            it 'reports the matched count' do
+              expect(result.matched_count).to eq(0)
+            end
+          end
 
           context 'when upsert is false' do
 
@@ -593,7 +1100,7 @@ describe Mongo::BulkWrite do
             end
 
             it 'reports the matched count' do
-              expect(result.modified_count).to eq(2)
+              expect(result.matched_count).to eq(2)
             end
 
 
@@ -760,6 +1267,92 @@ describe Mongo::BulkWrite do
 
         context 'when providing a single update many' do
 
+          context 'when the write has a collation specified' do
+
+            before do
+              authorized_collection.insert_one(name: 'bang')
+              authorized_collection.insert_one(name: 'bang')
+            end
+
+            let(:requests) do
+              [{ update_many: { filter: { name: 'BANG' },
+                                update: { "$set" => { name: 'pong' }},
+                                collation: collation }}]
+            end
+
+            context 'when the server selected supports collations', if: collation_enabled? do
+
+              let!(:result) do
+                bulk_write.execute
+              end
+
+              it 'applies the collation' do
+                expect(authorized_collection.find(name: 'pong').count).to eq(2)
+              end
+
+              it 'reports the upserted id' do
+                expect(result.upserted_ids).to eq([])
+              end
+
+              it 'reports the upserted count' do
+                expect(result.upserted_count).to eq(0)
+              end
+
+              it 'reports the modified count' do
+                expect(result.modified_count).to eq(2)
+              end
+
+              it 'reports the matched count' do
+                expect(result.matched_count).to eq(2)
+              end
+            end
+
+            context 'when the server selected does not support collations', unless: collation_enabled? do
+
+              it 'raises an exception' do
+                expect {
+                  bulk_write.execute
+                }.to raise_exception(Mongo::Error::UnsupportedCollation)
+              end
+            end
+          end
+
+          context 'when the write does not have a collation specified' do
+
+            before do
+              authorized_collection.insert_one(name: 'bang')
+              authorized_collection.insert_one(name: 'bang')
+            end
+
+            let(:requests) do
+              [{ update_one: { filter: { name: 'BANG' }, update: { "$set" => { name: 'pong' }}}}]
+            end
+
+            let!(:result) do
+              bulk_write.execute
+            end
+
+            it 'does not apply the collation' do
+              expect(authorized_collection.find(name: 'pong').count).to eq(0)
+            end
+
+            it 'reports the upserted id' do
+              expect(result.upserted_ids).to eq([])
+            end
+
+            it 'reports the upserted count' do
+              expect(result.upserted_count).to eq(0)
+            end
+
+            it 'reports the modified count' do
+              expect(result.modified_count).to eq(0)
+            end
+
+            it 'reports the matched count' do
+              expect(result.matched_count).to eq(0)
+            end
+          end
+
           context 'when upsert is false' do
 
             let(:requests) do
@@ -791,7 +1384,7 @@ describe Mongo::BulkWrite do
             end
 
             it 'reports the matched count' do
-              expect(result.modified_count).to eq(2)
+              expect(result.matched_count).to eq(2)
             end
 
             context 'when there is a write concern error' do
@@ -944,8 +1537,12 @@ describe Mongo::BulkWrite do
 
     context 'when the bulk write is unordered' do
 
+      let(:collection) do
+        authorized_collection
+      end
+
       let(:bulk_write) do
-        described_class.new(authorized_collection, requests, ordered: false)
+        described_class.new(collection, requests, ordered: false)
       end
 
       let(:bulk_write_invalid_write_concern) do
@@ -957,8 +1554,12 @@ describe Mongo::BulkWrite do
 
     context 'when the bulk write is ordered' do
 
+      let(:collection) do
+        authorized_collection
+      end
+
       let(:bulk_write) do
-        described_class.new(authorized_collection, requests, ordered: true)
+        described_class.new(collection, requests, ordered: true)
       end
 
       let(:bulk_write_invalid_write_concern) do

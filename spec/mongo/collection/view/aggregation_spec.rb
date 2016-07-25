@@ -26,6 +26,15 @@ describe Mongo::Collection::View::Aggregation do
     described_class.new(view, pipeline, options)
   end
 
+  after do
+    authorized_collection.delete_many
+  end
+
+  shared_examples_for 'an aggregation supporting collation' do
+
+
+  end
+
   describe '#allow_disk_use' do
 
     let(:new_agg) do
@@ -198,6 +207,41 @@ describe Mongo::Collection::View::Aggregation do
     it 'executes an explain' do
       expect(aggregation.explain).to_not be_empty
     end
+
+    context 'when a collation defined is specified' do
+
+      before do
+        authorized_collection.insert_many([ { name: 'bang' }, { name: 'bang' }])
+      end
+
+      let(:pipeline) do
+        [{ "$match" => { "name" => "BANG" } }]
+      end
+
+      let(:options) do
+        { collation: { locale: 'en_US', strength: 2 } }
+      end
+
+      let(:result) do
+        aggregation.explain['$cursor']['queryPlanner']['collation']['locale']
+      end
+
+      context 'when the server selected supports collations', if: collation_enabled? do
+
+        it 'applies the collation' do
+          expect(result).to eq('en_US')
+        end
+      end
+
+      context 'when the server selected does not support collations', unless: collation_enabled? do
+
+        it 'raises an exception' do
+          expect {
+            result
+          }.to raise_exception(Mongo::Error::UnsupportedCollation)
+        end
+      end
+    end
   end
 
   describe '#aggregate_spec' do
@@ -344,6 +388,41 @@ describe Mongo::Collection::View::Aggregation do
             expect(aggregation.send(:aggregate_spec)[:selector][:cursor]).to be_nil
           end
         end
+      end
+    end
+  end
+
+  context 'when the aggregation has a collation defined' do
+
+    before do
+      authorized_collection.insert_many([ { name: 'bang' }, { name: 'bang' }])
+    end
+
+    let(:pipeline) do
+      [{ "$match" => { "name" => "BANG" } }]
+    end
+
+    let(:options) do
+      { collation: { locale: 'en_US', strength: 2 } }
+    end
+
+    let(:result) do
+      aggregation.collect { |doc| doc['name']}
+    end
+
+    context 'when the server selected supports collations', if: collation_enabled? do
+
+      it 'applies the collation' do
+        expect(result).to eq(['bang', 'bang'])
+      end
+    end
+
+    context 'when the server selected does not support collations', unless: collation_enabled? do
+
+      it 'raises an exception' do
+        expect {
+          result
+        }.to raise_exception(Mongo::Error::UnsupportedCollation)
       end
     end
   end

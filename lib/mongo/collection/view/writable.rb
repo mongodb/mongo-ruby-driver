@@ -31,7 +31,10 @@ module Mongo
         #
         # @since 2.0.0
         def find_one_and_delete
+          validate_collation!(next_primary, options)
+
           cmd = { :findandmodify => collection.name, :query => filter, :remove => true }
+          cmd[:collation] = options[:collation] if options[:collation]
           cmd[:fields] = projection if projection
           cmd[:sort] = sort if sort
           cmd[:maxTimeMS] = max_time_ms if max_time_ms
@@ -85,7 +88,10 @@ module Mongo
         #
         # @since 2.0.0
         def find_one_and_update(document, opts = {})
+          validate_collation!(next_primary, options)
+
           cmd = { :findandmodify => collection.name, :query => filter }
+          cmd[:collation] = options[:collation] if options[:collation]
           cmd[:update] = document
           cmd[:fields] = projection if projection
           cmd[:sort] = sort if sort
@@ -94,10 +100,10 @@ module Mongo
           cmd[:maxTimeMS] = max_time_ms if max_time_ms
           cmd[:bypassDocumentValidation] = !!opts[:bypass_document_validation]
           cmd[:writeConcern] = write_concern.options if write_concern
-          write_with_retry do
-            value = database.command(cmd).first['value']
-            value unless value.nil? || value.empty?
+          value = write_with_retry do
+            database.command(cmd).first['value']
           end
+          value unless value.nil? || value.empty?
         end
 
         # Remove documents from the collection.
@@ -105,11 +111,15 @@ module Mongo
         # @example Remove multiple documents from the collection.
         #   collection_view.delete_many
         #
+        # @param [ Hash ] options The options.
+        #
+        # @option options [ Hash ] :collation The collation to use.
+        #
         # @return [ Result ] The response from the database.
         #
         # @since 2.0.0
-        def delete_many
-          remove(0)
+        def delete_many(opts = {})
+          remove(0, opts)
         end
 
         # Remove a document from the collection.
@@ -117,11 +127,15 @@ module Mongo
         # @example Remove a single document from the collection.
         #   collection_view.delete_one
         #
+        # @param [ Hash ] options The options.
+        #
+        # @option options [ Hash ] :collation The collation to use.
+        #
         # @return [ Result ] The response from the database.
         #
         # @since 2.0.0
-        def delete_one
-          remove(1)
+        def delete_one(opts = {})
+          remove(1, opts)
         end
 
         # Replaces a single document in the database with the new document.
@@ -134,6 +148,7 @@ module Mongo
         #
         # @option opts [ true, false ] :upsert Whether to upsert if the
         #   document doesn't exist.
+        # @option options [ Hash ] :collation The collation to use.
         #
         # @return [ Result ] The response from the database.
         #
@@ -152,6 +167,7 @@ module Mongo
         #
         # @option opts [ true, false ] :upsert Whether to upsert if the
         #   document doesn't exist.
+        # @option options [ Hash ] :collation The collation to use.
         #
         # @return [ Result ] The response from the database.
         #
@@ -170,6 +186,7 @@ module Mongo
         #
         # @option opts [ true, false ] :upsert Whether to upsert if the
         #   document doesn't exist.
+        # @option options [ Hash ] :collation The collation to use.
         #
         # @return [ Result ] The response from the database.
         #
@@ -180,29 +197,37 @@ module Mongo
 
         private
 
-        def remove(value)
+        def remove(value, opts)
+          server = next_primary
+          delete_doc = { Operation::Q => filter, Operation::LIMIT => value }
+          validate_collation!(server, opts)
+          delete_doc[:collation] = opts[:collation] if opts[:collation]
           write_with_retry do
             Operation::Write::Delete.new(
-              :delete => { Operation::Q => filter, Operation::LIMIT => value },
+              :delete => delete_doc,
               :db_name => collection.database.name,
               :coll_name => collection.name,
               :write_concern => collection.write_concern
-            ).execute(next_primary)
+            ).execute(server)
           end
         end
 
         def update(spec, multi, opts)
+          server = next_primary
+          validate_collation!(server, opts)
+          update_doc = { Operation::Q => filter,
+                         Operation::U => spec,
+                         Operation::MULTI => multi,
+                         Operation::UPSERT => !!opts[:upsert] }
+          update_doc[:collation] = opts[:collation] if opts[:collation]
           write_with_retry do
             Operation::Write::Update.new(
-              :update => { Operation::Q => filter,
-                           Operation::U => spec,
-                           Operation::MULTI => multi,
-                           Operation::UPSERT => !!opts[:upsert] },
+              :update => update_doc,
               :db_name => collection.database.name,
               :coll_name => collection.name,
               :write_concern => collection.write_concern,
               :bypass_document_validation => !!opts[:bypass_document_validation]
-            ).execute(next_primary)
+            ).execute(server)
           end
         end
       end

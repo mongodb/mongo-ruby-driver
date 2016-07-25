@@ -115,7 +115,12 @@ module Mongo
             log_warn(REROUTE)
             server = cluster.next_primary(false)
           end
+          validate_collation!(server)
           initial_query_op.execute(server)
+        end
+
+        def validate_collation!(server)
+          raise Error::UnsupportedCollation.new if @options[:collation] && !server.features.collation_enabled?
         end
       end
     end

@@ -126,6 +126,15 @@ def collation_enabled?
 end
 
 # For instances where behaviour is different on different versions, we need to
+# determine in the specs if we are 3.4 or higher.
+#
+# @since 2.4.0
+def collation_enabled?
+  $mongo_client ||= initialize_scanned_client!
+  $collation_enabled ||= $mongo_client.cluster.servers.first.features.collation_enabled?
+end
+
+# For instances where behaviour is different on different versions, we need to
 # determine in the specs if we are 3.2 or higher.
 #
 # @since 2.0.0
