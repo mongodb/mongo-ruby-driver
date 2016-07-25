@@ -328,7 +328,7 @@ describe Mongo::Collection::View::MapReduce do
         expect(map_reduce.send(:secondary_ok?)).to be false
       end
 
-      context 'when the context is not a valid server for writing' do
+      context 'when the server is not a valid for writing' do
 
         it 'reroutes the operation to a primary' do
           allow(map_reduce).to receive(:valid_server?).and_return(false)
@@ -337,7 +337,7 @@ describe Mongo::Collection::View::MapReduce do
         end
       end
 
-      context 'when the context is a valid server for writing' do
+      context 'when the server is a valid for writing' do
 
         it 'does not reroute the operation to a primary' do
           expect(Mongo::Logger.logger).not_to receive(:warn?)

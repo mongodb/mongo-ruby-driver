@@ -34,8 +34,9 @@ module Mongo
         include Specifiable
 
         # Execute the operation.
-        # The context gets a connection on which the operation
-        # is sent in the block.
+        #
+        # @example Execute the operation.
+        #   operation.execute(server)
         #
         # @param [ Mongo::Server ] server The server to send this operation to.
         #

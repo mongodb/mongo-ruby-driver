@@ -370,7 +370,7 @@ describe Mongo::Collection::View::Aggregation do
     end
 
 
-    context 'when the context is not a valid server for writing' do
+    context 'when the server is not a valid for writing' do
 
      it 'reroutes the operation to a primary' do
        allow(aggregation).to receive(:valid_server?).and_return(false)
@@ -379,7 +379,7 @@ describe Mongo::Collection::View::Aggregation do
      end
     end
 
-    context 'when the context is a valid server for writing' do
+    context 'when the server is a valid for writing' do
 
      it 'does not reroute the operation to a primary' do
        expect(Mongo::Logger.logger).not_to receive(:warn?)

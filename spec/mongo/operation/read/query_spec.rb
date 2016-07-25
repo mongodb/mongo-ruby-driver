@@ -57,30 +57,30 @@ describe Mongo::Operation::Read::Query do
       end
     end
 
-    let(:secondary_server_single) do
-      double('secondary_server').tap do |server|
-        allow(server).to receive(:mongos?) { false }
-        allow(server).to receive(:cluster) { cluster_single }
-      end
-    end
-
     let(:message) do
-      query.send(:message, secondary_server_single)
+      query.send(:message, authorized_primary)
     end
 
     it 'applies the correct flags' do
-      expect(message.flags).to eq([ :no_cursor_timeout, :slave_ok ])
+      expect(message.flags).to eq(query_options[:flags])
     end
-  end
 
-  describe '#message' do
+    context 'when the server is a secondary' do
 
-    it 'creates the correct message' do
-      expect(Mongo::Protocol::Query).to receive(:new).with(authorized_collection.database.name,
-                                                           authorized_collection.name,
-                                                           selector,
-                                                           {:flags=>[:slave_ok]})
-      op.send(:message, authorized_primary)
+      let(:secondary_server_single) do
+        double('secondary_server').tap do |server|
+          allow(server).to receive(:mongos?) { false }
+          allow(server).to receive(:cluster) { cluster_single }
+        end
+      end
+
+      let(:message) do
+        query.send(:message, secondary_server_single)
+      end
+
+      it 'applies the correct flags' do
+        expect(message.flags).to eq([ :no_cursor_timeout, :slave_ok ])
+      end
     end
 
     context "when the document contains an 'ok' field" do

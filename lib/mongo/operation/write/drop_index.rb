@@ -41,7 +41,7 @@ module Mongo
         # Execute the drop index operation.
         #
         # @example Execute the operation.
-        #   operation.execute(context)
+        #   operation.execute(server)
         #
         # @param [ Mongo::Server ] server The server to send this operation to.
         #
