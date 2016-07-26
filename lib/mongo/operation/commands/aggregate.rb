@@ -43,17 +43,17 @@ module Mongo
 
         private
 
-        def filter_selector(context)
-          return selector if context.features.write_command_enabled?
+        def filter_selector(server)
+          return selector if server.features.write_command_enabled?
           selector.reject{ |option, value| option.to_s == 'cursor' }
         end
 
-        def update_selector(context)
-          if context.mongos? && read_pref = read.to_mongos
-            sel = selector[:$query] ? filter_selector(context) : { :$query => filter_selector(context) }
+        def update_selector(server)
+          if server.mongos? && read_pref = read.to_mongos
+            sel = selector[:$query] ? filter_selector(server) : { :$query => filter_selector(server) }
             sel.merge(:$readPreference => read_pref)
           else
-            filter_selector(context)
+            filter_selector(server)
           end
         end
       end

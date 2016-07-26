@@ -37,20 +37,21 @@ module Mongo
         include Executable
 
         # Execute the operation.
-        # The context gets a connection on which the operation
-        # is sent in the block.
         #
-        # @param [ Mongo::Server::Context ] context The context for this operation.
+        # @example Execute the operation.
+        #   operation.execute(server)
+        #
+        # @param [ Mongo::Server ] server The server to send this operation to.
         #
         # @return [ Result ] The operation response, if there is one.
         #
         # @since 2.0.0
-        def execute(context)
-          if context.features.list_collections_enabled?
-            ListCollections.new(spec).execute(context)
+        def execute(server)
+          if server.features.list_collections_enabled?
+            ListCollections.new(spec).execute(server)
           else
-            context.with_connection do |connection|
-              Result.new(connection.dispatch([ message(context) ])).validate!
+            server.with_connection do |connection|
+              Result.new(connection.dispatch([ message(server) ])).validate!
             end
           end
         end

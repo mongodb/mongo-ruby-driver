@@ -344,7 +344,7 @@ module Mongo
           :bypass_document_validation => !!options[:bypass_document_validation],
           :options => options,
           :id_generator => client.options[:id_generator]
-        ).execute(next_primary.context)
+        ).execute(next_primary)
       end
     end
 

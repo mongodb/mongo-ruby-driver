@@ -23,7 +23,7 @@ describe Mongo::Operation::Write::CreateUser do
     context 'when user creation was successful' do
 
       let!(:response) do
-        operation.execute(root_authorized_primary.context)
+        operation.execute(root_authorized_primary)
       end
 
       it 'saves the user in the database' do
@@ -35,8 +35,8 @@ describe Mongo::Operation::Write::CreateUser do
 
       it 'raises an exception' do
         expect {
-          operation.execute(root_authorized_primary.context)
-          operation.execute(root_authorized_primary.context)
+          operation.execute(root_authorized_primary)
+          operation.execute(root_authorized_primary)
         }.to raise_error(Mongo::Error::OperationFailure)
       end
     end

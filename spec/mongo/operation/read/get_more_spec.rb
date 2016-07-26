@@ -1,14 +1,18 @@
 require 'spec_helper'
 
 describe Mongo::Operation::Read::GetMore do
-  include_context 'operation'
 
-  let(:to_return) { 50 }
-  let(:cursor_id) { 1 }
+  let(:to_return) do
+    50
+  end
+
+  let(:cursor_id) do
+    1
+  end
 
   let(:spec) do
-    { :db_name   => db_name,
-      :coll_name => coll_name,
+    { :db_name   => TEST_DB,
+      :coll_name => TEST_COLL,
       :to_return => to_return,
       :cursor_id => cursor_id }
   end
@@ -39,27 +43,11 @@ describe Mongo::Operation::Read::GetMore do
     end
   end
 
-  describe '#execute' do
+  describe '#message' do
 
-    context 'message' do
-
-      it 'creates a get more wire protocol message with correct specs' do
-        expect(Mongo::Protocol::GetMore).to receive(:new) do |db, coll, to_ret, id|
-          expect(db).to eq(db_name)
-          expect(coll).to eq(coll_name)
-          expect(to_ret).to eq(to_return)
-          expect(id).to eq(cursor_id)
-        end
-        op.execute(primary_context)
-      end
-    end
-
-    context 'connection' do
-
-      it 'dispatches the message on the connection' do
-        expect(connection).to receive(:dispatch)
-        op.execute(primary_context)
-      end
+    it 'creates a get more wire protocol message with correct specs' do
+      expect(Mongo::Protocol::GetMore).to receive(:new).with(TEST_DB, TEST_COLL, to_return, cursor_id)
+      op.send(:message, authorized_primary)
     end
   end
 end

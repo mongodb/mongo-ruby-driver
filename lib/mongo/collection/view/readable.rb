@@ -446,19 +446,19 @@ module Mongo
             :db_name => database.name,
             :cursor_count => cursor_count,
             :read_concern => collection.read_concern
-          ).execute(server.context).cursor_ids.map do |cursor_id|
+          ).execute(server).cursor_ids.map do |cursor_id|
             result = if server.features.find_command_enabled?
               Operation::Commands::GetMore.new({
                   :selector => { :getMore => cursor_id, :collection => collection.name },
                   :db_name  => database.name
-                }).execute(server.context)
+                }).execute(server)
             else
               Operation::Read::GetMore.new({
                   :to_return => 0,
                   :cursor_id => cursor_id,
                   :db_name   => database.name,
                   :coll_name => collection.name
-                }).execute(server.context)
+                }).execute(server)
             end
             Cursor.new(self, result, server)
           end

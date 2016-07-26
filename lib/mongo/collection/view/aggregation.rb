@@ -115,7 +115,7 @@ module Mongo
             log_warn(REROUTE)
             server = cluster.next_primary(false)
           end
-          initial_query_op.execute(server.context)
+          initial_query_op.execute(server)
         end
       end
     end

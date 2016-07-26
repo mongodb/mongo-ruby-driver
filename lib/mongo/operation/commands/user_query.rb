@@ -34,20 +34,21 @@ module Mongo
         include Specifiable
 
         # Execute the operation.
-        # The context gets a connection on which the operation
-        # is sent in the block.
         #
-        # @param [ Mongo::Server::Context ] context The context for this operation.
+        # @example Execute the operation.
+        #   operation.execute(server)
+        #
+        # @param [ Mongo::Server ] server The server to send this operation to.
         #
         # @return [ Result ] The operation response, if there is one.
         #
         # @since 2.1.0
-        def execute(context)
-          if context.features.users_info_enabled?
-            UsersInfo.new(spec).execute(context).validate!
+        def execute(server)
+          if server.features.users_info_enabled?
+            UsersInfo.new(spec).execute(server).validate!
           else
-            context.with_connection do |connection|
-              Result.new(connection.dispatch([ message(context) ])).validate!
+            server.with_connection do |connection|
+              Result.new(connection.dispatch([ message(server) ])).validate!
             end
           end
         end
@@ -62,7 +63,7 @@ module Mongo
           Auth::User::COLLECTION
         end
 
-        def message(context)
+        def message(server)
           Protocol::Query.new(db_name, query_coll, selector, options)
         end
       end

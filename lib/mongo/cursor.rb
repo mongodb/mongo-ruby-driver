@@ -160,7 +160,7 @@ module Mongo
 
     def get_more
       read_with_retry do
-        process(get_more_operation.execute(@server.context))
+        process(get_more_operation.execute(@server))
       end
     end
 
@@ -174,7 +174,7 @@ module Mongo
 
     def kill_cursors
       read_with_retry do
-        kill_cursors_operation.execute(@server.context)
+        kill_cursors_operation.execute(@server)
       end
     end
 

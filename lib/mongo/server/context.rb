@@ -19,6 +19,8 @@ module Mongo
     # connection.
     #
     # @since 2.0.0
+    #
+    # @deprecated Will be removed in version 3.0
     class Context
       extend Forwardable
 

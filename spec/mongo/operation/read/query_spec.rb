@@ -1,15 +1,14 @@
 require 'spec_helper'
 
 describe Mongo::Operation::Read::Query do
-  include_context 'operation'
-
-  let(:selector) { {} }
+  
+  let(:selector) { { foo: 1 } }
   let(:query_options) { {} }
   let(:spec) do
     { :selector  => selector,
       :options      => query_options,
-      :db_name   => db_name,
-      :coll_name => coll_name,
+      :db_name   => authorized_collection.database.name,
+      :coll_name => authorized_collection.name,
       :read => Mongo::ServerSelector.get
     }
   end
@@ -30,8 +29,8 @@ describe Mongo::Operation::Read::Query do
       let(:other_spec) do
         { :selector  => { :a => 1 },
           :options      => query_options,
-          :db_name   => db_name,
-          :coll_name => coll_name
+          :db_name   => authorized_collection.database.name,
+          :coll_name => authorized_collection.name
         }
       end
       let(:other) { described_class.new(other_spec) }
@@ -52,34 +51,35 @@ describe Mongo::Operation::Read::Query do
       described_class.new(spec)
     end
 
-    let(:message) do
-      query.send(:message, secondary_context_slave)
-    end
-
-    it 'does not lose flags' do
-      expect(message.flags).to eq([ :no_cursor_timeout, :slave_ok ])
-    end
-  end
-
-  describe '#execute' do
-
-    context 'message' do
-
-      it 'creates a query wire protocol message with correct specs' do
-        expect(Mongo::Protocol::Query).to receive(:new) do |db, coll, sel, options|
-          expect(db).to eq(db_name)
-          expect(coll).to eq(coll_name)
-          expect(sel).to eq(selector)
-        end
-        op.execute(primary_context)
+    let(:cluster_single) do
+      double('cluster').tap do |c|
+        allow(c).to receive(:single?).and_return(true)
       end
     end
 
-    context 'connection' do
+    let(:message) do
+      query.send(:message, authorized_primary)
+    end
 
-      it 'dispatches the message on the connection' do
-        expect(connection).to receive(:dispatch)
-        op.execute(primary_context)
+    it 'applies the correct flags' do
+      expect(message.flags).to eq(query_options[:flags])
+    end
+
+    context 'when the server is a secondary' do
+
+      let(:secondary_server_single) do
+        double('secondary_server').tap do |server|
+          allow(server).to receive(:mongos?) { false }
+          allow(server).to receive(:cluster) { cluster_single }
+        end
+      end
+
+      let(:message) do
+        query.send(:message, secondary_server_single)
+      end
+
+      it 'applies the correct flags' do
+        expect(message.flags).to eq([ :no_cursor_timeout, :slave_ok ])
       end
     end
 
@@ -93,12 +93,8 @@ describe Mongo::Operation::Read::Query do
         authorized_collection.delete_many
       end
 
-      let(:context) do
-        authorized_client.cluster.next_primary.context
-      end
-
       it 'does not raise an exception' do
-        expect(op.execute(context)).to be_a(Mongo::Operation::Read::Query::Result)
+        expect(op.execute(authorized_primary)).to be_a(Mongo::Operation::Read::Query::Result)
       end
     end
   end

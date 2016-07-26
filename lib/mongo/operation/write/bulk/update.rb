@@ -61,8 +61,8 @@ module Mongo
 
           private
 
-          def execute_write_command(context)
-            Result.new(Command::Update.new(spec).execute(context))
+          def execute_write_command(server)
+            Result.new(Command::Update.new(spec).execute(server))
           end
 
 

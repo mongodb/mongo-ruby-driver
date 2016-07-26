@@ -43,7 +43,7 @@ module Mongo
 
         private
 
-        def message(context)
+        def message(server)
           Protocol::GetMore.new(db_name, coll_name, to_return, cursor_id)
         end
       end

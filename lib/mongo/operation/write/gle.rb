@@ -24,8 +24,8 @@ module Mongo
 
         private
 
-        def execute_message(context)
-          context.with_connection do |connection|
+        def execute_message(server)
+          server.with_connection do |connection|
             result_class = self.class.const_defined?(:LegacyResult, false) ? self.class::LegacyResult :
                 self.class.const_defined?(:Result, false) ? self.class::Result : Result
             result_class.new(connection.dispatch([ message, gle ].compact)).validate!

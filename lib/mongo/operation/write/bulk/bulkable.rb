@@ -27,26 +27,26 @@ module Mongo
           # Execute the bulk operation.
           #
           # @example Execute the operation.
-          #   operation.execute(context)
+          #   operation.execute(server)
           #
-          # @param [ Mongo::Server::Context ] context The context for this operation.
+          # @param [ Mongo::Server ] server The server to send this operation to.
           #
           # @return [ Result ] The operation result.
           #
           # @since 2.0.0
-          def execute(context)
-            if context.features.write_command_enabled?
-              execute_write_command(context)
+          def execute(server)
+            if server.features.write_command_enabled?
+              execute_write_command(server)
             else
-              execute_message(context)
+              execute_message(server)
             end
           end
 
           private
 
-          def execute_message(context)
+          def execute_message(server)
             replies = messages.map do |m|
-              context.with_connection do |connection|
+              server.with_connection do |connection|
                 result = self.class::LegacyResult.new(connection.dispatch([ m, gle ].compact, operation_id))
                 if stop_sending?(result)
                   return result

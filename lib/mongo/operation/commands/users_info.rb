@@ -37,7 +37,7 @@ module Mongo
           { :usersInfo => user_name }
         end
 
-        def message(context)
+        def message(server)
           Protocol::Query.new(db_name, query_coll, selector, options)
         end
       end

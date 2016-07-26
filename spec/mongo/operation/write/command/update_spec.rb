@@ -1,16 +1,20 @@
 require 'spec_helper'
 
 describe Mongo::Operation::Write::Command::Update do
-  include_context 'operation'
 
   let(:updates) { [{:q => { :foo => 1 },
                     :u => { :$set => { :bar => 1 } },
                     :multi => true,
                     :upsert => false }] }
+
+  let(:write_concern) do
+    Mongo::WriteConcern.get(WRITE_CONCERN)
+  end
+
   let(:spec) do
     { :updates       => updates,
-      :db_name       => db_name,
-      :coll_name     => coll_name,
+      :db_name       => TEST_DB,
+      :coll_name     => TEST_COLL,
       :write_concern => write_concern,
       :ordered       => true
     }
@@ -47,9 +51,9 @@ describe Mongo::Operation::Write::Command::Update do
                           :upsert => false }] }
         let(:other_spec) do
           { :updates       => other_updates,
-            :db_name       => db_name,
-            :coll_name     => coll_name,
-            :write_concern => write_concern.options,
+            :db_name       => TEST_DB,
+            :coll_name     => TEST_COLL,
+            :write_concern => Mongo::WriteConcern.get(WRITE_CONCERN),
             :ordered       => true
           }
         end
@@ -68,8 +72,8 @@ describe Mongo::Operation::Write::Command::Update do
 
       let(:spec) do
         { :updates       => updates,
-          :db_name       => db_name,
-          :coll_name     => coll_name,
+          :db_name       => TEST_DB,
+          :coll_name     => TEST_COLL,
           :ordered       => true
         }
       end
@@ -87,32 +91,20 @@ describe Mongo::Operation::Write::Command::Update do
     end
   end
 
-  describe '#execute' do
+  describe '#message' do
 
-    context 'server' do
+    let(:expected_selector) do
+      {
+        :update        => TEST_COLL,
+        :updates       => updates,
+        :ordered       => true,
+        :writeConcern   => write_concern.options
+      }
+    end
 
-      context 'message' do
-        let(:expected_selector) do
-          { :updates       => updates,
-            :update        => coll_name,
-            :writeConcern => write_concern.options,
-            :ordered       => true
-          }
-        end
-
-        it 'creates a query wire protocol message with correct specs' do
-          allow_any_instance_of(Mongo::ServerSelector::Primary).to receive(:server) do
-            primary_server
-          end
-
-          expect(Mongo::Protocol::Query).to receive(:new) do |db, coll, sel, options|
-            expect(db).to eq(db_name)
-            expect(coll).to eq(Mongo::Database::COMMAND)
-            expect(sel).to eq(expected_selector)
-          end
-          op.execute(primary_context)
-        end
-      end
+    it 'creates the correct Command message' do
+      expect(Mongo::Protocol::Query).to receive(:new).with(TEST_DB, '$cmd', expected_selector, { limit: -1 })
+      op.send(:message)
     end
   end
 end

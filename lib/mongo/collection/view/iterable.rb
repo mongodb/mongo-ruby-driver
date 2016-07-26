@@ -77,7 +77,7 @@ module Mongo
         end
 
         def send_initial_query(server)
-          initial_query_op(server).execute(server.context)
+          initial_query_op(server).execute(server)
         end
       end
     end

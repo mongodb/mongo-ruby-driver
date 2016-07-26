@@ -1,17 +1,20 @@
 require 'spec_helper'
 
 describe Mongo::Operation::Commands::Aggregate do
-  include_context 'operation'
+
+  let(:options) do
+    {}
+  end
 
   let(:selector) do
-    { :aggregate => coll_name,
+    { :aggregate => TEST_COLL,
       :pipeline => [],
     }
   end
   let(:spec) do
     { :selector => selector,
-      :options => {},
-      :db_name => db_name
+      :options => options,
+      :db_name => TEST_DB
     }
   end
   let(:op) { described_class.new(spec) }
@@ -38,7 +41,7 @@ describe Mongo::Operation::Commands::Aggregate do
       let(:other_spec) do
         { :selector => other_selector,
           :options => options,
-          :db_name => db_name,
+          :db_name => TEST_DB,
         }
       end
       let(:other) { described_class.new(other_spec) }
@@ -54,14 +57,14 @@ describe Mongo::Operation::Commands::Aggregate do
     context 'when the aggregation fails' do
 
       let(:selector) do
-        { :aggregate => coll_name,
+        { :aggregate => TEST_COLL,
           :pipeline => [{ '$invalid' => 'operator' }],
         }
       end
 
       it 'raises an exception' do
         expect {
-          op.execute(authorized_primary.context)
+          op.execute(authorized_primary)
         }.to raise_error(Mongo::Error::OperationFailure)
       end
     end

@@ -29,7 +29,7 @@ describe Mongo::Operation::Commands::CollectionsInfo do
     end
 
     let(:info) do
-      docs = op.execute(authorized_primary.context).documents
+      docs = op.execute(authorized_primary).documents
       docs.collect { |info| info['name'].sub("#{TEST_DB}.", '') }
     end
 

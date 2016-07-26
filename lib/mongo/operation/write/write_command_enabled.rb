@@ -26,27 +26,27 @@ module Mongo
         # Execute the operation.
         #
         # @example Execute the operation.
-        #   operation.execute(context)
+        #   operation.execute(server)
         #
-        # @param [ Mongo::Server::Context ] context The context for this operation.
+        # @param [ Mongo::Server ] server The server to send this operation to.
         #
         # @return [ Result ] The operation result.
         #
         # @since 2.1.0
-        def execute(context)
-          if !context.features.write_command_enabled? ||
+        def execute(server)
+          if !server.features.write_command_enabled? ||
                (write_concern && write_concern.get_last_error.nil?)
-            execute_message(context)
+            execute_message(server)
           else
-            execute_write_command(context)
+            execute_write_command(server)
           end
         end
 
         private
 
-        def execute_write_command(context)
+        def execute_write_command(server)
           result_class = self.class.const_defined?(:Result, false) ? self.class::Result : Result
-          result_class.new(write_command_op.execute(context)).validate!
+          result_class.new(write_command_op.execute(server)).validate!
         end
       end
     end

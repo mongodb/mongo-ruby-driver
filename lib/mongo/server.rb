@@ -88,6 +88,8 @@ module Mongo
     # @return [ Mongo::Server::Context ] context The server context.
     #
     # @since 2.0.0
+    #
+    # @deprecated Will be removed in version 3.0
     def context
       Context.new(self)
     end
@@ -102,7 +104,7 @@ module Mongo
     #
     # @since 2.1.0
     def connectable?
-      context.with_connection do |connection|
+      with_connection do |connection|
         connection.connectable?
       end
     end
@@ -211,6 +213,21 @@ module Mongo
     # @since 2.1.0
     def reconnect!
       monitor.restart! and true
+    end
+
+    # Execute a block of code with a connection, that is checked out of the
+    # server's pool and then checked back in.
+    #
+    # @example Send a message with the connection.
+    #   server.with_connection do |connection|
+    #     connection.dispatch([ command ])
+    #   end
+    #
+    # @return [ Object ] The result of the block execution.
+    #
+    # @since 2.3.0
+    def with_connection(&block)
+      pool.with_connection(&block)
     end
   end
 end

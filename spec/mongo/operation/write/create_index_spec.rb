@@ -15,7 +15,7 @@ describe Mongo::Operation::Write::CreateIndex do
       end
 
       let(:response) do
-        operation.execute(authorized_primary.context)
+        operation.execute(authorized_primary)
       end
 
       after do
@@ -42,7 +42,7 @@ describe Mongo::Operation::Write::CreateIndex do
       end
 
       before do
-        operation.execute(authorized_primary.context)
+        operation.execute(authorized_primary)
       end
 
       after do
@@ -51,12 +51,12 @@ describe Mongo::Operation::Write::CreateIndex do
 
       it 'raises an exception', if: write_command_enabled? do
         expect {
-          second_operation.execute(authorized_primary.context)
+          second_operation.execute(authorized_primary)
         }.to raise_error(Mongo::Error::OperationFailure)
       end
 
       it 'does not raise an exception', unless: write_command_enabled? do
-        expect(second_operation.execute(authorized_primary.context)).to be_successful
+        expect(second_operation.execute(authorized_primary)).to be_successful
       end
     end
   end

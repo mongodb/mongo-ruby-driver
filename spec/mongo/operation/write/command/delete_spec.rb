@@ -1,13 +1,16 @@
 require 'spec_helper'
 
 describe Mongo::Operation::Write::Command::Delete do
-  include_context 'operation'
+
+  let(:write_concern) do
+    Mongo::WriteConcern.get(WRITE_CONCERN)
+  end
 
   let(:deletes) { [{:q => { :foo => 1 }, :limit => 1}] }
   let(:spec) do
     { :deletes       => deletes,
-      :db_name       => db_name,
-      :coll_name     => coll_name,
+      :db_name       => authorized_collection.database.name,
+      :coll_name     => authorized_collection.name,
       :write_concern => write_concern,
       :ordered       => true
     }
@@ -41,9 +44,9 @@ describe Mongo::Operation::Write::Command::Delete do
         let(:other_deletes) { [{:q => { :bar => 1 }, :limit => 1}] }
         let(:other_spec) do
           { :deletes       => other_deletes,
-            :db_name       => db_name,
-            :coll_name     => coll_name,
-            :write_concern => write_concern.options,
+            :db_name       => authorized_collection.database.name,
+            :coll_name     => authorized_collection.name,
+            :write_concern => write_concern,
             :ordered       => true
           }
         end
@@ -62,8 +65,8 @@ describe Mongo::Operation::Write::Command::Delete do
 
       let(:spec) do
         { :deletes       => deletes,
-          :db_name       => db_name,
-          :coll_name     => coll_name,
+          :db_name       => authorized_collection.database.name,
+          :coll_name     => authorized_collection.name,
           :ordered       => true
         }
       end
@@ -81,32 +84,23 @@ describe Mongo::Operation::Write::Command::Delete do
     end
   end
 
-  describe '#execute' do
+  describe '#message' do
 
-    context 'server' do
+    let(:expected_selector) do
+      {
+        :delete        => authorized_collection.name,
+        :deletes       => deletes,
+        :writeConcern => write_concern.options,
+        :ordered       => true
+      }
+    end
 
-      context 'message' do
-        let(:expected_selector) do
-          { :deletes       => deletes,
-            :delete        => coll_name,
-            :writeConcern => write_concern.options,
-            :ordered       => true
-          }
-        end
-
-        it 'creates a query wire protocol message with correct specs' do
-          allow_any_instance_of(Mongo::ServerSelector::Primary).to receive(:server) do
-            primary_server
-          end
-
-          expect(Mongo::Protocol::Query).to receive(:new) do |db, coll, sel, options|
-            expect(db).to eq(db_name)
-            expect(coll).to eq(Mongo::Database::COMMAND)
-            expect(sel).to eq(expected_selector)
-          end
-          op.execute(primary_context)
-        end
-      end
+    it 'creates the correct query wire protocol message' do
+      expect(Mongo::Protocol::Query).to receive(:new).with(authorized_collection.database.name,
+                                                           '$cmd',
+                                                           expected_selector,
+                                                           { limit: -1 } )
+      op.send(:message)
     end
   end
 end
