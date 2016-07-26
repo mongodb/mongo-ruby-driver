@@ -85,7 +85,7 @@ module Mongo
     # @example Get the server context.
     #   server.context
     #
-    # @param [ Mongo::Server ] server The server to send this operation to.
+    # @return [ Mongo::Server::Context ] context The server context.
     #
     # @since 2.0.0
     #
