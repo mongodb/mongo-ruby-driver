@@ -244,19 +244,14 @@ describe Mongo::Database do
       end
     end
 
-    context 'when no read preference is provided' do
+    context 'when no read preference is provided', unless: sharded? do
 
-      let!(:primary_selector) do
-        Mongo::ServerSelector.get(Mongo::ServerSelector::PRIMARY)
+      let!(:primary_server) do
+        database.cluster.next_primary
       end
 
       before do
-        expect(Mongo::ServerSelector).to receive(:get).
-          with(Mongo::ServerSelector::PRIMARY).ordered.and_call_original
-        if replica_set?
-          expect(Mongo::ServerSelector).to receive(:get).
-            with(primary_selector).ordered.and_call_original
-        end
+        expect(primary_server).to receive(:with_connection).at_least(:once).and_call_original
       end
 
       it 'uses read preference of primary' do
@@ -264,10 +259,10 @@ describe Mongo::Database do
       end
     end
 
-    context 'when the client has a read preference set' do
+    context 'when the client has a read preference set', unless: sharded? do
 
-      let!(:primary_selector) do
-        Mongo::ServerSelector.get(Mongo::ServerSelector::PRIMARY)
+      let!(:primary_server) do
+        database.cluster.next_primary
       end
 
       let(:read_preference) do
@@ -283,12 +278,7 @@ describe Mongo::Database do
       end
 
       before do
-        expect(Mongo::ServerSelector).to receive(:get).
-            with(Mongo::ServerSelector::PRIMARY).ordered.and_call_original
-        if replica_set?
-          expect(Mongo::ServerSelector).to receive(:get).
-              with(primary_selector).ordered.and_call_original
-        end
+        expect(primary_server).to receive(:with_connection).at_least(:once).and_call_original
       end
 
       it 'does not use the client read preference 'do
