@@ -50,4 +50,27 @@ describe Mongo::Operation::Specifiable do
       end
     end
   end
+
+  describe '#read' do
+
+    context 'when read is specified' do
+
+      let(:spec) do
+        {
+          read: { mode: :secondary}
+        }
+      end
+
+      it 'uses the read option' do
+        expect(specifiable.read).to eq(spec[:read])
+      end
+    end
+
+    context 'when read is not specified' do
+
+      it 'returns a Primary ServerSelector spec' do
+        expect(specifiable.read).to eq(Mongo::ServerSelector::PRIMARY)
+      end
+    end
+  end
 end

@@ -159,6 +159,53 @@ shared_examples 'a server selector accepting tag sets' do
   end
 end
 
+shared_examples 'a server selector accepting a local threshold option' do
+
+  describe '#local_threshold' do
+
+    context 'when a local_threshold option is not provided' do
+
+      it 'returns the default' do
+        expect(selector.local_threshold).to be(Mongo::ServerSelector::LOCAL_THRESHOLD)
+      end
+    end
+
+    context 'when local threshold option is provided' do
+
+      let(:options) do
+        {
+          local_threshold: 0.012
+        }
+      end
+
+      it 'returns the local threshold option' do
+        expect(selector.local_threshold).to eq(options[:local_threshold])
+      end
+    end
+  end
+
+  describe '#==' do
+
+    context 'when mode is the same' do
+
+      let(:other) { described_class.new }
+
+      context 'when local_threshold option is different' do
+
+        let(:options) do
+          {
+            local_threshold: 0.012
+          }
+        end
+
+        it 'returns false' do
+          expect(selector).not_to eq(other)
+        end
+      end
+    end
+  end
+end
+
 shared_examples 'a server selector with sensitive data in its options' do
 
   describe '#inspect' do

@@ -248,7 +248,7 @@ describe Mongo::Database do
 
       before do
         expect(Mongo::ServerSelector).to receive(:get).
-            with({}).and_call_original
+            with(Mongo::ServerSelector::PRIMARY).and_call_original
       end
 
       it 'uses read preference of primary' do
@@ -272,7 +272,7 @@ describe Mongo::Database do
 
       before do
         expect(Mongo::ServerSelector).to receive(:get).
-            with({}).and_call_original
+            with(Mongo::ServerSelector::PRIMARY).and_call_original
       end
 
       it 'does not use the client read preference 'do

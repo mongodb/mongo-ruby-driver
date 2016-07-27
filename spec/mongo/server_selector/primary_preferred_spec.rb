@@ -12,6 +12,7 @@ describe Mongo::ServerSelector::PrimaryPreferred do
 
   it_behaves_like 'a server selector accepting tag sets'
   it_behaves_like 'a server selector with sensitive data in its options'
+  it_behaves_like 'a server selector accepting a local threshold option'
 
   describe '#to_mongos' do
 

@@ -10,6 +10,7 @@ describe Mongo::ServerSelector::Primary do
     let(:slave_ok) { false }
   end
   it_behaves_like 'a server selector with sensitive data in its options'
+  it_behaves_like 'a server selector accepting a local threshold option'
 
   describe '#tag_sets' do
 

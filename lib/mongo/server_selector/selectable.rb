@@ -37,7 +37,9 @@ module Mongo
       #
       # @since 2.0.0
       def ==(other)
-        name == other.name && tag_sets == other.tag_sets
+        name == other.name &&
+          tag_sets == other.tag_sets &&
+          local_threshold == other.local_threshold
       end
 
       # Initialize the server selector.
