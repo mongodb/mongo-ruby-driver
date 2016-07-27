@@ -61,8 +61,16 @@ describe Mongo::Operation::Specifiable do
         }
       end
 
-      it 'uses the read option' do
-        expect(specifiable.read).to eq(spec[:read])
+      let(:server_selector) do
+        Mongo::ServerSelector.get(spec[:read])
+      end
+
+      it 'converts the read option to a ServerSelector' do
+        expect(specifiable.read).to be_a(Mongo::ServerSelector::Secondary)
+      end
+
+      it 'uses the read option provided' do
+        expect(specifiable.read).to eq(server_selector)
       end
     end
 
