@@ -38,7 +38,7 @@ module Mongo
         # @param value [ Array<Symbol> ] Array of flags to encode
         #
         # @return [ String ] Buffer that received the serialized vector
-        def serialize(buffer, value)
+        def serialize(buffer, value, validating_keys = BSON::Config.validating_keys?)
           bits = 0
           value.each { |flag| bits |= @masks[flag] }
           buffer.put_int32(bits)

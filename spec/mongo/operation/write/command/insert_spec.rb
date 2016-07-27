@@ -98,7 +98,7 @@ describe Mongo::Operation::Write::Command::Insert do
       expect(Mongo::Protocol::Query).to receive(:new).with(authorized_collection.database.name,
                                                            '$cmd',
                                                             expected_selector,
-                                                            { limit: -1 })
+                                                            { limit: -1, validating_keys: true })
       op.send(:message)
     end
   end

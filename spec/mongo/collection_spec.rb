@@ -707,6 +707,19 @@ describe Mongo::Collection do
       expect(result.inserted_ids.size).to eq(2)
     end
 
+    context 'when a document contains invalid keys' do
+
+      let(:docs) do
+        [ { 'first.name' => 'test1' }, { name: 'test2' } ]
+      end
+
+      it 'raises a BSON::String::IllegalKey exception' do
+        expect {
+          authorized_collection.insert_many(docs)
+        }.to raise_exception(BSON::String::IllegalKey)
+      end
+    end
+
     context 'when the client has a custom id generator' do
 
       let(:generator) do
@@ -828,6 +841,19 @@ describe Mongo::Collection do
 
     it 'contains the id in the result' do
       expect(result.inserted_id).to_not be_nil
+    end
+
+    context 'when the document contains invalid keys' do
+
+      let(:doc) do
+        { 'testing.test' => 'value' }
+      end
+
+      it 'raises a BSON::String::IllegalKey exception' do
+        expect {
+          authorized_collection.insert_one(doc)
+        }.to raise_exception(BSON::String::IllegalKey)
+      end
     end
 
     context 'when the insert fails' do

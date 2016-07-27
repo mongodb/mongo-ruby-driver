@@ -75,6 +75,10 @@ module Mongo
 
       private
 
+      def validating_keys?
+        true
+      end
+
       attr_reader :upconverter
 
       # The operation code required to specify an Insert message.
