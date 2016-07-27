@@ -407,7 +407,7 @@ module Mongo
       #
       # @since 2.1.0
       def read_preference
-        @read_preference ||= @options[:read] ? ServerSelector.get(@options[:read]) : database.read_preference
+        @read_preference ||= ServerSelector.get(@options[:read] || database.read_preference)
       end
 
       # Get the write concern.
