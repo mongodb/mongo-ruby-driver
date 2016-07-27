@@ -69,7 +69,7 @@ describe Mongo::Operation::Specifiable do
     context 'when read is not specified' do
 
       it 'returns a Primary ServerSelector spec' do
-        expect(specifiable.read).to eq(Mongo::ServerSelector::PRIMARY)
+        expect(specifiable.read).to eq(Mongo::ServerSelector.get(Mongo::ServerSelector::PRIMARY))
       end
     end
   end
