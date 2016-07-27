@@ -445,7 +445,7 @@ describe Mongo::Cluster do
       elsif cluster.sharded?
         cluster.servers
       else
-        cluster.collect { |s| s.primary? }
+        cluster.servers.select { |s| s.primary? }
       end
     end
 
