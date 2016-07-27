@@ -252,9 +252,11 @@ describe Mongo::Database do
 
       before do
         expect(Mongo::ServerSelector).to receive(:get).
-            with(Mongo::ServerSelector::PRIMARY).ordered.and_call_original
-        expect(Mongo::ServerSelector).to receive(:get).
+          with(Mongo::ServerSelector::PRIMARY).ordered.and_call_original
+        if replica_set?
+          expect(Mongo::ServerSelector).to receive(:get).
             with(primary_selector).ordered.and_call_original
+        end
       end
 
       it 'uses read preference of primary' do
@@ -283,8 +285,10 @@ describe Mongo::Database do
       before do
         expect(Mongo::ServerSelector).to receive(:get).
             with(Mongo::ServerSelector::PRIMARY).ordered.and_call_original
-        expect(Mongo::ServerSelector).to receive(:get).
-            with(primary_selector).ordered.and_call_original
+        if replica_set?
+          expect(Mongo::ServerSelector).to receive(:get).
+              with(primary_selector).ordered.and_call_original
+        end
       end
 
       it 'does not use the client read preference 'do
