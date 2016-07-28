@@ -1,0 +1,343 @@
+=====================
+Bulk Write Operations
+=====================
+
+.. default-domain:: mongodb
+
+This tutorial explains how to take advantage of MongoDB's bulk write
+operation feature with the Ruby driver. Executing write operations in
+batches reduces the number of network round trips and increases write
+throughput. Bulk write operations are available as of MongoDB server
+release 2.6.
+
+Bulk Insert How-To
+==================
+
+The following setup is assumed for each of the following code examples.
+
+.. code:: ruby
+
+    require 'mongo'
+    require 'pp'
+    mongo_client = Mongo::MongoClient.new
+    coll = mongo_client['test_db']['test_collection']
+    coll.remove
+
+Here's how to do an ordered bulk insert - the unordered bulk insert will
+be shown later.
+
+.. code:: ruby
+
+    bulk = coll.initialize_ordered_bulk_op
+    bulk.insert({'_id' => 1})
+    bulk.insert({'_id' => 2})
+    bulk.insert({'_id' => 3})
+    p bulk.execute
+
+On ``bulk.execute``, only one request is sent to the database server for
+the batch of three insert operations. In contrast, individual insert
+operations would take three requests, one request each per insert. The
+``bulk.execute`` above returns the following result indicating
+successful insertion of three documents.
+
+.. code:: ruby
+
+    {"ok"=>1, "n"=>3, "nInserted"=>3}
+
+Ordered Bulk Write Operation
+----------------------------
+
+In an ordered bulk write operation, the database server will stop
+execution on the first error. For example, the following results in an
+exception.
+
+.. code:: ruby
+
+    begin
+      bulk = coll.initialize_ordered_bulk_op
+      bulk.insert({'_id' => 1})
+      bulk.insert({'_id' => 1}) # cause a duplicate key error here
+      bulk.insert({'_id' => 3})
+      bulk.execute
+    rescue => ex
+      p ex
+      pp ex.result
+    end
+    puts "collection count: #{coll.count}"
+
+This is the output from executing the above code example.
+
+.. code:: ruby
+
+    #<Mongo::BulkWriteError: batch item errors occurred>
+    {"ok"=>1,
+     "n"=>1,
+     "code"=>65,
+     "errmsg"=>"batch item errors occurred",
+     "nInserted"=>1,
+     "writeErrors"=>
+      [{"index"=>1,
+        "code"=>11000,
+        "errmsg"=>
+         "insertDocument :: caused by :: 11000 E11000 duplicate key error index: bulk_write_example.bulk_write_test.$_id_  dup key: { : 1 }"}]}
+    collection count: 1
+
+The exception is a ``Mongo::BulkWriteError`` indicating that
+``batch item errors occurred``. Result details can be found in the
+``result`` member for the exception and indicate that one document was
+inserted. The ``writeErrors`` value includes the zero-base ``index``
+that indicates where the error occurred in the sequence. The collection
+count verifies that only one document was inserted as the batch
+terminated on error.
+
+Unordered Bulk Write Operation
+------------------------------
+
+To have the database server continue even if there is an error, use
+``initialize_unordered_bulk_op`` for an unordered bulk write operation.
+With a sharded MongoDB installation, the unordered operation permits
+``mongos`` to simultaneously submit operations to multiple shards in
+parallel and the resulting performance advantage can be significant.
+
+.. code:: ruby
+
+    begin
+      bulk = coll.initialize_unordered_bulk_op
+      bulk.insert({'_id' => 1})
+      bulk.insert({'_id' => 1}) # duplicate key
+      bulk.insert({'_id' => 3})
+      bulk.insert({'_id' => 3}) # duplicate key
+      bulk.execute
+    rescue => ex
+      p ex
+      pp ex.result
+    end
+    puts "collection count: #{coll.count}"
+
+Output:
+
+.. code:: ruby
+
+    #<Mongo::BulkWriteError: batch item errors occurred>
+    {"ok"=>1,
+     "n"=>2,
+     "code"=>65,
+     "errmsg"=>"batch item errors occurred",
+     "nInserted"=>2,
+     "writeErrors"=>
+      [{"index"=>1,
+        "code"=>11000,
+        "errmsg"=>
+         "insertDocument :: caused by :: 11000 E11000 duplicate key error index: test_db.test_collection.$_id_  dup key: { : 1 }"},
+       {"index"=>3,
+        "code"=>11000,
+        "errmsg"=>
+         "insertDocument :: caused by :: 11000 E11000 duplicate key error index: test_db.test_collection.$_id_  dup key: { : 3 }"}]}
+    collection count: 2
+
+There is a ``writeErrors`` element for each error that occurred. The
+result document and the collection count verify that two documents were
+inserted.
+
+Bulk Insert Performance Advantage
+---------------------------------
+
+The performance advantage of bulk write operations is demonstrated by
+the following program.
+
+.. code:: ruby
+
+    #!/usr/bin/env ruby
+    require 'mongo'
+    require 'benchmark'
+
+    TEST_SIZE = 100_000
+    DB_NAME = 'bulk_write_example'
+    COLLECTION_NAME = 'bulk_write_test'
+
+    $mongo_client = Mongo::MongoClient.new
+    $mongo_database = $mongo_client[DB_NAME]
+    $collection = $mongo_database[COLLECTION_NAME]
+    $norm_real = nil
+
+    def benchmark_real(title)
+      $mongo_database.drop_collection(COLLECTION_NAME)
+      real = Benchmark.measure { yield }.real
+      puts ("%2.1f" % (($norm_real || real)/real) + ' ' + title)
+      real
+    end
+
+    docs = TEST_SIZE.times.collect{|i| {i.to_s => i} }
+
+    $norm_real = benchmark_real("insert single"){ docs.each {|doc| $collection.insert(doc)} }
+
+    [1, 2, 10, 100, 1000, 10_000].each do |bulk_size|
+      [:ordered, :unordered].each do |order|
+        benchmark_real("bulk #{order} size #{bulk_size}") do
+          docs.each_slice(bulk_size) do |docs_slice|
+            bulk = (order == :ordered) ? $collection.initialize_ordered_bulk_op : $collection.initialize_unordered_bulk_op
+            docs_slice.each {|doc| bulk.insert(doc)}
+            bulk.execute
+          end
+        end
+      end
+    end
+
+    benchmark_real("insert batch") { $collection.insert(docs) }
+
+    $mongo_client.drop_database(DB_NAME)
+    $mongo_client.close
+
+Output:
+
+.. code:: ruby
+
+    1.0 insert single
+    0.7 bulk ordered size 1
+    0.7 bulk unordered size 1
+    1.3 bulk ordered size 2
+    1.3 bulk unordered size 2
+    5.0 bulk ordered size 10
+    4.9 bulk unordered size 10
+    15.1 bulk ordered size 100
+    14.6 bulk unordered size 100
+    20.0 bulk ordered size 1000
+    20.1 bulk unordered size 1000
+    19.8 bulk ordered size 10000
+    18.8 bulk unordered size 10000
+    22.9 insert batch
+
+This measurement was made with both the client and a single MongoDB
+server on the same local machine. Your results may vary with client and
+server on separate machines, with different network latency, with
+various cluster configurations, and with various document sizes.
+
+While there is some overhead for a bulk write operation, even a batch
+size of two shows benefit. The size of the user bulk operation is not
+restricted, and the driver will automatically split large operations
+into batches that will be accepted by the MongoDB server. At present,
+there is a ``max_write_batch_size`` of 1000, and this is reflected in
+the slightly lower benefit with batch size of 10\_000. A larger
+``max_write_batch_size`` may give a bit more advantage but is in the
+vicinity of diminishing returns.
+
+With this configuration, there is little difference between ordered and
+unordered performance. However with a sharded cluster, the unordered
+bulk write operation permits ``mongos`` to send simultaneous operations
+in parallel to multiple shards and the performance advantage can be
+significant.
+
+The collection ``insert`` method can also take an array for batch
+insertion and performance advantage. The measurement here shows that it
+has less overhead than the bulk write operation, but the performance is
+close for large batch sizes.
+
+Mixed Bulk Write Operations
+===========================
+
+The bulk write operation also permits mixing various ``update`` and
+``remove`` operations using a fluent API. Please see the Ruby driver API
+docs for full details - http://api.mongodb.org/ruby. So you can now
+realize performance gains with batches not just for ``insert``, but also
+for ``update`` and ``remove`` operations, or a mix of operation types.
+Here's a big example that illustrates the range of available expressions
+for operations.
+
+.. code:: ruby
+
+      def big_example(bulk)
+        bulk.insert({:a => 1})
+        bulk.insert({:a => 2})
+        bulk.insert({:a => 3})
+        bulk.insert({:a => 4})
+        bulk.insert({:a => 5})
+        # Update one document matching the selector
+        bulk.find({:a => 1}).update_one({"$inc" => {:x => 1}})
+        # Update all documents matching the selector
+        bulk.find({:a => 2}).update({"$inc" => {:x => 2}})
+        # Replace entire document (update with whole doc replaced)
+        bulk.find({:a => 3}).replace_one({:x => 3})
+        # Update one document matching the selector or upsert
+        bulk.find({:a => 1}).upsert.update_one({"$inc" => {:x => 1}})
+        # Update all documents matching the selector or upsert
+        bulk.find({:a => 2}).upsert.update({"$inc" => {:x => 2}})
+        # Replaces a single document matching the selector or upsert
+        bulk.find({:a => 3}).upsert.replace_one({:x => 3})
+        # Remove a single document matching the selector
+        bulk.find({:a => 4}).remove_one()
+        # Remove all documents matching the selector
+        bulk.find({:a => 5}).remove()
+        # Insert a document
+        bulk.insert({:x => 4})
+      end
+
+At present, the Ruby driver splits mixed bulk write operations into a
+sequence of ``insert``, ``update``, and ``remove`` requests.
+
+.. code:: ruby
+
+    bulk = coll.initialize_ordered_bulk_op
+    big_example(bulk)
+    bulk.execute
+
+For the above ordered bulk operation of the big example, this would be a
+sequence of four requests - ``insert`` ops 0-4, ``update`` ops 5-10,
+``remove`` ops 11-12, and ``insert`` op 13.
+
+.. code:: ruby
+
+    bulk = coll.initialize_unordered_bulk_op
+    big_example(bulk)
+    bulk.execute
+
+For the above unordered bulk operation of the big example, this would be
+reduced to a sequence of three requests with a single ``insert`` request
+for ops 0-4 and 13, a single ``update`` request for ops 5-10, and a
+single ``remove`` request for ops 11-12. In the absence of splitting due
+to large size, an unordered bulk operation will have at most three
+requests, one per type of operation. In contrast, an ordered bulk
+operation can only submit a request containing contiguous operations of
+the same type. So to maximize performance, minimize requests by
+maximizing contiguous operations by type.
+
+Write Concern
+=============
+
+By default bulk operations are executed with the ``write_concern``
+inherited from the collection. A custom write concern can be passed to
+the ``execute`` method. More detail on write concern can be found in the
+MongoDB `Manual <https://docs.mongodb.com/manual/core/write-concern/>`_
+or in the
+`wiki <https://github.com/mongodb/mongo-ruby-driver/wiki/Write-Concern>`_.
+Write concern errors, e.g.
+`wtimeout <https://docs.mongodb.com/manual/reference/write-concern/>`_,
+will be reported after all operations are attempted, regardless of
+execution order.
+
+.. code:: ruby
+
+    bulk = coll.initialize_ordered_bulk_op
+    bulk.insert({'a' => 0})
+    bulk.insert({'a' => 1})
+    bulk.insert({'a' => 2})
+    bulk.insert({'a' => 3})
+    begin
+      bulk.execute({:w => 4, :wtimeout => 1})
+    rescue Mongo::BulkWriteError => ex
+      pp ex.result
+    end
+
+Output:
+
+.. code:: ruby
+
+    {"ok"=>1,
+     "n"=>1,
+     "code"=>65,
+     "errmsg"=>"batch item errors occurred",
+     "nInserted"=>4,
+     "writeConcernError"=>
+      [{"errmsg"=>"timed out waiting for slaves",
+        "code"=>64,
+        "errInfo"=>{"wtimeout"=>true},
+        "index"=>0}]}}
