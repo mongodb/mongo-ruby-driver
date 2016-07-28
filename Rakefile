@@ -36,7 +36,7 @@ task :docs => 'docs:yard'
 namespace :docs do
   desc "Generate yard documention"
   task :yard do
-    out = File.join('docs', Mongo::VERSION)
+    out = File.join('yard-docs', Mongo::VERSION)
     FileUtils.rm_rf(out)
     system "yardoc -o #{out} --title mongo-#{Mongo::VERSION}"
   end

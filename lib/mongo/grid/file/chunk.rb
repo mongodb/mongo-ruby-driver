@@ -162,8 +162,9 @@ module Mongo
           # @example Split the data into chunks.
           #   Chunks.split(data)
           #
-          # @param [ String, IO ] data The raw bytes.
+          # @param [ String, IO ] io The raw bytes.
           # @param [ File::Info ] file_info The files collection file doc.
+          # @param [ Integer ] offset The offset.
           #
           # @return [ Array<Chunk> ] The chunks of the data.
           #
