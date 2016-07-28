@@ -193,7 +193,8 @@ module Mongo
         # @example Convert the file information document to BSON.
         #   file_info.to_bson
         #
-        # @param [ String ] encoded The encoded data to append to.
+        # @param [ BSON::ByteBuffer ] buffer The encoded BSON buffer to append to.
+        # @param [ true, false ] validating_keys Whether keys should be validated when serializing.
         #
         # @return [ String ] The raw BSON data.
         #

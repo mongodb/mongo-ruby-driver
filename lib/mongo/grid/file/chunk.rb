@@ -130,7 +130,8 @@ module Mongo
         # @example Convert the chunk to BSON.
         #   chunk.to_bson
         #
-        # @param [ String ] buffer The encoded data buffer to append to.
+        # @param [ BSON::ByteBuffer ] buffer The encoded BSON buffer to append to.
+        # @param [ true, false ] validating_keys Whether keys should be validated when serializing.
         #
         # @return [ String ] The raw BSON data.
         #
