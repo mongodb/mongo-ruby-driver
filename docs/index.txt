@@ -1,0 +1,60 @@
+.. http://www.mongodb.org/display/DOCS/Ruby+Language+Center
+
+.. _ruby-language-center:
+
+===================
+Ruby MongoDB Driver
+===================
+
+.. default-domain:: mongodb
+
+The MongoDB Ruby driver is the officially supported Ruby driver for
+MongoDB. It is written in pure Ruby and is optimized for simplicity. It
+can be used on its own, but it also serves as the basis of several
+object mapping libraries.
+
+
+Basic Features
+--------------
+
+- :doc:`/quick-start`
+- :doc:`/aggregation-framework`
+- :doc:`/examples`
+- :doc:`/authentication`
+- :doc:`/web-examples`
+- :doc:`/faq`
+
+Multiple Nodes
+--------------
+
+-  :doc:`/replica-sets`
+-  :doc:`/read-preference`
+-  :doc:`/write-concern`
+
+Advanced Features
+-----------------
+
+-  :doc:`/bulk-write-operations`
+-  :doc:`/tailable-cursors`
+-  :doc:`/gridfs`
+
+.. class:: hidden
+
+   .. toctree::
+      :titlesonly:
+
+      /quick-start
+      /aggregation-framework
+      /examples
+      /replica-sets
+      /read-preference
+      /write-concern
+      /bulk-write-operations
+      /authentication
+      /gridfs
+      /tailable-cursors
+      /web-examples
+      /faq
+      /style-guide
+      /credits
+
