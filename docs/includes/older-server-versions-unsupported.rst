@@ -1,0 +1,1 @@
+The driver does not support older versions of MongoDB.

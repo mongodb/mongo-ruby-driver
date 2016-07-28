@@ -1,0 +1,71 @@
+.. http://www.mongodb.org/display/DOCS/Ruby+Language+Center
+
+.. _ruby-language-center:
+
+===================
+Ruby MongoDB Driver
+===================
+
+.. default-domain:: mongodb
+
+The MongoDB Ruby driver is the officially supported Ruby driver for
+MongoDB. It is written in pure Ruby and is optimized for simplicity. It
+can be used on its own, but it also serves as the basis of several
+object mapping libraries.
+
+Get Started
+-----------
+
+To get started with the Ruby driver, see :doc:`/quick-start`
+
+BSON
+----
+
+The Ruby BSON implementation is packaged in a separate gem with C and
+Java extensions for speed depending on the runtime enviroment.
+
+For reference on the Ruby BSON gem, see :doc:`/bson-tutorials`.
+
+Object Mappers
+--------------
+
+Because MongoDB is so easy to use, the basic Ruby driver can be the
+best solution for many applications. But if you need validations,
+associations, and other high-level data modeling functions, then you
+may need Object Document Mapper may be needed.
+
+In the context of a Rails application, an Object Document Mapper
+provides functionality equivalent to, but distinct from, ActiveRecord.
+Because MongoDB is a document-based database, these mappers are called
+Object Document Mappers (ODM) as opposed to Object Relational Mappers
+(ORM).
+
+The ODM officially supported by MongoDB is Mongoid, originally written
+by Durran Jordan.
+
+For tutorial on Mongoid, see :doc:`/mongoid-tutorials`.
+
+.. COMMENT  For the actual build, see mongodb/docs-ruby repo which pulls the documentation source from:
+..    mongo-ruby-driver, 
+..    bson-ruby, and 
+..    mongoid repos.
+
+.. seealso::
+   
+   Blog Post: `Announcing Ruby Driver 2.0, a Rewrite
+   <http://www.mongodb.com/blog/post/announcing-ruby-driver-20-rewrite?jmp= docs>`_.
+   
+   
+.. class:: hidden
+
+   .. toctree::
+      :titlesonly:
+
+      /quick-start
+      bson-tutorials
+      mongoid-tutorials
+      API <https://api.mongodb.com/ruby/2.0.6/>
+      /reference/driver-compatibility
+      /reference/additional-resources
+      /contribute
+
