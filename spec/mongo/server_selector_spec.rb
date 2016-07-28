@@ -170,6 +170,73 @@ describe Mongo::ServerSelector do
         end.to raise_exception(Mongo::Error::NoServerAvailable)
       end
     end
+
+    context 'when the cluster has a server_selection_timeout set' do
+
+      let(:servers) do
+        [ server(:secondary), server(:primary) ]
+      end
+
+      let(:cluster) do
+        double('cluster').tap do |c|
+          allow(c).to receive(:servers).and_return(servers)
+          allow(c).to receive(:single?).and_return(false)
+          allow(c).to receive(:sharded?).and_return(false)
+          allow(c).to receive(:scan!).and_return(true)
+          allow(c).to receive(:options).and_return(server_selection_timeout: 0)
+        end
+      end
+
+      let(:read_pref) do
+        described_class.get(mode: :nearest)
+      end
+
+      it 'uses the server_selection_timeout of the cluster' do
+        expect{
+          read_pref.select_server(cluster)
+        }.to raise_exception(Mongo::Error::NoServerAvailable)
+      end
+    end
+
+    context 'when the cluster has a local_threshold set' do
+
+
+      let(:near_server) do
+        server(:secondary).tap do |s|
+          allow(s).to receive(:connectable?).and_return(true)
+          allow(s).to receive(:average_round_trip_time).and_return(100)
+        end
+      end
+
+      let(:far_server) do
+        server(:secondary).tap do |s|
+          allow(s).to receive(:connectable?).and_return(true)
+          allow(s).to receive(:average_round_trip_time).and_return(200)
+        end
+      end
+
+      let(:servers) do
+        [ near_server, far_server ]
+      end
+
+      let(:cluster) do
+        double('cluster').tap do |c|
+          allow(c).to receive(:servers).and_return(servers)
+          allow(c).to receive(:single?).and_return(false)
+          allow(c).to receive(:sharded?).and_return(false)
+          allow(c).to receive(:scan!).and_return(true)
+          allow(c).to receive(:options).and_return(local_threshold: 0.050)
+        end
+      end
+
+      let(:read_pref) do
+        described_class.get(mode: :nearest)
+      end
+
+      it 'uses the local_threshold of the cluster' do
+        expect(read_pref.select_server(cluster)).to eq(near_server)
+      end
+    end
   end
 
   shared_context 'a ServerSelector' do
