@@ -79,7 +79,8 @@ module Mongo
     # @example Convert the DBRef to raw BSON.
     #   dbref.to_bson
     #
-    # @param [ String ] buffer The encoded BSON buffer to append to.
+    # @param [ BSON::ByteBuffer ] buffer The encoded BSON buffer to append to.
+    # @param [ true, false ] validating_keys Whether keys should be validated when serializing.
     #
     # @return [ String ] The raw BSON.
     #
