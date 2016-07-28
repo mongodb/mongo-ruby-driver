@@ -1,0 +1,109 @@
+========
+Indexing
+========
+
+.. default-domain:: mongodb
+
+.. contents:: On this page
+   :local:
+   :backlinks: none
+   :depth: 1
+   :class: singlecol
+
+The driver provides the ability to create, drop and view
+:manual:`indexes</indexes/>` on a collection.
+
+Creating Indexes
+----------------
+
+Indexes can be created one at a time, or several can be created in a single
+operation. When creating multiple indexes on MongoDB 3.0 and later, the indexes
+are created in parallel. On earlier versions they are created in order.
+
+To create a single index, use ``create_one``.
+
+.. code-block:: ruby
+
+  client = Mongo::Client.new([ '127.0.0.1:27017' ], :database => 'music')
+  client[:bands].indexes.create_one( { :name => 1 }, unique: true )
+
+To create multiple indexes, use ``create_many``. Note that when creating many,
+the index keys must be passed as a ``key`` value in the provided spec. This is
+due to the fact that options can be different for each index being created.
+
+.. code-block:: ruby
+
+  client = Mongo::Client.new([ '127.0.0.1:27017' ], :database => 'music')
+  client[:bands].indexes.create_many([
+    { :key => { name: 1 }, unique: true },
+    { :key => { label: -1 } }
+  ])
+
+.. _ruby-driver-index-options:
+
+The following is a full list of the available options that can be added
+when creating indexes.
+
+.. list-table::
+   :header-rows: 1
+   :widths: 40 80
+
+   * - Option
+     - Description
+   * - ``:background``
+     - Either ``true`` or ``false``. Tells the index to be created in the background.
+   * - ``:expire_after``
+     - Number of seconds to expire documents in the collection after.
+   * - ``:name``
+     - The name of the index.
+   * - ``:sparse``
+     - Whether the index should be sparse or not, either ``true`` or ``false``.
+   * - ``:storage_engine``
+     - The name of the storage engine for this particular index.
+   * - ``:version``
+     - The index format version to use.
+   * - ``:default_language``
+     - The default language of text indexes.
+   * - ``:language_override``
+     - The field name to use when overriding the default language.
+   * - ``:text_version``
+     - The version format for text index storage.
+   * - ``:weights``
+     - A document specifying fields and weights in text search.
+   * - ``:sphere_version``
+     - The 2d sphere index version.
+   * - ``:bits``
+     - Sets the maximum boundary for latitude and longitude in the 2d index.
+   * - ``:max``
+     - Maximum boundary for latitude and longitude in the 2d index.
+   * - ``:min``
+     - Minimum boundary for latitude and longitude in the 2d index.
+   * - ``:bucket_size``
+     - The number of units within which to group the location values in a geo haystack index.
+   * - ``:partial_filter_expression``
+     - A filter for a partial index.
+
+
+Dropping Indexes
+----------------
+
+To drop an index, call ``dropOne`` or ``dropAll``.
+
+.. code-block:: ruby
+
+  client = Mongo::Client.new([ '127.0.0.1:27017' ], :database => 'music')
+
+  client[:bands].indexes.drop_one( 'name_1' ) # Drops the name_1 index.
+  client[:bands].indexes.drop_all # Drops all indexes in the collection.
+
+
+Listing Indexes
+---------------
+
+.. code-block:: ruby
+
+  client = Mongo::Client.new([ '127.0.0.1:27017' ], :database => 'music')
+
+  client[:bands].indexes.each do |index|
+    p index
+  end
