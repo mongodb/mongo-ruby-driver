@@ -1,0 +1,28 @@
+.. http://docs.mongodb.org/ecosystem/tutorial/ruby-driver-tutorial/
+
+.. _ruby-driver-tutorial:
+
+=========
+Tutorials
+=========
+
+.. default-domain:: mongodb
+
+The tutorials in this section provide examples of some frequently used
+operations. This section is not meant to be an exhaustive list of all
+operations available in the Ruby driver.
+    
+.. toctree::
+   :titlesonly:
+
+   /tutorial/ruby-driver-create-client
+   /tutorial/ruby-driver-crud-operations
+   /tutorial/ruby-driver-collection-tasks
+   /tutorial/ruby-driver-projections
+   /tutorial/ruby-driver-admin-tasks
+   /tutorial/ruby-driver-indexing
+   /tutorial/ruby-driver-aggregation
+   /tutorial/ruby-driver-bulk-operations
+   /tutorial/ruby-driver-text-search
+   /tutorial/ruby-driver-geospatial-search
+   /tutorial/ruby-driver-gridfs
