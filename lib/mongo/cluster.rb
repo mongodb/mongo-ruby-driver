@@ -159,7 +159,8 @@ module Mongo
     #
     # @since 2.0.0
     def next_primary(ping = true)
-      ServerSelector.get(ServerSelector::PRIMARY.merge(options)).select_server(self, ping)
+      @primary_selector ||= ServerSelector.get(ServerSelector::PRIMARY)
+      @primary_selector.select_server(self, ping)
     end
 
     # Elect a primary server from the description that has just changed to a

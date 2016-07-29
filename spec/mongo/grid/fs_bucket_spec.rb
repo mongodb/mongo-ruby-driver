@@ -63,6 +63,21 @@ describe Mongo::Grid::FSBucket do
         end
       end
 
+      context 'when a read preference is not set' do
+
+        let(:database) do
+          authorized_client.with(read: { mode: :secondary }).database
+        end
+
+        let(:fs) do
+          described_class.new(database, options)
+        end
+
+        it 'uses the read preference of the database' do
+          expect(fs.read_preference).to be(database.read_preference)
+        end
+      end
+
       context 'when a write stream is opened' do
 
         let(:stream) do

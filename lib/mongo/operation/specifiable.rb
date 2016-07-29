@@ -442,7 +442,7 @@ module Mongo
       #
       # @since 2.0.0
       def read
-        @spec[READ] || ServerSelector.get
+        @read ||= ServerSelector.get(@spec[READ] || ServerSelector::PRIMARY)
       end
 
       # Whether the operation is ordered.

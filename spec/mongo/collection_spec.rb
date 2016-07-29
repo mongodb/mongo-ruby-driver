@@ -148,6 +148,7 @@ describe Mongo::Collection do
 
         it 'sets the new read options on the new collection' do
           expect(new_collection.read_preference).to eq(Mongo::ServerSelector.get(new_options[:read]))
+          expect(new_collection.read_preference).not_to eq(client.read_preference)
         end
       end
 
@@ -233,6 +234,7 @@ describe Mongo::Collection do
 
         it 'sets the new read options on the new collection' do
           expect(new_collection.read_preference).to eq(Mongo::ServerSelector.get(new_options[:read]))
+          expect(new_collection.read_preference).not_to be(client.read_preference)
         end
       end
     end

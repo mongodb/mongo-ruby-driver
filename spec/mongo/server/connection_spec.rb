@@ -261,11 +261,11 @@ describe Mongo::Server::Connection do
       end
 
       let(:query_bob) do
-        Mongo::Protocol::Query.new(TEST_DB, TEST_COLL, { 'name' => 'bob' })
+        Mongo::Protocol::Query.new(TEST_DB, TEST_COLL, { name: 'bob' })
       end
 
       let(:query_alice) do
-        Mongo::Protocol::Query.new(TEST_DB, TEST_COLL, { 'name' => 'alice' })
+        Mongo::Protocol::Query.new(TEST_DB, TEST_COLL, { name: 'alice' })
       end
 
       after do
@@ -278,14 +278,14 @@ describe Mongo::Server::Connection do
         connection.dispatch([ insert, query_bob ])
       end
 
-      it 'raises an UnexpectedResponse' do
+      it 'raises an UnexpectedResponse error' do
         expect {
           connection.dispatch([ query_alice ])
         }.to raise_error(Mongo::Error::UnexpectedResponse,
           /Got response for request ID \d+ but expected response for request ID \d+/)
       end
 
-      it "doesn't break subsequent requests" do
+      it 'does not affect subsequent requests' do
         expect {
           connection.dispatch([ query_alice ])
         }.to raise_error(Mongo::Error::UnexpectedResponse)
@@ -294,7 +294,7 @@ describe Mongo::Server::Connection do
       end
     end
 
-    context 'when a request is brutaly interrupted (Thread.kill)' do
+    context 'when a request is interrupted (Thread.kill)' do
 
       let(:documents) do
         [{ 'name' => 'bob' }, { 'name' => 'alice' }]
@@ -305,11 +305,11 @@ describe Mongo::Server::Connection do
       end
 
       let(:query_bob) do
-        Mongo::Protocol::Query.new(TEST_DB, TEST_COLL, { 'name' => 'bob' })
+        Mongo::Protocol::Query.new(TEST_DB, TEST_COLL, { name: 'bob' })
       end
 
       let(:query_alice) do
-        Mongo::Protocol::Query.new(TEST_DB, TEST_COLL, { 'name' => 'alice' })
+        Mongo::Protocol::Query.new(TEST_DB, TEST_COLL, { name: 'alice' })
       end
 
       before do
@@ -320,7 +320,7 @@ describe Mongo::Server::Connection do
         authorized_collection.delete_many
       end
 
-      it "closes the socket and does not use it for subsequent requests" do
+      it 'closes the socket and does not use it for subsequent requests' do
         t = Thread.new {
           # Kill the thread just before the reply is read
           allow(Mongo::Protocol::Reply).to receive(:deserialize_header) { t.kill }
@@ -331,7 +331,6 @@ describe Mongo::Server::Connection do
         expect(connection.dispatch([ query_alice ]).documents.first['name']).to eq('alice')
       end
     end
-
 
     context 'when the message exceeds the max size' do
 
