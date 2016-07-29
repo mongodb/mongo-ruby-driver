@@ -1,1 +1,2 @@
-lib/**/*.rb 
+lib/**/*.rb
+-o yard-docs
