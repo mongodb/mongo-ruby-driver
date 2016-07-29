@@ -1,0 +1,185 @@
+===========
+Style Guide
+===========
+
+.. default-domain:: mongodb
+
+Ruby
+----
+
+Please see the community maintained `Ruby Style
+Guide <https://github.com/bbatsov/ruby-style-guide>`_. To check for
+style guide violations, you can run ``rake quality`` or ``rspec`` for a
+report (only for the 2.x driver).
+
+RSpec
+-----
+
+Do not use instance variables in specs, use ``let`` instead. Instance
+variables cause tests to have an order dependency in some cases where
+``before(:all)`` is used, either intentionally or not. let ensures that
+each example block has a fresh copy of the object being tested. Thus we
+can run RSpec with --order random and not get any surprises.
+
+.. code:: ruby
+
+    # do:
+    let(:object) do
+      Model.new
+    end
+
+    # do not:
+    before(:all) do
+      @object = Model.new
+    end
+
+Do not namespace specs under the same namespace as the library being
+tested. This causes the tests to be run under the same scope as the
+library itself, thus potentially providing false positives in the suite
+with respect to the scope in which things are accessed. We want the test
+quite to behave as if being accessed from another library or a users
+application, which would exist in the global scope or another namespace.
+
+.. code:: ruby
+
+    # do:
+    describe BSON::Binary do
+    end
+
+    # do not:
+    module BSON
+      describe Binary do
+      end
+    end
+
+Use ``described_class`` for instantiating the class under test, not a
+reference to the object itself. This makes refactoring much easier if
+you are to change the class namespace, name, etc, as only the describe
+block of the test needs to change. This also makes shared examples
+easier to write.
+
+.. code:: ruby
+
+    # do:
+    let(:binary) do
+      described_class.new(data, :generic)
+    end
+
+    # do not:
+    let(:binary) do
+      BSON::Binary.new(data, :generic)
+    end
+
+Do not use ``should`` anymore, this will be deprecated and removed as it
+pollutes Ruby's core Object class. Use ``expect``/``to`` instead.
+
+.. code:: ruby
+
+    # do:
+    expect(something).to eq(something)
+    expect { something.method }.to raise_error
+
+    # do not:
+    something.should eq(something)
+    lambda { something.method }.should raise_error
+
+Do not use ``==`` as a method for testing equality, use ``eq()``
+instead. ``==`` Causes ruby errors to be logged with "return value of
+blah is not used." You can run rspec with warnings turned on via
+``ruby -W -S rspec``.
+
+.. code:: ruby
+
+    # do:
+    expect(something).to eq(something)
+
+    # do not:
+    expect(something).to == something
+
+For us vim users, it would be nice if we leave spaces between code
+blocks, not scrunched into a single block. Code statistic tools do not
+count empty lines so there's really no reason to care about having an
+extra line between blocks or methods. Some of us have expectations when
+navigating via "{" and "}". Some spacing also is more readable in my
+opinion, and the test suite is part of the libaray as well - it should
+be just as clean and readable as the library code itself, since OSS
+users will be looking there to understand behaviour.
+
+.. code:: ruby
+
+    # instead of:
+    let(:something) { "something" }
+    let(:something_else) { "something else" }
+
+    # would be nice to do:
+    let(:something) do
+      "something"
+    end
+
+    let(:something_else) do
+      "something else"
+    end
+
+Do not use example blocks without a description, which really rules out
+using subject for that matter. The reason is with format --documentation
+if no description of the spec, you don't get anything meaningful as
+output, either in passing or failure. RSpec's documentation format
+should be just as readable and meaningful as cucumber features/output.
+
+.. code:: ruby
+
+    # do:
+    let(:object) do
+      described_class.new
+    end
+
+    it "returns something" do
+      expect(object.method).to eq(something)
+    end
+
+    # do not:
+    subject do
+      described_class.new
+    end
+
+    its(:method) { should eq(something) }
+
+More of semantics, but trying to be absolutely correct here... Don't use
+"should" in language anywhere in the specs. Nothing "should" exhibit
+behaviour, it *absolutely must* exhibit said behaviour in order for the
+specification to hold true.
+
+.. code:: ruby
+
+    # do:
+    it "returns nil" do
+    end
+
+    # do not:
+    it "should return nil" do
+    end
+
+Use ``describe`` for testing methods/constants, with the prefix ``#``
+for instance methods, ``.`` for class methods, and ``::`` for constants.
+``context`` should be used inside describe blocks to set up conditions.
+This keeps the language inline with what is being tested. "We describe
+the behaviour of a method, that within a certain context has an
+expectation".
+
+.. code:: ruby
+
+    Example:
+    describe "#instance_method" do
+
+      context "when some case holds true" do
+
+        it "returns something" do
+        end
+      end
+    end
+
+    describe ".class_method" do
+    end
+
+    describe "::CONSTANT" do
+    end

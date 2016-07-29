@@ -16,7 +16,6 @@
 .yardoc
 coverage
 data
-docs
 ext/cbson/Makefile
 ext/jbson/target/java
 Gemfile.lock
