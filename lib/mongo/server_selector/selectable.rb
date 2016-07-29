@@ -73,8 +73,7 @@ module Mongo
       #
       # @since 2.2.0
       def inspect
-        "#<#{self.class.name}:0x#{object_id} tag_sets=#{tag_sets.inspect} " +
-        "local_threshold=#{local_threshold}>"
+        "#<#{self.class.name}:0x#{object_id} tag_sets=#{tag_sets.inspect}>"
       end
 
       # Select a server from eligible candidates.
@@ -88,8 +87,9 @@ module Mongo
       #
       # @since 2.0.0
       def select_server(cluster, ping = true)
-        timeout = cluster.options[:server_selection_timeout] || ServerSelector::SERVER_SELECTION_TIMEOUT
-        deadline = Time.now + timeout
+        @local_threshold = cluster.options[:local_threshold] || LOCAL_THRESHOLD
+        @server_selection_timeout = cluster.options[:server_selection_timeout] || SERVER_SELECTION_TIMEOUT
+        deadline = Time.now + server_selection_timeout
         while (deadline - Time.now) > 0
           servers = candidates(cluster)
           if servers && !servers.compact.empty?
@@ -131,6 +131,9 @@ module Mongo
       # @return [ Float ] The local threshold.
       #
       # @since 2.0.0
+      #
+      # @deprecated This setting is now taken from the cluster options when a server is selected.
+      #   Will be removed in 3.0.
       def local_threshold
         @local_threshold ||= (options[:local_threshold] || ServerSelector::LOCAL_THRESHOLD)
       end
