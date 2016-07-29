@@ -13,7 +13,6 @@
 .yardoc
 coverage
 data
-docs
 Gemfile.lock
 .ruby-gemset
 .ruby-version
