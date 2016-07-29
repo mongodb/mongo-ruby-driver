@@ -1,0 +1,230 @@
+==============
+Authentication
+==============
+
+.. default-domain:: mongodb
+
+MongoDB supports a wide variety of `authentication
+mechanisms <https://docs.mongodb.com/master/core/access-control/>`__. The
+following examples demonstrate each of the authentication modes
+currently supported by the Ruby driver.
+
+For more information about configuring your MongoDB server for each of
+these authentication mechanisms please see MongoDB's `online
+documentation <https://docs.mongodb.com/master/tutorial/enable-authentication/>`__.
+
+For more detailed info on ``Mongo::DB#authenticate()`` please see the
+`API
+reference <http://api.mongodb.org/ruby/current/Mongo/DB.html#authenticate-instance_method>`__.
+
+MONGODB-CR
+==========
+
+MONGODB-CR is the default authentication mechanism for MongoDB and all
+drivers. As is the case for all authentication mechanisms, credentials
+are handled by the client instance on a per-database level.
+
+.. code:: ruby
+
+    # basic authentication
+    client = MongoClient.new
+    db     = client['example']
+    db.authenticate('sally', 'secret')
+
+    # basic authentication from uri
+    uri    = 'mongodb://sally:secret@localhost:27017/example'
+    client = MongoClient.from_uri(uri)
+
+User management with MONGODB-CR is easily handled through the driver:
+
+.. code:: ruby
+
+    # add a new user to the db
+    db.add_user('emily','password', nil, :roles => ['read'])
+
+    # create a custom role, then add a user with that role
+    cmd = BSON::OrderedHash.new
+    cmd[:createRole] = "insertAndFind"
+    cmd[:privileges] = [{ :resources => { :db => db_name, :collection => coll_name },
+                          :actions => [ "insert", "find" ] }]
+    cmd[:roles] = []
+    db.command(cmd)
+    db.add_user('insertAndFindUser', 'password', nil, :roles => ['insertAndFind'])
+
+    # remove a user from the db
+    db.remove_user('mark')
+
+When using MongoDB 2.4.x and the `delegated
+credentials <https://docs.mongodb.com/manual/reference/privilege-documents/#delegated-credentials>`__
+feature, you can log in using a separate source database with the
+examples below.
+
+.. code:: ruby
+
+    # basic delegated authentication
+    client = MongoClient.new
+    db     = client['example']
+    db.authenticate('sally', 'secret', nil, 'source-db')
+
+    # basic delegated authentication from uri
+    uri    = 'mongodb://sally:secret@localhost:27017/example?authSource=source-db' 
+    client = MongoClient.from_uri(uri)
+
+MONGODB-X509
+============
+
+*Requires MongoDB v2.6 or greater.*
+
+The MONGODB-X509 mechanism authenticates a username derived from the
+distinguished subject name of the X.509 certificate presented by the
+driver during SSL negotiation. This authentication method requires the
+use of SSL connections with certificate validation.
+
+For more information about configuring X.509 authentication in MongoDB,
+please see `this
+tutorial <https://docs.mongodb.com/master/tutorial/configure-x509/>`__.
+
+.. code:: ruby
+
+    # basic X509 authentication
+    ssl_opts = {
+      :ssl         => true,
+      :ssl_cert    => '/path/to/client.pem',
+      :ssl_ca_cert => '/path/to/ca.pem'
+    }
+
+    client = Mongo::MongoClient.new('example.com', 27017, ssl_opts)
+    db     = client['example']
+    db.authenticate('<X509-derived-name>', nil, nil, nil, 'MONGODB-X509')
+
+    # basic X509 authentication from a uri
+    # MONGODB-X509 authenticates against the $external virtual database, so you do not have to specify
+    #   a database in the URI.
+    uri        = "mongodb://<X509-derived-name>@example.com/?authMechanism=MONGODB-X509"
+    client     = MongoClient.from_uri(uri, ssl_opts)
+
+SASL PLAIN (LDAP)
+=================
+
+*Requires MongoDB Enterprise Edition v2.6 or greater.*
+
+MongoDB Enterprise Edition supports the SASL PLAIN authentication
+mechanism which allows you to delegate authentication using a
+Lightweight Directory Access Protocol
+(`LDAP <http://en.wikipedia.org/wiki/LDAP>`__) server. When using SASL
+PLAIN, passwords are sent to the server in plain text. For this reason,
+we strongly recommend enabling SSL when using SASL PLAIN as your
+authentication mechanism.
+
+For more information about configuring SASL PLAIN authentication in
+MongoDB, please see `this
+tutorial <https://docs.mongodb.com/master/tutorial/configure-ldap-sasl-authentication/>`__.
+
+.. code:: ruby
+
+    # basic SASL PLAIN authentication
+    ssl_opts = {
+      :ssl         => true,
+      :ssl_verify  => true,
+      :ssl_cert    => '/path/to/client.pem',
+      :ssl_ca_cert => '/path/to/ca.pem'
+    }
+
+    client = MongoClient.new('example.com', 27017, ssl_opts)
+    db     = client['example']
+    db.authenticate('sally', 'secret', nil, '$external', 'PLAIN')
+
+    # basic SASL PLAIN authentication from uri
+    username   = 'sally'
+    password   = 'secret'
+    host_port  = 'example.com:27017'
+    source     = '$external'
+    mechanism  = 'PLAIN'
+
+    uri        = "mongodb://#{username}:#{password}@#{host_port}/example?authSource=#{source}&authMechanism=#{mechanism}"
+    client     = MongoClient.from_uri(uri, ssl_opts)
+
+GSSAPI (Kerberos)
+=================
+
+*Requires MongoDB Enterprise Edition v2.4 or greater and the separate
+mongo\_kerberos gem.*
+
+To be able to use the driver with Kerberos authentication enabled,
+install the ``mongo_kerberos`` gem and add it instead of mongo to your
+application:
+
+.. code:: bash
+
+    gem install mongo_kerberos
+
+.. code:: ruby
+
+    require 'mongo_kerberos'
+
+MongoDB Enterprise Edition v2.4+ supports GSSAPI (Kerberos)
+authentication.
+
+In order to use it in the Ruby driver with **JRuby**, you must do the
+following:
+
+1. Specify several system properties so that the underlying GSSAPI Java
+   libraries can acquire a Kerberos ticket. Please see `this
+   documentation <https://docs.mongodb.com/ecosystem/tutorial/authenticate-with-java-driver/#kerberos-authentication>`__
+   for more information.
+
+2. Either provide a password OR set the
+   'java.security.auth.login.config' system property to a config file
+   that references a keytab file.
+
+In order to use it in the Ruby driver with **MRI**, you must do the
+following:
+
+1. Create a ticket-granting ticket using kinit. Please see `this
+   documentation <http://linux.die.net/man/1/kinit>`__ for more
+   information.
+
+For more information about deploying MongoDB with Kerberos
+authentication, please see `this
+documentation <https://docs.mongodb.com/manual/tutorial/control-access-to-mongodb-with-kerberos-authentication/>`__.
+
+.. code:: ruby
+
+    # GSSAPI authentication
+    client = MongoClient.new
+    db     = client['example']
+    db.authenticate('sally', 'secret', nil, nil, 'GSSAPI')
+
+    # GSSAPI authentication from uri
+    uri    = 'mongodb://mongodbuser%40EXAMPLE.COM@example.com/?authMechanism=GSSAPI' 
+    client = MongoClient.from_uri(uri)
+
+The default service name used by MongoDB and the Ruby driver is
+'mongodb'. You can specify a custom service name with the
+'gssapi\_service\_name' option:
+
+.. code:: ruby
+
+    client = MongoClient.new
+    db     = client['example']
+    db.authenticate('sally', 'secret', nil, nil, 'GSSAPI', :gssapi_service_name => 'myservicename')
+
+    # from uri
+    uri    = 'mongodb://mongodbuser%40EXAMPLE.COM@example.com/?authMechanism=GSSAPI&gssapiServiceName=myservicename' 
+    client = MongoClient.from_uri(uri)
+
+**Applies to JRuby only**
+
+By default, the driver won't canonicalize the hostname. You can specify
+that you would like it canonicalized by setting the
+'canonicalize\_host\_name' option to true:
+
+.. code:: ruby
+
+    client = MongoClient.new
+    db     = client['example']
+    db.authenticate('sally', 'secret', nil, nil, 'GSSAPI', :canonicalize_host_name => true)
+
+    # from uri
+    uri    = 'mongodb://mongodbuser%40EXAMPLE.COM@example.com/?authMechanism=GSSAPI&canonicalizeHostName=true' 
+    client = MongoClient.from_uri(uri)
