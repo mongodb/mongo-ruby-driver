@@ -1,0 +1,126 @@
+.. _reference-compatibility-ruby:
+
+====================
+Driver Compatibility
+====================
+
+.. default-domain:: mongodb
+
+.. _reference-compatibility-mongodb-ruby:
+
+MongoDB Compatibility
+~~~~~~~~~~~~~~~~~~~~~
+
+.. include:: /includes/ruby-driver-compatibility-matrix-mongodb.rst
+
+.. list-table::
+   :header-rows: 1
+   :stub-columns: 1
+   :widths: 20 20 20 20 20
+   :class: compatibility
+
+   * - Ruby Driver
+     - MongoDB 2.4
+     - MongoDB 2.6
+     - MongoDB 3.0
+     - MongoDB 3.2
+
+   * - 2.2
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+
+   * - 2.0
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     -
+
+   * - 1.12
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     -
+
+   * - 1.11
+     - |checkmark|
+     - |checkmark|
+     -
+     -
+
+   * - 1.10
+     - |checkmark|
+     - |checkmark|
+     -
+     -
+
+   * - 1.9
+     - |checkmark|
+     -
+     -
+     -
+
+   * - 1.8
+     - |checkmark|
+     -
+     -
+     -
+
+.. include:: /includes/older-server-versions-unsupported.rst
+
+.. _reference-compatibility-language-ruby:
+
+Language Compatibility
+~~~~~~~~~~~~~~~~~~~~~~
+
+.. include:: /includes/ruby-driver-compatibility-matrix-language.rst
+
+.. list-table::
+   :header-rows: 1
+   :stub-columns: 1
+   :class: compatibility
+
+   * - Ruby Driver
+     - Ruby 1.8.7
+     - Ruby 1.9
+     - Ruby 2.0
+     - Ruby 2.1
+     - JRuby
+
+   * - 2.0
+     -
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+
+   * - 1.12 - 1.9
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+
+   * - 1.8
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     -
+     - |checkmark|
+
+   * - 1.7
+     - |checkmark|
+     - |checkmark|
+     -
+     -
+     - |checkmark|
+
+   * - 1.6
+     - |checkmark|
+     - |checkmark|
+     -
+     -
+     - |checkmark|
+
+.. include:: /includes/unicode-checkmark.rst
