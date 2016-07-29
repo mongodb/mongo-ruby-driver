@@ -1,1 +1,2 @@
-lib/**/*.rb lib/mongo/**/*.rb lib/bson/**/*.rb
+lib/**/*.rb
+-o yard-docs
