@@ -200,7 +200,6 @@ describe Mongo::ServerSelector do
 
     context 'when the cluster has a local_threshold set' do
 
-
       let(:near_server) do
         server(:secondary).tap do |s|
           allow(s).to receive(:connectable?).and_return(true)
