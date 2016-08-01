@@ -546,9 +546,6 @@ describe Mongo::Server::Connection do
 
     before do
       connection.connect!
-      socket = connection.instance_variable_get(:@socket)
-      max_message_size = connection.send(:max_message_size)
-      allow(Mongo::Protocol::Reply).to receive(:deserialize).with(socket, max_message_size).and_return(reply)
     end
 
     context 'when the ismaster response indicates the auth mechanism is :scram' do
@@ -564,6 +561,9 @@ describe Mongo::Server::Connection do
       context 'when the server auth mechanism is scram', if: scram_sha_1_enabled? do
 
         it 'uses scram' do
+          socket = connection.instance_variable_get(:@socket)
+          max_message_size = connection.send(:max_message_size)
+          allow(Mongo::Protocol::Reply).to receive(:deserialize).with(socket, max_message_size).and_return(reply)
           expect(connection.send(:default_mechanism)).to eq(:scram)
         end
       end
@@ -571,6 +571,9 @@ describe Mongo::Server::Connection do
       context 'when the server auth mechanism is the default (mongodb_cr)', unless: scram_sha_1_enabled?  do
 
         it 'uses scram' do
+          socket = connection.instance_variable_get(:@socket)
+          max_message_size = connection.send(:max_message_size)
+          allow(Mongo::Protocol::Reply).to receive(:deserialize).with(socket, max_message_size).and_return(reply)
           expect(connection.send(:default_mechanism)).to eq(:scram)
         end
       end
@@ -589,6 +592,9 @@ describe Mongo::Server::Connection do
       context 'when the server auth mechanism is scram', if: scram_sha_1_enabled? do
 
         it 'uses scram' do
+          socket = connection.instance_variable_get(:@socket)
+          max_message_size = connection.send(:max_message_size)
+          allow(Mongo::Protocol::Reply).to receive(:deserialize).with(socket, max_message_size).and_return(reply)
           expect(connection.send(:default_mechanism)).to eq(:scram)
         end
       end
@@ -596,6 +602,9 @@ describe Mongo::Server::Connection do
       context 'when the server auth mechanism is the default (mongodb_cr)', unless: scram_sha_1_enabled?  do
 
         it 'uses mongodb_cr' do
+          socket = connection.instance_variable_get(:@socket)
+          max_message_size = connection.send(:max_message_size)
+          allow(Mongo::Protocol::Reply).to receive(:deserialize).with(socket, max_message_size).and_return(reply)
           expect(connection.send(:default_mechanism)).to eq(:mongodb_cr)
         end
       end
