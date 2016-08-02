@@ -76,6 +76,7 @@ module Mongo
     #
     # @since 2.0.0
     def get(options)
+      return options if options.is_a?(Unacknowledged) || options.is_a?(Acknowledged)
       if options
         validate!(options)
         if unacknowledged?(options)

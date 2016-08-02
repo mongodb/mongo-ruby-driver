@@ -124,8 +124,7 @@ module Mongo
     #
     # @since 2.0.0
     def write_concern
-      @write_concern ||= options[:write] ? WriteConcern.get(options[:write]) :
-        database.write_concern
+      @write_concern ||= WriteConcern.get(options[:write] || database.write_concern)
     end
 
     # Provides a new collection with either a new read preference or new write concern
