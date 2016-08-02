@@ -18,7 +18,7 @@ module Mongo
     # Adds behaviour for updating the options and the selector for operations
     # that need to take read preference into account.
     #
-    # @since 2.0.0
+    # @since 2.4.0
     module WriteConcern
 
       private
