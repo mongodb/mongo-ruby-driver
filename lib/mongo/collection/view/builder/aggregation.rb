@@ -33,7 +33,7 @@ module Mongo
             :bypass_document_validation => 'bypassDocumentValidation'
           ).freeze
 
-          def_delegators :@view, :collection, :database, :read
+          def_delegators :@view, :collection, :database, :read, :write_concern
 
           # @return [ Array<Hash> ] pipeline The pipeline.
           attr_reader :pipeline
@@ -69,7 +69,12 @@ module Mongo
           #
           # @since 2.2.0
           def specification
-            { selector: aggregation_command, db_name: database.name, read: read }
+            {
+              selector: aggregation_command,
+              db_name: database.name,
+              read: read,
+              write_concern: write_concern
+            }
           end
 
           private

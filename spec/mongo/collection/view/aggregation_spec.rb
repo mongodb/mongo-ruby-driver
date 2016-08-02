@@ -143,6 +143,33 @@ describe Mongo::Collection::View::Aggregation do
         expect(aggregation.to_a.size).to eq(2)
       end
     end
+
+    context 'when the view has a write concern' do
+
+      let(:collection) do
+        authorized_collection.with(write: { w: WRITE_CONCERN[:w]+1 })
+      end
+
+      let(:view) do
+        Mongo::Collection::View.new(collection, selector, view_options)
+      end
+
+      context 'when the server supports write concern on the aggregate command', if: collation_enabled? do
+
+        it 'uses the write concern' do
+          expect {
+            aggregation.to_a
+          }.to raise_exception(Mongo::Error::OperationFailure)
+        end
+      end
+
+      context 'when the server does not support write concern on the aggregation command', unless: collation_enabled? do
+
+        it 'does not apply the write concern' do
+          expect(aggregation.to_a.size).to eq(2)
+        end
+      end
+    end
   end
 
   describe '#initialize' do
