@@ -15,8 +15,8 @@
 module Mongo
   module Operation
 
-    # Adds behaviour for updating the options and the selector for operations
-    # that need to take read preference into account.
+    # Adds behaviour for updating the selector for operations
+    # that may take a write concern.
     #
     # @since 2.4.0
     module WriteConcern
