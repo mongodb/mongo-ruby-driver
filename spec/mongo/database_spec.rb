@@ -360,7 +360,7 @@ describe Mongo::Database do
         described_class.new(authorized_client.with(client_options), TEST_DB)
       end
 
-      context 'when a write concern is not provided as an option to the command method' do
+      context 'when a write concern is not provided as an option to the command method', if: write_command_enabled? do
 
         let(:cmd) do
           {
@@ -374,7 +374,7 @@ describe Mongo::Database do
         end
       end
 
-      context 'when a write concern is provided as an option to the #command method' do
+      context 'when a write concern is provided as an option to the #command method', if: write_command_enabled? do
 
         let(:cmd) do
           {
@@ -418,11 +418,11 @@ describe Mongo::Database do
       end
 
       let(:client) do
-        authorized_client.with(write_options)
+        root_authorized_client.with(write_options)
       end
 
       let(:database_with_write_options) do
-        described_class.new(client, TEST_DB)
+        client.database
       end
 
       context 'when the server supports write concern on the dropDatabase command', if: collation_enabled? do

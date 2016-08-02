@@ -335,6 +335,33 @@ describe Mongo::Collection::View::MapReduce do
           expect(Mongo::Logger.logger).to receive(:warn?).and_call_original
           map_reduce.to_a
         end
+
+        context 'when the view has a write concern' do
+
+          let(:collection) do
+            authorized_collection.with(write: { w: WRITE_CONCERN[:w]+1 })
+          end
+
+          let(:view) do
+            Mongo::Collection::View.new(collection, selector, view_options)
+          end
+
+          context 'when the server supports write concern on the mapReduce command', if: collation_enabled? do
+
+            it 'uses the write concern' do
+              expect {
+                map_reduce.to_a
+              }.to raise_exception(Mongo::Error::OperationFailure)
+            end
+          end
+
+          context 'when the server does not support write concern on the mapReduce command', unless: collation_enabled? do
+
+            it 'does not apply the write concern' do
+              expect(map_reduce.to_a.size).to eq(2)
+            end
+          end
+        end
       end
 
       context 'when the server is a valid for writing' do

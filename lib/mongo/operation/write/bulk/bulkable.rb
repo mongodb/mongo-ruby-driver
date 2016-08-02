@@ -63,7 +63,7 @@ module Mongo
           end
 
           def gle
-            wc = write_concern ||  WriteConcern.get(WriteConcern::DEFAULT)
+            wc = write_concern ||  Mongo::WriteConcern.get(Mongo::WriteConcern::DEFAULT)
             gle_message = ( ordered? && wc.get_last_error.nil? ) ?
                 Mongo::WriteConcern.get(Mongo::WriteConcern::DEFAULT).get_last_error :
                 wc.get_last_error

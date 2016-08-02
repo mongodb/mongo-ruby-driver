@@ -69,15 +69,19 @@ module Mongo
           #
           # @since 2.2.0
           def specification
-            {
-              selector: aggregation_command,
-              db_name: database.name,
-              read: read,
-              write_concern: write_concern
-            }
+            spec = {
+                    selector: aggregation_command,
+                    db_name: database.name,
+                    read: read
+                   }
+            write? ? spec.merge!(write_concern: write_concern) : spec
           end
 
           private
+
+          def write?
+            pipeline.any? { |operator| operator[:$out] || operator['$out'] }
+          end
 
           def aggregation_command
             command = BSON::Document.new(:aggregate => collection.name, :pipeline => pipeline)
