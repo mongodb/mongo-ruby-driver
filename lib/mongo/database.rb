@@ -68,6 +68,10 @@ module Mongo
                    :read_preference,
                    :write_concern
 
+    # @return [ Mongo::Server ] Get the primary server from the cluster.
+    def_delegators :cluster,
+                   :next_primary
+
     # Check equality of the database object against another. Will simply check
     # if the names are the same.
     #
@@ -148,12 +152,14 @@ module Mongo
     #
     # @return [ Hash ] The result of the command execution.
     def command(operation, opts = {})
+      if opts[:write]
+        operation = operation.merge(writeConcern: Mongo::WriteConcern.get(opts[:write]).options)
+      end
       preference = ServerSelector.get(opts[:read] || ServerSelector::PRIMARY)
       server = preference.select_server(cluster)
       Operation::Commands::Command.new({
         :selector => operation,
         :db_name => name,
-        :options => { :limit => -1 },
         :read => preference
       }).execute(server)
     end
@@ -167,7 +173,12 @@ module Mongo
     #
     # @since 2.0.0
     def drop
-      command(:dropDatabase => 1)
+      operation = { :dropDatabase => 1 }
+      Operation::Commands::DropDatabase.new({
+                                             selector: operation,
+                                             db_name: name,
+                                             write_concern: write_concern
+                                            }).execute(next_primary)
     end
 
     # Instantiate a new database object.
