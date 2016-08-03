@@ -411,14 +411,15 @@ describe Mongo::Database do
 
     context 'when the client/database has a write concern' do
 
-      let(:write_options) do
+      let(:client_options) do
         {
-          write: { w: WRITE_CONCERN[:w] + 1 }
+          write: { w: WRITE_CONCERN[:w] + 1 },
+          database: :safe_to_drop
         }
       end
 
       let(:client) do
-        root_authorized_client.with(write_options)
+        root_authorized_client.with(client_options)
       end
 
       let(:database_with_write_options) do
