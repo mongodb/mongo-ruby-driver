@@ -407,8 +407,21 @@ describe Mongo::Collection::View::Aggregation do
 
        context 'when the server does not support write concern on the aggregation command', unless: collation_enabled? do
 
+         let(:documents) do
+           [
+             { city: "Berlin", pop: 18913, neighborhood: "Kreuzberg" },
+             { city: "Berlin", pop: 84143, neighborhood: "Mitte" },
+             { city: "New York", pop: 40270, neighborhood: "Brooklyn" }
+           ]
+         end
+
+         before do
+           authorized_collection.insert_many(documents)
+           aggregation.to_a
+         end
+
          it 'does not apply the write concern' do
-           expect(aggregation.to_a.size).to eq(2)
+           expect(authorized_client['output_collection'].find.count).to eq(2)
          end
        end
      end
