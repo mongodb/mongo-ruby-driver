@@ -151,6 +151,7 @@ module Mongo
           indexes: normalize_models(models.flatten),
           db_name: database.name,
           coll_name: collection.name,
+          write_concern: write_concern
         ).execute(next_primary)
       end
 
