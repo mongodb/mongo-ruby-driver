@@ -102,6 +102,10 @@ describe Mongo::Index::View do
           view_with_write_concern.drop_all
         end
 
+        after do
+          view.drop_all
+        end
+
         context 'when the server accepts writeConcern for the dropIndexes operation', if: collation_enabled? do
 
           it 'applies the write concern' do
