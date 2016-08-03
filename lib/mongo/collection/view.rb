@@ -151,7 +151,7 @@ module Mongo
       private
 
       def write_concern
-        Mongo::WriteConcern.get(options[:write] || options[:write_concern] || collection.write_concern)
+        WriteConcern.get(options[:write] || options[:write_concern] || collection.write_concern)
       end
 
       def initialize_copy(other)

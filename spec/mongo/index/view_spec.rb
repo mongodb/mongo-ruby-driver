@@ -35,6 +35,37 @@ describe Mongo::Index::View do
         }.to raise_error(Mongo::Error::MultiIndexDrop)
       end
     end
+
+    context 'when the collection has a write concern' do
+
+      let(:collection) do
+        authorized_collection.with(write: { w: WRITE_CONCERN[:w] + 1})
+      end
+
+      let(:view_with_write_concern) do
+        described_class.new(collection)
+      end
+
+      let(:result) do
+        view_with_write_concern.drop_one('another_-1')
+      end
+
+      context 'when the server accepts writeConcern for the dropIndexes operation', if: collation_enabled? do
+
+        it 'applies the write concern' do
+          expect {
+            result
+          }.to raise_exception(Mongo::Error::OperationFailure)
+        end
+      end
+
+      context 'when the server does not accept writeConcern for the dropIndexes operation', unless: collation_enabled? do
+
+        it 'does not apply the write concern' do
+          expect(result).to be_successful
+        end
+      end
+    end
   end
 
   describe '#drop_all' do
@@ -55,6 +86,37 @@ describe Mongo::Index::View do
 
       it 'drops the index' do
         expect(result).to be_successful
+      end
+
+      context 'when the collection has a write concern' do
+
+        let(:collection) do
+          authorized_collection.with(write: { w: WRITE_CONCERN[:w] + 1})
+        end
+
+        let(:view_with_write_concern) do
+          described_class.new(collection)
+        end
+
+        let(:result) do
+          view_with_write_concern.drop_all
+        end
+
+        context 'when the server accepts writeConcern for the dropIndexes operation', if: collation_enabled? do
+
+          it 'applies the write concern' do
+            expect {
+              result
+            }.to raise_exception(Mongo::Error::OperationFailure)
+          end
+        end
+
+        context 'when the server does not accept writeConcern for the dropIndexes operation', unless: collation_enabled? do
+
+          it 'does not apply the write concern' do
+            expect(result).to be_successful
+          end
+        end
       end
     end
   end
