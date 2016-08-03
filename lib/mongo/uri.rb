@@ -339,7 +339,7 @@ module Mongo
     end
 
     def decode(value)
-      ::URI.decode(value)
+      ::URI::DEFAULT_PARSER.unescape(value)
     end
 
     # Hash for storing map of URI option parameters to conversion strategies
