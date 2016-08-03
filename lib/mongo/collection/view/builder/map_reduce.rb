@@ -116,8 +116,10 @@ module Mongo
           private
 
           def write?(spec)
-            out = spec[:selector][:out]
-            out && (out.respond_to?(:keys) && out.keys.first.to_s.downcase != View::MapReduce::INLINE)
+            if out = spec[:selector][:out]
+              out.is_a?(String) ||
+                  (out.respond_to?(:keys) && out.keys.first.to_s.downcase != View::MapReduce::INLINE)
+            end
           end
 
           def find_command

@@ -346,18 +346,50 @@ describe Mongo::Collection::View::MapReduce do
             Mongo::Collection::View.new(collection, selector, view_options)
           end
 
-          context 'when the server supports write concern on the mapReduce command', if: collation_enabled? do
+          shared_examples_for 'map reduce that writes accepting write concern' do
 
-            it 'uses the write concern' do
-              expect {
-                map_reduce.to_a
-              }.to raise_exception(Mongo::Error::OperationFailure)
+            context 'when the server supports write concern on the mapReduce command', if: collation_enabled? do
+
+              it 'uses the write concern' do
+                expect {
+                  map_reduce.to_a
+                }.to raise_exception(Mongo::Error::OperationFailure)
+              end
+            end
+
+            context 'when the server does not support write concern on the mapReduce command', unless: collation_enabled? do
+
+              it 'does not apply the write concern' do
+                expect(map_reduce.to_a.size).to eq(2)
+              end
             end
           end
 
-          context 'when the server does not support write concern on the mapReduce command', unless: collation_enabled? do
+          context 'when out is a String' do
 
-            it 'does not apply the write concern' do
+            let(:options) do
+              { :out => 'new-collection' }
+            end
+
+            it_behaves_like 'map reduce that writes accepting write concern'
+          end
+
+          context 'when out is a document and not inline' do
+
+            let(:options) do
+              { :out => { merge: 'exisiting-collection' } }
+            end
+
+            it_behaves_like 'map reduce that writes accepting write concern'
+          end
+
+          context 'when out is a document but inline is specified' do
+
+            let(:options) do
+              { :out => { inline: 1 } }
+            end
+
+            it 'does not use the write concern' do
               expect(map_reduce.to_a.size).to eq(2)
             end
           end
