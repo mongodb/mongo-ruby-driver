@@ -152,9 +152,6 @@ module Mongo
     #
     # @return [ Hash ] The result of the command execution.
     def command(operation, opts = {})
-      if opts[:write]
-        operation = operation.merge(writeConcern: Mongo::WriteConcern.get(opts[:write]).options)
-      end
       preference = ServerSelector.get(opts[:read] || ServerSelector::PRIMARY)
       server = preference.select_server(cluster)
       Operation::Commands::Command.new({
