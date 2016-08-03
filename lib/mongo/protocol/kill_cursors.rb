@@ -55,9 +55,11 @@ module Mongo
         }
       end
 
-      private
+      protected
 
       attr_reader :upconverter
+
+      private
 
       # The operation code required to specify +KillCursors+ message.
       # @return [Fixnum] the operation code.
