@@ -63,7 +63,7 @@ module Mongo
           Command::Update.new(s)
         end
 
-        def message
+        def message(server)
           flags = []
           flags << :multi_update if update[Operation::MULTI]
           flags << :upsert if update[Operation::UPSERT]

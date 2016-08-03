@@ -40,7 +40,7 @@ module Mongo
       #
       # @since 2.0.0
       class Aggregate < Command
-        include WriteConcern
+        include TakesWriteConcern
 
         private
 
@@ -50,10 +50,10 @@ module Mongo
         end
 
         def message(server)
-          sel = update_selector_for_read_pref(server)
+          sel = update_selector_for_read_pref(selector, server)
           sel = filter_cursor_from_selector(sel, server)
           sel = update_selector_for_write_concern(sel, server)
-          opts = update_options_for_slave_ok(server)
+          opts = update_options_for_slave_ok(options, server)
           Protocol::Query.new(db_name, query_coll, sel, opts)
         end
       end

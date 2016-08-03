@@ -31,7 +31,7 @@ module Mongo
       #
       # @since 2.4.0
       class Drop < Command
-        include WriteConcern
+        include TakesWriteConcern
 
         private
 

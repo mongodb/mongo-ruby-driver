@@ -40,7 +40,7 @@ module Mongo
           Command::CreateUser.new(spec)
         end
 
-        def message
+        def message(server)
           user_spec = { user: user.name }.merge(user.spec)
           Protocol::Insert.new(db_name, Auth::User::COLLECTION, [ user_spec ])
         end

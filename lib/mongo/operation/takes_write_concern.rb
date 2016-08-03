@@ -19,7 +19,7 @@ module Mongo
     # that may take a write concern.
     #
     # @since 2.4.0
-    module WriteConcern
+    module TakesWriteConcern
 
       private
 

@@ -28,12 +28,12 @@ module Mongo
           server.with_connection do |connection|
             result_class = self.class.const_defined?(:LegacyResult, false) ? self.class::LegacyResult :
                 self.class.const_defined?(:Result, false) ? self.class::Result : Result
-            result_class.new(connection.dispatch([ message, gle ].compact)).validate!
+            result_class.new(connection.dispatch([ message(server), gle ].compact)).validate!
           end
         end
 
         def gle
-          wc = write_concern ||  Mongo::WriteConcern.get(Mongo::WriteConcern::DEFAULT)
+          wc = write_concern ||  WriteConcern.get(WriteConcern::DEFAULT)
           if gle_message = wc.get_last_error
             Protocol::Query.new(
                 db_name,

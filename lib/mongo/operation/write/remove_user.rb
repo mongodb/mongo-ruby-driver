@@ -39,7 +39,7 @@ module Mongo
           Command::RemoveUser.new(spec)
         end
 
-        def message
+        def message(server)
           Protocol::Delete.new(db_name, Auth::User::COLLECTION, { user: user_name })
         end
       end

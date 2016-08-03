@@ -57,11 +57,11 @@ module Mongo
 
         def execute_message(server)
           server.with_connection do |connection|
-            Result.new(connection.dispatch([ message, gle ].compact), @ids).validate!
+            Result.new(connection.dispatch([ message(server), gle ].compact), @ids).validate!
           end
         end
 
-        def message
+        def message(server)
           opts = !!options[:continue_on_error] ? { :flags => [:continue_on_error] } : {}
           Protocol::Insert.new(db_name, coll_name, ensure_ids(documents), opts)
         end
