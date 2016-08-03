@@ -58,7 +58,7 @@ module Mongo
           end
         end
 
-        def message
+        def message(server)
           Protocol::Insert.new(db_name, Index::COLLECTION, index_documents)
         end
       end
