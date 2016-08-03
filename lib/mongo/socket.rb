@@ -162,7 +162,7 @@ module Mongo
     # @since 2.0.5
     def eof?
       @socket.eof?
-    rescue IOError, SystemCallError => e
+    rescue IOError, SystemCallError => _
       true
     end
 
