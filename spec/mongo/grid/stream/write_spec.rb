@@ -83,7 +83,7 @@ describe Mongo::Grid::FSBucket::Stream::Write do
 
         let(:extra_options) do
           {
-              write: { w: (WRITE_CONCERN[:w] + 1) }
+            write: { w: (WRITE_CONCERN[:w] + 1) }
           }
         end
 
@@ -172,6 +172,19 @@ describe Mongo::Grid::FSBucket::Stream::Write do
 
         it 'sets the aliases' do
           expect(stream.send(:file_info).document[:aliases]).to eq(options[:aliases])
+        end
+      end
+
+      context 'when provided a file_id option' do
+
+        let(:options) do
+          {
+            file_id: 'Custom ID'
+          }
+        end
+
+        it 'assigns the stream the file id' do
+          expect(stream.file_id).to eq(options[:file_id])
         end
       end
     end
@@ -285,24 +298,62 @@ describe Mongo::Grid::FSBucket::Stream::Write do
 
     context 'when provided an io stream' do
 
-      before do
-        stream.write(file)
-        stream.close
+      context 'when no file id is specified' do
+
+        before do
+          stream.write(file)
+          stream.close
+        end
+
+        it 'writes the contents of the stream' do
+          expect(file_from_db.data.size).to eq(file.size)
+        end
+
+        it 'updates the length written' do
+          expect(stream.send(:file_info).document['length']).to eq(file.size)
+        end
+
+        it 'updates the position (n)' do
+          expect(stream.instance_variable_get(:@n)).to eq(1)
+        end
       end
 
-      it 'writes the contents of the stream' do
-        expect(file_from_db.data.size).to eq(file.size)
-      end
+      context 'when a custom file id is provided' do
 
-      it 'updates the length written' do
-        expect(stream.send(:file_info).document['length']).to eq(file.size)
-      end
+        let(:extra_options) do
+          {
+            file_id: 'Custom ID'
+          }
+        end
 
-      it 'updates the position (n)' do
-        expect(stream.instance_variable_get(:@n)).to eq(1)
+        let!(:id) do
+          stream.write(file)
+          stream.close
+        end
+
+        it 'writes the contents of the stream' do
+          expect(file_from_db.data.size).to eq(file.size)
+        end
+
+        it 'updates the length written' do
+          expect(stream.send(:file_info).document['length']).to eq(file.size)
+        end
+
+        it 'updates the position (n)' do
+          expect(stream.instance_variable_get(:@n)).to eq(1)
+        end
+
+        it 'uses the custom file id' do
+          expect(id).to eq(options[:file_id])
+        end
       end
 
       context 'when the user file contains no data' do
+
+        before do
+          stream.write(file)
+          stream.close
+        end
 
         let(:file) do
           StringIO.new('')

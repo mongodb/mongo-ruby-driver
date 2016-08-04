@@ -337,6 +337,7 @@ module Mongo
       # @param [ String ] filename The filename of the file to upload.
       # @param [ Hash ] opts The options for the write stream.
       #
+      # @option opts [ Object ] :file_id An optional unique file id. An ObjectId is generated otherwise.
       # @option opts [ Integer ] :chunk_size Override the default chunk size.
       # @option opts [ Hash ] :write The write concern.
       # @option opts [ Hash ] :metadata User data for the 'metadata' field of the files
@@ -366,12 +367,13 @@ module Mongo
       # document for the filename in the files collection.
       #
       # @example Upload a file to the GridFS bucket.
-      #   fs.upload_from_stream('a-file.txt')
+      #   fs.upload_from_stream('a-file.txt', file)
       #
       # @param [ String ] filename The filename of the file to upload.
       # @param [ IO ] io The source io stream to upload from.
       # @param [ Hash ] opts The options for the write stream.
       #
+      # @option opts [ Object ] :file_id An optional unique file id. An ObjectId is generated otherwise.
       # @option opts [ Integer ] :chunk_size Override the default chunk size.
       # @option opts [ Hash ] :write The write concern.
       # @option opts [ Hash ] :metadata User data for the 'metadata' field of the files

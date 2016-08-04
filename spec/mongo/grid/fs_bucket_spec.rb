@@ -462,6 +462,25 @@ describe Mongo::Grid::FSBucket do
     it 'removes the file from the db' do
       expect(from_db).to be_nil
     end
+
+    context 'when a custom file id is used' do
+
+      let(:custom_file_id) do
+        fs.upload_from_stream(filename, file, file_id: 'Custom ID')
+      end
+
+      before do
+        fs.delete(custom_file_id)
+      end
+
+      let(:from_db) do
+        fs.find_one(:filename => filename)
+      end
+
+      it 'removes the file from the db' do
+        expect(from_db).to be_nil
+      end
+    end
   end
 
   context 'when a read stream is opened' do
@@ -524,6 +543,51 @@ describe Mongo::Grid::FSBucket do
 
         it 'does not yield the stream to the block' do
           expect(io.size).to eq(0)
+        end
+      end
+
+      context 'when a custom file id is provided' do
+
+        let(:file) do
+          File.open(__FILE__)
+        end
+
+        let!(:file_id) do
+          fs.open_upload_stream(filename, file_id: 'Custom ID') do |stream|
+            stream.write(file)
+          end.file_id
+        end
+
+        context 'when a block is provided' do
+
+          let!(:stream) do
+            fs.open_download_stream(file_id) do |stream|
+              io.write(stream.read)
+            end
+          end
+
+          it 'yields the stream to the block' do
+            expect(io.size).to eq(file.size)
+          end
+        end
+
+        context 'when a block is not provided' do
+
+          let!(:stream) do
+            fs.open_download_stream(file_id)
+          end
+
+          it 'returns a Stream::Read object' do
+            expect(stream).to be_a(Mongo::Grid::FSBucket::Stream::Read)
+          end
+
+          it 'does not close the stream' do
+            expect(stream.closed?).to be(false)
+          end
+
+          it 'does not yield the stream to the block' do
+            expect(io.size).to eq(0)
+          end
         end
       end
     end
@@ -858,6 +922,21 @@ describe Mongo::Grid::FSBucket do
         it 'creates an ObjectId for the file' do
           expect(stream.file_id).to be_a(BSON::ObjectId)
         end
+
+        context 'when a custom file ID is provided' do
+
+          let(:stream) do
+            fs.open_upload_stream(filename, file_id: 'Custom ID')
+          end
+
+          it 'returns a Stream::Write object' do
+            expect(stream).to be_a(Mongo::Grid::FSBucket::Stream::Write)
+          end
+
+          it 'creates an ObjectId for the file' do
+            expect(stream.file_id).to eq('Custom ID')
+          end
+        end
       end
 
       context 'when a block is provided' do
@@ -956,6 +1035,17 @@ describe Mongo::Grid::FSBucket do
 
       let(:stream) do
         fs.open_upload_stream(filename, stream_options)
+      end
+
+      context 'when a custom file id is provided' do
+
+        let(:stream_options) do
+          { file_id: 'Custom ID' }
+        end
+
+        it 'sets the file id on the stream' do
+          expect(stream.file_id).to eq('Custom ID')
+        end
       end
 
       context 'when a write option is specified' do
