@@ -232,6 +232,95 @@ describe Mongo::Cursor do
         end
       end
     end
+
+    context 'when the cursor is not fully iterated and is garbage collected' do
+
+      let(:documents) do
+        (1..3).map{ |i| { field: "test#{i}" }}
+      end
+
+      before do
+        authorized_collection.insert_many(documents)
+        cursor_reaper.schedule_kill_cursor(cursor.id,
+                                            cursor.send(:kill_cursors_op_spec),
+                                            cursor.instance_variable_get(:@server))
+      end
+
+      after do
+        authorized_collection.delete_many
+      end
+
+      let(:view) do
+        Mongo::Collection::View.new(
+            authorized_collection,
+            {},
+            :batch_size => 2
+        )
+      end
+
+      let!(:cursor) do
+        view.to_enum.next
+        view.instance_variable_get(:@cursor)
+      end
+
+      let(:cursor_reaper) do
+        authorized_client.cluster.instance_variable_get(:@cursor_reaper)
+      end
+
+
+      it 'schedules a kill cursors op' do
+        sleep(Mongo::Cluster::CursorReaper::FREQUENCY + 0.5)
+        expect {
+          cursor.to_a
+        }.to raise_exception(Mongo::Error::OperationFailure)
+      end
+
+      context 'when the cursor is unregistered before the kill cursors operations are executed' do
+
+        it 'does not send a kill cursors operation for the unregistered cursor' do
+          cursor_reaper.unregister_cursor(cursor.id)
+          expect(cursor.to_a.size).to eq(documents.size)
+        end
+      end
+    end
+
+    context 'when the cursor is fully iterated' do
+
+      let(:documents) do
+        (1..3).map{ |i| { field: "test#{i}" }}
+      end
+
+      before do
+        authorized_collection.insert_many(documents)
+      end
+
+      after do
+        authorized_collection.delete_many
+      end
+
+      let(:view) do
+        authorized_collection.find({}, batch_size: 2)
+      end
+
+      let!(:cursor_id) do
+        enum.next
+        enum.next
+        view.instance_variable_get(:@cursor).id
+      end
+
+      let(:enum) do
+        view.to_enum
+      end
+
+      let(:cursor_reaper) do
+        authorized_collection.client.cluster.instance_variable_get(:@cursor_reaper)
+      end
+
+      it 'removes the cursor id from the active cursors tracked by the cluster cursor manager' do
+        enum.next
+        expect(cursor_reaper.instance_variable_get(:@active_cursors)).not_to include(cursor_id)
+      end
+    end
   end
 
   describe '#inspect' do
