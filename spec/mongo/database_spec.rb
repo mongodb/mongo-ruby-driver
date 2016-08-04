@@ -330,7 +330,7 @@ describe Mongo::Database do
 
     context 'when a write concern is not defined on the client/database object' do
 
-      context 'when a write concern is provided in the selector' do
+      context 'when a write concern is provided in the selector', if: standalone? do
 
         let(:cmd) do
           {
