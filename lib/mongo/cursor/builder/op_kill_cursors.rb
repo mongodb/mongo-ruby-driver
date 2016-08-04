@@ -74,7 +74,7 @@ module Mongo
           # @return [ Hash ] The specification.
           #
           # @since 2.3.0
-          def cursors(spec)
+          def get_cursors_list(spec)
             spec[:cursor_ids]
           end
         end
