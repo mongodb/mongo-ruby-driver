@@ -47,7 +47,6 @@ module Mongo
           write_concern && write_concern.get_last_error.nil?
         end
 
-
         def execute_write_command(server)
           result_class = self.class.const_defined?(:Result, false) ? self.class::Result : Result
           result_class.new(write_command_op.execute(server)).validate!

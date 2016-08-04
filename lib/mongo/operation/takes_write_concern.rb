@@ -23,11 +23,11 @@ module Mongo
 
       private
 
-      def update_selector_for_write_concern(selector, server)
+      def update_selector_for_write_concern(sel, server)
         if write_concern && server.features.collation_enabled?
-          selector.merge(writeConcern: write_concern.options)
+          sel.merge(writeConcern: write_concern.options)
         else
-          selector
+          sel
         end
       end
     end
