@@ -330,7 +330,7 @@ describe Mongo::Database do
 
     context 'when a write concern is not defined on the client/database object' do
 
-      context 'when a write concern is provided as an option to the #command method' do
+      context 'when a write concern is provided in the selector' do
 
         let(:cmd) do
           {
@@ -360,7 +360,7 @@ describe Mongo::Database do
         described_class.new(authorized_client.with(client_options), TEST_DB)
       end
 
-      context 'when a write concern is not provided as an option to the command method', if: write_command_enabled? do
+      context 'when a write concern is not in the command selector', if: write_command_enabled? do
 
         let(:cmd) do
           {
@@ -374,7 +374,7 @@ describe Mongo::Database do
         end
       end
 
-      context 'when a write concern is provided as an option to the #command method', if: write_command_enabled? do
+      context 'when a write concern is provided in the command selector', if: write_command_enabled? do
 
         let(:cmd) do
           {

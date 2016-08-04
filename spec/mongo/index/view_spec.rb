@@ -175,7 +175,7 @@ describe Mongo::Index::View do
 
           context 'when the server does not accept writeConcern for the createIndexes operation', unless: collation_enabled? do
 
-            context 'when the server accepts the createIndexes command', if: write_command_enabled? do
+            context 'when the server supports the createIndexes command', if: write_command_enabled? do
 
               it 'does not apply the write concern' do
                 expect(result).to be_successful
@@ -331,7 +331,7 @@ describe Mongo::Index::View do
 
         context 'when the server does not accept writeConcern for the createIndexes operation', unless: collation_enabled? do
 
-          context 'when the server accepts the createIndexes command', if: write_command_enabled? do
+          context 'when the server supports the createIndexes command', if: write_command_enabled? do
 
             it 'does not apply the write concern' do
               expect(result).to be_successful
