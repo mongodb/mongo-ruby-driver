@@ -101,7 +101,7 @@ describe Mongo::Cluster::CursorReaper do
 
         it 'adds the op to the server list' do
           expect(to_kill.keys).to eq([ server ])
-          expect(to_kill[server]).to eq(Set.new([op_spec_1, op_spec_2]))
+          expect(to_kill[server]).to contain_exactly(op_spec_1, op_spec_2)
         end
 
         context 'when the same op is added more than once' do
@@ -112,7 +112,7 @@ describe Mongo::Cluster::CursorReaper do
 
           it 'does not allow duplicates ops for a server' do
             expect(to_kill.keys).to eq([ server ])
-            expect(to_kill[server]).to eq(Set.new([op_spec_1, op_spec_2]))
+            expect(to_kill[server]).to contain_exactly(op_spec_1, op_spec_2)
           end
         end
       end
@@ -180,7 +180,7 @@ describe Mongo::Cluster::CursorReaper do
       end
 
       it 'removes the cursor id' do
-        expect(active_cursors).to eq(Set.new)
+        expect(active_cursors.size).to eq(0)
       end
     end
   end
@@ -208,7 +208,7 @@ describe Mongo::Cluster::CursorReaper do
       reaper.instance_variable_get(:@thread)
     end
 
-    it 'stops the thread from running' do
+    it 'restarts the thread' do
       expect(thread.alive?).to be(true)
     end
   end
