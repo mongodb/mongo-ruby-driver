@@ -27,7 +27,7 @@ module Mongo
           # @since 2.1.0
           attr_reader :fs
 
-          # @return [ BSON::ObjectId ] file_id The id of the file being uploaded.
+          # @return [ Obejct ] file_id The id of the file being uploaded.
           #
           # @since 2.1.0
           attr_reader :file_id
@@ -50,6 +50,7 @@ module Mongo
           # @param [ FSBucket ] fs The GridFS bucket object.
           # @param [ Hash ] options The write stream options.
           #
+          # @option opts [ Object ] :file_id The file id. An ObjectId is generated otherwise.
           # @option opts [ Integer ] :chunk_size Override the default chunk size.
           # @option opts [ Hash ] :write The write concern.
           # @option opts [ Hash ] :metadata User data for the 'metadata' field of the files collection document.
@@ -63,7 +64,7 @@ module Mongo
             @fs = fs
             @length = 0
             @n = 0
-            @file_id = BSON::ObjectId.new
+            @file_id = options[:file_id] || BSON::ObjectId.new
             @options = options
             @filename = @options[:filename]
             @open = true
