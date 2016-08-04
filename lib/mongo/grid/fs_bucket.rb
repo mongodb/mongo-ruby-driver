@@ -373,7 +373,7 @@ module Mongo
       # @param [ IO ] io The source io stream to upload from.
       # @param [ Hash ] opts The options for the write stream.
       #
-      # @option opts [ Integer ] :file_id An optional unique file id. An ObjectId is generated otherwise.
+      # @option opts [ Object ] :file_id An optional unique file id. An ObjectId is generated otherwise.
       # @option opts [ Integer ] :chunk_size Override the default chunk size.
       # @option opts [ Hash ] :write The write concern.
       # @option opts [ Hash ] :metadata User data for the 'metadata' field of the files

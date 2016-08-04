@@ -27,7 +27,7 @@ module Mongo
           # @since 2.1.0
           attr_reader :fs
 
-          # @return [ Obejct ] file_id The id of the file being uploaded.
+          # @return [ Object ] file_id The id of the file being uploaded.
           #
           # @since 2.1.0
           attr_reader :file_id
