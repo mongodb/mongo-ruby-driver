@@ -58,7 +58,7 @@ module Mongo
       @initial_result = result
       @remaining = limit if limited?
       @cursor_id = result.cursor_id
-      register_cursor
+      register
       ObjectSpace.define_finalizer(self, self.class.finalize(result.cursor_id,
                                                              cluster,
                                                              kill_cursors_op_spec,
@@ -69,7 +69,7 @@ module Mongo
     # Finalize the cursor for garbage collection. Schedules this cursor to be included
     # in a killCursors operation executed by the Cluster's CursorReaper.
     #
-    # @example Finalize the cluster.
+    # @example Finalize the cursor.
     #   Cursor.finalize(id, cluster, op, server)
     #
     # @param [ Integer ] cursor_id The cursor's id.
@@ -198,7 +198,7 @@ module Mongo
     end
 
     def kill_cursors
-      unregister_cursor
+      unregister
       read_with_one_retry do
         kill_cursors_operation.execute(@server)
       end
@@ -231,7 +231,7 @@ module Mongo
     def process(result)
       @remaining -= result.returned_count if limited?
       @coll_name ||= result.namespace.sub("#{database.name}.", '') if result.namespace
-      unregister_cursor if result.cursor_id == 0
+      unregister if result.cursor_id == 0
       @cursor_id = result.cursor_id
       result.documents
     end
@@ -240,11 +240,11 @@ module Mongo
       limited? && batch_size >= @remaining
     end
 
-    def register_cursor
+    def register
       cluster.register_cursor(@cursor_id)
     end
 
-    def unregister_cursor
+    def unregister
       cluster.unregister_cursor(@cursor_id)
     end
   end
