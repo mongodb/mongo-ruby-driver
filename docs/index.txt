@@ -33,7 +33,7 @@ Object Mappers
 Because MongoDB is so easy to use, the basic Ruby driver can be the
 best solution for many applications. But if you need validations,
 associations, and other high-level data modeling functions, then you
-may need Object Document Mapper may be needed.
+may need Object Document Mapper.
 
 In the context of a Rails application, an Object Document Mapper
 provides functionality equivalent to, but distinct from, ActiveRecord.
