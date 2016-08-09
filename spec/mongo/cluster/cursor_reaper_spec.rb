@@ -204,8 +204,8 @@ describe Mongo::Cluster::CursorReaper do
     let(:thread) do
       reaper.run!
       reaper.stop!
-      reaper.restart!
       sleep(0.5)
+      reaper.restart!
       reaper.instance_variable_get(:@thread)
     end
 
