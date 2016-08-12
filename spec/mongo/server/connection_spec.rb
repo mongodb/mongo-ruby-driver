@@ -130,7 +130,6 @@ describe Mongo::Server::Connection do
         end
 
         it 'marks the server as unknown' do
-          pending 'Server must be set as unknown'
           expect(server).to be_unknown
         end
       end
