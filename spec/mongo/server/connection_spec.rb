@@ -113,7 +113,8 @@ describe Mongo::Server::Connection do
             TEST_OPTIONS.merge(
               :user => 'notauser',
               :password => 'password',
-              :database => TEST_DB )
+              :database => TEST_DB,
+              :heartbeat_frequency => 30)
           )
         end
 
