@@ -145,7 +145,7 @@ describe Mongo::ServerSelector do
     context 'when #select returns a list of nils' do
 
       let(:servers) do
-        [ server(:primary) ]
+        [ make_server(:primary) ]
       end
 
       let(:cluster) do
@@ -174,7 +174,7 @@ describe Mongo::ServerSelector do
     context 'when the cluster has a server_selection_timeout set' do
 
       let(:servers) do
-        [ server(:secondary), server(:primary) ]
+        [ make_server(:secondary), make_server(:primary) ]
       end
 
       let(:cluster) do
@@ -201,14 +201,14 @@ describe Mongo::ServerSelector do
     context 'when the cluster has a local_threshold set' do
 
       let(:near_server) do
-        server(:secondary).tap do |s|
+        make_server(:secondary).tap do |s|
           allow(s).to receive(:connectable?).and_return(true)
           allow(s).to receive(:average_round_trip_time).and_return(100)
         end
       end
 
       let(:far_server) do
-        server(:secondary).tap do |s|
+        make_server(:secondary).tap do |s|
           allow(s).to receive(:connectable?).and_return(true)
           allow(s).to receive(:average_round_trip_time).and_return(200)
         end

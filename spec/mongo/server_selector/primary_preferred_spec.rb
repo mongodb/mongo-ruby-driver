@@ -81,11 +81,11 @@ describe Mongo::ServerSelector::PrimaryPreferred do
       let(:tag_sets) { [tag_set] }
 
       let(:matching_primary) do
-        server(:primary, :tags => server_tags, address: default_address )
+        make_server(:primary, :tags => server_tags, address: default_address )
       end
 
       let(:matching_secondary) do
-        server(:secondary, :tags => server_tags, address: default_address )
+        make_server(:secondary, :tags => server_tags, address: default_address )
       end
 
       context 'single candidate' do
@@ -171,8 +171,8 @@ describe Mongo::ServerSelector::PrimaryPreferred do
     end
 
     context 'high latency servers' do
-      let(:far_primary) { server(:primary, :average_round_trip_time => 100, address: default_address) }
-      let(:far_secondary) { server(:secondary, :average_round_trip_time => 113, address: default_address) }
+      let(:far_primary) { make_server(:primary, :average_round_trip_time => 100, address: default_address) }
+      let(:far_secondary) { make_server(:secondary, :average_round_trip_time => 113, address: default_address) }
 
       context 'single candidate' do
 

@@ -1,4 +1,4 @@
-def server(mode, options = {})
+def make_server(mode, options = {})
   tags = options[:tags] || {}
   average_round_trip_time = options[:average_round_trip_time] || 0
 
@@ -30,8 +30,8 @@ shared_context 'server selector' do
   let(:server_tags) do
     { 'test' => 'tag', 'other' => 'tag' }
   end
-  let(:primary) { server(:primary) }
-  let(:secondary) { server(:secondary) }
+  let(:primary) { make_server(:primary) }
+  let(:secondary) { make_server(:secondary) }
   let(:options) { { :mode => name, :tag_sets => tag_sets } }
   let(:selector) { described_class.new(options) }
 
