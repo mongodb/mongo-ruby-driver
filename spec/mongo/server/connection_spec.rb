@@ -570,6 +570,7 @@ describe Mongo::Server::Connection do
           socket = connection.instance_variable_get(:@socket)
           max_message_size = connection.send(:max_message_size)
           allow(Mongo::Protocol::Reply).to receive(:deserialize).with(socket, max_message_size).and_return(reply)
+          connection.send(:handshake!)
           expect(connection.send(:default_mechanism)).to eq(:scram)
         end
       end
@@ -580,6 +581,7 @@ describe Mongo::Server::Connection do
           socket = connection.instance_variable_get(:@socket)
           max_message_size = connection.send(:max_message_size)
           allow(Mongo::Protocol::Reply).to receive(:deserialize).with(socket, max_message_size).and_return(reply)
+          connection.send(:handshake!)
           expect(connection.send(:default_mechanism)).to eq(:scram)
         end
       end
@@ -601,6 +603,7 @@ describe Mongo::Server::Connection do
           socket = connection.instance_variable_get(:@socket)
           max_message_size = connection.send(:max_message_size)
           allow(Mongo::Protocol::Reply).to receive(:deserialize).with(socket, max_message_size).and_return(reply)
+          connection.send(:handshake!)
           expect(connection.send(:default_mechanism)).to eq(:scram)
         end
       end
@@ -611,6 +614,7 @@ describe Mongo::Server::Connection do
           socket = connection.instance_variable_get(:@socket)
           max_message_size = connection.send(:max_message_size)
           allow(Mongo::Protocol::Reply).to receive(:deserialize).with(socket, max_message_size).and_return(reply)
+          connection.send(:handshake!)
           expect(connection.send(:default_mechanism)).to eq(:mongodb_cr)
         end
       end
