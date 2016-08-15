@@ -184,7 +184,7 @@ module Mongo
       end
 
       def default_mechanism
-        @auth_mechanism || @server.features.scram_sha_1_enabled? ? :scram : :mongodb_cr
+        @auth_mechanism || (@server.features.scram_sha_1_enabled? ? :scram : :mongodb_cr)
       end
 
       def write(messages, buffer = BSON::ByteBuffer.new)
