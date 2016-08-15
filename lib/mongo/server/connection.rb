@@ -43,7 +43,8 @@ module Mongo
                      :features,
                      :max_bson_object_size,
                      :max_message_size,
-                     :mongos?
+                     :mongos?,
+                     :app_metadata
 
       # Tell the underlying socket to establish a connection to the host.
       #
@@ -60,6 +61,7 @@ module Mongo
         unless socket && socket.connectable?
           @socket = address.socket(timeout, ssl_options)
           socket.connect!
+          handshake!
           authenticate!
         end
         true
@@ -79,6 +81,7 @@ module Mongo
       def disconnect!
         if socket
           socket.close
+          @auth_mechanism = nil
           @socket = nil
         end
         true
@@ -130,6 +133,7 @@ module Mongo
         @server = server
         @ssl_options = options.reject { |k, v| !k.to_s.start_with?(SSL) }
         @socket = nil
+        @auth_mechanism = nil
         @pid = Process.pid
       end
 
@@ -159,6 +163,17 @@ module Mongo
         messages.last.replyable? ? read(messages.last.request_id) : nil
       end
 
+      def handshake!
+        if socket && socket.connectable?
+          socket.write(app_metadata.ismaster_bytes)
+          response = Protocol::Reply.deserialize(socket, max_message_size).documents[0]
+          min_wire_version = response[Description::MIN_WIRE_VERSION] || Description::LEGACY_WIRE_VERSION
+          max_wire_version = response[Description::MAX_WIRE_VERSION] || Description::LEGACY_WIRE_VERSION
+          features = Description::Features.new(min_wire_version..max_wire_version)
+          @auth_mechanism = (features.scram_sha_1_enabled? || @server.features.scram_sha_1_enabled?) ? :scram : :mongodb_cr
+        end
+      end
+
       def authenticate!
         if options[:user]
           user = Auth::User.new(Options::Redacted.new(:auth_mech => default_mechanism).merge(options))
@@ -169,16 +184,7 @@ module Mongo
       end
 
       def default_mechanism
-        if socket && socket.connectable?
-          socket.write(Monitor::Connection::ISMASTER_BYTES)
-          ismaster = Protocol::Reply.deserialize(socket, max_message_size).documents[0]
-          min_wire_version = ismaster[Description::MIN_WIRE_VERSION] || Description::LEGACY_WIRE_VERSION
-          max_wire_version = ismaster[Description::MAX_WIRE_VERSION] || Description::LEGACY_WIRE_VERSION
-          features = Description::Features.new(min_wire_version..max_wire_version)
-          (features.scram_sha_1_enabled? || @server.features.scram_sha_1_enabled?) ? :scram : :mongodb_cr
-        else
-          @server.features.scram_sha_1_enabled? ? :scram : :mongodb_cr
-        end
+        @auth_mechanism || @server.features.scram_sha_1_enabled? ? :scram : :mongodb_cr
       end
 
       def write(messages, buffer = BSON::ByteBuffer.new)

@@ -67,6 +67,10 @@ module Mongo
                    :unknown!,
                    :last_write_date
 
+    # Get the app metadata from the cluster.
+    def_delegators :cluster,
+                   :app_metadata
+
     # Is this server equal to another?
     #
     # @example Is the server equal to the other?

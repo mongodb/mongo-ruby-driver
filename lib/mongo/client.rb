@@ -32,6 +32,7 @@ module Mongo
     #
     # @since 2.1.2
     VALID_OPTIONS = [
+      :app_name,
       :auth_mech,
       :auth_mech_properties,
       :auth_source,
