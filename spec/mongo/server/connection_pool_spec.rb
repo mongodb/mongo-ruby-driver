@@ -18,8 +18,14 @@ describe Mongo::Server::ConnectionPool do
     Mongo::Event::Listeners.new
   end
 
+  let(:app_metadata) do
+    Mongo::Cluster::AppMetadata.new(authorized_client.cluster)
+  end
+
   let(:cluster) do
-    double('cluster')
+    double('cluster').tap do |cl|
+      allow(cl).to receive(:app_metadata).and_return(app_metadata)
+    end
   end
 
   describe '#checkin' do
