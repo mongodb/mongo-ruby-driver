@@ -192,6 +192,8 @@ module Mongo
     #   in which reads on a mongos are retried.
     # @option options [ Object ] :id_generator A custom object to generate ids
     #   for documents. Must respond to #generate.
+    # @option options [ String, Symbol ] :app_name Application name that is printed to the
+    #   mongod logs upon establishing a connection in server versions >= 3.4.
     #
     # @since 2.0.0
     def initialize(addresses_or_uri, options = Options::Redacted.new)
