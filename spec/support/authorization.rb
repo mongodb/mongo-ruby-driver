@@ -249,5 +249,12 @@ module Authorization
     context.let(:default_address) do
       authorized_client.cluster.next_primary.address
     end
+
+    # Get a default app metadata.
+    #
+    # @since 2.2.6
+    context.let(:app_metadata) do
+      authorized_client.cluster.app_metadata
+    end
   end
 end

@@ -163,7 +163,7 @@ module Mongo
       @cluster = cluster
       @monitoring = monitoring
       @options = options.freeze
-      @monitor = Monitor.new(address, event_listeners, options)
+      @monitor = Monitor.new(address, event_listeners, options.merge(app_metadata: cluster.app_metadata))
       monitor.scan!
       monitor.run!
       ObjectSpace.define_finalizer(self, self.class.finalize(monitor))

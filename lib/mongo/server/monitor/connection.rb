@@ -75,6 +75,7 @@ module Mongo
           unless socket && socket.connectable?
             @socket = address.socket(timeout, ssl_options)
             socket.connect!
+            handshake!
           end
           true
         end
@@ -130,6 +131,15 @@ module Mongo
         # @since 2.0.0
         def timeout
           @timeout ||= options[:connect_timeout] || CONNECT_TIMEOUT
+        end
+
+        private
+
+        def handshake!
+          if options[:app_metadata]
+            socket.write(options[:app_metadata].ismaster_bytes)
+            Protocol::Reply.deserialize(socket, Mongo::Protocol::Message::MAX_MESSAGE_SIZE).documents[0]
+          end
         end
       end
     end
