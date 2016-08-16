@@ -57,7 +57,7 @@ describe Mongo::Cluster::CursorReaper do
         reaper.register_cursor(cursor_id)
         reaper.schedule_kill_cursor(cursor_id, op_spec_1, server)
         reaper.run!
-        sleep(Mongo::Cluster::CursorReaper::FREQUENCY + 0.5)
+        sleep(Mongo::Cluster::CursorReaper::FREQUENCY + 1)
       end
 
       it 'executes the ops in the thread' do
