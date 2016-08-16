@@ -162,7 +162,9 @@ module Mongo
       def authenticate!
         if options[:user]
           user = Auth::User.new(Options::Redacted.new(:auth_mech => default_mechanism).merge(options))
-          Auth.get(user).login(self)
+          @server.handle_auth_failure! do
+            Auth.get(user).login(self)
+          end
         end
       end
 

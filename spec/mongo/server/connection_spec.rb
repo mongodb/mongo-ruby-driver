@@ -113,7 +113,8 @@ describe Mongo::Server::Connection do
             TEST_OPTIONS.merge(
               :user => 'notauser',
               :password => 'password',
-              :database => TEST_DB )
+              :database => TEST_DB,
+              :heartbeat_frequency => 30)
           )
         end
 
@@ -130,7 +131,6 @@ describe Mongo::Server::Connection do
         end
 
         it 'marks the server as unknown' do
-          pending 'Server must be set as unknown'
           expect(server).to be_unknown
         end
       end

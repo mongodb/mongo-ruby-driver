@@ -63,7 +63,8 @@ module Mongo
                    :replica_set_name,
                    :secondary?,
                    :standalone?,
-                   :unknown?
+                   :unknown?,
+                   :unknown!
 
     # Is this server equal to another?
     #
@@ -228,6 +229,25 @@ module Mongo
     # @since 2.3.0
     def with_connection(&block)
       pool.with_connection(&block)
+    end
+
+    # Handle authentication failure.
+    #
+    # @example Handle possible authentication failure.
+    #   server.handle_auth_failure! do
+    #     Auth.get(user).login(self)
+    #   end
+    #
+    # @raise [ Auth::Unauthorized ] If the authentication failed.
+    #
+    # @return [ Object ] The result of the block execution.
+    #
+    # @since 2.3.0
+    def handle_auth_failure!
+      yield
+    rescue Auth::Unauthorized
+      unknown!
+      raise
     end
   end
 end
