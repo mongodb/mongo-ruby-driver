@@ -23,9 +23,6 @@ module Mongo
     class AppMetadata
       extend Forwardable
 
-      # @return [ Hash ] Get the options from the cluster.
-      def_delegators :@cluster, :options
-
       # Instantiate the new AppMetadata object.
       #
       # @api private
@@ -37,8 +34,7 @@ module Mongo
       #
       # @since 2.4.0
       def initialize(cluster)
-        @cluster = cluster
-        @app_name = options[:app_name]
+        @app_name = cluster.options[:app_name]
       end
 
       # Get the bytes of the ismaster message including this metadata.
@@ -90,9 +86,9 @@ module Mongo
       def os_doc
         {
           type: type,
-          name: '',
-          architecture: '',
-          version: ''
+          name: name,
+          architecture: architecture,
+          version: version
         }
       end
 
@@ -110,6 +106,18 @@ module Mongo
           when /bsd/i
             :bsd
         end
+      end
+
+      def name
+        ''
+      end
+
+      def architecture
+        ''
+      end
+
+      def version
+        ''
       end
     end
   end

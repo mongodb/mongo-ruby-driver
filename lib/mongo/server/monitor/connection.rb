@@ -116,6 +116,7 @@ module Mongo
         def initialize(address, options = {})
           @address = address
           @options = options.freeze
+          @app_metadata = options[:app_metadata]
           @ssl_options = options.reject { |k, v| !k.to_s.start_with?(SSL) }
           @socket = nil
           @pid = Process.pid
@@ -136,7 +137,7 @@ module Mongo
         private
 
         def handshake!
-          if options[:app_metadata]
+          if @app_metadata
             socket.write(options[:app_metadata].ismaster_bytes)
             Protocol::Reply.deserialize(socket, Mongo::Protocol::Message::MAX_MESSAGE_SIZE).documents[0]
           end
