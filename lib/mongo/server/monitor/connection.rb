@@ -138,7 +138,7 @@ module Mongo
 
         def handshake!
           if @app_metadata
-            socket.write(options[:app_metadata].ismaster_bytes)
+            socket.write(@app_metadata.ismaster_bytes)
             Protocol::Reply.deserialize(socket, Mongo::Protocol::Message::MAX_MESSAGE_SIZE).documents[0]
           end
         end

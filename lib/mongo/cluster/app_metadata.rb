@@ -48,7 +48,7 @@ module Mongo
       #
       # @since 2.4.0
       def ismaster_bytes
-        @ismaster_bytes ||= validate! && serialized_ismaster
+        @ismaster_bytes ||= validate! && serialized_ismaster.to_s
       end
 
       private
@@ -73,7 +73,7 @@ module Mongo
         @serialized_ismaster ||= Protocol::Query.new(Database::ADMIN,
                                                      Database::COMMAND,
                                                      document,
-                                                     :limit => -1).to_s.freeze
+                                                     :limit => -1).serialize.freeze
       end
 
       def driver_doc
