@@ -184,7 +184,7 @@ from a collection (either singly or several at once).
   client = Mongo::Client.new('mongodb://127.0.0.1:27017/test')
   collection = client[:people]
  
-  result = collection.delete_one( name 'Steve' )
+  result = collection.delete_one( { name: 'Steve' } )
   
   puts result.deleted_count # returns 1 because one document was deleted
   
