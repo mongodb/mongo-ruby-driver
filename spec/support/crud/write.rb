@@ -114,6 +114,27 @@ module Mongo
           REQUIRES_2_6.include?(name) && upsert
         end
 
+        # Whether this operation requires a certain server version to be run.
+        #
+        # @example Determine whether this operation requires a certain server feature.
+        #   operation.feature_enabled?(collection)
+        #
+        # @param [ Collection ] collection The collection the operation
+        #   should be executed on.
+        #
+        # @return [ true, false ] Whether this operation requires a certain server version.
+        #
+        # @since 2.4.0
+        def feature_enabled?(collection)
+          if arguments['collation']
+            $mongo_client.cluster.servers.first.features.collation_enabled?
+          elsif requires_2_6?(collection)
+            $mongo_client.cluster.servers.first.features.write_command_enabled?
+          else
+            true
+          end
+        end
+
         private
 
         def bulk_write(collection)
