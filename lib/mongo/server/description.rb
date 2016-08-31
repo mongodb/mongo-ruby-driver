@@ -577,6 +577,7 @@ module Mongo
       private
 
       def compare_config(other)
+        return true if self.config.keys.empty? && other.config.keys.empty?
         !config.keys.empty? && config.keys.all? do |k|
           config[k] == other.config[k] || EXCLUDE_FOR_COMPARISON.include?(k)
         end
