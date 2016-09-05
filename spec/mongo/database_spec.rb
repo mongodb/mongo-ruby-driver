@@ -403,7 +403,7 @@ describe Mongo::Database do
       expect(database.drop).to be_successful
     end
 
-    it 'raises an exception', unless: write_command_enabled? do
+    it 'raises an exception', if: (!write_command_enabled? && auth_enabled?) do
       expect {
         database.drop
       }.to raise_error(Mongo::Error::OperationFailure)

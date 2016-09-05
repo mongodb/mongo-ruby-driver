@@ -184,10 +184,8 @@ describe Mongo::Index::View do
 
             context 'when the driver inserts into the system.indexes collection', unless: write_command_enabled? do
 
-              it 'applies the write concern to the system.indexes insert' do
-                expect {
-                  result
-                }.to raise_exception(Mongo::Error::OperationFailure)
+              it 'does not apply the write concern' do
+                expect(result).to be_successful
               end
             end
           end
@@ -249,10 +247,8 @@ describe Mongo::Index::View do
 
             context 'when the driver inserts into the system.indexes collection', unless: write_command_enabled? do
 
-              it 'applies the write concern to the system.indexes insert' do
-                expect {
-                  result
-                }.to raise_exception(Mongo::Error::OperationFailure)
+              it 'does not apply the write concern' do
+                expect(result).to be_successful
               end
             end
           end
@@ -340,10 +336,8 @@ describe Mongo::Index::View do
 
           context 'when the driver inserts into the system.indexes collection', unless: write_command_enabled? do
 
-            it 'applies the write concern to the system.indexes insert' do
-              expect {
-                result
-              }.to raise_exception(Mongo::Error::OperationFailure)
+            it 'does not apply the write concern' do
+              expect(result).to be_successful
             end
           end
         end
