@@ -1,4 +1,3 @@
-
 # Copyright (C) 2014-2016 MongoDB, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,34 +14,30 @@
 
 module Mongo
   module Operation
-    module Write
+    module Commands
 
-      # A MongoDB create user operation.
+      # A MongoDB drop collection operation.
       #
-      # @example Initialize the operation.
-      #   Write::CreateUser.new(:db_name => 'test', :user => user)
+      # @example Instantiate the operation.
+      #   Commands::Drop.new(selector: { drop: 'test' }, :db_name => 'test')
       #
       # Initialization:
-      #   param [ Hash ] spec The specifications for the create.
+      #   param [ Hash ] spec The specifications for the operation.
       #
-      #   option spec :user [ Auth::User ] The user to create.
       #   option spec :db_name [ String ] The name of the database.
+      #   option spec :selector [ Hash ] The drop collection selector.
+      #   option spec :write_concern [ String ] The write concern to use.
+      #     Only applied for server version >= 3.4.
       #
-      # @since 2.0.0
-      class CreateUser
-        include GLE
-        include WriteCommandEnabled
-        include Specifiable
+      # @since 2.4.0
+      class Drop < Command
+        include TakesWriteConcern
 
         private
 
-        def write_command_op
-          Command::CreateUser.new(spec)
-        end
-
         def message(server)
-          user_spec = { user: user.name }.merge(user.spec)
-          Protocol::Insert.new(db_name, Auth::User::COLLECTION, [ user_spec ])
+          sel = update_selector_for_write_concern(selector, server)
+          Protocol::Query.new(db_name, query_coll, sel, options)
         end
       end
     end

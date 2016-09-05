@@ -54,7 +54,7 @@ module Mongo
           # @return [ Mongo::Protocol::Query ] Wire protocol message.
           #
           # @since 2.2.5
-          def message
+          def message(server)
             opts = options.merge(validating_keys: true)
             Protocol::Query.new(db_name, Database::COMMAND, selector, opts)
           end

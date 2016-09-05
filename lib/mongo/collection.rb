@@ -124,8 +124,7 @@ module Mongo
     #
     # @since 2.0.0
     def write_concern
-      @write_concern ||= options[:write] ? WriteConcern.get(options[:write]) :
-        database.write_concern
+      @write_concern ||= WriteConcern.get(options[:write] || database.write_concern)
     end
 
     # Provides a new collection with either a new read preference or new write concern
@@ -170,7 +169,13 @@ module Mongo
     #
     # @since 2.0.0
     def create
-      database.command({ :create => name }.merge(options))
+      operation = { :create => name }.merge(options)
+      operation.delete(:write)
+      Operation::Commands::Create.new({
+                                        selector: operation,
+                                        db_name: database.name,
+                                        write_concern: write_concern
+                                      }).execute(next_primary)
     end
 
     # Drop the collection. Will also drop all indexes associated with the
@@ -185,7 +190,12 @@ module Mongo
     #
     # @since 2.0.0
     def drop
-      database.command(:drop => name)
+      Operation::Commands::Drop.new({
+                                      selector: { :drop => name },
+                                      db_name: database.name,
+                                      write_concern: write_concern
+                                    }).execute(next_primary)
+
     rescue Error::OperationFailure => ex
       raise ex unless ex.message =~ /ns not found/
       false

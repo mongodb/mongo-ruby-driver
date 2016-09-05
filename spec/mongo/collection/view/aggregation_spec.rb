@@ -143,6 +143,31 @@ describe Mongo::Collection::View::Aggregation do
         expect(aggregation.to_a.size).to eq(2)
       end
     end
+
+    context 'when the view has a write concern' do
+
+      let(:collection) do
+        authorized_collection.with(write: { w: WRITE_CONCERN[:w]+1 })
+      end
+
+      let(:view) do
+        Mongo::Collection::View.new(collection, selector, view_options)
+      end
+
+      context 'when the server supports write concern on the aggregate command', if: collation_enabled? do
+
+        it 'does not apply the write concern' do
+          expect(aggregation.to_a.size).to eq(2)
+        end
+      end
+
+      context 'when the server does not support write concern on the aggregation command', unless: collation_enabled? do
+
+        it 'does not apply the write concern' do
+          expect(aggregation.to_a.size).to eq(2)
+        end
+      end
+    end
   end
 
   describe '#initialize' do
@@ -384,6 +409,46 @@ describe Mongo::Collection::View::Aggregation do
      it 'does not reroute the operation to a primary' do
        expect(Mongo::Logger.logger).not_to receive(:warn?)
        aggregation.to_a
+     end
+
+     context 'when the view has a write concern' do
+
+       let(:collection) do
+         authorized_collection.with(write: { w: WRITE_CONCERN[:w]+1 })
+       end
+
+       let(:view) do
+         Mongo::Collection::View.new(collection, selector, view_options)
+       end
+
+       context 'when the server supports write concern on the aggregate command', if: collation_enabled? do
+
+         it 'uses the write concern' do
+           expect {
+             aggregation.to_a
+           }.to raise_exception(Mongo::Error::OperationFailure)
+         end
+       end
+
+       context 'when the server does not support write concern on the aggregation command', unless: collation_enabled? do
+
+         let(:documents) do
+           [
+             { city: "Berlin", pop: 18913, neighborhood: "Kreuzberg" },
+             { city: "Berlin", pop: 84143, neighborhood: "Mitte" },
+             { city: "New York", pop: 40270, neighborhood: "Brooklyn" }
+           ]
+         end
+
+         before do
+           authorized_collection.insert_many(documents)
+           aggregation.to_a
+         end
+
+         it 'does not apply the write concern' do
+           expect(authorized_client['output_collection'].find.count).to eq(2)
+         end
+       end
      end
     end
   end

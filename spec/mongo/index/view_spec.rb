@@ -35,6 +35,37 @@ describe Mongo::Index::View do
         }.to raise_error(Mongo::Error::MultiIndexDrop)
       end
     end
+
+    context 'when the collection has a write concern' do
+
+      let(:collection) do
+        authorized_collection.with(write: { w: WRITE_CONCERN[:w] + 1})
+      end
+
+      let(:view_with_write_concern) do
+        described_class.new(collection)
+      end
+
+      let(:result) do
+        view_with_write_concern.drop_one('another_-1')
+      end
+
+      context 'when the server accepts writeConcern for the dropIndexes operation', if: collation_enabled? do
+
+        it 'applies the write concern' do
+          expect {
+            result
+          }.to raise_exception(Mongo::Error::OperationFailure)
+        end
+      end
+
+      context 'when the server does not accept writeConcern for the dropIndexes operation', unless: collation_enabled? do
+
+        it 'does not apply the write concern' do
+          expect(result).to be_successful
+        end
+      end
+    end
   end
 
   describe '#drop_all' do
@@ -56,6 +87,41 @@ describe Mongo::Index::View do
       it 'drops the index' do
         expect(result).to be_successful
       end
+
+      context 'when the collection has a write concern' do
+
+        let(:collection) do
+          authorized_collection.with(write: { w: WRITE_CONCERN[:w] + 1})
+        end
+
+        let(:view_with_write_concern) do
+          described_class.new(collection)
+        end
+
+        let(:result) do
+          view_with_write_concern.drop_all
+        end
+
+        after do
+          view.drop_all
+        end
+
+        context 'when the server accepts writeConcern for the dropIndexes operation', if: collation_enabled? do
+
+          it 'applies the write concern' do
+            expect {
+              result
+            }.to raise_exception(Mongo::Error::OperationFailure)
+          end
+        end
+
+        context 'when the server does not accept writeConcern for the dropIndexes operation', unless: collation_enabled? do
+
+          it 'does not apply the write concern' do
+            expect(result).to be_successful
+          end
+        end
+      end
     end
   end
 
@@ -73,12 +139,58 @@ describe Mongo::Index::View do
         end
 
         after do
-          view.drop_one('random_1')
-          view.drop_one('testing_-1')
+          begin; view.drop_one('random_1'); rescue; end
+          begin; view.drop_one('testing_-1'); rescue; end
         end
 
         it 'returns ok' do
           expect(result).to be_successful
+        end
+
+        context 'when the collection has a write concern' do
+
+          let(:collection) do
+            authorized_collection.with(write: { w: WRITE_CONCERN[:w] + 1})
+          end
+
+          let(:view_with_write_concern) do
+            described_class.new(collection)
+          end
+
+          let(:result) do
+            view_with_write_concern.create_many(
+                { key: { random: 1 }, unique: true },
+                { key: { testing: -1 }, unique: true }
+            )
+          end
+
+          context 'when the server accepts writeConcern for the createIndexes operation', if: collation_enabled? do
+
+            it 'applies the write concern' do
+              expect {
+                result
+              }.to raise_exception(Mongo::Error::OperationFailure)
+            end
+          end
+
+          context 'when the server does not accept writeConcern for the createIndexes operation', unless: collation_enabled? do
+
+            context 'when the server supports the createIndexes command', if: write_command_enabled? do
+
+              it 'does not apply the write concern' do
+                expect(result).to be_successful
+              end
+            end
+
+            context 'when the driver inserts into the system.indexes collection', unless: write_command_enabled? do
+
+              it 'applies the write concern to the system.indexes insert' do
+                expect {
+                  result
+                }.to raise_exception(Mongo::Error::OperationFailure)
+              end
+            end
+          end
         end
       end
 
@@ -92,12 +204,58 @@ describe Mongo::Index::View do
         end
 
         after do
-          view.drop_one('random_1')
-          view.drop_one('testing_-1')
+          begin; view.drop_one('random_1'); rescue; end
+          begin; view.drop_one('testing_-1'); rescue; end
         end
 
         it 'returns ok' do
           expect(result).to be_successful
+        end
+
+        context 'when the collection has a write concern' do
+
+          let(:collection) do
+            authorized_collection.with(write: { w: WRITE_CONCERN[:w] + 1})
+          end
+
+          let(:view_with_write_concern) do
+            described_class.new(collection)
+          end
+
+          let(:result) do
+            view_with_write_concern.create_many([
+                                 { key: { random: 1 }, unique: true },
+                                 { key: { testing: -1 }, unique: true }
+                             ])
+          end
+
+          context 'when the server accepts writeConcern for the createIndexes operation', if: collation_enabled? do
+
+            it 'applies the write concern' do
+              expect {
+                result
+              }.to raise_exception(Mongo::Error::OperationFailure)
+            end
+          end
+
+          context 'when the server does not accept writeConcern for the createIndexes operation', unless: collation_enabled? do
+
+            context 'when the server accepts the createIndexes command', if: write_command_enabled? do
+
+              it 'does not apply the write concern' do
+                expect(result).to be_successful
+              end
+            end
+
+            context 'when the driver inserts into the system.indexes collection', unless: write_command_enabled? do
+
+              it 'applies the write concern to the system.indexes insert' do
+                expect {
+                  result
+                }.to raise_exception(Mongo::Error::OperationFailure)
+              end
+            end
+          end
         end
       end
 
@@ -141,11 +299,54 @@ describe Mongo::Index::View do
       end
 
       after do
-        view.drop_one('random_1')
+        begin; view.drop_one('random_1'); rescue; end
       end
 
       it 'returns ok' do
         expect(result).to be_successful
+      end
+
+      context 'when the collection has a write concern' do
+
+        let(:collection) do
+          authorized_collection.with(write: { w: WRITE_CONCERN[:w] + 1})
+        end
+
+        let(:view_with_write_concern) do
+          described_class.new(collection)
+        end
+
+        let(:result) do
+          view_with_write_concern.create_one(spec, unique: true)
+        end
+
+        context 'when the server accepts writeConcern for the createIndexes operation', if: collation_enabled? do
+
+          it 'applies the write concern' do
+            expect {
+              result
+            }.to raise_exception(Mongo::Error::OperationFailure)
+          end
+        end
+
+        context 'when the server does not accept writeConcern for the createIndexes operation', unless: collation_enabled? do
+
+          context 'when the server supports the createIndexes command', if: write_command_enabled? do
+
+            it 'does not apply the write concern' do
+              expect(result).to be_successful
+            end
+          end
+
+          context 'when the driver inserts into the system.indexes collection', unless: write_command_enabled? do
+
+            it 'applies the write concern to the system.indexes insert' do
+              expect {
+                result
+              }.to raise_exception(Mongo::Error::OperationFailure)
+            end
+          end
+        end
       end
     end
 
@@ -235,7 +436,6 @@ describe Mongo::Index::View do
       it 'passes partialFilterExpression correctly' do
         expect(indexes[:partialFilterExpression]).to eq(expression)
       end
-
     end
   end
 

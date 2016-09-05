@@ -29,7 +29,7 @@ module Mongo
       #   when sending the listIndexes command.
       attr_reader :batch_size
 
-      def_delegators :@collection, :cluster, :database, :read_preference
+      def_delegators :@collection, :cluster, :database, :read_preference, :write_concern
       def_delegators :cluster, :next_primary
 
       # The index key field.
@@ -151,6 +151,7 @@ module Mongo
           indexes: normalize_models(models.flatten),
           db_name: database.name,
           coll_name: collection.name,
+          write_concern: write_concern
         ).execute(next_primary)
       end
 
@@ -216,7 +217,8 @@ module Mongo
         Operation::Write::DropIndex.new(
           db_name: database.name,
           coll_name: collection.name,
-          index_name: name
+          index_name: name,
+          write_concern: write_concern
         ).execute(next_primary)
       end
 

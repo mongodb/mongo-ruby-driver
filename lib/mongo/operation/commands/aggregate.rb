@@ -40,21 +40,21 @@ module Mongo
       #
       # @since 2.0.0
       class Aggregate < Command
+        include TakesWriteConcern
 
         private
 
-        def filter_selector(server)
-          return selector if server.features.write_command_enabled?
-          selector.reject{ |option, value| option.to_s == 'cursor' }
+        def filter_cursor_from_selector(sel, server)
+          return sel if server.features.write_command_enabled?
+          sel.reject{ |option, value| option.to_s == 'cursor' }
         end
 
-        def update_selector(server)
-          if server.mongos? && read_pref = read.to_mongos
-            sel = selector[:$query] ? filter_selector(server) : { :$query => filter_selector(server) }
-            sel.merge(:$readPreference => read_pref)
-          else
-            filter_selector(server)
-          end
+        def message(server)
+          sel = update_selector_for_read_pref(selector, server)
+          sel = filter_cursor_from_selector(sel, server)
+          sel = update_selector_for_write_concern(sel, server)
+          opts = update_options_for_slave_ok(options, server)
+          Protocol::Query.new(db_name, query_coll, sel, opts)
         end
       end
     end

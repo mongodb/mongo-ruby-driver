@@ -150,6 +150,10 @@ module Mongo
 
       private
 
+      def write_concern
+        WriteConcern.get(options[:write] || options[:write_concern] || collection.write_concern)
+      end
+
       def initialize_copy(other)
         @collection = other.collection
         @options = other.options.dup

@@ -15,6 +15,24 @@ describe Mongo::WriteConcern do
       end
     end
 
+    context 'when the value is a WriteConcern object' do
+
+      let(:value) do
+        Mongo::WriteConcern.get({})
+      end
+
+      it 'returns the object' do
+        expect(Mongo::WriteConcern.get(value)).to be(value)
+      end
+    end
+
+    context 'when the value is nil' do
+
+      it 'returns nil' do
+        expect(Mongo::WriteConcern.get(nil)).to be(nil)
+      end
+    end
+
     context 'when w is 0' do
 
       context 'when no other options are provided' do

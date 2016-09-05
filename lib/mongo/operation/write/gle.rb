@@ -28,7 +28,7 @@ module Mongo
           server.with_connection do |connection|
             result_class = self.class.const_defined?(:LegacyResult, false) ? self.class::LegacyResult :
                 self.class.const_defined?(:Result, false) ? self.class::Result : Result
-            result_class.new(connection.dispatch([ message, gle ].compact)).validate!
+            result_class.new(connection.dispatch([ message(server), gle ].compact)).validate!
           end
         end
 

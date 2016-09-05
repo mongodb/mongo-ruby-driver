@@ -100,7 +100,7 @@ describe Mongo::Operation::Write::Command::Delete do
                                                            '$cmd',
                                                            expected_selector,
                                                            { limit: -1 } )
-      op.send(:message)
+      op.send(:message, double('server'))
     end
   end
 end

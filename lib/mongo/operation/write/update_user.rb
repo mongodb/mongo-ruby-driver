@@ -40,7 +40,7 @@ module Mongo
           Command::UpdateUser.new(spec)
         end
 
-        def message
+        def message(server)
           user_spec = { user: user.name }.merge(user.spec)
           Protocol::Update.new(db_name, Auth::User::COLLECTION, { user: user.name }, user_spec)
         end
