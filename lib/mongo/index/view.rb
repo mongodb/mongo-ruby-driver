@@ -147,12 +147,14 @@ module Mongo
       #
       # @since 2.0.0
       def create_many(*models)
-        Operation::Write::CreateIndex.new(
-          indexes: normalize_models(models.flatten),
-          db_name: database.name,
-          coll_name: collection.name,
-          write_concern: write_concern
-        ).execute(next_primary)
+        spec = {
+                indexes: normalize_models(models.flatten),
+                db_name: database.name,
+                coll_name: collection.name
+               }
+        server = next_primary
+        spec[:write_concern] = write_concern if server.features.collation_enabled?
+        Operation::Write::CreateIndex.new(spec).execute(server)
       end
 
       # Convenience method for getting index information by a specific name or
@@ -214,12 +216,14 @@ module Mongo
       private
 
       def drop_by_name(name)
-        Operation::Write::DropIndex.new(
-          db_name: database.name,
-          coll_name: collection.name,
-          index_name: name,
-          write_concern: write_concern
-        ).execute(next_primary)
+        spec = {
+                 db_name: database.name,
+                 coll_name: collection.name,
+                 index_name: name
+               }
+        server = next_primary
+        spec[:write_concern] = write_concern if server.features.collation_enabled?
+        Operation::Write::DropIndex.new(spec).execute(server)
       end
 
       def index_name(spec)
