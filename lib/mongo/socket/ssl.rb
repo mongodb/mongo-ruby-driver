@@ -23,6 +23,8 @@ module Mongo
     class SSL < Socket
       include OpenSSL
 
+      ALLOWED_KEY_TYPES = [OpenSSL::PKey::RSA]
+
       # @return [ SSLContext ] context The ssl context.
       attr_reader :context
 
@@ -118,27 +120,26 @@ module Mongo
         set_cert(context, options) if options[:ssl_cert]
         set_key(context, options) if options[:ssl_key]
         set_cert_verification(context, options) unless options[:ssl_verify] == false
+        puts context.cert
+        puts context.key
         context
       end
 
       def set_cert(context, options)
-        context.cert = OpenSSL::X509::Certificate.new(File.open(options[:ssl_cert]))
+        context.cert = certificate_from_option(options[:ssl_cert])
+        puts("cccccc")
       end
 
       def set_key(context, options)
-        if options[:ssl_key_pass_phrase]
-          context.key = OpenSSL::PKey::RSA.new(File.open(options[:ssl_key]),
-                                               options[:ssl_key_pass_phrase])
-        else
-          context.key = OpenSSL::PKey::RSA.new(File.open(options[:ssl_key]))
-        end
+        context.key = key_from_option(options[:ssl_key], options[:ssl_key_pass_phrase])
+        puts("ddddd")
       end
 
       def set_cert_verification(context, options)
         context.verify_mode = OpenSSL::SSL::VERIFY_PEER
         cert_store = OpenSSL::X509::Store.new
         if options[:ssl_ca_cert]
-          cert_store.add_file(options[:ssl_ca_cert])
+          cert_store.add_cert(certificate_from_option(options[:ssl_ca_cert]))
         else
           cert_store.set_default_paths
         end
@@ -152,6 +153,37 @@ module Mongo
           end
         end
       end
+
+      def certificate_from_option(option)
+        puts 'here'
+        if option.is_a? OpenSSL::X509::Certificate
+          option
+        else
+          begin
+            cert = OpenSSL::X509::Certificate.new(option)
+            puts "aaaa"
+          rescue OpenSSL::X509::CertificateError
+            puts "bbbbb"
+            OpenSSL::X509::Certificate.new(File.open(option))
+          end
+        end
+      end
+
+      def key_from_option(option, passphrase)
+        puts 'there'
+        if ALLOWED_KEY_TYPES.include? option.class
+          option
+        else
+          begin
+            puts("eeeee")
+            OpenSSL::PKey::RSA.new(option, passphrase)
+          rescue OpenSSL::PKey::RSAError => e
+            puts("fffff")
+            OpenSSL::PKey::RSA.new(File.open(option), passphrase)
+          end
+        end
+      end
+
     end
   end
 end

@@ -51,6 +51,48 @@ describe Mongo::Socket::SSL, if: running_ssl? do
       end
     end
 
+    context 'when a certificate and key are provided as strings' do
+
+      let(:options) do
+        key = File.read(CLIENT_KEY_PEM)
+        cert = File.read(CLIENT_CERT_PEM)
+        super().merge({
+          :ssl_cert => cert,
+          :ssl_key => key
+        })
+      end
+
+      before do
+        socket.connect!
+      end
+
+      it 'connects to the server' do
+        expect(socket).to be_alive
+      end
+
+    end
+
+    context 'when a certificate and key are provided as objects' do
+
+      let(:options) do
+        key = OpenSSL::PKey.read(File.open(CLIENT_KEY_PEM))
+        cert = OpenSSL::X509::Certificate.new(File.read(CLIENT_CERT_PEM))
+        super().merge({
+          :ssl_cert => cert,
+          :ssl_key => key
+        })
+      end
+
+      before do
+        socket.connect!
+      end
+
+      it 'connects to the server' do
+        expect(socket).to be_alive
+      end
+
+    end
+
     context 'when a bad certificate is provided' do
 
       let(:options) do
@@ -68,20 +110,63 @@ describe Mongo::Socket::SSL, if: running_ssl? do
 
     context 'when a CA certificate is provided', if: testing_ssl_locally? do
 
-      let(:options) do
-        super().merge({
-          :ssl_ca_cert => CA_PEM,
-          :ssl_verify => true
-        })
+      context 'as a path to a file' do
+
+        let(:options) do
+          super().merge({
+            :ssl_ca_cert => CA_PEM,
+            :ssl_verify => true
+          })
+        end
+
+        before do
+          socket.connect!
+        end
+
+        it 'connects to the server' do
+          expect(socket).to be_alive
+        end
       end
 
-      before do
-        socket.connect!
+      context 'as a string containg the PEM-encoded certificate' do
+
+        let (:options) do
+          cert = File.read(CA_PEM)
+          super().merge({
+            :ssl_ca_cert => cert,
+            :ssl_verify => true
+          })
+        end
+
+        before do
+          socket.connect!
+        end
+
+        it 'connects to the server' do
+          expect(socket).to be_alive
+        end
+
       end
 
-      it 'connects to the server' do
-        expect(socket).to be_alive
+      context 'as a Certificate object' do
+        let (:options) do
+          cert = OpenSSL::X509::Certificate.new(File.read(CA_PEM))
+          super().merge({
+            :ssl_ca_cert => cert,
+            :ssl_verify => true
+          })
+        end
+
+        before do
+          socket.connect!
+        end
+
+        it 'connects to the server' do
+          expect(socket).to be_alive
+        end
+
       end
+
     end
 
     context 'when a CA certificate is not provided', if: testing_ssl_locally? do

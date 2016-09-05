@@ -14,6 +14,8 @@ CLIENT_PEM = "#{SSL_CERTS_DIR}/client.pem"
 CLIENT_PASSWORD_PEM = "#{SSL_CERTS_DIR}/password_protected.pem"
 CA_PEM = "#{SSL_CERTS_DIR}/ca.pem"
 CRL_PEM = "#{SSL_CERTS_DIR}/crl.pem"
+CLIENT_KEY_PEM = "#{SSL_CERTS_DIR}/client_key.pem"
+CLIENT_CERT_PEM = "#{SSL_CERTS_DIR}/client_cert.pem"
 
 require 'mongo'
 
