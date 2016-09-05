@@ -118,7 +118,7 @@ module Mongo
           def write?(spec)
             if out = spec[:selector][:out]
               out.is_a?(String) ||
-                  (out.respond_to?(:keys) && out.keys.first.to_s.downcase != View::MapReduce::INLINE)
+                (out.respond_to?(:keys) && out.keys.first.to_s.downcase != View::MapReduce::INLINE)
             end
           end
 
