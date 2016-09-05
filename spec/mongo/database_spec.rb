@@ -374,7 +374,7 @@ describe Mongo::Database do
         end
       end
 
-      context 'when a write concern is provided in the command selector', if: write_command_enabled? do
+      context 'when a write concern is provided in the command selector', if: write_command_enabled? && standalone? do
 
         let(:cmd) do
           {
