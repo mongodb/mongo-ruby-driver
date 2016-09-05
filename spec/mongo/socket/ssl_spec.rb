@@ -9,8 +9,8 @@ describe Mongo::Socket::SSL, if: running_ssl? do
   let(:options) do
     {
       :ssl => true,
-      :ssl_cert => CLIENT_PEM,
-      :ssl_key => CLIENT_PEM,
+      :ssl_cert => CLIENT_CERT_PEM,
+      :ssl_key => CLIENT_KEY_PEM,
       :ssl_verify => false
     }
   end
@@ -104,7 +104,7 @@ describe Mongo::Socket::SSL, if: running_ssl? do
       it 'raises an exception' do
         expect {
           socket.connect!
-        }.to raise_exception(OpenSSL::PKey::RSAError)
+        }.to raise_exception(ArgumentError)
       end
     end
 

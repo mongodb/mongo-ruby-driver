@@ -51,8 +51,8 @@ SSL = ENV['SSL_ENABLED'] == 'true'
 SSL_OPTIONS = {
                   ssl: SSL,
                   ssl_verify: false,
-                  ssl_cert:  CLIENT_PEM,
-                  ssl_key:  CLIENT_PEM
+                  ssl_cert:  CLIENT_CERT_PEM,
+                  ssl_key:  CLIENT_KEY_PEM
                 }
 
 # Base test options.

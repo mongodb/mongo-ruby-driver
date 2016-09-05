@@ -120,19 +120,15 @@ module Mongo
         set_cert(context, options) if options[:ssl_cert]
         set_key(context, options) if options[:ssl_key]
         set_cert_verification(context, options) unless options[:ssl_verify] == false
-        puts context.cert
-        puts context.key
         context
       end
 
       def set_cert(context, options)
         context.cert = certificate_from_option(options[:ssl_cert])
-        puts("cccccc")
       end
 
       def set_key(context, options)
         context.key = key_from_option(options[:ssl_key], options[:ssl_key_pass_phrase])
-        puts("ddddd")
       end
 
       def set_cert_verification(context, options)
@@ -155,31 +151,25 @@ module Mongo
       end
 
       def certificate_from_option(option)
-        puts 'here'
         if option.is_a? OpenSSL::X509::Certificate
           option
         else
           begin
-            cert = OpenSSL::X509::Certificate.new(option)
-            puts "aaaa"
+            OpenSSL::X509::Certificate.new(option)
           rescue OpenSSL::X509::CertificateError
-            puts "bbbbb"
             OpenSSL::X509::Certificate.new(File.open(option))
           end
         end
       end
 
       def key_from_option(option, passphrase)
-        puts 'there'
         if ALLOWED_KEY_TYPES.include? option.class
           option
         else
           begin
-            puts("eeeee")
-            OpenSSL::PKey::RSA.new(option, passphrase)
-          rescue OpenSSL::PKey::RSAError => e
-            puts("fffff")
-            OpenSSL::PKey::RSA.new(File.open(option), passphrase)
+            passphrase ? OpenSSL::PKey.read(option, passphrase) : OpenSSL::PKey.read(option)
+          rescue ArgumentError => e
+            passphrase ? OpenSSL::PKey.read(File.read(option), passphrase) : OpenSSL::PKey.read(File.read(option))
           end
         end
       end
