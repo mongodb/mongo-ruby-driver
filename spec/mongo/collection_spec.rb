@@ -488,7 +488,7 @@ describe Mongo::Collection do
           end
 
           context 'when the server supports collation', if: collation_enabled? do
-            it_behaves_like 'a collection command with default collation option'
+            it_behaves_like 'a collection command with a collation option'
           end
         end
 
@@ -499,7 +499,7 @@ describe Mongo::Collection do
           end
 
           context 'when the server supports collation', if: collation_enabled? do
-            it_behaves_like 'a collection command with default collation option'
+            it_behaves_like 'a collection command with a collation option'
           end
         end
       end
