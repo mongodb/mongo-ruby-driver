@@ -1397,7 +1397,7 @@ describe Mongo::Collection do
 
         it 'applies the collation' do
           expect(result.written_count).to eq(1)
-          expect(authorized_collection.find(name: 'bang').to_a.size).to eq(0)
+          expect(authorized_collection.find(name: 'bang').count).to eq(0)
         end
       end
 
@@ -1414,7 +1414,7 @@ describe Mongo::Collection do
     context 'when collation is not specified' do
 
       let(:selector) do
-        {name: 'BANG'}
+        { name: 'BANG' }
       end
 
       let(:result) do
@@ -1427,7 +1427,7 @@ describe Mongo::Collection do
 
       it 'does not apply the collation' do
         expect(result.written_count).to eq(0)
-        expect(authorized_collection.find(name: 'bang').to_a.size).to eq(1)
+        expect(authorized_collection.find(name: 'bang').count).to eq(1)
       end
     end
   end
@@ -1492,7 +1492,7 @@ describe Mongo::Collection do
 
         it 'applies the collation' do
           expect(result.written_count).to eq(2)
-          expect(authorized_collection.find(name: 'bang').to_a.size).to eq(0)
+          expect(authorized_collection.find(name: 'bang').count).to eq(0)
         end
       end
 
@@ -1523,7 +1523,7 @@ describe Mongo::Collection do
 
       it 'does not apply the collation' do
         expect(result.written_count).to eq(0)
-        expect(authorized_collection.find(name: 'bang').to_a.size).to eq(2)
+        expect(authorized_collection.find(name: 'bang').count).to eq(2)
       end
     end
   end
@@ -1831,7 +1831,7 @@ describe Mongo::Collection do
 
         it 'applies the collation' do
           expect(result.written_count).to eq(1)
-          expect(authorized_collection.find(name: 'doink').to_a.size).to eq(1)
+          expect(authorized_collection.find(name: 'doink').count).to eq(1)
         end
       end
 
@@ -1861,7 +1861,7 @@ describe Mongo::Collection do
 
       it 'does not apply the collation' do
         expect(result.written_count).to eq(0)
-        expect(authorized_collection.find(name: 'bang').to_a.size).to eq(1)
+        expect(authorized_collection.find(name: 'bang').count).to eq(1)
       end
     end
   end
@@ -2048,7 +2048,7 @@ describe Mongo::Collection do
 
         it 'applies the collation' do
           expect(result.written_count).to eq(2)
-          expect(authorized_collection.find(other: 'doink').to_a.size).to eq(2)
+          expect(authorized_collection.find(other: 'doink').count).to eq(2)
         end
       end
 
@@ -2264,7 +2264,7 @@ describe Mongo::Collection do
 
         it 'applies the collation' do
           expect(result.written_count).to eq(1)
-          expect(authorized_collection.find(other: 'doink').to_a.size).to eq(1)
+          expect(authorized_collection.find(other: 'doink').count).to eq(1)
         end
       end
 
@@ -2440,6 +2440,7 @@ describe Mongo::Collection do
 
         it 'applies the collation' do
           expect(result['name']).to eq('bang')
+          expect(authorized_collection.find(name: 'bang').count).to eq(0)
         end
       end
 
@@ -3005,7 +3006,7 @@ describe Mongo::Collection do
 
         it 'applies the collation' do
           expect(result['name']).to eq('bang')
-          expect(authorized_collection.find({ name: 'doink' }, limit: -1).first['name']).to eq('doink')
+          expect(authorized_collection.find(name: 'doink').count).to eq(1)
         end
       end
 
