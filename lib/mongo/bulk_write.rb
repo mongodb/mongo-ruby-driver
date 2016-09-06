@@ -54,8 +54,10 @@ module Mongo
       operation_id = Monitoring.next_operation_id
       result_combiner = ResultCombiner.new
       write_with_retry do
+        operations = op_combiner.combine
         server = next_primary
-        operations(server).each do |operation|
+        raise Error::UnsupportedCollation.new if op_combiner.has_collation && !server.features.collation_enabled?
+        operations.each do |operation|
           execute_operation(
             operation.keys.first,
             operation.values.first,
@@ -156,12 +158,8 @@ module Mongo
       end
     end
 
-    def operations(server)
-      if ordered?
-        OrderedCombiner.new(requests, server).combine
-      else
-        UnorderedCombiner.new(requests, server).combine
-      end
+    def op_combiner
+      @op_combiner ||= ordered? ? OrderedCombiner.new(requests) : UnorderedCombiner.new(requests)
     end
 
     def split_execute(name, values, server, operation_id, combiner)

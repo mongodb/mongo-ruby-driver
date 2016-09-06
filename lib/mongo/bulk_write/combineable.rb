@@ -25,8 +25,8 @@ module Mongo
       # @return [ Array<Hash, BSON::Document> ] requests The provided requests.
       attr_reader :requests
 
-      # @return [ Mongo::Server ] server The server receiving the requests.
-      attr_reader :server
+      # @return [ true, false ] has_collation Whether one or more operations has a collation defined.
+      attr_reader :has_collation
 
       # Create the ordered combiner.
       #
@@ -38,9 +38,9 @@ module Mongo
       # @param [ Array<Hash, BSON::Document> ] requests The bulk requests.
       #
       # @since 2.1.0
-      def initialize(requests, server)
+      def initialize(requests)
         @requests = requests
-        @server = server
+        @has_collation = false
       end
 
       private

@@ -40,7 +40,7 @@ module Mongo
       def validate(name, document)
         validate_operation(name)
         validate_document(name, document)
-        validate_collation(document)
+        @has_collation = true if document.respond_to?(:keys) && document[:collation]
       end
 
       private
@@ -56,14 +56,6 @@ module Mongo
       def validate_operation(name)
         unless Transformable::MAPPERS.key?(name)
           raise Error::InvalidBulkOperationType.new(name)
-        end
-      end
-
-      def validate_collation(document)
-        if document.respond_to?(:keys)
-          if document[:collation] && !server.features.collation_enabled?
-            raise Error::UnsupportedCollation.new
-          end
         end
       end
     end
