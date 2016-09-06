@@ -63,6 +63,10 @@ module Mongo
           Command::Update.new(s)
         end
 
+        def has_collation?
+          update[:collation]
+        end
+
         def message(server)
           flags = []
           flags << :multi_update if update[Operation::MULTI]

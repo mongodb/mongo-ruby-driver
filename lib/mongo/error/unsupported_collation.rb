@@ -21,15 +21,26 @@ module Mongo
     # @since 2.4.0
     class UnsupportedCollation < Error
 
+      # The default error message describing that collations is not supported.
+      #
+      # @return [ String ] A default message describing that collations is not supported by the server.
+      DEFAULT_MESSAGE = "Collations is not a supported feature of the server handling this operation. " +
+          "Operation results may be unexpected."
+
+      # The error message describing that collations cannot be used when write concern is unacknowledged.
+      #
+      # @return [ String ] A message describing that collations cannot be used when write concern is unacknowledged.
+      UNACKNOWLEDGED_WRITES_MESSAGE = "A collation cannot be specified when using unacknowledged writes. " +
+        "Either remove the collation option or use acknowledged writes (w > 0)."
+
       # Create the new exception.
       #
       # @example Create the new exception.
       #   Mongo::Error::UnsupportedCollation.new
       #
       # @since 2.4.0
-      def initialize
-        super("Collations is not a supported feature of the server handling this operation. " +
-                "Operation results may be unexpected.")
+      def initialize(message = nil)
+        super(message || DEFAULT_MESSAGE)
       end
     end
   end

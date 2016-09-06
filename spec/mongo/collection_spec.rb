@@ -1399,6 +1399,23 @@ describe Mongo::Collection do
           expect(result.written_count).to eq(1)
           expect(authorized_collection.find(name: 'bang').count).to eq(0)
         end
+
+        context 'when unacknowledged writes is used' do
+
+          let(:collection_with_unacknowledged_write_concern) do
+            authorized_collection.with(write: { w: 0 })
+          end
+
+          let(:result) do
+            collection_with_unacknowledged_write_concern.delete_one(selector, options)
+          end
+
+          it 'raises an exception' do
+            expect {
+              result
+            }.to raise_exception(Mongo::Error::UnsupportedCollation)
+          end
+        end
       end
 
       context 'when the server selected does not support collations', unless: collation_enabled? do
@@ -1493,6 +1510,23 @@ describe Mongo::Collection do
         it 'applies the collation' do
           expect(result.written_count).to eq(2)
           expect(authorized_collection.find(name: 'bang').count).to eq(0)
+        end
+
+        context 'when unacknowledged writes is used' do
+
+          let(:collection_with_unacknowledged_write_concern) do
+            authorized_collection.with(write: { w: 0 })
+          end
+
+          let(:result) do
+            collection_with_unacknowledged_write_concern.delete_many(selector, options)
+          end
+
+          it 'raises an exception' do
+            expect {
+              result
+            }.to raise_exception(Mongo::Error::UnsupportedCollation)
+          end
         end
       end
 
@@ -2050,6 +2084,23 @@ describe Mongo::Collection do
           expect(result.written_count).to eq(2)
           expect(authorized_collection.find(other: 'doink').count).to eq(2)
         end
+
+        context 'when unacknowledged writes is used' do
+
+          let(:collection_with_unacknowledged_write_concern) do
+            authorized_collection.with(write: { w: 0 })
+          end
+
+          let(:result) do
+            collection_with_unacknowledged_write_concern.update_many(selector, { '$set' => { other: 'doink' } }, options)
+          end
+
+          it 'raises an exception' do
+            expect {
+              result
+            }.to raise_exception(Mongo::Error::UnsupportedCollation)
+          end
+        end
       end
 
       context 'when the server selected does not support collations', unless: collation_enabled? do
@@ -2265,6 +2316,23 @@ describe Mongo::Collection do
         it 'applies the collation' do
           expect(result.written_count).to eq(1)
           expect(authorized_collection.find(other: 'doink').count).to eq(1)
+        end
+
+        context 'when unacknowledged writes is used' do
+
+          let(:collection_with_unacknowledged_write_concern) do
+            authorized_collection.with(write: { w: 0 })
+          end
+
+          let(:result) do
+            collection_with_unacknowledged_write_concern.update_one(selector, { '$set' => { other: 'doink' } }, options)
+          end
+
+          it 'raises an exception' do
+            expect {
+              result
+            }.to raise_exception(Mongo::Error::UnsupportedCollation)
+          end
         end
       end
 

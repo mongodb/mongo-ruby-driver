@@ -35,6 +35,7 @@ module Mongo
         # @since 2.1.0
         def execute(server)
           if !server.features.write_command_enabled? || unacknowledged_write?
+            raise Error::UnsupportedCollation.new(Error::UnsupportedCollation::UNACKNOWLEDGED_WRITES_MESSAGE) if has_collation?
             execute_message(server)
           else
             execute_write_command(server)
@@ -42,6 +43,10 @@ module Mongo
         end
 
         private
+
+        def has_collation?
+          false
+        end
 
         def unacknowledged_write?
           write_concern && write_concern.get_last_error.nil?
