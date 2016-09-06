@@ -126,13 +126,12 @@ module Mongo
         #
         # @since 2.4.0
         def feature_enabled?(collection)
-          if arguments['collation']
-            $mongo_client.cluster.servers.first.features.collation_enabled?
+          if collation
+            return $mongo_client.cluster.servers.first.features.collation_enabled?
           elsif requires_2_6?(collection)
-            $mongo_client.cluster.servers.first.features.write_command_enabled?
-          else
-            true
+            return $mongo_client.cluster.servers.first.features.write_command_enabled?
           end
+          true
         end
 
         private

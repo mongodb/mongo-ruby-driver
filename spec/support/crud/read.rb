@@ -103,13 +103,12 @@ module Mongo
         #
         # @since 2.4.0
         def feature_enabled?(collection)
-          if arguments['collation']
-            $mongo_client.cluster.servers.first.features.collation_enabled?
+          if collation
+            return $mongo_client.cluster.servers.first.features.collation_enabled?
           elsif requires_2_6?(collection)
-            $mongo_client.cluster.servers.first.features.write_command_enabled?
-          else
-            true
+            return $mongo_client.cluster.servers.first.features.write_command_enabled?
           end
+          true
         end
 
         private
@@ -138,6 +137,10 @@ module Mongo
           ARGUMENT_MAP.reduce({}) do |opts, (key, value)|
             arguments[value] ? opts.merge!(key => arguments[value]) : opts
           end
+        end
+
+        def collation
+          arguments['collation']
         end
 
         def batch_size
