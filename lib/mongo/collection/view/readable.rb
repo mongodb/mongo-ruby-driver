@@ -143,7 +143,7 @@ module Mongo
                                                :db_name => database.name,
                                                :options => { :limit => -1 },
                                                :read => preference,
-                                             }).execute(server.context).n.to_i
+                                             }).execute(server).n.to_i
 
           end
         end
@@ -180,7 +180,7 @@ module Mongo
                                                :db_name => database.name,
                                                :options => { :limit => -1 },
                                                :read => preference
-                                             }).execute(server.context).first['values']
+                                             }).execute(server).first['values']
 
           end
         end
