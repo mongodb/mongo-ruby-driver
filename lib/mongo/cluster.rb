@@ -23,6 +23,7 @@ module Mongo
   # @since 2.0.0
   class Cluster
     extend Forwardable
+    include Monitoring::Publishable
     include Event::Subscriber
     include Loggable
 
@@ -38,6 +39,9 @@ module Mongo
 
     # @return [ Hash ] The options hash.
     attr_reader :options
+
+    # @return [ Monitoring ] monitoring The monitoring.
+    attr_reader :monitoring
 
     # @return [ Object ] The cluster topology.
     attr_reader :topology
@@ -77,13 +81,40 @@ module Mongo
       address = Address.new(host)
       if !addresses.include?(address)
         if addition_allowed?(address)
-          log_debug("Adding #{address.to_s} to the cluster.")
           @update_lock.synchronize { @addresses.push(address) }
           server = Server.new(address, self, @monitoring, event_listeners, options)
           @update_lock.synchronize { @servers.push(server) }
           server
         end
       end
+    end
+
+    # Determine if the cluster would select a readable server for the
+    # provided read preference.
+    #
+    # @example Is a readable server present?
+    #   topology.has_readable_server?(server_selector)
+    #
+    # @param [ ServerSelector ] server_selector The server
+    #   selector.
+    #
+    # @return [ true, false ] If a readable server is present.
+    #
+    # @since 2.3.0
+    def has_readable_server?(server_selector)
+      topology.has_readable_server?(self, server_selector)
+    end
+
+    # Determine if the cluster would select a writable server.
+    #
+    # @example Is a writable server present?
+    #   topology.has_writable_server?
+    #
+    # @return [ true, false ] If a writable server is present.
+    #
+    # @since 2.3.0
+    def has_writable_server?
+      topology.has_writable_server?(self)
     end
 
     # Instantiate the new cluster.
@@ -106,7 +137,7 @@ module Mongo
       @monitoring = monitoring
       @event_listeners = Event::Listeners.new
       @options = options.freeze
-      @topology = Topology.initial(seeds, options)
+      @topology = Topology.initial(seeds, monitoring, options)
       @update_lock = Mutex.new
       @pool_lock = Mutex.new
 
@@ -251,11 +282,14 @@ module Mongo
     #
     # @since 2.0.0
     def remove(host)
-      log_debug("#{host} being removed from the cluster.")
       address = Address.new(host)
       removed_servers = @servers.select { |s| s.address == address }
       @update_lock.synchronize { @servers = @servers - removed_servers }
       removed_servers.each{ |server| server.disconnect! } if removed_servers
+      publish_sdam_event(
+        Monitoring::SERVER_CLOSED,
+        Monitoring::Event::ServerClosed.new(address, topology)
+      )
       @update_lock.synchronize { @addresses.reject! { |addr| addr == address } }
     end
 

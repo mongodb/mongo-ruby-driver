@@ -21,6 +21,7 @@ module Mongo
       # @since 2.0.0
       class Unknown
         include Loggable
+        include Monitoring::Publishable
 
         # The display name for the topology.
         #
@@ -29,6 +30,9 @@ module Mongo
 
         # @return [ Hash ] options The options.
         attr_reader :options
+
+        # @return [ Monitoring ] monitoring The monitoring.
+        attr_reader :monitoring
 
         # Get the display name.
         #
@@ -55,12 +59,41 @@ module Mongo
         # @return [ Sharded, ReplicaSet ] The new topology.
         def elect_primary(description, servers)
           if description.mongos?
-            log_debug("Mongos #{description.address.to_s} discovered.")
-            Sharded.new(options)
+            sharded = Sharded.new(options, monitoring)
+            topology_changed(sharded)
+            sharded
           else
             initialize_replica_set(description, servers)
           end
         end
+
+        # Determine if the topology would select a readable server for the
+        # provided candidates and read preference.
+        #
+        # @example Is a readable server present?
+        #   topology.has_readable_server?(cluster, server_selector)
+        #
+        # @param [ Cluster ] cluster The cluster.
+        # @param [ ServerSelector ] server_selector The server
+        #   selector.
+        #
+        # @return [ true, false ] If a readable server is present.
+        #
+        # @since 2.3.0
+        def has_readable_server?(cluster, server_selector); false; end
+
+        # Determine if the topology would select a writable server for the
+        # provided candidates.
+        #
+        # @example Is a writable server present?
+        #   topology.has_writable_server?(servers)
+        #
+        # @param [ Cluster ] cluster The cluster.
+        #
+        # @return [ true, false ] If a writable server is present.
+        #
+        # @since 2.3.0
+        def has_writable_server?(cluster); false; end
 
         # Initialize the topology with the options.
         #
@@ -68,11 +101,18 @@ module Mongo
         #   Unknown.new(options)
         #
         # @param [ Hash ] options The options.
+        # @param [ Monitoring ] monitoring The monitoring.
+        # @param [ Array<String> ] seeds The seeds.
         #
         # @since 2.0.0
-        def initialize(options, seeds = [])
+        def initialize(options, monitoring, seeds = [])
           @options = options
+          @monitoring = monitoring
           @seeds = seeds
+          publish_sdam_event(
+            Monitoring::TOPOLOGY_OPENING,
+            Monitoring::Event::TopologyOpening.new(self)
+          )
         end
 
         # An unknown topology is not a replica set.
@@ -195,7 +235,9 @@ module Mongo
         # @since 2.0.6
         def standalone_discovered
           if @seeds.size == 1
-            Single.new(options, @seeds)
+            single = Single.new(options, monitoring, @seeds)
+            topology_changed(single)
+            single
           else
             self
           end
@@ -204,16 +246,21 @@ module Mongo
         private
 
         def initialize_replica_set(description, servers)
-          log_debug(
-            "Server #{description.address.to_s} discovered as primary in replica set: " +
-            "'#{description.replica_set_name}'. Changing topology to replica set."
-          )
           servers.each do |server|
             if server.standalone? && server.address != description.address
               server.description.unknown!
             end
           end
-          ReplicaSet.new(options.merge(:replica_set => description.replica_set_name))
+          replica_set = ReplicaSet.new(options.merge(:replica_set => description.replica_set_name), monitoring)
+          topology_changed(replica_set)
+          replica_set
+        end
+
+        def topology_changed(new_topology)
+          publish_sdam_event(
+            Monitoring::TOPOLOGY_CHANGED,
+            Monitoring::Event::TopologyChanged.new(self, new_topology)
+          )
         end
       end
     end

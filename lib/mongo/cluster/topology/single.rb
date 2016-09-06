@@ -20,14 +20,21 @@ module Mongo
       #
       # @since 2.0.0
       class Single
-
-        # @return [ String ] seed The seed address.
-        attr_reader :seed
+        include Monitoring::Publishable
 
         # The display name for the topology.
         #
         # @since 2.0.0
         NAME = 'Single'.freeze
+
+        # @return [ Hash ] options The options.
+        attr_reader :options
+
+        # @return [ String ] seed The seed address.
+        attr_reader :seed
+
+        # @return [ monitoring ] monitoring the monitoring.
+        attr_reader :monitoring
 
         # Get the display name.
         #
@@ -54,17 +61,56 @@ module Mongo
         # @return [ Single ] The topology.
         def elect_primary(description, servers); self; end
 
+        # Determine if the topology would select a readable server for the
+        # provided candidates and read preference.
+        #
+        # @example Is a readable server present?
+        #   topology.has_readable_server?(cluster, server_selector)
+        #
+        # @param [ Cluster ] cluster The cluster.
+        # @param [ ServerSelector ] server_selector The server
+        #   selector.
+        #
+        # @return [ true, false ] If a readable server is present.
+        #
+        # @since 2.3.0
+        def has_readable_server?(cluster, server_selector)
+          server_selector.candidates(cluster).any?
+        end
+
+        # Determine if the topology would select a writable server for the
+        # provided candidates.
+        #
+        # @example Is a writable server present?
+        #   topology.has_writable_server?(servers)
+        #
+        # @param [ Cluster ] cluster The cluster.
+        #
+        # @return [ true, false ] If a writable server is present.
+        #
+        # @since 2.3.0
+        def has_writable_server?(cluster)
+          cluster.servers.any?{ |server| server.primary? }
+        end
+
         # Initialize the topology with the options.
         #
         # @example Initialize the topology.
         #   Single.new(options)
         #
         # @param [ Hash ] options The options.
+        # @param [ Monitoring ] monitoring The monitoring.
+        # @param [ Array<String> ] seeds The seeds.
         #
         # @since 2.0.0
-        def initialize(options, seeds = [])
+        def initialize(options, monitoring, seeds = [])
           @options = options
+          @monitoring = monitoring
           @seed = seeds.first
+          publish_sdam_event(
+            Monitoring::TOPOLOGY_OPENING,
+            Monitoring::Event::TopologyOpening.new(self)
+          )
         end
 
         # A single topology is not a replica set.

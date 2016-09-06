@@ -33,7 +33,7 @@ module Mongo
         replica_set: ReplicaSet,
         sharded: Sharded,
         direct: Single
-      }
+      }.freeze
 
       # Get the initial cluster topology for the provided options.
       #
@@ -41,19 +41,21 @@ module Mongo
       #   Topology.initial(topology: :replica_set)
       #
       # @param [ Array<String> ] seeds The addresses of the configured servers.
+      # @param [ Monitoring ] monitoring The monitoring.
       # @param [ Hash ] options The cluster options.
       #
       # @return [ ReplicaSet, Sharded, Single ] The topology.
       #
       # @since 2.0.0
-      def initial(seeds, options)
-        if options.has_key?(:connect)
-          OPTIONS.fetch(options[:connect]).new(options, seeds)
+      def initial(seeds, monitoring, options)
+        topology = if options.has_key?(:connect)
+          OPTIONS.fetch(options[:connect]).new(options, monitoring, seeds)
         elsif options.has_key?(:replica_set)
-          ReplicaSet.new(options, seeds)
+          ReplicaSet.new(options, monitoring, options)
         else
-          Unknown.new(options, seeds)
+          Unknown.new(options, monitoring, seeds)
         end
+        topology
       end
     end
   end

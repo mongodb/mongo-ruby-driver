@@ -55,6 +55,14 @@ module Mongo
         end
       end
 
+      def publish_event(topic, event)
+        monitoring.succeeded(topic, event)
+      end
+
+      def publish_sdam_event(topic, event)
+        monitoring.succeeded(topic, event) if monitoring?
+      end
+
       private
 
       def command_started(address, operation_id, payload)
@@ -100,6 +108,10 @@ module Mongo
 
       def error?(document)
         document && (document['ok'] == 0 || document.key?('$err'))
+      end
+
+      def monitoring?
+        options[:monitoring] != false
       end
     end
   end

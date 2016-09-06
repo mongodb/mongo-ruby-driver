@@ -41,6 +41,26 @@ module Mongo
           tag_sets == other.tag_sets
       end
 
+      # Get the potential candidates to selecto from the cluster.
+      #
+      # @example Get the server candidates.
+      #   selectable.candidates(cluster)
+      #
+      # @param [ Cluster ] cluster The cluster.
+      #
+      # @return [ Array<Server> ] The candidate servers.
+      #
+      # @since 2.3.0
+      def candidates(cluster)
+        if cluster.single?
+          cluster.servers
+        elsif cluster.sharded?
+          near_servers(cluster.servers)
+        else
+          select(cluster.servers)
+        end
+      end
+
       # Initialize the server selector.
       #
       # @example Initialize the selector.
@@ -140,16 +160,6 @@ module Mongo
       end
 
       private
-
-      def candidates(cluster)
-        if cluster.single?
-          cluster.servers
-        elsif cluster.sharded?
-          near_servers(cluster.servers)
-        else
-          select(cluster.servers)
-        end
-      end
 
       # Select the primary from a list of provided candidates.
       #

@@ -1,4 +1,4 @@
-# Copyright (C) 2015 MongoDB, Inc.
+# Copyright (C) 2016 MongoDB, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the 'License');
 # you may not use this file except in compliance with the License.
@@ -12,13 +12,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/monitoring/event/secure'
-require 'mongo/monitoring/event/command_started'
-require 'mongo/monitoring/event/command_succeeded'
-require 'mongo/monitoring/event/command_failed'
-require 'mongo/monitoring/event/server_closed'
-require 'mongo/monitoring/event/server_description_changed'
-require 'mongo/monitoring/event/server_opening'
-require 'mongo/monitoring/event/topology_changed'
-require 'mongo/monitoring/event/topology_closed'
-require 'mongo/monitoring/event/topology_opening'
+module Mongo
+  class Monitoring
+
+    # Subscribes to Server Description Changed events and logs them.
+    #
+    # @since 2.3.0
+    class ServerDescriptionChangedLogSubscriber < SDAMLogSubscriber
+
+      private
+
+      def log_event(event)
+        log_debug(
+          "Server description for #{event.address} changed from " +
+          "'#{event.previous_description.server_type}' to '#{event.new_description.server_type}'."
+        )
+      end
+    end
+  end
+end

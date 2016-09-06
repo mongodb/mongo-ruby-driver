@@ -2,8 +2,12 @@ require 'spec_helper'
 
 describe Mongo::Cluster::Topology::Unknown do
 
+  let(:monitoring) do
+    Mongo::Monitoring.new(monitoring: false)
+  end
+
   let(:topology) do
-    described_class.new({})
+    described_class.new({}, monitoring)
   end
 
   describe '.servers' do
@@ -42,6 +46,20 @@ describe Mongo::Cluster::Topology::Unknown do
 
     it 'returns true' do
       expect(topology.unknown?).to be(true)
+    end
+  end
+
+  describe '#has_readable_servers?' do
+
+    it 'returns false' do
+      expect(topology).to_not have_readable_server(nil, nil)
+    end
+  end
+
+  describe '#has_writable_servers?' do
+
+    it 'returns false' do
+      expect(topology).to_not have_writable_server(nil)
     end
   end
 

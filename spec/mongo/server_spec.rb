@@ -2,8 +2,12 @@ require 'spec_helper'
 
 describe Mongo::Server do
 
+  let(:topology) do
+    double('topology')
+  end
+
   let(:cluster) do
-    double('cluster')
+    double('cluster', topology: topology)
   end
 
   let(:listeners) do
@@ -11,7 +15,7 @@ describe Mongo::Server do
   end
 
   let(:monitoring) do
-    Mongo::Monitoring.new
+    Mongo::Monitoring.new(monitoring: false)
   end
 
   let(:address) do

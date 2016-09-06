@@ -150,6 +150,9 @@ module Mongo
     # @since 2.0.0
     class Outcome
 
+      # @return [ Array ] events The expected events.
+      attr_reader :events
+
       # @return [ Hash ] servers The expecations for
       #   server states.
       attr_reader :servers
@@ -169,17 +172,47 @@ module Mongo
       #
       # @since 2.0.0
       def initialize(outcome)
-        @servers = process_servers(outcome['servers'])
+        @servers = process_servers(outcome['servers']) if outcome['servers']
         @set_name = outcome['setName']
         @topology_type = outcome['topologyType']
+        @events = process_events(outcome['events']) if outcome['events']
       end
 
       private
+
+      def process_events(events)
+        events.map do |event|
+          Event.new(event.keys.first, event.values.first)
+        end
+      end
 
       def process_servers(servers)
         servers.each do |s|
           SDAM::convert_election_ids([ s[1] ])
         end
+      end
+    end
+
+    class Event
+
+      MAPPINGS = {
+        'server_closed_event' => Mongo::Monitoring::Event::ServerClosed,
+        'server_description_changed_event' => Mongo::Monitoring::Event::ServerDescriptionChanged,
+        'server_opening_event' => Mongo::Monitoring::Event::ServerOpening,
+        'topology_description_changed_event' => Mongo::Monitoring::Event::TopologyChanged,
+        'topology_opening_event' => Mongo::Monitoring::Event::TopologyOpening
+      }
+
+      attr_reader :name
+      attr_reader :data
+
+      def initialize(name, data)
+        @name = name
+        @data = data
+      end
+
+      def expected
+        MAPPINGS.fetch(name)
       end
     end
   end

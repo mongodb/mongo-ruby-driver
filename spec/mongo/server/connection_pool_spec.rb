@@ -11,15 +11,19 @@ describe Mongo::Server::ConnectionPool do
   end
 
   let(:monitoring) do
-    Mongo::Monitoring.new
+    Mongo::Monitoring.new(monitoring: false)
   end
 
   let(:listeners) do
     Mongo::Event::Listeners.new
   end
 
+  let(:topology) do
+    double('topology')
+  end
+
   let(:cluster) do
-    double('cluster')
+    double('cluster', topology: topology)
   end
 
   describe '#checkin' do

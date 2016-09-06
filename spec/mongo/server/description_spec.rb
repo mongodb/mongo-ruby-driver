@@ -32,7 +32,15 @@ describe Mongo::Server::Description do
   end
 
   let(:monitoring) do
-    Mongo::Monitoring.new
+    Mongo::Monitoring.new(monitoring: false)
+  end
+
+  let(:topology) do
+    double('topology')
+  end
+
+  let(:cluster) do
+    double('cluster', topology: topology)
   end
 
   describe '#arbiter?' do
@@ -540,6 +548,90 @@ describe Mongo::Server::Description do
     end
   end
 
+  describe '#server_type' do
+
+    context 'when the server is an arbiter' do
+
+      let(:description) do
+        described_class.new(address, { 'arbiterOnly' => true, 'setName' => 'test' })
+      end
+
+      it 'returns :arbiter' do
+        expect(description.server_type).to eq(:arbiter)
+      end
+    end
+
+    context 'when the server is a ghost' do
+
+      let(:description) do
+        described_class.new(address, { 'isreplicaset' => true })
+      end
+
+      it 'returns :ghost' do
+        expect(description.server_type).to eq(:ghost)
+      end
+    end
+
+    context 'when the server is a mongos' do
+
+      let(:config) do
+        { 'msg' => 'isdbgrid', 'ismaster' => true }
+      end
+
+      let(:description) do
+        described_class.new(address, config)
+      end
+
+      it 'returns :sharded' do
+        expect(description.server_type).to eq(:sharded)
+      end
+    end
+
+    context 'when the server is a primary' do
+
+      let(:description) do
+        described_class.new(address, replica)
+      end
+
+      it 'returns :primary' do
+        expect(description.server_type).to eq(:primary)
+      end
+    end
+
+    context 'when the server is a secondary' do
+
+      let(:description) do
+        described_class.new(address, { 'secondary' => true, 'setName' => 'test' })
+      end
+
+      it 'returns :secondary' do
+        expect(description.server_type).to eq(:secondary)
+      end
+    end
+
+    context 'when the server is standalone' do
+
+      let(:description) do
+        described_class.new(address, { 'ismaster' => true, 'ok' => 1 })
+      end
+
+      it 'returns :standalone' do
+        expect(description.server_type).to eq(:standalone)
+      end
+    end
+
+    context 'when the description has no configuration' do
+
+      let(:description) do
+        described_class.new(address)
+      end
+
+      it 'returns :unknown' do
+        expect(description.server_type).to eq(:unknown)
+      end
+    end
+  end
+
   describe '#unknown?' do
 
     context 'when the description has no configuration' do
@@ -587,7 +679,7 @@ describe Mongo::Server::Description do
     end
 
     let(:server) do
-      Mongo::Server.new(address, double('cluster'), monitoring, listeners)
+      Mongo::Server.new(address, cluster, monitoring, listeners)
     end
 
     let(:description) do
@@ -608,7 +700,7 @@ describe Mongo::Server::Description do
       end
 
       let(:server) do
-        Mongo::Server.new(other_address, double('cluster'), monitoring, listeners)
+        Mongo::Server.new(other_address, cluster, monitoring, listeners)
       end
 
       it 'returns false' do
@@ -674,7 +766,7 @@ describe Mongo::Server::Description do
     end
 
     let(:server) do
-      Mongo::Server.new(server_address, double('cluster'), monitoring, listeners)
+      Mongo::Server.new(server_address, cluster, monitoring, listeners)
     end
 
     context 'when the server is included in the description hosts list' do

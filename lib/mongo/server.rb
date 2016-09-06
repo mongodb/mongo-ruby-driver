@@ -27,6 +27,7 @@ module Mongo
   # @since 2.0.0
   class Server
     extend Forwardable
+    include Monitoring::Publishable
 
     # @return [ String ] The configured address for the server.
     attr_reader :address
@@ -158,6 +159,10 @@ module Mongo
       @cluster = cluster
       @monitoring = monitoring
       @options = options.freeze
+      publish_sdam_event(
+        Monitoring::SERVER_OPENING,
+        Monitoring::Event::ServerOpening.new(address, cluster.topology)
+      )
       @monitor = Monitor.new(address, event_listeners, options)
       monitor.scan!
       monitor.run!

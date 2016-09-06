@@ -11,25 +11,29 @@ describe Mongo::Cluster::Topology::ReplicaSet do
   end
 
   let(:monitoring) do
-    Mongo::Monitoring.new
+    Mongo::Monitoring.new(monitoring: false)
+  end
+
+  let(:cluster) do
+    double('cluster', topology: topology)
   end
 
   describe '#servers' do
 
     let(:mongos) do
-      Mongo::Server.new(address, double('cluster'), monitoring, listeners, TEST_OPTIONS)
+      Mongo::Server.new(address, cluster, monitoring, listeners, TEST_OPTIONS)
     end
 
     let(:standalone) do
-      Mongo::Server.new(address, double('cluster'), monitoring, listeners, TEST_OPTIONS)
+      Mongo::Server.new(address, cluster, monitoring, listeners, TEST_OPTIONS)
     end
 
     let(:replica_set) do
-      Mongo::Server.new(address, double('cluster'), monitoring, listeners, TEST_OPTIONS)
+      Mongo::Server.new(address, cluster, monitoring, listeners, TEST_OPTIONS)
     end
 
     let(:replica_set_two) do
-      Mongo::Server.new(address, double('cluster'), monitoring, listeners, TEST_OPTIONS)
+      Mongo::Server.new(address, cluster, monitoring, listeners, TEST_OPTIONS)
     end
 
     let(:mongos_description) do
@@ -58,7 +62,7 @@ describe Mongo::Cluster::Topology::ReplicaSet do
     context 'when no replica set name is provided' do
 
       let(:topology) do
-        described_class.new({})
+        described_class.new({}, monitoring, [])
       end
 
       let(:servers) do
@@ -73,7 +77,7 @@ describe Mongo::Cluster::Topology::ReplicaSet do
     context 'when a replica set name is provided' do
 
       let(:topology) do
-        described_class.new(:replica_set => 'testing')
+        described_class.new({ :replica_set => 'testing' }, monitoring)
       end
 
       let(:servers) do
@@ -89,32 +93,215 @@ describe Mongo::Cluster::Topology::ReplicaSet do
   describe '.replica_set?' do
 
     it 'returns true' do
-      expect(described_class.new({})).to be_replica_set
+      expect(described_class.new({}, monitoring)).to be_replica_set
     end
   end
 
   describe '.sharded?' do
 
     it 'returns false' do
-      expect(described_class.new({})).to_not be_sharded
+      expect(described_class.new({}, monitoring)).to_not be_sharded
     end
   end
 
   describe '.single?' do
 
     it 'returns false' do
-      expect(described_class.new({})).to_not be_single
+      expect(described_class.new({}, monitoring)).to_not be_single
+    end
+  end
+
+  describe '#has_readable_servers?' do
+
+    let(:topology) do
+      described_class.new({}, monitoring, [])
+    end
+
+    let(:cluster) do
+      double('cluster', servers: servers, single?: false, sharded?: false)
+    end
+
+    context 'when the read preference is primary' do
+
+      let(:selector) do
+        Mongo::ServerSelector.get(:mode => :primary)
+      end
+
+      context 'when a primary exists' do
+
+        let(:servers) do
+          [ double('server', primary?: true) ]
+        end
+
+        it 'returns true' do
+          expect(topology).to have_readable_server(cluster, selector)
+        end
+      end
+
+      context 'when a primary does not exist' do
+
+        let(:servers) do
+          [ double('server', primary?: false) ]
+        end
+
+        it 'returns false' do
+          expect(topology).to_not have_readable_server(cluster, selector)
+        end
+      end
+    end
+
+    context 'when the read preference is primary preferred' do
+
+      let(:selector) do
+        Mongo::ServerSelector.get(:mode => :primary_preferred)
+      end
+
+      context 'when a primary exists' do
+
+        let(:servers) do
+          [ double('server', primary?: true) ]
+        end
+
+        it 'returns true' do
+          expect(topology).to have_readable_server(cluster, selector)
+        end
+      end
+
+      context 'when a primary does not exist' do
+
+        let(:servers) do
+          [ double('server', primary?: false, secondary?: true, average_round_trip_time: 0.01) ]
+        end
+
+        it 'returns true' do
+          expect(topology).to have_readable_server(cluster, selector)
+        end
+      end
+    end
+
+    context 'when the read preference is secondary' do
+
+      let(:selector) do
+        Mongo::ServerSelector.get(:mode => :secondary)
+      end
+
+      context 'when a secondary exists' do
+
+        let(:servers) do
+          [ double('server', secondary?: true, average_round_trip_time: 0.01) ]
+        end
+
+        it 'returns true' do
+          expect(topology).to have_readable_server(cluster, selector)
+        end
+      end
+
+      context 'when a secondary does not exist' do
+
+        let(:servers) do
+          [ double('server', secondary?: false) ]
+        end
+
+        it 'returns false' do
+          expect(topology).to_not have_readable_server(cluster, selector)
+        end
+      end
+    end
+
+    context 'when the read preference is secondary preferred' do
+
+      let(:selector) do
+        Mongo::ServerSelector.get(:mode => :secondary_preferred)
+      end
+
+      context 'when a secondary exists' do
+
+        let(:servers) do
+          [ double('server', primary?: false, secondary?: true, average_round_trip_time: 0.01) ]
+        end
+
+        it 'returns true' do
+          expect(topology).to have_readable_server(cluster, selector)
+        end
+      end
+
+      context 'when a secondary does not exist' do
+
+        let(:servers) do
+          [ double('server', secondary?: false, primary?: true) ]
+        end
+
+        it 'returns true' do
+          expect(topology).to have_readable_server(cluster, selector)
+        end
+      end
+    end
+
+    context 'when the read preference is nearest' do
+
+      let(:selector) do
+        Mongo::ServerSelector.get(:mode => :nearest)
+      end
+
+      let(:servers) do
+        [ double('server', primary?: false, secondary?: true, average_round_trip_time: 0.01) ]
+      end
+
+      it 'returns true' do
+        expect(topology).to have_readable_server(cluster, selector)
+      end
+    end
+  end
+
+  describe '#has_writable_servers?' do
+
+    let(:topology) do
+      described_class.new({}, monitoring, [])
+    end
+
+    context 'when a primary server exists' do
+
+      let(:primary) do
+        double('server', :primary? => true)
+      end
+
+      let(:secondary) do
+        double('server', :primary? => false)
+      end
+
+      let(:cluster) do
+        double('cluster', servers: [ primary, secondary ])
+      end
+
+      it 'returns true' do
+        expect(topology).to have_writable_server(cluster)
+      end
+    end
+
+    context 'when no primary server exists' do
+
+      let(:server) do
+        double('server', :primary? => false)
+      end
+
+      let(:cluster) do
+        double('cluster', servers: [ server ])
+      end
+
+      it 'returns false' do
+        expect(topology).to_not have_writable_server(cluster)
+      end
     end
   end
 
   describe '#add_hosts?' do
 
     let(:primary) do
-      Mongo::Server.new(address, double('cluster'), monitoring, listeners, TEST_OPTIONS)
+      Mongo::Server.new(address, cluster, monitoring, listeners, TEST_OPTIONS)
     end
 
     let(:secondary) do
-      Mongo::Server.new(address, double('cluster'), monitoring, listeners, TEST_OPTIONS)
+      Mongo::Server.new(address, cluster, monitoring, listeners, TEST_OPTIONS)
     end
 
     let(:primary_description) do
@@ -127,7 +314,7 @@ describe Mongo::Cluster::Topology::ReplicaSet do
     end
 
     let(:topology) do
-      described_class.new(:replica_set => 'testing')
+      described_class.new({ :replica_set => 'testing' }, monitoring)
     end
 
     before do
@@ -193,7 +380,7 @@ describe Mongo::Cluster::Topology::ReplicaSet do
   describe '#remove_hosts?' do
 
     let(:primary) do
-      Mongo::Server.new(address, double('cluster'), monitoring, listeners, TEST_OPTIONS)
+      Mongo::Server.new(address, cluster, monitoring, listeners, TEST_OPTIONS)
     end
 
     let(:primary_description) do
@@ -201,7 +388,7 @@ describe Mongo::Cluster::Topology::ReplicaSet do
     end
 
     let(:topology) do
-      described_class.new(:replica_set => 'testing')
+      described_class.new({ :replica_set => 'testing' }, monitoring)
     end
 
     before do
@@ -274,7 +461,7 @@ describe Mongo::Cluster::Topology::ReplicaSet do
   describe '#remove_server?' do
 
     let(:secondary) do
-      Mongo::Server.new(address, double('cluster'), monitoring, listeners, TEST_OPTIONS)
+      Mongo::Server.new(address, cluster, monitoring, listeners, TEST_OPTIONS)
     end
 
     let(:secondary_description) do
@@ -283,7 +470,7 @@ describe Mongo::Cluster::Topology::ReplicaSet do
     end
 
     let(:topology) do
-      described_class.new(:replica_set => 'testing')
+      described_class.new({ :replica_set => 'testing' }, monitoring)
     end
 
     before do
