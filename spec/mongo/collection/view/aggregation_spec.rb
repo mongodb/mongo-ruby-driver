@@ -30,11 +30,6 @@ describe Mongo::Collection::View::Aggregation do
     authorized_collection.delete_many
   end
 
-  shared_examples_for 'an aggregation supporting collation' do
-
-
-  end
-
   describe '#allow_disk_use' do
 
     let(:new_agg) do
@@ -208,7 +203,7 @@ describe Mongo::Collection::View::Aggregation do
       expect(aggregation.explain).to_not be_empty
     end
 
-    context 'when a collation defined is specified' do
+    context 'when a collation is specified' do
 
       before do
         authorized_collection.insert_many([ { name: 'bang' }, { name: 'bang' }])
