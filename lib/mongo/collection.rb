@@ -171,11 +171,13 @@ module Mongo
     def create
       operation = { :create => name }.merge(options)
       operation.delete(:write)
+      server = next_primary
+      raise Error::UnsupportedCollation.new if options[:collation] && !server.features.collation_enabled?
       Operation::Commands::Create.new({
                                         selector: operation,
                                         db_name: database.name,
                                         write_concern: write_concern
-                                      }).execute(next_primary)
+                                      }).execute(server)
     end
 
     # Drop the collection. Will also drop all indexes associated with the

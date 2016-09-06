@@ -468,16 +468,28 @@ describe Mongo::Collection do
             collection.drop
           end
 
-          it 'executes the command' do
-            expect(response).to be_successful
+          context 'when the server supports collations', if: collation_enabled? do
+
+            it 'executes the command' do
+              expect(response).to be_successful
+            end
+
+            it 'sets the collection with a collation' do
+              expect(collection_info['options']['collation']['locale']).to eq('fr')
+            end
+
+            it 'creates the collection in the database' do
+              expect(database.collection_names).to include('specs')
+            end
           end
 
-          it 'sets the collection with a collation' do
-            expect(collection_info['options']['collation']['locale']).to eq('fr')
-          end
+          context 'when the server does not support collations', unless: collation_enabled? do
 
-          it 'creates the collection in the database' do
-            expect(database.collection_names).to include('specs')
+            it 'raises an error' do
+              expect {
+                response
+              }.to raise_exception(Mongo::Error::UnsupportedCollation)
+            end
           end
         end
 
@@ -552,6 +564,10 @@ describe Mongo::Collection do
 
       let(:collection_with_write_options) do
         collection.with(write_options)
+      end
+
+      after do
+        collection.drop
       end
 
       context 'when the server supports write concern on the drop command', if: collation_enabled? do
