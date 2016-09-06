@@ -1537,12 +1537,8 @@ describe Mongo::BulkWrite do
 
     context 'when the bulk write is unordered' do
 
-      let(:collection) do
-        authorized_collection
-      end
-
       let(:bulk_write) do
-        described_class.new(collection, requests, ordered: false)
+        described_class.new(authorized_collection, requests, ordered: false)
       end
 
       let(:bulk_write_invalid_write_concern) do
@@ -1554,12 +1550,8 @@ describe Mongo::BulkWrite do
 
     context 'when the bulk write is ordered' do
 
-      let(:collection) do
-        authorized_collection
-      end
-
       let(:bulk_write) do
-        described_class.new(collection, requests, ordered: true)
+        described_class.new(authorized_collection, requests, ordered: true)
       end
 
       let(:bulk_write_invalid_write_concern) do
