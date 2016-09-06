@@ -16,6 +16,10 @@ describe Mongo::Index::View do
       view.create_one(spec, unique: true)
     end
 
+    after do
+      begin; view.drop_one('another_-1'); rescue; end
+    end
+
     context 'when the index exists' do
 
       let(:result) do
@@ -684,7 +688,7 @@ describe Mongo::Index::View do
           :'2dsphereIndexVersion' => 1,
           :storageEngine => 'wiredtiger',
           :textIndexVersion => 2,
-          :v => 1,
+          :v => 1
         }
       end
 
