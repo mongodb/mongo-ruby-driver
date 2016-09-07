@@ -65,7 +65,7 @@ describe Mongo::Server::Connection do
     context 'when no socket exists' do
 
       let(:connection) do
-        described_class.new(server)
+        described_class.new(server, server.options)
       end
 
       let!(:result) do
@@ -92,7 +92,7 @@ describe Mongo::Server::Connection do
     context 'when a socket exists' do
 
       let(:connection) do
-        described_class.new(server)
+        described_class.new(server, server.options)
       end
 
       before do
@@ -169,7 +169,7 @@ describe Mongo::Server::Connection do
     context 'when a socket is not connected' do
 
       let(:connection) do
-        described_class.new(server)
+        described_class.new(server, server.options)
       end
 
       it 'does not raise an error' do
@@ -180,7 +180,7 @@ describe Mongo::Server::Connection do
     context 'when a socket is connected' do
 
       let(:connection) do
-        described_class.new(server)
+        described_class.new(server, server.options)
       end
 
       before do
@@ -437,7 +437,7 @@ describe Mongo::Server::Connection do
     context 'when host and port are provided' do
 
       let(:connection) do
-        described_class.new(server)
+        described_class.new(server, server.options)
       end
 
       it 'sets the address' do
@@ -541,7 +541,7 @@ describe Mongo::Server::Connection do
   describe '#auth_mechanism' do
 
     let(:connection) do
-      described_class.new(server)
+      described_class.new(server, server.options)
     end
 
     let(:reply) do
