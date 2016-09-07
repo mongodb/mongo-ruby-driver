@@ -23,6 +23,16 @@ module Mongo
     class AppMetadata
       extend Forwardable
 
+      # The max application metadata document size.
+      #
+      # @since 2.4.0
+      MAX_DOCUMENT_SIZE = 512
+
+      # The max application name length.
+      #
+      # @ since 2.4.0
+      MAX_APP_NAME_SIZE = 128
+
       # Instantiate the new AppMetadata object.
       #
       # @api private
@@ -48,24 +58,28 @@ module Mongo
       #
       # @since 2.4.0
       def ismaster_bytes
-        @ismaster_bytes ||= validate! && serialized_ismaster.to_s
+        @ismaster_bytes ||= validate! && serialized_ismaster
       end
 
       private
 
       def validate!
-        if serialized_ismaster.length > 512 || (@app_name && @app_name.length > 128)
+        if serialized_ismaster.length > MAX_DOCUMENT_SIZE || (@app_name && @app_name.length > MAX_APP_NAME_SIZE)
           raise Error::InvalidHandshakeDocument.new(@app_name)
         end
         true
       end
 
       def document
-        @document ||= { ismaster: 1 }.tap do |metadata|
-          metadata[:application] = { name: @app_name } if @app_name
-          metadata[:driver] = driver_doc
-          metadata[:os] = os_doc
-          metadata[:platform] = RUBY_PLATFORM
+        @document ||= { ismaster: 1 }.merge!(client_document)
+      end
+
+      def client_document
+        @client_document ||= {}.tap do |doc|
+          doc[:application] = { name: @app_name } if @app_name
+          doc[:driver] = driver_doc
+          doc[:os] = os_doc
+          doc[:platform] = platform
         end.freeze
       end
 
@@ -73,12 +87,12 @@ module Mongo
         @serialized_ismaster ||= Protocol::Query.new(Database::ADMIN,
                                                      Database::COMMAND,
                                                      document,
-                                                     :limit => -1).serialize.freeze
+                                                     :limit => -1).serialize.to_s
       end
 
       def driver_doc
         {
-          name: 'mongo-ruby-driver',
+          name: :'mongo-ruby-driver',
           version: Mongo::VERSION
         }
       end
@@ -93,19 +107,8 @@ module Mongo
       end
 
       def type
-        case RUBY_PLATFORM
-          when /darwin|mac/i
-            :macosx
-          when /mingw|windows/i
-            require 'rbconfig'
-            RbConfig::CONFIG['host_os'].split('_').first[/[a-z]+/i].downcase.to_sym
-          when /linux/i
-            :linux
-          when /sunos|solaris/i
-            :solaris
-          when /bsd/i
-            :bsd
-        end
+        (RbConfig::CONFIG && RbConfig::CONFIG['host_os']) ?
+          RbConfig::CONFIG['host_os'].split('_').first[/[a-z]+/i].downcase.to_sym : :unknown
       end
 
       def name
@@ -113,11 +116,15 @@ module Mongo
       end
 
       def architecture
-        ''
+        RbConfig::CONFIG["target_cpu"]
       end
 
       def version
         ''
+      end
+
+      def platform
+        [RUBY_VERSION, RUBY_PLATFORM, RbConfig::CONFIG["build"]].join(', ')
       end
     end
   end
