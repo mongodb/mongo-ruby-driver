@@ -31,16 +31,21 @@ module Mongo
         #
         # @since 2.0.0
         def find_one_and_delete
-          validate_collation!(next_primary, options)
-
-          cmd = { :findandmodify => collection.name, :query => filter, :remove => true }
-          cmd[:collation] = options[:collation] if options[:collation]
+          cmd = {:findandmodify => collection.name, :query => filter, :remove => true}
           cmd[:fields] = projection if projection
           cmd[:sort] = sort if sort
           cmd[:maxTimeMS] = max_time_ms if max_time_ms
           cmd[:writeConcern] = write_concern.options if write_concern
+
+          server = next_primary
+          validate_collation!(server, options)
+          cmd[:collation] = options[:collation] if options[:collation]
+
           write_with_retry do
-            database.command(cmd).first['value']
+            Operation::Commands::Command.new({
+                                              :selector => cmd,
+                                              :db_name => database.name
+                                             }).execute(server).first['value']
           end
         end
 
@@ -88,10 +93,7 @@ module Mongo
         #
         # @since 2.0.0
         def find_one_and_update(document, opts = {})
-          validate_collation!(next_primary, options)
-
           cmd = { :findandmodify => collection.name, :query => filter }
-          cmd[:collation] = options[:collation] if options[:collation]
           cmd[:update] = document
           cmd[:fields] = projection if projection
           cmd[:sort] = sort if sort
@@ -100,8 +102,16 @@ module Mongo
           cmd[:maxTimeMS] = max_time_ms if max_time_ms
           cmd[:bypassDocumentValidation] = !!opts[:bypass_document_validation]
           cmd[:writeConcern] = write_concern.options if write_concern
+
+          server = next_primary
+          validate_collation!(server, options)
+          cmd[:collation] = options[:collation] if options[:collation]
+          
           value = write_with_retry do
-            database.command(cmd).first['value']
+            Operation::Commands::Command.new({
+                                              :selector => cmd,
+                                              :db_name => database.name
+                                             }).execute(server).first['value']
           end
           value unless value.nil? || value.empty?
         end
