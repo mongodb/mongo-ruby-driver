@@ -96,8 +96,9 @@ module Mongo
                             :limit => -1).serialize(BSON::ByteBuffer.new,
                                                     MAX_DOCUMENT_SIZE + ISMASTER_KEY_VALUE_SIZE)
       rescue Mongo::Error::MaxBSONSize
-        if client_document[:os]
-          client_document.delete(:os)
+        if client_document[:os][:name] || client_document[:os][:architecture]
+          client_document[:os].delete(:name)
+          client_document[:os].delete(:architecture)
           retry
         elsif client_document[:platform]
           client_document.delete(:platform)
