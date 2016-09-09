@@ -209,8 +209,8 @@ module Mongo
 
         def remove(value, opts)
           server = next_primary
-          delete_doc = { Operation::Q => filter, Operation::LIMIT => value }
           validate_collation!(server, opts)
+          delete_doc = { Operation::Q => filter, Operation::LIMIT => value }
           delete_doc[:collation] = opts[:collation] if opts[:collation]
           write_with_retry do
             Operation::Write::Delete.new(

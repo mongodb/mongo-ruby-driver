@@ -31,7 +31,7 @@ module Mongo
       #
       # @return [ String ] A message describing that collations cannot be used when write concern is unacknowledged.
       UNACKNOWLEDGED_WRITES_MESSAGE = "A collation cannot be specified when using unacknowledged writes. " +
-        "Either remove the collation option or use acknowledged writes (w > 0)."
+        "Either remove the collation option or use acknowledged writes (w >= 1)."
 
       # Create the new exception.
       #
