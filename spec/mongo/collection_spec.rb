@@ -4,17 +4,14 @@ describe Mongo::Collection do
 
   after do
     authorized_collection.delete_many
-    collection_with_validator.drop()
   end
 
   let(:collection_invalid_write_concern) do
     authorized_collection.client.with(write: { w: (WRITE_CONCERN[:w] + 1) })[authorized_collection.name]
   end
+
   let(:collection_with_validator) do
-    authorized_client[:validating,
-                      :validator => { :a => { '$exists' => true } }].tap do |c|
-      c.create
-    end
+    authorized_client[:validating]
   end
 
   describe '#==' do
@@ -561,10 +558,6 @@ describe Mongo::Collection do
         authorized_collection.insert_many([{ field: 'test1' }, { field: 'test2' }])
       end
 
-      after do
-        authorized_collection.delete_many
-      end
-
       let(:view) do
         authorized_collection.find
       end
@@ -605,10 +598,6 @@ describe Mongo::Collection do
 
           before do
             authorized_collection.insert_one({ field => value })
-          end
-
-          after do
-            authorized_collection.delete_many
           end
 
           it 'iterates over the documents' do
@@ -757,11 +746,6 @@ describe Mongo::Collection do
 
   describe '#insert_many' do
 
-    after do
-      authorized_collection.delete_many
-      collection_with_validator.delete_many
-    end
-
     let(:result) do
       authorized_collection.insert_many([{ name: 'test1' }, { name: 'test2' }])
     end
@@ -846,6 +830,15 @@ describe Mongo::Collection do
 
     context 'when collection has a validator', if: find_command_enabled? do
 
+      around(:each) do |spec|
+        authorized_client[:validating,
+                          :validator => { :a => { '$exists' => true } }].tap do |c|
+          c.create
+        end
+        spec.run
+        collection_with_validator.drop
+      end
+
       context 'when the document is valid' do
 
         let(:result) do
@@ -888,11 +881,6 @@ describe Mongo::Collection do
   end
 
   describe '#insert_one' do
-
-    after do
-      authorized_collection.delete_many
-      collection_with_validator.delete_many
-    end
 
     let(:result) do
       authorized_collection.insert_one({ name: 'testing' })
@@ -969,6 +957,15 @@ describe Mongo::Collection do
     end
 
     context 'when collection has a validator', if: find_command_enabled? do
+
+      around(:each) do |spec|
+        authorized_client[:validating,
+                          :validator => { :a => { '$exists' => true } }].tap do |c|
+          c.create
+        end
+        spec.run
+        collection_with_validator.drop
+      end
 
       context 'when the document is valid' do
 
@@ -1084,10 +1081,6 @@ describe Mongo::Collection do
       authorized_collection.insert_many(documents)
     end
 
-    after do
-      authorized_collection.delete_many
-    end
-
     it 'returns an integer count' do
       expect(authorized_collection.count).to eq(10)
     end
@@ -1108,10 +1101,6 @@ describe Mongo::Collection do
 
     before do
       authorized_collection.insert_many(documents)
-    end
-
-    after do
-      authorized_collection.delete_many
     end
 
     it 'returns the distinct values' do
@@ -1147,10 +1136,6 @@ describe Mongo::Collection do
                                               { field: 'test1' },
                                               { field: 'test1' }
                                           ])
-      end
-
-      after do
-        authorized_collection.delete_many
       end
 
       let(:response) do
@@ -1195,10 +1180,6 @@ describe Mongo::Collection do
 
     before do
       authorized_collection.insert_many([{ field: 'test1' }, { field: 'test2' }])
-    end
-
-    after do
-      authorized_collection.delete_many
     end
 
     context 'when a selector was provided' do
@@ -1372,10 +1353,6 @@ describe Mongo::Collection do
         authorized_collection.insert_many([{ field: 'test1' }, { field: 'test1' }])
       end
 
-      after do
-        authorized_collection.delete_many
-      end
-
       let!(:response) do
         authorized_collection.replace_one(selector, { field: 'testing' })
       end
@@ -1422,10 +1399,6 @@ describe Mongo::Collection do
         authorized_collection.find(field: 'test1').first
       end
 
-      after do
-        authorized_collection.delete_many
-      end
-
       it 'reports that a document was written' do
         expect(response.written_count).to eq(1)
       end
@@ -1469,12 +1442,17 @@ describe Mongo::Collection do
 
     context 'when collection has a validator', if: find_command_enabled? do
 
-      before do
-        collection_with_validator.insert_one({ a: 1 })
+      around(:each) do |spec|
+        authorized_client[:validating,
+                          :validator => { :a => { '$exists' => true } }].tap do |c|
+          c.create
+        end
+        spec.run
+        collection_with_validator.drop
       end
 
-      after do
-        collection_with_validator.delete_many
+      before do
+        collection_with_validator.insert_one({ a: 1 })
       end
 
       context 'when the document is valid' do
@@ -1522,10 +1500,6 @@ describe Mongo::Collection do
 
     let(:selector) do
       { field: 'test' }
-    end
-
-    after do
-      authorized_collection.delete_many
     end
 
     context 'when a selector was provided' do
@@ -1625,12 +1599,17 @@ describe Mongo::Collection do
 
     context 'when collection has a validator', if: find_command_enabled? do
 
-      before do
-        collection_with_validator.insert_many([{ a: 1 }, { a: 2 }])
+      around(:each) do |spec|
+        authorized_client[:validating,
+                          :validator => { :a => { '$exists' => true } }].tap do |c|
+          c.create
+        end
+        spec.run
+        collection_with_validator.drop
       end
 
-      after do
-        collection_with_validator.delete_many
+      before do
+        collection_with_validator.insert_many([{ a: 1 }, { a: 2 }])
       end
 
       context 'when the document is valid' do
@@ -1780,12 +1759,17 @@ describe Mongo::Collection do
 
     context 'when collection has a validator', if: find_command_enabled? do
 
-      before do
-        collection_with_validator.insert_one({ a: 1 })
+      around(:each) do |spec|
+        authorized_client[:validating,
+                          :validator => { :a => { '$exists' => true } }].tap do |c|
+          c.create
+        end
+        spec.run
+        collection_with_validator.drop
       end
 
-      after do
-        collection_with_validator.delete_many
+      before do
+        collection_with_validator.insert_one({ a: 1 })
       end
 
       context 'when the document is valid' do
@@ -2108,12 +2092,17 @@ describe Mongo::Collection do
 
     context 'when collection has a validator', if: find_command_enabled? do
 
-      before do
-        collection_with_validator.insert_one({ a: 1 })
+      around(:each) do |spec|
+        authorized_client[:validating,
+                          :validator => { :a => { '$exists' => true } }].tap do |c|
+          c.create
+        end
+        spec.run
+        collection_with_validator.drop
       end
 
-      after do
-        collection_with_validator.delete_many
+      before do
+        collection_with_validator.insert_one({ a: 1 })
       end
 
       context 'when the document is valid' do
@@ -2316,12 +2305,17 @@ describe Mongo::Collection do
 
     context 'when collection has a validator', if: find_command_enabled? do
 
-      before do
-        collection_with_validator.insert_one({ a: 1 })
+      around(:each) do |spec|
+        authorized_client[:validating,
+                          :validator => { :a => { '$exists' => true } }].tap do |c|
+          c.create
+        end
+        spec.run
+        collection_with_validator.drop
       end
 
-      after do
-        collection_with_validator.delete_many
+      before do
+        collection_with_validator.insert_one({ a: 1 })
       end
 
       context 'when the document is valid' do
