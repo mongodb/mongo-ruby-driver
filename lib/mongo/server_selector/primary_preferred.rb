@@ -89,6 +89,10 @@ module Mongo
         primary = primary(candidates)
         primary.first ? primary : near_servers(secondaries(candidates))
       end
+
+      def max_staleness_allowed?
+        true
+      end
     end
   end
 end

@@ -83,11 +83,16 @@ module Mongo
       #
       # @since 2.0.0
       def select(candidates)
+        candidates = filter_stale_servers(candidates)
         if tag_sets.empty?
           near_servers(candidates)
         else
           near_servers(match_tag_sets(candidates))
         end
+      end
+
+      def max_staleness_allowed?
+        true
       end
     end
   end

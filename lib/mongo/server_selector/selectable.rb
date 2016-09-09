@@ -26,6 +26,12 @@ module Mongo
       # @return [ Array ] tag_sets The tag sets used to select servers.
       attr_reader :tag_sets
 
+      # @return [ Integer ] max_staleness The maximum replication lag, in milliseconds, that a
+      #   secondary can suffer and still be eligible.
+      #
+      # @since 2.4.0
+      attr_reader :max_staleness
+
       # Check equality of two server selector.
       #
       # @example Check server selector equality.
@@ -60,9 +66,9 @@ module Mongo
       # @since 2.0.0
       def initialize(options = {})
         @options = (options || {}).freeze
-        tag_sets = options[:tag_sets] || []
-        validate_tag_sets!(tag_sets)
-        @tag_sets = tag_sets.freeze
+        @tag_sets = (options[:tag_sets] || []).freeze
+        @max_staleness = options[:max_staleness] if options[:max_staleness] && options[:max_staleness] > 0
+        validate!
       end
 
       # Inspect the server selector.
@@ -175,6 +181,7 @@ module Mongo
       # @since 2.0.0
       def secondaries(candidates)
         matching_servers = candidates.select(&:secondary?)
+        matching_servers = filter_stale_servers(primary(candidates).first, matching_servers)
         matching_servers = match_tag_sets(matching_servers) unless tag_sets.empty?
         matching_servers
       end
@@ -212,8 +219,27 @@ module Mongo
         matches || []
       end
 
-      def validate_tag_sets!(tag_sets)
-        if !tag_sets.all? { |set| set.empty? } && !tags_allowed?
+      def filter_stale_servers(primary, candidates)
+        candidates.select do |server|
+          true unless @max_staleness
+          # raise exception if @max_staleness and !server.features.collation_enabled?
+          if primary
+            staleness = primary.last_write_date +
+                        (server.last_scan - primary.last_scan) -
+                        server.last_write_date +
+                        server.heartbeat_frequency
+          else
+            max_write_date = candidates.max(&:last_write_date)
+            staleness = max_write_date - server.last_write_date + server.heartbeat_frequency
+          end
+          staleness <= @max_staleness
+        end
+      end
+
+      def validate!
+        if !@tag_sets.all? { |set| set.empty? } && !tags_allowed?
+          raise Error::InvalidServerPreference.new(name)
+        elsif @max_staleness && !max_staleness_allowed?
           raise Error::InvalidServerPreference.new(name)
         end
       end
