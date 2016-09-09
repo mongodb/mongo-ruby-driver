@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require 'rbconfig'
 
 module Mongo
   class Cluster
@@ -27,6 +28,11 @@ module Mongo
       #
       # @since 2.4.0
       MAX_DOCUMENT_SIZE = 512
+
+      # The size of the { ismaster: 1 } key-value pair.
+      #
+      # @since 2.4.0
+      ISMASTER_KEY_VALUE_SIZE = 19
 
       # The max application name length.
       #
@@ -58,20 +64,20 @@ module Mongo
       #
       # @since 2.4.0
       def ismaster_bytes
-        @ismaster_bytes ||= validate! && serialized_ismaster
+        @ismaster_bytes ||= validate! && serialize.to_s
       end
 
       private
 
       def validate!
-        if serialized_ismaster.length > MAX_DOCUMENT_SIZE || (@app_name && @app_name.length > MAX_APP_NAME_SIZE)
-          raise Error::InvalidHandshakeDocument.new(@app_name)
+        if @app_name && @app_name.length > MAX_APP_NAME_SIZE
+          raise Error::InvalidApplicationName.new(@app_name)
         end
         true
       end
 
       def document
-        @document ||= { ismaster: 1 }.merge!(client_document)
+        @document ||= Server::Monitor::Connection::ISMASTER.merge(client: client_document)
       end
 
       def client_document
@@ -80,14 +86,25 @@ module Mongo
           doc[:driver] = driver_doc
           doc[:os] = os_doc
           doc[:platform] = platform
-        end.freeze
+        end
       end
 
-      def serialized_ismaster
-        @serialized_ismaster ||= Protocol::Query.new(Database::ADMIN,
-                                                     Database::COMMAND,
-                                                     document,
-                                                     :limit => -1).serialize.to_s
+      def serialize
+        Protocol::Query.new(Database::ADMIN,
+                            Database::COMMAND,
+                            document,
+                            :limit => -1).serialize(BSON::ByteBuffer.new,
+                                                    MAX_DOCUMENT_SIZE + ISMASTER_KEY_VALUE_SIZE)
+      rescue Mongo::Error::MaxBSONSize
+        if client_document[:os]
+          client_document.delete(:os)
+          retry
+        elsif client_document[:platform]
+          client_document.delete(:platform)
+          retry
+        else
+          Server::Monitor::Connection::ISMASTER_BYTES
+        end
       end
 
       def driver_doc
@@ -101,8 +118,7 @@ module Mongo
         {
           type: type,
           name: name,
-          architecture: architecture,
-          version: version
+          architecture: architecture
         }
       end
 
@@ -112,19 +128,15 @@ module Mongo
       end
 
       def name
-        ''
+        RbConfig::CONFIG['host_os']
       end
 
       def architecture
-        RbConfig::CONFIG["target_cpu"]
-      end
-
-      def version
-        ''
+        RbConfig::CONFIG['target_cpu']
       end
 
       def platform
-        [RUBY_VERSION, RUBY_PLATFORM, RbConfig::CONFIG["build"]].join(', ')
+        [RUBY_VERSION, RUBY_PLATFORM, RbConfig::CONFIG['build']].join(', ')
       end
     end
   end

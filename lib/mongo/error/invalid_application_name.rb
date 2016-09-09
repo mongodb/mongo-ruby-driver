@@ -19,19 +19,18 @@ module Mongo
     #   at the time of a connection handshake is invalid.
     #
     # @since 2.4.0
-    class InvalidHandshakeDocument < Error
+    class InvalidApplicationName < Error
 
       # Instantiate the new exception.
       #
       # @example Create the exception.
-      #   InvalidHandshakeDocument.new(app_name)
+      #   InvalidApplicationName.new(app_name)
       #
       # @param [ String ] app_name The application name option.
       #
       # @since 2.4.0
       def initialize(app_name)
-        super("The provided application name '#{app_name}' cannot exceed 128 bytes " +
-                "and the entire metadata document cannot exceed 512 bytes.")
+        super("The provided application name '#{app_name}' cannot exceed 128 bytes.")
       end
     end
   end
