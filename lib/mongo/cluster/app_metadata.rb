@@ -27,17 +27,17 @@ module Mongo
       # The max application metadata document size.
       #
       # @since 2.4.0
-      MAX_DOCUMENT_SIZE = 512
+      MAX_DOCUMENT_SIZE = 512.freeze
 
       # The size of the { ismaster: 1 } key-value pair.
       #
       # @since 2.4.0
-      ISMASTER_KEY_VALUE_SIZE = 19
+      ISMASTER_KEY_VALUE_SIZE = 19.freeze
 
       # The max application name length.
       #
       # @ since 2.4.0
-      MAX_APP_NAME_SIZE = 128
+      MAX_APP_NAME_SIZE = 128.freeze
 
       # Instantiate the new AppMetadata object.
       #
