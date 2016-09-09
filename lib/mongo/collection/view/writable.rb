@@ -86,7 +86,7 @@ module Mongo
         # @option opts [ true, false ] :upsert Whether to upsert if the document doesn't exist.
         # @option opts [ true, false ] :bypass_document_validation Whether or
         #   not to skip document level validation.
-        # @option options [ Hash ] :write_concern The write concern options.
+        # @option opts [ Hash ] :write_concern The write concern options.
         #   Defaults to the collection's write concern.
         #
         # @return [ BSON::Document ] The document.
@@ -121,9 +121,9 @@ module Mongo
         # @example Remove multiple documents from the collection.
         #   collection_view.delete_many
         #
-        # @param [ Hash ] options The options.
+        # @param [ Hash ] opts The options.
         #
-        # @option options [ Hash ] :collation The collation to use.
+        # @option opts [ Hash ] :collation The collation to use.
         #
         # @return [ Result ] The response from the database.
         #
@@ -137,9 +137,9 @@ module Mongo
         # @example Remove a single document from the collection.
         #   collection_view.delete_one
         #
-        # @param [ Hash ] options The options.
+        # @param [ Hash ] opts The options.
         #
-        # @option options [ Hash ] :collation The collation to use.
+        # @option opts [ Hash ] :collation The collation to use.
         #
         # @return [ Result ] The response from the database.
         #
@@ -158,7 +158,7 @@ module Mongo
         #
         # @option opts [ true, false ] :upsert Whether to upsert if the
         #   document doesn't exist.
-        # @option options [ Hash ] :collation The collation to use.
+        # @option opts [ Hash ] :collation The collation to use.
         #
         # @return [ Result ] The response from the database.
         #
@@ -177,7 +177,7 @@ module Mongo
         #
         # @option opts [ true, false ] :upsert Whether to upsert if the
         #   document doesn't exist.
-        # @option options [ Hash ] :collation The collation to use.
+        # @option opts [ Hash ] :collation The collation to use.
         #
         # @return [ Result ] The response from the database.
         #
@@ -196,7 +196,7 @@ module Mongo
         #
         # @option opts [ true, false ] :upsert Whether to upsert if the
         #   document doesn't exist.
-        # @option options [ Hash ] :collation The collation to use.
+        # @option opts [ Hash ] :collation The collation to use.
         #
         # @return [ Result ] The response from the database.
         #
