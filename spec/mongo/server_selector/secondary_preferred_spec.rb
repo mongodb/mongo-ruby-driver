@@ -34,6 +34,32 @@ describe Mongo::ServerSelector::SecondaryPreferred do
         expect(selector.to_mongos).to be_nil
       end
     end
+
+    context 'max staleness not provided' do
+
+      let(:expected) do
+        { :mode => 'secondaryPreferred' }
+      end
+
+      it 'returns nil' do
+        expect(selector.to_mongos).to be_nil
+      end
+    end
+
+    context 'max staleness provided' do
+
+      let(:max_staleness) do
+        60
+      end
+
+      let(:expected) do
+        { :mode => 'secondaryPreferred', maxStalenessMS: 60000 }
+      end
+
+      it 'returns a read preference formatted for mongos' do
+        expect(selector.to_mongos).to eq(expected)
+      end
+    end
   end
 
   describe '#select' do

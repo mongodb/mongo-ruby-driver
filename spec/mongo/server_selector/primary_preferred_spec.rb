@@ -31,6 +31,32 @@ describe Mongo::ServerSelector::PrimaryPreferred do
         )
       end
     end
+
+    context 'max staleness not provided' do
+
+      let(:expected) do
+        { :mode => 'primaryPreferred' }
+      end
+
+      it 'returns a read preference formatted for mongos' do
+        expect(selector.to_mongos).to eq(expected)
+      end
+    end
+
+    context 'max staleness provided' do
+
+      let(:max_staleness) do
+        60
+      end
+
+      let(:expected) do
+        { :mode => 'primaryPreferred', maxStalenessMS: 60000 }
+      end
+
+      it 'returns a read preference formatted for mongos' do
+        expect(selector.to_mongos).to eq(expected)
+      end
+    end
   end
 
   describe '#select' do

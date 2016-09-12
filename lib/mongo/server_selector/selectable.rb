@@ -26,7 +26,7 @@ module Mongo
       # @return [ Array ] tag_sets The tag sets used to select servers.
       attr_reader :tag_sets
 
-      # @return [ Integer ] max_staleness The maximum replication lag, in milliseconds, that a
+      # @return [ Float ] max_staleness The maximum replication lag, in seconds, that a
       #   secondary can suffer and still be eligible.
       #
       # @since 2.4.0

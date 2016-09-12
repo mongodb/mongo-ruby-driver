@@ -39,6 +39,26 @@ describe Mongo::ServerSelector::Primary do
     it 'returns nil' do
       expect(selector.to_mongos).to be_nil
     end
+
+    context 'max staleness not provided' do
+
+      it 'returns a read preference formatted for mongos' do
+        expect(selector.to_mongos).to be_nil
+      end
+    end
+
+    context 'max staleness provided' do
+
+      let(:max_staleness) do
+        60
+      end
+
+      it 'raises an error' do
+        expect {
+          selector
+        }.to raise_exception(Mongo::Error::InvalidServerPreference)
+      end
+    end
   end
 
   describe '#select' do
