@@ -94,6 +94,7 @@ module Mongo
       #
       # @since 2.0.0
       def select_server(cluster, ping = true)
+        # @todo: raise error if cluster.heartbeat_frequency < @maxstaleness * 2
         @local_threshold = cluster.options[:local_threshold] || LOCAL_THRESHOLD
         @server_selection_timeout = cluster.options[:server_selection_timeout] || SERVER_SELECTION_TIMEOUT
         deadline = Time.now + server_selection_timeout
@@ -220,19 +221,23 @@ module Mongo
       end
 
       def filter_stale_servers(primary, candidates)
-        candidates.select do |server|
-          true unless @max_staleness
-          # raise exception if @max_staleness and !server.features.collation_enabled?
-          if primary
-            staleness = primary.last_write_date +
-                        (server.last_scan - primary.last_scan) -
-                        server.last_write_date +
+        return candidates unless @max_staleness
+
+        if primary
+          candidates.select do |server|
+            # @todo raise error if !server.features.collation_enabled?
+            staleness = (server.last_scan - server.last_write_date) -
+                        (primary.last_scan - primary.last_write_date)  +
                         server.heartbeat_frequency
-          else
-            max_write_date = candidates.max(&:last_write_date)
-            staleness = max_write_date - server.last_write_date + server.heartbeat_frequency
+            staleness <= @max_staleness
           end
-          staleness <= @max_staleness
+        else
+          max_write_date = candidates.max(&:last_write_date) unless primary
+          candidates.select do |server|
+            # @todo raise error if !server.features.collation_enabled?
+            staleness = max_write_date - server.last_write_date + server.heartbeat_frequency
+            staleness <= @max_staleness
+          end
         end
       end
 
