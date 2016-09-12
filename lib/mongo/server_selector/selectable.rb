@@ -251,7 +251,9 @@ module Mongo
       end
 
       def validate_max_staleness_support!(server)
-        raise Error::InvalidServerPreference.new(Error::InvalidServerPreference::NO_MAX_STALENESS_WITH_LEGACY_SERVER) if !server.features.collation_enabled?
+        if @max_staleness && !server.features.collation_enabled?
+          raise Error::InvalidServerPreference.new(Error::InvalidServerPreference::NO_MAX_STALENESS_WITH_LEGACY_SERVER)
+        end
       end
     end
   end
