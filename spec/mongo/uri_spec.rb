@@ -538,6 +538,25 @@ describe Mongo::URI do
       end
     end
 
+    context 'read preference max staleness option provided' do
+
+      let(:options) do
+        'readPreference=Secondary&maxStalenessMS=30000'
+      end
+
+      let(:read) do
+        Mongo::Options::Redacted.new(mode: :secondary, :max_staleness => 30)
+      end
+
+      it 'sets the read preference max staleness in seconds' do
+        expect(uri.uri_options[:read]).to eq(read)
+      end
+
+      it 'sets the options on a client created with the uri' do
+        expect(Mongo::Client.new(string).options[:read]).to eq(read)
+      end
+    end
+
     context 'replica set option provided' do
       let(:rs_name) { TEST_SET }
       let(:options) { "replicaSet=#{rs_name}" }
