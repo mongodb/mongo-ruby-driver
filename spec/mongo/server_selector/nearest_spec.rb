@@ -13,6 +13,20 @@ describe Mongo::ServerSelector::Nearest do
   it_behaves_like 'a server selector accepting tag sets'
   it_behaves_like 'a server selector with sensitive data in its options'
 
+  describe '#initialize' do
+
+    context 'when max_staleness is provided' do
+
+      let(:options) do
+        { max_staleness: 60 }
+      end
+
+      it 'sets the max_staleness option' do
+        expect(selector.max_staleness).to eq(options[:max_staleness])
+      end
+    end
+  end
+
   describe '#to_mongos' do
 
     context 'tag set not provided' do
