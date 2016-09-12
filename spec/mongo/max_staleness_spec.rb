@@ -88,15 +88,13 @@ describe 'Max Staleness Spec' do
         allow(cluster).to receive(:scan!).and_return(true)
       end
 
-      context 'Valid read preference and matching server available' do
+      context 'Valid read preference and matching server available', unless: spec.invalid_max_staleness? do
 
         it 'Finds all suitable servers in the latency window', if: spec.replica_set? do
-          skip if spec.invalid_max_staleness?
           expect(server_selector.send(:select, cluster.servers)).to eq(in_latency_window)
         end
 
         it 'Finds the most suitable server in the latency window' do
-          skip if spec.invalid_max_staleness?
           expect(in_latency_window).to include(server_selector.select_server(cluster))
         end
       end
