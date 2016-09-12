@@ -83,7 +83,7 @@ module Mongo
       #
       # @since 2.0.0
       def select(candidates)
-        candidates = filter_stale_servers(primary(candidates), candidates)
+        candidates = filter_stale_servers(candidates, primary(candidates).first)
         if tag_sets.empty?
           near_servers(candidates)
         else

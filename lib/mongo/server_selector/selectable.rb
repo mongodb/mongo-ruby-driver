@@ -94,7 +94,6 @@ module Mongo
       #
       # @since 2.0.0
       def select_server(cluster, ping = true)
-        # @todo: raise error if cluster.heartbeat_frequency < @maxstaleness * 2
         @local_threshold = cluster.options[:local_threshold] || LOCAL_THRESHOLD
         @server_selection_timeout = cluster.options[:server_selection_timeout] || SERVER_SELECTION_TIMEOUT
         deadline = Time.now + server_selection_timeout
@@ -150,9 +149,9 @@ module Mongo
 
       def candidates(cluster)
         if cluster.single?
-          cluster.servers
+          cluster.servers.each { |server| validate_max_staleness_support!(server) }
         elsif cluster.sharded?
-          near_servers(cluster.servers)
+          near_servers(cluster.servers).each { |server| validate_max_staleness_support!(server) }
         else
           select(cluster.servers)
         end
@@ -182,7 +181,7 @@ module Mongo
       # @since 2.0.0
       def secondaries(candidates)
         matching_servers = candidates.select(&:secondary?)
-        matching_servers = filter_stale_servers(primary(candidates).first, matching_servers)
+        matching_servers = filter_stale_servers(matching_servers, primary(candidates).first)
         matching_servers = match_tag_sets(matching_servers) unless tag_sets.empty?
         matching_servers
       end
@@ -220,21 +219,23 @@ module Mongo
         matches || []
       end
 
-      def filter_stale_servers(primary, candidates)
+      def filter_stale_servers(candidates, primary = nil)
         return candidates unless @max_staleness
 
         if primary
           candidates.select do |server|
-            # @todo raise error if !server.features.collation_enabled?
+            validate_max_staleness_support!(server)
+            raise Error::InvalidServerPreference.new(Error::InvalidServerPreference::INVALID_MAX_STALENESS) if @max_staleness < server.heartbeat_frequency * 2
             staleness = (server.last_scan - server.last_write_date) -
                         (primary.last_scan - primary.last_write_date)  +
                         server.heartbeat_frequency
             staleness <= @max_staleness
           end
         else
-          max_write_date = candidates.max(&:last_write_date) unless primary
+          max_write_date = candidates.collect(&:last_write_date).max
           candidates.select do |server|
-            # @todo raise error if !server.features.collation_enabled?
+            validate_max_staleness_support!(server)
+            raise Error::InvalidServerPreference.new(Error::InvalidServerPreference::INVALID_MAX_STALENESS) if @max_staleness < server.heartbeat_frequency * 2
             staleness = max_write_date - server.last_write_date + server.heartbeat_frequency
             staleness <= @max_staleness
           end
@@ -243,10 +244,14 @@ module Mongo
 
       def validate!
         if !@tag_sets.all? { |set| set.empty? } && !tags_allowed?
-          raise Error::InvalidServerPreference.new(name)
+          raise Error::InvalidServerPreference.new(Error::InvalidServerPreference::NO_TAG_SUPPORT)
         elsif @max_staleness && !max_staleness_allowed?
-          raise Error::InvalidServerPreference.new(name)
+          raise Error::InvalidServerPreference.new(Error::InvalidServerPreference::NO_MAX_STALENESS_SUPPORT)
         end
+      end
+
+      def validate_max_staleness_support!(server)
+        raise Error::InvalidServerPreference.new(Error::InvalidServerPreference::NO_MAX_STALENESS_WITH_LEGACY_SERVER) if !server.features.collation_enabled?
       end
     end
   end

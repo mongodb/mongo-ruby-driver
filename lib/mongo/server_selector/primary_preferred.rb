@@ -87,7 +87,8 @@ module Mongo
       # @since 2.0.0
       def select(candidates)
         primary = primary(candidates)
-        primary.first ? primary : near_servers(secondaries(candidates))
+        secondaries = near_servers(secondaries(candidates))
+        primary.first ? primary : secondaries
       end
 
       def max_staleness_allowed?
