@@ -44,6 +44,11 @@ module Mongo
         # @since 2.4.0
         attr_reader :heartbeat_frequency
 
+        # @return [ Integer ] max_staleness The max_staleness.
+        #
+        # @since 2.4.0
+        attr_reader :max_staleness
+
         # @return [ Array<Hash> ] candidate_servers The candidate servers.
         #
         # @since 2.0.0
@@ -82,6 +87,7 @@ module Mongo
           @heartbeat_frequency = @test['heartbeatFrequencyMS']
           @read_preference = @test['read_preference']
           @read_preference['mode'] = READ_PREFERENCES[@read_preference['mode']]
+          @max_staleness = @read_preference['maxStalenessMS']
           @candidate_servers = @test['topology_description']['servers']
           @suitable_servers = @test['suitable_servers']
           @in_latency_window = @test['in_latency_window']

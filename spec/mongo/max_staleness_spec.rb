@@ -53,8 +53,8 @@ describe 'Max Staleness Spec' do
             allow(s).to receive(:secondary?).and_return(server['type'] == 'RSSecondary')
             allow(s).to receive(:primary?).and_return(server['type'] == 'RSPrimary')
             allow(s).to receive(:connectable?).and_return(true)
-            allow(s).to receive(:last_write_date).and_return(server['lastWrite']['lastWriteDate']['$numberLong'].to_i)
-            allow(s).to receive(:last_scan).and_return(server['lastUpdateTime'])
+            allow(s).to receive(:last_write_date).and_return(server['lastWrite']['lastWriteDate']['$numberLong'].to_i * 1000)
+            allow(s).to receive(:last_scan).and_return(server['lastUpdateTime'] * 1000)
             allow(s).to receive(:features).and_return(features)
           end
         end
@@ -74,7 +74,7 @@ describe 'Max Staleness Spec' do
       let(:server_selector_definition) do
         { mode: spec.read_preference['mode'] }.tap do |definition|
           definition[:tag_sets] = spec.read_preference['tag_sets']
-          definition[:max_staleness] = spec.read_preference['maxStalenessMS'] if spec.read_preference['maxStalenessMS']
+          definition[:max_staleness] = spec.max_staleness if spec.max_staleness
         end
       end
 

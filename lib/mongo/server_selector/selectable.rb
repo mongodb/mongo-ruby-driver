@@ -222,21 +222,22 @@ module Mongo
 
       def filter_stale_servers(candidates, primary = nil)
         return candidates unless @max_staleness
+        max_staleness_ms = @max_staleness * 1000
 
         if primary
           candidates.select do |server|
             validate_max_staleness_support!(server)
             staleness = (server.last_scan - server.last_write_date) -
                         (primary.last_scan - primary.last_write_date)  +
-                        server.heartbeat_frequency
-            staleness <= @max_staleness
+                        (server.heartbeat_frequency * 1000)
+            staleness <= max_staleness_ms
           end
         else
           max_write_date = candidates.collect(&:last_write_date).max
           candidates.select do |server|
             validate_max_staleness_support!(server)
-            staleness = max_write_date - server.last_write_date + server.heartbeat_frequency
-            staleness <= @max_staleness
+            staleness = max_write_date - server.last_write_date + (server.heartbeat_frequency * 1000)
+            staleness <= max_staleness_ms
           end
         end
       end
