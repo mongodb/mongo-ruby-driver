@@ -9,7 +9,9 @@ Bulk Operations
    :backlinks: none
    :depth: 1
    :class: singlecol
-   
+
+.. _ruby-driver-bulk-ops:
+
 The bulk write API sends a list of write operations to the server in
 one method call. Execution order of the operations is guaranteed if
 you pass in the ``ordered`` option.
