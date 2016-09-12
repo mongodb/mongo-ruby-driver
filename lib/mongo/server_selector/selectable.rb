@@ -153,6 +153,7 @@ module Mongo
         elsif cluster.sharded?
           near_servers(cluster.servers).each { |server| validate_max_staleness_support!(server) }
         else
+          validate_max_staleness_value!(cluster)
           select(cluster.servers)
         end
       end
@@ -225,7 +226,6 @@ module Mongo
         if primary
           candidates.select do |server|
             validate_max_staleness_support!(server)
-            raise Error::InvalidServerPreference.new(Error::InvalidServerPreference::INVALID_MAX_STALENESS) if @max_staleness < server.heartbeat_frequency * 2
             staleness = (server.last_scan - server.last_write_date) -
                         (primary.last_scan - primary.last_write_date)  +
                         server.heartbeat_frequency
@@ -235,7 +235,6 @@ module Mongo
           max_write_date = candidates.collect(&:last_write_date).max
           candidates.select do |server|
             validate_max_staleness_support!(server)
-            raise Error::InvalidServerPreference.new(Error::InvalidServerPreference::INVALID_MAX_STALENESS) if @max_staleness < server.heartbeat_frequency * 2
             staleness = max_write_date - server.last_write_date + server.heartbeat_frequency
             staleness <= @max_staleness
           end
@@ -251,8 +250,17 @@ module Mongo
       end
 
       def validate_max_staleness_support!(server)
+        return unless @max_staleness
         if @max_staleness && !server.features.collation_enabled?
           raise Error::InvalidServerPreference.new(Error::InvalidServerPreference::NO_MAX_STALENESS_WITH_LEGACY_SERVER)
+        end
+      end
+
+      def validate_max_staleness_value!(cluster)
+        return unless @max_staleness
+        heartbeat_frequency = cluster.options[:heartbeat_frequency] || Server::Monitor::HEARTBEAT_FREQUENCY
+        if @max_staleness < heartbeat_frequency * 2
+          raise Error::InvalidServerPreference.new(Error::InvalidServerPreference::INVALID_MAX_STALENESS)
         end
       end
     end
