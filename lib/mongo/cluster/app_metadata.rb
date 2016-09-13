@@ -20,6 +20,8 @@ module Mongo
     # Application metadata that is sent to the server in an ismaster command,
     #   when a new connection is established.
     #
+    # @api private
+    #
     # @since 2.4.0
     class AppMetadata
       extend Forwardable
