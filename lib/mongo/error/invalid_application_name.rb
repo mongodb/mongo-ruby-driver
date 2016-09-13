@@ -27,10 +27,11 @@ module Mongo
       #   InvalidApplicationName.new(app_name)
       #
       # @param [ String ] app_name The application name option.
+      # @param [ Integer ] max_size The max byte size of the application name.
       #
       # @since 2.4.0
-      def initialize(app_name)
-        super("The provided application name '#{app_name}' cannot exceed 128 bytes.")
+      def initialize(app_name, max_size)
+        super("The provided application name '#{app_name}' cannot exceed #{max_size} bytes.")
       end
     end
   end

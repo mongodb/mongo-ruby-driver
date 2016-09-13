@@ -29,11 +29,6 @@ module Mongo
       # @since 2.4.0
       MAX_DOCUMENT_SIZE = 512.freeze
 
-      # The size of the { ismaster: 1 } key-value pair.
-      #
-      # @since 2.4.0
-      ISMASTER_KEY_VALUE_SIZE = 19.freeze
-
       # The max application name length.
       #
       # @ since 2.4.0
@@ -71,7 +66,7 @@ module Mongo
 
       def validate!
         if @app_name && @app_name.bytesize > MAX_APP_NAME_SIZE
-          raise Error::InvalidApplicationName.new(@app_name)
+          raise Error::InvalidApplicationName.new(@app_name, MAX_APP_NAME_SIZE)
         end
         true
       end
