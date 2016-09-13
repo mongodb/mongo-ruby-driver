@@ -54,7 +54,7 @@ describe Mongo::ServerSelector::SecondaryPreferred do
         described_class.new(other_options)
       end
 
-      it 'returns true' do
+      it 'returns false' do
         expect(selector).not_to eq(other)
       end
     end
