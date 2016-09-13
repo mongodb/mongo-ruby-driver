@@ -268,7 +268,7 @@ describe Mongo::Client do
         end
 
         it 'sets the heartbeat frequency' do
-          expect(client.cluster.next_primary.heartbeat_frequency).to eq(2)
+          expect(client.cluster.options[:heartbeat_frequency]).to eq(client.options[:heartbeat_frequency])
         end
       end
     end
