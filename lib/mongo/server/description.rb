@@ -379,7 +379,7 @@ module Mongo
       #
       # @since 2.4.0
       def last_write_date
-        config[LAST_WRITE][LAST_WRITE_DATE]
+        config[LAST_WRITE][LAST_WRITE_DATE] if config[LAST_WRITE]
       end
 
       # Is the server a mongos?
