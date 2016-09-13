@@ -25,7 +25,7 @@ describe Mongo::Cluster::AppMetadata do
       context 'when the app name exceeds the max length of 128' do
 
         let(:cluster) do
-          authorized_client.with(app_name: 'x'*129).cluster
+          authorized_client.with(app_name: "\u3042"*43).cluster
         end
 
         it 'raises an error' do

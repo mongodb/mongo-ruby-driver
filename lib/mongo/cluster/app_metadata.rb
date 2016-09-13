@@ -70,7 +70,7 @@ module Mongo
       private
 
       def validate!
-        if @app_name && @app_name.length > MAX_APP_NAME_SIZE
+        if @app_name && @app_name.bytesize > MAX_APP_NAME_SIZE
           raise Error::InvalidApplicationName.new(@app_name)
         end
         true
