@@ -19,7 +19,7 @@ describe Mongo::Cluster::AppMetadata do
       end
 
       it 'sets the app name' do
-        expect(app_metadata.send(:client_document)[:application][:name]).to eq(:reports)
+        expect(app_metadata.send(:full_client_document)[:application][:name]).to eq(:reports)
       end
 
       context 'when the app name exceeds the max length of 128' do
@@ -39,7 +39,7 @@ describe Mongo::Cluster::AppMetadata do
     context 'when the cluster does not have an app name option set' do
 
       it 'does not set the app name' do
-        expect(app_metadata.send(:client_document)[:application]).to be(nil)
+        expect(app_metadata.send(:full_client_document)[:application]).to be(nil)
       end
     end
 
@@ -89,14 +89,14 @@ describe Mongo::Cluster::AppMetadata do
         end
       end
 
-      context 'when the driver info too long' do
+      context 'when the driver info is too long' do
 
         before do
           allow(app_metadata).to receive(:driver_doc).and_return('x'*500)
         end
 
         it 'truncates the document to be just an ismaster command' do
-          expect(app_metadata.send(:ismaster_bytes)).to eq(Mongo::Server::Monitor::Connection::ISMASTER_BYTES)
+          expect(app_metadata.ismaster_bytes.length).to eq(Mongo::Server::Monitor::Connection::ISMASTER_BYTES.length)
         end
       end
     end

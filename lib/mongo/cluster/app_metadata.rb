@@ -76,12 +76,8 @@ module Mongo
         true
       end
 
-      def document
-        @document ||= Server::Monitor::Connection::ISMASTER.merge(client: client_document)
-      end
-
-      def client_document
-        @client_document ||= {}.tap do |doc|
+      def full_client_document
+        BSON::Document.new.tap do |doc|
           doc[:application] = { name: @app_name } if @app_name
           doc[:driver] = driver_doc
           doc[:os] = os_doc
@@ -90,22 +86,20 @@ module Mongo
       end
 
       def serialize
-        Protocol::Query.new(Database::ADMIN,
-                            Database::COMMAND,
-                            document,
-                            :limit => -1).serialize(BSON::ByteBuffer.new,
-                                                    MAX_DOCUMENT_SIZE + ISMASTER_KEY_VALUE_SIZE)
-      rescue Mongo::Error::MaxBSONSize
-        if client_document[:os][:name] || client_document[:os][:architecture]
-          client_document[:os].delete(:name)
-          client_document[:os].delete(:architecture)
-          retry
-        elsif client_document[:platform]
-          client_document.delete(:platform)
-          retry
-        else
-          Server::Monitor::Connection::ISMASTER_BYTES
+        client_document = full_client_document
+        while client_document.to_bson.to_s.size > MAX_DOCUMENT_SIZE do
+          if client_document[:os][:name] || client_document[:os][:architecture]
+            client_document[:os].delete(:name)
+            client_document[:os].delete(:architecture)
+          elsif client_document[:platform]
+            client_document.delete(:platform)
+          else
+            client_document = nil
+          end
         end
+        document = Server::Monitor::Connection::ISMASTER
+        document = document.merge(client: client_document) if client_document
+        Protocol::Query.new(Database::ADMIN, Database::COMMAND, document, :limit => -1).serialize
       end
 
       def driver_doc
