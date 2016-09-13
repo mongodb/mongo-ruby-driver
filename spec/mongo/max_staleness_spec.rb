@@ -29,7 +29,7 @@ describe 'Max Staleness Spec' do
           copy = TEST_OPTIONS.dup
           copy.delete(:heartbeat_frequency)
           copy
-        end
+        end.merge!(server_selection_timeout: 0.2)
       end
 
       let(:cluster) do
@@ -38,13 +38,16 @@ describe 'Max Staleness Spec' do
           allow(c).to receive(:single?).and_return(topology.single?)
           allow(c).to receive(:sharded?).and_return(topology.sharded?)
           allow(c).to receive(:replica_set?).and_return(topology.replica_set?)
+          allow(c).to receive(:servers).and_return(candidate_servers)
+          allow(c).to receive(:options).and_return(options.merge(server_selection_timeout: 0.2))
+          allow(c).to receive(:scan!).and_return(true)
         end
       end
 
       let(:candidate_servers) do
         spec.candidate_servers.collect do |server|
           features = double('features').tap do |feat|
-            allow(feat).to receive(:collation_enabled?).and_return(server['maxWireVersion'] >= 5)
+            allow(feat).to receive(:max_staleness_enabled?).and_return(server['maxWireVersion'] >= 5)
           end
           address = Mongo::Address.new(server['address'])
           Mongo::Server.new(address, double('cluster'), monitoring, listeners, options).tap do |s|
@@ -62,12 +65,7 @@ describe 'Max Staleness Spec' do
 
       let(:in_latency_window) do
         spec.in_latency_window.collect do |server|
-          address = Mongo::Address.new(server['address'])
-          Mongo::Server.new(address, double('cluster'), monitoring, listeners, options).tap do |s|
-            allow(s).to receive(:average_round_trip_time).and_return(server['avg_rtt_ms'])
-            allow(s).to receive(:tags).and_return(server['tags'])
-            allow(s).to receive(:connectable?).and_return(true)
-          end
+          Mongo::Server.new(Mongo::Address.new(server['address']), double('cluster'), monitoring, listeners)
         end
       end
 
@@ -80,12 +78,6 @@ describe 'Max Staleness Spec' do
 
       let(:server_selector) do
         Mongo::ServerSelector.get(server_selector_definition)
-      end
-
-      before do
-        allow(cluster).to receive(:servers).and_return(candidate_servers)
-        allow(cluster).to receive(:options).and_return(server_selection_timeout: 0.2)
-        allow(cluster).to receive(:scan!).and_return(true)
       end
 
       context 'Valid read preference and matching server available', unless: spec.invalid_max_staleness? do
