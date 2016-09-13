@@ -47,7 +47,8 @@ module Mongo
                         :return_document => 'returnDocument',
                         :upsert => 'upsert',
                         :ordered => 'ordered',
-                        :write_concern => 'writeConcern'
+                        :write_concern => 'writeConcern',
+                        :collation => 'collation'
                        }
 
         # Operations that need a check if results on < 2.6 will match.
@@ -113,6 +114,26 @@ module Mongo
           REQUIRES_2_6.include?(name) && upsert
         end
 
+        # Whether this operation requires a certain server version to be run.
+        #
+        # @example Determine whether this operation requires a certain server feature.
+        #   operation.feature_enabled?(collection)
+        #
+        # @param [ Collection ] collection The collection the operation
+        #   should be executed on.
+        #
+        # @return [ true, false ] Whether this operation requires a certain server version.
+        #
+        # @since 2.4.0
+        def feature_enabled?(collection)
+          if collation
+            return $mongo_client.cluster.servers.first.features.collation_enabled?
+          elsif requires_2_6?(collection)
+            return $mongo_client.cluster.servers.first.features.write_command_enabled?
+          end
+          true
+        end
+
         private
 
         def bulk_write(collection)
@@ -120,12 +141,12 @@ module Mongo
         end
 
         def delete_many(collection)
-          result = collection.delete_many(filter)
+          result = collection.delete_many(filter, options)
           { 'deletedCount' => result.deleted_count }
         end
 
         def delete_one(collection)
-          result = collection.delete_one(filter)
+          result = collection.delete_one(filter, options)
           { 'deletedCount' => result.deleted_count }
         end
 
@@ -176,6 +197,10 @@ module Mongo
           ARGUMENT_MAP.reduce({}) do |opts, (key, value)|
             arguments.key?(value) ? opts.merge!(key => send(key)) : opts
           end
+        end
+
+        def collation
+          arguments['collation']
         end
 
         def replacement

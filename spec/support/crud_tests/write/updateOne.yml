@@ -2,6 +2,7 @@ data:
     - {_id: 1, x: 11}
     - {_id: 2, x: 22}
     - {_id: 3, x: 33}
+    - {_id: 4, x: 'ping'}
 
 tests:
     -
@@ -9,9 +10,9 @@ tests:
         operation:
             name: "updateOne"
             arguments:
-                filter: 
+                filter:
                     _id: {$gt: 1}
-                update: 
+                update:
                     $inc: {x: 1}
 
         outcome:
@@ -26,7 +27,7 @@ tests:
             name: "updateOne"
             arguments:
                 filter: {_id: 1}
-                update: 
+                update:
                     $inc: {x: 1}
 
         outcome:
@@ -38,12 +39,34 @@ tests:
                     - {_id: 1, x: 12}
                     - {_id: 2, x: 22}
                     - {_id: 3, x: 33}
+                    - {_id: 4, x: 'ping'}
+    -
+        description: "UpdateOne when one document matches with collation"
+        operation:
+            name: "updateOne"
+            arguments:
+                filter: {x: 'PING'}
+                update:
+                    $set: {x: 'pong'}
+                collation: { locale: 'en_US', strength: 2}
+
+        outcome:
+            result:
+                matchedCount: 1
+                modifiedCount: 1
+            collection:
+                data:
+                    - {_id: 1, x: 11}
+                    - {_id: 2, x: 22}
+                    - {_id: 3, x: 33}
+                    - {_id: 4, x: 'pong'}
+
     -
         description: "UpdateOne when no documents match"
         operation:
             name: "updateOne"
             arguments:
-                filter: {_id: 4}
+                filter: {_id: 5}
                 update: 
                     $inc: {x: 1}
 
@@ -56,12 +79,13 @@ tests:
                     - {_id: 1, x: 11}
                     - {_id: 2, x: 22}
                     - {_id: 3, x: 33}
+                    - {_id: 4, x: 'ping'}
     -
         description: "UpdateOne with upsert when no documents match"
         operation:
             name: "updateOne"
             arguments:
-                filter: {_id: 4}
+                filter: {_id: 5}
                 update: 
                     $inc: {x: 1}
                 upsert: true
@@ -70,11 +94,12 @@ tests:
             result:
                 matchedCount: 0
                 modifiedCount: 0
-                upsertedId: 4
+                upsertedId: 5
             collection:
                 data:
                     - {_id: 1, x: 11}
                     - {_id: 2, x: 22}
                     - {_id: 3, x: 33}
-                    - {_id: 4, x: 1}
+                    - {_id: 4, x: 'ping'}
+                    - {_id: 5, x: 1}
   

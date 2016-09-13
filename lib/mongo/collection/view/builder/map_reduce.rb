@@ -32,7 +32,8 @@ module Mongo
             out: 'out',
             scope: 'scope',
             verbose: 'verbose',
-            bypass_document_validation: 'bypassDocumentValidation'
+            bypass_document_validation: 'bypassDocumentValidation',
+            collation: 'collation'
           ).freeze
 
           def_delegators :@view, :collection, :database, :filter, :read, :write_concern
@@ -135,8 +136,8 @@ module Mongo
               :out => { inline: 1 }
             )
             command[:readConcern] = collection.read_concern if collection.read_concern
-            command.merge!(Options::Mapper.transform_documents(options, MAPPINGS))
             command.merge!(view.options)
+            command.merge!(Options::Mapper.transform_documents(options, MAPPINGS))
             command
           end
 

@@ -141,6 +141,11 @@ module Mongo
       # @since 2.2.0
       BYPASS_DOC_VALIDATION = :bypass_document_validation.freeze
 
+      # A collation to apply to the operation.
+      #
+      # @since 2.4.0
+      COLLATION = :collation.freeze
+
       # @return [ Hash ] spec The specification for the operation.
       attr_reader :spec
 
@@ -366,6 +371,18 @@ module Mongo
       # @since 2.2.0
       def bypass_document_validation
         spec[BYPASS_DOC_VALIDATION]
+      end
+
+      # The collation to apply to the operation.
+      #
+      # @example Get the collation option.
+      #   specifiable.collation.
+      #
+      # @return [ Hash ] The collation document.
+      #
+      # @since 2.4.0
+      def collation
+        spec[COLLATION]
       end
 
       # The selector for from the specification.

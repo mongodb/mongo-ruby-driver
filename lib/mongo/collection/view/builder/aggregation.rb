@@ -30,7 +30,8 @@ module Mongo
             :allow_disk_use => 'allowDiskUse',
             :max_time_ms => 'maxTimeMS',
             :explain => 'explain',
-            :bypass_document_validation => 'bypassDocumentValidation'
+            :bypass_document_validation => 'bypassDocumentValidation',
+            :collation => 'collation'
           ).freeze
 
           def_delegators :@view, :collection, :database, :read, :write_concern

@@ -60,6 +60,10 @@ module Mongo
           Command::Delete.new(s)
         end
 
+        def has_collation?
+          delete[:collation]
+        end
+
         def message(server)
           selector = delete[Operation::Q]
           opts     = (delete[Operation::LIMIT] || 0) <= 0 ? {} : { :flags => [ :single_remove ] }

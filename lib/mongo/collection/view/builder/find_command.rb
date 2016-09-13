@@ -48,7 +48,8 @@ module Mongo
             no_cursor_timeout: 'noCursorTimeout',
             await_data: 'awaitData',
             allow_partial_results: 'allowPartialResults',
-            read_concern: 'readConcern'
+            read_concern: 'readConcern',
+            collation: 'collation'
           ).freeze
 
           def_delegators :@view, :collection, :database, :filter, :options, :read
