@@ -24,12 +24,12 @@ module Mongo
     class AppMetadata
       extend Forwardable
 
-      # The max application metadata document size.
+      # The max application metadata document byte size.
       #
       # @since 2.4.0
       MAX_DOCUMENT_SIZE = 512.freeze
 
-      # The max application name length.
+      # The max application name byte size.
       #
       # @ since 2.4.0
       MAX_APP_NAME_SIZE = 128.freeze
