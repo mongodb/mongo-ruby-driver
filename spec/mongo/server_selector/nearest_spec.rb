@@ -27,6 +27,39 @@ describe Mongo::ServerSelector::Nearest do
     end
   end
 
+  describe '#==' do
+
+    context 'when max staleness is the same' do
+
+      let(:options) do
+        { max_staleness: 60 }
+      end
+
+      let(:other) do
+        described_class.new(options)
+      end
+
+      it 'returns true' do
+        expect(selector).to eq(other)
+      end
+    end
+
+    context 'when max staleness is different' do
+
+      let(:other_options) do
+        { max_staleness: 30 }
+      end
+
+      let(:other) do
+        described_class.new(other_options)
+      end
+
+      it 'returns true' do
+        expect(selector).not_to eq(other)
+      end
+    end
+  end
+
   describe '#to_mongos' do
 
     context 'tag set not provided' do

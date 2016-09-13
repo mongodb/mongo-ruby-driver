@@ -110,8 +110,8 @@ shared_examples 'a server selector mode' do
     context 'mode is different' do
 
       let(:other) do
-        double('selectable').tap do |mode|
-          allow(mode).to receive(:name).and_return(:other)
+        described_class.new.tap do |sel|
+          allow(sel).to receive(:name).and_return(:other_mode)
         end
       end
 

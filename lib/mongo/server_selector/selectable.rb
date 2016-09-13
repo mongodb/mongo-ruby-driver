@@ -44,7 +44,8 @@ module Mongo
       # @since 2.0.0
       def ==(other)
         name == other.name &&
-          tag_sets == other.tag_sets
+          tag_sets == other.tag_sets &&
+            max_staleness == other.max_staleness
       end
 
       # Initialize the server selector.
@@ -80,7 +81,7 @@ module Mongo
       #
       # @since 2.2.0
       def inspect
-        "#<#{self.class.name}:0x#{object_id} tag_sets=#{tag_sets.inspect} max_staleness=#{max_staleness}>"
+        "#<#{self.class.name}:0x#{object_id} tag_sets=#{tag_sets.inspect} max_staleness=#{max_staleness.inspect}>"
       end
 
       # Select a server from eligible candidates.
