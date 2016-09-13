@@ -27,7 +27,7 @@ module Mongo
       attr_reader :tag_sets
 
       # @return [ Float ] max_staleness The maximum replication lag, in seconds, that a
-      #   secondary can suffer and still be eligible.
+      #   secondary can suffer and still be eligible for a read.
       #
       # @since 2.4.0
       attr_reader :max_staleness
@@ -251,8 +251,7 @@ module Mongo
       end
 
       def validate_max_staleness_support!(server)
-        return unless @max_staleness
-        if @max_staleness && !server.features.collation_enabled?
+        if @max_staleness && !server.features.max_staleness_enabled?
           raise Error::InvalidServerPreference.new(Error::InvalidServerPreference::NO_MAX_STALENESS_WITH_LEGACY_SERVER)
         end
       end
