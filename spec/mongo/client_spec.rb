@@ -260,6 +260,17 @@ describe Mongo::Client do
           expect(client.cluster.logger).to_not eq(Mongo::Logger.logger)
         end
       end
+
+      context 'when providing a heartbeat_frequency' do
+
+        let(:client) do
+          described_class.new(['127.0.0.1:27017'], :heartbeat_frequency => 2)
+        end
+
+        it 'sets the heartbeat frequency' do
+          expect(client.cluster.next_primary.heartbeat_frequency).to eq(2)
+        end
+      end
     end
 
     context 'when providing a connection string' do
