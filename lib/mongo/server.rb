@@ -44,7 +44,7 @@ module Mongo
     attr_reader :monitoring
 
     # Get the description from the monitor and scan on monitor.
-    def_delegators :monitor, :description, :scan!
+    def_delegators :monitor, :description, :scan!, :heartbeat_frequency, :last_scan
 
     # Delegate convenience methods to the monitor description.
     def_delegators :description,
@@ -64,7 +64,8 @@ module Mongo
                    :secondary?,
                    :standalone?,
                    :unknown?,
-                   :unknown!
+                   :unknown!,
+                   :last_write_date
 
     # Is this server equal to another?
     #

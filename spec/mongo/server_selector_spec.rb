@@ -291,4 +291,57 @@ describe Mongo::ServerSelector do
 
     it_behaves_like 'a ServerSelector'
   end
+
+  describe '#inspect' do
+
+    let(:options) do
+      {}
+    end
+
+    let(:read_pref) do
+      described_class.get({ mode: mode }.merge(options))
+    end
+
+    context 'when the mode is primary' do
+
+      let(:mode) do
+        :primary
+      end
+
+      it 'includes the mode in the inspect string' do
+        expect(read_pref.inspect).to match(/#{mode.to_s}/i)
+      end
+    end
+
+    context 'when there are tag sets' do
+
+      let(:mode) do
+        :secondary
+      end
+
+      let(:options) do
+        { tag_sets: [{ 'data_center' => 'nyc' }] }
+      end
+
+      it 'includes the tag sets in the inspect string' do
+        expect(read_pref.inspect).to include(options[:tag_sets].inspect)
+      end
+    end
+
+    context 'when there is a max staleness set' do
+
+      let(:mode) do
+        :secondary
+      end
+
+      let(:options) do
+        { max_staleness: 123 }
+      end
+
+      it 'includes the tag sets in the inspect string' do
+        expect(read_pref.inspect).to match(/max_staleness/i)
+        expect(read_pref.inspect).to match(/123/)
+      end
+    end
+  end
 end

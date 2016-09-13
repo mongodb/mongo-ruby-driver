@@ -11,6 +11,22 @@ describe Mongo::ServerSelector::Primary do
   end
   it_behaves_like 'a server selector with sensitive data in its options'
 
+  describe '#initialize' do
+
+    context 'when max_staleness is provided' do
+
+      let(:options) do
+        { max_staleness: 60 }
+      end
+
+      it 'raises an exception' do
+        expect {
+          selector
+        }.to raise_exception(Mongo::Error::InvalidServerPreference)
+      end
+    end
+  end
+
   describe '#tag_sets' do
 
     context 'tags not provided' do
@@ -38,6 +54,26 @@ describe Mongo::ServerSelector::Primary do
 
     it 'returns nil' do
       expect(selector.to_mongos).to be_nil
+    end
+
+    context 'max staleness not provided' do
+
+      it 'returns nil' do
+        expect(selector.to_mongos).to be_nil
+      end
+    end
+
+    context 'max staleness provided' do
+
+      let(:max_staleness) do
+        60
+      end
+
+      it 'raises an error' do
+        expect {
+          selector
+        }.to raise_exception(Mongo::Error::InvalidServerPreference)
+      end
     end
   end
 

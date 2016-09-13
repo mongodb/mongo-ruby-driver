@@ -23,6 +23,7 @@ end
 
 shared_context 'server selector' do
 
+  let(:max_staleness) { nil }
   let(:tag_sets) { [] }
   let(:tag_set) do
     { 'test' => 'tag' }
@@ -32,7 +33,7 @@ shared_context 'server selector' do
   end
   let(:primary) { make_server(:primary) }
   let(:secondary) { make_server(:secondary) }
-  let(:options) { { :mode => name, :tag_sets => tag_sets } }
+  let(:options) { { :mode => name, :tag_sets => tag_sets, max_staleness: max_staleness } }
   let(:selector) { described_class.new(options) }
 
   before(:all) do
@@ -109,8 +110,8 @@ shared_examples 'a server selector mode' do
     context 'mode is different' do
 
       let(:other) do
-        double('selectable').tap do |mode|
-          allow(mode).to receive(:name).and_return(:other)
+        described_class.new.tap do |sel|
+          allow(sel).to receive(:name).and_return(:other_mode)
         end
       end
 

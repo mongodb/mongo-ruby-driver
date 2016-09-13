@@ -13,6 +13,53 @@ describe Mongo::ServerSelector::Secondary do
 
   it_behaves_like 'a server selector accepting tag sets'
 
+  describe '#initialize' do
+
+    context 'when max_staleness is provided' do
+
+      let(:options) do
+        { max_staleness: 60 }
+      end
+
+      it 'sets the max_staleness option' do
+        expect(selector.max_staleness).to eq(options[:max_staleness])
+      end
+    end
+  end
+
+  describe '#==' do
+
+    context 'when max staleness is the same' do
+
+      let(:options) do
+        { max_staleness: 60 }
+      end
+
+      let(:other) do
+        described_class.new(options)
+      end
+
+      it 'returns true' do
+        expect(selector).to eq(other)
+      end
+    end
+
+    context 'when max staleness is different' do
+
+      let(:other_options) do
+        { max_staleness: 30 }
+      end
+
+      let(:other) do
+        described_class.new(other_options)
+      end
+
+      it 'returns false' do
+        expect(selector).not_to eq(other)
+      end
+    end
+  end
+
   describe '#to_mongos' do
 
     it 'returns read preference formatted for mongos' do
@@ -28,6 +75,32 @@ describe Mongo::ServerSelector::Secondary do
         expect(selector.to_mongos).to eq(
           { :mode => 'secondary', :tags => tag_sets}
         )
+      end
+    end
+
+    context 'max staleness not provided' do
+
+      let(:expected) do
+        { :mode => 'secondary' }
+      end
+
+      it 'returns a read preference formatted for mongos' do
+        expect(selector.to_mongos).to eq(expected)
+      end
+    end
+
+    context 'max staleness provided' do
+
+      let(:max_staleness) do
+        60
+      end
+
+      let(:expected) do
+        { :mode => 'secondary', maxStalenessMS: 60000 }
+      end
+
+      it 'returns a read preference formatted for mongos' do
+        expect(selector.to_mongos).to eq(expected)
       end
     end
   end

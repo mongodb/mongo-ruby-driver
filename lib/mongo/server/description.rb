@@ -84,6 +84,16 @@ module Mongo
       # @since 2.0.0
       MAX_WRITE_BATCH_SIZE = 'maxWriteBatchSize'.freeze
 
+      # Constant for the lastWrite subdocument.
+      #
+      # @since 2.4.0
+      LAST_WRITE = 'lastWrite'.freeze
+
+      # Constant for the lastWriteDate field in the lastWrite subdocument.
+      #
+      # @since 2.4.0
+      LAST_WRITE_DATE = 'lastWriteDate'.freeze
+
       # Constant for reading the me field.
       #
       # @since 2.1.0
@@ -358,6 +368,18 @@ module Mongo
       # @since 2.2.2
       def set_version
         config[SET_VERSION]
+      end
+
+      # Get the lastWriteDate from the lastWrite subdocument in the config.
+      #
+      # @example Get the lastWriteDate value.
+      #   description.last_write_date
+      #
+      # @return [ Time ] The last write date.
+      #
+      # @since 2.4.0
+      def last_write_date
+        config[LAST_WRITE][LAST_WRITE_DATE] if config[LAST_WRITE]
       end
 
       # Is the server a mongos?
