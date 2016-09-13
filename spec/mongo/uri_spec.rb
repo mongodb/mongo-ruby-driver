@@ -541,11 +541,11 @@ describe Mongo::URI do
     context 'read preference max staleness option provided' do
 
       let(:options) do
-        'readPreference=Secondary&maxStalenessMS=30000'
+        'readPreference=Secondary&maxStalenessMS=120000'
       end
 
       let(:read) do
-        Mongo::Options::Redacted.new(mode: :secondary, :max_staleness => 30)
+        Mongo::Options::Redacted.new(mode: :secondary, :max_staleness => 120)
       end
 
       it 'sets the read preference max staleness in seconds' do
@@ -554,6 +554,33 @@ describe Mongo::URI do
 
       it 'sets the options on a client created with the uri' do
         expect(Mongo::Client.new(string).options[:read]).to eq(read)
+      end
+
+      context 'when the read preference and max staleness combination is invalid' do
+
+        context 'when max staleness is combined with read preference mode primary' do
+
+          let(:options) do
+            'readPreference=primary&maxStalenessMS=120000'
+          end
+
+          it 'raises an exception when read preference is accessed on the client' do
+            expect {
+              Mongo::Client.new(string).read_preference
+            }.to raise_exception(Mongo::Error::InvalidServerPreference)
+          end
+        end
+
+        context 'when the max staleness value is not at least twice heartbeat frequency' do
+
+          let(:options) do
+            'readPreference=secondary&maxStalenessMS=1'
+          end
+
+          it 'does not raise an exception until the read preference is used' do
+            expect(Mongo::Client.new(string).read_preference).to be_a(Mongo::ServerSelector::Secondary)
+          end
+        end
       end
     end
 

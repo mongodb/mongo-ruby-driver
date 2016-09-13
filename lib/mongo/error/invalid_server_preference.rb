@@ -38,8 +38,8 @@ module Mongo
       # Error message when max staleness cannot be used because one or more servers has version < 3.4.
       #
       # @since 2.4.0
-      NO_MAX_STALENESS_WITH_LEGACY_SERVER = 'max_staleness can only be set for a cluster in which " +
-                                              "each server is at least version 3.4.'.freeze
+      NO_MAX_STALENESS_WITH_LEGACY_SERVER = 'max_staleness can only be set for a cluster in which ' +
+                                              'each server is at least version 3.4.'.freeze
 
       # Instantiate the new exception.
       #
