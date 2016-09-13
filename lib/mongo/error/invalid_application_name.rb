@@ -24,7 +24,7 @@ module Mongo
       # Instantiate the new exception.
       #
       # @example Create the exception.
-      #   InvalidApplicationName.new(app_name)
+      #   InvalidApplicationName.new(app_name, 128)
       #
       # @param [ String ] app_name The application name option.
       # @param [ Integer ] max_size The max byte size of the application name.
