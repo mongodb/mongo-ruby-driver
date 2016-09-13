@@ -363,7 +363,7 @@ describe Mongo::Collection::View::Writable do
       end
 
       let(:result) do
-        view.find_one_and_update({ '$set' => { other: 99 } })
+        view.find_one_and_update({ '$set' => { other: 'doink' } })
       end
 
       before do
@@ -378,7 +378,7 @@ describe Mongo::Collection::View::Writable do
 
         it 'applies the collation' do
           expect(result['name']).to eq('bang')
-          expect(authorized_collection.find({ name: 'bang' }, limit: -1).first['other']).to eq(99)
+          expect(authorized_collection.find({ name: 'bang' }, limit: -1).first['other']).to eq('doink')
         end
       end
 
@@ -399,7 +399,7 @@ describe Mongo::Collection::View::Writable do
       end
 
       let(:result) do
-        view.find_one_and_update({ '$set' => { other: 99 } })
+        view.find_one_and_update({ '$set' => { other: 'doink' } })
       end
 
       before do

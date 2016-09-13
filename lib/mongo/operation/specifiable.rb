@@ -378,7 +378,7 @@ module Mongo
       # @example Get the collation option.
       #   specifiable.collation.
       #
-      # @return [ BSON::Document ] The collation document.
+      # @return [ Hash ] The collation document.
       #
       # @since 2.4.0
       def collation

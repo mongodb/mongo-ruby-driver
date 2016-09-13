@@ -1,4 +1,4 @@
-# Copyright (C) 2014-2015 MongoDB, Inc.
+# Copyright (C) 2014-2016 MongoDB, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,12 +24,16 @@ module Mongo
       # The default error message describing that collations is not supported.
       #
       # @return [ String ] A default message describing that collations is not supported by the server.
+      #
+      # @since 2.4.0
       DEFAULT_MESSAGE = "Collations is not a supported feature of the server handling this operation. " +
           "Operation results may be unexpected."
 
       # The error message describing that collations cannot be used when write concern is unacknowledged.
       #
       # @return [ String ] A message describing that collations cannot be used when write concern is unacknowledged.
+      #
+      # @since 2.4.0
       UNACKNOWLEDGED_WRITES_MESSAGE = "A collation cannot be specified when using unacknowledged writes. " +
         "Either remove the collation option or use acknowledged writes (w >= 1)."
 

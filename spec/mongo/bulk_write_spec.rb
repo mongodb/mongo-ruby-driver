@@ -246,7 +246,7 @@ describe Mongo::BulkWrite do
               end
             end
 
-            context 'when the collection does not have a collation specified' do
+            context 'when a collation is not specified' do
 
               before do
                 authorized_collection.insert_one(name: 'bang')
@@ -476,7 +476,7 @@ describe Mongo::BulkWrite do
             end
           end
 
-          context 'when the collection does not have a collation specified' do
+          context 'when a collation is not specified' do
 
             before do
               authorized_collection.insert_one(name: 'bang')
@@ -585,7 +585,7 @@ describe Mongo::BulkWrite do
             end
           end
 
-          context 'when the collection does not have a collation specified' do
+          context 'when a collation is not specified' do
 
             before do
               authorized_collection.insert_one(name: 'bang')
@@ -1325,7 +1325,7 @@ describe Mongo::BulkWrite do
             end
 
             let(:requests) do
-              [{ update_one: { filter: { name: 'BANG' }, update: { "$set" => { name: 'pong' }}}}]
+              [{ update_many: { filter: { name: 'BANG' }, update: { "$set" => { name: 'pong' }}}}]
             end
 
             let!(:result) do

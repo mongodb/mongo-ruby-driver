@@ -1866,6 +1866,23 @@ describe Mongo::Collection do
           expect(result.written_count).to eq(1)
           expect(authorized_collection.find(name: 'doink').count).to eq(1)
         end
+
+        context 'when unacknowledged writes is used' do
+
+          let(:collection_with_unacknowledged_write_concern) do
+            authorized_collection.with(write: { w: 0 })
+          end
+
+          let(:result) do
+            collection_with_unacknowledged_write_concern.replace_one(selector, { name: 'doink' }, options)
+          end
+
+          it 'raises an exception' do
+            expect {
+              result
+            }.to raise_exception(Mongo::Error::UnsupportedCollation)
+          end
+        end
       end
 
       context 'when the server selected does not support collations', unless: collation_enabled? do
@@ -2787,7 +2804,7 @@ describe Mongo::Collection do
 
       let(:result) do
         authorized_collection.find_one_and_update(selector,
-                                                  { '$set' => { other: 99 } },
+                                                  { '$set' => { other: 'doink' } },
                                                   options)
       end
 
@@ -2803,7 +2820,7 @@ describe Mongo::Collection do
 
         it 'applies the collation' do
           expect(result['name']).to eq('bang')
-          expect(authorized_collection.find({ name: 'bang' }, limit: -1).first['other']).to eq(99)
+          expect(authorized_collection.find({ name: 'bang' }, limit: -1).first['other']).to eq('doink')
         end
       end
 
@@ -2824,7 +2841,7 @@ describe Mongo::Collection do
       end
 
       let(:result) do
-        authorized_collection.find_one_and_update(selector, { '$set' => { other: 99 } })
+        authorized_collection.find_one_and_update(selector, { '$set' => { other: 'doink' } })
       end
 
       before do
