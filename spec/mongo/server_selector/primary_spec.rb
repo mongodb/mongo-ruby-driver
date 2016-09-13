@@ -58,7 +58,7 @@ describe Mongo::ServerSelector::Primary do
 
     context 'max staleness not provided' do
 
-      it 'returns a read preference formatted for mongos' do
+      it 'returns nil' do
         expect(selector.to_mongos).to be_nil
       end
     end
