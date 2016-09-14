@@ -40,7 +40,7 @@ describe 'Max Staleness Spec' do
           allow(c).to receive(:replica_set?).and_return(topology.replica_set?)
           allow(c).to receive(:options).and_return(options.merge(server_selection_timeout: 0.2))
           allow(c).to receive(:scan!).and_return(true)
-          allow(c).to receive(:app_metadata).and_return(double('app_metadata'))
+          allow(c).to receive(:app_metadata).and_return(app_metadata)
         end
       end
 

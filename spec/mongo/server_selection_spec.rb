@@ -28,7 +28,7 @@ describe 'Server Selection' do
           allow(c).to receive(:single?).and_return(topology.single?)
           allow(c).to receive(:sharded?).and_return(topology.sharded?)
           allow(c).to receive(:replica_set?).and_return(topology.replica_set?)
-          allow(c).to receive(:app_metadata).and_return(authorized_client.cluster.app_metadata)
+          allow(c).to receive(:app_metadata).and_return(app_metadata)
         end
       end
 
@@ -65,7 +65,7 @@ describe 'Server Selection' do
         allow(cluster).to receive(:servers).and_return(candidate_servers)
         allow(cluster).to receive(:options).and_return(server_selection_timeout: 0.2)
         allow(cluster).to receive(:scan!).and_return(true)
-        allow(cluster).to receive(:app_metadata).and_return(authorized_client.cluster.app_metadata)
+        allow(cluster).to receive(:app_metadata).and_return(app_metadata)
       end
 
       context 'Valid read preference and matching server available', if: spec.server_available? do
