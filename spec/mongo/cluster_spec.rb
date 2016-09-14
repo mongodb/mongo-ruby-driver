@@ -463,4 +463,33 @@ describe Mongo::Cluster do
       expect(primary_candidates).to include(cluster.next_primary)
     end
   end
+
+  describe '#app_metadata' do
+
+    it 'returns an AppMetadata object' do
+      expect(cluster.app_metadata).to be_a(Mongo::Cluster::AppMetadata)
+    end
+
+    context 'when the client has an app_name set' do
+
+      let(:cluster) do
+        authorized_client.with(app_name: 'reports').cluster
+      end
+
+      it 'constructs an AppMetadata object with the app_name' do
+        expect(cluster.app_metadata.send(:full_client_document)[:application]).to eq('name' => 'reports')
+      end
+    end
+
+    context 'when the client does not have an app_name set' do
+
+      let(:cluster) do
+        authorized_client.cluster
+      end
+
+      it 'constructs an AppMetadata object with no app_name' do
+        expect(cluster.app_metadata.send(:full_client_document)[:application]).to be_nil
+      end
+    end
+  end
 end

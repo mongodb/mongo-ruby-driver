@@ -392,6 +392,9 @@ module Mongo
     uri_option 'authmechanism', :auth_mech, :type => :auth_mech
     uri_option 'authmechanismproperties', :auth_mech_properties, :type => :auth_mech_props
 
+    # Client Options
+    uri_option 'appname', :app_name
+
     # Casts option values that do not have a specifically provided
     # transformation to the appropriate type.
     #

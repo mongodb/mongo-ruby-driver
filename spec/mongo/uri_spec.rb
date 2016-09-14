@@ -896,5 +896,13 @@ describe Mongo::URI do
         end
       end
     end
+
+    context 'when an app name option is provided' do
+      let(:options) { "appname=reports" }
+
+      it 'sets the app name on the client' do
+        expect(Mongo::Client.new(string).options[:app_name]).to eq(:reports)
+      end
+    end
   end
 end

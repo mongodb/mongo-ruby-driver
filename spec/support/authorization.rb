@@ -1,4 +1,4 @@
-# Copyright (C) 2009-2014 MongoDB, Inc.
+# Copyright (C) 2009-2016 MongoDB, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -248,6 +248,13 @@ module Authorization
     # @since 2.2.6
     context.let(:default_address) do
       authorized_client.cluster.next_primary.address
+    end
+
+    # Get a default app metadata.
+    #
+    # @since 2.4.0
+    context.let(:app_metadata) do
+      authorized_client.cluster.app_metadata
     end
   end
 end

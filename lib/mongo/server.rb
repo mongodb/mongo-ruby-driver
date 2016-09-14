@@ -67,6 +67,10 @@ module Mongo
                    :unknown!,
                    :last_write_date
 
+    # Get the app metadata from the cluster.
+    def_delegators :cluster,
+                   :app_metadata
+
     # Is this server equal to another?
     #
     # @example Is the server equal to the other?
@@ -159,7 +163,7 @@ module Mongo
       @cluster = cluster
       @monitoring = monitoring
       @options = options.freeze
-      @monitor = Monitor.new(address, event_listeners, options)
+      @monitor = Monitor.new(address, event_listeners, options.merge(app_metadata: cluster.app_metadata))
       monitor.scan!
       monitor.run!
       ObjectSpace.define_finalizer(self, self.class.finalize(monitor))

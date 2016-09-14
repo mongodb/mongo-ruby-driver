@@ -14,8 +14,14 @@ describe Mongo::Server::Connection do
     Mongo::Event::Listeners.new
   end
 
+  let(:app_metadata) do
+    Mongo::Cluster::AppMetadata.new(authorized_client.cluster)
+  end
+
   let(:cluster) do
-    double('cluster')
+    double('cluster').tap do |cl|
+      allow(cl).to receive(:app_metadata).and_return(app_metadata)
+    end
   end
 
   let(:server) do
@@ -59,7 +65,7 @@ describe Mongo::Server::Connection do
     context 'when no socket exists' do
 
       let(:connection) do
-        described_class.new(server)
+        described_class.new(server, server.options)
       end
 
       let!(:result) do
@@ -86,7 +92,7 @@ describe Mongo::Server::Connection do
     context 'when a socket exists' do
 
       let(:connection) do
-        described_class.new(server)
+        described_class.new(server, server.options)
       end
 
       before do
@@ -163,7 +169,7 @@ describe Mongo::Server::Connection do
     context 'when a socket is not connected' do
 
       let(:connection) do
-        described_class.new(server)
+        described_class.new(server, server.options)
       end
 
       it 'does not raise an error' do
@@ -174,7 +180,7 @@ describe Mongo::Server::Connection do
     context 'when a socket is connected' do
 
       let(:connection) do
-        described_class.new(server)
+        described_class.new(server, server.options)
       end
 
       before do
@@ -431,7 +437,7 @@ describe Mongo::Server::Connection do
     context 'when host and port are provided' do
 
       let(:connection) do
-        described_class.new(server)
+        described_class.new(server, server.options)
       end
 
       it 'sets the address' do
@@ -535,7 +541,7 @@ describe Mongo::Server::Connection do
   describe '#auth_mechanism' do
 
     let(:connection) do
-      described_class.new(server)
+      described_class.new(server, server.options)
     end
 
     let(:reply) do
@@ -564,6 +570,7 @@ describe Mongo::Server::Connection do
           socket = connection.instance_variable_get(:@socket)
           max_message_size = connection.send(:max_message_size)
           allow(Mongo::Protocol::Reply).to receive(:deserialize).with(socket, max_message_size).and_return(reply)
+          connection.send(:handshake!)
           expect(connection.send(:default_mechanism)).to eq(:scram)
         end
       end
@@ -574,6 +581,7 @@ describe Mongo::Server::Connection do
           socket = connection.instance_variable_get(:@socket)
           max_message_size = connection.send(:max_message_size)
           allow(Mongo::Protocol::Reply).to receive(:deserialize).with(socket, max_message_size).and_return(reply)
+          connection.send(:handshake!)
           expect(connection.send(:default_mechanism)).to eq(:scram)
         end
       end
@@ -595,6 +603,7 @@ describe Mongo::Server::Connection do
           socket = connection.instance_variable_get(:@socket)
           max_message_size = connection.send(:max_message_size)
           allow(Mongo::Protocol::Reply).to receive(:deserialize).with(socket, max_message_size).and_return(reply)
+          connection.send(:handshake!)
           expect(connection.send(:default_mechanism)).to eq(:scram)
         end
       end
@@ -605,6 +614,7 @@ describe Mongo::Server::Connection do
           socket = connection.instance_variable_get(:@socket)
           max_message_size = connection.send(:max_message_size)
           allow(Mongo::Protocol::Reply).to receive(:deserialize).with(socket, max_message_size).and_return(reply)
+          connection.send(:handshake!)
           expect(connection.send(:default_mechanism)).to eq(:mongodb_cr)
         end
       end

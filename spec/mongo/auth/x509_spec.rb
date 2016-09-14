@@ -14,8 +14,14 @@ describe Mongo::Auth::X509 do
     Mongo::Event::Listeners.new
   end
 
+  let(:cluster) do
+    double('cluster').tap do |cl|
+      allow(cl).to receive(:app_metadata).and_return(app_metadata)
+    end
+  end
+
   let(:server) do
-    Mongo::Server.new(address, double('cluster'), monitoring, listeners, TEST_OPTIONS)
+    Mongo::Server.new(address, cluster, monitoring, listeners, TEST_OPTIONS)
   end
 
   let(:connection) do
