@@ -417,7 +417,7 @@ describe Mongo::Collection do
       context 'when the collection has a write concern' do
 
         after do
-          collection.drop
+          database[:specs].drop
         end
 
         let(:options) do
