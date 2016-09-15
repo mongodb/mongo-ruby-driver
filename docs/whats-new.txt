@@ -1,0 +1,16 @@
+==========
+What's New
+==========
+
+.. default-domain:: mongodb
+
+What's New in the 2.4 Driver
+----------------------------
+
+- :doc:`Decimal128</tutorials/ruby-driver-crud-operations>`,
+  a new :doc:`BSON datatype </bson-tutorials>` which employs 128-bit
+  decimal-based floating-point values capable of emulating decimal
+  rounding with exact precision.
+
+.. COMMENT need internal link to #specify-decimal128 in the CRUD page
+.. COMMENT Collation and other items to come here
