@@ -348,7 +348,7 @@ describe Mongo::Collection::View::MapReduce do
 
           shared_examples_for 'map reduce that writes accepting write concern' do
 
-            context 'when the server supports write concern on the mapReduce command', if: collation_enabled? do
+            context 'when the server supports write concern on the mapReduce command', if: (collation_enabled? && standalone?) do
 
               it 'uses the write concern' do
                 expect {
