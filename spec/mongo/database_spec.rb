@@ -426,7 +426,7 @@ describe Mongo::Database do
         client.database
       end
 
-      context 'when the server supports write concern on the dropDatabase command', if: collation_enabled? do
+      context 'when the server supports write concern on the dropDatabase command', if: (collation_enabled? && standalone?) do
 
         it 'applies the write concern' do
           expect{
