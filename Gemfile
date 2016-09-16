@@ -5,6 +5,7 @@ gem 'rake', '10.1.1', :require => ['rake/testtask']
 gem 'rake-compiler', :require => ['rake/extensiontask', 'rake/javaextensiontask']
 gem 'mime-types', '~> 1.25'
 gem 'i18n', '0.6.11'
+gem 'tins', '1.6.0'
 
 if RUBY_VERSION < '1.9.3'
   gem 'multi_json', '1.10.1'
