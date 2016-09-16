@@ -25,3 +25,4 @@ lib/bson_ext
 lib/mongo_ext/Makefile
 nbproject
 tmp
+sanbox/*
