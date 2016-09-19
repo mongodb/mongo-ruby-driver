@@ -46,7 +46,7 @@ module Mongo
       # @example Instantiate the exception.
       #   Mongo::Error::InvalidServerPreference.new
       #
-      # @param [ String ] name The preference name.
+      # @param [ String ] message The error message.
       #
       # @since 2.0.0
       def initialize(message)
