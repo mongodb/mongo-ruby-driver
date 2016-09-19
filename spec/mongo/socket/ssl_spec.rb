@@ -72,6 +72,28 @@ describe Mongo::Socket::SSL, if: running_ssl? do
 
     end
 
+    context 'when certificate and an encrypted key are provided as strings' do
+
+      let(:options) do
+        key = File.read(CLIENT_KEY_ENCRYPTED_PEM)
+        cert = File.read(CLIENT_CERT_PEM)
+        super().merge({
+          :ssl_cert => cert,
+          :ssl_key => key,
+          :ssl_key_pass_phrase => CLIENT_KEY_PASSPHRASE
+        })
+      end
+
+      before do
+        socket.connect!
+      end
+
+      it 'connects to the server' do
+        expect(socket).to be_alive
+      end
+
+    end
+
     context 'when a certificate and key are provided as objects' do
 
       let(:options) do
