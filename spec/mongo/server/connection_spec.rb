@@ -417,7 +417,7 @@ describe Mongo::Server::Connection do
         start = Time.now
         expect {
           Timeout::timeout(3) do
-            client[authorized_collection.name].find("$where" => "sleep(10000) || true").first
+            client[authorized_collection.name].find("$where" => "sleep(2000) || true").first
           end
         }.to raise_exception(Timeout::Error, "Took more than 1.5 seconds to receive data.")
         end_time = Time.now
