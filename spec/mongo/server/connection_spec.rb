@@ -406,6 +406,31 @@ describe Mongo::Server::Connection do
       end
     end
 
+    context 'when a socket timeout occurs' do
+      let(:client) do
+        authorized_client.with(socket_timeout: 1.5)
+      end
+
+      before do
+        authorized_collection.insert_one( a: 1)
+      end
+
+      after do
+        authorized_collection.delete_many
+      end
+
+      it 'raises a timeout when it expires' do
+        start = Time.now
+        expect {
+          Timeout::timeout(3) do
+            client[authorized_collection.name].find("$where" => "sleep(10000) || true").first
+          end
+        }.to raise_exception(Timeout::Error, "Took more than 1.5 seconds to receive data.")
+        end_time = Time.now
+        expect(end_time - start).to be_within(0.2).of(1.5)
+      end
+    end
+
     context 'when the process is forked' do
 
       let(:insert) do
