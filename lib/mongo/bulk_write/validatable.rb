@@ -40,7 +40,9 @@ module Mongo
       def validate(name, document)
         validate_operation(name)
         validate_document(name, document)
-        @has_collation = true if document.respond_to?(:keys) && document[:collation]
+        if document.respond_to?(:keys) && (document[:collation] || document[Operation::COLLATION])
+          @has_collation = true
+        end
       end
 
       private

@@ -243,6 +243,19 @@ describe Mongo::BulkWrite do
                     bulk_write.execute
                   }.to raise_exception(Mongo::Error::UnsupportedCollation)
                 end
+
+                context 'when a String key is used' do
+
+                  let(:requests) do
+                    [{ delete_one: { filter: { name: 'BANG' }, 'collation' => collation } }]
+                  end
+
+                  it 'raises an exception' do
+                    expect {
+                      bulk_write.execute
+                    }.to raise_exception(Mongo::Error::UnsupportedCollation)
+                  end
+                end
               end
             end
 
@@ -371,6 +384,20 @@ describe Mongo::BulkWrite do
                   bulk_write.execute
                 }.to raise_exception(Mongo::Error::UnsupportedCollation)
               end
+
+              context 'when a String key is used' do
+
+                let(:requests) do
+                  [{ delete_one: { filter: { name: 'BANG' }, 'collation' => collation }},
+                   { delete_one: { filter: { name: 'DOINK' }, 'collation' => collation }}]
+                end
+
+                it 'raises an exception' do
+                  expect {
+                    bulk_write.execute
+                  }.to raise_exception(Mongo::Error::UnsupportedCollation)
+                end
+              end
             end
           end
 
@@ -472,6 +499,19 @@ describe Mongo::BulkWrite do
                 expect {
                   bulk_write.execute
                 }.to raise_exception(Mongo::Error::UnsupportedCollation)
+              end
+
+              context 'when a String key is used' do
+
+                let(:requests) do
+                  [{ delete_many: { filter: { name: 'BANG' }, 'collation' => collation }}]
+                end
+
+                it 'raises an exception' do
+                  expect {
+                    bulk_write.execute
+                  }.to raise_exception(Mongo::Error::UnsupportedCollation)
+                end
               end
             end
           end
@@ -581,6 +621,20 @@ describe Mongo::BulkWrite do
                 expect {
                   bulk_write.execute
                 }.to raise_exception(Mongo::Error::UnsupportedCollation)
+              end
+
+              context 'when a String key is used' do
+
+                let(:requests) do
+                  [{ delete_many: { filter: { name: 'BANG' },  'collation' => collation }},
+                   { delete_many: { filter: { name: 'DOINK' },  'collation' => collation }}]
+                end
+
+                it 'raises an exception' do
+                  expect {
+                    bulk_write.execute
+                  }.to raise_exception(Mongo::Error::UnsupportedCollation)
+                end
               end
             end
           end
@@ -697,6 +751,21 @@ describe Mongo::BulkWrite do
                 expect {
                   bulk_write.execute
                 }.to raise_exception(Mongo::Error::UnsupportedCollation)
+              end
+
+              context 'when a String key is used' do
+
+                let(:requests) do
+                  [{ replace_one: { filter: { name: 'BANG' },
+                                    replacement: { other: 'pong' },
+                                    'collation' => collation }}]
+                end
+
+                it 'raises an exception' do
+                  expect {
+                    bulk_write.execute
+                  }.to raise_exception(Mongo::Error::UnsupportedCollation)
+                end
               end
             end
           end
@@ -936,6 +1005,21 @@ describe Mongo::BulkWrite do
                   bulk_write.execute
                 }.to raise_exception(Mongo::Error::UnsupportedCollation)
               end
+
+              context 'when a String key is used' do
+
+                let(:requests) do
+                  [{ update_one: { filter: { name: 'BANG' },
+                                   update: { "$set" => { name: 'pong' }},
+                                   'collation' => collation }}]
+                end
+
+                it 'raises an exception' do
+                  expect {
+                    bulk_write.execute
+                  }.to raise_exception(Mongo::Error::UnsupportedCollation)
+                end
+              end
             end
           end
 
@@ -1026,6 +1110,24 @@ describe Mongo::BulkWrite do
                 expect {
                   bulk_write.execute
                 }.to raise_exception(Mongo::Error::UnsupportedCollation)
+              end
+
+              context 'when a String key is used' do
+
+                let(:requests) do
+                  [{ update_one: { filter: { name: 'BANG' },
+                                   update: { "$set" => { name: 'pong' }},
+                                   'collation' => collation }},
+                   { update_one: { filter: { name: 'DOINK' },
+                                   update: { "$set" => { name: 'pong' }},
+                                   'collation' => collation }}]
+                end
+
+                it 'raises an exception' do
+                  expect {
+                    bulk_write.execute
+                  }.to raise_exception(Mongo::Error::UnsupportedCollation)
+                end
               end
             end
           end
@@ -1313,6 +1415,21 @@ describe Mongo::BulkWrite do
                 expect {
                   bulk_write.execute
                 }.to raise_exception(Mongo::Error::UnsupportedCollation)
+              end
+
+              context 'when a String key is used' do
+
+                let(:requests) do
+                  [{ update_many: { filter: { name: 'BANG' },
+                                    update: { "$set" => { name: 'pong' }},
+                                    'collation' => collation }}]
+                end
+
+                it 'raises an exception' do
+                  expect {
+                    bulk_write.execute
+                  }.to raise_exception(Mongo::Error::UnsupportedCollation)
+                end
               end
             end
           end
