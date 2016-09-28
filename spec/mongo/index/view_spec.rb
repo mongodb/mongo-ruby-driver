@@ -224,6 +224,23 @@ describe Mongo::Index::View do
                 result
               }.to raise_exception(Mongo::Error::UnsupportedCollation)
             end
+
+            context 'when a String key is used' do
+
+              let(:result) do
+                view.create_many(
+                  { key: { random: 1 },
+                    unique: true,
+                    'collation' => { locale: 'en_US', strength: 2 } }
+                )
+              end
+
+              it 'raises an exception' do
+                expect {
+                  result
+                }.to raise_exception(Mongo::Error::UnsupportedCollation)
+              end
+            end
           end
         end
 
@@ -336,6 +353,23 @@ describe Mongo::Index::View do
               expect {
                 result
               }.to raise_exception(Mongo::Error::UnsupportedCollation)
+            end
+
+            context 'when a String key is used' do
+
+              let(:result) do
+                view.create_many([
+                                   { key: { random: 1 },
+                                     unique: true,
+                                     'collation' => { locale: 'en_US', strength: 2 }},
+                                 ])
+              end
+
+              it 'raises an exception' do
+                expect {
+                  result
+                }.to raise_exception(Mongo::Error::UnsupportedCollation)
+              end
             end
           end
         end

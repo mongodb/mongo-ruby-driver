@@ -64,7 +64,7 @@ module Mongo
         end
 
         def has_collation?
-          update[:collation]
+          update[:collation] || update[Operation::COLLATION]
         end
 
         def message(server)
