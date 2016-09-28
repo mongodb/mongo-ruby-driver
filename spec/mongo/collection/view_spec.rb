@@ -187,6 +187,19 @@ describe Mongo::Collection::View do
               result
             }.to raise_exception(Mongo::Error::UnsupportedCollation)
           end
+
+          context 'when a String key is used' do
+
+            let(:options) do
+              { 'collation' => { locale: 'en_US', strength: 2 } }
+            end
+
+            it 'raises an exception' do
+              expect {
+                result
+              }.to raise_exception(Mongo::Error::UnsupportedCollation)
+            end
+          end
         end
       end
 
