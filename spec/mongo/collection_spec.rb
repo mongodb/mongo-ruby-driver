@@ -451,7 +451,7 @@ describe Mongo::Collection do
 
         shared_examples 'a collection command with a collation option' do
 
-          let!(:response) do
+          let(:response) do
             collection.create
           end
 
@@ -474,10 +474,12 @@ describe Mongo::Collection do
             end
 
             it 'sets the collection with a collation' do
+              response
               expect(collection_info['options']['collation']['locale']).to eq('fr')
             end
 
             it 'creates the collection in the database' do
+              response
               expect(database.collection_names).to include('specs')
             end
           end
@@ -489,6 +491,19 @@ describe Mongo::Collection do
                 response
               }.to raise_exception(Mongo::Error::UnsupportedCollation)
             end
+
+            context 'when a String key is used' do
+
+              let(:options) do
+                { 'collation' => { locale: 'fr' } }
+              end
+
+              it 'raises an exception' do
+                expect {
+                  response
+                }.to raise_exception(Mongo::Error::UnsupportedCollation)
+              end
+            end
           end
         end
 
@@ -498,9 +513,7 @@ describe Mongo::Collection do
             described_class.new(database, :specs, options)
           end
 
-          context 'when the server supports collation', if: collation_enabled? do
-            it_behaves_like 'a collection command with a collation option'
-          end
+          it_behaves_like 'a collection command with a collation option'
         end
 
         context 'when instantiating a collection through the database' do
@@ -509,9 +522,7 @@ describe Mongo::Collection do
             authorized_client[:specs, options]
           end
 
-          context 'when the server supports collation', if: collation_enabled? do
-            it_behaves_like 'a collection command with a collation option'
-          end
+          it_behaves_like 'a collection command with a collation option'
         end
       end
     end
@@ -1182,6 +1193,19 @@ describe Mongo::Collection do
               result
             }.to raise_exception(Mongo::Error::UnsupportedCollation)
           end
+
+          context 'when a String key is used' do
+
+            let(:options) do
+              { 'collation' => { locale: 'en_US', strength: 2 } }
+            end
+
+            it 'raises an exception' do
+              expect {
+                result
+              }.to raise_exception(Mongo::Error::UnsupportedCollation)
+            end
+          end
         end
       end
     end
@@ -1238,6 +1262,19 @@ describe Mongo::Collection do
             expect {
               result
             }.to raise_exception(Mongo::Error::UnsupportedCollation)
+          end
+
+          context 'when a String key is used' do
+
+            let(:options) do
+              { 'collation' => { locale: 'en_US', strength: 2 } }
+            end
+
+            it 'raises an exception' do
+              expect {
+                result
+              }.to raise_exception(Mongo::Error::UnsupportedCollation)
+            end
           end
         end
       end
@@ -1300,6 +1337,19 @@ describe Mongo::Collection do
           expect {
             result
           }.to raise_exception(Mongo::Error::UnsupportedCollation)
+        end
+
+        context 'when a String key is used' do
+
+          let(:options) do
+            { 'collation' => { locale: 'en_US', strength: 2 } }
+          end
+
+          it 'raises an exception' do
+            expect {
+              result
+            }.to raise_exception(Mongo::Error::UnsupportedCollation)
+          end
         end
       end
     end
@@ -1414,6 +1464,19 @@ describe Mongo::Collection do
               result
             }.to raise_exception(Mongo::Error::UnsupportedCollation)
           end
+
+          context 'when a String key is used' do
+
+            let(:options) do
+              { 'collation' => { locale: 'en_US', strength: 2 } }
+            end
+
+            it 'raises an exception' do
+              expect {
+                result
+              }.to raise_exception(Mongo::Error::UnsupportedCollation)
+            end
+          end
         end
       end
 
@@ -1423,6 +1486,19 @@ describe Mongo::Collection do
           expect {
             result
           }.to raise_exception(Mongo::Error::UnsupportedCollation)
+        end
+
+        context 'when a String key is used' do
+
+          let(:options) do
+            { 'collation' => { locale: 'en_US', strength: 2 } }
+          end
+
+          it 'raises an exception' do
+            expect {
+              result
+            }.to raise_exception(Mongo::Error::UnsupportedCollation)
+          end
         end
       end
     end
@@ -1526,6 +1602,19 @@ describe Mongo::Collection do
               result
             }.to raise_exception(Mongo::Error::UnsupportedCollation)
           end
+
+          context 'when a String key is used' do
+
+            let(:options) do
+              { 'collation' => { locale: 'en_US', strength: 2 } }
+            end
+
+            it 'raises an exception' do
+              expect {
+                result
+              }.to raise_exception(Mongo::Error::UnsupportedCollation)
+            end
+          end
         end
       end
 
@@ -1535,6 +1624,19 @@ describe Mongo::Collection do
           expect {
             result
           }.to raise_exception(Mongo::Error::UnsupportedCollation)
+        end
+
+        context 'when a String key is used' do
+
+          let(:options) do
+            { 'collation' => { locale: 'en_US', strength: 2 } }
+          end
+
+          it 'raises an exception' do
+            expect {
+              result
+            }.to raise_exception(Mongo::Error::UnsupportedCollation)
+          end
         end
       end
     end
@@ -1882,6 +1984,19 @@ describe Mongo::Collection do
               result
             }.to raise_exception(Mongo::Error::UnsupportedCollation)
           end
+
+          context 'when a String key is used' do
+
+            let(:options) do
+              { 'collation' => { locale: 'en_US', strength: 2 } }
+            end
+
+            it 'raises an exception' do
+              expect {
+                result
+              }.to raise_exception(Mongo::Error::UnsupportedCollation)
+            end
+          end
         end
       end
 
@@ -1891,6 +2006,19 @@ describe Mongo::Collection do
           expect {
             result
           }.to raise_exception(Mongo::Error::UnsupportedCollation)
+        end
+
+        context 'when a String key is used' do
+
+          let(:options) do
+            { 'collation' => { locale: 'en_US', strength: 2 } }
+          end
+
+          it 'raises an exception' do
+            expect {
+              result
+            }.to raise_exception(Mongo::Error::UnsupportedCollation)
+          end
         end
       end
     end
@@ -2116,6 +2244,19 @@ describe Mongo::Collection do
               result
             }.to raise_exception(Mongo::Error::UnsupportedCollation)
           end
+
+          context 'when a String key is used' do
+
+            let(:options) do
+              { 'collation' => { locale: 'en_US', strength: 2 } }
+            end
+
+            it 'raises an exception' do
+              expect {
+                result
+              }.to raise_exception(Mongo::Error::UnsupportedCollation)
+            end
+          end
         end
       end
 
@@ -2125,6 +2266,19 @@ describe Mongo::Collection do
           expect {
             result
           }.to raise_exception(Mongo::Error::UnsupportedCollation)
+        end
+
+        context 'when a String key is used' do
+
+          let(:options) do
+            { 'collation' => { locale: 'en_US', strength: 2 } }
+          end
+
+          it 'raises an exception' do
+            expect {
+              result
+            }.to raise_exception(Mongo::Error::UnsupportedCollation)
+          end
         end
       end
     end
@@ -2349,6 +2503,19 @@ describe Mongo::Collection do
               result
             }.to raise_exception(Mongo::Error::UnsupportedCollation)
           end
+
+          context 'when a String key is used' do
+
+            let(:options) do
+              { 'collation' => { locale: 'en_US', strength: 2 } }
+            end
+
+            it 'raises an exception' do
+              expect {
+                result
+              }.to raise_exception(Mongo::Error::UnsupportedCollation)
+            end
+          end
         end
       end
 
@@ -2358,6 +2525,19 @@ describe Mongo::Collection do
           expect {
             result
           }.to raise_exception(Mongo::Error::UnsupportedCollation)
+        end
+
+        context 'when a String key is used' do
+
+          let(:options) do
+            { 'collation' => { locale: 'en_US', strength: 2 } }
+          end
+
+          it 'raises an exception' do
+            expect {
+              result
+            }.to raise_exception(Mongo::Error::UnsupportedCollation)
+          end
         end
       end
     end
@@ -2534,6 +2714,19 @@ describe Mongo::Collection do
           expect {
             result
           }.to raise_exception(Mongo::Error::UnsupportedCollation)
+        end
+
+        context 'when a String key is used' do
+
+          let(:options) do
+            { 'collation' => { locale: 'en_US', strength: 2 } }
+          end
+
+          it 'raises an exception' do
+            expect {
+              result
+            }.to raise_exception(Mongo::Error::UnsupportedCollation)
+          end
         end
       end
     end
@@ -2831,6 +3024,19 @@ describe Mongo::Collection do
             result
           }.to raise_exception(Mongo::Error::UnsupportedCollation)
         end
+
+        context 'when a String key is used' do
+
+          let(:options) do
+            { 'collation' => { locale: 'en_US', strength: 2 } }
+          end
+
+          it 'raises an exception' do
+            expect {
+              result
+            }.to raise_exception(Mongo::Error::UnsupportedCollation)
+          end
+        end
       end
     end
 
@@ -3100,6 +3306,19 @@ describe Mongo::Collection do
           expect {
             result
           }.to raise_exception(Mongo::Error::UnsupportedCollation)
+        end
+
+        context 'when a String key is used' do
+
+          let(:options) do
+            { 'collation' => { locale: 'en_US', strength: 2 } }
+          end
+
+          it 'raises an exception' do
+            expect {
+              result
+            }.to raise_exception(Mongo::Error::UnsupportedCollation)
+          end
         end
       end
     end

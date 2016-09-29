@@ -172,7 +172,9 @@ module Mongo
       operation = { :create => name }.merge(options)
       operation.delete(:write)
       server = next_primary
-      raise Error::UnsupportedCollation.new if options[:collation] && !server.features.collation_enabled?
+      if (options[:collation] || options[Operation::COLLATION]) && !server.features.collation_enabled?
+        raise Error::UnsupportedCollation.new
+      end
       Operation::Commands::Create.new({
                                         selector: operation,
                                         db_name: database.name,

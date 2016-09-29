@@ -211,7 +211,12 @@ module Mongo
           server = next_primary
           validate_collation!(server, opts)
           delete_doc = { Operation::Q => filter, Operation::LIMIT => value }
-          delete_doc[:collation] = opts[:collation] if opts[:collation]
+          # We must extract the collation at the String key as well so that if w == 0,
+          # an error can be raised later when an OpCode is used.
+          # Otherwise, the collation will silently not be sent.
+          if collation = opts[:collation] || opts[Operation::COLLATION]
+            delete_doc[:collation] = collation
+          end
           write_with_retry do
             Operation::Write::Delete.new(
               :delete => delete_doc,
@@ -229,7 +234,12 @@ module Mongo
                          Operation::U => spec,
                          Operation::MULTI => multi,
                          Operation::UPSERT => !!opts[:upsert] }
-          update_doc[:collation] = opts[:collation] if opts[:collation]
+          # We must extract the collation at the String key as well so that if w == 0,
+          # an error can be raised later when an OpCode is used.
+          # Otherwise, the collation will silently not be sent.
+          if collation = opts[:collation] || opts[Operation::COLLATION]
+            update_doc[:collation] = collation
+          end
           write_with_retry do
             Operation::Write::Update.new(
               :update => update_doc,
