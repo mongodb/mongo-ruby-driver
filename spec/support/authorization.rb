@@ -61,7 +61,7 @@ SSL_OPTIONS = {
 BASE_OPTIONS = {
                   max_pool_size: 1,
                   write: WRITE_CONCERN,
-                  heartbeat_frequency: 5,
+                  heartbeat_frequency: 20,
                   max_read_retries: 5
                }
 
