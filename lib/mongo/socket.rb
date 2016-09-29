@@ -172,14 +172,14 @@ module Mongo
       # Block on data to read for timeout seconds
       # using the suggested implementation of http://www.ruby-doc.org/core-2.1.3/Kernel.html#method-i-select
       # to work with SSL connections and some OSs like Ubuntu, CentOS and Red Hat
-      time_left = timeout.to_f
       data = String.new
+      deadline = Time.now + timeout
       begin
-        while data.length < length
+        while (data.length < length)
+          raise Timeout::Error.new("Took more than #{timeout} seconds to receive data.") if (deadline - Time.now) <= 0
           data << @socket.read_nonblock(length - data.length)
         end
       rescue IO::WaitReadable
-        raise Timeout::Error.new("Took more than #{timeout} seconds to receive data.") if (time_left -= 0.1) <= 0
         Kernel::select([@socket], nil, [@socket], 0.1)
         retry
       end
