@@ -176,18 +176,11 @@ module Mongo
           data << @socket.read_nonblock(length - data.length)
         end
       rescue IO::WaitReadable
-        if deadline
-          now = Time.now
-          if deadline - now <= 0
-            raise Timeout::Error.new("Took more than #{timeout} seconds to receive data.")
-          else
-            Kernel::select([@socket], nil, [@socket], (deadline - now))
-            retry
-          end
-        else
-          Kernel::select([@socket], nil, [@socket])
-          retry
+        select_timeout = (deadline - Time.now) if deadline
+        unless Kernel::select([@socket], nil, [@socket], select_timeout)
+          raise Timeout::Error.new("Took more than #{timeout} seconds to receive data.")
         end
+        retry
       end
 
       data
