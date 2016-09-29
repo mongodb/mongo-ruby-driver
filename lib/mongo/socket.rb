@@ -173,10 +173,12 @@ module Mongo
       # using the suggested implementation of http://www.ruby-doc.org/core-2.1.3/Kernel.html#method-i-select
       # to work with SSL connections and some OSs like Ubuntu, CentOS and Red Hat
       data = String.new
-      deadline = Time.now + timeout
+      deadline = (Time.now + timeout) if timeout
       begin
         while (data.length < length)
-          raise Timeout::Error.new("Took more than #{timeout} seconds to receive data.") if (deadline - Time.now) <= 0
+          if deadline
+            raise Timeout::Error.new("Took more than #{timeout} seconds to receive data.") if (deadline - Time.now) <= 0
+          end
           data << @socket.read_nonblock(length - data.length)
         end
       rescue IO::WaitReadable
@@ -194,7 +196,7 @@ module Mongo
     def set_socket_options(sock)
       sock.set_encoding(BSON::BINARY)
 
-      unless unix_socket?(sock) && BSON::Environment.jruby?
+      if timeout && !(unix_socket?(sock) && BSON::Environment.jruby?)
         encoded_timeout = [ timeout, 0 ].pack(TIMEOUT_PACK)
         sock.setsockopt(SOL_SOCKET, SO_RCVTIMEO, encoded_timeout)
         sock.setsockopt(SOL_SOCKET, SO_SNDTIMEO, encoded_timeout)

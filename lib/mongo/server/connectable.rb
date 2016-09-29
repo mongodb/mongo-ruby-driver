@@ -73,7 +73,7 @@ module Mongo
       #
       # @since 2.0.0
       def timeout
-        @timeout ||= options[:socket_timeout] || TIMEOUT
+        @timeout ||= options[:socket_timeout]
       end
 
       private
