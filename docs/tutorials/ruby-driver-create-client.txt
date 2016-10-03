@@ -169,7 +169,7 @@ Ruby Options
      - ``Boolean``
      - false
 
-   * - ``:2out``
+   * - ``:connect_timeout``
      - The number of seconds to wait to establish a socket connection
        before raising an exception. 
      - ``Float``
