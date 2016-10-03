@@ -28,6 +28,10 @@ module Mongo
       # The default time in seconds to timeout an operation executed on a socket.
       #
       # @since 2.0.0
+      #
+      # @deprecated Timeouts on Ruby sockets aren't effective so this default option is
+      #   no longer used.
+      #   Will be removed in driver version 3.0.
       TIMEOUT = 5.freeze
 
       # @return [ Mongo::Address ] address The address to connect to.
