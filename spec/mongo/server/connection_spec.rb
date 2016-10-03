@@ -483,8 +483,8 @@ describe Mongo::Server::Connection do
         expect(connection.send(:socket)).to be_nil
       end
 
-      it 'sets the timeout to the default' do
-        expect(connection.timeout).to eq(5)
+      it 'does not set the timeout to the default' do
+        expect(connection.timeout).to be_nil
       end
     end
 
