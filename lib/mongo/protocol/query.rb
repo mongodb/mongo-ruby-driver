@@ -252,7 +252,7 @@ module Mongo
         #
         # @since 2.1.0
         def command_name
-          command? ? filter.keys.first : FIND
+          command? && filter[:$query].nil? ? filter.keys.first : FIND
         end
 
         private
@@ -263,7 +263,7 @@ module Mongo
 
         def op_command
           document = BSON::Document.new
-          filter.each do |field, value|
+          (filter[:$query] || filter).each do |field, value|
             document.store(field.to_s, value)
           end
           document
@@ -272,7 +272,7 @@ module Mongo
         def find_command
           document = BSON::Document.new
           document.store(FIND, collection)
-          document.store(FILTER, filter[:$query] ? filter[:$query] : filter)
+          document.store(FILTER, filter[:$query] || filter)
           OPTION_MAPPINGS.each do |legacy, option|
             document.store(option, options[legacy]) unless options[legacy].nil?
           end

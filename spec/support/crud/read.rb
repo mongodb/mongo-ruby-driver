@@ -31,6 +31,16 @@ module Mongo
                          :limit => 'limit'
                        }
 
+        # Map of read preference mode names to their equivalent Ruby-formatted symbols.
+        #
+        # @since 2.4.0
+        READ_PREFERENCE_MAP = { 'primary' => :primary,
+                                'secondary' => :secondary,
+                                'primaryPreferred' => :primary_preferred,
+                                'secondaryPreferred' => :secondary_preferred,
+                                'nearest' => :nearest
+                              }
+
         # The operation name.
         #
         # @return [ String ] name The operation name.
@@ -109,7 +119,8 @@ module Mongo
         end
 
         def find(collection)
-          collection.find(filter, options.merge(modifiers: BSON::Document.new(modifiers) || {})).to_a
+          opts = modifiers ? options.merge(modifiers: BSON::Document.new(modifiers)) : options
+          (read_preference ? collection.with(read: read_preference) : collection).find(filter, opts).to_a
         end
 
         def options
@@ -140,6 +151,12 @@ module Mongo
 
         def arguments
           @spec['arguments']
+        end
+
+        def read_preference
+          if @spec['read_preference'] && @spec['read_preference']['mode']
+            { mode: READ_PREFERENCE_MAP[@spec['read_preference']['mode']] }
+          end
         end
       end
     end
