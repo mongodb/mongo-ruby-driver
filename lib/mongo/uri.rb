@@ -374,6 +374,7 @@ module Mongo
     # Read Options
     uri_option 'readpreference', :mode, :group => :read, :type => :read_mode
     uri_option 'readpreferencetags', :tag_sets, :group => :read, :type => :read_tags
+    uri_option 'maxstalenessms', :max_staleness, :group => :read, :type => :ms_convert
 
     # Pool options
     uri_option 'minpoolsize', :min_pool_size
@@ -390,6 +391,9 @@ module Mongo
     uri_option 'authsource', :auth_source, :type => :auth_source
     uri_option 'authmechanism', :auth_mech, :type => :auth_mech
     uri_option 'authmechanismproperties', :auth_mech_properties, :type => :auth_mech_props
+
+    # Client Options
+    uri_option 'appname', :app_name
 
     # Casts option values that do not have a specifically provided
     # transformation to the appropriate type.

@@ -121,6 +121,7 @@ module Mongo
         # @option options :max_time_ms [ Integer ] The maximum amount of time to allow the
         #   command to run.
         # @option options [ Hash ] :read The read preference options.
+        # @option options [ Hash ] :collation The collation to use.
         #
         # @return [ Integer ] The document count.
         #
@@ -132,9 +133,18 @@ module Mongo
           cmd[:limit] = options[:limit] if options[:limit]
           cmd[:maxTimeMS] = options[:max_time_ms] if options[:max_time_ms]
           cmd[:readConcern] = collection.read_concern if collection.read_concern
+          preference = ServerSelector.get(options[:read] || read_preference)
+          server = preference.select_server(cluster)
+          validate_collation!(server, options)
+          cmd[:collation] = options[:collation] if options[:collation]
           read_with_retry do
-            options = options.merge(read: read) unless options[:read]
-            database.command(cmd, options).n.to_i
+            Operation::Commands::Command.new({
+                                               :selector => cmd,
+                                               :db_name => database.name,
+                                               :options => { :limit => -1 },
+                                               :read => preference,
+                                             }).execute(server).n.to_i
+
           end
         end
 
@@ -149,6 +159,7 @@ module Mongo
         # @option options :max_time_ms [ Integer ] The maximum amount of time to allow the
         #   command to run.
         # @option options [ Hash ] :read The read preference options.
+        # @option options [ Hash ] :collation The collation to use.
         #
         # @return [ Array<Object> ] The list of distinct values.
         #
@@ -159,9 +170,18 @@ module Mongo
                   :query => filter }
           cmd[:maxTimeMS] = options[:max_time_ms] if options[:max_time_ms]
           cmd[:readConcern] = collection.read_concern if collection.read_concern
+          preference = ServerSelector.get(options[:read] || read_preference)
+          server = preference.select_server(cluster)
+          validate_collation!(server, options)
+          cmd[:collation] = options[:collation] if options[:collation]
           read_with_retry do
-            options = options.merge(read: read) unless options[:read]
-            database.command(cmd, options).first['values']
+            Operation::Commands::Command.new({
+                                               :selector => cmd,
+                                               :db_name => database.name,
+                                               :options => { :limit => -1 },
+                                               :read => preference
+                                             }).execute(server).first['values']
+
           end
         end
 

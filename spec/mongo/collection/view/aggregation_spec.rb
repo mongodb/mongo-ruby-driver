@@ -26,6 +26,10 @@ describe Mongo::Collection::View::Aggregation do
     described_class.new(view, pipeline, options)
   end
 
+  after do
+    authorized_collection.delete_many
+  end
+
   describe '#allow_disk_use' do
 
     let(:new_agg) do
@@ -143,6 +147,31 @@ describe Mongo::Collection::View::Aggregation do
         expect(aggregation.to_a.size).to eq(2)
       end
     end
+
+    context 'when the view has a write concern' do
+
+      let(:collection) do
+        authorized_collection.with(write: { w: WRITE_CONCERN[:w]+1 })
+      end
+
+      let(:view) do
+        Mongo::Collection::View.new(collection, selector, view_options)
+      end
+
+      context 'when the server supports write concern on the aggregate command', if: collation_enabled? do
+
+        it 'does not apply the write concern' do
+          expect(aggregation.to_a.size).to eq(2)
+        end
+      end
+
+      context 'when the server does not support write concern on the aggregation command', unless: collation_enabled? do
+
+        it 'does not apply the write concern' do
+          expect(aggregation.to_a.size).to eq(2)
+        end
+      end
+    end
   end
 
   describe '#initialize' do
@@ -172,6 +201,54 @@ describe Mongo::Collection::View::Aggregation do
 
     it 'executes an explain' do
       expect(aggregation.explain).to_not be_empty
+    end
+
+    context 'when a collation is specified' do
+
+      before do
+        authorized_collection.insert_many([ { name: 'bang' }, { name: 'bang' }])
+      end
+
+      let(:pipeline) do
+        [{ "$match" => { "name" => "BANG" } }]
+      end
+
+      let(:options) do
+        { collation: { locale: 'en_US', strength: 2 } }
+      end
+
+      let(:result) do
+        aggregation.explain['$cursor']['queryPlanner']['collation']['locale']
+      end
+
+      context 'when the server selected supports collations', if: collation_enabled? do
+
+        it 'applies the collation' do
+          expect(result).to eq('en_US')
+        end
+      end
+
+      context 'when the server selected does not support collations', unless: collation_enabled? do
+
+        it 'raises an exception' do
+          expect {
+            result
+          }.to raise_exception(Mongo::Error::UnsupportedCollation)
+        end
+
+        context 'when a String key is used' do
+
+          let(:options) do
+            { 'collation' => { locale: 'en_US', strength: 2 } }
+          end
+
+          it 'raises an exception' do
+            expect {
+              result
+            }.to raise_exception(Mongo::Error::UnsupportedCollation)
+          end
+        end
+      end
     end
   end
 
@@ -323,6 +400,54 @@ describe Mongo::Collection::View::Aggregation do
     end
   end
 
+  context 'when the aggregation has a collation defined' do
+
+    before do
+      authorized_collection.insert_many([ { name: 'bang' }, { name: 'bang' }])
+    end
+
+    let(:pipeline) do
+      [{ "$match" => { "name" => "BANG" } }]
+    end
+
+    let(:options) do
+      { collation: { locale: 'en_US', strength: 2 } }
+    end
+
+    let(:result) do
+      aggregation.collect { |doc| doc['name']}
+    end
+
+    context 'when the server selected supports collations', if: collation_enabled? do
+
+      it 'applies the collation' do
+        expect(result).to eq(['bang', 'bang'])
+      end
+    end
+
+    context 'when the server selected does not support collations', unless: collation_enabled? do
+
+      it 'raises an exception' do
+        expect {
+          result
+        }.to raise_exception(Mongo::Error::UnsupportedCollation)
+      end
+
+      context 'when a String key is used' do
+
+        let(:options) do
+          { 'collation' => { locale: 'en_US', strength: 2 } }
+        end
+
+        it 'raises an exception' do
+          expect {
+            result
+          }.to raise_exception(Mongo::Error::UnsupportedCollation)
+        end
+      end
+    end
+  end
+
   context 'when $out is in the pipeline', if: write_command_enabled? do
 
     let(:pipeline) do
@@ -384,6 +509,46 @@ describe Mongo::Collection::View::Aggregation do
      it 'does not reroute the operation to a primary' do
        expect(Mongo::Logger.logger).not_to receive(:warn?)
        aggregation.to_a
+     end
+
+     context 'when the view has a write concern' do
+
+       let(:collection) do
+         authorized_collection.with(write: { w: WRITE_CONCERN[:w]+1 })
+       end
+
+       let(:view) do
+         Mongo::Collection::View.new(collection, selector, view_options)
+       end
+
+       context 'when the server supports write concern on the aggregate command', if: collation_enabled? do
+
+         it 'uses the write concern' do
+           expect {
+             aggregation.to_a
+           }.to raise_exception(Mongo::Error::OperationFailure)
+         end
+       end
+
+       context 'when the server does not support write concern on the aggregation command', unless: collation_enabled? do
+
+         let(:documents) do
+           [
+             { city: "Berlin", pop: 18913, neighborhood: "Kreuzberg" },
+             { city: "Berlin", pop: 84143, neighborhood: "Mitte" },
+             { city: "New York", pop: 40270, neighborhood: "Brooklyn" }
+           ]
+         end
+
+         before do
+           authorized_collection.insert_many(documents)
+           aggregation.to_a
+         end
+
+         it 'does not apply the write concern' do
+           expect(authorized_client['output_collection'].find.count).to eq(2)
+         end
+       end
      end
     end
   end

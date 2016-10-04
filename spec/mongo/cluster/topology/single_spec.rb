@@ -18,22 +18,28 @@ describe Mongo::Cluster::Topology::Single do
     Mongo::Event::Listeners.new
   end
 
+  let(:cluster) do
+    double('cluster').tap do |cl|
+      allow(cl).to receive(:app_metadata).and_return(app_metadata)
+    end
+  end
+
   describe '.servers' do
 
     let(:mongos) do
-      Mongo::Server.new(address, double('cluster'), monitoring, listeners, TEST_OPTIONS)
+      Mongo::Server.new(address, cluster, monitoring, listeners, TEST_OPTIONS)
     end
 
     let(:standalone) do
-      Mongo::Server.new(address, double('cluster'), monitoring, listeners, TEST_OPTIONS)
+      Mongo::Server.new(address, cluster, monitoring, listeners, TEST_OPTIONS)
     end
 
     let(:standalone_two) do
-      Mongo::Server.new(address, double('cluster'), monitoring, listeners, TEST_OPTIONS)
+      Mongo::Server.new(address, cluster, monitoring, listeners, TEST_OPTIONS)
     end
 
     let(:replica_set) do
-      Mongo::Server.new(address, double('cluster'), monitoring, listeners, TEST_OPTIONS)
+      Mongo::Server.new(address, cluster, monitoring, listeners, TEST_OPTIONS)
     end
 
     let(:mongos_description) do

@@ -14,6 +14,7 @@
 
 require 'mongo/cluster/topology'
 require 'mongo/cluster/cursor_reaper'
+require 'mongo/cluster/app_metadata'
 
 module Mongo
 
@@ -41,6 +42,12 @@ module Mongo
 
     # @return [ Object ] The cluster topology.
     attr_reader :topology
+
+    # @return [ Mongo::Cluster::AppMetadata ] The application metadata, used for connection
+    #   handshakes.
+    #
+    # @since 2.4.0
+    attr_reader :app_metadata
 
     def_delegators :topology, :replica_set?, :replica_set_name, :sharded?, :single?, :unknown?
     def_delegators :@cursor_reaper, :register_cursor, :schedule_kill_cursor, :unregister_cursor
@@ -106,6 +113,7 @@ module Mongo
       @monitoring = monitoring
       @event_listeners = Event::Listeners.new
       @options = options.freeze
+      @app_metadata ||= AppMetadata.new(self)
       @topology = Topology.initial(seeds, options)
       @update_lock = Mutex.new
       @pool_lock = Mutex.new

@@ -44,7 +44,7 @@ module Mongo
     attr_reader :monitoring
 
     # Get the description from the monitor and scan on monitor.
-    def_delegators :monitor, :description, :scan!
+    def_delegators :monitor, :description, :scan!, :heartbeat_frequency, :last_scan
 
     # Delegate convenience methods to the monitor description.
     def_delegators :description,
@@ -64,7 +64,12 @@ module Mongo
                    :secondary?,
                    :standalone?,
                    :unknown?,
-                   :unknown!
+                   :unknown!,
+                   :last_write_date
+
+    # Get the app metadata from the cluster.
+    def_delegators :cluster,
+                   :app_metadata
 
     # Is this server equal to another?
     #
@@ -158,7 +163,7 @@ module Mongo
       @cluster = cluster
       @monitoring = monitoring
       @options = options.freeze
-      @monitor = Monitor.new(address, event_listeners, options)
+      @monitor = Monitor.new(address, event_listeners, options.merge(app_metadata: cluster.app_metadata))
       monitor.scan!
       monitor.run!
       ObjectSpace.define_finalizer(self, self.class.finalize(monitor))

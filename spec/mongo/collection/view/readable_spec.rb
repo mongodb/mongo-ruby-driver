@@ -405,6 +405,54 @@ describe Mongo::Collection::View::Readable do
     it 'sets the max_time_ms option on the command', if: write_command_enabled? do
       expect(view.count(max_time_ms: 100)).to eq(10)
     end
+
+    context 'when a collation is specified' do
+
+      let(:selector) do
+        { name: 'BANG' }
+      end
+
+      let(:result) do
+        view.count(count_options)
+      end
+
+      before do
+        authorized_collection.insert_one(name: 'bang')
+      end
+
+      let(:count_options) do
+        { collation: { locale: 'en_US', strength: 2 } }
+      end
+
+      context 'when the server selected supports collations', if: collation_enabled? do
+
+        it 'applies the collation to the count' do
+          expect(result).to eq(1)
+        end
+      end
+
+      context 'when the server selected does not support collations', unless: collation_enabled? do
+
+        it 'raises an exception' do
+          expect {
+            result
+          }.to raise_exception(Mongo::Error::UnsupportedCollation)
+        end
+
+        context 'when a String key is used' do
+
+          let(:count_options) do
+            { 'collation' => { locale: 'en_US', strength: 2 } }
+          end
+
+          it 'raises an exception' do
+            expect {
+              result
+            }.to raise_exception(Mongo::Error::UnsupportedCollation)
+          end
+        end
+      end
+    end
   end
 
   describe '#distinct' do
@@ -646,6 +694,67 @@ describe Mongo::Collection::View::Readable do
 
       it 'returns an empty array' do
         expect(view.distinct(:nofieldexists)).to be_empty
+      end
+    end
+
+    context 'when a collation is specified' do
+
+      let(:result) do
+        view.distinct(:name, distinct_options)
+      end
+
+      before do
+        authorized_collection.insert_one(name: 'bang')
+        authorized_collection.insert_one(name: 'BANG')
+      end
+
+      let(:distinct_options) do
+        { collation: { locale: 'en_US', strength: 2 } }
+      end
+
+      context 'when the server selected supports collations', if: collation_enabled? do
+
+        it 'applies the collation to the distinct' do
+          expect(result).to eq(['bang'])
+        end
+      end
+
+      context 'when the server selected does not support collations', unless: collation_enabled? do
+
+        it 'raises an exception' do
+          expect {
+            result
+          }.to raise_exception(Mongo::Error::UnsupportedCollation)
+        end
+
+        context 'when a String key is used' do
+
+          let(:distinct_options) do
+            { 'collation' => { locale: 'en_US', strength: 2 } }
+          end
+
+          it 'raises an exception' do
+            expect {
+              result
+            }.to raise_exception(Mongo::Error::UnsupportedCollation)
+          end
+        end
+      end
+    end
+
+    context 'when a collation is not specified' do
+
+      let(:result) do
+        view.distinct(:name)
+      end
+
+      before do
+        authorized_collection.insert_one(name: 'bang')
+        authorized_collection.insert_one(name: 'BANG')
+      end
+
+      it 'does not apply the collation to the distinct' do
+        expect(result).to eq(['bang', 'BANG'])
       end
     end
   end

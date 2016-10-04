@@ -4,17 +4,14 @@ describe Mongo::Collection do
 
   after do
     authorized_collection.delete_many
-    collection_with_validator.drop()
   end
 
   let(:collection_invalid_write_concern) do
     authorized_collection.client.with(write: { w: (WRITE_CONCERN[:w] + 1) })[authorized_collection.name]
   end
+
   let(:collection_with_validator) do
-    authorized_client[:validating,
-                      :validator => { :a => { '$exists' => true } }].tap do |c|
-      c.create
-    end
+    authorized_client[:validating]
   end
 
   describe '#==' do
@@ -416,6 +413,118 @@ describe Mongo::Collection do
           end
         end
       end
+
+      context 'when the collection has a write concern' do
+
+        after do
+          database[:specs].drop
+        end
+
+        let(:options) do
+          {
+            write: { w: WRITE_CONCERN[:w] + 1}
+          }
+        end
+
+        let(:collection) do
+          described_class.new(database, :specs, options)
+        end
+
+        context 'when the server supports write concern on the create command', if: replica_set? && collation_enabled? do
+
+          it 'applies the write concern' do
+            expect{
+              collection.create
+            }.to raise_exception(Mongo::Error::OperationFailure)
+          end
+        end
+
+        context 'when the server does not support write concern on the create command', unless: collation_enabled? do
+
+          it 'does not apply the write concern' do
+            expect(collection.create).to be_successful
+          end
+        end
+      end
+
+      context 'when the collection has a collation' do
+
+        shared_examples 'a collection command with a collation option' do
+
+          let(:response) do
+            collection.create
+          end
+
+          let(:options) do
+            { :collation => { locale: 'fr' } }
+          end
+
+          let(:collection_info) do
+            database.list_collections.find { |i| i['name'] == 'specs' }
+          end
+
+          after do
+            collection.drop
+          end
+
+          context 'when the server supports collations', if: collation_enabled? do
+
+            it 'executes the command' do
+              expect(response).to be_successful
+            end
+
+            it 'sets the collection with a collation' do
+              response
+              expect(collection_info['options']['collation']['locale']).to eq('fr')
+            end
+
+            it 'creates the collection in the database' do
+              response
+              expect(database.collection_names).to include('specs')
+            end
+          end
+
+          context 'when the server does not support collations', unless: collation_enabled? do
+
+            it 'raises an error' do
+              expect {
+                response
+              }.to raise_exception(Mongo::Error::UnsupportedCollation)
+            end
+
+            context 'when a String key is used' do
+
+              let(:options) do
+                { 'collation' => { locale: 'fr' } }
+              end
+
+              it 'raises an exception' do
+                expect {
+                  response
+                }.to raise_exception(Mongo::Error::UnsupportedCollation)
+              end
+            end
+          end
+        end
+
+        context 'when instantiating a collection directly' do
+
+          let(:collection) do
+            described_class.new(database, :specs, options)
+          end
+
+          it_behaves_like 'a collection command with a collation option'
+        end
+
+        context 'when instantiating a collection through the database' do
+
+          let(:collection) do
+            authorized_client[:specs, options]
+          end
+
+          it_behaves_like 'a collection command with a collation option'
+        end
+      end
     end
   end
 
@@ -433,22 +542,58 @@ describe Mongo::Collection do
       collection.create
     end
 
-    let!(:response) do
-      collection.drop
+    context 'when the collection does not have a write concern set' do
+
+      let!(:response) do
+        collection.drop
+      end
+
+      it 'executes the command' do
+        expect(response).to be_successful
+      end
+
+      it 'drops the collection from the database' do
+        expect(database.collection_names).to_not include('specs')
+      end
+
+      context 'when the collection does not exist' do
+
+        it 'does not raise an error' do
+          expect(database['non-existent-coll'].drop).to be(false)
+        end
+      end
     end
 
-    it 'executes the command' do
-      expect(response).to be_successful
-    end
+    context 'when the collection has a write concern' do
 
-    it 'drops the collection from the database' do
-      expect(database.collection_names).to_not include('specs')
-    end
+      let(:write_options) do
+        {
+          write: { w: WRITE_CONCERN[:w] + 1}
+        }
+      end
 
-    context 'when the collection does not exist' do
+      let(:collection_with_write_options) do
+        collection.with(write_options)
+      end
 
-      it 'does not raise an error' do
-        expect(database['non-existent-coll'].drop).to be(false)
+      after do
+        collection.drop
+      end
+
+      context 'when the server supports write concern on the drop command', if: collation_enabled? do
+
+        it 'applies the write concern' do
+          expect{
+            collection_with_write_options.drop
+          }.to raise_exception(Mongo::Error::OperationFailure)
+        end
+      end
+
+      context 'when the server does not support write concern on the drop command', unless: collation_enabled? do
+
+        it 'does not apply the write concern' do
+          expect(collection_with_write_options.drop).to be_successful
+        end
       end
     end
   end
@@ -496,10 +641,6 @@ describe Mongo::Collection do
         authorized_collection.insert_many([{ field: 'test1' }, { field: 'test2' }])
       end
 
-      after do
-        authorized_collection.delete_many
-      end
-
       let(:view) do
         authorized_collection.find
       end
@@ -540,10 +681,6 @@ describe Mongo::Collection do
 
           before do
             authorized_collection.insert_one({ field => value })
-          end
-
-          after do
-            authorized_collection.delete_many
           end
 
           it 'iterates over the documents' do
@@ -604,8 +741,6 @@ describe Mongo::Collection do
           expect(view.options[:cursor_type]).to eq(options[:cursor_type])
         end
       end
-
-      #limit
 
       context 'when provided :max_time_ms' do
 
@@ -687,15 +822,21 @@ describe Mongo::Collection do
           expect(view.modifiers[:$orderby]).to eq(options[:sort])
         end
       end
+
+      context 'when provided :collation' do
+
+        let(:options) do
+          { collation: { 'locale' => 'en_US' } }
+        end
+
+        it 'returns a view with :collation set' do
+          expect(view.options[:collation]).to eq(options[:collation])
+        end
+      end
     end
   end
 
   describe '#insert_many' do
-
-    after do
-      authorized_collection.delete_many
-      collection_with_validator.delete_many
-    end
 
     let(:result) do
       authorized_collection.insert_many([{ name: 'test1' }, { name: 'test2' }])
@@ -781,6 +922,15 @@ describe Mongo::Collection do
 
     context 'when collection has a validator', if: find_command_enabled? do
 
+      around(:each) do |spec|
+        authorized_client[:validating,
+                          :validator => { :a => { '$exists' => true } }].tap do |c|
+          c.create
+        end
+        spec.run
+        collection_with_validator.drop
+      end
+
       context 'when the document is valid' do
 
         let(:result) do
@@ -823,11 +973,6 @@ describe Mongo::Collection do
   end
 
   describe '#insert_one' do
-
-    after do
-      authorized_collection.delete_many
-      collection_with_validator.delete_many
-    end
 
     let(:result) do
       authorized_collection.insert_one({ name: 'testing' })
@@ -904,6 +1049,15 @@ describe Mongo::Collection do
     end
 
     context 'when collection has a validator', if: find_command_enabled? do
+
+      around(:each) do |spec|
+        authorized_client[:validating,
+                          :validator => { :a => { '$exists' => true } }].tap do |c|
+          c.create
+        end
+        spec.run
+        collection_with_validator.drop
+      end
 
       context 'when the document is valid' do
 
@@ -1006,6 +1160,54 @@ describe Mongo::Collection do
       it 'sets the options on the Aggregation object' do
         expect(authorized_collection.aggregate([], options).options).to eq(options)
       end
+
+      context 'when collation is provided' do
+
+        before do
+          authorized_collection.insert_many([ { name: 'bang' }, { name: 'bang' }])
+        end
+
+        let(:pipeline) do
+          [{ "$match" => { "name" => "BANG" } }]
+        end
+
+        let(:options) do
+          { collation: { locale: 'en_US', strength: 2 } }
+        end
+
+        let(:result) do
+          authorized_collection.aggregate(pipeline, options).collect { |doc| doc['name']}
+        end
+
+        context 'when the server selected supports collations', if: collation_enabled? do
+
+          it 'applies the collation' do
+            expect(result).to eq(['bang', 'bang'])
+          end
+        end
+
+        context 'when the server selected does not support collations', unless: collation_enabled? do
+
+          it 'raises an exception' do
+            expect {
+              result
+            }.to raise_exception(Mongo::Error::UnsupportedCollation)
+          end
+
+          context 'when a String key is used' do
+
+            let(:options) do
+              { 'collation' => { locale: 'en_US', strength: 2 } }
+            end
+
+            it 'raises an exception' do
+              expect {
+                result
+              }.to raise_exception(Mongo::Error::UnsupportedCollation)
+            end
+          end
+        end
+      end
     end
   end
 
@@ -1019,10 +1221,6 @@ describe Mongo::Collection do
       authorized_collection.insert_many(documents)
     end
 
-    after do
-      authorized_collection.delete_many
-    end
-
     it 'returns an integer count' do
       expect(authorized_collection.count).to eq(10)
     end
@@ -1031,6 +1229,54 @@ describe Mongo::Collection do
 
       it 'passes the options to the count' do
         expect(authorized_collection.count({}, limit: 5)).to eq(5)
+      end
+
+      context 'when a collation is specified' do
+
+        let(:selector) do
+          { name: 'BANG' }
+        end
+
+        let(:result) do
+          authorized_collection.count(selector, options)
+        end
+
+        before do
+          authorized_collection.insert_one(name: 'bang')
+        end
+
+        let(:options) do
+          { collation: { locale: 'en_US', strength: 2 } }
+        end
+
+        context 'when the server selected supports collations', if: collation_enabled? do
+
+          it 'applies the collation to the count' do
+            expect(result).to eq(1)
+          end
+        end
+
+        context 'when the server selected does not support collations', unless: collation_enabled? do
+
+          it 'raises an exception' do
+            expect {
+              result
+            }.to raise_exception(Mongo::Error::UnsupportedCollation)
+          end
+
+          context 'when a String key is used' do
+
+            let(:options) do
+              { 'collation' => { locale: 'en_US', strength: 2 } }
+            end
+
+            it 'raises an exception' do
+              expect {
+                result
+              }.to raise_exception(Mongo::Error::UnsupportedCollation)
+            end
+          end
+        end
       end
     end
   end
@@ -1043,10 +1289,6 @@ describe Mongo::Collection do
 
     before do
       authorized_collection.insert_many(documents)
-    end
-
-    after do
-      authorized_collection.delete_many
     end
 
     it 'returns the distinct values' do
@@ -1066,6 +1308,67 @@ describe Mongo::Collection do
         expect(authorized_collection.distinct(:field, {}, max_time_ms: 100).sort).to eq([ 'test1', 'test2', 'test3' ])
       end
     end
+
+    context 'when a collation is specified' do
+
+      let(:result) do
+        authorized_collection.distinct(:name, {}, options)
+      end
+
+      before do
+        authorized_collection.insert_one(name: 'bang')
+        authorized_collection.insert_one(name: 'BANG')
+      end
+
+      let(:options) do
+        { collation: { locale: 'en_US', strength: 2 } }
+      end
+
+      context 'when the server selected supports collations', if: collation_enabled? do
+
+        it 'applies the collation to the distinct' do
+          expect(result).to eq(['bang'])
+        end
+      end
+
+      context 'when the server selected does not support collations', unless: collation_enabled? do
+
+        it 'raises an exception' do
+          expect {
+            result
+          }.to raise_exception(Mongo::Error::UnsupportedCollation)
+        end
+
+        context 'when a String key is used' do
+
+          let(:options) do
+            { 'collation' => { locale: 'en_US', strength: 2 } }
+          end
+
+          it 'raises an exception' do
+            expect {
+              result
+            }.to raise_exception(Mongo::Error::UnsupportedCollation)
+          end
+        end
+      end
+    end
+
+    context 'when a collation is not specified' do
+
+      let(:result) do
+        authorized_collection.distinct(:name)
+      end
+
+      before do
+        authorized_collection.insert_one(name: 'bang')
+        authorized_collection.insert_one(name: 'BANG')
+      end
+
+      it 'does not apply the collation to the distinct' do
+        expect(result).to eq(['bang', 'BANG'])
+      end
+    end
   end
 
   describe '#delete_one' do
@@ -1082,10 +1385,6 @@ describe Mongo::Collection do
                                               { field: 'test1' },
                                               { field: 'test1' }
                                           ])
-      end
-
-      after do
-        authorized_collection.delete_many
       end
 
       let(:response) do
@@ -1124,16 +1423,111 @@ describe Mongo::Collection do
         }.to raise_exception(Mongo::Error::OperationFailure)
       end
     end
+
+    context 'when a collation is provided' do
+
+      let(:selector) do
+        { name: 'BANG' }
+      end
+
+      let(:result) do
+        authorized_collection.delete_one(selector, options)
+      end
+
+      before do
+        authorized_collection.insert_one(name: 'bang')
+      end
+
+      let(:options) do
+        { collation: { locale: 'en_US', strength: 2 } }
+      end
+
+      context 'when the server selected supports collations', if: collation_enabled? do
+
+        it 'applies the collation' do
+          expect(result.written_count).to eq(1)
+          expect(authorized_collection.find(name: 'bang').count).to eq(0)
+        end
+
+        context 'when unacknowledged writes is used' do
+
+          let(:collection_with_unacknowledged_write_concern) do
+            authorized_collection.with(write: { w: 0 })
+          end
+
+          let(:result) do
+            collection_with_unacknowledged_write_concern.delete_one(selector, options)
+          end
+
+          it 'raises an exception' do
+            expect {
+              result
+            }.to raise_exception(Mongo::Error::UnsupportedCollation)
+          end
+
+          context 'when a String key is used' do
+
+            let(:options) do
+              { 'collation' => { locale: 'en_US', strength: 2 } }
+            end
+
+            it 'raises an exception' do
+              expect {
+                result
+              }.to raise_exception(Mongo::Error::UnsupportedCollation)
+            end
+          end
+        end
+      end
+
+      context 'when the server selected does not support collations', unless: collation_enabled? do
+
+        it 'raises an exception' do
+          expect {
+            result
+          }.to raise_exception(Mongo::Error::UnsupportedCollation)
+        end
+
+        context 'when a String key is used' do
+
+          let(:options) do
+            { 'collation' => { locale: 'en_US', strength: 2 } }
+          end
+
+          it 'raises an exception' do
+            expect {
+              result
+            }.to raise_exception(Mongo::Error::UnsupportedCollation)
+          end
+        end
+      end
+    end
+
+    context 'when collation is not specified' do
+
+      let(:selector) do
+        { name: 'BANG' }
+      end
+
+      let(:result) do
+        authorized_collection.delete_one(selector)
+      end
+
+      before do
+        authorized_collection.insert_one(name: 'bang')
+      end
+
+      it 'does not apply the collation' do
+        expect(result.written_count).to eq(0)
+        expect(authorized_collection.find(name: 'bang').count).to eq(1)
+      end
+    end
   end
 
   describe '#delete_many' do
 
     before do
       authorized_collection.insert_many([{ field: 'test1' }, { field: 'test2' }])
-    end
-
-    after do
-      authorized_collection.delete_many
     end
 
     context 'when a selector was provided' do
@@ -1164,6 +1558,107 @@ describe Mongo::Collection do
         expect {
           result
         }.to raise_exception(Mongo::Error::OperationFailure)
+      end
+    end
+
+    context 'when a collation is specified' do
+
+      let(:selector) do
+        { name: 'BANG' }
+      end
+
+      let(:result) do
+        authorized_collection.delete_many(selector, options)
+      end
+
+      before do
+        authorized_collection.insert_one(name: 'bang')
+        authorized_collection.insert_one(name: 'bang')
+      end
+
+      let(:options) do
+        { collation: { locale: 'en_US', strength: 2 } }
+      end
+
+      context 'when the server selected supports collations', if: collation_enabled? do
+
+        it 'applies the collation' do
+          expect(result.written_count).to eq(2)
+          expect(authorized_collection.find(name: 'bang').count).to eq(0)
+        end
+
+        context 'when unacknowledged writes is used' do
+
+          let(:collection_with_unacknowledged_write_concern) do
+            authorized_collection.with(write: { w: 0 })
+          end
+
+          let(:result) do
+            collection_with_unacknowledged_write_concern.delete_many(selector, options)
+          end
+
+          it 'raises an exception' do
+            expect {
+              result
+            }.to raise_exception(Mongo::Error::UnsupportedCollation)
+          end
+
+          context 'when a String key is used' do
+
+            let(:options) do
+              { 'collation' => { locale: 'en_US', strength: 2 } }
+            end
+
+            it 'raises an exception' do
+              expect {
+                result
+              }.to raise_exception(Mongo::Error::UnsupportedCollation)
+            end
+          end
+        end
+      end
+
+      context 'when the server selected does not support collations', unless: collation_enabled? do
+
+        it 'raises an exception' do
+          expect {
+            result
+          }.to raise_exception(Mongo::Error::UnsupportedCollation)
+        end
+
+        context 'when a String key is used' do
+
+          let(:options) do
+            { 'collation' => { locale: 'en_US', strength: 2 } }
+          end
+
+          it 'raises an exception' do
+            expect {
+              result
+            }.to raise_exception(Mongo::Error::UnsupportedCollation)
+          end
+        end
+      end
+    end
+
+    context 'when a collation is not specified' do
+
+      let(:selector) do
+        { name: 'BANG' }
+      end
+
+      let(:result) do
+        authorized_collection.delete_many(selector)
+      end
+
+      before do
+        authorized_collection.insert_one(name: 'bang')
+        authorized_collection.insert_one(name: 'bang')
+      end
+
+      it 'does not apply the collation' do
+        expect(result.written_count).to eq(0)
+        expect(authorized_collection.find(name: 'bang').count).to eq(2)
       end
     end
   end
@@ -1307,10 +1802,6 @@ describe Mongo::Collection do
         authorized_collection.insert_many([{ field: 'test1' }, { field: 'test1' }])
       end
 
-      after do
-        authorized_collection.delete_many
-      end
-
       let!(:response) do
         authorized_collection.replace_one(selector, { field: 'testing' })
       end
@@ -1357,10 +1848,6 @@ describe Mongo::Collection do
         authorized_collection.find(field: 'test1').first
       end
 
-      after do
-        authorized_collection.delete_many
-      end
-
       it 'reports that a document was written' do
         expect(response.written_count).to eq(1)
       end
@@ -1404,12 +1891,17 @@ describe Mongo::Collection do
 
     context 'when collection has a validator', if: find_command_enabled? do
 
-      before do
-        collection_with_validator.insert_one({ a: 1 })
+      around(:each) do |spec|
+        authorized_client[:validating,
+                          :validator => { :a => { '$exists' => true } }].tap do |c|
+          c.create
+        end
+        spec.run
+        collection_with_validator.drop
       end
 
-      after do
-        collection_with_validator.delete_many
+      before do
+        collection_with_validator.insert_one({ a: 1 })
       end
 
       context 'when the document is valid' do
@@ -1451,16 +1943,111 @@ describe Mongo::Collection do
         end
       end
     end
+
+    context 'when a collation is specified' do
+
+      let(:selector) do
+        { name: 'BANG' }
+      end
+
+      let(:result) do
+        authorized_collection.replace_one(selector, { name: 'doink' }, options)
+      end
+
+      before do
+        authorized_collection.insert_one(name: 'bang')
+      end
+
+      let(:options) do
+        { collation: { locale: 'en_US', strength: 2 } }
+      end
+
+      context 'when the server selected supports collations', if: collation_enabled? do
+
+        it 'applies the collation' do
+          expect(result.written_count).to eq(1)
+          expect(authorized_collection.find(name: 'doink').count).to eq(1)
+        end
+
+        context 'when unacknowledged writes is used' do
+
+          let(:collection_with_unacknowledged_write_concern) do
+            authorized_collection.with(write: { w: 0 })
+          end
+
+          let(:result) do
+            collection_with_unacknowledged_write_concern.replace_one(selector, { name: 'doink' }, options)
+          end
+
+          it 'raises an exception' do
+            expect {
+              result
+            }.to raise_exception(Mongo::Error::UnsupportedCollation)
+          end
+
+          context 'when a String key is used' do
+
+            let(:options) do
+              { 'collation' => { locale: 'en_US', strength: 2 } }
+            end
+
+            it 'raises an exception' do
+              expect {
+                result
+              }.to raise_exception(Mongo::Error::UnsupportedCollation)
+            end
+          end
+        end
+      end
+
+      context 'when the server selected does not support collations', unless: collation_enabled? do
+
+        it 'raises an exception' do
+          expect {
+            result
+          }.to raise_exception(Mongo::Error::UnsupportedCollation)
+        end
+
+        context 'when a String key is used' do
+
+          let(:options) do
+            { 'collation' => { locale: 'en_US', strength: 2 } }
+          end
+
+          it 'raises an exception' do
+            expect {
+              result
+            }.to raise_exception(Mongo::Error::UnsupportedCollation)
+          end
+        end
+      end
+    end
+
+    context 'when a collation is not specified' do
+
+      let(:selector) do
+        { name: 'BANG' }
+      end
+
+      let(:result) do
+        authorized_collection.replace_one(selector, { name: 'doink' })
+      end
+
+      before do
+        authorized_collection.insert_one(name: 'bang')
+      end
+
+      it 'does not apply the collation' do
+        expect(result.written_count).to eq(0)
+        expect(authorized_collection.find(name: 'bang').count).to eq(1)
+      end
+    end
   end
 
   describe '#update_many' do
 
     let(:selector) do
       { field: 'test' }
-    end
-
-    after do
-      authorized_collection.delete_many
     end
 
     context 'when a selector was provided' do
@@ -1560,12 +2147,17 @@ describe Mongo::Collection do
 
     context 'when collection has a validator', if: find_command_enabled? do
 
-      before do
-        collection_with_validator.insert_many([{ a: 1 }, { a: 2 }])
+      around(:each) do |spec|
+        authorized_client[:validating,
+                          :validator => { :a => { '$exists' => true } }].tap do |c|
+          c.create
+        end
+        spec.run
+        collection_with_validator.drop
       end
 
-      after do
-        collection_with_validator.delete_many
+      before do
+        collection_with_validator.insert_many([{ a: 1 }, { a: 2 }])
       end
 
       context 'when the document is valid' do
@@ -1608,6 +2200,106 @@ describe Mongo::Collection do
             expect(result3.written_count).to eq(2)
           end
         end
+      end
+    end
+
+    context 'when a collation is specified' do
+
+      let(:selector) do
+        { name: 'BANG' }
+      end
+
+      let(:result) do
+        authorized_collection.update_many(selector, { '$set' => { other: 'doink' } }, options)
+      end
+
+      before do
+        authorized_collection.insert_one(name: 'bang')
+        authorized_collection.insert_one(name: 'baNG')
+      end
+
+      let(:options) do
+        { collation: { locale: 'en_US', strength: 2 } }
+      end
+
+      context 'when the server selected supports collations', if: collation_enabled? do
+
+        it 'applies the collation' do
+          expect(result.written_count).to eq(2)
+          expect(authorized_collection.find(other: 'doink').count).to eq(2)
+        end
+
+        context 'when unacknowledged writes is used' do
+
+          let(:collection_with_unacknowledged_write_concern) do
+            authorized_collection.with(write: { w: 0 })
+          end
+
+          let(:result) do
+            collection_with_unacknowledged_write_concern.update_many(selector, { '$set' => { other: 'doink' } }, options)
+          end
+
+          it 'raises an exception' do
+            expect {
+              result
+            }.to raise_exception(Mongo::Error::UnsupportedCollation)
+          end
+
+          context 'when a String key is used' do
+
+            let(:options) do
+              { 'collation' => { locale: 'en_US', strength: 2 } }
+            end
+
+            it 'raises an exception' do
+              expect {
+                result
+              }.to raise_exception(Mongo::Error::UnsupportedCollation)
+            end
+          end
+        end
+      end
+
+      context 'when the server selected does not support collations', unless: collation_enabled? do
+
+        it 'raises an exception' do
+          expect {
+            result
+          }.to raise_exception(Mongo::Error::UnsupportedCollation)
+        end
+
+        context 'when a String key is used' do
+
+          let(:options) do
+            { 'collation' => { locale: 'en_US', strength: 2 } }
+          end
+
+          it 'raises an exception' do
+            expect {
+              result
+            }.to raise_exception(Mongo::Error::UnsupportedCollation)
+          end
+        end
+      end
+    end
+
+    context 'when collation is not specified' do
+
+      let(:selector) do
+        {name: 'BANG'}
+      end
+
+      let(:result) do
+        authorized_collection.update_many(selector, { '$set' => {other: 'doink'} })
+      end
+
+      before do
+        authorized_collection.insert_one(name: 'bang')
+        authorized_collection.insert_one(name: 'baNG')
+      end
+
+      it 'does not apply the collation' do
+        expect(result.written_count).to eq(0)
       end
     end
   end
@@ -1715,12 +2407,17 @@ describe Mongo::Collection do
 
     context 'when collection has a validator', if: find_command_enabled? do
 
-      before do
-        collection_with_validator.insert_one({ a: 1 })
+      around(:each) do |spec|
+        authorized_client[:validating,
+                          :validator => { :a => { '$exists' => true } }].tap do |c|
+          c.create
+        end
+        spec.run
+        collection_with_validator.drop
       end
 
-      after do
-        collection_with_validator.delete_many
+      before do
+        collection_with_validator.insert_one({ a: 1 })
       end
 
       context 'when the document is valid' do
@@ -1763,6 +2460,104 @@ describe Mongo::Collection do
             expect(result3.written_count).to eq(1)
           end
         end
+      end
+    end
+
+    context 'when there is a collation specified' do
+
+      let(:selector) do
+        { name: 'BANG' }
+      end
+
+      let(:result) do
+        authorized_collection.update_one(selector, { '$set' => { other: 'doink' } }, options)
+      end
+
+      before do
+        authorized_collection.insert_one(name: 'bang')
+      end
+
+      let(:options) do
+        { collation: { locale: 'en_US', strength: 2 } }
+      end
+
+      context 'when the server selected supports collations', if: collation_enabled? do
+
+        it 'applies the collation' do
+          expect(result.written_count).to eq(1)
+          expect(authorized_collection.find(other: 'doink').count).to eq(1)
+        end
+
+        context 'when unacknowledged writes is used' do
+
+          let(:collection_with_unacknowledged_write_concern) do
+            authorized_collection.with(write: { w: 0 })
+          end
+
+          let(:result) do
+            collection_with_unacknowledged_write_concern.update_one(selector, { '$set' => { other: 'doink' } }, options)
+          end
+
+          it 'raises an exception' do
+            expect {
+              result
+            }.to raise_exception(Mongo::Error::UnsupportedCollation)
+          end
+
+          context 'when a String key is used' do
+
+            let(:options) do
+              { 'collation' => { locale: 'en_US', strength: 2 } }
+            end
+
+            it 'raises an exception' do
+              expect {
+                result
+              }.to raise_exception(Mongo::Error::UnsupportedCollation)
+            end
+          end
+        end
+      end
+
+      context 'when the server selected does not support collations', unless: collation_enabled? do
+
+        it 'raises an exception' do
+          expect {
+            result
+          }.to raise_exception(Mongo::Error::UnsupportedCollation)
+        end
+
+        context 'when a String key is used' do
+
+          let(:options) do
+            { 'collation' => { locale: 'en_US', strength: 2 } }
+          end
+
+          it 'raises an exception' do
+            expect {
+              result
+            }.to raise_exception(Mongo::Error::UnsupportedCollation)
+          end
+        end
+      end
+    end
+
+    context 'when a collation is not specified' do
+
+      let(:selector) do
+        { name: 'BANG' }
+      end
+
+      let(:result) do
+        authorized_collection.update_one(selector, { '$set' => { other: 'doink' } })
+      end
+
+      before do
+        authorized_collection.insert_one(name: 'bang')
+      end
+
+      it 'does not apply the collation' do
+        expect(result.written_count).to eq(0)
       end
     end
   end
@@ -1884,6 +2679,74 @@ describe Mongo::Collection do
           collection.find_one_and_delete(selector,
                                          write_concern: { w: 2 })
         }.to raise_error(Mongo::Error::OperationFailure)
+      end
+    end
+
+    context 'when collation is specified' do
+
+      let(:selector) do
+        { name: 'BANG' }
+      end
+
+      let(:result) do
+        authorized_collection.find_one_and_delete(selector, options)
+      end
+
+      before do
+        authorized_collection.insert_one(name: 'bang')
+      end
+
+      let(:options) do
+        { collation: { locale: 'en_US', strength: 2 } }
+      end
+
+      context 'when the server selected supports collations', if: collation_enabled? do
+
+        it 'applies the collation' do
+          expect(result['name']).to eq('bang')
+          expect(authorized_collection.find(name: 'bang').count).to eq(0)
+        end
+      end
+
+      context 'when the server selected does not support collations', unless: collation_enabled? do
+
+        it 'raises an exception' do
+          expect {
+            result
+          }.to raise_exception(Mongo::Error::UnsupportedCollation)
+        end
+
+        context 'when a String key is used' do
+
+          let(:options) do
+            { 'collation' => { locale: 'en_US', strength: 2 } }
+          end
+
+          it 'raises an exception' do
+            expect {
+              result
+            }.to raise_exception(Mongo::Error::UnsupportedCollation)
+          end
+        end
+      end
+    end
+
+    context 'when collation is not specified' do
+
+      let(:selector) do
+        { name: 'BANG' }
+      end
+
+      let(:result) do
+        authorized_collection.find_one_and_delete(selector)
+      end
+
+      before do
+        authorized_collection.insert_one(name: 'bang')
+      end
+
+      it 'does not apply the collation' do
+        expect(result).to be_nil
       end
     end
   end
@@ -2043,12 +2906,17 @@ describe Mongo::Collection do
 
     context 'when collection has a validator', if: find_command_enabled? do
 
-      before do
-        collection_with_validator.insert_one({ a: 1 })
+      around(:each) do |spec|
+        authorized_client[:validating,
+                          :validator => { :a => { '$exists' => true } }].tap do |c|
+          c.create
+        end
+        spec.run
+        collection_with_validator.drop
       end
 
-      after do
-        collection_with_validator.delete_many
+      before do
+        collection_with_validator.insert_one({ a: 1 })
       end
 
       context 'when the document is valid' do
@@ -2118,6 +2986,76 @@ describe Mongo::Collection do
                                          { '$set' => { field: 'testing' }},
                                          write_concern: { w: 2 })
         }.to raise_error(Mongo::Error::OperationFailure)
+      end
+    end
+
+    context 'when a collation is specified' do
+
+      let(:selector) do
+        { name: 'BANG' }
+      end
+
+      let(:result) do
+        authorized_collection.find_one_and_update(selector,
+                                                  { '$set' => { other: 'doink' } },
+                                                  options)
+      end
+
+      before do
+        authorized_collection.insert_one(name: 'bang')
+      end
+
+      let(:options) do
+        { collation: { locale: 'en_US', strength: 2 } }
+      end
+
+      context 'when the server selected supports collations', if: collation_enabled? do
+
+        it 'applies the collation' do
+          expect(result['name']).to eq('bang')
+          expect(authorized_collection.find({ name: 'bang' }, limit: -1).first['other']).to eq('doink')
+        end
+      end
+
+      context 'when the server selected does not support collations', unless: collation_enabled? do
+
+        it 'raises an exception' do
+          expect {
+            result
+          }.to raise_exception(Mongo::Error::UnsupportedCollation)
+        end
+
+        context 'when a String key is used' do
+
+          let(:options) do
+            { 'collation' => { locale: 'en_US', strength: 2 } }
+          end
+
+          it 'raises an exception' do
+            expect {
+              result
+            }.to raise_exception(Mongo::Error::UnsupportedCollation)
+          end
+        end
+      end
+    end
+
+    context 'when there is no collation specified' do
+
+      let(:selector) do
+        { name: 'BANG' }
+      end
+
+      let(:result) do
+        authorized_collection.find_one_and_update(selector, { '$set' => { other: 'doink' } })
+      end
+
+      before do
+        authorized_collection.insert_one(name: 'bang')
+      end
+
+      it 'does not apply the collation' do
+        expect(result).to be_nil
       end
     end
   end
@@ -2251,12 +3189,17 @@ describe Mongo::Collection do
 
     context 'when collection has a validator', if: find_command_enabled? do
 
-      before do
-        collection_with_validator.insert_one({ a: 1 })
+      around(:each) do |spec|
+        authorized_client[:validating,
+                          :validator => { :a => { '$exists' => true } }].tap do |c|
+          c.create
+        end
+        spec.run
+        collection_with_validator.drop
       end
 
-      after do
-        collection_with_validator.delete_many
+      before do
+        collection_with_validator.insert_one({ a: 1 })
       end
 
       context 'when the document is valid' do
@@ -2326,6 +3269,76 @@ describe Mongo::Collection do
                                           { field: 'testing' },
                                           write_concern: { w: 2 })
         }.to raise_error(Mongo::Error::OperationFailure)
+      end
+    end
+
+    context 'when collation is provided' do
+
+      let(:selector) do
+        { name: 'BANG' }
+      end
+
+      let(:result) do
+        authorized_collection.find_one_and_replace(selector,
+                                                   { name: 'doink' },
+                                                   options)
+      end
+
+      before do
+        authorized_collection.insert_one(name: 'bang')
+      end
+
+      let(:options) do
+        { collation: { locale: 'en_US', strength: 2 } }
+      end
+
+      context 'when the server selected supports collations', if: collation_enabled? do
+
+        it 'applies the collation' do
+          expect(result['name']).to eq('bang')
+          expect(authorized_collection.find(name: 'doink').count).to eq(1)
+        end
+      end
+
+      context 'when the server selected does not support collations', unless: collation_enabled? do
+
+        it 'raises an exception' do
+          expect {
+            result
+          }.to raise_exception(Mongo::Error::UnsupportedCollation)
+        end
+
+        context 'when a String key is used' do
+
+          let(:options) do
+            { 'collation' => { locale: 'en_US', strength: 2 } }
+          end
+
+          it 'raises an exception' do
+            expect {
+              result
+            }.to raise_exception(Mongo::Error::UnsupportedCollation)
+          end
+        end
+      end
+    end
+
+    context 'when collation is not specified' do
+
+      let(:selector) do
+        { name: 'BANG' }
+      end
+
+      let(:result) do
+        authorized_collection.find_one_and_replace(selector, { name: 'doink' })
+      end
+
+      before do
+        authorized_collection.insert_one(name: 'bang')
+      end
+
+      it 'does not apply the collation' do
+        expect(result).to be_nil
       end
     end
   end

@@ -211,6 +211,7 @@ module Mongo
             log_warn(REROUTE)
             server = cluster.next_primary(false)
           end
+          validate_collation!(server)
           result = initial_query_op.execute(server)
           inline? ? result : send_fetch_query(server)
         end
@@ -233,6 +234,12 @@ module Mongo
 
         def send_fetch_query(server)
           fetch_query_op(server).execute(server)
+        end
+
+        def validate_collation!(server)
+          if (options[:collation] || options[Operation::COLLATION]) && !server.features.collation_enabled?
+            raise Error::UnsupportedCollation.new
+          end
         end
       end
     end

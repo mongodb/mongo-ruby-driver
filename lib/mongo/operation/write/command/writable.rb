@@ -36,7 +36,7 @@ module Mongo
           # @since 2.0.0
           def execute(server)
             server.with_connection do |connection|
-              connection.dispatch([ message ], operation_id)
+              connection.dispatch([ message(server) ], operation_id)
             end
           end
 
@@ -47,7 +47,7 @@ module Mongo
           # @return [ Mongo::Protocol::Query ] Wire protocol message.
           #
           # @since 2.0.0
-          def message
+          def message(server)
             Protocol::Query.new(db_name, Database::COMMAND, selector, options)
           end
         end

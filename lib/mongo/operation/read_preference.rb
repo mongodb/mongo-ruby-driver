@@ -28,12 +28,12 @@ module Mongo
 
       private
 
-      def update_selector(server)
+      def update_selector_for_read_pref(sel, server)
         if server.mongos? && read_pref = read.to_mongos
-          sel = selector[:$query] ? selector : { :$query => selector }
+          sel = sel[:$query] ? sel : { :$query => sel }
           sel.merge(:$readPreference => read_pref)
         else
-          selector
+          sel
         end
       end
 
@@ -41,19 +41,19 @@ module Mongo
         (server.cluster.single? && !server.mongos?) || read.slave_ok?
       end
 
-      def update_options(server)
+      def update_options_for_slave_ok(opts, server)
         if slave_ok?(server)
-          options.dup.tap do |opts|
-            (opts[:flags] ||= []) << SLAVE_OK
+          opts.dup.tap do |o|
+            (o[:flags] ||= []) << SLAVE_OK
           end
         else
-          options
+          opts
         end
       end
 
       def message(server)
-        sel = update_selector(server)
-        opts = update_options(server)
+        sel = update_selector_for_read_pref(selector, server)
+        opts = update_options_for_slave_ok(options, server)
         Protocol::Query.new(db_name, query_coll, sel, opts)
       end
     end

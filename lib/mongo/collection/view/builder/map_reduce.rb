@@ -32,10 +32,11 @@ module Mongo
             out: 'out',
             scope: 'scope',
             verbose: 'verbose',
-            bypass_document_validation: 'bypassDocumentValidation'
+            bypass_document_validation: 'bypassDocumentValidation',
+            collation: 'collation'
           ).freeze
 
-          def_delegators :@view, :collection, :database, :filter, :read
+          def_delegators :@view, :collection, :database, :filter, :read, :write_concern
 
           # @return [ String ] map The map function.
           attr_reader :map
@@ -77,7 +78,11 @@ module Mongo
           #
           # @since 2.2.0
           def command_specification
-            { selector: find_command, db_name: database.name, read: read }
+            {
+              selector: find_command,
+              db_name: database.name,
+              read: read
+            }
           end
 
           # Get the specification for the document query after a map/reduce.
@@ -101,10 +106,22 @@ module Mongo
           #
           # @since 2.2.0
           def specification
-            { selector: map_reduce_command, db_name: database.name, read: read }
+            spec = {
+              selector: map_reduce_command,
+              db_name: database.name,
+              read: read
+            }
+            write?(spec) ? spec.merge!(write_concern: write_concern) : spec
           end
 
           private
+
+          def write?(spec)
+            if out = spec[:selector][:out]
+              out.is_a?(String) ||
+                (out.respond_to?(:keys) && out.keys.first.to_s.downcase != View::MapReduce::INLINE)
+            end
+          end
 
           def find_command
             BSON::Document.new('find' => query_collection, 'filter' => {})
@@ -119,8 +136,8 @@ module Mongo
               :out => { inline: 1 }
             )
             command[:readConcern] = collection.read_concern if collection.read_concern
-            command.merge!(Options::Mapper.transform_documents(options, MAPPINGS))
             command.merge!(view.options)
+            command.merge!(Options::Mapper.transform_documents(options, MAPPINGS))
             command
           end
 

@@ -104,7 +104,7 @@ describe Mongo::Operation::Write::Command::Update do
 
     it 'creates the correct Command message' do
       expect(Mongo::Protocol::Query).to receive(:new).with(TEST_DB, '$cmd', expected_selector, { limit: -1 })
-      op.send(:message)
+      op.send(:message, double('server'))
     end
   end
 end

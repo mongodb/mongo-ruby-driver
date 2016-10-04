@@ -260,6 +260,17 @@ describe Mongo::Client do
           expect(client.cluster.logger).to_not eq(Mongo::Logger.logger)
         end
       end
+
+      context 'when providing a heartbeat_frequency' do
+
+        let(:client) do
+          described_class.new(['127.0.0.1:27017'], :heartbeat_frequency => 2)
+        end
+
+        it 'sets the heartbeat frequency' do
+          expect(client.cluster.options[:heartbeat_frequency]).to eq(client.options[:heartbeat_frequency])
+        end
+      end
     end
 
     context 'when providing a connection string' do
@@ -557,6 +568,41 @@ describe Mongo::Client do
       end
     end
 
+    context 'when the app_name is changed' do
+
+      let(:client) do
+        authorized_client
+      end
+
+      let!(:original_options) do
+        client.options
+      end
+
+      let(:new_options) do
+        { app_name: 'reports' }
+      end
+
+      let!(:new_client) do
+        authorized_client.with(new_options)
+      end
+
+      it 'returns a new client' do
+        expect(new_client).not_to equal(client)
+      end
+
+      it 'replaces the existing options' do
+        expect(new_client.options).to eq(client.options.merge(new_options))
+      end
+
+      it 'does not modify the original client' do
+        expect(client.options).to eq(original_options)
+      end
+
+      it 'does not keep the same cluster' do
+        expect(new_client.cluster).not_to be(client.cluster)
+      end
+    end
+
     context 'when the write concern is not changed' do
 
       let(:client) do
@@ -595,7 +641,7 @@ describe Mongo::Client do
       end
 
       it 'keeps the same cluster' do
-        expect(new_client.cluster).to equal(client.cluster)
+        expect(new_client.cluster).to be(client.cluster)
       end
     end
 

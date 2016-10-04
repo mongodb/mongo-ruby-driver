@@ -169,7 +169,21 @@ module Mongo
     private
 
     def read_from_socket(length)
-      @socket.read(length) || String.new
+      data = String.new
+      deadline = (Time.now + timeout) if timeout
+      begin
+        while (data.length < length)
+          data << @socket.read_nonblock(length - data.length)
+        end
+      rescue IO::WaitReadable
+        select_timeout = (deadline - Time.now) if deadline
+        unless Kernel::select([@socket], nil, [@socket], select_timeout)
+          raise Timeout::Error.new("Took more than #{timeout} seconds to receive data.")
+        end
+        retry
+      end
+
+      data
     end
 
     def unix_socket?(sock)
@@ -178,12 +192,6 @@ module Mongo
 
     def set_socket_options(sock)
       sock.set_encoding(BSON::BINARY)
-
-      unless unix_socket?(sock) && BSON::Environment.jruby?
-        encoded_timeout = [ timeout, 0 ].pack(TIMEOUT_PACK)
-        sock.setsockopt(SOL_SOCKET, SO_RCVTIMEO, encoded_timeout)
-        sock.setsockopt(SOL_SOCKET, SO_SNDTIMEO, encoded_timeout)
-      end
     end
 
     def handle_errors

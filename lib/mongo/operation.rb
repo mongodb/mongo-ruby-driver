@@ -18,6 +18,7 @@ require 'mongo/operation/specifiable'
 require 'mongo/operation/limited'
 require 'mongo/operation/object_id_generator'
 require 'mongo/operation/read_preference'
+require 'mongo/operation/takes_write_concern'
 require 'mongo/operation/read'
 require 'mongo/operation/write'
 require 'mongo/operation/commands'
@@ -50,5 +51,10 @@ module Mongo
     #
     # @since 2.1.0
     UPSERT = 'upsert'.freeze
+
+    # The collation field constant.
+    #
+    # @since 2.4.0
+    COLLATION = 'collation'.freeze
   end
 end

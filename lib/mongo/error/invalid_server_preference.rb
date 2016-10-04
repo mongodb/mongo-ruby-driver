@@ -20,16 +20,37 @@ module Mongo
     # @since 2.0.0
     class InvalidServerPreference < Error
 
+      # Error message when tags are specified for a read preference that cannot support them.
+      #
+      # @since 2.4.0
+      NO_TAG_SUPPORT = 'This read preference cannot be combined with tags.'.freeze
+
+      # Error message when a max staleness is specified for a read preference that cannot support it.
+      #
+      # @since 2.4.0
+      NO_MAX_STALENESS_SUPPORT = 'max_staleness cannot be set for this read preference.'.freeze
+
+      # Error message for when the max staleness is not at least twice the heartbeat frequency.
+      #
+      # @since 2.4.0
+      INVALID_MAX_STALENESS = "max_staleness must be at least twice the client's heartbeat frequency.".freeze
+
+      # Error message when max staleness cannot be used because one or more servers has version < 3.4.
+      #
+      # @since 2.4.0
+      NO_MAX_STALENESS_WITH_LEGACY_SERVER = 'max_staleness can only be set for a cluster in which ' +
+                                              'each server is at least version 3.4.'.freeze
+
       # Instantiate the new exception.
       #
       # @example Instantiate the exception.
-      #   Mongo::ServerSelector::InvalidServerPreference.new
+      #   Mongo::Error::InvalidServerPreference.new
       #
-      # @param [ String ] name The preference name.
+      # @param [ String ] message The error message.
       #
       # @since 2.0.0
-      def initialize(name)
-        super("This server preference #{name} cannot be combined with tags.")
+      def initialize(message)
+        super(message)
       end
     end
   end

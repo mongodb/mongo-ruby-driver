@@ -30,6 +30,7 @@ module Mongo
         class CreateIndex
           include Specifiable
           include Writable
+          include TakesWriteConcern
 
           private
 
@@ -40,6 +41,11 @@ module Mongo
           # @since 2.0.0
           def selector
             { :createIndexes => coll_name, :indexes => indexes }
+          end
+
+          def message(server)
+            sel = update_selector_for_write_concern(selector, server)
+            Protocol::Query.new(db_name, Database::COMMAND, sel, options)
           end
         end
       end

@@ -48,7 +48,8 @@ describe Mongo::Collection::View::Builder::FindCommand do
           no_cursor_timeout: true,
           await_data: true,
           allow_partial_results: true,
-          read_concern: { level: 'local' }
+          read_concern: { level: 'local' },
+          collation: { locale: 'en_US' }
         }
       end
 
@@ -142,6 +143,10 @@ describe Mongo::Collection::View::Builder::FindCommand do
 
       it 'maps allow partial results' do
         expect(selector['allowPartialResults']).to be true
+      end
+
+      it 'maps collation' do
+        expect(selector['collation']).to eq('locale' => 'en_US')
       end
     end
 

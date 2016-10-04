@@ -35,11 +35,17 @@ module Mongo
           cmd[:fields] = projection if projection
           cmd[:sort] = sort if sort
           cmd[:maxTimeMS] = max_time_ms if max_time_ms
-          wc = options[:write_concern] || (collection.write_concern &&
-                                           collection.write_concern.options)
-          cmd[:writeConcern] = wc if wc
+          cmd[:writeConcern] = write_concern.options if write_concern
+
+          server = next_primary
+          validate_collation!(server, options)
+          cmd[:collation] = options[:collation] if options[:collation]
+
           write_with_retry do
-            database.command(cmd).first['value']
+            Operation::Commands::Command.new({
+                                              :selector => cmd,
+                                              :db_name => database.name
+                                             }).execute(server).first['value']
           end
         end
 
@@ -80,7 +86,7 @@ module Mongo
         # @option opts [ true, false ] :upsert Whether to upsert if the document doesn't exist.
         # @option opts [ true, false ] :bypass_document_validation Whether or
         #   not to skip document level validation.
-        # @option options [ Hash ] :write_concern The write concern options.
+        # @option opts [ Hash ] :write_concern The write concern options.
         #   Defaults to the collection's write concern.
         #
         # @return [ BSON::Document ] The document.
@@ -95,13 +101,19 @@ module Mongo
           cmd[:upsert] = opts[:upsert] if opts[:upsert]
           cmd[:maxTimeMS] = max_time_ms if max_time_ms
           cmd[:bypassDocumentValidation] = !!opts[:bypass_document_validation]
-          wc = options[:write_concern] || (collection.write_concern &&
-                                           collection.write_concern.options)
-          cmd[:writeConcern] = wc if wc
-          write_with_retry do
-            value = database.command(cmd).first['value']
-            value unless value.nil? || value.empty?
+          cmd[:writeConcern] = write_concern.options if write_concern
+
+          server = next_primary
+          validate_collation!(server, options)
+          cmd[:collation] = options[:collation] if options[:collation]
+          
+          value = write_with_retry do
+            Operation::Commands::Command.new({
+                                              :selector => cmd,
+                                              :db_name => database.name
+                                             }).execute(server).first['value']
           end
+          value unless value.nil? || value.empty?
         end
 
         # Remove documents from the collection.
@@ -109,11 +121,15 @@ module Mongo
         # @example Remove multiple documents from the collection.
         #   collection_view.delete_many
         #
+        # @param [ Hash ] opts The options.
+        #
+        # @option opts [ Hash ] :collation The collation to use.
+        #
         # @return [ Result ] The response from the database.
         #
         # @since 2.0.0
-        def delete_many
-          remove(0)
+        def delete_many(opts = {})
+          remove(0, opts)
         end
 
         # Remove a document from the collection.
@@ -121,11 +137,15 @@ module Mongo
         # @example Remove a single document from the collection.
         #   collection_view.delete_one
         #
+        # @param [ Hash ] opts The options.
+        #
+        # @option opts [ Hash ] :collation The collation to use.
+        #
         # @return [ Result ] The response from the database.
         #
         # @since 2.0.0
-        def delete_one
-          remove(1)
+        def delete_one(opts = {})
+          remove(1, opts)
         end
 
         # Replaces a single document in the database with the new document.
@@ -138,6 +158,7 @@ module Mongo
         #
         # @option opts [ true, false ] :upsert Whether to upsert if the
         #   document doesn't exist.
+        # @option opts [ Hash ] :collation The collation to use.
         #
         # @return [ Result ] The response from the database.
         #
@@ -156,6 +177,7 @@ module Mongo
         #
         # @option opts [ true, false ] :upsert Whether to upsert if the
         #   document doesn't exist.
+        # @option opts [ Hash ] :collation The collation to use.
         #
         # @return [ Result ] The response from the database.
         #
@@ -174,6 +196,7 @@ module Mongo
         #
         # @option opts [ true, false ] :upsert Whether to upsert if the
         #   document doesn't exist.
+        # @option opts [ Hash ] :collation The collation to use.
         #
         # @return [ Result ] The response from the database.
         #
@@ -184,29 +207,47 @@ module Mongo
 
         private
 
-        def remove(value)
+        def remove(value, opts)
+          server = next_primary
+          validate_collation!(server, opts)
+          delete_doc = { Operation::Q => filter, Operation::LIMIT => value }
+          # We must extract the collation at the String key as well so that if w == 0,
+          # an error can be raised later when an OpCode is used.
+          # Otherwise, the collation will silently not be sent.
+          if collation = opts[:collation] || opts[Operation::COLLATION]
+            delete_doc[:collation] = collation
+          end
           write_with_retry do
             Operation::Write::Delete.new(
-              :delete => { Operation::Q => filter, Operation::LIMIT => value },
+              :delete => delete_doc,
               :db_name => collection.database.name,
               :coll_name => collection.name,
               :write_concern => collection.write_concern
-            ).execute(next_primary)
+            ).execute(server)
           end
         end
 
         def update(spec, multi, opts)
+          server = next_primary
+          validate_collation!(server, opts)
+          update_doc = { Operation::Q => filter,
+                         Operation::U => spec,
+                         Operation::MULTI => multi,
+                         Operation::UPSERT => !!opts[:upsert] }
+          # We must extract the collation at the String key as well so that if w == 0,
+          # an error can be raised later when an OpCode is used.
+          # Otherwise, the collation will silently not be sent.
+          if collation = opts[:collation] || opts[Operation::COLLATION]
+            update_doc[:collation] = collation
+          end
           write_with_retry do
             Operation::Write::Update.new(
-              :update => { Operation::Q => filter,
-                           Operation::U => spec,
-                           Operation::MULTI => multi,
-                           Operation::UPSERT => !!opts[:upsert] },
+              :update => update_doc,
               :db_name => collection.database.name,
               :coll_name => collection.name,
               :write_concern => collection.write_concern,
               :bypass_document_validation => !!opts[:bypass_document_validation]
-            ).execute(next_primary)
+            ).execute(server)
           end
         end
       end

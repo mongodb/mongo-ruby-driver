@@ -31,6 +31,7 @@ module Mongo
         class DropIndex
           include Specifiable
           include Writable
+          include TakesWriteConcern
 
           private
 
@@ -41,6 +42,11 @@ module Mongo
           # @since 2.0.0
           def selector
             { :dropIndexes => coll_name, :index => index_name }
+          end
+
+          def message(server)
+            sel = update_selector_for_write_concern(selector, server)
+            Protocol::Query.new(db_name, Database::COMMAND, sel, options)
           end
         end
       end

@@ -30,10 +30,11 @@ module Mongo
             :allow_disk_use => 'allowDiskUse',
             :max_time_ms => 'maxTimeMS',
             :explain => 'explain',
-            :bypass_document_validation => 'bypassDocumentValidation'
+            :bypass_document_validation => 'bypassDocumentValidation',
+            :collation => 'collation'
           ).freeze
 
-          def_delegators :@view, :collection, :database, :read
+          def_delegators :@view, :collection, :database, :read, :write_concern
 
           # @return [ Array<Hash> ] pipeline The pipeline.
           attr_reader :pipeline
@@ -69,10 +70,19 @@ module Mongo
           #
           # @since 2.2.0
           def specification
-            { selector: aggregation_command, db_name: database.name, read: read }
+            spec = {
+                    selector: aggregation_command,
+                    db_name: database.name,
+                    read: read
+                   }
+            write? ? spec.merge!(write_concern: write_concern) : spec
           end
 
           private
+
+          def write?
+            pipeline.any? { |operator| operator[:$out] || operator['$out'] }
+          end
 
           def aggregation_command
             command = BSON::Document.new(:aggregate => collection.name, :pipeline => pipeline)

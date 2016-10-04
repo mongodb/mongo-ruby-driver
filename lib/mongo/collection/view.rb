@@ -56,7 +56,12 @@ module Mongo
       attr_reader :filter
 
       # Delegate necessary operations to the collection.
-      def_delegators :collection, :client, :cluster, :database, :read_preference, :write_concern
+      def_delegators :collection,
+                     :client,
+                     :cluster,
+                     :database,
+                     :read_preference,
+                     :write_concern
 
       # Delegate to the cluster for the next primary.
       def_delegators :cluster, :next_primary
@@ -127,6 +132,7 @@ module Mongo
       #   once.
       # @option options :sort [ Hash ] The key and direction pairs used to sort the
       #   results.
+      # @option options [ Hash ] :collation The collation to use.
       #
       # @since 2.0.0
       def initialize(collection, filter = {}, options = {})
@@ -150,6 +156,10 @@ module Mongo
 
       private
 
+      def write_concern
+        WriteConcern.get(options[:write] || options[:write_concern] || collection.write_concern)
+      end
+
       def initialize_copy(other)
         @collection = other.collection
         @options = other.options.dup
@@ -165,6 +175,12 @@ module Mongo
 
       def new(options)
         View.new(collection, filter, options)
+      end
+
+      def validate_collation!(server, opts)
+        if (opts[:collation] || opts[Operation::COLLATION]) && !server.features.collation_enabled?
+          raise Error::UnsupportedCollation.new
+        end
       end
 
       def view; self; end

@@ -67,6 +67,7 @@ module Mongo
       def to_mongos
         preference = { :mode => 'nearest' }
         preference.merge!({ :tags => tag_sets }) unless tag_sets.empty?
+        preference.merge!({ maxStalenessMS: max_staleness * 1000 }) if max_staleness
         preference
       end
 
@@ -76,18 +77,20 @@ module Mongo
       #   local threshold between the nearest server and other servers.
       #
       # @example Select nearest servers given a list of candidates.
-      #   preference = Mongo::Serverreference::Nearest.new
+      #   preference = Mongo::ServerSelector::Nearest.new
       #   preference.select_server(cluster)
       #
       # @return [ Array ] The nearest servers from the list of candidates.
       #
       # @since 2.0.0
       def select(candidates)
-        if tag_sets.empty?
-          near_servers(candidates)
-        else
-          near_servers(match_tag_sets(candidates))
-        end
+        matching_servers = filter_stale_servers(candidates, primary(candidates).first)
+        matching_servers = match_tag_sets(matching_servers) unless tag_sets.empty?
+        near_servers(matching_servers)
+      end
+
+      def max_staleness_allowed?
+        true
       end
     end
   end

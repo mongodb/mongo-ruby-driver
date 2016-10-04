@@ -16,6 +16,10 @@ describe Mongo::Index::View do
       view.create_one(spec, unique: true)
     end
 
+    after do
+      begin; view.drop_one('another_-1'); rescue; end
+    end
+
     context 'when the index exists' do
 
       let(:result) do
@@ -33,6 +37,68 @@ describe Mongo::Index::View do
         expect {
           view.drop_one('*')
         }.to raise_error(Mongo::Error::MultiIndexDrop)
+      end
+    end
+
+    context 'when the collection has a write concern' do
+
+      let(:collection) do
+        authorized_collection.with(write: { w: WRITE_CONCERN[:w] + 1})
+      end
+
+      let(:view_with_write_concern) do
+        described_class.new(collection)
+      end
+
+      let(:result) do
+        view_with_write_concern.drop_one('another_-1')
+      end
+
+      context 'when the server accepts writeConcern for the dropIndexes operation', if: collation_enabled? do
+
+        it 'applies the write concern' do
+          expect {
+            result
+          }.to raise_exception(Mongo::Error::OperationFailure)
+        end
+      end
+
+      context 'when the server does not accept writeConcern for the dropIndexes operation', unless: collation_enabled? do
+
+        it 'does not apply the write concern' do
+          expect(result).to be_successful
+        end
+      end
+    end
+
+    context 'when there are multiple indexes with the same key pattern', if: collation_enabled? do
+
+      before do
+        view.create_one({ random: 1 }, unique: true)
+        view.create_one({ random: 1 },
+                          name: 'random_1_with_collation',
+                          unique: true,
+                          collation: { locale: 'en_US', strength: 2 })
+      end
+
+      context 'when a name is supplied' do
+
+        let!(:result) do
+          view.drop_one('random_1_with_collation')
+        end
+
+        let(:index_names) do
+          view.collect { |model| model['name'] }
+        end
+
+        it 'returns ok' do
+          expect(result).to be_successful
+        end
+
+        it 'drops the correct index' do
+          expect(index_names).not_to include('random_1_with_collation')
+          expect(index_names).to include('random_1')
+        end
       end
     end
   end
@@ -56,6 +122,41 @@ describe Mongo::Index::View do
       it 'drops the index' do
         expect(result).to be_successful
       end
+
+      context 'when the collection has a write concern' do
+
+        let(:collection) do
+          authorized_collection.with(write: { w: WRITE_CONCERN[:w] + 1})
+        end
+
+        let(:view_with_write_concern) do
+          described_class.new(collection)
+        end
+
+        let(:result) do
+          view_with_write_concern.drop_all
+        end
+
+        after do
+          view.drop_all
+        end
+
+        context 'when the server accepts writeConcern for the dropIndexes operation', if: collation_enabled? do
+
+          it 'applies the write concern' do
+            expect {
+              result
+            }.to raise_exception(Mongo::Error::OperationFailure)
+          end
+        end
+
+        context 'when the server does not accept writeConcern for the dropIndexes operation', unless: collation_enabled? do
+
+          it 'does not apply the write concern' do
+            expect(result).to be_successful
+          end
+        end
+      end
     end
   end
 
@@ -65,39 +166,261 @@ describe Mongo::Index::View do
 
       context 'when passing multi-args' do
 
-        let(:result) do
-          view.create_many(
-            { key: { random: 1 }, unique: true },
-            { key: { testing: -1 }, unique: true }
-          )
+        context 'when the index creation is successful' do
+
+          let!(:result) do
+            view.create_many(
+              { key: { random: 1 }, unique: true },
+              { key: { testing: -1 }, unique: true }
+            )
+          end
+
+          after do
+            view.drop_one('random_1')
+            view.drop_one('testing_-1')
+          end
+
+          it 'returns ok' do
+            expect(result).to be_successful
+          end
         end
 
-        after do
-          view.drop_one('random_1')
-          view.drop_one('testing_-1')
+        context 'when collation is specified', if: collation_enabled? do
+
+          let(:result) do
+            view.create_many(
+              { key: { random: 1 },
+                unique: true,
+                collation: { locale: 'en_US', strength: 2 } }
+            )
+          end
+
+          after do
+            begin; view.drop_one('random_1'); rescue; end
+          end
+
+          let(:index_info) do
+            view.get('random_1')
+          end
+
+          context 'when the server supports collations', if: collation_enabled? do
+
+            it 'returns ok' do
+              expect(result).to be_successful
+            end
+
+            it 'applies the collation to the new index' do
+              result
+              expect(index_info['collation']).not_to be_nil
+              expect(index_info['collation']['locale']).to eq('en_US')
+              expect(index_info['collation']['strength']).to eq(2)
+            end
+          end
+
+          context 'when the server does not support collations', unless: collation_enabled? do
+
+            it 'raises an exception' do
+              expect {
+                result
+              }.to raise_exception(Mongo::Error::UnsupportedCollation)
+            end
+
+            context 'when a String key is used' do
+
+              let(:result) do
+                view.create_many(
+                  { key: { random: 1 },
+                    unique: true,
+                    'collation' => { locale: 'en_US', strength: 2 } }
+                )
+              end
+
+              it 'raises an exception' do
+                expect {
+                  result
+                }.to raise_exception(Mongo::Error::UnsupportedCollation)
+              end
+            end
+          end
         end
 
-        it 'returns ok' do
-          expect(result).to be_successful
+        context 'when the collection has a write concern' do
+
+          after do
+            begin; view.drop_one('random_1'); rescue; end
+            begin; view.drop_one('testing_-1'); rescue; end
+          end
+
+          let(:collection) do
+            authorized_collection.with(write: { w: WRITE_CONCERN[:w] + 1})
+          end
+
+          let(:view_with_write_concern) do
+            described_class.new(collection)
+          end
+
+          let(:result) do
+            view_with_write_concern.create_many(
+                { key: { random: 1 }, unique: true },
+                { key: { testing: -1 }, unique: true }
+            )
+          end
+
+          context 'when the server accepts writeConcern for the createIndexes operation', if: collation_enabled? do
+
+            it 'applies the write concern' do
+              expect {
+                result
+              }.to raise_exception(Mongo::Error::OperationFailure)
+            end
+          end
+
+          context 'when the server does not accept writeConcern for the createIndexes operation', unless: collation_enabled? do
+
+            context 'when the server supports the createIndexes command', if: write_command_enabled? do
+
+              it 'does not apply the write concern' do
+                expect(result).to be_successful
+              end
+            end
+
+            context 'when the driver inserts into the system.indexes collection', unless: write_command_enabled? do
+
+              it 'does not apply the write concern' do
+                expect(result).to be_successful
+              end
+            end
+          end
         end
       end
 
       context 'when passing an array' do
 
-        let(:result) do
-          view.create_many([
-            { key: { random: 1 }, unique: true },
-            { key: { testing: -1 }, unique: true }
-          ])
+        context 'when the index creation is successful' do
+
+          let!(:result) do
+            view.create_many([
+                                 { key: { random: 1 }, unique: true },
+                                 { key: { testing: -1 }, unique: true }
+                             ])
+          end
+
+          after do
+            view.drop_one('random_1')
+            view.drop_one('testing_-1')
+          end
+
+          it 'returns ok' do
+            expect(result).to be_successful
+          end
         end
 
-        after do
-          view.drop_one('random_1')
-          view.drop_one('testing_-1')
+        context 'when collation is specified' do
+
+          let(:result) do
+            view.create_many([
+                                 { key: { random: 1 },
+                                   unique: true,
+                                   collation: { locale: 'en_US', strength: 2 }},
+                             ])
+          end
+
+          let(:index_info) do
+            view.get('random_1')
+          end
+
+          after do
+            begin; view.drop_one('random_1'); rescue; end
+          end
+
+          context 'when the server supports collations', if: collation_enabled? do
+
+            it 'returns ok' do
+              expect(result).to be_successful
+            end
+
+            it 'applies the collation to the new index' do
+              result
+              expect(index_info['collation']).not_to be_nil
+              expect(index_info['collation']['locale']).to eq('en_US')
+              expect(index_info['collation']['strength']).to eq(2)
+            end
+          end
+
+          context 'when the server does not support collations', unless: collation_enabled? do
+
+            it 'raises an exception' do
+              expect {
+                result
+              }.to raise_exception(Mongo::Error::UnsupportedCollation)
+            end
+
+            context 'when a String key is used' do
+
+              let(:result) do
+                view.create_many([
+                                   { key: { random: 1 },
+                                     unique: true,
+                                     'collation' => { locale: 'en_US', strength: 2 }},
+                                 ])
+              end
+
+              it 'raises an exception' do
+                expect {
+                  result
+                }.to raise_exception(Mongo::Error::UnsupportedCollation)
+              end
+            end
+          end
         end
 
-        it 'returns ok' do
-          expect(result).to be_successful
+        context 'when the collection has a write concern' do
+
+          after do
+            begin; view.drop_one('random_1'); rescue; end
+            begin; view.drop_one('testing_-1'); rescue; end
+          end
+
+          let(:collection) do
+            authorized_collection.with(write: { w: WRITE_CONCERN[:w] + 1})
+          end
+
+          let(:view_with_write_concern) do
+            described_class.new(collection)
+          end
+
+          let(:result) do
+            view_with_write_concern.create_many([
+                                 { key: { random: 1 }, unique: true },
+                                 { key: { testing: -1 }, unique: true }
+                             ])
+          end
+
+          context 'when the server accepts writeConcern for the createIndexes operation', if: collation_enabled? do
+
+            it 'applies the write concern' do
+              expect {
+                result
+              }.to raise_exception(Mongo::Error::OperationFailure)
+            end
+          end
+
+          context 'when the server does not accept writeConcern for the createIndexes operation', unless: collation_enabled? do
+
+            context 'when the server accepts the createIndexes command', if: write_command_enabled? do
+
+              it 'does not apply the write concern' do
+                expect(result).to be_successful
+              end
+            end
+
+            context 'when the driver inserts into the system.indexes collection', unless: write_command_enabled? do
+
+              it 'does not apply the write concern' do
+                expect(result).to be_successful
+              end
+            end
+          end
         end
       end
 
@@ -141,11 +464,52 @@ describe Mongo::Index::View do
       end
 
       after do
-        view.drop_one('random_1')
+        begin; view.drop_one('random_1'); rescue; end
       end
 
       it 'returns ok' do
         expect(result).to be_successful
+      end
+
+      context 'when the collection has a write concern' do
+
+        let(:collection) do
+          authorized_collection.with(write: { w: WRITE_CONCERN[:w] + 1})
+        end
+
+        let(:view_with_write_concern) do
+          described_class.new(collection)
+        end
+
+        let(:result) do
+          view_with_write_concern.create_one(spec, unique: true)
+        end
+
+        context 'when the server accepts writeConcern for the createIndexes operation', if: collation_enabled? do
+
+          it 'applies the write concern' do
+            expect {
+              result
+            }.to raise_exception(Mongo::Error::OperationFailure)
+          end
+        end
+
+        context 'when the server does not accept writeConcern for the createIndexes operation', unless: collation_enabled? do
+
+          context 'when the server supports the createIndexes command', if: write_command_enabled? do
+
+            it 'does not apply the write concern' do
+              expect(result).to be_successful
+            end
+          end
+
+          context 'when the driver inserts into the system.indexes collection', unless: write_command_enabled? do
+
+            it 'does not apply the write concern' do
+              expect(result).to be_successful
+            end
+          end
+        end
       end
     end
 
@@ -235,7 +599,6 @@ describe Mongo::Index::View do
       it 'passes partialFilterExpression correctly' do
         expect(indexes[:partialFilterExpression]).to eq(expression)
       end
-
     end
   end
 
@@ -345,7 +708,7 @@ describe Mongo::Index::View do
       end
 
       let(:models) do
-        view.send(:normalize_models, [ options ])
+        view.send(:normalize_models, [ options ], authorized_primary)
       end
 
       let(:expected) do
@@ -378,7 +741,26 @@ describe Mongo::Index::View do
         end
 
         let(:models) do
-          view.send(:normalize_models, [ extended_options ])
+          view.send(:normalize_models, [ extended_options ], authorized_primary)
+        end
+
+        it 'maps the ruby options to the server options' do
+          expect(models).to eq([ extended_expected ])
+        end
+      end
+
+      context 'when the server supports collations', if: collation_enabled? do
+
+        let(:extended_options) do
+          options.merge(:collation => { locale: 'en_US' } )
+        end
+
+        let(:models) do
+          view.send(:normalize_models, [ extended_options ], authorized_primary)
+        end
+
+        let(:extended_expected) do
+          expected.tap { |exp| exp[:collation] = { locale: 'en_US' } }
         end
 
         it 'maps the ruby options to the server options' do

@@ -327,6 +327,70 @@ describe Mongo::Database do
         }.to raise_error(Mongo::Error::NoServerAvailable)
       end
     end
+
+    context 'when a write concern is not defined on the client/database object' do
+
+      context 'when a write concern is provided in the selector', if: standalone? do
+
+        let(:cmd) do
+          {
+              insert: TEST_COLL,
+              documents: [ { a: 1 } ],
+              writeConcern: { w: WRITE_CONCERN[:w]+1 }
+          }
+        end
+
+        it 'uses the write concern' do
+          expect {
+            database.command(cmd)
+          }.to raise_exception(Mongo::Error::OperationFailure)
+        end
+      end
+    end
+
+    context 'when a write concern is defined on the client/database object' do
+
+      let(:client_options) do
+        {
+          write: { w: WRITE_CONCERN[:w] + 1 }
+        }
+      end
+
+      let(:database) do
+        described_class.new(authorized_client.with(client_options), TEST_DB)
+      end
+
+      context 'when a write concern is not in the command selector', if: write_command_enabled? do
+
+        let(:cmd) do
+          {
+              insert: TEST_COLL,
+              documents: [ { a: 1 } ]
+          }
+        end
+
+        it 'does not apply a write concern' do
+          expect(database.command(cmd).written_count).to eq(1)
+        end
+      end
+
+      context 'when a write concern is provided in the command selector', if: write_command_enabled? && standalone? do
+
+        let(:cmd) do
+          {
+              insert: TEST_COLL,
+              documents: [ { a: 1 } ],
+              writeConcern: { w: WRITE_CONCERN[:w]+1 }
+          }
+        end
+
+        it 'uses the write concern' do
+          expect {
+            database.command(cmd)
+          }.to raise_exception(Mongo::Error::OperationFailure)
+        end
+      end
+    end
   end
 
   describe '#drop' do
@@ -339,10 +403,44 @@ describe Mongo::Database do
       expect(database.drop).to be_successful
     end
 
-    it 'raises an exception', unless: write_command_enabled? do
+    it 'raises an exception', if: (!write_command_enabled? && auth_enabled?) do
       expect {
         database.drop
       }.to raise_error(Mongo::Error::OperationFailure)
+    end
+
+    context 'when the client/database has a write concern' do
+
+      let(:client_options) do
+        {
+          write: { w: WRITE_CONCERN[:w] + 1 },
+          database: :safe_to_drop
+        }
+      end
+
+      let(:client) do
+        root_authorized_client.with(client_options)
+      end
+
+      let(:database_with_write_options) do
+        client.database
+      end
+
+      context 'when the server supports write concern on the dropDatabase command', if: (collation_enabled? && standalone?) do
+
+        it 'applies the write concern' do
+          expect{
+            database_with_write_options.drop
+          }.to raise_exception(Mongo::Error::OperationFailure)
+        end
+      end
+
+      context 'when the server does not support write concern on the dropDatabase command', unless: collation_enabled? do
+
+        it 'does not apply the write concern' do
+          expect(database_with_write_options.drop).to be_successful
+        end
+      end
     end
   end
 

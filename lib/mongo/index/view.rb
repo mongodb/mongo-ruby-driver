@@ -29,7 +29,7 @@ module Mongo
       #   when sending the listIndexes command.
       attr_reader :batch_size
 
-      def_delegators :@collection, :cluster, :database, :read_preference
+      def_delegators :@collection, :cluster, :database, :read_preference, :write_concern
       def_delegators :cluster, :next_primary
 
       # The index key field.
@@ -64,7 +64,8 @@ module Mongo
         :text_version => :textIndexVersion,
         :unique => :unique,
         :version => :v,
-        :weights => :weights
+        :weights => :weights,
+        :collation => :collation
       }.freeze
 
       # Drop an index by its name.
@@ -147,11 +148,15 @@ module Mongo
       #
       # @since 2.0.0
       def create_many(*models)
-        Operation::Write::CreateIndex.new(
-          indexes: normalize_models(models.flatten),
-          db_name: database.name,
-          coll_name: collection.name,
-        ).execute(next_primary)
+        server = next_primary
+        spec = {
+                indexes: normalize_models(models.flatten, server),
+                db_name: database.name,
+                coll_name: collection.name
+               }
+
+        spec[:write_concern] = write_concern if server.features.collation_enabled?
+        Operation::Write::CreateIndex.new(spec).execute(server)
       end
 
       # Convenience method for getting index information by a specific name or
@@ -213,11 +218,14 @@ module Mongo
       private
 
       def drop_by_name(name)
-        Operation::Write::DropIndex.new(
-          db_name: database.name,
-          coll_name: collection.name,
-          index_name: name
-        ).execute(next_primary)
+        spec = {
+                 db_name: database.name,
+                 coll_name: collection.name,
+                 index_name: name
+               }
+        server = next_primary
+        spec[:write_concern] = write_concern if server.features.collation_enabled?
+        Operation::Write::DropIndex.new(spec).execute(server)
       end
 
       def index_name(spec)
@@ -243,8 +251,8 @@ module Mongo
         Options::Mapper.transform_keys_to_strings(spec)
       end
 
-      def normalize_models(models)
-        with_generated_names(models).map do |model|
+      def normalize_models(models, server)
+        with_generated_names(models, server).map do |model|
           Options::Mapper.transform(model, OPTIONS)
         end
       end
@@ -253,11 +261,18 @@ module Mongo
         initial_query_op.execute(server)
       end
 
-      def with_generated_names(models)
+      def with_generated_names(models, server)
         models.dup.each do |model|
+          validate_collation!(model, server)
           unless model[:name]
             model[:name] = index_name(model[:key])
           end
+        end
+      end
+
+      def validate_collation!(model, server)
+        if (model[:collation] || model[Operation::COLLATION]) && !server.features.collation_enabled?
+          raise Error::UnsupportedCollation.new
         end
       end
     end

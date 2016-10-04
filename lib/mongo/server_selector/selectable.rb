@@ -26,6 +26,12 @@ module Mongo
       # @return [ Array ] tag_sets The tag sets used to select servers.
       attr_reader :tag_sets
 
+      # @return [ Float ] max_staleness The maximum replication lag, in seconds, that a
+      #   secondary can suffer and still be eligible for a read.
+      #
+      # @since 2.4.0
+      attr_reader :max_staleness
+
       # Check equality of two server selector.
       #
       # @example Check server selector equality.
@@ -38,7 +44,8 @@ module Mongo
       # @since 2.0.0
       def ==(other)
         name == other.name &&
-          tag_sets == other.tag_sets
+          tag_sets == other.tag_sets &&
+            max_staleness == other.max_staleness
       end
 
       # Initialize the server selector.
@@ -60,9 +67,9 @@ module Mongo
       # @since 2.0.0
       def initialize(options = {})
         @options = (options || {}).freeze
-        tag_sets = options[:tag_sets] || []
-        validate_tag_sets!(tag_sets)
-        @tag_sets = tag_sets.freeze
+        @tag_sets = (options[:tag_sets] || []).freeze
+        @max_staleness = options[:max_staleness] if options[:max_staleness] && options[:max_staleness] > 0
+        validate!
       end
 
       # Inspect the server selector.
@@ -74,7 +81,7 @@ module Mongo
       #
       # @since 2.2.0
       def inspect
-        "#<#{self.class.name}:0x#{object_id} tag_sets=#{tag_sets.inspect}>"
+        "#<#{self.class.name}:0x#{object_id} tag_sets=#{tag_sets.inspect} max_staleness=#{max_staleness.inspect}>"
       end
 
       # Select a server from eligible candidates.
@@ -143,10 +150,11 @@ module Mongo
 
       def candidates(cluster)
         if cluster.single?
-          cluster.servers
+          cluster.servers.each { |server| validate_max_staleness_support!(server) }
         elsif cluster.sharded?
-          near_servers(cluster.servers)
+          near_servers(cluster.servers).each { |server| validate_max_staleness_support!(server) }
         else
+          validate_max_staleness_value!(cluster)
           select(cluster.servers)
         end
       end
@@ -175,6 +183,7 @@ module Mongo
       # @since 2.0.0
       def secondaries(candidates)
         matching_servers = candidates.select(&:secondary?)
+        matching_servers = filter_stale_servers(matching_servers, primary(candidates).first)
         matching_servers = match_tag_sets(matching_servers) unless tag_sets.empty?
         matching_servers
       end
@@ -212,9 +221,47 @@ module Mongo
         matches || []
       end
 
-      def validate_tag_sets!(tag_sets)
-        if !tag_sets.all? { |set| set.empty? } && !tags_allowed?
-          raise Error::InvalidServerPreference.new(name)
+      def filter_stale_servers(candidates, primary = nil)
+        return candidates unless @max_staleness
+        max_staleness_ms = @max_staleness * 1000
+
+        if primary
+          candidates.select do |server|
+            validate_max_staleness_support!(server)
+            staleness = (server.last_scan - server.last_write_date) -
+                        (primary.last_scan - primary.last_write_date)  +
+                        (server.heartbeat_frequency * 1000)
+            staleness <= max_staleness_ms
+          end
+        else
+          max_write_date = candidates.collect(&:last_write_date).max
+          candidates.select do |server|
+            validate_max_staleness_support!(server)
+            staleness = max_write_date - server.last_write_date + (server.heartbeat_frequency * 1000)
+            staleness <= max_staleness_ms
+          end
+        end
+      end
+
+      def validate!
+        if !@tag_sets.all? { |set| set.empty? } && !tags_allowed?
+          raise Error::InvalidServerPreference.new(Error::InvalidServerPreference::NO_TAG_SUPPORT)
+        elsif @max_staleness && !max_staleness_allowed?
+          raise Error::InvalidServerPreference.new(Error::InvalidServerPreference::NO_MAX_STALENESS_SUPPORT)
+        end
+      end
+
+      def validate_max_staleness_support!(server)
+        if @max_staleness && !server.features.max_staleness_enabled?
+          raise Error::InvalidServerPreference.new(Error::InvalidServerPreference::NO_MAX_STALENESS_WITH_LEGACY_SERVER)
+        end
+      end
+
+      def validate_max_staleness_value!(cluster)
+        return unless @max_staleness
+        heartbeat_frequency = cluster.options[:heartbeat_frequency] || Server::Monitor::HEARTBEAT_FREQUENCY
+        if @max_staleness < heartbeat_frequency * 2
+          raise Error::InvalidServerPreference.new(Error::InvalidServerPreference::INVALID_MAX_STALENESS)
         end
       end
     end

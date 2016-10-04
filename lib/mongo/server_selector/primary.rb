@@ -83,6 +83,10 @@ module Mongo
       def select(candidates)
         primary(candidates)
       end
+
+      def max_staleness_allowed?
+        false
+      end
     end
   end
 end

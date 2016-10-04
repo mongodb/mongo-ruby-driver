@@ -53,6 +53,11 @@ module Mongo
       # @return [ Hash ] options The server options.
       attr_reader :options
 
+      # @return [ Time ] last_scan The time of the last server scan.
+      #
+      # @since 2.4.0
+      attr_reader :last_scan
+
       # Force the monitor to immediately do a check of its server.
       #
       # @example Force a scan.

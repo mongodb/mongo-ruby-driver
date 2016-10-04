@@ -35,7 +35,10 @@ module Mongo
     attr_reader :options
 
     # Delegate various methods to the collection.
-    def_delegators :@collection, :database, :cluster, :next_primary
+    def_delegators :@collection,
+                   :database,
+                   :cluster,
+                   :next_primary
 
     def_delegators :database, :client
 
@@ -51,7 +54,9 @@ module Mongo
       operation_id = Monitoring.next_operation_id
       result_combiner = ResultCombiner.new
       write_with_retry do
+        operations = op_combiner.combine
         server = next_primary
+        raise Error::UnsupportedCollation.new if op_combiner.has_collation && !server.features.collation_enabled?
         operations.each do |operation|
           execute_operation(
             operation.keys.first,
@@ -153,12 +158,8 @@ module Mongo
       end
     end
 
-    def operations
-      if ordered?
-        OrderedCombiner.new(requests).combine
-      else
-        UnorderedCombiner.new(requests).combine
-      end
+    def op_combiner
+      @op_combiner ||= ordered? ? OrderedCombiner.new(requests) : UnorderedCombiner.new(requests)
     end
 
     def split_execute(name, values, server, operation_id, combiner)

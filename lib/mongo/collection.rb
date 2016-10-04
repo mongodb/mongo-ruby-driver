@@ -124,8 +124,7 @@ module Mongo
     #
     # @since 2.0.0
     def write_concern
-      @write_concern ||= options[:write] ? WriteConcern.get(options[:write]) :
-        database.write_concern
+      @write_concern ||= WriteConcern.get(options[:write] || database.write_concern)
     end
 
     # Provides a new collection with either a new read preference or new write concern
@@ -170,7 +169,17 @@ module Mongo
     #
     # @since 2.0.0
     def create
-      database.command({ :create => name }.merge(options))
+      operation = { :create => name }.merge(options)
+      operation.delete(:write)
+      server = next_primary
+      if (options[:collation] || options[Operation::COLLATION]) && !server.features.collation_enabled?
+        raise Error::UnsupportedCollation.new
+      end
+      Operation::Commands::Create.new({
+                                        selector: operation,
+                                        db_name: database.name,
+                                        write_concern: write_concern
+                                      }).execute(server)
     end
 
     # Drop the collection. Will also drop all indexes associated with the
@@ -185,7 +194,12 @@ module Mongo
     #
     # @since 2.0.0
     def drop
-      database.command(:drop => name)
+      Operation::Commands::Drop.new({
+                                      selector: { :drop => name },
+                                      db_name: database.name,
+                                      write_concern: write_concern
+                                    }).execute(next_primary)
+
     rescue Error::OperationFailure => ex
       raise ex unless ex.message =~ /ns not found/
       false
@@ -223,6 +237,7 @@ module Mongo
     # @option options [ Integer ] :skip The number of docs to skip before returning results.
     # @option options [ Hash ] :sort The key and direction pairs by which the result set
     #   will be sorted.
+    # @option options [ Hash ] :collation The collation to use.
     #
     # @return [ CollectionView ] The collection view.
     #
@@ -248,6 +263,7 @@ module Mongo
     #   provide results using a cursor.
     # @option options [ true, false ] :bypass_document_validation Whether or
     #   not to skip document level validation.
+    # @option options [ Hash ] :collation The collation to use.
     #
     # @return [ Aggregation ] The aggregation object.
     #
@@ -269,6 +285,7 @@ module Mongo
     # @option options [ Integer ] :max_time_ms The maximum amount of time to allow the command to run.
     # @option options [ Integer ] :skip The number of documents to skip before counting.
     # @option options [ Hash ] :read The read preference options.
+    # @option options [ Hash ] :collation The collation to use.
     #
     # @return [ Integer ] The document count.
     #
@@ -288,6 +305,7 @@ module Mongo
     #
     # @option options [ Integer ] :max_time_ms The maximum amount of time to allow the command to run.
     # @option options [ Hash ] :read The read preference options.
+    # @option options [ Hash ] :collation The collation to use.
     #
     # @return [ Array<Object> ] The list of distinct values.
     #
@@ -392,12 +410,15 @@ module Mongo
     #   collection.delete_one
     #
     # @param [ Hash ] filter The filter to use.
+    # @param [ Hash ] options The options.
+    #
+    # @option options [ Hash ] :collation The collation to use.
     #
     # @return [ Result ] The response from the database.
     #
     # @since 2.1.0
-    def delete_one(filter = nil)
-      find(filter).delete_one
+    def delete_one(filter = nil, options = {})
+      find(filter).delete_one(options)
     end
 
     # Remove documents from the collection.
@@ -406,12 +427,15 @@ module Mongo
     #   collection.delete_many
     #
     # @param [ Hash ] filter The filter to use.
+    # @param [ Hash ] options The options.
+    #
+    # @option options [ Hash ] :collation The collation to use.
     #
     # @return [ Result ] The response from the database.
     #
     # @since 2.1.0
-    def delete_many(filter = nil)
-      find(filter).delete_many
+    def delete_many(filter = nil, options = {})
+      find(filter).delete_many(options)
     end
 
     # Execute a parallel scan on the collection view.
@@ -449,6 +473,7 @@ module Mongo
     #   document doesn't exist.
     # @option options [ true, false ] :bypass_document_validation Whether or
     #   not to skip document level validation.
+    # @option options [ Hash ] :collation The collation to use.
     #
     # @return [ Result ] The response from the database.
     #
@@ -470,6 +495,7 @@ module Mongo
     #   document doesn't exist.
     # @option options [ true, false ] :bypass_document_validation Whether or
     #   not to skip document level validation.
+    # @option options [ Hash ] :collation The collation to use.
     #
     # @return [ Result ] The response from the database.
     #
@@ -491,6 +517,7 @@ module Mongo
     #   document doesn't exist.
     # @option options [ true, false ] :bypass_document_validation Whether or
     #   not to skip document level validation.
+    # @option options [ Hash ] :collation The collation to use.
     #
     # @return [ Result ] The response from the database.
     #
@@ -515,6 +542,7 @@ module Mongo
     #   will be sorted.
     # @option options [ Hash ] :write_concern The write concern options.
     #   Defaults to the collection's write concern.
+    # @option options [ Hash ] :collation The collation to use.
     #
     # @return [ BSON::Document, nil ] The document, if found.
     #
@@ -547,6 +575,7 @@ module Mongo
     #   not to skip document level validation.
     # @option options [ Hash ] :write_concern The write concern options.
     #   Defaults to the collection's write concern.
+    # @option options [ Hash ] :collation The collation to use.
     #
     # @return [ BSON::Document ] The document.
     #
@@ -579,6 +608,7 @@ module Mongo
     #   not to skip document level validation.
     # @option options [ Hash ] :write_concern The write concern options.
     #   Defaults to the collection's write concern.
+    # @option options [ Hash ] :collation The collation to use.
     #
     # @return [ BSON::Document ] The document.
     #

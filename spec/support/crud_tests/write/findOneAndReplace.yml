@@ -2,6 +2,7 @@ data:
     - {_id: 1, x: 11}
     - {_id: 2, x: 22}
     - {_id: 3, x: 33}
+    - {_id: 4, x: 'ping'}
 
 tests:
     -
@@ -9,7 +10,7 @@ tests:
         operation:
             name: findOneAndReplace
             arguments:
-                filter: 
+                filter:
                     _id: {$gt: 1}
                 replacement: {x: 32}
                 projection: {x: 1, _id: 0}
@@ -22,12 +23,13 @@ tests:
                     - {_id: 1, x: 11}
                     - {_id: 2, x: 32}
                     - {_id: 3, x: 33}
+                    - {_id: 4, x: 'ping'}
     -
         description: "FindOneAndReplace when many documents match returning the document after modification"
         operation:
             name: findOneAndReplace
             arguments:
-                filter: 
+                filter:
                     _id: {$gt: 1}
                 replacement: {x: 32}
                 projection: {x: 1, _id: 0}
@@ -41,6 +43,7 @@ tests:
                     - {_id: 1, x: 11}
                     - {_id: 2, x: 32}
                     - {_id: 3, x: 33}
+                    - {_id: 4, x: 'ping'}
     -
         description: "FindOneAndReplace when one document matches returning the document before modification"
         operation:
@@ -58,6 +61,7 @@ tests:
                     - {_id: 1, x: 11}
                     - {_id: 2, x: 32}
                     - {_id: 3, x: 33}
+                    - {_id: 4, x: 'ping'}
     -
         description: "FindOneAndReplace when one document matches returning the document after modification"
         operation:
@@ -76,13 +80,35 @@ tests:
                     - {_id: 1, x: 11}
                     - {_id: 2, x: 32}
                     - {_id: 3, x: 33}
+                    - {_id: 4, x: 'ping'}
+
+    -
+        description: "FindOneAndReplace when one document matches with collation returning the document after modification"
+        operation:
+            name: findOneAndReplace
+            arguments:
+                filter: {x: 'PING'}
+                replacement: {x: 32}
+                projection: {x: 1, _id: 0}
+                returnDocument: After
+                sort: {x: 1}
+                collation: { locale: 'en_US', strength: 2 }
+
+        outcome:
+            result: {x: 32}
+            collection:
+                data:
+                    - {_id: 1, x: 11}
+                    - {_id: 2, x: 22}
+                    - {_id: 3, x: 33}
+                    - {_id: 4, x: 32}
     -
         description: "FindOneAndReplace when no documents match returning the document before modification"
         operation:
             name: findOneAndReplace
             arguments:
-                filter: {_id: 4}
-                replacement: {x: 44}
+                filter: {_id: 5}
+                replacement: {x: 55}
                 projection: {x: 1, _id: 0}
                 sort: {x: 1}
 
@@ -93,13 +119,14 @@ tests:
                     - {_id: 1, x: 11}
                     - {_id: 2, x: 22}
                     - {_id: 3, x: 33}
+                    - {_id: 4, x: 'ping'}
     -
         description: "FindOneAndReplace when no documents match with upsert returning the document before modification"
         operation:
             name: findOneAndReplace
             arguments:
-                filter: {_id: 4}
-                replacement: {x: 44}
+                filter: {_id: 5}
+                replacement: {x: 55}
                 projection: {x: 1, _id: 0}
                 sort: {x: 1}
                 upsert: true
@@ -111,14 +138,15 @@ tests:
                     - {_id: 1, x: 11}
                     - {_id: 2, x: 22}
                     - {_id: 3, x: 33}
-                    - {_id: 4, x: 44}
+                    - {_id: 4, x: 'ping'}
+                    - {_id: 5, x: 55}
     -
         description: "FindOneAndReplace when no documents match returning the document after modification"
         operation:
             name: findOneAndReplace
             arguments:
-                filter: {_id: 4}
-                replacement: {x: 44}
+                filter: {_id: 5}
+                replacement: {x: 55}
                 projection: {x: 1, _id: 0}
                 returnDocument: After
                 sort: {x: 1}
@@ -130,24 +158,25 @@ tests:
                     - {_id: 1, x: 11}
                     - {_id: 2, x: 22}
                     - {_id: 3, x: 33}
+                    - {_id: 4, x: 'ping'}
     -
         description: "FindOneAndReplace when no documents match with upsert returning the document after modification"
         operation:
             name: findOneAndReplace
             arguments:
-                filter: {_id: 4}
-                replacement: {x: 44}
+                filter: {_id: 5}
+                replacement: {x: 55}
                 projection: {x: 1, _id: 0}
                 returnDocument: After
                 sort: {x: 1}
                 upsert: true
 
         outcome:
-            result: {x: 44}
+            result: {x: 55}
             collection:
                 data:
                     - {_id: 1, x: 11}
                     - {_id: 2, x: 22}
                     - {_id: 3, x: 33}
-                    - {_id: 4, x: 44}
-  
+                    - {_id: 4, x: 'ping'}
+                    - {_id: 5, x: 55}

@@ -68,6 +68,7 @@ module Mongo
       def to_mongos
         preference = { :mode => 'secondary' }
         preference.merge!({ :tags => tag_sets }) unless tag_sets.empty?
+        preference.merge!({ maxStalenessMS: max_staleness * 1000 }) if max_staleness
         preference
       end
 
@@ -85,6 +86,10 @@ module Mongo
       # @since 2.0.0
       def select(candidates)
         near_servers(secondaries(candidates))
+      end
+
+      def max_staleness_allowed?
+        true
       end
     end
   end

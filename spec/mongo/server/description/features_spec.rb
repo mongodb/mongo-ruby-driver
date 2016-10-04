@@ -56,6 +56,56 @@ describe Mongo::Server::Description::Features do
     end
   end
 
+  describe '#collation_enabled?' do
+
+    context 'when the wire range includes 5' do
+
+      let(:features) do
+        described_class.new(0..5)
+      end
+
+      it 'returns true' do
+        expect(features).to be_collation_enabled
+      end
+    end
+
+    context 'when the wire range does not include 5' do
+
+      let(:features) do
+        described_class.new(0..2)
+      end
+
+      it 'returns false' do
+        expect(features).to_not be_collation_enabled
+      end
+    end
+  end
+
+  describe '#max_staleness_enabled?' do
+
+    context 'when the wire range includes 5' do
+
+      let(:features) do
+        described_class.new(0..5)
+      end
+
+      it 'returns true' do
+        expect(features).to be_max_staleness_enabled
+      end
+    end
+
+    context 'when the wire range does not include 5' do
+
+      let(:features) do
+        described_class.new(0..2)
+      end
+
+      it 'returns false' do
+        expect(features).to_not be_max_staleness_enabled
+      end
+    end
+  end
+
   describe '#find_command_enabled?' do
 
     context 'when the wire range includes 4' do

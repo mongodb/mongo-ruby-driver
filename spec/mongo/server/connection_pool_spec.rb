@@ -19,7 +19,9 @@ describe Mongo::Server::ConnectionPool do
   end
 
   let(:cluster) do
-    double('cluster')
+    double('cluster').tap do |cl|
+      allow(cl).to receive(:app_metadata).and_return(app_metadata)
+    end
   end
 
   describe '#checkin' do

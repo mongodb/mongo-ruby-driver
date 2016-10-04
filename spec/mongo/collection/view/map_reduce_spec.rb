@@ -335,6 +335,65 @@ describe Mongo::Collection::View::MapReduce do
           expect(Mongo::Logger.logger).to receive(:warn?).and_call_original
           map_reduce.to_a
         end
+
+        context 'when the view has a write concern' do
+
+          let(:collection) do
+            authorized_collection.with(write: { w: WRITE_CONCERN[:w]+1 })
+          end
+
+          let(:view) do
+            Mongo::Collection::View.new(collection, selector, view_options)
+          end
+
+          shared_examples_for 'map reduce that writes accepting write concern' do
+
+            context 'when the server supports write concern on the mapReduce command', if: (collation_enabled? && standalone?) do
+
+              it 'uses the write concern' do
+                expect {
+                  map_reduce.to_a
+                }.to raise_exception(Mongo::Error::OperationFailure)
+              end
+            end
+
+            context 'when the server does not support write concern on the mapReduce command', unless: collation_enabled? do
+
+              it 'does not apply the write concern' do
+                expect(map_reduce.to_a.size).to eq(2)
+              end
+            end
+          end
+
+          context 'when out is a String' do
+
+            let(:options) do
+              { :out => 'new-collection' }
+            end
+
+            it_behaves_like 'map reduce that writes accepting write concern'
+          end
+
+          context 'when out is a document and not inline' do
+
+            let(:options) do
+              { :out => { merge: 'exisiting-collection' } }
+            end
+
+            it_behaves_like 'map reduce that writes accepting write concern'
+          end
+
+          context 'when out is a document but inline is specified' do
+
+            let(:options) do
+              { :out => { inline: 1 } }
+            end
+
+            it 'does not use the write concern' do
+              expect(map_reduce.to_a.size).to eq(2)
+            end
+          end
+        end
       end
 
       context 'when the server is a valid for writing' do
@@ -424,6 +483,64 @@ describe Mongo::Collection::View::MapReduce do
     it 'includes the read preference in the spec' do
       allow(authorized_collection).to receive(:read_preference).and_return(read_preference)
       expect(map_reduce.send(:map_reduce_spec)[:read]).to eq(read_preference)
+    end
+  end
+
+  context 'when collation is specified' do
+
+    let(:map) do
+      %Q{
+         function() {
+           emit(this.name, 1);
+        }}
+    end
+
+    let(:reduce) do
+      %Q{
+         function(key, values) {
+           return Array.sum(values);
+        }}
+    end
+
+    before do
+      authorized_collection.insert_many([ { name: 'bang' }, { name: 'bang' }])
+    end
+
+    let(:options) do
+      { collation: { locale: 'en_US', strength: 2 } }
+    end
+
+    let(:selector) do
+      { name: 'BANG' }
+    end
+
+    context 'when the server selected supports collations', if: collation_enabled? do
+
+      it 'applies the collation' do
+        expect(map_reduce.first['value']).to eq(2)
+      end
+    end
+
+    context 'when the server selected does not support collations', unless: collation_enabled? do
+
+      it 'raises an exception' do
+        expect {
+          map_reduce.to_a
+        }.to raise_exception(Mongo::Error::UnsupportedCollation)
+      end
+
+      context 'when a String key is used' do
+
+        let(:options) do
+          { 'collation' => { locale: 'en_US', strength: 2 } }
+        end
+
+        it 'raises an exception' do
+          expect {
+            map_reduce.to_a
+          }.to raise_exception(Mongo::Error::UnsupportedCollation)
+        end
+      end
     end
   end
 end

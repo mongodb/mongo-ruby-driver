@@ -25,6 +25,9 @@ module Mongo
       # @return [ Array<Hash, BSON::Document> ] requests The provided requests.
       attr_reader :requests
 
+      # @return [ true, false ] has_collation Whether one or more operations has a collation defined.
+      attr_reader :has_collation
+
       # Create the ordered combiner.
       #
       # @api private
@@ -37,6 +40,7 @@ module Mongo
       # @since 2.1.0
       def initialize(requests)
         @requests = requests
+        @has_collation = false
       end
 
       private

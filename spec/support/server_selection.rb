@@ -39,6 +39,16 @@ module Mongo
         # @since 2.0.0
         attr_reader :read_preference
 
+        # @return [ Integer ] heartbeat_frequency The heartbeat frequency to be set on the client.
+        #
+        # @since 2.4.0
+        attr_reader :heartbeat_frequency
+
+        # @return [ Integer ] max_staleness The max_staleness.
+        #
+        # @since 2.4.0
+        attr_reader :max_staleness
+
         # @return [ Array<Hash> ] candidate_servers The candidate servers.
         #
         # @since 2.0.0
@@ -74,8 +84,10 @@ module Mongo
           @test = YAML.load(ERB.new(file.read).result)
           file.close
           @description = "#{@test['topology_description']['type']}: #{File.basename(file)}"
+          @heartbeat_frequency = @test['heartbeatFrequencyMS']
           @read_preference = @test['read_preference']
           @read_preference['mode'] = READ_PREFERENCES[@read_preference['mode']]
+          @max_staleness = @read_preference['maxStalenessMS']
           @candidate_servers = @test['topology_description']['servers']
           @suitable_servers = @test['suitable_servers']
           @in_latency_window = @test['in_latency_window']
@@ -104,6 +116,19 @@ module Mongo
         # @since 2.0.0
         def server_available?
           !in_latency_window.empty?
+        end
+
+        # Is the max staleness setting invalid.
+        #
+        # @example Will the max staleness setting be valid with other options.
+        #   spec.invalid_max_staleness?
+        #
+        # @return [ true, false ] If an error will be raised by the max staleness setting.
+        #
+        # @since 2.4.0
+        def invalid_max_staleness?
+          @test['error'] ||
+            candidate_servers.any? { |server| server['maxWireVersion'] < 5 }
         end
 
         # The subset of suitable servers that falls within the allowable latency

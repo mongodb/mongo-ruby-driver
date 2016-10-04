@@ -56,14 +56,20 @@ module Mongo
       #
       # @since 2.1.0
       DELETE_MANY_TRANSFORM = ->(doc){
-        { Operation::Q => doc[:filter], Operation::LIMIT => 0 }
+        { Operation::Q => doc[:filter],
+          Operation::LIMIT => 0 }.tap do |d|
+          d[Operation::COLLATION] = doc[:collation] if doc[:collation]
+        end
       }
 
       # Proc to transform delete one ops.
       #
       # @since 2.1.0
       DELETE_ONE_TRANSFORM = ->(doc){
-        { Operation::Q => doc[:filter], Operation::LIMIT => 1 }
+        { Operation::Q => doc[:filter],
+          Operation::LIMIT => 1 }.tap do |d|
+          d[Operation::COLLATION] = doc[:collation] if doc[:collation]
+        end
       }
 
       # Proc to transform insert one ops.
@@ -82,7 +88,9 @@ module Mongo
           Operation::U => doc[:replacement],
           Operation::MULTI => false,
           Operation::UPSERT => doc.fetch(:upsert, false)
-        }
+        }.tap do |d|
+          d[Operation::COLLATION] = doc[:collation] if doc[:collation]
+        end
       }
 
       # Proc to transform update many ops.
@@ -94,7 +102,9 @@ module Mongo
           Operation::U => doc[:update],
           Operation::MULTI => true,
           Operation::UPSERT => doc.fetch(:upsert, false)
-        }
+        }.tap do |d|
+          d[Operation::COLLATION] = doc[:collation] if doc[:collation]
+        end
       }
 
       # Proc to transform update one ops.
@@ -106,7 +116,9 @@ module Mongo
           Operation::U => doc[:update],
           Operation::MULTI => false,
           Operation::UPSERT => doc.fetch(:upsert, false)
-        }
+        }.tap do |d|
+          d[Operation::COLLATION] = doc[:collation] if doc[:collation]
+        end
       }
 
       # Document mappers from the bulk api input into proper commands.

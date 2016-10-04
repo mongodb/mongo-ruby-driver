@@ -41,7 +41,18 @@ module Mongo
       #   option spec :options [ Hash ] Options for the map reduce command.
       #
       # @since 2.0.0
-      class MapReduce < Command; end
+      class MapReduce < Command
+        include TakesWriteConcern
+
+        private
+
+        def message(server)
+          sel = update_selector_for_read_pref(selector, server)
+          sel = update_selector_for_write_concern(sel, server)
+          opts = update_options_for_slave_ok(options, server)
+          Protocol::Query.new(db_name, query_coll, sel, opts)
+        end
+      end
     end
   end
 end
