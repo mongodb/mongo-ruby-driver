@@ -299,10 +299,12 @@ Details on Timeout Options
 
 ``socket_timeout``
   The number of seconds to wait for an operation to
-  execute on a socket before raising an exception. It should take into
-  account network latency and operation duration. Defaults to 5 seconds.
+  execute on a socket before raising a timeout exception. It should take into
+  account network latency and operation duration. The default is no value; the default is effectively infinity.
+  Please consider using ``max_time_ms`` per-operation instead, as the ``socket_timeout`` does not stop the operation
+  on the server; a long-running operation will continue to run on the server, beyond a socket timeout being reached.
   See the `socket timeout for monitoring specification <https://github.com/mongodb/specifications/blob/master/source/server-discovery-and-monitoring/server-discovery-and-monitoring.rst#socket-timeout-for-monitoring-is-connecttimeoutms>`_
-  documentation for further information.
+  documentation for further information relating to server discovery and monitoring.
 
 ``server_selection_timeout``
   The number of seconds to wait for the driver to find an appropriate server to
@@ -337,3 +339,10 @@ Details on Timeout Options
   Increase this number to create connections when the pool is 
   initialized and to reduce the overhead of creating new connections
   later on. Defaults to 1.
+
+``max_time_ms``
+  Specified as an option on a particular operation. It defines a cumulative time limit in milliseconds for processing
+  operations on a cursor. Consider using this option instead of a ``socket_timeout``, if the operation should be
+  interrupted on the server. See the
+  `CRUD specification <https://github.com/mongodb/specifications/blob/master/source/crud/crud.rst>`_ for details on
+  operations that support this option.
