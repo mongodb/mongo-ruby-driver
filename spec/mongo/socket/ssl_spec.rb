@@ -57,8 +57,10 @@ describe Mongo::Socket::SSL, if: running_ssl? do
         key = File.read(CLIENT_KEY_PEM)
         cert = File.read(CLIENT_CERT_PEM)
         super().merge({
-          :ssl_cert => cert,
-          :ssl_key => key
+          :ssl_cert_string => cert,
+          :ssl_key_string => key,
+          :ssl_cert => nil,
+          :ssl_key => nil
         })
       end
 
@@ -78,8 +80,10 @@ describe Mongo::Socket::SSL, if: running_ssl? do
         key = File.read(CLIENT_KEY_ENCRYPTED_PEM)
         cert = File.read(CLIENT_CERT_PEM)
         super().merge({
-          :ssl_cert => cert,
-          :ssl_key => key,
+          :ssl_cert_string => cert,
+          :ssl_key_string => key,
+          :ssl_cert => nil,
+          :ssl_key => nil,
           :ssl_key_pass_phrase => CLIENT_KEY_PASSPHRASE
         })
       end
@@ -94,14 +98,36 @@ describe Mongo::Socket::SSL, if: running_ssl? do
 
     end
 
+    context 'when a certificate is specified using both file and PEM-encoded string' do
+
+      let(:options) do
+        cert_string = "This is an invalid cert string"
+        super().merge({
+          :ssl_cert_string => cert_string
+        })
+      end
+
+      before do
+        socket.connect!
+      end
+
+      # since the other option is clearly invalid we verify priority by checking that it connects
+      it 'respects the options priority' do
+        expect(socket).to be_alive
+      end
+
+    end
+
     context 'when a certificate and key are provided as objects' do
 
       let(:options) do
         key = OpenSSL::PKey.read(File.open(CLIENT_KEY_PEM))
         cert = OpenSSL::X509::Certificate.new(File.read(CLIENT_CERT_PEM))
         super().merge({
-          :ssl_cert => cert,
-          :ssl_key => key
+          :ssl_cert_object => cert,
+          :ssl_key_object => key,
+          :ssl_cert => nil,
+          :ssl_key => nil
         })
       end
 
@@ -113,6 +139,44 @@ describe Mongo::Socket::SSL, if: running_ssl? do
         expect(socket).to be_alive
       end
 
+    end
+
+    context 'when a certificate is passed by it is not of the right type' do
+
+      let(:options) do
+        key = OpenSSL::PKey.read(File.open(CLIENT_KEY_PEM))
+        cert = "This is a string, not a X509 Certificate"
+        super().merge({
+          :ssl_cert_object => cert,
+          :ssl_key_object => key,
+          :ssl_cert => nil,
+          :ssl_key => nil
+        })
+      end
+
+
+      it 'raise a TypeError' do
+        expect{
+          socket.connect!
+        }.to raise_exception(TypeError)
+      end
+    end
+
+    context 'when a key is passed by it is not of the right type' do
+      let(:options) do
+        key = "This is a string not a key"
+        super().merge({
+          :ssl_key_object => key,
+          :ssl_key => nil
+        })
+      end
+
+
+      it 'raise a TypeError' do
+        expect{
+          socket.connect!
+        }.to raise_exception(TypeError)
+      end
     end
 
     context 'when a bad certificate is provided' do
@@ -155,7 +219,7 @@ describe Mongo::Socket::SSL, if: running_ssl? do
         let (:options) do
           cert = File.read(CA_PEM)
           super().merge({
-            :ssl_ca_cert => cert,
+            :ssl_ca_cert_string => cert,
             :ssl_verify => true
           })
         end
@@ -170,11 +234,11 @@ describe Mongo::Socket::SSL, if: running_ssl? do
 
       end
 
-      context 'as a Certificate object' do
+      context 'as an array of Certificate objects' do
         let (:options) do
-          cert = OpenSSL::X509::Certificate.new(File.read(CA_PEM))
+          cert = [OpenSSL::X509::Certificate.new(File.read(CA_PEM))]
           super().merge({
-            :ssl_ca_cert => cert,
+            :ssl_ca_cert_object => cert,
             :ssl_verify => true
           })
         end
