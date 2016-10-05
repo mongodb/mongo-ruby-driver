@@ -173,9 +173,11 @@ module Mongo
     #   connect to. Servers not in this replica set will be ignored.
     # @option options [ true, false ] :ssl Whether to use SSL.
     # @option options [ String ] :ssl_cert The certificate file used to identify
-    #   the connection against MongoDB.
+    #   the connection against MongoDB. This parameter if present overrides the
+    #   values of :ssl_cert_string and :ssl_cert_object parameters
     # @option options [ String ] :ssl_cert_string A string containing the PEM-encoded
-    #   certificate used to identify the connection against MongoDB
+    #   certificate used to identify the connection against MongoDB. This parameter if present overrides the
+    #   valueof :ssl_cert_object parameters
     # @option options [ OpenSSL::X509::Certificate ] :ssl_cert_object The OpenSSL::X509::Certificate
     #   used to identify the connection against MongoDB
     # @option options [ String ] :ssl_key The private keyfile used to identify the
