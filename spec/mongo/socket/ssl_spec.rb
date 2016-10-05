@@ -98,26 +98,6 @@ describe Mongo::Socket::SSL, if: running_ssl? do
 
     end
 
-    context 'when a certificate is specified using both file and PEM-encoded string' do
-
-      let(:options) do
-        cert_string = "This is an invalid cert string"
-        super().merge({
-          :ssl_cert_string => cert_string
-        })
-      end
-
-      before do
-        socket.connect!
-      end
-
-      # since the other option is clearly invalid we verify priority by checking that it connects
-      it 'respects the options priority' do
-        expect(socket).to be_alive
-      end
-
-    end
-
     context 'when a certificate and key are provided as objects' do
 
       let(:options) do
@@ -141,6 +121,129 @@ describe Mongo::Socket::SSL, if: running_ssl? do
 
     end
 
+    context 'when the certificate is specified using both a file and a PEM-encoded string' do
+
+      let(:options) do
+        cert_string = 'This is a random string, not a PEM-encoded certificate'
+        super().merge({
+          :ssl_cert_string => cert_string
+        })
+      end
+
+      before do
+        socket.connect!
+      end
+
+      # since the lower priority option is clearly invalid we verify priority by checking that it connects
+      it 'discards the value of :ssl_cert_string' do
+        expect(socket).to be_alive
+      end
+
+    end
+
+    context 'when the certificate is specified using both a file and an object' do
+
+      let(:options) do
+        super().merge({
+          :ssl_cert_object => 'This is a string, not a certificate'
+        })
+      end
+
+      before do
+        socket.connect!
+      end
+
+      # since the lower priority option is clearly invalid we verify priority by checking that it connects
+      it 'discards the value of :ssl_cert_object' do
+        expect(socket).to be_alive
+      end
+
+    end
+
+    context 'when the certificate is specified using both a PEM-encoded string and an object' do
+
+      let(:options) do
+        cert_string = File.read(CLIENT_CERT_PEM)
+        super().merge({
+          :ssl_cert => nil,
+          :ssl_cert_string => cert_string,
+          :ssl_cert_object => 'This is a string, not a Certificate'
+        })
+      end
+
+      before do
+        socket.connect!
+      end
+
+      # since the lower priority option is clearly invalid we verify priority by checking that it connects
+      it 'discards the value of :ssl_cert_object' do
+        expect(socket).to be_alive
+      end
+
+    end
+
+    context 'when the key is specified using both a file and a PEM-encoded string' do
+
+      let(:options) do
+        super().merge({
+          :ssl_key_string => 'This is a normal string, not a PEM-encoded key'
+        })
+      end
+
+      before do
+        socket.connect!
+      end
+
+      # since the lower priority option is clearly invalid we verify priority by checking that it connects
+      it 'discards the value of :ssl_key_string' do
+        expect(socket).to be_alive
+      end
+
+    end
+
+    context 'when the key is specified using both a file and an object' do
+
+      let(:options) do
+        super().merge({
+          :ssl_cert_object => 'This is a string, not a key'
+        })
+      end
+
+      before do
+        socket.connect!
+      end
+
+      # since the lower priority option is clearly invalid we verify priority by checking that it connects
+      it 'discards the value of :ssl_key_object' do
+        expect(socket).to be_alive
+      end
+
+    end
+
+    context 'when the key is specified using both a PEM-encoded string and an object' do
+
+      let(:options) do
+        key_string = File.read(CLIENT_KEY_PEM)
+        super().merge({
+          :ssl_key => nil,
+          :ssl_key_string => key_string,
+          :ssl_key_object => 'This is a string, not a PKey'
+        })
+      end
+
+      before do
+        socket.connect!
+      end
+
+      # since the lower priority option is clearly invalid we verify priority by checking that it connects
+      it 'discards the value of :ssl_key_object' do
+        expect(socket).to be_alive
+      end
+
+    end
+
+
+
     context 'when a certificate is passed by it is not of the right type' do
 
       let(:options) do
@@ -155,7 +258,7 @@ describe Mongo::Socket::SSL, if: running_ssl? do
       end
 
 
-      it 'raise a TypeError' do
+      it 'raises a TypeError' do
         expect{
           socket.connect!
         }.to raise_exception(TypeError)
@@ -172,7 +275,7 @@ describe Mongo::Socket::SSL, if: running_ssl? do
       end
 
 
-      it 'raise a TypeError' do
+      it 'raises a TypeError' do
         expect{
           socket.connect!
         }.to raise_exception(TypeError)
@@ -252,6 +355,68 @@ describe Mongo::Socket::SSL, if: running_ssl? do
         end
 
       end
+
+      context 'both as a file and a PEM-encoded parameter' do
+
+        let(:options) do
+          super().merge({
+            :ssl_ca_cert => CA_PEM,
+            :ssl_ca_cert_string => 'This is a string, not a certificate',
+            :ssl_verify => true
+          })
+        end
+
+        before do
+          socket.connect!
+        end
+
+        it 'discards the value of :ssl_ca_cert_string' do
+          expect(socket).to be_alive
+        end
+
+      end
+
+      context 'both as a file and as object parameter' do
+
+        let(:options) do
+          super().merge({
+            :ssl_ca_cert => CA_PEM,
+            :ssl_ca_cert_object => 'This is a string, not an array of certificates',
+            :ssl_verify => true
+          })
+        end
+
+        before do
+          socket.connect!
+        end
+
+        it 'discards the value of :ssl_ca_cert_object' do
+          expect(socket).to be_alive
+        end
+
+      end
+
+      context 'both as a PEM-encoded string and as object parameter' do
+
+        let(:options) do
+          cert = File.read(CA_PEM)
+          super().merge({
+            :ssl_ca_cert_string => cert,
+            :ssl_ca_cert_object => 'This is a string, not an array of certificates',
+            :ssl_verify => true
+          })
+        end
+
+        before do
+          socket.connect!
+        end
+
+        it 'discards the value of :ssl_ca_cert_object' do
+          expect(socket).to be_alive
+        end
+
+      end
+
 
     end
 
