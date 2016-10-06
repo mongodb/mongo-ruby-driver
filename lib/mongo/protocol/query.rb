@@ -252,7 +252,7 @@ module Mongo
         #
         # @since 2.1.0
         def command_name
-          command? ? filter.keys.first : FIND
+          (filter[:$query] || !command?) ? FIND : filter.keys.first
         end
 
         private
@@ -261,9 +261,13 @@ module Mongo
           collection == Database::COMMAND
         end
 
+        def query_filter
+          filter[:$query] || filter
+        end
+
         def op_command
           document = BSON::Document.new
-          filter.each do |field, value|
+          query_filter.each do |field, value|
             document.store(field.to_s, value)
           end
           document
@@ -272,7 +276,7 @@ module Mongo
         def find_command
           document = BSON::Document.new
           document.store(FIND, collection)
-          document.store(FILTER, filter[:$query] ? filter[:$query] : filter)
+          document.store(FILTER, query_filter)
           OPTION_MAPPINGS.each do |legacy, option|
             document.store(option, options[legacy]) unless options[legacy].nil?
           end
