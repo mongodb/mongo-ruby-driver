@@ -383,6 +383,7 @@ describe Mongo::Socket::SSL, if: running_ssl? do
           socket.connect!
         end
 
+        # since the lower priority option is clearly invalid we verify priority by checking that it connects
         it 'discards the value of :ssl_ca_cert_string' do
           expect(socket).to be_alive
         end
