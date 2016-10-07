@@ -150,14 +150,256 @@ describe Mongo::Collection::View::Builder::FindCommand do
       end
     end
 
-    context 'when limit is negative' do
+
+    context 'when there is a limit' do
+
+      let(:filter) do
+        { 'name' => 'test' }
+      end
+
+      context 'when limit is 0' do
+
+        context 'when batch_size is also 0' do
+
+          let(:options) do
+            { limit: 0, batch_size: 0 }
+          end
+
+          it 'does not set the singleBatch' do
+            expect(selector['singleBatch']).to be nil
+          end
+
+          it 'does not set the limit' do
+            expect(selector['limit']).to be nil
+          end
+
+          it 'does not set the batch size' do
+            expect(selector['batchSize']).to be nil
+          end
+        end
+
+        context 'when batch_size is not set' do
+
+          let(:options) do
+            { limit: 0 }
+          end
+
+          it 'does not set the singleBatch' do
+            expect(selector['singleBatch']).to be nil
+          end
+
+          it 'does not set the limit' do
+            expect(selector['limit']).to be nil
+          end
+
+          it 'does not set the batch size' do
+            expect(selector['batchSize']).to be nil
+          end
+        end
+      end
+
+      context 'when the limit is negative' do
+
+        context 'when there is a batch_size' do
+
+          context 'when the batch_size is positive' do
+
+            let(:options) do
+              { limit: -1, batch_size: 3 }
+            end
+
+            it 'sets single batch to true' do
+              expect(selector['singleBatch']).to be true
+            end
+
+            it 'converts the limit to a positive value' do
+              expect(selector['limit']).to be(options[:limit].abs)
+            end
+
+            it 'sets the batch size' do
+              expect(selector['batchSize']).to be(options[:batch_size])
+            end
+          end
+
+          context 'when the batch_size is negative' do
+
+            let(:options) do
+              { limit: -1, batch_size: -3 }
+            end
+
+            it 'sets single batch to true' do
+              expect(selector['singleBatch']).to be true
+            end
+
+            it 'converts the limit to a positive value' do
+              expect(selector['limit']).to be(options[:limit].abs)
+            end
+
+            it 'sets the batch size to the limit' do
+              expect(selector['batchSize']).to be(options[:limit].abs)
+            end
+          end
+        end
+
+        context 'when there is not a batch_size' do
+
+          let(:options) do
+            { limit: -5 }
+          end
+
+          it 'sets single batch to true' do
+            expect(selector['singleBatch']).to be true
+          end
+
+          it 'converts the limit to a positive value' do
+            expect(selector['limit']).to be(options[:limit].abs)
+          end
+
+          it 'does not set the batch size' do
+            expect(selector['batchSize']).to be_nil
+          end
+        end
+      end
+
+      context 'when the limit is positive' do
+
+        context 'when there is a batch_size' do
+
+          context 'when the batch_size is positive' do
+
+            let(:options) do
+              { limit: 5, batch_size: 3 }
+            end
+
+            it 'does not set singleBatch' do
+              expect(selector['singleBatch']).to be nil
+            end
+
+            it 'sets the limit' do
+              expect(selector['limit']).to be(options[:limit])
+            end
+
+            it 'sets the batch size' do
+              expect(selector['batchSize']).to be(options[:batch_size])
+            end
+          end
+
+          context 'when the batch_size is negative' do
+
+            let(:options) do
+              { limit: 5, batch_size: -3 }
+            end
+
+            it 'sets the singleBatch' do
+              expect(selector['singleBatch']).to be true
+            end
+
+            it 'sets the limit' do
+              expect(selector['limit']).to be(options[:limit])
+            end
+
+            it 'sets the batch size to a positive value' do
+              expect(selector['batchSize']).to be(options[:batch_size].abs)
+            end
+          end
+        end
+
+        context 'when there is not a batch_size' do
+
+          let(:options) do
+            { limit: 5 }
+          end
+
+          it 'does not set the singleBatch' do
+            expect(selector['singleBatch']).to be nil
+          end
+
+          it 'sets the limit' do
+            expect(selector['limit']).to be(options[:limit])
+          end
+
+          it 'does not set the batch size' do
+            expect(selector['batchSize']).to be nil
+          end
+        end
+      end
+    end
+
+    context 'when there is a batch_size' do
+
+      let(:filter) do
+        { 'name' => 'test' }
+      end
+
+      context 'when there is no limit' do
+
+        context 'when the batch_size is positive' do
+
+          let(:options) do
+            { batch_size: 3 }
+          end
+
+          it 'does not set the singleBatch' do
+            expect(selector['singleBatch']).to be nil
+          end
+
+          it 'does not set the limit' do
+            expect(selector['limit']).to be nil
+          end
+
+          it 'sets the batch size' do
+            expect(selector['batchSize']).to be(options[:batch_size])
+          end
+        end
+
+        context 'when the batch_size is negative' do
+
+          let(:options) do
+            { batch_size: -3 }
+          end
+
+          it 'sets the singleBatch' do
+            expect(selector['singleBatch']).to be true
+          end
+
+          it 'does not set the limit' do
+            expect(selector['limit']).to be nil
+          end
+
+          it 'sets the batch size to a positive value' do
+            expect(selector['batchSize']).to be(options[:batch_size].abs)
+          end
+        end
+
+        context 'when batch_size is 0' do
+
+          let(:options) do
+            { batch_size: 0 }
+          end
+
+          it 'does not set the singleBatch' do
+            expect(selector['singleBatch']).to be nil
+          end
+
+          it 'does not set the limit' do
+            expect(selector['limit']).to be nil
+          end
+
+          it 'does not set the batch size' do
+            expect(selector['batchSize']).to be nil
+          end
+        end
+      end
+    end
+
+    context 'when limit and batch_size are negative' do
 
       let(:filter) do
         { 'name' => 'test' }
       end
 
       let(:options) do
-        { limit: -1 }
+        { limit: -1, batch_size: -3 }
       end
 
       it 'sets single batch to true' do
