@@ -173,20 +173,20 @@ module Mongo
     #   connect to. Servers not in this replica set will be ignored.
     # @option options [ true, false ] :ssl Whether to use SSL.
     # @option options [ String ] :ssl_cert The certificate file used to identify
-    #   the connection against MongoDB. This parameter if present overrides the
-    #   values of :ssl_cert_string and :ssl_cert_object parameters
+    #   the connection against MongoDB. This option, if present, takes precedence
+    #   over the values of :ssl_cert_string and :ssl_cert_object
     # @option options [ String ] :ssl_cert_string A string containing the PEM-encoded
-    #   certificate used to identify the connection against MongoDB. This parameter if present overrides the
-    #   valueof :ssl_cert_object parameters
+    #   certificate used to identify the connection against MongoDB. This option, if present,
+    #   takes precedence over the value of :ssl_cert_object
     # @option options [ OpenSSL::X509::Certificate ] :ssl_cert_object The OpenSSL::X509::Certificate
     #   used to identify the connection against MongoDB
     # @option options [ String ] :ssl_key The private keyfile used to identify the
     #   connection against MongoDB. Note that even if the key is stored in the same
-    #   file as the certificate, both need to be explicitly specified. This parameter,
-    #   if present, overrules values of :ssl_key_string and :ssl_key_object
+    #   file as the certificate, both need to be explicitly specified. This option,
+    #   if present, takes precedence over the values of :ssl_key_string and :ssl_key_object
     # @option options [ String ] :ssl_key_string A string containing the PEM-encoded private key
     #   used to identify the connection against MongoDB. This parameter, if present,
-    #   overrides the value of option :ssl_key_object
+    #   takes precedence over the value of option :ssl_key_object
     # @option options [ OpenSSL::PKey ] :ssl_key_object The private key used to identify the
     #   connection against MongoDB
     # @option options [ String ] :ssl_key_pass_phrase A passphrase for the private key.

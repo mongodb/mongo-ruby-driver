@@ -15,6 +15,22 @@ describe Mongo::Socket::SSL, if: running_ssl? do
     }
   end
 
+  let (:key_string) do
+    File.read(CLIENT_KEY_PEM)
+  end
+
+  let (:cert_string) do
+    File.read(CLIENT_CERT_PEM)
+  end
+
+  let (:ca_cert_string) do
+    File.read(CA_PEM)
+  end
+
+  let(:key_encrypted_string) do
+    File.read(CLIENT_KEY_ENCRYPTED_PEM)
+  end
+
   describe '#connect!' do
 
     context 'when a certificate is provided' do
@@ -54,14 +70,12 @@ describe Mongo::Socket::SSL, if: running_ssl? do
     context 'when a certificate and key are provided as strings' do
 
       let(:options) do
-        key = File.read(CLIENT_KEY_PEM)
-        cert = File.read(CLIENT_CERT_PEM)
-        super().merge({
-          :ssl_cert_string => cert,
-          :ssl_key_string => key,
-          :ssl_cert => nil,
-          :ssl_key => nil
-        })
+        {
+          :ssl => true,
+          :ssl_cert_string => cert_string,
+          :ssl_key_string => key_string,
+          :ssl_verify => false
+        }
       end
 
       before do
@@ -77,15 +91,13 @@ describe Mongo::Socket::SSL, if: running_ssl? do
     context 'when certificate and an encrypted key are provided as strings' do
 
       let(:options) do
-        key = File.read(CLIENT_KEY_ENCRYPTED_PEM)
-        cert = File.read(CLIENT_CERT_PEM)
-        super().merge({
-          :ssl_cert_string => cert,
-          :ssl_key_string => key,
-          :ssl_cert => nil,
-          :ssl_key => nil,
-          :ssl_key_pass_phrase => CLIENT_KEY_PASSPHRASE
-        })
+        {
+          :ssl => true,
+          :ssl_cert_string => cert_string,
+          :ssl_key_string => key_encrypted_string,
+          :ssl_key_pass_phrase => CLIENT_KEY_PASSPHRASE,
+          :ssl_verify => false
+        }
       end
 
       before do
@@ -101,14 +113,14 @@ describe Mongo::Socket::SSL, if: running_ssl? do
     context 'when a certificate and key are provided as objects' do
 
       let(:options) do
-        key = OpenSSL::PKey.read(File.open(CLIENT_KEY_PEM))
-        cert = OpenSSL::X509::Certificate.new(File.read(CLIENT_CERT_PEM))
-        super().merge({
+        key = OpenSSL::PKey.read(key_string)
+        cert = OpenSSL::X509::Certificate.new(cert_string)
+        {
+          :ssl => true,
           :ssl_cert_object => cert,
           :ssl_key_object => key,
-          :ssl_cert => nil,
-          :ssl_key => nil
-        })
+          :ssl_verify => false
+        }
       end
 
       before do
@@ -124,9 +136,8 @@ describe Mongo::Socket::SSL, if: running_ssl? do
     context 'when the certificate is specified using both a file and a PEM-encoded string' do
 
       let(:options) do
-        cert_string = 'This is a random string, not a PEM-encoded certificate'
         super().merge({
-          :ssl_cert_string => cert_string
+          :ssl_cert_string => 'This is a random string, not a PEM-encoded certificate'
         })
       end
 
@@ -163,12 +174,13 @@ describe Mongo::Socket::SSL, if: running_ssl? do
     context 'when the certificate is specified using both a PEM-encoded string and an object' do
 
       let(:options) do
-        cert_string = File.read(CLIENT_CERT_PEM)
-        super().merge({
-          :ssl_cert => nil,
+        {
+          :ssl => true,
           :ssl_cert_string => cert_string,
-          :ssl_cert_object => 'This is a string, not a Certificate'
-        })
+          :ssl_cert_object => 'This is a string, not a Certificate',
+          :ssl_key => CLIENT_KEY_PEM,
+          :ssl_verify => false
+        }
       end
 
       before do
@@ -223,12 +235,13 @@ describe Mongo::Socket::SSL, if: running_ssl? do
     context 'when the key is specified using both a PEM-encoded string and an object' do
 
       let(:options) do
-        key_string = File.read(CLIENT_KEY_PEM)
-        super().merge({
-          :ssl_key => nil,
+        {
+          :ssl => true,
+          :ssl_cert => CLIENT_CERT_PEM,
           :ssl_key_string => key_string,
-          :ssl_key_object => 'This is a string, not a PKey'
-        })
+          :ssl_key_object => 'This is a string, not a PKey',
+          :ssl_verify => false
+        }
       end
 
       before do
@@ -244,17 +257,16 @@ describe Mongo::Socket::SSL, if: running_ssl? do
 
 
 
-    context 'when a certificate is passed by it is not of the right type' do
+    context 'when a certificate is passed, but it is not of the right type' do
 
       let(:options) do
-        key = OpenSSL::PKey.read(File.open(CLIENT_KEY_PEM))
         cert = "This is a string, not a X509 Certificate"
-        super().merge({
+        {
+          :ssl => true,
           :ssl_cert_object => cert,
-          :ssl_key_object => key,
-          :ssl_cert => nil,
-          :ssl_key => nil
-        })
+          :ssl_key => CLIENT_KEY_PEM,
+          :ssl_verify => false
+        }
       end
 
 
@@ -265,13 +277,15 @@ describe Mongo::Socket::SSL, if: running_ssl? do
       end
     end
 
-    context 'when a key is passed by it is not of the right type' do
+    context 'when a key is passed, but it is not of the right type' do
       let(:options) do
         key = "This is a string not a key"
-        super().merge({
+        {
+          :ssl => true,
           :ssl_key_object => key,
-          :ssl_key => nil
-        })
+          :ssl_cert => CLIENT_CERT_PEM,
+          :ssl_verify => false
+        }
       end
 
 
@@ -320,9 +334,8 @@ describe Mongo::Socket::SSL, if: running_ssl? do
       context 'as a string containg the PEM-encoded certificate' do
 
         let (:options) do
-          cert = File.read(CA_PEM)
           super().merge({
-            :ssl_ca_cert_string => cert,
+            :ssl_ca_cert_string => ca_cert_string,
             :ssl_verify => true
           })
         end
@@ -339,7 +352,7 @@ describe Mongo::Socket::SSL, if: running_ssl? do
 
       context 'as an array of Certificate objects' do
         let (:options) do
-          cert = [OpenSSL::X509::Certificate.new(File.read(CA_PEM))]
+          cert = [OpenSSL::X509::Certificate.new(ca_cert_string)]
           super().merge({
             :ssl_ca_cert_object => cert,
             :ssl_verify => true

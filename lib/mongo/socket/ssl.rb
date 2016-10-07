@@ -23,8 +23,6 @@ module Mongo
     class SSL < Socket
       include OpenSSL
 
-      ALLOWED_KEY_TYPES = [OpenSSL::PKey::RSA]
-
       # @return [ SSLContext ] context The ssl context.
       attr_reader :context
 
@@ -137,9 +135,11 @@ module Mongo
       def set_key(context, options)
         passphrase = options[:ssl_key_pass_phrase]
         if options[:ssl_key]
-          context.key = passphrase ? OpenSSL::PKey.read(File.open(options[:ssl_key]), passphrase) : OpenSSL::PKey.read(File.open(options[:ssl_key]))
+          context.key = passphrase ? OpenSSL::PKey.read(File.open(options[:ssl_key]), passphrase) :
+            OpenSSL::PKey.read(File.open(options[:ssl_key]))
         elsif options[:ssl_key_string]
-          context.key = passphrase ? OpenSSL::PKey.read(options[:ssl_key_string], passphrase) : OpenSSL::PKey.read(options[:ssl_key_string])
+          context.key = passphrase ? OpenSSL::PKey.read(options[:ssl_key_string], passphrase) :
+            OpenSSL::PKey.read(options[:ssl_key_string])
         elsif options[:ssl_key_object]
           context.key = options[:ssl_key_object]
         end
@@ -168,7 +168,6 @@ module Mongo
           end
         end
       end
-
     end
   end
 end
