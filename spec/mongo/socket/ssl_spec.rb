@@ -31,6 +31,14 @@ describe Mongo::Socket::SSL, if: running_ssl? do
     File.read(CLIENT_KEY_ENCRYPTED_PEM)
   end
 
+  let(:cert_object) do
+    OpenSSL::X509::Certificate.new(cert_string)
+  end
+
+  let(:key_object) do
+    OpenSSL::PKey.read(key_string)
+  end
+
   describe '#connect!' do
 
     context 'when a certificate is provided' do
@@ -85,7 +93,6 @@ describe Mongo::Socket::SSL, if: running_ssl? do
       it 'connects to the server' do
         expect(socket).to be_alive
       end
-
     end
 
     context 'when certificate and an encrypted key are provided as strings' do
@@ -107,18 +114,15 @@ describe Mongo::Socket::SSL, if: running_ssl? do
       it 'connects to the server' do
         expect(socket).to be_alive
       end
-
     end
 
     context 'when a certificate and key are provided as objects' do
 
       let(:options) do
-        key = OpenSSL::PKey.read(key_string)
-        cert = OpenSSL::X509::Certificate.new(cert_string)
         {
           :ssl => true,
-          :ssl_cert_object => cert,
-          :ssl_key_object => key,
+          :ssl_cert_object => cert_object,
+          :ssl_key_object => key_object,
           :ssl_verify => false
         }
       end
@@ -130,15 +134,14 @@ describe Mongo::Socket::SSL, if: running_ssl? do
       it 'connects to the server' do
         expect(socket).to be_alive
       end
-
     end
 
     context 'when the certificate is specified using both a file and a PEM-encoded string' do
 
       let(:options) do
-        super().merge({
+        super().merge(
           :ssl_cert_string => 'This is a random string, not a PEM-encoded certificate'
-        })
+        )
       end
 
       before do
@@ -149,15 +152,14 @@ describe Mongo::Socket::SSL, if: running_ssl? do
       it 'discards the value of :ssl_cert_string' do
         expect(socket).to be_alive
       end
-
     end
 
     context 'when the certificate is specified using both a file and an object' do
 
       let(:options) do
-        super().merge({
+        super().merge(
           :ssl_cert_object => 'This is a string, not a certificate'
-        })
+        )
       end
 
       before do
@@ -168,7 +170,6 @@ describe Mongo::Socket::SSL, if: running_ssl? do
       it 'discards the value of :ssl_cert_object' do
         expect(socket).to be_alive
       end
-
     end
 
     context 'when the certificate is specified using both a PEM-encoded string and an object' do
@@ -191,15 +192,14 @@ describe Mongo::Socket::SSL, if: running_ssl? do
       it 'discards the value of :ssl_cert_object' do
         expect(socket).to be_alive
       end
-
     end
 
     context 'when the key is specified using both a file and a PEM-encoded string' do
 
       let(:options) do
-        super().merge({
+        super().merge(
           :ssl_key_string => 'This is a normal string, not a PEM-encoded key'
-        })
+        )
       end
 
       before do
@@ -210,15 +210,14 @@ describe Mongo::Socket::SSL, if: running_ssl? do
       it 'discards the value of :ssl_key_string' do
         expect(socket).to be_alive
       end
-
     end
 
     context 'when the key is specified using both a file and an object' do
 
       let(:options) do
-        super().merge({
+        super().merge(
           :ssl_cert_object => 'This is a string, not a key'
-        })
+        )
       end
 
       before do
@@ -229,7 +228,6 @@ describe Mongo::Socket::SSL, if: running_ssl? do
       it 'discards the value of :ssl_key_object' do
         expect(socket).to be_alive
       end
-
     end
 
     context 'when the key is specified using both a PEM-encoded string and an object' do
@@ -252,10 +250,7 @@ describe Mongo::Socket::SSL, if: running_ssl? do
       it 'discards the value of :ssl_key_object' do
         expect(socket).to be_alive
       end
-
     end
-
-
 
     context 'when a certificate is passed, but it is not of the right type' do
 
@@ -268,7 +263,6 @@ describe Mongo::Socket::SSL, if: running_ssl? do
           :ssl_verify => false
         }
       end
-
 
       it 'raises a TypeError' do
         expect{
@@ -288,7 +282,6 @@ describe Mongo::Socket::SSL, if: running_ssl? do
         }
       end
 
-
       it 'raises a TypeError' do
         expect{
           socket.connect!
@@ -299,9 +292,9 @@ describe Mongo::Socket::SSL, if: running_ssl? do
     context 'when a bad certificate is provided' do
 
       let(:options) do
-        super().merge({
+        super().merge(
           :ssl_key => CRL_PEM
-        })
+        )
       end
 
       it 'raises an exception' do
@@ -316,10 +309,10 @@ describe Mongo::Socket::SSL, if: running_ssl? do
       context 'as a path to a file' do
 
         let(:options) do
-          super().merge({
+          super().merge(
             :ssl_ca_cert => CA_PEM,
             :ssl_verify => true
-          })
+          )
         end
 
         before do
@@ -334,10 +327,10 @@ describe Mongo::Socket::SSL, if: running_ssl? do
       context 'as a string containg the PEM-encoded certificate' do
 
         let (:options) do
-          super().merge({
+          super().merge(
             :ssl_ca_cert_string => ca_cert_string,
             :ssl_verify => true
-          })
+          )
         end
 
         before do
@@ -347,16 +340,15 @@ describe Mongo::Socket::SSL, if: running_ssl? do
         it 'connects to the server' do
           expect(socket).to be_alive
         end
-
       end
 
       context 'as an array of Certificate objects' do
         let (:options) do
           cert = [OpenSSL::X509::Certificate.new(ca_cert_string)]
-          super().merge({
+          super().merge(
             :ssl_ca_cert_object => cert,
             :ssl_verify => true
-          })
+          )
         end
 
         before do
@@ -366,17 +358,16 @@ describe Mongo::Socket::SSL, if: running_ssl? do
         it 'connects to the server' do
           expect(socket).to be_alive
         end
-
       end
 
       context 'both as a file and a PEM-encoded parameter' do
 
         let(:options) do
-          super().merge({
+          super().merge(
             :ssl_ca_cert => CA_PEM,
             :ssl_ca_cert_string => 'This is a string, not a certificate',
             :ssl_verify => true
-          })
+          )
         end
 
         before do
@@ -387,17 +378,16 @@ describe Mongo::Socket::SSL, if: running_ssl? do
         it 'discards the value of :ssl_ca_cert_string' do
           expect(socket).to be_alive
         end
-
       end
 
       context 'both as a file and as object parameter' do
 
         let(:options) do
-          super().merge({
+          super().merge(
             :ssl_ca_cert => CA_PEM,
             :ssl_ca_cert_object => 'This is a string, not an array of certificates',
             :ssl_verify => true
-          })
+          )
         end
 
         before do
@@ -407,18 +397,17 @@ describe Mongo::Socket::SSL, if: running_ssl? do
         it 'discards the value of :ssl_ca_cert_object' do
           expect(socket).to be_alive
         end
-
       end
 
       context 'both as a PEM-encoded string and as object parameter' do
 
         let(:options) do
           cert = File.read(CA_PEM)
-          super().merge({
+          super().merge(
             :ssl_ca_cert_string => cert,
             :ssl_ca_cert_object => 'This is a string, not an array of certificates',
             :ssl_verify => true
-          })
+          )
         end
 
         before do
@@ -428,18 +417,15 @@ describe Mongo::Socket::SSL, if: running_ssl? do
         it 'discards the value of :ssl_ca_cert_object' do
           expect(socket).to be_alive
         end
-
       end
-
-
     end
 
     context 'when a CA certificate is not provided', if: testing_ssl_locally? do
 
       let(:options) do
-        super().merge({
+        super().merge(
           :ssl_verify => true
-        })
+        )
       end
 
       before do
@@ -455,9 +441,9 @@ describe Mongo::Socket::SSL, if: running_ssl? do
     context 'when ssl_verify is not specified', if: testing_ssl_locally? do
 
       let(:options) do
-        super().merge({
+        super().merge(
           :ssl_ca_cert => CA_PEM
-        }).tap { |options| options.delete(:ssl_verify) }
+        ).tap { |options| options.delete(:ssl_verify) }
       end
 
       before do
@@ -472,10 +458,10 @@ describe Mongo::Socket::SSL, if: running_ssl? do
     context 'when ssl_verify is true', if: testing_ssl_locally? do
 
       let(:options) do
-        super().merge({
+        super().merge(
           :ssl_ca_cert => CA_PEM,
           :ssl_verify => true
-        })
+        )
       end
 
       before do
@@ -490,10 +476,10 @@ describe Mongo::Socket::SSL, if: running_ssl? do
     context 'when ssl_verify is false' do
 
       let(:options) do
-        super().merge({
+        super().merge(
           :ssl_ca_cert => 'invalid',
           :ssl_verify => false
-        })
+        )
       end
 
       before do
