@@ -169,6 +169,72 @@ Ruby Options
      - ``Boolean``
      - false
 
+   * - ``:ssl_cert``
+     - The certificate file path used to identify the connection against MongoDB. This option, if present,
+       takes precedence over the values of :ssl_cert_string and :ssl_cert_object.
+     - ``String``
+     - none
+
+   * - ``:ssl_cert_string``
+     - A string containing the PEM-encoded certificate used to identify the connection against MongoDB.
+       This option, if present, takes precedence over the value of :ssl_cert_object.
+     - ``String``
+     - none
+
+   * - ``:ssl_cert_object``
+     - The OpenSSL::X509::Certificate used to identify the connection against MongoDB.
+     - ``OpenSSL::X509::Certificate``
+     - none
+
+   * - ``:ssl_key``
+     - The private keyfile used to identify the connection against MongoDB. Note that even if the key is stored in
+       the same file as the certificate, both need to be explicitly specified. This option, if present, takes
+       precedence over the values of :ssl_key_string and :ssl_key_object.
+     - ``String``
+     - none
+
+   * - ``:ssl_key_string``
+     - A string containing the PEM-encoded private key used to identify the connection against MongoDB.
+       This parameter, if present, takes precedence over the value of option :ssl_key_object.
+     - ``String``
+     - none
+
+   * - ``:ssl_key_object``
+     - The private key used to identify the connection against MongoDB.
+     - ``OpenSSL::PKey``
+     - none
+
+   * - ``:ssl_key_pass_phrase``
+     - A passphrase for the private key.
+     - ``String``
+     - none
+
+   * - ``:ssl_ca_cert``
+     - The file path containing a set of concatenated certification authority certifications used to validate certs
+       passed from the other end of the connection. One of :ssl_ca_cert, :ssl_ca_cert_string or :ssl_ca_cert_object
+       (in order of priority) is required for :ssl_verify.
+     - ``String``
+     - none
+
+   * - ``:ssl_ca_cert_string``
+     - A string containing a set of concatenated certification authority certifications used to validate certs
+       passed from the other end of the connection. One of :ssl_ca_cert, :ssl_ca_cert_string or :ssl_ca_cert_object
+       (in order of priority) is required for :ssl_verify.
+     - ``String``
+     - none
+
+   * - ``:ssl_ca_cert_object``
+     - An array of OpenSSL::X509::Certificate representing the certification authority certifications used to
+       validate certs passed from the other end of the connection. One of :ssl_ca_cert, :ssl_ca_cert_string or
+       :ssl_ca_cert_object (in order of priority) is required for :ssl_verify.
+     - ``Array<OpenSSL::X509::Certificate>``
+     - none
+
+   * - ``:ssl_verify``
+     - Whether or not to do peer certification validation.
+     - ``Boolean``
+     - false
+
    * - ``:connect_timeout``
      - The number of seconds to wait to establish a socket connection
        before raising an exception. 
