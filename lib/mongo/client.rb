@@ -55,8 +55,14 @@ module Mongo
       :socket_timeout,
       :ssl,
       :ssl_ca_cert,
+      :ssl_ca_cert_string,
+      :ssl_ca_cert_object,
       :ssl_cert,
+      :ssl_cert_string,
+      :ssl_cert_object,
       :ssl_key,
+      :ssk_key_string,
+      :ssl_key_object,
       :ssl_key_pass_phrase,
       :ssl_verify,
       :truncate_logs,
@@ -167,16 +173,37 @@ module Mongo
     #   connect to. Servers not in this replica set will be ignored.
     # @option options [ true, false ] :ssl Whether to use SSL.
     # @option options [ String ] :ssl_cert The certificate file used to identify
-    #   the connection against MongoDB.
+    #   the connection against MongoDB. This option, if present, takes precedence
+    #   over the values of :ssl_cert_string and :ssl_cert_object
+    # @option options [ String ] :ssl_cert_string A string containing the PEM-encoded
+    #   certificate used to identify the connection against MongoDB. This option, if present,
+    #   takes precedence over the value of :ssl_cert_object
+    # @option options [ OpenSSL::X509::Certificate ] :ssl_cert_object The OpenSSL::X509::Certificate
+    #   used to identify the connection against MongoDB
     # @option options [ String ] :ssl_key The private keyfile used to identify the
     #   connection against MongoDB. Note that even if the key is stored in the same
-    #   file as the certificate, both need to be explicitly specified.
+    #   file as the certificate, both need to be explicitly specified. This option,
+    #   if present, takes precedence over the values of :ssl_key_string and :ssl_key_object
+    # @option options [ String ] :ssl_key_string A string containing the PEM-encoded private key
+    #   used to identify the connection against MongoDB. This parameter, if present,
+    #   takes precedence over the value of option :ssl_key_object
+    # @option options [ OpenSSL::PKey ] :ssl_key_object The private key used to identify the
+    #   connection against MongoDB
     # @option options [ String ] :ssl_key_pass_phrase A passphrase for the private key.
     # @option options [ true, false ] :ssl_verify Whether or not to do peer certification
     #   validation.
     # @option options [ String ] :ssl_ca_cert The file containing a set of concatenated
     #   certification authority certifications used to validate certs passed from the
-    #   other end of the connection. Required for :ssl_verify.
+    #   other end of the connection. One of :ssl_ca_cert, :ssl_ca_cert_string or
+    #   :ssl_ca_cert_object (in order of priority) is required for :ssl_verify.
+    # @option options [ String ] :ssl_ca_cert_string A string containing a set of concatenated
+    #   certification authority certifications used to validate certs passed from the
+    #   other end of the connection. One of :ssl_ca_cert, :ssl_ca_cert_string or
+    #   :ssl_ca_cert_object (in order of priority) is required for :ssl_verify.
+    # @option options [ Array<OpenSSL::X509::Certificate> ] :ssl_ca_cert_object An array of OpenSSL::X509::Certificate
+    #   reprenting the certification authority certifications used to validate certs passed from the
+    #   other end of the connection. One of :ssl_ca_cert, :ssl_ca_cert_string or
+    #   :ssl_ca_cert_object (in order of priority) is required for :ssl_verify.
     # @option options [ Float ] :socket_timeout The timeout, in seconds, to
     #   execute operations on a socket.
     # @option options [ String ] :user The user name.

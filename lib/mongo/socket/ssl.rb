@@ -116,22 +116,32 @@ module Mongo
 
       def create_context(options)
         context = OpenSSL::SSL::SSLContext.new
-        set_cert(context, options) if options[:ssl_cert]
-        set_key(context, options) if options[:ssl_key]
+        set_cert(context, options)
+        set_key(context, options)
         set_cert_verification(context, options) unless options[:ssl_verify] == false
         context
       end
 
       def set_cert(context, options)
-        context.cert = OpenSSL::X509::Certificate.new(File.open(options[:ssl_cert]))
+        if options[:ssl_cert]
+          context.cert = OpenSSL::X509::Certificate.new(File.open(options[:ssl_cert]))
+        elsif options[:ssl_cert_string]
+          context.cert = OpenSSL::X509::Certificate.new(options[:ssl_cert_string])
+        elsif options[:ssl_cert_object]
+          context.cert = options[:ssl_cert_object]
+        end
       end
 
       def set_key(context, options)
-        if options[:ssl_key_pass_phrase]
-          context.key = OpenSSL::PKey::RSA.new(File.open(options[:ssl_key]),
-                                               options[:ssl_key_pass_phrase])
-        else
-          context.key = OpenSSL::PKey::RSA.new(File.open(options[:ssl_key]))
+        passphrase = options[:ssl_key_pass_phrase]
+        if options[:ssl_key]
+          context.key = passphrase ? OpenSSL::PKey.read(File.open(options[:ssl_key]), passphrase) :
+            OpenSSL::PKey.read(File.open(options[:ssl_key]))
+        elsif options[:ssl_key_string]
+          context.key = passphrase ? OpenSSL::PKey.read(options[:ssl_key_string], passphrase) :
+            OpenSSL::PKey.read(options[:ssl_key_string])
+        elsif options[:ssl_key_object]
+          context.key = options[:ssl_key_object]
         end
       end
 
@@ -139,7 +149,12 @@ module Mongo
         context.verify_mode = OpenSSL::SSL::VERIFY_PEER
         cert_store = OpenSSL::X509::Store.new
         if options[:ssl_ca_cert]
-          cert_store.add_file(options[:ssl_ca_cert])
+          cert_store.add_cert(OpenSSL::X509::Certificate.new(File.open(options[:ssl_ca_cert])))
+        elsif options[:ssl_ca_cert_string]
+          cert_store.add_cert(OpenSSL::X509::Certificate.new(options[:ssl_ca_cert_string]))
+        elsif options[:ssl_ca_cert_object]
+          raise TypeError("Option :ssl_ca_cert_object should be an array of OpenSSL::X509:Certificate objects") unless options[:ssl_ca_cert_object].is_a? Array
+          options[:ssl_ca_cert_object].each {|cert| cert_store.add_cert(cert)}
         else
           cert_store.set_default_paths
         end
