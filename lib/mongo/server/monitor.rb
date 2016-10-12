@@ -104,6 +104,7 @@ module Mongo
         @options = options.freeze
         @connection = Connection.new(address, options)
         @last_round_trip_time = nil
+        @last_scan = nil
         @mutex = Mutex.new
       end
 

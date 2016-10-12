@@ -193,7 +193,7 @@ module Mongo
     def initialize(string, options = {})
       @string = string
       @options = options
-      empty, scheme, remaining = @string.partition(SCHEME)
+      _, scheme, remaining = @string.partition(SCHEME)
       raise_invalid_error!(INVALID_SCHEME) unless scheme == SCHEME
       setup!(remaining)
     end
@@ -248,7 +248,7 @@ module Mongo
     end
 
     def extract_db_opts!(string)
-      db_opts, d, creds_hosts = string.reverse.partition(DATABASE_DELIM)
+      db_opts, _, creds_hosts = string.reverse.partition(DATABASE_DELIM)
       db_opts, creds_hosts = creds_hosts, db_opts if creds_hosts.empty?
       if db_opts.empty? && creds_hosts.include?(URI_OPTS_DELIM)
         raise_invalid_error!(INVALID_OPTS_DELIM)
@@ -264,13 +264,13 @@ module Mongo
     end
 
     def split_creds_hosts(string)
-      hosts, d, creds = string.reverse.partition(AUTH_DELIM)
+      hosts, _, creds = string.reverse.partition(AUTH_DELIM)
       hosts, creds = creds, hosts if hosts.empty?
       [ hosts, creds ].map { |s| s.reverse }
     end
 
     def parse_db_opts!(string)
-      auth_db, d, uri_opts = string.partition(URI_OPTS_DELIM)
+      auth_db, _, uri_opts = string.partition(URI_OPTS_DELIM)
       @uri_options = Options::Redacted.new(parse_uri_options!(uri_opts))
       @database = parse_database!(auth_db)
     end
@@ -324,7 +324,7 @@ module Mongo
             validate_port_string!(p)
           end
         elsif host.index(HOST_PORT_DELIM)
-          h, d, p = host.partition(HOST_PORT_DELIM)
+          h, _, p = host.partition(HOST_PORT_DELIM)
           raise_invalid_error!(INVALID_HOST) unless h.size > 0
           validate_port_string!(p)
         elsif host =~ UNIX_SOCKET
@@ -339,7 +339,7 @@ module Mongo
     end
 
     def decode(value)
-      ::URI.decode(value)
+      ::URI::DEFAULT_PARSER.unescape(value)
     end
 
     # Hash for storing map of URI option parameters to conversion strategies

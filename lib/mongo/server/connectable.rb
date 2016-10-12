@@ -80,9 +80,11 @@ module Mongo
         @timeout ||= options[:socket_timeout]
       end
 
-      private
+      protected
 
       attr_reader :socket
+
+      private
 
       def ssl_options
         @ssl_options[:ssl] == true ? @ssl_options : {}

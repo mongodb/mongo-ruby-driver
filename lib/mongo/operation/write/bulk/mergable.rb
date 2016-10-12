@@ -55,7 +55,7 @@ module Mongo
           #
           # @since 2.0.0
           def aggregate_write_concern_errors(count)
-            @replies.each_with_index.reduce(nil) do |errors, (reply, i)|
+            @replies.each_with_index.reduce(nil) do |errors, (reply, _)|
               if write_concern_errors = reply.documents.first[Error::WRITE_CONCERN_ERRORS]
                 (errors || []) << write_concern_errors.reduce(nil) do |errs, wce|
                     wce.merge!('index' => count + wce['index'])

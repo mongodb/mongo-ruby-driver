@@ -73,13 +73,15 @@ module Mongo
         }
       end
 
+      protected
+
+      attr_reader :upconverter
+
       private
 
       def validating_keys?
         true
       end
-
-      attr_reader :upconverter
 
       # The operation code required to specify an Insert message.
       # @return [Fixnum] the operation code.

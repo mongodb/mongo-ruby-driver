@@ -109,9 +109,11 @@ module Mongo
         checkin(connection) if connection
       end
 
-      private
+      protected
 
       attr_reader :queue
+
+      private
 
       class << self
 

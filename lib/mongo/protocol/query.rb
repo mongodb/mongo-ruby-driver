@@ -98,9 +98,11 @@ module Mongo
         true
       end
 
-      private
+      protected
 
       attr_reader :upconverter
+
+      private
 
       # The operation code required to specify a Query message.
       # @return [Fixnum] the operation code.

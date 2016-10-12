@@ -77,6 +77,10 @@ module Mongo
       # @return [Fixnum] The request id for this message
       attr_reader :request_id
 
+      def initialize # :nodoc:
+        @request_id = nil
+      end
+
       # The default for messages is not to require a reply after sending a
       # message to the server.
       #
@@ -110,7 +114,7 @@ module Mongo
       #
       # @return [ Message ] Instance of a Message class
       def self.deserialize(io, max_message_size = MAX_MESSAGE_SIZE, expected_response_to = nil)
-        length, request_id, response_to, op_code = deserialize_header(BSON::ByteBuffer.new(io.read(16)))
+        length, _request_id, response_to, _op_code = deserialize_header(BSON::ByteBuffer.new(io.read(16)))
 
         # Protection from potential DOS man-in-the-middle attacks. See
         # DRIVERS-276.
