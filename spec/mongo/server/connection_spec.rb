@@ -591,20 +591,14 @@ describe Mongo::Server::Connection do
 
     context 'when the ismaster response indicates the auth mechanism is :scram' do
 
-      let(:ismaster) do
-        {
-            'maxWireVersion' => 3,
-            'minWireVersion' => 0,
-            'ok' => 1
-        }
+      let(:features) do
+        Mongo::Server::Description::Features.new(0..3)
       end
 
       context 'when the server auth mechanism is scram', if: scram_sha_1_enabled? do
 
         it 'uses scram' do
-          socket = connection.instance_variable_get(:@socket)
-          max_message_size = connection.send(:max_message_size)
-          allow(Mongo::Protocol::Reply).to receive(:deserialize).with(socket, max_message_size).and_return(reply)
+          allow(Mongo::Server::Description::Features).to receive(:new).and_return(features)
           connection.send(:handshake!)
           expect(connection.send(:default_mechanism)).to eq(:scram)
         end
@@ -613,9 +607,7 @@ describe Mongo::Server::Connection do
       context 'when the server auth mechanism is the default (mongodb_cr)', unless: scram_sha_1_enabled?  do
 
         it 'uses scram' do
-          socket = connection.instance_variable_get(:@socket)
-          max_message_size = connection.send(:max_message_size)
-          allow(Mongo::Protocol::Reply).to receive(:deserialize).with(socket, max_message_size).and_return(reply)
+          allow(Mongo::Server::Description::Features).to receive(:new).and_return(features)
           connection.send(:handshake!)
           expect(connection.send(:default_mechanism)).to eq(:scram)
         end
@@ -624,20 +616,14 @@ describe Mongo::Server::Connection do
 
     context 'when the ismaster response indicates the auth mechanism is :mongodb_cr' do
 
-      let(:ismaster) do
-        {
-            'maxWireVersion' => 2,
-            'minWireVersion' => 0,
-            'ok' => 1
-        }
+      let(:features) do
+        Mongo::Server::Description::Features.new(0..2)
       end
 
       context 'when the server auth mechanism is scram', if: scram_sha_1_enabled? do
 
         it 'uses scram' do
-          socket = connection.instance_variable_get(:@socket)
-          max_message_size = connection.send(:max_message_size)
-          allow(Mongo::Protocol::Reply).to receive(:deserialize).with(socket, max_message_size).and_return(reply)
+          allow(Mongo::Server::Description::Features).to receive(:new).and_return(features)
           connection.send(:handshake!)
           expect(connection.send(:default_mechanism)).to eq(:scram)
         end
@@ -646,9 +632,7 @@ describe Mongo::Server::Connection do
       context 'when the server auth mechanism is the default (mongodb_cr)', unless: scram_sha_1_enabled?  do
 
         it 'uses mongodb_cr' do
-          socket = connection.instance_variable_get(:@socket)
-          max_message_size = connection.send(:max_message_size)
-          allow(Mongo::Protocol::Reply).to receive(:deserialize).with(socket, max_message_size).and_return(reply)
+          allow(Mongo::Server::Description::Features).to receive(:new).and_return(features)
           connection.send(:handshake!)
           expect(connection.send(:default_mechanism)).to eq(:mongodb_cr)
         end
