@@ -77,6 +77,10 @@ module Mongo
       # @return [Fixnum] The request id for this message
       attr_reader :request_id
 
+      def initialize # :nodoc:
+        @request_id = nil
+      end
+
       # The default for messages is not to require a reply after sending a
       # message to the server.
       #
