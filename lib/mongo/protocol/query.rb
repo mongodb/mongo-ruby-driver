@@ -67,6 +67,7 @@ module Mongo
         @skip = options[:skip]  || 0
         @flags = options[:flags] || []
         @upconverter = Upconverter.new(collection, selector, options, flags)
+        super
       end
 
       # Return the event payload for monitoring.

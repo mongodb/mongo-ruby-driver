@@ -46,6 +46,7 @@ module Mongo
         @selector = selector
         @flags = options[:flags] || []
         @upconverter = Upconverter.new(collection, selector, options)
+        super
       end
 
       # Return the event payload for monitoring.

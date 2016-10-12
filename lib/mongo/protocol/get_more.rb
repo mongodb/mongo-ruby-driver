@@ -42,6 +42,7 @@ module Mongo
         @number_to_return = number_to_return
         @cursor_id = cursor_id
         @upconverter = Upconverter.new(collection, cursor_id, number_to_return)
+        super
       end
 
       # Return the event payload for monitoring.

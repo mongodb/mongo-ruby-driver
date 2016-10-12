@@ -36,6 +36,7 @@ module Mongo
         @cursor_ids = cursor_ids
         @id_count   = @cursor_ids.size
         @upconverter = Upconverter.new(collection, cursor_ids)
+        super
       end
 
       # Return the event payload for monitoring.

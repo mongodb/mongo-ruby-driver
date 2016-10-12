@@ -77,7 +77,7 @@ module Mongo
       # @return [Fixnum] The request id for this message
       attr_reader :request_id
 
-      def initialize # :nodoc:
+      def initialize(*args) # :nodoc:
         @request_id = nil
       end
 

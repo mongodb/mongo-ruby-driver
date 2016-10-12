@@ -54,6 +54,7 @@ module Mongo
         @documents = documents
         @flags = options[:flags] || []
         @upconverter = Upconverter.new(collection, documents, options)
+        super
       end
 
       # Return the event payload for monitoring.
