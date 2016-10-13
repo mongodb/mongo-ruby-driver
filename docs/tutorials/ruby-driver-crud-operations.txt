@@ -85,6 +85,51 @@ On MongoDB 2.4, an exception is only raised if the insert fails and the
   ])
   result.inserted_count # returns 2, because 2 documents were inserted.
 
+.. _specify-decimal128:
+
+Specify a ``Decimal128`` number
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. versionadded:: 3.4
+
+:manual:`Decimal128</tutorial/model-monetary-data>` is a
+:doc:`BSON datatype </bson-tutorials>`
+that employs 128-bit decimal-based floating-point values capable
+of emulating decimal rounding with exact precision. This
+functionality is intended for applications that handle
+:manual:`monetary data </tutorial/model-monetary-data>`,
+such as financial and tax computations.
+
+The following example inserts a value of type ``Decimal128`` into
+the ``price`` field of a collection named ``inventory``:
+
+.. code-block:: ruby
+
+   client = Mongo::Client.new([ '127.0.0.1:27017' ], :database => 'test')
+
+   price = BSON::Decimal128.new("428.79")
+   client[:inventory].insert_one({ "_id" => 1,
+                                   "item" => "26 inch monitor",
+                                   "price" => price })
+
+The above operation produces the following document:
+
+.. code-block:: javascript
+
+   { "_id" : 1, "item" : "26 inch monitor", "price" : NumberDecimal("428.79") }
+
+You can also create a ``Decimal128`` object from a Ruby ``BigDecimal``
+object, or with ``Decimal128.from_string()``.
+
+.. code-block:: ruby
+
+   big_decimal = BigDecimal.new(428.79, 5)
+   price = BSON::Decimal128.new(big_decimal)
+   # => BSON::Decimal128('428.79')
+
+   price = BSON::Decimal128.from_string("428.79")
+   # => BSON::Decimal128('428.79')
+
 Reading
 -------
 
@@ -110,7 +155,7 @@ query:
 .. _ruby-driver-query-options:
 
 Query Options
-`````````````
+~~~~~~~~~~~~~
 
 To add options to a query, chain the appropriate methods after the
 ``find`` method. Note that the underlying object, the ``Mongo::Collection::View``,
@@ -182,7 +227,7 @@ when querying and their corresponding methods as examples.
          client[:artists].find.sort(:name => -1)
 
 Additional Query Operations
-```````````````````````````
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ``count``
   Get the total number of documents an operation returns.
@@ -204,7 +249,7 @@ Additional Query Operations
   client[:artists].find.distinct(:name )
   
 Tailable Cursors
-````````````````
+~~~~~~~~~~~~~~~~
 
 For capped collections you may use a :manual:`tailable cursor
 </core/tailable-cursors/>` that remains open
@@ -233,7 +278,7 @@ following code example shows how a tailable cursor might be used:
 .. _ruby-driver-read-preference:
 
 Read Preference
-````````````````
+~~~~~~~~~~~~~~~
 
 Read preference determines the candidate :manual:`replica set</replication/>`
 members to which a query or command can be sent. They consist of a **mode** specified as
@@ -270,7 +315,7 @@ option when a command is run on a database.
                                                        tag_sets: [ { 'dc' => 'nyc' } ] } )
 
 Mode
-````
+~~~~
 
 There are five possible read preference modes. They are ``:primary``,
 ``:secondary``, ``:primary_preferred``, ``:secondary_preferred``,
@@ -278,7 +323,7 @@ There are five possible read preference modes. They are ``:primary``,
 </core/read-preference/>` for an explanation of the modes and tag sets.
 
 Tag sets
-````````
+~~~~~~~~
 
 The ``tag_sets`` parameter is an ordered list of tag sets used to
 restrict the eligibility of servers for selection, such as for data
