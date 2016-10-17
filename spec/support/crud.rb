@@ -23,7 +23,7 @@
 # @since 2.0.0
 RSpec::Matchers.define :match_collection_data do |test|
 
-  match do |actual|
+  match do
     test.compare_collection_data
   end
 end
@@ -31,7 +31,6 @@ end
 RSpec::Matchers.define :match_operation_result do |test|
 
   match do |actual|
-    #binding.pry
     test.compare_operation_result(actual)
   end
 end
