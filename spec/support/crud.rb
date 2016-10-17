@@ -23,8 +23,15 @@
 # @since 2.0.0
 RSpec::Matchers.define :match_collection_data do |test|
 
-  match do |actual|
+  match do
     test.compare_collection_data
+  end
+end
+
+RSpec::Matchers.define :match_operation_result do |test|
+
+  match do |actual|
+    test.compare_operation_result(actual)
   end
 end
 
@@ -72,6 +79,14 @@ module Mongo
       def tests
         @crud_tests.collect do |test|
           Mongo::CRUD::CRUDTest.new(@data, test)
+        end
+      end
+
+      def description
+        if @spec['serverVersion']
+          "#{@description} for server version #{@spec['serverVersion']}"
+        else
+          @description
         end
       end
     end
@@ -153,41 +168,52 @@ module Mongo
         end
       end
 
-      # Whether this test requires server version >= 2.6 for its results to match
-      # the expected results.
+      # Compare the actual operation result to the expected operation result.
       #
-      # @example If this test requires >= 2.6.
-      #   test.requires_2_6?(collection)
+      # @example Compare the existing and expected operation results.
+      #   test.compare_operation_result(actual_results)
       #
-      # @param [ true, false ] If write commands are enabled on the server.
-      # @param [ Collection ] The collection the test is run on.
+      # @params [ Object ] actual The actual test results.
       #
-      # @return [ true, false ] Whether the test requires server >= 2.6.
-      #
-      # @since 2.0.0
-      def requires_2_6?(write_command_enabled, collection)
-        !write_command_enabled && @operation.requires_2_6?(collection)
-      end
-
-      # Whether this operation requires a certain server version to be run.
-      #
-      # @example Determine whether this operation requires a certain server feature.
-      #   operation.feature_enabled?(collection)
-      #
-      # @param [ Collection ] collection The collection the operation
-      #   should be executed on.
-      #
-      # @return [ true, false ] Whether this operation requires a certain server version.
+      # @return [ true, false ] The result of comparing the expected and actual operation result.
       #
       # @since 2.4.0
-      def feature_enabled?(collection)
-        @operation.feature_enabled?(collection)
+      def compare_operation_result(actual)
+        if actual.is_a?(Array)
+          actual.empty? || @outcome['result'].each_with_index do |expected, i|
+            compare_result(expected, actual[i])
+          end
+        else
+          compare_result(@outcome['result'], actual)
+        end
+      end
+
+      # The expected data in the collection as an outcome after running this test.
+      #
+      # @example Get the outcome collection data
+      #   test.outcome_collection_data
+      #
+      # @return [ Array<Hash> ] The list of documents expected to be in the collection
+      #   after running this test.
+      #
+      # @since 2.4.0
+      def outcome_collection_data
+        @outcome['collection']['data'] if @outcome['collection']
       end
 
       private
 
-      def outcome_collection_data
-        @outcome['collection']['data'] if @outcome['collection']
+      def compare_result(expected, actual)
+        case expected
+          when nil
+            actual.nil?
+          when Hash
+            actual.each do |k, v|
+              expected[k] == v
+            end
+          when Integer
+            expected == actual
+        end
       end
 
       def actual_collection_data

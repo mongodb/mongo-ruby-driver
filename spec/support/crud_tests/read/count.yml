@@ -2,7 +2,6 @@ data:
     - {_id: 1, x: 11}
     - {_id: 2, x: 22}
     - {_id: 3, x: 33}
-    - {_id: 4, x: 'PING'}
 
 tests:
     -
@@ -13,14 +12,14 @@ tests:
                 filter: { }
 
         outcome:
-            result: 4
+            result: 3
     -
         description: "Count with a filter"
         operation:
             name: count
             arguments:
                 filter: 
-                    _id: {$gt: 1, $lt: 4}
+                    _id: {$gt: 1}
 
         outcome:
             result: 2
@@ -34,15 +33,4 @@ tests:
                 limit: 3
 
         outcome:
-            result: 3
-    -
-        description: "Count with collation"
-        operation:
-            name: count
-            arguments:
-                filter: { x: 'ping' }
-                collation: { locale: 'en_US', strength: 2 }
-
-        outcome:
-            result: 1
-  
+            result: 2

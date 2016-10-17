@@ -2,7 +2,6 @@ data:
     - {_id: 1, x: 11}
     - {_id: 2, x: 22}
     - {_id: 3, x: 33}
-    - {_id: 4, x: 'ping'}
 
 tests:
     -
@@ -32,29 +31,12 @@ tests:
                 data:
                     - {_id: 1, x: 11}
                     - {_id: 3, x: 33}
-                    - {_id: 4, x: 'ping'}
-    -
-        description: "DeleteOne when one document matches with collation"
-        operation:
-            name: "deleteOne"
-            arguments:
-                filter: {x: 'PING'}
-                collation: { locale: 'en_US', strength: 2 }
-
-        outcome:
-            result:
-                deletedCount: 1
-            collection:
-                data:
-                   - {_id: 1, x: 11}
-                   - {_id: 2, x: 22}
-                   - {_id: 3, x: 33}
     -
         description: "DeleteOne when no documents match"
         operation:
             name: "deleteOne"
             arguments:
-                filter: {_id: 5}
+                filter: {_id: 4}
 
         outcome:
             result:
@@ -64,5 +46,3 @@ tests:
                     - {_id: 1, x: 11}
                     - {_id: 2, x: 22}
                     - {_id: 3, x: 33}
-                    - {_id: 4, x: 'ping'}
-  
