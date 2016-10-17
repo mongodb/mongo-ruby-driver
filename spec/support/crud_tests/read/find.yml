@@ -4,7 +4,6 @@ data:
     - {_id: 3, x: 33}
     - {_id: 4, x: 44}
     - {_id: 5, x: 55}
-    - {_id: 6, x: 'ping'}
 
 tests:
     -
@@ -24,7 +23,7 @@ tests:
             name: "find"
             arguments:
                 filter: 
-                    _id: {$gt: 2, $lt: 6}
+                    _id: {$gt: 2}
                 sort: {_id: 1}
                 skip: 2
                 limit: 2
@@ -48,13 +47,3 @@ tests:
                 - {_id: 2, x: 22}
                 - {_id: 3, x: 33}
                 - {_id: 4, x: 44}
-    -
-        description: "Find with a collation"
-        operation:
-            name: "find"
-            arguments:
-                filter: {x: 'PING'}
-                collation: { locale: 'en_US', strength: 2 }
-        outcome:
-            result:
-                - {_id: 6, x: 'ping'}

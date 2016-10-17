@@ -24,13 +24,13 @@ describe 'CRUD' do
             test.run(authorized_collection)
           end
 
-          it "returns the correct result" do
-            skip 'Test cannot be run on this server version' unless test.feature_enabled?(authorized_collection)
-            expect(results).to eq(test.result)
+          it 'returns the correct result' do
+            skip 'Test cannot be run on this server version' unless spec.server_version_satisfied?(authorized_client)
+            expect(results).to match_operation_result(test)
           end
 
-          it 'has the correct data in the collection' do
-            skip 'Test cannot be run on this server version' unless test.feature_enabled?(authorized_collection)
+          it 'has the correct data in the collection', if: test.outcome_collection_data do
+            skip 'Test cannot be run on this server version' unless spec.server_version_satisfied?(authorized_client)
             results
             expect(authorized_collection.find.to_a).to match_collection_data(test)
           end
