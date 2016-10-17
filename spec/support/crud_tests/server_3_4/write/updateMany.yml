@@ -1,0 +1,114 @@
+data:
+    - {_id: 1, x: 11}
+    - {_id: 2, x: 22}
+    - {_id: 3, x: 33}
+    - {_id: 4, x: 'ping'}
+    - {_id: 5, x: 'pINg'}
+
+tests:
+    -
+        description: "UpdateMany when many documents match"
+        operation:
+            name: "updateMany"
+            arguments:
+                filter:
+                    _id: {$gt: 1, $lt: 4}
+                update:
+                    $inc: {x: 1}
+
+        outcome:
+            result:
+                matchedCount: 2
+                modifiedCount: 2
+            collection:
+                data:
+                    - {_id: 1, x: 11}
+                    - {_id: 2, x: 23}
+                    - {_id: 3, x: 34}
+                    - {_id: 4, x: 'ping'}
+                    - {_id: 5, x: 'pINg'}
+    -
+        description: "UpdateMany when many documents match with collation"
+        operation:
+            name: "updateMany"
+            arguments:
+                filter:
+                    x: 'ping'
+                update:
+                    $set: {x: 'pong'}
+                collation: { locale: 'en_US', strength: 2 }
+
+        outcome:
+            result:
+                matchedCount: 2
+                modifiedCount: 2
+            collection:
+                data:
+                    - {_id: 1, x: 11}
+                    - {_id: 2, x: 22}
+                    - {_id: 3, x: 33}
+                    - {_id: 4, x: 'pong'}
+                    - {_id: 5, x: 'pong'}
+    -
+        description: "UpdateMany when one document matches"
+        operation:
+            name: "updateMany"
+            arguments:
+                filter: {_id: 1}
+                update:
+                    $inc: {x: 1}
+
+        outcome:
+            result:
+                matchedCount: 1
+                modifiedCount: 1
+            collection:
+                data:
+                    - {_id: 1, x: 12}
+                    - {_id: 2, x: 22}
+                    - {_id: 3, x: 33}
+                    - {_id: 4, x: 'ping'}
+                    - {_id: 5, x: 'pINg'}
+    -
+        description: "UpdateMany when no documents match"
+        operation:
+            name: "updateMany"
+            arguments:
+                filter: {_id: 6}
+                update:
+                    $inc: {x: 1}
+
+        outcome:
+            result:
+                matchedCount: 0
+                modifiedCount: 0
+            collection:
+                data:
+                    - {_id: 1, x: 11}
+                    - {_id: 2, x: 22}
+                    - {_id: 3, x: 33}
+                    - {_id: 4, x: 'ping'}
+                    - {_id: 5, x: 'pINg'}
+    -
+        description: "UpdateMany with upsert when no documents match"
+        operation:
+            name: "updateMany"
+            arguments:
+                filter: {_id: 6}
+                update:
+                    $inc: {x: 1}
+                upsert: true
+
+        outcome:
+            result:
+                matchedCount: 0
+                modifiedCount: 0
+                upsertedId: 6
+            collection:
+                data:
+                    - {_id: 1, x: 11}
+                    - {_id: 2, x: 22}
+                    - {_id: 3, x: 33}
+                    - {_id: 4, x: 'ping'}
+                    - {_id: 5, x: 'pINg'}
+                    - {_id: 6, x: 1}

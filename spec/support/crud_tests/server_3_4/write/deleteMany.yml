@@ -1,0 +1,56 @@
+data:
+    - {_id: 1, x: 11}
+    - {_id: 2, x: 22}
+    - {_id: 3, x: 33}
+    - {_id: 4, x: 'ping'}
+    - {_id: 5, x: 'pINg'}
+
+tests:
+    -
+        description: "DeleteMany when many documents match"
+        operation:
+            name: "deleteMany"
+            arguments:
+                filter:
+                    _id: {$gt: 1}
+
+        outcome:
+            result:
+                deletedCount: 4
+            collection:
+                data:
+                    - {_id: 1, x: 11}
+    -
+        description: "DeleteMany when many documents match with collation"
+        operation:
+            name: "deleteMany"
+            arguments:
+                filter:
+                    x: 'PING'
+                collation: { locale: 'en_US', strength: 2 }
+
+        outcome:
+            result:
+                deletedCount: 2
+            collection:
+                data:
+                    - {_id: 1, x: 11}
+                    - {_id: 2, x: 22}
+                    - {_id: 3, x: 33}
+    -
+        description: "DeleteMany when no document matches"
+        operation:
+            name: "deleteMany"
+            arguments:
+                filter: {_id: 6}
+
+        outcome:
+            result:
+                deletedCount: 0
+            collection:
+                data:
+                    - {_id: 1, x: 11}
+                    - {_id: 2, x: 22}
+                    - {_id: 3, x: 33}
+                    - {_id: 4, x: 'ping'}
+                    - {_id: 5, x: 'pINg'}
