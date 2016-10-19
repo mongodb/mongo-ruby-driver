@@ -54,6 +54,7 @@ module Mongo
         @documents = documents
         @flags = options[:flags] || []
         @upconverter = Upconverter.new(collection, documents, options)
+        @options = options
         super
       end
 
@@ -81,7 +82,7 @@ module Mongo
       private
 
       def validating_keys?
-        true
+        @options.fetch(:validating_keys, true)
       end
 
       # The operation code required to specify an Insert message.
