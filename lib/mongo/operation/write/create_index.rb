@@ -59,7 +59,7 @@ module Mongo
         end
 
         def message
-          Protocol::Insert.new(db_name, Index::COLLECTION, index_documents)
+          Protocol::Insert.new(db_name, Index::COLLECTION, index_documents, validating_keys: false)
         end
       end
     end

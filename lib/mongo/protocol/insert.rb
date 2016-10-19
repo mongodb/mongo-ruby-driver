@@ -54,6 +54,7 @@ module Mongo
         @documents = documents
         @flags = options[:flags] || []
         @upconverter = Upconverter.new(collection, documents, options)
+        @options = options
       end
 
       # Return the event payload for monitoring.
@@ -76,7 +77,7 @@ module Mongo
       private
 
       def validating_keys?
-        true
+        @options.fetch(:validating_keys, true)
       end
 
       attr_reader :upconverter
