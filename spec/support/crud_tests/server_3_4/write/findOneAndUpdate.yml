@@ -1,0 +1,202 @@
+data:
+    - {_id: 1, x: 11}
+    - {_id: 2, x: 22}
+    - {_id: 3, x: 33}
+    - {_id: 4, x: 'ping'}
+    - {_id: 5, x: 'pINg'}
+
+tests:
+    -
+        description: "FindOneAndUpdate when many documents match returning the document before modification"
+        operation:
+            name: findOneAndUpdate
+            arguments:
+                filter:
+                    _id: {$gt: 1}
+                update:
+                    $inc: {x: 1}
+                projection: {x: 1, _id: 0}
+                sort: {x: 1}
+
+        outcome:
+            result: {x: 22}
+            collection:
+                data:
+                    - {_id: 1, x: 11}
+                    - {_id: 2, x: 23}
+                    - {_id: 3, x: 33}
+                    - {_id: 4, x: 'ping'}
+                    - {_id: 5, x: 'pINg'}
+
+    -
+        description: "FindOneAndUpdate when many documents match with collation returning the document before modification"
+        operation:
+            name: findOneAndUpdate
+            arguments:
+                filter:
+                    x: 'PING'
+                update:
+                    $set: {x: 'pong'}
+                projection: {x: 1, _id: 0}
+                sort: {_id: 1}
+                collation: { locale: 'en_US', strength: 2 }
+
+        outcome:
+            result: {x: 'ping'}
+            collection:
+                data:
+                    - {_id: 1, x: 11}
+                    - {_id: 2, x: 22}
+                    - {_id: 3, x: 33}
+                    - {_id: 4, x: 'pong'}
+                    - {_id: 5, x: 'pINg'}
+
+    -
+        description: "FindOneAndUpdate when many documents match returning the document after modification"
+        operation:
+            name: findOneAndUpdate
+            arguments:
+                filter:
+                    _id: {$gt: 1}
+                update:
+                    $inc: {x: 1}
+                projection: {x: 1, _id: 0}
+                returnDocument: After
+                sort: {x: 1}
+
+        outcome:
+            result: {x: 23}
+            collection:
+                data:
+                    - {_id: 1, x: 11}
+                    - {_id: 2, x: 23}
+                    - {_id: 3, x: 33}
+                    - {_id: 4, x: 'ping'}
+                    - {_id: 5, x: 'pINg'}
+    -
+        description: "FindOneAndUpdate when one document matches returning the document before modification"
+        operation:
+            name: findOneAndUpdate
+            arguments:
+                filter: {_id: 2}
+                update:
+                    $inc: {x: 1}
+                projection: {x: 1, _id: 0}
+                sort: {x: 1}
+
+        outcome:
+            result: {x: 22}
+            collection:
+                data:
+                    - {_id: 1, x: 11}
+                    - {_id: 2, x: 23}
+                    - {_id: 3, x: 33}
+                    - {_id: 4, x: 'ping'}
+                    - {_id: 5, x: 'pINg'}
+    -
+        description: "FindOneAndUpdate when one document matches returning the document after modification"
+        operation:
+            name: findOneAndUpdate
+            arguments:
+                filter: {_id: 2}
+                update:
+                    $inc: {x: 1}
+                projection: {x: 1, _id: 0}
+                returnDocument: After
+                sort: {x: 1}
+
+        outcome:
+            result: {x: 23}
+            collection:
+                data:
+                    - {_id: 1, x: 11}
+                    - {_id: 2, x: 23}
+                    - {_id: 3, x: 33}
+                    - {_id: 4, x: 'ping'}
+                    - {_id: 5, x: 'pINg'}
+    -
+        description: "FindOneAndUpdate when no documents match returning the document before modification"
+        operation:
+            name: findOneAndUpdate
+            arguments:
+                filter: {_id: 6}
+                update:
+                    $inc: {x: 1}
+                projection: {x: 1, _id: 0}
+                sort: {x: 1}
+
+        outcome:
+            result: null
+            collection:
+                data:
+                    - {_id: 1, x: 11}
+                    - {_id: 2, x: 22}
+                    - {_id: 3, x: 33}
+                    - {_id: 4, x: 'ping'}
+                    - {_id: 5, x: 'pINg'}
+    -
+        description: "FindOneAndUpdate when no documents match with upsert returning the document before modification"
+        operation:
+            name: findOneAndUpdate
+            arguments:
+                filter: {_id: 6}
+                update:
+                    $inc: {x: 1}
+                projection: {x: 1, _id: 0}
+                sort: {x: 1}
+                upsert: true
+
+        outcome:
+            result: null
+            collection:
+                data:
+                    - {_id: 1, x: 11}
+                    - {_id: 2, x: 22}
+                    - {_id: 3, x: 33}
+                    - {_id: 4, x: 'ping'}
+                    - {_id: 5, x: 'pINg'}
+                    - {_id: 6, x: 1}
+    -
+        description: "FindOneAndUpdate when no documents match returning the document after modification"
+        operation:
+            name: findOneAndUpdate
+            arguments:
+                filter: {_id: 6}
+                update:
+                    $inc: {x: 1}
+                projection: {x: 1, _id: 0}
+                returnDocument: After
+                sort: {x: 1}
+
+        outcome:
+            result: null
+            collection:
+                data:
+                    - {_id: 1, x: 11}
+                    - {_id: 2, x: 22}
+                    - {_id: 3, x: 33}
+                    - {_id: 4, x: 'ping'}
+                    - {_id: 5, x: 'pINg'}
+    -
+        description: "FindOneAndUpdate when no documents match with upsert returning the document after modification"
+        operation:
+            name: findOneAndUpdate
+            arguments:
+                filter: {_id: 6}
+                update:
+                    $inc: {x: 1}
+                projection: {x: 1, _id: 0}
+                returnDocument: After
+                sort: {x: 1}
+                upsert: true
+
+        outcome:
+            result: {x: 1}
+            collection:
+                data:
+                    - {_id: 1, x: 11}
+                    - {_id: 2, x: 22}
+                    - {_id: 3, x: 33}
+                    - {_id: 4, x: 'ping'}
+                    - {_id: 5, x: 'pINg'}
+                    - {_id: 6, x: 1}

@@ -2,7 +2,19 @@ require 'spec_helper'
 
 describe 'CRUD' do
 
-  CRUD_TESTS.each do |file|
+  test_files = if collation_enabled?
+      CRUD_TESTS_3_4
+    elsif find_command_enabled?
+      CRUD_TESTS_3_2
+    elsif list_command_enabled?
+      CRUD_TESTS_3_0
+    elsif write_command_enabled?
+      CRUD_TESTS_2_6
+    else
+      CRUD_TESTS_2_4
+    end
+
+  test_files.each do |file|
 
     spec = Mongo::CRUD::Spec.new(file)
 
@@ -20,18 +32,15 @@ describe 'CRUD' do
             authorized_collection.delete_many
           end
 
-          let(:results) do
+          let!(:results) do
             test.run(authorized_collection)
           end
 
-          it "returns the correct result" do
-            skip 'Test cannot be run on this server version' unless test.feature_enabled?(authorized_collection)
-            expect(results).to eq(test.result)
+          it 'returns the correct result' do
+            expect(results).to match_operation_result(test)
           end
 
-          it 'has the correct data in the collection' do
-            skip 'Test cannot be run on this server version' unless test.feature_enabled?(authorized_collection)
-            results
+          it 'has the correct data in the collection', if: test.outcome_collection_data do
             expect(authorized_collection.find.to_a).to match_collection_data(test)
           end
         end
