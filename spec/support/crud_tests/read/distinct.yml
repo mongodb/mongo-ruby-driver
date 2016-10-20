@@ -2,8 +2,6 @@ data:
     - {_id: 1, x: 11}
     - {_id: 2, x: 22}
     - {_id: 3, x: 33}
-    - {_id: 4, string: 'PING'}
-    - {_id: 5, string: 'ping'}
 
 tests:
     -
@@ -32,14 +30,3 @@ tests:
             result: 
                 - 22
                 - 33
-    -
-        description: "Distinct with a collation"
-        operation:
-            name: distinct
-            arguments:
-                fieldName: "string"
-                collation: { locale: 'en_US', strength: 2 }
-
-        outcome:
-            result:
-                - 'PING'
