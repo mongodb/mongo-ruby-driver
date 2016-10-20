@@ -511,6 +511,25 @@ describe Mongo::Index::View do
           end
         end
       end
+
+      context 'when the index is created on an subdocument field' do
+
+        let(:spec) do
+          { 'sub_document.random' => 1 }
+        end
+
+        let(:result) do
+          view.create_one(spec, unique: true)
+        end
+
+        after do
+          begin; view.drop_one('sub_document.random_1'); rescue; end
+        end
+
+        it 'returns ok' do
+          expect(result).to be_successful
+        end
+      end
     end
 
     context 'when index creation fails' do
