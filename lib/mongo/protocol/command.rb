@@ -86,6 +86,10 @@ module Mongo
 
       private
 
+      def extra_doc_size
+        1024 * 16
+      end
+
       # The operation code required to specify a Query Command message.
       # @return [Fixnum] the operation code.
       def op_code
