@@ -364,7 +364,7 @@ describe Mongo::Server::Connection do
       context 'when the message is a command' do
 
         before do
-          allow(connection).to receive(:max_bson_object_size).and_return(100)
+          allow(connection).to receive(:max_bson_object_size).and_return(24-command.send(:extra_doc_size))
         end
 
         let(:selector) do
