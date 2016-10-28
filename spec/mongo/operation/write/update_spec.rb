@@ -252,5 +252,34 @@ describe Mongo::Operation::Write::Update do
         expect(result.written_count).to eq(0)
       end
     end
+
+    context 'when the replacement document is the max bson size' do
+
+      let(:update_e) do
+        described_class.new({
+                                update: document,
+                                db_name: TEST_DB,
+                                coll_name: TEST_COLL,
+                                write_concern: Mongo::WriteConcern.get(:w => 0)
+                            })
+      end
+
+      before do
+        authorized_collection.insert_one(_id: BSON::Int32.new(1))
+      end
+
+      let(:result) do
+        update.execute(authorized_primary)
+      end
+
+      let(:document) do
+        {'q' => {_id: BSON::Int32.new(1)},
+         'u' => { x: 'y' * (1024 * 1024 * 16 - 22) } }
+      end
+
+      it 'allows the document to be replaced' do
+        expect(result.written_count).to eq(1)
+      end
+    end
   end
 end
