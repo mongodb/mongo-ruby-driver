@@ -54,7 +54,7 @@ module Mongo
           sel = filter_cursor_from_selector(sel, server)
           sel = update_selector_for_write_concern(sel, server)
           opts = update_options_for_slave_ok(options, server)
-          Protocol::Query.new(db_name, query_coll, sel, opts)
+          Protocol::Command.new(db_name, query_coll, sel, opts)
         end
       end
     end

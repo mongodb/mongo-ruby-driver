@@ -99,4 +99,3 @@ describe Mongo::Operation::Read::Query do
     end
   end
 end
-

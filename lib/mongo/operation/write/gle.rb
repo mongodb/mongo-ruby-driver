@@ -35,7 +35,7 @@ module Mongo
         def gle
           wc = write_concern ||  WriteConcern.get(WriteConcern::DEFAULT)
           if gle_message = wc.get_last_error
-            Protocol::Query.new(
+            Protocol::Command.new(
                 db_name,
                 Database::COMMAND,
                 gle_message,

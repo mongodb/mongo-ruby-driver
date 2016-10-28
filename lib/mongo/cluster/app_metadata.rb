@@ -102,7 +102,7 @@ module Mongo
         end
         document = Server::Monitor::Connection::ISMASTER
         document = document.merge(client: client_document) if client_document
-        Protocol::Query.new(Database::ADMIN, Database::COMMAND, document, :limit => -1).serialize
+        Protocol::Command.new(Database::ADMIN, Database::COMMAND, document, :limit => -1).serialize
       end
 
       def driver_doc

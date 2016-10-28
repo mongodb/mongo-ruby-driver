@@ -240,7 +240,7 @@ describe Mongo::Server::Connection do
       end
 
       let(:command) do
-        Mongo::Protocol::Query.new(TEST_DB, '$cmd', selector, :limit => -1)
+        Mongo::Protocol::Command.new(TEST_DB, '$cmd', selector, :limit => -1)
       end
 
       let(:reply) do

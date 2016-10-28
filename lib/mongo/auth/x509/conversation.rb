@@ -43,7 +43,7 @@ module Mongo
         # @param [ Protocol::Reply ] reply The reply of the previous
         #   message.
         #
-        # @return [ Protocol::Query ] The next message to send.
+        # @return [ Protocol::Command ] The next message to send.
         #
         # @since 2.0.0
         def finalize(reply)
@@ -56,13 +56,13 @@ module Mongo
         # @example Start the conversation.
         #   conversation.start
         #
-        # @return [ Protocol::Query ] The first x.509 conversation message.
+        # @return [ Protocol::Command ] The first x.509 conversation message.
         #
         # @since 2.0.0
         def start
           login = LOGIN.merge(mechanism: X509::MECHANISM)
           login[:user] = user.name if user.name
-          Protocol::Query.new(
+          Protocol::Command.new(
             Auth::EXTERNAL,
             Database::COMMAND,
             login,

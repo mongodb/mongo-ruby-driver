@@ -32,7 +32,7 @@ module Mongo
       # Ping message.
       #
       # @since 2.1.0
-      PING_MESSAGE = Protocol::Query.new(Database::ADMIN, Database::COMMAND, PING, :limit => -1)
+      PING_MESSAGE = Protocol::Command.new(Database::ADMIN, Database::COMMAND, PING, :limit => -1)
 
       # The ping message as raw bytes.
       #

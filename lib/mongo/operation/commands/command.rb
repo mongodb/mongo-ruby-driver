@@ -38,6 +38,10 @@ module Mongo
 
         private
 
+        def wire_protocol_type
+          Protocol::Command
+        end
+
         def query_coll
           Database::COMMAND
         end

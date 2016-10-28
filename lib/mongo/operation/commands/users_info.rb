@@ -38,7 +38,7 @@ module Mongo
         end
 
         def message(server)
-          Protocol::Query.new(db_name, query_coll, selector, options)
+          Protocol::Command.new(db_name, query_coll, selector, options)
         end
       end
     end

@@ -105,12 +105,12 @@ module Mongo
         # @param [ Protocol::Reply ] reply The reply of the previous
         #   message.
         #
-        # @return [ Protocol::Query ] The next message to send.
+        # @return [ Protocol::Command ] The next message to send.
         #
         # @since 2.0.0
         def continue(reply)
           validate_first_message!(reply)
-          Protocol::Query.new(
+          Protocol::Command.new(
             user.auth_source,
             Database::COMMAND,
             CLIENT_CONTINUE_MESSAGE.merge(payload: client_final_message, conversationId: id),
@@ -127,12 +127,12 @@ module Mongo
         # @param [ Protocol::Reply ] reply The reply of the previous
         #   message.
         #
-        # @return [ Protocol::Query ] The next message to send.
+        # @return [ Protocol::Command ] The next message to send.
         #
         # @since 2.0.0
         def finalize(reply)
           validate_final_message!(reply)
-          Protocol::Query.new(
+          Protocol::Command.new(
             user.auth_source,
             Database::COMMAND,
             CLIENT_CONTINUE_MESSAGE.merge(payload: client_empty_message, conversationId: id),
@@ -146,11 +146,11 @@ module Mongo
         # @example Start the conversation.
         #   conversation.start
         #
-        # @return [ Protocol::Query ] The first SCRAM conversation message.
+        # @return [ Protocol::Command ] The first SCRAM conversation message.
         #
         # @since 2.0.0
         def start
-          Protocol::Query.new(
+          Protocol::Command.new(
             user.auth_source,
             Database::COMMAND,
             CLIENT_FIRST_MESSAGE.merge(payload: client_first_message, mechanism: SCRAM::MECHANISM),
