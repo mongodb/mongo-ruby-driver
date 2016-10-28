@@ -36,6 +36,11 @@ module Mongo
       # @ since 2.4.0
       MAX_APP_NAME_SIZE = 128.freeze
 
+      # The driver name.
+      #
+      # @ since 2.4.0
+      DRIVER_NAME = 'mongo-ruby-driver'
+
       # Instantiate the new AppMetadata object.
       #
       # @api private
@@ -101,7 +106,7 @@ module Mongo
 
       def driver_doc
         {
-          name: :'mongo-ruby-driver',
+          name: DRIVER_NAME,
           version: Mongo::VERSION
         }
       end
@@ -116,7 +121,7 @@ module Mongo
 
       def type
         (RbConfig::CONFIG && RbConfig::CONFIG['host_os']) ?
-          RbConfig::CONFIG['host_os'].split('_').first[/[a-z]+/i].downcase.to_sym : :unknown
+          RbConfig::CONFIG['host_os'].split('_').first[/[a-z]+/i].downcase : 'unknown'
       end
 
       def name
