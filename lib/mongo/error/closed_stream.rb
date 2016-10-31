@@ -15,7 +15,7 @@
 module Mongo
   class Error
 
-    # Raised if the GridFS::Stream object is closed and an operation is attempted.
+    # Raised if the Grid::FSBucket::Stream object is closed and an operation is attempted.
     #
     # @since 2.1.0
     class ClosedStream < Error

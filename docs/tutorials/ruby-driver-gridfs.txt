@@ -20,7 +20,7 @@ Creating a GridFS object ("Grid::FSBucket")
 You can create a GridFS object by calling ``fs`` on a database, with optional
 arguments. ``fs`` returns a ``Grid::FSBucket`` object.
 
-The options that ``GridFS::Bucket`` supports are:
+The options that ``Grid::FSBucket`` supports are:
 
 .. list-table::
    :header-rows: 1
