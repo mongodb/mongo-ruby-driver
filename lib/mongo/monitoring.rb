@@ -36,32 +36,32 @@ module Mongo
 
     # Server closed topic.
     #
-    # @since 2.3.0
+    # @since 2.4.0
     SERVER_CLOSED = 'ServerClosed'.freeze
 
     # Server description changed topic.
     #
-    # @since 2.3.0
+    # @since 2.4.0
     SERVER_DESCRIPTION_CHANGED = 'ServerDescriptionChanged'.freeze
 
     # Server opening topic.
     #
-    # @since 2.3.0
+    # @since 2.4.0
     SERVER_OPENING = 'ServerOpening'.freeze
 
     # Topology changed topic.
     #
-    # @since 2.3.0
+    # @since 2.4.0
     TOPOLOGY_CHANGED = 'TopologyChanged'.freeze
 
     # Topology closed topic.
     #
-    # @since 2.3.0
+    # @since 2.4.0
     TOPOLOGY_CLOSED = 'TopologyClosed'.freeze
 
     # Topology opening topic.
     #
-    # @since 2.3.0
+    # @since 2.4.0
     TOPOLOGY_OPENING = 'TopologyOpening'.freeze
 
     @@operation_id = 0

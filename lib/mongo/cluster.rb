@@ -58,7 +58,8 @@ module Mongo
     # @since 2.4.0
     attr_reader :app_metadata
 
-    def_delegators :topology, :replica_set?, :replica_set_name, :sharded?, :single?, :unknown?
+    def_delegators :topology, :replica_set?, :replica_set_name, :sharded?,
+                   :single?, :unknown?, :member_discovered
     def_delegators :@cursor_reaper, :register_cursor, :schedule_kill_cursor, :unregister_cursor
 
     # Determine if this cluster of servers is equal to another object. Checks the
@@ -112,7 +113,7 @@ module Mongo
     #
     # @return [ true, false ] If a readable server is present.
     #
-    # @since 2.3.0
+    # @since 2.4.0
     def has_readable_server?(server_selector)
       topology.has_readable_server?(self, server_selector)
     end
@@ -124,7 +125,7 @@ module Mongo
     #
     # @return [ true, false ] If a writable server is present.
     #
-    # @since 2.3.0
+    # @since 2.4.0
     def has_writable_server?
       topology.has_writable_server?(self)
     end
@@ -154,11 +155,21 @@ module Mongo
       @pool_lock = Mutex.new
       @topology = Topology.initial(seeds, monitoring, options)
 
+      publish_sdam_event(
+        Monitoring::TOPOLOGY_OPENING,
+        Monitoring::Event::TopologyOpening.new(@topology)
+      )
+
       subscribe_to(Event::STANDALONE_DISCOVERED, Event::StandaloneDiscovered.new(self))
       subscribe_to(Event::DESCRIPTION_CHANGED, Event::DescriptionChanged.new(self))
-      subscribe_to(Event::PRIMARY_ELECTED, Event::PrimaryElected.new(self))
+      subscribe_to(Event::MEMBER_DISCOVERED, Event::MemberDiscovered.new(self))
 
       seeds.each{ |seed| add(seed) }
+
+      publish_sdam_event(
+        Monitoring::TOPOLOGY_CHANGED,
+        Monitoring::Event::TopologyChanged.new(@topology, @topology)
+      ) if @servers.size > 1
 
       @cursor_reaper = CursorReaper.new
       @cursor_reaper.run!

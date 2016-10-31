@@ -18,7 +18,7 @@ module Mongo
 
       # Event fired when the topology is opening.
       #
-      # @since 2.3.0
+      # @since 2.4.0
       class TopologyOpening
 
         # @return [ Topology ] topology The topology.
@@ -31,7 +31,7 @@ module Mongo
         #
         # @param [ Integer ] topology The topology.
         #
-        # @since 2.3.0
+        # @since 2.4.0
         def initialize(topology)
           @topology = topology
         end

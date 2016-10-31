@@ -344,6 +344,7 @@ describe Mongo::Cluster do
       let(:topology) do
         double('topology').tap do |t|
           allow(t).to receive(:add_hosts?).and_return(true)
+          allow(t).to receive(:changed!).and_return(true)
         end
       end
 
@@ -358,6 +359,7 @@ describe Mongo::Cluster do
       let(:topology) do
         double('topology').tap do |t|
           allow(t).to receive(:add_hosts?).and_return(false)
+          allow(t).to receive(:changed!).and_return(true)
         end
       end
 
@@ -406,6 +408,7 @@ describe Mongo::Cluster do
           double('topology').tap do |t|
             allow(t).to receive(:remove_hosts?).and_return(true)
             allow(t).to receive(:remove_server?).and_return(true)
+            allow(t).to receive(:changed!).and_return(true)
           end
         end
 
@@ -426,6 +429,7 @@ describe Mongo::Cluster do
           double('topology').tap do |t|
             allow(t).to receive(:remove_hosts?).and_return(true)
             allow(t).to receive(:remove_server?).and_return(false)
+            allow(t).to receive(:changed!).and_return(true)
           end
         end
 
@@ -446,6 +450,7 @@ describe Mongo::Cluster do
       let(:topology) do
         double('topology').tap do |t|
           allow(t).to receive(:remove_hosts?).and_return(false)
+          allow(t).to receive(:changed!).and_return(true)
         end
       end
 

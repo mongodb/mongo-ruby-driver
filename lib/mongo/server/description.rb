@@ -487,7 +487,7 @@ module Mongo
       #
       # @return [ Symbol ] The server type.
       #
-      # @since 2.3.0
+      # @since 2.4.0
       def server_type
         return :arbiter if arbiter?
         return :ghost if ghost?

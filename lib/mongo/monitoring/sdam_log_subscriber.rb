@@ -17,7 +17,7 @@ module Mongo
 
     # Subscribes to SDAM events and logs them.
     #
-    # @since 2.3.0
+    # @since 2.4.0
     class SDAMLogSubscriber
       include Loggable
 
@@ -33,7 +33,7 @@ module Mongo
       #
       # @option options [ Logger ] :logger An optional custom logger.
       #
-      # @since 2.1.0
+      # @since 2.4.0
       def initialize(options = {})
         @options = options
       end
@@ -45,7 +45,7 @@ module Mongo
       #
       # @param [ Event ] event The event.
       #
-      # @since 2.3.0
+      # @since 2.4.0
       def succeeded(event)
         log_event(event) if logger.debug?
       end

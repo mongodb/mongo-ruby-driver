@@ -17,7 +17,7 @@ module Mongo
 
     # Subscribes to Topology Openeing events and logs them.
     #
-    # @since 2.3.0
+    # @since 2.4.0
     class TopologyOpeningLogSubscriber < SDAMLogSubscriber
 
       private

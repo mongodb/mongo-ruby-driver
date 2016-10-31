@@ -18,7 +18,7 @@ module Mongo
 
       # Event fired when a server's description changes.
       #
-      # @since 2.3.0
+      # @since 2.4.0
       class ServerDescriptionChanged
 
         # @return [ Address ] address The server address.
@@ -45,7 +45,7 @@ module Mongo
         # @param [ Server::Description ] previous_description The previous description.
         # @param [ Server::Description ] new_description The new description.
         #
-        # @since 2.3.0
+        # @since 2.4.0
         def initialize(address, topology, previous_description, new_description)
           @address = address
           @topology = topology

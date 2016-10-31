@@ -73,7 +73,7 @@ module Mongo
         #
         # @return [ true, false ] If a readable server is present.
         #
-        # @since 2.3.0
+        # @since 2.4.0
         def has_readable_server?(cluster, server_selector)
           server_selector.candidates(cluster).any?
         end
@@ -88,7 +88,7 @@ module Mongo
         #
         # @return [ true, false ] If a writable server is present.
         #
-        # @since 2.3.0
+        # @since 2.4.0
         def has_writable_server?(cluster)
           cluster.servers.any?{ |server| server.primary? }
         end
@@ -107,10 +107,6 @@ module Mongo
           @options = options
           @monitoring = monitoring
           @seed = seeds.first
-          publish_sdam_event(
-            Monitoring::TOPOLOGY_OPENING,
-            Monitoring::Event::TopologyOpening.new(self)
-          )
         end
 
         # A single topology is not a replica set.
@@ -227,6 +223,19 @@ module Mongo
         #
         # @since 2.0.6
         def standalone_discovered; self; end
+
+        # Publish that a member of this topology was discovered.
+        #
+        # @example Publish that a member was discovered.
+        #   topology.member_discovered
+        #
+        # @since 2.4.0
+        def member_discovered
+          publish_sdam_event(
+            Monitoring::TOPOLOGY_CHANGED,
+            Monitoring::Event::TopologyChanged.new(self, self)
+          )
+        end
       end
     end
   end

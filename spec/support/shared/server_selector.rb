@@ -35,6 +35,12 @@ shared_context 'server selector' do
   let(:secondary) { make_server(:secondary) }
   let(:options) { { :mode => name, :tag_sets => tag_sets, max_staleness: max_staleness } }
   let(:selector) { described_class.new(options) }
+  let(:monitoring) do
+    Mongo::Monitoring.new(monitoring: false)
+  end
+  let(:topology) do
+    double('topology')
+  end
 
   before(:all) do
     module Mongo

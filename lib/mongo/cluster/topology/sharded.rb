@@ -70,7 +70,7 @@ module Mongo
         #
         # @return [ true, false ] If a readable server is present.
         #
-        # @since 2.3.0
+        # @since 2.4.0
         def has_readable_server?(cluster, server_selector); true; end
 
         # Determine if the topology would select a writable server for the
@@ -83,7 +83,7 @@ module Mongo
         #
         # @return [ true, false ] If a writable server is present.
         #
-        # @since 2.3.0
+        # @since 2.4.0
         def has_writable_server?(cluster); true; end
 
         # Initialize the topology with the options.
@@ -99,10 +99,6 @@ module Mongo
         def initialize(options, monitoring, seeds = [])
           @options = options
           @monitoring = monitoring
-          publish_sdam_event(
-            Monitoring::TOPOLOGY_OPENING,
-            Monitoring::Event::TopologyOpening.new(self)
-          )
         end
 
         # A sharded topology is not a replica set.
@@ -222,6 +218,14 @@ module Mongo
         #
         # @since 2.0.6
         def standalone_discovered; self; end
+
+        # Notify the topology that a member was discovered.
+        #
+        # @example Notify the cluster that a member was discovered.
+        #   topology.member_discovered
+        #
+        # @since 2.4.0
+        def member_discovered; end;
 
         private
 

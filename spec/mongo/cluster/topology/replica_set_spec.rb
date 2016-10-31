@@ -15,11 +15,8 @@ describe Mongo::Cluster::Topology::ReplicaSet do
   end
 
   let(:cluster) do
-    double('cluster', topology: topology)
-  end
-
-  let(:cluster) do
     double('cluster').tap do |cl|
+      allow(cl).to receive(:topology).and_return(topology)
       allow(cl).to receive(:app_metadata).and_return(app_metadata)
     end
   end
@@ -124,7 +121,7 @@ describe Mongo::Cluster::Topology::ReplicaSet do
     end
 
     let(:cluster) do
-      double('cluster', servers: servers, single?: false, sharded?: false)
+      double('cluster', servers: servers, single?: false, sharded?: false, unknown?: false)
     end
 
     context 'when the read preference is primary' do
@@ -165,7 +162,7 @@ describe Mongo::Cluster::Topology::ReplicaSet do
       context 'when a primary exists' do
 
         let(:servers) do
-          [ double('server', primary?: true) ]
+          [ double('server', primary?: true, secondary?: false) ]
         end
 
         it 'returns true' do
@@ -194,7 +191,7 @@ describe Mongo::Cluster::Topology::ReplicaSet do
       context 'when a secondary exists' do
 
         let(:servers) do
-          [ double('server', secondary?: true, average_round_trip_time: 0.01) ]
+          [ double('server', primary?: false, secondary?: true, average_round_trip_time: 0.01) ]
         end
 
         it 'returns true' do
@@ -205,7 +202,7 @@ describe Mongo::Cluster::Topology::ReplicaSet do
       context 'when a secondary does not exist' do
 
         let(:servers) do
-          [ double('server', secondary?: false) ]
+          [ double('server', primary?: true, secondary?: false) ]
         end
 
         it 'returns false' do

@@ -1,4 +1,4 @@
-# Copyright (C) 2014-2016 MongoDB, Inc.
+# Copyright (C) 2015 MongoDB, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the 'License');
 # you may not use this file except in compliance with the License.
@@ -17,37 +17,39 @@ module Mongo
     class Description
       class Inspector
 
-        # Handles inspecting the result of an ismaster command for servers
-        # added to the cluster.
+        # Handles inspecting the result of an ismaster command to check if this
+        # a server is a member of a known topology.
         #
-        # @since 2.0.0
-        class DescriptionChanged
+        # @since 2.4.0
+        class MemberDiscovered
           include Event::Publisher
 
-          # Instantiate the server added inspection.
+          # Instantiate the member discovered inspection.
           #
           # @example Instantiate the inspection.
-          #   ServerAdded.new(listeners)
+          #   MemberDiscovered.new(listeners)
           #
           # @param [ Event::Listeners ] event_listeners The event listeners.
           #
-          # @since 2.0.0
+          # @since 2.4.0
           def initialize(event_listeners)
             @event_listeners = event_listeners
           end
 
-          # Run the server added inspection.
+          # Run the member discovered inspection.
           #
           # @example Run the inspection.
-          #   ServerAdded.run(description, {})
+          #   MemberDiscovered.run(description, {})
           #
           # @param [ Description ] description The server description.
           # @param [ Description ] updated The updated description.
           #
-          # @since 2.0.0
+          # @since 2.4.0
           def run(description, updated)
-            unless (description.config.empty? && updated.config.empty?) || (description == updated)
-              publish(Event::DESCRIPTION_CHANGED, description, updated)
+            if (!description.primary? && updated.primary?) ||
+                (!description.mongos? && updated.mongos?) ||
+                (description.unknown? && !updated.unknown?)
+              publish(Event::MEMBER_DISCOVERED, description, updated)
             end
           end
         end

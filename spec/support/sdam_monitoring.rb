@@ -88,7 +88,7 @@ module Mongo
       def topology_matches?(actual, expected)
         case expected['topologyType']
           when 'ReplicaSetWithPrimary' then actual.replica_set?
-          when 'ReplicaSetNoPrimary' then actual.replica_set?
+          when 'ReplicaSetNoPrimary' then (actual.replica_set? || actual.unknown?)
           when 'Sharded' then actual.sharded?
           when 'Single' then actual.single?
           when 'Unknown' then actual.unknown?
@@ -98,12 +98,12 @@ module Mongo
 
     # Test subscriber for SDAM monitoring.
     #
-    # @since 2.3.0
+    # @since 2.4.0
     class TestSubscriber
 
       # The mappings of event names to types.
       #
-      # @since 2.3.0
+      # @since 2.4.0
       MAPPINGS = {
         'topology_opening_event' => Mongo::Monitoring::Event::TopologyOpening,
         'topology_description_changed_event' => Mongo::Monitoring::Event::TopologyChanged,
@@ -116,7 +116,7 @@ module Mongo
       #
       # @param [ Event ] event The event.
       #
-      # @since 2.3.0
+      # @since 2.4.0
       def succeeded(event)
         events.push(event)
       end
@@ -130,7 +130,7 @@ module Mongo
         matching = events.find do |event|
           event.class == MAPPINGS[name]
         end
-        events.delete(events.find_index(matching))
+        events.delete(matching)
         matching
       end
 

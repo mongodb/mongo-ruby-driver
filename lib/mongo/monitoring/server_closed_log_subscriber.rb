@@ -17,7 +17,7 @@ module Mongo
 
     # Subscribes to Server Closed events and logs them.
     #
-    # @since 2.3.0
+    # @since 2.4.0
     class ServerClosedLogSubscriber < SDAMLogSubscriber
 
       private

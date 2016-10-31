@@ -15,7 +15,8 @@ describe Mongo::Auth::CR do
   end
 
   let(:cluster) do
-    double('cluster', topology: topology).tap do |cl|
+    double('cluster').tap do |cl|
+      allow(cl).to receive(:topology).and_return(topology)
       allow(cl).to receive(:app_metadata).and_return(app_metadata)
     end
   end

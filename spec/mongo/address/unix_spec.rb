@@ -24,7 +24,7 @@ describe Mongo::Address::Unix do
     end
   end
 
-  pending '#socket' do
+  describe '#socket' do
 
     let(:address) do
       '/tmp/mongodb-27017.sock'

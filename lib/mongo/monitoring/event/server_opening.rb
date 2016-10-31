@@ -18,7 +18,7 @@ module Mongo
 
       # Event fired when the server is opening.
       #
-      # @since 2.3.0
+      # @since 2.4.0
       class ServerOpening
 
         # @return [ Address ] address The server address.
@@ -35,7 +35,7 @@ module Mongo
         # @param [ Address ] address The server address.
         # @param [ Integer ] topology The topology.
         #
-        # @since 2.3.0
+        # @since 2.4.0
         def initialize(address, topology)
           @address = address
           @topology = topology

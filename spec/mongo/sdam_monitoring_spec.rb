@@ -10,49 +10,20 @@ describe 'SDAM Monitoring' do
     context(spec.description) do
 
       before(:all) do
-
-        module Mongo
-          # We monkey-patch the server here, so the monitors do not run and no
-          # real TCP connection is attempted. Thus we can control the server
-          # descriptions per-phase.
-          #
-          # @since 2.0.0
-          class Server
-
-            alias :original_initialize :initialize
-            def initialize(address, cluster, monitoring, event_listeners, options = {})
-              @address = address
-              @cluster = cluster
-              @monitoring = monitoring
-              @options = options.freeze
-              @monitor = Monitor.new(address, event_listeners, options)
-            end
-
-            alias :original_disconnect! :disconnect!
-            def disconnect!; true; end
-          end
-        end
-
-        # Client is set as an instance variable inside the scope of the spec to
-        # retain its modifications across contexts/phases. Let is no good
-        # here as we have a clean slate for each context/phase.
-        @client = Mongo::Client.new(spec.uri_string)
+        cl = Mongo::Client.new([])
+        @client = cl.with(heartbeat_frequency: 100, connect_timeout: 0.1)
+        cl.close
+        @subscriber = Mongo::SDAMMonitoring::TestSubscriber.new
+        @client.subscribe(Mongo::Monitoring::SERVER_OPENING, @subscriber)
+        @client.subscribe(Mongo::Monitoring::SERVER_CLOSED, @subscriber)
+        @client.subscribe(Mongo::Monitoring::SERVER_DESCRIPTION_CHANGED, @subscriber)
+        @client.subscribe(Mongo::Monitoring::TOPOLOGY_OPENING, @subscriber)
+        @client.subscribe(Mongo::Monitoring::TOPOLOGY_CHANGED, @subscriber)
+        @client.send(:create_from_uri, spec.uri_string)
       end
 
       after(:all) do
         @client.close
-
-        # Return the server implementation to its original for the other
-        # tests in the suite.
-        module Mongo
-          class Server
-            alias :initialize :original_initialize
-            remove_method(:original_initialize)
-
-            alias :disconnect! :original_disconnect!
-            remove_method(:original_disconnect!)
-          end
-        end
       end
 
       spec.phases.each_with_index do |phase, index|
@@ -60,17 +31,7 @@ describe 'SDAM Monitoring' do
         context("Phase: #{index + 1}") do
 
           before(:all) do
-            @subscriber = Mongo::SDAMMonitoring::TestSubscriber.new
-            @client.subscribe(Mongo::Monitoring::SERVER_OPENING, @subscriber)
-            @client.subscribe(Mongo::Monitoring::SERVER_CLOSED, @subscriber)
-            @client.subscribe(Mongo::Monitoring::SERVER_DESCRIPTION_CHANGED, @subscriber)
-            @client.subscribe(Mongo::Monitoring::TOPOLOGY_OPENING, @subscriber)
-            @client.subscribe(Mongo::Monitoring::TOPOLOGY_CHANGED, @subscriber)
-          end
-
-          phase.responses.each do |response|
-
-            before do
+            phase.responses.each do |response|
               # For each response in the phase, we need to change that server's
               # description.
               server = find_server(@client, response.address)
@@ -91,6 +52,7 @@ describe 'SDAM Monitoring' do
 
             it "expects a #{expectation.name} to be fired" do
               fired_event = @subscriber.first_event(expectation.name)
+              expect(fired_event).not_to be_nil
               expect(fired_event).to match_sdam_monitoring_event(expectation)
             end
           end

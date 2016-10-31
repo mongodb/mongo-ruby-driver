@@ -18,7 +18,7 @@ module Mongo
 
       # Event fired when the topology changes.
       #
-      # @since 2.3.0
+      # @since 2.4.0
       class TopologyChanged
 
         # @return [ Cluster::Topology ] previous_topology The previous topology.
@@ -35,7 +35,7 @@ module Mongo
         # @param [ Cluster::Topology ] previous_topology The previous topology.
         # @param [ Cluster::Topology ] new_topology The new topology.
         #
-        # @since 2.3.0
+        # @since 2.4.0
         def initialize(previous_topology, new_topology)
           @previous_topology = previous_topology
           @new_topology = new_topology

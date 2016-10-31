@@ -79,7 +79,7 @@ module Mongo
         #
         # @return [ true, false ] If a readable server is present.
         #
-        # @since 2.3.0
+        # @since 2.4.0
         def has_readable_server?(cluster, server_selector); false; end
 
         # Determine if the topology would select a writable server for the
@@ -92,7 +92,7 @@ module Mongo
         #
         # @return [ true, false ] If a writable server is present.
         #
-        # @since 2.3.0
+        # @since 2.4.0
         def has_writable_server?(cluster); false; end
 
         # Initialize the topology with the options.
@@ -109,10 +109,6 @@ module Mongo
           @options = options
           @monitoring = monitoring
           @seeds = seeds
-          publish_sdam_event(
-            Monitoring::TOPOLOGY_OPENING,
-            Monitoring::Event::TopologyOpening.new(self)
-          )
         end
 
         # An unknown topology is not a replica set.
@@ -241,6 +237,19 @@ module Mongo
           else
             self
           end
+        end
+
+        # Notify the topology that a member was discovered.
+        #
+        # @example Notify the topology that a member was discovered.
+        #   topology.member_discovered
+        #
+        # @since 2.4.0
+        def member_discovered
+          publish_sdam_event(
+            Monitoring::TOPOLOGY_CHANGED,
+            Monitoring::Event::TopologyChanged.new(self, self)
+          )
         end
 
         private

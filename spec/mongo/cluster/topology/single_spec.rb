@@ -19,8 +19,9 @@ describe Mongo::Cluster::Topology::Single do
   end
 
   let(:cluster) do
-    double('cluster', topology: topology).tap do |cl|
+    double('cluster').tap do |cl|
       allow(cl).to receive(:app_metadata).and_return(app_metadata)
+      allow(cl).to receive(:topology).and_return(topology)
     end
   end
 

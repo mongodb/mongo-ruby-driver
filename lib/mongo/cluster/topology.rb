@@ -26,7 +26,7 @@ module Mongo
     module Topology
       extend self
 
-      # The 2 various topologies for server selection.
+      # The various topologies for server selection.
       #
       # @since 2.0.0
       OPTIONS = {
@@ -48,14 +48,13 @@ module Mongo
       #
       # @since 2.0.0
       def initial(seeds, monitoring, options)
-        topology = if options.has_key?(:connect)
+        if options.has_key?(:connect)
           OPTIONS.fetch(options[:connect]).new(options, monitoring, seeds)
         elsif options.has_key?(:replica_set)
           ReplicaSet.new(options, monitoring, options)
         else
           Unknown.new(options, monitoring, seeds)
         end
-        topology
       end
     end
   end

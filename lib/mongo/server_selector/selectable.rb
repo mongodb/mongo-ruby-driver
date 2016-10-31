@@ -166,8 +166,16 @@ module Mongo
         @local_threshold ||= (options[:local_threshold] || ServerSelector::LOCAL_THRESHOLD)
       end
 
-      private
-
+      # Get the potential candidates to selecto from the cluster.
+      #
+      # @example Get the server candidates.
+      #   selectable.candidates(cluster)
+      #
+      # @param [ Cluster ] cluster The cluster.
+      #
+      # @return [ Array<Server> ] The candidate servers.
+      #
+      # @since 2.4.0
       def candidates(cluster)
         if cluster.single?
           cluster.servers.each { |server| validate_max_staleness_support!(server) }
@@ -178,6 +186,8 @@ module Mongo
           select(cluster.servers)
         end
       end
+
+      private
 
       # Select the primary from a list of provided candidates.
       #

@@ -17,7 +17,7 @@ module Mongo
 
     # Subscribes to Server Description Changed events and logs them.
     #
-    # @since 2.3.0
+    # @since 2.4.0
     class ServerDescriptionChangedLogSubscriber < SDAMLogSubscriber
 
       private

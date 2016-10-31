@@ -65,7 +65,6 @@ module Mongo
         def elect_primary(description, servers)
           if description.replica_set_name == replica_set_name
             unless detect_stale_primary!(description)
-              log_debug("Server #{description.address.to_s} elected as primary in #{replica_set_name}.")
               servers.each do |server|
                 if server.primary? && server.address != description.address
                   server.description.unknown!
@@ -95,7 +94,7 @@ module Mongo
         #
         # @return [ true, false ] If a readable server is present.
         #
-        # @since 2.3.0
+        # @since 2.4.0
         def has_readable_server?(cluster, server_selector)
           server_selector.candidates(cluster).any?
         end
@@ -110,7 +109,7 @@ module Mongo
         #
         # @return [ true, false ] If a writable server is present.
         #
-        # @since 2.3.0
+        # @since 2.4.0
         def has_writable_server?(cluster)
           cluster.servers.any?{ |server| server.primary? }
         end
@@ -130,10 +129,6 @@ module Mongo
           @monitoring = monitoring
           @max_election_id = nil
           @max_set_version = nil
-          publish_sdam_event(
-            Monitoring::TOPOLOGY_OPENING,
-            Monitoring::Event::TopologyOpening.new(self)
-          )
         end
 
         # A replica set topology is a replica set.
@@ -264,6 +259,14 @@ module Mongo
         #
         # @since 2.0.6
         def standalone_discovered; self; end
+
+        # Notify the topology that a member was discovered.
+        #
+        # @example Notify the topology that a member was discovered.
+        #   topology.member_discovered
+        #
+        # @since 2.4.0
+        def member_discovered; end;
 
         private
 
