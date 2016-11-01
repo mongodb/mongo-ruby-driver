@@ -44,6 +44,7 @@ branches:
   only:
     - master
     - 1.x-stable
+    - 2.3-stable
 
 matrix:
   exclude:
