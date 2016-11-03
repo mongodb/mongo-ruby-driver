@@ -158,7 +158,7 @@ describe Mongo::Client do
       described_class.new(
         ['127.0.0.1:27017'],
         :read => { :mode => :primary },
-        :local_threshold => 10,
+        :local_threshold => 0.010,
         :server_selection_timeout => 10000,
         :database => TEST_DB
       )
@@ -166,7 +166,7 @@ describe Mongo::Client do
 
     let(:options) do
       Mongo::Options::Redacted.new(:read => { :mode => :primary },
-                                    :local_threshold => 10,
+                                    :local_threshold => 0.010,
                                     :server_selection_timeout => 10000,
                                     :database => TEST_DB)
     end
