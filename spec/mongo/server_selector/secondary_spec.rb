@@ -207,8 +207,8 @@ describe Mongo::ServerSelector::Secondary do
     end
 
     context 'high latency servers' do
-      let(:far_primary) { make_server(:primary, :average_round_trip_time => 100, address: default_address) }
-      let(:far_secondary) { make_server(:secondary, :average_round_trip_time => 113, address: default_address) }
+      let(:far_primary) { make_server(:primary, :average_round_trip_time => 0.100, address: default_address) }
+      let(:far_secondary) { make_server(:secondary, :average_round_trip_time => 0.113, address: default_address) }
 
       context 'single candidate' do
 

@@ -239,7 +239,7 @@ module Mongo
       #
       # @param [ Address ] address The server address.
       # @param [ Hash ] config The result of the ismaster command.
-      # @param [ Float ] average_round_trip_time The moving average time (ms) the ismaster
+      # @param [ Float ] average_round_trip_time The moving average time (sec) the ismaster
       #   call took to complete.
       #
       # @since 2.0.0
