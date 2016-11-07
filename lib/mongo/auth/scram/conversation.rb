@@ -172,7 +172,7 @@ module Mongo
 
         # Create the new conversation.
         #
-        # @example Create the new coversation.
+        # @example Create the new conversation.
         #   Conversation.new(user)
         #
         # @param [ Auth::User ] user The user to converse about.
