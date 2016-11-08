@@ -175,7 +175,7 @@ module Mongo
       end
 
       def authenticate!
-        if options[:user]
+        if options[:user] || options[:auth_mech]
           user = Auth::User.new(Options::Redacted.new(:auth_mech => default_mechanism).merge(options))
           @server.handle_auth_failure! do
             Auth.get(user).login(self)

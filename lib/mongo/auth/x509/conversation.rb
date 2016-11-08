@@ -60,10 +60,12 @@ module Mongo
         #
         # @since 2.0.0
         def start
+          login = LOGIN.merge(mechanism: X509::MECHANISM)
+          login[:user] = user.name if user.name
           Protocol::Query.new(
             Auth::EXTERNAL,
             Database::COMMAND,
-            LOGIN.merge(user: user.name, mechanism: X509::MECHANISM),
+            login,
             limit: -1
           )
         end
