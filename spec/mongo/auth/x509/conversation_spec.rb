@@ -58,7 +58,7 @@ describe Mongo::Auth::X509::Conversation do
       end
 
       it 'does not set the username' do
-        expect(selector[:user]).to be_nil
+        expect(selector.has_key?(:user)).to be(false)
       end
 
       it 'sets the mechanism' do
