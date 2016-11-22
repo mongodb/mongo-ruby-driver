@@ -49,11 +49,6 @@ module Mongo
         # @since 2.4.0
         attr_reader :max_staleness
 
-        # @return [ Array<Hash> ] candidate_servers The candidate servers.
-        #
-        # @since 2.0.0
-        attr_reader :candidate_servers
-
         # @return [ Array<Hash> ] eligible_servers The eligible servers before the latency
         #   window is taken into account.
         #
@@ -88,9 +83,9 @@ module Mongo
           @read_preference = @test['read_preference']
           @read_preference['mode'] = READ_PREFERENCES[@read_preference['mode']]
           @max_staleness = @read_preference['maxStalenessSeconds']
-          @candidate_servers = @test['topology_description']['servers'].select { |s| s['type'] != 'Unknown' }
-          @suitable_servers = @test['suitable_servers']
-          @in_latency_window = @test['in_latency_window']
+          @candidate_servers = @test['topology_description']['servers']
+          @suitable_servers = @test['suitable_servers'] || []
+          @in_latency_window = @test['in_latency_window'] || []
           @type = TOPOLOGY_TYPES[@test['topology_description']['type']]
         end
 
@@ -115,7 +110,7 @@ module Mongo
         #
         # @since 2.0.0
         def server_available?
-          in_latency_window && !in_latency_window.empty?
+          !in_latency_window.empty?
         end
 
         # Is the max staleness setting invalid.
@@ -146,6 +141,15 @@ module Mongo
             return @in_latency_window.push(primary).uniq
           end
           @in_latency_window
+        end
+
+        # The servers a topology would return as candidates for selection.
+        #
+        # @return [ Array<Hash> ] candidate_servers The candidate servers.
+        #
+        # @since 2.0.0
+        def candidate_servers
+          @candidate_servers.select { |s| s['type'] != 'Unknown' }
         end
 
         private
