@@ -84,7 +84,16 @@ describe 'Max Staleness Spec' do
         allow(cluster).to receive(:servers).and_return(candidate_servers)
       end
 
-      context 'Valid read preference and matching server available', unless: spec.invalid_max_staleness? do
+      context 'No matching server available', if: (!spec.invalid_max_staleness? && !spec.server_available?) do
+
+        it 'Raises a NoServerAvailable Exception' do
+          expect do
+            server_selector.select_server(cluster)
+          end.to raise_exception(Mongo::Error::NoServerAvailable)
+        end
+      end
+
+      context 'Valid read preference and matching server available', unless: (spec.invalid_max_staleness? || !spec.server_available?) do
 
         it 'Finds all suitable servers in the latency window', if: spec.replica_set? do
           expect(server_selector.send(:select, cluster.servers)).to match_array(in_latency_window)

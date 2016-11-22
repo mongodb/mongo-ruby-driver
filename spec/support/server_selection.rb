@@ -88,7 +88,7 @@ module Mongo
           @read_preference = @test['read_preference']
           @read_preference['mode'] = READ_PREFERENCES[@read_preference['mode']]
           @max_staleness = @read_preference['maxStalenessSeconds']
-          @candidate_servers = @test['topology_description']['servers']
+          @candidate_servers = @test['topology_description']['servers'].select { |s| s['type'] != 'Unknown' }
           @suitable_servers = @test['suitable_servers']
           @in_latency_window = @test['in_latency_window']
           @type = TOPOLOGY_TYPES[@test['topology_description']['type']]
@@ -115,7 +115,7 @@ module Mongo
         #
         # @since 2.0.0
         def server_available?
-          !in_latency_window.empty?
+          in_latency_window && !in_latency_window.empty?
         end
 
         # Is the max staleness setting invalid.
@@ -127,8 +127,7 @@ module Mongo
         #
         # @since 2.4.0
         def invalid_max_staleness?
-          @test['error'] ||
-            candidate_servers.any? { |server| true unless (server['maxWireVersion'] && server['maxWireVersion'] < 5) }
+          @test['error']
         end
 
         # The subset of suitable servers that falls within the allowable latency
