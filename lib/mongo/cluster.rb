@@ -37,6 +37,11 @@ module Mongo
     # @since 2.1.1
     READ_RETRY_INTERVAL = 5
 
+    # How often an idle primary writes a no-op to the oplog.
+    #
+    # @since 2.4.0
+    IDLE_WRITE_PERIOD_SECONDS = 10
+
     # @return [ Hash ] The options hash.
     attr_reader :options
 

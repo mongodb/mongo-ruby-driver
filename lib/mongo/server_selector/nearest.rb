@@ -67,7 +67,7 @@ module Mongo
       def to_mongos
         preference = { :mode => 'nearest' }
         preference.merge!({ :tags => tag_sets }) unless tag_sets.empty?
-        preference.merge!({ maxStalenessMS: max_staleness * 1000 }) if max_staleness
+        preference.merge!({ maxStalenessSeconds: max_staleness }) if max_staleness
         preference
       end
 

@@ -541,7 +541,7 @@ describe Mongo::URI do
     context 'read preference max staleness option provided' do
 
       let(:options) do
-        'readPreference=Secondary&maxStalenessMS=120000'
+        'readPreference=Secondary&maxStalenessSeconds=120'
       end
 
       let(:read) do
@@ -561,7 +561,7 @@ describe Mongo::URI do
         context 'when max staleness is combined with read preference mode primary' do
 
           let(:options) do
-            'readPreference=primary&maxStalenessMS=120000'
+            'readPreference=primary&maxStalenessSeconds=120'
           end
 
           it 'raises an exception when read preference is accessed on the client' do
@@ -571,10 +571,10 @@ describe Mongo::URI do
           end
         end
 
-        context 'when the max staleness value is not at least twice heartbeat frequency' do
+        context 'when the max staleness value is too small' do
 
           let(:options) do
-            'readPreference=secondary&maxStalenessMS=1'
+            'readPreference=secondary&maxStalenessSeconds=89'
           end
 
           it 'does not raise an exception until the read preference is used' do

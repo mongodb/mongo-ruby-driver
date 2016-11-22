@@ -18,7 +18,7 @@ describe Mongo::ServerSelector::Nearest do
     context 'when max_staleness is provided' do
 
       let(:options) do
-        { max_staleness: 60 }
+        { max_staleness: 95 }
       end
 
       it 'sets the max_staleness option' do
@@ -32,7 +32,7 @@ describe Mongo::ServerSelector::Nearest do
     context 'when max staleness is the same' do
 
       let(:options) do
-        { max_staleness: 60 }
+        { max_staleness: 95 }
       end
 
       let(:other) do
@@ -47,7 +47,7 @@ describe Mongo::ServerSelector::Nearest do
     context 'when max staleness is different' do
 
       let(:other_options) do
-        { max_staleness: 30 }
+        { max_staleness: 100 }
       end
 
       let(:other) do
@@ -100,11 +100,11 @@ describe Mongo::ServerSelector::Nearest do
     context 'max staleness provided' do
 
       let(:max_staleness) do
-        60
+        100
       end
 
       let(:expected) do
-        { :mode => 'nearest', maxStalenessMS: 60000 }
+        { :mode => 'nearest', maxStalenessSeconds: 100 }
       end
 
       it 'returns a read preference formatted for mongos' do

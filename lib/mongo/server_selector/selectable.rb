@@ -26,7 +26,7 @@ module Mongo
       # @return [ Array ] tag_sets The tag sets used to select servers.
       attr_reader :tag_sets
 
-      # @return [ Float ] max_staleness The maximum replication lag, in seconds, that a
+      # @return [ Integer ] max_staleness The maximum replication lag, in seconds, that a
       #   secondary can suffer and still be eligible for a read.
       #
       # @since 2.4.0
@@ -68,7 +68,7 @@ module Mongo
       def initialize(options = {})
         @options = (options || {}).freeze
         @tag_sets = (options[:tag_sets] || []).freeze
-        @max_staleness = options[:max_staleness] if options[:max_staleness] && options[:max_staleness] > 0
+        @max_staleness = options[:max_staleness] unless options[:max_staleness] == -1
         validate!
       end
 
@@ -258,10 +258,13 @@ module Mongo
       end
 
       def validate_max_staleness_value!(cluster)
-        return unless @max_staleness
-        heartbeat_frequency = cluster.options[:heartbeat_frequency] || Server::Monitor::HEARTBEAT_FREQUENCY
-        if @max_staleness < heartbeat_frequency * 2
-          raise Error::InvalidServerPreference.new(Error::InvalidServerPreference::INVALID_MAX_STALENESS)
+        if @max_staleness
+          heartbeat_frequency = cluster.options[:heartbeat_frequency] || Server::Monitor::HEARTBEAT_FREQUENCY
+          unless @max_staleness > 0  &&
+                   @max_staleness >= [ SMALLEST_MAX_STALENESS_SECONDS,
+                                       (heartbeat_frequency  + Cluster::IDLE_WRITE_PERIOD_SECONDS) ].max
+            raise Error::InvalidServerPreference.new(Error::InvalidServerPreference::INVALID_MAX_STALENESS)
+          end
         end
       end
     end

@@ -26,10 +26,10 @@ describe 'Max Staleness Spec' do
         if spec.heartbeat_frequency
           TEST_OPTIONS.merge(heartbeat_frequency: spec.heartbeat_frequency)
         else
-          copy = TEST_OPTIONS.dup
-          copy.delete(:heartbeat_frequency)
-          copy
-        end.merge!(server_selection_timeout: 0.2)
+          TEST_OPTIONS.dup.tap do |opts|
+            opts.delete(:heartbeat_frequency)
+          end
+        end.merge!(server_selection_timeout: 0.2, connect_timeout: 0.1)
       end
 
       let(:cluster) do
@@ -38,7 +38,7 @@ describe 'Max Staleness Spec' do
           allow(c).to receive(:single?).and_return(topology.single?)
           allow(c).to receive(:sharded?).and_return(topology.sharded?)
           allow(c).to receive(:replica_set?).and_return(topology.replica_set?)
-          allow(c).to receive(:options).and_return(options.merge(server_selection_timeout: 0.2))
+          allow(c).to receive(:options).and_return(options)
           allow(c).to receive(:scan!).and_return(true)
           allow(c).to receive(:app_metadata).and_return(app_metadata)
         end
@@ -47,17 +47,17 @@ describe 'Max Staleness Spec' do
       let(:candidate_servers) do
         spec.candidate_servers.collect do |server|
           features = double('features').tap do |feat|
-            allow(feat).to receive(:max_staleness_enabled?).and_return(server['maxWireVersion'] >= 5)
+            allow(feat).to receive(:max_staleness_enabled?).and_return(server['maxWireVersion'] && server['maxWireVersion'] >= 5)
           end
           address = Mongo::Address.new(server['address'])
           Mongo::Server.new(address, cluster, monitoring, listeners, options).tap do |s|
-            allow(s).to receive(:average_round_trip_time).and_return(server['avg_rtt_ms'] / 1000.0)
+            allow(s).to receive(:average_round_trip_time).and_return(server['avg_rtt_ms'] / 1000.0) if server['avg_rtt_ms']
             allow(s).to receive(:tags).and_return(server['tags'])
             allow(s).to receive(:secondary?).and_return(server['type'] == 'RSSecondary')
             allow(s).to receive(:primary?).and_return(server['type'] == 'RSPrimary')
             allow(s).to receive(:connectable?).and_return(true)
-            allow(s).to receive(:last_write_date).and_return(server['lastWrite']['lastWriteDate']['$numberLong'].to_i * 1000)
-            allow(s).to receive(:last_scan).and_return(server['lastUpdateTime'] * 1000)
+            allow(s).to receive(:last_write_date).and_return(server['lastWrite']['lastWriteDate']['$numberLong'].to_i) if server['lastWrite']
+            allow(s).to receive(:last_scan).and_return(server['lastUpdateTime'])
             allow(s).to receive(:features).and_return(features)
           end
         end

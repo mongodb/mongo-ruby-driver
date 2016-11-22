@@ -16,7 +16,7 @@ describe Mongo::ServerSelector::Primary do
     context 'when max_staleness is provided' do
 
       let(:options) do
-        { max_staleness: 60 }
+        { max_staleness: 100 }
       end
 
       it 'raises an exception' do
@@ -66,7 +66,7 @@ describe Mongo::ServerSelector::Primary do
     context 'max staleness provided' do
 
       let(:max_staleness) do
-        60
+        100
       end
 
       it 'raises an error' do

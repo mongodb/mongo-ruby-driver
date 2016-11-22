@@ -374,7 +374,7 @@ module Mongo
     # Read Options
     uri_option 'readpreference', :mode, :group => :read, :type => :read_mode
     uri_option 'readpreferencetags', :tag_sets, :group => :read, :type => :read_tags
-    uri_option 'maxstalenessms', :max_staleness, :group => :read, :type => :ms_convert
+    uri_option 'maxstalenessseconds', :max_staleness, :group => :read
 
     # Pool options
     uri_option 'minpoolsize', :min_pool_size

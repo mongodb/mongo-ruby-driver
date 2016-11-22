@@ -84,10 +84,10 @@ module Mongo
           @test = YAML.load(ERB.new(file.read).result)
           file.close
           @description = "#{@test['topology_description']['type']}: #{File.basename(file)}"
-          @heartbeat_frequency = @test['heartbeatFrequencyMS']
+          @heartbeat_frequency = @test['heartbeatFrequencyMS'] / 1000 if @test['heartbeatFrequencyMS']
           @read_preference = @test['read_preference']
           @read_preference['mode'] = READ_PREFERENCES[@read_preference['mode']]
-          @max_staleness = @read_preference['maxStalenessMS']
+          @max_staleness = @read_preference['maxStalenessSeconds']
           @candidate_servers = @test['topology_description']['servers']
           @suitable_servers = @test['suitable_servers']
           @in_latency_window = @test['in_latency_window']
@@ -128,7 +128,7 @@ module Mongo
         # @since 2.4.0
         def invalid_max_staleness?
           @test['error'] ||
-            candidate_servers.any? { |server| server['maxWireVersion'] < 5 }
+            candidate_servers.any? { |server| true unless (server['maxWireVersion'] && server['maxWireVersion'] < 5) }
         end
 
         # The subset of suitable servers that falls within the allowable latency
