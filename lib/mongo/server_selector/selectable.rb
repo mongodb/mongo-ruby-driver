@@ -230,14 +230,14 @@ module Mongo
             validate_max_staleness_support!(server)
             staleness = (server.last_scan - server.last_write_date) -
                         (primary.last_scan - primary.last_write_date)  +
-                        (server.heartbeat_frequency * 1000)
+                        (server.heartbeat_frequency_seconds * 1000)
             staleness <= max_staleness_ms
           end
         else
           max_write_date = candidates.collect(&:last_write_date).max
           candidates.select do |server|
             validate_max_staleness_support!(server)
-            staleness = max_write_date - server.last_write_date + (server.heartbeat_frequency * 1000)
+            staleness = max_write_date - server.last_write_date + (server.heartbeat_frequency_seconds * 1000)
             staleness <= max_staleness_ms
           end
         end
@@ -259,10 +259,10 @@ module Mongo
 
       def validate_max_staleness_value!(cluster)
         if @max_staleness
-          heartbeat_frequency = cluster.options[:heartbeat_frequency] || Server::Monitor::HEARTBEAT_FREQUENCY
+          heartbeat_frequency_seconds = cluster.options[:heartbeat_frequency] || Server::Monitor::HEARTBEAT_FREQUENCY
           unless @max_staleness > 0  &&
                    @max_staleness >= [ SMALLEST_MAX_STALENESS_SECONDS,
-                                       (heartbeat_frequency  + Cluster::IDLE_WRITE_PERIOD_SECONDS) ].max
+                                       (heartbeat_frequency_seconds  + Cluster::IDLE_WRITE_PERIOD_SECONDS) ].max
             raise Error::InvalidServerPreference.new(Error::InvalidServerPreference::INVALID_MAX_STALENESS)
           end
         end

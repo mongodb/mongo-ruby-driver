@@ -45,6 +45,7 @@ module Mongo
 
     # Get the description from the monitor and scan on monitor.
     def_delegators :monitor, :description, :scan!, :heartbeat_frequency, :last_scan
+    alias :heartbeat_frequency_seconds :heartbeat_frequency
 
     # Delegate convenience methods to the monitor description.
     def_delegators :description,
