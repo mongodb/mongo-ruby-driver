@@ -154,9 +154,8 @@ module Mongo
         elsif cluster.sharded?
           near_servers(cluster.servers).each { |server| validate_max_staleness_support!(server) }
         else
-          servers = cluster.servers
-          validate_max_staleness_value!(cluster) unless servers.empty?
-          select(servers)
+          validate_max_staleness_value!(cluster) unless cluster.unknown?
+          select(cluster.servers)
         end
       end
 

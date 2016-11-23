@@ -38,6 +38,7 @@ describe 'Max Staleness Spec' do
           allow(c).to receive(:single?).and_return(topology.single?)
           allow(c).to receive(:sharded?).and_return(topology.sharded?)
           allow(c).to receive(:replica_set?).and_return(topology.replica_set?)
+          allow(c).to receive(:unknown?).and_return(topology.unknown?)
           allow(c).to receive(:options).and_return(options)
           allow(c).to receive(:scan!).and_return(true)
           allow(c).to receive(:app_metadata).and_return(app_metadata)
