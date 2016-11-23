@@ -136,6 +136,11 @@ module Mongo
       # @since 2.4.0
       class Upconverter
 
+        # Find command constant.
+        #
+        # @since 2.4.0
+        FIND = 'find'.freeze
+
         # @return [ String ] collection The name of the collection.
         attr_reader :collection
 
@@ -176,7 +181,7 @@ module Mongo
         # @since 2.4.0
         def command
           document = BSON::Document.new
-          filter.each do |field, value|
+          (filter[:$query] || filter).each do |field, value|
             document.store(field.to_s, value)
           end
           document
@@ -191,6 +196,7 @@ module Mongo
         #
         # @since 2.4.0
         def command_name
+          return FIND if filter[:$query]
           filter.keys.first
         end
       end
