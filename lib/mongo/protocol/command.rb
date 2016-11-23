@@ -95,8 +95,17 @@ module Mongo
         2004
       end
 
-      # Available flags for a Query Command message.
-      FLAGS = [ :slave_ok ]
+      # Available flags for a Query/Command message.
+      FLAGS = [
+        :reserved,
+        :tailable_cursor,
+        :slave_ok,
+        :oplog_replay,
+        :no_cursor_timeout,
+        :await_data,
+        :exhaust,
+        :partial
+      ]
 
       # @!attribute
       # @return [Array<Symbol>] The flags for this query command message.
