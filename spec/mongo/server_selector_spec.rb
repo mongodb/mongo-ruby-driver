@@ -153,6 +153,7 @@ describe Mongo::ServerSelector do
           allow(c).to receive(:servers).and_return(servers)
           allow(c).to receive(:single?).and_return(false)
           allow(c).to receive(:sharded?).and_return(false)
+          allow(c).to receive(:unknown?).and_return(false)
           allow(c).to receive(:scan!).and_return(true)
           allow(c).to receive(:options).and_return(server_selection_timeout: 0.1)
         end
@@ -182,6 +183,7 @@ describe Mongo::ServerSelector do
           allow(c).to receive(:servers).and_return(servers)
           allow(c).to receive(:single?).and_return(false)
           allow(c).to receive(:sharded?).and_return(false)
+          allow(c).to receive(:unknown?).and_return(false)
           allow(c).to receive(:scan!).and_return(true)
           allow(c).to receive(:options).and_return(server_selection_timeout: 0)
         end
@@ -223,6 +225,7 @@ describe Mongo::ServerSelector do
           allow(c).to receive(:servers).and_return(servers)
           allow(c).to receive(:single?).and_return(false)
           allow(c).to receive(:sharded?).and_return(false)
+          allow(c).to receive(:unknown?).and_return(false)
           allow(c).to receive(:scan!).and_return(true)
           allow(c).to receive(:options).and_return(local_threshold: 0.050)
         end
@@ -251,6 +254,7 @@ describe Mongo::ServerSelector do
           allow(c).to receive(:servers).and_return(servers)
           allow(c).to receive(:single?).and_return(single)
           allow(c).to receive(:sharded?).and_return(sharded)
+          allow(c).to receive(:unknown?).and_return(false)
           allow(c).to receive(:scan!).and_return(true)
           allow(c).to receive(:options).and_return(server_selection_timeout: 0.1)
         end
