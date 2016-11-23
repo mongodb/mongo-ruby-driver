@@ -260,9 +260,8 @@ module Mongo
       def validate_max_staleness_value!(cluster)
         if @max_staleness
           heartbeat_frequency_seconds = cluster.options[:heartbeat_frequency] || Server::Monitor::HEARTBEAT_FREQUENCY
-          unless @max_staleness > 0  &&
-                   @max_staleness >= [ SMALLEST_MAX_STALENESS_SECONDS,
-                                       (heartbeat_frequency_seconds  + Cluster::IDLE_WRITE_PERIOD_SECONDS) ].max
+          unless @max_staleness >= [ SMALLEST_MAX_STALENESS_SECONDS,
+                                     (heartbeat_frequency_seconds  + Cluster::IDLE_WRITE_PERIOD_SECONDS) ].max
             raise Error::InvalidServerPreference.new(Error::InvalidServerPreference::INVALID_MAX_STALENESS)
           end
         end
