@@ -28,16 +28,15 @@ module Mongo
       # @example A message for the create command.
       #   Command.new('music', '$cmd', {:create => 'bands'})
       #
-      # @param database [String, Symbol] The database on which this command is run.
-      # @param collection [String, Symbol] The collection, which is always $cmd. This argument
-      #   is preserved for consistency with other Protocol message types.
-      # @param selector [Hash] The command document.
-      # @param options [Hash] The additional query options.
+      # @param database [ String, Symbol ] The database on which this command is run.
+      # @param collection [ String, Symbol ] The collection, which is always $cmd. This argument
+      #   is preserved for consistency with other Protocol message APIs.
+      # @param selector [ Hash ] The command document.
+      # @param options [ Hash ] The additional query options.
       #
-      # @option options :flags [Array] The flags for the query message.
+      # Supported flags: +:slave_ok
       #
-      #   Supported flags: +:tailable_cursor+, +:slave_ok+, +:oplog_replay+,
-      #   +:no_cursor_timeout+, +:await_data+, +:exhaust+, +:partial+
+      # @since 2.4.0
       def initialize(database, collection, selector, options = {})
         @database = database
         @namespace = "#{database}.#{Database::COMMAND}"
@@ -96,7 +95,7 @@ module Mongo
         2004
       end
 
-      # Available flags for a Query Comand message.
+      # Available flags for a Query Command message.
       FLAGS = [ :slave_ok ]
 
       # @!attribute
@@ -128,20 +127,10 @@ module Mongo
       # @since 2.4.0
       class Upconverter
 
-        # Find command constant.
-        #
-        # @since 2.4.0
-        FIND = 'find'.freeze
-
-        # Filter attribute constant.
-        #
-        # @since 2.4.0
-        FILTER = 'filter'.freeze
-
         # @return [ String ] collection The name of the collection.
         attr_reader :collection
 
-        # @return [ BSON::Document, Hash ] filter The query filter or command.
+        # @return [ BSON::Document, Hash ] filter The query filter / command.
         attr_reader :filter
 
         # @return [ BSON::Document, Hash ] options The options.
@@ -156,7 +145,7 @@ module Mongo
         #   Upconverter.new('users', { name: 'test' }, { skip: 10 })
         #
         # @param [ String ] collection The name of the collection.
-        # @param [ BSON::Document, Hash ] filter The filter.
+        # @param [ BSON::Document, Hash ] filter The filter / command.
         # @param [ BSON::Document, Hash ] options The options.
         # @param [ Array<Symbol> ] flags The flags.
         #
@@ -178,14 +167,13 @@ module Mongo
         # @since 2.4.0
         def command
           document = BSON::Document.new
-          (filter[:$query] || filter).each do |field, value|
+          filter.each do |field, value|
             document.store(field.to_s, value)
           end
           document
         end
 
-        # Get the name of the command. If the collection is $cmd then it's the
-        # first key in the filter, otherwise it's a find.
+        # Get the name of the command.
         #
         # @example Get the command name.
         #   upconverter.command_name
@@ -194,7 +182,6 @@ module Mongo
         #
         # @since 2.4.0
         def command_name
-          return FIND if filter[:$query]
           filter.keys.first
         end
       end
