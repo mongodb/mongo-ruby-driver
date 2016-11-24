@@ -85,7 +85,7 @@ module Mongo
 
       private
 
-      def extra_doc_size
+      def extra_obj_size
         1024 * 16
       end
 

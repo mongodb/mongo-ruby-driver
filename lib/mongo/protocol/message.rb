@@ -179,7 +179,7 @@ module Mongo
       @@request_id = 0
       @@id_lock = Mutex.new
 
-      def extra_doc_size
+      def extra_obj_size
         0
       end
 
@@ -214,7 +214,7 @@ module Mongo
             end
           else
             if field[:type].respond_to?(:size_limited?)
-              max_size =  max_bson_size + extra_doc_size if max_bson_size
+              max_size =  max_bson_size + extra_obj_size if max_bson_size
               field[:type].serialize(buffer, value, max_size, validating_keys?)
             else
               field[:type].serialize(buffer, value, validating_keys?)
