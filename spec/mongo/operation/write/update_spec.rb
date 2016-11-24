@@ -255,15 +255,6 @@ describe Mongo::Operation::Write::Update do
 
     context 'when the replacement document is the max bson size' do
 
-      let(:update) do
-        described_class.new({
-                                update: document,
-                                db_name: TEST_DB,
-                                coll_name: TEST_COLL,
-                                write_concern: Mongo::WriteConcern.get(:w => 0)
-                            })
-      end
-
       before do
         authorized_collection.insert_one(_id: BSON::Int32.new(1))
       end
@@ -274,11 +265,30 @@ describe Mongo::Operation::Write::Update do
 
       let(:document) do
         {'q' => {_id: BSON::Int32.new(1)},
-         'u' => { x: 'y' * (1024 * 1024 * 16 - 30) } }
+         'u' => { x: 'y' * (1024 * 1024 * 16 - 27) } }
       end
 
-      it 'allows the document to be replaced' do
-        expect(authorized_collection.find(x: { '$exists' => true }).count).to eq(1)
+      let(:update) do
+        described_class.new({
+                              update: document,
+                              db_name: TEST_DB,
+                              coll_name: TEST_COLL,
+                              write_concern: Mongo::WriteConcern.get(:w => 1)
+                            })
+      end
+
+      context 'when a write command is sent' do
+
+        it 'allows the document to be replaced' do
+          expect(authorized_collection.find(x: { '$exists' => true }).count).to eq(1)
+        end
+      end
+
+      context 'when a OP_CODE is used', unless: write_command_enabled? do
+
+        it 'allows the document to be replaced' do
+          expect(authorized_collection.find(x: { '$exists' => true }).count).to eq(1)
+        end
       end
     end
   end
