@@ -71,7 +71,7 @@ module Mongo
         return nil if tag_sets.empty? && max_staleness.nil?
         preference = { mode: 'secondaryPreferred' }
         preference.merge!({ tags: tag_sets }) unless tag_sets.empty?
-        preference.merge!({ maxStalenessMS: max_staleness * 1000 }) if max_staleness
+        preference.merge!({ maxStalenessSeconds: max_staleness }) if max_staleness
         preference
       end
 

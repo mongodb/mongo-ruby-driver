@@ -33,7 +33,9 @@ module Mongo
       # Error message for when the max staleness is not at least twice the heartbeat frequency.
       #
       # @since 2.4.0
-      INVALID_MAX_STALENESS = "max_staleness must be at least twice the client's heartbeat frequency.".freeze
+      INVALID_MAX_STALENESS = "`max_staleness` value is too small. It must be at least " +
+        "`ServerSelector::SMALLEST_MAX_STALENESS_SECONDS` and (the cluster's heartbeat_frequency " +
+          "setting + `Cluster::IDLE_WRITE_PERIOD_SECONDS`).".freeze
 
       # Error message when max staleness cannot be used because one or more servers has version < 3.4.
       #

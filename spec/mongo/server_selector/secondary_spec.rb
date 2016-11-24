@@ -18,7 +18,7 @@ describe Mongo::ServerSelector::Secondary do
     context 'when max_staleness is provided' do
 
       let(:options) do
-        { max_staleness: 60 }
+        { max_staleness: 100 }
       end
 
       it 'sets the max_staleness option' do
@@ -32,7 +32,7 @@ describe Mongo::ServerSelector::Secondary do
     context 'when max staleness is the same' do
 
       let(:options) do
-        { max_staleness: 60 }
+        { max_staleness: 90 }
       end
 
       let(:other) do
@@ -47,7 +47,7 @@ describe Mongo::ServerSelector::Secondary do
     context 'when max staleness is different' do
 
       let(:other_options) do
-        { max_staleness: 30 }
+        { max_staleness: 95 }
       end
 
       let(:other) do
@@ -96,7 +96,7 @@ describe Mongo::ServerSelector::Secondary do
       end
 
       let(:expected) do
-        { :mode => 'secondary', maxStalenessMS: 60000 }
+        { :mode => 'secondary', maxStalenessSeconds: 60 }
       end
 
       it 'returns a read preference formatted for mongos' do
