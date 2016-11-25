@@ -114,7 +114,7 @@ module Mongo
     # @return [ true, false ] If a readable server is present.
     #
     # @since 2.4.0
-    def has_readable_server?(server_selector)
+    def has_readable_server?(server_selector = nil)
       topology.has_readable_server?(self, server_selector)
     end
 

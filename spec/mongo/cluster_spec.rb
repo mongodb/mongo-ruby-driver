@@ -66,14 +66,14 @@ describe Mongo::Cluster do
     end
 
     it 'delegates to the topology' do
-      expect(cluster).to have_readable_server(selector)
+      expect(cluster.has_readable_server?).to eq(cluster.topology.has_readable_server?(cluster))
     end
   end
 
   describe '#has_writable_server?' do
 
     it 'delegates to the topology' do
-      expect(cluster).to_not have_writable_server
+      expect(cluster.has_writable_server?).to eq(cluster.topology.has_writable_server?(cluster))
     end
   end
 

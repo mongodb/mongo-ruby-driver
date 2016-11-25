@@ -80,7 +80,7 @@ module Mongo
         # @return [ true, false ] If a readable server is present.
         #
         # @since 2.4.0
-        def has_readable_server?(cluster, server_selector); false; end
+        def has_readable_server?(cluster, server_selector = nil); false; end
 
         # Determine if the topology would select a writable server for the
         # provided candidates.

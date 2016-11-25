@@ -254,6 +254,31 @@ describe Mongo::Cluster::Topology::ReplicaSet do
         expect(topology).to have_readable_server(cluster, selector)
       end
     end
+
+    context 'when the read preference is not provided' do
+
+      context 'when a primary exists' do
+
+        let(:servers) do
+          [ double('server', primary?: true, secondary?: false) ]
+        end
+
+        it 'returns true' do
+          expect(topology).to have_readable_server(cluster)
+        end
+      end
+
+      context 'when a primary does not exist' do
+
+        let(:servers) do
+          [ double('server', primary?: false, secondary?: true, average_round_trip_time: 0.01) ]
+        end
+
+        it 'returns false' do
+          expect(topology).to_not have_readable_server(cluster)
+        end
+      end
+    end
   end
 
   describe '#has_writable_servers?' do

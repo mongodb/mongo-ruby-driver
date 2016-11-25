@@ -74,9 +74,7 @@ module Mongo
         # @return [ true, false ] If a readable server is present.
         #
         # @since 2.4.0
-        def has_readable_server?(cluster, server_selector)
-          server_selector.candidates(cluster).any?
-        end
+        def has_readable_server?(cluster, server_selector = nil); true; end
 
         # Determine if the topology would select a writable server for the
         # provided candidates.
@@ -89,9 +87,7 @@ module Mongo
         # @return [ true, false ] If a writable server is present.
         #
         # @since 2.4.0
-        def has_writable_server?(cluster)
-          cluster.servers.any?{ |server| server.primary? }
-        end
+        def has_writable_server?(cluster); true; end
 
         # Initialize the topology with the options.
         #
