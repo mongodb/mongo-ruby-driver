@@ -10,9 +10,9 @@ describe 'Server Discovery and Monitoring' do
     context(spec.description) do
 
       before(:all) do
-        c = Mongo::Client.new(spec.uri_string)
-        @client = c.with(connect_timeout: 0.1)
-        c.close
+        Mongo::Client.new(spec.uri_string).tap do |client|
+          @client = client.with(connect_timeout: 0.1)
+        end.close
       end
 
       after(:all) do
@@ -26,14 +26,13 @@ describe 'Server Discovery and Monitoring' do
           before(:all) do
             phase.responses.each do |response|
               server = find_server(@client, response.address)
-              server = Mongo::Server.new(
+              server ||= Mongo::Server.new(
                   Mongo::Address.new(response.address),
                   @client.cluster,
                   @client.instance_variable_get(:@monitoring),
                   @client.cluster.send(:event_listeners),
                   @client.cluster.options
-              ) unless server
-
+              )
               monitor = server.instance_variable_get(:@monitor)
               description = monitor.inspector.run(server.description, response.ismaster, 0.5)
               monitor.instance_variable_set(:@description, description)
