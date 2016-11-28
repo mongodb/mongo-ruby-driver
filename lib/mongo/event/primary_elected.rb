@@ -18,6 +18,8 @@ module Mongo
     # This handles primary elected events for server descriptions.
     #
     # @since 2.0.0
+    #
+    # @deprecated. Will be removed in 3.0
     class PrimaryElected
 
       # @return [ Mongo::Cluster ] cluster The cluster.

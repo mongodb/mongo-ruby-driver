@@ -13,6 +13,7 @@
 # limitations under the License.
 
 require 'mongo/server/description/inspector/member_discovered'
+# @deprecated. Will be removed in 3.0
 require 'mongo/server/description/inspector/primary_elected'
 require 'mongo/server/description/inspector/description_changed'
 require 'mongo/server/description/inspector/standalone_discovered'
