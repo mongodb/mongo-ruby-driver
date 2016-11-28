@@ -519,7 +519,8 @@ module Mongo
       #
       # @since 2.0.0
       def unknown?
-        config.empty? || config[Operation::Result::OK] != 1
+        config.empty? || (config[Operation::Result::OK] &&
+                            config[Operation::Result::OK] != 1)
       end
 
       # A result from another server's ismaster command before this server has
@@ -610,6 +611,7 @@ module Mongo
       # @since 2.0.6
       def ==(other)
         return false if self.class != other.class
+        return false if unknown? || other.unknown?
         compare_config(other)
       end
       alias_method :eql?, :==
@@ -617,7 +619,7 @@ module Mongo
       private
 
       def compare_config(other)
-        !config.keys.empty? && config.keys.all? do |k|
+        config.keys.all? do |k|
           config[k] == other.config[k] || EXCLUDE_FOR_COMPARISON.include?(k)
         end
       end

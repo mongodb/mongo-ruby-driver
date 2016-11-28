@@ -21,7 +21,7 @@ module Mongo
     class MemberDiscovered
       include Monitoring::Publishable
 
-      # @return [ Mongo::Cluster ] cluster The event publisher.
+      # @return [ Mongo::Cluster ] cluster The cluster.
       attr_reader :cluster
 
       # @return [ Hash ] options The options.
@@ -44,7 +44,7 @@ module Mongo
         @monitoring = cluster.monitoring
       end
 
-      # This event tells the cluster that a member of a known topology is discovered.
+      # This event tells the cluster that a member of a topology is discovered.
       #
       # @example Handle the event.
       #   member_discovered.handle(previous_description, description)

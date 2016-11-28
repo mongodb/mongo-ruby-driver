@@ -22,7 +22,7 @@ module Mongo
     class DescriptionChanged
       include Monitoring::Publishable
 
-      # @return [ Mongo::Cluster ] cluster The event publisher.
+      # @return [ Mongo::Cluster ] cluster The cluster.
       attr_reader :cluster
 
       # @return [ Hash ] options The options.

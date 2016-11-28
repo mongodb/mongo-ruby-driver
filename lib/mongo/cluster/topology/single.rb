@@ -71,7 +71,7 @@ module Mongo
         # @param [ ServerSelector ] server_selector The server
         #   selector.
         #
-        # @return [ true, false ] If a readable server is present.
+        # @return [ true ] A standalone always has a readable server.
         #
         # @since 2.4.0
         def has_readable_server?(cluster, server_selector = nil); true; end
@@ -84,7 +84,7 @@ module Mongo
         #
         # @param [ Cluster ] cluster The cluster.
         #
-        # @return [ true, false ] If a writable server is present.
+        # @return [ true ] A standalone always has a writable server.
         #
         # @since 2.4.0
         def has_writable_server?(cluster); true; end

@@ -77,7 +77,7 @@ module Mongo
         # @param [ ServerSelector ] server_selector The server
         #   selector.
         #
-        # @return [ true, false ] If a readable server is present.
+        # @return [ false ] An Unknown topology will never have a readable server.
         #
         # @since 2.4.0
         def has_readable_server?(cluster, server_selector = nil); false; end
@@ -90,7 +90,7 @@ module Mongo
         #
         # @param [ Cluster ] cluster The cluster.
         #
-        # @return [ true, false ] If a writable server is present.
+        # @return [ false ] An Unknown topology will never have a writable server.
         #
         # @since 2.4.0
         def has_writable_server?(cluster); false; end

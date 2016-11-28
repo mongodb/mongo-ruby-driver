@@ -46,7 +46,7 @@ module Mongo
           #
           # @since 2.0.0
           def run(description, updated)
-            unless (description.config.empty? && updated.config.empty?) || (description == updated)
+            unless (description.unknown? && updated.unknown?) || (description == updated)
               publish(Event::DESCRIPTION_CHANGED, description, updated)
             end
           end

@@ -20,7 +20,7 @@ module Mongo
     # @since 2.0.0
     class PrimaryElected
 
-      # @return [ Mongo::Cluster ] cluster The event publisher.
+      # @return [ Mongo::Cluster ] cluster The cluster.
       attr_reader :cluster
 
       # Initialize the new primary elected event handler.
