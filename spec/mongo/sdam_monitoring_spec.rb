@@ -10,9 +10,7 @@ describe 'SDAM Monitoring' do
     context(spec.description) do
 
       before(:all) do
-        cl = Mongo::Client.new([])
-        @client = cl.with(heartbeat_frequency: 100, connect_timeout: 0.1)
-        cl.close
+        @client = Mongo::Client.new([], heartbeat_frequency: 100, connect_timeout: 0.1)
         @subscriber = Mongo::SDAMMonitoring::TestSubscriber.new
         @client.subscribe(Mongo::Monitoring::SERVER_OPENING, @subscriber)
         @client.subscribe(Mongo::Monitoring::SERVER_CLOSED, @subscriber)
@@ -32,16 +30,15 @@ describe 'SDAM Monitoring' do
 
           before(:all) do
             phase.responses.each do |response|
-              # For each response in the phase, we need to change that server's
-              # description.
+              # For each response in the phase, we need to change that server's description.
               server = find_server(@client, response.address)
-              server = Mongo::Server.new(
-                Mongo::Address.new(response.address),
-                @client.cluster,
-                @client.instance_variable_get(:@monitoring),
-                @client.cluster.send(:event_listeners),
-                @client.cluster.options
-              ) unless server
+              server ||= Mongo::Server.new(
+                           Mongo::Address.new(response.address),
+                           @client.cluster,
+                           @client.instance_variable_get(:@monitoring),
+                           @client.cluster.send(:event_listeners),
+                           @client.cluster.options
+                         )
               monitor = server.instance_variable_get(:@monitor)
               description = monitor.inspector.run(server.description, response.ismaster, 0.5)
               monitor.instance_variable_set(:@description, description)
