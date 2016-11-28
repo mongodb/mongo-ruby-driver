@@ -23,10 +23,17 @@ module Mongo
       private
 
       def log_event(event)
-        log_debug(
-          "Topology type '#{event.previous_topology.display_name.downcase}' changed to " +
-          "type '#{event.new_topology.display_name.downcase}'."
-        )
+        if event.previous_topology != event.new_topology
+          log_debug(
+            "Topology type '#{event.previous_topology.display_name.downcase}' changed to " +
+            "type '#{event.new_topology.display_name.downcase}'."
+          )
+        else
+          log_debug(
+            "There was a change in the members of the '#{event.new_topology.display_name.downcase}' " +
+              "topology."
+          )
+        end
       end
     end
   end
