@@ -48,26 +48,6 @@ module Mongo
             max_staleness == other.max_staleness
       end
 
-      # Get the potential candidates to selecto from the cluster.
-      #
-      # @example Get the server candidates.
-      #   selectable.candidates(cluster)
-      #
-      # @param [ Cluster ] cluster The cluster.
-      #
-      # @return [ Array<Server> ] The candidate servers.
-      #
-      # @since 2.3.0
-      def candidates(cluster)
-        if cluster.single?
-          cluster.servers
-        elsif cluster.sharded?
-          near_servers(cluster.servers)
-        else
-          select(cluster.servers)
-        end
-      end
-
       # Initialize the server selector.
       #
       # @example Initialize the selector.
@@ -166,7 +146,7 @@ module Mongo
         @local_threshold ||= (options[:local_threshold] || ServerSelector::LOCAL_THRESHOLD)
       end
 
-      # Get the potential candidates to selecto from the cluster.
+      # Get the potential candidates to select from the cluster.
       #
       # @example Get the server candidates.
       #   selectable.candidates(cluster)
