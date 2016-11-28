@@ -94,31 +94,15 @@ describe Mongo::Cluster::Topology::Single do
 
   describe '#has_readable_servers?' do
 
-    let(:server) do
-      double('server', :primary? => true)
-    end
-
-    let(:cluster) do
-      double('cluster', servers: [server], single?: true)
-    end
-
     it 'returns true' do
-      expect(topology).to have_readable_server(cluster)
+      expect(topology).to have_readable_server(nil, nil)
     end
   end
 
   describe '#has_writable_servers?' do
 
-    let(:server) do
-      double('server', :primary? => true)
-    end
-
-    let(:cluster) do
-      double('cluster', servers: [server], single?: true)
-    end
-
     it 'returns true' do
-      expect(topology).to have_writable_server(cluster)
+      expect(topology).to have_writable_server(nil)
     end
   end
 
