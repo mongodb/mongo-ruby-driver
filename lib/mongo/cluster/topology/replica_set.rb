@@ -21,6 +21,7 @@ module Mongo
       # @since 2.0.0
       class ReplicaSet
         include Loggable
+        include Monitoring::Publishable
 
         # Constant for the replica set name configuration option.
         #
@@ -29,6 +30,9 @@ module Mongo
 
         # @return [ Hash ] options The options.
         attr_reader :options
+
+        # @return [ Monitoring ] monitoring The monitoring.
+        attr_reader :monitoring
 
         # The display name for the topology.
         #
@@ -61,7 +65,6 @@ module Mongo
         def elect_primary(description, servers)
           if description.replica_set_name == replica_set_name
             unless detect_stale_primary!(description)
-              log_debug("Server #{description.address.to_s} elected as primary in #{replica_set_name}.")
               servers.each do |server|
                 if server.primary? && server.address != description.address
                   server.description.unknown!
@@ -79,16 +82,51 @@ module Mongo
           self
         end
 
+        # Determine if the topology would select a readable server for the
+        # provided candidates and read preference.
+        #
+        # @example Is a readable server present?
+        #   topology.has_readable_server?(cluster, server_selector)
+        #
+        # @param [ Cluster ] cluster The cluster.
+        # @param [ ServerSelector ] server_selector The server
+        #   selector.
+        #
+        # @return [ true, false ] If a readable server is present.
+        #
+        # @since 2.4.0
+        def has_readable_server?(cluster, server_selector = nil)
+          (server_selector || ServerSelector.get(mode: :primary)).candidates(cluster).any?
+        end
+
+        # Determine if the topology would select a writable server for the
+        # provided candidates.
+        #
+        # @example Is a writable server present?
+        #   topology.has_writable_server?(servers)
+        #
+        # @param [ Cluster ] cluster The cluster.
+        #
+        # @return [ true, false ] If a writable server is present.
+        #
+        # @since 2.4.0
+        def has_writable_server?(cluster)
+          cluster.servers.any?{ |server| server.primary? }
+        end
+
         # Initialize the topology with the options.
         #
         # @example Initialize the topology.
         #   ReplicaSet.new(options)
         #
         # @param [ Hash ] options The options.
+        # @param [ Monitoring ] monitoring The monitoring.
+        # @param [ Array<String> ] seeds The seeds.
         #
         # @since 2.0.0
-        def initialize(options, seeds = [])
+        def initialize(options, monitoring, seeds = [])
           @options = options
+          @monitoring = monitoring
           @max_election_id = nil
           @max_set_version = nil
         end
@@ -221,6 +259,14 @@ module Mongo
         #
         # @since 2.0.6
         def standalone_discovered; self; end
+
+        # Notify the topology that a member was discovered.
+        #
+        # @example Notify the topology that a member was discovered.
+        #   topology.member_discovered
+        #
+        # @since 2.4.0
+        def member_discovered; end;
 
         private
 

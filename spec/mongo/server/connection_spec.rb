@@ -7,7 +7,7 @@ describe Mongo::Server::Connection do
   end
 
   let(:monitoring) do
-    Mongo::Monitoring.new
+    Mongo::Monitoring.new(monitoring: false)
   end
 
   let(:listeners) do
@@ -20,8 +20,13 @@ describe Mongo::Server::Connection do
 
   let(:cluster) do
     double('cluster').tap do |cl|
+      allow(cl).to receive(:topology).and_return(topology)
       allow(cl).to receive(:app_metadata).and_return(app_metadata)
     end
+  end
+
+  let(:topology) do
+    double('topology')
   end
 
   let(:server) do

@@ -16,6 +16,7 @@ require 'mongo/event/listeners'
 require 'mongo/event/publisher'
 require 'mongo/event/subscriber'
 require 'mongo/event/primary_elected'
+require 'mongo/event/member_discovered'
 require 'mongo/event/description_changed'
 require 'mongo/event/standalone_discovered'
 
@@ -30,7 +31,14 @@ module Mongo
     # When a server is elected primary.
     #
     # @since 2.0.0
+    #
+    # @deprecated. Will be removed in 3.0
     PRIMARY_ELECTED = 'primary_elected'.freeze
+
+    # When a server is discovered to be a member of a topology.
+    #
+    # @since 2.4.0
+    MEMBER_DISCOVERED = 'member_discovered'.freeze
 
     # When a server is to be removed from a cluster.
     #

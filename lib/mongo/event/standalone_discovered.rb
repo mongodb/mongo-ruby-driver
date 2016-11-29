@@ -20,7 +20,7 @@ module Mongo
     # @since 2.0.6
     class StandaloneDiscovered
 
-      # @return [ Mongo::Cluster ] cluster The event publisher.
+      # @return [ Mongo::Cluster ] cluster The cluster.
       attr_reader :cluster
 
       # Initialize the new standalone discovered event handler.

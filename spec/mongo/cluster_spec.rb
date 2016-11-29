@@ -3,7 +3,7 @@ require 'spec_helper'
 describe Mongo::Cluster do
 
   let(:monitoring) do
-    Mongo::Monitoring.new
+    Mongo::Monitoring.new(monitoring: false)
   end
 
   let(:cluster) do
@@ -56,6 +56,24 @@ describe Mongo::Cluster do
       it 'returns false' do
         expect(cluster).to_not eq('test')
       end
+    end
+  end
+
+  describe '#has_readable_server?' do
+
+    let(:selector) do
+      Mongo::ServerSelector.get(mode: :primary)
+    end
+
+    it 'delegates to the topology' do
+      expect(cluster.has_readable_server?).to eq(cluster.topology.has_readable_server?(cluster))
+    end
+  end
+
+  describe '#has_writable_server?' do
+
+    it 'delegates to the topology' do
+      expect(cluster.has_writable_server?).to eq(cluster.topology.has_writable_server?(cluster))
     end
   end
 
@@ -156,7 +174,7 @@ describe Mongo::Cluster do
       context 'when topology is Single' do
 
         let(:topology) do
-          Mongo::Cluster::Topology::Single.new({})
+          Mongo::Cluster::Topology::Single.new({}, monitoring)
         end
 
         it 'returns an empty array' do
@@ -167,7 +185,7 @@ describe Mongo::Cluster do
       context 'when topology is ReplicaSet' do
 
         let(:topology) do
-          Mongo::Cluster::Topology::ReplicaSet.new({})
+          Mongo::Cluster::Topology::ReplicaSet.new({}, monitoring)
         end
 
         it 'returns an empty array' do
@@ -178,7 +196,7 @@ describe Mongo::Cluster do
       context 'when topology is Sharded' do
 
         let(:topology) do
-          Mongo::Cluster::Topology::Sharded.new({})
+          Mongo::Cluster::Topology::Sharded.new({}, monitoring)
         end
 
         it 'returns an empty array' do
@@ -189,7 +207,7 @@ describe Mongo::Cluster do
       context 'when topology is Unknown' do
 
         let(:topology) do
-          Mongo::Cluster::Topology::Unknown.new({})
+          Mongo::Cluster::Topology::Unknown.new({}, monitoring)
         end
 
         it 'returns an empty array' do
@@ -268,7 +286,7 @@ describe Mongo::Cluster do
     end
 
     let(:monitoring) do
-      Mongo::Monitoring.new
+      Mongo::Monitoring.new(monitoring: false)
     end
 
     let(:server_a) do
@@ -361,7 +379,7 @@ describe Mongo::Cluster do
     end
 
     let(:monitoring) do
-      Mongo::Monitoring.new
+      Mongo::Monitoring.new(monitoring: false)
     end
 
     let(:server) do

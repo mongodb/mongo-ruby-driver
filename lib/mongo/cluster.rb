@@ -24,6 +24,7 @@ module Mongo
   # @since 2.0.0
   class Cluster
     extend Forwardable
+    include Monitoring::Publishable
     include Event::Subscriber
     include Loggable
 
@@ -45,6 +46,9 @@ module Mongo
     # @return [ Hash ] The options hash.
     attr_reader :options
 
+    # @return [ Monitoring ] monitoring The monitoring.
+    attr_reader :monitoring
+
     # @return [ Object ] The cluster topology.
     attr_reader :topology
 
@@ -54,7 +58,8 @@ module Mongo
     # @since 2.4.0
     attr_reader :app_metadata
 
-    def_delegators :topology, :replica_set?, :replica_set_name, :sharded?, :single?, :unknown?
+    def_delegators :topology, :replica_set?, :replica_set_name, :sharded?,
+                   :single?, :unknown?, :member_discovered
     def_delegators :@cursor_reaper, :register_cursor, :schedule_kill_cursor, :unregister_cursor
 
     # Determine if this cluster of servers is equal to another object. Checks the
@@ -89,13 +94,40 @@ module Mongo
       address = Address.new(host)
       if !addresses.include?(address)
         if addition_allowed?(address)
-          log_debug("Adding #{address.to_s} to the cluster.")
           @update_lock.synchronize { @addresses.push(address) }
           server = Server.new(address, self, @monitoring, event_listeners, options)
           @update_lock.synchronize { @servers.push(server) }
           server
         end
       end
+    end
+
+    # Determine if the cluster would select a readable server for the
+    # provided read preference.
+    #
+    # @example Is a readable server present?
+    #   topology.has_readable_server?(server_selector)
+    #
+    # @param [ ServerSelector ] server_selector The server
+    #   selector.
+    #
+    # @return [ true, false ] If a readable server is present.
+    #
+    # @since 2.4.0
+    def has_readable_server?(server_selector = nil)
+      topology.has_readable_server?(self, server_selector)
+    end
+
+    # Determine if the cluster would select a writable server.
+    #
+    # @example Is a writable server present?
+    #   topology.has_writable_server?
+    #
+    # @return [ true, false ] If a writable server is present.
+    #
+    # @since 2.4.0
+    def has_writable_server?
+      topology.has_writable_server?(self)
     end
 
     # Instantiate the new cluster.
@@ -119,15 +151,25 @@ module Mongo
       @event_listeners = Event::Listeners.new
       @options = options.freeze
       @app_metadata ||= AppMetadata.new(self)
-      @topology = Topology.initial(seeds, options)
       @update_lock = Mutex.new
       @pool_lock = Mutex.new
+      @topology = Topology.initial(seeds, monitoring, options)
+
+      publish_sdam_event(
+        Monitoring::TOPOLOGY_OPENING,
+        Monitoring::Event::TopologyOpening.new(@topology)
+      )
 
       subscribe_to(Event::STANDALONE_DISCOVERED, Event::StandaloneDiscovered.new(self))
       subscribe_to(Event::DESCRIPTION_CHANGED, Event::DescriptionChanged.new(self))
-      subscribe_to(Event::PRIMARY_ELECTED, Event::PrimaryElected.new(self))
+      subscribe_to(Event::MEMBER_DISCOVERED, Event::MemberDiscovered.new(self))
 
       seeds.each{ |seed| add(seed) }
+
+      publish_sdam_event(
+        Monitoring::TOPOLOGY_CHANGED,
+        Monitoring::Event::TopologyChanged.new(@topology, @topology)
+      ) if @servers.size > 1
 
       @cursor_reaper = CursorReaper.new
       @cursor_reaper.run!
@@ -264,11 +306,14 @@ module Mongo
     #
     # @since 2.0.0
     def remove(host)
-      log_debug("#{host} being removed from the cluster.")
       address = Address.new(host)
       removed_servers = @servers.select { |s| s.address == address }
       @update_lock.synchronize { @servers = @servers - removed_servers }
       removed_servers.each{ |server| server.disconnect! } if removed_servers
+      publish_sdam_event(
+        Monitoring::SERVER_CLOSED,
+        Monitoring::Event::ServerClosed.new(address, topology)
+      )
       @update_lock.synchronize { @addresses.reject! { |addr| addr == address } }
     end
 

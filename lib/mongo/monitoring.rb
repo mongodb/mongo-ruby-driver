@@ -15,6 +15,12 @@
 require 'mongo/monitoring/event'
 require 'mongo/monitoring/publishable'
 require 'mongo/monitoring/command_log_subscriber'
+require 'mongo/monitoring/sdam_log_subscriber'
+require 'mongo/monitoring/server_description_changed_log_subscriber'
+require 'mongo/monitoring/server_closed_log_subscriber'
+require 'mongo/monitoring/server_opening_log_subscriber'
+require 'mongo/monitoring/topology_changed_log_subscriber'
+require 'mongo/monitoring/topology_opening_log_subscriber'
 
 module Mongo
 
@@ -27,6 +33,36 @@ module Mongo
     #
     # @since 2.1.0
     COMMAND = 'Command'.freeze
+
+    # Server closed topic.
+    #
+    # @since 2.4.0
+    SERVER_CLOSED = 'ServerClosed'.freeze
+
+    # Server description changed topic.
+    #
+    # @since 2.4.0
+    SERVER_DESCRIPTION_CHANGED = 'ServerDescriptionChanged'.freeze
+
+    # Server opening topic.
+    #
+    # @since 2.4.0
+    SERVER_OPENING = 'ServerOpening'.freeze
+
+    # Topology changed topic.
+    #
+    # @since 2.4.0
+    TOPOLOGY_CHANGED = 'TopologyChanged'.freeze
+
+    # Topology closed topic.
+    #
+    # @since 2.4.0
+    TOPOLOGY_CLOSED = 'TopologyClosed'.freeze
+
+    # Topology opening topic.
+    #
+    # @since 2.4.0
+    TOPOLOGY_OPENING = 'TopologyOpening'.freeze
 
     @@operation_id = 0
     @@operation_id_lock = Mutex.new
@@ -101,6 +137,11 @@ module Mongo
           end
         end
         subscribe(COMMAND, CommandLogSubscriber.new(options))
+        subscribe(SERVER_OPENING, ServerOpeningLogSubscriber.new(options))
+        subscribe(SERVER_CLOSED, ServerClosedLogSubscriber.new(options))
+        subscribe(SERVER_DESCRIPTION_CHANGED, ServerDescriptionChangedLogSubscriber.new(options))
+        subscribe(TOPOLOGY_OPENING, TopologyOpeningLogSubscriber.new(options))
+        subscribe(TOPOLOGY_CHANGED, TopologyChangedLogSubscriber.new(options))
       end
     end
 

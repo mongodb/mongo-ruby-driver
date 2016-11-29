@@ -18,7 +18,7 @@
             },
             "responses": [
                 [
-                    "localhost:27017",
+                    "lhost:27017",
                      {
                          "me": "a:27017",
                          "hosts": [
@@ -33,5 +33,5 @@
             ]
         }
     ],
-    "uri": "mongodb://localhost:27017/?replicaSet=rs"
+    "uri": "mongodb://lhost:27017/?replicaSet=rs"
 }

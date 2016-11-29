@@ -7,11 +7,11 @@ describe Mongo::Cluster::Topology::Sharded do
   end
 
   let(:topology) do
-    described_class.new({})
+    described_class.new({}, monitoring)
   end
 
   let(:monitoring) do
-    Mongo::Monitoring.new
+    Mongo::Monitoring.new(monitoring: false)
   end
 
   let(:listeners) do
@@ -20,6 +20,7 @@ describe Mongo::Cluster::Topology::Sharded do
 
   let(:cluster) do
     double('cluster').tap do |cl|
+      allow(cl).to receive(:topology).and_return(topology)
       allow(cl).to receive(:app_metadata).and_return(app_metadata)
     end
   end
@@ -83,6 +84,20 @@ describe Mongo::Cluster::Topology::Sharded do
 
     it 'returns false' do
       expect(topology).to_not be_single
+    end
+  end
+
+  describe '#has_readable_servers?' do
+
+    it 'returns true' do
+      expect(topology).to have_readable_server(nil, nil)
+    end
+  end
+
+  describe '#has_writable_servers?' do
+
+    it 'returns true' do
+      expect(topology).to have_writable_server(nil)
     end
   end
 

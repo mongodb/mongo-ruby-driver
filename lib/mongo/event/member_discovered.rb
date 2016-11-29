@@ -1,5 +1,4 @@
-
-# Copyright (C) 2014-2016 MongoDB, Inc.
+# Copyright (C) 2015 MongoDB, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,10 +15,10 @@
 module Mongo
   module Event
 
-    # This handles a change in description.
+    # This handles member discovered events for server descriptions.
     #
-    # @since 2.0.6
-    class DescriptionChanged
+    # @since 2.4.0
+    class MemberDiscovered
       include Monitoring::Publishable
 
       # @return [ Mongo::Cluster ] cluster The cluster.
@@ -31,10 +30,10 @@ module Mongo
       # @return [ Monitoring ] monitoring The monitoring.
       attr_reader :monitoring
 
-      # Initialize the new host added event handler.
+      # Initialize the new member discovered event handler.
       #
       # @example Create the new handler.
-      #   ServerAdded.new(cluster)
+      #   MemberDiscovered.new(cluster)
       #
       # @param [ Mongo::Cluster ] cluster The cluster to publish from.
       #
@@ -45,27 +44,21 @@ module Mongo
         @monitoring = cluster.monitoring
       end
 
-      # This event publishes an event to add the cluster and logs the
-      # configuration change.
+      # This event tells the cluster that a member of a topology is discovered.
       #
       # @example Handle the event.
-      #   server_added.handle('127.0.0.1:27018')
+      #   member_discovered.handle(previous_description, description)
       #
-      # @param [ Server::Description ] updated The changed description.
+      # @param [ Server::Description ] previous The previous description of the server.
+      # @param [ Server::Description ] updated The updated description of the server.
       #
-      # @since 2.0.0
+      # @since 2.4.0
       def handle(previous, updated)
-        publish_sdam_event(
-          Monitoring::SERVER_DESCRIPTION_CHANGED,
-          Monitoring::Event::ServerDescriptionChanged.new(
-            updated.address,
-            cluster.topology,
-            previous,
-            updated
-          )
-        )
-        cluster.add_hosts(updated)
-        cluster.remove_hosts(updated)
+        if updated.primary? || updated.mongos?
+          cluster.elect_primary!(updated)
+        else
+          cluster.member_discovered
+        end
       end
     end
   end

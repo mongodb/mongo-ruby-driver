@@ -18,9 +18,11 @@ module Mongo
     # This handles primary elected events for server descriptions.
     #
     # @since 2.0.0
+    #
+    # @deprecated. Will be removed in 3.0
     class PrimaryElected
 
-      # @return [ Mongo::Cluster ] cluster The event publisher.
+      # @return [ Mongo::Cluster ] cluster The cluster.
       attr_reader :cluster
 
       # Initialize the new primary elected event handler.

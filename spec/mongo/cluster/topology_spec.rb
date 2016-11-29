@@ -2,12 +2,16 @@ require 'spec_helper'
 
 describe Mongo::Cluster::Topology do
 
+  let(:monitoring) do
+    Mongo::Monitoring.new(monitoring: false)
+  end
+
   describe '.initial' do
 
     context 'when provided a replica set option' do
 
       let(:topology) do
-        described_class.initial([ 'a' ], connect: :replica_set)
+        described_class.initial([ 'a' ], monitoring, connect: :replica_set)
       end
 
       it 'returns a replica set topology' do
@@ -18,7 +22,7 @@ describe Mongo::Cluster::Topology do
     context 'when provided a single option' do
 
       let(:topology) do
-        described_class.initial([ 'a' ], connect: :direct)
+        described_class.initial([ 'a' ], monitoring, connect: :direct)
       end
 
       it 'returns a single topology' do
@@ -33,7 +37,7 @@ describe Mongo::Cluster::Topology do
     context 'when provided a sharded option' do
 
       let(:topology) do
-        described_class.initial([ 'a' ], connect: :sharded)
+        described_class.initial([ 'a' ], monitoring, connect: :sharded)
       end
 
       it 'returns a sharded topology' do
@@ -46,7 +50,7 @@ describe Mongo::Cluster::Topology do
       context 'when a set name is in the options' do
 
         let(:topology) do
-          described_class.initial([], replica_set: 'testing')
+          described_class.initial([], monitoring, replica_set: 'testing')
         end
 
         it 'returns a replica set topology' do
@@ -57,7 +61,7 @@ describe Mongo::Cluster::Topology do
       context 'when no set name is in the options' do
 
         let(:topology) do
-          described_class.initial([], {})
+          described_class.initial([], monitoring, {})
         end
 
         it 'returns an unknown topology' do
@@ -68,7 +72,7 @@ describe Mongo::Cluster::Topology do
       context 'when provided a single mongos', if: single_mongos? do
 
         let(:topology) do
-          described_class.initial(ADDRESSES, TEST_OPTIONS)
+          described_class.initial(ADDRESSES, monitoring, TEST_OPTIONS)
         end
 
         it 'returns a sharded topology' do
@@ -79,7 +83,7 @@ describe Mongo::Cluster::Topology do
       context 'when provided a single replica set member', if: single_rs_member? do
 
         let(:topology) do
-          described_class.initial(ADDRESSES, TEST_OPTIONS)
+          described_class.initial(ADDRESSES, monitoring, TEST_OPTIONS)
         end
 
         it 'returns a single topology' do

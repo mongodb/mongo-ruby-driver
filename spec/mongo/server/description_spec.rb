@@ -32,11 +32,16 @@ describe Mongo::Server::Description do
   end
 
   let(:monitoring) do
-    Mongo::Monitoring.new
+    Mongo::Monitoring.new(monitoring: false)
   end
 
+  let(:topology) do
+    double('topology')
+  end
+  
   let(:cluster) do
     double('cluster').tap do |cl|
+      allow(cl).to receive(:topology).and_return(topology)
       allow(cl).to receive(:app_metadata).and_return(app_metadata)
     end
   end
@@ -542,6 +547,90 @@ describe Mongo::Server::Description do
 
       it 'returns false' do
         expect(description).to_not be_standalone
+      end
+    end
+  end
+
+  describe '#server_type' do
+
+    context 'when the server is an arbiter' do
+
+      let(:description) do
+        described_class.new(address, { 'arbiterOnly' => true, 'setName' => 'test' })
+      end
+
+      it 'returns :arbiter' do
+        expect(description.server_type).to eq(:arbiter)
+      end
+    end
+
+    context 'when the server is a ghost' do
+
+      let(:description) do
+        described_class.new(address, { 'isreplicaset' => true })
+      end
+
+      it 'returns :ghost' do
+        expect(description.server_type).to eq(:ghost)
+      end
+    end
+
+    context 'when the server is a mongos' do
+
+      let(:config) do
+        { 'msg' => 'isdbgrid', 'ismaster' => true }
+      end
+
+      let(:description) do
+        described_class.new(address, config)
+      end
+
+      it 'returns :sharded' do
+        expect(description.server_type).to eq(:sharded)
+      end
+    end
+
+    context 'when the server is a primary' do
+
+      let(:description) do
+        described_class.new(address, replica)
+      end
+
+      it 'returns :primary' do
+        expect(description.server_type).to eq(:primary)
+      end
+    end
+
+    context 'when the server is a secondary' do
+
+      let(:description) do
+        described_class.new(address, { 'secondary' => true, 'setName' => 'test' })
+      end
+
+      it 'returns :secondary' do
+        expect(description.server_type).to eq(:secondary)
+      end
+    end
+
+    context 'when the server is standalone' do
+
+      let(:description) do
+        described_class.new(address, { 'ismaster' => true, 'ok' => 1 })
+      end
+
+      it 'returns :standalone' do
+        expect(description.server_type).to eq(:standalone)
+      end
+    end
+
+    context 'when the description has no configuration' do
+
+      let(:description) do
+        described_class.new(address)
+      end
+
+      it 'returns :unknown' do
+        expect(description.server_type).to eq(:unknown)
       end
     end
   end

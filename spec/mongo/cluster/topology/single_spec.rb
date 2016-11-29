@@ -6,12 +6,12 @@ describe Mongo::Cluster::Topology::Single do
     Mongo::Address.new('127.0.0.1:27017')
   end
 
-  let(:topology) do
-    described_class.new({})
+  let(:monitoring) do
+    Mongo::Monitoring.new(monitoring: false)
   end
 
-  let(:monitoring) do
-    Mongo::Monitoring.new
+  let(:topology) do
+    described_class.new({}, monitoring)
   end
 
   let(:listeners) do
@@ -21,6 +21,7 @@ describe Mongo::Cluster::Topology::Single do
   let(:cluster) do
     double('cluster').tap do |cl|
       allow(cl).to receive(:app_metadata).and_return(app_metadata)
+      allow(cl).to receive(:topology).and_return(topology)
     end
   end
 
@@ -88,6 +89,20 @@ describe Mongo::Cluster::Topology::Single do
 
     it 'returns true' do
       expect(topology).to be_single
+    end
+  end
+
+  describe '#has_readable_servers?' do
+
+    it 'returns true' do
+      expect(topology).to have_readable_server(nil, nil)
+    end
+  end
+
+  describe '#has_writable_servers?' do
+
+    it 'returns true' do
+      expect(topology).to have_writable_server(nil)
     end
   end
 

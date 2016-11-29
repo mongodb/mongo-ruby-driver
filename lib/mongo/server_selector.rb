@@ -53,11 +53,11 @@ module Mongo
     #
     # @since 2.0.0
     PREFERENCES = {
-        nearest: Nearest,
-        primary: Primary,
-        primary_preferred: PrimaryPreferred,
-        secondary: Secondary,
-        secondary_preferred: SecondaryPreferred
+      nearest: Nearest,
+      primary: Primary,
+      primary_preferred: PrimaryPreferred,
+      secondary: Secondary,
+      secondary_preferred: SecondaryPreferred
     }.freeze
 
     # Create a server selector object.

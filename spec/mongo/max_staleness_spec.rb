@@ -11,7 +11,11 @@ describe 'Max Staleness Spec' do
     context(spec.description) do
 
       let(:topology) do
-        spec.type.new({})
+        spec.type.new({}, monitoring, [])
+      end
+
+      let(:monitoring) do
+        Mongo::Monitoring.new(monitoring: false)
       end
 
       let(:monitoring) do

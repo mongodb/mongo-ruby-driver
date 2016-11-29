@@ -10,12 +10,12 @@ describe 'Server Selection' do
 
     context(spec.description) do
 
-      let(:topology) do
-        spec.type.new({})
+      let(:monitoring) do
+        Mongo::Monitoring.new(monitoring: false)
       end
 
-      let(:monitoring) do
-        Mongo::Monitoring.new
+      let(:topology) do
+        spec.type.new({}, monitoring)
       end
 
       let(:listeners) do
