@@ -11,7 +11,7 @@ describe 'Server Discovery and Monitoring' do
 
       before(:all) do
         Mongo::Client.new(spec.uri_string).tap do |client|
-          @client = client.with(connect_timeout: 0.1)
+          @client = client.with(connect_timeout: 0.1, heartbeat_frequency: 100)
         end.close
       end
 
