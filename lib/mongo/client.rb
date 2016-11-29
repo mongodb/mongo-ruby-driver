@@ -48,6 +48,7 @@ module Mongo
       :min_pool_size,
       :monitoring,
       :password,
+      :platform,
       :read,
       :read_retry_interval,
       :replica_set,
@@ -200,10 +201,10 @@ module Mongo
     #   certification authority certifications used to validate certs passed from the
     #   other end of the connection. One of :ssl_ca_cert, :ssl_ca_cert_string or
     #   :ssl_ca_cert_object (in order of priority) is required for :ssl_verify.
-    # @option options [ Array<OpenSSL::X509::Certificate> ] :ssl_ca_cert_object An array of OpenSSL::X509::Certificate
-    #   reprenting the certification authority certifications used to validate certs passed from the
-    #   other end of the connection. One of :ssl_ca_cert, :ssl_ca_cert_string or
-    #   :ssl_ca_cert_object (in order of priority) is required for :ssl_verify.
+    # @option options [ Array<OpenSSL::X509::Certificate> ] :ssl_ca_cert_object An array of
+    #   OpenSSL::X509::Certificate representing the certification authority certifications used
+    #   to validate certs passed from the other end of the connection. One of :ssl_ca_cert,
+    #   :ssl_ca_cert_string or :ssl_ca_cert_object (in order of priority) is required for :ssl_verify.
     # @option options [ Float ] :socket_timeout The timeout, in seconds, to
     #   execute operations on a socket.
     # @option options [ String ] :user The user name.
@@ -222,6 +223,8 @@ module Mongo
     #   for documents. Must respond to #generate.
     # @option options [ String, Symbol ] :app_name Application name that is printed to the
     #   mongod logs upon establishing a connection in server versions >= 3.4.
+    # @option options [ String ] :platform Platform information to include in the
+    #   metadata printed to the mongod logs upon establishing a connection in server versions >= 3.4.
     #
     # @since 2.0.0
     def initialize(addresses_or_uri, options = Options::Redacted.new)

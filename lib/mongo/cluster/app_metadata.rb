@@ -53,6 +53,7 @@ module Mongo
       # @since 2.4.0
       def initialize(cluster)
         @app_name = cluster.options[:app_name]
+        @platform = cluster.options[:platform]
       end
 
       # Get the bytes of the ismaster message including this metadata.
@@ -133,7 +134,12 @@ module Mongo
       end
 
       def platform
-        [RUBY_VERSION, RUBY_PLATFORM, RbConfig::CONFIG['build']].join(', ')
+        [
+          @platform,
+          RUBY_VERSION,
+          RUBY_PLATFORM,
+          RbConfig::CONFIG['build']
+        ].compact.join(', ')
       end
     end
   end

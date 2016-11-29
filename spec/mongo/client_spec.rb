@@ -271,6 +271,44 @@ describe Mongo::Client do
           expect(client.cluster.options[:heartbeat_frequency]).to eq(client.options[:heartbeat_frequency])
         end
       end
+
+      context 'when platform details are specified' do
+
+        let(:app_metadata) do
+          client.cluster.app_metadata
+        end
+
+        let(:client) do
+          described_class.new(['127.0.0.1:27017'], :platform => 'mongoid-6.0.2')
+        end
+
+        it 'includes the platform info in the app metadata' do
+          expect(app_metadata.send(:full_client_document)[:platform]).to match(/mongoid-6\.0\.2/)
+        end
+      end
+
+      context 'when platform details are not specified' do
+
+        let(:app_metadata) do
+          client.cluster.app_metadata
+        end
+
+        let(:client) do
+          described_class.new(['127.0.0.1:27017'])
+        end
+
+        let(:platform_string) do
+          [
+            RUBY_VERSION,
+            RUBY_PLATFORM,
+            RbConfig::CONFIG['build']
+          ].join(', ')
+        end
+
+        it 'does not include the platform info in the app metadata' do
+          expect(app_metadata.send(:full_client_document)[:platform]).to eq(platform_string)
+        end
+      end
     end
 
     context 'when providing a connection string' do
