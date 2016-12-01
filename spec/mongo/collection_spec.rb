@@ -538,62 +538,71 @@ describe Mongo::Collection do
       described_class.new(database, :specs)
     end
 
-    before do
-      collection.create
-    end
-
-    context 'when the collection does not have a write concern set' do
-
-      let!(:response) do
-        collection.drop
+    context 'when the collection exists' do
+      before do
+        collection.create
       end
 
-      it 'executes the command' do
-        expect(response).to be_successful
+      context 'when the collection does not have a write concern set' do
+
+        let!(:response) do
+          collection.drop
+        end
+
+        it 'executes the command' do
+          expect(response).to be_successful
+        end
+
+        it 'drops the collection from the database' do
+          expect(database.collection_names).to_not include('specs')
+        end
+
+        context 'when the collection does not exist' do
+
+          it 'does not raise an error' do
+            expect(database['non-existent-coll'].drop).to be(false)
+          end
+        end
       end
 
-      it 'drops the collection from the database' do
-        expect(database.collection_names).to_not include('specs')
-      end
+      context 'when the collection has a write concern' do
 
-      context 'when the collection does not exist' do
+        let(:write_options) do
+          {
+            write: { w: WRITE_CONCERN[:w] + 1}
+          }
+        end
 
-        it 'does not raise an error' do
-          expect(database['non-existent-coll'].drop).to be(false)
+        let(:collection_with_write_options) do
+          collection.with(write_options)
+        end
+
+        after do
+          collection.drop
+        end
+
+        context 'when the server supports write concern on the drop command', if: collation_enabled? do
+
+          it 'applies the write concern' do
+            expect{
+              collection_with_write_options.drop
+            }.to raise_exception(Mongo::Error::OperationFailure)
+          end
+        end
+
+        context 'when the server does not support write concern on the drop command', unless: collation_enabled? do
+
+          it 'does not apply the write concern' do
+            expect(collection_with_write_options.drop).to be_successful
+          end
         end
       end
     end
 
-    context 'when the collection has a write concern' do
+    context 'when the collection does not exist' do
 
-      let(:write_options) do
-        {
-          write: { w: WRITE_CONCERN[:w] + 1}
-        }
-      end
-
-      let(:collection_with_write_options) do
-        collection.with(write_options)
-      end
-
-      after do
-        collection.drop
-      end
-
-      context 'when the server supports write concern on the drop command', if: collation_enabled? do
-
-        it 'applies the write concern' do
-          expect{
-            collection_with_write_options.drop
-          }.to raise_exception(Mongo::Error::OperationFailure)
-        end
-      end
-
-      context 'when the server does not support write concern on the drop command', unless: collation_enabled? do
-
-        it 'does not apply the write concern' do
-          expect(collection_with_write_options.drop).to be_successful
-        end
+      it 'returns false' do
+        expect(collection.drop).to be(false)
       end
     end
   end
