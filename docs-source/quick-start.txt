@@ -1,0 +1,1110 @@
+.. http://docs.mongodb.org/ecosystem/tutorial/ruby-driver-tutorial-2-0/
+
+.. _ruby-driver-tutorial-2-0:
+
+===============
+Getting Started
+===============
+
+.. default-domain:: mongodb
+
+.. contents:: On this page
+   :local:
+   :backlinks: none
+   :depth: 1
+   :class: twocols
+
+This tutorial discusses using the core MongoDB Ruby driver, version 2.0
+
+.. seealso::  `Ruby Driver Source Code on GitHub <https://github.com/mongodb/mongo-ruby-driver>`_
+
+
+Installation
+------------
+
+The Ruby driver is bundled as a gem, and is hosted on `Rubygems <http://rubygems.org>`_.
+The driver can be installed manually or with bundler.
+
+To install the gem manually:
+
+.. code-block:: sh
+
+    gem install mongo
+
+To install the gem with bundler, include the following in your Gemfile:
+
+.. code-block:: ruby
+
+    gem 'mongo', '~> 2.0'
+
+Note the following compatibility matrix to determine if the driver is
+supported on your Runtime and server.
+
+.. list-table::
+   :header-rows: 1
+   :widths: 28 30 30 30
+
+   * - Ruby Version
+     - 2.4.x
+     - 2.6.x
+     - 3.0.x
+
+   * - MRI 1.8.x
+     - No
+     - No
+     - No
+
+   * - MRI 1.9.x
+     - Yes
+     - Yes
+     - Yes
+
+   * - MRI 2.0.x
+     - Yes
+     - Yes
+     - Yes
+
+   * - MRI 2.1.x
+     - Yes
+     - Yes
+     - Yes
+
+   * - MRI 2.2.x
+     - Yes
+     - Yes
+     - Yes
+
+   * - JRuby 1.7.x
+     - Yes
+     - Yes
+     - Yes
+
+Creating a Client
+-----------------
+
+The entry point to using the driver in all applications is via a ``Mongo::Client``.
+A client can be created by passing in a list of hosts and options, or alternatively
+can be instantiated using a URI. If a database name is not provided, then the
+``admin`` database will be used by default.
+
+To create a client to a standalone server, provide one host in the seed list.
+Optionally you can force the cluster topology to be standalone without going through
+the auto-discovery steps.
+
+.. code-block:: ruby
+
+  Mongo::Client.new([ '127.0.0.1:27017' ], :database => 'mydb')
+  Mongo::Client.new([ '127.0.0.1:27017' ], :database => 'mydb', :connect => :direct)
+  Mongo::Client.new('mongodb://127.0.0.1:27017/mydb')
+
+To create a client to a replica set, pass one or more hosts and the replica set name.
+The client has an auto-discovery feature that will find all members of the replica
+set if not all are provided.
+
+.. code-block:: ruby
+
+  Mongo::Client.new([ '127.0.0.1:27017', '127.0.0.1:27018' ], :database => 'mydb', :replica_set => 'myapp')
+  Mongo::Client.new('mongodb://127.0.0.1:27017,127.0.0.1:27018/mydb?replicaSet=myapp')
+
+To create a client to a sharded cluster, pass one or more mongos hosts. The auto-
+discovery functionality will determine that the servers are mongoses, but if you
+would like to force it and bypass the auto-discovery pass the sharded option to the
+client.
+
+.. code-block:: ruby
+
+  Mongo::Client.new([ '127.0.0.1:27017' ], :database => 'mydb')
+  Mongo::Client.new([ '127.0.0.1:27017' ], :database => 'mydb', :connect => :sharded)
+  Mongo::Client.new('mongodb://127.0.0.1:27017/mydb?connect=sharded' ])
+
+Client Options
+``````````````
+
+A number of different options can be passed to a ``Mongo::Client`` to configure driver
+behaviour, either by providing them in the options hash to the constructor or by
+providing them in the URI.
+
+Since the URI options are required in camel case, which is not the Ruby standard, the
+following table shows the option in the URI and its corresponding option if passed
+to the constructor in Ruby. Note that the options passed directly should be symbols.
+
+The options are explained in detail `here <http://docs.mongodb.org/master/reference/connection-string/>`_.
+Note that options that are set in **milliseconds** in the URI, are represented as a ``Float``
+in Ruby and the units are **seconds**.
+
+URI Options Conversions
+***********************
+
+.. list-table::
+   :header-rows: 1
+   :widths: 40 105
+
+   * - URI Option
+     - Ruby Option
+
+   * - replicaSet=String
+     - ``:replica_set => String``
+
+   * - connect=String
+     - ``:connect => Symbol``
+
+   * - ssl=Boolean
+     - ``:ssl => true|false``
+
+   * - connectTimeoutMS=Integer
+     - ``:connect_timeout => Float``
+
+   * - socketTimeoutMS=Integer
+     - ``:socket_timeout => Float``
+
+   * - serverSelectionTimeoutMS=Integer
+     - ``:server_selection_timeout => Float``
+
+   * - localThresholdMS=Integer
+     - ``:local_threshold => Float``
+
+   * - maxPoolSize=Integer
+     - ``:max_pool_size => Integer``
+
+   * - minPoolSize=Integer
+     - ``:min_pool_size => Integer``
+
+   * - waitQueueTimeoutMS=Integer
+     - ``:wait_queue_timeout => Float``
+
+   * - w=Integer|String
+     - ``{ :write => { :w => Integer|String }}``
+
+   * - wtimeoutMS=Integer
+     - ``{ :write => { :wtimeout => Float }}``
+
+   * - journal=Boolean
+     - ``{ :write => { :j => true|false }}``
+
+   * - fsync=Boolean
+     - ``{ :write => { :fsync => true|false }}``
+
+   * - readPreference=String
+     - ``{ :read => { :mode => Symbol }}``
+
+   * - readPreferenceTags=Strings
+     - ``{ :read => { :tag_sets => Array<String> }}``
+
+   * - authSource=String
+     - ``:auth_source => String``
+
+   * - authMechanism=String
+     - ``:auth_mech => Symbol``
+
+   * - authMechanismProperties=Strings
+     - ``{ :auth_mech_properties => { :service_realm => String, :canonicalize_host_name => true|false, :service_name => String }}``
+
+Ruby Options
+************
+
+.. list-table::
+   :header-rows: 1
+   :widths: 40 105
+
+   * - Option
+     - Description
+
+   * - ``:replica_set``
+     - When connecting to a replica set, this is the name of the set to
+       filter servers by. Takes a ``String``.
+
+   * - ``:ssl``
+     - Tell the client to connect to the servers via SSL. Takes ``true`` or
+       ``false``.
+
+   * - ``:connect_timeout``
+     - The number of seconds as a ``Float`` to wait to establish a socket connection
+       before raising an exception. Defaults to 10 seconds.
+
+   * - ``:socket_timeout``
+     - The number of seconds as a ``Float`` to wait for an operation to execute on a
+       socket before raising an exception. Defaults to 5 seconds.
+
+   * - ``:max_pool_size``
+     - The maximum size of the connection pool for each server. Defaults to
+       5 connections.
+
+   * - ``:min_pool_size =>``
+     - The minimum number of connections in the connection pool for each
+       server. Defaults to 1.
+
+   * - ``:wait_queue_timeout``
+     - The number of seconds as a ``Float`` to wait for a connection in the connection
+       pool to become available. Defaults to 1.
+
+   * - ``:write``
+     - Specifies write concern options as a ``Hash``. The default write concern ``:w`` is
+       ``:primary``. Keys in the hash can be ``:w``, ``:wtimeout``, ``:j``, ``:fsync``.
+
+       .. code-block:: ruby
+
+         { :write => { :w => 2 }}
+
+   * - ``:read``
+     - Specifies the read preference mode and tag sets for selecting servers as a ``Hash``.
+       Keys in the hash are ``:mode`` and ``:tag_sets``.
+
+       .. code-block:: ruby
+
+         { :read => { :mode => :secondary, :tag_sets => ["berlin"] }}
+
+   * - ``:auth_source``
+     - Specifies the authentication source. For MongoDB 2.6 and higher this defaults to
+       **admin** if credentials are supplied, otherwise the current database.
+
+   * - ``:auth_mech``
+     - Specifies the authenticaion mechanism to use as a ``Symbol``. Can be one of:
+       ``:mongodb_cr``, ``:mongodb_x509``, ``:plain``, ``:scram``. If user credentials
+       are supplied but an ``:auth_mech`` is not, then on MongoDB 3.0 and higher this
+       defaults to ``:scram`` and on 2.6 and lower defaults to ``:mongodb_cr``.
+
+   * - ``:auth_mech_properties``
+     - Provides additional authentication mechanism properties as a ``Hash``.
+
+   * - ``:user``
+     - The name of the user to authenticate with as a ``String``.
+
+   * - ``:password``
+     - The password of the user to authenticate with as a ``String``.
+
+   * - ``:connect``
+     - Overrides the auto-discovery feature of the driver and forces the cluster
+       topology to a specific type. Can be a ``Symbol`` from ``:direct``,
+       ``:replica_set`` or ``:sharded``.
+
+   * - ``:heartbeat_frequency``
+     - The number of seconds as a ``Float`` for the server monitors to refresh
+       server states asynchronously. Defaults to 10.
+
+   * - ``:database``
+     - The name of the database to connect to as a ``String``. If not supplied
+       the client will default to **admin**.
+
+   * - ``:server_selection_timeout``
+     - The number of seconds as a ``Float`` to wait for an appropriate server to
+       be selected for an operation to be executed before raising an exception.
+       Defaults to 30.
+
+   * - ``:local_threshold``
+     - Specifies the maximum latency in seconds as a ``Float`` between the nearest
+       server and the servers that can be available for selection to operate on.
+       Defaults to 0.015.
+
+Inserting
+---------
+
+Inserting documents into a collection via the driver is done by selecting a
+collection on the client and calling ``insert_one`` or ``insert_many``.
+
+Insert operations will return a ``Mongo::Operation::Result`` object which will
+give you information about the insert itself.
+
+On MongoDB 2.6 and higher, if the insert failed, then an exception will be
+raised since write commands are used.
+
+On MongoDB 2.4, an exception will only be raised if the insert failed and the
+write concern is 1 or higher.
+
+.. code-block:: ruby
+
+  client = Mongo::Client.new([ '127.0.0.1:27017' ], :database => 'music')
+
+  result = client[:artists].insert_one({ name: 'FKA Twigs' })
+  result.inserted_count # returns 1, because 1 document was inserted.
+
+  result = client[:artists].insert_many([
+    { :name => 'Flying Lotus' },
+    { :name => 'Aphex Twin' }
+  ])
+  result.inserted_count # returns 2, since 2 documents were inserted.
+
+Querying
+--------
+
+The Ruby driver provides a fluent interface for querying that is accessed
+via the method ``find`` on the collection. From there, one has various
+options that can be added.
+
+The query is lazily executed against the server only when iterating the
+results - at that point the query is dispatched and a ``Mongo::Cursor`` is
+returned.
+
+To find all documents for a given filter, simply call ``find`` with the
+query:
+
+.. code-block:: ruby
+
+  client = Mongo::Client.new([ '127.0.0.1:27017' ], :database => 'music')
+
+  client[:artists].find(:name => 'Flying Lotus').each do |document|
+    #=> Yields a BSON::Document.
+  end
+
+Query Options
+`````````````
+
+To add options to a query, simply chain the appropriate methods after the
+``find``. Note that the underlying object, the ``Mongo::Collection::View``,
+is immutable and a new object will be returned after each method call.
+
+.. code-block:: ruby
+
+  client = Mongo::Client.new([ '127.0.0.1:27017' ], :database => 'music')
+
+  documents = client[:artists].find(:name => 'Flying Lotus').skip(10).limit(10)
+  documents.each do |document|
+    #=> Yields a BSON::Document.
+  end
+
+The following is a full list of the available options that can be added
+when querying and their corresponding methods as examples.
+
+.. list-table::
+   :header-rows: 1
+   :widths: 40 80
+
+   * - Option
+     - Description
+   * - ``#allow_partial_results``
+     - For use with sharded clusters. If a shard is down, allows the query
+       to return results from the shards that are up, potentially only getting
+       a portion of the results.
+   * - ``#batch_size(integer)``
+     - Specifies the size of each batch of documents the cursor will return on
+       each GETMORE operation.
+   * - ``#comment(string)``
+     - Adds a comment to the query.
+   * - ``#hint(hash)``
+     - Provides the query with an index hint to use.
+   * - ``#limit(integer)``
+     - Limits the number of returned documents to the provided value.
+   * - ``#max_scan(integer)``
+     - Sets the maximum number of documents to scan if a full collection scan
+       would be performed.
+   * - ``#no_cursor_timeout``
+     - MongoDB automatically closes inactive cursors after a period of 10
+       minutes. Call this for cursors to remain open indefinitely on the server.
+   * - ``#projection(hash)``
+     - Specifies the fields to include or exclude from the results.
+
+       .. code-block:: ruby
+
+         client[:artists].find.projection(:name => 1)
+
+   * - ``#read(hash)``
+     - Changes the read preference for this query only.
+
+       .. code-block:: ruby
+
+         client[:artists].find.read(:mode => :secondary_preferred)
+
+   * - ``#show_disk_loc(boolean)``
+     - Tells the results to also include the location of the documents on disk.
+   * - ``#skip(integer)``
+     - Skip the provided number of documents in the results.
+   * - ``#snapshot``
+     - Execute the query in snapshot mode.
+   * - ``#sort(hash)``
+     - Specifies sort criteria for the query.
+
+       .. code-block:: ruby
+
+         client[:artists].find.sort(:name => -1)
+
+Additional Query Operations
+```````````````````````````
+
+To execute a count of documents on a collection, call ``count`` on the view.
+
+.. code-block:: ruby
+
+  client = Mongo::Client.new([ '127.0.0.1:27017' ], :database => 'music')
+
+  client[:artists].find(:name => 'Flying Lotus').count
+
+To get an array of distinct field values, use ``distinct``.
+
+.. code-block:: ruby
+
+  client = Mongo::Client.new([ '127.0.0.1:27017' ], :database => 'music')
+
+  client[:artists].find.distinct(:name)
+
+Updating
+--------
+
+Updating documents comes in 2 variations, either by executing a single or
+multiple update, or by leveraging the ``$findAndModify`` command.
+
+To update documents via the regular mode, which returns a ``Result`` object,
+use ``update_one``, ``update_many``, or ``replace_one``.
+
+.. code-block:: ruby
+
+  client = Mongo::Client.new([ '127.0.0.1:27017' ], :database => 'music')
+  artists = client[:artists]
+
+  result = artists.find(:name => 'Goldie').update_one("$inc" => { :plays => 1 })
+  result.modified_count # Returns 1.
+
+  result = artists.find(:label => 'Hospital').update_many("$inc" => { :plays => 1 })
+  result.modified_count # Returns the number of documents that were updated.
+
+  result = artists.find(:name => 'Aphex Twin').replace_one(:name => 'Richard James')
+  result.modified_count # Returns 1.
+
+To update documents and return a document via ``$findAndModify``, use one of
+the three provided helpers: ``find_one_and_delete``, ``find_one_and_replace``,
+or ``find_one_and_update``. One may opt to return the document before or after
+the modification occurs.
+
+.. code-block:: ruby
+
+  client = Mongo::Client.new([ '127.0.0.1:27017' ], :database => 'music')
+  artists = client[:artists]
+
+  artists.find(:name => 'José James').find_one_and_delete # Returns the document.
+
+  doc = artists.find(:name => 'José James').find_one_and_replace(:name => 'José')
+  doc # Return the document before the update.
+
+  doc = artists.find(:name => 'José James').
+    find_one_and_replace({ :name => 'José' }, :return_document => :after)
+  doc # Return the document after the update.
+
+  doc = artists.find(:name => 'José James').
+    find_one_and_update('$set' => { :name => 'José' })
+  doc # Return the document before the update.
+
+  doc = artists.find(:name => 'José James').
+    find_one_and_replace({ '$set' => { :name => 'José' }}, :return_document => :after)
+  doc # Return the document after the update.
+
+Removing
+--------
+
+Removing documents from a collection is done either in single or multiples.
+
+.. code-block:: ruby
+
+  client = Mongo::Client.new([ '127.0.0.1:27017' ], :database => 'music')
+  artists = client[:artists]
+
+  result = artists.find(:name => 'Björk').delete_one
+  result.deleted_count # Returns 1.
+
+  result = artists.find(:label => 'Mute').delete_many
+  result.deleted_count # Returns the number deleted.
+
+Collections
+-----------
+
+The driver provides some helpers to deal with administrative type tasks with
+collections.
+
+To create a collection with options (such as creating a capped collection),
+pass the options when getting the collection from the client and call
+``create``.
+
+.. code-block:: ruby
+
+  client = Mongo::Client.new([ '127.0.0.1:27017' ], :database => 'music')
+  artists = client[:artists, :capped => true, :size => 1024]
+  artists.create
+  artists.capped? # Returns true.
+
+To drop a collection, call ``drop`` on the collection object.
+
+.. code-block:: ruby
+
+  client = Mongo::Client.new([ '127.0.0.1:27017' ], :database => 'music')
+  artists = client[:artists]
+  artists.drop
+
+Databases
+---------
+
+The driver provides various helpers on database objects for executing
+commands, getting collection lists, and administrative tasks.
+
+To get a list of collections or collection names for a database, use
+``collections`` and ``collection_names``, respectively.
+
+.. code-block:: ruby
+
+  client = Mongo::Client.new([ '127.0.0.1:27017' ], :database => 'music')
+  database = client.database
+
+  database.collections # Returns an array of Collection objects.
+  database.collection_names # Returns an array of collection names as strings.
+
+To execute any command on the database, execute ``command``.
+
+.. code-block:: ruby
+
+  client = Mongo::Client.new([ '127.0.0.1:27017' ], :database => 'music')
+  database = client.database
+
+  result = database.command(:ismaster => 1)
+  result.first # Returns the BSON::Document returned from the server.
+
+To drop a database, execute the ``drop`` method.
+
+.. code-block:: ruby
+
+  client = Mongo::Client.new([ '127.0.0.1:27017' ], :database => 'music')
+  client.database.drop
+
+
+Indexing
+--------
+
+The driver provides the ability to create, drop and view indexes in a collection
+via a special view on the collection.
+
+
+Creating Indexes
+````````````````
+
+Indexes can be created one at a time, or multiples can be created in a single
+operation. When creating multiples on MongoDB 3.0.0 and higher, the indexes
+will be created in parallel, otherwise they will be created in order.
+
+To create a single index, use ``create_one`` on the view.
+
+.. code-block:: ruby
+
+  client = Mongo::Client.new([ '127.0.0.1:27017' ], :database => 'music')
+  client[:bands].indexes.create_one({ :name => 1 }, :unique => true)
+
+To create multiple indexes, use ``create_many``. Note that when creating many,
+the index keys must be passed as a ``key`` value in the provided spec. This is
+due to the fact that options can be different for each index being created.
+
+.. code-block:: ruby
+
+  client = Mongo::Client.new([ '127.0.0.1:27017' ], :database => 'music')
+  client[:bands].indexes.create_many([
+    { :key => { name: 1 }, :unique => true },
+    { :key => { label: -1 }}
+  ])
+
+The following is a full list of the available options that can be added
+when creating indexes.
+
+.. list-table::
+   :header-rows: 1
+   :widths: 40 80
+
+   * - Option
+     - Description
+   * - ``:background``
+     - Either ``true`` or ``false``. Tells the index to be created in the background.
+   * - ``:expire_after``
+     - Number of seconds to expire documents in the collection after.
+   * - ``:name``
+     - The name of the index.
+   * - ``:sparse``
+     - Whether the index should be sparse or not, either ``true`` or ``false``.
+   * - ``:storage_engine``
+     - The name of the storage engine for this particular index.
+   * - ``:version``
+     - The index format version to use.
+   * - ``:default_language``
+     - The default language of text indexes.
+   * - ``:language_override``
+     - The field name to use when overriding the default language.
+   * - ``:text_version``
+     - The version format for text index storage.
+   * - ``:weights``
+     - A document specifying fields and weights in text search.
+   * - ``:sphere_version``
+     - The 2d sphere index version.
+   * - ``:bits``
+     - Sets the maximum boundary for latitude and longitude in the 2d index.
+   * - ``:max``
+     - Maximum boundary for latitude and longitude in the 2d index.
+   * - ``:min``
+     - Minimum boundary for latitude and longitude in the 2d index.
+   * - ``:bucket_size``
+     - The number of units within which to group the location values in a geo haystack index.
+
+
+Dropping Indexes
+````````````````
+
+To drop an index, call ``dropOne`` or ``dropAll``.
+
+.. code-block:: ruby
+
+  client = Mongo::Client.new([ '127.0.0.1:27017' ], :database => 'music')
+
+  client[:bands].indexes.drop_one('name_1') # Drops the name_1 index.
+  client[:bands].indexes.drop_all # Drops all indexes in the collection.
+
+
+Listing Indexes
+```````````````
+
+To view all the indexes in a collection, iterate over the index view.
+
+.. code-block:: ruby
+
+  client = Mongo::Client.new([ '127.0.0.1:27017' ], :database => 'music')
+
+  client[:bands].indexes.each do |index|
+    p index
+  end
+
+
+Authentication
+--------------
+
+MongoDB supports a variety of `authentication mechanisms <http://docs.mongodb.org/master/core/access-control/>`_.
+
+For more information about configuring your MongoDB server for each of these authentication mechanisms please see MongoDB's `online documentation <http://docs.mongodb.org/master/tutorial/enable-authentication>`_.
+
+Creating a user
+```````````````
+
+A user can be created in a database by calling ``create`` on the users view with the name, password, and roles (optional).
+
+.. code-block:: ruby
+
+  client.database.users.create(
+        'durran',
+        password: 'password',
+        roles: [ Mongo::Auth::Roles::READ_WRITE ])
+
+Providing credentials
+`````````````````````
+
+As is the case for all authentication mechanisms, credentials are either provided at instantiation of the client or when a new client is created via the ``with`` method.
+
+.. code-block:: ruby
+
+  client = Mongo::Client.new([ '127.0.0.1:27017' ],
+                             user: 'test',
+                             password: '123')
+
+For MongoDB 2.6 and higher, ``:auth_source`` defaults to **admin**, otherwise the current database is used.
+
+The current database can be changed using the client's ``use`` method.
+
+.. code-block:: ruby
+
+  client = Mongo::Client.new([ '127.0.0.1:27017' ])
+  music_client = client.use('music')
+
+Then a new client can be created with the authentication credentials.
+
+.. code-block:: ruby
+
+  authenticated_client = client.with(user: 'test',
+                                     password: '123')
+
+Alternatively, setting the current database and credentials can be done in one step:
+
+.. code-block:: ruby
+
+  authenticated_music_client = client.with(:database => 'music',
+                                           user:'test',
+                                           password:'123')
+
+
+MONGODB-CR mechanism
+````````````````````
+
+MONGODB-CR was the default authentication mechanism for MongoDB up through version 2.6.
+
+The mechanism can be explicitly set with the credentials.
+
+.. code-block:: ruby
+
+  client = Mongo::Client.new([ '127.0.0.1:27017' ],
+                             :database => 'music',
+                             user: 'test',
+                             password: '123',
+                             auth_mech: :mongodb_cr)
+
+
+MONGODB-X509 mechanism
+``````````````````````
+*Requires MongoDB v2.6 or greater.*
+
+The MONGODB-X509 mechanism authenticates a username derived from the distinguished subject name of the X.509 certificate presented by the driver during SSL negotiation. This authentication method requires the use of SSL connections with certificate validation.
+
+For more information about configuring X.509 authentication in MongoDB,
+please see the :manual:`X.509 tutorial in the MongoDB Manual
+</tutorial/configure-x509/>`.
+
+.. code-block:: ruby
+
+  client = Mongo::Client.new([ '127.0.0.1:27017' ],
+                             auth_mech: :mongodb_x509,
+                             ssl: true,
+                             ssl_cert: '/path/to/client.pem',
+                             ssl_ca_cert: '/path/to/ca.pem') )
+
+
+SASL PLAIN (LDAP) mechanism
+```````````````````````````
+*Requires MongoDB Enterprise Edition v2.6 or greater.*
+
+MongoDB Enterprise Edition supports the SASL PLAIN authentication mechanism which allows you to delegate authentication using a Lightweight Directory Access Protocol `LDAP <http://en.wikipedia.org/wiki/LDAP>`_ server. When using SASL PLAIN, passwords are sent to the server in plain text. For this reason, we strongly recommend enabling SSL when using SASL PLAIN as your authentication mechanism.
+
+For more information about configuring SASL PLAIN authentication in
+MongoDB, please see the :manual:`SASL/LDAP tutorial in the MongoDB Manual
+</tutorial/configure-ldap-sasl-authentication/>`.
+
+.. code-block:: ruby
+
+  client = Mongo::Client.new([ '127.0.0.1:27017' ],
+                             auth_mech: :plain,
+                             ssl: true,
+                             ssl_verify: true,
+                             ssl_cert: '/path/to/client.pem',
+                             ssl_ca_cert: '/path/to/ca.pem')
+
+GSSAPI (Kerberos) mechanism
+```````````````````````````
+*Requires MongoDB Enterprise Edition v2.4 or greater.*
+
+MongoDB Enterprise Edition v2.4+ supports GSSAPI (Kerberos) authentication.
+
+In order to use GSSAPI in the Ruby driver with **JRuby**, you must do the following:
+
+1. Specify several system properties so that the underlying GSSAPI Java
+   
+   libraries can acquire a Kerberos ticket. Please see the `MongoDB Java
+   Driver authentication documentation
+   <http://mongodb.github.io/mongo-java-driver/3.0/driver/reference/connecting/authenticating/#kerberos-gssapi>`_
+   for more information.
+
+2. Either provide a password OR set the 'java.security.auth.login.config' system property to a config file that references a keytab file.
+
+In order to use the GSSAPI authentication mechanism in the Ruby driver with **MRI**, you must do the following:
+
+1. Create a ticket-granting ticket using kinit. Please see `this documentation <http://linux.die.net/man/1/kinit>`_ for more information.
+
+For more information about deploying MongoDB with Kerberos
+authentication, please see the :manual:`Kerberos documentation in the
+MongoDB Manual
+</tutorial/control-access-to-mongodb-with-kerberos-authentication/>`.
+
+.. code-block:: ruby
+
+  client = Mongo::Client.new([ '127.0.0.1:27017' ],
+                             auth_mech: :gssapi,
+                             user: 'test',
+                             password: '123')
+
+
+Read Preferences
+----------------
+
+Read preferences determine the candidate replica set members to which a query or command can be sent. They consist of a **mode** specified as a symbol, an array of hashes known as **tag_sets**, and two timing options: **local_threshold** and **server_selection_timeout**.
+
+``local_threshold`` defines the upper limit in seconds of the latency window between the nearest server and suitable servers to which an operation may be sent. The default is 15 milliseconds, i.e. 0.015 seconds.
+
+``server_selection_timeout`` defines how long to block for server selection before throwing an exception. The default is 30,000 milliseconds, i.e. 30 seconds.
+
+For more information on the algorithm used to select a server, please
+refer to the `Server Selection documentation, available on github
+<https://github.com/mongodb/specifications/blob/master/source/server-sel
+ection/server-selection.rst>`_.
+
+The read preference is set as an option on the client or passed an option when a command is run on a database.
+
+.. code-block:: ruby
+
+  # Set read preference on a client, used for all operations
+  client = Mongo::Client.new([ '127.0.0.1:27017' ],
+                             read: { mode: :secondary,
+                                     tag_sets: [{ 'dc' => 'nyc' } ]
+                                    })
+
+  # Set read preference for a given command
+  client.database.command({ collstats: 'test' }, read: { mode: secondary,
+                                                       tag_sets: [{ 'dc' => 'nyc' }]})
+
+Mode
+````
+
+There are five possible read preference modes. They are ``:primary``,
+``:secondary``, ``:primary_preferred``, ``:secondary_preferred``,
+``:nearest``. Please see the :manual:`read preference documentation in the MongoDB Manual
+</core/read-preference/>` for an explanation of the modes and tag sets.
+
+Tag sets
+````````
+
+The ``tag_sets`` parameter is an ordered list of tag sets used to restrict the eligibility of servers for selection, such as for data center awareness.
+
+A read preference tag set (T) matches a server tag set (S) – or equivalently a server tag set (S) matches a read preference tag set (T) — if T is a subset of S (i.e. T ⊆ S).
+
+For example, the read preference tag set ``{ dc: 'ny', rack: 2 }`` matches a secondary server with tag set ``{ dc: 'ny', rack: 2, size: 'large' }``.
+
+A tag set that is an empty document matches any server, because the empty tag set is a subset of any tag set. This means the default ``tag_sets`` parameter ``[{}]`` matches all servers.
+
+
+Aggregation
+-----------
+
+The aggregation framework is used to process documents and return computed results. An aggregation is defined in the driver by providing a list of pipeline operators and options to a collection view.
+
+``find`` is called on a collection and then ``aggregate`` can be called with a list of pipeline operators.
+
+.. code-block:: ruby
+
+  client = Mongo::Client.new([ '127.0.0.1:27017' ], :database => 'demographics')
+  coll = client['populations']
+  aggregation = coll.find.aggregate([
+    { :$group => { :_id => "$city", :total_pop => { :$sum => "$pop" }}}
+  ])
+
+  aggregation.each do |doc|
+    #=> Yields a BSON::Document.
+  end
+
+The MongoDB option, ``allowDiskUse`` can be explicitly set on the aggregation using the ``allow_disk_use`` method:
+
+
+.. code-block:: ruby
+
+  client = Mongo::Client.new([ '127.0.0.1:27017' ], :database => 'demographics')
+  coll = client['populations']
+  aggregation = coll.find.aggregate([ { :$group => { :_id => "$city",
+                                                     :total_pop => { :$sum => "$pop" }
+                                                   }
+                                      }
+                                    ])
+  aggregation.allow_disk_use(true)
+
+  aggregation.each do |document|
+    #=> Yields a BSON::Document.
+  end
+
+
+Bulk Operations
+---------------
+
+The bulk write API allows a list of write operations to be sent to the server through one method call. The type of execution can either be ``ordered`` or ``unordered``.
+
+A bulk operation is defined by passing a list of operations to the ``bulk_write`` method on a collection. The second argument to the method is options defining whether the operations should be executed in order and what write concern should be used. The default is ``ordered`` and the collection's write concern will be used if no other is specified.
+
+
+Each operation is defined as a document with one of the follow keys.
+
+- ``insert_one``
+- ``delete_one``
+- ``delete_many``
+- ``replace_one``
+- ``update_one``
+- ``update_many``
+
+
+The format for each operation is the following:
+
+insert_one
+``````````
+
+.. code-block:: ruby
+
+    { :insert_one => { :x => 1 } }
+
+delete_one
+``````````
+
+.. code-block:: ruby
+
+    { :delete_one => { :x => 1 } }
+
+delete_many
+```````````
+
+.. code-block:: ruby
+
+    { :delete_many => { :x => 1 } }
+
+replace_one
+```````````
+
+.. code-block:: ruby
+
+    { :replace_one => { :find => { :x => 1 },
+                        :replacement => { :x => 2 },
+                        :upsert => true } # upsert is optional and defaults to false
+     }
+
+update_one
+``````````
+
+.. code-block:: ruby
+
+    { :update_one => { :find => { :x => 1 },
+                       :update => { '$set' =>  { :x => 2 } },
+                       :upsert => true } # upsert is optional and defaults to false
+     }
+
+update_many
+```````````
+
+.. code-block:: ruby
+
+    { :update_many => { :find => { :x => 1 },
+                        :update => { '$set' =>  { :x => 2 } },
+                        :upsert => true } # upsert is optional and defaults to false
+     }
+
+The follow is an example of a list of operations passed to the ``bulk_write`` method.
+
+.. code-block:: ruby
+
+    coll = client['documents']
+    coll.bulk_write([ { :insert_one => { :x => 1 }
+                      },
+                      { :update_one => { :find => { :x => 1 },
+                                         :update => {'$set' => { :x => 2 } }
+                                       }
+                      },
+                      { :replace_one => { :find => { :x => 2 },
+                                          :replacement => { :x => 3 }
+                                        }
+                      }
+                    ],
+                    :ordered => true )
+
+
+Logger
+------
+
+You can either use the default driver logger or set your own. To set your own:
+
+.. code-block:: ruby
+
+  Mongo::Logger.logger = other_logger
+
+Please see the `Ruby Logger documentation <http://ruby-doc.org/stdlib-2.2.0/libdoc/logger/rdoc/Logger.html>`_
+for more information on the default logger API and available levels. To change the logger level:
+
+.. code-block:: ruby
+
+  Mongo::Logger.logger.level = Logger::WARN
+
+
+GridFS
+------
+
+The driver provides a clean and extremely simple interface to work with storage of
+chunked files in the database, also known as the pattern "GridFS".
+
+Files
+`````
+
+The core object when working with GridFS in Ruby is a ``Mongo::Grid::File`` object.
+This is the object that must be inserted into the database, and when retrieving
+files this is the object that is returned.
+
+To create a file with raw data:
+
+.. code-block:: ruby
+
+  file = Mongo::Grid::File.new('I am a file', :filename => 'new-file.txt')
+
+To create a file from a Ruby ``File`` object:
+
+.. code-block:: ruby
+
+  file = File.open('/path/to/my-file.txt')
+  grid_file = Mongo::Grid::File.new(file.read, :filename => File.basename(file.path))
+
+To change file options, for example chunk size, pass the options to the constructor:
+
+.. code-block:: ruby
+
+  file = File.open('/path/to/my-file.txt')
+  grid_file = Mongo::Grid::File.new(
+    file.read,
+    :filename => File.basename(file.path),
+    :chunk_size => 1024
+  )
+
+The following is a full list of the available options that files support.
+
+.. list-table::
+   :header-rows: 1
+   :widths: 40 80
+
+   * - Option
+     - Description
+   * - ``:chunk_size``
+     - Sets the size of each file chunk in the database.
+   * - ``:content_type``
+     - Set a content type for the file.
+   * - ``:filename`` (Required)
+     - The file name.
+   * - ``:upload_date``
+     - The date the file was uploaded (stored).
+
+
+Inserting Files
+```````````````
+
+Files can be inserted into the database, one at a time. File chunks are inserted
+by default into the ``fs.chunks`` collection and file metadata is inserted into the
+``fs.files`` collection.
+
+.. code-block:: ruby
+
+  client = Mongo::Client.new([ '127.0.0.1:27017' ], :database => 'music')
+  file = Mongo::Grid::File.new('I am a file', :filename => 'new-file.txt')
+
+  client.database.fs.insert_one(file)
+
+To insert into collections with a name prefix other than `fs`, access the
+"filesystem" with a ``:fs_name`` option.
+
+.. code-block:: ruby
+
+  client = Mongo::Client.new([ '127.0.0.1:27017' ], :database => 'music')
+  file = Mongo::Grid::File.new('I am a file', :filename => 'new-file.txt')
+
+  client.database.fs(:fs_name => 'grid').insert_one(file)
+
+Note that the first time the ``fs`` is called, it will create the required index
+for you on the ``chunks`` collection. This index is a compound index:
+
+.. code-block:: ruby
+
+  { :files_id => 1, :n => 1 }
+
+Finding Files
+`````````````
+
+To retrieve a file from the database, call ``find_one`` with the appropriate filter.
+
+.. code-block:: ruby
+
+  client = Mongo::Client.new([ '127.0.0.1:27017' ], :database => 'music')
+  client.database.fs.find_one(:filename => 'new-file.txt') # Returns a Mongo::Grid::File
+
+Deleting Files
+``````````````
+
+To delete a file, pass the file object to ``delete_one``.
+
+.. code-block:: ruby
+
+  client = Mongo::Client.new([ '127.0.0.1:27017' ], :database => 'music')
+  fs = client.database.fs
+  file = fs.find_one(:filename => 'new-file.txt')
+  fs.delete_one(file)
+
+
+    coll.find.to_a # { '_id' => ..., 'x' => 3 }
