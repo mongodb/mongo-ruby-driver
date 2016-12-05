@@ -24,7 +24,7 @@ To install the gem with bundler, include the following in your Gemfile:
 
 .. code-block:: ruby
 
-    gem 'mongo', '~> 2.2'
+    gem 'mongo', '~> 2.3'
 
 Note the following compatibility matrix to determine if the driver is
 supported on your Ruby version and MongoDB server version.
