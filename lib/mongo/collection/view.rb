@@ -177,10 +177,18 @@ module Mongo
         View.new(collection, filter, options)
       end
 
-      def validate_collation!(server, opts)
-        if (opts[:collation] || opts[Operation::COLLATION]) && !server.features.collation_enabled?
+      def apply_collation!(doc, server)
+        if validate_collation!(server)
+          doc[:collation] = options[:collation] || options[Operation::COLLATION]
+        end
+      end
+
+      def validate_collation!(server)
+        if (collation = options[:collation] || options[Operation::COLLATION]) &&
+            !server.features.collation_enabled?
           raise Error::UnsupportedCollation.new
         end
+        collation
       end
 
       def view; self; end

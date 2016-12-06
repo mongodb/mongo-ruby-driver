@@ -413,14 +413,14 @@ describe Mongo::Collection::View::Readable do
       end
 
       let(:result) do
-        view.count(count_options)
+        view.count
       end
 
       before do
         authorized_collection.insert_one(name: 'bang')
       end
 
-      let(:count_options) do
+      let(:options) do
         { collation: { locale: 'en_US', strength: 2 } }
       end
 
@@ -441,7 +441,7 @@ describe Mongo::Collection::View::Readable do
 
         context 'when a String key is used' do
 
-          let(:count_options) do
+          let(:options) do
             { 'collation' => { locale: 'en_US', strength: 2 } }
           end
 
@@ -700,7 +700,7 @@ describe Mongo::Collection::View::Readable do
     context 'when a collation is specified' do
 
       let(:result) do
-        view.distinct(:name, distinct_options)
+        view.distinct(:name)
       end
 
       before do
@@ -708,7 +708,7 @@ describe Mongo::Collection::View::Readable do
         authorized_collection.insert_one(name: 'BANG')
       end
 
-      let(:distinct_options) do
+      let(:options) do
         { collation: { locale: 'en_US', strength: 2 } }
       end
 
@@ -729,7 +729,7 @@ describe Mongo::Collection::View::Readable do
 
         context 'when a String key is used' do
 
-          let(:distinct_options) do
+          let(:options) do
             { 'collation' => { locale: 'en_US', strength: 2 } }
           end
 
