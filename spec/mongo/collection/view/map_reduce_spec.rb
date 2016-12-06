@@ -537,6 +537,10 @@ describe Mongo::Collection::View::MapReduce do
 
     context 'when the server selected does not support collations', unless: collation_enabled? do
 
+      let(:options) do
+        { collation: { locale: 'en_US', strength: 2 } }
+      end
+
       it 'raises an exception' do
         expect {
           map_reduce.to_a
