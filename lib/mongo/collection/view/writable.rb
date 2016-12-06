@@ -38,8 +38,7 @@ module Mongo
           cmd[:writeConcern] = write_concern.options if write_concern
 
           server = next_primary
-          validate_collation!(server, options)
-          cmd[:collation] = options[:collation] if options[:collation]
+          apply_collation!(cmd, server)
 
           write_with_retry do
             Operation::Commands::Command.new({
@@ -104,9 +103,8 @@ module Mongo
           cmd[:writeConcern] = write_concern.options if write_concern
 
           server = next_primary
-          validate_collation!(server, options)
-          cmd[:collation] = options[:collation] if options[:collation]
-          
+          apply_collation!(cmd, server)
+
           value = write_with_retry do
             Operation::Commands::Command.new({
                                               :selector => cmd,
@@ -121,15 +119,11 @@ module Mongo
         # @example Remove multiple documents from the collection.
         #   collection_view.delete_many
         #
-        # @param [ Hash ] opts The options.
-        #
-        # @option opts [ Hash ] :collation The collation to use.
-        #
         # @return [ Result ] The response from the database.
         #
         # @since 2.0.0
-        def delete_many(opts = {})
-          remove(0, opts)
+        def delete_many
+          remove(0)
         end
 
         # Remove a document from the collection.
@@ -137,15 +131,11 @@ module Mongo
         # @example Remove a single document from the collection.
         #   collection_view.delete_one
         #
-        # @param [ Hash ] opts The options.
-        #
-        # @option opts [ Hash ] :collation The collation to use.
-        #
         # @return [ Result ] The response from the database.
         #
         # @since 2.0.0
-        def delete_one(opts = {})
-          remove(1, opts)
+        def delete_one
+          remove(1)
         end
 
         # Replaces a single document in the database with the new document.
@@ -158,7 +148,6 @@ module Mongo
         #
         # @option opts [ true, false ] :upsert Whether to upsert if the
         #   document doesn't exist.
-        # @option opts [ Hash ] :collation The collation to use.
         #
         # @return [ Result ] The response from the database.
         #
@@ -177,7 +166,6 @@ module Mongo
         #
         # @option opts [ true, false ] :upsert Whether to upsert if the
         #   document doesn't exist.
-        # @option opts [ Hash ] :collation The collation to use.
         #
         # @return [ Result ] The response from the database.
         #
@@ -196,7 +184,6 @@ module Mongo
         #
         # @option opts [ true, false ] :upsert Whether to upsert if the
         #   document doesn't exist.
-        # @option opts [ Hash ] :collation The collation to use.
         #
         # @return [ Result ] The response from the database.
         #
@@ -207,16 +194,10 @@ module Mongo
 
         private
 
-        def remove(value, opts)
-          server = next_primary
-          validate_collation!(server, opts)
+        def remove(value)
           delete_doc = { Operation::Q => filter, Operation::LIMIT => value }
-          # We must extract the collation at the String key as well so that if w == 0,
-          # an error can be raised later when an OpCode is used.
-          # Otherwise, the collation will silently not be sent.
-          if collation = opts[:collation] || opts[Operation::COLLATION]
-            delete_doc[:collation] = collation
-          end
+          server = next_primary
+          apply_collation!(delete_doc, server)
           write_with_retry do
             Operation::Write::Delete.new(
               :delete => delete_doc,
@@ -228,18 +209,12 @@ module Mongo
         end
 
         def update(spec, multi, opts)
-          server = next_primary
-          validate_collation!(server, opts)
           update_doc = { Operation::Q => filter,
                          Operation::U => spec,
                          Operation::MULTI => multi,
                          Operation::UPSERT => !!opts[:upsert] }
-          # We must extract the collation at the String key as well so that if w == 0,
-          # an error can be raised later when an OpCode is used.
-          # Otherwise, the collation will silently not be sent.
-          if collation = opts[:collation] || opts[Operation::COLLATION]
-            update_doc[:collation] = collation
-          end
+          server = next_primary
+          apply_collation!(update_doc, server)
           write_with_retry do
             Operation::Write::Update.new(
               :update => update_doc,

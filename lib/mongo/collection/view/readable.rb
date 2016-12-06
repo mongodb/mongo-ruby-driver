@@ -112,31 +112,28 @@ module Mongo
         # @example Get the number of documents in the collection.
         #   collection_view.count
         #
-        # @param [ Hash ] options Options for the count command.
+        # @param [ Hash ] opts Options for the count command.
         #
-        # @option options :skip [ Integer ] The number of documents to skip.
-        # @option options :hint [ Hash ] Override default index selection and force
+        # @option opts :skip [ Integer ] The number of documents to skip.
+        # @option opts :hint [ Hash ] Override default index selection and force
         #   MongoDB to use a specific index for the query.
-        # @option options :limit [ Integer ] Max number of docs to return.
-        # @option options :max_time_ms [ Integer ] The maximum amount of time to allow the
+        # @option opts :limit [ Integer ] Max number of docs to return.
+        # @option opts :max_time_ms [ Integer ] The maximum amount of time to allow the
         #   command to run.
-        # @option options [ Hash ] :read The read preference options.
-        # @option options [ Hash ] :collation The collation to use.
         #
         # @return [ Integer ] The document count.
         #
         # @since 2.0.0
-        def count(options = {})
+        def count(opts = {})
           cmd = { :count => collection.name, :query => filter }
-          cmd[:skip] = options[:skip] if options[:skip]
-          cmd[:hint] = options[:hint] if options[:hint]
-          cmd[:limit] = options[:limit] if options[:limit]
-          cmd[:maxTimeMS] = options[:max_time_ms] if options[:max_time_ms]
+          cmd[:skip] = opts[:skip] if opts[:skip]
+          cmd[:hint] = opts[:hint] if opts[:hint]
+          cmd[:limit] = opts[:limit] if opts[:limit]
+          cmd[:maxTimeMS] = opts[:max_time_ms] if opts[:max_time_ms]
           cmd[:readConcern] = collection.read_concern if collection.read_concern
-          preference = ServerSelector.get(options[:read] || read_preference)
+          preference = ServerSelector.get(opts[:read] || read_preference)
           server = preference.select_server(cluster)
-          validate_collation!(server, options)
-          cmd[:collation] = options[:collation] if options[:collation]
+          apply_collation!(cmd, server)
           read_with_retry do
             Operation::Commands::Command.new({
                                                :selector => cmd,
@@ -154,26 +151,23 @@ module Mongo
         #   collection_view.distinct('name')
         #
         # @param [ String, Symbol ] field_name The name of the field.
-        # @param [ Hash ] options Options for the distinct command.
+        # @param [ Hash ] opts Options for the distinct command.
         #
-        # @option options :max_time_ms [ Integer ] The maximum amount of time to allow the
+        # @option opts :max_time_ms [ Integer ] The maximum amount of time to allow the
         #   command to run.
-        # @option options [ Hash ] :read The read preference options.
-        # @option options [ Hash ] :collation The collation to use.
         #
         # @return [ Array<Object> ] The list of distinct values.
         #
         # @since 2.0.0
-        def distinct(field_name, options={})
+        def distinct(field_name, opts = {})
           cmd = { :distinct => collection.name,
                   :key => field_name.to_s,
                   :query => filter }
-          cmd[:maxTimeMS] = options[:max_time_ms] if options[:max_time_ms]
+          cmd[:maxTimeMS] = opts[:max_time_ms] if opts[:max_time_ms]
           cmd[:readConcern] = collection.read_concern if collection.read_concern
-          preference = ServerSelector.get(options[:read] || read_preference)
+          preference = ServerSelector.get(opts[:read] || read_preference)
           server = preference.select_server(cluster)
-          validate_collation!(server, options)
-          cmd[:collation] = options[:collation] if options[:collation]
+          apply_collation!(cmd, server)
           read_with_retry do
             Operation::Commands::Command.new({
                                                :selector => cmd,
@@ -454,6 +448,10 @@ module Mongo
         end
 
         private
+
+        def collation(doc = nil)
+          configure(:collation, doc)
+        end
 
         def default_read
           options[:read] || read_preference

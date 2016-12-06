@@ -509,7 +509,7 @@ describe Mongo::Collection::View::Writable do
       end
 
       let(:result) do
-        view.delete_many(options)
+        view.delete_many
       end
 
       before do
@@ -621,7 +621,7 @@ describe Mongo::Collection::View::Writable do
       end
 
       let(:result) do
-        view.delete_one(options)
+        view.delete_one
       end
 
       before do

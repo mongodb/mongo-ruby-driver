@@ -291,7 +291,7 @@ module Mongo
     #
     # @since 2.1.0
     def count(filter = nil, options = {})
-      View.new(self, filter || {}).count(options)
+      View.new(self, filter || {}, options).count(options)
     end
 
     # Get a list of distinct values for a specific field.
@@ -311,7 +311,7 @@ module Mongo
     #
     # @since 2.1.0
     def distinct(field_name, filter = nil, options = {})
-      View.new(self, filter || {}).distinct(field_name, options)
+      View.new(self, filter || {}, options).distinct(field_name, options)
     end
 
     # Get a view of all indexes for this collection. Can be iterated or has
@@ -418,7 +418,7 @@ module Mongo
     #
     # @since 2.1.0
     def delete_one(filter = nil, options = {})
-      find(filter).delete_one(options)
+      find(filter, options).delete_one
     end
 
     # Remove documents from the collection.
@@ -435,7 +435,7 @@ module Mongo
     #
     # @since 2.1.0
     def delete_many(filter = nil, options = {})
-      find(filter).delete_many(options)
+      find(filter, options).delete_many
     end
 
     # Execute a parallel scan on the collection view.
@@ -479,7 +479,7 @@ module Mongo
     #
     # @since 2.1.0
     def replace_one(filter, replacement, options = {})
-      find(filter).replace_one(replacement, options)
+      find(filter, options).replace_one(replacement, options)
     end
 
     # Update documents in the collection.
@@ -501,7 +501,7 @@ module Mongo
     #
     # @since 2.1.0
     def update_many(filter, update, options = {})
-      find(filter).update_many(update, options)
+      find(filter, options).update_many(update, options)
     end
 
     # Update a single document in the collection.
@@ -523,7 +523,7 @@ module Mongo
     #
     # @since 2.1.0
     def update_one(filter, update, options = {})
-      find(filter).update_one(update, options)
+      find(filter, options).update_one(update, options)
     end
 
     # Finds a single document in the database via findAndModify and deletes
