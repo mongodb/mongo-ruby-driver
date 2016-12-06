@@ -449,6 +449,10 @@ module Mongo
 
         private
 
+        def collation(doc = nil)
+          configure(:collation, doc)
+        end
+
         def default_read
           options[:read] || read_preference
         end
