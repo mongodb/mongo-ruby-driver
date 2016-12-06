@@ -107,7 +107,7 @@ module Mongo
           @view = view
           @map = map.freeze
           @reduce = reduce.freeze
-          @options = options.freeze
+          @options = BSON::Document.new(options).freeze
         end
 
         # Set or get the jsMode flag for the operation.
@@ -237,8 +237,7 @@ module Mongo
         end
 
         def validate_collation!(server)
-          if (options[:collation] || options[Operation::COLLATION]) &&
-              !server.features.collation_enabled?
+          if options[:collation] && !server.features.collation_enabled?
             raise Error::UnsupportedCollation.new
           end
         end

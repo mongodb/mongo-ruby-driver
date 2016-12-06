@@ -506,18 +506,32 @@ describe Mongo::Collection::View::MapReduce do
       authorized_collection.insert_many([ { name: 'bang' }, { name: 'bang' }])
     end
 
-    let(:options) do
-      { collation: { locale: 'en_US', strength: 2 } }
-    end
-
     let(:selector) do
       { name: 'BANG' }
     end
 
     context 'when the server selected supports collations', if: collation_enabled? do
 
-      it 'applies the collation' do
-        expect(map_reduce.first['value']).to eq(2)
+      context 'when the collation key is a String' do
+
+        let(:options) do
+          { 'collation' => { locale: 'en_US', strength: 2 } }
+        end
+
+        it 'applies the collation' do
+          expect(map_reduce.first['value']).to eq(2)
+        end
+      end
+
+      context 'when the collation key is a Symbol' do
+
+        let(:options) do
+          { collation: { locale: 'en_US', strength: 2 } }
+        end
+
+        it 'applies the collation' do
+          expect(map_reduce.first['value']).to eq(2)
+        end
       end
     end
 

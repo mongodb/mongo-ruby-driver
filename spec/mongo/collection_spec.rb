@@ -1167,7 +1167,7 @@ describe Mongo::Collection do
       end
 
       it 'sets the options on the Aggregation object' do
-        expect(authorized_collection.aggregate([], options).options).to eq(options)
+        expect(authorized_collection.aggregate([], options).options).to eq(BSON::Document.new(options))
       end
 
       context 'when collation is provided' do

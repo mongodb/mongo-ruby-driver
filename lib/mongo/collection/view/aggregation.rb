@@ -73,7 +73,7 @@ module Mongo
         def initialize(view, pipeline, options = {})
           @view = view
           @pipeline = pipeline.dup
-          @options = options.dup
+          @options = BSON::Document.new(options).freeze
         end
 
         # Get the explain plan for the aggregation.
@@ -120,8 +120,7 @@ module Mongo
         end
 
         def validate_collation!(server)
-          if (@options[:collation] || @options[Operation::COLLATION]) &&
-              !server.features.collation_enabled?
+          if options[:collation] && !server.features.collation_enabled?
             raise Error::UnsupportedCollation.new
           end
         end

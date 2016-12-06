@@ -189,7 +189,7 @@ describe Mongo::Collection::View::Aggregation do
     end
 
     it 'sets the options' do
-      expect(aggregation.options).to eq(options)
+      expect(aggregation.options).to eq(BSON::Document.new(options))
     end
 
     it 'dups the options' do
@@ -213,18 +213,32 @@ describe Mongo::Collection::View::Aggregation do
         [{ "$match" => { "name" => "BANG" } }]
       end
 
-      let(:options) do
-        { collation: { locale: 'en_US', strength: 2 } }
-      end
-
       let(:result) do
         aggregation.explain['$cursor']['queryPlanner']['collation']['locale']
       end
 
       context 'when the server selected supports collations', if: collation_enabled? do
 
-        it 'applies the collation' do
-          expect(result).to eq('en_US')
+        context 'when the collation key is a String' do
+
+          let(:options) do
+            { 'collation' => { locale: 'en_US', strength: 2 } }
+          end
+
+          it 'applies the collation' do
+            expect(result).to eq('en_US')
+          end
+        end
+
+        context 'when the collation key is a Symbol' do
+
+          let(:options) do
+            { collation: { locale: 'en_US', strength: 2 } }
+          end
+
+          it 'applies the collation' do
+            expect(result).to eq('en_US')
+          end
         end
       end
 
