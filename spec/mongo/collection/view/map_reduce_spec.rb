@@ -133,6 +133,23 @@ describe Mongo::Collection::View::MapReduce do
         it 'fetches the results from the collection' do
           expect(new_map_reduce.count).to eq(2)
         end
+
+        context 'when another db is specified', if: (!auth_enabled? && list_command_enabled?) do
+
+          let(:new_map_reduce) do
+            map_reduce.out(db: 'another-db', replace: 'output_collection')
+          end
+
+          it 'iterates over the documents in the result' do
+            new_map_reduce.each do |document|
+              expect(document[:value]).to_not be_nil
+            end
+          end
+
+          it 'fetches the results from the collection' do
+            expect(new_map_reduce.count).to eq(2)
+          end
+        end
       end
 
       context 'when the option is to merge' do
@@ -150,6 +167,23 @@ describe Mongo::Collection::View::MapReduce do
         it 'fetches the results from the collection' do
           expect(new_map_reduce.count).to eq(2)
         end
+
+        context 'when another db is specified', if: (!auth_enabled? && list_command_enabled?) do
+
+          let(:new_map_reduce) do
+            map_reduce.out(db: 'another-db', merge: 'output_collection')
+          end
+
+          it 'iterates over the documents in the result' do
+            new_map_reduce.each do |document|
+              expect(document[:value]).to_not be_nil
+            end
+          end
+
+          it 'fetches the results from the collection' do
+            expect(new_map_reduce.count).to eq(2)
+          end
+        end
       end
 
       context 'when the option is to reduce' do
@@ -166,6 +200,23 @@ describe Mongo::Collection::View::MapReduce do
 
         it 'fetches the results from the collection' do
           expect(new_map_reduce.count).to eq(2)
+        end
+
+        context 'when another db is specified', if: (!auth_enabled? && list_command_enabled?) do
+
+          let(:new_map_reduce) do
+            map_reduce.out(db: 'another-db', reduce: 'output_collection')
+          end
+
+          it 'iterates over the documents in the result' do
+            new_map_reduce.each do |document|
+              expect(document[:value]).to_not be_nil
+            end
+          end
+
+          it 'fetches the results from the collection' do
+            expect(new_map_reduce.count).to eq(2)
+          end
         end
       end
 
