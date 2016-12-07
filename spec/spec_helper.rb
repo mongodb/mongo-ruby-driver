@@ -192,7 +192,11 @@ end
 # @since 2.2.0
 def auth_enabled?
   $mongo_client ||= initialize_scanned_client!
-  begin; $mongo_client.use(:admin).command(getCmdLineOpts: 1); rescue; return true; end
+  begin
+    $mongo_client.use(:admin).command(getCmdLineOpts: 1).first["argv"].include?("--auth")
+  rescue
+    return true
+  end
   false
 end
 

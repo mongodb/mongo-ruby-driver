@@ -80,7 +80,7 @@ module Mongo
           def command_specification
             {
               selector: find_command,
-              db_name: database.name,
+              db_name: query_database,
               read: read
             }
           end
@@ -94,7 +94,7 @@ module Mongo
           #
           # @since 2.2.0
           def query_specification
-            { selector: {}, options: {}, db_name: database.name, coll_name: query_collection }
+            { selector: {}, options: {}, db_name: query_database, coll_name: query_collection }
           end
 
           # Get the specification to pass to the map/reduce operation.
@@ -115,6 +115,8 @@ module Mongo
           end
 
           private
+
+          OUT_ACTIONS = [ :replace, :merge, :reduce ].freeze
 
           def write?(spec)
             if out = spec[:selector][:out]
@@ -141,8 +143,14 @@ module Mongo
             command
           end
 
+          def query_database
+            options[:out].respond_to?(:keys) && options[:out][:db] ? options[:out][:db] : database.name
+          end
+
           def query_collection
-            options[:out].respond_to?(:keys) ? options[:out].values.first : options[:out]
+            if options[:out].respond_to?(:keys)
+              options[:out][OUT_ACTIONS.find { |action| options[:out][action] }]
+            end || options[:out]
           end
         end
       end
