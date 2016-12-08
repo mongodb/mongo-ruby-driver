@@ -26,7 +26,7 @@ following form:
 
 .. code-block:: javascript
 
-  { field1: <value>, field2: <value> ... }
+  { 'projection': { field1: <value>, field2: <value> ... } }
 
 ``<value>`` may be ``0`` (or ``false``) to exclude the field, or
 ``1`` (or ``true``) to include it. With the exception of the ``_id``
@@ -48,7 +48,8 @@ included automatically unless specifically excluded.
   client = Mongo::Client.new([ '127.0.0.1:27017' ], :database => 'test')
   collection = client[:restaurants]
 
-  collection.find({}, { 'name' => 1, 'cuisine' => 1 }).limit(5).each do |doc|
+  collection.find({}, { 'projection' =>
+    { 'name' => 1, 'cuisine' => 1 } }).limit(5).each do |doc|
     p doc
   end
 
@@ -57,11 +58,11 @@ including ``_id``, use the following projection document:
 
 .. code-block:: javascript
 
-  { 'name' : 1, 'cuisine' : 1, '_id': 0 }
+  { 'projection' => { 'name' => 1, 'cuisine' => 1, '_id' => 0 } }
 
 
 To return all fields *except* the address field, use the following:
 
 .. code-block:: javascript
 
-  { 'address' : 0 }
+  { 'projection' => { 'address' => 0 } }
