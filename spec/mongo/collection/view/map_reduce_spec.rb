@@ -588,26 +588,55 @@ describe Mongo::Collection::View::MapReduce do
 
     context 'when the server selected does not support collations', unless: collation_enabled? do
 
-      let(:options) do
-        { collation: { locale: 'en_US', strength: 2 } }
-      end
-
-      it 'raises an exception' do
-        expect {
-          map_reduce.to_a
-        }.to raise_exception(Mongo::Error::UnsupportedCollation)
-      end
-
-      context 'when a String key is used' do
+      context 'when the map reduce has collation specified in its options' do
 
         let(:options) do
-          { 'collation' => { locale: 'en_US', strength: 2 } }
+          { collation: { locale: 'en_US', strength: 2 } }
         end
 
         it 'raises an exception' do
           expect {
             map_reduce.to_a
           }.to raise_exception(Mongo::Error::UnsupportedCollation)
+        end
+
+        context 'when a String key is used' do
+
+          let(:options) do
+            { 'collation' => { locale: 'en_US', strength: 2 } }
+          end
+
+          it 'raises an exception' do
+            expect {
+              map_reduce.to_a
+            }.to raise_exception(Mongo::Error::UnsupportedCollation)
+          end
+        end
+      end
+
+      context 'when the view has collation specified in its options' do
+
+        let(:view_options) do
+          { collation: { locale: 'en_US', strength: 2 } }
+        end
+
+        it 'raises an exception' do
+          expect {
+            map_reduce.to_a
+          }.to raise_exception(Mongo::Error::UnsupportedCollation)
+        end
+
+        context 'when a String key is used' do
+
+          let(:options) do
+            { 'collation' => { locale: 'en_US', strength: 2 } }
+          end
+
+          it 'raises an exception' do
+            expect {
+              map_reduce.to_a
+            }.to raise_exception(Mongo::Error::UnsupportedCollation)
+          end
         end
       end
     end
