@@ -667,6 +667,31 @@ describe Mongo::URI do
           expect(Mongo::Client.new(string.downcase).options[:auth_mech]).to eq(expected)
         end
       end
+
+      context 'mongodb-x509' do
+        let(:mechanism) { 'MONGODB-X509' }
+        let(:expected) { :mongodb_x509 }
+
+        it 'sets the auth mechanism to :mongodb_x509' do
+          expect(uri.uri_options[:auth_mech]).to eq(expected)
+        end
+
+        it 'sets the options on a client created with the uri' do
+          expect(Mongo::Client.new(string).options[:auth_mech]).to eq(expected)
+        end
+
+        it 'is case-insensitive' do
+          expect(Mongo::Client.new(string.downcase).options[:auth_mech]).to eq(expected)
+        end
+
+        context 'when a username is not provided' do
+
+          it 'recognizes the mechanism with no username' do
+            expect(Mongo::Client.new(string.downcase).options[:auth_mech]).to eq(expected)
+            expect(Mongo::Client.new(string.downcase).options[:user]).to be_nil
+          end
+        end
+      end
     end
 
     context 'auth source provided' do
