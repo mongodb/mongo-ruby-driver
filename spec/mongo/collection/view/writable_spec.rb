@@ -142,6 +142,54 @@ describe Mongo::Collection::View::Writable do
           expect(result).to be_nil
         end
       end
+
+      context 'when collation is specified as a method option' do
+
+        let(:selector) do
+          { name: 'BANG' }
+        end
+
+        let(:result) do
+          view.find_one_and_delete(method_options)
+        end
+
+        before do
+          authorized_collection.insert_one(name: 'bang')
+        end
+
+        let(:method_options) do
+          { collation: { locale: 'en_US', strength: 2 } }
+        end
+
+        context 'when the server selected supports collations', if: collation_enabled? do
+
+          it 'applies the collation' do
+            expect(result['name']).to eq('bang')
+          end
+        end
+
+        context 'when the server selected does not support collations', unless: collation_enabled? do
+
+          it 'raises an exception' do
+            expect {
+              result
+            }.to raise_exception(Mongo::Error::UnsupportedCollation)
+          end
+
+          context 'when a String key is used' do
+
+            let(:method_options) do
+              { 'collation' => { locale: 'en_US', strength: 2 } }
+            end
+
+            it 'raises an exception' do
+              expect {
+                result
+              }.to raise_exception(Mongo::Error::UnsupportedCollation)
+            end
+          end
+        end
+      end
     end
 
     context 'when no matching document is found' do
@@ -258,6 +306,55 @@ describe Mongo::Collection::View::Writable do
           context 'when a String key is used' do
 
             let(:options) do
+              { 'collation' => { locale: 'en_US', strength: 2 } }
+            end
+
+            it 'raises an exception' do
+              expect {
+                result
+              }.to raise_exception(Mongo::Error::UnsupportedCollation)
+            end
+          end
+        end
+      end
+
+      context 'when collation is provided as a method option' do
+
+        let(:selector) do
+          { name: 'BANG' }
+        end
+
+        let(:result) do
+          view.find_one_and_replace({ name: 'doink' }, method_options)
+        end
+
+        before do
+          authorized_collection.insert_one(name: 'bang')
+        end
+
+        let(:method_options) do
+          { collation: { locale: 'en_US', strength: 2 } }
+        end
+
+        context 'when the server selected supports collations', if: collation_enabled? do
+
+          it 'applies the collation' do
+            expect(result['name']).to eq('bang')
+            expect(authorized_collection.find({ name: 'doink' }, limit: -1).first['name']).to eq('doink')
+          end
+        end
+
+        context 'when the server selected does not support collations', unless: collation_enabled? do
+
+          it 'raises an exception' do
+            expect {
+              result
+            }.to raise_exception(Mongo::Error::UnsupportedCollation)
+          end
+
+          context 'when a String key is used' do
+
+            let(:method_options) do
               { 'collation' => { locale: 'en_US', strength: 2 } }
             end
 
@@ -431,6 +528,55 @@ describe Mongo::Collection::View::Writable do
       end
     end
 
+    context 'when a collation is specified as a method option' do
+
+      let(:selector) do
+        { name: 'BANG' }
+      end
+
+      let(:result) do
+        view.find_one_and_update({ '$set' => { other: 'doink' } }, method_options)
+      end
+
+      before do
+        authorized_collection.insert_one(name: 'bang')
+      end
+
+      let(:method_options) do
+        { collation: { locale: 'en_US', strength: 2 } }
+      end
+
+      context 'when the server selected supports collations', if: collation_enabled? do
+
+        it 'applies the collation' do
+          expect(result['name']).to eq('bang')
+          expect(authorized_collection.find({ name: 'bang' }, limit: -1).first['other']).to eq('doink')
+        end
+      end
+
+      context 'when the server selected does not support collations', unless: collation_enabled? do
+
+        it 'raises an exception' do
+          expect {
+            result
+          }.to raise_exception(Mongo::Error::UnsupportedCollation)
+        end
+
+        context 'when a String key is used' do
+
+          let(:method_options) do
+            { 'collation' => { locale: 'en_US', strength: 2 } }
+          end
+
+          it 'raises an exception' do
+            expect {
+              result
+            }.to raise_exception(Mongo::Error::UnsupportedCollation)
+          end
+        end
+      end
+    end
+
     context 'when no collation is specified' do
 
       let(:selector) do
@@ -552,6 +698,56 @@ describe Mongo::Collection::View::Writable do
       end
     end
 
+    context 'when a collation is specified as a method option' do
+
+      let(:selector) do
+        { name: 'BANG' }
+      end
+
+      let(:result) do
+        view.delete_many(method_options)
+      end
+
+      before do
+        authorized_collection.insert_one(name: 'bang')
+        authorized_collection.insert_one(name: 'bang')
+      end
+
+      let(:method_options) do
+        { collation: { locale: 'en_US', strength: 2 } }
+      end
+
+      context 'when the server selected supports collations', if: collation_enabled? do
+
+        it 'applies the collation' do
+          expect(result.written_count).to eq(2)
+          expect(authorized_collection.find(name: 'bang').to_a.size).to eq(0)
+        end
+      end
+
+      context 'when the server selected does not support collations', unless: collation_enabled? do
+
+        it 'raises an exception' do
+          expect {
+            result
+          }.to raise_exception(Mongo::Error::UnsupportedCollation)
+        end
+
+        context 'when a String key is used' do
+
+          let(:method_options) do
+            { 'collation' => { locale: 'en_US', strength: 2 } }
+          end
+
+          it 'raises an exception' do
+            expect {
+              result
+            }.to raise_exception(Mongo::Error::UnsupportedCollation)
+          end
+        end
+      end
+    end
+
     context 'when a collation is not specified' do
 
       let(:selector) do
@@ -651,6 +847,55 @@ describe Mongo::Collection::View::Writable do
         context 'when a String key is used' do
 
           let(:options) do
+            { 'collation' => { locale: 'en_US', strength: 2 } }
+          end
+
+          it 'raises an exception' do
+            expect {
+              result
+            }.to raise_exception(Mongo::Error::UnsupportedCollation)
+          end
+        end
+      end
+    end
+
+    context 'when a collation is provided as a method_option' do
+
+      let(:selector) do
+        { name: 'BANG' }
+      end
+
+      let(:result) do
+        view.delete_one(method_options)
+      end
+
+      before do
+        authorized_collection.insert_one(name: 'bang')
+      end
+
+      let(:method_options) do
+        { collation: { locale: 'en_US', strength: 2 } }
+      end
+
+      context 'when the server selected supports collations', if: collation_enabled? do
+
+        it 'applies the collation' do
+          expect(result.written_count).to eq(1)
+          expect(authorized_collection.find(name: 'bang').to_a.size).to eq(0)
+        end
+      end
+
+      context 'when the server selected does not support collations', unless: collation_enabled? do
+
+        it 'raises an exception' do
+          expect {
+            result
+          }.to raise_exception(Mongo::Error::UnsupportedCollation)
+        end
+
+        context 'when a String key is used' do
+
+          let(:method_options) do
             { 'collation' => { locale: 'en_US', strength: 2 } }
           end
 
@@ -800,7 +1045,7 @@ describe Mongo::Collection::View::Writable do
       end
 
       let(:result) do
-        view.replace_one({ name: 'doink' }, options)
+        view.replace_one({ name: 'doink' })
       end
 
       before do
@@ -830,6 +1075,55 @@ describe Mongo::Collection::View::Writable do
         context 'when a String key is used' do
 
           let(:options) do
+            { 'collation' => { locale: 'en_US', strength: 2 } }
+          end
+
+          it 'raises an exception' do
+            expect {
+              result
+            }.to raise_exception(Mongo::Error::UnsupportedCollation)
+          end
+        end
+      end
+    end
+
+    context 'when a collation is specified as method option' do
+
+      let(:selector) do
+        { name: 'BANG' }
+      end
+
+      let(:result) do
+        view.replace_one({ name: 'doink' }, method_options)
+      end
+
+      before do
+        authorized_collection.insert_one(name: 'bang')
+      end
+
+      let(:method_options) do
+        { collation: { locale: 'en_US', strength: 2 } }
+      end
+
+      context 'when the server selected supports collations', if: collation_enabled? do
+
+        it 'applies the collation' do
+          expect(result.written_count).to eq(1)
+          expect(authorized_collection.find(name: 'doink').to_a.size).to eq(1)
+        end
+      end
+
+      context 'when the server selected does not support collations', unless: collation_enabled? do
+
+        it 'raises an exception' do
+          expect {
+            result
+          }.to raise_exception(Mongo::Error::UnsupportedCollation)
+        end
+
+        context 'when a String key is used' do
+
+          let(:method_options) do
             { 'collation' => { locale: 'en_US', strength: 2 } }
           end
 
@@ -983,7 +1277,7 @@ describe Mongo::Collection::View::Writable do
       end
 
       let(:result) do
-        view.update_many({ '$set' => { other: 'doink' } }, options)
+        view.update_many({ '$set' => { other: 'doink' } })
       end
 
       before do
@@ -1014,6 +1308,56 @@ describe Mongo::Collection::View::Writable do
         context 'when a String key is used' do
 
           let(:options) do
+            { 'collation' => { locale: 'en_US', strength: 2 } }
+          end
+
+          it 'raises an exception' do
+            expect {
+              result
+            }.to raise_exception(Mongo::Error::UnsupportedCollation)
+          end
+        end
+      end
+    end
+
+    context 'when a collation is specified as a method option' do
+
+      let(:selector) do
+        { name: 'BANG' }
+      end
+
+      let(:result) do
+        view.update_many({ '$set' => { other: 'doink' } }, method_options)
+      end
+
+      before do
+        authorized_collection.insert_one(name: 'bang')
+        authorized_collection.insert_one(name: 'baNG')
+      end
+
+      let(:method_options) do
+        { collation: { locale: 'en_US', strength: 2 } }
+      end
+
+      context 'when the server selected supports collations', if: collation_enabled? do
+
+        it 'applies the collation' do
+          expect(result.written_count).to eq(2)
+          expect(authorized_collection.find(other: 'doink').to_a.size).to eq(2)
+        end
+      end
+
+      context 'when the server selected does not support collations', unless: collation_enabled? do
+
+        it 'raises an exception' do
+          expect {
+            result
+          }.to raise_exception(Mongo::Error::UnsupportedCollation)
+        end
+
+        context 'when a String key is used' do
+
+          let(:method_options) do
             { 'collation' => { locale: 'en_US', strength: 2 } }
           end
 
@@ -1165,7 +1509,7 @@ describe Mongo::Collection::View::Writable do
       end
 
       let(:result) do
-        view.update_one({ '$set' => { other: 'doink' } }, options)
+        view.update_one({ '$set' => { other: 'doink' } })
       end
 
       before do
@@ -1195,6 +1539,55 @@ describe Mongo::Collection::View::Writable do
         context 'when a String key is used' do
 
           let(:options) do
+            { 'collation' => { locale: 'en_US', strength: 2 } }
+          end
+
+          it 'raises an exception' do
+            expect {
+              result
+            }.to raise_exception(Mongo::Error::UnsupportedCollation)
+          end
+        end
+      end
+    end
+
+    context 'when there is a collation specified as a method option' do
+
+      let(:selector) do
+        { name: 'BANG' }
+      end
+
+      let(:result) do
+        view.update_one({ '$set' => { other: 'doink' } }, method_options)
+      end
+
+      before do
+        authorized_collection.insert_one(name: 'bang')
+      end
+
+      let(:method_options) do
+        { collation: { locale: 'en_US', strength: 2 } }
+      end
+
+      context 'when the server selected supports collations', if: collation_enabled? do
+
+        it 'applies the collation' do
+          expect(result.written_count).to eq(1)
+          expect(authorized_collection.find(other: 'doink').to_a.size).to eq(1)
+        end
+      end
+
+      context 'when the server selected does not support collations', unless: collation_enabled? do
+
+        it 'raises an exception' do
+          expect {
+            result
+          }.to raise_exception(Mongo::Error::UnsupportedCollation)
+        end
+
+        context 'when a String key is used' do
+
+          let(:method_options) do
             { 'collation' => { locale: 'en_US', strength: 2 } }
           end
 

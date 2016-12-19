@@ -418,7 +418,7 @@ module Mongo
     #
     # @since 2.1.0
     def delete_one(filter = nil, options = {})
-      find(filter, options).delete_one
+      find(filter, options).delete_one(options)
     end
 
     # Remove documents from the collection.
@@ -435,7 +435,7 @@ module Mongo
     #
     # @since 2.1.0
     def delete_many(filter = nil, options = {})
-      find(filter, options).delete_many
+      find(filter, options).delete_many(options)
     end
 
     # Execute a parallel scan on the collection view.
