@@ -121,6 +121,7 @@ module Mongo
         # @option opts :max_time_ms [ Integer ] The maximum amount of time to allow the
         #   command to run.
         # @option opts [ Hash ] :read The read preference options.
+        # @option opts [ Hash ] :collation The collation to use.
         #
         # @return [ Integer ] The document count.
         #
@@ -134,7 +135,7 @@ module Mongo
           cmd[:readConcern] = collection.read_concern if collection.read_concern
           preference = ServerSelector.get(opts[:read] || read)
           server = preference.select_server(cluster)
-          apply_collation!(cmd, server)
+          apply_collation!(cmd, server, opts)
           read_with_retry do
             Operation::Commands::Command.new({
                                                :selector => cmd,
@@ -157,6 +158,7 @@ module Mongo
         # @option opts :max_time_ms [ Integer ] The maximum amount of time to allow the
         #   command to run.
         # @option opts [ Hash ] :read The read preference options.
+        # @option opts [ Hash ] :collation The collation to use.
         #
         # @return [ Array<Object> ] The list of distinct values.
         #
@@ -169,7 +171,7 @@ module Mongo
           cmd[:readConcern] = collection.read_concern if collection.read_concern
           preference = ServerSelector.get(opts[:read] || read)
           server = preference.select_server(cluster)
-          apply_collation!(cmd, server)
+          apply_collation!(cmd, server, opts)
           read_with_retry do
             Operation::Commands::Command.new({
                                                :selector => cmd,

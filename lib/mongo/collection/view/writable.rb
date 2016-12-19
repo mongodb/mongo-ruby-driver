@@ -27,10 +27,14 @@ module Mongo
         # @example Find one document and delete it.
         #   view.find_one_and_delete
         #
+        # @param [ Hash ] opts The options.
+        #
+        # @option opts [ Hash ] :collation The collation to use.
+        #
         # @return [ BSON::Document, nil ] The document, if found.
         #
         # @since 2.0.0
-        def find_one_and_delete
+        def find_one_and_delete(opts = {})
           cmd = { :findandmodify => collection.name, :query => filter, :remove => true }
           cmd[:fields] = projection if projection
           cmd[:sort] = sort if sort
@@ -38,7 +42,7 @@ module Mongo
           cmd[:writeConcern] = write_concern.options if write_concern
 
           server = next_primary
-          apply_collation!(cmd, server)
+          apply_collation!(cmd, server, opts)
 
           write_with_retry do
             Operation::Commands::Command.new({
@@ -65,6 +69,7 @@ module Mongo
         #   not to skip document level validation.
         # @option options [ Hash ] :write_concern The write concern options.
         #   Defaults to the collection's write concern.
+        # @option opts [ Hash ] :collation The collation to use.
         #
         # @return [ BSON::Document ] The document.
         #
@@ -87,6 +92,7 @@ module Mongo
         #   not to skip document level validation.
         # @option opts [ Hash ] :write_concern The write concern options.
         #   Defaults to the collection's write concern.
+        # @option opts [ Hash ] :collation The collation to use.
         #
         # @return [ BSON::Document ] The document.
         #
@@ -103,7 +109,7 @@ module Mongo
           cmd[:writeConcern] = write_concern.options if write_concern
 
           server = next_primary
-          apply_collation!(cmd, server)
+          apply_collation!(cmd, server, opts)
 
           value = write_with_retry do
             Operation::Commands::Command.new({
@@ -119,11 +125,15 @@ module Mongo
         # @example Remove multiple documents from the collection.
         #   collection_view.delete_many
         #
+        # @param [ Hash ] opts The options.
+        #
+        # @option opts [ Hash ] :collation The collation to use.
+        #
         # @return [ Result ] The response from the database.
         #
         # @since 2.0.0
-        def delete_many
-          remove(0)
+        def delete_many(opts = {})
+          remove(0, opts)
         end
 
         # Remove a document from the collection.
@@ -131,11 +141,15 @@ module Mongo
         # @example Remove a single document from the collection.
         #   collection_view.delete_one
         #
+        # @param [ Hash ] opts The options.
+        #
+        # @option opts [ Hash ] :collation The collation to use.
+        #
         # @return [ Result ] The response from the database.
         #
         # @since 2.0.0
-        def delete_one
-          remove(1)
+        def delete_one(opts = {})
+          remove(1, opts)
         end
 
         # Replaces a single document in the database with the new document.
@@ -148,6 +162,7 @@ module Mongo
         #
         # @option opts [ true, false ] :upsert Whether to upsert if the
         #   document doesn't exist.
+        # @option opts [ Hash ] :collation The collation to use.
         #
         # @return [ Result ] The response from the database.
         #
@@ -166,6 +181,7 @@ module Mongo
         #
         # @option opts [ true, false ] :upsert Whether to upsert if the
         #   document doesn't exist.
+        # @option opts [ Hash ] :collation The collation to use.
         #
         # @return [ Result ] The response from the database.
         #
@@ -184,6 +200,7 @@ module Mongo
         #
         # @option opts [ true, false ] :upsert Whether to upsert if the
         #   document doesn't exist.
+        # @option opts [ Hash ] :collation The collation to use.
         #
         # @return [ Result ] The response from the database.
         #
@@ -194,10 +211,10 @@ module Mongo
 
         private
 
-        def remove(value)
+        def remove(value, opts = {})
           delete_doc = { Operation::Q => filter, Operation::LIMIT => value }
           server = next_primary
-          apply_collation!(delete_doc, server)
+          apply_collation!(delete_doc, server, opts)
           write_with_retry do
             Operation::Write::Delete.new(
               :delete => delete_doc,
@@ -214,7 +231,7 @@ module Mongo
                          Operation::MULTI => multi,
                          Operation::UPSERT => !!opts[:upsert] }
           server = next_primary
-          apply_collation!(update_doc, server)
+          apply_collation!(update_doc, server, opts)
           write_with_retry do
             Operation::Write::Update.new(
               :update => update_doc,
