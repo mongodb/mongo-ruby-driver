@@ -309,6 +309,40 @@ describe Mongo::Collection::View::Readable do
       expect(view.count(read: { mode: :secondary })).to eq(10)
     end
 
+    context 'when a read preference is set on the view', unless: sharded? do
+
+      let(:client) do
+        # Set a timeout otherwise, the test will hang for 30 seconds.
+        authorized_client.with(server_selection_timeout: 1)
+      end
+
+      let(:collection) do
+        client[authorized_collection.name]
+      end
+
+      before do
+        allow(client.cluster).to receive(:single?).and_return(false)
+      end
+
+      let(:view) do
+        Mongo::Collection::View.new(collection, selector, options)
+      end
+
+      let(:view_with_read_pref) do
+        view.read(:mode => :secondary, :tag_sets => [{ 'non' => 'existent' }])
+      end
+
+      let(:result) do
+        view_with_read_pref.count
+      end
+
+      it 'uses the read preference setting on the view' do
+        expect {
+          result
+        }.to raise_exception(Mongo::Error::NoServerAvailable)
+      end
+    end
+
     context 'when the collection has a read preference set' do
 
       after do
@@ -337,6 +371,21 @@ describe Mongo::Collection::View::Readable do
 
         let(:result) do
           view.count(read: { mode: :primary })
+        end
+
+        it 'uses the read preference passed to the method' do
+          expect(result).to eq(10)
+        end
+      end
+
+      context 'when a read preference is set on the view' do
+
+        let(:view_with_read_pref) do
+          view.read(mode: :primary)
+        end
+
+        let(:result) do
+          view_with_read_pref.count
         end
 
         it 'uses the read preference passed to the method' do
@@ -392,6 +441,21 @@ describe Mongo::Collection::View::Readable do
           expect {
             result
           }.to raise_exception(Mongo::Error::NoServerAvailable)
+        end
+      end
+
+      context 'when a read preference is set on the view' do
+
+        let(:view_with_read_pref) do
+          view.read(:mode => :secondary, :tag_sets => [{'non' => 'existent'}])
+        end
+
+        let(:result) do
+          view.count
+        end
+
+        it 'uses the read preference passed to the method' do
+          expect(result).to eq(10)
         end
       end
     end
@@ -569,6 +633,40 @@ describe Mongo::Collection::View::Readable do
       end
     end
 
+    context 'when a read preference is set on the view', unless: sharded? do
+
+      let(:client) do
+        # Set a timeout otherwise, the test will hang for 30 seconds.
+        authorized_client.with(server_selection_timeout: 1)
+      end
+
+      let(:collection) do
+        client[authorized_collection.name]
+      end
+
+      before do
+        allow(client.cluster).to receive(:single?).and_return(false)
+      end
+
+      let(:view) do
+        Mongo::Collection::View.new(collection, selector, options)
+      end
+
+      let(:view_with_read_pref) do
+        view.read(:mode => :secondary, :tag_sets => [{ 'non' => 'existent' }])
+      end
+
+      let(:result) do
+        view_with_read_pref.distinct(:field)
+      end
+
+      it 'uses the read preference setting on the view' do
+        expect {
+          result
+        }.to raise_exception(Mongo::Error::NoServerAvailable)
+      end
+    end
+
     context 'when the collection has a read preference set' do
 
       let(:documents) do
@@ -665,6 +763,21 @@ describe Mongo::Collection::View::Readable do
           expect {
             distinct
           }.to raise_exception(Mongo::Error::NoServerAvailable)
+        end
+      end
+
+      context 'when a read preference is set on the view' do
+
+        let(:view_with_read_pref) do
+          view.read(:mode => :secondary, :tag_sets => [{ 'non' => 'existent' }])
+        end
+
+        let(:distinct) do
+          view_with_read_pref.distinct(:field, read: { mode: :primary })
+        end
+
+        it 'uses the read preference passed to the method' do
+          expect(distinct.sort).to eq([ 'test1', 'test2', 'test3' ])
         end
       end
     end
