@@ -120,6 +120,7 @@ module Mongo
         # @option opts :limit [ Integer ] Max number of docs to return.
         # @option opts :max_time_ms [ Integer ] The maximum amount of time to allow the
         #   command to run.
+        # @option opts [ Hash ] :read The read preference options.
         #
         # @return [ Integer ] The document count.
         #
@@ -131,7 +132,7 @@ module Mongo
           cmd[:limit] = opts[:limit] if opts[:limit]
           cmd[:maxTimeMS] = opts[:max_time_ms] if opts[:max_time_ms]
           cmd[:readConcern] = collection.read_concern if collection.read_concern
-          preference = ServerSelector.get(opts[:read] || read_preference)
+          preference = ServerSelector.get(opts[:read] || read)
           server = preference.select_server(cluster)
           apply_collation!(cmd, server)
           read_with_retry do
@@ -155,6 +156,7 @@ module Mongo
         #
         # @option opts :max_time_ms [ Integer ] The maximum amount of time to allow the
         #   command to run.
+        # @option opts [ Hash ] :read The read preference options.
         #
         # @return [ Array<Object> ] The list of distinct values.
         #
@@ -165,7 +167,7 @@ module Mongo
                   :query => filter }
           cmd[:maxTimeMS] = opts[:max_time_ms] if opts[:max_time_ms]
           cmd[:readConcern] = collection.read_concern if collection.read_concern
-          preference = ServerSelector.get(opts[:read] || read_preference)
+          preference = ServerSelector.get(opts[:read] || read)
           server = preference.select_server(cluster)
           apply_collation!(cmd, server)
           read_with_retry do
@@ -454,7 +456,7 @@ module Mongo
         end
 
         def default_read
-          options[:read] || read_preference
+          options[:read] || collection.read_preference
         end
 
         def parallel_scan(cursor_count, options = {})
