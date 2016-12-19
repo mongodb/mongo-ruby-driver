@@ -178,7 +178,7 @@ module Mongo
       end
 
       def apply_collation!(doc, server, opts = {})
-        if coll = opts[:collation] || collation
+        if coll = opts[:collation] || opts['collation'] || collation
           validate_collation!(server, coll)
           doc[:collation] = coll
         end
