@@ -10,9 +10,12 @@ describe 'Server Discovery and Monitoring' do
     context(spec.description) do
 
       before(:all) do
-        Mongo::Client.new(spec.uri_string).tap do |client|
-          @client = client.with(connect_timeout: 0.1, heartbeat_frequency: 100)
-        end.close
+        @client = Mongo::Client.new([])
+        @client.send(:create_from_uri, spec.uri_string)
+        client_options = @client.instance_variable_get(:@options)
+        @client.instance_variable_set(:@options, client_options.merge(heartbeat_frequency: 100, connect_timeout: 0.1))
+        @client.cluster.instance_variable_set(:@options, client_options.merge(heartbeat_frequency: 100, connect_timeout: 0.1))
+        @client.cluster.instance_variable_get(:@servers).each { |s| s.disconnect!; s.unknown!; }
       end
 
       after(:all) do
@@ -26,13 +29,17 @@ describe 'Server Discovery and Monitoring' do
           before(:all) do
             phase.responses.each do |response|
               server = find_server(@client, response.address)
-              server ||= Mongo::Server.new(
-                  Mongo::Address.new(response.address),
-                  @client.cluster,
-                  @client.instance_variable_get(:@monitoring),
-                  @client.cluster.send(:event_listeners),
-                  @client.cluster.options
-              )
+              unless server
+                server = Mongo::Server.new(
+                    Mongo::Address.new(response.address),
+                    @client.cluster,
+                    @client.instance_variable_get(:@monitoring),
+                    @client.cluster.send(:event_listeners),
+                    @client.cluster.options
+                )
+                server.disconnect!
+                server.unknown!
+              end
               monitor = server.instance_variable_get(:@monitor)
               description = monitor.inspector.run(server.description, response.ismaster, 0.5)
               monitor.instance_variable_set(:@description, description)
