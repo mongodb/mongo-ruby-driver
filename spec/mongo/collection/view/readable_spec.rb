@@ -388,7 +388,7 @@ describe Mongo::Collection::View::Readable do
           view_with_read_pref.count
         end
 
-        it 'uses the read preference passed to the method' do
+        it 'uses the read preference of the view' do
           expect(result).to eq(10)
         end
       end
@@ -447,11 +447,11 @@ describe Mongo::Collection::View::Readable do
       context 'when a read preference is set on the view' do
 
         let(:view_with_read_pref) do
-          view.read(:mode => :secondary, :tag_sets => [{'non' => 'existent'}])
+          view.read(:mode => :primary)
         end
 
         let(:result) do
-          view.count
+          view_with_read_pref.count
         end
 
         it 'uses the read preference passed to the method' do
