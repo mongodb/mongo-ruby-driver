@@ -5,9 +5,10 @@ sudo: false
 rvm:
   - 1.9.3
   - 2.0.0
-  - 2.1
-  - 2.2
-  - 2.3.2
+  - 2.1.10
+  - 2.2.6
+  - 2.3.3
+  - 2.4.0
   - jruby-19mode
   - jruby-9.1.6.0
 
@@ -24,10 +25,10 @@ env:
     - JRUBY_OPTS="--server -J-Xms512m -J-Xmx1024m"
   matrix:
     - MONGODB=2.4.14
-    - MONGODB=2.6.11
+    - MONGODB=2.6.12
     - MONGODB=3.0.12
     - MONGODB=3.2.11
-    - MONGODB=3.4.0
+    - MONGODB=3.4.1
 
 before_script:
   - wget http://fastdl.mongodb.org/linux/mongodb-linux-x86_64-${MONGODB}.tgz -O /tmp/mongodb.tgz
@@ -57,13 +58,21 @@ matrix:
       jdk: openjdk7
     - rvm: 2.0.0
       jdk: oraclejdk8
-    - rvm: 2.1
+    - rvm: 2.1.10
       jdk: openjdk7
-    - rvm: 2.1
+    - rvm: 2.1.10
       jdk: oraclejdk8
-    - rvm: 2.2
+    - rvm: 2.2.6
       jdk: openjdk7
-    - rvm: 2.2
+    - rvm: 2.2.6
+      jdk: oraclejdk8
+    - rvm: 2.3.3
+      jdk: openjdk7
+    - rvm: 2.3.3
+      jdk: oraclejdk8
+    - rvm: 2.4.0
+      jdk: openjdk7
+    - rvm: 2.4.0
       jdk: oraclejdk8
     - rvm: ruby-head
       jdk: openjdk7
