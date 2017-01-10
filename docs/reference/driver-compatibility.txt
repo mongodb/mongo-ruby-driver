@@ -16,7 +16,6 @@ MongoDB Compatibility
 .. list-table::
    :header-rows: 1
    :stub-columns: 1
-   :widths: 20 20 20 20 20
    :class: compatibility
 
    * - Ruby Driver
