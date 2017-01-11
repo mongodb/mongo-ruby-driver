@@ -43,7 +43,7 @@ describe Mongo::Index::View do
     context 'when the collection has a write concern' do
 
       let(:collection) do
-        authorized_collection.with(write: { w: WRITE_CONCERN[:w] + 1})
+        authorized_collection.with(write: INVALID_WRITE_CONCERN)
       end
 
       let(:view_with_write_concern) do
@@ -126,7 +126,7 @@ describe Mongo::Index::View do
       context 'when the collection has a write concern' do
 
         let(:collection) do
-          authorized_collection.with(write: { w: WRITE_CONCERN[:w] + 1})
+          authorized_collection.with(write: INVALID_WRITE_CONCERN)
         end
 
         let(:view_with_write_concern) do
@@ -252,7 +252,7 @@ describe Mongo::Index::View do
           end
 
           let(:collection) do
-            authorized_collection.with(write: { w: WRITE_CONCERN[:w] + 1})
+            authorized_collection.with(write: INVALID_WRITE_CONCERN)
           end
 
           let(:view_with_write_concern) do
@@ -382,7 +382,7 @@ describe Mongo::Index::View do
           end
 
           let(:collection) do
-            authorized_collection.with(write: { w: WRITE_CONCERN[:w] + 1})
+            authorized_collection.with(write: INVALID_WRITE_CONCERN)
           end
 
           let(:view_with_write_concern) do
@@ -474,7 +474,7 @@ describe Mongo::Index::View do
       context 'when the collection has a write concern' do
 
         let(:collection) do
-          authorized_collection.with(write: { w: WRITE_CONCERN[:w] + 1})
+          authorized_collection.with(write: INVALID_WRITE_CONCERN)
         end
 
         let(:view_with_write_concern) do

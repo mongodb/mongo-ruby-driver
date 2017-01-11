@@ -20,7 +20,7 @@ describe Mongo::BulkWrite do
   end
 
   let(:collection_invalid_write_concern) do
-    authorized_collection.client.with(write: { w: (WRITE_CONCERN[:w] + 1) })[authorized_collection.name]
+    authorized_collection.client.with(write: INVALID_WRITE_CONCERN)[authorized_collection.name]
   end
 
   let(:collation) do

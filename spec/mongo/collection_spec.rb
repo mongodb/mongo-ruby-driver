@@ -7,7 +7,7 @@ describe Mongo::Collection do
   end
 
   let(:collection_invalid_write_concern) do
-    authorized_collection.client.with(write: { w: (WRITE_CONCERN[:w] + 1) })[authorized_collection.name]
+    authorized_collection.client.with(write: INVALID_WRITE_CONCERN)[authorized_collection.name]
   end
 
   let(:collection_with_validator) do
@@ -422,7 +422,7 @@ describe Mongo::Collection do
 
         let(:options) do
           {
-            write: { w: WRITE_CONCERN[:w] + 1}
+            write: INVALID_WRITE_CONCERN
           }
         end
 
@@ -569,7 +569,7 @@ describe Mongo::Collection do
 
         let(:write_options) do
           {
-            write: { w: WRITE_CONCERN[:w] + 1}
+            write: INVALID_WRITE_CONCERN
           }
         end
 

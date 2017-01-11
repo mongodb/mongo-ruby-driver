@@ -113,7 +113,7 @@ describe Mongo::Cluster do
     context 'when the option is not provided' do
 
       let(:cluster) do
-        described_class.new([ '127.0.0.1:27017' ], monitoring, TEST_OPTIONS.dup.delete_if { |k| k == :replica_set })
+        described_class.new([ '127.0.0.1:27017' ], monitoring, TEST_OPTIONS.merge(connect: :direct).delete_if { |k| k == :replica_set })
       end
 
       it 'returns nil' do

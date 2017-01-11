@@ -11,20 +11,28 @@ COMMAND_MONITORING_TESTS = Dir.glob("#{CURRENT_PATH}/support/command_monitoring/
 CONNECTION_STRING_TESTS = Dir.glob("#{CURRENT_PATH}/support/connection_string_tests/*.yml")
 GRIDFS_TESTS = Dir.glob("#{CURRENT_PATH}/support/gridfs_tests/*.yml")
 
-SSL_CERTS_DIR = "#{CURRENT_PATH}/support/certificates"
-CLIENT_PEM = "#{SSL_CERTS_DIR}/client.pem"
-CLIENT_PASSWORD_PEM = "#{SSL_CERTS_DIR}/password_protected.pem"
-CA_PEM = "#{SSL_CERTS_DIR}/ca.pem"
-CRL_PEM = "#{SSL_CERTS_DIR}/crl.pem"
-CLIENT_KEY_PEM = "#{SSL_CERTS_DIR}/client_key.pem"
-CLIENT_CERT_PEM = "#{SSL_CERTS_DIR}/client_cert.pem"
-CLIENT_KEY_ENCRYPTED_PEM = "#{SSL_CERTS_DIR}/client_key_encrypted.pem"
-CLIENT_KEY_PASSPHRASE = "passphrase"
+if ENV['DRIVERS_TOOLS']
+  CLIENT_CERT_PEM = ENV['DRIVER_TOOLS_CLIENT_CERT_PEM']
+  CLIENT_KEY_PEM = ENV['DRIVER_TOOLS_CLIENT_KEY_PEM']
+  CA_PEM = ENV['DRIVER_TOOLS_CA_PEM']
+  CLIENT_KEY_ENCRYPTED_PEM = ENV['DRIVER_TOOLS_CLIENT_KEY_ENCRYPTED_PEM']
+else
+  SSL_CERTS_DIR = "#{CURRENT_PATH}/support/certificates"
+  CLIENT_PEM = "#{SSL_CERTS_DIR}/client.pem"
+  CLIENT_PASSWORD_PEM = "#{SSL_CERTS_DIR}/password_protected.pem"
+  CA_PEM = "#{SSL_CERTS_DIR}/ca.pem"
+  CRL_PEM = "#{SSL_CERTS_DIR}/crl.pem"
+  CLIENT_KEY_PEM = "#{SSL_CERTS_DIR}/client_key.pem"
+  CLIENT_CERT_PEM = "#{SSL_CERTS_DIR}/client_cert.pem"
+  CLIENT_KEY_ENCRYPTED_PEM = "#{SSL_CERTS_DIR}/client_key_encrypted.pem"
+  CLIENT_KEY_PASSPHRASE = "passphrase"
+end
 
 require 'mongo'
 
 Mongo::Logger.logger = Logger.new($stdout)
 Mongo::Logger.logger.level = Logger::INFO
+Encoding.default_external = Encoding::UTF_8
 
 require 'support/travis'
 require 'support/matchers'
@@ -45,7 +53,6 @@ RSpec.configure do |config|
   config.include(Authorization)
 
   config.before(:suite) do
-
     begin
       # Create the root user administrator as the first user to be added to the
       # database. This user will need to be authenticated in order to add any
@@ -191,13 +198,16 @@ end
 #
 # @since 2.2.0
 def auth_enabled?
-  $mongo_client ||= initialize_scanned_client!
-  begin
-    $mongo_client.use(:admin).command(getCmdLineOpts: 1).first["argv"].include?("--auth")
-  rescue
-    return true
+  if auth = ENV['AUTH']
+    auth == 'auth'
+  else
+    $mongo_client ||= initialize_scanned_client!
+    begin
+      $mongo_client.use(:admin).command(getCmdLineOpts: 1).first["argv"].include?("--auth")
+    rescue => e
+      e.message =~ /(not authorized)|(unauthorized)/
+    end
   end
-  false
 end
 
 # Initializes a basic scanned client to do an ismaster check.
