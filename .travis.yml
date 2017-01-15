@@ -9,8 +9,10 @@ rvm:
   - 2.2.6
   - 2.3.3
   - 2.4.0
+  - ruby-head
   - jruby-19mode
   - jruby-9.1.7.0
+  - jruby-head
 
 jdk:
   - oraclejdk7
@@ -49,6 +51,10 @@ branches:
     - 2.3-stable
 
 matrix:
+  allow_failures:
+    - rvm: 2.4.0
+    - rvm: ruby-head
+    - rvm: jruby-head
   exclude:
     - rvm: 1.9.3
       jdk: openjdk7
