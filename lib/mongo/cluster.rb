@@ -174,7 +174,7 @@ module Mongo
       @cursor_reaper = CursorReaper.new
       @cursor_reaper.run!
 
-      ObjectSpace.define_finalizer(self, self.class.finalize(pools))
+      ObjectSpace.define_finalizer(self, self.class.finalize(pools, @cursor_reaper))
     end
 
     # Finalize the cluster for garbage collection. Disconnects all the scoped
@@ -189,10 +189,10 @@ module Mongo
     # @return [ Proc ] The Finalizer.
     #
     # @since 2.2.0
-    def self.finalize(pools)
+    def self.finalize(pools, cursor_reaper)
       proc do
-        begin; @cursor_reaper.kill_cursors; rescue; end
-        @cursor_reaper.stop!
+        begin; cursor_reaper.kill_cursors; rescue; end
+        cursor_reaper.stop!
         pools.values.each do |pool|
           pool.disconnect!
         end
