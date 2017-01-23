@@ -154,7 +154,6 @@ module Mongo
       @update_lock = Mutex.new
       @pool_lock = Mutex.new
       @topology = Topology.initial(seeds, monitoring, options)
-      @cursor_reaper = nil
 
       publish_sdam_event(
         Monitoring::TOPOLOGY_OPENING,
