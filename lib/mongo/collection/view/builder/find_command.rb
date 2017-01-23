@@ -126,8 +126,8 @@ module Mongo
             return options if options.empty?
             opts = options.dup
             opts.delete(:cursor_type)
-            Flags.map_flags(options).reduce(opts) do |opts, key|
-              opts.merge!(key => true)
+            Flags.map_flags(options).reduce(opts) do |o, key|
+              o.merge!(key => true)
             end
           end
         end
