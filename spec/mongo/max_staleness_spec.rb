@@ -18,10 +18,6 @@ describe 'Max Staleness Spec' do
         Mongo::Monitoring.new(monitoring: false)
       end
 
-      let(:monitoring) do
-        Mongo::Monitoring.new
-      end
-
       let(:listeners) do
         Mongo::Event::Listeners.new
       end
