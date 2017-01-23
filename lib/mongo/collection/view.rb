@@ -60,8 +60,7 @@ module Mongo
                      :client,
                      :cluster,
                      :database,
-                     :read_preference,
-                     :write_concern
+                     :read_preference
 
       # Delegate to the cluster for the next primary.
       def_delegators :cluster, :next_primary
@@ -154,11 +153,19 @@ module Mongo
             " @filter=#{filter.to_s} @options=#{options.to_s}>"
       end
 
-      private
-
+      # Get the write concern on this +View+.
+      #
+      # @example Get the write concern.
+      #   view.write_concern
+      #
+      # @return [ Mongo::WriteConcern ] The write concern.
+      #
+      # @since 2.0.0
       def write_concern
         WriteConcern.get(options[:write] || options[:write_concern] || collection.write_concern)
       end
+
+      private
 
       def initialize_copy(other)
         @collection = other.collection
