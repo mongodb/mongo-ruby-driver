@@ -51,7 +51,7 @@ describe 'Command Monitoring Events' do
                 test.run(authorized_collection)
                 event = subscriber.send(expectation.event_type)[expectation.command_name]
                 expect(event).to send(expectation.matcher, expectation)
-              rescue Mongo::Error::OperationFailure, Mongo::Error::BulkWriteError => e
+              rescue Mongo::Error::OperationFailure, Mongo::Error::BulkWriteError
                 event = subscriber.send(expectation.event_type)[expectation.command_name]
                 expect(event).to send(expectation.matcher, expectation)
               end
