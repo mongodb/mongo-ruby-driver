@@ -50,9 +50,6 @@ module Mongo
     # Delegate to the cluster for the next primary.
     def_delegators :cluster, :next_primary
 
-    # Convenience delegators to find.
-    def_delegators :find, :parallel_scan
-
     # Options that can be updated on a new Collection instance via the #with method.
     #
     # @since 2.1.0
