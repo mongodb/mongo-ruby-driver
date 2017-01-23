@@ -14,7 +14,7 @@
 
 RSpec::Matchers.define :have_hosts do |test|
 
-  match do |client|
+  match do |cl|
 
     def find_server(client, host)
       client.cluster.instance_variable_get(:@servers).detect do |s|
@@ -40,7 +40,7 @@ RSpec::Matchers.define :have_hosts do |test|
     end
 
     test.hosts.all? do |host|
-      server = find_server(client, host)
+      server = find_server(cl, host)
       match_host?(server, host) &&
           match_port?(server, host) if server #&&
           #match_address_family?(server, host) if server
@@ -49,7 +49,7 @@ RSpec::Matchers.define :have_hosts do |test|
     failure_message do |client|
       "With URI: #{test.uri_string}\n" +
           "Expected that test hosts: #{test.hosts} would match " +
-          "client hosts: #{client.cluster.instance_variable_get(:@servers)}"
+          "client hosts: #{cl.cluster.instance_variable_get(:@servers)}"
     end
   end
 end
