@@ -58,6 +58,7 @@ module Mongo
       @initial_result = result
       @remaining = limit if limited?
       @cursor_id = result.cursor_id
+      @coll_name = nil
       register
       ObjectSpace.define_finalizer(self, self.class.finalize(result.cursor_id,
                                                              cluster,

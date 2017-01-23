@@ -42,6 +42,7 @@ module Mongo
         @to_kill = {}
         @active_cursors = Set.new
         @mutex = Mutex.new
+        @thread = nil
       end
 
       # Start the cursor reaper's thread.
