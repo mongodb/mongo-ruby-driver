@@ -312,6 +312,7 @@ module Mongo
         else
           @operation = SuccessfulOp.new(self, test)
         end
+        @result = nil
       end
 
       # Whether the expected  and actual collections should be compared after the test runs.
