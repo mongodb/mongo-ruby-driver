@@ -497,14 +497,14 @@ axes:
         display_name: ruby-2.3
         variables:
            RVM_RUBY: "ruby-2.3"
-#      - id: "jruby-1.7"
-#        display_name: jruby-1.7
-#        variables:
-#           RVM_RUBY: "jruby-1.7"
-#      - id: "jruby"
-#        display_name: jruby
-#        variables:
-#           RVM_RUBY: "jruby"
+      - id: "jruby-1.7"
+        display_name: jruby-1.7
+        variables:
+           RVM_RUBY: "jruby-1.7"
+      - id: "jruby-9.1"
+        display_name: jruby-9.1
+        variables:
+           RVM_RUBY: "jruby-9.1"
   - id: "os"
     display_name: OS
     values:
