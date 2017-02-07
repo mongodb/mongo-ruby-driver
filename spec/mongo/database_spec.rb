@@ -336,7 +336,7 @@ describe Mongo::Database do
           {
               insert: TEST_COLL,
               documents: [ { a: 1 } ],
-              writeConcern: { w: WRITE_CONCERN[:w]+1 }
+              writeConcern: INVALID_WRITE_CONCERN
           }
         end
 
@@ -352,7 +352,7 @@ describe Mongo::Database do
 
       let(:client_options) do
         {
-          write: { w: WRITE_CONCERN[:w] + 1 }
+          write: INVALID_WRITE_CONCERN
         }
       end
 
@@ -380,7 +380,7 @@ describe Mongo::Database do
           {
               insert: TEST_COLL,
               documents: [ { a: 1 } ],
-              writeConcern: { w: WRITE_CONCERN[:w]+1 }
+              writeConcern: INVALID_WRITE_CONCERN
           }
         end
 
@@ -413,7 +413,7 @@ describe Mongo::Database do
 
       let(:client_options) do
         {
-          write: { w: WRITE_CONCERN[:w] + 1 },
+          write: INVALID_WRITE_CONCERN,
           database: :safe_to_drop
         }
       end

@@ -2,8 +2,13 @@ require 'spec_helper'
 
 describe Mongo::Socket::SSL, if: running_ssl? do
 
+  let(:family) do
+    resolver = default_address.instance_variable_get(:@resolver)
+    Mongo::Address::FAMILY_MAP.key(resolver.class)
+  end
+
   let(:socket) do
-    described_class.new(*default_address.to_s.split(":"), default_address.host, 5, Socket::PF_INET, options)
+    described_class.new(*default_address.to_s.split(":"), default_address.host, 5, family, options)
   end
 
   let(:options) do
@@ -95,7 +100,7 @@ describe Mongo::Socket::SSL, if: running_ssl? do
       end
     end
 
-    context 'when certificate and an encrypted key are provided as strings' do
+    context 'when certificate and an encrypted key are provided as strings', if: testing_ssl_locally? do
 
       let(:options) do
         {
@@ -293,7 +298,7 @@ describe Mongo::Socket::SSL, if: running_ssl? do
 
       let(:options) do
         super().merge(
-          :ssl_key => CRL_PEM
+          :ssl_key => COMMAND_MONITORING_TESTS.first
         )
       end
 
@@ -324,7 +329,7 @@ describe Mongo::Socket::SSL, if: running_ssl? do
         end
       end
 
-      context 'as a string containg the PEM-encoded certificate' do
+      context 'as a string containing the PEM-encoded certificate' do
 
         let (:options) do
           super().merge(

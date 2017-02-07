@@ -56,7 +56,7 @@ describe Mongo::Grid::FSBucket::Stream::Write do
     context 'when the fs has a write concern', if: standalone? do
 
       let(:fs_options) do
-        { write: { w: (WRITE_CONCERN[:w] + 1) } }
+        { write: INVALID_WRITE_CONCERN }
       end
 
       it 'uses the write concern of the fs as a default' do
@@ -83,7 +83,7 @@ describe Mongo::Grid::FSBucket::Stream::Write do
 
         let(:extra_options) do
           {
-            write: { w: (WRITE_CONCERN[:w] + 1) }
+            write: INVALID_WRITE_CONCERN
           }
         end
 
