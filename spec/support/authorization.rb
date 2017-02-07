@@ -22,6 +22,7 @@ TEST_DB = 'ruby-driver'.freeze
 # @since 2.0.0
 TEST_COLL = 'test'.freeze
 
+# For Evergreen
 if ENV['MONGODB_URI']
   MONGODB_URI = Mongo::URI.new(ENV['MONGODB_URI'])
   URI_OPTIONS = Mongo::Options::Mapper.transform_keys_to_symbols(MONGODB_URI.uri_options)
@@ -35,8 +36,7 @@ if ENV['MONGODB_URI']
     ADDRESSES = MONGODB_URI.servers
     CONNECT = { connect: :direct }
   end
-else
-  # For Jenkins
+else # For Jenkins
   ADDRESSES = ENV['MONGODB_ADDRESSES'] ? ENV['MONGODB_ADDRESSES'].split(',').freeze : [ '127.0.0.1:27017' ].freeze
   if ENV['RS_ENABLED']
     CONNECT = { connect: :replica_set, replica_set: ENV['RS_NAME'] }
@@ -90,18 +90,17 @@ TEST_OPTIONS = BASE_OPTIONS.merge(CONNECT).merge(SSL_OPTIONS)
 # The root user name.
 #
 # @since 2.0.0
-ROOT_USER_NAME = (defined?(MONGODB_URI) && MONGODB_URI.credentials[:user]) ? MONGODB_URI.credentials[:user] : 'root-user'
+ROOT_USER_NAME = (defined?(MONGODB_URI) && MONGODB_URI.credentials[:user]) || 'root-user'
 
 # The root user password.
 #
 # @since 2.0.0
-ROOT_USER_PWD = (defined?(MONGODB_URI) && MONGODB_URI.credentials[:password]) ? MONGODB_URI.credentials[:password] : 'password'
+ROOT_USER_PWD = (defined?(MONGODB_URI) && MONGODB_URI.credentials[:password]) || 'password'
 
 # The root user auth source.
 #
 # @since 2.4.2
-ROOT_USER_AUTH_SOURCE = (defined?(URI_OPTIONS) && URI_OPTIONS[:auth_source]) ?
-                          URI_OPTIONS[:auth_source] : Mongo::Database::ADMIN
+ROOT_USER_AUTH_SOURCE = (defined?(URI_OPTIONS) && URI_OPTIONS[:auth_source]) || Mongo::Database::ADMIN
 
 # Gets the root system administrator user.
 #
