@@ -97,7 +97,7 @@ describe Mongo::Collection do
   describe '#with' do
 
     let(:client) do
-      Mongo::Client.new(ADDRESSES)
+      Mongo::Client.new(ADDRESSES, TEST_OPTIONS)
     end
 
     let(:database) do
@@ -129,7 +129,7 @@ describe Mongo::Collection do
       context 'when the client has a server selection timeout setting' do
 
         let(:client) do
-          Mongo::Client.new(ADDRESSES, server_selection_timeout: 2)
+          Mongo::Client.new(ADDRESSES, TEST_OPTIONS.merge(server_selection_timeout: 2))
         end
 
         it 'passes the the server_selection_timeout to the cluster' do
@@ -140,7 +140,7 @@ describe Mongo::Collection do
       context 'when the client has a read preference set' do
 
         let(:client) do
-          Mongo::Client.new(ADDRESSES, read: { mode: :primary_preferred })
+          Mongo::Client.new(ADDRESSES, TEST_OPTIONS.merge(read: { mode: :primary_preferred }))
         end
 
         it 'sets the new read options on the new collection' do
@@ -152,7 +152,7 @@ describe Mongo::Collection do
       context 'when the client has a read preference and server selection timeout set' do
 
         let(:client) do
-          Mongo::Client.new(ADDRESSES, read: { mode: :primary_preferred }, server_selection_timeout: 2)
+          Mongo::Client.new(ADDRESSES, TEST_OPTIONS.merge(read: { mode: :primary_preferred }, server_selection_timeout: 2))
         end
 
         it 'sets the new read options on the new collection' do
@@ -182,7 +182,7 @@ describe Mongo::Collection do
       context 'when the client has a write concern set' do
 
         let(:client) do
-          Mongo::Client.new(ADDRESSES, write: { w: 10 })
+          Mongo::Client.new(ADDRESSES, TEST_OPTIONS.merge(write: { w: 10 }))
         end
 
         it 'sets the new write options on the new collection' do
@@ -215,7 +215,7 @@ describe Mongo::Collection do
       context 'when the client has a server selection timeout setting' do
 
         let(:client) do
-          Mongo::Client.new(ADDRESSES, server_selection_timeout: 2)
+          Mongo::Client.new(ADDRESSES, TEST_OPTIONS.merge(server_selection_timeout: 2))
         end
 
         it 'passes the server_selection_timeout setting to the cluster' do
@@ -226,7 +226,7 @@ describe Mongo::Collection do
       context 'when the client has a read preference set' do
 
         let(:client) do
-          Mongo::Client.new(ADDRESSES, read: { mode: :primary_preferred })
+          Mongo::Client.new(ADDRESSES, TEST_OPTIONS.merge(read: { mode: :primary_preferred }))
         end
 
         it 'sets the new read options on the new collection' do
