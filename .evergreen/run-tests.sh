@@ -21,10 +21,6 @@ DRIVERS_TOOLS=${DRIVERS_TOOLS:-}
 
 export CI=true
 
-if [ "$TOPOLOGY" == "replica_set" ]; then
-  export RS_NAME=repl0
-fi
-
 if [ "$AUTH" != "noauth" ]; then
   export ROOT_USER_NAME="bob"
   export ROOT_USER_PWD="pwd123"
