@@ -305,7 +305,7 @@ describe Mongo::Socket::SSL, if: running_ssl? do
       it 'raises an exception' do
         expect {
           socket.connect!
-        }.to raise_exception(ArgumentError)
+        }.to raise_exception
       end
     end
 
