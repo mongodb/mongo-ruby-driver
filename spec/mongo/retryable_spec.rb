@@ -36,19 +36,19 @@ describe Mongo::Retryable do
     end
   end
 
+  let(:operation) do
+    double('operation')
+  end
+
+  let(:cluster) do
+    double('cluster')
+  end
+
+  let(:retryable) do
+    klass.new(operation, cluster)
+  end
+
   describe '#read_with_retry' do
-
-    let(:operation) do
-      double('operation')
-    end
-
-    let(:cluster) do
-      double('cluster')
-    end
-
-    let(:retryable) do
-      klass.new(operation, cluster)
-    end
 
     context 'when no exception occurs' do
 
@@ -65,6 +65,8 @@ describe Mongo::Retryable do
 
       before do
         expect(operation).to receive(:execute).and_raise(Mongo::Error::SocketError).ordered
+        expect(cluster).to receive(:max_read_retries).and_return(1).ordered
+        expect(cluster).to receive(:read_retry_interval).and_return(0.1).ordered
         expect(cluster).to receive(:scan!).and_return(true).ordered
         expect(operation).to receive(:execute).and_return(true).ordered
       end
@@ -78,6 +80,8 @@ describe Mongo::Retryable do
 
       before do
         expect(operation).to receive(:execute).and_raise(Mongo::Error::SocketTimeoutError).ordered
+        expect(cluster).to receive(:max_read_retries).and_return(1).ordered
+        expect(cluster).to receive(:read_retry_interval).and_return(0.1).ordered
         expect(cluster).to receive(:scan!).and_return(true).ordered
         expect(operation).to receive(:execute).and_return(true).ordered
       end
@@ -169,18 +173,6 @@ describe Mongo::Retryable do
 
   describe '#write_with_retry' do
 
-    let(:operation) do
-      double('operation')
-    end
-
-    let(:cluster) do
-      double('cluster')
-    end
-
-    let(:retryable) do
-      klass.new(operation, cluster)
-    end
-
     context 'when no exception occurs' do
 
       before do
@@ -196,6 +188,23 @@ describe Mongo::Retryable do
 
       before do
         expect(operation).to receive(:execute).and_raise(Mongo::Error::OperationFailure.new('not master')).ordered
+        expect(cluster).to receive(:max_read_retries).and_return(1).ordered
+        expect(cluster).to receive(:read_retry_interval).and_return(0.1).ordered
+        expect(cluster).to receive(:scan!).and_return(true).ordered
+        expect(operation).to receive(:execute).and_return(true).ordered
+      end
+
+      it 'executes the operation twice' do
+        expect(retryable.write).to be true
+      end
+    end
+
+    context 'when a not primary error occurs' do
+
+      before do
+        expect(operation).to receive(:execute).and_raise(Mongo::Error::OperationFailure.new('Not primary')).ordered
+        expect(cluster).to receive(:max_read_retries).and_return(1).ordered
+        expect(cluster).to receive(:read_retry_interval).and_return(0.1).ordered
         expect(cluster).to receive(:scan!).and_return(true).ordered
         expect(operation).to receive(:execute).and_return(true).ordered
       end
@@ -209,6 +218,7 @@ describe Mongo::Retryable do
 
       before do
         expect(operation).to receive(:execute).and_raise(Mongo::Error::OperationFailure).ordered
+        expect(cluster).to receive(:max_read_retries).and_return(1).ordered
       end
 
       it 'raises an exception' do
@@ -217,5 +227,34 @@ describe Mongo::Retryable do
         }.to raise_error(Mongo::Error::OperationFailure)
       end
     end
+
+    context 'when a socket error occurs' do
+
+      before do
+        expect(operation).to receive(:execute).and_raise(Mongo::Error::SocketError).ordered
+        expect(cluster).to receive(:max_read_retries).and_return(1).ordered
+        expect(cluster).to receive(:read_retry_interval).and_return(0.1).ordered
+        expect(cluster).to receive(:scan!).and_return(true).ordered
+        expect(operation).to receive(:execute).and_return(true).ordered
+      end
+
+      it 'executes the operation twice' do
+        expect(retryable.write).to be true
+      end
+    end
+
+    context 'when a socket timeout error occurs' do
+
+      before do
+        expect(operation).to receive(:execute).and_raise(Mongo::Error::SocketTimeoutError).ordered
+      end
+
+      it 'raises an exception' do
+        expect {
+          retryable.write
+        }.to raise_error(Mongo::Error::SocketTimeoutError)
+      end
+    end
+
   end
 end

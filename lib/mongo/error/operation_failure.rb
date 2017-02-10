@@ -20,19 +20,26 @@ module Mongo
     # @since 2.0.0
     class OperationFailure < Error
 
+      # These are magic error messages that could indicate a master change.
+      #
+      # @since 2.4.2
+      WRITE_RETRY_MESSAGES = [
+        'no master',
+        'not master',
+        'could not contact primary',
+        'Not primary'
+      ]
+
       # These are magic error messages that could indicate a cluster
       # reconfiguration behind a mongos. We cannot check error codes as they
       # change between versions, for example 15988 which has 2 completely
       # different meanings between 2.4 and 3.0.
       #
       # @since 2.1.1
-      RETRY_MESSAGES = [
+      RETRY_MESSAGES = WRITE_RETRY_MESSAGES + [
         'transport error',
         'socket exception',
         "can't connect",
-        'no master',
-        'not master',
-        'could not contact primary',
         'connect failed',
         'error querying',
         'could not get last error',
@@ -40,9 +47,9 @@ module Mongo
         'interrupted at shutdown',
         'unknown replica set',
         'dbclient error communicating with server'
-      ].freeze
+      ]
 
-      # Can the operation that caused the error be retried?
+      # Can the read operation that caused the error be retried?
       #
       # @example Is the error retryable?
       #   error.retryable?
@@ -52,6 +59,18 @@ module Mongo
       # @since 2.1.1
       def retryable?
         RETRY_MESSAGES.any?{ |m| message.include?(m) }
+      end
+
+      # Can the write operation that caused the error be retried?
+      #
+      # @example Is the error retryable for writes?
+      #   error.write_retryable?
+      #
+      # @return [ true, false ] If the error is retryable.
+      #
+      # @since 2.4.2
+      def write_retryable?
+        WRITE_RETRY_MESSAGES.any? { |m| message.include?(m) }
       end
     end
   end
