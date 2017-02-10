@@ -80,7 +80,6 @@ module Mongo
     def read_with_one_retry
       yield
     rescue Error::SocketError, Error::SocketTimeoutError => e
-      retry_reconnect(e)
       yield
     end
 
