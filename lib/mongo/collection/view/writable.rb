@@ -41,10 +41,10 @@ module Mongo
           cmd[:maxTimeMS] = max_time_ms if max_time_ms
           cmd[:writeConcern] = write_concern.options if write_concern
 
-          server = next_primary
-          apply_collation!(cmd, server, opts)
-
           write_with_retry do
+            server = next_primary
+            apply_collation!(cmd, server, opts)
+
             Operation::Commands::Command.new({
                                               :selector => cmd,
                                               :db_name => database.name
@@ -108,10 +108,10 @@ module Mongo
           cmd[:bypassDocumentValidation] = !!opts[:bypass_document_validation]
           cmd[:writeConcern] = write_concern.options if write_concern
 
-          server = next_primary
-          apply_collation!(cmd, server, opts)
-
           value = write_with_retry do
+            server = next_primary
+            apply_collation!(cmd, server, opts)
+
             Operation::Commands::Command.new({
                                               :selector => cmd,
                                               :db_name => database.name
@@ -213,9 +213,10 @@ module Mongo
 
         def remove(value, opts = {})
           delete_doc = { Operation::Q => filter, Operation::LIMIT => value }
-          server = next_primary
-          apply_collation!(delete_doc, server, opts)
           write_with_retry do
+            server = next_primary
+            apply_collation!(delete_doc, server, opts)
+
             Operation::Write::Delete.new(
               :delete => delete_doc,
               :db_name => collection.database.name,
@@ -230,9 +231,10 @@ module Mongo
                          Operation::U => spec,
                          Operation::MULTI => multi,
                          Operation::UPSERT => !!opts[:upsert] }
-          server = next_primary
-          apply_collation!(update_doc, server, opts)
           write_with_retry do
+            server = next_primary
+            apply_collation!(update_doc, server, opts)
+
             Operation::Write::Update.new(
               :update => update_doc,
               :db_name => collection.database.name,
