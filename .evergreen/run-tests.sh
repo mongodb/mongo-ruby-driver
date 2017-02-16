@@ -21,6 +21,9 @@ DRIVERS_TOOLS=${DRIVERS_TOOLS:-}
 
 export CI=true
 
+# Necessary for jruby
+export JAVACMD=/opt/java/jdk8/bin/java
+
 if [ "$AUTH" != "noauth" ]; then
   export ROOT_USER_NAME="bob"
   export ROOT_USER_PWD="pwd123"
