@@ -16,6 +16,12 @@ describe Mongo::Client do
       client.close
     end
 
+    describe 'VALID_OPTIONS' do
+      subject { described_class::VALID_OPTIONS }
+
+      it { is_expected.to include :ssl_key_string }
+    end
+
     context 'when the other is a client' do
 
       context 'when the options and cluster are equal' do
