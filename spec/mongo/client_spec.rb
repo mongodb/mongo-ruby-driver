@@ -16,12 +16,6 @@ describe Mongo::Client do
       client.close
     end
 
-    describe 'VALID_OPTIONS' do
-      subject { described_class::VALID_OPTIONS }
-
-      it { is_expected.to include :ssl_key_string }
-    end
-
     context 'when the other is a client' do
 
       context 'when the options and cluster are equal' do
@@ -223,6 +217,78 @@ describe Mongo::Client do
   describe '#initialize' do
 
     context 'when providing options' do
+
+      context 'when ssl options are provided' do
+
+        let(:options) do
+          {
+              :ssl => true,
+              :ssl_ca_cert => CA_PEM,
+              :ssl_ca_cert_string => 'ca cert string',
+              :ssl_ca_cert_object => 'ca cert object',
+              :ssl_cert => CLIENT_CERT_PEM,
+              :ssl_cert_string => 'cert string',
+              :ssl_cert_object => 'cert object',
+              :ssl_key => CLIENT_KEY_PEM,
+              :ssl_key_string => 'key string',
+              :ssl_key_object => 'key object',
+              :ssl_key_pass_phrase => 'passphrase',
+              :ssl_verify => true
+          }
+        end
+
+        let(:client) do
+          described_class.new(['127.0.0.1:27017'], options)
+        end
+
+        it 'sets the ssl option' do
+          expect(client.options[:ssl]).to eq(options[:ssl])
+        end
+
+        it 'sets the ssl_ca_cert option' do
+          expect(client.options[:ssl_ca_cert]).to eq(options[:ssl_ca_cert])
+        end
+
+        it 'sets the ssl_ca_cert_string option' do
+          expect(client.options[:ssl_ca_cert_string]).to eq(options[:ssl_ca_cert_string])
+        end
+
+        it 'sets the ssl_ca_cert_object option' do
+          expect(client.options[:ssl_ca_cert_object]).to eq(options[:ssl_ca_cert_object])
+        end
+
+        it 'sets the ssl_cert option' do
+          expect(client.options[:ssl_cert]).to eq(options[:ssl_cert])
+        end
+
+        it 'sets the ssl_cert_string option' do
+          expect(client.options[:ssl_cert_string]).to eq(options[:ssl_cert_string])
+        end
+
+        it 'sets the ssl_cert_object option' do
+          expect(client.options[:ssl_cert_object]).to eq(options[:ssl_cert_object])
+        end
+
+        it 'sets the ssl_key option' do
+          expect(client.options[:ssl_key]).to eq(options[:ssl_key])
+        end
+
+        it 'sets the ssl_key_string option' do
+          expect(client.options[:ssl_key_string]).to eq(options[:ssl_key_string])
+        end
+
+        it 'sets the ssl_key_object option' do
+          expect(client.options[:ssl_key_object]).to eq(options[:ssl_key_object])
+        end
+
+        it 'sets the ssl_key_pass_phrase option' do
+          expect(client.options[:ssl_key_pass_phrase]).to eq(options[:ssl_key_pass_phrase])
+        end
+
+        it 'sets the ssl_verify option' do
+          expect(client.options[:ssl_verify]).to eq(options[:ssl_verify])
+        end
+      end
 
       context 'when no database is provided' do
 
