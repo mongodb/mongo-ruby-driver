@@ -237,8 +237,9 @@ module Mongo
 
       def handle_upserted_id(field, expected_id, actual_id)
         if field == 'upsertedId'
-          expected_id.is_a?(Integer) && actual_id.is_a?(BSON::ObjectId) ||
-              actual_id.nil? && expected_id.is_a?(Integer)
+          if expected_id.is_a?(Integer)
+            actual_id.is_a?(BSON::ObjectId) || actual_id.nil?
+          end
         end
       end
 
