@@ -49,7 +49,7 @@ module Mongo
       # @since 2.0.0
       def initial(seeds, monitoring, options)
         if options.has_key?(:connect)
-          OPTIONS.fetch(options[:connect]).new(options, monitoring, seeds)
+          OPTIONS.fetch(options[:connect].to_sym).new(options, monitoring, seeds)
         elsif options.has_key?(:replica_set)
           ReplicaSet.new(options, monitoring, options)
         else
