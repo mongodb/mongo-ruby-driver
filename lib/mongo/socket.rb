@@ -177,7 +177,7 @@ module Mongo
         end
       rescue IO::WaitReadable
         select_timeout = (deadline - Time.now) if deadline
-        unless Kernel::select([@socket], nil, [@socket], select_timeout)
+        unless (select_timeout.nil? || select_timeout > 0) && Kernel::select([@socket], nil, [@socket], select_timeout)
           raise Timeout::Error.new("Took more than #{timeout} seconds to receive data.")
         end
         retry
