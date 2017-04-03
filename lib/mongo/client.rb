@@ -62,7 +62,7 @@ module Mongo
       :ssl_cert_string,
       :ssl_cert_object,
       :ssl_key,
-      :ssk_key_string,
+      :ssl_key_string,
       :ssl_key_object,
       :ssl_key_pass_phrase,
       :ssl_verify,
