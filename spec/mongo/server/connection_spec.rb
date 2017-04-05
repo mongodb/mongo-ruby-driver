@@ -447,6 +447,10 @@ describe Mongo::Server::Connection do
 
       context 'when the socket_timeout is negative' do
 
+        let(:connection) do
+          described_class.new(server, server.options)
+        end
+
         let(:messages) do
           [ insert ]
         end
