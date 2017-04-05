@@ -447,22 +447,22 @@ describe Mongo::Server::Connection do
 
       context 'when the socket_timeout is negative' do
 
-        let(:socket) do
-          connection.connect!
-          connection.send(:socket)
+        let(:messages) do
+          [ insert ]
         end
 
         before do
-          allow(socket).to receive(:timeout).and_return(-(Time.now.to_i))
+          connection.send(:write, messages)
+          connection.send(:socket).instance_variable_set(:@timeout, -(Time.now.to_i))
         end
 
-        let(:query) do
-          Mongo::Protocol::Query.new(TEST_DB, TEST_COLL, { 'name' => 'testing' })
+        let(:reply) do
+          connection.send(:read, messages.last.request_id)
         end
 
         it 'raises a timeout error' do
           expect {
-            connection.dispatch([ query ])
+            reply
           }.to raise_exception(Timeout::Error)
         end
       end
