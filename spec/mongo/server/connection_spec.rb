@@ -444,6 +444,28 @@ describe Mongo::Server::Connection do
         end_time = Time.now
         expect(end_time - start).to be_within(0.2).of(1.5)
       end
+
+      context 'when the socket_timeout is negative' do
+
+        let(:socket) do
+          connection.connect!
+          connection.send(:socket)
+        end
+
+        before do
+          allow(socket).to receive(:timeout).and_return(-(Time.now.to_i))
+        end
+
+        let(:query) do
+          Mongo::Protocol::Query.new(TEST_DB, TEST_COLL, { 'name' => 'testing' })
+        end
+
+        it 'raises a timeout error' do
+          expect {
+            connection.dispatch([ query ])
+          }.to raise_exception(Timeout::Error)
+        end
+      end
     end
 
     context 'when the process is forked' do
