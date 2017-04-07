@@ -40,6 +40,7 @@ module Mongo
         begin
           sock = Socket.new(info[4], Socket::SOCK_STREAM, 0)
           sock.setsockopt(Socket::IPPROTO_TCP, Socket::TCP_NODELAY, 1)
+          sock.setsockopt(Socket::SOL_SOCKET, Socket::SO_KEEPALIVE, true)
           socket_address = Socket.pack_sockaddr_in(port, info[3])
           connect(sock, socket_address)
           return sock
