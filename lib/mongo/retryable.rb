@@ -101,19 +101,14 @@ module Mongo
     #
     # @since 2.1.0
     def write_with_retry
-      attempt = 0
+      retried = false
       begin
-        attempt += 1
         yield
-      rescue Error::SocketError => e
-        raise(e) if attempt > cluster.max_read_retries
-        # During a replicaset master change the primary immediately closes all existing client connections.
-        retry_reconnect(e)
-        retry
       rescue Error::OperationFailure => e
-        raise(e) if attempt > cluster.max_read_retries
+        raise(e) if retried
         if e.write_retryable?
           retry_reconnect(e)
+          retried = true
           retry
         else
           raise(e)
