@@ -8,10 +8,10 @@ rvm:
   - 2.1.10
   - 2.2.6
   - 2.3.3
-  - 2.4.0
+  - 2.4.1
   - ruby-head
   - jruby-19mode
-  - jruby-9.1.7.0
+  - jruby-9.1.8.0
   - jruby-head
 
 jdk:
@@ -52,7 +52,6 @@ branches:
 
 matrix:
   allow_failures:
-    - rvm: 2.4.0
     - rvm: ruby-head
     - rvm: jruby-head
   exclude:

@@ -444,6 +444,32 @@ describe Mongo::Server::Connection do
         end_time = Time.now
         expect(end_time - start).to be_within(0.2).of(1.5)
       end
+
+      context 'when the socket_timeout is negative' do
+
+        let(:connection) do
+          described_class.new(server, server.options)
+        end
+
+        let(:messages) do
+          [ insert ]
+        end
+
+        before do
+          connection.send(:write, messages)
+          connection.send(:socket).instance_variable_set(:@timeout, -(Time.now.to_i))
+        end
+
+        let(:reply) do
+          connection.send(:read, messages.last.request_id)
+        end
+
+        it 'raises a timeout error' do
+          expect {
+            reply
+          }.to raise_exception(Timeout::Error)
+        end
+      end
     end
 
     context 'when the process is forked' do
