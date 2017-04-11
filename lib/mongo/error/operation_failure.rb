@@ -27,9 +27,8 @@ module Mongo
         'no master',
         'not master',
         'could not contact primary',
-        'Not primary',
-        'interrupted at shutdown'
-      ]
+        'Not primary'
+      ].freeze
 
       # These are magic error messages that could indicate a cluster
       # reconfiguration behind a mongos. We cannot check error codes as they
@@ -48,7 +47,7 @@ module Mongo
         'interrupted at shutdown',
         'unknown replica set',
         'dbclient error communicating with server'
-      ]
+      ].freeze
 
       # Can the read operation that caused the error be retried?
       #

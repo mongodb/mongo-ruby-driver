@@ -43,7 +43,7 @@ module Mongo
         yield
       rescue Error::SocketError, Error::SocketTimeoutError => e
         raise(e) if attempt > cluster.max_read_retries
-        retry_reconnect(e)
+        log_retry(e)
         retry
       rescue Error::OperationFailure => e
         if cluster.sharded? && e.retryable?
@@ -79,7 +79,7 @@ module Mongo
     # @since 2.2.6
     def read_with_one_retry
       yield
-    rescue Error::SocketError, Error::SocketTimeoutError => e
+    rescue Error::SocketError, Error::SocketTimeoutError
       yield
     end
 
@@ -101,14 +101,14 @@ module Mongo
     #
     # @since 2.1.0
     def write_with_retry
-      retried = false
+      attempt = 0
       begin
+        attempt += 1
         yield
       rescue Error::OperationFailure => e
-        raise(e) if retried
+        raise(e) if attempt > Cluster::MAX_WRITE_RETRIES
         if e.write_retryable?
-          retry_reconnect(e)
-          retried = true
+          log_retry(e)
           retry
         else
           raise(e)
@@ -118,10 +118,9 @@ module Mongo
 
     private
 
-    def retry_reconnect(e)
+    def log_retry(e)
       # Log a warning so that any application slow down is immediately obvious.
       Logger.logger.warn "Retry due to: #{e.class.name} #{e.message}"
-      sleep(cluster.read_retry_interval)
       cluster.scan!
     end
   end

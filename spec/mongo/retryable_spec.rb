@@ -66,7 +66,6 @@ describe Mongo::Retryable do
       before do
         expect(operation).to receive(:execute).and_raise(Mongo::Error::SocketError).ordered
         expect(cluster).to receive(:max_read_retries).and_return(1).ordered
-        expect(cluster).to receive(:read_retry_interval).and_return(0.1).ordered
         expect(cluster).to receive(:scan!).and_return(true).ordered
         expect(operation).to receive(:execute).and_return(true).ordered
       end
@@ -81,7 +80,6 @@ describe Mongo::Retryable do
       before do
         expect(operation).to receive(:execute).and_raise(Mongo::Error::SocketTimeoutError).ordered
         expect(cluster).to receive(:max_read_retries).and_return(1).ordered
-        expect(cluster).to receive(:read_retry_interval).and_return(0.1).ordered
         expect(cluster).to receive(:scan!).and_return(true).ordered
         expect(operation).to receive(:execute).and_return(true).ordered
       end
@@ -188,7 +186,6 @@ describe Mongo::Retryable do
 
       before do
         expect(operation).to receive(:execute).and_raise(Mongo::Error::OperationFailure.new('not master')).ordered
-        expect(cluster).to receive(:read_retry_interval).and_return(0.1).ordered
         expect(cluster).to receive(:scan!).and_return(true).ordered
         expect(operation).to receive(:execute).and_return(true).ordered
       end
@@ -202,7 +199,6 @@ describe Mongo::Retryable do
 
       before do
         expect(operation).to receive(:execute).and_raise(Mongo::Error::OperationFailure.new('Not primary')).ordered
-        expect(cluster).to receive(:read_retry_interval).and_return(0.1).ordered
         expect(cluster).to receive(:scan!).and_return(true).ordered
         expect(operation).to receive(:execute).and_return(true).ordered
       end
