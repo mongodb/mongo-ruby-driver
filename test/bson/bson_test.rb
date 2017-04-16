@@ -233,6 +233,12 @@ class BSONTest < Test::Unit::TestCase
         assert_raise BSON::InvalidStringEncoding do
           BSON::BSON_CODER.serialize({'str' => str})
         end
+
+        str2 = "\xED\xAE\xBA\xED\xB6\x86"
+        assert !str2.valid_encoding?
+        assert_raise BSON::InvalidStringEncoding do
+          BSON::BSON_CODER.serialize({'str' => str2})
+        end
       end
 
       def test_non_utf8_key
