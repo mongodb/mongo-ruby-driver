@@ -22,7 +22,7 @@ jdk:
 # delete this when the issue referenced above is resolved
 install: ruby -S bundle install --without deploy development
 
-before_install: rm -f Gemfile.lock
+before_install: rm -f Gemfile.lock; ls -l; bundle install --without deploy development; bundle update activesupport
 
 env: TRAVIS_CI="true" JRUBY_OPTS="-J-Xmn1024m -J-Xms2048m -J-Xmx2048m"
 
