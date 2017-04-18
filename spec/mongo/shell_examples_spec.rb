@@ -52,8 +52,7 @@ describe 'shell examples in Ruby' do
                                         { item: 'mousepad',
                                           qty: 25,
                                           tags: ['gel', 'blue'],
-                                          size: { h: 19, w: 22.85, uom: 'cm'
-                                          }
+                                          size: { h: 19, w: 22.85, uom: 'cm' }
                                         }
                                        ])
       end
@@ -152,8 +151,7 @@ describe 'shell examples in Ruby' do
       let(:example) do
         client[:inventory].find('$or' => [{ status: 'A' },
                                           { qty: { '$lt' => 30 } }
-                                         ]
-                               )
+                                         ])
       end
 
       it 'matches the expected output' do
@@ -208,9 +206,7 @@ describe 'shell examples in Ruby' do
     context 'example 15' do
 
       let(:example) do
-        client[:inventory].find(size: { h: 14,
-                                        w: 21,
-                                        uom: 'cm' })
+        client[:inventory].find(size: { h: 14, w: 21, uom: 'cm' })
       end
 
       it 'matches the expected output' do
@@ -221,9 +217,7 @@ describe 'shell examples in Ruby' do
     context 'example 16' do
 
       let(:example) do
-        client[:inventory].find(size: { h: 21,
-                                        w: 14,
-                                        uom: 'cm' })
+        client[:inventory].find(size: { h: 21, w: 14, uom: 'cm' })
       end
 
       it 'matches the expected output' do
@@ -548,24 +542,24 @@ describe 'shell examples in Ruby' do
       client[:inventory].insert_many([{ item: 'journal',
                                         status: 'A',
                                         size: { h: 14, w: 21, uom: 'cm' },
-                                        instock: [ { warehouse: 'A', qty: 5 } ] },
+                                        instock: [ { warehouse: 'A', qty: 5 }] },
                                       { item: 'notebook',
                                         status: 'A',
                                         size: { h: 8.5, w: 11, uom: 'in' },
-                                        instock: [ { warehouse: 'C', qty: 5 } ] },
+                                        instock: [ { warehouse: 'C', qty: 5 }] },
                                       { item: 'paper',
                                         status: 'D',
                                         size: { h: 8.5, w: 11, uom: 'in' },
-                                        instock: [ { warehouse: 'A', qty: 60 } ] },
+                                        instock: [ { warehouse: 'A', qty: 60 }] },
                                       { item: 'planner',
                                         status: 'D',
                                         size: { h: 22.85, w: 30, uom: 'cm' },
-                                        instock: [ { warehouse: 'A', qty: 40 } ] },
+                                        instock: [ { warehouse: 'A', qty: 40 }] },
                                       { item: 'postcard',
                                         status: 'A',
                                         size: { h: 10, w: 15.25, uom: 'cm' },
                                         instock: [ { warehouse: 'B', qty: 15 },
-                                                   { warehouse: 'C', qty: 35 } ] }])
+                                                   { warehouse: 'C', qty: 35 }] }])
     end
 
 
