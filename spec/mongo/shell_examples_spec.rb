@@ -762,7 +762,7 @@ describe 'shell examples in Ruby' do
                                     ])
     end
 
-    context 'example 52' do
+    context 'example 52', if: write_command_enabled? do
 
       let!(:example) do
         client[:inventory].update_one({ item: 'paper'},
@@ -777,7 +777,7 @@ describe 'shell examples in Ruby' do
       end
     end
 
-    context 'example 53' do
+    context 'example 53', if: write_command_enabled? do
 
       let!(:example) do
         client[:inventory].update_many({ qty: { '$lt' => 50 } },
