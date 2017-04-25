@@ -44,17 +44,14 @@ module Mongo
       rescue Error::SocketError, Error::SocketTimeoutError => e
         raise(e) if attempt > cluster.max_read_retries
         log_retry(e)
+        cluster.scan!
         retry
       rescue Error::OperationFailure => e
         if cluster.sharded? && e.retryable?
-          if attempt <= cluster.max_read_retries
-            # We don't scan the cluster in this case as Mongos always returns
-            # ready after a ping no matter what the state behind it is.
-            sleep(cluster.read_retry_interval)
-            retry
-          else
-            raise e
-          end
+          raise(e) if attempt > cluster.max_read_retries
+          log_retry(e)
+          sleep(cluster.read_retry_interval)
+          retry
         else
           raise e
         end
@@ -109,6 +106,7 @@ module Mongo
         raise(e) if attempt > Cluster::MAX_WRITE_RETRIES
         if e.write_retryable?
           log_retry(e)
+          cluster.scan!
           retry
         else
           raise(e)
@@ -118,10 +116,9 @@ module Mongo
 
     private
 
+    # Log a warning so that any application slow down is immediately obvious.
     def log_retry(e)
-      # Log a warning so that any application slow down is immediately obvious.
       Logger.logger.warn "Retry due to: #{e.class.name} #{e.message}"
-      cluster.scan!
     end
   end
 end
