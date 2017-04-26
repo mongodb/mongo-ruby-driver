@@ -399,12 +399,20 @@ module Mongo
       return Options::Redacted.new unless opts
       Options::Redacted.new(opts.select do |o|
         if VALID_OPTIONS.include?(o)
-          true
+          validate_max_min_pool_size(o, opts) and true
         else
           log_warn("Unsupported client option '#{o}'. It will be ignored.")
           false
         end
       end)
+    end
+
+    def validate_max_min_pool_size(option, opts)
+      if option == :min_pool_size
+        max = opts[:max_pool_size] || Server::ConnectionPool::Queue::MAX_SIZE
+        raise Error::InvalidMinPoolSize.new(opts[:min_pool_size], max) unless opts[:min_pool_size] <= max
+      end
+      true
     end
   end
 end
