@@ -230,9 +230,9 @@ module Mongo
     def initialize(addresses_or_uri, options = Options::Redacted.new)
       @monitoring = Monitoring.new(options)
       if addresses_or_uri.is_a?(::String)
-        create_from_uri(addresses_or_uri, validate_options(options))
+        create_from_uri(addresses_or_uri, validate_options!(options))
       else
-        create_from_addresses(addresses_or_uri, validate_options(options))
+        create_from_addresses(addresses_or_uri, validate_options!(options))
       end
       yield(self) if block_given?
     end
@@ -291,7 +291,7 @@ module Mongo
     # @since 2.0.0
     def with(new_options = Options::Redacted.new)
       clone.tap do |client|
-        opts = validate_options(new_options)
+        opts = validate_options!(new_options)
         client.options.update(opts)
         Database.create(client)
         # We can't use the same cluster if some options that would affect it
@@ -374,6 +374,7 @@ module Mongo
     def create_from_uri(connection_string, opts = Options::Redacted.new)
       uri = URI.new(connection_string, opts)
       @options = Database::DEFAULT_OPTIONS.merge(uri.client_options.merge(opts)).freeze
+      validate_options!(@options)
       @cluster = Cluster.new(uri.servers, @monitoring, options)
       @database = Database.new(self, options[:database], options)
     end
@@ -395,16 +396,24 @@ module Mongo
       end
     end
 
-    def validate_options(opts = Options::Redacted.new)
+    def validate_options!(opts = Options::Redacted.new)
       return Options::Redacted.new unless opts
       Options::Redacted.new(opts.select do |o|
-        if VALID_OPTIONS.include?(o)
-          true
+        if VALID_OPTIONS.include?(o.to_sym)
+          validate_max_min_pool_size!(o.to_sym, opts) and true
         else
           log_warn("Unsupported client option '#{o}'. It will be ignored.")
           false
         end
       end)
+    end
+
+    def validate_max_min_pool_size!(option, opts)
+      if option == :min_pool_size
+        max = opts[:max_pool_size] || Server::ConnectionPool::Queue::MAX_SIZE
+        raise Error::InvalidMinPoolSize.new(opts[:min_pool_size], max) unless opts[:min_pool_size] <= max
+      end
+      true
     end
   end
 end

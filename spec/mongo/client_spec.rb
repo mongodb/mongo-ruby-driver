@@ -344,6 +344,106 @@ describe Mongo::Client do
         end
       end
 
+      context 'when min_pool_size is provided' do
+
+        let(:client) do
+          described_class.new(['127.0.0.1:27017'], options)
+        end
+
+        context 'when max_pool_size is provided' do
+
+          context 'when the min_pool_size is greater than the max_pool_size' do
+
+            let(:options) do
+              {
+                  :min_pool_size => 20,
+                  :max_pool_size => 10
+              }
+            end
+
+            it 'raises an Exception' do
+              expect {
+                client
+              }.to raise_exception(Mongo::Error::InvalidMinPoolSize)
+            end
+          end
+
+          context 'when the min_pool_size is less than the max_pool_size' do
+
+            let(:options) do
+              {
+                  :min_pool_size => 10,
+                  :max_pool_size => 20
+              }
+            end
+
+            it 'sets the option' do
+              expect(client.options[:min_pool_size]).to eq(options[:min_pool_size])
+              expect(client.options[:max_pool_size]).to eq(options[:max_pool_size])
+            end
+          end
+
+          context 'when the min_pool_size is equal to the max_pool_size' do
+
+            let(:options) do
+              {
+                  :min_pool_size => 10,
+                  :max_pool_size => 10
+              }
+            end
+
+            it 'sets the option' do
+              expect(client.options[:min_pool_size]).to eq(options[:min_pool_size])
+              expect(client.options[:max_pool_size]).to eq(options[:max_pool_size])
+            end
+          end
+        end
+
+        context 'when max_pool_size is not provided' do
+
+          context 'when the min_pool_size is greater than the default max_pool_size' do
+
+            let(:options) do
+              {
+                  :min_pool_size => 10
+              }
+            end
+
+            it 'raises an Exception' do
+              expect {
+                client
+              }.to raise_exception(Mongo::Error::InvalidMinPoolSize)
+            end
+          end
+
+          context 'when the min_pool_size is less than the default max_pool_size' do
+
+            let(:options) do
+              {
+                  :min_pool_size => 3
+              }
+            end
+
+            it 'sets the option' do
+              expect(client.options[:min_pool_size]).to eq(options[:min_pool_size])
+            end
+          end
+
+          context 'when the min_pool_size is equal to the max_pool_size' do
+
+            let(:options) do
+              {
+                :min_pool_size => Mongo::Server::ConnectionPool::Queue::MAX_SIZE
+              }
+            end
+
+            it 'sets the option' do
+              expect(client.options[:min_pool_size]).to eq(options[:min_pool_size])
+            end
+          end
+        end
+      end
+
       context 'when platform details are specified' do
 
         let(:app_metadata) do
@@ -431,6 +531,87 @@ describe Mongo::Client do
 
         it 'sets the options' do
           expect(client.options).to eq(expected_options)
+        end
+
+        context 'when min_pool_size is provided' do
+
+          context 'when max_pool_size is provided' do
+
+            context 'when the min_pool_size is greater than the max_pool_size' do
+
+              let(:uri) do
+                'mongodb://127.0.0.1:27017/?minPoolSize=20&maxPoolSize=10'
+              end
+
+              it 'raises an Exception' do
+                expect {
+                  client
+                }.to raise_exception(Mongo::Error::InvalidMinPoolSize)
+              end
+            end
+
+            context 'when the min_pool_size is less than the max_pool_size' do
+
+              let(:uri) do
+                'mongodb://127.0.0.1:27017/?minPoolSize=10&maxPoolSize=20'
+              end
+
+              it 'sets the option' do
+                expect(client.options[:min_pool_size]).to eq(10)
+                expect(client.options[:max_pool_size]).to eq(20)
+              end
+            end
+
+            context 'when the min_pool_size is equal to the max_pool_size' do
+
+              let(:uri) do
+                'mongodb://127.0.0.1:27017/?minPoolSize=10&maxPoolSize=10'
+              end
+
+              it 'sets the option' do
+                expect(client.options[:min_pool_size]).to eq(10)
+                expect(client.options[:max_pool_size]).to eq(10)
+              end
+            end
+          end
+
+          context 'when max_pool_size is not provided' do
+
+            context 'when the min_pool_size is greater than the default max_pool_size' do
+
+              let(:uri) do
+                'mongodb://127.0.0.1:27017/?minPoolSize=10'
+              end
+
+              it 'raises an Exception' do
+                expect {
+                  client
+                }.to raise_exception(Mongo::Error::InvalidMinPoolSize)
+              end
+            end
+
+            context 'when the min_pool_size is less than the default max_pool_size' do
+
+              let(:uri) do
+                'mongodb://127.0.0.1:27017/?minPoolSize=3'
+              end
+
+              it 'sets the option' do
+                expect(client.options[:min_pool_size]).to eq(3)
+              end
+            end
+
+            context 'when the min_pool_size is equal to the max_pool_size' do
+
+              let(:uri) do
+                'mongodb://127.0.0.1:27017/?minPoolSize=5'
+              end
+
+              it 'sets the option' do
+                expect(client.options[:min_pool_size]).to eq(5)
+              end
+            end
+          end
         end
       end
 
