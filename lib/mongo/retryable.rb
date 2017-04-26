@@ -19,16 +19,6 @@ module Mongo
   # @since 2.1.0
   module Retryable
 
-    # The not master error message.
-    #
-    # @since 2.1.0
-    NOT_MASTER = 'not master'.freeze
-
-    # Could not contact primary error message, seen on stepdowns
-    #
-    # @since 2.2.0
-    COULD_NOT_CONTACT_PRIMARY = 'could not contact primary'.freeze
-
     # Execute a read operation with a retry.
     #
     # @api private
@@ -46,21 +36,22 @@ module Mongo
     # @return [ Result ] The result of the operation.
     #
     # @since 2.1.0
-    def read_with_retry(attempt = 0, &block)
+    def read_with_retry
+      attempt = 0
       begin
-        block.call
-      rescue Error::SocketError, Error::SocketTimeoutError
-        retry_operation(&block)
+        attempt += 1
+        yield
+      rescue Error::SocketError, Error::SocketTimeoutError => e
+        raise(e) if attempt > cluster.max_read_retries
+        log_retry(e)
+        cluster.scan!
+        retry
       rescue Error::OperationFailure => e
         if cluster.sharded? && e.retryable?
-          if attempt < cluster.max_read_retries
-            # We don't scan the cluster in this case as Mongos always returns
-            # ready after a ping no matter what the state behind it is.
-            sleep(cluster.read_retry_interval)
-            read_with_retry(attempt + 1, &block)
-          else
-            raise e
-          end
+          raise(e) if attempt > cluster.max_read_retries
+          log_retry(e)
+          sleep(cluster.read_retry_interval)
+          retry
         else
           raise e
         end
@@ -83,11 +74,10 @@ module Mongo
     # @return [ Result ] The result of the operation.
     #
     # @since 2.2.6
-    def read_with_one_retry(&block)
-      block.call
-    rescue Error::SocketError,
-           Error::SocketTimeoutError
-      block.call
+    def read_with_one_retry
+      yield
+    rescue Error::SocketError, Error::SocketTimeoutError
+      yield
     end
 
     # Execute a write operation with a retry.
@@ -107,23 +97,28 @@ module Mongo
     # @return [ Result ] The result of the operation.
     #
     # @since 2.1.0
-    def write_with_retry(&block)
+    def write_with_retry
+      attempt = 0
       begin
-        block.call
+        attempt += 1
+        yield
       rescue Error::OperationFailure => e
-        if e.message.include?(NOT_MASTER) || e.message.include?(COULD_NOT_CONTACT_PRIMARY)
-          retry_operation(&block)
+        raise(e) if attempt > Cluster::MAX_WRITE_RETRIES
+        if e.write_retryable?
+          log_retry(e)
+          cluster.scan!
+          retry
         else
-          raise e
+          raise(e)
         end
       end
     end
 
     private
 
-    def retry_operation(&block)
-      cluster.scan!
-      block.call
+    # Log a warning so that any application slow down is immediately obvious.
+    def log_retry(e)
+      Logger.logger.warn "Retry due to: #{e.class.name} #{e.message}"
     end
   end
 end

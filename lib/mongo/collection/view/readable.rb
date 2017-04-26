@@ -134,9 +134,9 @@ module Mongo
           cmd[:maxTimeMS] = opts[:max_time_ms] if opts[:max_time_ms]
           cmd[:readConcern] = collection.read_concern if collection.read_concern
           preference = ServerSelector.get(opts[:read] || read)
-          server = preference.select_server(cluster, false)
-          apply_collation!(cmd, server, opts)
           read_with_retry do
+            server = preference.select_server(cluster, false)
+            apply_collation!(cmd, server, opts)
             Operation::Commands::Command.new({
                                                :selector => cmd,
                                                :db_name => database.name,
@@ -170,9 +170,9 @@ module Mongo
           cmd[:maxTimeMS] = opts[:max_time_ms] if opts[:max_time_ms]
           cmd[:readConcern] = collection.read_concern if collection.read_concern
           preference = ServerSelector.get(opts[:read] || read)
-          server = preference.select_server(cluster, false)
-          apply_collation!(cmd, server, opts)
           read_with_retry do
+            server = preference.select_server(cluster, false)
+            apply_collation!(cmd, server, opts)
             Operation::Commands::Command.new({
                                                :selector => cmd,
                                                :db_name => database.name,

@@ -33,6 +33,11 @@ module Mongo
     # @since 2.1.1
     MAX_READ_RETRIES = 1
 
+    # The default number of mongos write retries.
+    #
+    # @since 2.4.2
+    MAX_WRITE_RETRIES = 1
+
     # The default mongos read retry interval, in seconds.
     #
     # @since 2.1.1
