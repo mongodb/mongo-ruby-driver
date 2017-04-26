@@ -18,7 +18,7 @@ module Mongo
     # Exception that is raised when trying to create a client with an invalid
     #   min_pool_size option.
     #
-    # @since 2.0.0
+    # @since 2.4.2
     class InvalidMinPoolSize < Error
 
       # Instantiate the new exception.
