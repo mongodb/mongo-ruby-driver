@@ -1,0 +1,93 @@
+===============
+Bulk Operations
+===============
+
+.. default-domain:: mongodb
+
+.. contents:: On this page
+   :local:
+   :backlinks: none
+   :depth: 1
+   :class: singlecol
+   
+The bulk write API sends a list of write operations to the server in
+one method call. Execution order of the operations is guaranteed if
+you pass in the ``ordered`` option.
+
+The ``bulk_write`` method takes three arguments:
+
+- A list of operations.
+- The ``ordered`` option with a boolean. Defaults to ``true``.
+- A write concern option. Defaults to the collection's write concern.
+
+Valid bulk write operations are the following:
+
+insert_one
+----------
+
+.. code-block:: ruby
+
+    { :insert_one => { :x => 1 } }
+
+delete_one
+----------
+
+.. code-block:: ruby
+
+    { :delete_one => { :filter => { :x => 1 } } }
+
+delete_many
+-----------
+
+.. code-block:: ruby
+
+    { :delete_many => { :filter => { :x => 1 } } }
+
+replace_one
+-----------
+
+.. code-block:: ruby
+
+    { :replace_one => { :filter => { :x => 1 },
+                        :replacement => { :x => 2 },
+                        :upsert => true } # upsert is optional and defaults to false
+     }
+
+update_one
+----------
+
+.. code-block:: ruby
+
+    { :update_one => { :filter => { :x => 1 },
+                       :update => { '$set' =>  { :x => 2 } },
+                       :upsert => true } # upsert is optional and defaults to false
+     }
+
+update_many
+-----------
+
+.. code-block:: ruby
+
+    { :update_many => { :filter => { :x => 1 },
+                        :update => { '$set' =>  { :x => 2 } },
+                        :upsert => true } # upsert is optional and defaults to false
+     }
+
+The following example shows how to pass operations
+to the ``bulk_write`` method.
+
+.. code-block:: ruby
+
+    coll = client['documents']
+    coll.bulk_write([ { :insert_one => { :x => 1 }
+                      },
+                      { :update_one => { :filter => { :x => 1 },
+                                         :update => {'$set' => { :x => 2 } }
+                                       }
+                      },
+                      { :replace_one => { :filter => { :x => 2 },
+                                          :replacement => { :x => 3 }
+                                        }
+                      }
+                    ],
+                    :ordered => true)

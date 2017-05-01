@@ -1,0 +1,18 @@
+====
+BSON
+====
+
+.. default-domain:: mongodb
+
+This section contains tutorials for using the core Ruby BSON gem.
+
+The Ruby BSON implementation is packaged in a separate gem with C and
+Java extensions for speed depending on the runtime enviroment.
+
+.. toctree::
+   :titlesonly:
+
+   /tutorial/bson-v4
+   /tutorial/bson-v3
+
+.. seealso:: `BSON Source Code on GitHub <https://github.com/mongodb/bson-ruby>`_
