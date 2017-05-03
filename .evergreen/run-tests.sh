@@ -35,7 +35,6 @@ export DRIVER_TOOLS_CA_PEM="${DRIVERS_TOOLS}/.evergreen/x509gen/ca.pem"
 export DRIVER_TOOLS_CLIENT_KEY_ENCRYPTED_PEM="${DRIVERS_TOOLS}/.evergreen/x509gen/password_protected.pem"
 
 source ~/.rvm/scripts/rvm
-rvm install $RVM_RUBY
 rvm use $RVM_RUBY
 gem install bundler
 bundle install

@@ -489,14 +489,18 @@ axes:
         display_name: ruby-1.9
         variables:
            RVM_RUBY: "ruby-1.9"
-      - id: "ruby-2.0"
-        display_name: ruby-2.0
+      - id: "ruby-2.2"
+        display_name: ruby-2.2
         variables:
-           RVM_RUBY: "ruby-2.0"
+           RVM_RUBY: "ruby-2.2"
       - id: "ruby-2.3"
         display_name: ruby-2.3
         variables:
            RVM_RUBY: "ruby-2.3"
+      - id: "ruby-2.4.1"
+        display_name: ruby-2.4.1
+        variables:
+           RVM_RUBY: "ruby-2.4.1"
       - id: "jruby-1.7"
         display_name: jruby-1.7
         variables:
