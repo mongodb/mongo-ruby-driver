@@ -1819,8 +1819,12 @@ describe Mongo::Collection do
         authorized_collection.find(field: 'testing').first
       end
 
-      it 'updates the first matching document in the collection' do
+      it 'updates the first matching document in the collection', if: write_command_enabled? do
         expect(response.modified_count).to eq(1)
+      end
+
+      it 'does not return modified count', unless: write_command_enabled? do
+        expect(response.modified_count).to eq(nil)
       end
 
       it 'updates the documents in the collection' do
@@ -1838,8 +1842,12 @@ describe Mongo::Collection do
         authorized_collection.find(field: 'test1').to_a
       end
 
-      it 'reports that no documents were written' do
+      it 'reports that no documents were written', if: write_command_enabled?  do
         expect(response.modified_count).to eq(0)
+      end
+
+      it 'does not return modified count', unless: write_command_enabled? do
+        expect(response.modified_count).to eq(nil)
       end
 
       it 'does not insert the document' do
@@ -1876,8 +1884,12 @@ describe Mongo::Collection do
         authorized_collection.find(field: 'test1').to_a
       end
 
-      it 'reports that no documents were written' do
+      it 'reports that no documents were written', if: write_command_enabled? do
         expect(response.modified_count).to eq(0)
+      end
+
+      it 'does not return modified count', unless: write_command_enabled? do
+        expect(response.modified_count).to eq(nil)
       end
 
       it 'does not insert the document' do
@@ -2073,8 +2085,12 @@ describe Mongo::Collection do
         authorized_collection.find(field: 'testing').to_a.last
       end
 
-      it 'returns the number updated' do
+      it 'returns the number updated', if: write_command_enabled? do
         expect(response.modified_count).to eq(2)
+      end
+
+      it 'does not return modified count', unless: write_command_enabled? do
+        expect(response.modified_count).to eq(nil)
       end
 
       it 'updates the documents in the collection' do
@@ -2093,8 +2109,12 @@ describe Mongo::Collection do
         authorized_collection.find.to_a
       end
 
-      it 'reports that no documents were updated' do
+      it 'reports that no documents were updated', if: write_command_enabled? do
         expect(response.modified_count).to eq(0)
+      end
+
+      it 'does not return modified count', unless: write_command_enabled? do
+        expect(response.modified_count).to eq(nil)
       end
 
       it 'updates no documents in the collection' do
@@ -2132,8 +2152,12 @@ describe Mongo::Collection do
         authorized_collection.find.to_a
       end
 
-      it 'reports that no documents were updated' do
+      it 'reports that no documents were updated', if: write_command_enabled? do
         expect(response.modified_count).to eq(0)
+      end
+
+      it 'does not return modified count', unless: write_command_enabled? do
+        expect(response.modified_count).to eq(nil)
       end
 
       it 'updates no documents in the collection' do
@@ -2333,8 +2357,12 @@ describe Mongo::Collection do
         authorized_collection.find(field: 'testing').first
       end
 
-      it 'updates the first matching document in the collection' do
+      it 'updates the first matching document in the collection', if: write_command_enabled? do
         expect(response.modified_count).to eq(1)
+      end
+
+      it 'does not return modified count', unless: write_command_enabled? do
+        expect(response.modified_count).to eq(nil)
       end
 
       it 'updates the documents in the collection' do
@@ -2353,8 +2381,12 @@ describe Mongo::Collection do
         authorized_collection.find.to_a
       end
 
-      it 'reports that no documents were updated' do
+      it 'reports that no documents were updated', if: write_command_enabled? do
         expect(response.modified_count).to eq(0)
+      end
+
+      it 'does not return modified count', unless: write_command_enabled? do
+        expect(response.modified_count).to eq(nil)
       end
 
       it 'updates no documents in the collection' do
@@ -2392,8 +2424,12 @@ describe Mongo::Collection do
         authorized_collection.find.to_a
       end
 
-      it 'reports that no documents were updated' do
+      it 'reports that no documents were updated', if: write_command_enabled? do
         expect(response.modified_count).to eq(0)
+      end
+
+      it 'does not return modified count', unless: write_command_enabled? do
+        expect(response.modified_count).to eq(nil)
       end
 
       it 'updates no documents in the collection' do

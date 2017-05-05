@@ -680,8 +680,13 @@ describe Mongo::BulkWrite do
             authorized_collection.insert_one({ _id: 0 })
           end
 
-          it 'replaces the document' do
+          it 'replaces the document', if: write_command_enabled? do
             expect(result.modified_count).to eq(1)
+            expect(authorized_collection.find(_id: 0).first[:name]).to eq('test')
+          end
+
+          it 'replaces the document', unless: write_command_enabled? do
+            expect(result.modified_count).to be_nil
             expect(authorized_collection.find(_id: 0).first[:name]).to eq('test')
           end
 
@@ -736,8 +741,12 @@ describe Mongo::BulkWrite do
                 expect(result.upserted_count).to eq(0)
               end
 
-              it 'reports the modified count' do
+              it 'reports the modified count', if: write_command_enabled? do
                 expect(result.modified_count).to eq(1)
+              end
+
+              it 'returns nil for the modified count', unless: write_command_enabled? do
+                expect(result.modified_count).to be_nil
               end
 
               it 'reports the matched count' do
@@ -796,8 +805,12 @@ describe Mongo::BulkWrite do
               expect(result.upserted_count).to eq(0)
             end
 
-            it 'reports the modified count' do
+            it 'reports the modified count', if: write_command_enabled? do
               expect(result.modified_count).to eq(0)
+            end
+
+            it 'returns nil as the modified count', unless: write_command_enabled?  do
+              expect(result.modified_count).to be_nil
             end
 
             it 'reports the matched count' do
@@ -835,8 +848,12 @@ describe Mongo::BulkWrite do
               expect(result.upserted_count).to eq(0)
             end
 
-            it 'reports the modified count' do
+            it 'reports the modified count', if: write_command_enabled? do
               expect(result.modified_count).to eq(1)
+            end
+
+            it 'returns nil for the modified count', unless: write_command_enabled? do
+              expect(result.modified_count).to be_nil
             end
 
             it 'reports the matched count' do
@@ -863,6 +880,10 @@ describe Mongo::BulkWrite do
 
               it 'reports the modified count', if: write_command_enabled? do
                 expect(result.modified_count).to eq(0)
+              end
+
+              it 'returns nil for the modified count', unless: write_command_enabled? do
+                expect(result.modified_count).to be_nil
               end
 
               it 'reports the matched count' do
@@ -925,8 +946,12 @@ describe Mongo::BulkWrite do
               expect(result.upserted_count).to eq(1)
             end
 
-            it 'reports the modified_count count' do
+            it 'reports the modified_count count', if: write_command_enabled? do
               expect(result.modified_count).to eq(0)
+            end
+
+            it 'returns nil for the modified_count count', unless: write_command_enabled? do
+              expect(result.modified_count).to be_nil
             end
 
             it 'reports the matched count' do
@@ -989,8 +1014,12 @@ describe Mongo::BulkWrite do
                 expect(result.upserted_count).to eq(0)
               end
 
-              it 'reports the modified count' do
+              it 'reports the modified count', if: write_command_enabled? do
                 expect(result.modified_count).to eq(1)
+              end
+
+              it 'returns nil for the modified count', unless: write_command_enabled? do
+                expect(result.modified_count).to be_nil
               end
 
               it 'reports the matched count' do
@@ -1049,8 +1078,12 @@ describe Mongo::BulkWrite do
               expect(result.upserted_count).to eq(0)
             end
 
-            it 'reports the modified count' do
+            it 'reports the modified count', if: write_command_enabled? do
               expect(result.modified_count).to eq(0)
+            end
+
+            it 'returns nil for the modified count', unless: write_command_enabled? do
+              expect(result.modified_count).to be_nil
             end
 
             it 'reports the matched count' do
@@ -1095,8 +1128,12 @@ describe Mongo::BulkWrite do
                 expect(result.upserted_count).to eq(0)
               end
 
-              it 'reports the modified count' do
+              it 'reports the modified count', if: write_command_enabled? do
                 expect(result.modified_count).to eq(2)
+              end
+
+              it 'returns nil for the modified count', unless: write_command_enabled? do
+                expect(result.modified_count).to be_nil
               end
 
               it 'reports the matched count' do
@@ -1160,8 +1197,12 @@ describe Mongo::BulkWrite do
               expect(result.upserted_count).to eq(0)
             end
 
-            it 'reports the modified count' do
+            it 'reports the modified count', if: write_command_enabled? do
               expect(result.modified_count).to eq(0)
+            end
+
+            it 'returns nil for the modified count', unless: write_command_enabled? do
+              expect(result.modified_count).to be_nil
             end
 
             it 'reports the matched count' do
@@ -1197,8 +1238,12 @@ describe Mongo::BulkWrite do
               expect(result.upserted_count).to eq(0)
             end
 
-            it 'reports the modified count' do
+            it 'reports the modified count', if: write_command_enabled? do
               expect(result.modified_count).to eq(2)
+            end
+
+            it 'returns nil for the modified count', unless: write_command_enabled? do
+              expect(result.modified_count).to be_nil
             end
 
             it 'reports the matched count' do
@@ -1238,8 +1283,8 @@ describe Mongo::BulkWrite do
                 expect(result.modified_count).to eq(1)
               end
 
-              it 'reports the modified count', unless: write_command_enabled? do
-                expect(result.modified_count).to eq(2)
+              it 'returns nil for the modified count', unless: write_command_enabled? do
+                expect(result.modified_count).to be_nil
               end
 
               it 'reports the matched count' do
@@ -1280,8 +1325,13 @@ describe Mongo::BulkWrite do
               bulk_write.execute
             end
 
-            it 'updates the document' do
+            it 'updates the document', if: write_command_enabled? do
               expect(result.modified_count).to eq(0)
+              expect(authorized_collection.find(name: { '$in' => ['test', 'test1'] }).count).to eq(2)
+            end
+
+            it 'updates the document', unless: write_command_enabled? do
+              expect(result.modified_count).to be_nil
               expect(authorized_collection.find(name: { '$in' => ['test', 'test1'] }).count).to eq(2)
             end
 
@@ -1289,8 +1339,12 @@ describe Mongo::BulkWrite do
               expect(result.upserted_count).to eq(2)
             end
 
-            it 'reports the modified count' do
+            it 'reports the modified count', if: write_command_enabled? do
               expect(result.modified_count).to eq(0)
+            end
+
+            it 'returns nil for the modified count', unless: write_command_enabled? do
+              expect(result.modified_count).to be_nil
             end
 
             it 'reports the matched count' do
@@ -1335,8 +1389,8 @@ describe Mongo::BulkWrite do
                 expect(result.modified_count).to eq(1)
               end
 
-              it 'reports the modified count', unless: write_command_enabled? do
-                expect(result.modified_count).to eq(2)
+              it 'returns nil for the modified count', unless: write_command_enabled? do
+                expect(result.modified_count).to be_nil
               end
 
               it 'reports the matched count' do
@@ -1400,8 +1454,12 @@ describe Mongo::BulkWrite do
                 expect(result.upserted_count).to eq(0)
               end
 
-              it 'reports the modified count' do
+              it 'reports the modified count', if: write_command_enabled? do
                 expect(result.modified_count).to eq(2)
+              end
+
+              it 'returns nil for the modified count', unless: write_command_enabled? do
+                expect(result.modified_count).to be_nil
               end
 
               it 'reports the matched count' do
@@ -1461,12 +1519,16 @@ describe Mongo::BulkWrite do
               expect(result.upserted_count).to eq(0)
             end
 
-            it 'reports the modified count' do
+            it 'reports the modified count', if: write_command_enabled? do
               expect(result.modified_count).to eq(0)
             end
 
+            it 'returns nil for the modified count', unless: write_command_enabled? do
+              expect(result.modified_count).to be_nil
+            end
+
             it 'reports the matched count' do
-              expect(result.matched_count).to eq(0)
+              expect(result.matched_count).to be(0)
             end
           end
 
@@ -1496,8 +1558,12 @@ describe Mongo::BulkWrite do
               expect(result.upserted_count).to eq(0)
             end
 
-            it 'reports the modified count' do
+            it 'reports the modified count', if: write_command_enabled? do
               expect(result.modified_count).to eq(2)
+            end
+
+            it 'returns nil for the modified count', unless: write_command_enabled? do
+              expect(result.modified_count).to be_nil
             end
 
             it 'reports the matched count' do
@@ -1549,8 +1615,12 @@ describe Mongo::BulkWrite do
               expect(result.matched_count).to eq(0)
             end
 
-            it 'reports the modified count' do
+            it 'reports the modified count', if: write_command_enabled? do
               expect(result.modified_count).to eq(0)
+            end
+
+            it 'returns nil for the modified count', unless: write_command_enabled? do
+              expect(result.modified_count).to be_nil
             end
 
             it 'reports the upserted id', if: write_command_enabled? do
@@ -1813,7 +1883,7 @@ describe Mongo::BulkWrite do
               ops, :bypass_document_validation => true)
         end
 
-        it 'executes successfully' do
+        it 'executes successfully', if: write_command_enabled? do
           expect(result2.modified_count).to eq(2)
           expect(result2.inserted_count).to eq(1)
         end
