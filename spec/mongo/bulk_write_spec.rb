@@ -723,33 +723,33 @@ describe Mongo::BulkWrite do
                                 collation: collation }}]
             end
 
-            context 'when the server selected supports collations', if: collation_enabled? do
+            context 'when the server selected supports collations' do
 
               let!(:result) do
                 bulk_write.execute
               end
 
-              it 'applies the collation' do
+              it 'applies the collation', if: collation_enabled? do
                 expect(authorized_collection.find(other: 'pong').count).to eq(1)
               end
 
-              it 'reports the upserted id' do
+              it 'reports the upserted id', if: collation_enabled? do
                 expect(result.upserted_ids).to eq([])
               end
 
-              it 'reports the upserted count' do
+              it 'reports the upserted count', if: collation_enabled? do
                 expect(result.upserted_count).to eq(0)
               end
 
-              it 'reports the modified count', if: write_command_enabled? do
+              it 'reports the modified count', if: collation_enabled? && write_command_enabled? do
                 expect(result.modified_count).to eq(1)
               end
 
-              it 'returns nil for the modified count', unless: write_command_enabled? do
+              it 'returns nil for the modified count', if: collation_enabled? && !write_command_enabled? do
                 expect(result.modified_count).to be_nil
               end
 
-              it 'reports the matched count' do
+              it 'reports the matched count', if: collation_enabled? do
                 expect(result.matched_count).to eq(1)
               end
             end
@@ -996,33 +996,33 @@ describe Mongo::BulkWrite do
                                collation: collation }}]
             end
 
-            context 'when the server selected supports collations', if: collation_enabled? do
+            context 'when the server selected supports collations' do
 
               let!(:result) do
                 bulk_write.execute
               end
 
-              it 'applies the collation' do
+              it 'applies the collation', if: collation_enabled? do
                 expect(authorized_collection.find(name: 'pong').count).to eq(1)
               end
 
-              it 'reports the upserted id' do
+              it 'reports the upserted id', if: collation_enabled? do
                 expect(result.upserted_ids).to eq([])
               end
 
-              it 'reports the upserted count' do
+              it 'reports the upserted count', if: collation_enabled? do
                 expect(result.upserted_count).to eq(0)
               end
 
-              it 'reports the modified count', if: write_command_enabled? do
+              it 'reports the modified count', if: collation_enabled? && write_command_enabled? do
                 expect(result.modified_count).to eq(1)
               end
 
-              it 'returns nil for the modified count', unless: write_command_enabled? do
+              it 'returns nil for the modified count', if: collation_enabled? && !write_command_enabled? do
                 expect(result.modified_count).to be_nil
               end
 
-              it 'reports the matched count' do
+              it 'reports the matched count', if: collation_enabled? do
                 expect(result.matched_count).to eq(1)
               end
             end
@@ -1110,33 +1110,33 @@ describe Mongo::BulkWrite do
                                collation: collation }}]
             end
 
-            context 'when the server selected supports collations', if: collation_enabled? do
+            context 'when the server selected supports collations' do
 
               let!(:result) do
                 bulk_write.execute
               end
 
-              it 'applies the collation' do
+              it 'applies the collation', if: collation_enabled? do
                 expect(authorized_collection.find(name: 'pong').count).to eq(2)
               end
 
-              it 'reports the upserted id' do
+              it 'reports the upserted id', if: collation_enabled? do
                 expect(result.upserted_ids).to eq([])
               end
 
-              it 'reports the upserted count' do
+              it 'reports the upserted count', if: collation_enabled? do
                 expect(result.upserted_count).to eq(0)
               end
 
-              it 'reports the modified count', if: write_command_enabled? do
+              it 'reports the modified count', if: collation_enabled? && write_command_enabled? do
                 expect(result.modified_count).to eq(2)
               end
 
-              it 'returns nil for the modified count', unless: write_command_enabled? do
+              it 'returns nil for the modified count', if: collation_enabled? && !write_command_enabled? do
                 expect(result.modified_count).to be_nil
               end
 
-              it 'reports the matched count' do
+              it 'reports the matched count', if: collation_enabled? do
                 expect(result.matched_count).to eq(2)
               end
             end
@@ -1436,33 +1436,33 @@ describe Mongo::BulkWrite do
                                 collation: collation }}]
             end
 
-            context 'when the server selected supports collations', if: collation_enabled? do
+            context 'when the server selected supports collations' do
 
               let!(:result) do
                 bulk_write.execute
               end
 
-              it 'applies the collation' do
+              it 'applies the collation', if: collation_enabled? do
                 expect(authorized_collection.find(name: 'pong').count).to eq(2)
               end
 
-              it 'reports the upserted id' do
+              it 'reports the upserted id', if: collation_enabled? do
                 expect(result.upserted_ids).to eq([])
               end
 
-              it 'reports the upserted count' do
+              it 'reports the upserted count', if: collation_enabled? do
                 expect(result.upserted_count).to eq(0)
               end
 
-              it 'reports the modified count', if: write_command_enabled? do
+              it 'reports the modified count', if: collation_enabled? && write_command_enabled? do
                 expect(result.modified_count).to eq(2)
               end
 
-              it 'returns nil for the modified count', unless: write_command_enabled? do
+              it 'returns nil for the modified count', if: collation_enabled? && !write_command_enabled? do
                 expect(result.modified_count).to be_nil
               end
 
-              it 'reports the matched count' do
+              it 'reports the matched count', if: collation_enabled? do
                 expect(result.matched_count).to eq(2)
               end
             end
