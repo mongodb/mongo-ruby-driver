@@ -32,11 +32,6 @@ module Mongo
           # @since 2.0.0
           UPSERTED = 'upserted'.freeze
 
-          # Constant for number upserted.
-          #
-          # @since 2.4.2
-          UPSERTED_COUNT = 'n_upserted'.freeze
-
           # Get the number of documents matched.
           #
           # @example Get the matched count.
@@ -90,7 +85,7 @@ module Mongo
           #
           # @since 2.4.2
           def upserted_count
-            first[UPSERTED_COUNT] || (upsert? ? n : 0 )
+            upsert? ? n : 0
           end
 
           private
@@ -115,11 +110,6 @@ module Mongo
           #
           # @since 2.0.0
           UPSERTED = 'upserted'.freeze
-
-          # Constant for number upserted.
-          #
-          # @since 2.4.2
-          UPSERTED_COUNT = 'n_upserted'.freeze
 
           # Get the number of documents matched.
           #
