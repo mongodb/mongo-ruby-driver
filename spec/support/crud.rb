@@ -118,6 +118,8 @@ module Mongo
             client.cluster.next_primary.features.collation_enabled?
           elsif @min_server_version >= '2.6'
             client.cluster.next_primary.features.write_command_enabled?
+          else
+            true
           end
         else
           true
