@@ -76,6 +76,18 @@ module Mongo
             upsert?.first['_id']
           end
 
+          # Returns the number of documents upserted.
+          #
+          # @example Get the number of upserted documents.
+          #   result.upserted_count
+          #
+          # @return [ Integer ] The number upserted.
+          #
+          # @since 2.4.2
+          def upserted_count
+            upsert? ? n : 0
+          end
+
           private
 
           def upsert?
@@ -121,15 +133,10 @@ module Mongo
           # @example Get the modified count.
           #   result.modified_count
           #
-          # @return [ Integer ] The modified count.
+          # @return [ nil ] Always omitted for legacy versions.
           #
           # @since 2.0.0
-          def modified_count
-            return 0 unless acknowledged?
-            return n if updated_existing?
-            return 0 if upsert?
-            n
-          end
+          def modified_count; end
 
           # The identifier of the inserted document if an upsert
           #   took place.
@@ -142,6 +149,18 @@ module Mongo
           # @since 2.0.0
           def upserted_id
             first[UPSERTED] if upsert?
+          end
+
+          # Returns the number of documents upserted.
+          #
+          # @example Get the number of upserted documents.
+          #   result.upserted_count
+          #
+          # @return [ Integer ] The number upserted.
+          #
+          # @since 2.4.2
+          def upserted_count
+            upsert? ? n : 0
           end
 
           private

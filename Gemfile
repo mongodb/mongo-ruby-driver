@@ -9,7 +9,11 @@ group :development, :testing do
   gem 'json', :platforms => [ :jruby ]
   gem 'rspec', '~> 3.0'
   gem 'mime-types', '~> 1.25'
-  gem 'httparty'
+  if RUBY_VERSION < '2.0.0'
+    gem 'httparty', '0.14.0'
+  else
+    gem 'httparty'
+  end
   gem 'yajl-ruby', require: 'yajl', platforms: :mri
   gem 'celluloid', platforms: :mri
 end

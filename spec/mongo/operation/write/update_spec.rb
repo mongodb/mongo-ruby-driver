@@ -106,8 +106,12 @@ describe Mongo::Operation::Write::Update do
           expect(result.written_count).to eq(1)
         end
 
-        it 'reports the modified count' do
+        it 'reports the modified count', if: write_command_enabled? do
           expect(result.modified_count).to eq(1)
+        end
+
+        it 'returns nil for the modified count', unless: write_command_enabled? do
+          expect(result.modified_count).to be_nil
         end
 
         it 'reports the matched count' do
@@ -158,8 +162,12 @@ describe Mongo::Operation::Write::Update do
           expect(result.written_count).to eq(2)
         end
 
-        it 'reports the modified count' do
+        it 'reports the modified count', if: write_command_enabled? do
           expect(result.modified_count).to eq(2)
+        end
+
+        it 'returns nil for the modified count', unless: write_command_enabled? do
+          expect(result.modified_count).to be_nil
         end
 
         it 'reports the matched count' do
@@ -211,8 +219,12 @@ describe Mongo::Operation::Write::Update do
           expect(result.written_count).to eq(1)
         end
 
-        it 'reports the modified count' do
+        it 'reports the modified count', if: write_command_enabled? do
           expect(result.modified_count).to eq(0)
+        end
+
+        it 'returns nil for the modified count', unless: write_command_enabled? do
+          expect(result.modified_count).to be_nil
         end
 
         it 'reports the matched count' do

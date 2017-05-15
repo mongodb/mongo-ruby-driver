@@ -176,16 +176,7 @@ module Mongo
             # @return [ Integer ] The number of documents modified.
             #
             # @since 2.2.3
-            def n_modified
-              return 0 unless acknowledged?
-              @replies.reduce(0) do |n, reply|
-                if upsert?(reply)
-                  n
-                else
-                  updated_existing?(reply) ? n += reply.documents.first[N] : n
-                end
-              end
-            end
+            def n_modified; end
 
             private
 

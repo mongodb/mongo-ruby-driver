@@ -83,14 +83,7 @@ module Mongo
       #
       # @since 2.4.0
       def server_version_satisfied?(client)
-        case @min_server_version
-          when '2.6'
-            client.cluster.servers.first.features.write_command_enabled?
-          when '3.4'
-            client.cluster.servers.first.features.collation_enabled?
-          else
-            true
-        end
+        lower_bound_satisfied?(client) && upper_bound_satisfied?(client)
       end
 
       # Get a list of CRUDTests for each test definition.
@@ -104,6 +97,32 @@ module Mongo
       def tests
         @crud_tests.collect do |test|
           Mongo::CRUD::CRUDTest.new(@data, test)
+        end
+      end
+
+      private
+
+      def upper_bound_satisfied?(client)
+        if @max_server_version
+          if @max_server_version < '2.6'
+            !client.cluster.next_primary.features.write_command_enabled?
+          end
+        else
+          true
+        end
+      end
+
+      def lower_bound_satisfied?(client)
+        if @min_server_version
+          if @min_server_version >= '3.4'
+            client.cluster.next_primary.features.collation_enabled?
+          elsif @min_server_version >= '2.6'
+            client.cluster.next_primary.features.write_command_enabled?
+          else
+            true
+          end
+        else
+          true
         end
       end
     end
@@ -236,6 +255,7 @@ module Mongo
       end
 
       def handle_upserted_id(field, expected_id, actual_id)
+        return true if expected_id.nil?
         if field == 'upsertedId'
           if expected_id.is_a?(Integer)
             actual_id.is_a?(BSON::ObjectId) || actual_id.nil?

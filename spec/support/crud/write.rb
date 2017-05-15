@@ -117,9 +117,12 @@ module Mongo
         end
 
         def update_return_doc(result)
-          return_doc = { 'upsertedId' => result.upserted_id } if upsert
-          (return_doc || {}).merge!({ 'matchedCount' => result.matched_count,
-                                      'modifiedCount' => result.modified_count })
+          return_doc = {}
+          return_doc['upsertedId'] = result.upserted_id if upsert
+          return_doc['upsertedCount'] = result.upserted_count
+          return_doc['matchedCount'] = result.matched_count
+          return_doc['modifiedCount'] = result.modified_count if result.modified_count
+          return_doc
         end
 
         def replace_one(collection)
