@@ -77,9 +77,9 @@ License
    See the License for the specific language governing permissions and
    limitations under the License.
 
-[rubygems-img]: https://badge.fury.io/rb/mongo.png
+[rubygems-img]: https://badge.fury.io/rb/mongo.svg
 [rubygems-url]: http://badge.fury.io/rb/mongo
-[travis-img]: https://secure.travis-ci.org/mongodb/mongo-ruby-driver.png?branch=master
+[travis-img]: https://secure.travis-ci.org/mongodb/mongo-ruby-driver.svg?branch=master
 [travis-url]: http://travis-ci.org/mongodb/mongo-ruby-driver?branch=master
-[codeclimate-img]: https://codeclimate.com/github/mongodb/mongo-ruby-driver.png?branch=master
+[codeclimate-img]: https://codeclimate.com/github/mongodb/mongo-ruby-driver.svg?branch=master
 [codeclimate-url]: https://codeclimate.com/github/mongodb/mongo-ruby-driver?branch=master
