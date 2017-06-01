@@ -19,24 +19,46 @@ MONGODB_URI=${MONGODB_URI:-}
 TOPOLOGY=${TOPOLOGY:-server}
 DRIVERS_TOOLS=${DRIVERS_TOOLS:-}
 
-export CI=true
-
-# Necessary for jruby
-export JAVACMD=/opt/java/jdk8/bin/java
 
 if [ "$AUTH" != "noauth" ]; then
   export ROOT_USER_NAME="bob"
   export ROOT_USER_PWD="pwd123"
 fi
-
+export CI=true
 export DRIVER_TOOLS_CLIENT_CERT_PEM="${DRIVERS_TOOLS}/.evergreen/x509gen/client-public.pem"
 export DRIVER_TOOLS_CLIENT_KEY_PEM="${DRIVERS_TOOLS}/.evergreen/x509gen/client-private.pem"
 export DRIVER_TOOLS_CA_PEM="${DRIVERS_TOOLS}/.evergreen/x509gen/ca.pem"
 export DRIVER_TOOLS_CLIENT_KEY_ENCRYPTED_PEM="${DRIVERS_TOOLS}/.evergreen/x509gen/password_protected.pem"
 
+
 source ~/.rvm/scripts/rvm
+
+# Necessary for jruby
+export JAVACMD=/opt/java/jdk8/bin/java
+export PATH=$PATH:/opt/java/jdk8/bin
+
+if [ "$RVM_RUBY" == "ruby-head" ]; then
+  rvm reinstall $RVM_RUBY
+fi
+
+# Don't errexit because this may call scripts which error
+set +o errexit
 rvm use $RVM_RUBY
+set -o errexit
+
+# Ensure we're using the right ruby
+python - <<EOH
+ruby = "${RVM_RUBY}".split("-")[0]
+version = "${RVM_RUBY}".split("-")[1]
+assert(ruby in "`ruby --version`")
+assert(version in "`ruby --version`")
+EOH
+
 gem install bundler
+
+echo "Installing all gem dependencies"
 bundle install
 bundle exec rake clean
+
+echo "Running specs"
 bundle exec rake spec
