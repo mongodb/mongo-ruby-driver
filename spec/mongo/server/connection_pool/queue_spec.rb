@@ -97,6 +97,39 @@ describe Mongo::Server::ConnectionPool::Queue do
       it 'does not use the same objects in the queue' do
         expect(queue.dequeue).to_not equal(queue.dequeue)
       end
+
+      context 'when min size is greater than max size' do
+
+        context 'when max size is provided' do
+
+          let(:queue) do
+            described_class.new(:min_pool_size => 10, :max_pool_size => 2) { double('connection') }
+          end
+
+          it 'creates the queue with the minimum connections' do
+            expect(queue.size).to eq(10)
+          end
+
+          it 'sets max_size to the min' do
+            expect(queue.max_size).to eq(10)
+          end
+        end
+
+        context 'when max size is not provided' do
+
+          let(:queue) do
+            described_class.new(:min_pool_size => 10) { double('connection') }
+          end
+
+          it 'creates the queue with the minimum connections' do
+            expect(queue.size).to eq(10)
+          end
+
+          it 'sets max_size to the min' do
+            expect(queue.max_size).to eq(10)
+          end
+        end
+      end
     end
 
     context 'when no min size is provided' do

@@ -138,7 +138,7 @@ module Mongo
         #
         # @since 2.0.0
         def max_size
-          @max_size ||= options[:max_pool_size] || MAX_SIZE
+          @max_size ||= [(options[:max_pool_size] || MAX_SIZE), min_size].max
         end
 
         # Get the minimum size of the queue.
