@@ -412,3 +412,56 @@ Details on Timeout Options
   interrupted on the server. See the
   `CRUD specification <https://github.com/mongodb/specifications/blob/master/source/crud/crud.rst>`_ for details on
   operations that support this option.
+
+Details on Connection Pooling
+-----------------------------
+
+``Mongo::Client`` instances have a connection pool per server in your MongoDB topology. The pool opens connections on
+demand to support the number of concurrent MongoDB operations your application requires. There is no thread-affinity
+for connections.
+
+The client instance opens one additional connection per server in your MongoDB topology for monitoring the server's
+state.
+
+The size of each connection pool is capped at ``max_pool_size``, which defaults to 5. When a thread in your application
+begins an operation on MongoDB, it tries to retrieve a connection from the pool to send that operation on. If there
+are some connections available in the pool, it checks out a connection from the pool and uses it for the operation.
+If there are no connections available and the size of the pool is less than the ``max_pool_size``, a new connection
+will be created. If all connections are in use and the pool has reached its maximum, the thread pauses and waits for a
+connection to be returned to the pool by another thread.
+
+You can also set the minimum number of connections initialized when the pool is created with the ``min_pool_size``
+setting. This is helpful if your application is prone to load spikes and you want to avoid a slow-down due to new
+connections being created if a spike occurs. The default ``min_pool_size`` is 1.
+
+There is one more setting affecting the connection pool, called ``wait_queue_timeout``, defined in seconds. This setting
+determines how long a thread will wait for a connection to be returned to the pool, when there are no connections
+available. If this timeout is reached, a ``Timeout::Error`` will be raised. The default is 1 second.
+
+The default configuration for a ``Mongo::Client`` works for most applications:
+
+.. code-block:: ruby
+
+    client = Mongo::Client.new(["localhost:27017"])
+
+Create this client **once** for each process, and reuse it for all operations. It is a common mistake to create a new
+client for each request, which is very inefficient and not what the client was designed for.
+
+To support extremely high numbers of concurrent MongoDB operations within one process, increase ``max_pool_size``:
+
+.. code-block:: ruby
+
+    client = Mongo::Client.new(["localhost:27017"], max_pool_size: 200)
+
+Any number of threads are allowed to wait for connections to become available, and they can wait the default (1 second)
+or the ``wait_queue_timeout`` setting:
+
+.. code-block:: ruby
+
+    client = Mongo::Client.new(["localhost:27017"], wait_queue_timeout: 0.5)
+
+When ``#close`` is called on a client by any thread, all connections are closed:
+
+.. code-block:: ruby
+
+    client.close
