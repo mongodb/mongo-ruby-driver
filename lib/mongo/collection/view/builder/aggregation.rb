@@ -31,7 +31,8 @@ module Mongo
             :max_time_ms => 'maxTimeMS',
             :explain => 'explain',
             :bypass_document_validation => 'bypassDocumentValidation',
-            :collation => 'collation'
+            :collation => 'collation',
+            :hint => 'hint'
           ).freeze
 
           def_delegators :@view, :collection, :database, :read, :write_concern

@@ -1170,6 +1170,17 @@ describe Mongo::Collection do
         expect(authorized_collection.aggregate([], options).options).to eq(BSON::Document.new(options))
       end
 
+      context 'when a hint is provided' do
+
+        let(:options) do
+          {:hint => {y: 1}}
+        end
+
+        it 'sets the options on the Aggregation object' do
+          expect(authorized_collection.aggregate([], options).options).to eq(BSON::Document.new(options))
+        end
+      end
+
       context 'when collation is provided' do
 
         before do

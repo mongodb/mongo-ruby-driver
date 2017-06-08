@@ -372,6 +372,17 @@ describe Mongo::Collection::View::Aggregation do
       end
     end
 
+    context 'when a hint is specified' do
+
+      let(:options) do
+        {:hint => {'y' => 1}}
+      end
+
+      it 'includes the option in the spec' do
+        expect(aggregation.send(:aggregate_spec)[:selector][:hint]).to eq(options[:hint])
+      end
+    end
+
     context 'when use_cursor is set' do
 
       context 'when use_cursor is true' do
