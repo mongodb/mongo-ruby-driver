@@ -375,11 +375,11 @@ describe Mongo::Collection::View::Aggregation do
     context 'when a hint is specified' do
 
       let(:options) do
-        {:hint => {'y' => 1}}
+        { 'hint' => { 'y' => 1 } }
       end
 
       it 'includes the option in the spec' do
-        expect(aggregation.send(:aggregate_spec)[:selector][:hint]).to eq(options[:hint])
+        expect(aggregation.send(:aggregate_spec)[:selector][:hint]).to eq(options['hint'])
       end
     end
 
