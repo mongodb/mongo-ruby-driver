@@ -430,13 +430,20 @@ If there are no connections available and the size of the pool is less than the 
 will be created. If all connections are in use and the pool has reached its maximum, the thread pauses and waits for a
 connection to be returned to the pool by another thread.
 
-You can also set the minimum number of connections initialized when the pool is created with the ``min_pool_size``
-setting. This is helpful if your application is prone to load spikes and you want to avoid a slow-down due to new
-connections being created if a spike occurs. The default ``min_pool_size`` is 1.
+The number of seconds the thread will wait is configurable. This setting, called ``wait_queue_timeout``, is defined in
+seconds. It determines how long a thread will wait for a connection to be returned to the pool, when there are no
+connections available. If this timeout is reached, a ``Timeout::Error`` is raised. The default is 1 second.
 
-There is one more setting affecting the connection pool, called ``wait_queue_timeout``, defined in seconds. This setting
-determines how long a thread will wait for a connection to be returned to the pool, when there are no connections
-available. If this timeout is reached, a ``Timeout::Error`` will be raised. The default is 1 second.
+You can also set the number of connections initialized when the pool is created with the ``min_pool_size``
+setting. This is helpful if your application experiences load spikes and you want to avoid a slow-down when
+connections are created at the time of the spike. The default ``min_pool_size`` is 1.
+
+For example, a client connected to a 3-node replica set opens 3 monitoring sockets. It also opens as many sockets as
+needed to support a multi-threaded application's concurrent operations on each server, up to ``maxPoolSize``. If the
+application only uses the primary (the default), then only the primary connection pool grows and the total connections
+is at most 8 (5 connections for the primary pool + 3 monitoring connections). If the application uses a read
+preference to query the secondaries, their pools also grow and the total connections can reach 18 (5 + 5 + 5 + 3).
+
 
 The default configuration for a ``Mongo::Client`` works for most applications:
 
