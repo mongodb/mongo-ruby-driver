@@ -27,7 +27,6 @@ Gem::Specification.new do |s|
 
   s.executables       = ['mongo_console']
   s.require_paths     = ['lib']
-  s.has_rdoc          = 'yard'
   s.bindir            = 'bin'
 
   s.add_dependency 'bson', '>=4.2.1', '<5.0.0'
