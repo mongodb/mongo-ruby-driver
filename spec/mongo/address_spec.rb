@@ -209,7 +209,7 @@ describe Mongo::Address do
     context 'when providing a DNS entry that resolves to both IPv6 and IPv4' do
 
       let(:address) do
-        default_address
+        described_class.new('localhost')
       end
 
       let(:host) do
@@ -218,13 +218,13 @@ describe Mongo::Address do
 
       before do
         allow(::Socket).to receive(:getaddrinfo).and_return(
-          [ ["AF_INET6", 0, '::1', '::1', ::Socket::AF_INET6, 1, 6],
+          [ ["AF_INET6", 0, '2607:5300:60:4c2f::', '2607:5300:60:4c2f::', ::Socket::AF_INET6, 1, 6],
             ["AF_INET", 0, host, host, ::Socket::AF_INET, 1, 6]]
         )
       end
 
       it "attempts to use IPv6 and fallbacks to IPv4" do
-        expect(address.socket(0.0)).not_to be_nil
+        expect(address.socket(1)).not_to be_nil
       end
     end
   end
