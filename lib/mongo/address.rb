@@ -173,7 +173,7 @@ module Mongo
           res = FAMILY_MAP[info[4]].new(info[3], port, host)
           res.socket(timeout, ssl_options).connect!.close
           return res
-        rescue IOError, SystemCallError, Error::SocketError, Mongo::Error::SocketTimeoutError => e
+        rescue IOError, SystemCallError, Error::SocketError, Error::SocketTimeoutError => e
           error = e
         end
       end
