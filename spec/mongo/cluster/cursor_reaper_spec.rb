@@ -25,47 +25,6 @@ describe Mongo::Cluster::CursorReaper do
     end
   end
 
-  describe '#run' do
-
-    it 'starts a thread calling #kill_cursors' do
-      reaper.run!
-      expect(reaper.instance_variable_get(:@thread)).to be_a(Thread)
-    end
-
-    context 'when run is called more than once' do
-
-      let!(:reaper_thread) do
-        reaper.run!
-        reaper.instance_variable_get(:@reaper)
-      end
-
-      it 'only starts a thread once' do
-        reaper.run!
-        expect(reaper.instance_variable_get(:@reaper)).to be(reaper_thread)
-      end
-    end
-
-    context 'when there are ops in the list to execute' do
-
-      let(:server) { double('server') }
-      let(:cursor_id) { 1 }
-      let(:op_spec_1) { double('op_spec_1') }
-      let(:op_spec_2) { double('op_spec_2') }
-      let(:to_kill) { reaper.instance_variable_get(:@to_kill)}
-
-      before do
-        reaper.register_cursor(cursor_id)
-        reaper.schedule_kill_cursor(cursor_id, op_spec_1, server)
-        reaper.run!
-        sleep(Mongo::Cluster::CursorReaper::FREQUENCY + 1)
-      end
-
-      it 'executes the ops in the thread' do
-        expect(reaper.instance_variable_get(:@to_kill).size).to eq(0)
-      end
-    end
-  end
-
   describe '#schedule_kill_cursor' do
 
     let(:server) { double('server') }
@@ -182,35 +141,6 @@ describe Mongo::Cluster::CursorReaper do
       it 'removes the cursor id' do
         expect(active_cursors.size).to eq(0)
       end
-    end
-  end
-
-  describe '#stop!' do
-
-    let(:thread) do
-      reaper.run!
-      reaper.stop!
-      sleep(0.5)
-      reaper.instance_variable_get(:@thread)
-    end
-
-    it 'stops the thread from running' do
-      expect(thread.alive?).to be(false)
-    end
-  end
-
-  describe '#restart!' do
-
-    let(:thread) do
-      reaper.run!
-      reaper.stop!
-      sleep(0.5)
-      reaper.restart!
-      reaper.instance_variable_get(:@thread)
-    end
-
-    it 'restarts the thread' do
-      expect(thread.alive?).to be(true)
     end
   end
 end

@@ -267,9 +267,8 @@ describe Mongo::Cursor do
         authorized_client.cluster.instance_variable_get(:@cursor_reaper)
       end
 
-
       it 'schedules a kill cursors op', unless: sessions_enabled? do
-        sleep(Mongo::Cluster::CursorReaper::FREQUENCY + 0.5)
+        sleep(Mongo::Cluster::PeriodicExecutor::FREQUENCY)
         expect {
           cursor.to_a
         }.to raise_exception(Mongo::Error::OperationFailure)

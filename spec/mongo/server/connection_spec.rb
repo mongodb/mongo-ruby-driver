@@ -336,7 +336,7 @@ describe Mongo::Server::Connection do
       it 'closes the socket and does not use it for subsequent requests' do
         t = Thread.new {
           # Kill the thread just before the reply is read
-          allow(Mongo::Protocol::Message).to receive(:deserialize_header) { t.kill }
+          allow(Mongo::Protocol::Reply).to receive(:deserialize_header) { t.kill and t.stop? }
           connection.dispatch([ query_bob ])
         }
         t.join
@@ -439,13 +439,17 @@ describe Mongo::Server::Connection do
 
       it 'raises a timeout when it expires' do
         start = Time.now
-        expect {
-          Timeout::timeout(3) do
+        begin
+          Timeout::timeout(1.5 + 2) do
             client[authorized_collection.name].find("$where" => "sleep(2000) || true").first
           end
-        }.to raise_exception(Timeout::Error, "Took more than 1.5 seconds to receive data.")
-        end_time = Time.now
-        expect(end_time - start).to be_within(0.2).of(1.5)
+        rescue => ex
+          end_time = Time.now
+          expect(ex).to be_a(Timeout::Error)
+          expect(ex.message).to eq("Took more than 1.5 seconds to receive data.")
+        end
+        # Account for wait queue timeout (2s) and rescue
+        expect(end_time - start).to be_within(2.5).of(1.5)
       end
 
       context 'when the socket_timeout is negative' do

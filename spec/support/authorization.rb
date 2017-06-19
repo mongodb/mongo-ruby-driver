@@ -86,7 +86,8 @@ BASE_OPTIONS = {
                   heartbeat_frequency: 20,
                   max_read_retries: 5,
                   wait_queue_timeout: 2,
-                  connect_timeout: 3
+                  connect_timeout: 3,
+                  max_idle_time: 5
                }
 
 # Options for test suite clients.
