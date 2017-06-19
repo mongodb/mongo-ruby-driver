@@ -62,3 +62,6 @@ bundle exec rake clean
 
 echo "Running specs"
 bundle exec rake spec
+
+echo "Killing all jruby processes"
+for pid in $(ps -ef | grep "jruby" | awk '{print $2}'); do kill -9 $pid; done || true
