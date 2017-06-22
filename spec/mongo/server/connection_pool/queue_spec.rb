@@ -8,41 +8,64 @@ describe Mongo::Server::ConnectionPool::Queue do
       double('connection')
     end
 
-    let(:queue) do
-      described_class.new(:max_pool_size => 1) { connection }
-    end
+    context 'when the max pool size is 1' do
 
-    context 'when the queue is empty' do
+      let(:queue) do
+        described_class.new(:max_pool_size => 1) { connection }
+      end
 
-      context 'when the max size is reached' do
+      context 'when the queue is empty' do
 
-        it 'raises a timeout error' do
-          expect {
-            queue.dequeue
-            queue.dequeue
-          }.to raise_error(Timeout::Error)
+        context 'when the max size is reached' do
+
+          it 'raises a timeout error' do
+            expect {
+              queue.dequeue
+              queue.dequeue
+            }.to raise_error(Timeout::Error)
+          end
+        end
+
+        context 'when the max size is not reached' do
+
+          it 'creates a new connecection' do
+            expect(queue.dequeue).to eq(connection)
+          end
         end
       end
 
-      context 'when the max size is not reached' do
+      context 'when waiting for a connection to be enqueued' do
 
-        it 'creates a new connecection' do
+        before do
+          Thread.new do
+            sleep(0.5)
+            queue.enqueue(connection)
+          end.join
+        end
+
+        it 'returns the enqueued connection' do
           expect(queue.dequeue).to eq(connection)
         end
       end
     end
 
-    context 'when waiting for a connection to be enqueued' do
+    context 'when the max pool size is more than 1' do
 
-      before do
-        Thread.new do
-          sleep(0.5)
-          queue.enqueue(connection)
-        end.join
+      let(:queue) do
+        described_class.new(:max_pool_size => 2) { double('connection') }
       end
 
-      it 'returns the enqueued connection' do
-        expect(queue.dequeue).to eq(connection)
+      before do
+        first = queue.dequeue
+        second = queue.dequeue
+        queue.enqueue(second)
+        queue.enqueue(first)
+      end
+
+      it 'pulls the connection from the front of the queue' do
+        first = queue.dequeue
+        queue.enqueue(first)
+        expect(queue.dequeue).to eq(first)
       end
     end
   end
