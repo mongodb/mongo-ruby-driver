@@ -31,7 +31,7 @@ module Mongo
         # The constant for the ismaster command.
         #
         # @since 2.2.0
-        ISMASTER_MESSAGE = Protocol::Query.new(Database::ADMIN, Database::COMMAND, ISMASTER, :limit => -1)
+        ISMASTER_MESSAGE = Protocol::Command.new(Database::ADMIN, Database::COMMAND, ISMASTER, :limit => -1)
 
         # The raw bytes for the ismaster message.
         #

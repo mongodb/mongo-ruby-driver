@@ -95,7 +95,7 @@ describe Mongo::Operation::Write::Command::Insert do
     end
 
     it 'creates a query wire protocol message with correct specs' do
-      expect(Mongo::Protocol::Query).to receive(:new).with(authorized_collection.database.name,
+      expect(Mongo::Protocol::Command).to receive(:new).with(authorized_collection.database.name,
                                                            '$cmd',
                                                             expected_selector,
                                                             { limit: -1, validating_keys: true })

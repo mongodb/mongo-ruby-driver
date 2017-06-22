@@ -245,7 +245,7 @@ describe Mongo::Server::Connection do
       end
 
       let(:command) do
-        Mongo::Protocol::Query.new(TEST_DB, '$cmd', selector, :limit => -1)
+        Mongo::Protocol::Command.new(TEST_DB, '$cmd', selector, :limit => -1)
       end
 
       let(:reply) do
@@ -369,7 +369,7 @@ describe Mongo::Server::Connection do
       context 'when the message is a command' do
 
         before do
-          allow(connection).to receive(:max_bson_object_size).and_return(100)
+          allow(connection).to receive(:max_bson_object_size).and_return(24-command.send(:extra_obj_size))
         end
 
         let(:selector) do

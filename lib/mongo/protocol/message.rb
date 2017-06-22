@@ -179,6 +179,10 @@ module Mongo
       @@request_id = 0
       @@id_lock = Mutex.new
 
+      def extra_obj_size
+        0
+      end
+
       # A method for getting the fields for a message class
       #
       # @return [Integer] the fields for the message class
@@ -210,7 +214,8 @@ module Mongo
             end
           else
             if field[:type].respond_to?(:size_limited?)
-              field[:type].serialize(buffer, value, max_bson_size, validating_keys?)
+              max_size =  max_bson_size + extra_obj_size if max_bson_size
+              field[:type].serialize(buffer, value, max_size, validating_keys?)
             else
               field[:type].serialize(buffer, value, validating_keys?)
             end

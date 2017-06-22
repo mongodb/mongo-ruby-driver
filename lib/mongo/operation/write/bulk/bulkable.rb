@@ -68,7 +68,7 @@ module Mongo
                 WriteConcern.get(WriteConcern::DEFAULT).get_last_error :
                 wc.get_last_error
             if gle_message
-              Protocol::Query.new(
+              Protocol::Command.new(
                   db_name,
                   Database::COMMAND,
                   gle_message,

@@ -34,11 +34,6 @@ module Mongo
 
           private
 
-          # The query selector for this insert command operation.
-          #
-          # @return [ Hash ] The selector describing this insert operation.
-          #
-          # @since 2.0.0
           def selector
             { insert: coll_name,
               documents: documents,
@@ -49,14 +44,9 @@ module Mongo
             end
           end
 
-          # The wire protocol message for this write operation.
-          #
-          # @return [ Mongo::Protocol::Query ] Wire protocol message.
-          #
-          # @since 2.2.5
           def message(server)
             opts = options.merge(validating_keys: true)
-            Protocol::Query.new(db_name, Database::COMMAND, selector, opts)
+            Protocol::Command.new(db_name, Database::COMMAND, selector, opts)
           end
         end
       end

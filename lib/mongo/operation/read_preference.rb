@@ -51,10 +51,14 @@ module Mongo
         end
       end
 
+      def wire_protocol_type
+        Protocol::Query
+      end
+
       def message(server)
         sel = update_selector_for_read_pref(selector, server)
         opts = update_options_for_slave_ok(options, server)
-        Protocol::Query.new(db_name, query_coll, sel, opts)
+        wire_protocol_type.new(db_name, query_coll, sel, opts)
       end
     end
   end
