@@ -30,7 +30,7 @@ module Mongo
                          :batch_size => 'batchSize',
                          :limit => 'limit',
                          :collation => 'collation'
-                       }
+                       }.freeze
 
         # Map of read preference mode names to their equivalent Ruby-formatted symbols.
         #
@@ -40,7 +40,7 @@ module Mongo
                                 'primaryPreferred' => :primary_preferred,
                                 'secondaryPreferred' => :secondary_preferred,
                                 'nearest' => :nearest
-                              }
+                              }.freeze
 
         # The operation name.
         #

@@ -36,7 +36,7 @@ module Mongo
                        'findOneAndReplace' => :find_one_and_replace,
                        'findOneAndUpdate' => :find_one_and_update,
                        'bulkWrite' => :bulk_write
-                     }
+                     }.freeze
 
         # Map of operation options to method names.
         #
@@ -49,7 +49,7 @@ module Mongo
                         :ordered => 'ordered',
                         :write_concern => 'writeConcern',
                         :collation => 'collation'
-                       }
+                       }.freeze
 
         # The operation name.
         #
@@ -58,6 +58,11 @@ module Mongo
         # @since 2.0.0
         attr_reader :name
 
+        # Instantiate the operation.
+        #
+        # @return [ Hash ] spec The operation spec.
+        #
+        # @since 2.0.0
         def initialize(spec)
           @spec = spec
           @name = spec['name']
