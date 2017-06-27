@@ -37,7 +37,7 @@ module Mongo
       # @return [ Unix ] The connected socket instance.
       #
       # @since 2.0.0
-      def connect!
+      def connect!(connect_timeout = nil)
         self
       end
 

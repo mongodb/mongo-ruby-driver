@@ -52,8 +52,8 @@ module Mongo
       # @return [ SSL ] The connected socket instance.
       #
       # @since 2.0.0
-      def connect!
-        Timeout.timeout(timeout, Error::SocketTimeoutError) do
+      def connect!(connect_timeout = nil)
+        Timeout.timeout(connect_timeout || timeout, Error::SocketTimeoutError) do
           handle_errors { @tcp_socket.connect(::Socket.pack_sockaddr_in(port, host)) }
           @socket = OpenSSL::SSL::SSLSocket.new(@tcp_socket, context)
           @socket.hostname = @host_name unless BSON::Environment.jruby?

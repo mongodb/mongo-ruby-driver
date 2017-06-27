@@ -60,7 +60,7 @@ module Mongo
       def connect!
         unless socket && socket.connectable?
           @socket = address.socket(timeout, ssl_options)
-          socket.connect!
+          address.connect_socket(socket)
           handshake!
           authenticate!
         end
@@ -154,6 +154,18 @@ module Mongo
           reply = Protocol::Reply.deserialize(socket, max_message_size)
           reply.documents[0][Operation::Result::OK] == 1
         end
+      end
+
+      # Get the timeout to execute an operation on a socket.
+      #
+      # @example Get the timeout to execute an operation on a socket.
+      #   connection.timeout
+      #
+      # @return [ Float ] The operation timeout in seconds.
+      #
+      # @since 2.0.0
+      def timeout
+        @timeout ||= options[:socket_timeout]
       end
 
       private

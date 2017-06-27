@@ -34,6 +34,11 @@ module Mongo
       ::Socket::AF_INET => IPv4
     }.freeze
 
+    # The default time in seconds to timeout a connection attempt.
+    #
+    # @since 2.5.0
+    CONNECT_TIMEOUT = 10.freeze
+
     # The localhost constant.
     #
     # @since 2.1.0
@@ -119,6 +124,7 @@ module Mongo
     def initialize(seed, options = {})
       @seed = seed
       @host, @port = parse_host_port
+      @options = options
     end
 
     # Get a pretty printed address inspection.
@@ -145,7 +151,7 @@ module Mongo
     #
     # @since 2.0.0
     def socket(timeout, ssl_options = {})
-      @resolver ||= initialize_resolver!(timeout, ssl_options)
+      @resolver ||= initialize_resolver!(ssl_options)
       @resolver.socket(timeout, ssl_options)
     end
 
@@ -161,9 +167,17 @@ module Mongo
       port ? "#{host}:#{port}" : host
     end
 
+    def connect_socket(socket)
+      socket.connect!(connect_timeout)
+    end
+
     private
 
-    def initialize_resolver!(timeout, ssl_options)
+    def connect_timeout
+      @connect_timeout ||= @options[:connect_timeout] || CONNECT_TIMEOUT
+    end
+
+    def initialize_resolver!(ssl_options)
       return Unix.new(seed.downcase) if seed.downcase =~ Unix::MATCH
 
       family = (host == LOCALHOST) ? ::Socket::AF_INET : ::Socket::AF_UNSPEC
@@ -171,9 +185,9 @@ module Mongo
       ::Socket.getaddrinfo(host, nil, family, ::Socket::SOCK_STREAM).each do |info|
         begin
           res = FAMILY_MAP[info[4]].new(info[3], port, host)
-          res.socket(timeout, ssl_options).connect!.close
+          res.socket(connect_timeout, ssl_options).connect!.close
           return res
-        rescue IOError, SystemCallError, Error::SocketError => e
+        rescue IOError, SystemCallError, Error::SocketTimeoutError, Error::SocketError => e
           error = e
         end
       end

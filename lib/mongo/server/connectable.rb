@@ -68,18 +68,6 @@ module Mongo
         !!@socket && @socket.alive?
       end
 
-      # Get the timeout to execute an operation on a socket.
-      #
-      # @example Get the timeout to execute an operation on a socket.
-      #   connection.timeout
-      #
-      # @return [ Float ] The operation timeout in seconds.
-      #
-      # @since 2.0.0
-      def timeout
-        @timeout ||= options[:socket_timeout]
-      end
-
       protected
 
       attr_reader :socket
