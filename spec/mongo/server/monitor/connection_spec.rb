@@ -75,7 +75,6 @@ describe Mongo::Server::Monitor::Connection do
 
   context 'when a connect_timeout is not in the options' do
 
-
     context 'when a socket_timeout is in the options' do
 
       let(:options) do

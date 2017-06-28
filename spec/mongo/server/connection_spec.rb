@@ -38,8 +38,8 @@ describe Mongo::Server::Connection do
   end
 
   after do
-    expect(cluster).to receive(:pool).with(server).and_return(pool)
-    expect(pool).to receive(:disconnect!).and_return(true)
+    allow(cluster).to receive(:pool).with(server).and_return(pool)
+    allow(pool).to receive(:disconnect!).and_return(true)
     server.disconnect!
   end
 
@@ -432,6 +432,7 @@ describe Mongo::Server::Connection do
       after do
         sleep(0.5)
         authorized_collection.delete_many
+        client.close
       end
 
       it 'raises a timeout when it expires' do
@@ -666,6 +667,111 @@ describe Mongo::Server::Connection do
           allow(Mongo::Server::Description::Features).to receive(:new).and_return(features)
           connection.send(:handshake!)
           expect(connection.send(:default_mechanism)).to eq(:mongodb_cr)
+        end
+      end
+    end
+  end
+
+  context 'when different timeout options are set' do
+
+    let(:client) do
+      authorized_client.with(options)
+    end
+
+    let(:server) do
+      client.cluster.next_primary
+    end
+
+    let(:address) do
+      server.address
+    end
+
+    let(:connection) do
+      described_class.new(server, server.options)
+    end
+
+    after do
+      client.close
+    end
+
+    context 'when a connect_timeout is in the options' do
+
+      context 'when a socket_timeout is in the options' do
+
+        let(:options) do
+          TEST_OPTIONS.merge(connect_timeout: 3, socket_timeout: 5)
+        end
+
+        before do
+          connection.connect!
+        end
+
+        it 'uses the connect_timeout for the address' do
+          expect(connection.address.send(:connect_timeout)).to eq(3)
+        end
+
+        it 'uses the socket_timeout as the socket_timeout' do
+          expect(connection.send(:socket).timeout).to eq(5)
+        end
+      end
+
+      context 'when a socket_timeout is not in the options' do
+
+        let(:options) do
+          TEST_OPTIONS.merge(connect_timeout: 3, socket_timeout: nil)
+        end
+
+        before do
+          connection.connect!
+        end
+
+        it 'uses the connect_timeout for the address' do
+          expect(connection.address.send(:connect_timeout)).to eq(3)
+        end
+
+        it 'does not use a socket_timeout' do
+          expect(connection.send(:socket).timeout).to be(nil)
+        end
+      end
+    end
+
+    context 'when a connect_timeout is not in the options' do
+
+      context 'when a socket_timeout is in the options' do
+
+        let(:options) do
+          TEST_OPTIONS.merge(connect_timeout: nil, socket_timeout: 5)
+        end
+
+        before do
+          connection.connect!
+        end
+
+        it 'uses the default connect_timeout for the address' do
+          expect(connection.address.send(:connect_timeout)).to eq(10)
+        end
+
+        it 'uses the socket_timeout' do
+          expect(connection.send(:socket).timeout).to eq(5)
+        end
+      end
+
+      context 'when a socket_timeout is not in the options' do
+
+        let(:options) do
+          TEST_OPTIONS.merge(connect_timeout: nil, socket_timeout: nil)
+        end
+
+        before do
+          connection.connect!
+        end
+
+        it 'uses the default connect_timeout for the address' do
+          expect(connection.address.send(:connect_timeout)).to eq(10)
+        end
+
+        it 'does not use a socket_timeout' do
+          expect(connection.send(:socket).timeout).to be(nil)
         end
       end
     end
