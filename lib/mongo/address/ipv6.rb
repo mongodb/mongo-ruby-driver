@@ -72,17 +72,17 @@ module Mongo
       # @example Get an IPv6 socket.
       #   ipv4.socket(5, :ssl => true)
       #
-      # @param [ Float ] timeout The socket timeout.
+      # @param [ Float ] socket_timeout The socket timeout.
       # @param [ Hash ] ssl_options SSL options.
       #
       # @return [ Pool::Socket::SSL, Pool::Socket::TCP ] The socket.
       #
       # @since 2.0.0
-      def socket(timeout, ssl_options = {})
+      def socket(socket_timeout, ssl_options = {})
         unless ssl_options.empty?
-          Socket::SSL.new(host, port, host_name, timeout, Socket::PF_INET6, ssl_options)
+          Socket::SSL.new(host, port, host_name, socket_timeout, Socket::PF_INET6, ssl_options)
         else
-          Socket::TCP.new(host, port, timeout, Socket::PF_INET6)
+          Socket::TCP.new(host, port, socket_timeout, Socket::PF_INET6)
         end
       end
     end

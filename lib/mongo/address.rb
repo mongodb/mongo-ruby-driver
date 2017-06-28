@@ -144,15 +144,15 @@ module Mongo
     # @example Get a socket.
     #   address.socket(5, :ssl => true)
     #
-    # @param [ Float ] timeout The socket timeout.
+    # @param [ Float ] socket_timeout The socket timeout.
     # @param [ Hash ] ssl_options SSL options.
     #
     # @return [ Pool::Socket::SSL, Pool::Socket::TCP, Pool::Socket::Unix ] The socket.
     #
     # @since 2.0.0
-    def socket(timeout, ssl_options = {})
+    def socket(socket_timeout, ssl_options = {})
       @resolver ||= initialize_resolver!(ssl_options)
-      @resolver.socket(timeout, ssl_options)
+      @resolver.socket(socket_timeout, ssl_options)
     end
 
     # Get the address as a string.

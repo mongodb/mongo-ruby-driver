@@ -68,8 +68,8 @@ module Mongo
       # @return [ Pool::Socket::Unix ] The socket.
       #
       # @since 2.0.0
-      def socket(timeout, ssl_options = {})
-        Socket::Unix.new(host, timeout)
+      def socket(socket_timeout, ssl_options = {})
+        Socket::Unix.new(host, socket_timeout)
       end
     end
   end

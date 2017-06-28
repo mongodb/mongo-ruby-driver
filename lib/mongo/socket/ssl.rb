@@ -38,7 +38,7 @@ module Mongo
       # @return [ Integer ] port The port to connect to.
       attr_reader :port
 
-      # @return [ Float ] timeout The connection timeout.
+      # @return [ Float ] timeout The socket timeout.
       attr_reader :timeout
 
       # Establishes a socket connection.
@@ -53,7 +53,7 @@ module Mongo
       #
       # @since 2.0.0
       def connect!(connect_timeout = nil)
-        Timeout.timeout(connect_timeout || timeout, Error::SocketTimeoutError) do
+        Timeout.timeout(connect_timeout, Error::SocketTimeoutError) do
           handle_errors { @tcp_socket.connect(::Socket.pack_sockaddr_in(port, host)) }
           @socket = OpenSSL::SSL::SSLSocket.new(@tcp_socket, context)
           @socket.hostname = @host_name unless BSON::Environment.jruby?

@@ -59,7 +59,7 @@ module Mongo
       # @since 2.0.0
       def connect!
         unless socket && socket.connectable?
-          @socket = address.socket(timeout, ssl_options)
+          @socket = address.socket(socket_timeout, ssl_options)
           address.connect_socket(socket)
           handshake!
           authenticate!
@@ -167,6 +167,7 @@ module Mongo
       def timeout
         @timeout ||= options[:socket_timeout]
       end
+      alias :socket_timeout :timeout
 
       private
 
