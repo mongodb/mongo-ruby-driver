@@ -34,11 +34,6 @@ module Mongo
       ::Socket::AF_INET => IPv4
     }.freeze
 
-    # The default time in seconds to timeout a connection attempt.
-    #
-    # @since 2.5.0
-    CONNECT_TIMEOUT = 10.freeze
-
     # The localhost constant.
     #
     # @since 2.1.0
@@ -174,7 +169,7 @@ module Mongo
     private
 
     def connect_timeout
-      @connect_timeout ||= @options[:connect_timeout] || CONNECT_TIMEOUT
+      @connect_timeout ||= @options[:connect_timeout] || Server::CONNECT_TIMEOUT
     end
 
     def initialize_resolver!(ssl_options)

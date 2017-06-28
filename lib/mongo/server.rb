@@ -44,6 +44,11 @@ module Mongo
     # @return [ Monitoring ] monitoring The monitoring.
     attr_reader :monitoring
 
+    # The default time in seconds to timeout a connection attempt.
+    #
+    # @since 2.5.0
+    CONNECT_TIMEOUT = 10.freeze
+
     # Get the description from the monitor and scan on monitor.
     def_delegators :monitor, :description, :scan!, :heartbeat_frequency, :last_scan
     alias :heartbeat_frequency_seconds :heartbeat_frequency

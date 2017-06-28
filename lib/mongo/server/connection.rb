@@ -164,10 +164,11 @@ module Mongo
       # @return [ Float ] The operation timeout in seconds.
       #
       # @since 2.0.0
-      def timeout
+      def socket_timeout
         @timeout ||= options[:socket_timeout]
       end
-      alias :socket_timeout :timeout
+      # @deprecated Please use :socket_timeout instead. Will be removed in 3.0.0
+      alias :timeout :socket_timeout
 
       private
 

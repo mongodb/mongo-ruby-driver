@@ -41,6 +41,8 @@ module Mongo
         # The default time in seconds to timeout a connection attempt.
         #
         # @since 2.1.2
+        #
+        # @deprecated Please use Server::CONNECT_TIMEOUT instead. Will be removed in 3.0.0
         CONNECT_TIMEOUT = 10.freeze
 
         # Send the preserialized ismaster call.
@@ -122,18 +124,21 @@ module Mongo
           @pid = Process.pid
         end
 
-        # Get the connection timeout.
+        # Get the socket timeout.
         #
-        # @example Get the connection timeout.
-        #   connection.timeout
+        # @example Get the socket timeout.
+        #   connection.socket_timeout
         #
-        # @return [ Float ] The connection timeout in seconds.
+        # @return [ Float ] The socket timeout in seconds. Note that the Monitor's connection
+        #  uses the connect timeout value for calling ismaster. See the Server Discovery and
+        #  Monitoring specification for details.
         #
-        # @since 2.0.0
-        def timeout
-          @timeout ||= options[:connect_timeout] || CONNECT_TIMEOUT
+        # @since 2.5.0
+        def socket_timeout
+          @timeout ||= options[:connect_timeout] || Server::CONNECT_TIMEOUT
         end
-        alias :socket_timeout :timeout
+        # @deprecated Please use :socket_timeout instead. Will be removed in 3.0.0
+        alias :timeout :socket_timeout
 
         private
 
