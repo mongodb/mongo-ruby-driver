@@ -206,17 +206,18 @@ describe Mongo::Address do
 
   describe "#socket" do
 
+    let(:address) do
+      default_address
+    end
+
+    let(:host) do
+      address.host
+    end
+
     context 'when providing a DNS entry that resolves to both IPv6 and IPv4' do
 
-      let(:address) do
-        default_address
-      end
-
-      let(:host) do
-        address.host
-      end
-
       before do
+        address.instance_variable_set(:@resolver, nil)
         allow(::Socket).to receive(:getaddrinfo).and_return(
           [ ["AF_INET6", 0, '::1', '::1', ::Socket::AF_INET6, 1, 6],
             ["AF_INET", 0, host, host, ::Socket::AF_INET, 1, 6]]
