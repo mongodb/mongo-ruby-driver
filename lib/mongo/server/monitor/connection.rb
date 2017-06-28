@@ -41,8 +41,6 @@ module Mongo
         # The default time in seconds to timeout a connection attempt.
         #
         # @since 2.1.2
-        #
-        # @deprecated Will be removed in 3.0. CONNECT_TIMEOUT is now defined in Address.
         CONNECT_TIMEOUT = 10.freeze
 
         # Send the preserialized ismaster call.
@@ -133,7 +131,7 @@ module Mongo
         #
         # @since 2.0.0
         def timeout
-          @timeout ||= options[:connect_timeout]
+          @timeout ||= options[:connect_timeout] || CONNECT_TIMEOUT
         end
 
         private
