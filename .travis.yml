@@ -6,12 +6,12 @@ rvm:
   - 1.9.3
   - 2.0.0
   - 2.1.10
-  - 2.2.6
-  - 2.3.3
+  - 2.2.7
+  - 2.3.4
   - 2.4.1
   - ruby-head
   - jruby-19mode
-  - jruby-9.1.10.0
+  - jruby-9.1.12.0
   - jruby-head
 
 jdk:
@@ -67,17 +67,17 @@ matrix:
       jdk: openjdk7
     - rvm: 2.1.10
       jdk: oraclejdk8
-    - rvm: 2.2.6
+    - rvm: 2.2.7
       jdk: openjdk7
-    - rvm: 2.2.6
+    - rvm: 2.2.7
       jdk: oraclejdk8
-    - rvm: 2.3.3
+    - rvm: 2.3.4
       jdk: openjdk7
-    - rvm: 2.3.3
+    - rvm: 2.3.4
       jdk: oraclejdk8
-    - rvm: 2.4.0
+    - rvm: 2.4.1
       jdk: openjdk7
-    - rvm: 2.4.0
+    - rvm: 2.4.1
       jdk: oraclejdk8
     - rvm: ruby-head
       jdk: openjdk7
