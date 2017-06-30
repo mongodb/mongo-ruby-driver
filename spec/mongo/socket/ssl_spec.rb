@@ -276,7 +276,7 @@ describe Mongo::Socket::SSL, if: running_ssl? do
       end
     end
 
-    context 'when ruby version is < 2.4.1', if: RUBY_VERSION < '2.4.1' do
+    context 'when ruby version is < 2.4.1', if: (RUBY_VERSION < '2.4.1' && running_ssl?) do
 
       context 'when a key is passed, but it is not of the right type' do
 
@@ -300,7 +300,7 @@ describe Mongo::Socket::SSL, if: running_ssl? do
 
     # Note that as of MRI 2.4, Creating a socket with the wrong key type raises
     # a NoMethodError because #private? is attempted to be called on the key.
-    context 'when ruby version is >= 2.4.1', if: RUBY_VERSION >= '2.4.1' do
+    context 'when ruby version is >= 2.4.1', if: (RUBY_VERSION >= '2.4.1' && running_ssl?) do
 
       context 'when a key is passed, but it is not of the right type' do
 
