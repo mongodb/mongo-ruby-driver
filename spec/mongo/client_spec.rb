@@ -233,12 +233,13 @@ describe Mongo::Client do
               :ssl_key_string => 'key string',
               :ssl_key_object => 'key object',
               :ssl_key_pass_phrase => 'passphrase',
-              :ssl_verify => true
+              :ssl_verify => true,
+              :connect_timeout => 0.02
           }
         end
 
         let(:client) do
-          described_class.new(['127.0.0.1:27017'], options)
+          described_class.new(['127.0.0.1:27017'], TEST_OPTIONS.merge(options))
         end
 
         it 'sets the ssl option' do
