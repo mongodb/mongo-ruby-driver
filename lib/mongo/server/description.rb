@@ -157,7 +157,7 @@ module Mongo
       # Fields to exclude when comparing two descriptions.
       #
       # @since 2.0.6
-      EXCLUDE_FOR_COMPARISON = [ LOCAL_TIME ].freeze
+      EXCLUDE_FOR_COMPARISON = [ LOCAL_TIME, LAST_WRITE ].freeze
 
       # @return [ Address ] address The server's address.
       attr_reader :address
