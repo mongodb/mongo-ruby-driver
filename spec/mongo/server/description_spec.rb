@@ -23,6 +23,7 @@ describe Mongo::Server::Description do
       'maxWireVersion' => 2,
       'minWireVersion' => 0,
       'localTime' => Time.now,
+      'lastWrite' => { 'lastWriteDate' => Time.now },
       'ok' => 1
     }
   end
@@ -838,7 +839,10 @@ describe Mongo::Server::Description do
     end
 
     let(:other) do
-      described_class.new(address, replica.merge('localTime' => 1))
+      described_class.new(address, replica.merge(
+        'localTime' => 1,
+        'lastWrite' => { 'lastWriteDate' => 1 }
+      ))
     end
 
     it 'excludes certain fields' do
