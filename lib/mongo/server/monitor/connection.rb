@@ -76,7 +76,7 @@ module Mongo
         def connect!
           unless socket && socket.connectable?
             @socket = address.socket(socket_timeout, ssl_options)
-            address.connect_socket(socket)
+            address.connect_socket!(socket)
             handshake!
           end
           true
@@ -133,7 +133,7 @@ module Mongo
         #  uses the connect timeout value for calling ismaster. See the Server Discovery and
         #  Monitoring specification for details.
         #
-        # @since 2.5.0
+        # @since 2.4.3
         def socket_timeout
           @timeout ||= options[:connect_timeout] || Server::CONNECT_TIMEOUT
         end

@@ -46,7 +46,7 @@ module Mongo
 
     # The default time in seconds to timeout a connection attempt.
     #
-    # @since 2.5.0
+    # @since 2.4.3
     CONNECT_TIMEOUT = 10.freeze
 
     # Get the description from the monitor and scan on monitor.

@@ -162,7 +162,13 @@ module Mongo
       port ? "#{host}:#{port}" : host
     end
 
-    def connect_socket(socket)
+    # Connect a socket.
+    #
+    # @example Connect a socket.
+    #   address.connect_socket!(socket)
+    #
+    # @since 2.4.3
+    def connect_socket!(socket)
       socket.connect!(connect_timeout)
     end
 

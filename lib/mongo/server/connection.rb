@@ -60,7 +60,7 @@ module Mongo
       def connect!
         unless socket && socket.connectable?
           @socket = address.socket(socket_timeout, ssl_options)
-          address.connect_socket(socket)
+          address.connect_socket!(socket)
           handshake!
           authenticate!
         end
