@@ -80,7 +80,8 @@ BASE_OPTIONS = {
                   write: WRITE_CONCERN,
                   heartbeat_frequency: 20,
                   max_read_retries: 5,
-                  wait_queue_timeout: 2
+                  wait_queue_timeout: 2,
+                  connect_timeout: 3
                }
 
 # Options for test suite clients.
