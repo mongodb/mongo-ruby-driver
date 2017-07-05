@@ -26,7 +26,7 @@ module Mongo
       # @return [ Integer ] port The port to connect to.
       attr_reader :port
 
-      # @return [ Float ] timeout The connection timeout.
+      # @return [ Float ] timeout The socket timeout.
       attr_reader :timeout
 
       # Establishes a socket connection.
@@ -40,8 +40,8 @@ module Mongo
       # @return [ TCP ] The connected socket instance.
       #
       # @since 2.0.0
-      def connect!
-        Timeout.timeout(timeout, Error::SocketTimeoutError) do
+      def connect!(connect_timeout = nil)
+        Timeout.timeout(connect_timeout, Error::SocketTimeoutError) do
           socket.setsockopt(IPPROTO_TCP, TCP_NODELAY, 1)
           socket.setsockopt(SOL_SOCKET, SO_KEEPALIVE, true)
           handle_errors { socket.connect(::Socket.pack_sockaddr_in(port, host)) }

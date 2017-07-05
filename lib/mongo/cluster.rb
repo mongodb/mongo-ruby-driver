@@ -96,7 +96,7 @@ module Mongo
     #
     # @since 2.0.0
     def add(host)
-      address = Address.new(host)
+      address = Address.new(host, options)
       if !addresses.include?(address)
         if addition_allowed?(address)
           @update_lock.synchronize { @addresses.push(address) }

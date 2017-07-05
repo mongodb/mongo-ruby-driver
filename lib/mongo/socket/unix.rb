@@ -23,7 +23,7 @@ module Mongo
       # @return [ String ] path The path to connect to.
       attr_reader :path
 
-      # @return [ Float ] timeout The connection timeout.
+      # @return [ Float ] timeout The socket timeout.
       attr_reader :timeout
 
       # Establishes a socket connection.
@@ -37,7 +37,7 @@ module Mongo
       # @return [ Unix ] The connected socket instance.
       #
       # @since 2.0.0
-      def connect!
+      def connect!(connect_timeout = nil)
         self
       end
 

@@ -119,6 +119,7 @@ module Mongo
     def initialize(seed, options = {})
       @seed = seed
       @host, @port = parse_host_port
+      @options = options
     end
 
     # Get a pretty printed address inspection.
@@ -138,15 +139,15 @@ module Mongo
     # @example Get a socket.
     #   address.socket(5, :ssl => true)
     #
-    # @param [ Float ] timeout The socket timeout.
+    # @param [ Float ] socket_timeout The socket timeout.
     # @param [ Hash ] ssl_options SSL options.
     #
     # @return [ Pool::Socket::SSL, Pool::Socket::TCP, Pool::Socket::Unix ] The socket.
     #
     # @since 2.0.0
-    def socket(timeout, ssl_options = {})
-      @resolver ||= initialize_resolver!(timeout, ssl_options)
-      @resolver.socket(timeout, ssl_options)
+    def socket(socket_timeout, ssl_options = {})
+      @resolver ||= initialize_resolver!(ssl_options)
+      @resolver.socket(socket_timeout, ssl_options)
     end
 
     # Get the address as a string.
@@ -161,9 +162,23 @@ module Mongo
       port ? "#{host}:#{port}" : host
     end
 
+    # Connect a socket.
+    #
+    # @example Connect a socket.
+    #   address.connect_socket!(socket)
+    #
+    # @since 2.4.3
+    def connect_socket!(socket)
+      socket.connect!(connect_timeout)
+    end
+
     private
 
-    def initialize_resolver!(timeout, ssl_options)
+    def connect_timeout
+      @connect_timeout ||= @options[:connect_timeout] || Server::CONNECT_TIMEOUT
+    end
+
+    def initialize_resolver!(ssl_options)
       return Unix.new(seed.downcase) if seed.downcase =~ Unix::MATCH
 
       family = (host == LOCALHOST) ? ::Socket::AF_INET : ::Socket::AF_UNSPEC
@@ -171,9 +186,9 @@ module Mongo
       ::Socket.getaddrinfo(host, nil, family, ::Socket::SOCK_STREAM).each do |info|
         begin
           res = FAMILY_MAP[info[4]].new(info[3], port, host)
-          res.socket(timeout, ssl_options).connect!.close
+          res.socket(connect_timeout, ssl_options).connect!(connect_timeout).close
           return res
-        rescue IOError, SystemCallError, Error::SocketError => e
+        rescue IOError, SystemCallError, Error::SocketTimeoutError, Error::SocketError => e
           error = e
         end
       end

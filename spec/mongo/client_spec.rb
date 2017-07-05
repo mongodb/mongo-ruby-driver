@@ -238,7 +238,7 @@ describe Mongo::Client do
         end
 
         let(:client) do
-          described_class.new(['127.0.0.1:27017'], options)
+          described_class.new(['127.0.0.1:27017'], TEST_OPTIONS.merge(options))
         end
 
         it 'sets the ssl option' do

@@ -59,8 +59,8 @@ module Mongo
       # @since 2.0.0
       def connect!
         unless socket && socket.connectable?
-          @socket = address.socket(timeout, ssl_options)
-          socket.connect!
+          @socket = address.socket(socket_timeout, ssl_options)
+          address.connect_socket!(socket)
           handshake!
           authenticate!
         end
@@ -155,6 +155,20 @@ module Mongo
           reply.documents[0][Operation::Result::OK] == 1
         end
       end
+
+      # Get the timeout to execute an operation on a socket.
+      #
+      # @example Get the timeout to execute an operation on a socket.
+      #   connection.timeout
+      #
+      # @return [ Float ] The operation timeout in seconds.
+      #
+      # @since 2.0.0
+      def socket_timeout
+        @timeout ||= options[:socket_timeout]
+      end
+      # @deprecated Please use :socket_timeout instead. Will be removed in 3.0.0
+      alias :timeout :socket_timeout
 
       private
 
