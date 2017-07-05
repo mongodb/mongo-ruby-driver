@@ -233,8 +233,7 @@ describe Mongo::Client do
               :ssl_key_string => 'key string',
               :ssl_key_object => 'key object',
               :ssl_key_pass_phrase => 'passphrase',
-              :ssl_verify => true,
-              :connect_timeout => 0.02
+              :ssl_verify => true
           }
         end
 
