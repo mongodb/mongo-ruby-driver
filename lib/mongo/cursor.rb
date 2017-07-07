@@ -50,15 +50,20 @@ module Mongo
     # @param [ CollectionView ] view The +CollectionView+ defining the query.
     # @param [ Operation::Result ] result The result of the first execution.
     # @param [ Server ] server The server this cursor is locked to.
+    # @param [ Hash ] options The cursor options.
+    #
+    # @option options [ true, false ] :disable_retry Whether to disable retrying on
+    #   error when sending getmores.
     #
     # @since 2.0.0
-    def initialize(view, result, server)
+    def initialize(view, result, server, options = {})
       @view = view
       @server = server
       @initial_result = result
       @remaining = limit if limited?
       @cursor_id = result.cursor_id
       @coll_name = nil
+      @options = options
       register
       ObjectSpace.define_finalizer(self, self.class.finalize(result.cursor_id,
                                                              cluster,
@@ -185,8 +190,12 @@ module Mongo
     end
 
     def get_more
-      read_with_retry do
+      if @options[:disable_retry]
         process(get_more_operation.execute(@server))
+      else
+        read_with_retry do
+          process(get_more_operation.execute(@server))
+        end
       end
     end
 
@@ -203,6 +212,8 @@ module Mongo
       read_with_one_retry do
         kill_cursors_operation.execute(@server)
       end
+    ensure
+      @cursor_id = 0
     end
 
     def kill_cursors_operation

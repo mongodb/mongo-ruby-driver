@@ -1,0 +1,559 @@
+require 'spec_helper'
+
+describe Mongo::Collection::View::ChangeStream, if: test_change_streams? do
+
+  let(:pipeline) do
+    []
+  end
+
+  let(:options) do
+    {}
+  end
+
+  let(:view) do
+    Mongo::Collection::View.new(authorized_collection, {}, options)
+  end
+
+  let(:change_stream) do
+    described_class.new(view, pipeline, options)
+  end
+
+  let(:change_stream_document) do
+    change_stream.send(:pipeline)[0]['$changeStream']
+  end
+
+  let!(:sample_resume_token) do
+    stream = authorized_collection.watch
+    authorized_collection.insert_one(a: 1)
+    doc = stream.to_enum.next
+    stream.close
+    doc[:_id]
+  end
+
+  let(:command_selector) do
+    change_stream.send(:aggregate_spec)[:selector]
+  end
+
+  let(:cursor) do
+    change_stream.instance_variable_get(:@cursor)
+  end
+
+  let(:error) do
+    begin
+      change_stream
+    rescue => e
+      e
+    end
+  end
+
+  after do
+    authorized_collection.delete_many
+    begin; change_stream.close; rescue; end
+  end
+
+  describe '#initialize' do
+
+    it 'sets the view' do
+      expect(change_stream.view).to be(view)
+    end
+
+    it 'sets the options' do
+      expect(change_stream.options).to eq(options)
+    end
+
+    context 'when full_document is provided' do
+
+      context "when the value is 'default'" do
+
+        let(:options) do
+          { full_document: 'default' }
+        end
+
+        it 'sets the fullDocument value to default' do
+          expect(change_stream_document[:fullDocument]).to eq('default')
+        end
+      end
+
+      context "when the value is 'updateLookup'" do
+
+        let(:options) do
+          { full_document: 'updateLookup' }
+        end
+
+        it 'sets the fullDocument value to updateLookup' do
+          expect(change_stream_document[:fullDocument]).to eq('updateLookup')
+        end
+      end
+    end
+
+    context 'when full_document is not provided' do
+
+      it "defaults to use the 'default' value" do
+        expect(change_stream_document[:fullDocument]).to eq('default')
+      end
+    end
+
+    context 'when resume_after is provided' do
+
+      let(:options) do
+        { resume_after: sample_resume_token }
+      end
+
+      it 'sets the resumeAfter value to the provided document' do
+        expect(change_stream_document[:resumeAfter]).to eq(sample_resume_token)
+      end
+    end
+
+    context 'when max_await_time_ms is provided' do
+
+      let(:options) do
+        { max_await_time_ms: 10 }
+      end
+
+      it 'sets the maxTimeMS value to the provided document' do
+        expect(command_selector[:maxTimeMS]).to eq(10)
+      end
+    end
+
+    context 'when batch_size is provided' do
+
+      let(:options) do
+        { batch_size: 5 }
+      end
+
+      it 'sets the batchSize value to the provided document' do
+        expect(command_selector[:cursor][:batchSize]).to eq(5)
+      end
+    end
+
+    context 'when collation is provided'  do
+
+      let(:options) do
+        { 'collation' => { locale: 'en_US', strength: 2 } }
+      end
+
+      it 'sets the collation value to the provided document' do
+        expect(error).to be_a(Mongo::Error::OperationFailure)
+        expect(error.message).to include('Only default collation is allowed')
+      end
+    end
+
+    context 'when a changeStream operator is provided by the user as well' do
+
+      let(:pipeline) do
+        [ { '$changeStream' => { fullDocument: 'default' } }]
+      end
+
+      it 'raises the error from the server' do
+        expect(error).to be_a(Mongo::Error::OperationFailure)
+        expect(error.message).to include('$changeStream is only valid as the first stage in a pipeline')
+      end
+    end
+
+    context 'when the collection has a readConcern' do
+
+      let(:collection) do
+        authorized_collection.with(read_concern: { level: 'majority' })
+      end
+
+      let(:view) do
+        Mongo::Collection::View.new(collection, {}, options)
+      end
+
+      it 'uses the read concern of the collection' do
+        expect(command_selector[:readConcern]).to eq('level' => 'majority')
+      end
+    end
+
+    context 'when no pipeline is supplied' do
+
+      it 'uses an empty pipeline' do
+        expect(command_selector[:pipeline][0].keys).to eq(['$changeStream'])
+      end
+    end
+
+    context 'when other pipeline operators are supplied' do
+
+      context 'when the other pipeline operators are supported' do
+
+        let(:pipeline) do
+          [ { '$project' => { '_id' => 0 }}]
+        end
+
+        it 'uses the pipeline operators' do
+          expect(command_selector[:pipeline][1]).to eq(pipeline[0])
+        end
+      end
+
+      context 'when the other pipeline operators are not supported' do
+
+        let(:pipeline) do
+          [ { '$unwind' => '$test' }]
+        end
+
+        it 'sends the pipeline to the server without a custom error' do
+          expect(change_stream).to be_a(Mongo::Collection::View::ChangeStream)
+        end
+      end
+    end
+
+    context 'when the initial batch is empty' do
+
+      before do
+        change_stream
+      end
+
+      it 'does not close the cursor' do
+        expect(cursor).to be_a(Mongo::Cursor)
+      end
+    end
+  end
+
+  describe '#close' do
+
+    context 'when documents have not been retrieved and the stream is closed' do
+
+      before do
+        expect(cursor).to receive(:kill_cursors)
+        change_stream.close
+      end
+
+      it 'closes the cursor' do
+        expect(change_stream.instance_variable_get(:@cursor)).to be(nil)
+        expect(change_stream.closed?).to be(true)
+      end
+
+      it 'raises an error when the stream is attempted to be iterated' do
+        expect {
+          change_stream.to_enum.next
+        }.to raise_exception(StopIteration)
+      end
+    end
+
+    context 'when some documents have been retrieved and the stream is closed before sending getmore' do
+
+      before do
+        change_stream
+        authorized_collection.insert_one(a: 1)
+        enum.next
+        change_stream.close
+      end
+
+      let(:enum) do
+        change_stream.to_enum
+      end
+
+      it 'raises an error' do
+        expect {
+          enum.next
+        }.to raise_exception(StopIteration)
+      end
+    end
+  end
+
+  describe '#closed?' do
+
+    context 'when the change stream has not been closed' do
+
+      it 'returns false' do
+        expect(change_stream.closed?).to be(false)
+      end
+    end
+
+    context 'when the change stream has been closed' do
+
+      before do
+        change_stream.close
+      end
+
+      it 'returns false' do
+        expect(change_stream.closed?).to be(true)
+      end
+    end
+  end
+
+  context 'when the first response does not contain the resume token' do
+
+    let(:pipeline) do
+      [ { '$project' => { _id: 0 } }]
+    end
+
+    before do
+      change_stream
+      authorized_collection.insert_one(a: 1)
+    end
+
+    it 'raises an exception and closes the cursor' do
+      expect(cursor).to receive(:kill_cursors).and_call_original
+      expect {
+        change_stream.to_enum.next
+      }.to raise_exception(Mongo::Error::MissingResumeToken)
+    end
+  end
+
+  context 'when an error is encountered the first time the command is run' do
+
+    let(:primary_socket) do
+      primary = authorized_collection.client.cluster.servers.find { |s| s.primary? }
+      connection = primary.pool.checkout
+      primary.pool.checkin(connection)
+      connection.send(:socket)
+    end
+
+    context 'when the error is a resumable error' do
+
+      shared_examples_for 'a resumable change stream' do
+
+        before do
+          expect(primary_socket).to receive(:write).and_raise(error).once
+          expect(view.send(:server_selector)).to receive(:select_server).twice.and_call_original
+          change_stream
+          authorized_collection.insert_one(a: 1)
+        end
+
+        let(:document) do
+          change_stream.to_enum.next
+        end
+
+        it 'runs the command again while using the same read preference and caches the resume token' do
+          expect(document[:fullDocument][:a]).to eq(1)
+          expect(change_stream_document[:resumeAfter]).to eq(document[:_id])
+        end
+      end
+
+      context 'when the error is a SocketError' do
+
+        let(:error) do
+          Mongo::Error::SocketError
+        end
+
+        it_behaves_like 'a resumable change stream'
+      end
+
+      context 'when the error is a SocketTimeoutError' do
+
+        let(:error) do
+          Mongo::Error::SocketTimeoutError
+        end
+
+        it_behaves_like 'a resumable change stream'
+      end
+
+      context "when the error is a 'not master' error" do
+
+        let(:error) do
+          Mongo::Error::OperationFailure.new('not master')
+        end
+
+        it_behaves_like 'a resumable change stream'
+      end
+
+      context "when the error is a 'cursor not found (43)' error" do
+
+        let(:error) do
+          Mongo::Error::OperationFailure.new('cursor not found (43)')
+        end
+
+        it_behaves_like 'a resumable change stream'
+      end
+    end
+
+    context 'when the error is another server error' do
+
+      before do
+        expect(primary_socket).to receive(:write).and_raise(Mongo::Error::OperationFailure)
+        #expect twice because of kill_cursors in after block
+        expect(view.send(:server_selector)).to receive(:select_server).twice.and_call_original
+      end
+
+      it 'does not run the command again and instead raises the error' do
+        expect {
+          change_stream
+        }.to raise_exception(Mongo::Error::OperationFailure)
+      end
+    end
+  end
+
+  context 'when a server error is encountered during a getmore' do
+
+    context 'when the error is a resumable error' do
+
+      shared_examples_for 'a change stream that encounters an error from a getmore' do
+
+        before do
+          change_stream
+          authorized_collection.insert_one(a: 1)
+          enum.next
+          authorized_collection.insert_one(a: 2)
+          expect(cursor).to receive(:get_more).once.and_raise(error)
+          expect(cursor).to receive(:kill_cursors).and_call_original
+          expect(Mongo::Operation::Commands::Aggregate).to receive(:new).and_call_original
+        end
+
+        let(:enum) do
+          change_stream.to_enum
+        end
+
+        let(:document) do
+          enum.next
+        end
+
+        it 'runs the command again while using the same read preference and caching the resume token' do
+          expect(document[:fullDocument][:a]).to eq(2)
+          expect(change_stream_document[:resumeAfter]).to eq(document[:_id])
+        end
+      end
+
+      context 'when the error is a SocketError' do
+
+        let(:error) do
+          Mongo::Error::SocketError
+        end
+
+        it_behaves_like 'a change stream that encounters an error from a getmore'
+      end
+
+      context 'when the error is a SocketTimeoutError' do
+
+        let(:error) do
+          Mongo::Error::SocketTimeoutError
+        end
+
+        it_behaves_like 'a change stream that encounters an error from a getmore'
+      end
+
+      context "when the error is a not 'master error'" do
+
+        let(:error) do
+          Mongo::Error::OperationFailure.new('not master')
+        end
+
+        it_behaves_like 'a change stream that encounters an error from a getmore'
+      end
+
+      context "when the error is a not 'cursor not found error'" do
+
+        let(:error) do
+          Mongo::Error::OperationFailure.new('cursor not found (43)')
+        end
+
+        it_behaves_like 'a change stream that encounters an error from a getmore'
+      end
+    end
+
+    context 'when the error is another server error' do
+
+      before do
+        change_stream
+        authorized_collection.insert_one(a: 1)
+        enum.next
+        authorized_collection.insert_one(a: 2)
+        expect(cursor).to receive(:get_more).and_raise(Mongo::Error::OperationFailure)
+        expect(cursor).to receive(:kill_cursors).and_call_original
+        expect(Mongo::Operation::Commands::Aggregate).not_to receive(:new)
+      end
+
+      let(:enum) do
+        change_stream.to_enum
+      end
+
+      it 'does not run the command again and instead raises the error' do
+        expect {
+          change_stream.to_enum.next
+        }.to raise_exception(Mongo::Error::OperationFailure)
+      end
+    end
+  end
+
+  context 'when a server error is encountered during the command following an error during getmore' do
+
+    context 'when the error is a resumable error' do
+
+      shared_examples_for 'a change stream that sent getmores, that then encounters an error when resuming' do
+
+        before do
+          change_stream
+          authorized_collection.insert_one(a: 1)
+          enum.next
+          authorized_collection.insert_one(a: 2)
+          expect(cursor).to receive(:get_more).and_raise(error)
+          expect(cursor).to receive(:kill_cursors).and_call_original
+          expect(change_stream).to receive(:send_initial_query).and_raise(error).once.ordered
+        end
+
+        let(:enum) do
+          change_stream.to_enum
+        end
+
+        let(:document) do
+          enum.next
+        end
+
+        it 'raises the error' do
+          expect {
+            document
+          }.to raise_exception(error)
+        end
+      end
+
+      context 'when the error is a SocketError' do
+
+        let(:error) do
+          Mongo::Error::SocketError
+        end
+
+        it_behaves_like 'a change stream that sent getmores, that then encounters an error when resuming'
+      end
+
+      context 'when the error is a SocketTimeoutError' do
+
+        let(:error) do
+          Mongo::Error::SocketTimeoutError
+        end
+
+        it_behaves_like 'a change stream that sent getmores, that then encounters an error when resuming'
+      end
+
+      context "when the error is a 'not master error'" do
+
+        let(:error) do
+          Mongo::Error::OperationFailure.new('not master')
+        end
+
+        it_behaves_like 'a change stream that sent getmores, that then encounters an error when resuming'
+      end
+
+      context "when the error is a not 'cursor not found error'" do
+
+        let(:error) do
+          Mongo::Error::OperationFailure.new('cursor not found (43)')
+        end
+
+        it_behaves_like 'a change stream that sent getmores, that then encounters an error when resuming'
+      end
+    end
+
+    context 'when the error is another server error' do
+
+      before do
+        change_stream
+        authorized_collection.insert_one(a: 1)
+        enum.next
+        authorized_collection.insert_one(a: 2)
+        expect(cursor).to receive(:get_more).and_raise(Mongo::Error::OperationFailure.new('not master'))
+        expect(cursor).to receive(:kill_cursors).and_call_original
+        expect(change_stream).to receive(:send_initial_query).and_raise(Mongo::Error::OperationFailure).once.ordered
+      end
+
+      let(:enum) do
+        change_stream.to_enum
+      end
+
+      it 'does not run the command again and instead raises the error' do
+        expect {
+          change_stream.to_enum.next
+        }.to raise_exception(Mongo::Error::OperationFailure)
+      end
+    end
+  end
+end

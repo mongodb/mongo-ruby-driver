@@ -3784,4 +3784,115 @@ describe Mongo::Collection do
       end
     end
   end
+
+  describe '#watch' do
+
+    context 'when change streams can be tested', if: test_change_streams? do
+
+      let(:change_stream) do
+        authorized_collection.watch
+      end
+
+      let(:enum) do
+        change_stream.to_enum
+      end
+
+      before do
+        change_stream
+        authorized_collection.insert_one(a: 1)
+      end
+
+      context 'when no options are provided' do
+
+        context 'when the operation type is an insert' do
+
+          it 'returns the change' do
+            expect(enum.next[:fullDocument][:a]).to eq(1)
+          end
+        end
+
+        context 'when the operation type is an update' do
+
+          before do
+            authorized_collection.update_one({ a: 1 }, { '$set' => { a: 2 } })
+          end
+
+          let(:change_doc) do
+            enum.next
+            enum.next
+          end
+
+          it 'returns the change' do
+            expect(change_doc[:operationType]).to eq('update')
+            expect(change_doc[:updateDescription][:updatedFields]).to eq('a' => 2)
+          end
+        end
+      end
+
+      context 'when options are provided' do
+
+        context 'when full_document is updateLookup' do
+
+          let(:change_stream) do
+            authorized_collection.watch([], full_document: 'updateLookup').to_enum
+          end
+
+          before do
+            authorized_collection.update_one({ a: 1 }, { '$set' => { a: 2 } })
+          end
+
+          let(:change_doc) do
+            enum.next
+            enum.next
+          end
+
+          it 'returns the change' do
+            expect(change_doc[:operationType]).to eq('update')
+            expect(change_doc[:fullDocument][:a]).to eq(2)
+          end
+        end
+
+        context 'when batch_size is provided' do
+
+          before do
+            authorized_collection.insert_one(a: 2)
+            authorized_collection.insert_one(a: 3)
+          end
+
+          let(:change_stream) do
+            authorized_collection.watch([], batch_size: 2)
+          end
+
+          it 'returns the documents in the batch size specified' do
+            expect(change_stream.instance_variable_get(:@cursor)).to receive(:get_more).once.and_call_original
+            enum.next
+            enum.next
+          end
+        end
+
+        context 'when collation is provided' do
+          # pending 'server support for collation with the $changeStream operator'
+          #
+          # before do
+          #   authorized_collection.update_one({ a: 1 }, { '$set' => { a: 2 } })
+          # end
+          #
+          # let(:change_doc) do
+          #   change_stream.next
+          #   change_stream.next
+          # end
+          #
+          # let(:change_stream) do
+          #   authorized_collection.watch([ { '$match' => { operationType: 'UPDATE'}}],
+          #                               collation: { locale: 'en_US', strength: 2 } ).to_enum
+          # end
+          #
+          # it 'returns the change' do
+          #   expect(change_doc[:operationType]).to eq('update')
+          #   expect(change_doc[:fullDocument][:a]).to eq(2)
+          # end
+        end
+      end
+    end
+  end
 end
