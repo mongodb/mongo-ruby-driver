@@ -440,7 +440,7 @@ connections at the beginning of a spike. The default ``min_pool_size`` is 1.
 
 Here is an example of estimating the number of connections a multi-threaded application will open:
 A client connected to a 3-node replica set opens 3 monitoring sockets. It also opens as many sockets as
-needed to support a multi-threaded application's concurrent operations on each server, up to ``maxPoolSize``. If the
+needed to support a multi-threaded application's concurrent operations on each server, up to ``max_pool_size``. If the
 application only uses the primary (the default), then only the primary connection pool grows and the total connections
 is at most 8 (5 connections for the primary pool + 3 monitoring connections). If the application uses a read
 preference to query the secondaries, their pools also grow and the total connections can reach 18 (5 + 5 + 5 + 3).
