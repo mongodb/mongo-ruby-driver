@@ -1,4 +1,4 @@
-# Copyright (C) 2014-2016 MongoDB, Inc.
+# Copyright (C) 2014-2017 MongoDB, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ module Mongo
     # number of returned documents.
     #
     # There are a variety of flags that can be used to adjust cursor
-    # parameters or the desired consistancy and integrity the results.
+    # parameters or the desired consistency and integrity the results.
     #
     # @api semipublic
     class Query < Message
