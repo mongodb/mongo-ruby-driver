@@ -50,7 +50,11 @@ module Mongo
       end
 
       def payload
-        {}
+        { reply: documents[0], request_id: request_id }
+      end
+
+      def cursor_not_found?
+        false
       end
 
       protected
@@ -78,6 +82,7 @@ module Mongo
       # @!attribute
       # @return [Hash] The sections of payload type 1 or 0.
       field :sections, Sections
+      alias :documents :sections
 
       #field :checksum, Checksum
     end

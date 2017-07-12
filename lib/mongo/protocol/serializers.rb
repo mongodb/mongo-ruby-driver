@@ -182,13 +182,14 @@ module Mongo
           sections = []
           until buffer.to_s.size == end_size
             case buffer.get_byte
-            when PayloadZero::TYPE
+            when PayloadZero::TYPE_BYTE
               sections << PayloadZero.deserialize(buffer)
-            when PayloadOne::TYPE
+            when PayloadOne::TYPE_BYTE
               sections << PayloadOne.deserialize(buffer)
              # else raise error
             end
           end
+          sections
         end
 
         # Whether there can be a size limit on this type after serialization.
@@ -204,7 +205,7 @@ module Mongo
 
           TYPE = 0x0
 
-          TYPE_CSTRING = TYPE.chr.force_encoding(BSON::BINARY).freeze
+          TYPE_BYTE = TYPE.chr.force_encoding(BSON::BINARY).freeze
 
           # Serializes a section of an OP_MSG, payload type 0.
           #
@@ -215,7 +216,7 @@ module Mongo
           #
           # @return [ String ] Buffer with serialized value.
           def self.serialize(buffer, value, max_bson_size = nil, validating_keys = BSON::Config.validating_keys?)
-            buffer.put_byte(TYPE_CSTRING)
+            buffer.put_byte(TYPE_BYTE)
             Document.serialize(buffer, value, max_bson_size, validating_keys)
           end
 
@@ -233,7 +234,7 @@ module Mongo
 
           TYPE = 0x1
 
-          TYPE_CSTRING = TYPE.chr.force_encoding(BSON::BINARY).freeze
+          TYPE_BYTE = TYPE.chr.force_encoding(BSON::BINARY).freeze
 
           # Serializes a section of an OP_MSG, payload type 1.
           #
@@ -244,7 +245,7 @@ module Mongo
           #
           # @return [ String ] Buffer with serialized value.
           def self.serialize(buffer, value, max_bson_size = nil, validating_keys = BSON::Config.validating_keys?)
-            buffer.put_byte(TYPE_CSTRING)
+            buffer.put_byte(TYPE_BYTE)
             start = buffer.length
             buffer.put_int32(0) # hold for size
             CString.serialize(buffer, value[:identifier])
