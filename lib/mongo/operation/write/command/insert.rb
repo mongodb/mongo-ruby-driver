@@ -55,8 +55,17 @@ module Mongo
           #
           # @since 2.2.5
           def message(server)
-            opts = options.merge(validating_keys: true)
-            Protocol::Query.new(db_name, Database::COMMAND, selector, opts)
+            if server.features.op_msg_enabled?
+              arguments = { insert: coll_name, "$db" => db_name }
+              arguments[:writeConcern] = write_concern.options if write_concern
+              arguments[:bypassDocumentValidation] = true if bypass_document_validation
+
+              section = { identifier: 'documents', documents: documents}
+              Protocol::Msg.new([:none], { type: 0, payload: arguments}, { type: 1, payload: section })
+            else
+              opts = options.merge(validating_keys: true)
+              Protocol::Query.new(db_name, Database::COMMAND, selector, opts)
+            end
           end
         end
       end

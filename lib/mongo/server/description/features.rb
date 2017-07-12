@@ -26,6 +26,7 @@ module Mongo
         # @since 2.0.0
         MAPPINGS = {
           :array_filters => 6,
+          :op_msg => 6,
           :collation => 5,
           :max_staleness => 5,
           :find_command => 4,

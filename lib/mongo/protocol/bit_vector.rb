@@ -40,7 +40,7 @@ module Mongo
         # @return [ String ] Buffer that received the serialized vector
         def serialize(buffer, value, validating_keys = BSON::Config.validating_keys?)
           bits = 0
-          value.each { |flag| bits |= @masks[flag] }
+          value.each { |flag| bits |= (@masks[flag] || 0) }
           buffer.put_int32(bits)
         end
 
