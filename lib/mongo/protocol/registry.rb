@@ -59,11 +59,6 @@ module Mongo
         define_type_reader(type)
       end
 
-      # Raised when trying to get a type from the registry that doesn't exist.
-      #
-      # @since 2.5.0
-      class UnsupportedType < RuntimeError; end
-
       private
 
       def define_type_reader(type)
@@ -74,7 +69,7 @@ module Mongo
 
       def handle_unsupported_op_code!(op_code)
         message = "Detected unknown message type with op code: #{op_code}."
-        raise UnsupportedType.new(message)
+        raise Error::UnsupportedMessageType.new(message)
       end
     end
   end
