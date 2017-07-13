@@ -74,9 +74,9 @@ module Mongo
 
       # The operation code required to specify a Delete message.
       # @return [Fixnum] the operation code.
-      def op_code
-        2006
-      end
+      #
+      # @since 2.5.0
+      OP_CODE = 2006
 
       # Available flags for a Delete message.
       FLAGS = [:single_remove]
@@ -162,6 +162,8 @@ module Mongo
           end
         end
       end
+
+      Registry.register(OP_CODE, self)
     end
   end
 end

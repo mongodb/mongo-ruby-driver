@@ -87,9 +87,9 @@ module Mongo
 
       # The operation code required to specify an Update message.
       # @return [Fixnum] the operation code.
-      def op_code
-        2001
-      end
+      #
+      # @since 2.5.0
+      OP_CODE = 2001
 
       # Available flags for an Update message.
       FLAGS = [:upsert, :multi_update]
@@ -200,6 +200,8 @@ module Mongo
           document
         end
       end
+
+      Registry.register(OP_CODE, self)
     end
   end
 end

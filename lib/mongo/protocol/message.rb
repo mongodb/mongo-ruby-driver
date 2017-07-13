@@ -115,6 +115,7 @@ module Mongo
       # @return [ Message ] Instance of a Message class
       def self.deserialize(io, max_message_size = MAX_MESSAGE_SIZE, expected_response_to = nil)
         length, _request_id, response_to, _op_code = deserialize_header(BSON::ByteBuffer.new(io.read(16)))
+        message_type = Registry.get(_op_code)
 
         # Protection from potential DOS man-in-the-middle attacks. See
         # DRIVERS-276.
@@ -129,9 +130,9 @@ module Mongo
         end
 
         buffer = BSON::ByteBuffer.new(io.read(length - 16))
-        message = allocate
+        message = message_type.allocate
 
-        fields.each do |field|
+        message_type.fields.each do |field|
           if field[:multi]
             deserialize_array(message, buffer, field)
           else

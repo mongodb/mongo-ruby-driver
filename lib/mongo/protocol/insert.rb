@@ -87,9 +87,9 @@ module Mongo
 
       # The operation code required to specify an Insert message.
       # @return [Fixnum] the operation code.
-      def op_code
-        2002
-      end
+      #
+      # @since 2.5.0
+      OP_CODE = 2002
 
       # Available flags for an Insert message.
       FLAGS = [:continue_on_error]
@@ -169,6 +169,8 @@ module Mongo
           document
         end
       end
+
+      Registry.register(OP_CODE, self)
     end
   end
 end

@@ -107,9 +107,9 @@ module Mongo
 
       # The operation code required to specify a Query message.
       # @return [Fixnum] the operation code.
-      def op_code
-        2004
-      end
+      #
+      # @since 2.5.0
+      OP_CODE = 2004
 
       def determine_limit
         [ @options[:limit] || @options[:batch_size], @options[:batch_size] || @options[:limit] ].min || 0
@@ -292,6 +292,8 @@ module Mongo
           document
         end
       end
+
+      Registry.register(OP_CODE, self)
     end
   end
 end
