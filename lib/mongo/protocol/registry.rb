@@ -39,7 +39,7 @@ module Mongo
         if type = MAPPINGS[op_code]
           type
         else
-          handle_unsupported_op_code!(op_code, message)
+          handle_unsupported_op_code!(op_code)
         end
       end
 
@@ -72,7 +72,7 @@ module Mongo
         MOD
       end
 
-      def handle_unsupported_op_code!(op_code, message)
+      def handle_unsupported_op_code!(op_code)
         message = "Detected unknown message type with op code: #{op_code}."
         raise UnsupportedType.new(message)
       end

@@ -23,7 +23,7 @@ describe Mongo::Protocol::Registry do
 
       it "raises an error" do
         expect {
-          described_class.get(-100, "message")
+          described_class.get(-100)
         }.to raise_error(Mongo::Protocol::Registry::UnsupportedType)
       end
     end
