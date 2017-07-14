@@ -23,6 +23,7 @@ module Mongo
     # @since 2.0.0
     class Monitor
       include Loggable
+      extend Forwardable
 
       # The default time for a server to refresh its status is 10 seconds.
       #
@@ -57,6 +58,10 @@ module Mongo
       #
       # @since 2.4.0
       attr_reader :last_scan
+
+      # The compressor is determined during the handshake, so it must be an attribute
+      # of the connection.
+      def_delegators :connection, :compressor
 
       # Force the monitor to immediately do a check of its server.
       #

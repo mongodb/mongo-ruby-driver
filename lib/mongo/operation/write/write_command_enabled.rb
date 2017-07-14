@@ -34,12 +34,21 @@ module Mongo
         #
         # @since 2.1.0
         def execute(server)
-          if !server.features.write_command_enabled? || unacknowledged_write?
+          if unacknowledged_write?
             raise Error::UnsupportedCollation.new(Error::UnsupportedCollation::UNACKNOWLEDGED_WRITES_MESSAGE) if has_collation?
             raise Error::UnsupportedArrayFilters.new(Error::UnsupportedArrayFilters::UNACKNOWLEDGED_WRITES_MESSAGE) if has_array_filters?
+          end
+
+          if !server.features.write_command_enabled? # version < 2.4
             execute_message(server)
-          else
+          elsif server.features.op_msg_enabled? # version 3.6
             execute_write_command(server)
+          else # server version is 2.6 through 3.4
+            if unacknowledged_write?
+              execute_message(server)
+            else
+              execute_write_command(server)
+            end
           end
         end
 

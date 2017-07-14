@@ -23,6 +23,7 @@ module Mongo
     #
     # @since 2.5.0
     class Msg < Message
+      include Monitoring::Event::Secure
 
       # The identifier for the database name to execute the command on.
       #
@@ -100,6 +101,23 @@ module Mongo
         super
         add_check_sum(buffer)
         buffer
+      end
+
+      # Compress this message.
+      #
+      # @param [ String, Symbol ] compressor The compressor to use.
+      # @param [ Integer ] zlib_compression_level The zlib compression level to use.
+      #
+      # @return [ Compressed, self ] A Protocol::Compressed message or self, depending on whether
+      #  this message can be compressed.
+      #
+      # @since 2.5.0
+      def compress!(compressor, zlib_compression_level = nil)
+        if compressor && compression_allowed?(command.keys.first)
+          Compressed.new(self, compressor, zlib_compression_level)
+        else
+          self
+        end
       end
 
       private

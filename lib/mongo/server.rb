@@ -50,7 +50,7 @@ module Mongo
     CONNECT_TIMEOUT = 10.freeze
 
     # Get the description from the monitor and scan on monitor.
-    def_delegators :monitor, :description, :scan!, :heartbeat_frequency, :last_scan
+    def_delegators :monitor, :description, :scan!, :heartbeat_frequency, :last_scan, :compressor
     alias :heartbeat_frequency_seconds :heartbeat_frequency
 
     # Delegate convenience methods to the monitor description.

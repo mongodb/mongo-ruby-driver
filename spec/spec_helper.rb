@@ -202,6 +202,21 @@ def running_ssl?
   SSL
 end
 
+# Is the test suite using compression.
+#
+# @since 2.5.0
+def compression_enabled?
+  COMPRESSORS[:compressors]
+end
+
+# Is the test suite testing compression.
+# Requires that the server supports compression and compression is used by the test client.
+#
+# @since 2.5.0
+def testing_compression?
+  compression_enabled? && op_msg_enabled?
+end
+
 alias :scram_sha_1_enabled? :list_command_enabled?
 
 # Depending on whether write commands are enabled, there are different documents that

@@ -95,8 +95,8 @@ describe Mongo::Cluster::AppMetadata do
           allow(app_metadata).to receive(:driver_doc).and_return('x'*500)
         end
 
-        it 'truncates the document to be just an ismaster command' do
-          expect(app_metadata.ismaster_bytes.length).to eq(Mongo::Server::Monitor::Connection::ISMASTER_BYTES.length)
+        it 'truncates the document to be just an ismaster command and the compressors', unless: compression_enabled? do
+          expect(app_metadata.ismaster_bytes.length).to eq(Mongo::Server::Monitor::Connection::ISMASTER_BYTES.length + 26)
         end
       end
     end

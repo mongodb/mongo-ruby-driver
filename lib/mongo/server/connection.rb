@@ -59,7 +59,8 @@ module Mongo
                      :max_bson_object_size,
                      :max_message_size,
                      :mongos?,
-                     :app_metadata
+                     :app_metadata,
+                     :compressor
 
       # Tell the underlying socket to establish a connection to the host.
       #
@@ -223,7 +224,7 @@ module Mongo
       def write(messages, buffer = BSON::ByteBuffer.new)
         start_size = 0
         messages.each do |message|
-          message.serialize(buffer, max_bson_object_size)
+          message.compress!(compressor, options[:zlib_compression_level]).serialize(buffer, max_bson_object_size)
           if max_message_size &&
             (buffer.length - start_size) > max_message_size
             raise Error::MaxMessageSize.new(max_message_size)

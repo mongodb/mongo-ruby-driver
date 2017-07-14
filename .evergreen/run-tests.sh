@@ -24,6 +24,9 @@ if [ "$AUTH" != "noauth" ]; then
   export ROOT_USER_NAME="bob"
   export ROOT_USER_PWD="pwd123"
 fi
+if [ "$COMPRESSOR" == "zlib" ]; then
+  export COMPRESSOR="zlib"
+fi
 export CI=true
 export DRIVER_TOOLS_CLIENT_CERT_PEM="${DRIVERS_TOOLS}/.evergreen/x509gen/client-public.pem"
 export DRIVER_TOOLS_CLIENT_KEY_PEM="${DRIVERS_TOOLS}/.evergreen/x509gen/client-private.pem"

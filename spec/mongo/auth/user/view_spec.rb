@@ -24,6 +24,15 @@ describe Mongo::Auth::User::View do
       it 'saves the user in the database' do
         expect(response).to be_successful
       end
+
+      context 'when compression is used', if: testing_compression? do
+
+        it 'does not compress the message' do
+          # The dropUser command message will be compressed, so expect instantiation once.
+          expect(Mongo::Protocol::Compressed).to receive(:new).once.and_call_original
+          expect(response).to be_successful
+        end
+      end
     end
 
     context 'when creation was not successful' do
@@ -61,6 +70,15 @@ describe Mongo::Auth::User::View do
       it 'updates the password' do
         expect(response).to be_successful
       end
+
+      context 'when compression is used', if: testing_compression? do
+
+        it 'does not compress the message' do
+          # The dropUser command message will be compressed, so expect instantiation once.
+          expect(Mongo::Protocol::Compressed).to receive(:new).once.and_call_original
+          expect(response).to be_successful
+        end
+      end
     end
 
     context 'when the roles of a user are updated' do
@@ -74,6 +92,15 @@ describe Mongo::Auth::User::View do
 
       it 'updates the roles' do
         expect(response).to be_successful
+      end
+
+      context 'when compression is used', if: testing_compression? do
+
+        it 'does not compress the message' do
+          # The dropUser command message will be compressed, so expect instantiation once.
+          expect(Mongo::Protocol::Compressed).to receive(:new).once.and_call_original
+          expect(response).to be_successful
+        end
       end
     end
   end

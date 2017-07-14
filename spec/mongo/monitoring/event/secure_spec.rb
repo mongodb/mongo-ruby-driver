@@ -54,4 +54,46 @@ describe Mongo::Monitoring::Event::Secure do
       end
     end
   end
+
+  describe '#compression_allowed?' do
+
+    context 'when the selector represents a command for which compression is not allowed' do
+
+      let(:secure) do
+        klass.new
+      end
+
+      Mongo::Monitoring::Event::Secure::REDACTED_COMMANDS.each do |command|
+
+        let(:selector) do
+          { command => 1 }
+        end
+
+        context "when the command is #{command}" do
+
+          it 'does not allow compression for the command' do
+           expect(secure.compression_allowed?(selector.keys.first)).to be(false)
+          end
+        end
+      end
+    end
+
+    context 'when the selector represents a command for which compression is allowed' do
+
+      let(:selector) do
+        { ping: 1 }
+      end
+
+      let(:secure) do
+        klass.new
+      end
+
+      context 'when the command is :ping' do
+
+        it 'does not allow compression for the command' do
+          expect(secure.compression_allowed?(selector.keys.first)).to be(true)
+        end
+      end
+    end
+  end
 end

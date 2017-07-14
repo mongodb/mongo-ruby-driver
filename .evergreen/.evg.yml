@@ -523,6 +523,14 @@ axes:
       - id: rhel70
         display_name: "RHEL 7.0"
         run_on: rhel70-small
+  - id: "compressor"
+    display_name: Compressor
+    values:
+      - id: "zlib"
+        display_name: Zlib
+        variables:
+           COMPRESSOR: "zlib"
+
 
 buildvariants:
 #- matrix_name: "all-os-all-ruby-auth-nossl-standalone"
@@ -534,6 +542,14 @@ buildvariants:
   matrix_spec: { auth: "*", ssl: "*", ruby: "*", mongodb-version: "*", topology: "*" }
   exclude_spec: { auth: "*", ssl: "ssl", ruby: "*", mongodb-version: "2.4", topology: "*" }
   display_name: "${mongodb-version} ${topology} ${auth} ${ssl} ${ruby}"
+  run_on:
+    - rhel70-small
+  tasks:
+     - name: "test"
+
+- matrix_name: "rhel70-latest-all-rubies-all-topologies-all-auth-all-ssl-compression"
+  matrix_spec: { auth: "*", ssl: "*", ruby: "*", mongodb-version: "latest", topology: "*", compressor: 'zlib' }
+  display_name: "${compressor} ${topology} ${auth} ${ssl} ${ruby}"
   run_on:
     - rhel70-small
   tasks:

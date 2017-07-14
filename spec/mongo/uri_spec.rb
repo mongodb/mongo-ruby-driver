@@ -929,5 +929,34 @@ describe Mongo::URI do
         expect(Mongo::Client.new(string).options[:app_name]).to eq(:reports)
       end
     end
+
+    context 'when a supported compressors option is provided' do
+      let(:options) { "compressors=zlib" }
+
+      it 'sets the compressors as an array on the client' do
+        expect(Mongo::Client.new(string).options[:compressors]).to eq(['zlib'])
+      end
+    end
+
+    context 'when a non-supported compressors option is provided' do
+      let(:options) { "compressors=snoopy" }
+
+      let(:client) do
+        Mongo::Client.new(string)
+      end
+
+      it 'sets no compressors on the client and warns' do
+        expect(Mongo::Logger.logger).to receive(:warn)
+        expect(client.options[:compressors]).to be_nil
+      end
+    end
+
+    context 'when a zlibCompressionLevel option is provided' do
+      let(:options) { "zlibCompressionLevel=6" }
+
+      it 'sets the zlib compression level on the client' do
+        expect(Mongo::Client.new(string).options[:zlib_compression_level]).to eq(6)
+      end
+    end
   end
 end

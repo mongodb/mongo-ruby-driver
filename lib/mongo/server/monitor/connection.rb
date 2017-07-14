@@ -22,6 +22,7 @@ module Mongo
       class Connection
         include Retryable
         include Connectable
+        include Loggable
 
         # The command used for determining server status.
         #
@@ -59,6 +60,23 @@ module Mongo
         #
         # @deprecated Please use Server::CONNECT_TIMEOUT instead. Will be removed in 3.0.0
         CONNECT_TIMEOUT = 10.freeze
+
+        # Key for compression algorithms in the response from the server during handshake.
+        #
+        # @since 2.5.0
+        COMPRESSION = 'compression'.freeze
+
+        # Warning message that the server has no compression algorithms in common with those requested
+        #   by the client.
+        #
+        # @since 2.5.0
+        COMPRESSION_WARNING = 'The server has no compression algorithms in common with those requested. ' +
+                                'Compression will not be used.'.freeze
+
+        # The compressor, which is determined during the handshake.
+        #
+        # @since 2.5.0
+        attr_reader :compressor
 
         # Send the preserialized ismaster call.
         #
@@ -137,6 +155,7 @@ module Mongo
           @ssl_options = options.reject { |k, v| !k.to_s.start_with?(SSL) }
           @socket = nil
           @pid = Process.pid
+          @compressor = nil
         end
 
         # Get the socket timeout.
@@ -157,10 +176,24 @@ module Mongo
 
         private
 
+        def set_compressor!(reply)
+          server_compressors = reply[COMPRESSION]
+
+          if options[:compressors]
+            if intersection = (server_compressors & options[:compressors])
+              @compressor = intersection[0]
+            else
+              log_warn(COMPRESSION_WARNING)
+            end
+          end
+        end
+
         def handshake!
           if @app_metadata
             socket.write(@app_metadata.ismaster_bytes)
-            Protocol::Message.deserialize(socket, Mongo::Protocol::Message::MAX_MESSAGE_SIZE).documents[0]
+            reply = Protocol::Message.deserialize(socket, Mongo::Protocol::Message::MAX_MESSAGE_SIZE).documents[0]
+            set_compressor!(reply)
+            reply
           end
         end
       end
