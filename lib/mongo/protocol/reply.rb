@@ -70,9 +70,9 @@ module Mongo
 
       # The operation code required to specify a Reply message.
       # @return [Fixnum] the operation code.
-      def op_code
-        1
-      end
+      #
+      # @since 2.5.0
+      OP_CODE = 1
 
       # Available flags for a Reply message.
       FLAGS = [
@@ -194,6 +194,8 @@ module Mongo
           documents.first
         end
       end
+
+      Registry.register(OP_CODE, self)
     end
   end
 end

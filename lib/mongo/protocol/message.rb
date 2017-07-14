@@ -129,9 +129,9 @@ module Mongo
         end
 
         buffer = BSON::ByteBuffer.new(io.read(length - 16))
-        message = allocate
+        message = Registry.get(_op_code).allocate
 
-        fields.each do |field|
+        message.send(:fields).each do |field|
           if field[:multi]
             deserialize_array(message, buffer, field)
           else
