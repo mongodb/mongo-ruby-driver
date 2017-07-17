@@ -48,12 +48,33 @@ module Mongo
           # @return [ Hash ] The selector describing this update operation.
           def selector
             { update: coll_name,
-              updates: updates,
-              ordered: ordered?
-            }.tap do |cmd|
-              cmd.merge!(writeConcern: write_concern.options) if write_concern
-              cmd.merge!(:bypassDocumentValidation => true) if bypass_document_validation
-              cmd.merge!(:collation => collation) if collation
+              updates: updates
+            }.merge(command_options)
+          end
+
+          def command_options
+            opts = { ordered: ordered? }
+            opts[:writeConcern] = write_concern.options if write_concern
+            opts[:bypassDocumentValidation] = true if bypass_document_validation
+            opts[:collation] = collation if collation
+            opts
+          end
+
+          # The wire protocol message for this write operation.
+          #
+          # @return [ Mongo::Protocol::Query ] Wire protocol message.
+          #
+          # @since 2.0.0
+          def message(server)
+            if server.features.op_msg_enabled?
+
+              args = { update: coll_name, "$db" => db_name }.merge!(command_options)
+              global_arguments = Protocol::Msg::PayloadZero.new(args)
+
+              payload = Protocol::Msg::PayloadOne.new('updates', updates)
+              Protocol::Msg.new([:none], options, global_arguments, payload)
+            else
+              Protocol::Query.new(db_name, Database::COMMAND, selector, options)
             end
           end
         end

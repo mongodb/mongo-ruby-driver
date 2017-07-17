@@ -42,10 +42,32 @@ module Mongo
           # @since 2.0.0
           def selector
             { delete: coll_name,
-              deletes: deletes,
-              ordered: ordered?
-            }.tap do |cmd|
-              cmd.merge!(writeConcern: write_concern.options) if write_concern
+              deletes: deletes
+            }.merge(command_options)
+          end
+
+          def command_options
+            opts = { ordered: ordered? }
+            opts[:writeConcern] = write_concern.options if write_concern
+            opts[:collation] = collation if collation
+            opts
+          end
+
+          # The wire protocol message for this write operation.
+          #
+          # @return [ Mongo::Protocol::Query ] Wire protocol message.
+          #
+          # @since 2.0.0
+          def message(server)
+            if server.features.op_msg_enabled?
+
+              args = { delete: coll_name, "$db" => db_name }.merge!(command_options)
+              global_arguments = Protocol::Msg::PayloadZero.new(args)
+
+              payload = Protocol::Msg::PayloadOne.new('deletes', deletes)
+              Protocol::Msg.new([:none], options, global_arguments, payload)
+            else
+              Protocol::Query.new(db_name, Database::COMMAND, selector, options)
             end
           end
         end

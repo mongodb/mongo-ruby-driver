@@ -31,9 +31,10 @@ module Mongo
       # @api private
       #
       # @since 2.5.0
-      def initialize(flag_bits, *sections)
+      def initialize(flag_bits, options = {}, *sections)
         @flag_bits = flag_bits || [ :none ]
         @sections = sections
+        @options = options
         super
       end
 
@@ -85,6 +86,62 @@ module Mongo
       alias :documents :sections
 
       #field :checksum, Checksum
+
+      class PayloadZero
+
+        TYPE = 0x0
+
+        TYPE_BYTE = TYPE.chr.force_encoding(BSON::BINARY).freeze
+
+        def initialize(document, options = {})
+          @document = document
+          @options = options
+        end
+
+        # Serializes a section of an OP_MSG, payload type 0.
+        #
+        # @param [ String ] buffer Buffer to receive the serialized Sections.
+        # @param [ Fixnum ] max_bson_size The max bson size of documents in the section.
+        # @param [ true, false ] validating_keys Whether to validate document keys.
+        #
+        # @return [ String ] Buffer with serialized value.
+        def serialize(buffer, max_bson_size = nil, validating_keys = BSON::Config.validating_keys?)
+          buffer.put_byte(TYPE_BYTE)
+          Serializers::Document.serialize(buffer, @document, max_bson_size,
+                                          @options.fetch(:validating_keys, validating_keys))
+        end
+      end
+
+      class PayloadOne
+
+        TYPE = 0x1
+
+        TYPE_BYTE = TYPE.chr.force_encoding(BSON::BINARY).freeze
+
+        def initialize(identifier, documents)
+          @identifier = identifier
+          @documents = documents
+        end
+
+        # Serializes a section of an OP_MSG, payload type 1.
+        #
+        # @param [ String ] buffer Buffer to receive the serialized Sections.
+        # @param [ Fixnum ] max_bson_size The max bson size of documents in the section.
+        # @param [ true, false ] validating_keys Whether to validate document keys.
+        #
+        # @return [ String ] Buffer with serialized value.
+        def serialize(buffer, max_bson_size = nil, validating_keys = BSON::Config.validating_keys?)
+          buffer.put_byte(TYPE_BYTE)
+          start = buffer.length
+          buffer.put_int32(0) # hold for size
+          Serializers::CString.serialize(buffer, @identifier)
+          @documents.each do |document|
+            Serializers::Document.serialize(buffer, document, max_bson_size, validating_keys)
+          end
+          buffer.replace_int32(start, buffer.length - start)
+        end
+      end
+
 
       Registry.register(OP_CODE, self)
     end

@@ -41,12 +41,15 @@ module Mongo
           # @since 2.0.0
           def selector
             { insert: coll_name,
-              documents: documents,
-              ordered: ordered?
-            }.tap do |cmd|
-              cmd.merge!(writeConcern: write_concern.options) if write_concern
-              cmd.merge!(:bypassDocumentValidation => true) if bypass_document_validation
-            end
+              documents: documents
+            }.merge!(command_options)
+          end
+
+          def command_options
+            opts = { ordered: ordered? }
+            opts[:writeConcern] = write_concern.options if write_concern
+            opts[:bypassDocumentValidation] = true if bypass_document_validation
+            opts
           end
 
           # The wire protocol message for this write operation.
@@ -55,15 +58,15 @@ module Mongo
           #
           # @since 2.2.5
           def message(server)
+            opts = options.merge(validating_keys: true)
             if server.features.op_msg_enabled?
-              arguments = { insert: coll_name, "$db" => db_name }
-              arguments[:writeConcern] = write_concern.options if write_concern
-              arguments[:bypassDocumentValidation] = true if bypass_document_validation
 
-              section = { identifier: 'documents', documents: documents}
-              Protocol::Msg.new([:none], { type: 0, payload: arguments}, { type: 1, payload: section })
+              args = { insert: coll_name, "$db" => db_name }.merge!(command_options)
+              global_arguments = Protocol::Msg::PayloadZero.new(args, validating_keys: false)
+
+              payload = Protocol::Msg::PayloadOne.new('documents', documents)
+              Protocol::Msg.new([:none], opts, global_arguments, payload)
             else
-              opts = options.merge(validating_keys: true)
               Protocol::Query.new(db_name, Database::COMMAND, selector, opts)
             end
           end
