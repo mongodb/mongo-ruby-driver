@@ -65,9 +65,9 @@ module Mongo
 
       # The operation code required to specify a OP_MSG message.
       # @return [ Fixnum ] the operation code.
-      def op_code
-        2013
-      end
+      #
+      # @since 2.5.0
+      OP_CODE = 2013
 
       # Available flags for a OP_MSG message.
       FLAGS = Array.new(16).tap { |arr|
@@ -85,6 +85,8 @@ module Mongo
       alias :documents :sections
 
       #field :checksum, Checksum
+
+      Registry.register(OP_CODE, self)
     end
   end
 end
