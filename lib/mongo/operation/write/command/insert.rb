@@ -62,10 +62,12 @@ module Mongo
             if server.features.op_msg_enabled?
 
               args = { insert: coll_name, "$db" => db_name }.merge!(command_options)
-              global_arguments = Protocol::Msg::PayloadZero.new(args, validating_keys: false)
+              payload = { identifier: 'documents', documents: documents }
 
-              payload = Protocol::Msg::PayloadOne.new('documents', documents)
-              Protocol::Msg.new([:none], opts, global_arguments, payload)
+              global_args = { type: 0, document: args }
+              section = { type: 1, sequence: payload }
+
+              Protocol::Msg.new([:none], opts, global_args, section)
             else
               Protocol::Query.new(db_name, Database::COMMAND, selector, opts)
             end

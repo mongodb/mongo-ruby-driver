@@ -162,7 +162,14 @@ module Mongo
         # @return [ String ] Buffer with serialized value.
         def self.serialize(buffer, value, max_bson_size = nil, validating_keys = BSON::Config.validating_keys?)
           value.each do |section|
-            section.serialize(buffer, max_bson_size, validating_keys)
+            case section[:type]
+            when PayloadZero::TYPE
+              PayloadZero.serialize(buffer, section[:document], max_bson_size, false)
+            when PayloadOne::TYPE
+              PayloadOne.serialize(buffer, section[:sequence], max_bson_size, validating_keys)
+            else
+              #raise error?
+            end
           end
         end
 
@@ -177,9 +184,9 @@ module Mongo
           sections = []
           until buffer.to_s.size == end_size
             case buffer.get_byte
-            when Msg::PayloadZero::TYPE_BYTE
+            when PayloadZero::TYPE_BYTE
               sections << PayloadZero.deserialize(buffer)
-            when Msg::PayloadOne::TYPE_BYTE
+            when PayloadOne::TYPE_BYTE
               sections << PayloadOne.deserialize(buffer)
              # else raise error?
             end
@@ -198,6 +205,23 @@ module Mongo
 
         module PayloadZero
 
+          TYPE = 0x0
+
+          TYPE_BYTE = TYPE.chr.force_encoding(BSON::BINARY).freeze
+
+          # Serializes a section of an OP_MSG, payload type 0.
+          #
+          # @param [ String ] buffer Buffer to receive the serialized Sections.
+          # @param [ BSON::Document, Hash ] value The object to serialize.
+          # @param [ Fixnum ] max_bson_size The max bson size of documents in the section.
+          # @param [ true, false ] validating_keys Whether to validate document keys.
+          #
+          # @return [ String ] Buffer with serialized value.
+          def self.serialize(buffer, value, max_bson_size = nil, validating_keys = BSON::Config.validating_keys?)
+            buffer.put_byte(TYPE_BYTE)
+            Serializers::Document.serialize(buffer, value, max_bson_size, validating_keys)
+          end
+
           # Deserializes a section of payload type 0 of an OP_MSG from the IO stream.
           #
           # @param [ String ] buffer Buffer containing the sections.
@@ -209,6 +233,29 @@ module Mongo
         end
 
         module PayloadOne
+
+          TYPE = 0x1
+
+          TYPE_BYTE = TYPE.chr.force_encoding(BSON::BINARY).freeze
+
+          # Serializes a section of an OP_MSG, payload type 1.
+          #
+          # @param [ String ] buffer Buffer to receive the serialized Sections.
+          # @param [ BSON::Document, Hash ] value The object to serialize.
+          # @param [ Fixnum ] max_bson_size The max bson size of documents in the section.
+          # @param [ true, false ] validating_keys Whether to validate document keys.
+          #
+          # @return [ String ] Buffer with serialized value.
+          def self.serialize(buffer, value, max_bson_size = nil, validating_keys = BSON::Config.validating_keys?)
+            buffer.put_byte(TYPE_BYTE)
+            start = buffer.length
+            buffer.put_int32(0) # hold for size
+            Serializers::CString.serialize(buffer, value[:identifier])
+            value[:documents].each do |document|
+              Serializers::Document.serialize(buffer, document, max_bson_size, validating_keys)
+            end
+            buffer.replace_int32(start, buffer.length - start)
+          end
 
           # Deserializes a section of payload type 1 of an OP_MSG from the IO stream.
           #

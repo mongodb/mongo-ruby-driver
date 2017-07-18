@@ -62,10 +62,12 @@ module Mongo
             if server.features.op_msg_enabled?
 
               args = { delete: coll_name, "$db" => db_name }.merge!(command_options)
-              global_arguments = Protocol::Msg::PayloadZero.new(args)
+              payload = { identifier: 'deletes', documents: deletes }
 
-              payload = Protocol::Msg::PayloadOne.new('deletes', deletes)
-              Protocol::Msg.new([:none], options, global_arguments, payload)
+              global_args = { type: 0, document: args }
+              section = { type: 1, sequence: payload }
+
+              Protocol::Msg.new([:none], options, global_args, section)
             else
               Protocol::Query.new(db_name, Database::COMMAND, selector, options)
             end
