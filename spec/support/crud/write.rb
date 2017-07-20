@@ -48,7 +48,8 @@ module Mongo
                         :upsert => 'upsert',
                         :ordered => 'ordered',
                         :write_concern => 'writeConcern',
-                        :collation => 'collation'
+                        :collation => 'collation',
+                        :array_filters => 'arrayFilters'
                        }.freeze
 
         # The operation name.
@@ -197,6 +198,10 @@ module Mongo
 
         def filter
           arguments['filter']
+        end
+
+        def array_filters
+          arguments['arrayFilters']
         end
 
         def requests

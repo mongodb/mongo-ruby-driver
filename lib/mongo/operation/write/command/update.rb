@@ -27,6 +27,7 @@ module Mongo
         #       :bar => 1 }},
         #       :multi  => true,
         #       :upsert => false
+        #       :array_filters => []
         #     }],
         #     :db_name => 'test',
         #     :coll_name => 'test_coll',

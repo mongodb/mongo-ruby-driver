@@ -57,6 +57,8 @@ module Mongo
         operations = op_combiner.combine
         server = next_primary
         raise Error::UnsupportedCollation.new if op_combiner.has_collation && !server.features.collation_enabled?
+        raise Error::UnsupportedArrayFilters.new if op_combiner.has_array_filters && !server.features.array_filters_enabled?
+
         operations.each do |operation|
           execute_operation(
             operation.keys.first,

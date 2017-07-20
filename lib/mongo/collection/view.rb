@@ -131,6 +131,8 @@ module Mongo
       # @option options :sort [ Hash ] The key and direction pairs used to sort the
       #   results.
       # @option options [ Hash ] :collation The collation to use.
+      # @option options [ Array ] :array_filters A set of filters specifying to which array elements
+      #   an update should apply.
       #
       # @since 2.0.0
       def initialize(collection, filter = {}, options = {})
@@ -183,10 +185,23 @@ module Mongo
         View.new(collection, filter, options)
       end
 
+      def apply_array_filters!(doc, server, opts = {})
+        if filters = doc[:array_filters] || opts[:array_filters] || opts['array_filters']
+          validate_array_filters!(server, filters)
+          doc[:arrayFilters] = filters
+        end
+      end
+
       def apply_collation!(doc, server, opts = {})
         if coll = doc[:collation] || opts[:collation] || opts['collation'] || collation
           validate_collation!(server, coll)
           doc[:collation] = coll
+        end
+      end
+
+      def validate_array_filters!(server, filters)
+        if filters && !server.features.array_filters_enabled?
+          raise Error::UnsupportedArrayFilters.new
         end
       end
 

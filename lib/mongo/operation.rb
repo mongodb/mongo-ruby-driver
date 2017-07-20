@@ -56,5 +56,10 @@ module Mongo
     #
     # @since 2.4.0
     COLLATION = 'collation'.freeze
+
+    # The array filters field constant.
+    #
+    # @since 2.5.0
+    ARRAY_FILTERS = 'array_filters'.freeze
   end
 end

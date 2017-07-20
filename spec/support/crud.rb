@@ -114,7 +114,9 @@ module Mongo
 
       def lower_bound_satisfied?(client)
         if @min_server_version
-          if @min_server_version >= '3.4'
+          if @min_server_version >= '3.6'
+            client.cluster.next_primary.features.array_filters_enabled?
+          elsif @min_server_version >= '3.4'
             client.cluster.next_primary.features.collation_enabled?
           elsif @min_server_version >= '2.6'
             client.cluster.next_primary.features.write_command_enabled?
