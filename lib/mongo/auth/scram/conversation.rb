@@ -181,6 +181,7 @@ module Mongo
         def initialize(user)
           @user = user
           @nonce = SecureRandom.base64
+          @client_key = user.client_key
         end
 
         private
@@ -246,7 +247,9 @@ module Mongo
         #
         # @since 2.0.0
         def client_key
-          @client_key ||= hmac(salted_password, CLIENT_KEY)
+          key = @client_key ||= hmac(salted_password, CLIENT_KEY)
+          user.client_key ||= key
+          key
         end
 
         # Client proof algorithm implementation.

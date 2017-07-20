@@ -67,8 +67,17 @@ describe Mongo::Auth::SCRAM do
       cr.login(connection).documents[0]
     end
 
-    it 'logs the user into the connection', if: list_command_enabled? do
+    it 'logs the user into the connection and caches the client key', if: list_command_enabled? do
       expect(login['ok']).to eq(1)
+      expect(root_user.client_key).not_to be_nil
+    end
+
+    it 'raises an exception when an incorrect client key is set', if: list_command_enabled? do
+      root_user.client_key = "incorrect client key"
+      expect {
+        cr.login(connection)
+      }.to raise_error(Mongo::Auth::Unauthorized)
+      root_user.client_key = nil
     end
   end
 end

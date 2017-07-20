@@ -49,6 +49,10 @@ module Mongo
       # @return [ Array<String> ] roles The user roles.
       attr_reader :roles
 
+      # Sets the client key for the user.
+      # @return [ String ] The client key for the user.
+      attr_accessor :client_key
+
       # Determine if this user is equal to another.
       #
       # @example Check user equality.
