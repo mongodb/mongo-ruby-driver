@@ -96,6 +96,7 @@ describe Mongo::Operation::Write::Command::Delete do
     end
 
     it 'creates the correct query wire protocol message' do
+      pending 'update for op msg support'
       expect(Mongo::Protocol::Query).to receive(:new).with(authorized_collection.database.name,
                                                            '$cmd',
                                                            expected_selector,

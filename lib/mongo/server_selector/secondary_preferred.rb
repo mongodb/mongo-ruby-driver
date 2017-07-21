@@ -23,6 +23,8 @@ module Mongo
     class SecondaryPreferred
       include Selectable
 
+      SERVER_FORMATTED_NAME = 'secondaryPreferred'.freeze
+
       # Get the name of the server mode type.
       #
       # @example Get the name of the server mode for this preference.
@@ -69,6 +71,10 @@ module Mongo
       # @since 2.0.0
       def to_mongos
         return nil if tag_sets.empty? && max_staleness.nil?
+        to_doc
+      end
+
+      def to_doc
         preference = { mode: 'secondaryPreferred' }
         preference.merge!({ tags: tag_sets }) unless tag_sets.empty?
         preference.merge!({ maxStalenessSeconds: max_staleness }) if max_staleness

@@ -132,13 +132,13 @@ module Mongo
         message = Registry.get(_op_code).allocate
 
         message.send(:fields).each do |field|
-        #message.instance_variable_set(:@request_id, _request_id)
           if field[:multi]
             deserialize_array(message, buffer, field)
           else
             deserialize_field(message, buffer, field)
           end
         end
+        binding.pry unless (message.class == Msg || message.documents[0]['ismaster'])
         message
       end
 

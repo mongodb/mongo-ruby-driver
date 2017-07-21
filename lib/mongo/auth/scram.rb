@@ -55,10 +55,10 @@ module Mongo
       # @since 2.0.0
       def login(connection)
         conversation = Conversation.new(user)
-        reply = connection.dispatch([ conversation.start ])
-        reply = connection.dispatch([ conversation.continue(reply) ])
+        reply = connection.dispatch([ conversation.start(connection) ])
+        reply = connection.dispatch([ conversation.continue(reply, connection) ])
         until reply.documents[0][Conversation::DONE]
-          reply = connection.dispatch([ conversation.finalize(reply) ])
+          reply = connection.dispatch([ conversation.finalize(reply, connection) ])
         end
         reply
       end

@@ -23,6 +23,8 @@ module Mongo
     class Primary
       include Selectable
 
+      SERVER_FORMATTED_NAME = 'primary'.freeze
+
       # Get the name of the server mode type.
       #
       # @example Get the name of the server mode for this preference.
@@ -33,6 +35,10 @@ module Mongo
       # @since 2.0.0
       def name
         :primary
+      end
+
+      def server_formatted_name
+        SERVER_FORMATTED_NAME
       end
 
       # Whether the slaveOk bit should be set on wire protocol messages.
@@ -67,6 +73,10 @@ module Mongo
       # @since 2.0.0
       def to_mongos
         nil
+      end
+
+      def to_doc
+        @doc ||= { mode: 'primary' }
       end
 
       private

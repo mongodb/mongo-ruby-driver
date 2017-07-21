@@ -30,6 +30,7 @@ module Mongo
       #
       # @since 2.1.0
       class UsersInfo < Command
+        include UsesOpMsg
 
         private
 
@@ -38,7 +39,11 @@ module Mongo
         end
 
         def message(server)
-          Protocol::Query.new(db_name, query_coll, selector, options)
+          if server.features.op_msg_enabled?
+            op_msg(selector, options)
+          else
+            Protocol::Query.new(db_name, query_coll, selector, options)
+          end
         end
       end
     end

@@ -104,7 +104,7 @@ module Mongo
       #
       # @since 2.0.0
       def cursor_id
-        acknowledged? ? replies.last.cursor_id : 0
+        acknowledged? ? (replies.last.cursor_id || 0) : 0
       end
 
       # Get the namespace of the cursor. The method should be defined in

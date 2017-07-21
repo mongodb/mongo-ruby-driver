@@ -29,15 +29,20 @@ module Mongo
       # @since 2.1.0
       PING = { :ping => 1 }.freeze
 
+      PING_OP_MSG = { :ping => 1, '$db' => Database::ADMIN }.freeze
+
       # Ping message.
       #
       # @since 2.1.0
       PING_MESSAGE = Protocol::Query.new(Database::ADMIN, Database::COMMAND, PING, :limit => -1)
 
+      PING_OP_MSG_MESSAGE = Protocol::Msg.new([:none], {}, { type: 0, document: PING_OP_MSG })
       # The ping message as raw bytes.
       #
       # @since 2.1.0
       PING_BYTES = PING_MESSAGE.serialize.to_s.freeze
+
+      PING_OP_MSG_BYTES = PING_OP_MSG_MESSAGE.serialize.to_s.freeze
 
       def_delegators :@server,
                      :features,
@@ -149,8 +154,9 @@ module Mongo
       #
       # @since 2.1.0
       def ping
+        bytes = features.op_msg_enabled? ? PING_OP_MSG_BYTES : PING_BYTES
         ensure_connected do |socket|
-          socket.write(PING_BYTES)
+          socket.write(bytes)
           reply = Protocol::Message.deserialize(socket, max_message_size)
           reply.documents[0][Operation::Result::OK] == 1
         end

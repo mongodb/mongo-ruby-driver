@@ -53,14 +53,20 @@ module Mongo
         # @return [ Protocol::Query ] The next message to send.
         #
         # @since 2.0.0
-        def continue(reply)
+        def continue(reply, connection = nil)
           validate!(reply)
-          Protocol::Query.new(
-            user.auth_source,
-            Database::COMMAND,
-            LOGIN.merge(user: user.name, nonce: nonce, key: user.auth_key(nonce)),
-            limit: -1
-          )
+          if connection && connection.features.op_msg_enabled?
+            selector = LOGIN.merge(user: user.name, nonce: nonce, key: user.auth_key(nonce))
+            selector['$db'] = user.auth_source
+            Protocol::Msg.new([:none], {}, { type: 0, document: selector })
+          else
+            Protocol::Query.new(
+              user.auth_source,
+              Database::COMMAND,
+              LOGIN.merge(user: user.name, nonce: nonce, key: user.auth_key(nonce)),
+              limit: -1
+            )
+          end
         end
 
         # Finalize the CR conversation. This is meant to be iterated until
@@ -75,7 +81,7 @@ module Mongo
         # @return [ Protocol::Query ] The next message to send.
         #
         # @since 2.0.0
-        def finalize(reply)
+        def finalize(reply, connection = nil)
           validate!(reply)
         end
 
@@ -88,12 +94,17 @@ module Mongo
         # @return [ Protocol::Query ] The first CR conversation message.
         #
         # @since 2.0.0
-        def start
-          Protocol::Query.new(
-            user.auth_source,
-            Database::COMMAND,
-            Auth::GET_NONCE,
-            limit: -1)
+        def start(connection = nil)
+          if connection && connection.features.op_msg_enabled?
+            selector = Auth::GET_NONCE.merge('$db' => user.auth_source)
+            Protocol::Msg.new([:none], {}, { type: 0, document: selector })
+          else
+            Protocol::Query.new(
+              user.auth_source,
+              Database::COMMAND,
+              Auth::GET_NONCE,
+              limit: -1)
+          end
         end
 
         # Create the new conversation.

@@ -20,6 +20,7 @@ module Mongo
     #
     # @since 2.0.0
     module ReadPreference
+      include UsesOpMsg
 
       # The constant for slave ok flags.
       #
@@ -52,9 +53,13 @@ module Mongo
       end
 
       def message(server)
-        sel = update_selector_for_read_pref(selector, server)
-        opts = update_options_for_slave_ok(options, server)
-        Protocol::Query.new(db_name, query_coll, sel, opts)
+        if server.features.op_msg_enabled?
+          op_msg(selector, options)
+        else
+          sel = update_selector_for_read_pref(selector, server)
+          opts = update_options_for_slave_ok(options, server)
+          Protocol::Query.new(db_name, query_coll, sel, opts)
+        end
       end
     end
   end

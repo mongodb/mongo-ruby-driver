@@ -90,11 +90,7 @@ module Mongo
             #
             # @since 2.0.0
             def initialize(replies, ids)
-<<<<<<< HEAD
               @replies = [ *replies ] if replies
-=======
-              @replies = replies.is_a?(Array) ? replies : [ replies ]
->>>>>>> Make PayloadOne and PayloadTwo classes for better handling when serializing
               @inserted_ids = ids
             end
 

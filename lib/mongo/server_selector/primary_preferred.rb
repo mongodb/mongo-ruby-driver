@@ -23,6 +23,8 @@ module Mongo
     class PrimaryPreferred
       include Selectable
 
+      SERVER_FORMATTED_NAME = 'primaryPreferred'.freeze
+
       # Get the name of the server mode type.
       #
       # @example Get the name of the server mode for this preference.
@@ -71,6 +73,7 @@ module Mongo
         preference.merge!({ maxStalenessSeconds: max_staleness }) if max_staleness
         preference
       end
+      alias :to_doc :to_mongos
 
       private
 

@@ -108,7 +108,7 @@ module Mongo
         # @return [ Protocol::Query ] The next message to send.
         #
         # @since 2.0.0
-        def continue(reply)
+        def continue(reply, connection = nil)
           validate_first_message!(reply)
 
           # The salted password needs to be calculated now; otherwise, if the
@@ -117,12 +117,18 @@ module Mongo
           # needed to calculate the server key.
           salted_password
 
-          Protocol::Query.new(
-            user.auth_source,
-            Database::COMMAND,
-            CLIENT_CONTINUE_MESSAGE.merge(payload: client_final_message, conversationId: id),
-            limit: -1
-          )
+          if connection && connection.features.op_msg_enabled?
+            selector = CLIENT_CONTINUE_MESSAGE.merge(payload: client_final_message, conversationId: id)
+            selector['$db'] = user.auth_source
+            Protocol::Msg.new([:none], {}, { type: 0, document: selector })
+          else
+            Protocol::Query.new(
+              user.auth_source,
+              Database::COMMAND,
+              CLIENT_CONTINUE_MESSAGE.merge(payload: client_final_message, conversationId: id),
+              limit: -1
+            )
+          end
         end
 
         # Finalize the SCRAM conversation. This is meant to be iterated until
@@ -137,14 +143,20 @@ module Mongo
         # @return [ Protocol::Query ] The next message to send.
         #
         # @since 2.0.0
-        def finalize(reply)
+        def finalize(reply, connection = nil)
           validate_final_message!(reply)
-          Protocol::Query.new(
-            user.auth_source,
-            Database::COMMAND,
-            CLIENT_CONTINUE_MESSAGE.merge(payload: client_empty_message, conversationId: id),
-            limit: -1
-          )
+          if connection && connection.features.op_msg_enabled?
+            selector = CLIENT_CONTINUE_MESSAGE.merge(payload: client_empty_message, conversationId: id)
+            selector['$db'] = user.auth_source
+            Protocol::Msg.new([:none], {}, { type: 0, document: selector })
+          else
+            Protocol::Query.new(
+              user.auth_source,
+              Database::COMMAND,
+              CLIENT_CONTINUE_MESSAGE.merge(payload: client_empty_message, conversationId: id),
+              limit: -1
+            )
+          end
         end
 
         # Start the SCRAM conversation. This returns the first message that
@@ -156,13 +168,20 @@ module Mongo
         # @return [ Protocol::Query ] The first SCRAM conversation message.
         #
         # @since 2.0.0
-        def start
-          Protocol::Query.new(
-            user.auth_source,
-            Database::COMMAND,
-            CLIENT_FIRST_MESSAGE.merge(payload: client_first_message, mechanism: SCRAM::MECHANISM),
-            limit: -1
-          )
+        def start(connection = nil)
+          # @todo what to do with limit?
+          if connection && connection.features.op_msg_enabled?
+            selector = CLIENT_FIRST_MESSAGE.merge(payload: client_first_message, mechanism: SCRAM::MECHANISM)
+            selector['$db'] = user.auth_source
+            Protocol::Msg.new([:none], {}, { type: 0, document: selector })
+          else
+            Protocol::Query.new(
+              user.auth_source,
+              Database::COMMAND,
+              CLIENT_FIRST_MESSAGE.merge(payload: client_first_message, mechanism: SCRAM::MECHANISM),
+              limit: -1
+            )
+          end
         end
 
         # Get the id of the conversation.

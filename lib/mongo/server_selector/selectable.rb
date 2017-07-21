@@ -167,6 +167,13 @@ module Mongo
         end
       end
 
+      def specification
+        preference = { :mode => server_formatted_name }
+        preference.merge!({ :tags => tag_sets }) unless tag_sets.empty?
+        preference.merge!({ maxStalenessSeconds: max_staleness }) if max_staleness
+        preference
+      end
+
       private
 
       # Select the primary from a list of provided candidates.

@@ -28,15 +28,21 @@ module Mongo
         # @since 2.2.0
         ISMASTER = { :ismaster => 1 }.freeze
 
+        ISMASTER_OP_MSG = { :ismaster => 1 }.merge('$db' => Database::ADMIN).freeze
+
         # The constant for the ismaster command.
         #
         # @since 2.2.0
         ISMASTER_MESSAGE = Protocol::Query.new(Database::ADMIN, Database::COMMAND, ISMASTER, :limit => -1)
 
+        ISMASTER_OP_MSG_MESSAGE = Protocol::Msg.new([:none], {}, { type: 0, document: ISMASTER_OP_MSG })
+
         # The raw bytes for the ismaster message.
         #
         # @since 2.2.0
         ISMASTER_BYTES = ISMASTER_MESSAGE.serialize.to_s.freeze
+
+        ISMASTER_OP_MSG_BYTES = ISMASTER_OP_MSG_MESSAGE.serialize.to_s.freeze
 
         # The default time in seconds to timeout a connection attempt.
         #

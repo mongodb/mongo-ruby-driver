@@ -103,6 +103,7 @@ describe Mongo::Operation::Write::Command::Update do
     end
 
     it 'creates the correct Command message' do
+      pending 'update for op msg support'
       expect(Mongo::Protocol::Query).to receive(:new).with(TEST_DB, '$cmd', expected_selector, { limit: -1 })
       op.send(:message, double('server'))
     end

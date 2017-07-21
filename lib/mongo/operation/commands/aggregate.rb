@@ -41,6 +41,7 @@ module Mongo
       # @since 2.0.0
       class Aggregate < Command
         include TakesWriteConcern
+        include UsesOpMsg
 
         private
 
@@ -50,11 +51,16 @@ module Mongo
         end
 
         def message(server)
-          sel = update_selector_for_read_pref(selector, server)
-          sel = filter_cursor_from_selector(sel, server)
+          sel = filter_cursor_from_selector(selector, server)
           sel = update_selector_for_write_concern(sel, server)
-          opts = update_options_for_slave_ok(options, server)
-          Protocol::Query.new(db_name, query_coll, sel, opts)
+
+          if server.features.op_msg_enabled?
+            op_msg(sel, options)
+          else
+            sel = update_selector_for_read_pref(sel, server)
+            opts = update_options_for_slave_ok(options, server)
+            Protocol::Query.new(db_name, query_coll, sel, opts)
+          end
         end
       end
     end

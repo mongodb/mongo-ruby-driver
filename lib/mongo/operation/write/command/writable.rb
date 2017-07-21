@@ -23,6 +23,7 @@ module Mongo
         # @since 2.0.0
         module Writable
           include Limited
+          include UsesOpMsg
 
           # Execute the operation.
           #
@@ -48,7 +49,11 @@ module Mongo
           #
           # @since 2.0.0
           def message(server)
-            Protocol::Query.new(db_name, Database::COMMAND, selector, options)
+            if server.features.op_msg_enabled?
+              op_msg(selector, options)
+            else
+              Protocol::Query.new(db_name, Database::COMMAND, selector, options)
+            end
           end
         end
       end

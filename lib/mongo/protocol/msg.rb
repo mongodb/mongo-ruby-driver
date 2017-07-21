@@ -58,6 +58,10 @@ module Mongo
         false
       end
 
+      def cursor_id; end
+
+      def number_returned; 0; end
+
       protected
 
       #attr_reader :upconverter

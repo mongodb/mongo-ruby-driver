@@ -479,6 +479,12 @@ module Mongo
         @read ||= ServerSelector.get(spec[READ]) if spec[READ]
       end
 
+      def read_pref_hash
+        if spec[READ]
+          ServerSelector.get(spec[READ]).specification
+        end
+      end
+
       # Whether the operation is ordered.
       #
       # @example Get the ordered value, true is the default.
