@@ -48,7 +48,7 @@ describe Mongo::Auth::SCRAM::Conversation do
   describe '#continue' do
 
     let(:reply) do
-      Mongo::Protocol::Reply.new
+      Mongo::Protocol::Message.new
     end
 
     let(:documents) do
@@ -62,7 +62,7 @@ describe Mongo::Auth::SCRAM::Conversation do
 
     before do
       expect(SecureRandom).to receive(:base64).once.and_return('NDA2NzU3MDY3MDYwMTgy')
-      reply.instance_variable_set(:@documents, documents)
+      allow(reply).to receive(:documents).and_return(documents)
     end
 
     context 'when the server rnonce starts with the nonce' do
@@ -115,7 +115,7 @@ describe Mongo::Auth::SCRAM::Conversation do
   describe '#finalize' do
 
     let(:continue_reply) do
-      Mongo::Protocol::Reply.new
+      Mongo::Protocol::Message.new
     end
 
     let(:continue_documents) do
@@ -134,7 +134,7 @@ describe Mongo::Auth::SCRAM::Conversation do
     end
 
     let(:reply) do
-      Mongo::Protocol::Reply.new
+      Mongo::Protocol::Message.new
     end
 
     let(:documents) do
@@ -148,8 +148,8 @@ describe Mongo::Auth::SCRAM::Conversation do
 
     before do
       expect(SecureRandom).to receive(:base64).once.and_return('NDA2NzU3MDY3MDYwMTgy')
-      continue_reply.instance_variable_set(:@documents, continue_documents)
-      reply.instance_variable_set(:@documents, documents)
+      allow(continue_reply).to receive(:documents).and_return(continue_documents)
+      allow(reply).to receive(:documents).and_return(documents)
     end
 
     context 'when the verifier matches the server signature' do

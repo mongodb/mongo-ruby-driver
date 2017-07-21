@@ -99,7 +99,7 @@ module Mongo
 
       def read(request_id = nil)
         ensure_connected do |socket|
-          Protocol::Reply.deserialize(socket, max_message_size, request_id)
+          Protocol::Message.deserialize(socket, max_message_size, request_id)
         end
       end
     end

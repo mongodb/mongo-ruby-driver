@@ -99,7 +99,7 @@ module Mongo
       # @param [ Array<Message> ] messages The messages to dispatch.
       # @param [ Integer ] operation_id The operation id to link messages.
       #
-      # @return [ Protocol::Reply ] The reply if needed.
+      # @return [ Protocol::Message ] The reply if needed.
       #
       # @since 2.0.0
       def dispatch(messages, operation_id = nil)
@@ -151,7 +151,7 @@ module Mongo
       def ping
         ensure_connected do |socket|
           socket.write(PING_BYTES)
-          reply = Protocol::Reply.deserialize(socket, max_message_size)
+          reply = Protocol::Message.deserialize(socket, max_message_size)
           reply.documents[0][Operation::Result::OK] == 1
         end
       end
@@ -180,7 +180,7 @@ module Mongo
       def handshake!
         if socket && socket.connectable?
           socket.write(app_metadata.ismaster_bytes)
-          response = Protocol::Reply.deserialize(socket, max_message_size).documents[0]
+          response = Protocol::Message.deserialize(socket, max_message_size).documents[0]
           min_wire_version = response[Description::MIN_WIRE_VERSION] || Description::LEGACY_WIRE_VERSION
           max_wire_version = response[Description::MAX_WIRE_VERSION] || Description::LEGACY_WIRE_VERSION
           features = Description::Features.new(min_wire_version..max_wire_version)

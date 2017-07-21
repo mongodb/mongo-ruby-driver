@@ -27,7 +27,7 @@ module Mongo
         # @since 2.0.0
         LOGIN = { authenticate: 1 }.freeze
 
-        # @return [ Protocol::Reply ] reply The current reply in the
+        # @return [ Protocol::Message ] reply The current reply in the
         #   conversation.
         attr_reader :reply
 
@@ -40,7 +40,7 @@ module Mongo
         # @example Finalize the conversation.
         #   conversation.finalize(reply)
         #
-        # @param [ Protocol::Reply ] reply The reply of the previous
+        # @param [ Protocol::Message ] reply The reply of the previous
         #   message.
         #
         # @return [ Protocol::Query ] The next message to send.

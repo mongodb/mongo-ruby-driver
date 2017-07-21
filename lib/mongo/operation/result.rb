@@ -158,7 +158,7 @@ module Mongo
       #
       # @since 2.0.0
       def initialize(replies)
-        @replies = replies.is_a?(Protocol::Reply) ? [ replies ] : replies
+        @replies = [ *replies ] if replies
       end
 
       # Get the pretty formatted inspection of the result.

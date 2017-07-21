@@ -27,7 +27,7 @@ module Mongo
       # @return [ String ] message The error message parsed from the document.
       attr_reader :message
 
-      # @return [ Array<Protocol::Reply> ] replies The message replies.
+      # @return [ Array<Protocol::Message> ] replies The message replies.
       attr_reader :replies
 
       # Create the new parser with the returned document.

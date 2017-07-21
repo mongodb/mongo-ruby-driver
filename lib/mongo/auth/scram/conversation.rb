@@ -88,7 +88,7 @@ module Mongo
         # @return [ String ] nonce The initial user nonce.
         attr_reader :nonce
 
-        # @return [ Protocol::Reply ] reply The current reply in the
+        # @return [ Protocol::Message ] reply The current reply in the
         #   conversation.
         attr_reader :reply
 
@@ -102,7 +102,7 @@ module Mongo
         # @example Continue the conversation.
         #   conversation.continue(reply)
         #
-        # @param [ Protocol::Reply ] reply The reply of the previous
+        # @param [ Protocol::Message ] reply The reply of the previous
         #   message.
         #
         # @return [ Protocol::Query ] The next message to send.
@@ -124,7 +124,7 @@ module Mongo
         # @example Finalize the conversation.
         #   conversation.finalize(reply)
         #
-        # @param [ Protocol::Reply ] reply The reply of the previous
+        # @param [ Protocol::Message ] reply The reply of the previous
         #   message.
         #
         # @return [ Protocol::Query ] The next message to send.

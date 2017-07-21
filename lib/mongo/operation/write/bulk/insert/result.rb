@@ -34,12 +34,12 @@ module Mongo
             # @example Instantiate the result.
             #   Result.new(replies, inserted_ids)
             #
-            # @param [ Protocol::Reply ] replies The wire protocol replies.
+            # @param [ Protocol::Message ] replies The wire protocol replies.
             # @param [ Array<Object> ] ids The ids of the inserted documents.
             #
             # @since 2.0.0
             def initialize(replies, ids)
-              @replies = replies.is_a?(Protocol::Reply) ? [ replies ] : replies
+              @replies = [ *replies ] if replies
               @inserted_ids = ids
             end
 
@@ -85,12 +85,12 @@ module Mongo
             # @example Instantiate the result.
             #   Result.new(replies, inserted_ids)
             #
-            # @param [ Protocol::Reply ] replies The wire protocol replies.
+            # @param [ Protocol::Message ] replies The wire protocol replies.
             # @param [ Array<Object> ] ids The ids of the inserted documents.
             #
             # @since 2.0.0
             def initialize(replies, ids)
-              @replies = replies.is_a?(Protocol::Reply) ? [ replies ] : replies
+              @replies = [ *replies ] if replies
               @inserted_ids = ids
             end
 

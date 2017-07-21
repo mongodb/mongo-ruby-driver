@@ -49,7 +49,7 @@ module Mongo
       #
       # @param [ Mongo::Connection ] connection The connection to log into.
       #
-      # @return [ Protocol::Reply ] The authentication response.
+      # @return [ Protocol::Message ] The authentication response.
       #
       # @since 2.0.0
       def login(connection)

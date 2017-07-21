@@ -57,7 +57,7 @@ module Mongo
           ensure_connected do |socket|
             read_with_one_retry do
               socket.write(ISMASTER_BYTES)
-              Protocol::Reply.deserialize(socket).documents[0]
+              Protocol::Message.deserialize(socket).documents[0]
             end
           end
         end
@@ -145,7 +145,7 @@ module Mongo
         def handshake!
           if @app_metadata
             socket.write(@app_metadata.ismaster_bytes)
-            Protocol::Reply.deserialize(socket, Mongo::Protocol::Message::MAX_MESSAGE_SIZE).documents[0]
+            Protocol::Message.deserialize(socket, Mongo::Protocol::Message::MAX_MESSAGE_SIZE).documents[0]
           end
         end
       end
