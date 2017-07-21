@@ -123,7 +123,7 @@ describe Mongo::Collection do
       end
 
       it 'sets the new read options on the new collection' do
-        expect(new_collection.read_preference).to eq(Mongo::ServerSelector.get(new_options[:read]))
+        expect(new_collection.read_preference).to eq(new_options[:read])
       end
 
       context 'when the client has a server selection timeout setting' do
@@ -144,7 +144,7 @@ describe Mongo::Collection do
         end
 
         it 'sets the new read options on the new collection' do
-          expect(new_collection.read_preference).to eq(Mongo::ServerSelector.get(new_options[:read]))
+          expect(new_collection.read_preference).to eq(new_options[:read])
           expect(new_collection.read_preference).not_to eq(client.read_preference)
         end
       end
@@ -156,7 +156,7 @@ describe Mongo::Collection do
         end
 
         it 'sets the new read options on the new collection' do
-          expect(new_collection.read_preference).to eq(Mongo::ServerSelector.get(new_options[:read]))
+          expect(new_collection.read_preference).to eq(new_options[:read])
         end
 
         it 'passes the server_selection_timeout setting to the cluster' do

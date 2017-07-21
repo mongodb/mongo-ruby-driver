@@ -710,7 +710,7 @@ describe Mongo::Client do
       end
 
       it 'returns a primary read preference' do
-        expect(preference).to be_a(Mongo::ServerSelector::Primary)
+        expect(preference).to eq(BSON::Document.new(mode))
       end
 
       it 'passes the options to the cluster' do
@@ -725,7 +725,11 @@ describe Mongo::Client do
       end
 
       it 'returns a primary preferred read preference' do
-        expect(preference).to be_a(Mongo::ServerSelector::PrimaryPreferred)
+        expect(preference).to eq(BSON::Document.new(mode))
+      end
+
+      it 'uses a PrimaryPreferred server selector' do
+        expect(client.server_selector).to be_a(Mongo::ServerSelector::PrimaryPreferred)
       end
     end
 
@@ -736,7 +740,11 @@ describe Mongo::Client do
       end
 
       it 'returns a secondary read preference' do
-        expect(preference).to be_a(Mongo::ServerSelector::Secondary)
+        expect(preference).to eq(BSON::Document.new(mode))
+      end
+
+      it 'uses a Secondary server selector' do
+        expect(client.server_selector).to be_a(Mongo::ServerSelector::Secondary)
       end
     end
 
@@ -747,7 +755,11 @@ describe Mongo::Client do
       end
 
       it 'returns a secondary preferred read preference' do
-        expect(preference).to be_a(Mongo::ServerSelector::SecondaryPreferred)
+        expect(preference).to eq(BSON::Document.new(mode))
+      end
+
+      it 'uses a SecondaryPreferred server selector' do
+        expect(client.server_selector).to be_a(Mongo::ServerSelector::SecondaryPreferred)
       end
     end
 
@@ -758,7 +770,11 @@ describe Mongo::Client do
       end
 
       it 'returns a nearest read preference' do
-        expect(preference).to be_a(Mongo::ServerSelector::Nearest)
+        expect(preference).to eq(BSON::Document.new(mode))
+      end
+
+      it 'uses a Nearest server selector' do
+        expect(client.server_selector).to be_a(Mongo::ServerSelector::Nearest)
       end
     end
 
@@ -769,7 +785,11 @@ describe Mongo::Client do
       end
 
       it 'returns a primary read preference' do
-        expect(preference).to be_a(Mongo::ServerSelector::Primary)
+        expect(preference).to eq(BSON::Document.new(mode))
+      end
+
+      it 'uses a Primary server selector' do
+        expect(client.server_selector).to be_a(Mongo::ServerSelector::Primary)
       end
     end
 

@@ -47,7 +47,7 @@ module Mongo
         attr_reader :reduce
 
         # Delegate necessary operations to the view.
-        def_delegators :view, :collection, :read, :cluster
+        def_delegators :view, :collection, :read, :cluster, :server_selector
 
         # Delegate necessary operations to the collection.
         def_delegators :collection, :database
@@ -67,7 +67,7 @@ module Mongo
         def each
           @cursor = nil
           write_with_retry do
-            server = read.select_server(cluster, false)
+            server = server_selector.select_server(cluster, false)
             result = send_initial_query(server)
             @cursor = Cursor.new(view, result, server)
           end

@@ -66,6 +66,7 @@ module Mongo
     def_delegators :@client,
                    :cluster,
                    :read_preference,
+                   :server_selector,
                    :write_concern
 
     # @return [ Mongo::Server ] Get the primary server from the cluster.

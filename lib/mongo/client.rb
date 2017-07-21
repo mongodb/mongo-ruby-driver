@@ -258,8 +258,12 @@ module Mongo
     #   was provided to the client.
     #
     # @since 2.0.0
+    def server_selector
+      @server_selector ||= ServerSelector.get(read_preference || ServerSelector::PRIMARY)
+    end
+
     def read_preference
-      @read_preference ||= ServerSelector.get(options[:read] || ServerSelector::PRIMARY)
+      @read_preference ||= options[:read]
     end
 
     # Use the database with the provided name. This will switch the current

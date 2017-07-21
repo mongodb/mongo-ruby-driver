@@ -68,7 +68,7 @@ module Mongo
           end
 
           def read_pref_formatted
-            @read_formatted ||= read.to_mongos
+            @read_formatted ||= read.to_mongos if read
           end
 
           def special_filter

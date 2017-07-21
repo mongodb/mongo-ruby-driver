@@ -108,8 +108,12 @@ module Mongo
     # @return [ Mongo::ServerSelector ] The read preference.
     #
     # @since 2.0.0
+    def server_selector
+     @server_selector ||= ServerSelector.get(read_preference || database.server_selector)
+    end
+
     def read_preference
-      @read_preference ||= ServerSelector.get(options[:read] || database.read_preference)
+      @read_preference ||= options[:read]
     end
 
     # Get the write concern on this collection.
