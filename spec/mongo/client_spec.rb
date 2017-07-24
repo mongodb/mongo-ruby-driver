@@ -690,6 +690,122 @@ describe Mongo::Client do
     end
   end
 
+  describe '#server_selector' do
+
+    context 'when there is a read preference set' do
+
+      let(:client) do
+        described_class.new(['127.0.0.1:27017'],
+                            :database => TEST_DB,
+                            :read => mode,
+                            :server_selection_timeout => 2)
+      end
+
+      let(:server_selector) do
+        client.server_selector
+      end
+
+      context 'when mode is primary' do
+
+        let(:mode) do
+          { :mode => :primary }
+        end
+
+        it 'returns a primary server selector' do
+          expect(server_selector).to be_a(Mongo::ServerSelector::Primary)
+        end
+
+        it 'passes the options to the cluster' do
+          expect(client.cluster.options[:server_selection_timeout]).to eq(2)
+        end
+      end
+
+      context 'when mode is primary_preferred' do
+
+        let(:mode) do
+          { :mode => :primary_preferred }
+        end
+
+        it 'returns a primary preferred server selector' do
+          expect(server_selector).to be_a(Mongo::ServerSelector::PrimaryPreferred)
+        end
+      end
+
+      context 'when mode is secondary' do
+
+        let(:mode) do
+          { :mode => :secondary }
+        end
+
+        it 'uses a Secondary server selector' do
+          expect(server_selector).to be_a(Mongo::ServerSelector::Secondary)
+        end
+      end
+
+      context 'when mode is secondary preferred' do
+
+        let(:mode) do
+          { :mode => :secondary_preferred }
+        end
+
+        it 'uses a Secondary server selector' do
+          expect(server_selector).to be_a(Mongo::ServerSelector::SecondaryPreferred)
+        end
+      end
+
+      context 'when mode is nearest' do
+
+        let(:mode) do
+          { :mode => :nearest }
+        end
+
+        it 'uses a Secondary server selector' do
+          expect(server_selector).to be_a(Mongo::ServerSelector::Nearest)
+        end
+      end
+
+      context 'when no mode provided' do
+
+        let(:client) do
+          described_class.new(['127.0.0.1:27017'],
+                              :database => TEST_DB,
+                              :server_selection_timeout => 2)
+        end
+
+        it 'returns a primary server selector' do
+          expect(server_selector).to be_a(Mongo::ServerSelector::Primary)
+        end
+      end
+
+      context 'when the read preference is printed' do
+
+        let(:client) do
+          described_class.new([ default_address.to_s ], options)
+        end
+
+        let(:options) do
+          { user: 'Emily', password: 'sensitive_data', server_selection_timeout: 0.1 }
+        end
+
+        before do
+          allow(client.database.cluster).to receive(:single?).and_return(false)
+        end
+
+        let(:error) do
+          begin
+            client.database.command(ping: 1)
+          rescue => e
+            e
+          end
+        end
+
+        it 'redacts sensitive client options' do
+          expect(error.message).not_to match(options[:password])
+        end
+      end
+    end
+  end
+
   describe '#read_preference' do
 
     let(:client) do
@@ -712,10 +828,6 @@ describe Mongo::Client do
       it 'returns a primary read preference' do
         expect(preference).to eq(BSON::Document.new(mode))
       end
-
-      it 'passes the options to the cluster' do
-        expect(client.cluster.options[:server_selection_timeout]).to eq(2)
-      end
     end
 
     context 'when mode is primary_preferred' do
@@ -726,10 +838,6 @@ describe Mongo::Client do
 
       it 'returns a primary preferred read preference' do
         expect(preference).to eq(BSON::Document.new(mode))
-      end
-
-      it 'uses a PrimaryPreferred server selector' do
-        expect(client.server_selector).to be_a(Mongo::ServerSelector::PrimaryPreferred)
       end
     end
 
@@ -742,10 +850,6 @@ describe Mongo::Client do
       it 'returns a secondary read preference' do
         expect(preference).to eq(BSON::Document.new(mode))
       end
-
-      it 'uses a Secondary server selector' do
-        expect(client.server_selector).to be_a(Mongo::ServerSelector::Secondary)
-      end
     end
 
     context 'when mode is secondary preferred' do
@@ -756,10 +860,6 @@ describe Mongo::Client do
 
       it 'returns a secondary preferred read preference' do
         expect(preference).to eq(BSON::Document.new(mode))
-      end
-
-      it 'uses a SecondaryPreferred server selector' do
-        expect(client.server_selector).to be_a(Mongo::ServerSelector::SecondaryPreferred)
       end
     end
 
@@ -772,51 +872,18 @@ describe Mongo::Client do
       it 'returns a nearest read preference' do
         expect(preference).to eq(BSON::Document.new(mode))
       end
-
-      it 'uses a Nearest server selector' do
-        expect(client.server_selector).to be_a(Mongo::ServerSelector::Nearest)
-      end
     end
 
     context 'when no mode provided' do
 
-      let(:mode) do
-        {}
-      end
-
-      it 'returns a primary read preference' do
-        expect(preference).to eq(BSON::Document.new(mode))
-      end
-
-      it 'uses a Primary server selector' do
-        expect(client.server_selector).to be_a(Mongo::ServerSelector::Primary)
-      end
-    end
-
-    context 'when the read preference is printed' do
-
       let(:client) do
-        described_class.new([ default_address.to_s ], options)
+        described_class.new(['127.0.0.1:27017'],
+                            :database => TEST_DB,
+                            :server_selection_timeout => 2)
       end
 
-      let(:options) do
-        { user: 'Emily', password: 'sensitive_data', server_selection_timeout: 0.1 }
-      end
-
-      before do
-        allow(client.database.cluster).to receive(:single?).and_return(false)
-      end
-
-      let(:error) do
-        begin
-          client.database.command(ping: 1)
-        rescue => e
-          e
-        end
-      end
-
-      it 'redacts sensitive client options' do
-        expect(error.message).not_to match(options[:password])
+      it 'returns nil' do
+        expect(preference).to be_nil
       end
     end
   end

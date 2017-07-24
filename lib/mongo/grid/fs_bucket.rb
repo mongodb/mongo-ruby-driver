@@ -84,7 +84,8 @@ module Mongo
       #
       # @since 2.1.0
       def find(selector = nil, options = {})
-        files_collection.find(selector, options.merge(read: read_preference))
+        opts = options.merge(read: read_preference) if read_preference
+        files_collection.find(selector, opts || options)
       end
 
       # Find a file in the GridFS.
@@ -409,7 +410,7 @@ module Mongo
       #
       # @since 2.1.0
       def read_preference
-        @read_preference ||= ServerSelector.get(@options[:read] || database.read_preference)
+        @read_preference ||= options[:read] || database.read_preference
       end
 
       # Get the write concern.

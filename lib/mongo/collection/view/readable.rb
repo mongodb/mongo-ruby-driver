@@ -448,14 +448,14 @@ module Mongo
           configure(:cursor_type, type)
         end
 
-        def read_preference
-          @read_preference ||= (options[:read] || collection.read_preference)
-        end
-
         private
 
         def collation(doc = nil)
           configure(:collation, doc)
+        end
+
+        def read_preference
+          @read_preference ||= (options[:read] || collection.read_preference)
         end
 
         def server_selector

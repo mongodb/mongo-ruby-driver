@@ -133,7 +133,7 @@ module Mongo
           #
           # @since 2.1.0
           def read_preference
-            @read_preference ||= ServerSelector.get(@options[:read] || fs.read_preference)
+            @read_preference ||= options[:read] || fs.read_preference
           end
 
           # Get the files collection file information document for the file being read.
@@ -167,7 +167,8 @@ module Mongo
           end
 
           def view
-            @view ||= fs.chunks_collection.find({ :files_id => file_id }, options).read(read_preference).sort(:n => 1)
+            @view ||= (opts = options.merge(read: read_preference) if read_preference
+                         fs.chunks_collection.find({ :files_id => file_id }, opts || options).sort(:n => 1))
           end
 
           def validate!(index, num_chunks, chunk, length_read)

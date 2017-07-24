@@ -100,20 +100,28 @@ module Mongo
       @read_concern ||= options[:read_concern]
     end
 
-    # Get the read preference on this collection.
+    # Get the server selector on this collection.
     #
-    # @example Get the read preference.
-    #   collection.read_preference
+    # @example Get the server selector.
+    #   collection.server_selector
     #
-    # @return [ Mongo::ServerSelector ] The read preference.
+    # @return [ Mongo::ServerSelector ] The server selector.
     #
     # @since 2.0.0
     def server_selector
      @server_selector ||= ServerSelector.get(read_preference || database.server_selector)
     end
 
+    # Get the read preference on this collection.
+    #
+    # @example Get the read preference.
+    #   collection.read_preference
+    #
+    # @return [ Hash ] The read preference.
+    #
+    # @since 2.0.0
     def read_preference
-      @read_preference ||= options[:read]
+      @read_preference ||= options[:read] || database.read_preference
     end
 
     # Get the write concern on this collection.

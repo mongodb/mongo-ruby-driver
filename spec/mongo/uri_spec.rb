@@ -566,7 +566,7 @@ describe Mongo::URI do
 
           it 'raises an exception when read preference is accessed on the client' do
             expect {
-              Mongo::Client.new(string).read_preference
+              Mongo::Client.new(string).server_selector
             }.to raise_exception(Mongo::Error::InvalidServerPreference)
           end
         end
@@ -578,7 +578,7 @@ describe Mongo::URI do
           end
 
           it 'does not raise an exception until the read preference is used' do
-            expect(Mongo::Client.new(string).read_preference).to be_a(Mongo::ServerSelector::Secondary)
+            expect(Mongo::Client.new(string).read_preference).to eq(BSON::Document.new(mode: :secondary, max_staleness: 89))
           end
         end
       end

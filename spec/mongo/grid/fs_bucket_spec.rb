@@ -54,12 +54,8 @@ describe Mongo::Grid::FSBucket do
           { read: { mode: :secondary } }
         end
 
-        let(:read_pref) do
-          Mongo::ServerSelector.get(Mongo::Options::Redacted.new(options[:read].merge(authorized_client.options)))
-        end
-
         it 'sets the read preference' do
-          expect(fs.send(:read_preference)).to eq(read_pref)
+          expect(fs.send(:read_preference)).to eq(options[:read])
         end
       end
 
@@ -678,7 +674,7 @@ describe Mongo::Grid::FSBucket do
       end
 
       it 'sets the read preference on the Stream::Read object' do
-        expect(stream.read_preference).to eq(Mongo::ServerSelector.get(options[:read]))
+        expect(stream.read_preference).to eq(options[:read])
       end
     end
 

@@ -250,6 +250,96 @@ describe Mongo::Collection do
     end
   end
 
+  describe '#read_preference' do
+
+    let(:collection) do
+      described_class.new(authorized_client.database, :users, options)
+    end
+
+    let(:options) { {} }
+
+    context 'when a read preference is set in the options' do
+
+      let(:options) do
+        { read: { mode: :secondary } }
+      end
+
+      it 'returns the read preference' do
+        expect(collection.read_preference).to eq(options[:read])
+      end
+    end
+
+    context 'when a read preference is not set in the options' do
+
+      context 'when the database has a read preference set' do
+
+        let(:client) do
+          authorized_client.with(read: { mode: :secondary_preferred })
+        end
+
+        let(:collection) do
+          described_class.new(client.database, :users, options)
+        end
+
+        it 'returns the database read preference' do
+          expect(collection.read_preference).to eq(BSON::Document.new({ mode: :secondary_preferred }))
+        end
+      end
+
+      context 'when the database does not have a read preference' do
+
+        it 'returns nil' do
+          expect(collection.read_preference).to be_nil
+        end
+      end
+    end
+  end
+
+  describe '#server_selector' do
+
+    let(:collection) do
+      described_class.new(authorized_client.database, :users, options)
+    end
+
+    let(:options) { {} }
+
+    context 'when a read preference is set in the options' do
+
+      let(:options) do
+        { read: { mode: :secondary } }
+      end
+
+      it 'returns the server selector for that read preference' do
+        expect(collection.server_selector).to be_a(Mongo::ServerSelector::Secondary)
+      end
+    end
+
+    context 'when a read preference is not set in the options' do
+
+      context 'when the database has a read preference set' do
+
+        let(:client) do
+          authorized_client.with(read: { mode: :secondary_preferred })
+        end
+
+        let(:collection) do
+          described_class.new(client.database, :users, options)
+        end
+
+        it 'returns the server selector for that read preference' do
+          expect(collection.server_selector).to be_a(Mongo::ServerSelector::SecondaryPreferred)
+        end
+      end
+
+      context 'when the database does not have a read preference' do
+
+        it 'returns a primary server selector' do
+          expect(collection.server_selector).to be_a(Mongo::ServerSelector::Primary)
+        end
+      end
+    end
+  end
+
   describe '#capped?' do
 
     let(:database) do
@@ -1787,7 +1877,7 @@ describe Mongo::Collection do
       context 'when the read concern is valid' do
 
         let(:options) do
-          { max_time_ms: 2 }
+          { max_time_ms: 5 }
         end
 
         it 'sends the max time ms value' do
