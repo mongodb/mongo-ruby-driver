@@ -444,6 +444,25 @@ describe Mongo::Client do
         end
       end
 
+      context 'when max_pool_size and min_pool_size are both nil' do
+
+        let(:client) do
+          described_class.new(['127.0.0.1:27017'], options)
+        end
+
+        let(:options) do
+          {
+              :min_pool_size => nil,
+              :max_pool_size => nil
+          }
+        end
+
+        it 'does not set either option' do
+          expect(client.options[:max_pool_size]).to be_nil
+          expect(client.options[:min_pool_size]).to be_nil
+        end
+      end
+
       context 'when platform details are specified' do
 
         let(:app_metadata) do
