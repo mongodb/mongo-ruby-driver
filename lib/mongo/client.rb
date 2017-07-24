@@ -409,7 +409,7 @@ module Mongo
     end
 
     def validate_max_min_pool_size!(option, opts)
-      if option == :min_pool_size
+      if option == :min_pool_size && opts[:min_pool_size]
         max = opts[:max_pool_size] || Server::ConnectionPool::Queue::MAX_SIZE
         raise Error::InvalidMinPoolSize.new(opts[:min_pool_size], max) unless opts[:min_pool_size] <= max
       end
