@@ -249,19 +249,28 @@ module Mongo
       "#<Mongo::Client:0x#{object_id} cluster=#{cluster.addresses.join(', ')}>"
     end
 
+    # Get the server selector. It either uses the read preference defined in the client options
+    #   or defaults to a Primary server selector.
+    #
+    # @example Get the server selector.
+    #   client.server_selector
+    #
+    # @return [ Mongo::ServerSelector ] The server selector using the user-defined read preference
+    #  or a Primary server selector default.
+    #
+    # @since 2.5.0
+    def server_selector
+      @server_selector ||= ServerSelector.get(read_preference || ServerSelector::PRIMARY)
+    end
+
     # Get the read preference from the options passed to the client.
     #
     # @example Get the read preference.
     #   client.read_preference
     #
-    # @return [ Object ] The appropriate read preference or primary if none
-    #   was provided to the client.
+    # @return [ BSON::Document ] The user-defined read preference.
     #
     # @since 2.0.0
-    def server_selector
-      @server_selector ||= ServerSelector.get(read_preference || ServerSelector::PRIMARY)
-    end
-
     def read_preference
       @read_preference ||= options[:read]
     end
