@@ -133,14 +133,15 @@ module Mongo
           cmd[:limit] = opts[:limit] if opts[:limit]
           cmd[:maxTimeMS] = opts[:max_time_ms] if opts[:max_time_ms]
           cmd[:readConcern] = collection.read_concern if collection.read_concern
+          read_pref = opts[:read] || read_preference
           read_with_retry do
-            server = server_selector.select_server(cluster, false)
+            server = ServerSelector.get(read_pref || server_selector).select_server(cluster, false)
             apply_collation!(cmd, server, opts)
             Operation::Commands::Command.new({
                                                :selector => cmd,
                                                :db_name => database.name,
                                                :options => { :limit => -1 },
-                                               :read => read_preference,
+                                               :read => read_pref,
                                              }).execute(server).n.to_i
 
           end
@@ -168,14 +169,15 @@ module Mongo
                   :query => filter }
           cmd[:maxTimeMS] = opts[:max_time_ms] if opts[:max_time_ms]
           cmd[:readConcern] = collection.read_concern if collection.read_concern
+          read_pref = opts[:read] || read_preference
           read_with_retry do
-            server = server_selector.select_server(cluster, false)
+            server = ServerSelector.get(read_pref || server_selector).select_server(cluster, false)
             apply_collation!(cmd, server, opts)
             Operation::Commands::Command.new({
                                                :selector => cmd,
                                                :db_name => database.name,
                                                :options => { :limit => -1 },
-                                               :read => read_preference
+                                               :read => read_pref,
                                              }).execute(server).first['values']
 
           end
