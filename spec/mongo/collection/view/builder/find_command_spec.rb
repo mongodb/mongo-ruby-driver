@@ -48,7 +48,6 @@ describe Mongo::Collection::View::Builder::FindCommand do
           no_cursor_timeout: true,
           await_data: true,
           allow_partial_results: true,
-          read_concern: { level: 'local' },
           collation: { locale: 'en_US' }
         }
       end
@@ -107,10 +106,6 @@ describe Mongo::Collection::View::Builder::FindCommand do
 
       it 'maps min' do
         expect(selector['min']).to eq('name' => 'albert')
-      end
-
-      it 'maps read concern' do
-        expect(selector['readConcern']).to eq('level' => 'local')
       end
 
       it 'maps return key' do
@@ -449,6 +444,36 @@ describe Mongo::Collection::View::Builder::FindCommand do
         it 'maps to awaitData' do
           expect(selector['awaitData']).to be true
         end
+      end
+    end
+
+    context 'when the collection has a read concern defined' do
+
+      let(:collection) do
+        authorized_collection.with(read_concern: { level: 'invalid' })
+      end
+
+      let(:view) do
+        Mongo::Collection::View.new(collection, {})
+      end
+
+      it 'applies the read concern of the collection' do
+        expect(selector['readConcern']).to eq(BSON::Document.new(level: 'invalid'))
+      end
+    end
+
+    context 'when the collection does not have a read concern defined' do
+
+      let(:filter) do
+        {}
+      end
+
+      let(:options) do
+        {}
+      end
+
+      it 'does not apply a read concern' do
+        expect(selector['readConcern']).to be_nil
       end
     end
   end
