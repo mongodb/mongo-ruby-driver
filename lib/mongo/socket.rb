@@ -173,7 +173,9 @@ module Mongo
       deadline = (Time.now + timeout) if timeout
       begin
         while (data.length < length)
-          data << @socket.read_nonblock(length - data.length)
+          bytes_to_read = length - data.length
+          bytes_to_read = 4096 if bytes_to_read > 4096
+          data << @socket.read_nonblock(bytes_to_read)
         end
       rescue IO::WaitReadable
         select_timeout = (deadline - Time.now) if deadline
