@@ -841,7 +841,8 @@ describe Mongo::Server::Description do
     let(:other) do
       described_class.new(address, replica.merge(
         'localTime' => 1,
-        'lastWrite' => { 'lastWriteDate' => 1 }
+        'lastWrite' => { 'lastWriteDate' => 1 },
+        'operationTime' => 1
       ))
     end
 

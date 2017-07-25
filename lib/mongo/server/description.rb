@@ -154,10 +154,17 @@ module Mongo
       # @since 2.1.0
       LOCAL_TIME = 'localTime'.freeze
 
+      # Constant for reading operationTime info from config.
+      #
+      # @since 2.5.0
+      OPERATION_TIME = 'operationTime'.freeze
+
       # Fields to exclude when comparing two descriptions.
       #
       # @since 2.0.6
-      EXCLUDE_FOR_COMPARISON = [ LOCAL_TIME, LAST_WRITE ].freeze
+      EXCLUDE_FOR_COMPARISON = [ LOCAL_TIME,
+                                 LAST_WRITE,
+                                 OPERATION_TIME ].freeze
 
       # @return [ Address ] address The server's address.
       attr_reader :address
