@@ -64,6 +64,8 @@ module Mongo
 
       OPERATION_TIME = 'operationTime'.freeze
 
+      CLUSTER_TIME = '$clusterTime'.freeze
+
       # @return [ Array<Protocol::Reply> ] replies The wrapped wire protocol replies.
       attr_reader :replies
 
@@ -277,6 +279,10 @@ module Mongo
 
       def operation_time
         replies.first.documents[0][OPERATION_TIME]
+      end
+
+      def cluster_time
+        replies.first.documents[0][CLUSTER_TIME]
       end
 
       private

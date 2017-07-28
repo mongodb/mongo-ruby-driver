@@ -265,5 +265,10 @@ module Mongo
       unknown!
       raise
     end
+
+    private
+
+    def_delegators :cluster,
+                   :update_cluster_time
   end
 end

@@ -23,6 +23,7 @@ module Mongo
         # @since 2.0.0
         module Writable
           include Limited
+          include ClusterTime
 
           # Execute the operation.
           #
@@ -48,7 +49,8 @@ module Mongo
           #
           # @since 2.0.0
           def message(server)
-            Protocol::Query.new(db_name, Database::COMMAND, selector, options)
+            sel = update_selector_with_cluster_time(selector, server)
+            Protocol::Query.new(db_name, Database::COMMAND, sel, options)
           end
         end
       end
