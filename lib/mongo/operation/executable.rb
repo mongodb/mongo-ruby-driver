@@ -35,8 +35,7 @@ module Mongo
         server.with_connection do |connection|
           result_class = self.class.const_defined?(:Result, false) ? self.class::Result : Result
           result = result_class.new(connection.dispatch([ message(server) ], operation_id))
-          server.send(:update_cluster_time, result)
-          result.validate!
+          server.update_cluster_time(result).validate!
         end
       end
     end

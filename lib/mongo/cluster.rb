@@ -443,8 +443,6 @@ module Mongo
       addresses_list
     end
 
-    private
-
     def update_cluster_time(result)
       if cl_time = result.cluster_time
         if @cluster_time
@@ -455,7 +453,10 @@ module Mongo
           @cluster_time = cl_time
         end
       end
+      result
     end
+
+    private
 
     def direct_connection?(address)
       address.seed == @topology.seed

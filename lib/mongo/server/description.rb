@@ -99,6 +99,11 @@ module Mongo
       # @since 2.1.0
       ME = 'me'.freeze
 
+      # Constant for the cluster time field.
+      #
+      # @since 2.5.0
+      CLUSTER_TIME = '$clusterTime'.freeze
+
       # Default max write batch size.
       #
       # @since 2.0.0
@@ -339,6 +344,10 @@ module Mongo
       # @since 2.1.0
       def me
         config[ME]
+      end
+
+      def cluster_time
+        config[CLUSTER_TIME]
       end
 
       # Get the tags configured for the server.

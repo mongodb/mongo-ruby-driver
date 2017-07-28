@@ -145,7 +145,6 @@ module Mongo
                                                  :options => { :limit => -1 },
                                                  :read => read_pref,
                                                }).execute(server)
-
             end
           end.n.to_i
         end
@@ -184,7 +183,6 @@ module Mongo
                                                  :options => { :limit => -1 },
                                                  :read => read_pref
                                                }).execute(server)
-
             end
           end.first['values']
         end

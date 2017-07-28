@@ -76,7 +76,8 @@ module Mongo
 
     # Get the app metadata from the cluster.
     def_delegators :cluster,
-                   :app_metadata
+                   :app_metadata,
+                   :update_cluster_time
 
     # Is this server equal to another?
     #
@@ -265,10 +266,5 @@ module Mongo
       unknown!
       raise
     end
-
-    private
-
-    def_delegators :cluster,
-                   :update_cluster_time
   end
 end

@@ -41,16 +41,14 @@ module Mongo
           cmd[:maxTimeMS] = max_time_ms if max_time_ms
           cmd[:writeConcern] = write_concern.options if write_concern
 
-          with_session do
-            write_with_retry do
-              server = next_primary
-              apply_collation!(cmd, server, opts)
+          write_with_retry do
+            server = next_primary
+            apply_collation!(cmd, server, opts)
 
-              Operation::Commands::Command.new({
-                                                :selector => cmd,
-                                                :db_name => database.name
-                                               }).execute(server)
-            end
+            Operation::Commands::Command.new({
+                                                 :selector => cmd,
+                                                 :db_name => database.name
+                                             }).execute(server)
           end.first['value']
         end
 
@@ -110,16 +108,14 @@ module Mongo
           cmd[:bypassDocumentValidation] = !!opts[:bypass_document_validation]
           cmd[:writeConcern] = write_concern.options if write_concern
 
-          with_session do
-            write_with_retry do
-              server = next_primary
-              apply_collation!(cmd, server, opts)
+          value = write_with_retry do
+            server = next_primary
+            apply_collation!(cmd, server, opts)
 
-              Operation::Commands::Command.new({
-                                                :selector => cmd,
-                                                :db_name => database.name
-                                               }).execute(server)
-            end
+            Operation::Commands::Command.new({
+                                                 :selector => cmd,
+                                                 :db_name => database.name
+                                             }).execute(server)
           end.first['value']
           value unless value.nil? || value.empty?
         end
@@ -218,18 +214,16 @@ module Mongo
         def remove(value, opts = {})
           delete_doc = { Operation::Q => filter, Operation::LIMIT => value }
 
-          with_session do
-            result = write_with_retry do
-              server = next_primary
-              apply_collation!(delete_doc, server, opts)
+          write_with_retry do
+            server = next_primary
+            apply_collation!(delete_doc, server, opts)
 
-              Operation::Write::Delete.new(
+            Operation::Write::Delete.new(
                 :delete => delete_doc,
                 :db_name => collection.database.name,
                 :coll_name => collection.name,
                 :write_concern => collection.write_concern
-              ).execute(server)
-            end
+            ).execute(server)
           end
         end
 
@@ -238,19 +232,17 @@ module Mongo
                          Operation::U => spec,
                          Operation::MULTI => multi,
                          Operation::UPSERT => !!opts[:upsert] }
-          with_session do
-            write_with_retry do
-              server = next_primary
-              apply_collation!(update_doc, server, opts)
+          write_with_retry do
+            server = next_primary
+            apply_collation!(update_doc, server, opts)
 
-              Operation::Write::Update.new(
+            Operation::Write::Update.new(
                 :update => update_doc,
                 :db_name => collection.database.name,
                 :coll_name => collection.name,
                 :write_concern => collection.write_concern,
                 :bypass_document_validation => !!opts[:bypass_document_validation]
-              ).execute(server)
-            end
+            ).execute(server)
           end
         end
       end

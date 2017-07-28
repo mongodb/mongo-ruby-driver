@@ -53,8 +53,7 @@ module Mongo
         def execute_write_command(server)
           command_spec = spec.merge(:documents => ensure_ids(documents))
           result = Result.new(Command::Insert.new(command_spec).execute(server), @ids)
-          server.send(:update_cluster_time, result)
-          result.validate!
+          server.update_cluster_time(result).validate!
         end
 
         def execute_message(server)

@@ -278,11 +278,11 @@ module Mongo
       alias :n :written_count
 
       def operation_time
-        replies.first.documents[0][OPERATION_TIME]
+        documents[0][OPERATION_TIME] if documents[0]
       end
 
       def cluster_time
-        replies.first.documents[0][CLUSTER_TIME]
+        documents[0][CLUSTER_TIME] if documents[0]
       end
 
       private
