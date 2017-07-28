@@ -137,7 +137,7 @@ module Mongo
       # @option options [ Array<String>, Array<Hash> ] roles The user roles.
       #
       # @since 2.0.0
-      def initialize(options)
+      def initialize(options, client_key = nil)
         @database = options[:database] || Database::ADMIN
         @auth_source = options[:auth_source] || @database
         @name = options[:user]
@@ -145,6 +145,7 @@ module Mongo
         @mechanism = options[:auth_mech] || :mongodb_cr
         @auth_mech_properties = options[:auth_mech_properties] || {}
         @roles = options[:roles] || []
+        @client_key = client_key
       end
 
       # Get the specification for the user, used in creation.
