@@ -41,15 +41,17 @@ module Mongo
           cmd[:maxTimeMS] = max_time_ms if max_time_ms
           cmd[:writeConcern] = write_concern.options if write_concern
 
-          write_with_retry do
-            server = next_primary
-            apply_collation!(cmd, server, opts)
+          with_session do
+            write_with_retry do
+              server = next_primary
+              apply_collation!(cmd, server, opts)
 
-            Operation::Commands::Command.new({
-                                              :selector => cmd,
-                                              :db_name => database.name
-                                             }).execute(server).first['value']
-          end
+              Operation::Commands::Command.new({
+                                                :selector => cmd,
+                                                :db_name => database.name
+                                               }).execute(server)
+            end
+          end.first['value']
         end
 
         # Finds a single document and replaces it.
@@ -108,15 +110,17 @@ module Mongo
           cmd[:bypassDocumentValidation] = !!opts[:bypass_document_validation]
           cmd[:writeConcern] = write_concern.options if write_concern
 
-          value = write_with_retry do
-            server = next_primary
-            apply_collation!(cmd, server, opts)
+          with_session do
+            write_with_retry do
+              server = next_primary
+              apply_collation!(cmd, server, opts)
 
-            Operation::Commands::Command.new({
-                                              :selector => cmd,
-                                              :db_name => database.name
-                                             }).execute(server).first['value']
-          end
+              Operation::Commands::Command.new({
+                                                :selector => cmd,
+                                                :db_name => database.name
+                                               }).execute(server)
+            end
+          end.first['value']
           value unless value.nil? || value.empty?
         end
 
@@ -213,16 +217,19 @@ module Mongo
 
         def remove(value, opts = {})
           delete_doc = { Operation::Q => filter, Operation::LIMIT => value }
-          write_with_retry do
-            server = next_primary
-            apply_collation!(delete_doc, server, opts)
 
-            Operation::Write::Delete.new(
-              :delete => delete_doc,
-              :db_name => collection.database.name,
-              :coll_name => collection.name,
-              :write_concern => collection.write_concern
-            ).execute(server)
+          with_session do
+            result = write_with_retry do
+              server = next_primary
+              apply_collation!(delete_doc, server, opts)
+
+              Operation::Write::Delete.new(
+                :delete => delete_doc,
+                :db_name => collection.database.name,
+                :coll_name => collection.name,
+                :write_concern => collection.write_concern
+              ).execute(server)
+            end
           end
         end
 
@@ -231,17 +238,19 @@ module Mongo
                          Operation::U => spec,
                          Operation::MULTI => multi,
                          Operation::UPSERT => !!opts[:upsert] }
-          write_with_retry do
-            server = next_primary
-            apply_collation!(update_doc, server, opts)
+          with_session do
+            write_with_retry do
+              server = next_primary
+              apply_collation!(update_doc, server, opts)
 
-            Operation::Write::Update.new(
-              :update => update_doc,
-              :db_name => collection.database.name,
-              :coll_name => collection.name,
-              :write_concern => collection.write_concern,
-              :bypass_document_validation => !!opts[:bypass_document_validation]
-            ).execute(server)
+              Operation::Write::Update.new(
+                :update => update_doc,
+                :db_name => collection.database.name,
+                :coll_name => collection.name,
+                :write_concern => collection.write_concern,
+                :bypass_document_validation => !!opts[:bypass_document_validation]
+              ).execute(server)
+            end
           end
         end
       end

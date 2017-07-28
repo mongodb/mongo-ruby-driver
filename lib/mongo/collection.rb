@@ -44,6 +44,8 @@ module Mongo
     # @return [ Hash ] The collection options.
     attr_reader :options
 
+    attr_reader :session
+
     # Get client, cluster, read preference, and write concern from client.
     def_delegators :database, :client, :cluster
 
@@ -86,6 +88,7 @@ module Mongo
       @database = database
       @name = name.to_s.freeze
       @options = options.freeze
+      @session = options[:session]
     end
 
     # Get the read concern for this collection instance.
@@ -97,7 +100,7 @@ module Mongo
     #
     # @since 2.2.0
     def read_concern
-      @read_concern ||= options[:read_concern]
+      session ? session.get_read_concern(self) : options[:read_concern]
     end
 
     # Get the server selector on this collection.

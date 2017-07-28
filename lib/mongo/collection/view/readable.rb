@@ -135,17 +135,19 @@ module Mongo
           cmd[:readConcern] = collection.read_concern if collection.read_concern
           read_pref = opts[:read] || read_preference
           selector = ServerSelector.get(read_pref || server_selector)
-          read_with_retry do
-            server = selector.select_server(cluster, false)
-            apply_collation!(cmd, server, opts)
-            Operation::Commands::Command.new({
-                                               :selector => cmd,
-                                               :db_name => database.name,
-                                               :options => { :limit => -1 },
-                                               :read => read_pref,
-                                             }).execute(server).n.to_i
+          with_session do
+            read_with_retry do
+              server = selector.select_server(cluster, false)
+              apply_collation!(cmd, server, opts)
+              Operation::Commands::Command.new({
+                                                 :selector => cmd,
+                                                 :db_name => database.name,
+                                                 :options => { :limit => -1 },
+                                                 :read => read_pref,
+                                               }).execute(server)
 
-          end
+            end
+          end.n.to_i
         end
 
         # Get a list of distinct values for a specific field.
@@ -172,17 +174,19 @@ module Mongo
           cmd[:readConcern] = collection.read_concern if collection.read_concern
           read_pref = opts[:read] || read_preference
           selector = ServerSelector.get(read_pref || server_selector)
-          read_with_retry do
-            server = selector.select_server(cluster, false)
-            apply_collation!(cmd, server, opts)
-            Operation::Commands::Command.new({
-                                               :selector => cmd,
-                                               :db_name => database.name,
-                                               :options => { :limit => -1 },
-                                               :read => read_pref,
-                                             }).execute(server).first['values']
+          with_session do
+            read_with_retry do
+              server = selector.select_server(cluster, false)
+              apply_collation!(cmd, server, opts)
+              Operation::Commands::Command.new({
+                                                 :selector => cmd,
+                                                 :db_name => database.name,
+                                                 :options => { :limit => -1 },
+                                                 :read => read_pref
+                                               }).execute(server)
 
-          end
+            end
+          end.first['values']
         end
 
         # The index that MongoDB will be forced to use for the query.

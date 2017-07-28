@@ -376,6 +376,10 @@ module Mongo
       use(Database::ADMIN).command(listDatabases: 1).first[Database::DATABASES]
     end
 
+    def start_session(opts = {})
+      Session.new(self, opts)
+    end
+
     private
 
     def create_from_addresses(addresses, opts = Options::Redacted.new)

@@ -62,6 +62,8 @@ module Mongo
       # @since 2.2.0
       RESULT = 'result'.freeze
 
+      OPERATION_TIME = 'operationTime'.freeze
+
       # @return [ Array<Protocol::Reply> ] replies The wrapped wire protocol replies.
       attr_reader :replies
 
@@ -272,6 +274,10 @@ module Mongo
         end
       end
       alias :n :written_count
+
+      def operation_time
+        replies.first.documents[0][OPERATION_TIME]
+      end
 
       private
 

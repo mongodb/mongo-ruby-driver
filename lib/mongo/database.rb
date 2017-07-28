@@ -101,7 +101,9 @@ module Mongo
     #
     # @since 2.0.0
     def [](collection_name, options = {})
-      Collection.new(self, collection_name, options)
+      Collection.new(self, collection_name, options).tap do |coll|
+        coll.instance_variable_set(:@session, @session) if @session
+      end
     end
     alias_method :collection, :[]
 
