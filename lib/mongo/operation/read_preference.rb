@@ -29,7 +29,7 @@ module Mongo
       private
 
       def update_selector_for_read_pref(sel, server)
-        if server.mongos? && read_pref = read.to_mongos
+        if read && server.mongos? && read_pref = read.to_mongos
           sel = sel[:$query] ? sel : { :$query => sel }
           sel.merge(:$readPreference => read_pref)
         else
@@ -38,7 +38,7 @@ module Mongo
       end
 
       def slave_ok?(server)
-        (server.cluster.single? && !server.mongos?) || read.slave_ok?
+        (server.cluster.single? && !server.mongos?) || (read && read.slave_ok?)
       end
 
       def update_options_for_slave_ok(opts, server)

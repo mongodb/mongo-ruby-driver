@@ -79,7 +79,8 @@ describe Mongo::Database do
       end
 
       it 'applies the options to the collection' do
-        expect(collection.read_preference).to eq(Mongo::ServerSelector.get(mode: :secondary))
+        expect(collection.server_selector).to eq(Mongo::ServerSelector.get(mode: :secondary))
+        expect(collection.read_preference).to eq(BSON::Document.new(mode: :secondary))
       end
     end
   end

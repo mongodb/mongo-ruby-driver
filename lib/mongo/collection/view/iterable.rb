@@ -37,7 +37,7 @@ module Mongo
         def each
           @cursor = nil
           read_with_retry do
-            server = read.select_server(cluster, false)
+            server = server_selector.select_server(cluster, false)
             result = send_initial_query(server)
             @cursor = Cursor.new(view, result, server)
           end

@@ -1134,28 +1134,19 @@ describe Mongo::Collection::View::Readable do
 
   describe '#read' do
 
-    context 'when providing a hash' do
-
-      it 'converts to a read preference' do
-        expect(view.read(:mode => :primary_preferred).read).to be_a(
-          Mongo::ServerSelector::PrimaryPreferred
-        )
-      end
-    end
-
     context 'when a read pref is specified' do
 
       let(:options) do
-        { :read => Mongo::ServerSelector.get(:mode => :secondary) }
+        { :read => { :mode => :secondary } }
       end
 
       let(:new_read) do
-        Mongo::ServerSelector.get(:mode => :secondary_preferred)
+        { :mode => :secondary_preferred }
       end
 
       it 'sets the read preference' do
         new_view = view.read(new_read)
-        expect(new_view.read).to eq(new_read)
+        expect(new_view.read).to eq(BSON::Document.new(new_read))
       end
 
       it 'returns a new View' do

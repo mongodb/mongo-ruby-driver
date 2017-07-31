@@ -68,11 +68,11 @@ describe Mongo::Grid::FSBucket::Stream::Read do
         end
 
         it 'sets the read preference' do
-          expect(stream.read_preference).to eq(Mongo::ServerSelector.get(options[:read]))
+          expect(stream.read_preference).to eq(options[:read])
         end
 
         it 'sets the read preference on the view' do
-          expect(stream.send(:view).read).to eq(Mongo::ServerSelector.get(options[:read]))
+          expect(stream.send(:view).read).to eq(BSON::Document.new(options[:read]))
         end
       end
 

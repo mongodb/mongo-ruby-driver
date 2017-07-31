@@ -5,7 +5,7 @@ describe Mongo::Cursor do
   describe '#each' do
 
     let(:server) do
-      view.read.select_server(authorized_client.cluster)
+      view.send(:server_selector).select_server(authorized_client.cluster)
     end
 
     let(:reply) do

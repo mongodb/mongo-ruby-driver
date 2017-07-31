@@ -133,15 +133,16 @@ module Mongo
           cmd[:limit] = opts[:limit] if opts[:limit]
           cmd[:maxTimeMS] = opts[:max_time_ms] if opts[:max_time_ms]
           cmd[:readConcern] = collection.read_concern if collection.read_concern
-          preference = ServerSelector.get(opts[:read] || read)
+          read_pref = opts[:read] || read_preference
+          selector = ServerSelector.get(read_pref || server_selector)
           read_with_retry do
-            server = preference.select_server(cluster, false)
+            server = selector.select_server(cluster, false)
             apply_collation!(cmd, server, opts)
             Operation::Commands::Command.new({
                                                :selector => cmd,
                                                :db_name => database.name,
                                                :options => { :limit => -1 },
-                                               :read => preference,
+                                               :read => read_pref,
                                              }).execute(server).n.to_i
 
           end
@@ -169,15 +170,16 @@ module Mongo
                   :query => filter }
           cmd[:maxTimeMS] = opts[:max_time_ms] if opts[:max_time_ms]
           cmd[:readConcern] = collection.read_concern if collection.read_concern
-          preference = ServerSelector.get(opts[:read] || read)
+          read_pref = opts[:read] || read_preference
+          selector = ServerSelector.get(read_pref || server_selector)
           read_with_retry do
-            server = preference.select_server(cluster, false)
+            server = selector.select_server(cluster, false)
             apply_collation!(cmd, server, opts)
             Operation::Commands::Command.new({
                                                :selector => cmd,
                                                :db_name => database.name,
                                                :options => { :limit => -1 },
-                                               :read => preference
+                                               :read => read_pref,
                                              }).execute(server).first['values']
 
           end
@@ -313,9 +315,8 @@ module Mongo
         #
         # @since 2.0.0
         def read(value = nil)
-          return default_read if value.nil?
-          selector = ServerSelector.get(value)
-          configure(:read, selector)
+          return read_preference if value.nil?
+          configure(:read, value)
         end
 
         # Set whether to return only the indexed field or fields.
@@ -457,12 +458,16 @@ module Mongo
           configure(:collation, doc)
         end
 
-        def default_read
-          options[:read] || collection.read_preference
+        def read_preference
+          @read_preference ||= (options[:read] || collection.read_preference)
+        end
+
+        def server_selector
+          @server_selector ||= ServerSelector.get(read_preference || collection.server_selector)
         end
 
         def parallel_scan(cursor_count, options = {})
-          server = read.select_server(cluster, false)
+          server = server_selector.select_server(cluster, false)
           cmd = Operation::Commands::ParallelScan.new({
                   :coll_name => collection.name,
                   :db_name => database.name,
