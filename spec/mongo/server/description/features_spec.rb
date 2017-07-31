@@ -56,6 +56,31 @@ describe Mongo::Server::Description::Features do
     end
   end
 
+  describe '#session_enabled?' do
+
+    context 'when the wire range includes 6' do
+
+      let(:features) do
+        described_class.new(0..6)
+      end
+
+      it 'returns true' do
+        expect(features).to be_sessions_enabled
+      end
+    end
+
+    context 'when the wire range does not include 6' do
+
+      let(:features) do
+        described_class.new(0..2)
+      end
+
+      it 'returns false' do
+        expect(features).to_not be_sessions_enabled
+      end
+    end
+  end
+
   describe '#collation_enabled?' do
 
     context 'when the wire range includes 5' do

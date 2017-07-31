@@ -33,13 +33,6 @@ module Mongo
     # @since 2.5.0
     attr_reader :options
 
-    def_delegators :client, :list_databases, :database_names
-
-    # The field added to read concern documents for cluster time.
-    #
-    # @since 2.5.0
-    AFTER_CLUSTER_TIME = 'afterClusterTime'.freeze
-
     # Initialize a Session.
     #
     # @example
@@ -53,6 +46,7 @@ module Mongo
       @client = client
       @options = options
       @server_session = ServerSession.new(@client)
+      @operation_time = 0
       @ended = false
     end
 
@@ -65,7 +59,7 @@ module Mongo
     #
     # @since 2.5.0
     def end_session
-      begin; @server_session.end_session; rescue; end
+      begin; @server_session.send(:end_sessions); rescue; end
       @ended = true
     end
 
@@ -184,12 +178,14 @@ module Mongo
 
     private
 
+    AFTER_CLUSTER_TIME = 'afterClusterTime'.freeze
+
     def check_if_ended!
       raise Exception if ended?
     end
 
     def set_operation_time(result)
-      @operation_time = result.operation_time
+      @operation_time = result.operation_time if result.operation_time
       result
     end
 
@@ -209,6 +205,11 @@ module Mongo
       #
       # @since 2.5.0
       START_SESSION = { :startSession => 1 }.freeze
+
+      # The command sent to the server to end a session.
+      #
+      # @since 2.5.0
+      END_SESSION = { :endSessions => 1 }.freeze
 
       # The field in the startSession response from the server containing
       #   the id of the session.
@@ -245,22 +246,20 @@ module Mongo
       def start(client)
         server = ServerSelector.get(mode: :primary_preferred).select_server(client.cluster)
         response = read_with_one_retry do
-          Operation::Commands::Command.new({
-                                                      :selector => START_SESSION,
-                                                      :db_name => :admin,
-                                                  }).execute(server).first
+          Operation::Commands::Command.new(:selector => START_SESSION,
+                                           :db_name => :admin
+                                          ).execute(server).first
         end
         @session_id = response[SESSION_ID]['signedLsid']['lsid']
         @timeout_minutes = response[TIMEOUT_MINUTES]
         @last_use = response[SESSION_ID][LAST_USE]
       end
 
-      def end_session(client)
+      def end_sessions(client, ids = nil)
         read_with_one_retry do
-          Operation::Commands::Command.new({
-                                               :selector => { :endSessions => 1, ids: [ @session_id ] },
-                                               :db_name => :admin,
-                                           }).execute(client.cluster.next_primary)
+          Operation::Commands::Command.new(:selector => END_SESSION.merge(ids: ids || [ @session_id ]),
+                                           :db_name => :admin
+                                          ).execute(client.cluster.next_primary)
         end
       end
     end
