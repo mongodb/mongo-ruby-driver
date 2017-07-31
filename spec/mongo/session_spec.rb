@@ -211,4 +211,53 @@ describe Mongo::Session, if: sessions_enabled? do
       end
     end
   end
+
+  describe '#database_names' do
+
+    context 'when the session is still active' do
+
+      it 'returns a list of database names' do
+        expect(session.database_names).to include('admin')
+      end
+    end
+
+    context 'when the session has ended' do
+
+      before do
+        session.end_session
+      end
+
+      it 'raises an exception' do
+        expect {
+          session.database_names
+        }.to raise_exception(Exception)
+      end
+    end
+  end
+
+  describe '#list_databases' do
+
+    context 'when the session is still active' do
+
+      it 'returns a list of database info documents' do
+        expect(
+            session.list_databases.collect do |i|
+              i['name']
+            end).to include('admin')
+      end
+    end
+
+    context 'when the session has ended' do
+
+      before do
+        session.end_session
+      end
+
+      it 'raises an exception' do
+        expect {
+          session.database_names
+        }.to raise_exception(Exception)
+      end
+    end
+  end
 end

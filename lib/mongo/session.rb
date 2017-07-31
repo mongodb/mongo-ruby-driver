@@ -160,7 +160,7 @@ module Mongo
     # @since 2.0.5
     def database_names
       check_if_ended!
-      list_databases.collect{ |info| info[Database::NAME] }
+      client.database_names
     end
 
     # Get info for each database.
@@ -173,7 +173,7 @@ module Mongo
     # @since 2.0.5
     def list_databases
       check_if_ended!
-      @client.use(Database::ADMIN).command(listDatabases: 1).first[Database::DATABASES]
+      client.list_databases
     end
 
     private
