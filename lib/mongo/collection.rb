@@ -124,11 +124,7 @@ module Mongo
     #
     # @since 2.0.0
     def read_preference
-      @read_preference ||= if read_pref = session && session.read_preference
-                             read_pref
-                           else
-                             options[:read] || database.read_preference
-                           end
+      @read_preference ||= options[:read] || database.read_preference
     end
 
     # Get the write concern on this collection.
@@ -140,11 +136,7 @@ module Mongo
     #
     # @since 2.0.0
     def write_concern
-      @write_concern ||= if w_concern = session && session.write_concern
-                           w_concern
-                         else
-                           WriteConcern.get(options[:write] || database.write_concern)
-                         end
+      @write_concern ||= WriteConcern.get(options[:write] || database.write_concern)
     end
 
     # Provides a new collection with either a new read preference or new write concern

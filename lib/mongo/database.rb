@@ -67,9 +67,7 @@ module Mongo
     # Get cluster, read preference, and write concern from client.
     def_delegators :@client,
                    :cluster,
-                   :read_preference,
-                   :server_selector,
-                   :write_concern
+                   :server_selector
 
     # @return [ Mongo::Server ] Get the primary server from the cluster.
     def_delegators :cluster,
@@ -254,6 +252,14 @@ module Mongo
     def self.create(client)
       database = Database.new(client, client.options[:database], client.options)
       client.instance_variable_set(:@database, database)
+    end
+
+    def read_preference
+      session ? session.read_preference : client.read_preference
+    end
+
+    def write_concern
+      session ? session.write_concern : client.write_concern
     end
 
     def with_session

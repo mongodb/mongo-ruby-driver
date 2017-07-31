@@ -312,8 +312,8 @@ describe Mongo::Collection do
             { read: { mode: :secondary } }
           end
 
-          it 'uses the read preference of the session' do
-            expect(collection.read_preference).to eq(BSON::Document.new(options[:read]))
+          it 'uses the read preference of the collection' do
+            expect(collection.read_preference).to eq(coll_options[:read])
           end
         end
 
@@ -346,7 +346,7 @@ describe Mongo::Collection do
           end
 
           it 'uses the read preference of the session' do
-            expect(collection.read_preference).to eq(BSON::Document.new(options[:read]))
+            expect(collection.read_preference).to eq(options[:read])
           end
         end
 
@@ -438,8 +438,8 @@ describe Mongo::Collection do
             { write: { w: 3 } }
           end
 
-          it 'uses the write concern of the session' do
-            expect(collection.write_concern.options).to eq(Mongo::WriteConcern.get(w: 3).options)
+          it 'uses the write concern of the collection' do
+            expect(collection.write_concern.options).to eq(Mongo::WriteConcern.get(coll_options[:write]).options)
           end
         end
 
