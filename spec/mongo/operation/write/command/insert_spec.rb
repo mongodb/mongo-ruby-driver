@@ -99,7 +99,7 @@ describe Mongo::Operation::Write::Command::Insert do
                                                            '$cmd',
                                                             expected_selector,
                                                             { limit: -1, validating_keys: true })
-      op.send(:message, double('server'))
+      op.send(:message, double('server', :mongos? => false))
     end
   end
 end
