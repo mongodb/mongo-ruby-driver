@@ -59,7 +59,8 @@ module Mongo
       def_delegators :collection,
                      :client,
                      :cluster,
-                     :database
+                     :database,
+                     :with_session
 
       # Delegate to the cluster for the next primary.
       def_delegators :cluster, :next_primary

@@ -282,7 +282,7 @@ module Mongo
       end
 
       def cluster_time
-        documents[0][CLUSTER_TIME] if documents[0]
+        first_document[CLUSTER_TIME] if first_document
       end
 
       private

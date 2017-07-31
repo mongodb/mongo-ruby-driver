@@ -293,6 +293,201 @@ describe Mongo::Collection do
         end
       end
     end
+
+    context 'when there is a session associated with the collection' do
+
+      let(:collection) do
+        authorized_client.start_session(options).database(TEST_DB)[TEST_COLL, coll_options]
+      end
+
+      context 'when the collection has a read preference' do
+
+        let(:coll_options) do
+         { read: { mode: :primary_preferred} }
+        end
+
+        context 'when the session has a read preference in the options' do
+
+          let(:options) do
+            { read: { mode: :secondary } }
+          end
+
+          it 'uses the read preference of the session' do
+            expect(collection.read_preference).to eq(BSON::Document.new(options[:read]))
+          end
+        end
+
+        context 'when the session does not have a read preference in the options' do
+
+          let(:options) do
+            { }
+          end
+
+          it 'uses the read preference of the collection' do
+            expect(collection.read_preference).to eq(coll_options[:read])
+          end
+        end
+      end
+
+      context 'when the database has a read preference' do
+
+        let(:collection) do
+          authorized_client.with(client_options).start_session(options).database(TEST_DB)[TEST_COLL]
+        end
+
+        let(:client_options) do
+          { read: { mode: :primary_preferred} }
+        end
+
+        context 'when the session has a read preference in the options' do
+
+          let(:options) do
+            { read: { mode: :secondary } }
+          end
+
+          it 'uses the read preference of the session' do
+            expect(collection.read_preference).to eq(BSON::Document.new(options[:read]))
+          end
+        end
+
+        context 'when the session does not have a read preference in the options' do
+
+          let(:options) do
+            { }
+          end
+
+          it 'uses the read preference of the database' do
+            expect(collection.read_preference).to eq(BSON::Document.new(client_options[:read]))
+          end
+        end
+      end
+    end
+  end
+
+  describe '#write_concern' do
+
+    let(:client) do
+      Mongo::Client.new([default_address.host])
+    end
+
+    let(:collection) do
+      described_class.new(client.database, :users, options)
+    end
+
+    context 'when a write concern is set in the options' do
+
+      let(:options) do
+        { write: { w: 2 } }
+      end
+
+      it 'returns the write concern' do
+        expect(collection.write_concern.options).to eq(Mongo::WriteConcern.get(options[:write]).options)
+      end
+    end
+
+    context 'when a write concern is not set in the options' do
+
+      let(:options) { {} }
+
+      context 'when the database has a write concern set' do
+
+        let(:client) do
+          Mongo::Client.new([default_address.host], write: { w: 2 })
+        end
+
+        let(:collection) do
+          described_class.new(client.database, :users, options)
+        end
+
+        it 'returns the database write concern' do
+          expect(collection.write_concern.options).to eq(Mongo::WriteConcern.get(w: 2).options)
+        end
+      end
+
+      context 'when the database does not have a write concern' do
+
+        let(:client) do
+          Mongo::Client.new([default_address.host])
+        end
+
+        let(:collection) do
+          described_class.new(client.database, :users, options)
+        end
+
+        it 'returns nil' do
+          expect(collection.write_concern).to be_nil
+        end
+      end
+    end
+
+    context 'when there is a session associated with the collection' do
+
+      let(:collection) do
+        client.start_session(options).database(TEST_DB)[TEST_COLL, coll_options]
+      end
+
+      context 'when the collection has a write concern' do
+
+        let(:coll_options) do
+          { write: { w:  2 } }
+        end
+
+        context 'when the session has a write concern in the options' do
+
+          let(:options) do
+            { write: { w: 3 } }
+          end
+
+          it 'uses the write concern of the session' do
+            expect(collection.write_concern.options).to eq(Mongo::WriteConcern.get(w: 3).options)
+          end
+        end
+
+        context 'when the session does not have a write concern in the options' do
+
+          let(:options) do
+            { }
+          end
+
+          it 'uses the write concern of the collection' do
+            expect(collection.write_concern.options).to eq(Mongo::WriteConcern.get(w: 2).options)
+          end
+        end
+      end
+
+      context 'when the database has a write concern' do
+
+        let(:client) do
+          Mongo::Client.new([default_address.host], write: { w: 2 })
+        end
+
+        let(:collection) do
+          client.start_session(options).database(TEST_DB)[TEST_COLL]
+        end
+
+        context 'when the session has a write concern in the options' do
+
+          let(:options) do
+            { write: { w: 3 } }
+          end
+
+          it 'uses the write concern of the session' do
+            expect(collection.write_concern.options).to eq(Mongo::WriteConcern.get(w: 3).options)
+          end
+        end
+
+        context 'when the session does not have a write concern in the options' do
+
+          let(:options) do
+            { }
+          end
+
+          it 'uses the write concern of the database' do
+            expect(collection.write_concern.options).to eq(Mongo::WriteConcern.get(w: 2).options)
+          end
+        end
+      end
+    end
   end
 
   describe '#server_selector' do

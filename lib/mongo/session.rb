@@ -41,17 +41,13 @@ module Mongo
     end
 
     def database(name)
-      Database.new(client, name, client.options).tap do |db|
+      Database.new(client, name, options).tap do |db|
         db.instance_variable_set(:@session, self)
       end
     end
 
-    def use
-      begin
-        yield
-      ensure
-        @server_session.update_last_use!
-      end
+    def with_recorded_operation_time
+      set_operation_time(yield)
     end
 
     def get_read_concern(collection)
@@ -62,14 +58,24 @@ module Mongo
       end
     end
 
+    def read_preference
+     @read_preference ||= @options[:read]
+    end
+
+    def write_concern
+      @write_concern ||= WriteConcern.get(@options[:write])
+    end
+
     private
 
-    def causally_consistent_reads?
-      options[:causally_consistent_reads]
-    end
 
     def set_operation_time(result)
       @operation_time = result.operation_time
+      result
+    end
+
+    def causally_consistent_reads?
+      options[:causally_consistent_reads]
     end
 
     class ServerSession

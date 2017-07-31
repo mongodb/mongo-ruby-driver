@@ -62,6 +62,8 @@ module Mongo
     # @return [ Hash ] options The options.
     attr_reader :options
 
+    attr_reader :session
+
     # Get cluster, read preference, and write concern from client.
     def_delegators :@client,
                    :cluster,
@@ -252,6 +254,13 @@ module Mongo
     def self.create(client)
       database = Database.new(client, client.options[:database], client.options)
       client.instance_variable_set(:@database, database)
+    end
+
+    def with_session
+      return yield unless session
+      session.with_recorded_operation_time do
+        yield
+      end
     end
   end
 end
