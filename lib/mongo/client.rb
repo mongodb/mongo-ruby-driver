@@ -376,8 +376,19 @@ module Mongo
       use(Database::ADMIN).command(listDatabases: 1).first[Database::DATABASES]
     end
 
-    def start_session(opts = {})
-      Session.new(self, opts)
+    # Start a session.
+    #
+    # @param [ Hash ] options The session options.
+    #
+    # @option options [ Hash ] :read The read preference to use in the session.
+    # @option options [ Hash ] :write The write concern to use in the session.
+    # @option options [ Hash ] :read_concern The read concern to use in the session.
+    #
+    # @return [ Mongo::Session ] THe session object.
+    #
+    # @since 2.5.0
+    def start_session(options = {})
+      Session.new(self, options)
     end
 
     private

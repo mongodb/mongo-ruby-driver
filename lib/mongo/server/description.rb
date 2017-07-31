@@ -346,6 +346,14 @@ module Mongo
         config[ME]
       end
 
+      # Get the cluster time field value.
+      #
+      # @example Get the cluster time field value.
+      #   description.cluster_time
+      #
+      # @return [ String ] The cluster time field.
+      #
+      # @since 2.5.0
       def cluster_time
         config[CLUSTER_TIME]
       end

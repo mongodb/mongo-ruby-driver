@@ -62,6 +62,9 @@ module Mongo
     # @return [ Hash ] options The options.
     attr_reader :options
 
+    # @return [ Mongo::Session ] The session this database is associated with.
+    #
+    # @since 2.5.0
     attr_reader :session
 
     # Get cluster, read preference, and write concern from client.
@@ -254,19 +257,28 @@ module Mongo
       client.instance_variable_set(:@database, database)
     end
 
+    # Get the read concern for this database instance.
+    #
+    # @example Get the read preference.
+    #   collection.read_preference
+    #
+    # @return [ Hash ] The read preference.
+    #
+    # @since 2.5.0
     def read_preference
       session ? session.read_preference : client.read_preference
     end
 
+    # Get the write concern for this database instance.
+    #
+    # @example Get the write concern.
+    #   collection.write_concern
+    #
+    # @return [ Mongo::WriteConcern ] The write concern.
+    #
+    # @since 2.5.0
     def write_concern
       session ? session.write_concern : client.write_concern
-    end
-
-    def with_session
-      return yield unless session
-      session.with_recorded_operation_time do
-        yield
-      end
     end
   end
 end

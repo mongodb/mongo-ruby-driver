@@ -443,6 +443,14 @@ module Mongo
       addresses_list
     end
 
+    # Update the max cluster time seen in a response.
+    #
+    # @example Update the cluster time.
+    #   cluster.update_cluster_time(result)
+    #
+    # @return [ Object ] The cluster time.
+    #
+    # @since 2.5.0
     def update_cluster_time(result)
       if cl_time = result.cluster_time
         if @cluster_time

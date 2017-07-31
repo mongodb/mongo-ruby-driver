@@ -277,10 +277,26 @@ module Mongo
       end
       alias :n :written_count
 
+      # Get the operation time reported in the server response.
+      #
+      # @example Get the cluster time.
+      #   result.operation_time
+      #
+      # @return [ Object ] The operation time value.
+      #
+      # @since 2.5.0
       def operation_time
         documents[0][OPERATION_TIME] if documents[0]
       end
 
+      # Get the number of cluster time reported in the server response.
+      #
+      # @example Get the cluster time.
+      #   result.cluster_time
+      #
+      # @return [ BSON::Document ] The cluster time document.
+      #
+      # @since 2.5.0
       def cluster_time
         first_document[CLUSTER_TIME] if first_document
       end
