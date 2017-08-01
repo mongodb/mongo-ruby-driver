@@ -104,7 +104,7 @@ module Mongo
           #
           # @since 2.0.0
           def validate!
-            documents.nil? ? raise(Error::OperationFailure.new(parser.message)) : self
+            documents.nil? ? raise(Error::OperationFailure.new(parser.message, self)) : self
           end
 
           private

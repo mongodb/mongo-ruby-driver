@@ -44,7 +44,7 @@ module Mongo
       @client = client
       @options = options
       @server_session = ServerSession.new(client)
-      @operation_time = 0
+      @operation_time = nil
       @ended = false
       ObjectSpace.define_finalizer(self, self.class.finalize(@server_session))
     end
@@ -111,16 +111,19 @@ module Mongo
     # Execute a block of code and cache the operation time from the result.
     #
     # @example
-    #   session.with_recorded_operation_time do
+    #   session.use do
     #     execute_operation
     #   end
     #
     # @return [ Object ] Result of the block.
     #
     # @since 2.5.0
-    def with_recorded_operation_time
+    def use
       check_if_ended!
       set_operation_time(yield)
+    rescue Mongo::Error::OperationFailure => e
+      set_operation_time(e)
+      raise
     end
 
     # Get the read concern for this session.
@@ -136,7 +139,7 @@ module Mongo
     # @since 2.5.0
     def get_read_concern(collection)
       if causally_consistent_reads? && @operation_time
-        collection.options[:read_concern].merge(AFTER_CLUSTER_TIME => @operation_time)
+        (collection.options[:read_concern] || {}).merge(AFTER_CLUSTER_TIME => @operation_time)
       else
         collection.options[:read_concern]
       end
@@ -176,7 +179,7 @@ module Mongo
     # @since 2.0.5
     def database_names
       check_if_ended!
-      client.database_names
+      list_databases.collect { |info| info[Database::NAME] }
     end
 
     # Get info for each database.

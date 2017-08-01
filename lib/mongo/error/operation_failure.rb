@@ -20,6 +20,11 @@ module Mongo
     # @since 2.0.0
     class OperationFailure < Error
 
+      # For causally consistent reads, we must extract the operation time even from errors.
+      #
+      # @since 2.5.0
+      attr_reader :operation_time
+
       # These are magic error messages that could indicate a master change.
       #
       # @since 2.4.2
@@ -71,6 +76,20 @@ module Mongo
       # @since 2.4.2
       def write_retryable?
         WRITE_RETRY_MESSAGES.any? { |m| message.include?(m) }
+      end
+
+      # Create the operation failure.
+      #
+      # @example Create the error object
+      #   OperationFailure.new(message, result)
+      #
+      # param [ String ] message The error message.
+      # param [ Operation::Result ] result The result object.
+      #
+      # @since 2.5.0
+      def initialize(message, result = nil)
+        @operation_time = result.operation_time
+        super(message)
       end
     end
   end

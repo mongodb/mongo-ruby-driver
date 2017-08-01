@@ -361,7 +361,7 @@ module Mongo
     #
     # @since 2.0.5
     def database_names
-      list_databases.collect{ |info| info[Database::NAME] }
+      list_databases.collect { |info| info[Database::NAME] }
     end
 
     # Get info for each database.

@@ -50,7 +50,7 @@ module Mongo
         def_delegators :view, :collection, :read, :cluster, :server_selector
 
         # Delegate necessary operations to the collection.
-        def_delegators :collection, :database
+        def_delegators :collection, :database, :with_session
 
         # Iterate through documents returned by the map/reduce.
         #
@@ -233,7 +233,7 @@ module Mongo
         end
 
         def send_fetch_query(server)
-          fetch_query_op(server).execute(server)
+          with_session { fetch_query_op(server).execute(server) }
         end
 
         def validate_collation!(server)

@@ -36,7 +36,7 @@ module Mongo
     include Retryable
 
     def_delegators :@view, :collection, :limit
-    def_delegators :collection, :client, :database
+    def_delegators :collection, :client, :database, :with_session
     def_delegators :@server, :cluster
 
     # @return [ Collection::View ] view The collection view.
@@ -186,7 +186,7 @@ module Mongo
 
     def get_more
       read_with_retry do
-        process(get_more_operation.execute(@server))
+        process(with_session { get_more_operation.execute(@server) })
       end
     end
 

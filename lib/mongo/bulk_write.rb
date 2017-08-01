@@ -38,7 +38,8 @@ module Mongo
     def_delegators :@collection,
                    :database,
                    :cluster,
-                   :next_primary
+                   :next_primary,
+                   :with_session
 
     def_delegators :database, :client
 
@@ -168,24 +169,30 @@ module Mongo
     end
 
     def delete(documents, server, operation_id)
-      Operation::Write::Bulk::Delete.new(
-        base_spec(operation_id).merge(:deletes => documents)
-      ).execute(server)
+      with_session do
+        Operation::Write::Bulk::Delete.new(
+          base_spec(operation_id).merge(:deletes => documents)
+        ).execute(server)
+      end
     end
 
     alias :delete_one :delete
     alias :delete_many :delete
 
     def insert_one(documents, server, operation_id)
-      Operation::Write::Bulk::Insert.new(
-        base_spec(operation_id).merge(:documents => documents)
-      ).execute(server)
+      with_session do
+        Operation::Write::Bulk::Insert.new(
+          base_spec(operation_id).merge(:documents => documents)
+        ).execute(server)
+      end
     end
 
     def update(documents, server, operation_id)
-      Operation::Write::Bulk::Update.new(
-        base_spec(operation_id).merge(:updates => documents)
-      ).execute(server)
+      with_session do
+        Operation::Write::Bulk::Update.new(
+          base_spec(operation_id).merge(:updates => documents)
+        ).execute(server)
+      end
     end
 
     alias :replace_one :update

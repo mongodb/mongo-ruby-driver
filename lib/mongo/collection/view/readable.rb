@@ -135,16 +135,16 @@ module Mongo
           cmd[:readConcern] = collection.read_concern if collection.read_concern
           read_pref = opts[:read] || read_preference
           selector = ServerSelector.get(read_pref || server_selector)
-          with_session do
-            read_with_retry do
-              server = selector.select_server(cluster, false)
-              apply_collation!(cmd, server, opts)
-              Operation::Commands::Command.new({
-                                                 :selector => cmd,
-                                                 :db_name => database.name,
-                                                 :options => { :limit => -1 },
-                                                 :read => read_pref,
-                                               }).execute(server)
+          read_with_retry do
+            server = selector.select_server(cluster, false)
+            apply_collation!(cmd, server, opts)
+            with_session do
+              Operation::Commands::Command.new(
+                :selector => cmd,
+                :db_name => database.name,
+                :options => {:limit => -1},
+                :read => read_pref,
+              ).execute(server)
             end
           end.n.to_i
         end
@@ -173,16 +173,16 @@ module Mongo
           cmd[:readConcern] = collection.read_concern if collection.read_concern
           read_pref = opts[:read] || read_preference
           selector = ServerSelector.get(read_pref || server_selector)
-          with_session do
-            read_with_retry do
-              server = selector.select_server(cluster, false)
-              apply_collation!(cmd, server, opts)
-              Operation::Commands::Command.new({
-                                                 :selector => cmd,
-                                                 :db_name => database.name,
-                                                 :options => { :limit => -1 },
-                                                 :read => read_pref
-                                               }).execute(server)
+          read_with_retry do
+            server = selector.select_server(cluster, false)
+            apply_collation!(cmd, server, opts)
+            with_session do
+              Operation::Commands::Command.new(
+                :selector => cmd,
+                :db_name => database.name,
+                :options => {:limit => -1},
+                :read => read_pref
+              ).execute(server)
             end
           end.first['values']
         end
@@ -476,19 +476,23 @@ module Mongo
                   :cursor_count => cursor_count,
                   :read_concern => collection.read_concern
                 }.merge!(options))
-          cmd.execute(server).cursor_ids.map do |cursor_id|
+          with_session { cmd.execute(server) }.cursor_ids.map do |cursor_id|
             result = if server.features.find_command_enabled?
-                Operation::Commands::GetMore.new({
-                  :selector => { :getMore => cursor_id, :collection => collection.name },
-                  :db_name  => database.name
-                }).execute(server)
+                with_session do
+                  Operation::Commands::GetMore.new(
+                    :selector => { :getMore => cursor_id, :collection => collection.name },
+                    :db_name  => database.name
+                  ).execute(server)
+                end
               else
-                Operation::Read::GetMore.new({
-                  :to_return => 0,
-                  :cursor_id => cursor_id,
-                  :db_name   => database.name,
-                  :coll_name => collection.name
-                }).execute(server)
+                with_session do
+                  Operation::Read::GetMore.new(
+                    :to_return => 0,
+                    :cursor_id => cursor_id,
+                    :db_name   => database.name,
+                    :coll_name => collection.name
+                  ).execute(server)
+                end
             end
             Cursor.new(self, result, server)
           end

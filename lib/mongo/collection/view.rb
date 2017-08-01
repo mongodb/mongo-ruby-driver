@@ -199,7 +199,7 @@ module Mongo
       def view; self; end
 
       def with_session(&block)
-        collection.send(:with_session, &block)
+        database.send(:with_session, &block)
       end
     end
   end

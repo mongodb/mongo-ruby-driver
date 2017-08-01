@@ -22,7 +22,7 @@ module Mongo
       extend Forwardable
       include Enumerable
 
-      def_delegators :@database, :cluster, :read_preference, :with_session
+      def_delegators :@database, :cluster, :read_preference
       def_delegators :cluster, :next_primary
 
       # @return [ Integer ] batch_size The size of the batch of results
@@ -111,9 +111,7 @@ module Mongo
       end
 
       def send_initial_query(server)
-        with_session do
-          initial_query_op.execute(server)
-        end
+        initial_query_op.execute(server)
       end
     end
   end

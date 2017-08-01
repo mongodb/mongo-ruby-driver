@@ -45,10 +45,12 @@ module Mongo
             server = next_primary
             apply_collation!(cmd, server, opts)
 
-            Operation::Commands::Command.new({
-                                                 :selector => cmd,
-                                                 :db_name => database.name
-                                             }).execute(server)
+            with_session do
+              Operation::Commands::Command.new(
+                :selector => cmd,
+                :db_name => database.name
+              ).execute(server)
+            end
           end.first['value']
         end
 
@@ -112,10 +114,12 @@ module Mongo
             server = next_primary
             apply_collation!(cmd, server, opts)
 
-            Operation::Commands::Command.new({
-                                                 :selector => cmd,
-                                                 :db_name => database.name
-                                             }).execute(server)
+            with_session do
+              Operation::Commands::Command.new(
+                :selector => cmd,
+                :db_name => database.name
+              ).execute(server)
+            end
           end.first['value']
           value unless value.nil? || value.empty?
         end
@@ -218,12 +222,14 @@ module Mongo
             server = next_primary
             apply_collation!(delete_doc, server, opts)
 
-            Operation::Write::Delete.new(
+            with_session do
+              Operation::Write::Delete.new(
                 :delete => delete_doc,
                 :db_name => collection.database.name,
                 :coll_name => collection.name,
                 :write_concern => collection.write_concern
-            ).execute(server)
+              ).execute(server)
+            end
           end
         end
 
@@ -236,13 +242,15 @@ module Mongo
             server = next_primary
             apply_collation!(update_doc, server, opts)
 
-            Operation::Write::Update.new(
+            with_session do
+              Operation::Write::Update.new(
                 :update => update_doc,
                 :db_name => collection.database.name,
                 :coll_name => collection.name,
                 :write_concern => collection.write_concern,
                 :bypass_document_validation => !!opts[:bypass_document_validation]
-            ).execute(server)
+              ).execute(server)
+            end
           end
         end
       end

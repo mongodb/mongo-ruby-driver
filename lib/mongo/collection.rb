@@ -50,7 +50,7 @@ module Mongo
     attr_reader :session
 
     # Get client, cluster, read preference, and write concern from client.
-    def_delegators :database, :client, :cluster, :with_session
+    def_delegators :database, :client, :cluster
 
     # Delegate to the cluster for the next primary.
     def_delegators :cluster, :next_primary
@@ -190,11 +190,11 @@ module Mongo
       if (options[:collation] || options[Operation::COLLATION]) && !server.features.collation_enabled?
         raise Error::UnsupportedCollation.new
       end
-      Operation::Commands::Create.new({
-                                        selector: operation,
-                                        db_name: database.name,
-                                        write_concern: write_concern
-                                      }).execute(server)
+      Operation::Commands::Create.new(
+        selector: operation,
+        db_name: database.name,
+        write_concern: write_concern
+      ).execute(server)
     end
 
     # Drop the collection. Will also drop all indexes associated with the
@@ -209,13 +209,11 @@ module Mongo
     #
     # @since 2.0.0
     def drop
-      with_session do
-        Operation::Commands::Drop.new({
-                                        selector: { :drop => name },
-                                        db_name: database.name,
-                                        write_concern: write_concern
-                                      }).execute(next_primary)
-      end
+      Operation::Commands::Drop.new(
+        selector: {:drop => name},
+        db_name: database.name,
+        write_concern: write_concern
+      ).execute(next_primary)
     rescue Error::OperationFailure => ex
       raise ex unless ex.message =~ /ns not found/
       false
