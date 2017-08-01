@@ -49,10 +49,6 @@ module Mongo
       # @return [ Array<String> ] roles The user roles.
       attr_reader :roles
 
-      # Sets the client key for the user.
-      # @return [ String ] The client key for the user.
-      attr_accessor :client_key
-
       # Determine if this user is equal to another.
       #
       # @example Check user equality.
@@ -135,9 +131,10 @@ module Mongo
       # @option options [ String ] :password The user's password.
       # @option options [ Symbol ] :auth_mech The authorization mechanism.
       # @option options [ Array<String>, Array<Hash> ] roles The user roles.
+      #@option options [ String ] :client_key The user's client key cached from a previous authentication on the same connection.
       #
       # @since 2.0.0
-      def initialize(options, client_key = nil)
+      def initialize(options)
         @database = options[:database] || Database::ADMIN
         @auth_source = options[:auth_source] || @database
         @name = options[:user]
@@ -145,7 +142,7 @@ module Mongo
         @mechanism = options[:auth_mech] || :mongodb_cr
         @auth_mech_properties = options[:auth_mech_properties] || {}
         @roles = options[:roles] || []
-        @client_key = client_key
+        @client_key = options[:client_key]
       end
 
       # Get the specification for the user, used in creation.
@@ -159,6 +156,12 @@ module Mongo
       def spec
         { pwd: hashed_password, roles: roles }
       end
+
+      private
+
+      # Sets the client key for the user.
+      # @return [ String ] The client key for the user.
+      attr_accessor :client_key
     end
   end
 end

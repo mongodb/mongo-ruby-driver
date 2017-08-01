@@ -188,7 +188,7 @@ module Mongo
         def initialize(user)
           @user = user
           @nonce = SecureRandom.base64
-          @client_key = user.client_key
+          @client_key = user.send(:client_key)
         end
 
         private
@@ -255,7 +255,7 @@ module Mongo
         # @since 2.0.0
         def client_key
           @client_key ||= hmac(salted_password, CLIENT_KEY)
-          user.client_key ||= @client_key
+          user.send(:client_key=, @client_key) unless user.send(:client_key)
           @client_key
         end
 

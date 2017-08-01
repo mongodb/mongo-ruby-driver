@@ -190,11 +190,11 @@ module Mongo
 
       def authenticate!
         if options[:user] || options[:auth_mech]
-          user = Auth::User.new(Options::Redacted.new(:auth_mech => default_mechanism).merge(options), @client_key)
+          user = Auth::User.new(Options::Redacted.new(:auth_mech => default_mechanism, :client_key => @client_key).merge(options))
  
           @server.handle_auth_failure! do
             reply = Auth.get(user).login(self)
-            @client_key ||= user.client_key if user.mechanism == :scram
+            @client_key ||= user.send(:client_key) if user.mechanism == :scram
             reply
           end
         end
