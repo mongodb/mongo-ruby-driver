@@ -160,11 +160,13 @@ module Mongo
     def command(operation, opts = {})
       preference = ServerSelector.get(opts[:read] || ServerSelector::PRIMARY)
       server = preference.select_server(cluster)
-      Operation::Commands::Command.new({
-        :selector => operation,
-        :db_name => name,
-        :read => preference
-      }).execute(server)
+      with_session do
+        Operation::Commands::Command.new({
+          :selector => operation,
+          :db_name => name,
+          :read => preference
+        }).execute(server)
+      end
     end
 
     # Drop the database and all its associated information.
@@ -177,11 +179,13 @@ module Mongo
     # @since 2.0.0
     def drop
       operation = { :dropDatabase => 1 }
-      Operation::Commands::DropDatabase.new({
-                                             selector: operation,
-                                             db_name: name,
-                                             write_concern: write_concern
-                                            }).execute(next_primary)
+      with_session do
+        Operation::Commands::DropDatabase.new({
+                                              selector: operation,
+                                              db_name: name,
+                                              write_concern: write_concern
+                                              }).execute(next_primary)
+      end
     end
 
     # Instantiate a new database object.
@@ -279,6 +283,15 @@ module Mongo
     # @since 2.5.0
     def write_concern
       session ? session.write_concern : client.write_concern
+    end
+
+    private
+
+    def with_session(&block)
+      return yield unless session
+      session.with_recorded_operation_time do
+        yield
+      end
     end
   end
 end

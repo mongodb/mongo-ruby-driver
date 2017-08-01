@@ -384,7 +384,7 @@ module Mongo
     # @option options [ Hash ] :write The write concern to use in the session.
     # @option options [ Hash ] :read_concern The read concern to use in the session.
     #
-    # @return [ Mongo::Session ] THe session object.
+    # @return [ Mongo::Session ] The session object.
     #
     # @since 2.5.0
     def start_session(options = {})

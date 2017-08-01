@@ -50,7 +50,7 @@ module Mongo
     attr_reader :session
 
     # Get client, cluster, read preference, and write concern from client.
-    def_delegators :database, :client, :cluster
+    def_delegators :database, :client, :cluster, :with_session
 
     # Delegate to the cluster for the next primary.
     def_delegators :cluster, :next_primary
@@ -209,12 +209,13 @@ module Mongo
     #
     # @since 2.0.0
     def drop
-      Operation::Commands::Drop.new({
-                                      selector: { :drop => name },
-                                      db_name: database.name,
-                                      write_concern: write_concern
-                                    }).execute(next_primary)
-
+      with_session do
+        Operation::Commands::Drop.new({
+                                        selector: { :drop => name },
+                                        db_name: database.name,
+                                        write_concern: write_concern
+                                      }).execute(next_primary)
+      end
     rescue Error::OperationFailure => ex
       raise ex unless ex.message =~ /ns not found/
       false
@@ -368,16 +369,18 @@ module Mongo
     #
     # @since 2.0.0
     def insert_one(document, options = {})
-      write_with_retry do
-        Operation::Write::Insert.new(
-          :documents => [ document ],
-          :db_name => database.name,
-          :coll_name => name,
-          :write_concern => write_concern,
-          :bypass_document_validation => !!options[:bypass_document_validation],
-          :options => options,
-          :id_generator => client.options[:id_generator]
-        ).execute(next_primary)
+      with_session do
+        write_with_retry do
+          Operation::Write::Insert.new(
+            :documents => [ document ],
+            :db_name => database.name,
+            :coll_name => name,
+            :write_concern => write_concern,
+            :bypass_document_validation => !!options[:bypass_document_validation],
+            :options => options,
+            :id_generator => client.options[:id_generator]
+          ).execute(next_primary)
+        end
       end
     end
 
@@ -644,21 +647,10 @@ module Mongo
       "#{database.name}.#{name}"
     end
 
-    # Execute a block in the context of a session, if this collection instance is associated with one.
-    #
-    # @example Execute a block in the context of a session.
-    #   database.with_session do
-    #     collection.find({}, limit: 1).first
-    #   end
-    #
-    # @return [ Object ] The result of the block.
-    #
-    # @since 2.5.0
-    def with_session
-      return yield unless session
-      session.with_recorded_operation_time do
-        yield
-      end
+    private
+
+    def with_session(&block)
+      database.send(:with_session, &block)
     end
   end
 end
