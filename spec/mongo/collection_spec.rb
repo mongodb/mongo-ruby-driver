@@ -894,6 +894,33 @@ describe Mongo::Collection do
 
   describe '#find' do
 
+    context 'when causally consistent sessions are used' do
+
+      let(:session) do
+        authorized_client.start_session(causally_consistent_reads: true)
+      end
+
+      after do
+        session.end_session
+      end
+
+      let(:database) do
+        session.database(TEST_DB)
+      end
+
+      let(:collection) do
+        described_class.new(database, TEST_COLL)
+      end
+
+      before do
+        collection.find(name: 1, limit: 1).first
+      end
+
+      it 'includes the afterClusterTime for subsequent operations' do
+        expect(collection.read_concern['afterClusterTime']).to be_a(BSON::Timestamp)
+      end
+    end
+
     context 'when provided a filter' do
 
       let(:view) do
@@ -1264,6 +1291,33 @@ describe Mongo::Collection do
         end
       end
     end
+
+    context 'when causally consistent sessions are used' do
+
+      let(:session) do
+        authorized_client.start_session(causally_consistent_reads: true)
+      end
+
+      after do
+        session.end_session
+      end
+
+      let(:database) do
+        session.database(TEST_DB)
+      end
+
+      let(:collection) do
+        described_class.new(database, TEST_COLL)
+      end
+
+      before do
+        collection.insert_many([ { a: 1 }])
+      end
+
+      it 'includes the afterClusterTime for subsequent operations' do
+        expect(collection.read_concern['afterClusterTime']).to be_a(BSON::Timestamp)
+      end
+    end
   end
 
   describe '#insert_one' do
@@ -1392,6 +1446,33 @@ describe Mongo::Collection do
         end
       end
     end
+
+    context 'when causally consistent sessions are used' do
+
+      let(:session) do
+        authorized_client.start_session(causally_consistent_reads: true)
+      end
+
+      after do
+        session.end_session
+      end
+
+      let(:database) do
+        session.database(TEST_DB)
+      end
+
+      let(:collection) do
+        described_class.new(database, TEST_COLL)
+      end
+
+      before do
+        collection.insert_one(a: 1)
+      end
+
+      it 'includes the afterClusterTime for subsequent operations' do
+        expect(collection.read_concern['afterClusterTime']).to be_a(BSON::Timestamp)
+      end
+    end
   end
 
   describe '#inspect' do
@@ -1514,6 +1595,33 @@ describe Mongo::Collection do
         end
       end
     end
+
+    context 'when causally consistent sessions are used' do
+
+      let(:session) do
+        authorized_client.start_session(causally_consistent_reads: true)
+      end
+
+      after do
+        session.end_session
+      end
+
+      let(:database) do
+        session.database(TEST_DB)
+      end
+
+      let(:collection) do
+        described_class.new(database, TEST_COLL)
+      end
+
+      before do
+        collection.aggregate([]).first
+      end
+
+      it 'includes the afterClusterTime for subsequent operations' do
+        expect(collection.read_concern['afterClusterTime']).to be_a(BSON::Timestamp)
+      end
+    end
   end
 
   describe '#count' do
@@ -1582,6 +1690,33 @@ describe Mongo::Collection do
             end
           end
         end
+      end
+    end
+
+    context 'when causally consistent sessions are used' do
+
+      let(:session) do
+        authorized_client.start_session(causally_consistent_reads: true)
+      end
+
+      after do
+        session.end_session
+      end
+
+      let(:database) do
+        session.database(TEST_DB)
+      end
+
+      let(:collection) do
+        described_class.new(database, TEST_COLL)
+      end
+
+      before do
+        collection.count
+      end
+
+      it 'includes the afterClusterTime for subsequent operations' do
+        expect(collection.read_concern['afterClusterTime']).to be_a(BSON::Timestamp)
       end
     end
   end
@@ -1672,6 +1807,33 @@ describe Mongo::Collection do
 
       it 'does not apply the collation to the distinct' do
         expect(result).to eq(['bang', 'BANG'])
+      end
+    end
+
+    context 'when causally consistent sessions are used' do
+
+      let(:session) do
+        authorized_client.start_session(causally_consistent_reads: true)
+      end
+
+      after do
+        session.end_session
+      end
+
+      let(:database) do
+        session.database(TEST_DB)
+      end
+
+      let(:collection) do
+        described_class.new(database, TEST_COLL)
+      end
+
+      before do
+        collection.distinct(:field)
+      end
+
+      it 'includes the afterClusterTime for subsequent operations' do
+        expect(collection.read_concern['afterClusterTime']).to be_a(BSON::Timestamp)
       end
     end
   end
@@ -1827,6 +1989,33 @@ describe Mongo::Collection do
         expect(authorized_collection.find(name: 'bang').count).to eq(1)
       end
     end
+
+    context 'when causally consistent sessions are used' do
+
+      let(:session) do
+        authorized_client.start_session(causally_consistent_reads: true)
+      end
+
+      after do
+        session.end_session
+      end
+
+      let(:database) do
+        session.database(TEST_DB)
+      end
+
+      let(:collection) do
+        described_class.new(database, TEST_COLL)
+      end
+
+      before do
+        collection.delete_one({ a: 1 })
+      end
+
+      it 'includes the afterClusterTime for subsequent operations' do
+        expect(collection.read_concern['afterClusterTime']).to be_a(BSON::Timestamp)
+      end
+    end
   end
 
   describe '#delete_many' do
@@ -1966,6 +2155,33 @@ describe Mongo::Collection do
         expect(authorized_collection.find(name: 'bang').count).to eq(2)
       end
     end
+
+    context 'when causally consistent sessions are used' do
+
+      let(:session) do
+        authorized_client.start_session(causally_consistent_reads: true)
+      end
+
+      after do
+        session.end_session
+      end
+
+      let(:database) do
+        session.database(TEST_DB)
+      end
+
+      let(:collection) do
+        described_class.new(database, TEST_COLL)
+      end
+
+      before do
+        collection.delete_many({ a: 1 })
+      end
+
+      it 'includes the afterClusterTime for subsequent operations' do
+        expect(collection.read_concern['afterClusterTime']).to be_a(BSON::Timestamp)
+      end
+    end
   end
 
   describe '#parallel_scan', unless: sharded? do
@@ -2091,6 +2307,33 @@ describe Mongo::Collection do
             result
           }.to raise_error(Mongo::Error::OperationFailure)
         end
+      end
+    end
+
+    context 'when causally consistent sessions are used' do
+
+      let(:session) do
+        authorized_client.start_session(causally_consistent_reads: true)
+      end
+
+      after do
+        session.end_session
+      end
+
+      let(:database) do
+        session.database(TEST_DB)
+      end
+
+      let(:collection) do
+        described_class.new(database, TEST_COLL)
+      end
+
+      before do
+        collection.parallel_scan(2)
+      end
+
+      it 'includes the afterClusterTime for subsequent operations' do
+        expect(collection.read_concern['afterClusterTime']).to be_a(BSON::Timestamp)
       end
     end
   end
@@ -2357,6 +2600,33 @@ describe Mongo::Collection do
       it 'does not apply the collation' do
         expect(result.written_count).to eq(0)
         expect(authorized_collection.find(name: 'bang').count).to eq(1)
+      end
+    end
+
+    context 'when causally consistent sessions are used' do
+
+      let(:session) do
+        authorized_client.start_session(causally_consistent_reads: true)
+      end
+
+      after do
+        session.end_session
+      end
+
+      let(:database) do
+        session.database(TEST_DB)
+      end
+
+      let(:collection) do
+        described_class.new(database, TEST_COLL)
+      end
+
+      before do
+        collection.replace_one({}, {})
+      end
+
+      it 'includes the afterClusterTime for subsequent operations' do
+        expect(collection.read_concern['afterClusterTime']).to be_a(BSON::Timestamp)
       end
     end
   end
@@ -2631,6 +2901,33 @@ describe Mongo::Collection do
         expect(result.written_count).to eq(0)
       end
     end
+
+    context 'when causally consistent sessions are used' do
+
+      let(:session) do
+        authorized_client.start_session(causally_consistent_reads: true)
+      end
+
+      after do
+        session.end_session
+      end
+
+      let(:database) do
+        session.database(TEST_DB)
+      end
+
+      let(:collection) do
+        described_class.new(database, TEST_COLL)
+      end
+
+      before do
+        collection.update_many({}, { '$set' => { a: 1 } })
+      end
+
+      it 'includes the afterClusterTime for subsequent operations' do
+        expect(collection.read_concern['afterClusterTime']).to be_a(BSON::Timestamp)
+      end
+    end
   end
 
   describe '#update_one' do
@@ -2901,6 +3198,33 @@ describe Mongo::Collection do
         expect(result.written_count).to eq(0)
       end
     end
+
+    context 'when causally consistent sessions are used' do
+
+      let(:session) do
+        authorized_client.start_session(causally_consistent_reads: true)
+      end
+
+      after do
+        session.end_session
+      end
+
+      let(:database) do
+        session.database(TEST_DB)
+      end
+
+      let(:collection) do
+        described_class.new(database, TEST_COLL)
+      end
+
+      before do
+        collection.update_one({}, { '$set' => { a: 1 } })
+      end
+
+      it 'includes the afterClusterTime for subsequent operations' do
+        expect(collection.read_concern['afterClusterTime']).to be_a(BSON::Timestamp)
+      end
+    end
   end
 
   describe '#find_one_and_delete' do
@@ -3088,6 +3412,33 @@ describe Mongo::Collection do
 
       it 'does not apply the collation' do
         expect(result).to be_nil
+      end
+    end
+
+    context 'when causally consistent sessions are used' do
+
+      let(:session) do
+        authorized_client.start_session(causally_consistent_reads: true)
+      end
+
+      after do
+        session.end_session
+      end
+
+      let(:database) do
+        session.database(TEST_DB)
+      end
+
+      let(:collection) do
+        described_class.new(database, TEST_COLL)
+      end
+
+      before do
+        collection.find_one_and_delete({})
+      end
+
+      it 'includes the afterClusterTime for subsequent operations' do
+        expect(collection.read_concern['afterClusterTime']).to be_a(BSON::Timestamp)
       end
     end
   end
@@ -3399,6 +3750,33 @@ describe Mongo::Collection do
         expect(result).to be_nil
       end
     end
+
+    context 'when causally consistent sessions are used' do
+
+      let(:session) do
+        authorized_client.start_session(causally_consistent_reads: true)
+      end
+
+      after do
+        session.end_session
+      end
+
+      let(:database) do
+        session.database(TEST_DB)
+      end
+
+      let(:collection) do
+        described_class.new(database, TEST_COLL)
+      end
+
+      before do
+        collection.find_one_and_update({}, { '$set' => { a: 1 } })
+      end
+
+      it 'includes the afterClusterTime for subsequent operations' do
+        expect(collection.read_concern['afterClusterTime']).to be_a(BSON::Timestamp)
+      end
+    end
   end
 
   describe '#find_one_and_replace' do
@@ -3680,6 +4058,33 @@ describe Mongo::Collection do
 
       it 'does not apply the collation' do
         expect(result).to be_nil
+      end
+    end
+
+    context 'when causally consistent sessions are used' do
+
+      let(:session) do
+        authorized_client.start_session(causally_consistent_reads: true)
+      end
+
+      after do
+        session.end_session
+      end
+
+      let(:database) do
+        session.database(TEST_DB)
+      end
+
+      let(:collection) do
+        described_class.new(database, TEST_COLL)
+      end
+
+      before do
+        collection.find_one_and_replace({}, { })
+      end
+
+      it 'includes the afterClusterTime for subsequent operations' do
+        expect(collection.read_concern['afterClusterTime']).to be_a(BSON::Timestamp)
       end
     end
   end

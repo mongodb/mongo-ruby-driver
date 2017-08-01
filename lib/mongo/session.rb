@@ -137,8 +137,8 @@ module Mongo
     # @return [ Hash ] The read concern for this session.
     #
     # @since 2.5.0
-    def get_read_concern(collection)
-      if causally_consistent_reads? && @operation_time
+    def get_read_concern(collection, server = nil)
+      if !server.standalone? && causally_consistent_reads? && @operation_time
         (collection.options[:read_concern] || {}).merge(AFTER_CLUSTER_TIME => @operation_time)
       else
         collection.options[:read_concern]

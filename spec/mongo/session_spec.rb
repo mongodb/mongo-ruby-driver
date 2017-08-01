@@ -102,6 +102,10 @@ describe Mongo::Session, if: sessions_enabled? do
     it 'saves a reference to the client' do
       expect(session.client).to be(client)
     end
+
+    it 'sets the operation time to nil' do
+      expect(session.instance_variable_get(:@operation_time)).to be_nil
+    end
   end
 
   describe '#end_session' do
@@ -271,6 +275,110 @@ describe Mongo::Session, if: sessions_enabled? do
         expect {
           session.database_names
         }.to raise_exception(Exception)
+      end
+    end
+  end
+
+  context 'when the session does not use causally consistent reads' do
+
+    let(:collection) do
+      session.database(TEST_DB)[TEST_COLL, coll_options]
+    end
+
+    let(:coll_options) do
+      { }
+    end
+
+    context 'when the first request is sent' do
+
+      context 'when the collection has a read concern set' do
+
+        let(:coll_options) do
+          { read_concern: { level: 'local' } }
+        end
+
+        it 'does not add the afterClusterTime field' do
+          expect(collection.read_concern).to eq(coll_options[:read_concern])
+        end
+      end
+
+      context 'when the collection does not have a read concern set' do
+
+        it 'does not add the afterClusterTime field' do
+          expect(collection.read_concern).to eq(coll_options[:read_concern])
+        end
+      end
+    end
+
+    context 'when the first request has already been sent' do
+
+      before do
+        collection.find({ 'a' => 1 }, limit: 1).first
+      end
+
+      it 'does not add the afterClusterTime field' do
+        expect(collection.read_concern).to eq(coll_options[:read_concern])
+      end
+    end
+  end
+
+  context 'when the session uses causally consistent reads' do
+
+    let(:options) do
+      { causally_consistent_reads: true }
+    end
+
+    let(:collection) do
+      session.database(TEST_DB)[TEST_COLL, coll_options]
+    end
+
+    let(:coll_options) do
+      { }
+    end
+
+    context 'when the first request is sent' do
+
+      context 'when the collection has a read concern set' do
+
+        let(:coll_options) do
+          { read_concern: { level: 'local' } }
+        end
+
+        it 'does not add the afterClusterTime field' do
+          expect(collection.read_concern).to eq(coll_options[:read_concern])
+        end
+      end
+
+      context 'when the collection does not have a read concern set' do
+
+        it 'does not add the afterClusterTime field' do
+          expect(collection.read_concern).to be_nil
+        end
+      end
+    end
+
+    context 'when at least one request has been sent already' do
+
+      context 'when the first request is an OperationFailure' do
+
+        before do
+          begin; collection.find({ '$a' => 1 }, limit: 1).first; rescue; end
+        end
+
+        it 'updates the operation time value on the session' do
+          expect(collection.read_concern['afterClusterTime']).to be_a(BSON::Timestamp)
+        end
+      end
+
+      context 'when the first request is successful' do
+
+        before do
+          collection.find({ 'a' => 1 }, limit: 1).first
+        end
+
+        it 'updates the operation time value on the session' do
+          expect(collection.read_concern['afterClusterTime']).to be_a(BSON::Timestamp)
+        end
       end
     end
   end

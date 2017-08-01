@@ -194,6 +194,37 @@ describe Mongo::Collection::View::Readable do
         end
       end
     end
+
+    context 'when causally consistent sessions are used' do
+
+      let(:session) do
+        authorized_client.start_session(causally_consistent_reads: true)
+      end
+
+      after do
+        session.end_session
+      end
+
+      let(:database) do
+        session.database(TEST_DB)
+      end
+
+      let(:collection) do
+        database[TEST_COLL]
+      end
+
+      let(:view) do
+        Mongo::Collection::View.new(collection, selector, options)
+      end
+
+      before do
+        view.map_reduce(map, reduce, options).to_a
+      end
+
+      it 'includes the afterClusterTime for subsequent operations' do
+        expect(collection.read_concern['afterClusterTime']).to be_a(BSON::Timestamp)
+      end
+    end
   end
 
   describe '#batch_size' do

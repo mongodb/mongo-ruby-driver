@@ -212,7 +212,7 @@ module Mongo
             server = cluster.next_primary(false)
           end
           validate_collation!(server)
-          result = initial_query_op.execute(server)
+          result = with_session { initial_query_op.execute(server) }
           inline? ? result : send_fetch_query(server)
         end
 
