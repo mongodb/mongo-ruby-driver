@@ -559,4 +559,26 @@ describe Mongo::Database do
       end
     end
   end
+
+  describe '#session' do
+
+    context 'when the database is created via a session' do
+
+      let(:session) do
+        authorized_client.start_session
+      end
+
+      let(:database) do
+        session.database(TEST_DB)
+      end
+
+      after do
+        session.end_session
+      end
+
+      it 'provides an accessor for the session' do
+        expect(database.session).to be(session)
+      end
+    end
+  end
 end

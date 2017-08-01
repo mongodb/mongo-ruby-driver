@@ -22,6 +22,20 @@ describe Mongo::Session, if: sessions_enabled? do
     { }
   end
 
+  describe '#client' do
+
+    it 'returns the client through which the session was created' do
+      expect(session.client).to be(client)
+    end
+  end
+
+  describe '#options' do
+
+    it 'returns the options' do
+      expect(session.options).to be(options)
+    end
+  end
+
   describe '#initialize' do
 
     context 'when options are provided' do
@@ -194,7 +208,7 @@ describe Mongo::Session, if: sessions_enabled? do
       end
 
       it 'records the operationTime' do
-        expect(session.instance_variable_get(:@operation_time)).to be >(operation_time_before)
+        expect(session.instance_variable_get(:@operation_time)).to be_a(BSON::Timestamp)
       end
     end
 

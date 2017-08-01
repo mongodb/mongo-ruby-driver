@@ -17,8 +17,6 @@ module Mongo
   # A logical session representing a set of sequential operations executed
   #   by an application that are related in some way.
   #
-  # @api private
-  #
   # @since 2.5.0
   class Session
     extend Forwardable
@@ -28,7 +26,7 @@ module Mongo
     # @since 2.5.0
     attr_reader :client
 
-    # Get the options.
+    # Get the options for this session.
     #
     # @since 2.5.0
     attr_reader :options
@@ -45,9 +43,27 @@ module Mongo
     def initialize(client, options = {})
       @client = client
       @options = options
-      @server_session = ServerSession.new(@client)
+      @server_session = ServerSession.new(client)
       @operation_time = 0
       @ended = false
+      ObjectSpace.define_finalizer(self, self.class.finalize(@server_session))
+    end
+
+    # Finalize the session for garbage collection. Sends an endSessions command.
+    #
+    # @example Finalize the session.
+    #   Session.finalize(server_session)
+    #
+    # @param [ Mongo::Session::ServerSession ] server_session The associated server
+    #   session object.
+    #
+    # @return [ Proc ] The Finalizer.
+    #
+    # @since 2.5.0
+    def self.finalize(server_session)
+      proc do
+        begin; server_session.send(:end_sessions); rescue; end
+      end
     end
 
     # End this session.
@@ -244,8 +260,9 @@ module Mongo
       private
 
       def start(client)
-        server = ServerSelector.get(mode: :primary_preferred).select_server(client.cluster)
+        server_selector = ServerSelector.get(mode: :primary_preferred)
         response = read_with_one_retry do
+          server = server_selector.select_server(client.cluster)
           Operation::Commands::Command.new(:selector => START_SESSION,
                                            :db_name => :admin
                                           ).execute(server).first

@@ -3683,4 +3683,26 @@ describe Mongo::Collection do
       end
     end
   end
+
+  describe '#session' do
+
+    context 'when the collection is created via a session' do
+
+      let(:session) do
+        authorized_client.start_session
+      end
+
+      let(:collection) do
+        session.database(TEST_DB)[TEST_COLL]
+      end
+
+      after do
+        session.end_session
+      end
+
+      it 'provides an accessor for the session' do
+        expect(collection.session).to be(session)
+      end
+    end
+  end
 end
