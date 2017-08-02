@@ -452,8 +452,12 @@ describe Mongo::Session, if: sessions_enabled? do
 
   context 'when the session uses causally consistent reads' do
 
-    let(:session) do
-      authorized_client.start_session(options)
+    let!(:session) do
+      client.start_session(options)
+    end
+
+    let(:client) do
+      authorized_client
     end
 
     let(:options) do
@@ -468,25 +472,21 @@ describe Mongo::Session, if: sessions_enabled? do
       { }
     end
 
-    let(:client) do
-      collection.client
-    end
-
-    let(:subscriber) do
-      client.instance_variable_get(:@monitoring).subscribers[Mongo::Monitoring::COMMAND][-1]
+    let!(:subscriber) do
+      session.client.instance_variable_get(:@monitoring).subscribers[Mongo::Monitoring::COMMAND][-1]
     end
 
     around do |example|
-      with_command_subscriber(client) do
+      with_command_subscriber(session.client) do
         example.run
       end
     end
 
-    let(:read_concern_document) do
-      subscriber.instance_variable_get(:@started_events)['find'].command['readConcern']
-    end
-
     context 'when the first request is sent' do
+
+      let(:first_request_event) do
+        subscriber.instance_variable_get(:@started_events)['find']
+      end
 
       before do
         collection.find({}, limit: 1).first
@@ -499,102 +499,124 @@ describe Mongo::Session, if: sessions_enabled? do
         end
 
         it 'does not add the afterClusterTime field' do
-          expect(read_concern_document['afterClusterTime']).to be_nil
+          expect(first_request_event.command['readConcern']['afterClusterTime']).to be_nil
         end
       end
 
       context 'when the collection does not have a read concern set' do
 
-        it 'does not add the afterClusterTime field' do
-          expect(read_concern_document).to be_nil
+        it 'does not include a readConcern value' do
+          expect(first_request_event.command['readConcern']).to be_nil
         end
       end
     end
 
     context 'when at least one read request has been sent already', if: test_causally_consistent? do
 
-      let(:operation_time) do
-        subscriber.instance_variable_get(:@succeeded_events)['find'].reply['operationTime']
-      end
-
-      let(:failed_operation_time) do
-        subscriber.instance_variable_get(:@failed_events)['find'].reply['operationTime']
-      end
-
       context 'when the first request is an OperationFailure' do
 
-        before do
+        let!(:first_request_event) do
           begin; collection.find({ '$a' => 1 }, limit: 1).first; rescue; end
-          collection.find({ 'a' => 1 }, limit: 1).first
+          subscriber.instance_variable_get(:@started_events)['find']
+        end
+
+        let(:failed_operation_time) do
+          subscriber.instance_variable_get(:@failed_events)['find'].reply['operationTime']
+        end
+
+        let(:second_request_event) do
+          collection.count
+          subscriber.instance_variable_get(:@started_events)['count']
+        end
+
+        it 'uses the operation time from the failed event in the subsequent request' do
+          expect(failed_operation_time).to eq(second_request_event.command['readConcern']['afterClusterTime'])
         end
 
         it 'updates the operation time value on the session' do
-          expect(failed_operation_time).to eq(read_concern_document['afterClusterTime'])
+          expect(session.instance_variable_get(:@operation_time)).to eq(failed_operation_time)
         end
       end
 
       context 'when the first request is successful' do
 
-        before do
-          collection.find({ 'a' => 1 }, limit: 1).first
+        let!(:first_request_event) do
+          collection.find({ }, limit: 1).first
+          subscriber.instance_variable_get(:@started_events)['find']
         end
 
-        let(:read_concern_document) do
-          subscriber.instance_variable_get(:@started_events)['aggregate'].command['readConcern']
+        let(:second_request_event) do
+          collection.count
+          subscriber.instance_variable_get(:@started_events)['count']
+        end
+
+        let(:success_operation_time) do
+          subscriber.instance_variable_get(:@succeeded_events)['find'].reply['operationTime']
+        end
+
+        let(:operation_time) do
+          first_request_event['find'].reply['operationTime']
         end
 
         it 'updates the operation time value on the session' do
-          collection.count
-          expect(session.instance_variable_get(:@operation_time)).to eq(operation_time)
+          expect(session.instance_variable_get(:@operation_time)).to eq(success_operation_time)
         end
 
         it 'adds the operationTime in the read concern document of the subsequent request' do
-          collection.aggregate([]).first
-          expect(operation_time).to eq(read_concern_document['afterClusterTime'])
+          expect(second_request_event.command['readConcern']['afterClusterTime']).to eq(success_operation_time)
         end
       end
     end
 
     context 'when at least one write request has been sent already', if: test_causally_consistent? do
 
-      let(:operation_time) do
-        subscriber.instance_variable_get(:@succeeded_events)['update'].reply['operationTime']
-      end
-
-      let(:failed_operation_time) do
-        subscriber.instance_variable_get(:@failed_events)['update'].reply['operationTime']
-      end
-
       context 'when the first request is an OperationFailure' do
 
-        before do
-          begin; collection.update_one({ '$_id' => 1 }, {}); rescue; end
-          collection.find({ 'a' => 1 }, limit: 1).first
+        let!(:first_request_event) do
+          begin; collection.update_one({ '$a' => 1 }, {}).first; rescue; end
+          subscriber.instance_variable_get(:@started_events)['update']
+        end
+
+        let(:failed_operation_time) do
+          subscriber.instance_variable_get(:@failed_events)['update'].reply['operationTime']
+        end
+
+        let(:second_request_event) do
+          collection.count
+          subscriber.instance_variable_get(:@started_events)['count']
         end
 
         it 'updates the operation time value on the session' do
-          expect(failed_operation_time).to eq(read_concern_document['afterClusterTime'])
+          expect(session.instance_variable_get(:@operation_time)).to eq(failed_operation_time)
+        end
+
+        it 'uses the operation time from the failed event in the subsequent request' do
+          expect(second_request_event.command['readConcern']['afterClusterTime']).to eq(failed_operation_time)
         end
       end
 
       context 'when the first request is successful' do
 
-        before do
-          collection.update_one({ '_id' => 1 }, {})
+        let!(:first_request_event) do
+          begin; collection.update_one({ 'a' => 1 }, {}).first; rescue; end
+          subscriber.instance_variable_get(:@started_events)['update']
         end
 
-        let(:read_concern_document) do
-          subscriber.instance_variable_get(:@started_events)['aggregate'].command['readConcern']
+        let(:success_operation_time) do
+          subscriber.instance_variable_get(:@succeeded_events)['update'].reply['operationTime']
+        end
+
+        let(:second_request_event) do
+          collection.count
+          subscriber.instance_variable_get(:@started_events)['count']
         end
 
         it 'updates the operation time value on the session' do
-          collection.count
-          expect(session.instance_variable_get(:@operation_time)).to eq(operation_time)
+          expect(session.instance_variable_get(:@operation_time)).to eq(success_operation_time)
         end
 
         it 'adds the operationTime in the read concern document of the subsequent request' do
-          collection.aggregate([]).first
-          expect(operation_time).to eq(read_concern_document['afterClusterTime'])
+          expect(second_request_event.command['readConcern']['afterClusterTime']).to eq(success_operation_time)
         end
       end
     end
