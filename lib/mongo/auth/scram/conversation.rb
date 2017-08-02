@@ -255,7 +255,7 @@ module Mongo
         # @since 2.0.0
         def client_key
           @client_key ||= hmac(salted_password, CLIENT_KEY)
-          user.send(:client_key=, @client_key) unless user.send(:client_key)
+          user.instance_variable_set(:@client_key, @client_key) unless user.send(:client_key)
           @client_key
         end
 
