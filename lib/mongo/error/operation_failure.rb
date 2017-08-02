@@ -87,8 +87,8 @@ module Mongo
       # param [ Operation::Result ] result The result object.
       #
       # @since 2.5.0
-      def initialize(message, result = nil)
-        @operation_time = result.operation_time
+      def initialize(message = nil, result = nil)
+        @operation_time = result.operation_time if result
         super(message)
       end
     end

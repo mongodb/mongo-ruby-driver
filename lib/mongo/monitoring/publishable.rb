@@ -95,7 +95,7 @@ module Mongo
         )
       end
 
-      def command_failed(address, operation_id, payload, message, duration, document)
+      def command_failed(address, operation_id, payload, message, duration, document = nil)
         monitoring.failed(
           Monitoring::COMMAND,
           Event::CommandFailed.generate(address, operation_id, payload, message, duration, document)
@@ -107,7 +107,7 @@ module Mongo
       end
 
       def error?(document)
-        document && (document['ok'] == 0 || document.key?('$err') || document.key?('writeErrors'))
+        document && (document['ok'] == 0 || document.key?('$err'))
       end
 
       def monitoring?
