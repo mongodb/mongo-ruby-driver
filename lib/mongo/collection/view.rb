@@ -184,7 +184,6 @@ module Mongo
       def new(options)
         View.new(collection, filter, options)
       end
-     end
 
       def apply_collation!(doc, server, opts = {})
         if coll = doc[:collation] || opts[:collation] || opts['collation'] || collation

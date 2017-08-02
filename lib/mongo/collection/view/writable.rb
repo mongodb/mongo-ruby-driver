@@ -255,7 +255,7 @@ module Mongo
         end
 
         def apply_array_filters!(doc, server, opts = {})
-          if filters = doc[:array_filters] || opts[:array_filters] || opts['array_filters']
+          if filters = opts[:array_filters] || opts[:arrayFilters] || opts['array_filters'] || opts['arrayFilters']
             validate_array_filters!(server, filters)
             doc[:arrayFilters] = filters
           end
