@@ -134,9 +134,18 @@ def single_seed?
 end
 
 # For instances where behaviour is different on different versions, we need to
+# determine in the specs if we are 3.6 or higher and not connected to a standalone.
+#
+# @since 2.5.0
+def test_causally_consistent?
+  $mongo_client ||= initialize_scanned_client!
+  $test_causally_consistent ||= !$mongo_client.cluster.single? && sessions_enabled?
+end
+
+# For instances where behaviour is different on different versions, we need to
 # determine in the specs if we are 3.6 or higher.
 #
-# @since 2.4.0
+# @since 2.5.0
 def sessions_enabled?
   $mongo_client ||= initialize_scanned_client!
   $collation_enabled ||= $mongo_client.cluster.next_primary.features.sessions_enabled?
@@ -228,3 +237,48 @@ end
 
 # require all shared examples
 Dir['./spec/support/shared/*.rb'].sort.each { |file| require file }
+
+# The test subscriber to track the events.
+#
+# @since 2.1.0
+class TestSubscriber
+
+  def started(event)
+    command_started_event[event.command_name] = event
+  end
+
+  def succeeded(event)
+    command_succeeded_event[event.command_name] = event
+  end
+
+  def failed(event)
+    command_failed_event[event.command_name] = event
+  end
+
+  private
+
+  def command_started_event
+    @started_events ||= BSON::Document.new
+  end
+
+  def command_succeeded_event
+    @succeeded_events ||= BSON::Document.new
+  end
+
+  def command_failed_event
+    @failed_events ||= BSON::Document.new
+  end
+end
+
+# A method executed 'around' tests that adds a TestSubscriber to a client,
+#   then removes it after the test.
+#
+# @param [ Mongo::Client ] client The client to add the subscriber to.
+#
+# @since 2.5.0
+def with_command_subscriber(client)
+  subscriber = TestSubscriber.new
+  client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
+  yield
+  client.instance_variable_get(:@monitoring).subscribers[Mongo::Monitoring::COMMAND].delete(subscriber)
+end

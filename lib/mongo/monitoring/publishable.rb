@@ -76,7 +76,7 @@ module Mongo
         document = result ? (result.documents || []).first : nil
         if error?(document)
           parser = Error::Parser.new(document)
-          command_failed(address, operation_id, payload, parser.message, duration)
+          command_failed(address, operation_id, payload, parser.message, duration, document)
         else
           command_succeeded(result, address, operation_id, payload, duration)
         end
@@ -95,10 +95,10 @@ module Mongo
         )
       end
 
-      def command_failed(address, operation_id, payload, message, duration)
+      def command_failed(address, operation_id, payload, message, duration, document)
         monitoring.failed(
           Monitoring::COMMAND,
-          Event::CommandFailed.generate(address, operation_id, payload, message, duration)
+          Event::CommandFailed.generate(address, operation_id, payload, message, duration, document)
         )
       end
 
@@ -107,7 +107,7 @@ module Mongo
       end
 
       def error?(document)
-        document && (document['ok'] == 0 || document.key?('$err'))
+        document && (document['ok'] == 0 || document.key?('$err') || document.key?('writeErrors'))
       end
 
       def monitoring?

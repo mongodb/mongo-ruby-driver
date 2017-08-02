@@ -137,8 +137,8 @@ module Mongo
     # @return [ Hash ] The read concern for this session.
     #
     # @since 2.5.0
-    def get_read_concern(collection, server = nil)
-      if !server.standalone? && causally_consistent_reads? && @operation_time
+    def get_read_concern(collection)
+      if !client.cluster.single? && causally_consistent_reads? && @operation_time
         (collection.options[:read_concern] || {}).merge(AFTER_CLUSTER_TIME => @operation_time)
       else
         collection.options[:read_concern]
@@ -242,12 +242,6 @@ module Mongo
       # @since 2.5.0
       TIMEOUT_MINUTES = 'timeoutMinutes'.freeze
 
-      # The field in the startSession response from the server containing
-      #   the last time the server session was used.
-      #
-      # @since 2.5.0
-      LAST_USE = 'lastUse'.freeze
-
       # Initialize a ServerSession.
       #
       # @example
@@ -270,9 +264,8 @@ module Mongo
                                            :db_name => :admin
                                           ).execute(server).first
         end
-        @session_id = response[SESSION_ID]['signedLsid']['lsid']
+        @session_id = response[SESSION_ID]
         @timeout_minutes = response[TIMEOUT_MINUTES]
-        @last_use = response[SESSION_ID][LAST_USE]
       end
 
       def end_sessions(client, ids = nil)

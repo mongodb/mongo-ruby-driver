@@ -102,8 +102,8 @@ module Mongo
     # @return [ Hash ] The read concern.
     #
     # @since 2.2.0
-    def read_concern(server = nil)
-      session ? session.get_read_concern(self, server) : options[:read_concern]
+    def read_concern
+      session ? session.get_read_concern(self) : options[:read_concern]
     end
 
     # Get the server selector on this collection.
