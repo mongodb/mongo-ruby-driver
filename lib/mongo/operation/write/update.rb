@@ -61,14 +61,11 @@ module Mongo
         def write_command_op
           s = spec.merge(:updates => [ update ])
           s.delete(:update)
-
-          puts s
-
           Command::Update.new(s)
         end
 
         def has_array_filters?
-          update[:array_filters] || update[Operation::ARRAY_FILTERS]
+          update[:array_filters] || update[:arrayFilters] || update['arrayFilters'] || update update[Operation::ARRAY_FILTERS]
         end
 
         def has_collation?

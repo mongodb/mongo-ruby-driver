@@ -184,24 +184,12 @@ module Mongo
       def new(options)
         View.new(collection, filter, options)
       end
-
-      def apply_array_filters!(doc, server, opts = {})
-        if filters = doc[:array_filters] || opts[:array_filters] || opts['array_filters']
-          validate_array_filters!(server, filters)
-          doc[:arrayFilters] = filters
-        end
-      end
+     end
 
       def apply_collation!(doc, server, opts = {})
         if coll = doc[:collation] || opts[:collation] || opts['collation'] || collation
           validate_collation!(server, coll)
           doc[:collation] = coll
-        end
-      end
-
-      def validate_array_filters!(server, filters)
-        if filters && !server.features.array_filters_enabled?
-          raise Error::UnsupportedArrayFilters.new
         end
       end
 

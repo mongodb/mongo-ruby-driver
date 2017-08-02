@@ -16,7 +16,7 @@ module Mongo
   class Error
 
     # Raised if the array filters option is specified for an operation but the server
-    # selected does not support collations.
+    # selected does not support array filters.
     #
     # @since 2.5.0
     class UnsupportedArrayFilters < Error
@@ -27,7 +27,7 @@ module Mongo
       #
       # @since 2.5.0
       DEFAULT_MESSAGE = "The array_filters option is not a supported feature of the server handling this operation. " +
-          "Operation results may be unexpected."
+          "Operation results may be unexpected.".freeze
 
       # The error message describing that array filters cannot be used when write concern is unacknowledged.
       #
@@ -35,12 +35,12 @@ module Mongo
       #
       # @since 2.5.0
       UNACKNOWLEDGED_WRITES_MESSAGE = "The array_filters option cannot be specified when using unacknowledged writes. " +
-        "Either remove the array_filters option or use acknowledged writes (w >= 1)."
+        "Either remove the array_filters option or use acknowledged writes (w >= 1).".freeze
 
       # Create the new exception.
       #
       # @example Create the new exception.
-      #   Mongo::Error::UnsupportedCollation.new
+      #   Mongo::Error::UnsupportedArrayFilters.new
       #
       # @since 2.5.0
       def initialize(message = nil)

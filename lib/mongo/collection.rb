@@ -586,9 +586,9 @@ module Mongo
     # @option options [ true, false ] :upsert Whether to upsert if the document doesn't exist.
     # @option options [ true, false ] :bypass_document_validation Whether or
     #   not to skip document level validation.
-    # @option options [ Hash ] :write_concern he write concern options.
+    # @option options [ Hash ] :write_concern The write concern options.
     #   Defaults to the collection's write concern.
-    # @option options [ Hash ] :collation The ollation to use.
+    # @option options [ Hash ] :collation The collation to use.
     # @option options [ Array ] :array_filters A set of filters specifying to which array elements
     #   an update should apply.
     #
