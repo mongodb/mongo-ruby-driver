@@ -158,6 +158,7 @@ module Mongo
       @app_metadata ||= AppMetadata.new(self)
       @update_lock = Mutex.new
       @pool_lock = Mutex.new
+      @cluster_time_lock = Mutex.new
       @topology = Topology.initial(seeds, monitoring, options)
       @cluster_time = nil
 
@@ -453,12 +454,8 @@ module Mongo
     # @since 2.5.0
     def update_cluster_time(result)
       if cl_time = result.cluster_time
-        if @cluster_time
-          cluster_time_copy = @cluster_time.dup
-          max = [cl_time, cluster_time_copy].max
-          @cluster_time = max if cluster_time_copy == @cluster_time
-        else
-          @cluster_time = cl_time
+        @cluster_time_lock.synchronize do
+          @cluster_time = [cl_time, @cluster_time].max
         end
       end
       result
