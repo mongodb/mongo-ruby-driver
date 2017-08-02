@@ -110,6 +110,13 @@ module Mongo
         # @since 2.0.0
         def continue(reply)
           validate_first_message!(reply)
+
+          # The salted password needs to be calculated now; otherwise, if the
+          # client key is cached from a previous authentication, the salt in the
+          # reply will no longer be available for when the salted password is
+          # needed to calculate the server key.
+          salted_password
+
           Protocol::Query.new(
             user.auth_source,
             Database::COMMAND,
@@ -181,6 +188,7 @@ module Mongo
         def initialize(user)
           @user = user
           @nonce = SecureRandom.base64
+          @client_key = user.send(:client_key)
         end
 
         private
@@ -247,6 +255,8 @@ module Mongo
         # @since 2.0.0
         def client_key
           @client_key ||= hmac(salted_password, CLIENT_KEY)
+          user.send(:client_key=, @client_key) unless user.send(:client_key)
+          @client_key
         end
 
         # Client proof algorithm implementation.
