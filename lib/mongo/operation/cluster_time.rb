@@ -28,7 +28,7 @@ module Mongo
       private
 
       def update_selector_with_cluster_time(sel, server)
-        if server.mongos? && server.cluster_time
+        if server.mongos? && server.features.sessions_enabled? && server.cluster_time
           sel[CLUSTER_TIME] = server.cluster_time
         end
         sel

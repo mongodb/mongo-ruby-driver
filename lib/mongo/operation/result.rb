@@ -286,7 +286,9 @@ module Mongo
       #
       # @since 2.5.0
       def operation_time
-        reply.documents[0][OPERATION_TIME] if replies.first
+        if replies.first && reply.documents[0]
+          reply.documents[0][OPERATION_TIME]
+        end
       end
 
       # Get the number of cluster time reported in the server response.

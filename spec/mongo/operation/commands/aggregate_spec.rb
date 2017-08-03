@@ -70,7 +70,7 @@ describe Mongo::Operation::Commands::Aggregate do
     end
   end
 
-  context 'when the server is a mongos' do
+  context 'when the server is a mongos', if: sessions_enabled? do
 
     let(:cluster) do
       authorized_primary.cluster.dup

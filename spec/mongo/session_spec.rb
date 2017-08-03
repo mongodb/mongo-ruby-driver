@@ -200,7 +200,7 @@ describe Mongo::Session, if: sessions_enabled? do
 
   describe '#with_recorded_operation_time' do
 
-    context 'when the session is still active', if: replica_set? do
+    context 'when the session is still active', if: test_causally_consistent? do
 
       let!(:operation_time_before) do
         session.database(TEST_DB)[TEST_COLL].find({}, limit: 1).first

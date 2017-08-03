@@ -57,6 +57,12 @@ module Mongo
     # @return [ Object ] The cluster topology.
     attr_reader :topology
 
+    # @return [ BSON::Timestamp ] The cluster time. Used for "gossiping" cluster time in
+    #  server versions >= 3.6
+    #
+    # @since 2.5.0
+    attr_reader :cluster_time
+
     # @return [ Mongo::Cluster::AppMetadata ] The application metadata, used for connection
     #   handshakes.
     #

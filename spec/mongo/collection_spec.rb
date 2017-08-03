@@ -925,6 +925,48 @@ describe Mongo::Collection do
       end
     end
 
+    context 'when causally consistent sessions are used with a standalone', if: sessions_enabled? do
+
+      let(:session) do
+        authorized_client.start_session(causally_consistent_reads: true)
+      end
+
+      after do
+        session.end_session
+      end
+
+      let(:database) do
+        session.database(TEST_DB)
+      end
+
+      let(:collection) do
+        described_class.new(database, TEST_COLL)
+      end
+
+      let(:subscriber) do
+        session.client.instance_variable_get(:@monitoring).subscribers[Mongo::Monitoring::COMMAND][-1]
+      end
+
+      around do |example|
+        with_command_subscriber(session.client) do
+          example.run
+        end
+      end
+
+      before do
+        collection.find({}, limit: 1).first
+        collection.count
+      end
+
+      let(:command) do
+        subscriber.instance_variable_get(:@started_events)['count'].command
+      end
+
+      it 'includes the afterClusterTime for subsequent operations' do
+        expect(command['$clusterTime']).to be_nil
+      end
+    end
+
     context 'when provided a filter' do
 
       let(:view) do
@@ -1320,6 +1362,26 @@ describe Mongo::Collection do
 
       it 'includes the afterClusterTime for subsequent operations' do
         expect(collection.read_concern(server)['afterClusterTime']).to be_a(BSON::Timestamp)
+      end
+
+      context 'when unacknowledged writes are used' do
+
+        let(:collection) do
+          described_class.new(database, TEST_COLL, write: { w: 0 })
+        end
+
+        let!(:before_operation_time) do
+          session.instance_variable_get(:@operation_time)
+        end
+
+        let(:after_operation_time) do
+          session.instance_variable_get(:@operation_time)
+        end
+
+        it 'does not update the operation time' do
+          binding.pry
+          expect(after_operation_time).to eq(before_operation_time)
+        end
       end
     end
   end

@@ -38,8 +38,7 @@ module Mongo
     def_delegators :@collection,
                    :database,
                    :cluster,
-                   :next_primary,
-                   :with_session
+                   :next_primary
 
     def_delegators :database, :client
 
@@ -132,6 +131,10 @@ module Mongo
     end
 
     private
+
+    def with_session(&block)
+      collection.send(:with_session, &block)
+    end
 
     def base_spec(operation_id)
       {

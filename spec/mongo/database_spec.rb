@@ -562,7 +562,7 @@ describe Mongo::Database do
 
   describe '#session' do
 
-    context 'when the database is created via a session' do
+    context 'when the database is created via a session', if: sessions_enabled? do
 
       let(:session) do
         authorized_client.start_session
