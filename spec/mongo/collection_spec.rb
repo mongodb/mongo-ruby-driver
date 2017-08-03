@@ -427,7 +427,7 @@ describe Mongo::Collection do
     context 'when there is a session associated with the collection', if: sessions_enabled? do
 
       let(:collection) do
-        client.start_session(options).database(TEST_DB)[TEST_COLL, coll_options]
+        authorized_client.start_session(options).database(TEST_DB)[TEST_COLL, coll_options]
       end
 
       context 'when the collection has a write concern' do
@@ -462,7 +462,7 @@ describe Mongo::Collection do
       context 'when the database has a write concern' do
 
         let(:client) do
-          Mongo::Client.new([default_address.host], write: { w: 2 })
+          authorized_client.with(write: { w: 2 })
         end
 
         let(:collection) do
@@ -925,7 +925,7 @@ describe Mongo::Collection do
       end
     end
 
-    context 'when causally consistent sessions are used with a standalone', if: sessions_enabled? do
+    context 'when causally consistent sessions are used with a standalone', if: (standalone? && sessions_enabled?) do
 
       let(:session) do
         authorized_client.start_session(causally_consistent_reads: true)

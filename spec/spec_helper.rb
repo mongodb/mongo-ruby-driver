@@ -148,7 +148,7 @@ end
 # @since 2.5.0
 def sessions_enabled?
   $mongo_client ||= initialize_scanned_client!
-  $collation_enabled ||= $mongo_client.cluster.next_primary.features.sessions_enabled?
+  $sessions_enabled ||= $mongo_client.cluster.next_primary.features.sessions_enabled?
 end
 
 # For instances where behaviour is different on different versions, we need to

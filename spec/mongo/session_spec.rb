@@ -232,6 +232,10 @@ describe Mongo::Session, if: sessions_enabled? do
 
   describe '#database_names' do
 
+    let(:client) do
+      root_authorized_client
+    end
+
     context 'when the session is still active' do
 
       it 'returns a list of database names' do
@@ -254,6 +258,10 @@ describe Mongo::Session, if: sessions_enabled? do
   end
 
   describe '#list_databases' do
+
+    let(:client) do
+      root_authorized_client
+    end
 
     context 'when the session is still active' do
 
