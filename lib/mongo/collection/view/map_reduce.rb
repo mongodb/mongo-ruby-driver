@@ -186,16 +186,16 @@ module Mongo
           out.nil? || out == { inline: 1 } || out == { INLINE => 1 }
         end
 
-        def map_reduce_spec
-          Builder::MapReduce.new(map, reduce, view, options).specification
+        def map_reduce_spec(server)
+          Builder::MapReduce.new(map, reduce, view, options.merge(server: server)).specification
         end
 
         def new(options)
           MapReduce.new(view, map, reduce, options)
         end
 
-        def initial_query_op
-          Operation::Commands::MapReduce.new(map_reduce_spec)
+        def initial_query_op(server)
+          Operation::Commands::MapReduce.new(map_reduce_spec(server))
         end
 
         def valid_server?(server)
@@ -212,7 +212,7 @@ module Mongo
             server = cluster.next_primary(false)
           end
           validate_collation!(server)
-          result = with_session { initial_query_op.execute(server) }
+          result = with_session { initial_query_op(server).execute(server) }
           inline? ? result : send_fetch_query(server)
         end
 

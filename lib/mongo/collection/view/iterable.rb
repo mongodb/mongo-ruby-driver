@@ -62,17 +62,18 @@ module Mongo
 
         def initial_query_op(server)
           if server.features.find_command_enabled?
-            initial_command_op
+            initial_command_op(server)
           else
             Operation::Read::Query.new(Builder::OpQuery.new(self).specification)
           end
         end
 
-        def initial_command_op
+        def initial_command_op(server)
+          builder = Builder::FindCommand.new(self, { server: server })
           if explained?
-            Operation::Commands::Command.new(Builder::FindCommand.new(self).explain_specification)
+            Operation::Commands::Command.new(builder.explain_specification)
           else
-            Operation::Commands::Find.new(Builder::FindCommand.new(self).specification)
+            Operation::Commands::Find.new(builder.specification)
           end
         end
 

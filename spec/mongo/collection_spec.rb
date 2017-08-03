@@ -894,7 +894,7 @@ describe Mongo::Collection do
 
   describe '#find' do
 
-    context 'when causally consistent sessions are used' do
+    context 'when causally consistent sessions are used not with a standalone' do
 
       let(:session) do
         authorized_client.start_session(causally_consistent_reads: true)
@@ -916,8 +916,12 @@ describe Mongo::Collection do
         collection.find(name: 1, limit: 1).first
       end
 
+      let(:server) do
+        double('server', :standalone? => false)
+      end
+
       it 'includes the afterClusterTime for subsequent operations' do
-        expect(collection.read_concern['afterClusterTime']).to be_a(BSON::Timestamp)
+        expect(collection.read_concern(server)['afterClusterTime']).to be_a(BSON::Timestamp)
       end
     end
 
@@ -1292,7 +1296,7 @@ describe Mongo::Collection do
       end
     end
 
-    context 'when causally consistent sessions are used' do
+    context 'when causally consistent sessions are used not with a standalone' do
 
       let(:session) do
         authorized_client.start_session(causally_consistent_reads: true)
@@ -1314,8 +1318,12 @@ describe Mongo::Collection do
         collection.insert_many([ { a: 1 }])
       end
 
+      let(:server) do
+        double('server', :standalone? => false)
+      end
+
       it 'includes the afterClusterTime for subsequent operations' do
-        expect(collection.read_concern['afterClusterTime']).to be_a(BSON::Timestamp)
+        expect(collection.read_concern(server)['afterClusterTime']).to be_a(BSON::Timestamp)
       end
     end
   end
@@ -1447,7 +1455,7 @@ describe Mongo::Collection do
       end
     end
 
-    context 'when causally consistent sessions are used' do
+    context 'when causally consistent sessions are used not with a standalone' do
 
       let(:session) do
         authorized_client.start_session(causally_consistent_reads: true)
@@ -1469,8 +1477,12 @@ describe Mongo::Collection do
         collection.insert_one(a: 1)
       end
 
+      let(:server) do
+        double('server', :standalone? => false)
+      end
+
       it 'includes the afterClusterTime for subsequent operations' do
-        expect(collection.read_concern['afterClusterTime']).to be_a(BSON::Timestamp)
+        expect(collection.read_concern(server)['afterClusterTime']).to be_a(BSON::Timestamp)
       end
     end
   end
@@ -1596,7 +1608,7 @@ describe Mongo::Collection do
       end
     end
 
-    context 'when causally consistent sessions are used' do
+    context 'when causally consistent sessions are used not with a standalone' do
 
       let(:session) do
         authorized_client.start_session(causally_consistent_reads: true)
@@ -1618,8 +1630,12 @@ describe Mongo::Collection do
         collection.aggregate([]).first
       end
 
+      let(:server) do
+        double('server', :standalone? => false)
+      end
+
       it 'includes the afterClusterTime for subsequent operations' do
-        expect(collection.read_concern['afterClusterTime']).to be_a(BSON::Timestamp)
+        expect(collection.read_concern(server)['afterClusterTime']).to be_a(BSON::Timestamp)
       end
     end
   end
@@ -1693,7 +1709,7 @@ describe Mongo::Collection do
       end
     end
 
-    context 'when causally consistent sessions are used' do
+    context 'when causally consistent sessions are used not with a standalone' do
 
       let(:session) do
         authorized_client.start_session(causally_consistent_reads: true)
@@ -1715,8 +1731,12 @@ describe Mongo::Collection do
         collection.count
       end
 
+      let(:server) do
+        double('server', :standalone? => false)
+      end
+
       it 'includes the afterClusterTime for subsequent operations' do
-        expect(collection.read_concern['afterClusterTime']).to be_a(BSON::Timestamp)
+        expect(collection.read_concern(server)['afterClusterTime']).to be_a(BSON::Timestamp)
       end
     end
   end
@@ -1810,7 +1830,7 @@ describe Mongo::Collection do
       end
     end
 
-    context 'when causally consistent sessions are used' do
+    context 'when causally consistent sessions are used not with a standalone' do
 
       let(:session) do
         authorized_client.start_session(causally_consistent_reads: true)
@@ -1832,8 +1852,12 @@ describe Mongo::Collection do
         collection.distinct(:field)
       end
 
+      let(:server) do
+        double('server', :standalone? => false)
+      end
+
       it 'includes the afterClusterTime for subsequent operations' do
-        expect(collection.read_concern['afterClusterTime']).to be_a(BSON::Timestamp)
+        expect(collection.read_concern(server)['afterClusterTime']).to be_a(BSON::Timestamp)
       end
     end
   end
@@ -1990,7 +2014,7 @@ describe Mongo::Collection do
       end
     end
 
-    context 'when causally consistent sessions are used' do
+    context 'when causally consistent sessions are used not with a standalone' do
 
       let(:session) do
         authorized_client.start_session(causally_consistent_reads: true)
@@ -2012,8 +2036,12 @@ describe Mongo::Collection do
         collection.delete_one({ a: 1 })
       end
 
+      let(:server) do
+        double('server', :standalone? => false)
+      end
+
       it 'includes the afterClusterTime for subsequent operations' do
-        expect(collection.read_concern['afterClusterTime']).to be_a(BSON::Timestamp)
+        expect(collection.read_concern(server)['afterClusterTime']).to be_a(BSON::Timestamp)
       end
     end
   end
@@ -2156,7 +2184,7 @@ describe Mongo::Collection do
       end
     end
 
-    context 'when causally consistent sessions are used' do
+    context 'when causally consistent sessions are used not with a standalone' do
 
       let(:session) do
         authorized_client.start_session(causally_consistent_reads: true)
@@ -2178,8 +2206,12 @@ describe Mongo::Collection do
         collection.delete_many({ a: 1 })
       end
 
+      let(:server) do
+        double('server', :standalone? => false)
+      end
+
       it 'includes the afterClusterTime for subsequent operations' do
-        expect(collection.read_concern['afterClusterTime']).to be_a(BSON::Timestamp)
+        expect(collection.read_concern(server)['afterClusterTime']).to be_a(BSON::Timestamp)
       end
     end
   end
@@ -2310,7 +2342,7 @@ describe Mongo::Collection do
       end
     end
 
-    context 'when causally consistent sessions are used' do
+    context 'when causally consistent sessions are used not with a standalone' do
 
       let(:session) do
         authorized_client.start_session(causally_consistent_reads: true)
@@ -2332,8 +2364,12 @@ describe Mongo::Collection do
         collection.parallel_scan(2)
       end
 
+      let(:server) do
+        double('server', :standalone? => false)
+      end
+
       it 'includes the afterClusterTime for subsequent operations' do
-        expect(collection.read_concern['afterClusterTime']).to be_a(BSON::Timestamp)
+        expect(collection.read_concern(server)['afterClusterTime']).to be_a(BSON::Timestamp)
       end
     end
   end
@@ -2603,7 +2639,7 @@ describe Mongo::Collection do
       end
     end
 
-    context 'when causally consistent sessions are used' do
+    context 'when causally consistent sessions are used not with a standalone' do
 
       let(:session) do
         authorized_client.start_session(causally_consistent_reads: true)
@@ -2625,8 +2661,12 @@ describe Mongo::Collection do
         collection.replace_one({}, {})
       end
 
+      let(:server) do
+        double('server', :standalone? => false)
+      end
+
       it 'includes the afterClusterTime for subsequent operations' do
-        expect(collection.read_concern['afterClusterTime']).to be_a(BSON::Timestamp)
+        expect(collection.read_concern(server)['afterClusterTime']).to be_a(BSON::Timestamp)
       end
     end
   end
@@ -2902,7 +2942,7 @@ describe Mongo::Collection do
       end
     end
 
-    context 'when causally consistent sessions are used' do
+    context 'when causally consistent sessions are used not with a standalone' do
 
       let(:session) do
         authorized_client.start_session(causally_consistent_reads: true)
@@ -2924,8 +2964,12 @@ describe Mongo::Collection do
         collection.update_many({}, { '$set' => { a: 1 } })
       end
 
+      let(:server) do
+        double('server', :standalone? => false)
+      end
+
       it 'includes the afterClusterTime for subsequent operations' do
-        expect(collection.read_concern['afterClusterTime']).to be_a(BSON::Timestamp)
+        expect(collection.read_concern(server)['afterClusterTime']).to be_a(BSON::Timestamp)
       end
     end
   end
@@ -3199,7 +3243,7 @@ describe Mongo::Collection do
       end
     end
 
-    context 'when causally consistent sessions are used' do
+    context 'when causally consistent sessions are used not with a standalone' do
 
       let(:session) do
         authorized_client.start_session(causally_consistent_reads: true)
@@ -3221,8 +3265,12 @@ describe Mongo::Collection do
         collection.update_one({}, { '$set' => { a: 1 } })
       end
 
+      let(:server) do
+        double('server', :standalone? => false)
+      end
+
       it 'includes the afterClusterTime for subsequent operations' do
-        expect(collection.read_concern['afterClusterTime']).to be_a(BSON::Timestamp)
+        expect(collection.read_concern(server)['afterClusterTime']).to be_a(BSON::Timestamp)
       end
     end
   end
@@ -3415,7 +3463,7 @@ describe Mongo::Collection do
       end
     end
 
-    context 'when causally consistent sessions are used' do
+    context 'when causally consistent sessions are used not with a standalone' do
 
       let(:session) do
         authorized_client.start_session(causally_consistent_reads: true)
@@ -3437,8 +3485,12 @@ describe Mongo::Collection do
         collection.find_one_and_delete({})
       end
 
+      let(:server) do
+        double('server', :standalone? => false)
+      end
+
       it 'includes the afterClusterTime for subsequent operations' do
-        expect(collection.read_concern['afterClusterTime']).to be_a(BSON::Timestamp)
+        expect(collection.read_concern(server)['afterClusterTime']).to be_a(BSON::Timestamp)
       end
     end
   end
@@ -3751,7 +3803,7 @@ describe Mongo::Collection do
       end
     end
 
-    context 'when causally consistent sessions are used' do
+    context 'when causally consistent sessions are used not with a standalone' do
 
       let(:session) do
         authorized_client.start_session(causally_consistent_reads: true)
@@ -3773,8 +3825,12 @@ describe Mongo::Collection do
         collection.find_one_and_update({}, { '$set' => { a: 1 } })
       end
 
+      let(:server) do
+        double('server', :standalone? => false)
+      end
+
       it 'includes the afterClusterTime for subsequent operations' do
-        expect(collection.read_concern['afterClusterTime']).to be_a(BSON::Timestamp)
+        expect(collection.read_concern(server)['afterClusterTime']).to be_a(BSON::Timestamp)
       end
     end
   end
@@ -4061,7 +4117,7 @@ describe Mongo::Collection do
       end
     end
 
-    context 'when causally consistent sessions are used' do
+    context 'when causally consistent sessions are used not with a standalone' do
 
       let(:session) do
         authorized_client.start_session(causally_consistent_reads: true)
@@ -4083,8 +4139,12 @@ describe Mongo::Collection do
         collection.find_one_and_replace({}, { })
       end
 
+      let(:server) do
+        double('server', :standalone? => false)
+      end
+
       it 'includes the afterClusterTime for subsequent operations' do
-        expect(collection.read_concern['afterClusterTime']).to be_a(BSON::Timestamp)
+        expect(collection.read_concern(server)['afterClusterTime']).to be_a(BSON::Timestamp)
       end
     end
   end

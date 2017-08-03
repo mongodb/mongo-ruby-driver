@@ -195,7 +195,7 @@ describe Mongo::Collection::View::Readable do
       end
     end
 
-    context 'when causally consistent sessions are used' do
+    context 'when causally consistent sessions are used not with a standalone' do
 
       let(:session) do
         authorized_client.start_session(causally_consistent_reads: true)
@@ -221,8 +221,12 @@ describe Mongo::Collection::View::Readable do
         view.map_reduce(map, reduce, options).to_a
       end
 
+      let(:server) do
+        double('server', :standalone? => false)
+      end
+
       it 'includes the afterClusterTime for subsequent operations' do
-        expect(collection.read_concern['afterClusterTime']).to be_a(BSON::Timestamp)
+        expect(collection.read_concern(server)['afterClusterTime']).to be_a(BSON::Timestamp)
       end
     end
   end

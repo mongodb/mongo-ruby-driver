@@ -190,6 +190,12 @@ module Mongo
         end
       end
 
+      def apply_read_concern!(doc, server)
+        if read_concern = collection.read_concern(server)
+          doc[:readConcern] = read_concern if read_concern
+        end
+      end
+
       def validate_collation!(server, coll)
         if coll &&!server.features.collation_enabled?
           raise Error::UnsupportedCollation.new

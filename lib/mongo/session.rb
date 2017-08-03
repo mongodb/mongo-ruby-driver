@@ -129,20 +129,18 @@ module Mongo
     # Get the read concern for this session.
     #
     # @example
-    #   session.get_read_concern(collection)
+    #   session.read_concern(doc, server)
     #
-    # @param [ Mongo::Collection ] collection The collection whose read concern is combined
-    #   with the afterClusterTime value.
+    # @param [ BSON::Document, Hash ] doc The command document to which the
+    #   read concern should be added.
+    # @param [ Mongo::Server ] server The server to which the command is being sent.
     #
     # @return [ Hash ] The read concern for this session.
     #
     # @since 2.5.0
-    def get_read_concern(collection)
-      if !client.cluster.single? && causally_consistent_reads? && @operation_time
-        (collection.options[:read_concern] || {}).merge(AFTER_CLUSTER_TIME => @operation_time)
-      else
-        collection.options[:read_concern]
-      end
+    def read_concern(doc, server)
+      return doc unless causally_consistent_reads? && server && !server.standalone?
+      causally_consistent_read_concern(doc)
     end
 
     # Get the read preference for this session.
@@ -210,6 +208,11 @@ module Mongo
 
     def causally_consistent_reads?
       options[:causally_consistent_reads]
+    end
+
+    def causally_consistent_read_concern(doc)
+      return doc unless @operation_time
+      (doc || {}).merge(AFTER_CLUSTER_TIME => @operation_time)
     end
 
     # An object representing the server-side session.

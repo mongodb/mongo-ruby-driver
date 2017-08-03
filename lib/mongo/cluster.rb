@@ -455,7 +455,8 @@ module Mongo
     def update_cluster_time(result)
       if cl_time = result.cluster_time
         @cluster_time_lock.synchronize do
-          @cluster_time = [cl_time, @cluster_time].max
+          # @todo Implement comparison of BSON::Timestamps
+          @cluster_time = cl_time #[cl_time, (@cluster_time || BSON::Timestamp.new(0, 0))].max
         end
       end
       result

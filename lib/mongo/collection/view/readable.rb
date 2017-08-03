@@ -132,12 +132,12 @@ module Mongo
           cmd[:hint] = opts[:hint] if opts[:hint]
           cmd[:limit] = opts[:limit] if opts[:limit]
           cmd[:maxTimeMS] = opts[:max_time_ms] if opts[:max_time_ms]
-          cmd[:readConcern] = collection.read_concern if collection.read_concern
           read_pref = opts[:read] || read_preference
           selector = ServerSelector.get(read_pref || server_selector)
           read_with_retry do
             server = selector.select_server(cluster, false)
             apply_collation!(cmd, server, opts)
+            apply_read_concern!(cmd, server)
             with_session do
               Operation::Commands::Command.new(
                 :selector => cmd,
@@ -170,12 +170,12 @@ module Mongo
                   :key => field_name.to_s,
                   :query => filter }
           cmd[:maxTimeMS] = opts[:max_time_ms] if opts[:max_time_ms]
-          cmd[:readConcern] = collection.read_concern if collection.read_concern
           read_pref = opts[:read] || read_preference
           selector = ServerSelector.get(read_pref || server_selector)
           read_with_retry do
             server = selector.select_server(cluster, false)
             apply_collation!(cmd, server, opts)
+            apply_read_concern!(cmd, server)
             with_session do
               Operation::Commands::Command.new(
                 :selector => cmd,
@@ -469,13 +469,15 @@ module Mongo
         end
 
         def parallel_scan(cursor_count, options = {})
+          spec = { :coll_name => collection.name,
+                   :db_name => database.name,
+                   :cursor_count => cursor_count,
+                 }.merge!(options)
+
           server = server_selector.select_server(cluster, false)
-          cmd = Operation::Commands::ParallelScan.new({
-                  :coll_name => collection.name,
-                  :db_name => database.name,
-                  :cursor_count => cursor_count,
-                  :read_concern => collection.read_concern
-                }.merge!(options))
+          apply_read_concern!(spec, server)
+          cmd = Operation::Commands::ParallelScan.new(spec)
+
           with_session { cmd.execute(server) }.cursor_ids.map do |cursor_id|
             result = if server.features.find_command_enabled?
                 with_session do
