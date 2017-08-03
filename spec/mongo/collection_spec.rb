@@ -14,6 +14,10 @@ describe Mongo::Collection do
     authorized_client[:validating]
   end
 
+  let(:server) do
+    authorized_client.cluster.next_primary
+  end
+
   describe '#==' do
 
     let(:database) do
@@ -294,7 +298,7 @@ describe Mongo::Collection do
       end
     end
 
-    context 'when there is a session associated with the collection' do
+    context 'when there is a session associated with the collection', if: sessions_enabled? do
 
       let(:collection) do
         authorized_client.start_session(options).database(TEST_DB)[TEST_COLL, coll_options]
@@ -420,7 +424,7 @@ describe Mongo::Collection do
       end
     end
 
-    context 'when there is a session associated with the collection' do
+    context 'when there is a session associated with the collection', if: sessions_enabled? do
 
       let(:collection) do
         client.start_session(options).database(TEST_DB)[TEST_COLL, coll_options]
@@ -894,7 +898,7 @@ describe Mongo::Collection do
 
   describe '#find' do
 
-    context 'when causally consistent sessions are used not with a standalone' do
+    context 'when causally consistent sessions are used not with a standalone', if: test_causally_consistent? do
 
       let(:session) do
         authorized_client.start_session(causally_consistent_reads: true)
@@ -913,11 +917,7 @@ describe Mongo::Collection do
       end
 
       before do
-        collection.find(name: 1, limit: 1).first
-      end
-
-      let(:server) do
-        double('server', :standalone? => false)
+        collection.find({}, limit: 1).first
       end
 
       it 'includes the afterClusterTime for subsequent operations' do
@@ -1296,7 +1296,7 @@ describe Mongo::Collection do
       end
     end
 
-    context 'when causally consistent sessions are used not with a standalone' do
+    context 'when causally consistent sessions are used not with a standalone', if: test_causally_consistent? do
 
       let(:session) do
         authorized_client.start_session(causally_consistent_reads: true)
@@ -1316,10 +1316,6 @@ describe Mongo::Collection do
 
       before do
         collection.insert_many([ { a: 1 }])
-      end
-
-      let(:server) do
-        double('server', :standalone? => false)
       end
 
       it 'includes the afterClusterTime for subsequent operations' do
@@ -1455,7 +1451,7 @@ describe Mongo::Collection do
       end
     end
 
-    context 'when causally consistent sessions are used not with a standalone' do
+    context 'when causally consistent sessions are used not with a standalone', if: test_causally_consistent? do
 
       let(:session) do
         authorized_client.start_session(causally_consistent_reads: true)
@@ -1475,10 +1471,6 @@ describe Mongo::Collection do
 
       before do
         collection.insert_one(a: 1)
-      end
-
-      let(:server) do
-        double('server', :standalone? => false)
       end
 
       it 'includes the afterClusterTime for subsequent operations' do
@@ -1608,7 +1600,7 @@ describe Mongo::Collection do
       end
     end
 
-    context 'when causally consistent sessions are used not with a standalone' do
+    context 'when causally consistent sessions are used not with a standalone', if: test_causally_consistent? do
 
       let(:session) do
         authorized_client.start_session(causally_consistent_reads: true)
@@ -1628,10 +1620,6 @@ describe Mongo::Collection do
 
       before do
         collection.aggregate([]).first
-      end
-
-      let(:server) do
-        double('server', :standalone? => false)
       end
 
       it 'includes the afterClusterTime for subsequent operations' do
@@ -1709,7 +1697,7 @@ describe Mongo::Collection do
       end
     end
 
-    context 'when causally consistent sessions are used not with a standalone' do
+    context 'when causally consistent sessions are used not with a standalone', if: test_causally_consistent? do
 
       let(:session) do
         authorized_client.start_session(causally_consistent_reads: true)
@@ -1729,10 +1717,6 @@ describe Mongo::Collection do
 
       before do
         collection.count
-      end
-
-      let(:server) do
-        double('server', :standalone? => false)
       end
 
       it 'includes the afterClusterTime for subsequent operations' do
@@ -1830,7 +1814,7 @@ describe Mongo::Collection do
       end
     end
 
-    context 'when causally consistent sessions are used not with a standalone' do
+    context 'when causally consistent sessions are used not with a standalone', if: test_causally_consistent? do
 
       let(:session) do
         authorized_client.start_session(causally_consistent_reads: true)
@@ -1850,10 +1834,6 @@ describe Mongo::Collection do
 
       before do
         collection.distinct(:field)
-      end
-
-      let(:server) do
-        double('server', :standalone? => false)
       end
 
       it 'includes the afterClusterTime for subsequent operations' do
@@ -2014,7 +1994,7 @@ describe Mongo::Collection do
       end
     end
 
-    context 'when causally consistent sessions are used not with a standalone' do
+    context 'when causally consistent sessions are used not with a standalone', if: test_causally_consistent? do
 
       let(:session) do
         authorized_client.start_session(causally_consistent_reads: true)
@@ -2034,10 +2014,6 @@ describe Mongo::Collection do
 
       before do
         collection.delete_one({ a: 1 })
-      end
-
-      let(:server) do
-        double('server', :standalone? => false)
       end
 
       it 'includes the afterClusterTime for subsequent operations' do
@@ -2184,7 +2160,7 @@ describe Mongo::Collection do
       end
     end
 
-    context 'when causally consistent sessions are used not with a standalone' do
+    context 'when causally consistent sessions are used not with a standalone', if: test_causally_consistent? do
 
       let(:session) do
         authorized_client.start_session(causally_consistent_reads: true)
@@ -2204,10 +2180,6 @@ describe Mongo::Collection do
 
       before do
         collection.delete_many({ a: 1 })
-      end
-
-      let(:server) do
-        double('server', :standalone? => false)
       end
 
       it 'includes the afterClusterTime for subsequent operations' do
@@ -2342,7 +2314,7 @@ describe Mongo::Collection do
       end
     end
 
-    context 'when causally consistent sessions are used not with a standalone' do
+    context 'when causally consistent sessions are used not with a standalone', if: test_causally_consistent? do
 
       let(:session) do
         authorized_client.start_session(causally_consistent_reads: true)
@@ -2362,10 +2334,6 @@ describe Mongo::Collection do
 
       before do
         collection.parallel_scan(2)
-      end
-
-      let(:server) do
-        double('server', :standalone? => false)
       end
 
       it 'includes the afterClusterTime for subsequent operations' do
@@ -2639,7 +2607,7 @@ describe Mongo::Collection do
       end
     end
 
-    context 'when causally consistent sessions are used not with a standalone' do
+    context 'when causally consistent sessions are used not with a standalone', if: test_causally_consistent? do
 
       let(:session) do
         authorized_client.start_session(causally_consistent_reads: true)
@@ -2659,10 +2627,6 @@ describe Mongo::Collection do
 
       before do
         collection.replace_one({}, {})
-      end
-
-      let(:server) do
-        double('server', :standalone? => false)
       end
 
       it 'includes the afterClusterTime for subsequent operations' do
@@ -2942,7 +2906,7 @@ describe Mongo::Collection do
       end
     end
 
-    context 'when causally consistent sessions are used not with a standalone' do
+    context 'when causally consistent sessions are used not with a standalone', if: test_causally_consistent? do
 
       let(:session) do
         authorized_client.start_session(causally_consistent_reads: true)
@@ -2962,10 +2926,6 @@ describe Mongo::Collection do
 
       before do
         collection.update_many({}, { '$set' => { a: 1 } })
-      end
-
-      let(:server) do
-        double('server', :standalone? => false)
       end
 
       it 'includes the afterClusterTime for subsequent operations' do
@@ -3243,7 +3203,7 @@ describe Mongo::Collection do
       end
     end
 
-    context 'when causally consistent sessions are used not with a standalone' do
+    context 'when causally consistent sessions are used not with a standalone', if: test_causally_consistent? do
 
       let(:session) do
         authorized_client.start_session(causally_consistent_reads: true)
@@ -3263,10 +3223,6 @@ describe Mongo::Collection do
 
       before do
         collection.update_one({}, { '$set' => { a: 1 } })
-      end
-
-      let(:server) do
-        double('server', :standalone? => false)
       end
 
       it 'includes the afterClusterTime for subsequent operations' do
@@ -3463,7 +3419,7 @@ describe Mongo::Collection do
       end
     end
 
-    context 'when causally consistent sessions are used not with a standalone' do
+    context 'when causally consistent sessions are used not with a standalone', if: test_causally_consistent? do
 
       let(:session) do
         authorized_client.start_session(causally_consistent_reads: true)
@@ -3483,10 +3439,6 @@ describe Mongo::Collection do
 
       before do
         collection.find_one_and_delete({})
-      end
-
-      let(:server) do
-        double('server', :standalone? => false)
       end
 
       it 'includes the afterClusterTime for subsequent operations' do
@@ -3803,7 +3755,7 @@ describe Mongo::Collection do
       end
     end
 
-    context 'when causally consistent sessions are used not with a standalone' do
+    context 'when causally consistent sessions are used not with a standalone', if: test_causally_consistent? do
 
       let(:session) do
         authorized_client.start_session(causally_consistent_reads: true)
@@ -3823,10 +3775,6 @@ describe Mongo::Collection do
 
       before do
         collection.find_one_and_update({}, { '$set' => { a: 1 } })
-      end
-
-      let(:server) do
-        double('server', :standalone? => false)
       end
 
       it 'includes the afterClusterTime for subsequent operations' do
@@ -4117,7 +4065,7 @@ describe Mongo::Collection do
       end
     end
 
-    context 'when causally consistent sessions are used not with a standalone' do
+    context 'when causally consistent sessions are used not with a standalone', if: test_causally_consistent? do
 
       let(:session) do
         authorized_client.start_session(causally_consistent_reads: true)
@@ -4139,10 +4087,6 @@ describe Mongo::Collection do
         collection.find_one_and_replace({}, { })
       end
 
-      let(:server) do
-        double('server', :standalone? => false)
-      end
-
       it 'includes the afterClusterTime for subsequent operations' do
         expect(collection.read_concern(server)['afterClusterTime']).to be_a(BSON::Timestamp)
       end
@@ -4151,7 +4095,7 @@ describe Mongo::Collection do
 
   describe '#session' do
 
-    context 'when the collection is created via a session' do
+    context 'when the collection is created via a session', if: sessions_enabled? do
 
       let(:session) do
         authorized_client.start_session

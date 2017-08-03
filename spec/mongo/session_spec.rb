@@ -578,7 +578,7 @@ describe Mongo::Session, if: sessions_enabled? do
         end
 
         let(:failed_operation_time) do
-          subscriber.instance_variable_get(:@failed_events)['update'].reply['operationTime']
+          subscriber.instance_variable_get(:@succeeded_events)['update'].reply['operationTime']
         end
 
         let(:second_request_event) do

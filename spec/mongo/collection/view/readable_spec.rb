@@ -195,7 +195,7 @@ describe Mongo::Collection::View::Readable do
       end
     end
 
-    context 'when causally consistent sessions are used not with a standalone' do
+    context 'when causally consistent sessions are used not with a standalone', if: test_causally_consistent? do
 
       let(:session) do
         authorized_client.start_session(causally_consistent_reads: true)
