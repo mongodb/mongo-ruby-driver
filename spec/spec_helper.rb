@@ -141,6 +141,7 @@ def test_causally_consistent?
   $mongo_client ||= initialize_scanned_client!
   $test_causally_consistent ||= !$mongo_client.cluster.single? && sessions_enabled?
 end
+alias :test_operation_time_saved? :test_causally_consistent?
 
 # For instances where behaviour is different on different versions, we need to
 # determine in the specs if we are 3.6 or higher.

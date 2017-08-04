@@ -1379,7 +1379,6 @@ describe Mongo::Collection do
         end
 
         it 'does not update the operation time' do
-          binding.pry
           expect(after_operation_time).to eq(before_operation_time)
         end
       end
@@ -4155,9 +4154,9 @@ describe Mongo::Collection do
     end
   end
 
-  describe '#session' do
+  describe '#session', if: sessions_enabled? do
 
-    context 'when the collection is created via a session', if: sessions_enabled? do
+    context 'when the collection is created via a session' do
 
       let(:session) do
         authorized_client.start_session
@@ -4173,6 +4172,181 @@ describe Mongo::Collection do
 
       it 'provides an accessor for the session' do
         expect(collection.session).to be(session)
+      end
+
+      context 'when an operation is called against a non-standalone', if: test_operation_time_saved? do
+
+        shared_examples_for 'a session saving operation time' do
+
+          let!(:before_operation_time) do
+            session.instance_variable_get(:@operation_time)
+          end
+
+          it 'updates the operation time on the session' do
+            expect(after_operation_time).not_to be_nil
+            expect(after_operation_time).not_to eq(before_operation_time)
+          end
+        end
+
+        context 'when the operation is a find' do
+
+          let(:after_operation_time) do
+            collection.find({}, limit: 1).first
+            session.instance_variable_get(:@operation_time)
+          end
+
+          it_behaves_like 'a session saving operation time'
+        end
+
+        context 'when the operation is aggregate' do
+
+          let(:after_operation_time) do
+            collection.aggregate([]).first
+            session.instance_variable_get(:@operation_time)
+          end
+
+          it_behaves_like 'a session saving operation time'
+        end
+
+        context 'when the operation is count' do
+
+          let(:after_operation_time) do
+            collection.count
+            session.instance_variable_get(:@operation_time)
+          end
+
+          it_behaves_like 'a session saving operation time'
+        end
+
+        context 'when the operation is distinct' do
+
+          let(:after_operation_time) do
+            collection.distinct(:field)
+            session.instance_variable_get(:@operation_time)
+          end
+
+          it_behaves_like 'a session saving operation time'
+        end
+
+        context 'when the operation is insert_one' do
+
+          let(:after_operation_time) do
+            collection.insert_one(a: 1)
+            session.instance_variable_get(:@operation_time)
+          end
+
+          it_behaves_like 'a session saving operation time'
+        end
+
+        context 'when the operation is insert_many' do
+
+          let(:after_operation_time) do
+            collection.insert_many([ { a: 1 }])
+            session.instance_variable_get(:@operation_time)
+          end
+
+          it_behaves_like 'a session saving operation time'
+        end
+
+        context 'when the operation is bulk_write' do
+
+          let(:after_operation_time) do
+            collection.bulk_write([ { insert_one: { a: 1 } }])
+            session.instance_variable_get(:@operation_time)
+          end
+
+          it_behaves_like 'a session saving operation time'
+        end
+
+        context 'when the operation is delete_one' do
+
+          let(:after_operation_time) do
+            collection.delete_one({})
+            session.instance_variable_get(:@operation_time)
+          end
+
+          it_behaves_like 'a session saving operation time'
+        end
+
+        context 'when the operation is delete_many' do
+
+          let(:after_operation_time) do
+            collection.delete_many
+            session.instance_variable_get(:@operation_time)
+          end
+
+          it_behaves_like 'a session saving operation time'
+        end
+
+        context 'when the operation is parallel_scan' do
+
+          let(:after_operation_time) do
+            collection.parallel_scan(2)
+            session.instance_variable_get(:@operation_time)
+          end
+
+          it_behaves_like 'a session saving operation time'
+        end
+
+        context 'when the operation is replace_one' do
+
+          let(:after_operation_time) do
+            collection.replace_one({ a: 1 }, { b: 1 })
+            session.instance_variable_get(:@operation_time)
+          end
+
+          it_behaves_like 'a session saving operation time'
+        end
+
+        context 'when the operation is update_many' do
+
+          let(:after_operation_time) do
+            collection.update_many({ a: 1 }, { '$set' => { a: 2 }})
+            session.instance_variable_get(:@operation_time)
+          end
+
+          it_behaves_like 'a session saving operation time'
+        end
+
+        context 'when the operation is update_one' do
+
+          let(:after_operation_time) do
+            collection.update_one({ a: 1 }, { '$set' => { a: 2 }})
+            session.instance_variable_get(:@operation_time)
+          end
+
+          it_behaves_like 'a session saving operation time'
+        end
+
+        context 'when the operation is find_one_and_delete' do
+
+          let(:after_operation_time) do
+            collection.find_one_and_delete({})
+            session.instance_variable_get(:@operation_time)
+          end
+
+          it_behaves_like 'a session saving operation time'
+        end
+
+        context 'when the operation is find_one_and_update' do
+
+          let(:after_operation_time) do
+            collection.find_one_and_update({ a: 1 }, { '$set' => { a: 2 } })
+            session.instance_variable_get(:@operation_time)
+          end
+
+          it_behaves_like 'a session saving operation time'
+        end
+
+        context 'when the operation is find_one_and_replace' do
+
+          let(:after_operation_time) do
+            collection.find_one_and_replace({ a: 1 }, { a: 2 })
+            session.instance_variable_get(:@operation_time)
+          end
+
+          it_behaves_like 'a session saving operation time'
+        end
       end
     end
   end

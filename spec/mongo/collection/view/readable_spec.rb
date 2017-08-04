@@ -195,7 +195,7 @@ describe Mongo::Collection::View::Readable do
       end
     end
 
-    context 'when causally consistent sessions are used not with a standalone', if: test_causally_consistent? do
+    context 'when using sessions', if: sessions_enabled? do
 
       let(:session) do
         authorized_client.start_session(causally_consistent_reads: true)
@@ -217,16 +217,36 @@ describe Mongo::Collection::View::Readable do
         Mongo::Collection::View.new(collection, selector, options)
       end
 
-      before do
-        view.map_reduce(map, reduce, options).to_a
+      context 'when causally consistent sessions are used not with a standalone', if: test_causally_consistent? do
+
+        before do
+          view.map_reduce(map, reduce, options).to_a
+        end
+
+        let(:server) do
+          double('server', :standalone? => false)
+        end
+
+        it 'includes the afterClusterTime for subsequent operations' do
+          expect(collection.read_concern(server)['afterClusterTime']).to be_a(BSON::Timestamp)
+        end
       end
 
-      let(:server) do
-        double('server', :standalone? => false)
-      end
+      context 'when the operation time should be saved by the session', if: test_operation_time_saved? do
 
-      it 'includes the afterClusterTime for subsequent operations' do
-        expect(collection.read_concern(server)['afterClusterTime']).to be_a(BSON::Timestamp)
+        let(:after_operation_time) do
+          view.map_reduce(map, reduce, options).first
+          session.instance_variable_get(:@operation_time)
+        end
+
+        let!(:before_operation_time) do
+          session.instance_variable_get(:@operation_time)
+        end
+
+        it 'updates the operation time on the session' do
+          expect(after_operation_time).not_to be_nil
+          expect(after_operation_time).not_to eq(before_operation_time)
+        end
       end
     end
   end
