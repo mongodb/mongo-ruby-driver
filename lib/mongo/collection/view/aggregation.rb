@@ -34,7 +34,7 @@ module Mongo
         attr_reader :pipeline
 
         # Delegate necessary operations to the view.
-        def_delegators :view, :collection, :read, :cluster, :server_selector, :with_session
+        def_delegators :view, :collection, :read, :cluster, :server_selector
 
         # Delegate necessary operations to the collection.
         def_delegators :collection, :database
@@ -116,7 +116,7 @@ module Mongo
             server = cluster.next_primary(false)
           end
           validate_collation!(server)
-          with_session { initial_query_op(server).execute(server) }
+          view.send(:with_session) { initial_query_op(server).execute(server) }
         end
 
         def validate_collation!(server)

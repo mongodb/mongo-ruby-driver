@@ -4196,6 +4196,16 @@ describe Mongo::Collection do
           end
 
           it_behaves_like 'a session saving operation time'
+
+          context 'when the operation fails' do
+
+            let(:after_operation_time) do
+              begin; collection.find({ '$_id' => 1 }, limit: 1).first; rescue; end
+              session.instance_variable_get(:@operation_time)
+            end
+
+            it_behaves_like 'a session saving operation time'
+          end
         end
 
         context 'when the operation is aggregate' do
@@ -4206,6 +4216,16 @@ describe Mongo::Collection do
           end
 
           it_behaves_like 'a session saving operation time'
+
+          context 'when the operation fails' do
+
+            let(:after_operation_time) do
+              begin; collection.aggregate([ { '$invalid' => 1 }]).first; rescue; end
+              session.instance_variable_get(:@operation_time)
+            end
+
+            it_behaves_like 'a session saving operation time'
+          end
         end
 
         context 'when the operation is count' do
@@ -4216,6 +4236,16 @@ describe Mongo::Collection do
           end
 
           it_behaves_like 'a session saving operation time'
+
+          context 'when the operation fails' do
+
+            let(:after_operation_time) do
+              begin; collection.count('$_id' => 1); rescue; end
+              session.instance_variable_get(:@operation_time)
+            end
+
+            it_behaves_like 'a session saving operation time'
+          end
         end
 
         context 'when the operation is distinct' do
@@ -4226,6 +4256,16 @@ describe Mongo::Collection do
           end
 
           it_behaves_like 'a session saving operation time'
+
+          context 'when the operation fails' do
+
+            let(:after_operation_time) do
+              begin; collection.distinct(:field, { '$_id' => 1}); rescue; end
+              session.instance_variable_get(:@operation_time)
+            end
+
+            it_behaves_like 'a session saving operation time'
+          end
         end
 
         context 'when the operation is insert_one' do
@@ -4236,6 +4276,17 @@ describe Mongo::Collection do
           end
 
           it_behaves_like 'a session saving operation time'
+
+          context 'when the operation fails' do
+
+            let(:after_operation_time) do
+              collection.insert_one('_id' => 1)
+              begin; collection.insert_one('_id' => 1); rescue; end
+              session.instance_variable_get(:@operation_time)
+            end
+
+            it_behaves_like 'a session saving operation time'
+          end
         end
 
         context 'when the operation is insert_many' do
@@ -4246,6 +4297,17 @@ describe Mongo::Collection do
           end
 
           it_behaves_like 'a session saving operation time'
+
+          context 'when the operation fails' do
+
+            let(:after_operation_time) do
+              collection.insert_many([ { _id: 1 }])
+              begin; collection.insert_many([ { _id: 1 }]); rescue; end
+              session.instance_variable_get(:@operation_time)
+            end
+
+            it_behaves_like 'a session saving operation time'
+          end
         end
 
         context 'when the operation is bulk_write' do
@@ -4256,6 +4318,17 @@ describe Mongo::Collection do
           end
 
           it_behaves_like 'a session saving operation time'
+
+          context 'when the operation fails' do
+
+            let(:after_operation_time) do
+              collection.bulk_write([ { insert_one: { _id: 1 } }])
+              begin; collection.bulk_write([ { insert_one: { _id: 1 } }]); rescue; end
+              session.instance_variable_get(:@operation_time)
+            end
+
+            it_behaves_like 'a session saving operation time'
+          end
         end
 
         context 'when the operation is delete_one' do
@@ -4266,6 +4339,16 @@ describe Mongo::Collection do
           end
 
           it_behaves_like 'a session saving operation time'
+
+          context 'when the operation fails' do
+
+            let(:after_operation_time) do
+              begin; collection.delete_one({ '$_id' => 1}); rescue; end
+              session.instance_variable_get(:@operation_time)
+            end
+
+            it_behaves_like 'a session saving operation time'
+          end
         end
 
         context 'when the operation is delete_many' do
@@ -4276,6 +4359,16 @@ describe Mongo::Collection do
           end
 
           it_behaves_like 'a session saving operation time'
+
+          context 'when the operation fails' do
+
+            let(:after_operation_time) do
+              begin; collection.delete_many({ '$_id' => 1}); rescue; end
+              session.instance_variable_get(:@operation_time)
+            end
+
+            it_behaves_like 'a session saving operation time'
+          end
         end
 
         context 'when the operation is parallel_scan' do
@@ -4286,6 +4379,16 @@ describe Mongo::Collection do
           end
 
           it_behaves_like 'a session saving operation time'
+
+          context 'when the operation fails' do
+
+            let(:after_operation_time) do
+              begin; collection.parallel_scan(0); rescue; end
+              session.instance_variable_get(:@operation_time)
+            end
+
+            it_behaves_like 'a session saving operation time'
+          end
         end
 
         context 'when the operation is replace_one' do
@@ -4296,6 +4399,16 @@ describe Mongo::Collection do
           end
 
           it_behaves_like 'a session saving operation time'
+
+          context 'when the operation fails' do
+
+            let(:after_operation_time) do
+              begin; collection.replace_one({ '$_id' => 1 }, { b: 1 }); rescue; end
+              session.instance_variable_get(:@operation_time)
+            end
+
+            it_behaves_like 'a session saving operation time'
+          end
         end
 
         context 'when the operation is update_many' do
@@ -4306,6 +4419,16 @@ describe Mongo::Collection do
           end
 
           it_behaves_like 'a session saving operation time'
+
+          context 'when the operation fails' do
+
+            let(:after_operation_time) do
+              begin; collection.update_many({ '$_id' => 1 }, { '$set' => { a: 2 }}); rescue; end
+              session.instance_variable_get(:@operation_time)
+            end
+
+            it_behaves_like 'a session saving operation time'
+          end
         end
 
         context 'when the operation is update_one' do
@@ -4316,6 +4439,16 @@ describe Mongo::Collection do
           end
 
           it_behaves_like 'a session saving operation time'
+
+          context 'when the operation fails' do
+
+            let(:after_operation_time) do
+              begin; collection.update_one({ '$_id' => 1 }, { '$set' => { a: 2 }}); rescue; end
+              session.instance_variable_get(:@operation_time)
+            end
+
+            it_behaves_like 'a session saving operation time'
+          end
         end
 
         context 'when the operation is find_one_and_delete' do
@@ -4326,6 +4459,16 @@ describe Mongo::Collection do
           end
 
           it_behaves_like 'a session saving operation time'
+
+          context 'when the operation fails' do
+
+            let(:after_operation_time) do
+              begin; collection.find_one_and_delete('$_id' => 1); rescue; end
+              session.instance_variable_get(:@operation_time)
+            end
+
+            it_behaves_like 'a session saving operation time'
+          end
         end
 
         context 'when the operation is find_one_and_update' do
@@ -4336,6 +4479,16 @@ describe Mongo::Collection do
           end
 
           it_behaves_like 'a session saving operation time'
+
+          context 'when the operation fails' do
+
+            let(:after_operation_time) do
+              begin; collection.find_one_and_update({ '$_id' => 1 }, {}); rescue; end
+              session.instance_variable_get(:@operation_time)
+            end
+
+            it_behaves_like 'a session saving operation time'
+          end
         end
 
         context 'when the operation is find_one_and_replace' do
@@ -4346,6 +4499,16 @@ describe Mongo::Collection do
           end
 
           it_behaves_like 'a session saving operation time'
+
+          context 'when the operation fails' do
+
+            let(:after_operation_time) do
+              begin; collection.find_one_and_replace({ '$_id' => 1 }, {}); rescue; end
+              session.instance_variable_get(:@operation_time)
+            end
+
+            it_behaves_like 'a session saving operation time'
+          end
         end
       end
     end

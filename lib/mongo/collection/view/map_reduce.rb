@@ -50,7 +50,7 @@ module Mongo
         def_delegators :view, :collection, :read, :cluster, :server_selector
 
         # Delegate necessary operations to the collection.
-        def_delegators :collection, :database, :with_session
+        def_delegators :collection, :database
 
         # Iterate through documents returned by the map/reduce.
         #
@@ -212,7 +212,7 @@ module Mongo
             server = cluster.next_primary(false)
           end
           validate_collation!(server)
-          result = with_session { initial_query_op(server).execute(server) }
+          result = view.send(:with_session) { initial_query_op(server).execute(server) }
           inline? ? result : send_fetch_query(server)
         end
 
@@ -233,7 +233,7 @@ module Mongo
         end
 
         def send_fetch_query(server)
-          with_session { fetch_query_op(server).execute(server) }
+          view.send(:with_session) { fetch_query_op(server).execute(server) }
         end
 
         def validate_collation!(server)
