@@ -49,6 +49,7 @@ module Mongo
         #
         # @param [ Protocol::Message ] reply The reply of the previous
         #   message.
+        # @param [ Mongo::Server::Connection ] connection The connection being authenticated.
         #
         # @return [ Protocol::Query ] The next message to send.
         #

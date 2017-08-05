@@ -29,6 +29,9 @@ module Mongo
       # @since 2.1.0
       PING = { :ping => 1 }.freeze
 
+      # The ping command for an OP_MSG (server versions >= 3.6).
+      #
+      # @since 2.5.0
       PING_OP_MSG = { :ping => 1, '$db' => Database::ADMIN }.freeze
 
       # Ping message.
@@ -36,12 +39,19 @@ module Mongo
       # @since 2.1.0
       PING_MESSAGE = Protocol::Query.new(Database::ADMIN, Database::COMMAND, PING, :limit => -1)
 
+      # Ping message as an OP_MSG (server versions >= 3.6).
+      #
+      # @since 2.5.0
       PING_OP_MSG_MESSAGE = Protocol::Msg.new([:none], {}, { type: 0, document: PING_OP_MSG })
+
       # The ping message as raw bytes.
       #
       # @since 2.1.0
       PING_BYTES = PING_MESSAGE.serialize.to_s.freeze
 
+      # The ping OP_MSG message as raw bytes (server versions >= 3.6).
+      #
+      # @since 2.5.0
       PING_OP_MSG_BYTES = PING_OP_MSG_MESSAGE.serialize.to_s.freeze
 
       def_delegators :@server,

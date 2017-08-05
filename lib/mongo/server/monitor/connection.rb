@@ -28,6 +28,9 @@ module Mongo
         # @since 2.2.0
         ISMASTER = { :ismaster => 1 }.freeze
 
+        # The command used for determining server status formatted for an OP_MSG (server versions >= 3.6).
+        #
+        # @since 2.5.0
         ISMASTER_OP_MSG = { :ismaster => 1 }.merge('$db' => Database::ADMIN).freeze
 
         # The constant for the ismaster command.
@@ -35,6 +38,9 @@ module Mongo
         # @since 2.2.0
         ISMASTER_MESSAGE = Protocol::Query.new(Database::ADMIN, Database::COMMAND, ISMASTER, :limit => -1)
 
+        # The constant for the ismaster command as an OP_MSG (server versions >= 3.6).
+        #
+        # @since 2.5.0
         ISMASTER_OP_MSG_MESSAGE = Protocol::Msg.new([:none], {}, { type: 0, document: ISMASTER_OP_MSG })
 
         # The raw bytes for the ismaster message.
@@ -42,6 +48,9 @@ module Mongo
         # @since 2.2.0
         ISMASTER_BYTES = ISMASTER_MESSAGE.serialize.to_s.freeze
 
+        # The raw bytes for the ismaster OP_MSG message (server versions >= 3.6).
+        #
+        # @since 2.5.0
         ISMASTER_OP_MSG_BYTES = ISMASTER_OP_MSG_MESSAGE.serialize.to_s.freeze
 
         # The default time in seconds to timeout a connection attempt.

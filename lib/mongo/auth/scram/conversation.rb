@@ -104,6 +104,7 @@ module Mongo
         #
         # @param [ Protocol::Message ] reply The reply of the previous
         #   message.
+        # @param [ Mongo::Server::Connection ] connection The connection being authenticated.
         #
         # @return [ Protocol::Query ] The next message to send.
         #
@@ -139,6 +140,7 @@ module Mongo
         #
         # @param [ Protocol::Message ] reply The reply of the previous
         #   message.
+        # @param [ Mongo::Server::Connection ] connection The connection being authenticated.
         #
         # @return [ Protocol::Query ] The next message to send.
         #
@@ -165,11 +167,12 @@ module Mongo
         # @example Start the conversation.
         #   conversation.start
         #
+        # @param [ Mongo::Server::Connection ] connection The connection being authenticated.
+        #
         # @return [ Protocol::Query ] The first SCRAM conversation message.
         #
         # @since 2.0.0
         def start(connection = nil)
-          # @todo what to do with limit?
           if connection && connection.features.op_msg_enabled?
             selector = CLIENT_FIRST_MESSAGE.merge(payload: client_first_message, mechanism: SCRAM::MECHANISM)
             selector['$db'] = user.auth_source

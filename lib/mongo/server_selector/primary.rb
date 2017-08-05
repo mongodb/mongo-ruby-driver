@@ -23,6 +23,9 @@ module Mongo
     class Primary
       include Selectable
 
+      # Name of the this read preference in the server's format.
+      #
+      # @since 2.5.0
       SERVER_FORMATTED_NAME = 'primary'.freeze
 
       # Get the name of the server mode type.
@@ -75,8 +78,19 @@ module Mongo
         nil
       end
 
+      # Convert this server preference definition into a format appropriate
+      #   for a mongodb server.
+      #
+      # @example Convert this server preference definition into a format
+      #   for a server.
+      #   preference = Mongo::ServerSelector::Primary.new
+      #   preference.to_doc
+      #
+      # @return [ Hash ] The server preference formatted for a mongodb server.
+      #
+      # @since 2.5.0
       def to_doc
-        @doc ||= { mode: 'primary' }
+        @doc ||= { mode: SERVER_FORMATTED_NAME }
       end
 
       private

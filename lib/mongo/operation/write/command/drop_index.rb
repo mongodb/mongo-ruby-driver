@@ -47,7 +47,6 @@ module Mongo
 
           def message(server)
             sel = update_selector_for_write_concern(selector, server)
-
             if server.features.op_msg_enabled?
               command_op_msg(server, sel, options)
             else

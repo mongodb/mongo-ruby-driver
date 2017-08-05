@@ -56,6 +56,8 @@ module Mongo
         # @example Start the conversation.
         #   conversation.start
         #
+        # @param [ Mongo::Server::Connection ] connection The connection being authenticated.
+        #
         # @return [ Protocol::Query ] The first x.509 conversation message.
         #
         # @since 2.0.0

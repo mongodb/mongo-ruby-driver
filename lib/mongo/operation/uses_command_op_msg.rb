@@ -15,7 +15,7 @@
 module Mongo
   module Operation
 
-    # Uses an OP_MSG for certain commands. Only uses payload type 0.
+    # A command that uses OP_MSG, with the document as payload type 0.
     #
     # @since 2.5.0
     module UsesCommandOpMsg

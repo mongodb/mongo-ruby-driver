@@ -23,6 +23,9 @@ module Mongo
     class SecondaryPreferred
       include Selectable
 
+      # Name of the this read preference in the server's format.
+      #
+      # @since 2.5.0
       SERVER_FORMATTED_NAME = 'secondaryPreferred'.freeze
 
       # Get the name of the server mode type.
@@ -74,11 +77,22 @@ module Mongo
         to_doc
       end
 
+      # Convert this server preference definition into a format appropriate
+      #   for a server.
+      #
+      # @example Convert this server preference definition into a format
+      #   for a sererv.
+      #   preference = Mongo::ServerSelector::SecondaryPreferred.new
+      #   preference.to_doc
+      #
+      # @return [ Hash ] The server preference formatted for a server.
+      #
+      # @since 2.5.0
       def to_doc
-        preference = { mode: 'secondaryPreferred' }
-        preference.merge!({ tags: tag_sets }) unless tag_sets.empty?
-        preference.merge!({ maxStalenessSeconds: max_staleness }) if max_staleness
-        preference
+        @doc ||= (preference = { mode: SERVER_FORMATTED_NAME }
+          preference.merge!({ tags: tag_sets }) unless tag_sets.empty?
+          preference.merge!({ maxStalenessSeconds: max_staleness }) if max_staleness
+          preference)
       end
 
       private

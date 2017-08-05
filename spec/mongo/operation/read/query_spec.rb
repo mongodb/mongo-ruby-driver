@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe Mongo::Operation::Read::Query do
+describe Mongo::Operation::Read::Query, unless: op_msg_enabled? do
   
   let(:selector) { { foo: 1 } }
   let(:query_options) { {} }
@@ -41,7 +41,7 @@ describe Mongo::Operation::Read::Query do
     end
   end
 
-  describe '#message', unless: op_msg_enabled? do
+  describe '#message' do
 
     let(:query_options) do
       { :flags => [ :no_cursor_timeout ]}
@@ -71,6 +71,7 @@ describe Mongo::Operation::Read::Query do
         double('secondary_server').tap do |server|
           allow(server).to receive(:mongos?) { false }
           allow(server).to receive(:cluster) { cluster_single }
+          allow(server).to receive(:features) { authorized_primary.features }
         end
       end
 
