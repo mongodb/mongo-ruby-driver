@@ -35,7 +35,7 @@ module Mongo
         include Limited
         include ReadPreference
         include Executable
-        include UsesOpMsg
+        include UsesCommandOpMsg
 
         private
 

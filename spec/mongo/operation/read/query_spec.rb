@@ -41,7 +41,7 @@ describe Mongo::Operation::Read::Query do
     end
   end
 
-  describe '#message' do
+  describe '#message', unless: op_msg_enabled? do
 
     let(:query_options) do
       { :flags => [ :no_cursor_timeout ]}
@@ -62,7 +62,6 @@ describe Mongo::Operation::Read::Query do
     end
 
     it 'applies the correct flags' do
-      pending 'update for op msg support'
       expect(message.flags).to eq(query_options[:flags])
     end
 
@@ -80,7 +79,6 @@ describe Mongo::Operation::Read::Query do
       end
 
       it 'applies the correct flags' do
-        pending
         expect(message.flags).to eq([ :no_cursor_timeout, :slave_ok ])
       end
     end
@@ -96,7 +94,6 @@ describe Mongo::Operation::Read::Query do
       end
 
       it 'does not raise an exception' do
-        pending
         expect(op.execute(authorized_primary)).to be_a(Mongo::Operation::Read::Query::Result)
       end
     end

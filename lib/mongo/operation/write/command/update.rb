@@ -43,9 +43,8 @@ module Mongo
 
           private
 
-          # The query selector for this update command operation.
-          #
-          # @return [ Hash ] The selector describing this update operation.
+          IDENTIFIER = 'updates'.freeze
+
           def selector
             { update: coll_name,
               updates: updates
@@ -60,21 +59,21 @@ module Mongo
             opts
           end
 
-          # The wire protocol message for this write operation.
-          #
-          # @return [ Mongo::Protocol::Query ] Wire protocol message.
-          #
-          # @since 2.0.0
+          def op_msg(server)
+            args = { update: coll_name, "$db" => db_name }.merge!(command_options)
+            if (cl_time = cluster_time(server))
+              args[CLUSTER_TIME] = cl_time
+            end
+            global_args = { type: 0, document: args }
+
+            section = { type: 1, sequence: { identifier: IDENTIFIER, documents: updates } }
+            flags = unacknowledged_write? ? [:more_to_come] : [:none]
+            Protocol::Msg.new(flags, {}, global_args, section)
+          end
+
           def message(server)
             if server.features.op_msg_enabled?
-
-              args = { update: coll_name, "$db" => db_name }.merge!(command_options)
-              payload = { identifier: 'updates', documents: updates }
-
-              global_args = { type: 0, document: args }
-              section = { type: 1, sequence: payload }
-
-              Protocol::Msg.new([:none], options, global_args, section)
+              op_msg(server)
             else
               Protocol::Query.new(db_name, Database::COMMAND, selector, options)
             end

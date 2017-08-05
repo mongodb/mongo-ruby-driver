@@ -34,11 +34,8 @@ module Mongo
 
           private
 
-          # The query selector for this insert command operation.
-          #
-          # @return [ Hash ] The selector describing this insert operation.
-          #
-          # @since 2.0.0
+          IDENTIFIER = 'documents'.freeze
+
           def selector
             { insert: coll_name,
               documents: documents
@@ -52,23 +49,23 @@ module Mongo
             opts
           end
 
-          # The wire protocol message for this write operation.
-          #
-          # @return [ Mongo::Protocol::Query ] Wire protocol message.
-          #
-          # @since 2.2.5
+          def op_msg(server)
+            args = { insert: coll_name, "$db" => db_name }.merge!(command_options)
+            if (cl_time = cluster_time(server))
+              args[CLUSTER_TIME] = cl_time
+            end
+            global_args = { type: 0, document: args }
+
+            section = { type: 1, sequence: { identifier: IDENTIFIER, documents: documents } }
+            flags = unacknowledged_write? ? [:more_to_come] : [:none]
+            Protocol::Msg.new(flags, { validating_keys: true }, global_args, section)
+          end
+
           def message(server)
-            opts = options.merge(validating_keys: true)
             if server.features.op_msg_enabled?
-
-              args = { insert: coll_name, "$db" => db_name }.merge!(command_options)
-              payload = { identifier: 'documents', documents: documents }
-
-              global_args = { type: 0, document: args }
-              section = { type: 1, sequence: payload }
-
-              Protocol::Msg.new([:none], opts, global_args, section)
+              op_msg(server)
             else
+              opts = options.merge(validating_keys: true)
               Protocol::Query.new(db_name, Database::COMMAND, selector, opts)
             end
           end

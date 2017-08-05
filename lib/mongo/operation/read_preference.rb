@@ -20,7 +20,7 @@ module Mongo
     #
     # @since 2.0.0
     module ReadPreference
-      include UsesOpMsg
+      include UsesCommandOpMsg
 
       # The constant for slave ok flags.
       #
@@ -54,7 +54,7 @@ module Mongo
 
       def message(server)
         if server.features.op_msg_enabled?
-          op_msg(selector, options)
+          command_op_msg(server, selector, options)
         else
           sel = update_selector_for_read_pref(selector, server)
           opts = update_options_for_slave_ok(options, server)

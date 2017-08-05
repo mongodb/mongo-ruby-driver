@@ -33,8 +33,8 @@ module Mongo
       # @since 2.5.0
       def initialize(flag_bits, options = {}, *sections)
         @flag_bits = flag_bits || [ :none ]
-        @sections = sections
         @options = options
+        @sections = sections
         super
       end
 
@@ -47,7 +47,7 @@ module Mongo
       #
       # @since 2.5.0
       def replyable?
-        true
+        !@flag_bits.include?(:more_to_come)
       end
 
       def payload
@@ -78,7 +78,7 @@ module Mongo
       FLAGS = Array.new(16).tap { |arr|
         arr[0] = :checksum_present
         arr[1] = :more_to_come
-        arr[15] = :exhaust_allowed }
+      }
 
       # @!attribute
       # @return [Array<Symbol>] The flags for this message.

@@ -41,7 +41,7 @@ module Mongo
       # @since 2.0.0
       class Aggregate < Command
         include TakesWriteConcern
-        include UsesOpMsg
+        include UsesCommandOpMsg
 
         private
 
@@ -55,7 +55,7 @@ module Mongo
           sel = update_selector_for_write_concern(sel, server)
 
           if server.features.op_msg_enabled?
-            op_msg(sel, options)
+            command_op_msg(server, sel, options)
           else
             sel = update_selector_for_read_pref(sel, server)
             opts = update_options_for_slave_ok(options, server)

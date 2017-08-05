@@ -138,7 +138,6 @@ module Mongo
             deserialize_field(message, buffer, field)
           end
         end
-        binding.pry unless (message.class == Msg || message.documents[0]['ismaster'])
         message
       end
 
