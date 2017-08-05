@@ -40,10 +40,6 @@ module Mongo
         :primary
       end
 
-      def server_formatted_name
-        SERVER_FORMATTED_NAME
-      end
-
       # Whether the slaveOk bit should be set on wire protocol messages.
       #   I.e. whether the operation can be performed on a secondary server.
       #
