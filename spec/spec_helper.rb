@@ -133,6 +133,10 @@ def single_seed?
   ADDRESSES.size == 1
 end
 
+# For instances where behaviour is different on different versions, we need to
+# determine in the specs if we are 3.6 or higher.
+#
+# @since 2.5.0
 def op_msg_enabled?
   $mongo_client ||= initialize_scanned_client!
   $op_msg_enabled ||= $mongo_client.cluster.servers.first.features.op_msg_enabled?
