@@ -88,6 +88,10 @@ describe Mongo::Operation::Write::Command::Insert do
 
     context 'when the server supports OP_MSG', if: op_msg_enabled? do
 
+      let(:documents) do
+        [ { foo: 1}, { bar: 2 }]
+      end
+
       let(:expected_global_args) do
         {
             insert: TEST_COLL,
