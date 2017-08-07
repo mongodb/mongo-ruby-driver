@@ -31,10 +31,12 @@ module Mongo
       # @api private
       #
       # @since 2.5.0
-      def initialize(flag_bits, options = {}, *sections)
+      def initialize(flag_bits, options, command, *sections)
         @flag_bits = flag_bits || [ :none ]
         @options = options
-        @sections = sections
+        @sections = [ command ] + sections
+        @global_args = command[:document]
+        @request_id = nil
         super
       end
 
@@ -47,26 +49,34 @@ module Mongo
       #
       # @since 2.5.0
       def replyable?
-        !@flag_bits.include?(:more_to_come)
+        @replyable ||= !@flag_bits.include?(:more_to_come)
       end
 
+      # Return the event payload for monitoring.
+      #
+      # @example Return the event payload.
+      #   message.payload
+      #
+      # @return [ BSON::Document ] The event payload.
+      #
+      # @since 2.5.0
       def payload
-        { reply: documents[0], request_id: request_id }
+        BSON::Document.new(
+          command_name: global_args.keys.first,
+          database_name: global_args[DATABASE_IDENTIFIER],
+          command: global_args,
+          request_id: request_id,
+          reply: global_args
+        )
       end
-
-      def cursor_not_found?
-        false
-      end
-
-      def cursor_id; end
-
-      def number_returned; 0; end
-
-      protected
-
-      #attr_reader :upconverter
 
       private
+
+      DATABASE_IDENTIFIER = '$db'.freeze
+
+      def global_args
+        @global_args ||= sections[0]
+      end
 
       # The operation code required to specify a OP_MSG message.
       # @return [ Fixnum ] the operation code.

@@ -50,16 +50,16 @@ module Mongo
       # @example Return the event payload.
       #   message.payload
       #
-      # @return [ Hash ] The event payload.
+      # @return [ BSON::Document ] The event payload.
       #
       # @since 2.1.0
       def payload
-        {
+        BSON::Document.new(
           command_name: 'getMore',
           database_name: @database,
           command: upconverter.command,
           request_id: request_id
-        }
+        )
       end
 
       # Get more messages require replies from the database.

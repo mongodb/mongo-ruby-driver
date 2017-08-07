@@ -50,7 +50,7 @@ module Mongo
           #
           # @since 2.0.0
           def cursor_id
-            cursor_document ? cursor_document[CURSOR_ID] : super
+            cursor_document ? cursor_document[CURSOR_ID] : 0
           end
 
           # Get the documents for the aggregation result. This is either the

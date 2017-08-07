@@ -107,6 +107,18 @@ module Mongo
             documents.nil? ? raise(Error::OperationFailure.new(parser.message)) : self
           end
 
+          # Get the cursor id.
+          #
+          # @example Get the cursor id.
+          #   result.cursor_id
+          #
+          # @return [ Integer ] Always 0 because map reduce doesn't return a cursor.
+          #
+          # @since 2.5.0
+          def cursor_id
+            0
+          end
+
           private
 
           def first_document

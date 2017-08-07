@@ -88,7 +88,7 @@ describe Mongo::Operation::Write::Command::Delete do
 
     context 'when the server supports OP_MSG', if: op_msg_enabled? do
 
-      let(:expected_payload_0) do
+      let(:expected_global_args) do
         {
             type: 0,
             document: {
@@ -110,7 +110,7 @@ describe Mongo::Operation::Write::Command::Delete do
       end
 
       it 'creates the correct OP_MSG message' do
-        expect(Mongo::Protocol::Msg).to receive(:new).with([:none], {}, expected_payload_0, expected_payload_1)
+        expect(Mongo::Protocol::Msg).to receive(:new).with([:none], {}, expected_global_args, expected_payload_1)
         op.send(:message, authorized_primary)
       end
 
@@ -121,7 +121,7 @@ describe Mongo::Operation::Write::Command::Delete do
         end
 
         it 'creates the correct OP_MSG message' do
-          expect(Mongo::Protocol::Msg).to receive(:new).with([:more_to_come], {}, expected_payload_0, expected_payload_1)
+          expect(Mongo::Protocol::Msg).to receive(:new).with([:more_to_come], {}, expected_global_args, expected_payload_1)
           op.send(:message, authorized_primary)
         end
       end

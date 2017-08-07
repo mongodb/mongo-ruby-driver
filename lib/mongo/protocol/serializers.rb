@@ -150,6 +150,8 @@ module Mongo
       # MongoDB wire protocol serialization strategy for a Section of OP_MSG.
       #
       # Serializes and de-serializes a list of Sections.
+      #
+      # @since 2.5.0
       module Sections
 
         # Serializes the sections of an OP_MSG, payload type 0 or 1.
@@ -160,6 +162,8 @@ module Mongo
         # @param [ true, false ] validating_keys Whether to validate document keys.
         #
         # @return [ String ] Buffer with serialized value.
+        #
+        # @since 2.5.0
         def self.serialize(buffer, value, max_bson_size = nil, validating_keys = BSON::Config.validating_keys?)
           value.each do |section|
             case section[:type]
@@ -178,13 +182,15 @@ module Mongo
         # @param [ String ] buffer Buffer containing the sections.
         #
         # @return [ Array<BSON::Document> ] Deserialized section.
+        #
+        # @since 2.5.0
         def self.deserialize(buffer)
           end_size = (@flag_bits & Msg::FLAGS.index(:checksum_present)) == 1 ? 32 : 0
 
           sections = []
           until buffer.to_s.size == end_size
             case buffer.get_byte
-            when PayloadZero::TYPE_BYTE
+              when PayloadZero::TYPE_BYTE
               sections << PayloadZero.deserialize(buffer)
             when PayloadOne::TYPE_BYTE
               sections << PayloadOne.deserialize(buffer)
@@ -198,15 +204,24 @@ module Mongo
         #
         # @return [ true ] Documents can be size limited upon serialization.
         #
-        # @since 2.0.0
+        # @since 2.5.0
         def self.size_limited?
           true
         end
 
+        # MongoDB wire protocol serialization strategy for a payload 0 type Section of OP_MSG.
+        #
+        # @since 2.5.0
         module PayloadZero
 
+          # The byte identifier for this payload type.
+          #
+          # @since 2.5.0
           TYPE = 0x0
 
+          # The byte corresponding to this payload type.
+          #
+          # @since 2.5.0
           TYPE_BYTE = TYPE.chr.force_encoding(BSON::BINARY).freeze
 
           # Serializes a section of an OP_MSG, payload type 0.
@@ -217,6 +232,8 @@ module Mongo
           # @param [ true, false ] validating_keys Whether to validate document keys.
           #
           # @return [ String ] Buffer with serialized value.
+          #
+          # @since 2.5.0
           def self.serialize(buffer, value, max_bson_size = nil, validating_keys = BSON::Config.validating_keys?)
             buffer.put_byte(TYPE_BYTE)
             Serializers::Document.serialize(buffer, value, max_bson_size, validating_keys)
@@ -227,15 +244,26 @@ module Mongo
           # @param [ String ] buffer Buffer containing the sections.
           #
           # @return [ Array<BSON::Document> ] Deserialized section.
+          #
+          # @since 2.5.0
           def self.deserialize(buffer)
             BSON::Document.from_bson(buffer)
           end
         end
 
+        # MongoDB wire protocol serialization strategy for a payload 0 type Section of OP_MSG.
+        #
+        # @since 2.5.0
         module PayloadOne
 
+          # The byte identifier for this payload type.
+          #
+          # @since 2.5.0
           TYPE = 0x1
 
+          # The byte corresponding to this payload type.
+          #
+          # @since 2.5.0
           TYPE_BYTE = TYPE.chr.force_encoding(BSON::BINARY).freeze
 
           # Serializes a section of an OP_MSG, payload type 1.
@@ -246,6 +274,8 @@ module Mongo
           # @param [ true, false ] validating_keys Whether to validate document keys.
           #
           # @return [ String ] Buffer with serialized value.
+          #
+          # @since 2.5.0
           def self.serialize(buffer, value, max_bson_size = nil, validating_keys = BSON::Config.validating_keys?)
             buffer.put_byte(TYPE_BYTE)
             start = buffer.length
@@ -262,6 +292,8 @@ module Mongo
           # @param [ String ] buffer Buffer containing the sections.
           #
           # @return [ Array<BSON::Document> ] Deserialized section.
+          #
+          # @since 2.5.0
           def self.deserialize(buffer)
             start_size = buffer.to_s.size
             section_size = buffer.get_int32 # get the size

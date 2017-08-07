@@ -174,6 +174,13 @@ module Mongo
         end
       end
 
+      # Default number returned value for protocol messages.
+      #
+      # @return [ 0 ] Always 0.
+      #
+      # @since 2.5.0
+      def number_returned; 0; end
+
       private
 
       @@request_id = 0

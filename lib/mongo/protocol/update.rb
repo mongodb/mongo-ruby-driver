@@ -71,12 +71,12 @@ module Mongo
       #
       # @since 2.1.0
       def payload
-        {
+        BSON::Document.new(
           command_name: 'update',
           database_name: @database,
           command: upconverter.command,
           request_id: request_id
-        }
+        )
       end
 
       protected
