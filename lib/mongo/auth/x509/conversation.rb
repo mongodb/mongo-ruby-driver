@@ -66,8 +66,8 @@ module Mongo
           login[:user] = user.name if user.name
           if connection && connection.features.op_msg_enabled?
             selector = login
-            selector['$db'] = user.auth_source
-            Protocol::Msg.new([:none], {}, { type: 0, document: selector })
+            selector[Protocol::Msg::DATABASE_IDENTIFIER] = user.auth_source
+            Protocol::Msg.new([:none], {}, selector)
           else
             Protocol::Query.new(
               Auth::EXTERNAL,

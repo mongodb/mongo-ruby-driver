@@ -97,13 +97,10 @@ describe Mongo::Operation::Write::Command::Update do
 
       let(:expected_global_args) do
         {
-          type: 0,
-          document: {
-              update: TEST_COLL,
-              ordered: true,
-              writeConcern: write_concern.options,
-              '$db' => TEST_DB
-          }
+            update: TEST_COLL,
+            ordered: true,
+            writeConcern: write_concern.options,
+            '$db' => TEST_DB
         }
       end
 

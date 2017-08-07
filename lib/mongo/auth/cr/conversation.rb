@@ -58,8 +58,8 @@ module Mongo
           validate!(reply)
           if connection && connection.features.op_msg_enabled?
             selector = LOGIN.merge(user: user.name, nonce: nonce, key: user.auth_key(nonce))
-            selector['$db'] = user.auth_source
-            Protocol::Msg.new([:none], {}, { type: 0, document: selector })
+            selector[Protocol::Msg::DATABASE_IDENTIFIER] = user.auth_source
+            Protocol::Msg.new([:none], {}, selector)
           else
             Protocol::Query.new(
               user.auth_source,

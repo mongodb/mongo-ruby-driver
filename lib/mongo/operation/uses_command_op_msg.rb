@@ -24,8 +24,6 @@ module Mongo
 
       CLUSTER_TIME = '$clusterTime'.freeze
 
-      DB = '$db'.freeze
-
       READ_PREFERENCE = '$readPreference'.freeze
 
       def cluster_time(server)
@@ -41,11 +39,10 @@ module Mongo
         if (cl_time = cluster_time(server))
           selector[CLUSTER_TIME] = cl_time
         end
-        selector[DB] = db_name
+        selector[Protocol::Msg::DATABASE_IDENTIFIER] = db_name
         selector[READ_PREFERENCE] = read.to_doc if read
-        global_args = { type: 0, document: selector }
         flags = unacknowledged_write? ? [:more_to_come] : [:none]
-        Protocol::Msg.new(flags, options, global_args)
+        Protocol::Msg.new(flags, options, selector)
       end
     end
   end

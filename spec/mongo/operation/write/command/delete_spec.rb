@@ -90,13 +90,10 @@ describe Mongo::Operation::Write::Command::Delete do
 
       let(:expected_global_args) do
         {
-            type: 0,
-            document: {
-                delete: TEST_COLL,
-                ordered: true,
-                writeConcern: write_concern.options,
-                '$db' => TEST_DB
-            }
+            delete: TEST_COLL,
+            ordered: true,
+            writeConcern: write_concern.options,
+            '$db' => TEST_DB
         }
       end
 

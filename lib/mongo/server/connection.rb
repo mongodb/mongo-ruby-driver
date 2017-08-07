@@ -42,7 +42,7 @@ module Mongo
       # Ping message as an OP_MSG (server versions >= 3.6).
       #
       # @since 2.5.0
-      PING_OP_MSG_MESSAGE = Protocol::Msg.new([:none], {}, { type: 0, document: PING_OP_MSG })
+      PING_OP_MSG_MESSAGE = Protocol::Msg.new([:none], {}, PING_OP_MSG)
 
       # The ping message as raw bytes.
       #

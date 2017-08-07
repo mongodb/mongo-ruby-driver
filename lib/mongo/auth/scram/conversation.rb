@@ -120,8 +120,8 @@ module Mongo
 
           if connection && connection.features.op_msg_enabled?
             selector = CLIENT_CONTINUE_MESSAGE.merge(payload: client_final_message, conversationId: id)
-            selector['$db'] = user.auth_source
-            Protocol::Msg.new([:none], {}, { type: 0, document: selector })
+            selector[Protocol::Msg::DATABASE_IDENTIFIER] = user.auth_source
+            Protocol::Msg.new([:none], {}, selector)
           else
             Protocol::Query.new(
               user.auth_source,
@@ -150,7 +150,7 @@ module Mongo
           if connection && connection.features.op_msg_enabled?
             selector = CLIENT_CONTINUE_MESSAGE.merge(payload: client_empty_message, conversationId: id)
             selector['$db'] = user.auth_source
-            Protocol::Msg.new([:none], {}, { type: 0, document: selector })
+            Protocol::Msg.new([:none], {}, selector)
           else
             Protocol::Query.new(
               user.auth_source,
@@ -175,8 +175,8 @@ module Mongo
         def start(connection = nil)
           if connection && connection.features.op_msg_enabled?
             selector = CLIENT_FIRST_MESSAGE.merge(payload: client_first_message, mechanism: SCRAM::MECHANISM)
-            selector['$db'] = user.auth_source
-            Protocol::Msg.new([:none], {}, { type: 0, document: selector })
+            selector[Protocol::Msg::DATABASE_IDENTIFIER] = user.auth_source
+            Protocol::Msg.new([:none], {}, selector)
           else
             Protocol::Query.new(
               user.auth_source,

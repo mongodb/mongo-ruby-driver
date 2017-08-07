@@ -24,18 +24,32 @@ module Mongo
     # @since 2.5.0
     class Msg < Message
 
+      # The identifier for the database name to execute the command on.
+      #
+      # @since 2.5.0
+      DATABASE_IDENTIFIER = '$db'.freeze
+
       # Creates a new OP_MSG protocol message
       #
-      # @example
+      # @example Create a OP_MSG wire protocol message
+      #   Msg.new([:more_to_come], {}, { ismaster: 1 }, { type: 1 { sequence: [..] }})
+      #
+      # @param [ Array<Symbol> ] flag_bits The flag bits. Current supported values are
+      #  :more_to_come and :checksum_present.
+      # @param [ Hash ] options The options. There are currently no supported options, this is a
+      #   place-holder for the future.
+      # @param [ BSON::Document, Hash ] global_args The global arguments, becomes a section of payload type 0.
+      # @param [ BSON::Document, Hash ] sections Zero or more sections, in the format { type: 0, document: {..} }
+      #   or { type: 1 sequence: [..] }.
       #
       # @api private
       #
       # @since 2.5.0
-      def initialize(flag_bits, options, command, *sections)
+      def initialize(flag_bits, options, global_args, *sections)
         @flag_bits = flag_bits || [ :none ]
         @options = options
-        @sections = [ command ] + sections
-        @global_args = command[:document]
+        @global_args = global_args
+        @sections = [ { type: 0, document: global_args } ] + sections
         @request_id = nil
         super
       end
@@ -71,8 +85,6 @@ module Mongo
       end
 
       private
-
-      DATABASE_IDENTIFIER = '$db'.freeze
 
       def global_args
         @global_args ||= sections[0]

@@ -64,8 +64,8 @@ module Mongo
         def start(connection = nil)
           if connection && connection.features.op_msg_enabled?
             selector = LOGIN.merge(payload: payload, mechanism: LDAP::MECHANISM)
-            selector['$db'] = Auth::EXTERNAL
-            Protocol::Msg.new([:none], {}, { type: 0, document: selector })
+            selector[Protocol::Msg::DATABASE_IDENTIFIER] = Auth::EXTERNAL
+            Protocol::Msg.new([:none], {}, selector)
           else
             Protocol::Query.new(
               Auth::EXTERNAL,

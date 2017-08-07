@@ -50,11 +50,12 @@ module Mongo
           end
 
           def op_msg(server)
-            args = { insert: coll_name, "$db" => db_name }.merge!(command_options)
+            global_args = { insert: coll_name,
+                            Protocol::Msg::DATABASE_IDENTIFIER => db_name
+                          }.merge!(command_options)
             if (cl_time = cluster_time(server))
-              args[CLUSTER_TIME] = cl_time
+              global_args[CLUSTER_TIME] = cl_time
             end
-            global_args = { type: 0, document: args }
 
             section = { type: 1, sequence: { identifier: IDENTIFIER, documents: documents } }
             flags = unacknowledged_write? ? [:more_to_come] : [:none]
