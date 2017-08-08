@@ -155,7 +155,7 @@ module Mongo
       @monitoring = monitoring
       @event_listeners = Event::Listeners.new
       @options = options.freeze
-      @app_metadata ||= AppMetadata.new(self)
+      @app_metadata = AppMetadata.new(self)
       @update_lock = Mutex.new
       @pool_lock = Mutex.new
       @topology = Topology.initial(seeds, monitoring, options)
