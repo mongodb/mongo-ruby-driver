@@ -194,6 +194,61 @@ describe Mongo::Collection::View::Readable do
         end
       end
     end
+
+    context 'when using sessions', if: sessions_enabled? do
+
+      let(:session) do
+        authorized_client.start_session(causally_consistent_reads: true)
+      end
+
+      after do
+        session.end_session
+      end
+
+      let(:database) do
+        session.database(TEST_DB)
+      end
+
+      let(:collection) do
+        database[TEST_COLL]
+      end
+
+      let(:view) do
+        Mongo::Collection::View.new(collection, selector, options)
+      end
+
+      context 'when causally consistent sessions are used not with a standalone', if: test_causally_consistent? do
+
+        before do
+          view.map_reduce(map, reduce, options).to_a
+        end
+
+        let(:server) do
+          double('server', :standalone? => false)
+        end
+
+        it 'includes the afterClusterTime for subsequent operations' do
+          expect(collection.read_concern(server)['afterClusterTime']).to be_a(BSON::Timestamp)
+        end
+      end
+
+      context 'when the operation time should be saved by the session', if: test_operation_time_saved? do
+
+        let(:after_operation_time) do
+          view.map_reduce(map, reduce, options).first
+          session.instance_variable_get(:@operation_time)
+        end
+
+        let!(:before_operation_time) do
+          session.instance_variable_get(:@operation_time)
+        end
+
+        it 'updates the operation time on the session' do
+          expect(after_operation_time).not_to be_nil
+          expect(after_operation_time).not_to eq(before_operation_time)
+        end
+      end
+    end
   end
 
   describe '#batch_size' do

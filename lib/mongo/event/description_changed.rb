@@ -64,6 +64,7 @@ module Mongo
             updated
           )
         )
+        cluster.update_cluster_time(updated)
         cluster.add_hosts(updated)
         cluster.remove_hosts(updated)
       end

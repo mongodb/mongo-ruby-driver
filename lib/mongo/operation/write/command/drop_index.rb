@@ -32,6 +32,7 @@ module Mongo
           include Specifiable
           include Writable
           include TakesWriteConcern
+          include ClusterTime
 
           private
 
@@ -46,6 +47,7 @@ module Mongo
 
           def message(server)
             sel = update_selector_for_write_concern(selector, server)
+            sel = update_selector_with_cluster_time(sel, server)
             Protocol::Query.new(db_name, Database::COMMAND, sel, options)
           end
         end

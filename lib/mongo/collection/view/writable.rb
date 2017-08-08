@@ -45,11 +45,13 @@ module Mongo
             server = next_primary
             apply_collation!(cmd, server, opts)
 
-            Operation::Commands::Command.new({
-                                              :selector => cmd,
-                                              :db_name => database.name
-                                             }).execute(server).first['value']
-          end
+            with_session do
+              Operation::Commands::Command.new(
+                :selector => cmd,
+                :db_name => database.name
+              ).execute(server)
+            end
+          end.first['value']
         end
 
         # Finds a single document and replaces it.
@@ -112,11 +114,13 @@ module Mongo
             server = next_primary
             apply_collation!(cmd, server, opts)
 
-            Operation::Commands::Command.new({
-                                              :selector => cmd,
-                                              :db_name => database.name
-                                             }).execute(server).first['value']
-          end
+            with_session do
+              Operation::Commands::Command.new(
+                :selector => cmd,
+                :db_name => database.name
+              ).execute(server)
+            end
+          end.first['value']
           value unless value.nil? || value.empty?
         end
 
@@ -213,16 +217,19 @@ module Mongo
 
         def remove(value, opts = {})
           delete_doc = { Operation::Q => filter, Operation::LIMIT => value }
+
           write_with_retry do
             server = next_primary
             apply_collation!(delete_doc, server, opts)
 
-            Operation::Write::Delete.new(
-              :delete => delete_doc,
-              :db_name => collection.database.name,
-              :coll_name => collection.name,
-              :write_concern => collection.write_concern
-            ).execute(server)
+            with_session do
+              Operation::Write::Delete.new(
+                :delete => delete_doc,
+                :db_name => collection.database.name,
+                :coll_name => collection.name,
+                :write_concern => collection.write_concern
+              ).execute(server)
+            end
           end
         end
 
@@ -235,13 +242,15 @@ module Mongo
             server = next_primary
             apply_collation!(update_doc, server, opts)
 
-            Operation::Write::Update.new(
-              :update => update_doc,
-              :db_name => collection.database.name,
-              :coll_name => collection.name,
-              :write_concern => collection.write_concern,
-              :bypass_document_validation => !!opts[:bypass_document_validation]
-            ).execute(server)
+            with_session do
+              Operation::Write::Update.new(
+                :update => update_doc,
+                :db_name => collection.database.name,
+                :coll_name => collection.name,
+                :write_concern => collection.write_concern,
+                :bypass_document_validation => !!opts[:bypass_document_validation]
+              ).execute(server)
+            end
           end
         end
       end

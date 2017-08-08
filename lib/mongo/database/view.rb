@@ -111,7 +111,9 @@ module Mongo
       end
 
       def send_initial_query(server)
-        initial_query_op.execute(server)
+        @database.send(:with_session) do
+          initial_query_op.execute(server)
+        end
       end
     end
   end

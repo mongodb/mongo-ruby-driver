@@ -62,12 +62,15 @@ module Mongo
     # @return [ Hash ] options The options.
     attr_reader :options
 
+    # @return [ Mongo::Session ] The session this database is associated with.
+    #
+    # @since 2.5.0
+    attr_reader :session
+
     # Get cluster, read preference, and write concern from client.
     def_delegators :@client,
                    :cluster,
-                   :read_preference,
-                   :server_selector,
-                   :write_concern
+                   :server_selector
 
     # @return [ Mongo::Server ] Get the primary server from the cluster.
     def_delegators :cluster,
@@ -155,11 +158,11 @@ module Mongo
     def command(operation, opts = {})
       preference = ServerSelector.get(opts[:read] || ServerSelector::PRIMARY)
       server = preference.select_server(cluster)
-      Operation::Commands::Command.new({
+      Operation::Commands::Command.new(
         :selector => operation,
         :db_name => name,
         :read => preference
-      }).execute(server)
+      ).execute(server)
     end
 
     # Drop the database and all its associated information.
@@ -171,12 +174,12 @@ module Mongo
     #
     # @since 2.0.0
     def drop
-      operation = { :dropDatabase => 1 }
-      Operation::Commands::DropDatabase.new({
-                                             selector: operation,
-                                             db_name: name,
-                                             write_concern: write_concern
-                                            }).execute(next_primary)
+      operation = {:dropDatabase => 1}
+      Operation::Commands::DropDatabase.new(
+        selector: operation,
+        db_name: name,
+        write_concern: write_concern
+      ).execute(next_primary)
     end
 
     # Instantiate a new database object.
@@ -250,6 +253,39 @@ module Mongo
     def self.create(client)
       database = Database.new(client, client.options[:database], client.options)
       client.instance_variable_set(:@database, database)
+    end
+
+    # Get the read concern for this database instance.
+    #
+    # @example Get the read preference.
+    #   collection.read_preference
+    #
+    # @return [ Hash ] The read preference.
+    #
+    # @since 2.5.0
+    def read_preference
+      session ? session.read_preference : client.read_preference
+    end
+
+    # Get the write concern for this database instance.
+    #
+    # @example Get the write concern.
+    #   collection.write_concern
+    #
+    # @return [ Mongo::WriteConcern ] The write concern.
+    #
+    # @since 2.5.0
+    def write_concern
+      session ? session.write_concern : client.write_concern
+    end
+
+    private
+
+    def with_session(&block)
+      return yield unless session
+      session.use do
+        yield
+      end
     end
   end
 end

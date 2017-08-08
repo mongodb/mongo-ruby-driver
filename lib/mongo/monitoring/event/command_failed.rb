@@ -42,6 +42,8 @@ module Mongo
         # @return [ Integer ] request_id The request id.
         attr_reader :request_id
 
+        attr_reader :reply
+
         # Create the new event.
         #
         # @example Create the event.
@@ -55,7 +57,7 @@ module Mongo
         # @param [ Float ] duration The duration the command took in seconds.
         #
         # @since 2.1.0
-        def initialize(command_name, database_name, address, request_id, operation_id, message, duration)
+        def initialize(command_name, database_name, address, request_id, operation_id, message, duration, reply)
           @command_name = command_name
           @database_name = database_name
           @address = address
@@ -63,6 +65,7 @@ module Mongo
           @operation_id = operation_id
           @message = message
           @duration = duration
+          @reply = reply
         end
 
         # Create the event from a wire protocol message payload.
@@ -79,7 +82,7 @@ module Mongo
         # @return [ CommandFailed ] The event.
         #
         # @since 2.1.0
-        def self.generate(address, operation_id, payload, message, duration)
+        def self.generate(address, operation_id, payload, message, duration, reply)
           new(
             payload[:command_name],
             payload[:database_name],
@@ -87,7 +90,8 @@ module Mongo
             payload[:request_id],
             operation_id,
             message,
-            duration
+            duration,
+            reply
           )
         end
       end

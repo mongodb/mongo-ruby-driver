@@ -361,7 +361,7 @@ module Mongo
     #
     # @since 2.0.5
     def database_names
-      list_databases.collect{ |info| info[Database::NAME] }
+      list_databases.collect { |info| info[Database::NAME] }
     end
 
     # Get info for each database.
@@ -374,6 +374,21 @@ module Mongo
     # @since 2.0.5
     def list_databases
       use(Database::ADMIN).command(listDatabases: 1).first[Database::DATABASES]
+    end
+
+    # Start a session.
+    #
+    # @param [ Hash ] options The session options.
+    #
+    # @option options [ Hash ] :read The read preference to use in the session.
+    # @option options [ Hash ] :write The write concern to use in the session.
+    # @option options [ Hash ] :read_concern The read concern to use in the session.
+    #
+    # @return [ Mongo::Session ] The session object.
+    #
+    # @since 2.5.0
+    def start_session(options = {})
+      Session.new(self, options)
     end
 
     private

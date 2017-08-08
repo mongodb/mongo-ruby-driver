@@ -90,16 +90,16 @@ module Mongo
 
         private
 
-        def aggregate_spec
-          Builder::Aggregation.new(pipeline, view, options).specification
+        def aggregate_spec(server)
+          Builder::Aggregation.new(pipeline, view, options.merge(server: server)).specification
         end
 
         def new(options)
           Aggregation.new(view, pipeline, options)
         end
 
-        def initial_query_op
-          Operation::Commands::Aggregate.new(aggregate_spec)
+        def initial_query_op(server)
+          Operation::Commands::Aggregate.new(aggregate_spec(server))
         end
 
         def valid_server?(server)
@@ -116,7 +116,7 @@ module Mongo
             server = cluster.next_primary(false)
           end
           validate_collation!(server)
-          initial_query_op.execute(server)
+          view.send(:with_session) { initial_query_op(server).execute(server) }
         end
 
         def validate_collation!(server)

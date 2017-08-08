@@ -62,6 +62,10 @@ module Mongo
       # @since 2.2.0
       RESULT = 'result'.freeze
 
+      OPERATION_TIME = 'operationTime'.freeze
+
+      CLUSTER_TIME = '$clusterTime'.freeze
+
       # @return [ Array<Protocol::Reply> ] replies The wrapped wire protocol replies.
       attr_reader :replies
 
@@ -253,7 +257,7 @@ module Mongo
       #
       # @since 2.0.0
       def validate!
-        !successful? ? raise(Error::OperationFailure.new(parser.message)) : self
+        !successful? ? raise(Error::OperationFailure.new(parser.message, self)) : self
       end
 
       # Get the number of documents written by the server.
@@ -272,6 +276,32 @@ module Mongo
         end
       end
       alias :n :written_count
+
+      # Get the operation time reported in the server response.
+      #
+      # @example Get the cluster time.
+      #   result.operation_time
+      #
+      # @return [ Object ] The operation time value.
+      #
+      # @since 2.5.0
+      def operation_time
+        if replies.first && reply.documents[0]
+          reply.documents[0][OPERATION_TIME]
+        end
+      end
+
+      # Get the number of cluster time reported in the server response.
+      #
+      # @example Get the cluster time.
+      #   result.cluster_time
+      #
+      # @return [ BSON::Document ] The cluster time document.
+      #
+      # @since 2.5.0
+      def cluster_time
+        first_document[CLUSTER_TIME] if first_document
+      end
 
       private
 

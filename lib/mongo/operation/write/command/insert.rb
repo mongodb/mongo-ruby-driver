@@ -31,6 +31,7 @@ module Mongo
         class Insert
           include Specifiable
           include Writable
+          include ClusterTime
 
           private
 
@@ -56,7 +57,8 @@ module Mongo
           # @since 2.2.5
           def message(server)
             opts = options.merge(validating_keys: true)
-            Protocol::Query.new(db_name, Database::COMMAND, selector, opts)
+            sel = update_selector_with_cluster_time(selector, server)
+            Protocol::Query.new(db_name, Database::COMMAND, sel, opts)
           end
         end
       end

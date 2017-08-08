@@ -44,6 +44,11 @@ module Mongo
     # @return [ Hash ] The collection options.
     attr_reader :options
 
+    # @return [ Mongo::Session ] The session this collection is associated with.
+    #
+    # @since 2.5.0
+    attr_reader :session
+
     # Get client, cluster, read preference, and write concern from client.
     def_delegators :database, :client, :cluster
 
@@ -86,6 +91,7 @@ module Mongo
       @database = database
       @name = name.to_s.freeze
       @options = options.freeze
+      @session = database.session
     end
 
     # Get the read concern for this collection instance.
@@ -96,8 +102,12 @@ module Mongo
     # @return [ Hash ] The read concern.
     #
     # @since 2.2.0
-    def read_concern
-      @read_concern ||= options[:read_concern]
+    def read_concern(server = nil)
+      if session
+        session.read_concern(options[:read_concern], server)
+      else
+        options[:read_concern]
+      end
     end
 
     # Get the server selector on this collection.
@@ -184,11 +194,11 @@ module Mongo
       if (options[:collation] || options[Operation::COLLATION]) && !server.features.collation_enabled?
         raise Error::UnsupportedCollation.new
       end
-      Operation::Commands::Create.new({
-                                        selector: operation,
-                                        db_name: database.name,
-                                        write_concern: write_concern
-                                      }).execute(server)
+      Operation::Commands::Create.new(
+        selector: operation,
+        db_name: database.name,
+        write_concern: write_concern
+      ).execute(server)
     end
 
     # Drop the collection. Will also drop all indexes associated with the
@@ -203,12 +213,11 @@ module Mongo
     #
     # @since 2.0.0
     def drop
-      Operation::Commands::Drop.new({
-                                      selector: { :drop => name },
-                                      db_name: database.name,
-                                      write_concern: write_concern
-                                    }).execute(next_primary)
-
+      Operation::Commands::Drop.new(
+        selector: {:drop => name},
+        db_name: database.name,
+        write_concern: write_concern
+      ).execute(next_primary)
     rescue Error::OperationFailure => ex
       raise ex unless ex.message =~ /ns not found/
       false
@@ -362,16 +371,18 @@ module Mongo
     #
     # @since 2.0.0
     def insert_one(document, options = {})
-      write_with_retry do
-        Operation::Write::Insert.new(
-          :documents => [ document ],
-          :db_name => database.name,
-          :coll_name => name,
-          :write_concern => write_concern,
-          :bypass_document_validation => !!options[:bypass_document_validation],
-          :options => options,
-          :id_generator => client.options[:id_generator]
-        ).execute(next_primary)
+      with_session do
+        write_with_retry do
+          Operation::Write::Insert.new(
+            :documents => [ document ],
+            :db_name => database.name,
+            :coll_name => name,
+            :write_concern => write_concern,
+            :bypass_document_validation => !!options[:bypass_document_validation],
+            :options => options,
+            :id_generator => client.options[:id_generator]
+          ).execute(next_primary)
+        end
       end
     end
 
@@ -636,6 +647,12 @@ module Mongo
     # @since 2.0.0
     def namespace
       "#{database.name}.#{name}"
+    end
+
+    private
+
+    def with_session(&block)
+      database.send(:with_session, &block)
     end
   end
 end

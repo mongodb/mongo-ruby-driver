@@ -14,6 +14,10 @@ describe Mongo::Collection do
     authorized_client[:validating]
   end
 
+  let(:server) do
+    authorized_client.cluster.next_primary
+  end
+
   describe '#==' do
 
     let(:database) do
@@ -290,6 +294,201 @@ describe Mongo::Collection do
 
         it 'returns nil' do
           expect(collection.read_preference).to be_nil
+        end
+      end
+    end
+
+    context 'when there is a session associated with the collection', if: sessions_enabled? do
+
+      let(:collection) do
+        authorized_client.start_session(options).database(TEST_DB)[TEST_COLL, coll_options]
+      end
+
+      context 'when the collection has a read preference' do
+
+        let(:coll_options) do
+         { read: { mode: :primary_preferred} }
+        end
+
+        context 'when the session has a read preference in the options' do
+
+          let(:options) do
+            { read: { mode: :secondary } }
+          end
+
+          it 'uses the read preference of the collection' do
+            expect(collection.read_preference).to eq(coll_options[:read])
+          end
+        end
+
+        context 'when the session does not have a read preference in the options' do
+
+          let(:options) do
+            { }
+          end
+
+          it 'uses the read preference of the collection' do
+            expect(collection.read_preference).to eq(coll_options[:read])
+          end
+        end
+      end
+
+      context 'when the database has a read preference' do
+
+        let(:collection) do
+          authorized_client.with(client_options).start_session(options).database(TEST_DB)[TEST_COLL]
+        end
+
+        let(:client_options) do
+          { read: { mode: :primary_preferred} }
+        end
+
+        context 'when the session has a read preference in the options' do
+
+          let(:options) do
+            { read: { mode: :secondary } }
+          end
+
+          it 'uses the read preference of the session' do
+            expect(collection.read_preference).to eq(options[:read])
+          end
+        end
+
+        context 'when the session does not have a read preference in the options' do
+
+          let(:options) do
+            { }
+          end
+
+          it 'uses the read preference of the database' do
+            expect(collection.read_preference).to eq(BSON::Document.new(client_options[:read]))
+          end
+        end
+      end
+    end
+  end
+
+  describe '#write_concern' do
+
+    let(:client) do
+      Mongo::Client.new([default_address.host])
+    end
+
+    let(:collection) do
+      described_class.new(client.database, :users, options)
+    end
+
+    context 'when a write concern is set in the options' do
+
+      let(:options) do
+        { write: { w: 2 } }
+      end
+
+      it 'returns the write concern' do
+        expect(collection.write_concern.options).to eq(Mongo::WriteConcern.get(options[:write]).options)
+      end
+    end
+
+    context 'when a write concern is not set in the options' do
+
+      let(:options) { {} }
+
+      context 'when the database has a write concern set' do
+
+        let(:client) do
+          Mongo::Client.new([default_address.host], write: { w: 2 })
+        end
+
+        let(:collection) do
+          described_class.new(client.database, :users, options)
+        end
+
+        it 'returns the database write concern' do
+          expect(collection.write_concern.options).to eq(Mongo::WriteConcern.get(w: 2).options)
+        end
+      end
+
+      context 'when the database does not have a write concern' do
+
+        let(:client) do
+          Mongo::Client.new([default_address.host])
+        end
+
+        let(:collection) do
+          described_class.new(client.database, :users, options)
+        end
+
+        it 'returns nil' do
+          expect(collection.write_concern).to be_nil
+        end
+      end
+    end
+
+    context 'when there is a session associated with the collection', if: sessions_enabled? do
+
+      let(:collection) do
+        authorized_client.start_session(options).database(TEST_DB)[TEST_COLL, coll_options]
+      end
+
+      context 'when the collection has a write concern' do
+
+        let(:coll_options) do
+          { write: { w:  2 } }
+        end
+
+        context 'when the session has a write concern in the options' do
+
+          let(:options) do
+            { write: { w: 3 } }
+          end
+
+          it 'uses the write concern of the collection' do
+            expect(collection.write_concern.options).to eq(Mongo::WriteConcern.get(coll_options[:write]).options)
+          end
+        end
+
+        context 'when the session does not have a write concern in the options' do
+
+          let(:options) do
+            { }
+          end
+
+          it 'uses the write concern of the collection' do
+            expect(collection.write_concern.options).to eq(Mongo::WriteConcern.get(w: 2).options)
+          end
+        end
+      end
+
+      context 'when the database has a write concern' do
+
+        let(:client) do
+          authorized_client.with(write: { w: 2 })
+        end
+
+        let(:collection) do
+          client.start_session(options).database(TEST_DB)[TEST_COLL]
+        end
+
+        context 'when the session has a write concern in the options' do
+
+          let(:options) do
+            { write: { w: 3 } }
+          end
+
+          it 'uses the write concern of the session' do
+            expect(collection.write_concern.options).to eq(Mongo::WriteConcern.get(w: 3).options)
+          end
+        end
+
+        context 'when the session does not have a write concern in the options' do
+
+          let(:options) do
+            { }
+          end
+
+          it 'uses the write concern of the database' do
+            expect(collection.write_concern.options).to eq(Mongo::WriteConcern.get(w: 2).options)
+          end
         end
       end
     end
@@ -699,6 +898,75 @@ describe Mongo::Collection do
 
   describe '#find' do
 
+    context 'when causally consistent sessions are used not with a standalone', if: test_causally_consistent? do
+
+      let(:session) do
+        authorized_client.start_session(causally_consistent_reads: true)
+      end
+
+      after do
+        session.end_session
+      end
+
+      let(:database) do
+        session.database(TEST_DB)
+      end
+
+      let(:collection) do
+        described_class.new(database, TEST_COLL)
+      end
+
+      before do
+        collection.find({}, limit: 1).first
+      end
+
+      it 'includes the afterClusterTime for subsequent operations' do
+        expect(collection.read_concern(server)['afterClusterTime']).to be_a(BSON::Timestamp)
+      end
+    end
+
+    context 'when causally consistent sessions are used with a standalone', if: (standalone? && sessions_enabled?) do
+
+      let(:session) do
+        authorized_client.start_session(causally_consistent_reads: true)
+      end
+
+      after do
+        session.end_session
+      end
+
+      let(:database) do
+        session.database(TEST_DB)
+      end
+
+      let(:collection) do
+        described_class.new(database, TEST_COLL)
+      end
+
+      let(:subscriber) do
+        session.client.instance_variable_get(:@monitoring).subscribers[Mongo::Monitoring::COMMAND][-1]
+      end
+
+      around do |example|
+        with_command_subscriber(session.client) do
+          example.run
+        end
+      end
+
+      before do
+        collection.find({}, limit: 1).first
+        collection.count
+      end
+
+      let(:command) do
+        subscriber.instance_variable_get(:@started_events)['count'].command
+      end
+
+      it 'includes the afterClusterTime for subsequent operations' do
+        expect(command['$clusterTime']).to be_nil
+      end
+    end
+
     context 'when provided a filter' do
 
       let(:view) do
@@ -1069,6 +1337,52 @@ describe Mongo::Collection do
         end
       end
     end
+
+    context 'when causally consistent sessions are used not with a standalone', if: test_causally_consistent? do
+
+      let(:session) do
+        authorized_client.start_session(causally_consistent_reads: true)
+      end
+
+      after do
+        session.end_session
+      end
+
+      let(:database) do
+        session.database(TEST_DB)
+      end
+
+      let(:collection) do
+        described_class.new(database, TEST_COLL)
+      end
+
+      before do
+        collection.insert_many([ { a: 1 }])
+      end
+
+      it 'includes the afterClusterTime for subsequent operations' do
+        expect(collection.read_concern(server)['afterClusterTime']).to be_a(BSON::Timestamp)
+      end
+
+      context 'when unacknowledged writes are used' do
+
+        let(:collection) do
+          described_class.new(database, TEST_COLL, write: { w: 0 })
+        end
+
+        let!(:before_operation_time) do
+          session.instance_variable_get(:@operation_time)
+        end
+
+        let(:after_operation_time) do
+          session.instance_variable_get(:@operation_time)
+        end
+
+        it 'does not update the operation time' do
+          expect(after_operation_time).to eq(before_operation_time)
+        end
+      end
+    end
   end
 
   describe '#insert_one' do
@@ -1197,6 +1511,33 @@ describe Mongo::Collection do
         end
       end
     end
+
+    context 'when causally consistent sessions are used not with a standalone', if: test_causally_consistent? do
+
+      let(:session) do
+        authorized_client.start_session(causally_consistent_reads: true)
+      end
+
+      after do
+        session.end_session
+      end
+
+      let(:database) do
+        session.database(TEST_DB)
+      end
+
+      let(:collection) do
+        described_class.new(database, TEST_COLL)
+      end
+
+      before do
+        collection.insert_one(a: 1)
+      end
+
+      it 'includes the afterClusterTime for subsequent operations' do
+        expect(collection.read_concern(server)['afterClusterTime']).to be_a(BSON::Timestamp)
+      end
+    end
   end
 
   describe '#inspect' do
@@ -1319,6 +1660,33 @@ describe Mongo::Collection do
         end
       end
     end
+
+    context 'when causally consistent sessions are used not with a standalone', if: test_causally_consistent? do
+
+      let(:session) do
+        authorized_client.start_session(causally_consistent_reads: true)
+      end
+
+      after do
+        session.end_session
+      end
+
+      let(:database) do
+        session.database(TEST_DB)
+      end
+
+      let(:collection) do
+        described_class.new(database, TEST_COLL)
+      end
+
+      before do
+        collection.aggregate([]).first
+      end
+
+      it 'includes the afterClusterTime for subsequent operations' do
+        expect(collection.read_concern(server)['afterClusterTime']).to be_a(BSON::Timestamp)
+      end
+    end
   end
 
   describe '#count' do
@@ -1387,6 +1755,33 @@ describe Mongo::Collection do
             end
           end
         end
+      end
+    end
+
+    context 'when causally consistent sessions are used not with a standalone', if: test_causally_consistent? do
+
+      let(:session) do
+        authorized_client.start_session(causally_consistent_reads: true)
+      end
+
+      after do
+        session.end_session
+      end
+
+      let(:database) do
+        session.database(TEST_DB)
+      end
+
+      let(:collection) do
+        described_class.new(database, TEST_COLL)
+      end
+
+      before do
+        collection.count
+      end
+
+      it 'includes the afterClusterTime for subsequent operations' do
+        expect(collection.read_concern(server)['afterClusterTime']).to be_a(BSON::Timestamp)
       end
     end
   end
@@ -1477,6 +1872,33 @@ describe Mongo::Collection do
 
       it 'does not apply the collation to the distinct' do
         expect(result).to eq(['bang', 'BANG'])
+      end
+    end
+
+    context 'when causally consistent sessions are used not with a standalone', if: test_causally_consistent? do
+
+      let(:session) do
+        authorized_client.start_session(causally_consistent_reads: true)
+      end
+
+      after do
+        session.end_session
+      end
+
+      let(:database) do
+        session.database(TEST_DB)
+      end
+
+      let(:collection) do
+        described_class.new(database, TEST_COLL)
+      end
+
+      before do
+        collection.distinct(:field)
+      end
+
+      it 'includes the afterClusterTime for subsequent operations' do
+        expect(collection.read_concern(server)['afterClusterTime']).to be_a(BSON::Timestamp)
       end
     end
   end
@@ -1632,6 +2054,33 @@ describe Mongo::Collection do
         expect(authorized_collection.find(name: 'bang').count).to eq(1)
       end
     end
+
+    context 'when causally consistent sessions are used not with a standalone', if: test_causally_consistent? do
+
+      let(:session) do
+        authorized_client.start_session(causally_consistent_reads: true)
+      end
+
+      after do
+        session.end_session
+      end
+
+      let(:database) do
+        session.database(TEST_DB)
+      end
+
+      let(:collection) do
+        described_class.new(database, TEST_COLL)
+      end
+
+      before do
+        collection.delete_one({ a: 1 })
+      end
+
+      it 'includes the afterClusterTime for subsequent operations' do
+        expect(collection.read_concern(server)['afterClusterTime']).to be_a(BSON::Timestamp)
+      end
+    end
   end
 
   describe '#delete_many' do
@@ -1771,6 +2220,33 @@ describe Mongo::Collection do
         expect(authorized_collection.find(name: 'bang').count).to eq(2)
       end
     end
+
+    context 'when causally consistent sessions are used not with a standalone', if: test_causally_consistent? do
+
+      let(:session) do
+        authorized_client.start_session(causally_consistent_reads: true)
+      end
+
+      after do
+        session.end_session
+      end
+
+      let(:database) do
+        session.database(TEST_DB)
+      end
+
+      let(:collection) do
+        described_class.new(database, TEST_COLL)
+      end
+
+      before do
+        collection.delete_many({ a: 1 })
+      end
+
+      it 'includes the afterClusterTime for subsequent operations' do
+        expect(collection.read_concern(server)['afterClusterTime']).to be_a(BSON::Timestamp)
+      end
+    end
   end
 
   describe '#parallel_scan', unless: sharded? do
@@ -1896,6 +2372,33 @@ describe Mongo::Collection do
             result
           }.to raise_error(Mongo::Error::OperationFailure)
         end
+      end
+    end
+
+    context 'when causally consistent sessions are used not with a standalone', if: test_causally_consistent? do
+
+      let(:session) do
+        authorized_client.start_session(causally_consistent_reads: true)
+      end
+
+      after do
+        session.end_session
+      end
+
+      let(:database) do
+        session.database(TEST_DB)
+      end
+
+      let(:collection) do
+        described_class.new(database, TEST_COLL)
+      end
+
+      before do
+        collection.parallel_scan(2)
+      end
+
+      it 'includes the afterClusterTime for subsequent operations' do
+        expect(collection.read_concern(server)['afterClusterTime']).to be_a(BSON::Timestamp)
       end
     end
   end
@@ -2162,6 +2665,33 @@ describe Mongo::Collection do
       it 'does not apply the collation' do
         expect(result.written_count).to eq(0)
         expect(authorized_collection.find(name: 'bang').count).to eq(1)
+      end
+    end
+
+    context 'when causally consistent sessions are used not with a standalone', if: test_causally_consistent? do
+
+      let(:session) do
+        authorized_client.start_session(causally_consistent_reads: true)
+      end
+
+      after do
+        session.end_session
+      end
+
+      let(:database) do
+        session.database(TEST_DB)
+      end
+
+      let(:collection) do
+        described_class.new(database, TEST_COLL)
+      end
+
+      before do
+        collection.replace_one({}, {})
+      end
+
+      it 'includes the afterClusterTime for subsequent operations' do
+        expect(collection.read_concern(server)['afterClusterTime']).to be_a(BSON::Timestamp)
       end
     end
   end
@@ -2436,6 +2966,33 @@ describe Mongo::Collection do
         expect(result.written_count).to eq(0)
       end
     end
+
+    context 'when causally consistent sessions are used not with a standalone', if: test_causally_consistent? do
+
+      let(:session) do
+        authorized_client.start_session(causally_consistent_reads: true)
+      end
+
+      after do
+        session.end_session
+      end
+
+      let(:database) do
+        session.database(TEST_DB)
+      end
+
+      let(:collection) do
+        described_class.new(database, TEST_COLL)
+      end
+
+      before do
+        collection.update_many({}, { '$set' => { a: 1 } })
+      end
+
+      it 'includes the afterClusterTime for subsequent operations' do
+        expect(collection.read_concern(server)['afterClusterTime']).to be_a(BSON::Timestamp)
+      end
+    end
   end
 
   describe '#update_one' do
@@ -2706,6 +3263,33 @@ describe Mongo::Collection do
         expect(result.written_count).to eq(0)
       end
     end
+
+    context 'when causally consistent sessions are used not with a standalone', if: test_causally_consistent? do
+
+      let(:session) do
+        authorized_client.start_session(causally_consistent_reads: true)
+      end
+
+      after do
+        session.end_session
+      end
+
+      let(:database) do
+        session.database(TEST_DB)
+      end
+
+      let(:collection) do
+        described_class.new(database, TEST_COLL)
+      end
+
+      before do
+        collection.update_one({}, { '$set' => { a: 1 } })
+      end
+
+      it 'includes the afterClusterTime for subsequent operations' do
+        expect(collection.read_concern(server)['afterClusterTime']).to be_a(BSON::Timestamp)
+      end
+    end
   end
 
   describe '#find_one_and_delete' do
@@ -2893,6 +3477,33 @@ describe Mongo::Collection do
 
       it 'does not apply the collation' do
         expect(result).to be_nil
+      end
+    end
+
+    context 'when causally consistent sessions are used not with a standalone', if: test_causally_consistent? do
+
+      let(:session) do
+        authorized_client.start_session(causally_consistent_reads: true)
+      end
+
+      after do
+        session.end_session
+      end
+
+      let(:database) do
+        session.database(TEST_DB)
+      end
+
+      let(:collection) do
+        described_class.new(database, TEST_COLL)
+      end
+
+      before do
+        collection.find_one_and_delete({})
+      end
+
+      it 'includes the afterClusterTime for subsequent operations' do
+        expect(collection.read_concern(server)['afterClusterTime']).to be_a(BSON::Timestamp)
       end
     end
   end
@@ -3204,6 +3815,33 @@ describe Mongo::Collection do
         expect(result).to be_nil
       end
     end
+
+    context 'when causally consistent sessions are used not with a standalone', if: test_causally_consistent? do
+
+      let(:session) do
+        authorized_client.start_session(causally_consistent_reads: true)
+      end
+
+      after do
+        session.end_session
+      end
+
+      let(:database) do
+        session.database(TEST_DB)
+      end
+
+      let(:collection) do
+        described_class.new(database, TEST_COLL)
+      end
+
+      before do
+        collection.find_one_and_update({}, { '$set' => { a: 1 } })
+      end
+
+      it 'includes the afterClusterTime for subsequent operations' do
+        expect(collection.read_concern(server)['afterClusterTime']).to be_a(BSON::Timestamp)
+      end
+    end
   end
 
   describe '#find_one_and_replace' do
@@ -3485,6 +4123,393 @@ describe Mongo::Collection do
 
       it 'does not apply the collation' do
         expect(result).to be_nil
+      end
+    end
+
+    context 'when causally consistent sessions are used not with a standalone', if: test_causally_consistent? do
+
+      let(:session) do
+        authorized_client.start_session(causally_consistent_reads: true)
+      end
+
+      after do
+        session.end_session
+      end
+
+      let(:database) do
+        session.database(TEST_DB)
+      end
+
+      let(:collection) do
+        described_class.new(database, TEST_COLL)
+      end
+
+      before do
+        collection.find_one_and_replace({}, { })
+      end
+
+      it 'includes the afterClusterTime for subsequent operations' do
+        expect(collection.read_concern(server)['afterClusterTime']).to be_a(BSON::Timestamp)
+      end
+    end
+  end
+
+  describe '#session', if: sessions_enabled? do
+
+    context 'when the collection is created via a session' do
+
+      let(:session) do
+        authorized_client.start_session
+      end
+
+      let(:collection) do
+        session.database(TEST_DB)[TEST_COLL]
+      end
+
+      after do
+        session.end_session
+      end
+
+      it 'provides an accessor for the session' do
+        expect(collection.session).to be(session)
+      end
+
+      context 'when an operation is called against a non-standalone', if: test_operation_time_saved? do
+
+        shared_examples_for 'a session saving operation time' do
+
+          let!(:before_operation_time) do
+            session.instance_variable_get(:@operation_time)
+          end
+
+          it 'updates the operation time on the session' do
+            expect(after_operation_time).not_to be_nil
+            expect(after_operation_time).not_to eq(before_operation_time)
+          end
+        end
+
+        context 'when the operation is a find' do
+
+          let(:after_operation_time) do
+            collection.find({}, limit: 1).first
+            session.instance_variable_get(:@operation_time)
+          end
+
+          it_behaves_like 'a session saving operation time'
+
+          context 'when the operation fails' do
+
+            let(:after_operation_time) do
+              begin; collection.find({ '$_id' => 1 }, limit: 1).first; rescue; end
+              session.instance_variable_get(:@operation_time)
+            end
+
+            it_behaves_like 'a session saving operation time'
+          end
+        end
+
+        context 'when the operation is aggregate' do
+
+          let(:after_operation_time) do
+            collection.aggregate([]).first
+            session.instance_variable_get(:@operation_time)
+          end
+
+          it_behaves_like 'a session saving operation time'
+
+          context 'when the operation fails' do
+
+            let(:after_operation_time) do
+              begin; collection.aggregate([ { '$invalid' => 1 }]).first; rescue; end
+              session.instance_variable_get(:@operation_time)
+            end
+
+            it_behaves_like 'a session saving operation time'
+          end
+        end
+
+        context 'when the operation is count' do
+
+          let(:after_operation_time) do
+            collection.count
+            session.instance_variable_get(:@operation_time)
+          end
+
+          it_behaves_like 'a session saving operation time'
+
+          context 'when the operation fails' do
+
+            let(:after_operation_time) do
+              begin; collection.count('$_id' => 1); rescue; end
+              session.instance_variable_get(:@operation_time)
+            end
+
+            it_behaves_like 'a session saving operation time'
+          end
+        end
+
+        context 'when the operation is distinct' do
+
+          let(:after_operation_time) do
+            collection.distinct(:field)
+            session.instance_variable_get(:@operation_time)
+          end
+
+          it_behaves_like 'a session saving operation time'
+
+          context 'when the operation fails' do
+
+            let(:after_operation_time) do
+              begin; collection.distinct(:field, { '$_id' => 1}); rescue; end
+              session.instance_variable_get(:@operation_time)
+            end
+
+            it_behaves_like 'a session saving operation time'
+          end
+        end
+
+        context 'when the operation is insert_one' do
+
+          let(:after_operation_time) do
+            collection.insert_one(a: 1)
+            session.instance_variable_get(:@operation_time)
+          end
+
+          it_behaves_like 'a session saving operation time'
+
+          context 'when the operation fails' do
+
+            let(:after_operation_time) do
+              collection.insert_one('_id' => 1)
+              begin; collection.insert_one('_id' => 1); rescue; end
+              session.instance_variable_get(:@operation_time)
+            end
+
+            it_behaves_like 'a session saving operation time'
+          end
+        end
+
+        context 'when the operation is insert_many' do
+
+          let(:after_operation_time) do
+            collection.insert_many([ { a: 1 }])
+            session.instance_variable_get(:@operation_time)
+          end
+
+          it_behaves_like 'a session saving operation time'
+
+          context 'when the operation fails' do
+
+            let(:after_operation_time) do
+              collection.insert_many([ { _id: 1 }])
+              begin; collection.insert_many([ { _id: 1 }]); rescue; end
+              session.instance_variable_get(:@operation_time)
+            end
+
+            it_behaves_like 'a session saving operation time'
+          end
+        end
+
+        context 'when the operation is bulk_write' do
+
+          let(:after_operation_time) do
+            collection.bulk_write([ { insert_one: { a: 1 } }])
+            session.instance_variable_get(:@operation_time)
+          end
+
+          it_behaves_like 'a session saving operation time'
+
+          context 'when the operation fails' do
+
+            let(:after_operation_time) do
+              collection.bulk_write([ { insert_one: { _id: 1 } }])
+              begin; collection.bulk_write([ { insert_one: { _id: 1 } }]); rescue; end
+              session.instance_variable_get(:@operation_time)
+            end
+
+            it_behaves_like 'a session saving operation time'
+          end
+        end
+
+        context 'when the operation is delete_one' do
+
+          let(:after_operation_time) do
+            collection.delete_one({})
+            session.instance_variable_get(:@operation_time)
+          end
+
+          it_behaves_like 'a session saving operation time'
+
+          context 'when the operation fails' do
+
+            let(:after_operation_time) do
+              begin; collection.delete_one({ '$_id' => 1}); rescue; end
+              session.instance_variable_get(:@operation_time)
+            end
+
+            it_behaves_like 'a session saving operation time'
+          end
+        end
+
+        context 'when the operation is delete_many' do
+
+          let(:after_operation_time) do
+            collection.delete_many
+            session.instance_variable_get(:@operation_time)
+          end
+
+          it_behaves_like 'a session saving operation time'
+
+          context 'when the operation fails' do
+
+            let(:after_operation_time) do
+              begin; collection.delete_many({ '$_id' => 1}); rescue; end
+              session.instance_variable_get(:@operation_time)
+            end
+
+            it_behaves_like 'a session saving operation time'
+          end
+        end
+
+        context 'when the operation is parallel_scan' do
+
+          let(:after_operation_time) do
+            collection.parallel_scan(2)
+            session.instance_variable_get(:@operation_time)
+          end
+
+          it_behaves_like 'a session saving operation time'
+
+          context 'when the operation fails' do
+
+            let(:after_operation_time) do
+              begin; collection.parallel_scan(0); rescue; end
+              session.instance_variable_get(:@operation_time)
+            end
+
+            it_behaves_like 'a session saving operation time'
+          end
+        end
+
+        context 'when the operation is replace_one' do
+
+          let(:after_operation_time) do
+            collection.replace_one({ a: 1 }, { b: 1 })
+            session.instance_variable_get(:@operation_time)
+          end
+
+          it_behaves_like 'a session saving operation time'
+
+          context 'when the operation fails' do
+
+            let(:after_operation_time) do
+              begin; collection.replace_one({ '$_id' => 1 }, { b: 1 }); rescue; end
+              session.instance_variable_get(:@operation_time)
+            end
+
+            it_behaves_like 'a session saving operation time'
+          end
+        end
+
+        context 'when the operation is update_many' do
+
+          let(:after_operation_time) do
+            collection.update_many({ a: 1 }, { '$set' => { a: 2 }})
+            session.instance_variable_get(:@operation_time)
+          end
+
+          it_behaves_like 'a session saving operation time'
+
+          context 'when the operation fails' do
+
+            let(:after_operation_time) do
+              begin; collection.update_many({ '$_id' => 1 }, { '$set' => { a: 2 }}); rescue; end
+              session.instance_variable_get(:@operation_time)
+            end
+
+            it_behaves_like 'a session saving operation time'
+          end
+        end
+
+        context 'when the operation is update_one' do
+
+          let(:after_operation_time) do
+            collection.update_one({ a: 1 }, { '$set' => { a: 2 }})
+            session.instance_variable_get(:@operation_time)
+          end
+
+          it_behaves_like 'a session saving operation time'
+
+          context 'when the operation fails' do
+
+            let(:after_operation_time) do
+              begin; collection.update_one({ '$_id' => 1 }, { '$set' => { a: 2 }}); rescue; end
+              session.instance_variable_get(:@operation_time)
+            end
+
+            it_behaves_like 'a session saving operation time'
+          end
+        end
+
+        context 'when the operation is find_one_and_delete' do
+
+          let(:after_operation_time) do
+            collection.find_one_and_delete({})
+            session.instance_variable_get(:@operation_time)
+          end
+
+          it_behaves_like 'a session saving operation time'
+
+          context 'when the operation fails' do
+
+            let(:after_operation_time) do
+              begin; collection.find_one_and_delete('$_id' => 1); rescue; end
+              session.instance_variable_get(:@operation_time)
+            end
+
+            it_behaves_like 'a session saving operation time'
+          end
+        end
+
+        context 'when the operation is find_one_and_update' do
+
+          let(:after_operation_time) do
+            collection.find_one_and_update({ a: 1 }, { '$set' => { a: 2 } })
+            session.instance_variable_get(:@operation_time)
+          end
+
+          it_behaves_like 'a session saving operation time'
+
+          context 'when the operation fails' do
+
+            let(:after_operation_time) do
+              begin; collection.find_one_and_update({ '$_id' => 1 }, {}); rescue; end
+              session.instance_variable_get(:@operation_time)
+            end
+
+            it_behaves_like 'a session saving operation time'
+          end
+        end
+
+        context 'when the operation is find_one_and_replace' do
+
+          let(:after_operation_time) do
+            collection.find_one_and_replace({ a: 1 }, { a: 2 })
+            session.instance_variable_get(:@operation_time)
+          end
+
+          it_behaves_like 'a session saving operation time'
+
+          context 'when the operation fails' do
+
+            let(:after_operation_time) do
+              begin; collection.find_one_and_replace({ '$_id' => 1 }, {}); rescue; end
+              session.instance_variable_get(:@operation_time)
+            end
+
+            it_behaves_like 'a session saving operation time'
+          end
+        end
       end
     end
   end
