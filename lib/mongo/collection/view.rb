@@ -131,8 +131,6 @@ module Mongo
       # @option options :sort [ Hash ] The key and direction pairs used to sort the
       #   results.
       # @option options [ Hash ] :collation The collation to use.
-      # @option options [ Array ] :array_filters A set of filters specifying to which array elements
-      #   an update should apply.
       #
       # @since 2.0.0
       def initialize(collection, filter = {}, options = {})

@@ -29,7 +29,7 @@ module Mongo
       attr_reader :has_collation
 
       # @return [ true, false ] has_array_filters Whether one or more operations specifies an array
-      # filters options.
+      # filters option.
       attr_reader :has_array_filters
 
       # Create the ordered combiner.

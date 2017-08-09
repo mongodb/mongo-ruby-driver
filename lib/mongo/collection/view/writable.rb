@@ -21,6 +21,8 @@ module Mongo
       # @since 2.0.0
       module Writable
 
+        ARRAY_FILTERS = 'array_filters'.freeze
+
         # Finds a single document in the database via findAndModify and deletes
         # it, returning the original document.
         #
@@ -255,7 +257,7 @@ module Mongo
         end
 
         def apply_array_filters!(doc, server, opts = {})
-          if filters = opts[:array_filters] || opts[:arrayFilters] || opts['array_filters'] || opts['arrayFilters']
+          if filters = opts[:array_filters] || opts[ARRAY_FILTERS]
             validate_array_filters!(server, filters)
             doc[:arrayFilters] = filters
           end

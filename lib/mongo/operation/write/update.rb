@@ -65,7 +65,7 @@ module Mongo
         end
 
         def has_array_filters?
-          update[:array_filters] || update[:arrayFilters] || update['arrayFilters'] || update[Operation::ARRAY_FILTERS]
+          update[Operation::ARRAY_FILTERS]
         end
 
         def has_collation?
@@ -77,15 +77,12 @@ module Mongo
           flags << :multi_update if update[Operation::MULTI]
           flags << :upsert if update[Operation::UPSERT]
 
-          options = flags.empty? ? {} : { flags: flags }
-          options[:array_filters] = update[:array_filters] if has_array_filters?
-
           Protocol::Update.new(
             db_name,
             coll_name,
             update[Operation::Q],
             update[Operation::U],
-            options
+            flags.empty? ? {} : { flags: flags }
           )
         end
       end

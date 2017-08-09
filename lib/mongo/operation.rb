@@ -60,6 +60,6 @@ module Mongo
     # The array filters field constant.
     #
     # @since 2.5.0
-    ARRAY_FILTERS = 'array_filters'.freeze
+    ARRAY_FILTERS = 'arrayFilters'.freeze
   end
 end

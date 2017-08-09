@@ -90,6 +90,7 @@ module Mongo
           Operation::UPSERT => doc.fetch(:upsert, false)
         }.tap do |d|
           d[Operation::COLLATION] = doc[:collation] if doc[:collation]
+          d[Operation::ARRAY_FILTERS] = doc[:array_filters] if doc[:array_filters]
         end
       }
 
@@ -104,6 +105,7 @@ module Mongo
           Operation::UPSERT => doc.fetch(:upsert, false)
         }.tap do |d|
           d[Operation::COLLATION] = doc[:collation] if doc[:collation]
+          d[Operation::ARRAY_FILTERS] = doc[:array_filters] if doc[:array_filters]
         end
       }
 
@@ -118,6 +120,7 @@ module Mongo
           Operation::UPSERT => doc.fetch(:upsert, false)
         }.tap do |d|
           d[Operation::COLLATION] = doc[:collation] if doc[:collation]
+          d[Operation::ARRAY_FILTERS] = doc[:array_filters] if doc[:array_filters]
         end
       }
 

@@ -44,7 +44,7 @@ module Mongo
           @has_collation = true
         end
 
-        if document.respond_to?(:keys) && (document[:array_filters] || document[Operation::ARRAY_FILTERS])
+        if document.respond_to?(:keys) && (document[:array_filters] || document['array_filters'])
           @has_array_filters = true
         end
       end

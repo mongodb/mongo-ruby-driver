@@ -27,6 +27,10 @@ describe Mongo::BulkWrite do
     { locale: 'en_US', strength: 2 }
   end
 
+  let(:array_filters) do
+    [{ 'i.y' => 3}]
+  end
+
   describe '#execute' do
 
     shared_examples_for 'an executable bulk write' do
@@ -279,6 +283,64 @@ describe Mongo::BulkWrite do
 
               it 'reports the deleted count' do
                 expect(result.deleted_count).to eq(0)
+              end
+            end
+          end
+
+          context 'when the write has specifies arrayFilters' do
+
+            before do
+              authorized_collection.insert_one(_id: 1, x: [{ y: 1 }, { y: 2 }, {y: 3 }])
+            end
+
+            let(:requests) do
+              [{
+                 update_one: {
+                   filter: { _id: 1 },
+                   update: { '$set' => { 'x.$[i].y' => 5 } },
+                   array_filters: array_filters,
+                 }
+               }]
+            end
+
+            context 'when the server selected supports arrayFilters', if: array_filters_enabled? do
+
+              let!(:result) do
+                bulk_write.execute
+              end
+
+              it 'applies the arrayFilters' do
+                expect(result.matched_count).to eq(1)
+                expect(result.modified_count).to eq(1)
+                expect(authorized_collection.find(_id: 1).first['x'].last['y']).to eq(5)
+              end
+            end
+
+            context 'when the server selected does not support arrayFilters', unless: array_filters_enabled? do
+
+              it 'raises an exception' do
+                expect {
+                  bulk_write.execute
+                }.to raise_exception(Mongo::Error::UnsupportedArrayFilters)
+              end
+
+              context 'when a String key is used' do
+
+                let(:requests) do
+                  [{
+                     update_one: {
+                       filter: { _id: 1 },
+                       update: { '$set' => { 'x.$[i].y' => 5 } },
+                       'array_filters' => array_filters,
+                     }
+                   }]
+                end
+
+                it 'raises an exception' do
+                  expect {
+                    bulk_write.execute
+                  }.to raise_exception(Mongo::Error::UnsupportedArrayFilters)
+                end
               end
             end
           end
