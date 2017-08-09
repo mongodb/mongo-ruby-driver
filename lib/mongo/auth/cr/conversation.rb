@@ -98,7 +98,7 @@ module Mongo
         def start(connection = nil)
           if connection && connection.features.op_msg_enabled?
             selector = Auth::GET_NONCE.merge(Protocol::Msg::DATABASE_IDENTIFIER => user.auth_source)
-            Protocol::Msg.new([:none], {}, { type: 0, document: selector })
+            Protocol::Msg.new([:none], {}, selector)
           else
             Protocol::Query.new(
               user.auth_source,

@@ -149,7 +149,7 @@ module Mongo
           validate_final_message!(reply)
           if connection && connection.features.op_msg_enabled?
             selector = CLIENT_CONTINUE_MESSAGE.merge(payload: client_empty_message, conversationId: id)
-            selector[DATABASE_IDENTIFIER] = user.auth_source
+            selector[Protocol::Msg::DATABASE_IDENTIFIER] = user.auth_source
             Protocol::Msg.new([:none], {}, selector)
           else
             Protocol::Query.new(
