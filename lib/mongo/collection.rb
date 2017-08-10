@@ -483,8 +483,6 @@ module Mongo
     # @option options [ true, false ] :bypass_document_validation Whether or
     #   not to skip document level validation.
     # @option options [ Hash ] :collation The collation to use.
-    # @option options [ Array ] :array_filters A set of filters specifying to which array elements
-    #   an update should apply.
     #
     # @return [ Result ] The response from the database.
     #
@@ -531,6 +529,8 @@ module Mongo
     # @option options [ true, false ] :bypass_document_validation Whether or
     #   not to skip document level validation.
     # @option options [ Hash ] :collation The collation to use.
+    # @option options [ Array ] :array_filters A set of filters specifying to which array elements
+    #   an update should apply.
     #
     # @return [ Result ] The response from the database.
     #

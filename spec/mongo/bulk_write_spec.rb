@@ -287,59 +287,144 @@ describe Mongo::BulkWrite do
             end
           end
 
-          context 'when the write has specifies arrayFilters' do
+          context 'when bulk executing update_one' do
 
-            before do
-              authorized_collection.insert_one(_id: 1, x: [{ y: 1 }, { y: 2 }, {y: 3 }])
-            end
+            context 'when the write has specified arrayFilters' do
 
-            let(:requests) do
-              [{
-                 update_one: {
-                   filter: { _id: 1 },
-                   update: { '$set' => { 'x.$[i].y' => 5 } },
-                   array_filters: array_filters,
-                 }
-               }]
-            end
-
-            context 'when the server selected supports arrayFilters', if: array_filters_enabled? do
-
-              let!(:result) do
-                bulk_write.execute
+              before do
+                authorized_collection.insert_one(_id: 1, x: [{ y: 1 }, { y: 2 }, { y: 3 }])
               end
 
-              it 'applies the arrayFilters' do
-                expect(result.matched_count).to eq(1)
-                expect(result.modified_count).to eq(1)
-                expect(authorized_collection.find(_id: 1).first['x'].last['y']).to eq(5)
+              let(:requests) do
+                [{
+                   update_one: {
+                     filter: { _id: 1 },
+                     update: { '$set' => { 'x.$[i].y' => 5 } },
+                     array_filters: array_filters,
+                   }
+                 }]
               end
-            end
 
-            context 'when the server selected does not support arrayFilters', unless: array_filters_enabled? do
+              context 'when the server selected supports arrayFilters', if: array_filters_enabled? do
 
-              it 'raises an exception' do
-                expect {
+                let!(:result) do
                   bulk_write.execute
-                }.to raise_exception(Mongo::Error::UnsupportedArrayFilters)
+                end
+
+                it 'applies the arrayFilters' do
+                  expect(result.matched_count).to eq(1)
+                  expect(result.modified_count).to eq(1)
+                  expect(authorized_collection.find(_id: 1).first['x'].last['y']).to eq(5)
+                end
               end
 
-              context 'when a String key is used' do
-
-                let(:requests) do
-                  [{
-                     update_one: {
-                       filter: { _id: 1 },
-                       update: { '$set' => { 'x.$[i].y' => 5 } },
-                       'array_filters' => array_filters,
-                     }
-                   }]
-                end
+              context 'when the server selected does not support arrayFilters', unless: array_filters_enabled? do
 
                 it 'raises an exception' do
                   expect {
                     bulk_write.execute
                   }.to raise_exception(Mongo::Error::UnsupportedArrayFilters)
+                end
+
+                context 'when a String key is used' do
+
+                  let(:requests) do
+                    [{
+                       update_one: {
+                         filter: { _id: 1 },
+                         update: { '$set' => { 'x.$[i].y' => 5 } },
+                         'array_filters' => array_filters,
+                       }
+                     }]
+                  end
+
+                  it 'raises an exception' do
+                    expect {
+                      bulk_write.execute
+                    }.to raise_exception(Mongo::Error::UnsupportedArrayFilters)
+                  end
+                end
+              end
+            end
+          end
+
+          context 'when bulk executing update_many' do
+
+            context 'when the write has specified arrayFilters' do
+
+              before do
+                authorized_collection.insert_many([{
+                                                     _id: 1, x: [
+                                                       { y: 1 },
+                                                       { y: 2 },
+                                                       { y: 3 }
+                                                     ]
+                                                   },
+                                                   {
+                                                     _id: 2,
+                                                     x: [
+                                                       { y: 3 },
+                                                       { y: 2 },
+                                                       { y: 1 }
+                                                     ]
+                                                   }])
+              end
+
+              let(:selector) do 
+                { '$or' => [{ _id: 1 }, { _id: 2 }]}
+              end
+
+              let(:requests) do
+                [{
+                   update_many: {
+                     filter: { '$or' => [{ _id: 1 }, { _id: 2 }]},
+                     update: { '$set' => { 'x.$[i].y' => 5 } },
+                     array_filters: array_filters,
+                   }
+                 }]
+              end
+
+              context 'when the server selected supports arrayFilters', if: array_filters_enabled? do
+
+                let!(:result) do
+                  bulk_write.execute
+                end
+
+                it 'applies the arrayFilters' do
+                  expect(result.matched_count).to eq(2)
+                  expect(result.modified_count).to eq(2)
+
+                  docs = authorized_collection.find(selector, sort: { _id: 1 }).to_a
+                  expect(docs[0]['x']).to eq ([{ 'y' => 1 },  { 'y' => 2 }, { 'y' => 5}])
+                  expect(docs[1]['x']).to eq ([{ 'y' => 5 },  { 'y' => 2 }, { 'y' => 1}])
+                end
+              end
+
+              context 'when the server selected does not support arrayFilters', unless: array_filters_enabled? do
+
+                it 'raises an exception' do
+                  expect {
+                    bulk_write.execute
+                  }.to raise_exception(Mongo::Error::UnsupportedArrayFilters)
+                end
+
+                context 'when a String key is used' do
+
+                  let(:requests) do
+                    [{
+                       update_many: {
+                         filter: { '$or' => [{ _id: 0 }, { _id: 1 }]},
+                         update: { '$set' => { 'x.$[i].y' => 5 } },
+                         array_filters: array_filters,
+                       }
+                     }]
+                  end
+
+                  it 'raises an exception' do
+                    expect {
+                      bulk_write.execute
+                    }.to raise_exception(Mongo::Error::UnsupportedArrayFilters)
+                  end
                 end
               end
             end

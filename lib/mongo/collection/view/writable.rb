@@ -21,6 +21,9 @@ module Mongo
       # @since 2.0.0
       module Writable
 
+        # The array filters field constant.
+        #
+        # @since 2.5.0
         ARRAY_FILTERS = 'array_filters'.freeze
 
         # Finds a single document in the database via findAndModify and deletes
@@ -188,7 +191,7 @@ module Mongo
         # @option opts [ true, false ] :upsert Whether to upsert if the
         #   document doesn't exist.
         # @option opts [ Hash ] :collation The collation to use.
-        # @option options [ Array ] :array_filters A set of filters specifying to which array elements
+        # @option opts [ Array ] :array_filters A set of filters specifying to which array elements
         #   an update should apply.
         #
         # @return [ Result ] The response from the database.
