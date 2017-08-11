@@ -325,25 +325,6 @@ describe Mongo::BulkWrite do
                     bulk_write.execute
                   }.to raise_exception(Mongo::Error::UnsupportedArrayFilters)
                 end
-
-                context 'when a String key is used' do
-
-                  let(:requests) do
-                    [{
-                       update_one: {
-                         filter: { _id: 1 },
-                         update: { '$set' => { 'x.$[i].y' => 5 } },
-                         'array_filters' => array_filters,
-                       }
-                     }]
-                  end
-
-                  it 'raises an exception' do
-                    expect {
-                      bulk_write.execute
-                    }.to raise_exception(Mongo::Error::UnsupportedArrayFilters)
-                  end
-                end
               end
             end
           end
@@ -406,25 +387,6 @@ describe Mongo::BulkWrite do
                   expect {
                     bulk_write.execute
                   }.to raise_exception(Mongo::Error::UnsupportedArrayFilters)
-                end
-
-                context 'when a String key is used' do
-
-                  let(:requests) do
-                    [{
-                       update_many: {
-                         filter: { '$or' => [{ _id: 0 }, { _id: 1 }]},
-                         update: { '$set' => { 'x.$[i].y' => 5 } },
-                         array_filters: array_filters,
-                       }
-                     }]
-                  end
-
-                  it 'raises an exception' do
-                    expect {
-                      bulk_write.execute
-                    }.to raise_exception(Mongo::Error::UnsupportedArrayFilters)
-                  end
                 end
               end
             end
