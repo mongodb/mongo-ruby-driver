@@ -31,12 +31,13 @@ module Mongo
       #         :u => { :$set => { :bar => 1 }},
       #         :multi  => true,
       #         :upsert => false
+      #         :array_filters => []
       #       },
       #     :db_name => 'test',
       #     :coll_name => 'test_coll',
       #     :write_concern => write_concern
       #   })
-      #
+
       # Initialization:
       #   param [ Hash ] spec The specifications for the update.
       #
@@ -63,6 +64,10 @@ module Mongo
           Command::Update.new(s)
         end
 
+        def has_array_filters?
+          update[Operation::ARRAY_FILTERS]
+        end
+
         def has_collation?
           update[:collation] || update[Operation::COLLATION]
         end
@@ -71,6 +76,7 @@ module Mongo
           flags = []
           flags << :multi_update if update[Operation::MULTI]
           flags << :upsert if update[Operation::UPSERT]
+
           Protocol::Update.new(
             db_name,
             coll_name,

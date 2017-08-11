@@ -36,6 +36,7 @@ module Mongo
         def execute(server)
           if !server.features.write_command_enabled? || unacknowledged_write?
             raise Error::UnsupportedCollation.new(Error::UnsupportedCollation::UNACKNOWLEDGED_WRITES_MESSAGE) if has_collation?
+            raise Error::UnsupportedArrayFilters.new(Error::UnsupportedArrayFilters::UNACKNOWLEDGED_WRITES_MESSAGE) if has_array_filters?
             execute_message(server)
           else
             execute_write_command(server)
@@ -43,6 +44,10 @@ module Mongo
         end
 
         private
+
+        def has_array_filters?
+          false
+        end
 
         def has_collation?
           false

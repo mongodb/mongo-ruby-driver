@@ -25,6 +25,7 @@ module Mongo
         #
         # @since 2.0.0
         MAPPINGS = {
+          :array_filters => 6,
           :collation => 5,
           :max_staleness => 5,
           :find_command => 4,
@@ -38,7 +39,7 @@ module Mongo
         # The wire protocol versions that this version of the driver supports.
         #
         # @since 2.0.0
-        DRIVER_WIRE_VERSIONS = (0..5).freeze
+        DRIVER_WIRE_VERSIONS = (0..6).freeze
 
         # Create the methods for each mapping to tell if they are supported.
         #

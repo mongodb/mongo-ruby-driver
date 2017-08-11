@@ -21,6 +21,11 @@ module Mongo
       # @since 2.0.0
       module Writable
 
+        # The array filters field constant.
+        #
+        # @since 2.5.0
+        ARRAY_FILTERS = 'array_filters'.freeze
+
         # Finds a single document in the database via findAndModify and deletes
         # it, returning the original document.
         #
@@ -40,6 +45,7 @@ module Mongo
           cmd[:sort] = sort if sort
           cmd[:maxTimeMS] = max_time_ms if max_time_ms
           cmd[:writeConcern] = write_concern.options if write_concern
+
 
           write_with_retry do
             server = next_primary
@@ -67,7 +73,7 @@ module Mongo
         # @option opts [ true, false ] :upsert Whether to upsert if the document doesn't exist.
         # @option opts [ true, false ] :bypass_document_validation Whether or
         #   not to skip document level validation.
-        # @option options [ Hash ] :write_concern The write concern options.
+        # @option opts [ Hash ] :write_concern The write concern options.
         #   Defaults to the collection's write concern.
         # @option opts [ Hash ] :collation The collation to use.
         #
@@ -93,6 +99,8 @@ module Mongo
         # @option opts [ Hash ] :write_concern The write concern options.
         #   Defaults to the collection's write concern.
         # @option opts [ Hash ] :collation The collation to use.
+        # @options opts [ Array ] :array_filters A set of filters specifying to which array elements
+        # an update should apply.
         #
         # @return [ BSON::Document ] The document.
         #
@@ -111,6 +119,7 @@ module Mongo
           value = write_with_retry do
             server = next_primary
             apply_collation!(cmd, server, opts)
+            apply_array_filters!(cmd, server, opts)
 
             Operation::Commands::Command.new({
                                               :selector => cmd,
@@ -182,6 +191,8 @@ module Mongo
         # @option opts [ true, false ] :upsert Whether to upsert if the
         #   document doesn't exist.
         # @option opts [ Hash ] :collation The collation to use.
+        # @option opts [ Array ] :array_filters A set of filters specifying to which array elements
+        #   an update should apply.
         #
         # @return [ Result ] The response from the database.
         #
@@ -201,6 +212,8 @@ module Mongo
         # @option opts [ true, false ] :upsert Whether to upsert if the
         #   document doesn't exist.
         # @option opts [ Hash ] :collation The collation to use.
+        # @option opts [ Array ] :array_filters A set of filters specifying to which array elements
+        #   an update should apply.
         #
         # @return [ Result ] The response from the database.
         #
@@ -234,6 +247,7 @@ module Mongo
           write_with_retry do
             server = next_primary
             apply_collation!(update_doc, server, opts)
+            apply_array_filters!(update_doc, server, opts)
 
             Operation::Write::Update.new(
               :update => update_doc,
@@ -242,6 +256,19 @@ module Mongo
               :write_concern => collection.write_concern,
               :bypass_document_validation => !!opts[:bypass_document_validation]
             ).execute(server)
+          end
+        end
+
+        def apply_array_filters!(doc, server, opts = {})
+          if filters = opts[:array_filters] || opts[ARRAY_FILTERS]
+            validate_array_filters!(server, filters)
+            doc[:arrayFilters] = filters
+          end
+        end
+
+        def validate_array_filters!(server, filters)
+          if filters && !server.features.array_filters_enabled?
+            raise Error::UnsupportedArrayFilters.new
           end
         end
       end

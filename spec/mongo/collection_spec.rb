@@ -1060,7 +1060,7 @@ describe Mongo::Collection do
 
           let(:result3) do
             collection_with_validator.insert_many(
-                [{ x: 1 }, { x: 2 }], :bypass_document_validation => true)
+              [{ x: 1 }, { x: 2 }], :bypass_document_validation => true)
           end
 
           it 'inserts successfully' do
@@ -1188,7 +1188,7 @@ describe Mongo::Collection do
 
           let(:result3) do
             collection_with_validator.insert_one(
-                { x: 1 }, :bypass_document_validation => true)
+              { x: 1 }, :bypass_document_validation => true)
           end
 
           it 'inserts successfully' do
@@ -1491,9 +1491,9 @@ describe Mongo::Collection do
 
       before do
         authorized_collection.insert_many([
-                                              { field: 'test1' },
-                                              { field: 'test1' },
-                                              { field: 'test1' }
+                                            { field: 'test1' },
+                                            { field: 'test1' },
+                                            { field: 'test1' }
                                           ])
       end
 
@@ -2056,7 +2056,7 @@ describe Mongo::Collection do
 
           let(:result3) do
             collection_with_validator.replace_one(
-                { a: 1 }, { x: 1 }, :bypass_document_validation => true)
+              { a: 1 }, { x: 1 }, :bypass_document_validation => true)
           end
 
           it 'replaces successfully' do
@@ -2203,7 +2203,7 @@ describe Mongo::Collection do
 
       let(:response) do
         authorized_collection.update_many(selector, { '$set'=> { field: 'testing' } },
-                         upsert: false)
+                                          upsert: false)
       end
 
       let(:updated) do
@@ -2227,7 +2227,7 @@ describe Mongo::Collection do
 
       let!(:response) do
         authorized_collection.update_many(selector, { '$set'=> { field: 'testing' } },
-                         upsert: true)
+                                          upsert: true)
       end
 
       let(:updated) do
@@ -2266,6 +2266,106 @@ describe Mongo::Collection do
       end
     end
 
+    context 'when arrayFilters is provided' do 
+
+      let(:selector) do
+        { '$or' => [{ _id: 0 }, { _id: 1 }]}
+      end
+
+      context 'when the server supports arrayFilters', if: array_filters_enabled? do
+
+        before do
+          authorized_collection.insert_many([{
+                                               _id: 0, x: [
+                                                 { y: 1 },
+                                                 { y: 2 },
+                                                 { y: 3 }
+                                               ]
+                                             },
+                                             {
+                                               _id: 1,
+                                               x: [
+                                                 { y: 3 },
+                                                 { y: 2 },
+                                                 { y: 1 }
+                                               ]
+                                             }])
+        end
+
+        let(:result) do
+          authorized_collection.update_many(selector,
+                                            { '$set' => { 'x.$[i].y' => 5 } },
+                                            options)
+        end
+
+        context 'when a Symbol key is used' do
+
+          let(:options) do
+            { array_filters: [{ 'i.y' => 3 }] }
+          end
+
+          it 'applies the arrayFilters' do
+            expect(result.matched_count).to eq(2)
+            expect(result.modified_count).to eq(2)
+
+            docs = authorized_collection.find(selector, sort: { _id: 1 }).to_a
+            expect(docs[0]['x']).to eq ([{ 'y' => 1 },  { 'y' => 2 }, { 'y' => 5 }])
+            expect(docs[1]['x']).to eq ([{ 'y' => 5 },  { 'y' => 2 }, { 'y' => 1 }])
+          end
+        end
+
+        context 'when a String key is used' do
+          let(:options) do
+            { 'array_filters' => [{ 'i.y' => 3 }] }
+          end
+
+          it 'applies the arrayFilters' do
+            expect(result.matched_count).to eq(2)
+            expect(result.modified_count).to eq(2)
+
+            docs = authorized_collection.find({}, sort: { _id: 1 }).to_a
+            expect(docs[0]['x']).to eq ([{ 'y' => 1 },  { 'y' => 2 }, { 'y' => 5 }])
+            expect(docs[1]['x']).to eq ([{ 'y' => 5 },  { 'y' => 2 }, { 'y' => 1 }])
+          end
+        end
+      end
+
+      context 'when the server does not support arrayFilters', unless: array_filters_enabled? do
+
+        let(:result) do
+          authorized_collection.update_many(selector,
+                                           { '$set' => { 'x.$[i].y' => 5 } },
+                                           options)
+        end
+
+        context 'when a Symbol key is used' do
+
+          let(:options) do
+            { array_filters: [{ 'i.y' => 3 }] }
+          end
+
+          it 'raises an exception' do
+            expect {
+              result
+            }.to raise_exception(Mongo::Error::UnsupportedArrayFilters)
+          end
+        end
+
+        context 'when a String key is used' do
+
+          let(:options) do
+            { 'array_filters' => [{ 'i.y' => 3 }] }
+          end
+
+          it 'raises an exception' do
+            expect {
+              result
+            }.to raise_exception(Mongo::Error::UnsupportedArrayFilters)
+          end
+        end
+      end
+    end
+
     context 'when the updates fail' do
 
       let(:result) do
@@ -2298,7 +2398,7 @@ describe Mongo::Collection do
 
         let(:result) do
           collection_with_validator.update_many(
-              { :a => { '$gt' => 0 } }, '$inc' => { :a => 1 } )
+            { :a => { '$gt' => 0 } }, '$inc' => { :a => 1 } )
         end
 
         it 'updates successfully' do
@@ -2312,7 +2412,7 @@ describe Mongo::Collection do
 
           let(:result2) do
             collection_with_validator.update_many(
-                { :a => { '$gt' => 0 } }, '$unset' => { :a => '' })
+              { :a => { '$gt' => 0 } }, '$unset' => { :a => '' })
           end
 
           it 'raises OperationFailure' do
@@ -2326,8 +2426,8 @@ describe Mongo::Collection do
 
           let(:result3) do
             collection_with_validator.update_many(
-                { :a => { '$gt' => 0 } }, { '$unset' => { :a => '' } },
-                :bypass_document_validation => true)
+              { :a => { '$gt' => 0 } }, { '$unset' => { :a => '' } },
+              :bypass_document_validation => true)
           end
 
           it 'updates successfully' do
@@ -2475,7 +2575,7 @@ describe Mongo::Collection do
 
       let(:response) do
         authorized_collection.update_one(selector, { '$set'=> { field: 'testing' } },
-                        upsert: false)
+                                         upsert: false)
       end
 
       let(:updated) do
@@ -2499,7 +2599,7 @@ describe Mongo::Collection do
 
       let!(:response) do
         authorized_collection.update_one(selector, { '$set'=> { field: 'testing' } },
-                        upsert: true)
+                                         upsert: true)
       end
 
       let(:updated) do
@@ -2570,7 +2670,7 @@ describe Mongo::Collection do
 
         let(:result) do
           collection_with_validator.update_one(
-              { :a => { '$gt' => 0 } }, '$inc' => { :a => 1 } )
+            { :a => { '$gt' => 0 } }, '$inc' => { :a => 1 } )
         end
 
         it 'updates successfully' do
@@ -2584,7 +2684,7 @@ describe Mongo::Collection do
 
           let(:result2) do
             collection_with_validator.update_one(
-                { :a => { '$gt' => 0 } }, '$unset' => { :a => '' })
+              { :a => { '$gt' => 0 } }, '$unset' => { :a => '' })
           end
 
           it 'raises OperationFailure' do
@@ -2598,8 +2698,8 @@ describe Mongo::Collection do
 
           let(:result3) do
             collection_with_validator.update_one(
-                { :a => { '$gt' => 0 } }, { '$unset' => { :a => '' } },
-                :bypass_document_validation => true)
+              { :a => { '$gt' => 0 } }, { '$unset' => { :a => '' } },
+              :bypass_document_validation => true)
           end
 
           it 'updates successfully' do
@@ -2704,6 +2804,87 @@ describe Mongo::Collection do
 
       it 'does not apply the collation' do
         expect(result.written_count).to eq(0)
+      end
+    end
+
+    context 'when arrayFilters is provided' do
+
+      let(:selector) do
+        { _id: 0}
+      end
+
+      context 'when the server supports arrayFilters', if: array_filters_enabled? do
+
+        before do
+          authorized_collection.insert_one(_id: 0, x: [{ y: 1 }, { y: 2 }, {y: 3 }])
+        end
+
+        let(:result) do
+          authorized_collection.update_one(selector,
+                                           { '$set' => { 'x.$[i].y' => 5 } },
+                                           options)
+        end
+
+        context 'when a Symbol key is used' do
+
+          let(:options) do
+            { array_filters: [{ 'i.y' => 3 }] }
+          end
+
+          it 'applies the arrayFilters' do
+            expect(result.matched_count).to eq(1)
+            expect(result.modified_count).to eq(1)
+            expect(authorized_collection.find(selector).first['x'].last['y']).to eq(5)
+          end
+        end
+
+        context 'when a String key is used' do
+
+          let(:options) do
+            { 'array_filters' => [{ 'i.y' => 3 }] }
+          end
+
+          it 'applies the arrayFilters' do
+            expect(result.matched_count).to eq(1)
+            expect(result.modified_count).to eq(1)
+            expect(authorized_collection.find(selector).first['x'].last['y']).to eq(5)
+          end
+        end
+      end
+
+      context 'when the server does not support arrayFilters', unless: array_filters_enabled? do
+
+        let(:result) do
+          authorized_collection.update_one(selector,
+                                           { '$set' => { 'x.$[i].y' => 5 } },
+                                           options)
+        end
+
+        context 'when a Symbol key is used' do
+
+          let(:options) do
+            { array_filters: [{ 'i.y' => 3 }] }
+          end
+
+          it 'raises an exception' do
+            expect {
+              result
+            }.to raise_exception(Mongo::Error::UnsupportedArrayFilters)
+          end
+        end
+
+        context 'when a String key is used' do
+
+          let(:options) do
+            { 'array_filters' => [{ 'i.y' => 3 }] }
+          end
+
+          it 'raises an exception' do
+            expect {
+              result
+            }.to raise_exception(Mongo::Error::UnsupportedArrayFilters)
+          end
+        end
       end
     end
   end
@@ -3069,7 +3250,7 @@ describe Mongo::Collection do
 
         let(:result) do
           collection_with_validator.find_one_and_update(
-              { a: 1 }, { '$inc' => { :a => 1 } }, :return_document => :after)
+            { a: 1 }, { '$inc' => { :a => 1 } }, :return_document => :after)
         end
 
         it 'updates successfully' do
@@ -3083,7 +3264,7 @@ describe Mongo::Collection do
 
           let(:result2) do
             collection_with_validator.find_one_and_update(
-                { a: 1 }, { '$unset' => { :a => '' } }, :return_document => :after)
+              { a: 1 }, { '$unset' => { :a => '' } }, :return_document => :after)
           end
 
           it 'raises OperationFailure' do
@@ -3097,9 +3278,9 @@ describe Mongo::Collection do
 
           let(:result3) do
             collection_with_validator.find_one_and_update(
-                { a: 1 }, { '$unset' => { :a => '' } },
-                :bypass_document_validation => true,
-                :return_document => :after)
+              { a: 1 }, { '$unset' => { :a => '' } },
+              :bypass_document_validation => true,
+              :return_document => :after)
           end
 
           it 'updates successfully' do
@@ -3114,8 +3295,8 @@ describe Mongo::Collection do
       it 'uses the write concern' do
         expect {
           authorized_collection.find_one_and_update(selector,
-                                         { '$set' => { field: 'testing' }},
-                                         write_concern: { w: 2 })
+                                                    { '$set' => { field: 'testing' }},
+                                                    write_concern: { w: 2 })
         }.to raise_error(Mongo::Error::OperationFailure)
       end
     end
@@ -3202,6 +3383,86 @@ describe Mongo::Collection do
 
       it 'does not apply the collation' do
         expect(result).to be_nil
+      end
+    end
+
+    context 'when arrayFilters is provided' do
+
+      let(:selector) do
+        { _id: 0 }
+      end
+
+      context 'when the server supports arrayFilters', if: array_filters_enabled? do
+
+        before do
+          authorized_collection.insert_one(_id: 0, x: [{ y: 1 }, { y: 2 }, { y: 3 }])
+        end
+
+        let(:result) do
+          authorized_collection.find_one_and_update(selector,
+                                                    { '$set' => { 'x.$[i].y' => 5 } },
+                                                    options)
+        end
+
+        context 'when a Symbol key is used' do
+
+          let(:options) do
+            { array_filters: [{ 'i.y' => 3 }] }
+          end
+
+
+          it 'applies the arrayFilters' do
+            expect(result['x']).to eq([{ 'y' => 1 }, { 'y' => 2 }, { 'y' => 3 }])
+            expect(authorized_collection.find(selector).first['x'].last['y']).to eq(5)
+          end
+        end
+
+        context 'when a String key is used' do
+
+          let(:options) do
+            { 'array_filters' => [{ 'i.y' => 3 }] }
+          end
+
+          it 'applies the arrayFilters' do
+            expect(result['x']).to eq([{ 'y' => 1 }, { 'y' => 2 }, { 'y' => 3 }])
+            expect(authorized_collection.find(selector).first['x'].last['y']).to eq(5)
+          end
+        end
+      end
+
+      context 'when the server selected does not support arrayFilters', unless: array_filters_enabled? do
+
+        let(:result) do
+          authorized_collection.find_one_and_update(selector,
+                                                    { '$set' => { 'x.$[i].y' => 5 } },
+                                                    options)
+        end
+
+        context 'when a Symbol key is used' do
+
+          let(:options) do
+            { array_filters: [{ 'i.y' => 3 }] }
+          end
+
+          it 'raises an exception' do
+            expect {
+              result
+            }.to raise_exception(Mongo::Error::UnsupportedArrayFilters)
+          end
+        end
+
+        context 'when a String key is used' do
+
+          let(:options) do
+            { 'array_filters' => [{ 'i.y' => 3 }] }
+          end
+
+          it 'raises an exception' do
+            expect {
+              result
+            }.to raise_exception(Mongo::Error::UnsupportedArrayFilters)
+          end
+        end
       end
     end
   end
@@ -3352,7 +3613,7 @@ describe Mongo::Collection do
 
         let(:result) do
           collection_with_validator.find_one_and_replace(
-              { a: 1 }, { a: 5 }, :return_document => :after)
+            { a: 1 }, { a: 5 }, :return_document => :after)
         end
 
         it 'replaces successfully when document is valid' do
@@ -3366,7 +3627,7 @@ describe Mongo::Collection do
 
           let(:result2) do
             collection_with_validator.find_one_and_replace(
-                { a: 1 }, { x: 5 }, :return_document => :after)
+              { a: 1 }, { x: 5 }, :return_document => :after)
           end
 
           it 'raises OperationFailure' do
@@ -3380,8 +3641,8 @@ describe Mongo::Collection do
 
           let(:result3) do
             collection_with_validator.find_one_and_replace(
-                { a: 1 }, { x: 1 }, :bypass_document_validation => true,
-                :return_document => :after)
+              { a: 1 }, { x: 1 }, :bypass_document_validation => true,
+              :return_document => :after)
           end
 
           it 'replaces successfully' do

@@ -134,6 +134,16 @@ def single_seed?
 end
 
 # For instances where behaviour is different on different versions, we need to
+# determine in the specs if we are 3.6 or higher.
+#
+# @since 2.5.0
+def array_filters_enabled?
+  $mongo_client ||= initialize_scanned_client!
+  $array_filters_enabled ||= $mongo_client.cluster.servers.first.features.array_filters_enabled?
+end
+
+
+# For instances where behaviour is different on different versions, we need to
 # determine in the specs if we are 3.4 or higher.
 #
 # @since 2.4.0
