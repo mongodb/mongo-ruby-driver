@@ -107,8 +107,8 @@ describe Mongo::Operation::Write::Command::Update do
       let(:expected_payload_1) do
         {
           type: 1,
-          sequence: { identifier: 'updates',
-                      documents: updates
+          payload: { identifier: 'updates',
+                     sequence: updates
           }
         }
       end

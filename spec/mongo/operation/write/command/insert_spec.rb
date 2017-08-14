@@ -104,8 +104,8 @@ describe Mongo::Operation::Write::Command::Insert do
       let(:expected_payload_1) do
         {
             type: 1,
-            sequence: { identifier: 'documents',
-                        documents: documents
+            payload: { identifier: 'documents',
+                       sequence: documents
             }
         }
       end

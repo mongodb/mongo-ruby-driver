@@ -34,7 +34,7 @@ module Mongo
       # @example Create a OP_MSG wire protocol message
       #   Msg.new([:more_to_come], {}, { ismaster: 1 }, { type: 1 { sequence: [..] }})
       #
-      # @param [ Array<Symbol> ] flag_bits The flag bits. Current supported values are
+      # @param [ Array<Symbol> ] flags The flag bits. Current supported values are
       #  :more_to_come and :checksum_present.
       # @param [ Hash ] options The options. There are currently no supported options, this is a
       #   place-holder for the future.
@@ -45,11 +45,11 @@ module Mongo
       # @api private
       #
       # @since 2.5.0
-      def initialize(flag_bits, options, global_args, *sections)
-        @flag_bits = flag_bits || [ :none ]
+      def initialize(flags, options, global_args, *sections)
+        @flags = flags || [ :none ]
         @options = options
         @global_args = global_args
-        @sections = [ { type: 0, document: global_args } ] + sections
+        @sections = [ { type: 0, payload: global_args } ] + sections
         @request_id = nil
         super
       end
@@ -63,7 +63,7 @@ module Mongo
       #
       # @since 2.5.0
       def replyable?
-        @replyable ||= !@flag_bits.include?(:more_to_come)
+        @replyable ||= !flags.include?(:more_to_come)
       end
 
       # Return the event payload for monitoring.
@@ -84,7 +84,27 @@ module Mongo
         )
       end
 
+      # Serializes message into bytes that can be sent on the wire.
+      #
+      # @param [ BSON::ByteBuffer ] buffer where the message should be inserted.
+      # @param [ Integer ] max_bson_size The maximum bson object size.
+      #
+      # @return [ BSON::ByteBuffer ] buffer containing the serialized message.
+      #
+      # @since 2.5.0
+      def serialize(buffer = BSON::ByteBuffer.new, max_bson_size = nil)
+        super
+        add_check_sum(buffer)
+        buffer
+      end
+
       private
+
+      def add_check_sum(buffer)
+        if flags.include?(:checksum_present)
+          #buffer.put_int32(checksum)
+        end
+      end
 
       def global_args
         @global_args ||= sections[0]
@@ -104,7 +124,7 @@ module Mongo
 
       # @!attribute
       # @return [Array<Symbol>] The flags for this message.
-      field :flag_bits, BitVector.new(FLAGS)
+      field :flags, BitVector.new(FLAGS)
 
       # @!attribute
       # @return [Hash] The sections of payload type 1 or 0.

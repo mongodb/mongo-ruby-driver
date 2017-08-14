@@ -67,7 +67,7 @@ module Mongo
               global_args[CLUSTER_TIME] = cl_time
             end
 
-            section = { type: 1, sequence: { identifier: IDENTIFIER, documents: updates } }
+            section = { type: 1, payload: { identifier: IDENTIFIER, sequence: updates } }
             flags = unacknowledged_write? ? [:more_to_come] : [:none]
             Protocol::Msg.new(flags, {}, global_args, section)
           end

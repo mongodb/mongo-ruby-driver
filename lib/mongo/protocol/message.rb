@@ -128,8 +128,8 @@ module Mongo
           raise Error::UnexpectedResponse.new(expected_response_to, response_to)
         end
 
-        buffer = BSON::ByteBuffer.new(io.read(length - 16))
         message = Registry.get(_op_code).allocate
+        buffer = BSON::ByteBuffer.new(io.read(length - 16))
 
         message.send(:fields).each do |field|
           if field[:multi]

@@ -100,8 +100,8 @@ describe Mongo::Operation::Write::Command::Delete do
       let(:expected_payload_1) do
         {
             type: 1,
-            sequence: { identifier: 'deletes',
-                        documents: deletes
+            payload: { identifier: 'deletes',
+                       sequence: deletes
             }
         }
       end

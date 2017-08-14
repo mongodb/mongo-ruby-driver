@@ -168,11 +168,11 @@ module Mongo
           value.each do |section|
             case section[:type]
             when PayloadZero::TYPE
-              PayloadZero.serialize(buffer, section[:document], max_bson_size, false)
+              PayloadZero.serialize(buffer, section[:payload], max_bson_size, false)
             when PayloadOne::TYPE
-              PayloadOne.serialize(buffer, section[:sequence], max_bson_size, validating_keys)
+              PayloadOne.serialize(buffer, section[:payload], max_bson_size, validating_keys)
             else
-              #raise error?
+              raise Error::UnknownPayloadType.new(section[:type])
             end
           end
         end
@@ -185,16 +185,16 @@ module Mongo
         #
         # @since 2.5.0
         def self.deserialize(buffer)
-          end_size = (@flag_bits & Msg::FLAGS.index(:checksum_present)) == 1 ? 32 : 0
-
+          end_length = (@flag_bits & Msg::FLAGS.index(:checksum_present)) == 1 ? 32 : 0
           sections = []
-          until buffer.to_s.size == end_size
-            case buffer.get_byte
-              when PayloadZero::TYPE_BYTE
+          until buffer.length == end_length
+            case byte = buffer.get_byte
+            when PayloadZero::TYPE_BYTE
               sections << PayloadZero.deserialize(buffer)
             when PayloadOne::TYPE_BYTE
               sections << PayloadOne.deserialize(buffer)
-             # else raise error?
+            else
+              raise Error::UnknownPayloadType.new(byte)
             end
           end
           sections
@@ -281,7 +281,7 @@ module Mongo
             start = buffer.length
             buffer.put_int32(0) # hold for size
             Serializers::CString.serialize(buffer, value[:identifier])
-            value[:documents].each do |document|
+            value[:sequence].each do |document|
               Serializers::Document.serialize(buffer, document, max_bson_size, validating_keys)
             end
             buffer.replace_int32(start, buffer.length - start)
@@ -295,12 +295,12 @@ module Mongo
           #
           # @since 2.5.0
           def self.deserialize(buffer)
-            start_size = buffer.to_s.size
+            start_size = buffer.length
             section_size = buffer.get_int32 # get the size
             end_size = start_size - section_size
             buffer.get_cstring # get the identifier
             documents = []
-            until buffer.to_s.size == end_size
+            until buffer.length == end_size
               documents << BSON::Document.from_bson(buffer)
             end
             documents
