@@ -1019,6 +1019,23 @@ describe Mongo::Collection do
       end
     end
 
+    context 'when the documents are sent with OP_MSG', if: op_msg_enabled? do
+
+      let(:documents) do
+        [{ '_id' => 1, 'name' => '1'*16777191 }, { '_id' => 'y' }]
+      end
+
+      before do
+        authorized_collection.insert_one(a:1)
+      end
+
+      it 'sends the documents in one OP_MSG' do
+        # Msg created twice: once for update, once for the delete in the after block
+        expect(Mongo::Protocol::Msg).to receive(:new).twice.and_call_original
+        expect(authorized_collection.insert_many(documents).inserted_count).to eq(2)
+      end
+    end
+
     context 'when collection has a validator', if: find_command_enabled? do
 
       around(:each) do |spec|
@@ -2807,6 +2824,7 @@ describe Mongo::Collection do
       end
     end
 
+
     context 'when arrayFilters is provided' do
 
       let(:selector) do
@@ -2885,6 +2903,23 @@ describe Mongo::Collection do
             }.to raise_exception(Mongo::Error::UnsupportedArrayFilters)
           end
         end
+      end
+    end
+
+    context 'when the documents are sent with OP_MSG', if: op_msg_enabled? do
+
+      before do
+        authorized_collection.insert_one(a:1)
+      end
+
+      let(:update) do
+        {'$set' => { 'name' => '1'*16777149 }}
+      end
+
+      it 'sends the operation in one OP_MSG' do
+        # Msg created twice: once for update, once for the delete in the after block
+        expect(Mongo::Protocol::Msg).to receive(:new).twice.and_call_original
+        expect(authorized_collection.update_one({a: 1}, update).written_count).to eq(1)
       end
     end
   end
