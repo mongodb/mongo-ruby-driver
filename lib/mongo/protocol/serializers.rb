@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-require 'pry-nav'
+
 module Mongo
   module Protocol
 
@@ -156,12 +156,12 @@ module Mongo
 
         # Serializes the sections of an OP_MSG, payload type 0 or 1.
         #
-        # @param [ String ] buffer Buffer to receive the serialized Sections.
+        # @param [ BSON::ByteBuffer ] buffer Buffer to receive the serialized Sections.
         # @param [ Array<Hash, BSON::Document> ] value The sections to be serialized.
         # @param [ Fixnum ] max_bson_size The max bson size of documents in the sections.
         # @param [ true, false ] validating_keys Whether to validate document keys.
         #
-        # @return [ String ] Buffer with serialized value.
+        # @return [ BSON::ByteBuffer ] Buffer with serialized value.
         #
         # @since 2.5.0
         def self.serialize(buffer, value, max_bson_size = nil, validating_keys = BSON::Config.validating_keys?)
@@ -179,9 +179,9 @@ module Mongo
 
         # Deserializes a section of an OP_MSG from the IO stream.
         #
-        # @param [ String ] buffer Buffer containing the sections.
+        # @param [ BSON::ByteBuffer ] buffer Buffer containing the sections.
         #
-        # @return [ Array<BSON::Document> ] Deserialized section.
+        # @return [ Array<BSON::Document> ] Deserialized sections.
         #
         # @since 2.5.0
         def self.deserialize(buffer)
@@ -226,12 +226,12 @@ module Mongo
 
           # Serializes a section of an OP_MSG, payload type 0.
           #
-          # @param [ String ] buffer Buffer to receive the serialized Sections.
+          # @param [ BSON::ByteBuffer ] buffer Buffer to receive the serialized Sections.
           # @param [ BSON::Document, Hash ] value The object to serialize.
           # @param [ Fixnum ] max_bson_size The max bson size of documents in the section.
           # @param [ true, false ] validating_keys Whether to validate document keys.
           #
-          # @return [ String ] Buffer with serialized value.
+          # @return [ BSON::ByteBuffer ] Buffer with serialized value.
           #
           # @since 2.5.0
           def self.serialize(buffer, value, max_bson_size = nil, validating_keys = BSON::Config.validating_keys?)
@@ -241,7 +241,7 @@ module Mongo
 
           # Deserializes a section of payload type 0 of an OP_MSG from the IO stream.
           #
-          # @param [ String ] buffer Buffer containing the sections.
+          # @param [ BSON::ByteBuffer ] buffer Buffer containing the sections.
           #
           # @return [ Array<BSON::Document> ] Deserialized section.
           #
@@ -268,12 +268,12 @@ module Mongo
 
           # Serializes a section of an OP_MSG, payload type 1.
           #
-          # @param [ String ] buffer Buffer to receive the serialized Sections.
+          # @param [ BSON::ByteBuffer ] buffer Buffer to receive the serialized Sections.
           # @param [ BSON::Document, Hash ] value The object to serialize.
           # @param [ Fixnum ] max_bson_size The max bson size of documents in the section.
           # @param [ true, false ] validating_keys Whether to validate document keys.
           #
-          # @return [ String ] Buffer with serialized value.
+          # @return [ BSON::ByteBuffer ] Buffer with serialized value.
           #
           # @since 2.5.0
           def self.serialize(buffer, value, max_bson_size = nil, validating_keys = BSON::Config.validating_keys?)
@@ -289,7 +289,7 @@ module Mongo
 
           # Deserializes a section of payload type 1 of an OP_MSG from the IO stream.
           #
-          # @param [ String ] buffer Buffer containing the sections.
+          # @param [ BSON::ByteBuffer ] buffer Buffer containing the sections.
           #
           # @return [ Array<BSON::Document> ] Deserialized section.
           #

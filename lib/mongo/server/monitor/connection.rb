@@ -31,7 +31,7 @@ module Mongo
         # The command used for determining server status formatted for an OP_MSG (server versions >= 3.6).
         #
         # @since 2.5.0
-        ISMASTER_OP_MSG = { :ismaster => 1 }.merge('$db' => Database::ADMIN).freeze
+        ISMASTER_OP_MSG = { :ismaster => 1, '$db' => Database::ADMIN }.freeze
 
         # The constant for the ismaster command.
         #

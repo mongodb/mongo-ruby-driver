@@ -1,4 +1,4 @@
-# Copyright (C) 2014-2017 MongoDB, Inc.
+# Copyright (C) 2017 MongoDB, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,12 +20,15 @@ module Mongo
     # @since 2.5.0
     class UnknownPayloadType < Error
 
+      # The error message.
+      #
+      # @since 2.5.0
       MESSAGE = 'Unknown payload type (%s) encountered when creating or reading an OP_MSG wire protocol message.'
 
       # Create the new exception.
       #
       # @example Create the new exception.
-      #   Mongo::Error::UnknownPayloadType.new
+      #   Mongo::Error::UnknownPayloadType.new(byte)
       #
       # @param [ String ] byte The unknown payload type.
       #

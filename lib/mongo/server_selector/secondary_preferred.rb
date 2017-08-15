@@ -81,7 +81,7 @@ module Mongo
       #   for a server.
       #
       # @example Convert this server preference definition into a format
-      #   for a sererv.
+      #   for a server.
       #   preference = Mongo::ServerSelector::SecondaryPreferred.new
       #   preference.to_doc
       #

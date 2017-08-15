@@ -1030,7 +1030,7 @@ describe Mongo::Collection do
       end
 
       it 'sends the documents in one OP_MSG' do
-        # Msg created twice: once for update, once for the delete in the after block
+        # Msg created twice: once for insert, once for the delete in the after block
         expect(Mongo::Protocol::Msg).to receive(:new).twice.and_call_original
         expect(authorized_collection.insert_many(documents).inserted_count).to eq(2)
       end

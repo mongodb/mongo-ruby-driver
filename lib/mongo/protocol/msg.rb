@@ -1,4 +1,4 @@
-# Copyright (C) 2014-2016 MongoDB, Inc.
+# Copyright (C) 2017 MongoDB, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -32,15 +32,17 @@ module Mongo
       # Creates a new OP_MSG protocol message
       #
       # @example Create a OP_MSG wire protocol message
-      #   Msg.new([:more_to_come], {}, { ismaster: 1 }, { type: 1 { sequence: [..] }})
+      #   Msg.new([:more_to_come], {}, { ismaster: 1 },
+      #           { type: 1, payload: { identifier: 'documents', sequence: [..] } })
       #
       # @param [ Array<Symbol> ] flags The flag bits. Current supported values are
       #  :more_to_come and :checksum_present.
       # @param [ Hash ] options The options. There are currently no supported options, this is a
       #   place-holder for the future.
       # @param [ BSON::Document, Hash ] global_args The global arguments, becomes a section of payload type 0.
-      # @param [ BSON::Document, Hash ] sections Zero or more sections, in the format { type: 0, document: {..} }
-      #   or { type: 1 sequence: [..] }.
+      # @param [ BSON::Document, Hash ] sections Zero or more sections, in the format
+      #   { type: 1, payload: { identifier: <String>, sequence: <Array<BSON::Document, Hash>> } } or
+      #   { type: 0, payload: <BSON::Document, Hash> }
       #
       # @api private
       #
@@ -54,12 +56,12 @@ module Mongo
         super
       end
 
-      # Command messages require replies from the database.
+      # Whether the message expects a reply from the database.
       #
       # @example Does the message require a reply?
       #   message.replyable?
       #
-      # @return [ true ] Always true for OP_MSG.
+      # @return [ true, false ] If the message expects a reply.
       #
       # @since 2.5.0
       def replyable?
@@ -130,8 +132,6 @@ module Mongo
       # @return [Hash] The sections of payload type 1 or 0.
       field :sections, Sections
       alias :documents :sections
-
-      #field :checksum, Checksum
 
       Registry.register(OP_CODE, self)
     end
