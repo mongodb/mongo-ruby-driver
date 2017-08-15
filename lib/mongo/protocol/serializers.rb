@@ -192,7 +192,7 @@ module Mongo
             when PayloadZero::TYPE_BYTE
               sections << PayloadZero.deserialize(buffer)
             when PayloadOne::TYPE_BYTE
-              sections << PayloadOne.deserialize(buffer)
+              sections += PayloadOne.deserialize(buffer)
             else
               raise Error::UnknownPayloadType.new(byte)
             end

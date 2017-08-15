@@ -329,6 +329,26 @@ describe Mongo::Protocol::Msg do
           end
         end
       end
+
+      context 'when the sections are mixed types and payload type 1 comes before type 0' do
+
+        let(:section1) do
+          { type: 1,
+            payload: { identifier: 'documents', sequence: [ { 'a' => 1 }]}}
+        end
+
+        let(:section2) do
+          { type: 0, payload: { 'b' => 2 } }
+        end
+
+        let(:sections) do
+          [ section1, section2 ]
+        end
+
+        it 'serializes all sections' do
+          expect(deserialized.documents).to eq([ BSON::Document.new(global_args), { 'a' => 1 }, { 'b' => 2 }])
+        end
+      end
     end
   end
 
