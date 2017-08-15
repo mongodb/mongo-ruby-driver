@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+require 'pry-nav'
 module Mongo
   module Protocol
 
@@ -280,7 +280,7 @@ module Mongo
             buffer.put_byte(TYPE_BYTE)
             start = buffer.length
             buffer.put_int32(0) # hold for size
-            Serializers::CString.serialize(buffer, value[:identifier])
+            buffer.put_cstring(value[:identifier])
             value[:sequence].each do |document|
               Serializers::Document.serialize(buffer, document, max_bson_size, validating_keys)
             end
