@@ -47,10 +47,14 @@ module Mongo
         private
 
         def message(server)
-          sel = update_selector_for_read_pref(selector, server)
-          sel = update_selector_for_write_concern(sel, server)
-          opts = update_options_for_slave_ok(options, server)
-          Protocol::Query.new(db_name, query_coll, sel, opts)
+          sel = update_selector_for_write_concern(selector, server)
+          if server.features.op_msg_enabled?
+            command_op_msg(server, sel, options)
+          else
+            sel = update_selector_for_read_pref(sel, server)
+            opts = update_options_for_slave_ok(options, server)
+            Protocol::Query.new(db_name, query_coll, sel, opts)
+          end
         end
       end
     end

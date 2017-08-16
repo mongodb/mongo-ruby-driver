@@ -38,7 +38,11 @@ module Mongo
         end
 
         def message(server)
-          Protocol::Query.new(db_name, query_coll, selector, options)
+          if server.features.op_msg_enabled?
+            command_op_msg(server, selector, options)
+          else
+            Protocol::Query.new(db_name, query_coll, selector, options)
+          end
         end
       end
     end

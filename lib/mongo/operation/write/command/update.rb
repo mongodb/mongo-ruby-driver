@@ -43,17 +43,40 @@ module Mongo
 
           private
 
-          # The query selector for this update command operation.
-          #
-          # @return [ Hash ] The selector describing this update operation.
+          IDENTIFIER = 'updates'.freeze
+
           def selector
             { update: coll_name,
-              updates: updates,
-              ordered: ordered?
-            }.tap do |cmd|
-              cmd.merge!(writeConcern: write_concern.options) if write_concern
-              cmd.merge!(:bypassDocumentValidation => true) if bypass_document_validation
-              cmd.merge!(:collation => collation) if collation
+              updates: updates
+            }.merge(command_options)
+          end
+
+          def command_options
+            opts = { ordered: ordered? }
+            opts[:writeConcern] = write_concern.options if write_concern
+            opts[:bypassDocumentValidation] = true if bypass_document_validation
+            opts[:collation] = collation if collation
+            opts
+          end
+
+          def op_msg(server)
+            global_args = { update: coll_name,
+                            Protocol::Msg::DATABASE_IDENTIFIER => db_name
+                          }.merge!(command_options)
+            if (cl_time = cluster_time(server))
+              global_args[CLUSTER_TIME] = cl_time
+            end
+
+            section = { type: 1, payload: { identifier: IDENTIFIER, sequence: updates } }
+            flags = unacknowledged_write? ? [:more_to_come] : [:none]
+            Protocol::Msg.new(flags, {}, global_args, section)
+          end
+
+          def message(server)
+            if server.features.op_msg_enabled?
+              op_msg(server)
+            else
+              Protocol::Query.new(db_name, Database::COMMAND, selector, options)
             end
           end
         end

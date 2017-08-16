@@ -34,29 +34,41 @@ module Mongo
 
           private
 
-          # The query selector for this insert command operation.
-          #
-          # @return [ Hash ] The selector describing this insert operation.
-          #
-          # @since 2.0.0
+          IDENTIFIER = 'documents'.freeze
+
           def selector
             { insert: coll_name,
-              documents: documents,
-              ordered: ordered?
-            }.tap do |cmd|
-              cmd.merge!(writeConcern: write_concern.options) if write_concern
-              cmd.merge!(:bypassDocumentValidation => true) if bypass_document_validation
-            end
+              documents: documents
+            }.merge!(command_options)
           end
 
-          # The wire protocol message for this write operation.
-          #
-          # @return [ Mongo::Protocol::Query ] Wire protocol message.
-          #
-          # @since 2.2.5
+          def command_options
+            opts = { ordered: ordered? }
+            opts[:writeConcern] = write_concern.options if write_concern
+            opts[:bypassDocumentValidation] = true if bypass_document_validation
+            opts
+          end
+
+          def op_msg(server)
+            global_args = { insert: coll_name,
+                            Protocol::Msg::DATABASE_IDENTIFIER => db_name
+                          }.merge!(command_options)
+            if (cl_time = cluster_time(server))
+              global_args[CLUSTER_TIME] = cl_time
+            end
+
+            section = { type: 1, payload: { identifier: IDENTIFIER, sequence: documents } }
+            flags = unacknowledged_write? ? [:more_to_come] : [:none]
+            Protocol::Msg.new(flags, { validating_keys: true }, global_args, section)
+          end
+
           def message(server)
-            opts = options.merge(validating_keys: true)
-            Protocol::Query.new(db_name, Database::COMMAND, selector, opts)
+            if server.features.op_msg_enabled?
+              op_msg(server)
+            else
+              opts = options.merge(validating_keys: true)
+              Protocol::Query.new(db_name, Database::COMMAND, selector, opts)
+            end
           end
         end
       end

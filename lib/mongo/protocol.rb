@@ -11,6 +11,7 @@ require 'mongo/protocol/insert'
 require 'mongo/protocol/kill_cursors'
 require 'mongo/protocol/query'
 require 'mongo/protocol/update'
+require 'mongo/protocol/msg'
 
 # Server Responses
 require 'mongo/protocol/reply'

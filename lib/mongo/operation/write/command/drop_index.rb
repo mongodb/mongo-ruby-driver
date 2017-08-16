@@ -32,6 +32,7 @@ module Mongo
           include Specifiable
           include Writable
           include TakesWriteConcern
+          include UsesCommandOpMsg
 
           private
 
@@ -46,7 +47,11 @@ module Mongo
 
           def message(server)
             sel = update_selector_for_write_concern(selector, server)
-            Protocol::Query.new(db_name, Database::COMMAND, sel, options)
+            if server.features.op_msg_enabled?
+              command_op_msg(server, sel, options)
+            else
+              Protocol::Query.new(db_name, Database::COMMAND, sel, options)
+            end
           end
         end
       end

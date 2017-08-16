@@ -37,7 +37,11 @@ module Mongo
 
         def message(server)
           sel = update_selector_for_write_concern(selector, server)
-          Protocol::Query.new(db_name, query_coll, sel, options)
+          if server.features.op_msg_enabled?
+            command_op_msg(server, sel, options)
+          else
+            Protocol::Query.new(db_name, query_coll, sel, options)
+          end
         end
       end
     end

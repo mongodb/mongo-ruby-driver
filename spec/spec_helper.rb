@@ -137,6 +137,15 @@ end
 # determine in the specs if we are 3.6 or higher.
 #
 # @since 2.5.0
+def op_msg_enabled?
+  $mongo_client ||= initialize_scanned_client!
+  $op_msg_enabled ||= $mongo_client.cluster.servers.first.features.op_msg_enabled?
+end
+
+# For instances where behaviour is different on different versions, we need to
+# determine in the specs if we are 3.6 or higher.
+#
+# @since 2.5.0
 def array_filters_enabled?
   $mongo_client ||= initialize_scanned_client!
   $array_filters_enabled ||= $mongo_client.cluster.servers.first.features.array_filters_enabled?

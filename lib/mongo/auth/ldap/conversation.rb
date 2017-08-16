@@ -56,16 +56,24 @@ module Mongo
         # @example Start the conversation.
         #   conversation.start
         #
+        # @param [ Mongo::Server::Connection ] connection The connection being authenticated.
+        #
         # @return [ Protocol::Query ] The first PLAIN conversation message.
         #
         # @since 2.0.0
-        def start
-          Protocol::Query.new(
-            Auth::EXTERNAL,
-            Database::COMMAND,
-            LOGIN.merge(payload: payload, mechanism: LDAP::MECHANISM),
-            limit: -1
-          )
+        def start(connection = nil)
+          if connection && connection.features.op_msg_enabled?
+            selector = LOGIN.merge(payload: payload, mechanism: LDAP::MECHANISM)
+            selector[Protocol::Msg::DATABASE_IDENTIFIER] = Auth::EXTERNAL
+            Protocol::Msg.new([:none], {}, selector)
+          else
+            Protocol::Query.new(
+              Auth::EXTERNAL,
+              Database::COMMAND,
+              LOGIN.merge(payload: payload, mechanism: LDAP::MECHANISM),
+              limit: -1
+            )
+          end
         end
 
         # Create the new conversation.

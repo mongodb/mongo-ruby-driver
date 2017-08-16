@@ -35,6 +35,8 @@ module Mongo
 
           private
 
+          IDENTIFIER = 'deletes'.freeze
+
           # The query selector for this delete command operation.
           #
           # @return [ Hash ] The selector describing this delete operation.
@@ -42,10 +44,40 @@ module Mongo
           # @since 2.0.0
           def selector
             { delete: coll_name,
-              deletes: deletes,
-              ordered: ordered?
-            }.tap do |cmd|
-              cmd.merge!(writeConcern: write_concern.options) if write_concern
+              deletes: deletes
+            }.merge(command_options)
+          end
+
+          def command_options
+            opts = { ordered: ordered? }
+            opts[:writeConcern] = write_concern.options if write_concern
+            opts[:collation] = collation if collation
+            opts
+          end
+
+          def op_msg(server)
+            global_args = { delete: coll_name,
+                            Protocol::Msg::DATABASE_IDENTIFIER => db_name
+                          }.merge!(command_options)
+            if (cl_time = cluster_time(server))
+              global_args[CLUSTER_TIME] = cl_time
+            end
+
+            section = { type: 1, payload: { identifier: IDENTIFIER, sequence: deletes } }
+            flags = unacknowledged_write? ? [:more_to_come] : [:none]
+            Protocol::Msg.new(flags, {}, global_args, section)
+          end
+
+          # The wire protocol message for this write operation.
+          #
+          # @return [ Mongo::Protocol::Query ] Wire protocol message.
+          #
+          # @since 2.0.0
+          def message(server)
+            if server.features.op_msg_enabled?
+              op_msg(server)
+            else
+              Protocol::Query.new(db_name, Database::COMMAND, selector, options)
             end
           end
         end

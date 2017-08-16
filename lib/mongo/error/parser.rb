@@ -72,7 +72,8 @@ module Mongo
       end
 
       def parse_flag(message)
-        if replies && replies.first && replies.first.cursor_not_found?
+        if replies && replies.first &&
+            (replies.first.respond_to?(:cursor_not_found?)) && replies.first.cursor_not_found?
           append(message, CURSOR_NOT_FOUND)
         end
       end

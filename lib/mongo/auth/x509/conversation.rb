@@ -56,18 +56,26 @@ module Mongo
         # @example Start the conversation.
         #   conversation.start
         #
+        # @param [ Mongo::Server::Connection ] connection The connection being authenticated.
+        #
         # @return [ Protocol::Query ] The first x.509 conversation message.
         #
         # @since 2.0.0
-        def start
+        def start(connection = nil)
           login = LOGIN.merge(mechanism: X509::MECHANISM)
           login[:user] = user.name if user.name
-          Protocol::Query.new(
-            Auth::EXTERNAL,
-            Database::COMMAND,
-            login,
-            limit: -1
-          )
+          if connection && connection.features.op_msg_enabled?
+            selector = login
+            selector[Protocol::Msg::DATABASE_IDENTIFIER] = user.auth_source
+            Protocol::Msg.new([:none], {}, selector)
+          else
+            Protocol::Query.new(
+              Auth::EXTERNAL,
+              Database::COMMAND,
+              login,
+              limit: -1
+            )
+          end
         end
 
         # Create the new conversation.

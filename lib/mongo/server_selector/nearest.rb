@@ -22,6 +22,11 @@ module Mongo
     class Nearest
       include Selectable
 
+      # Name of the this read preference in the server's format.
+      #
+      # @since 2.5.0
+      SERVER_FORMATTED_NAME = 'nearest'.freeze
+
       # Get the name of the server mode type.
       #
       # @example Get the name of the server mode for this preference.
@@ -65,11 +70,12 @@ module Mongo
       #
       # @since 2.0.0
       def to_mongos
-        preference = { :mode => 'nearest' }
-        preference.merge!({ :tags => tag_sets }) unless tag_sets.empty?
-        preference.merge!({ maxStalenessSeconds: max_staleness }) if max_staleness
-        preference
+        @doc ||= (preference = { :mode => SERVER_FORMATTED_NAME }
+          preference.merge!({ :tags => tag_sets }) unless tag_sets.empty?
+          preference.merge!({ maxStalenessSeconds: max_staleness }) if max_staleness
+          preference)
       end
+      alias :to_doc :to_mongos
 
       private
 

@@ -86,21 +86,62 @@ describe Mongo::Operation::Write::Command::Delete do
 
   describe '#message' do
 
-    let(:expected_selector) do
-      {
-        :delete        => authorized_collection.name,
-        :deletes       => deletes,
-        :writeConcern => write_concern.options,
-        :ordered       => true
-      }
+    context 'when the server supports OP_MSG', if: op_msg_enabled? do
+
+      let(:expected_global_args) do
+        {
+            delete: TEST_COLL,
+            ordered: true,
+            writeConcern: write_concern.options,
+            '$db' => TEST_DB
+        }
+      end
+
+      let(:expected_payload_1) do
+        {
+            type: 1,
+            payload: { identifier: 'deletes',
+                       sequence: deletes
+            }
+        }
+      end
+
+      it 'creates the correct OP_MSG message' do
+        expect(Mongo::Protocol::Msg).to receive(:new).with([:none], {}, expected_global_args, expected_payload_1)
+        op.send(:message, authorized_primary)
+      end
+
+      context 'when the write concern is 0' do
+
+        let(:write_concern) do
+          Mongo::WriteConcern.get(w: 0)
+        end
+
+        it 'creates the correct OP_MSG message' do
+          expect(Mongo::Protocol::Msg).to receive(:new).with([:more_to_come], {}, expected_global_args, expected_payload_1)
+          op.send(:message, authorized_primary)
+        end
+      end
     end
 
-    it 'creates the correct query wire protocol message' do
-      expect(Mongo::Protocol::Query).to receive(:new).with(authorized_collection.database.name,
-                                                           '$cmd',
-                                                           expected_selector,
-                                                           { limit: -1 } )
-      op.send(:message, double('server'))
+    context 'when the server does not support OP_MSG' do
+
+      let(:expected_selector) do
+        {
+            :delete        => authorized_collection.name,
+            :deletes       => deletes,
+            :writeConcern => write_concern.options,
+            :ordered       => true
+        }
+      end
+
+      it 'creates the correct query wire protocol message', unless: op_msg_enabled? do
+        expect(Mongo::Protocol::Query).to receive(:new).with(authorized_collection.database.name,
+                                                             '$cmd',
+                                                             expected_selector,
+                                                             { limit: -1 } )
+        op.send(:message, authorized_primary)
+      end
     end
   end
 end

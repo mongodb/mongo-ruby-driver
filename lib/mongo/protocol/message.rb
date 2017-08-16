@@ -128,8 +128,8 @@ module Mongo
           raise Error::UnexpectedResponse.new(expected_response_to, response_to)
         end
 
-        buffer = BSON::ByteBuffer.new(io.read(length - 16))
         message = Registry.get(_op_code).allocate
+        buffer = BSON::ByteBuffer.new(io.read(length - 16))
 
         message.send(:fields).each do |field|
           if field[:multi]
@@ -173,6 +173,13 @@ module Mongo
           @request_id = @@request_id += 1
         end
       end
+
+      # Default number returned value for protocol messages.
+      #
+      # @return [ 0 ] This method must be overridden, otherwise, always returns 0.
+      #
+      # @since 2.5.0
+      def number_returned; 0; end
 
       private
 
