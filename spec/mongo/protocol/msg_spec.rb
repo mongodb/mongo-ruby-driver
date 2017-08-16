@@ -350,6 +350,46 @@ describe Mongo::Protocol::Msg do
         end
       end
     end
+
+    context 'when the validating_keys option is true with payload 1' do
+
+      let(:sections) do
+        [ section ]
+      end
+
+      let(:section) do
+        { type: 1, payload: { identifier: 'documents', sequence: [ { '$b' => 2 } ] } }
+      end
+
+      let(:options) do
+        { validating_keys: true }
+      end
+
+      it 'checks the sequence document keys' do
+        expect {
+          message.serialize
+        }.to raise_exception(BSON::String::IllegalKey)
+      end
+    end
+
+    context 'when the validating_keys option is false with payload 1' do
+
+      let(:sections) do
+        [ section ]
+      end
+
+      let(:section) do
+        { type: 1, payload: { identifier: 'documents', sequence: [ { '$b' => 2 } ] } }
+      end
+
+      let(:options) do
+        { validating_keys: false }
+      end
+
+      it 'does not check the sequence document keys' do
+        expect(message.serialize).to be_a(BSON::ByteBuffer)
+      end
+    end
   end
 
   describe '#deserialize' do
