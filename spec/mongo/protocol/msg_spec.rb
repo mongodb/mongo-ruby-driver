@@ -377,6 +377,54 @@ describe Mongo::Protocol::Msg do
     end
   end
 
+  describe '#payload' do
+
+    context 'when the msg only contains a payload type 0' do
+
+      it 'creates a payload with the command' do
+        expect(message.payload[:command_name]).to eq(:ping)
+        expect(message.payload[:database_name]).to eq(TEST_DB)
+        expect(message.payload[:command]).to eq('ping' => 1)
+        expect(message.payload[:request_id]).to eq(message.request_id)
+      end
+    end
+
+    context 'when the contains a payload type 1' do
+
+      let(:section) do
+        { type: 1,
+          payload: { identifier: 'documents',
+                     sequence: [ { a: 1 } ] } }
+      end
+
+      let(:global_args) do
+        { '$db' => TEST_DB,
+          'insert' => TEST_COLL,
+          'ordered' => true
+        }
+      end
+
+      let(:sections) do
+        [ section ]
+      end
+
+      let(:expected_command_doc) do
+        {
+            'insert' => TEST_COLL,
+            'documents' => [{ 'a' => 1 }],
+            'ordered' => true
+        }
+      end
+
+      it 'creates a payload with the command' do
+        expect(message.payload[:command_name]).to eq('insert')
+        expect(message.payload[:database_name]).to eq(TEST_DB)
+        expect(message.payload[:command]).to eq(expected_command_doc)
+        expect(message.payload[:request_id]).to eq(message.request_id)
+      end
+    end
+  end
+
   describe '#registry' do
 
     context 'when the class is loaded' do

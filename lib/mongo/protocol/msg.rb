@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+require 'pry-nav'
 module Mongo
   module Protocol
 
@@ -78,11 +78,11 @@ module Mongo
       # @since 2.5.0
       def payload
         BSON::Document.new(
-          command_name: global_args.keys.first,
+          command_name: command.keys.first,
           database_name: global_args[DATABASE_IDENTIFIER],
-          command: global_args,
+          command: command,
           request_id: request_id,
-          reply: global_args
+          reply: sections[0]
         )
       end
 
@@ -101,6 +101,19 @@ module Mongo
       end
 
       private
+
+      def command
+        @command ||= global_args.dup.tap do |cmd|
+          cmd.delete(DATABASE_IDENTIFIER)
+          sections.each do |section|
+            if section[:type] == 1
+              identifier = section[:payload][:identifier]
+              cmd[identifier] ||= []
+              cmd[identifier] += section[:payload][:sequence]
+            end
+          end
+        end
+      end
 
       def add_check_sum(buffer)
         if flags.include?(:checksum_present)
