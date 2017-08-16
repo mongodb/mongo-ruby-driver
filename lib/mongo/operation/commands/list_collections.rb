@@ -19,7 +19,7 @@ module Mongo
       # A MongoDB listCollections command operation.
       #
       # @example Create the listCollections command operation.
-      #   Mongo::Operation::Read::ListCollections.new(db_name: 'test')
+      #   ListCollections.new(db_name: 'test')
       #
       # @note A command is actually a query on the virtual '$cmd' collection.
       #

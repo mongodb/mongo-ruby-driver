@@ -19,7 +19,7 @@ module Mongo
       # A MongoDB drop collection operation.
       #
       # @example Instantiate the operation.
-      #   Commands::Drop.new(selector: { drop: 'test' }, :db_name => 'test')
+      #   Drop.new(selector: { drop: 'test' }, :db_name => 'test')
       #
       # Initialization:
       #   param [ Hash ] spec The specifications for the operation.

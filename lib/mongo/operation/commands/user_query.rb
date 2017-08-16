@@ -19,7 +19,7 @@ module Mongo
       # A MongoDB operation to get info of a particular user in a database.
       #
       # @example Create the user query operation.
-      #   Read::UserQuery.new(:name => 'emily', :db_name => 'test-db')
+      #   UserQuery.new(:name => 'emily', :db_name => 'test-db')
       #
       # Initialization:
       #   param [ Hash ] spec The specifications for the user query operation.

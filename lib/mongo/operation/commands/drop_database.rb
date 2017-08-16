@@ -19,7 +19,7 @@ module Mongo
       # A MongoDB drop database operation.
       #
       # @example Instantiate the operation.
-      #   Commands::Drop.new(selector: { dropDatabase: 'test' }, :db_name => 'test')
+      #   Drop.new(selector: { dropDatabase: 'test' }, :db_name => 'test')
       #
       # Initialization:
       #   param [ Hash ] spec The specifications for the operation.

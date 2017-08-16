@@ -21,7 +21,7 @@ module Mongo
       # Initialize the get indexes operation.
       #
       # @example Instantiate the operation.
-      #   Read::Indexes.new(:db_name => 'test', :coll_name => 'test_coll')
+      #   Indexes.new(:db_name => 'test', :coll_name => 'test_coll')
       #
       # Initialization:
       #   param [ Hash ] spec The specifications for the insert.
