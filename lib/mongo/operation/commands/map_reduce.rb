@@ -43,7 +43,6 @@ module Mongo
       # @since 2.0.0
       class MapReduce < Command
         include TakesWriteConcern
-        include UsesCommandOpMsg
 
         private
 

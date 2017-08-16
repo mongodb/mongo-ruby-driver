@@ -32,7 +32,6 @@ module Mongo
       # @since 2.4.0
       class Create < Command
         include TakesWriteConcern
-        include UsesCommandOpMsg
 
         private
 
