@@ -224,6 +224,10 @@ describe Mongo::Database do
       expect(database.command(:ismaster => 1).written_count).to eq(0)
     end
 
+    it 'does not mutate the command selector' do
+      expect(database.command({:ismaster => 1}.freeze).written_count).to eq(0)
+    end
+
     context 'when a read concern is provided', if: find_command_enabled? do
 
       context 'when the read concern is valid' do
