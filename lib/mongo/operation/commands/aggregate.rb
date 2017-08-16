@@ -18,7 +18,7 @@ module Mongo
 
       # A MongoDB aggregate operation.
       #
-      # @note An aggregate operation can behave like a read and return a 
+      # @note An aggregate operation can behave like a read and return a
       #   result set, or can behave like a write operation and
       #   output results to a user-specified collection.
       #

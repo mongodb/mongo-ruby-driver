@@ -19,7 +19,7 @@ module Mongo
       # A MongoDB listIndexes command operation.
       #
       # @example Create the listIndexes command operation.
-      #   Mongo::Operation::Read::ListIndexes.new({ db_name: 'test', coll_name: 'example' })
+      #   ListIndexes.new({ db_name: 'test', coll_name: 'example' })
       #
       # @note A command is actually a query on the virtual '$cmd' collection.
       #

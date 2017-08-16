@@ -19,7 +19,7 @@ module Mongo
       # A MongoDB command operation.
       #
       # @example Create the command operation.
-      #   Mongo::Operation::Command.new({ :selector => { :isMaster => 1 } })
+      #   Command.new({ :selector => { :isMaster => 1 } })
       #
       # Initialization:
       #   param [ Hash ] spec The specifications for the command.

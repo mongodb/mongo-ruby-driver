@@ -19,7 +19,7 @@ module Mongo
       # A MongoDB create collection operation.
       #
       # @example Instantiate the operation.
-      #   Commands::Create.new(selector: { create: 'test' }, :db_name => 'test')
+      #   Create.new(selector: { create: 'test' }, :db_name => 'test')
       #
       # Initialization:
       #   param [ Hash ] spec The specifications for the operation.

@@ -18,16 +18,16 @@ module Mongo
   module Operation
     module Commands
 
-      # A MongoDB operation to get a list of collection names in a database.
+      # A MongoDB operation to get a list of collections info in a database.
       #
-      # @example Create the collection names operation.
-      #   Read::CollectionNames.new(:db_name => 'test-db')
+      # @example Create the collections info operation.
+      #   CollectionsInfo.new(:db_name => 'test-db')
       #
       # Initialization:
-      #   param [ Hash ] spec The specifications for the collection names operation.
+      #   param [ Hash ] spec The specifications for the collections info operation.
       #
-      #   option spec :db_name [ String ] The name of the database whose collection
-      #     names is requested.
+      #   option spec :db_name [ String ] The name of the database whose collections
+      #     info is requested.
       #   option spec :options [ Hash ] Options for the operation.
       #
       # @since 2.0.0
