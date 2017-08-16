@@ -176,7 +176,7 @@ module Mongo
 
       # Default number returned value for protocol messages.
       #
-      # @return [ 0 ] Always 0.
+      # @return [ 0 ] This method must be overridden, otherwise, always returns 0.
       #
       # @since 2.5.0
       def number_returned; 0; end

@@ -251,7 +251,7 @@ module Mongo
           end
         end
 
-        # MongoDB wire protocol serialization strategy for a payload 0 type Section of OP_MSG.
+        # MongoDB wire protocol serialization strategy for a payload 1 type Section of OP_MSG.
         #
         # @since 2.5.0
         module PayloadOne
@@ -282,7 +282,7 @@ module Mongo
             buffer.put_int32(0) # hold for size
             buffer.put_cstring(value[:identifier])
             value[:sequence].each do |document|
-              Serializers::Document.serialize(buffer, document, max_bson_size, validating_keys)
+              Document.serialize(buffer, document, max_bson_size, validating_keys)
             end
             buffer.replace_int32(start, buffer.length - start)
           end

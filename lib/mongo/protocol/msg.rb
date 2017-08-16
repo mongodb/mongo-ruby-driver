@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-require 'pry-nav'
+
 module Mongo
   module Protocol
 
@@ -43,6 +43,8 @@ module Mongo
       # @param [ BSON::Document, Hash ] sections Zero or more sections, in the format
       #   { type: 1, payload: { identifier: <String>, sequence: <Array<BSON::Document, Hash>> } } or
       #   { type: 0, payload: <BSON::Document, Hash> }
+      #
+      # @option options [ true, false ] validating_keys Whether keys should be validated.
       #
       # @api private
       #

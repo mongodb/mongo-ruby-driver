@@ -32,7 +32,7 @@ module Mongo
       #
       # @param [ String ] byte The unknown payload type.
       #
-      # @since 2.2.6
+      # @since 2.5.0
       def initialize(byte)
         super(MESSAGE % byte.inspect)
       end
