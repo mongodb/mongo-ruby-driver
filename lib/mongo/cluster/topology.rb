@@ -51,7 +51,7 @@ module Mongo
         if options.has_key?(:connect)
           OPTIONS.fetch(options[:connect].to_sym).new(options, monitoring, seeds)
         elsif options.has_key?(:replica_set)
-          ReplicaSet.new(options, monitoring, options)
+          ReplicaSet.new(options, monitoring, seeds)
         else
           Unknown.new(options, monitoring, seeds)
         end
