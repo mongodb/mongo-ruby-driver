@@ -47,7 +47,7 @@ module Mongo
         attr_reader :reduce
 
         # Delegate necessary operations to the view.
-        def_delegators :view, :collection, :read, :cluster, :server_selector
+        def_delegators :view, :collection, :read, :cluster
 
         # Delegate necessary operations to the collection.
         def_delegators :collection, :database
@@ -181,6 +181,10 @@ module Mongo
         end
 
         private
+
+        def server_selector
+          @view.send(:server_selector)
+        end
 
         def inline?
           out.nil? || out == { inline: 1 } || out == { INLINE => 1 }

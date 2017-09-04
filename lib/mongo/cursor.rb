@@ -35,7 +35,7 @@ module Mongo
     include Enumerable
     include Retryable
 
-    def_delegators :@view, :collection, :limit
+    def_delegators :@view, :collection
     def_delegators :collection, :client, :database
     def_delegators :@server, :cluster
 
@@ -239,6 +239,10 @@ module Mongo
 
     def use_limit?
       limited? && batch_size >= @remaining
+    end
+
+    def limit
+      @view.send(:limit)
     end
 
     def register

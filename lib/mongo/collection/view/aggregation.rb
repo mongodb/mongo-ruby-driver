@@ -34,7 +34,7 @@ module Mongo
         attr_reader :pipeline
 
         # Delegate necessary operations to the view.
-        def_delegators :view, :collection, :read, :cluster, :server_selector
+        def_delegators :view, :collection, :read, :cluster
 
         # Delegate necessary operations to the collection.
         def_delegators :collection, :database
@@ -89,6 +89,10 @@ module Mongo
         end
 
         private
+
+        def server_selector
+          @view.send(:server_selector)
+        end
 
         def aggregate_spec
           Builder::Aggregation.new(pipeline, view, options).specification
