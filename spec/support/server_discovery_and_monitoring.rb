@@ -163,6 +163,9 @@ module Mongo
       # @return [ String ] topology_type The expected cluster topology type.
       attr_reader :topology_type
 
+      # @return [ Integer, nil ] logical_session_timeout The expected logical session timeout.
+      attr_reader :logical_session_timeout
+
       # Create the new outcome.
       #
       # @example Create the new outcome.
@@ -175,6 +178,7 @@ module Mongo
         @servers = process_servers(outcome['servers']) if outcome['servers']
         @set_name = outcome['setName']
         @topology_type = outcome['topologyType']
+        @logical_session_timeout = outcome['logicalSessionTimeoutMinutes']
         @events = process_events(outcome['events']) if outcome['events']
       end
 

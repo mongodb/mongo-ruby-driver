@@ -72,7 +72,8 @@ module Mongo
                    :standalone?,
                    :unknown?,
                    :unknown!,
-                   :last_write_date
+                   :last_write_date,
+                   :logical_session_timeout
 
     # Get the app metadata from the cluster.
     def_delegators :cluster,

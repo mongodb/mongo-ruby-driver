@@ -63,6 +63,10 @@ describe 'Server Discovery and Monitoring' do
             expect(@client.cluster.replica_set_name).to eq(phase.outcome.set_name)
           end
 
+          it "sets the cluster logical session timeout minutes to #{phase.outcome.logical_session_timeout.inspect}" do
+            expect(@client.cluster.logical_session_timeout).to eq(phase.outcome.logical_session_timeout)
+          end
+
           it "has the expected servers in the cluster" do
             expect(cluster_addresses).to eq(phase_addresses)
           end

@@ -442,6 +442,21 @@ module Mongo
       addresses_list
     end
 
+    # The logical session timeout value in minutes.
+    #
+    # @example Get the logical session timeout in minutes.
+    #   cluster.logical_session_timeout
+    #
+    # @return [ Integer, nil ] The logical session timeout.
+    #
+    # @since 2.5.0
+    def logical_session_timeout
+      servers.inject(nil) do |min, server|
+        break unless timeout = server.logical_session_timeout
+        [timeout, (min || timeout)].min
+      end
+    end
+
     private
 
     def direct_connection?(address)

@@ -24,6 +24,7 @@ describe Mongo::Server::Description do
       'minWireVersion' => 0,
       'localTime' => Time.now,
       'lastWrite' => { 'lastWriteDate' => Time.now },
+      'logicalSessionTimeoutMinutes' => 7,
       'ok' => 1
     }
   end
@@ -828,6 +829,31 @@ describe Mongo::Server::Description do
 
       it 'returns true' do
         expect(description.replica_set_member?).to be(true)
+      end
+    end
+  end
+
+  describe '#logical_session_timeout_minutes' do
+
+    context 'when a logical session timeout value is in the config' do
+
+      let(:description) do
+        described_class.new(address, replica)
+      end
+
+      it 'returns the logical session timeout value' do
+        expect(description.logical_session_timeout).to eq(7)
+      end
+    end
+
+    context 'when a logical session timeout value is not in the config' do
+
+      let(:description) do
+        described_class.new(address, { 'ismaster' => true, 'ok' => 1 })
+      end
+
+      it 'returns nil' do
+        expect(description.logical_session_timeout).to be(nil)
       end
     end
   end
