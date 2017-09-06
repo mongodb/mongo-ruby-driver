@@ -38,8 +38,8 @@ phases: [
                     setName:
                 }
             },
-
             topologyType: "Sharded",
+            logicalSessionTimeoutMinutes: null,
             setName:
         }
     },
@@ -64,8 +64,8 @@ phases: [
                     setName:
                 }
             },
-
             topologyType: "Sharded",
+            logicalSessionTimeoutMinutes: null,
             setName:
         }
     },
@@ -96,8 +96,8 @@ phases: [
                     setName:
                 }
             },
-
             topologyType: "Sharded",
+            logicalSessionTimeoutMinutes: null,
             setName:
         }
     }

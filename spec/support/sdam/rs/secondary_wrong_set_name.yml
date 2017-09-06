@@ -20,8 +20,8 @@ phases: [
         outcome: {
 
             servers: {},
-
             topologyType: "ReplicaSetNoPrimary",
+            logicalSessionTimeoutMinutes: null,
             setName: "rs"
         }
     }

@@ -32,6 +32,7 @@ phases: [
                 }
             },
             topologyType: "ReplicaSetWithPrimary",
+            logicalSessionTimeoutMinutes: null,
             setName: "rs",
         }
     },
@@ -62,6 +63,7 @@ phases: [
                 }
             },
             topologyType: "ReplicaSetWithPrimary",
+            logicalSessionTimeoutMinutes: null,
             setName: "rs",
         }
     },
@@ -93,6 +95,7 @@ phases: [
                 }
             },
             topologyType: "ReplicaSetWithPrimary",
+            logicalSessionTimeoutMinutes: null,
             setName: "rs",
         }
     }
