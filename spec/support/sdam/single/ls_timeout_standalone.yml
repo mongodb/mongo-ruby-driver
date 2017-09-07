@@ -1,4 +1,4 @@
-description: "Handle a not-ok ismaster response"
+description: "Parse logicalSessionTimeoutMinutes from standalone"
 
 uri: "mongodb://a"
 
@@ -10,13 +10,10 @@ phases: [
                 ["a:27017", {
 
                     ok: 1,
-                    ismaster: true
-                }],
-
-                ["a:27017", {
-
-                    ok: 0,
-                    ismaster: true
+                    ismaster: true,
+                    logicalSessionTimeoutMinutes: 7,
+                    minWireVersion: 0,
+                    maxWireVersion: 6
                 }]
         ],
 
@@ -26,12 +23,12 @@ phases: [
 
                 "a:27017": {
 
-                    type: "Unknown",
+                    type: "Standalone",
                     setName:
                 }
             },
             topologyType: "Single",
-            logicalSessionTimeoutMinutes: null,
+            logicalSessionTimeoutMinutes: 7,
             setName:
         }
     }

@@ -159,6 +159,11 @@ module Mongo
       # @since 2.5.0
       OPERATION_TIME = 'operationTime'.freeze
 
+      # Constant for reading logicalSessionTimeoutMinutes info from config.
+      #
+      # @since 2.5.0
+      LOGICAL_SESSION_TIMEOUT_MINUTES = 'logicalSessionTimeoutMinutes'.freeze
+
       # Fields to exclude when comparing two descriptions.
       #
       # @since 2.0.6
@@ -387,6 +392,18 @@ module Mongo
       # @since 2.4.0
       def last_write_date
         config[LAST_WRITE][LAST_WRITE_DATE] if config[LAST_WRITE]
+      end
+
+      # Get the logicalSessionTimeoutMinutes from the config.
+      #
+      # @example Get the logicalSessionTimeoutMinutes value in minutes.
+      #   description.logical_session_timeout
+      #
+      # @return [ Integer, nil ] The logical session timeout in minutes.
+      #
+      # @since 2.5.0
+      def logical_session_timeout
+        config[LOGICAL_SESSION_TIMEOUT_MINUTES] if config[LOGICAL_SESSION_TIMEOUT_MINUTES]
       end
 
       # Is the server a mongos?
