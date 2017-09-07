@@ -472,19 +472,11 @@ module Mongo
     end
 
     def servers_list
-      @update_lock.synchronize do
-        @servers.reduce([]) do |servers, server|
-          servers << server
-        end
-      end
+      @update_lock.synchronize { @servers.dup }
     end
 
     def addresses_list
-      @update_lock.synchronize do
-        @addresses.reduce([]) do |addresses, address|
-          addresses << address
-        end
-      end
+      @update_lock.synchronize { @addresses.dup }
     end
   end
 end
