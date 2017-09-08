@@ -60,7 +60,9 @@ module Mongo
                      :max_message_size,
                      :mongos?,
                      :app_metadata,
-                     :compressor
+                     :compressor,
+                     :cluster_time,
+                     :update_cluster_time
 
       # Tell the underlying socket to establish a connection to the host.
       #

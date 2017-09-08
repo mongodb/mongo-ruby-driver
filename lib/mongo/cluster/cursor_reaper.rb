@@ -22,7 +22,6 @@ module Mongo
     #
     # @since 2.3.0
     class CursorReaper
-      extend Forwardable
       include Retryable
 
       # The default time interval for the cursor reaper to send pending kill cursors operations.

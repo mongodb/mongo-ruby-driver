@@ -68,7 +68,10 @@ module Mongo
 
         def execute_write_command(server)
           result_class = self.class.const_defined?(:Result, false) ? self.class::Result : Result
-          result_class.new(write_command_op.execute(server)).validate!
+          result = result_class.new(write_command_op.execute(server))
+          server.update_cluster_time(result)
+          session.process(result) if session
+          result.validate!
         end
       end
     end

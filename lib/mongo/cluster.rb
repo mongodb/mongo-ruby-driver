@@ -48,6 +48,11 @@ module Mongo
     # @since 2.4.0
     IDLE_WRITE_PERIOD_SECONDS = 10
 
+    # The cluster time key in responses from mongos servers.
+    #
+    # @since 2.5.0
+    CLUSTER_TIME = 'clusterTime'.freeze
+
     # @return [ Hash ] The options hash.
     attr_reader :options
 
@@ -62,6 +67,11 @@ module Mongo
     #
     # @since 2.4.0
     attr_reader :app_metadata
+
+    # @return [ BSON::Document ] The latest cluster time seen.
+    #
+    # @since 2.5.0
+    attr_reader :cluster_time
 
     def_delegators :topology, :replica_set?, :replica_set_name, :sharded?,
                    :single?, :unknown?, :member_discovered
@@ -158,6 +168,8 @@ module Mongo
       @app_metadata = AppMetadata.new(self)
       @update_lock = Mutex.new
       @pool_lock = Mutex.new
+      @cluster_time = nil
+      @cluster_time_lock = Mutex.new
       @topology = Topology.initial(seeds, monitoring, options)
 
       publish_sdam_event(
@@ -454,6 +466,28 @@ module Mongo
       servers.inject(nil) do |min, server|
         break unless timeout = server.logical_session_timeout
         [timeout, (min || timeout)].min
+      end
+    end
+
+    # Update the max cluster time seen in a response.
+    #
+    # @example Update the cluster time.
+    #   cluster.update_cluster_time(result)
+    #
+    # @param [ Operation::Result ] The operation result containing the cluster time.
+    #
+    # @return [ Object ] The cluster time.
+    #
+    # @since 2.5.0
+    def update_cluster_time(result)
+      if cluster_time_doc = result.cluster_time
+        @cluster_time_lock.synchronize do
+          if @cluster_time.nil?
+            @cluster_time = cluster_time_doc
+          else
+            @cluster_time = cluster_time_doc if cluster_time_doc[CLUSTER_TIME] > @cluster_time[CLUSTER_TIME]
+          end
+        end
       end
     end
 

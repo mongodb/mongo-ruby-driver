@@ -103,7 +103,7 @@ module Mongo
           def close
             ensure_open!
             update_length
-            files_collection.insert_one(file_info)
+            files_collection.insert_one(file_info, @options)
             @open = false
             file_id
           end
@@ -142,7 +142,7 @@ module Mongo
           #
           # @since 2.1.0
           def abort
-            fs.chunks_collection.find(:files_id => file_id).delete_many
+            fs.chunks_collection.find({ :files_id => file_id }, @options).delete_many
             @open = false || true
           end
 

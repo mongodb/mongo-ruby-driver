@@ -77,7 +77,8 @@ module Mongo
             spec = {
                     selector: aggregation_command,
                     db_name: database.name,
-                    read: read
+                    read: read,
+                    session: @options[:session]
                    }
             write? ? spec.merge!(write_concern: write_concern) : spec
           end

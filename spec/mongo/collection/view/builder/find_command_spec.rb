@@ -9,7 +9,7 @@ describe Mongo::Collection::View::Builder::FindCommand do
     end
 
     let(:builder) do
-      described_class.new(view)
+      described_class.new(view, nil)
     end
 
     let(:specification) do
@@ -50,6 +50,21 @@ describe Mongo::Collection::View::Builder::FindCommand do
           allow_partial_results: true,
           collation: { locale: 'en_US' }
         }
+      end
+
+      context 'when the operation has a session' do
+
+        let(:session) do
+          double('session')
+        end
+
+        let(:builder) do
+          described_class.new(view, session)
+        end
+
+        it 'adds the session to the specification' do
+          expect(builder.specification[:session]).to be(session)
+        end
       end
 
       it 'maps the collection name' do

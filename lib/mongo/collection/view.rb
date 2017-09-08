@@ -198,6 +198,12 @@ module Mongo
       end
 
       def view; self; end
+
+      def with_session
+        client.send(:with_session, @options) do |session|
+          yield(session)
+        end
+      end
     end
   end
 end

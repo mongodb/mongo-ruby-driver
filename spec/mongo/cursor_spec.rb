@@ -22,7 +22,7 @@ describe Mongo::Cursor do
         Mongo::Collection::View.new(authorized_collection)
       end
 
-      context 'when the initial query retieves all documents' do
+      context 'when the initial query retrieves all documents' do
 
         let(:documents) do
           (1..10).map{ |i| { field: "test#{i}" }}

@@ -56,9 +56,12 @@ module Mongo
       def login(connection)
         conversation = Conversation.new(user)
         reply = connection.dispatch([ conversation.start(connection) ])
+        connection.update_cluster_time(Operation::Result.new(reply))
         reply = connection.dispatch([ conversation.continue(reply, connection) ])
+        connection.update_cluster_time(Operation::Result.new(reply))
         until reply.documents[0][Conversation::DONE]
           reply = connection.dispatch([ conversation.finalize(reply, connection) ])
+          connection.update_cluster_time(Operation::Result.new(reply))
         end
         reply
       end

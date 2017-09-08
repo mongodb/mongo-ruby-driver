@@ -182,7 +182,7 @@ describe Mongo::Collection do
       context 'when the client has a write concern set' do
 
         let(:client) do
-          Mongo::Client.new(ADDRESSES, TEST_OPTIONS.merge(write: { w: 10 }))
+          Mongo::Client.new(ADDRESSES, TEST_OPTIONS.merge(write: INVALID_WRITE_CONCERN))
         end
 
         it 'sets the new write options on the new collection' do
@@ -615,8 +615,39 @@ describe Mongo::Collection do
           it_behaves_like 'a collection command with a collation option'
         end
       end
+
+      context 'when a session is provided' do
+
+        let(:collection) do
+          authorized_client[:specs]
+        end
+
+        let(:operation) do
+          collection.create(session: session)
+        end
+
+        let(:session) do
+          authorized_client.start_session
+        end
+
+        let(:client) do
+          authorized_client
+        end
+
+        let(:failed_operation) do
+          authorized_client[:specs, invalid: true].create(session: session)
+        end
+
+        after do
+          collection.drop
+        end
+
+        it_behaves_like 'an operation using a session'
+        it_behaves_like 'a failed operation using a session'
+      end
     end
   end
+
 
   describe '#drop' do
 
@@ -629,8 +660,35 @@ describe Mongo::Collection do
     end
 
     context 'when the collection exists' do
+
       before do
         collection.create
+      end
+
+      context 'when a session is provided' do
+
+        let(:operation) do
+          collection.drop(session: session)
+        end
+
+        let(:failed_operation) do
+          collection.with(write: INVALID_WRITE_CONCERN).drop(session: session)
+        end
+
+        let(:session) do
+          authorized_client.start_session
+        end
+
+        let(:client) do
+          authorized_client
+        end
+
+        after do
+          collection.drop
+        end
+
+        it_behaves_like 'an operation using a session'
+        it_behaves_like 'a failed operation using a session'
       end
 
       context 'when the collection does not have a write concern set' do
@@ -698,6 +756,19 @@ describe Mongo::Collection do
   end
 
   describe '#find' do
+
+    describe 'updating cluster time' do
+
+      let(:operation) do
+        client[TEST_COLL].find.first
+      end
+
+      let(:second_operation) do
+        client[TEST_COLL].find.first
+      end
+
+      it_behaves_like 'an operation updating cluster time'
+    end
 
     context 'when provided a filter' do
 
@@ -795,6 +866,28 @@ describe Mongo::Collection do
 
       let(:view) do
         authorized_collection.find({}, options)
+      end
+
+      context 'when a session is provided' do
+
+        let(:operation) do
+          authorized_collection.find({}, session: session).to_a
+        end
+
+        let(:session) do
+          authorized_client.start_session
+        end
+
+        let(:failed_operation) do
+          authorized_collection.find({ '$._id' => 1 }, session: session).to_a
+        end
+
+        let(:client) do
+          authorized_client
+        end
+
+        it_behaves_like 'an operation using a session'
+        it_behaves_like 'a failed operation using a session'
       end
 
       context 'when provided :allow_partial_results' do
@@ -949,6 +1042,28 @@ describe Mongo::Collection do
       expect(result.inserted_ids.size).to eq(2)
     end
 
+    context 'when a session is provided' do
+
+      let(:session) do
+        authorized_client.start_session
+      end
+
+      let(:operation) do
+        authorized_collection.insert_many([{ name: 'test1' }, { name: 'test2' }], session: session)
+      end
+
+      let(:failed_operation) do
+        authorized_collection.insert_many([{ _id: 'test1' }, { _id: 'test1' }], session: session)
+      end
+
+      let(:client) do
+        authorized_client
+      end
+
+      it_behaves_like 'an operation using a session'
+      it_behaves_like 'a failed operation using a session'
+    end
+
     context 'when a document contains invalid keys' do
 
       let(:docs) do
@@ -1021,18 +1136,35 @@ describe Mongo::Collection do
 
     context 'when the documents are sent with OP_MSG', if: op_msg_enabled? do
 
+      let(:client) do
+        authorized_client.with(heartbeat_frequency: 100).tap do |cl|
+          cl.subscribe(Mongo::Monitoring::COMMAND, subscriber)
+        end
+      end
+
+      let(:subscriber) do
+        EventSubscriber.new
+      end
+
       let(:documents) do
         [{ '_id' => 1, 'name' => '1'*16777191 }, { '_id' => 'y' }]
       end
 
       before do
-        authorized_collection.insert_one(a:1)
+        client[TEST_COLL].insert_many(documents)
+      end
+
+      after do
+        client.close
+      end
+
+      let(:insert_events) do
+        subscriber.started_events.select { |e| e.command_name == :insert }
       end
 
       it 'sends the documents in one OP_MSG' do
-        # Msg created twice: once for insert, once for the delete in the after block
-        expect(Mongo::Protocol::Msg).to receive(:new).twice.and_call_original
-        expect(authorized_collection.insert_many(documents).inserted_count).to eq(2)
+        expect(insert_events.size).to eq(1)
+        expect(insert_events[0].command['documents']).to eq(documents)
       end
     end
 
@@ -1090,6 +1222,19 @@ describe Mongo::Collection do
 
   describe '#insert_one' do
 
+    describe 'updating cluster time' do
+
+      let(:operation) do
+        client[TEST_COLL].insert_one({ name: 'testing' })
+      end
+
+      let(:second_operation) do
+        client[TEST_COLL].insert_one({ name: 'testing' })
+      end
+
+      it_behaves_like 'an operation updating cluster time'
+    end
+
     let(:result) do
       authorized_collection.insert_one({ name: 'testing' })
     end
@@ -1104,6 +1249,29 @@ describe Mongo::Collection do
 
     it 'contains the id in the result' do
       expect(result.inserted_id).to_not be_nil
+    end
+
+    context 'when a session is provided' do
+
+      let(:session) do
+        authorized_client.start_session
+      end
+
+      let(:operation) do
+        authorized_collection.insert_one({ name: 'testing' }, session: session)
+      end
+
+      let(:failed_operation) do
+        authorized_collection.insert_one({ _id: 'testing' })
+        authorized_collection.insert_one({ _id: 'testing' }, session: session)
+      end
+
+      let(:client) do
+        authorized_client
+      end
+
+      it_behaves_like 'an operation using a session'
+      it_behaves_like 'a failed operation using a session'
     end
 
     context 'when the document contains invalid keys' do
@@ -1251,6 +1419,28 @@ describe Mongo::Collection do
       expect(index_names).to include(*'name_1', '_id_')
     end
 
+    context 'when a session is provided' do
+
+      let(:session) do
+        authorized_client.start_session
+      end
+
+      let(:operation) do
+        authorized_collection.indexes(batch_size: batch_size, session: session).collect { |i| i['name'] }
+      end
+
+      let(:failed_operation) do
+        authorized_collection.indexes(batch_size: -100, session: session).collect { |i| i['name'] }
+      end
+
+      let(:client) do
+        authorized_client
+      end
+
+      it_behaves_like 'an operation using a session'
+      it_behaves_like 'a failed operation using a session'
+    end
+
     context 'when batch size is specified' do
 
       let(:batch_size) { 1 }
@@ -1262,6 +1452,19 @@ describe Mongo::Collection do
   end
 
   describe '#aggregate' do
+
+    describe 'updating cluster time' do
+
+      let(:operation) do
+        client[TEST_COLL].aggregate([]).first
+      end
+
+      let(:second_operation) do
+        client[TEST_COLL].aggregate([]).first
+      end
+
+      it_behaves_like 'an operation updating cluster time'
+    end
 
     it 'returns an Aggregation object' do
       expect(authorized_collection.aggregate([])).to be_a(Mongo::Collection::View::Aggregation)
@@ -1275,6 +1478,28 @@ describe Mongo::Collection do
 
       it 'sets the options on the Aggregation object' do
         expect(authorized_collection.aggregate([], options).options).to eq(BSON::Document.new(options))
+      end
+
+      context 'when a session is provided' do
+
+        let(:session) do
+          authorized_client.start_session
+        end
+
+        let(:operation) do
+          authorized_collection.aggregate([], session: session).to_a
+        end
+
+        let(:failed_operation) do
+          authorized_collection.aggregate([ { '$invalid' => 1 }], session: session).to_a
+        end
+
+        let(:client) do
+          authorized_client
+        end
+
+        it_behaves_like 'an operation using a session'
+        it_behaves_like 'a failed operation using a session'
       end
 
       context 'when a hint is provided' do
@@ -1358,6 +1583,28 @@ describe Mongo::Collection do
         expect(authorized_collection.count({}, limit: 5)).to eq(5)
       end
 
+      context 'when a session is provided' do
+
+        let(:session) do
+          authorized_client.start_session
+        end
+
+        let(:operation) do
+          authorized_collection.count({}, session: session)
+        end
+
+        let(:failed_operation) do
+          authorized_collection.count({ '$._id' => 1 }, session: session)
+        end
+
+        let(:client) do
+          authorized_client
+        end
+
+        it_behaves_like 'an operation using a session'
+        it_behaves_like 'a failed operation using a session'
+      end
+
       context 'when a collation is specified' do
 
         let(:selector) do
@@ -1433,6 +1680,28 @@ describe Mongo::Collection do
 
       it 'passes the options to the distinct command' do
         expect(authorized_collection.distinct(:field, {}, max_time_ms: 100).sort).to eq([ 'test1', 'test2', 'test3' ])
+      end
+
+      context 'when a session is provided' do
+
+        let(:session) do
+          authorized_client.start_session
+        end
+
+        let(:operation) do
+          authorized_collection.distinct(:field, {}, session: session)
+        end
+
+        let(:failed_operation) do
+          authorized_collection.distinct(:field, { '$._id' => 1 }, session: session)
+        end
+
+        let(:client) do
+          authorized_client
+        end
+
+        it_behaves_like 'an operation using a session'
+        it_behaves_like 'a failed operation using a session'
       end
     end
 
@@ -1549,6 +1818,28 @@ describe Mongo::Collection do
           result
         }.to raise_exception(Mongo::Error::OperationFailure)
       end
+    end
+
+    context 'when a session is provided' do
+
+      let(:session) do
+        authorized_client.start_session
+      end
+
+      let(:operation) do
+        authorized_collection.delete_one({}, session: session)
+      end
+
+      let(:failed_operation) do
+        authorized_collection.delete_one({ '$._id' => 1}, session: session)
+      end
+
+      let(:client) do
+        authorized_client
+      end
+
+      it_behaves_like 'an operation using a session'
+      it_behaves_like 'a failed operation using a session'
     end
 
     context 'when a collation is provided' do
@@ -1688,6 +1979,28 @@ describe Mongo::Collection do
       end
     end
 
+    context 'when a session is provided' do
+
+      let(:session) do
+        authorized_client.start_session
+      end
+
+      let(:operation) do
+        authorized_collection.delete_many({}, session: session)
+      end
+
+      let(:failed_operation) do
+        authorized_collection.delete_many({ '$._id' => 1}, session: session)
+      end
+
+      let(:client) do
+        authorized_client
+      end
+
+      it_behaves_like 'an operation using a session'
+      it_behaves_like 'a failed operation using a session'
+    end
+
     context 'when a collation is specified' do
 
       let(:selector) do
@@ -1822,6 +2135,32 @@ describe Mongo::Collection do
       expect {
         cursors
       }.to raise_error(Mongo::Error::OperationFailure)
+    end
+
+    context 'when a session is provided' do
+
+      let(:cursors) do
+        authorized_collection.parallel_scan(2, session: session)
+      end
+
+      let(:session) do
+        authorized_client.start_session
+      end
+
+      let(:operation) do
+        cursors.reduce(0) { |total, cursor| total + cursor.to_a.size }
+      end
+
+      let(:failed_operation) do
+        authorized_collection.parallel_scan(-2, session: session)
+      end
+
+      let(:client) do
+        authorized_client
+      end
+
+      it_behaves_like 'an operation using a session'
+      it_behaves_like 'a failed operation using a session'
     end
 
     context 'when a read concern is provided', if: find_command_enabled? do
@@ -2181,6 +2520,36 @@ describe Mongo::Collection do
         expect(authorized_collection.find(name: 'bang').count).to eq(1)
       end
     end
+
+    context 'when a session is provided' do
+
+      let(:selector) do
+        { name: 'BANG' }
+      end
+
+      before do
+        authorized_collection.insert_one(name: 'bang')
+      end
+
+      let(:session) do
+        authorized_client.start_session
+      end
+
+      let(:operation) do
+        authorized_collection.replace_one(selector, { name: 'doink' }, session: session)
+      end
+
+      let(:failed_operation) do
+        authorized_collection.replace_one({ '$._id' => 1 }, { name: 'doink' }, session: session)
+      end
+
+      let(:client) do
+        authorized_client
+      end
+
+      it_behaves_like 'an operation using a session'
+      it_behaves_like 'a failed operation using a session'
+    end
   end
 
   describe '#update_many' do
@@ -2283,7 +2652,7 @@ describe Mongo::Collection do
       end
     end
 
-    context 'when arrayFilters is provided' do 
+    context 'when arrayFilters is provided' do
 
       let(:selector) do
         { '$or' => [{ _id: 0 }, { _id: 1 }]}
@@ -2552,6 +2921,37 @@ describe Mongo::Collection do
       it 'does not apply the collation' do
         expect(result.written_count).to eq(0)
       end
+    end
+
+    context 'when a session is provided' do
+
+      let(:selector) do
+        { name: 'BANG' }
+      end
+
+      let(:operation) do
+        authorized_collection.update_many(selector, { '$set' => {other: 'doink'} }, session: session)
+      end
+
+      before do
+        authorized_collection.insert_one(name: 'bang')
+        authorized_collection.insert_one(name: 'baNG')
+      end
+
+      let(:session) do
+        authorized_client.start_session
+      end
+
+      let(:failed_operation) do
+        authorized_collection.update_many({ '$._id' => 1 }, { '$set' => {other: 'doink'} }, session: session)
+      end
+
+      let(:client) do
+        authorized_client
+      end
+
+      it_behaves_like 'an operation using a session'
+      it_behaves_like 'a failed operation using a session'
     end
   end
 
@@ -2908,19 +3308,62 @@ describe Mongo::Collection do
 
     context 'when the documents are sent with OP_MSG', if: op_msg_enabled? do
 
+      let(:client) do
+        authorized_client.with(heartbeat_frequency: 100).tap do |cl|
+          cl.subscribe(Mongo::Monitoring::COMMAND, subscriber)
+        end
+      end
+
+      let(:subscriber) do
+        EventSubscriber.new
+      end
+
+      let(:documents) do
+        [{ '_id' => 1, 'name' => '1'*16777191 }, { '_id' => 'y' }]
+      end
+
       before do
-        authorized_collection.insert_one(a:1)
+        authorized_collection.insert_many([{ field: 'test1' }, { field: 'test1' }])
+        client[TEST_COLL].update_one({ a: 1 }, {'$set' => { 'name' => '1'*16777149 }})
       end
 
-      let(:update) do
-        {'$set' => { 'name' => '1'*16777149 }}
+      after do
+        client.close
       end
 
-      it 'sends the operation in one OP_MSG' do
-        # Msg created twice: once for update, once for the delete in the after block
-        expect(Mongo::Protocol::Msg).to receive(:new).twice.and_call_original
-        expect(authorized_collection.update_one({a: 1}, update).written_count).to eq(1)
+      let(:update_events) do
+        subscriber.started_events.select { |e| e.command_name == :update }
       end
+
+      it 'sends the documents in one OP_MSG' do
+        expect(update_events.size).to eq(1)
+      end
+    end
+
+    context 'when a session is provided' do
+
+      before do
+        authorized_collection.insert_many([{ field: 'test1' }, { field: 'test1' }])
+      end
+
+      let(:session) do
+        authorized_client.start_session
+      end
+
+      let(:operation) do
+        authorized_collection.update_one({ field: 'test' }, { '$set'=> { field: 'testing' } }, session: session)
+      end
+
+      let(:failed_operation) do
+        authorized_collection.update_one({ '$._id' => 1 }, { '$set'=> { field: 'testing' } }, session: session)
+      end
+
+      let(:client) do
+        authorized_client
+      end
+
+      it_behaves_like 'an operation using a session'
+      it_behaves_like 'a failed operation using a session'
     end
   end
 
@@ -2935,6 +3378,28 @@ describe Mongo::Collection do
     end
 
     context 'when a matching document is found' do
+
+      context 'when a session is provided' do
+
+        let(:operation) do
+          authorized_collection.find_one_and_delete(selector, session: session)
+        end
+
+        let(:failed_operation) do
+          authorized_collection.find_one_and_delete({ '$._id' => 1 }, session: session)
+        end
+
+        let(:session) do
+          authorized_client.start_session
+        end
+
+        let(:client) do
+          authorized_client
+        end
+
+        it_behaves_like 'an operation using a session'
+        it_behaves_like 'a failed operation using a session'
+      end
 
       context 'when no options are provided' do
 
@@ -3134,6 +3599,28 @@ describe Mongo::Collection do
         it 'returns the original document' do
           expect(document['field']).to eq('test1')
         end
+      end
+
+      context 'when a session is provided' do
+
+        let(:operation) do
+          authorized_collection.find_one_and_update(selector, { '$set' => { field: 'testing' }}, session: session)
+        end
+
+        let(:failed_operation) do
+          authorized_collection.find_one_and_update({ '$._id' => 1 }, { '$set' => { field: 'testing' }}, session: session)
+        end
+
+        let(:session) do
+          authorized_client.start_session
+        end
+
+        let(:client) do
+          authorized_client
+        end
+
+        it_behaves_like 'an operation using a session'
+        it_behaves_like 'a failed operation using a session'
       end
 
       context 'when no options are provided' do
@@ -3523,6 +4010,28 @@ describe Mongo::Collection do
         it 'returns the original document' do
           expect(document['field']).to eq('test1')
         end
+      end
+
+      context 'when a session is provided' do
+
+        let(:operation) do
+          authorized_collection.find_one_and_replace(selector, { field: 'testing' }, session: session)
+        end
+
+        let(:failed_operation) do
+          authorized_collection.find_one_and_replace({ '$._id' => 1}, { field: 'testing' }, session: session)
+        end
+
+        let(:session) do
+          authorized_client.start_session
+        end
+
+        let(:client) do
+          authorized_client
+        end
+
+        it_behaves_like 'an operation using a session'
+        it_behaves_like 'a failed operation using a session'
       end
 
       context 'when return_document options are provided' do

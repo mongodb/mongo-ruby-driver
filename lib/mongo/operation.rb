@@ -62,5 +62,15 @@ module Mongo
     #
     # @since 2.5.0
     ARRAY_FILTERS = 'arrayFilters'.freeze
+
+    # The operation time field constant.
+    #
+    # @since 2.5.0
+    OPERATION_TIME = 'operationTime'.freeze
+
+    # The cluster time field constant.
+    #
+    # @since 2.5.0
+    CLUSTER_TIME = '$clusterTime'.freeze
   end
 end

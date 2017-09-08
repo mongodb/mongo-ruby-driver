@@ -221,7 +221,7 @@ describe Mongo::Client do
       context 'when compressors are provided' do
 
         let(:client) do
-          described_class.new([default_address.seed], TEST_OPTIONS.merge(options))
+          described_class.new([default_address.seed], authorized_client.options.merge(options))
         end
 
         after do
@@ -1350,6 +1350,104 @@ describe Mongo::Client do
     it 'refers the current database collections' do
       expect(authorized_client.collections).to include(collection)
       expect(authorized_client.collections).to all(be_a(Mongo::Collection))
+    end
+  end
+
+  describe '#start_session' do
+
+    let(:session) do
+      authorized_client.start_session
+    end
+
+    context 'when sessions are supported', if: sessions_enabled? do
+
+      it 'creates a session' do
+        expect(session).to be_a(Mongo::Session)
+      end
+
+      it 'sets the last use field to the current time' do
+        expect(session.instance_variable_get(:@server_session).last_use).to be_within(0.2).of(Time.now)
+      end
+
+      context 'when options are provided' do
+
+        let(:options) do
+          { causally_consistent: true }
+        end
+
+        let(:session) do
+          authorized_client.start_session(options)
+        end
+
+        it 'sets the options on the session' do
+          expect(session.options).to eq(options)
+        end
+      end
+
+      context 'when options are not provided' do
+
+        it 'does not set options on the session' do
+          expect(session.options).to be_empty
+        end
+      end
+
+      context 'when a session is checked out and checked back in' do
+
+        let!(:session_a) do
+          authorized_client.start_session
+        end
+
+        let!(:session_b) do
+          authorized_client.start_session
+        end
+
+        let!(:session_a_server_session) do
+          session_a.instance_variable_get(:@server_session)
+        end
+
+        let!(:session_b_server_session) do
+          session_b.instance_variable_get(:@server_session)
+        end
+
+        before do
+          session_a.end_session
+          session_b.end_session
+        end
+
+        it 'is returned to the front of the queue' do
+          expect(authorized_client.start_session.instance_variable_get(:@server_session)).to be(session_b_server_session)
+          expect(authorized_client.start_session.instance_variable_get(:@server_session)).to be(session_a_server_session)
+        end
+      end
+
+      context 'when an implicit session is used' do
+
+        before do
+          authorized_client.database.command(ping: 1)
+        end
+
+        let(:pool) do
+          authorized_client.instance_variable_get(:@session_pool)
+        end
+
+        let!(:before_last_use) do
+          pool.instance_variable_get(:@queue)[0].last_use
+        end
+
+        it 'uses the session and updates the last use time' do
+          authorized_client.database.command(ping: 1)
+          expect(before_last_use).to be < (pool.instance_variable_get(:@queue)[0].last_use)
+        end
+      end
+    end
+
+    context 'when sessions are not supported', unless: sessions_enabled? do
+
+      it 'raises an exception' do
+        expect {
+          session
+        }.to raise_exception(Mongo::Error::InvalidSession)
+      end
     end
   end
 end

@@ -28,6 +28,25 @@ describe Mongo::Cursor::Builder::GetMoreCommand do
       specification[:selector]
     end
 
+    context 'when the operation has a session' do
+
+      let(:view) do
+        Mongo::Collection::View.new(authorized_collection)
+      end
+
+      let(:session) do
+        double('session')
+      end
+
+      let(:builder) do
+        described_class.new(cursor, session)
+      end
+
+      it 'adds the session to the specification' do
+        expect(builder.specification[:session]).to be(session)
+      end
+    end
+
     shared_examples_for 'a getmore command builder' do
 
       it 'includes the database name' do

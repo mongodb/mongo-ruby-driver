@@ -573,4 +573,117 @@ describe Mongo::Cluster do
       end
     end
   end
+
+  describe '#cluster_time' do
+
+    let(:operation) do
+      client.command(ping: 1)
+    end
+
+    let(:second_operation) do
+      client.command(ping: 1)
+    end
+
+    it_behaves_like 'an operation updating cluster time'
+  end
+
+  describe '#update_cluster_time' do
+
+    let(:cluster) do
+      described_class.new(ADDRESSES, monitoring, TEST_OPTIONS.merge(heartbeat_frequency: 1000))
+    end
+
+    let(:result) do
+      double('result', cluster_time: cluster_time_doc)
+    end
+
+    context 'when the cluster_time variable is nil' do
+
+      before do
+        cluster.instance_variable_set(:@cluster_time, nil)
+        cluster.update_cluster_time(result)
+      end
+
+      context 'when the cluster time received is nil' do
+
+        let(:cluster_time_doc) do
+          nil
+        end
+
+        it 'does not set the cluster_time variable' do
+          expect(cluster.cluster_time).to be_nil
+        end
+      end
+
+      context 'when the cluster time received is not nil' do
+
+        let(:cluster_time_doc) do
+          BSON::Document.new(Mongo::Cluster::CLUSTER_TIME => BSON::Timestamp.new(1, 1))
+        end
+
+        it 'sets the cluster_time variable to the cluster time doc' do
+          expect(cluster.cluster_time).to eq(cluster_time_doc)
+        end
+      end
+    end
+
+    context 'when the cluster_time variable has a value' do
+
+      before do
+        cluster.instance_variable_set(:@cluster_time, BSON::Document.new(
+            Mongo::Cluster::CLUSTER_TIME => BSON::Timestamp.new(1, 1)))
+        cluster.update_cluster_time(result)
+      end
+
+      context 'when the cluster time received is nil' do
+
+        let(:cluster_time_doc) do
+          nil
+        end
+
+        it 'does not update the cluster_time variable' do
+          expect(cluster.cluster_time).to eq(BSON::Document.new(
+              Mongo::Cluster::CLUSTER_TIME => BSON::Timestamp.new(1, 1)))
+        end
+      end
+
+      context 'when the cluster time received is not nil' do
+
+        context 'when the cluster time received is greater than the cluster_time variable' do
+
+          let(:cluster_time_doc) do
+            BSON::Document.new(Mongo::Cluster::CLUSTER_TIME => BSON::Timestamp.new(1, 2))
+          end
+
+          it 'sets the cluster_time variable to the cluster time' do
+            expect(cluster.cluster_time).to eq(cluster_time_doc)
+          end
+        end
+
+        context 'when the cluster time received is less than the cluster_time variable' do
+
+          let(:cluster_time_doc) do
+            BSON::Document.new(Mongo::Cluster::CLUSTER_TIME => BSON::Timestamp.new(0, 1))
+          end
+
+          it 'does not set the cluster_time variable to the cluster time' do
+            expect(cluster.cluster_time).to eq(BSON::Document.new(
+                Mongo::Cluster::CLUSTER_TIME => BSON::Timestamp.new(1, 1)))
+          end
+        end
+
+        context 'when the cluster time received is equal to the cluster_time variable' do
+
+          let(:cluster_time_doc) do
+            BSON::Document.new(Mongo::Cluster::CLUSTER_TIME => BSON::Timestamp.new(1, 1))
+          end
+
+          it 'does not change the cluster_time variable' do
+            expect(cluster.cluster_time).to eq(BSON::Document.new(
+                Mongo::Cluster::CLUSTER_TIME => BSON::Timestamp.new(1, 1)))
+          end
+        end
+      end
+    end
+  end
 end

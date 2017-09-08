@@ -64,6 +64,7 @@ module Mongo
       @cursor_id = result.cursor_id
       @coll_name = nil
       @options = options
+      @session = @options[:session]
       register
       ObjectSpace.define_finalizer(self, self.class.finalize(result.cursor_id,
                                                              cluster,
@@ -201,7 +202,7 @@ module Mongo
 
     def get_more_operation
       if @server.features.find_command_enabled?
-        Operation::Commands::GetMore.new(Builder::GetMoreCommand.new(self).specification)
+        Operation::Commands::GetMore.new(Builder::GetMoreCommand.new(self, @session).specification)
       else
         Operation::Read::GetMore.new(Builder::OpGetMore.new(self).specification)
       end
@@ -213,7 +214,12 @@ module Mongo
         kill_cursors_operation.execute(@server)
       end
     ensure
+      end_session
       @cursor_id = 0
+    end
+
+    def end_session
+      @session.end_implicit_session if @session
     end
 
     def kill_cursors_operation
