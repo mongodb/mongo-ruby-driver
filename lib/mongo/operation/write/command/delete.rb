@@ -52,6 +52,7 @@ module Mongo
             opts = { ordered: ordered? }
             opts[:writeConcern] = write_concern.options if write_concern
             opts[:collation] = collation if collation
+            opts = session.add_id(opts) if session
             opts
           end
 

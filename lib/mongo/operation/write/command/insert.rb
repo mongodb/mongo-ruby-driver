@@ -46,6 +46,7 @@ module Mongo
             opts = { ordered: ordered? }
             opts[:writeConcern] = write_concern.options if write_concern
             opts[:bypassDocumentValidation] = true if bypass_document_validation
+            opts = session.add_id(opts) if session
             opts
           end
 

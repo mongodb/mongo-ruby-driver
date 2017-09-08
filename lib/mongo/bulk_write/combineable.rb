@@ -42,8 +42,9 @@ module Mongo
       # @param [ Array<Hash, BSON::Document> ] requests The bulk requests.
       #
       # @since 2.1.0
-      def initialize(requests)
+      def initialize(requests, session)
         @requests = requests
+        @session = session
         @has_collation = false
         @has_array_filters = false
       end

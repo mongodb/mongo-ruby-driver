@@ -50,7 +50,7 @@ module Mongo
         def_delegators :view, :collection, :read, :cluster
 
         # Delegate necessary operations to the collection.
-        def_delegators :collection, :database
+        def_delegators :collection, :database, :client
 
         # Iterate through documents returned by the map/reduce.
         #
@@ -66,15 +66,17 @@ module Mongo
         # @yieldparam [ Hash ] Each matching document.
         def each
           @cursor = nil
-          write_with_retry do
-            server = server_selector.select_server(cluster, false)
-            result = send_initial_query(server)
-            @cursor = Cursor.new(view, result, server)
+          Session.use(@options, client) do |session|
+            write_with_retry(session, Proc.new { server_selector.select_server(cluster, false) }) do |server|
+              server = server_selector.select_server(cluster, false)
+              result = send_initial_query(server)
+              @cursor = Cursor.new(view, result, server, session)
+            end
+            @cursor.each do |doc|
+              yield doc
+            end if block_given?
+            @cursor.to_enum
           end
-          @cursor.each do |doc|
-            yield doc
-          end if block_given?
-          @cursor.to_enum
         end
 
         # Set or get the finalize function for the operation.

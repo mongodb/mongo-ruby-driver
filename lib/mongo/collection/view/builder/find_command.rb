@@ -74,8 +74,9 @@ module Mongo
           # @param [ Collection::View ] view The collection view.
           #
           # @since 2.2.2
-          def initialize(view)
+          def initialize(view, session = nil)
             @view = view
+            @session = session
           end
 
           # Get the specification to pass to the find command operation.
@@ -87,7 +88,7 @@ module Mongo
           #
           # @since 2.2.0
           def specification
-            { selector: find_command, db_name: database.name, read: read }
+            { selector: find_command, db_name: database.name, read: read, session: @session }
           end
 
           private
@@ -95,6 +96,7 @@ module Mongo
           def find_command
             document = BSON::Document.new('find' => collection.name, 'filter' => filter)
             document[:readConcern] = collection.read_concern if collection.read_concern
+            document = @session.add_id(document) if @session
             command = Options::Mapper.transform_documents(convert_flags(options), MAPPINGS, document)
             convert_limit_and_batch_size(command)
             command

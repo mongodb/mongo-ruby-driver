@@ -177,18 +177,21 @@ module Mongo
     # @return [ Result ] The result of the command.
     #
     # @since 2.0.0
-    def create
+    def create(opts = {})
       operation = { :create => name }.merge(options)
       operation.delete(:write)
       server = next_primary
       if (options[:collation] || options[Operation::COLLATION]) && !server.features.collation_enabled?
         raise Error::UnsupportedCollation.new
       end
-      Operation::Commands::Create.new({
-                                        selector: operation,
-                                        db_name: database.name,
-                                        write_concern: write_concern
-                                      }).execute(server)
+      Session.use(opts, client) do |session|
+        Operation::Commands::Create.new({
+                                          selector: operation,
+                                          db_name: database.name,
+                                          write_concern: write_concern,
+                                          session: session
+                                        }).execute(server)
+      end
     end
 
     # Drop the collection. Will also drop all indexes associated with the
@@ -202,13 +205,15 @@ module Mongo
     # @return [ Result ] The result of the command.
     #
     # @since 2.0.0
-    def drop
-      Operation::Commands::Drop.new({
-                                      selector: { :drop => name },
-                                      db_name: database.name,
-                                      write_concern: write_concern
-                                    }).execute(next_primary)
-
+    def drop(opts = {})
+      Session.use(opts, client) do |session|
+        Operation::Commands::Drop.new({
+                                        selector: { :drop => name },
+                                        db_name: database.name,
+                                        write_concern: write_concern,
+                                        session: session
+                                      }).execute(next_primary)
+      end
     rescue Error::OperationFailure => ex
       raise ex unless ex.message =~ /ns not found/
       false
@@ -247,6 +252,7 @@ module Mongo
     # @option options [ Hash ] :sort The key and direction pairs by which the result set
     #   will be sorted.
     # @option options [ Hash ] :collation The collation to use.
+    # @option options [ Session ] :session The session to use.
     #
     # @return [ CollectionView ] The collection view.
     #
@@ -278,7 +284,7 @@ module Mongo
     #
     # @since 2.1.0
     def aggregate(pipeline, options = {})
-      View.new(self, {}).aggregate(pipeline, options)
+      View.new(self, options).aggregate(pipeline, options)
     end
 
     # Get a count of matching documents in the collection.
@@ -362,16 +368,19 @@ module Mongo
     #
     # @since 2.0.0
     def insert_one(document, options = {})
-      write_with_retry do
-        Operation::Write::Insert.new(
-          :documents => [ document ],
-          :db_name => database.name,
-          :coll_name => name,
-          :write_concern => write_concern,
-          :bypass_document_validation => !!options[:bypass_document_validation],
-          :options => options,
-          :id_generator => client.options[:id_generator]
-        ).execute(next_primary)
+      Session.use(options, client) do |session|
+        write_with_retry(session, Proc.new { next_primary }) do |server|
+          Operation::Write::Insert.new(
+              :documents => [ document ],
+              :db_name => database.name,
+              :coll_name => name,
+              :write_concern => write_concern,
+              :bypass_document_validation => !!options[:bypass_document_validation],
+              :options => options,
+              :id_generator => client.options[:id_generator],
+              :session => session
+          ).execute(server)
+        end
       end
     end
 
@@ -561,7 +570,7 @@ module Mongo
     #
     # @since 2.1.0
     def find_one_and_delete(filter, options = {})
-      find(filter, options).find_one_and_delete
+      find(filter, options).find_one_and_delete(options)
     end
 
     # Finds a single document via findAndModify and updates it, returning the original doc unless

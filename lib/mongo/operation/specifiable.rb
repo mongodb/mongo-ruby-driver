@@ -502,6 +502,14 @@ module Mongo
       def namespace
         "#{db_name}.#{coll_name}"
       end
+
+      def session
+        @spec[:session]
+      end
+
+      def operation_time
+        session.operation_time if session
+      end
     end
   end
 end

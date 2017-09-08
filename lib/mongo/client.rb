@@ -376,6 +376,21 @@ module Mongo
       use(Database::ADMIN).command(listDatabases: 1).first[Database::DATABASES]
     end
 
+    # Start a session.
+    #
+    # @param [ Hash ] options The session options.
+    #
+    # @option options [ Hash ] :operation_time
+    # @option options [ Hash ] :cluster_time
+    # @option options [ true, false ] :causally_consistent_reads
+    #
+    # @return [ Mongo::Session ] The session object.
+    #
+    # @since 2.5.0
+    def start_session(options = {})
+      Session.new(self, options)
+    end
+
     private
 
     def create_from_addresses(addresses, opts = Options::Redacted.new)

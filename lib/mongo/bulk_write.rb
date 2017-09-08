@@ -53,20 +53,21 @@ module Mongo
     def execute
       operation_id = Monitoring.next_operation_id
       result_combiner = ResultCombiner.new
-      write_with_retry do
-        operations = op_combiner.combine
-        server = next_primary
-        raise Error::UnsupportedCollation.new if op_combiner.has_collation && !server.features.collation_enabled?
-        raise Error::UnsupportedArrayFilters.new if op_combiner.has_array_filters && !server.features.array_filters_enabled?
+      Session.use(@options, client) do |session|
+        write_with_retry(session, Proc.new { next_primary }) do |server|
+          operations = op_combiner(session).combine
+          raise Error::UnsupportedCollation.new if op_combiner(session).has_collation && !server.features.collation_enabled?
+          raise Error::UnsupportedArrayFilters.new if op_combiner(session).has_array_filters && !server.features.array_filters_enabled?
 
-        operations.each do |operation|
-          execute_operation(
-            operation.keys.first,
-            operation.values.first,
-            server,
-            operation_id,
-            result_combiner
-          )
+          operations.each do |operation|
+            execute_operation(
+              operation.keys.first,
+              operation.values.first,
+              server,
+              operation_id,
+              result_combiner
+            )
+          end
         end
       end
       result_combiner.result
@@ -160,8 +161,8 @@ module Mongo
       end
     end
 
-    def op_combiner
-      @op_combiner ||= ordered? ? OrderedCombiner.new(requests) : UnorderedCombiner.new(requests)
+    def op_combiner(session)
+      @op_combiner ||= ordered? ? OrderedCombiner.new(requests, session) : UnorderedCombiner.new(requests, session)
     end
 
     def split_execute(name, values, server, operation_id, combiner)

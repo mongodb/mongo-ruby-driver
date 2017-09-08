@@ -62,5 +62,9 @@ module Mongo
     #
     # @since 2.5.0
     ARRAY_FILTERS = 'arrayFilters'.freeze
+
+    OPERATION_TIME = 'operationTime'.freeze
+
+    CLUSTER_TIME = '$clusterTime'.freeze
   end
 end

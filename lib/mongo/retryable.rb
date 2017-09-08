@@ -97,11 +97,11 @@ module Mongo
     # @return [ Result ] The result of the operation.
     #
     # @since 2.1.0
-    def write_with_retry
+    def write_with_retry(session, server_selector)
       attempt = 0
       begin
         attempt += 1
-        yield
+        yield(server_selector.call)
       rescue Error::OperationFailure => e
         raise(e) if attempt > Cluster::MAX_WRITE_RETRIES
         if e.write_retryable?

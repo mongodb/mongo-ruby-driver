@@ -52,13 +52,14 @@ module Mongo
     # @param [ Server ] server The server this cursor is locked to.
     #
     # @since 2.0.0
-    def initialize(view, result, server)
+    def initialize(view, result, server, options = {})
       @view = view
       @server = server
       @initial_result = result
       @remaining = limit if limited?
       @cursor_id = result.cursor_id
       @coll_name = nil
+      @options = options
       register
       ObjectSpace.define_finalizer(self, self.class.finalize(result.cursor_id,
                                                              cluster,
@@ -186,13 +187,15 @@ module Mongo
 
     def get_more
       read_with_retry do
-        process(get_more_operation.execute(@server))
+        process(Session.use(@options, client) do |session|
+          get_more_operation(session).execute(@server)
+        end)
       end
     end
 
-    def get_more_operation
+    def get_more_operation(session = nil)
       if @server.features.find_command_enabled?
-        Operation::Commands::GetMore.new(Builder::GetMoreCommand.new(self).specification)
+        Operation::Commands::GetMore.new(Builder::GetMoreCommand.new(self, session).specification)
       else
         Operation::Read::GetMore.new(Builder::OpGetMore.new(self).specification)
       end
@@ -201,21 +204,23 @@ module Mongo
     def kill_cursors
       unregister
       read_with_one_retry do
-        kill_cursors_operation.execute(@server)
+        Session.use(@options, client) do |session|
+          kill_cursors_operation(session).execute(@server)
+        end
       end
     end
 
-    def kill_cursors_operation
+    def kill_cursors_operation(session)
       if @server.features.find_command_enabled?
-        Operation::Commands::Command.new(kill_cursors_op_spec)
+        Operation::Commands::Command.new(kill_cursors_op_spec(session))
       else
         Operation::KillCursors.new(kill_cursors_op_spec)
       end
     end
 
-    def kill_cursors_op_spec
+    def kill_cursors_op_spec(session = nil)
       if @server.features.find_command_enabled?
-        Builder::KillCursorsCommand.new(self).specification
+        Builder::KillCursorsCommand.new(self, session).specification
       else
         Builder::OpKillCursors.new(self).specification
       end
