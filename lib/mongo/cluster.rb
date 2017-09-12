@@ -57,6 +57,12 @@ module Mongo
     # @return [ Object ] The cluster topology.
     attr_reader :topology
 
+    # @return [ BSON::Timestamp ] The cluster time. Used for "gossiping" cluster time in
+    #  server versions >= 3.6
+    #
+    # @since 2.5.0
+    attr_reader :cluster_time
+
     # @return [ Mongo::Cluster::AppMetadata ] The application metadata, used for connection
     #   handshakes.
     #
@@ -158,7 +164,9 @@ module Mongo
       @app_metadata = AppMetadata.new(self)
       @update_lock = Mutex.new
       @pool_lock = Mutex.new
+      @cluster_time_lock = Mutex.new
       @topology = Topology.initial(seeds, monitoring, options)
+      @cluster_time = nil
 
       publish_sdam_event(
         Monitoring::TOPOLOGY_OPENING,
@@ -440,6 +448,28 @@ module Mongo
     # @since 2.0.6
     def addresses
       addresses_list
+    end
+
+    # Update the max cluster time seen in a response.
+    #
+    # @example Update the cluster time.
+    #   cluster.update_cluster_time(result)
+    #
+    # @return [ Object ] The cluster time.
+    #
+    # @since 2.5.0
+    def update_cluster_time(result)
+      if cl_time = result.cluster_time
+        @cluster_time_lock.synchronize do
+          if @cluster_time.nil?
+            @cluster_time = cl_time
+          # @todo Implement comparison of BSON::Timestamps
+          elsif (cl_time['clusterTime'].seconds + cl_time['clusterTime'].increment) >
+            (@cluster_time['clusterTime'].seconds + @cluster_time['clusterTime'].increment)
+            @cluster_time = cl_time
+          end
+        end
+      end
     end
 
     # The logical session timeout value in minutes.

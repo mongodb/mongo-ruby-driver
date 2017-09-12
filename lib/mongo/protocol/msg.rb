@@ -124,7 +124,7 @@ module Mongo
       end
 
       def global_args
-        @global_args ||= sections[0]
+        @global_args ||= (sections[0] || {})
       end
 
       # The operation code required to specify a OP_MSG message.

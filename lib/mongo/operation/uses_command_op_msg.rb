@@ -22,8 +22,6 @@ module Mongo
 
       private
 
-      CLUSTER_TIME = '$clusterTime'.freeze
-
       READ_PREFERENCE = '$readPreference'.freeze
 
       def cluster_time(server)
