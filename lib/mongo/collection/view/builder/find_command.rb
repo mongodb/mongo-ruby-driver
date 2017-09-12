@@ -96,7 +96,6 @@ module Mongo
           def find_command
             document = BSON::Document.new('find' => collection.name, 'filter' => filter)
             document[:readConcern] = collection.read_concern if collection.read_concern
-            document = @session.add_id(document) if @session
             command = Options::Mapper.transform_documents(convert_flags(options), MAPPINGS, document)
             convert_limit_and_batch_size(command)
             command

@@ -36,18 +36,16 @@ module Mongo
         # @yieldparam [ Hash ] Each matching document.
         def each
           @cursor = nil
-          Session.use(@options, client) do |session|
-            read_with_retry do
-              server = server_selector.select_server(cluster, false)
-              result = send_initial_query(server, session)
-              @cursor = Cursor.new(view, result, server, session: session)
-              result
-            end
-            @cursor.each do |doc|
-              yield doc
-            end if block_given?
-            @cursor.to_enum
+          session = with_session
+          read_with_retry do
+            server = server_selector.select_server(cluster, false)
+            result = send_initial_query(server, session)
+            @cursor = Cursor.new(view, result, server, session: session)
           end
+          @cursor.each do |doc|
+            yield doc
+          end if block_given?
+          @cursor.to_enum
         end
 
         # Stop the iteration by sending a KillCursors command to the server.
@@ -79,7 +77,7 @@ module Mongo
           end
         end
 
-        def send_initial_query(server, session = nil)
+        def send_initial_query(server, session)
           validate_collation!(server, collation)
           initial_query_op(server, session).execute(server)
         end

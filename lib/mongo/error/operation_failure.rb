@@ -19,6 +19,7 @@ module Mongo
     #
     # @since 2.0.0
     class OperationFailure < Error
+      extend Forwardable
 
       # These are magic error messages that could indicate a master change.
       #
@@ -49,10 +50,7 @@ module Mongo
         'dbclient error communicating with server'
       ].freeze
 
-      # For causally consistent reads, we must extract the operation time even from errors.
-      #
-      # @since 2.5.0
-      attr_reader :operation_time
+      def_delegators :@result, :operation_time
 
       # Can the read operation that caused the error be retried?
       #
@@ -88,7 +86,7 @@ module Mongo
       #
       # @since 2.5.0
       def initialize(message = nil, result = nil)
-        @operation_time = result.operation_time if result
+        @result = result
         super(message)
       end
     end

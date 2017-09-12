@@ -22,7 +22,7 @@ module Mongo
       extend Forwardable
       include Enumerable
 
-      def_delegators :@database, :cluster, :read_preference
+      def_delegators :@database, :cluster, :read_preference, :client
       def_delegators :cluster, :next_primary
 
       # @return [ Integer ] batch_size The size of the batch of results
@@ -52,12 +52,13 @@ module Mongo
         @batch_size = options[:batch_size]
         server = next_primary(false)
         @limit = -1 if server.features.list_collections_enabled?
-        collections_info(server).collect do |info|
+        session = Session.with_session(client, options)
+        collections_info(server, session).collect do |info|
           if server.features.list_collections_enabled?
             info[Database::NAME]
           else
             (info[Database::NAME] &&
-              info[Database::NAME].sub("#{@database.name}.", ''))
+                info[Database::NAME].sub("#{@database.name}.", ''))
           end
         end
       end
@@ -71,7 +72,8 @@ module Mongo
       #
       # @since 2.0.5
       def list_collections
-        collections_info(next_primary(false))
+        session = Session.with_session(client)
+        collections_info(next_primary(false), session)
       end
 
       # Create the new database view.
@@ -89,29 +91,32 @@ module Mongo
         @collection = @database[Database::COMMAND]
       end
 
+      def session; end
+
       private
 
-      def collections_info(server, &block)
-        cursor = Cursor.new(self, send_initial_query(server), server).to_enum
+      def collections_info(server, session)
+        cursor = Cursor.new(self, send_initial_query(server, session), server, session: session)
         cursor.each do |doc|
           yield doc
         end if block_given?
-        cursor
+        cursor.to_enum
       end
 
-      def collections_info_spec
+      def collections_info_spec(session)
         { selector: {
             listCollections: 1,
             cursor: batch_size ? { batchSize: batch_size } : {} },
-          db_name: @database.name }
+          db_name: @database.name,
+          session: session }
       end
 
-      def initial_query_op
-        Operation::Commands::CollectionsInfo.new(collections_info_spec)
+      def initial_query_op(session)
+        Operation::Commands::CollectionsInfo.new(collections_info_spec(session))
       end
 
-      def send_initial_query(server)
-        initial_query_op.execute(server)
+      def send_initial_query(server, session)
+        initial_query_op(session).execute(server)
       end
     end
   end

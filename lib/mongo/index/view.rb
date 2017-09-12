@@ -78,9 +78,9 @@ module Mongo
       # @return [ Result ] The response.
       #
       # @since 2.0.0
-      def drop_one(name, opts = {})
+      def drop_one(name)
         raise Error::MultiIndexDrop.new if name == Index::ALL
-        drop_by_name(name, opts)
+        drop_by_name(name)
       end
 
       # Drop all indexes on the collection.
@@ -91,8 +91,8 @@ module Mongo
       # @return [ Result ] The response.
       #
       # @since 2.0.0
-      def drop_all(opts = {})
-        drop_by_name(Index::ALL, opts)
+      def drop_all
+        drop_by_name(Index::ALL)
       end
 
       # Creates an index on the collection.
@@ -148,15 +148,21 @@ module Mongo
       #
       # @since 2.0.0
       def create_many(*models)
+        if models[-1].respond_to?(:keys) && models[-1][:session]
+          opts = models[-1]
+          models = models[0...-1]
+        end
         server = next_primary
-        spec = {
-                indexes: normalize_models(models.flatten, server),
-                db_name: database.name,
-                coll_name: collection.name
-               }
-
-        spec[:write_concern] = write_concern if server.features.collation_enabled?
-        Operation::Write::CreateIndex.new(spec).execute(server)
+        Session.with_session(client, opts || {}) do |session|
+          spec = {
+                  indexes: normalize_models(models.flatten, server),
+                  db_name: database.name,
+                  coll_name: collection.name,
+                  session: session
+                 }
+          spec[:write_concern] = write_concern if server.features.collation_enabled?
+          Operation::Write::CreateIndex.new(spec).execute(server)
+        end
       end
 
       # Convenience method for getting index information by a specific name or
@@ -173,7 +179,7 @@ module Mongo
       # @return [ Hash ] The index information.
       #
       # @since 2.0.0
-      def get(keys_or_name, opts = {})
+      def get(keys_or_name)
         find do |index|
           (index[NAME] == keys_or_name) || (index[KEY] == normalize_keys(keys_or_name))
         end
@@ -187,15 +193,15 @@ module Mongo
       #   end
       #
       # @since 2.0.0
-      def each(opts = {}, &block)
+      def each(&block)
         server = next_primary(false)
-        Session.use(@options.merge(opts), client) do |session|
-          cursor = Cursor.new(self, send_initial_query(server, session), server, session: session).to_enum
-          cursor.each do |doc|
-            yield doc
-          end if block_given?
-          cursor
-        end
+        session = Session.with_session(client, @options)
+        result = send_initial_query(server, session)
+        cursor = Cursor.new(self, result, server, session: session)
+        cursor.each do |doc|
+          yield doc
+        end if block_given?
+        cursor.to_enum
       end
 
       # Create the new index view.
@@ -218,10 +224,14 @@ module Mongo
         @options = options
       end
 
+      def session
+        @options[:session]
+      end
+
       private
 
-      def drop_by_name(name, opts)
-        Session.use(opts, client) do |session|
+      def drop_by_name(name)
+        Session.with_session(client) do |session|
           spec = {
                    db_name: database.name,
                    coll_name: collection.name,

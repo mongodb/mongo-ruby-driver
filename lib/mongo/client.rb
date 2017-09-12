@@ -388,6 +388,7 @@ module Mongo
     #
     # @since 2.5.0
     def start_session(options = {})
+      raise Exception unless Session.sessions_supported?(self)
       Session.new(self, options)
     end
 

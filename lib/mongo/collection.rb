@@ -184,7 +184,7 @@ module Mongo
       if (options[:collation] || options[Operation::COLLATION]) && !server.features.collation_enabled?
         raise Error::UnsupportedCollation.new
       end
-      Session.use(opts, client) do |session|
+      Session.with_session(client, opts) do |session|
         Operation::Commands::Create.new({
                                           selector: operation,
                                           db_name: database.name,
@@ -206,7 +206,7 @@ module Mongo
     #
     # @since 2.0.0
     def drop(opts = {})
-      Session.use(opts, client) do |session|
+      Session.with_session(client, opts) do |session|
         Operation::Commands::Drop.new({
                                         selector: { :drop => name },
                                         db_name: database.name,
@@ -368,7 +368,7 @@ module Mongo
     #
     # @since 2.0.0
     def insert_one(document, options = {})
-      Session.use(options, client) do |session|
+      Session.with_session(client, options) do |session|
         write_with_retry(session, Proc.new { next_primary }) do |server|
           Operation::Write::Insert.new(
               :documents => [ document ],
@@ -475,7 +475,7 @@ module Mongo
     #
     # @since 2.1
     def parallel_scan(cursor_count, options = {})
-      find.send(:parallel_scan, cursor_count, options)
+      find({}, options).send(:parallel_scan, cursor_count, options)
     end
 
     # Replaces a single document in the collection with the new document.

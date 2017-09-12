@@ -50,7 +50,7 @@ module Mongo
         #
         # @since 2.2.0
         def specification
-          { selector: get_more_command, db_name: database.name }
+          { selector: get_more_command, db_name: database.name, session: @session }
         end
 
         private
@@ -58,7 +58,6 @@ module Mongo
         def get_more_command
           command = { :getMore => cursor.id, :collection => collection_name }
           command[:batchSize] = batch_size.abs if batch_size && batch_size != 0
-          command = @session.add_id(command) if @session
           # add session id
           # If the max_await_time_ms option is set, then we set maxTimeMS on
           # the get more command.

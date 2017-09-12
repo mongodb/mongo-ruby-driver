@@ -128,6 +128,10 @@ module Mongo
             raise Error::UnsupportedCollation.new
           end
         end
+
+        def with_session(&block)
+          Session.with_session(client, options, &block)
+        end
       end
     end
   end

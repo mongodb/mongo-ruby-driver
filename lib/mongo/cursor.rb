@@ -60,6 +60,7 @@ module Mongo
       @cursor_id = result.cursor_id
       @coll_name = nil
       @options = options
+      @session = @options[:session]
       register
       ObjectSpace.define_finalizer(self, self.class.finalize(result.cursor_id,
                                                              cluster,
@@ -114,6 +115,8 @@ module Mongo
         return kill_cursors if exhausted?
         get_more.each { |doc| yield doc }
       end
+    ensure
+      end_session
     end
 
     # Get the batch size.
@@ -187,15 +190,13 @@ module Mongo
 
     def get_more
       read_with_retry do
-        process(Session.use(@options, client) do |session|
-          get_more_operation(session).execute(@server)
-        end)
+        process(get_more_operation.execute(@server))
       end
     end
 
-    def get_more_operation(session = nil)
+    def get_more_operation
       if @server.features.find_command_enabled?
-        Operation::Commands::GetMore.new(Builder::GetMoreCommand.new(self, session).specification)
+        Operation::Commands::GetMore.new(Builder::GetMoreCommand.new(self, @session).specification)
       else
         Operation::Read::GetMore.new(Builder::OpGetMore.new(self).specification)
       end
@@ -204,23 +205,29 @@ module Mongo
     def kill_cursors
       unregister
       read_with_one_retry do
-        Session.use(@options, client) do |session|
-          kill_cursors_operation(session).execute(@server)
-        end
+        result = kill_cursors_operation.execute(@server)
+        @session.process(result) if @session
+      end
+      end_session
+    end
+
+    def end_session
+      if @session && view.session != @session
+        @session.end_session
       end
     end
 
-    def kill_cursors_operation(session)
+    def kill_cursors_operation
       if @server.features.find_command_enabled?
-        Operation::Commands::Command.new(kill_cursors_op_spec(session))
+        Operation::Commands::Command.new(kill_cursors_op_spec)
       else
         Operation::KillCursors.new(kill_cursors_op_spec)
       end
     end
 
-    def kill_cursors_op_spec(session = nil)
+    def kill_cursors_op_spec
       if @server.features.find_command_enabled?
-        Builder::KillCursorsCommand.new(self, session).specification
+        Builder::KillCursorsCommand.new(self, @session).specification
       else
         Builder::OpKillCursors.new(self).specification
       end
@@ -239,6 +246,7 @@ module Mongo
       @coll_name ||= result.namespace.sub("#{database.name}.", '') if result.namespace
       unregister if result.cursor_id == 0
       @cursor_id = result.cursor_id
+      @session.process(result) if @session
       result.documents
     end
 

@@ -164,6 +164,10 @@ module Mongo
         WriteConcern.get(options[:write] || options[:write_concern] || collection.write_concern)
       end
 
+      def session
+        @options[:session]
+      end
+
       private
 
       def initialize_copy(other)
@@ -197,6 +201,10 @@ module Mongo
       end
 
       def view; self; end
+
+      def with_session(&block)
+        Session.with_session(client, @options, &block)
+      end
     end
   end
 end

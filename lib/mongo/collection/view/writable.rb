@@ -46,7 +46,7 @@ module Mongo
           cmd[:maxTimeMS] = max_time_ms if max_time_ms
           cmd[:writeConcern] = write_concern.options if write_concern
 
-          Session.use(opts, client) do |session|
+          with_session do |session|
             write_with_retry(session, Proc.new { next_primary }) do |server|
               apply_collation!(cmd, server, opts)
               Operation::Commands::Command.new({
@@ -116,11 +116,10 @@ module Mongo
           cmd[:bypassDocumentValidation] = !!opts[:bypass_document_validation]
           cmd[:writeConcern] = write_concern.options if write_concern
 
-          value = Session.use(opts, client) do |session|
+          value = with_session do |session|
             write_with_retry(session, Proc.new { next_primary }) do |server|
               apply_collation!(cmd, server, opts)
               apply_array_filters!(cmd, server, opts)
-
               Operation::Commands::Command.new(
                                                :selector => cmd,
                                                :db_name => database.name,
@@ -229,7 +228,7 @@ module Mongo
         def remove(value, opts = {})
           delete_doc = { Operation::Q => filter, Operation::LIMIT => value }
 
-          Session.use(opts, client) do |session|
+          with_session do |session|
             write_with_retry(session, Proc.new { next_primary }) do |server|
               apply_collation!(delete_doc, server, opts)
               Operation::Write::Delete.new(
@@ -249,7 +248,7 @@ module Mongo
                          Operation::MULTI => multi,
                          Operation::UPSERT => !!opts[:upsert] }
 
-          Session.use(opts, client) do |session|
+          with_session do |session|
             write_with_retry(session, Proc.new { next_primary }) do |server|
               apply_collation!(update_doc, server, opts)
               apply_array_filters!(update_doc, server, opts)

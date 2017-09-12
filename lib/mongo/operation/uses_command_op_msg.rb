@@ -41,7 +41,8 @@ module Mongo
         end
         selector[Protocol::Msg::DATABASE_IDENTIFIER] = db_name
         selector[READ_PREFERENCE] = read.to_doc if read
-        selector[OPERATION_TIME] = operation_time if operation_time
+        #selector[AFTER_CLUSTER_TIME] = operation_time if operation_time
+        selector = session.add_id(selector) if session
         flags = unacknowledged_write? ? [:more_to_come] : [:none]
         Protocol::Msg.new(flags, options, selector)
       end

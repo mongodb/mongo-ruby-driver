@@ -66,17 +66,15 @@ module Mongo
         # @yieldparam [ Hash ] Each matching document.
         def each
           @cursor = nil
-          Session.use(@options, client) do |session|
-            write_with_retry(session, Proc.new { server_selector.select_server(cluster, false) }) do |server|
-              server = server_selector.select_server(cluster, false)
-              result = send_initial_query(server)
-              @cursor = Cursor.new(view, result, server, session)
-            end
-            @cursor.each do |doc|
-              yield doc
-            end if block_given?
-            @cursor.to_enum
+          session = Session.with_session(client, @options)
+          write_with_retry(session, Proc.new { server_selector.select_server(cluster, false) }) do |server|
+            result = send_initial_query(server, session)
+            @cursor = Cursor.new(view, result, server, session: session)
           end
+          @cursor.each do |doc|
+            yield doc
+          end if block_given?
+          @cursor.to_enum
         end
 
         # Set or get the finalize function for the operation.
@@ -192,16 +190,16 @@ module Mongo
           out.nil? || out == { inline: 1 } || out == { INLINE => 1 }
         end
 
-        def map_reduce_spec
-          Builder::MapReduce.new(map, reduce, view, options).specification
+        def map_reduce_spec(session)
+          Builder::MapReduce.new(map, reduce, view, options.merge(session: session)).specification
         end
 
         def new(options)
           MapReduce.new(view, map, reduce, options)
         end
 
-        def initial_query_op
-          Operation::Commands::MapReduce.new(map_reduce_spec)
+        def initial_query_op(session)
+          Operation::Commands::MapReduce.new(map_reduce_spec(session))
         end
 
         def valid_server?(server)
@@ -212,34 +210,34 @@ module Mongo
           out.respond_to?(:keys) && out.keys.first.to_s.downcase == INLINE
         end
 
-        def send_initial_query(server)
+        def send_initial_query(server, session)
           unless valid_server?(server)
             log_warn(REROUTE)
             server = cluster.next_primary(false)
           end
           validate_collation!(server)
-          result = initial_query_op.execute(server)
-          inline? ? result : send_fetch_query(server)
+          result = initial_query_op(session).execute(server)
+          inline? ? result : send_fetch_query(server, session)
         end
 
         def fetch_query_spec
           Builder::MapReduce.new(map, reduce, view, options).query_specification
         end
 
-        def find_command_spec
-          Builder::MapReduce.new(map, reduce, view, options).command_specification
+        def find_command_spec(session)
+          Builder::MapReduce.new(map, reduce, view, options.merge(session: session)).command_specification
         end
 
-        def fetch_query_op(server)
+        def fetch_query_op(server, session)
           if server.features.find_command_enabled?
-            Operation::Commands::Find.new(find_command_spec)
+            Operation::Commands::Find.new(find_command_spec(session))
           else
             Operation::Read::Query.new(fetch_query_spec)
           end
         end
 
-        def send_fetch_query(server)
-          fetch_query_op(server).execute(server)
+        def send_fetch_query(server, session)
+          fetch_query_op(server, session).execute(server)
         end
 
         def validate_collation!(server)

@@ -81,7 +81,8 @@ module Mongo
             {
               selector: find_command,
               db_name: query_database,
-              read: read
+              read: read,
+              session: options[:session]
             }
           end
 
@@ -109,7 +110,8 @@ module Mongo
             spec = {
               selector: map_reduce_command,
               db_name: database.name,
-              read: read
+              read: read,
+              session: options[:session]
             }
             write?(spec) ? spec.merge!(write_concern: write_concern) : spec
           end

@@ -43,6 +43,10 @@ describe Mongo::Collection::View::MapReduce do
     {}
   end
 
+  let(:map_reduce_spec) do
+    map_reduce.send(:map_reduce_spec, double('session'))
+  end
+
   before do
     authorized_collection.insert_many(documents)
   end
@@ -247,7 +251,7 @@ describe Mongo::Collection::View::MapReduce do
         end
 
         it 'includes the selector in the operation spec' do
-          expect(map_reduce.send(:map_reduce_spec)[:selector][:query]).to eq(selector)
+          expect(map_reduce_spec[:selector][:query]).to eq(selector)
         end
       end
 
@@ -264,7 +268,7 @@ describe Mongo::Collection::View::MapReduce do
         end
 
         it 'includes the selector in the operation spec' do
-          expect(map_reduce.send(:map_reduce_spec)[:selector][:query]).to eq(selector[:$query])
+          expect(map_reduce_spec[:selector][:query]).to eq(selector[:$query])
         end
       end
     end
@@ -302,7 +306,7 @@ describe Mongo::Collection::View::MapReduce do
     end
 
     it 'includes the finalize function in the operation spec' do
-      expect(new_map_reduce.send(:map_reduce_spec)[:selector][:finalize]).to eq(finalize)
+      expect(new_map_reduce.send(:map_reduce_spec, double('session'))[:selector][:finalize]).to eq(finalize)
     end
   end
 
@@ -317,7 +321,7 @@ describe Mongo::Collection::View::MapReduce do
     end
 
     it 'includes the js mode value in the operation spec' do
-      expect(new_map_reduce.send(:map_reduce_spec)[:selector][:jsMode]).to be(true)
+      expect(new_map_reduce.send(:map_reduce_spec, double('session'))[:selector][:jsMode]).to be(true)
     end
   end
 
@@ -336,13 +340,13 @@ describe Mongo::Collection::View::MapReduce do
     end
 
     it 'includes the out value in the operation spec' do
-      expect(new_map_reduce.send(:map_reduce_spec)[:selector][:out]).to eq(location)
+      expect(new_map_reduce.send(:map_reduce_spec, double('session'))[:selector][:out]).to eq(location)
     end
 
     context 'when out is not defined' do
 
       it 'defaults to inline' do
-        expect(map_reduce.send(:map_reduce_spec)[:selector][:out]).to eq('inline' => 1)
+        expect(map_reduce_spec[:selector][:out]).to eq('inline' => 1)
       end
     end
 
@@ -361,7 +365,7 @@ describe Mongo::Collection::View::MapReduce do
       end
 
       it 'includes the out value in the operation spec' do
-        expect(map_reduce.send(:map_reduce_spec)[:selector][:out]).to eq(location)
+        expect(map_reduce_spec[:selector][:out]).to eq(location)
       end
     end
 
@@ -472,7 +476,7 @@ describe Mongo::Collection::View::MapReduce do
     end
 
     it 'includes the scope object in the operation spec' do
-      expect(new_map_reduce.send(:map_reduce_spec)[:selector][:scope]).to eq(object)
+      expect(new_map_reduce.send(:map_reduce_spec, double('session'))[:selector][:scope]).to eq(object)
     end
   end
 
@@ -491,7 +495,7 @@ describe Mongo::Collection::View::MapReduce do
     end
 
     it 'includes the verbose option in the operation spec' do
-      expect(new_map_reduce.send(:map_reduce_spec)[:selector][:verbose]).to eq(verbose)
+      expect(new_map_reduce.send(:map_reduce_spec, double('session'))[:selector][:verbose]).to eq(verbose)
     end
   end
 
@@ -506,7 +510,7 @@ describe Mongo::Collection::View::MapReduce do
     end
 
     it 'includes the limit in the operation spec' do
-      expect(map_reduce.send(:map_reduce_spec)[:selector][:limit]).to be(limit)
+      expect(map_reduce_spec[:selector][:limit]).to be(limit)
     end
   end
 
@@ -521,7 +525,7 @@ describe Mongo::Collection::View::MapReduce do
     end
 
     it 'includes the sort object in the operation spec' do
-      expect(map_reduce.send(:map_reduce_spec)[:selector][:sort][:name]).to eq(sort[:name])
+      expect(map_reduce_spec[:selector][:sort][:name]).to eq(sort[:name])
     end
   end
 
@@ -533,7 +537,7 @@ describe Mongo::Collection::View::MapReduce do
 
     it 'includes the read preference in the spec' do
       allow(authorized_collection).to receive(:read_preference).and_return(read_preference)
-      expect(map_reduce.send(:map_reduce_spec)[:read]).to eq(read_preference)
+      expect(map_reduce_spec[:read]).to eq(read_preference)
     end
   end
 
