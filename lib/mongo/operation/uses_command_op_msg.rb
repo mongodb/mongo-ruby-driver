@@ -27,8 +27,7 @@ module Mongo
       READ_PREFERENCE = '$readPreference'.freeze
 
       def cluster_time(server)
-        # @todo update when merged with sessions work
-        #server.mongos? && server.cluster_time
+        server.mongos? && server.cluster_time
       end
 
       def unacknowledged_write?

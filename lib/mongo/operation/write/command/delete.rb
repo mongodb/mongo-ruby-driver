@@ -48,14 +48,6 @@ module Mongo
             }.merge(command_options)
           end
 
-          def command_options
-            opts = { ordered: ordered? }
-            opts[:writeConcern] = write_concern.options if write_concern
-            opts[:collation] = collation if collation
-            opts = session.add_id(opts) if session
-            opts
-          end
-
           def op_msg(server)
             global_args = { delete: coll_name,
                             Protocol::Msg::DATABASE_IDENTIFIER => db_name

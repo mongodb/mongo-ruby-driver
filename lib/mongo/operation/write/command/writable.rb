@@ -43,6 +43,15 @@ module Mongo
 
           private
 
+          def command_options
+            opts = { ordered: ordered? }
+            opts[:writeConcern] = write_concern.options if write_concern
+            opts[:collation] = collation if collation
+            opts[:bypassDocumentValidation] = true if bypass_document_validation
+            opts = session.add_id(opts) if session
+            opts
+          end
+
           # The wire protocol message for this write operation.
           #
           # @return [ Mongo::Protocol::Query ] Wire protocol message.

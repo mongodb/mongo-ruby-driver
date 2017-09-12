@@ -42,14 +42,6 @@ module Mongo
             }.merge!(command_options)
           end
 
-          def command_options
-            opts = { ordered: ordered? }
-            opts[:writeConcern] = write_concern.options if write_concern
-            opts[:bypassDocumentValidation] = true if bypass_document_validation
-            opts = session.add_id(opts) if session
-            opts
-          end
-
           def op_msg(server)
             global_args = { insert: coll_name,
                             Protocol::Msg::DATABASE_IDENTIFIER => db_name
