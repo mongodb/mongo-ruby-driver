@@ -22,6 +22,7 @@ module Mongo
     extend Forwardable
 
     def self.with_session(client, options = {})
+      # @todo: check if not a standalone
       if session = options[:session]
         session.validate!(client)
         return session unless block_given?
