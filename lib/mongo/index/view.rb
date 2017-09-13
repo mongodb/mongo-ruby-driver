@@ -148,12 +148,8 @@ module Mongo
       #
       # @since 2.0.0
       def create_many(*models)
-        if models[-1].respond_to?(:keys) && models[-1][:session]
-          opts = models[-1]
-          models = models[0...-1]
-        end
         server = next_primary
-        Session.with_session(client, opts || {}) do |session|
+        Session.with_session(client, @options) do |session|
           spec = {
                   indexes: normalize_models(models.flatten, server),
                   db_name: database.name,
@@ -231,7 +227,7 @@ module Mongo
       private
 
       def drop_by_name(name)
-        Session.with_session(client) do |session|
+        Session.with_session(client, @options) do |session|
           spec = {
                    db_name: database.name,
                    coll_name: collection.name,
@@ -276,7 +272,11 @@ module Mongo
       end
 
       def send_initial_query(server, session)
-        initial_query_op(session).execute(server)
+        if session
+          session.execute { initial_query_op(session).execute(server) }
+        else
+          initial_query_op(session).execute(server)
+        end
       end
 
       def with_generated_names(models, server)

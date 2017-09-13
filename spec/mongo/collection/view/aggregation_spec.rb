@@ -72,6 +72,19 @@ describe Mongo::Collection::View::Aggregation do
       authorized_collection.delete_many
     end
 
+    context 'when provided a session' do
+
+      let(:options) do
+        { session: session }
+      end
+
+      let(:operation) do
+        aggregation.to_a
+      end
+
+      it_behaves_like 'an operation using a session'
+    end
+
     context 'when a block is provided' do
 
       context 'when no batch size is provided' do

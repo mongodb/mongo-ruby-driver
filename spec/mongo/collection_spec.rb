@@ -615,6 +615,28 @@ describe Mongo::Collection do
           it_behaves_like 'a collection command with a collation option'
         end
       end
+
+      context 'when a session is provided' do
+
+        let(:collection) do
+          authorized_client[:specs]
+        end
+
+        let(:operation) do
+          collection.create(session: session)
+        end
+
+        let(:failed_operation) do
+          authorized_client[:specs, invalid: true].create(session: session)
+        end
+
+        after do
+          collection.drop
+        end
+
+        it_behaves_like 'an operation using a session'
+        it_behaves_like 'a failed operation using a session'
+      end
     end
   end
 
@@ -629,8 +651,27 @@ describe Mongo::Collection do
     end
 
     context 'when the collection exists' do
+
       before do
         collection.create
+      end
+
+      context 'when a session is provided' do
+
+        let(:operation) do
+          collection.drop(session: session)
+        end
+
+        let(:failed_operation) do
+          collection.with(write: { w: 10 }).drop(session: session)
+        end
+
+        after do
+          collection.drop
+        end
+
+        it_behaves_like 'an operation using a session'
+        it_behaves_like 'a failed operation using a session'
       end
 
       context 'when the collection does not have a write concern set' do
@@ -810,13 +851,18 @@ describe Mongo::Collection do
         authorized_collection.find({}, options)
       end
 
-      context 'when provided a session' do
+      context 'when a session is provided' do
 
         let(:operation) do
           authorized_collection.find({}, session: session).to_a
         end
 
+        let(:failed_operation) do
+          authorized_collection.find({ '$._id': 1 }, session: session).to_a
+        end
+
         it_behaves_like 'an operation using a session'
+        it_behaves_like 'a failed operation using a session'
       end
 
       context 'when provided :allow_partial_results' do
@@ -971,13 +1017,18 @@ describe Mongo::Collection do
       expect(result.inserted_ids.size).to eq(2)
     end
 
-    context 'when provided a session' do
+    context 'when a session is provided' do
 
       let(:operation) do
         authorized_collection.insert_many([{ name: 'test1' }, { name: 'test2' }], session: session)
       end
 
+      let(:failed_operation) do
+        authorized_collection.insert_many([{ _id: 'test1' }, { _id: 'test1' }], session: session)
+      end
+
       it_behaves_like 'an operation using a session'
+      it_behaves_like 'a failed operation using a session'
     end
 
     context 'when a document contains invalid keys' do
@@ -1150,13 +1201,19 @@ describe Mongo::Collection do
       expect(result.inserted_id).to_not be_nil
     end
 
-    context 'when provided a session' do
+    context 'when a session is provided' do
 
       let(:operation) do
         authorized_collection.insert_one({ name: 'testing' }, session: session)
       end
 
+      let(:failed_operation) do
+        authorized_collection.insert_one({ _id: 'testing' })
+        authorized_collection.insert_one({ _id: 'testing' }, session: session)
+      end
+
       it_behaves_like 'an operation using a session'
+      it_behaves_like 'a failed operation using a session'
     end
 
     context 'when the document contains invalid keys' do
@@ -1304,13 +1361,18 @@ describe Mongo::Collection do
       expect(index_names).to include(*'name_1', '_id_')
     end
 
-    context 'when provided a session' do
+    context 'when a session is provided' do
 
       let(:operation) do
         authorized_collection.indexes(batch_size: batch_size, session: session).collect { |i| i['name'] }
       end
 
+      let(:failed_operation) do
+        authorized_collection.indexes(batch_size: -100, session: session).collect { |i| i['name'] }
+      end
+
       it_behaves_like 'an operation using a session'
+      it_behaves_like 'a failed operation using a session'
     end
 
     context 'when batch size is specified' do
@@ -1352,13 +1414,18 @@ describe Mongo::Collection do
         expect(authorized_collection.aggregate([], options).options).to eq(BSON::Document.new(options))
       end
 
-      context 'when provided a session' do
+      context 'when a session is provided' do
 
         let(:operation) do
           authorized_collection.aggregate([], session: session).to_a
         end
 
+        let(:failed_operation) do
+          authorized_collection.aggregate([ { '$invalid' => 1 }], session: session).to_a
+        end
+
         it_behaves_like 'an operation using a session'
+        it_behaves_like 'a failed operation using a session'
       end
 
       context 'when a hint is provided' do
@@ -1448,7 +1515,12 @@ describe Mongo::Collection do
           authorized_collection.count({}, session: session)
         end
 
+        let(:failed_operation) do
+          authorized_collection.count({ '$._id' => 1 }, session: session)
+        end
+
         it_behaves_like 'an operation using a session'
+        it_behaves_like 'a failed operation using a session'
       end
 
       context 'when a collation is specified' do
@@ -1534,7 +1606,12 @@ describe Mongo::Collection do
           authorized_collection.distinct(:field, {}, session: session)
         end
 
+        let(:failed_operation) do
+          authorized_collection.distinct(:field, { '$._id' => 1 }, session: session)
+        end
+
         it_behaves_like 'an operation using a session'
+        it_behaves_like 'a failed operation using a session'
       end
     end
 
@@ -1659,7 +1736,12 @@ describe Mongo::Collection do
         authorized_collection.delete_one({}, session: session)
       end
 
+      let(:failed_operation) do
+        authorized_collection.delete_one({ '$._id' => 1}, session: session)
+      end
+
       it_behaves_like 'an operation using a session'
+      it_behaves_like 'a failed operation using a session'
     end
 
     context 'when a collation is provided' do
@@ -1805,7 +1887,12 @@ describe Mongo::Collection do
         authorized_collection.delete_many({}, session: session)
       end
 
+      let(:failed_operation) do
+        authorized_collection.delete_many({ '$._id' => 1}, session: session)
+      end
+
       it_behaves_like 'an operation using a session'
+      it_behaves_like 'a failed operation using a session'
     end
 
     context 'when a collation is specified' do
@@ -1954,7 +2041,12 @@ describe Mongo::Collection do
         cursors.reduce(0) { |total, cursor| total + cursor.to_a.size }
       end
 
+      let(:failed_operation) do
+        authorized_collection.parallel_scan(-2, session: session)
+      end
+
       it_behaves_like 'an operation using a session'
+      it_behaves_like 'a failed operation using a session'
     end
 
     context 'when a read concern is provided', if: find_command_enabled? do
@@ -2329,7 +2421,12 @@ describe Mongo::Collection do
         authorized_collection.replace_one(selector, { name: 'doink' }, session: session)
       end
 
+      let(:failed_operation) do
+        authorized_collection.replace_one({ '$._id' => 1 }, { name: 'doink' }, session: session)
+      end
+
       it_behaves_like 'an operation using a session'
+      it_behaves_like 'a failed operation using a session'
     end
   end
 
@@ -2719,7 +2816,12 @@ describe Mongo::Collection do
         authorized_collection.insert_one(name: 'baNG')
       end
 
+      let(:failed_operation) do
+        authorized_collection.update_many({ '$._id' => 1 }, { '$set' => {other: 'doink'} }, session: session)
+      end
+
       it_behaves_like 'an operation using a session'
+      it_behaves_like 'a failed operation using a session'
     end
   end
 
@@ -3101,7 +3203,12 @@ describe Mongo::Collection do
         authorized_collection.update_one({ field: 'test' }, { '$set'=> { field: 'testing' } }, session: session)
       end
 
+      let(:failed_operation) do
+        authorized_collection.update_one({ '$._id' => 1 }, { '$set'=> { field: 'testing' } }, session: session)
+      end
+
       it_behaves_like 'an operation using a session'
+      it_behaves_like 'a failed operation using a session'
     end
   end
 
@@ -3123,7 +3230,12 @@ describe Mongo::Collection do
           authorized_collection.find_one_and_delete(selector, session: session)
         end
 
+        let(:failed_operation) do
+          authorized_collection.find_one_and_delete({ '$._id' => 1 }, session: session)
+        end
+
         it_behaves_like 'an operation using a session'
+        it_behaves_like 'a failed operation using a session'
       end
 
       context 'when no options are provided' do
@@ -3332,7 +3444,12 @@ describe Mongo::Collection do
           authorized_collection.find_one_and_update(selector, { '$set' => { field: 'testing' }}, session: session)
         end
 
+        let(:failed_operation) do
+          authorized_collection.find_one_and_update({ '$._id' => 1 }, { '$set' => { field: 'testing' }}, session: session)
+        end
+
         it_behaves_like 'an operation using a session'
+        it_behaves_like 'a failed operation using a session'
       end
 
       context 'when no options are provided' do
@@ -3730,7 +3847,12 @@ describe Mongo::Collection do
           authorized_collection.find_one_and_replace(selector, { field: 'testing' }, session: session)
         end
 
+        let(:failed_operation) do
+          authorized_collection.find_one_and_replace({ '$._id' => 1}, { field: 'testing' }, session: session)
+        end
+
         it_behaves_like 'an operation using a session'
+        it_behaves_like 'a failed operation using a session'
       end
 
       context 'when return_document options are provided' do

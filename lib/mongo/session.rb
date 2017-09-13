@@ -59,6 +59,11 @@ module Mongo
     attr_reader :options
     attr_reader :operation_time
 
+    MISTMATCHED_CLUSTER_ERROR_MSG = 'The cluster used to create this session does not match that of client ' +
+      'initiating this operation. Please only use this session for operations on its original client.'.freeze
+
+    SESSION_ENDED_ERROR_MSG = 'This session has ended. Please create a new one.'.freeze
+
     # Initialize a Session.
     #
     # @example
@@ -165,17 +170,18 @@ module Mongo
     AFTER_CLUSTER_TIME = 'afterClusterTime'.freeze
 
     def check_if_ended!
-      binding.pry if ended?
-      raise Exception if ended?
+      raise Mongo::Error::InvalidSession.new(SESSION_ENDED_ERROR_MSG) if ended?
     end
 
     def validate_client!(client)
-      raise Exception unless @client == client
+      raise Mongo::Error::InvalidSession.new(MISTMATCHED_CLUSTER_ERROR_MSG) unless @client.cluster == client.cluster
     end
 
     def set_operation_time(result)
-      @operation_time = result.operation_time if result.respond_to?(:operation_time) && result.operation_time
-      result
+      if result && result.operation_time
+        @operation_time = result.operation_time
+        result
+      end
     end
 
     def causally_consistent_reads?

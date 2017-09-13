@@ -137,10 +137,6 @@ module Mongo
 
     private
 
-    def with_session
-      Session.with_session(client, @options)
-    end
-
     def end_session!(session)
       session.end_session unless @options[:session] == session
     end

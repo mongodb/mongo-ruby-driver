@@ -190,7 +190,11 @@ module Mongo
 
     def get_more
       read_with_retry do
-        process(get_more_operation.execute(@server))
+        process(if @session
+                  @session.execute { get_more_operation.execute(@server) }
+                else
+                  get_more_operation.execute(@server)
+                end)
       end
     end
 
@@ -205,8 +209,11 @@ module Mongo
     def kill_cursors
       unregister
       read_with_one_retry do
-        result = kill_cursors_operation.execute(@server)
-        @session.process(result) if @session
+        if @session
+          @session.execute { kill_cursors_operation.execute(@server) }
+        else
+          kill_cursors_operation.execute(@server)
+        end
       end
       end_session
     end
@@ -246,7 +253,6 @@ module Mongo
       @coll_name ||= result.namespace.sub("#{database.name}.", '') if result.namespace
       unregister if result.cursor_id == 0
       @cursor_id = result.cursor_id
-      @session.process(result) if @session
       result.documents
     end
 

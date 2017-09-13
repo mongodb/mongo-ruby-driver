@@ -116,7 +116,11 @@ module Mongo
       end
 
       def send_initial_query(server, session)
-        initial_query_op(session).execute(server)
+        if session
+          session.execute { initial_query_op(session).execute(server) }
+        else
+          initial_query_op(session).execute(server)
+        end
       end
     end
   end

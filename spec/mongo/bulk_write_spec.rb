@@ -32,7 +32,6 @@ describe Mongo::BulkWrite do
   end
 
   describe '#execute' do
-
     shared_examples_for 'an executable bulk write' do
 
       context 'when providing a bad operation' do
@@ -78,6 +77,19 @@ describe Mongo::BulkWrite do
           it 'sets the document index on the error' do
             expect(error.result[Mongo::Error::WRITE_ERRORS].first['index']).to eq(2)
           end
+
+          context 'when using a session' do
+
+            let(:extra_options) do
+              { session: session }
+            end
+
+            let(:failed_operation) do
+              bulk_write.execute
+            end
+
+            it_behaves_like 'a failed operation using a session'
+          end
         end
 
         context 'when provided a single insert one' do
@@ -100,6 +112,19 @@ describe Mongo::BulkWrite do
             expect(authorized_collection.find.first['_id']).to eq(0)
           end
 
+          context 'when a session is provided' do
+
+            let(:operation) do
+              result
+            end
+
+            let(:extra_options) do
+              { session: session }
+            end
+
+            it_behaves_like 'an operation using a session'
+          end
+
           context 'when there is a write concern error' do
 
             context 'when the server version is < 2.6' do
@@ -117,6 +142,19 @@ describe Mongo::BulkWrite do
                 expect {
                   bulk_write_invalid_write_concern.execute
                 }.to raise_error(Mongo::Error::OperationFailure)
+              end
+
+              context 'when using a session' do
+
+                let(:extra_options) do
+                  { session: session }
+                end
+
+                let(:failed_operation) do
+                  bulk_write_invalid_write_concern.execute
+                end
+
+                it_behaves_like 'a failed operation using a session'
               end
             end
           end
@@ -172,6 +210,19 @@ describe Mongo::BulkWrite do
                   bulk_write_invalid_write_concern.execute
                 }.to raise_error(Mongo::Error::OperationFailure)
               end
+
+              context 'when using a session' do
+
+                let(:extra_options) do
+                  { session: session }
+                end
+
+                let(:failed_operation) do
+                  bulk_write_invalid_write_concern.execute
+                end
+
+                it_behaves_like 'a failed operation using a session'
+              end
             end
           end
         end
@@ -195,6 +246,19 @@ describe Mongo::BulkWrite do
             expect(authorized_collection.find(_id: 0).count).to eq(0)
           end
 
+          context 'when a session is provided' do
+
+            let(:operation) do
+              result
+            end
+
+            let(:extra_options) do
+              { session: session }
+            end
+
+            it_behaves_like 'an operation using a session'
+          end
+
           context 'when there is a write concern error' do
 
             context 'when the server version is < 2.6' do
@@ -212,6 +276,19 @@ describe Mongo::BulkWrite do
                 expect {
                   bulk_write_invalid_write_concern.execute
                 }.to raise_error(Mongo::Error::OperationFailure)
+              end
+
+              context 'when using a session' do
+
+                let(:extra_options) do
+                  { session: session }
+                end
+
+                let(:failed_operation) do
+                  bulk_write_invalid_write_concern.execute
+                end
+
+                it_behaves_like 'a failed operation using a session'
               end
             end
 
@@ -438,6 +515,19 @@ describe Mongo::BulkWrite do
             expect(authorized_collection.find(_id: { '$in'=> [ 0, 1, 2 ]}).count).to eq(0)
           end
 
+          context 'when a session is provided' do
+
+            let(:operation) do
+              result
+            end
+
+            let(:extra_options) do
+              { session: session }
+            end
+
+            it_behaves_like 'an operation using a session'
+          end
+
           context 'when there is a write concern error' do
 
             context 'when the server version is < 2.6' do
@@ -455,6 +545,19 @@ describe Mongo::BulkWrite do
                 expect {
                   bulk_write_invalid_write_concern.execute
                 }.to raise_error(Mongo::Error::OperationFailure)
+              end
+
+              context 'when using a session' do
+
+                let(:extra_options) do
+                  { session: session }
+                end
+
+                let(:failed_operation) do
+                  bulk_write_invalid_write_concern.execute
+                end
+
+                it_behaves_like 'a failed operation using a session'
               end
             end
           end
@@ -555,6 +658,19 @@ describe Mongo::BulkWrite do
             expect(authorized_collection.find(_id: 0).count).to eq(0)
           end
 
+          context 'when a session is provided' do
+
+            let(:operation) do
+              result
+            end
+
+            let(:extra_options) do
+              { session: session }
+            end
+
+            it_behaves_like 'an operation using a session'
+          end
+
           context 'when there is a write concern error' do
 
             context 'when the server version is < 2.6' do
@@ -572,6 +688,19 @@ describe Mongo::BulkWrite do
                 expect {
                   bulk_write_invalid_write_concern.execute
                 }.to raise_error(Mongo::Error::OperationFailure)
+              end
+
+              context 'when using a session' do
+
+                let(:extra_options) do
+                  { session: session }
+                end
+
+                let(:failed_operation) do
+                  bulk_write_invalid_write_concern.execute
+                end
+
+                it_behaves_like 'a failed operation using a session'
               end
             end
           end
@@ -675,6 +804,19 @@ describe Mongo::BulkWrite do
             expect(authorized_collection.find(_id: { '$in'=> [ 0, 1, 2 ]}).count).to eq(0)
           end
 
+          context 'when a session is provided' do
+
+            let(:operation) do
+              result
+            end
+
+            let(:extra_options) do
+              { session: session }
+            end
+
+            it_behaves_like 'an operation using a session'
+          end
+
           context 'when there is a write concern error' do
 
             context 'when the server version is < 2.6' do
@@ -692,6 +834,19 @@ describe Mongo::BulkWrite do
                 expect {
                   bulk_write_invalid_write_concern.execute
                 }.to raise_error(Mongo::Error::OperationFailure)
+              end
+
+              context 'when a session is provided' do
+
+                let(:operation) do
+                  result
+                end
+
+                let(:extra_options) do
+                  { session: session }
+                end
+
+                it_behaves_like 'an operation using a session'
               end
             end
           end
@@ -799,6 +954,19 @@ describe Mongo::BulkWrite do
             expect(authorized_collection.find(_id: 0).first[:name]).to eq('test')
           end
 
+          context 'when a session is provided' do
+
+            let(:operation) do
+              result
+            end
+
+            let(:extra_options) do
+              { session: session }
+            end
+
+            it_behaves_like 'an operation using a session'
+          end
+
           context 'when there is a write concern error' do
 
             context 'when the server version is < 2.6' do
@@ -816,6 +984,19 @@ describe Mongo::BulkWrite do
                 expect {
                   bulk_write_invalid_write_concern.execute
                 }.to raise_error(Mongo::Error::OperationFailure)
+              end
+
+              context 'when using a session' do
+
+                let(:extra_options) do
+                  { session: session }
+                end
+
+                let(:failed_operation) do
+                  bulk_write_invalid_write_concern.execute
+                end
+
+                it_behaves_like 'a failed operation using a session'
               end
             end
           end
@@ -969,6 +1150,19 @@ describe Mongo::BulkWrite do
               expect(result.matched_count).to eq(1)
             end
 
+            context 'when a session is provided' do
+
+              let(:operation) do
+                result
+              end
+
+              let(:extra_options) do
+                { session: session }
+              end
+
+              it_behaves_like 'an operation using a session'
+            end
+
             context 'when documents match but are not modified' do
 
               before do
@@ -1031,6 +1225,19 @@ describe Mongo::BulkWrite do
                   expect {
                     bulk_write_invalid_write_concern.execute
                   }.to raise_error(Mongo::Error::OperationFailure)
+                end
+
+                context 'when using a session' do
+
+                  let(:extra_options) do
+                    { session: session }
+                  end
+
+                  let(:failed_operation) do
+                    bulk_write_invalid_write_concern.execute
+                  end
+
+                  it_behaves_like 'a failed operation using a session'
                 end
               end
             end
@@ -1810,6 +2017,19 @@ describe Mongo::BulkWrite do
           it 'combines the inserted ids' do
             expect(result.inserted_ids.size).to eq(1001)
           end
+
+          context 'when a session is provided' do
+
+            let(:operation) do
+              result
+            end
+
+            let(:extra_options) do
+              { session: session }
+            end
+
+            it_behaves_like 'an operation using a session'
+          end
         end
       end
 
@@ -1828,17 +2048,38 @@ describe Mongo::BulkWrite do
         it 'inserts the documents' do
           expect(result.inserted_count).to eq(5)
         end
+
+        context 'when a session is provided' do
+
+          let(:operation) do
+            result
+          end
+
+          let(:extra_options) do
+            { session: session }
+          end
+
+          it_behaves_like 'an operation using a session'
+        end
       end
     end
 
     context 'when the bulk write is unordered' do
 
       let(:bulk_write) do
-        described_class.new(authorized_collection, requests, ordered: false)
+        described_class.new(authorized_collection, requests, options)
+      end
+
+      let(:options) do
+        { ordered: false }.merge(extra_options)
+      end
+
+      let(:extra_options) do
+        {}
       end
 
       let(:bulk_write_invalid_write_concern) do
-        described_class.new(collection_invalid_write_concern, requests, ordered: false)
+        described_class.new(collection_invalid_write_concern, requests, options)
       end
 
       it_behaves_like 'an executable bulk write'
@@ -1847,11 +2088,19 @@ describe Mongo::BulkWrite do
     context 'when the bulk write is ordered' do
 
       let(:bulk_write) do
-        described_class.new(authorized_collection, requests, ordered: true)
+        described_class.new(authorized_collection, requests, options)
+      end
+
+      let(:options) do
+        { ordered: true }.merge(extra_options)
+      end
+
+      let(:extra_options) do
+        {}
       end
 
       let(:bulk_write_invalid_write_concern) do
-        described_class.new(collection_invalid_write_concern, requests, ordered: true)
+        described_class.new(collection_invalid_write_concern, requests, options)
       end
 
       it_behaves_like 'an executable bulk write'

@@ -481,15 +481,16 @@ module Mongo
                                                         :read_concern => collection.read_concern,
                                                         :session => session
                                                       }.merge!(options))
-          result = cmd.execute(server)
-          session.process(result) if session
+          result = session.execute { cmd.execute(server) }
           result.cursor_ids.map do |cursor_id|
             result = if server.features.find_command_enabled?
-                       Operation::Commands::GetMore.new({
+                       session.execute do
+                         Operation::Commands::GetMore.new({
                                                           :selector => {:getMore => cursor_id, :collection => collection.name},
                                                           :db_name => database.name,
                                                           :session => session
                                                         }).execute(server)
+                       end
                      else
                        Operation::Read::GetMore.new({
                                                       :to_return => 0,

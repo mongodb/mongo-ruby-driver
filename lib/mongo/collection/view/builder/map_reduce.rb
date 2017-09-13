@@ -140,7 +140,7 @@ module Mongo
               :out => { inline: 1 }
             )
             command[:readConcern] = collection.read_concern if collection.read_concern
-            command.merge!(view.options)
+            command.merge!(view_options)
             command.merge!(Options::Mapper.transform_documents(options, MAPPINGS))
             command
           end
@@ -153,6 +153,12 @@ module Mongo
             if options[:out].respond_to?(:keys)
               options[:out][OUT_ACTIONS.find { |action| options[:out][action] }]
             end || options[:out]
+          end
+
+          def view_options
+            @view_options ||= (opts = view.options.dup
+                               opts.delete(:session)
+                               opts)
           end
         end
       end

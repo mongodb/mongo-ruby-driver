@@ -39,7 +39,11 @@ module Mongo
           session = with_session
           read_with_retry do
             server = server_selector.select_server(cluster, false)
-            result = send_initial_query(server, session)
+            result = if session
+                       session.execute { send_initial_query(server, session) }
+                     else
+                       send_initial_query(server, session)
+                     end
             @cursor = Cursor.new(view, result, server, session: session)
           end
           @cursor.each do |doc|

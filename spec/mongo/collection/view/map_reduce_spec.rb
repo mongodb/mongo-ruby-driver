@@ -70,6 +70,19 @@ describe Mongo::Collection::View::MapReduce do
       end
     end
 
+    context 'when provided a session' do
+
+      let(:view_options) do
+        { session: session }
+      end
+
+      let(:operation) do
+        map_reduce.to_a
+      end
+
+      it_behaves_like 'an operation using a session'
+    end
+
     context 'when out is in the options' do
 
       after do
@@ -136,6 +149,53 @@ describe Mongo::Collection::View::MapReduce do
 
         it 'fetches the results from the collection' do
           expect(new_map_reduce.count).to eq(2)
+        end
+
+        context 'when provided a session' do
+
+          let(:view_options) do
+            { session: session }
+          end
+
+          let(:operation) do
+            new_map_reduce.to_a
+          end
+
+          it_behaves_like 'an operation using a session'
+        end
+
+        context 'when the output collection is iterated', if: sessions_enabled? && !sharded? do
+
+          let(:view_options) do
+            { session: session }
+          end
+
+          let(:session) do
+            client.start_session
+          end
+
+          let(:view) do
+            Mongo::Collection::View.new(client[TEST_COLL], selector, view_options)
+          end
+
+          let(:client) do
+            Mongo::Client.new(ADDRESSES, TEST_OPTIONS.merge(heartbeat_frequency: 100)).tap do |cl|
+              cl.subscribe(Mongo::Monitoring::COMMAND, subscriber)
+            end
+          end
+
+          let(:subscriber) do
+            EventSubscriber.new
+          end
+
+          let(:find_command) do
+            subscriber.started_events[-1].command
+          end
+
+          it 'uses the session when iterating over the output collection' do
+            new_map_reduce.to_a
+            expect(find_command["lsid"]).to eq(BSON::Document.new(session.session_id))
+          end
         end
 
         context 'when another db is specified', if: (!auth_enabled? && list_command_enabled?) do
