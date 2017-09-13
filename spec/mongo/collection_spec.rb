@@ -699,6 +699,19 @@ describe Mongo::Collection do
 
   describe '#find' do
 
+    describe 'updating cluster time' do
+
+      let(:operation) do
+        client[TEST_COLL].find.first
+      end
+
+      let(:second_operation) do
+        client[TEST_COLL].find.first
+      end
+
+      it_behaves_like 'an operation updating cluster time'
+    end
+
     context 'when provided a filter' do
 
       let(:view) do
@@ -1108,6 +1121,19 @@ describe Mongo::Collection do
 
   describe '#insert_one' do
 
+    describe 'updating cluster time' do
+
+      let(:operation) do
+        client[TEST_COLL].insert_one({ name: 'testing' })
+      end
+
+      let(:second_operation) do
+        client[TEST_COLL].insert_one({ name: 'testing' })
+      end
+
+      it_behaves_like 'an operation updating cluster time'
+    end
+
     let(:result) do
       authorized_collection.insert_one({ name: 'testing' })
     end
@@ -1298,6 +1324,19 @@ describe Mongo::Collection do
   end
 
   describe '#aggregate' do
+
+    describe 'updating cluster time' do
+
+      let(:operation) do
+        client[TEST_COLL].aggregate([]).first
+      end
+
+      let(:second_operation) do
+        client[TEST_COLL].aggregate([]).first
+      end
+
+      it_behaves_like 'an operation updating cluster time'
+    end
 
     it 'returns an Aggregation object' do
       expect(authorized_collection.aggregate([])).to be_a(Mongo::Collection::View::Aggregation)
