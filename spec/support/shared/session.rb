@@ -99,17 +99,20 @@ shared_examples 'a failed operation using a session' do
     begin; failed_operation; rescue => e; e; end
   end
 
-  it 'raises an error' do
-    expect([Mongo::Error::OperationFailure,
-            Mongo::Error::BulkWriteError]).to include(operation_result.class)
-  end
+  context 'when the operation fails', if: sessions_enabled? do
 
-  it 'updates the last use value' do
-    expect(session.instance_variable_get(:@last_use)).not_to eq(before_last_use)
-  end
+    it 'raises an error' do
+      expect([Mongo::Error::OperationFailure,
+              Mongo::Error::BulkWriteError]).to include(operation_result.class)
+    end
 
-  it 'updates the operation time value' do
-    expect(session.instance_variable_get(:@operation_time)).not_to eq(before_operation_time)
+    it 'updates the last use value' do
+      expect(session.instance_variable_get(:@last_use)).not_to eq(before_last_use)
+    end
+
+    it 'updates the operation time value' do
+      expect(session.instance_variable_get(:@operation_time)).not_to eq(before_operation_time)
+    end
   end
 end
 

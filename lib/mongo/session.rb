@@ -21,34 +21,9 @@ module Mongo
   class Session
     extend Forwardable
 
-    def self.with_session(client, options = {})
-      # @todo: check if not a standalone
-      if session = options[:session]
-        session.validate!(client)
-        return session unless block_given?
-        session.execute do
-          yield(session)
-        end
-      elsif sessions_supported?(client)
-        session = new(client, options)
-        return session unless block_given?
-        result = session.execute do
-          yield(session)
-        end
-        session.end_session
-        result
-      else
-        yield if block_given?
-      end
-    end
-
-    def self.sessions_supported?(client)
-      client.cluster.servers.find.first && client.cluster.logical_session_timeout
-    end
-
     def_delegators :@server_session, :session_id
 
-    # Get the client through which this session was created.
+    # Get the client with which this session was created.
     #
     # @since 2.5.0
     attr_reader :client
@@ -57,11 +32,22 @@ module Mongo
     #
     # @since 2.5.0
     attr_reader :options
+
+    # Get last seen operation time.
+    #
+    # @since 2.5.0
     attr_reader :operation_time
 
+    # Error message describing that the session was attempted to be used by a cluster different from the
+    # one it was originally associated with.
+    #
+    # @since 2.5.0
     MISTMATCHED_CLUSTER_ERROR_MSG = 'The cluster used to create this session does not match that of client ' +
-      'initiating this operation. Please only use this session for operations on its original client.'.freeze
+        'initiating this operation. Please only use this session for operations on its original client.'.freeze
 
+    # Error message describing that the session cannot be used because it has already been ended.
+    #
+    # @since 2.5.0
     SESSION_ENDED_ERROR_MSG = 'This session has ended. Please create a new one.'.freeze
 
     # Initialize a Session.
@@ -69,7 +55,7 @@ module Mongo
     # @example
     #   Session.new(client, options)
     #
-    # @param [ Mongo::Client ] client The client through which this session is created.
+    # @param [ Client ] client The client through which this session is created.
     # @param [ Hash ] options The options for this session.
     #
     # @since 2.5.0
@@ -126,6 +112,16 @@ module Mongo
       @ended
     end
 
+    # Execute an operation in the context of this session.
+    #
+    # @example
+    #   session.execute do
+    #     ...
+    #   end
+    #
+    # @return [ Object ] Result of the block.
+    #
+    # @since 2.5.0
     def execute
       process(yield)
     rescue Mongo::Error::OperationFailure => e
@@ -133,15 +129,16 @@ module Mongo
       raise
     end
 
-    def process(result)
-      set_operation_time(result)
-      set_last_use!
-      result
-    end
-
-    def validate!(client)
-      validate_client!(client)
-      check_if_ended!
+    # Add this session's id to a command document.
+    #
+    # @example
+    #   session.add_id(cmd)
+    #
+    # @return [ Hash, BSON::Document ] The command document.
+    #
+    # @since 2.5.0
+    def add_id(command)
+      command.merge(lsid: session_id)
     end
 
     # Get the read concern for this session.
@@ -161,20 +158,39 @@ module Mongo
       causally_consistent_read_concern(doc)
     end
 
-    def add_id(command)
-      command.merge(lsid: session_id)
+    # Validate the session.
+    #
+    # @example
+    #   session.validate(client)
+    #
+    # @param [ Client ] client The client the session is associated with.
+    #
+    # @return [ nil ] Return nil if the session is valid.
+    #
+    # @raise [ Mongo::Error::InvalidSession ] Raise error if the session is not valid.
+    #
+    # @since 2.5.0
+    def validate!(client)
+      check_matching_client!(client)
+      check_if_ended!
     end
 
     private
 
-    AFTER_CLUSTER_TIME = 'afterClusterTime'.freeze
+    def process(result)
+      set_operation_time(result)
+      set_last_use!
+      result
+    end
 
     def check_if_ended!
       raise Mongo::Error::InvalidSession.new(SESSION_ENDED_ERROR_MSG) if ended?
     end
 
-    def validate_client!(client)
-      raise Mongo::Error::InvalidSession.new(MISTMATCHED_CLUSTER_ERROR_MSG) unless @client.cluster == client.cluster
+    def check_matching_client!(client)
+      if @client.cluster != client.cluster
+        raise Mongo::Error::InvalidSession.new(MISTMATCHED_CLUSTER_ERROR_MSG)
+      end
     end
 
     def set_operation_time(result)
@@ -195,6 +211,57 @@ module Mongo
 
     def set_last_use!
       @last_use = Time.now
+    end
+
+    class << self
+
+      # Get a session or use a session to execute a block.
+      #
+      # @example Get a session.
+      #   Session.with_session(client)
+      #
+      # @example Use a session.
+      #   Session.with_session(client) do |session|
+      #     ...
+      #   end
+      #
+      # @param [ Client ] The client to associate the session with.
+      # @param [ Hash ] options The options for the session.
+      #
+      # @option options [ Session ] :session The session to use or return.
+      #
+      # @since 2.5.0
+      def with_session(client, options = {})
+        # @todo: check if not a standalone
+        if session = options[:session]
+          session.validate!(client)
+          return session unless block_given?
+          session.execute do
+            yield(session)
+          end
+        elsif sessions_supported?(client)
+          session = new(client, options)
+          return session unless block_given?
+          result = session.execute do
+            yield(session)
+          end
+          session.end_session
+          result
+        else
+          yield if block_given?
+        end
+      end
+
+      # Are sessions supported?
+      #
+      # @example Session.sessions_supported?(client)
+      #
+      # @return [ true, false ] Whether sessions are supported.
+      #
+      # @since 2.5.0
+      def sessions_supported?(client)
+        client.cluster.servers.find.first && client.cluster.logical_session_timeout
+      end
     end
 
     # An object representing the server-side session.

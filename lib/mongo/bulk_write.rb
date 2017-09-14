@@ -178,30 +178,48 @@ module Mongo
     end
 
     def delete(documents, server, operation_id, session)
-      result = Operation::Write::Bulk::Delete.new(
-        base_spec(operation_id, session).merge(:deletes => documents)
-      ).execute(server)
-      session.process(result) if session
-      result
+      if session
+        session.execute do
+          Operation::Write::Bulk::Delete.new(
+              base_spec(operation_id, session).merge(:deletes => documents)
+          ).execute(server)
+        end
+      else
+        Operation::Write::Bulk::Delete.new(
+            base_spec(operation_id, session).merge(:deletes => documents)
+        ).execute(server)
+      end
     end
 
     alias :delete_one :delete
     alias :delete_many :delete
 
     def insert_one(documents, server, operation_id, session)
-      result = Operation::Write::Bulk::Insert.new(
-          base_spec(operation_id, session).merge(:documents => documents)
-      ).execute(server)
-      session.process(result) if session
-      result
+      if session
+        session.execute do
+          Operation::Write::Bulk::Insert.new(
+              base_spec(operation_id, session).merge(:documents => documents)
+          ).execute(server)
+        end
+      else
+        Operation::Write::Bulk::Insert.new(
+            base_spec(operation_id, session).merge(:documents => documents)
+        ).execute(server)
+      end
     end
 
     def update(documents, server, operation_id, session)
-      result = Operation::Write::Bulk::Update.new(
-          base_spec(operation_id, session).merge(:updates => documents)
-      ).execute(server)
-      session.process(result) if session
-      result
+      if session
+        session.execute do
+          Operation::Write::Bulk::Update.new(
+              base_spec(operation_id, session).merge(:updates => documents)
+          ).execute(server)
+        end
+      else
+        Operation::Write::Bulk::Update.new(
+            base_spec(operation_id, session).merge(:updates => documents)
+        ).execute(server)
+      end
     end
 
     alias :replace_one :update
