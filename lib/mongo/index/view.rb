@@ -220,6 +220,14 @@ module Mongo
         @options = options
       end
 
+      # The session associated with this +View+.
+      #
+      # @example Get the session.
+      #   view.session
+      #
+      # @return [ Session ] The session.
+      #
+      # @since 2.5.0
       def session
         @options[:session]
       end

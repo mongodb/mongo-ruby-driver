@@ -48,6 +48,11 @@ module Mongo
     # @since 2.4.0
     IDLE_WRITE_PERIOD_SECONDS = 10
 
+    # The key for getting the cluster time from a response.
+    #
+    # @since 2.5.0
+    CLUSTER_TIME = 'clusterTime'.freeze
+
     # @return [ Hash ] The options hash.
     attr_reader :options
 
@@ -464,8 +469,8 @@ module Mongo
           if @cluster_time.nil?
             @cluster_time = cl_time
           # @todo Implement comparison of BSON::Timestamps
-          elsif (cl_time['clusterTime'].seconds + cl_time['clusterTime'].increment) >
-            (@cluster_time['clusterTime'].seconds + @cluster_time['clusterTime'].increment)
+          elsif (cl_time[CLUSTER_TIME].seconds + cl_time[CLUSTER_TIME].increment) >
+            (@cluster_time[CLUSTER_TIME].seconds + @cluster_time[CLUSTER_TIME].increment)
             @cluster_time = cl_time
           end
         end

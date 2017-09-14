@@ -127,7 +127,7 @@ module Mongo
         #
         # @since 2.0.0
         def count(opts = {})
-          cmd = {:count => collection.name, :query => filter}
+          cmd = { :count => collection.name, :query => filter }
           cmd[:skip] = opts[:skip] if opts[:skip]
           cmd[:hint] = opts[:hint] if opts[:hint]
           cmd[:limit] = opts[:limit] if opts[:limit]
@@ -168,9 +168,9 @@ module Mongo
         #
         # @since 2.0.0
         def distinct(field_name, opts = {})
-          cmd = {:distinct => collection.name,
-                 :key => field_name.to_s,
-                 :query => filter}
+          cmd = { :distinct => collection.name,
+                  :key => field_name.to_s,
+                  :query => filter }
           cmd[:maxTimeMS] = opts[:max_time_ms] if opts[:max_time_ms]
           cmd[:readConcern] = collection.read_concern if collection.read_concern
           read_pref = opts[:read] || read_preference

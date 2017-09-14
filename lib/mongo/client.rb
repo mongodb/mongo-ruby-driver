@@ -388,7 +388,9 @@ module Mongo
     #
     # @since 2.5.0
     def start_session(options = {})
-      raise Exception unless Session.sessions_supported?(self)
+      if !Session.sessions_supported?(self)
+        raise Error::InvalidSession.new(Session::SESSIONS_NOT_SUPPORTED)
+      end
       Session.new(self, options)
     end
 

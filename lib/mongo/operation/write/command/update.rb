@@ -55,6 +55,8 @@ module Mongo
             global_args = { update: coll_name,
                             Protocol::Msg::DATABASE_IDENTIFIER => db_name
                           }.merge!(command_options)
+
+            global_args = session.add_id(global_args) if session
             if (cl_time = cluster_time(server))
               global_args[CLUSTER_TIME] = cl_time
             end

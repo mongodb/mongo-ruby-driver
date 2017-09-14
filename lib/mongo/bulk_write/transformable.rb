@@ -59,7 +59,6 @@ module Mongo
         { Operation::Q => doc[:filter],
           Operation::LIMIT => 0 }.tap do |d|
           d[Operation::COLLATION] = doc[:collation] if doc[:collation]
-          d[:session] = @session if @session
         end
       }
 
@@ -70,7 +69,6 @@ module Mongo
         { Operation::Q => doc[:filter],
           Operation::LIMIT => 1 }.tap do |d|
           d[Operation::COLLATION] = doc[:collation] if doc[:collation]
-          d[:session] = @session if @session
         end
       }
 
@@ -92,7 +90,6 @@ module Mongo
           Operation::UPSERT => doc.fetch(:upsert, false)
         }.tap do |d|
           d[Operation::COLLATION] = doc[:collation] if doc[:collation]
-          d[:session] = @session if @session
         end
       }
 
@@ -108,7 +105,6 @@ module Mongo
         }.tap do |d|
           d[Operation::COLLATION] = doc[:collation] if doc[:collation]
           d[Operation::ARRAY_FILTERS] = doc[:array_filters] if doc[:array_filters]
-          d[:session] = @session if @session
         end
       }
 
@@ -124,7 +120,6 @@ module Mongo
         }.tap do |d|
           d[Operation::COLLATION] = doc[:collation] if doc[:collation]
           d[Operation::ARRAY_FILTERS] = doc[:array_filters] if doc[:array_filters]
-          d[:session] = @session if @session
         end
       }
 

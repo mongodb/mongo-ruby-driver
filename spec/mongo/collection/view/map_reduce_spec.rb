@@ -164,7 +164,7 @@ describe Mongo::Collection::View::MapReduce do
           it_behaves_like 'an operation using a session'
         end
 
-        context 'when the output collection is iterated', if: sessions_enabled? && !sharded? do
+        context 'when the output collection is iterated', if: sessions_testable? && !sharded? do
 
           let(:view_options) do
             { session: session }

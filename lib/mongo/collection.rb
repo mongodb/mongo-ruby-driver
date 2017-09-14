@@ -174,6 +174,10 @@ module Mongo
     # @example Force the collection to be created.
     #   collection.create
     #
+    # @param [ Hash ] options The options for the create operation.
+    #
+    # @option options [ Session ] :session The session to use for the operation.
+    #
     # @return [ Result ] The result of the command.
     #
     # @since 2.0.0
@@ -201,6 +205,10 @@ module Mongo
     #
     # @example Drop the collection.
     #   collection.drop
+    #
+    # @param [ Hash ] options The options for the drop operation.
+    #
+    # @option options [ Session ] :session The session to use for the operation.
     #
     # @return [ Result ] The result of the command.
     #
@@ -279,6 +287,7 @@ module Mongo
     # @option options [ true, false ] :bypass_document_validation Whether or
     #   not to skip document level validation.
     # @option options [ Hash ] :collation The collation to use.
+    # @option options [ Session ] :session The session to use.
     #
     # @return [ Aggregation ] The aggregation object.
     #
@@ -301,6 +310,7 @@ module Mongo
     # @option options [ Integer ] :skip The number of documents to skip before counting.
     # @option options [ Hash ] :read The read preference options.
     # @option options [ Hash ] :collation The collation to use.
+    # @option options [ Session ] :session The session to use.
     #
     # @return [ Integer ] The document count.
     #
@@ -321,6 +331,7 @@ module Mongo
     # @option options [ Integer ] :max_time_ms The maximum amount of time to allow the command to run.
     # @option options [ Hash ] :read The read preference options.
     # @option options [ Hash ] :collation The collation to use.
+    # @option options [ Session ] :session The session to use.
     #
     # @return [ Array<Object> ] The list of distinct values.
     #
@@ -336,6 +347,8 @@ module Mongo
     #   collection.indexes
     #
     # @param [ Hash ] options Options for getting a list of all indexes.
+    #
+    # @option options [ Session ] :session The session to use.
     #
     # @return [ View::Index ] The index view.
     #
@@ -363,6 +376,8 @@ module Mongo
     #
     # @param [ Hash ] document The document to insert.
     # @param [ Hash ] options The insert options.
+    #
+    # @option options [ Session ] :session The session to use for the operation.
     #
     # @return [ Result ] The database response wrapper.
     #
@@ -392,6 +407,8 @@ module Mongo
     # @param [ Array<Hash> ] documents The documents to insert.
     # @param [ Hash ] options The insert options.
     #
+    # @option options [ Session ] :session The session to use for the operation.
+    #
     # @return [ Result ] The database response wrapper.
     #
     # @since 2.0.0
@@ -414,6 +431,7 @@ module Mongo
     #   Can be :w => Integer, :fsync => Boolean, :j => Boolean.
     # @option options [ true, false ] :bypass_document_validation Whether or
     #   not to skip document level validation.
+    # @option options [ Session ] :session The session to use for the set of operations.
     #
     # @return [ BulkWrite::Result ] The result of the operation.
     #
@@ -431,6 +449,7 @@ module Mongo
     # @param [ Hash ] options The options.
     #
     # @option options [ Hash ] :collation The collation to use.
+    # @option options [ Session ] :session The session to use.
     #
     # @return [ Result ] The response from the database.
     #
@@ -448,6 +467,7 @@ module Mongo
     # @param [ Hash ] options The options.
     #
     # @option options [ Hash ] :collation The collation to use.
+    # @option options [ Session ] :session The session to use.
     #
     # @return [ Result ] The response from the database.
     #
@@ -470,6 +490,7 @@ module Mongo
     #
     # @option options [ Integer ] :max_time_ms The maximum amount of time to allow the command
     #   to run in milliseconds.
+    # @option options [ Session ] :session The session to use.
     #
     # @return [ Array<Cursor> ] An array of cursors.
     #
@@ -492,6 +513,7 @@ module Mongo
     # @option options [ true, false ] :bypass_document_validation Whether or
     #   not to skip document level validation.
     # @option options [ Hash ] :collation The collation to use.
+    # @option options [ Session ] :session The session to use.
     #
     # @return [ Result ] The response from the database.
     #
@@ -516,6 +538,7 @@ module Mongo
     # @option options [ Hash ] :collation The collation to use.
     # @option options [ Array ] :array_filters A set of filters specifying to which array elements
     #   an update should apply.
+    # @option options [ Session ] :session The session to use.
     #
     # @return [ Result ] The response from the database.
     #
@@ -540,6 +563,7 @@ module Mongo
     # @option options [ Hash ] :collation The collation to use.
     # @option options [ Array ] :array_filters A set of filters specifying to which array elements
     #   an update should apply.
+    # @option options [ Session ] :session The session to use.
     #
     # @return [ Result ] The response from the database.
     #
@@ -565,6 +589,7 @@ module Mongo
     # @option options [ Hash ] :write_concern The write concern options.
     #   Defaults to the collection's write concern.
     # @option options [ Hash ] :collation The collation to use.
+    # @option options [ Session ] :session The session to use.
     #
     # @return [ BSON::Document, nil ] The document, if found.
     #
@@ -600,6 +625,7 @@ module Mongo
     # @option options [ Hash ] :collation The collation to use.
     # @option options [ Array ] :array_filters A set of filters specifying to which array elements
     #   an update should apply.
+    # @option options [ Session ] :session The session to use.
     #
     # @return [ BSON::Document ] The document.
     #
@@ -633,6 +659,7 @@ module Mongo
     # @option options [ Hash ] :write_concern The write concern options.
     #   Defaults to the collection's write concern.
     # @option options [ Hash ] :collation The collation to use.
+    # @option options [ Session ] :session The session to use.
     #
     # @return [ BSON::Document ] The document.
     #

@@ -275,7 +275,7 @@ module Mongo
 
       # Get the operation time reported in the server response.
       #
-      # @example Get the cluster time.
+      # @example Get the operation time.
       #   result.operation_time
       #
       # @return [ Object ] The operation time value.
@@ -287,7 +287,7 @@ module Mongo
         end
       end
 
-      # Get the number of cluster time reported in the server response.
+      # Get the cluster time reported in the server response.
       #
       # @example Get the cluster time.
       #   result.cluster_time

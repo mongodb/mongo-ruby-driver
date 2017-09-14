@@ -78,7 +78,6 @@ module Mongo
     # Get the app metadata from the cluster.
     def_delegators :cluster,
                    :app_metadata,
-                   :client,
                    :cluster_time,
                    :update_cluster_time
 

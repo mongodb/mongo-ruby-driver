@@ -55,7 +55,6 @@ module Mongo
         private
 
         def kill_cursors_command
-          # add session id
           cmd = { :killCursors => collection_name, :cursors => [ cursor.id ] }
           @session ? @session.add_id(cmd) : cmd
         end

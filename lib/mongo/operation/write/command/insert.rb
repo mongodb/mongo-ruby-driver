@@ -46,9 +46,11 @@ module Mongo
             global_args = { insert: coll_name,
                             Protocol::Msg::DATABASE_IDENTIFIER => db_name
                           }.merge!(command_options)
+
             if (cl_time = cluster_time(server))
               global_args[CLUSTER_TIME] = cl_time
             end
+            global_args = session.add_id(global_args) if session
 
             section = { type: 1, payload: { identifier: IDENTIFIER, sequence: documents } }
             flags = unacknowledged_write? ? [:more_to_come] : [:none]

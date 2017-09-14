@@ -58,7 +58,7 @@ module Mongo
             info[Database::NAME]
           else
             (info[Database::NAME] &&
-                info[Database::NAME].sub("#{@database.name}.", ''))
+              info[Database::NAME].sub("#{@database.name}.", ''))
           end
         end
       end

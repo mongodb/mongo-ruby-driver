@@ -71,7 +71,7 @@ module Mongo
           )
         end
       end
-      end_session!(session)
+      session.end_session unless @options[:session] == session
       result_combiner.result
     end
 
@@ -136,10 +136,6 @@ module Mongo
     end
 
     private
-
-    def end_session!(session)
-      session.end_session unless @options[:session] == session
-    end
 
     def base_spec(operation_id, session)
       {

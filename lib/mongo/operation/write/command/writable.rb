@@ -48,7 +48,6 @@ module Mongo
             opts[:writeConcern] = write_concern.options if write_concern
             opts[:collation] = collation if collation
             opts[:bypassDocumentValidation] = true if bypass_document_validation
-            opts = session.add_id(opts) if session
             opts
           end
 

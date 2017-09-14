@@ -50,6 +50,11 @@ module Mongo
     # @since 2.5.0
     SESSION_ENDED_ERROR_MSG = 'This session has ended. Please create a new one.'.freeze
 
+    # Error message describing that sessions are not supported by the server version.
+    #
+    # @since 2.5.0
+    SESSIONS_NOT_SUPPORTED = 'Sessions are not supported by the server version.'.freeze
+
     # Initialize a Session.
     #
     # @example
@@ -260,7 +265,8 @@ module Mongo
       #
       # @since 2.5.0
       def sessions_supported?(client)
-        client.cluster.servers.find.first && client.cluster.logical_session_timeout
+        server = client.cluster.servers.find.first
+        server && server.features.sessions_enabled? && client.cluster.logical_session_timeout
       end
     end
 

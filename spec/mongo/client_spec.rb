@@ -1239,4 +1239,49 @@ describe Mongo::Client do
       expect(authorized_client.collections).to all(be_a(Mongo::Collection))
     end
   end
+
+  describe 'start_session' do
+
+    let(:session) do
+      authorized_client.start_session
+    end
+
+    context 'when sessions are supported', if: op_msg_enabled? do
+
+      it 'creates a session' do
+        expect(session).to be_a(Mongo::Session)
+      end
+
+      context 'when options are provided' do
+
+        let(:options) do
+          { causally_consistent: true }
+        end
+
+        let(:session) do
+          authorized_client.start_session(options)
+        end
+
+        it 'sets the options on the session' do
+          expect(session.options).to eq(options)
+        end
+      end
+
+      context 'when options are not provided' do
+
+        it 'does not set options on the session' do
+          expect(session.options).to be_empty
+        end
+      end
+    end
+
+    context 'when sessions are not supported', unless: op_msg_enabled? do
+
+      it 'raises an exception' do
+        expect {
+          session
+        }.to raise_exception(Mongo::Error::InvalidSession)
+      end
+    end
+  end
 end

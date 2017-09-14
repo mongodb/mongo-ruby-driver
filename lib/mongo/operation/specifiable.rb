@@ -503,12 +503,16 @@ module Mongo
         "#{db_name}.#{coll_name}"
       end
 
+      # The session to use for the operation.
+      #
+      # @example Get the session.
+      #   specifiable.session
+      #
+      # @return [ Session ] The session.
+      #
+      # @since 2.5.0
       def session
         @spec[:session]
-      end
-
-      def operation_time
-        session.operation_time if session
       end
     end
   end

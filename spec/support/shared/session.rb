@@ -1,6 +1,6 @@
 shared_examples 'an operation using a session' do
 
-  describe 'operation execution', if: sessions_enabled? do
+  describe 'operation execution', if: sessions_testable? do
 
     context 'when the session is created from the same client used for the operation' do
 
@@ -99,7 +99,7 @@ shared_examples 'a failed operation using a session' do
     begin; failed_operation; rescue => e; e; end
   end
 
-  context 'when the operation fails', if: sessions_enabled? do
+  context 'when the operation fails', if: sessions_testable? do
 
     it 'raises an error' do
       expect([Mongo::Error::OperationFailure,
@@ -123,7 +123,7 @@ shared_examples 'an operation updating cluster time' do
   end
 
   let(:client) do
-    Mongo::Client.new(ADDRESSES, TEST_OPTIONS.merge(heartbeat_frequency: 100)).tap do |cl|
+    authorized_client.with(heartbeat_frequency: 100).tap do |cl|
       cl.subscribe(Mongo::Monitoring::COMMAND, subscriber)
     end
   end
