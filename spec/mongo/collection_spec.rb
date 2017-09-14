@@ -858,7 +858,7 @@ describe Mongo::Collection do
         end
 
         let(:failed_operation) do
-          authorized_collection.find({ '$._id': 1 }, session: session).to_a
+          authorized_collection.find({ '$._id' => 1 }, session: session).to_a
         end
 
         it_behaves_like 'an operation using a session'
