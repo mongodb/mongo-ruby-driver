@@ -626,6 +626,10 @@ describe Mongo::Collection do
           collection.create(session: session)
         end
 
+        let(:session) do
+          authorized_client.start_session
+        end
+
         let(:failed_operation) do
           authorized_client[:specs, invalid: true].create(session: session)
         end
@@ -639,6 +643,7 @@ describe Mongo::Collection do
       end
     end
   end
+
 
   describe '#drop' do
 
@@ -664,6 +669,10 @@ describe Mongo::Collection do
 
         let(:failed_operation) do
           collection.with(write: { w: 10 }).drop(session: session)
+        end
+
+        let(:session) do
+          authorized_client.start_session
         end
 
         after do
@@ -857,6 +866,10 @@ describe Mongo::Collection do
           authorized_collection.find({}, session: session).to_a
         end
 
+        let(:session) do
+          authorized_client.start_session
+        end
+
         let(:failed_operation) do
           authorized_collection.find({ '$._id' => 1 }, session: session).to_a
         end
@@ -1018,6 +1031,10 @@ describe Mongo::Collection do
     end
 
     context 'when a session is provided' do
+
+      let(:session) do
+        authorized_client.start_session
+      end
 
       let(:operation) do
         authorized_collection.insert_many([{ name: 'test1' }, { name: 'test2' }], session: session)
@@ -1203,6 +1220,10 @@ describe Mongo::Collection do
 
     context 'when a session is provided' do
 
+      let(:session) do
+        authorized_client.start_session
+      end
+
       let(:operation) do
         authorized_collection.insert_one({ name: 'testing' }, session: session)
       end
@@ -1363,6 +1384,10 @@ describe Mongo::Collection do
 
     context 'when a session is provided' do
 
+      let(:session) do
+        authorized_client.start_session
+      end
+
       let(:operation) do
         authorized_collection.indexes(batch_size: batch_size, session: session).collect { |i| i['name'] }
       end
@@ -1415,6 +1440,10 @@ describe Mongo::Collection do
       end
 
       context 'when a session is provided' do
+
+        let(:session) do
+          authorized_client.start_session
+        end
 
         let(:operation) do
           authorized_collection.aggregate([], session: session).to_a
@@ -1511,6 +1540,10 @@ describe Mongo::Collection do
 
       context 'when a session is provided' do
 
+        let(:session) do
+          authorized_client.start_session
+        end
+
         let(:operation) do
           authorized_collection.count({}, session: session)
         end
@@ -1601,6 +1634,10 @@ describe Mongo::Collection do
       end
 
       context 'when a session is provided' do
+
+        let(:session) do
+          authorized_client.start_session
+        end
 
         let(:operation) do
           authorized_collection.distinct(:field, {}, session: session)
@@ -1731,6 +1768,10 @@ describe Mongo::Collection do
     end
 
     context 'when a session is provided' do
+
+      let(:session) do
+        authorized_client.start_session
+      end
 
       let(:operation) do
         authorized_collection.delete_one({}, session: session)
@@ -1882,6 +1923,10 @@ describe Mongo::Collection do
     end
 
     context 'when a session is provided' do
+
+      let(:session) do
+        authorized_client.start_session
+      end
 
       let(:operation) do
         authorized_collection.delete_many({}, session: session)
@@ -2035,6 +2080,10 @@ describe Mongo::Collection do
 
       let(:cursors) do
         authorized_collection.parallel_scan(2, session: session)
+      end
+
+      let(:session) do
+        authorized_client.start_session
       end
 
       let(:operation) do
@@ -2417,6 +2466,10 @@ describe Mongo::Collection do
         authorized_collection.insert_one(name: 'bang')
       end
 
+      let(:session) do
+        authorized_client.start_session
+      end
+
       let(:operation) do
         authorized_collection.replace_one(selector, { name: 'doink' }, session: session)
       end
@@ -2530,7 +2583,7 @@ describe Mongo::Collection do
       end
     end
 
-    context 'when arrayFilters is provided' do 
+    context 'when arrayFilters is provided' do
 
       let(:selector) do
         { '$or' => [{ _id: 0 }, { _id: 1 }]}
@@ -2814,6 +2867,10 @@ describe Mongo::Collection do
       before do
         authorized_collection.insert_one(name: 'bang')
         authorized_collection.insert_one(name: 'baNG')
+      end
+
+      let(:session) do
+        authorized_client.start_session
       end
 
       let(:failed_operation) do
@@ -3199,6 +3256,10 @@ describe Mongo::Collection do
         authorized_collection.insert_many([{ field: 'test1' }, { field: 'test1' }])
       end
 
+      let(:session) do
+        authorized_client.start_session
+      end
+
       let(:operation) do
         authorized_collection.update_one({ field: 'test' }, { '$set'=> { field: 'testing' } }, session: session)
       end
@@ -3232,6 +3293,10 @@ describe Mongo::Collection do
 
         let(:failed_operation) do
           authorized_collection.find_one_and_delete({ '$._id' => 1 }, session: session)
+        end
+
+        let(:session) do
+          authorized_client.start_session
         end
 
         it_behaves_like 'an operation using a session'
@@ -3446,6 +3511,10 @@ describe Mongo::Collection do
 
         let(:failed_operation) do
           authorized_collection.find_one_and_update({ '$._id' => 1 }, { '$set' => { field: 'testing' }}, session: session)
+        end
+
+        let(:session) do
+          authorized_client.start_session
         end
 
         it_behaves_like 'an operation using a session'
@@ -3849,6 +3918,10 @@ describe Mongo::Collection do
 
         let(:failed_operation) do
           authorized_collection.find_one_and_replace({ '$._id' => 1}, { field: 'testing' }, session: session)
+        end
+
+        let(:session) do
+          authorized_client.start_session
         end
 
         it_behaves_like 'an operation using a session'

@@ -53,7 +53,7 @@ module Mongo
     def execute
       operation_id = Monitoring.next_operation_id
       result_combiner = ResultCombiner.new
-      session = Session.with_session(client, @options)
+      session = client.get_session(@options)
 
       write_with_retry(session, Proc.new { next_primary }) do |server|
         operations = op_combiner.combine
@@ -70,8 +70,8 @@ module Mongo
               session
           )
         end
-      end
-      session.end_session unless @options[:session] == session
+        end
+      session.end_temp_session(client) if session
       result_combiner.result
     end
 
@@ -175,7 +175,7 @@ module Mongo
 
     def delete(documents, server, operation_id, session)
       if session
-        session.execute do
+        session.use do
           Operation::Write::Bulk::Delete.new(
               base_spec(operation_id, session).merge(:deletes => documents)
           ).execute(server)
@@ -192,7 +192,7 @@ module Mongo
 
     def insert_one(documents, server, operation_id, session)
       if session
-        session.execute do
+        session.use do
           Operation::Write::Bulk::Insert.new(
               base_spec(operation_id, session).merge(:documents => documents)
           ).execute(server)
@@ -206,7 +206,7 @@ module Mongo
 
     def update(documents, server, operation_id, session)
       if session
-        session.execute do
+        session.use do
           Operation::Write::Bulk::Update.new(
               base_spec(operation_id, session).merge(:updates => documents)
           ).execute(server)

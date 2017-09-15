@@ -52,7 +52,7 @@ module Mongo
         @batch_size = options[:batch_size]
         server = next_primary(false)
         @limit = -1 if server.features.list_collections_enabled?
-        session = Session.with_session(client, options)
+        session = client.get_session(options)
         collections_info(server, session).collect do |info|
           if server.features.list_collections_enabled?
             info[Database::NAME]
@@ -72,7 +72,7 @@ module Mongo
       #
       # @since 2.0.5
       def list_collections
-        session = Session.with_session(client)
+        session = client.get_session
         collections_info(next_primary(false), session)
       end
 
@@ -117,7 +117,7 @@ module Mongo
 
       def send_initial_query(server, session)
         if session
-          session.execute { initial_query_op(session).execute(server) }
+          session.use { initial_query_op(session).execute(server) }
         else
           initial_query_op(session).execute(server)
         end

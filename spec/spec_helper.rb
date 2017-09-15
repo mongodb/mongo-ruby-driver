@@ -146,7 +146,7 @@ end
 # are only supported in at least version 3.6 of the server.
 #
 # @since 2.5.0
-def sessions_enabled?
+def sessions_testable?
   !standalone? && op_msg_enabled?
 end
 

@@ -48,11 +48,6 @@ module Mongo
     # @since 2.4.0
     IDLE_WRITE_PERIOD_SECONDS = 10
 
-    # The key for getting the cluster time from a response.
-    #
-    # @since 2.5.0
-    CLUSTER_TIME = 'clusterTime'.freeze
-
     # @return [ Hash ] The options hash.
     attr_reader :options
 
@@ -62,17 +57,16 @@ module Mongo
     # @return [ Object ] The cluster topology.
     attr_reader :topology
 
-    # @return [ BSON::Timestamp ] The cluster time. Used for "gossiping" cluster time in
-    #  server versions >= 3.6
-    #
-    # @since 2.5.0
-    attr_reader :cluster_time
-
     # @return [ Mongo::Cluster::AppMetadata ] The application metadata, used for connection
     #   handshakes.
     #
     # @since 2.4.0
     attr_reader :app_metadata
+
+    # @return [ BSON::Document ] The latest cluster time seen.
+    #
+    # @since 2.5.0
+    attr_reader :cluster_time
 
     def_delegators :topology, :replica_set?, :replica_set_name, :sharded?,
                    :single?, :unknown?, :member_discovered
@@ -171,7 +165,6 @@ module Mongo
       @pool_lock = Mutex.new
       @cluster_time_lock = Mutex.new
       @topology = Topology.initial(seeds, monitoring, options)
-      @cluster_time = nil
 
       publish_sdam_event(
         Monitoring::TOPOLOGY_OPENING,
@@ -455,28 +448,6 @@ module Mongo
       addresses_list
     end
 
-    # Update the max cluster time seen in a response.
-    #
-    # @example Update the cluster time.
-    #   cluster.update_cluster_time(result)
-    #
-    # @return [ Object ] The cluster time.
-    #
-    # @since 2.5.0
-    def update_cluster_time(result)
-      if cl_time = result.cluster_time
-        @cluster_time_lock.synchronize do
-          if @cluster_time.nil?
-            @cluster_time = cl_time
-          # @todo Implement comparison of BSON::Timestamps
-          elsif (cl_time[CLUSTER_TIME].seconds + cl_time[CLUSTER_TIME].increment) >
-            (@cluster_time[CLUSTER_TIME].seconds + @cluster_time[CLUSTER_TIME].increment)
-            @cluster_time = cl_time
-          end
-        end
-      end
-    end
-
     # The logical session timeout value in minutes.
     #
     # @example Get the logical session timeout in minutes.
@@ -490,6 +461,24 @@ module Mongo
         break unless timeout = server.logical_session_timeout
         [timeout, (min || timeout)].min
       end
+    end
+
+    # Update the max cluster time seen in a response.
+    #
+    # @example Update the cluster time.
+    #   cluster.update_cluster_time(result)
+    #
+    # @return [ Object ] The cluster time.
+    #
+    # @since 2.5.0
+    def update_cluster_time(result)
+      if cl_time = result.cluster_time
+        @cluster_time_lock.synchronize do
+          # @todo Implement comparison of BSON::Timestamps
+          @cluster_time = cl_time #[cl_time, (@cluster_time || BSON::Timestamp.new(0, 0))].max
+        end
+      end
+      result
     end
 
     private

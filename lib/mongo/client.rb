@@ -87,6 +87,8 @@ module Mongo
     # Delegate subscription to monitoring.
     def_delegators :@monitoring, :subscribe, :unsubscribe
 
+    def_delegators :@cluster, :logical_session_timeout
+
     # Determine if this client is equivalent to another object.
     #
     # @example Check client equality.
@@ -229,6 +231,7 @@ module Mongo
     # @since 2.0.0
     def initialize(addresses_or_uri, options = Options::Redacted.new)
       @monitoring = Monitoring.new(options)
+      @session_pool = Session::SessionPool.create(self)
       if addresses_or_uri.is_a?(::String)
         create_from_uri(addresses_or_uri, validate_options!(options))
       else
@@ -307,6 +310,7 @@ module Mongo
         opts = validate_options!(new_options)
         client.options.update(opts)
         Database.create(client)
+        Session::SessionPool.create(client)
         # We can't use the same cluster if some options that would affect it
         # have changed.
         if cluster_modifying?(opts)
@@ -378,23 +382,78 @@ module Mongo
 
     # Start a session.
     #
+    # @example Start a session.
+    #   client.start_session
+    #
     # @param [ Hash ] options The session options.
     #
-    # @option options [ Hash ] :operation_time
-    # @option options [ Hash ] :cluster_time
-    # @option options [ true, false ] :causally_consistent_reads
-    #
-    # @return [ Mongo::Session ] The session object.
+    # @return [ Session ] The session.
     #
     # @since 2.5.0
     def start_session(options = {})
-      if !Session.sessions_supported?(self)
+      if !sessions_supported?
         raise Error::InvalidSession.new(Session::SESSIONS_NOT_SUPPORTED)
       end
-      Session.new(self, options)
+      Session.new(@session_pool.checkout, self, options)
+    end
+
+    # Get and validate a session from the options or return a new Session.
+    #
+    # @example Get a session.
+    #   client.get_session(opts)
+    #
+    # @param [ Hash ] options The options from which the session can be extracted.
+    #
+    # @return [ Session ] A session.
+    #
+    # @since 2.5.0
+    def get_session(options = {})
+      if session = options[:session]
+        session.validate!(self)
+        session
+      elsif sessions_supported?
+        Session.new(@session_pool.checkout)
+      end
+    end
+
+    # Use a session to execute an operation.
+    #
+    # @example Use a session.
+    #   client.with_session(opts) do |session|
+    #     ...
+    #   end
+    #
+    # @param [ Hash ] options The options from which the session can be extracted.
+    #
+    # @yieldparam [ Session ] A session.
+    #
+    # @since 2.5.0
+    def with_session(options = {})
+      # @todo: check if not a standalone
+      if session = options[:session]
+        session.validate!(self)
+        session.use do
+          yield(session)
+        end
+      elsif sessions_supported?
+        @session_pool.with_session do |server_session|
+          yield(Session.new(server_session))
+        end
+      else
+        yield
+      end
     end
 
     private
+
+    def checkin_session(session)
+      @session_pool.checkin(session)
+    end
+
+    def sessions_supported?
+      server = cluster.servers.find.first
+      server && server.features.sessions_enabled? && logical_session_timeout
+    end
 
     def create_from_addresses(addresses, opts = Options::Redacted.new)
       @options = Database::DEFAULT_OPTIONS.merge(opts).freeze

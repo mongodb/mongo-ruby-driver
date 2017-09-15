@@ -84,6 +84,10 @@ describe Mongo::BulkWrite do
               { session: session }
             end
 
+            let(:session) do
+              authorized_client.start_session
+            end
+
             let(:failed_operation) do
               bulk_write.execute
             end
@@ -148,6 +152,10 @@ describe Mongo::BulkWrite do
 
                 let(:extra_options) do
                   { session: session }
+                end
+
+                let(:session) do
+                  collection_invalid_write_concern.client.start_session
                 end
 
                 let(:failed_operation) do
@@ -217,6 +225,10 @@ describe Mongo::BulkWrite do
                   { session: session }
                 end
 
+                let(:session) do
+                  collection_invalid_write_concern.client.start_session
+                end
+
                 let(:failed_operation) do
                   bulk_write_invalid_write_concern.execute
                 end
@@ -282,6 +294,10 @@ describe Mongo::BulkWrite do
 
                 let(:extra_options) do
                   { session: session }
+                end
+
+                let(:session) do
+                  collection_invalid_write_concern.client.start_session
                 end
 
                 let(:failed_operation) do
@@ -553,6 +569,10 @@ describe Mongo::BulkWrite do
                   { session: session }
                 end
 
+                let(:session) do
+                  collection_invalid_write_concern.client.start_session
+                end
+
                 let(:failed_operation) do
                   bulk_write_invalid_write_concern.execute
                 end
@@ -694,6 +714,10 @@ describe Mongo::BulkWrite do
 
                 let(:extra_options) do
                   { session: session }
+                end
+
+                let(:session) do
+                  collection_invalid_write_concern.client.start_session
                 end
 
                 let(:failed_operation) do
@@ -992,6 +1016,10 @@ describe Mongo::BulkWrite do
                   { session: session }
                 end
 
+                let(:session) do
+                  collection_invalid_write_concern.client.start_session
+                end
+
                 let(:failed_operation) do
                   bulk_write_invalid_write_concern.execute
                 end
@@ -1231,6 +1259,10 @@ describe Mongo::BulkWrite do
 
                   let(:extra_options) do
                     { session: session }
+                  end
+
+                  let(:session) do
+                    collection_invalid_write_concern.client.start_session
                   end
 
                   let(:failed_operation) do

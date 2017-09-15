@@ -210,8 +210,10 @@ module Mongo
 
       def view; self; end
 
-      def with_session(&block)
-        Session.with_session(client, @options, &block)
+      def with_session
+        client.with_session(@options) do |session|
+          yield(session)
+        end
       end
     end
   end

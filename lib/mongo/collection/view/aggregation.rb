@@ -114,7 +114,7 @@ module Mongo
           pipeline.none? { |op| op.key?('$out') || op.key?(:$out) }
         end
 
-        def send_initial_query(server, session)
+        def send_initial_query(server, session = nil)
           unless valid_server?(server)
             log_warn(REROUTE)
             server = cluster.next_primary(false)
@@ -127,10 +127,6 @@ module Mongo
           if options[:collation] && !server.features.collation_enabled?
             raise Error::UnsupportedCollation.new
           end
-        end
-
-        def with_session(&block)
-          Session.with_session(client, options, &block)
         end
       end
     end

@@ -66,7 +66,7 @@ module Mongo
         # @yieldparam [ Hash ] Each matching document.
         def each
           @cursor = nil
-          session = Session.with_session(client, view.options)
+          session = client.get_session(view.options)
           write_with_retry(session, Proc.new { server_selector.select_server(cluster, false) }) do |server|
             result = send_initial_query(server, session)
             @cursor = Cursor.new(view, result, server, session: session)
@@ -217,7 +217,7 @@ module Mongo
           end
           validate_collation!(server)
           result = if session
-                     session.execute { initial_query_op(session).execute(server) }
+                     session.use { initial_query_op(session).execute(server) }
                    else
                      initial_query_op(session).execute(server)
                    end

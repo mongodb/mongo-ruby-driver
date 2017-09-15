@@ -8,12 +8,16 @@ shared_examples 'an operation using a session' do
         authorized_client.start_session
       end
 
+      let(:server_session) do
+        session.server_session
+      end
+
       let!(:before_last_use) do
-        session.instance_variable_get(:@last_use)
+        server_session.instance_variable_get(:@last_use)
       end
 
       let!(:before_operation_time) do
-        (session.instance_variable_get(:@operation_time) || 0)
+        (session.operation_time || 0)
       end
 
       let!(:operation_result) do
@@ -21,11 +25,11 @@ shared_examples 'an operation using a session' do
       end
 
       it 'updates the last use value' do
-        expect(session.instance_variable_get(:@last_use)).not_to eq(before_last_use)
+        expect(server_session.instance_variable_get(:@last_use)).not_to eq(before_last_use)
       end
 
       it 'updates the operation time value' do
-        expect(session.instance_variable_get(:@operation_time)).not_to eq(before_operation_time)
+        expect(session.operation_time).not_to eq(before_operation_time)
       end
     end
 
@@ -61,7 +65,7 @@ shared_examples 'an operation using a session' do
       end
 
       before do
-        session.end_session
+        session.end_session(authorized_client)
       end
 
       let(:operation_result) do
@@ -79,27 +83,19 @@ end
 
 shared_examples 'a failed operation using a session' do
 
-  let(:session) do
-    authorized_client.start_session
-  end
-
-  let!(:before_last_use) do
-    session.instance_variable_get(:@last_use)
-  end
-
-  let!(:before_operation_time) do
-    (session.instance_variable_get(:@operation_time) || 0)
-  end
-
-  let!(:operation_result) do
-    operation
-  end
-
-  let(:operation_result) do
-    begin; failed_operation; rescue => e; e; end
-  end
-
   context 'when the operation fails', if: sessions_testable? do
+
+    let!(:before_last_use) do
+      session.server_session.instance_variable_get(:@last_use)
+    end
+
+    let!(:before_operation_time) do
+      (session.operation_time || 0)
+    end
+
+    let!(:operation_result) do
+      begin; failed_operation; rescue => e; e; end
+    end
 
     it 'raises an error' do
       expect([Mongo::Error::OperationFailure,
@@ -107,11 +103,11 @@ shared_examples 'a failed operation using a session' do
     end
 
     it 'updates the last use value' do
-      expect(session.instance_variable_get(:@last_use)).not_to eq(before_last_use)
+      expect(session.server_session.instance_variable_get(:@last_use)).not_to eq(before_last_use)
     end
 
     it 'updates the operation time value' do
-      expect(session.instance_variable_get(:@operation_time)).not_to eq(before_operation_time)
+      expect(session.operation_time).not_to eq(before_operation_time)
     end
   end
 end

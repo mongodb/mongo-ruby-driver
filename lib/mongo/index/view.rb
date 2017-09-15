@@ -149,7 +149,7 @@ module Mongo
       # @since 2.0.0
       def create_many(*models)
         server = next_primary
-        Session.with_session(client, @options) do |session|
+        client.with_session(@options) do |session|
           spec = {
                   indexes: normalize_models(models.flatten, server),
                   db_name: database.name,
@@ -191,7 +191,7 @@ module Mongo
       # @since 2.0.0
       def each(&block)
         server = next_primary(false)
-        session = Session.with_session(client, @options)
+        session = client.get_session(@options)
         result = send_initial_query(server, session)
         cursor = Cursor.new(self, result, server, session: session)
         cursor.each do |doc|
@@ -235,7 +235,7 @@ module Mongo
       private
 
       def drop_by_name(name)
-        Session.with_session(client, @options) do |session|
+        client.with_session(@options) do |session|
           spec = {
                    db_name: database.name,
                    coll_name: collection.name,
@@ -281,7 +281,7 @@ module Mongo
 
       def send_initial_query(server, session)
         if session
-          session.execute { initial_query_op(session).execute(server) }
+          session.use { initial_query_op(session).execute(server) }
         else
           initial_query_op(session).execute(server)
         end

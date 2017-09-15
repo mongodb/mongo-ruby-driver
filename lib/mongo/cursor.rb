@@ -191,7 +191,7 @@ module Mongo
     def get_more
       read_with_retry do
         process(if @session
-                  @session.execute { get_more_operation.execute(@server) }
+                  @session.use { get_more_operation.execute(@server) }
                 else
                   get_more_operation.execute(@server)
                 end)
@@ -210,7 +210,7 @@ module Mongo
       unregister
       read_with_one_retry do
         if @session
-          @session.execute { kill_cursors_operation.execute(@server) }
+          @session.use { kill_cursors_operation.execute(@server) }
         else
           kill_cursors_operation.execute(@server)
         end
@@ -219,8 +219,8 @@ module Mongo
     end
 
     def end_session
-      if @session && view.session != @session
-        @session.end_session
+      if @session
+        @session.end_temp_session(client)
       end
     end
 
