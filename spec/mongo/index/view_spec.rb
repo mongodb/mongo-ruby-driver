@@ -30,6 +30,10 @@ describe Mongo::Index::View do
         described_class.new(authorized_collection, session: session)
       end
 
+      let(:session) do
+        authorized_client.start_session
+      end
+
       let(:operation) do
         view_with_session.drop_one('another_-1')
       end
@@ -232,6 +236,10 @@ describe Mongo::Index::View do
               )
             end
 
+            let(:session) do
+              authorized_client.start_session
+            end
+
             let(:failed_operation) do
               view_with_session.create_many(
                   { key: { random: 1 }, invalid: true }
@@ -387,6 +395,10 @@ describe Mongo::Index::View do
 
             let(:failed_operation) do
               view_with_session.create_many([ { key: { random: 1 }, invalid: true }])
+            end
+
+            let(:session) do
+              authorized_client.start_session
             end
 
             it_behaves_like 'an operation using a session'
@@ -558,6 +570,10 @@ describe Mongo::Index::View do
 
         let(:failed_operation) do
           view_with_session.create_one(spec, invalid: true)
+        end
+
+        let(:session) do
+          authorized_client.start_session
         end
 
         it_behaves_like 'an operation using a session'
