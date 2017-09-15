@@ -63,6 +63,11 @@ module Mongo
     # @since 2.4.0
     attr_reader :app_metadata
 
+    # @return [ BSON::Document ] The latest cluster time seen.
+    #
+    # @since 2.5.0
+    attr_reader :cluster_time
+
     def_delegators :topology, :replica_set?, :replica_set_name, :sharded?,
                    :single?, :unknown?, :member_discovered
     def_delegators :@cursor_reaper, :register_cursor, :schedule_kill_cursor, :unregister_cursor
@@ -158,6 +163,7 @@ module Mongo
       @app_metadata = AppMetadata.new(self)
       @update_lock = Mutex.new
       @pool_lock = Mutex.new
+      @cluster_time_lock = Mutex.new
       @topology = Topology.initial(seeds, monitoring, options)
 
       publish_sdam_event(
@@ -455,6 +461,24 @@ module Mongo
         break unless timeout = server.logical_session_timeout
         [timeout, (min || timeout)].min
       end
+    end
+
+    # Update the max cluster time seen in a response.
+    #
+    # @example Update the cluster time.
+    #   cluster.update_cluster_time(result)
+    #
+    # @return [ Object ] The cluster time.
+    #
+    # @since 2.5.0
+    def update_cluster_time(result)
+      if cl_time = result.cluster_time
+        @cluster_time_lock.synchronize do
+          # @todo Implement comparison of BSON::Timestamps
+          @cluster_time = cl_time #[cl_time, (@cluster_time || BSON::Timestamp.new(0, 0))].max
+        end
+      end
+      result
     end
 
     private

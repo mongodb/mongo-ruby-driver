@@ -37,7 +37,7 @@ module Mongo
         def_delegators :view, :collection, :read, :cluster
 
         # Delegate necessary operations to the collection.
-        def_delegators :collection, :database
+        def_delegators :collection, :database, :client
 
         # The reroute message.
         #
@@ -94,16 +94,16 @@ module Mongo
           @view.send(:server_selector)
         end
 
-        def aggregate_spec
-          Builder::Aggregation.new(pipeline, view, options).specification
+        def aggregate_spec(session)
+          Builder::Aggregation.new(pipeline, view, options.merge(session: session)).specification
         end
 
         def new(options)
           Aggregation.new(view, pipeline, options)
         end
 
-        def initial_query_op
-          Operation::Commands::Aggregate.new(aggregate_spec)
+        def initial_query_op(session)
+          Operation::Commands::Aggregate.new(aggregate_spec(session))
         end
 
         def valid_server?(server)
@@ -114,13 +114,13 @@ module Mongo
           pipeline.none? { |op| op.key?('$out') || op.key?(:$out) }
         end
 
-        def send_initial_query(server)
+        def send_initial_query(server, session = nil)
           unless valid_server?(server)
             log_warn(REROUTE)
             server = cluster.next_primary(false)
           end
           validate_collation!(server)
-          initial_query_op.execute(server)
+          initial_query_op(session).execute(server)
         end
 
         def validate_collation!(server)

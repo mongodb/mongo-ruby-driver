@@ -164,6 +164,18 @@ module Mongo
         WriteConcern.get(options[:write] || options[:write_concern] || collection.write_concern)
       end
 
+      # The session associated with this +View+.
+      #
+      # @example Get the session.
+      #   view.session
+      #
+      # @return [ Session ] The session.
+      #
+      # @since 2.5.0
+      def session
+        @options[:session]
+      end
+
       private
 
       def initialize_copy(other)
@@ -197,6 +209,12 @@ module Mongo
       end
 
       def view; self; end
+
+      def with_session
+        client.with_session(@options) do |session|
+          yield(session)
+        end
+      end
     end
   end
 end

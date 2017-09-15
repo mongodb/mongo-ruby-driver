@@ -19,6 +19,7 @@ module Mongo
     #
     # @since 2.0.0
     class OperationFailure < Error
+      extend Forwardable
 
       # These are magic error messages that could indicate a master change.
       #
@@ -49,6 +50,8 @@ module Mongo
         'dbclient error communicating with server'
       ].freeze
 
+      def_delegators :@result, :operation_time
+
       # Can the read operation that caused the error be retried?
       #
       # @example Is the error retryable?
@@ -71,6 +74,20 @@ module Mongo
       # @since 2.4.2
       def write_retryable?
         WRITE_RETRY_MESSAGES.any? { |m| message.include?(m) }
+      end
+
+      # Create the operation failure.
+      #
+      # @example Create the error object
+      #   OperationFailure.new(message, result)
+      #
+      # param [ String ] message The error message.
+      # param [ Operation::Result ] result The result object.
+      #
+      # @since 2.5.0
+      def initialize(message = nil, result = nil)
+        @result = result
+        super(message)
       end
     end
   end

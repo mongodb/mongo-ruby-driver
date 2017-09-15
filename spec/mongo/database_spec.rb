@@ -107,6 +107,15 @@ describe Mongo::Database do
       expect(database.collection_names).to_not include('system.indexes')
     end
 
+    context 'when provided a session' do
+
+      let(:operation) do
+        database.collection_names(session: session)
+      end
+
+      it_behaves_like 'an operation using a session'
+    end
+
     context 'when specifying a batch size' do
 
       it 'returns the stripped names of the collections' do

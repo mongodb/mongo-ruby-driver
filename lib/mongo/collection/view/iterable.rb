@@ -36,10 +36,15 @@ module Mongo
         # @yieldparam [ Hash ] Each matching document.
         def each
           @cursor = nil
+          session = client.get_session(@options)
           read_with_retry do
             server = server_selector.select_server(cluster, false)
-            result = send_initial_query(server)
-            @cursor = Cursor.new(view, result, server)
+            result = if session
+                       session.use { send_initial_query(server, session) }
+                     else
+                       send_initial_query(server)
+                     end
+            @cursor = Cursor.new(view, result, server, session: session)
           end
           @cursor.each do |doc|
             yield doc
@@ -60,25 +65,25 @@ module Mongo
 
         private
 
-        def initial_query_op(server)
+        def initial_query_op(server, session)
           if server.features.find_command_enabled?
-            initial_command_op
+            initial_command_op(session)
           else
             Operation::Read::Query.new(Builder::OpQuery.new(self).specification)
           end
         end
 
-        def initial_command_op
+        def initial_command_op(session)
           if explained?
-            Operation::Commands::Explain.new(Builder::FindCommand.new(self).explain_specification)
+            Operation::Commands::Explain.new(Builder::FindCommand.new(self, session).explain_specification)
           else
-            Operation::Commands::Find.new(Builder::FindCommand.new(self).specification)
+            Operation::Commands::Find.new(Builder::FindCommand.new(self, session).specification)
           end
         end
 
-        def send_initial_query(server)
+        def send_initial_query(server, session = nil)
           validate_collation!(server, collation)
-          initial_query_op(server).execute(server)
+          initial_query_op(server, session).execute(server)
         end
       end
     end

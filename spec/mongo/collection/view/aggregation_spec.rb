@@ -26,6 +26,10 @@ describe Mongo::Collection::View::Aggregation do
     described_class.new(view, pipeline, options)
   end
 
+  let(:aggregation_spec) do
+    aggregation.send(:aggregate_spec, double('session'))
+  end
+
   after do
     authorized_collection.delete_many
   end
@@ -66,6 +70,19 @@ describe Mongo::Collection::View::Aggregation do
 
     after do
       authorized_collection.delete_many
+    end
+
+    context 'when provided a session' do
+
+      let(:options) do
+        { session: session }
+      end
+
+      let(:operation) do
+        aggregation.to_a
+      end
+
+      it_behaves_like 'an operation using a session'
     end
 
     context 'when a block is provided' do
@@ -280,7 +297,7 @@ describe Mongo::Collection::View::Aggregation do
 
       it 'includes the read preference in the spec' do
         allow(authorized_collection).to receive(:read_preference).and_return(read_preference)
-        expect(aggregation.send(:aggregate_spec)[:read]).to eq(read_preference)
+        expect(aggregation_spec[:read]).to eq(read_preference)
       end
     end
 
@@ -291,7 +308,7 @@ describe Mongo::Collection::View::Aggregation do
       end
 
       it 'includes the option in the spec' do
-        expect(aggregation.send(:aggregate_spec)[:selector][:allowDiskUse]).to eq(true)
+        expect(aggregation_spec[:selector][:allowDiskUse]).to eq(true)
       end
 
       context 'when allow_disk_use is specified as an option' do
@@ -305,7 +322,7 @@ describe Mongo::Collection::View::Aggregation do
         end
 
         it 'includes the option in the spec' do
-          expect(aggregation.send(:aggregate_spec)[:selector][:allowDiskUse]).to eq(true)
+          expect(aggregation_spec[:selector][:allowDiskUse]).to eq(true)
         end
 
         context 'when #allow_disk_use is also called' do
@@ -319,7 +336,7 @@ describe Mongo::Collection::View::Aggregation do
           end
 
           it 'overrides the first option with the second' do
-            expect(aggregation.send(:aggregate_spec)[:selector][:allowDiskUse]).to eq(false)
+            expect(aggregation_spec[:selector][:allowDiskUse]).to eq(false)
           end
         end
       end
@@ -332,7 +349,7 @@ describe Mongo::Collection::View::Aggregation do
       end
 
       it 'includes the option in the spec' do
-        expect(aggregation.send(:aggregate_spec)[:selector][:maxTimeMS]).to eq(options[:max_time_ms])
+        expect(aggregation_spec[:selector][:maxTimeMS]).to eq(options[:max_time_ms])
       end
     end
 
@@ -345,7 +362,7 @@ describe Mongo::Collection::View::Aggregation do
         end
 
         it 'uses the batch_size on the view' do
-          expect(aggregation.send(:aggregate_spec)[:selector][:cursor][:batchSize]).to eq(view_options[:batch_size])
+          expect(aggregation_spec[:selector][:cursor][:batchSize]).to eq(view_options[:batch_size])
         end
       end
 
@@ -356,7 +373,7 @@ describe Mongo::Collection::View::Aggregation do
         end
 
         it 'includes the option in the spec' do
-          expect(aggregation.send(:aggregate_spec)[:selector][:cursor][:batchSize]).to eq(options[:batch_size])
+          expect(aggregation_spec[:selector][:cursor][:batchSize]).to eq(options[:batch_size])
         end
 
         context 'when  batch_size is also set on the view' do
@@ -366,7 +383,7 @@ describe Mongo::Collection::View::Aggregation do
           end
 
           it 'overrides the view batch_size with the option batch_size' do
-            expect(aggregation.send(:aggregate_spec)[:selector][:cursor][:batchSize]).to eq(options[:batch_size])
+            expect(aggregation_spec[:selector][:cursor][:batchSize]).to eq(options[:batch_size])
           end
         end
       end
@@ -379,7 +396,7 @@ describe Mongo::Collection::View::Aggregation do
       end
 
       it 'includes the option in the spec' do
-        expect(aggregation.send(:aggregate_spec)[:selector][:hint]).to eq(options['hint'])
+        expect(aggregation_spec[:selector][:hint]).to eq(options['hint'])
       end
     end
 
@@ -396,7 +413,7 @@ describe Mongo::Collection::View::Aggregation do
           end
 
           it 'sets a batch size document in the spec' do
-            expect(aggregation.send(:aggregate_spec)[:selector][:cursor][:batchSize]).to eq(options[:batch_size])
+            expect(aggregation_spec[:selector][:cursor][:batchSize]).to eq(options[:batch_size])
           end
         end
 
@@ -407,7 +424,7 @@ describe Mongo::Collection::View::Aggregation do
           end
 
           it 'sets an empty document in the spec' do
-            expect(aggregation.send(:aggregate_spec)[:selector][:cursor]).to eq({})
+            expect(aggregation_spec[:selector][:cursor]).to eq({})
           end
         end
 
@@ -422,7 +439,7 @@ describe Mongo::Collection::View::Aggregation do
         context 'when batch_size is set' do
 
           it 'does not set the cursor option in the spec' do
-            expect(aggregation.send(:aggregate_spec)[:selector][:cursor]).to be_nil
+            expect(aggregation_spec[:selector][:cursor]).to be_nil
           end
         end
       end

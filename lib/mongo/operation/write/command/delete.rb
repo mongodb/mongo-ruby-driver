@@ -48,20 +48,15 @@ module Mongo
             }.merge(command_options)
           end
 
-          def command_options
-            opts = { ordered: ordered? }
-            opts[:writeConcern] = write_concern.options if write_concern
-            opts[:collation] = collation if collation
-            opts
-          end
-
           def op_msg(server)
             global_args = { delete: coll_name,
                             Protocol::Msg::DATABASE_IDENTIFIER => db_name
                           }.merge!(command_options)
+
             if (cl_time = cluster_time(server))
               global_args[CLUSTER_TIME] = cl_time
             end
+            global_args = session.add_id(global_args) if session
 
             section = { type: 1, payload: { identifier: IDENTIFIER, sequence: deletes } }
             flags = unacknowledged_write? ? [:more_to_come] : [:none]

@@ -35,8 +35,9 @@ module Mongo
         # @param [ Cursor ] cursor The cursor.
         #
         # @since 2.2.0
-        def initialize(cursor)
+        def initialize(cursor, session = nil)
           @cursor = cursor
+          @session = session
         end
 
         # Get the specification.
@@ -54,7 +55,8 @@ module Mongo
         private
 
         def kill_cursors_command
-          { :killCursors => collection_name, :cursors => [ cursor.id ] }
+          cmd = { :killCursors => collection_name, :cursors => [ cursor.id ] }
+          @session ? @session.add_id(cmd) : cmd
         end
 
         class << self

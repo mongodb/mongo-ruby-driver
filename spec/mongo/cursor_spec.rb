@@ -9,7 +9,7 @@ describe Mongo::Cursor do
     end
 
     let(:reply) do
-      view.send(:send_initial_query, server)
+      view.send(:send_initial_query, server, nil)
     end
 
     let(:cursor) do

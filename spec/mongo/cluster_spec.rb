@@ -573,4 +573,17 @@ describe Mongo::Cluster do
       end
     end
   end
+
+  describe '#cluster_time' do
+
+    let(:operation) do
+      client.command(ping: 1)
+    end
+
+    let(:second_operation) do
+      client.command(ping: 1)
+    end
+
+    it_behaves_like 'an operation updating cluster time'
+  end
 end

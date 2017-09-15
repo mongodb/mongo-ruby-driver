@@ -36,7 +36,9 @@ module Mongo
           # @since 2.0.0
           def execute(server)
             if server.features.write_command_enabled?
-              execute_write_command(server)
+              result = execute_write_command(server)
+              server.update_cluster_time(result)
+              result
             else
               execute_message(server)
             end

@@ -36,8 +36,9 @@ module Mongo
         # @param [ Cursor ] cursor The cursor.
         #
         # @since 2.2.0
-        def initialize(cursor)
+        def initialize(cursor, session = nil)
           @cursor = cursor
+          @session = session
         end
 
         # Get the specification.
@@ -49,7 +50,7 @@ module Mongo
         #
         # @since 2.2.0
         def specification
-          { selector: get_more_command, db_name: database.name }
+          { selector: get_more_command, db_name: database.name, session: @session }
         end
 
         private

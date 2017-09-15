@@ -53,22 +53,25 @@ module Mongo
     def execute
       operation_id = Monitoring.next_operation_id
       result_combiner = ResultCombiner.new
-      write_with_retry do
+      session = client.get_session(@options)
+
+      write_with_retry(session, Proc.new { next_primary }) do |server|
         operations = op_combiner.combine
-        server = next_primary
         raise Error::UnsupportedCollation.new if op_combiner.has_collation && !server.features.collation_enabled?
         raise Error::UnsupportedArrayFilters.new if op_combiner.has_array_filters && !server.features.array_filters_enabled?
 
         operations.each do |operation|
           execute_operation(
-            operation.keys.first,
-            operation.values.first,
-            server,
-            operation_id,
-            result_combiner
+              operation.keys.first,
+              operation.values.first,
+              server,
+              operation_id,
+              result_combiner,
+              session
           )
         end
-      end
+        end
+      session.end_temp_session(client) if session
       result_combiner.result
     end
 
@@ -134,7 +137,7 @@ module Mongo
 
     private
 
-    def base_spec(operation_id)
+    def base_spec(operation_id, session)
       {
         :db_name => database.name,
         :coll_name => collection.name,
@@ -143,20 +146,21 @@ module Mongo
         :operation_id => operation_id,
         :bypass_document_validation => !!options[:bypass_document_validation],
         :options => options,
+        :session => session,
         :id_generator => client.options[:id_generator]
       }
     end
 
-    def execute_operation(name, values, server, operation_id, combiner)
+    def execute_operation(name, values, server, operation_id, combiner, session)
       begin
         if values.size > server.max_write_batch_size
-          split_execute(name, values, server, operation_id, combiner)
+          split_execute(name, values, server, operation_id, combiner, session)
         else
-          combiner.combine!(send(name, values, server, operation_id), values.size)
+          combiner.combine!(send(name, values, server, operation_id, session), values.size)
         end
       rescue Error::MaxBSONSize, Error::MaxMessageSize => e
         raise e if values.size <= 1
-        split_execute(name, values, server, operation_id, combiner)
+        split_execute(name, values, server, operation_id, combiner, session)
       end
     end
 
@@ -164,30 +168,54 @@ module Mongo
       @op_combiner ||= ordered? ? OrderedCombiner.new(requests) : UnorderedCombiner.new(requests)
     end
 
-    def split_execute(name, values, server, operation_id, combiner)
-      execute_operation(name, values.shift(values.size / 2), server, operation_id, combiner)
-      execute_operation(name, values, server, operation_id, combiner)
+    def split_execute(name, values, server, operation_id, combiner, session)
+      execute_operation(name, values.shift(values.size / 2), server, operation_id, combiner, session)
+      execute_operation(name, values, server, operation_id, combiner, session)
     end
 
-    def delete(documents, server, operation_id)
-      Operation::Write::Bulk::Delete.new(
-        base_spec(operation_id).merge(:deletes => documents)
-      ).execute(server)
+    def delete(documents, server, operation_id, session)
+      if session
+        session.use do
+          Operation::Write::Bulk::Delete.new(
+              base_spec(operation_id, session).merge(:deletes => documents)
+          ).execute(server)
+        end
+      else
+        Operation::Write::Bulk::Delete.new(
+            base_spec(operation_id, session).merge(:deletes => documents)
+        ).execute(server)
+      end
     end
 
     alias :delete_one :delete
     alias :delete_many :delete
 
-    def insert_one(documents, server, operation_id)
-      Operation::Write::Bulk::Insert.new(
-        base_spec(operation_id).merge(:documents => documents)
-      ).execute(server)
+    def insert_one(documents, server, operation_id, session)
+      if session
+        session.use do
+          Operation::Write::Bulk::Insert.new(
+              base_spec(operation_id, session).merge(:documents => documents)
+          ).execute(server)
+        end
+      else
+        Operation::Write::Bulk::Insert.new(
+            base_spec(operation_id, session).merge(:documents => documents)
+        ).execute(server)
+      end
     end
 
-    def update(documents, server, operation_id)
-      Operation::Write::Bulk::Update.new(
-        base_spec(operation_id).merge(:updates => documents)
-      ).execute(server)
+    def update(documents, server, operation_id, session)
+      if session
+        session.use do
+          Operation::Write::Bulk::Update.new(
+              base_spec(operation_id, session).merge(:updates => documents)
+          ).execute(server)
+        end
+      else
+        Operation::Write::Bulk::Update.new(
+            base_spec(operation_id, session).merge(:updates => documents)
+        ).execute(server)
+      end
     end
 
     alias :replace_one :update

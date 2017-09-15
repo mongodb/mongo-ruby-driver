@@ -22,13 +22,10 @@ module Mongo
 
       private
 
-      CLUSTER_TIME = '$clusterTime'.freeze
-
       READ_PREFERENCE = '$readPreference'.freeze
 
       def cluster_time(server)
-        # @todo update when merged with sessions work
-        #server.mongos? && server.cluster_time
+        server.mongos? && server.cluster_time
       end
 
       def unacknowledged_write?
@@ -41,6 +38,7 @@ module Mongo
         end
         selector[Protocol::Msg::DATABASE_IDENTIFIER] = db_name
         selector[READ_PREFERENCE] = read.to_doc if read
+        selector = session.add_id(selector) if session
         flags = unacknowledged_write? ? [:more_to_come] : [:none]
         Protocol::Msg.new(flags, options, selector)
       end
