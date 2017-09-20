@@ -395,6 +395,8 @@ module Mongo
 
     # Client Options
     uri_option 'appname', :app_name
+    uri_option 'compressors', :compressors, :type => :array
+    uri_option 'zlibcompressionlevel', :zlib_compression_level
 
     # Casts option values that do not have a specifically provided
     # transformation to the appropriate type.
@@ -571,6 +573,15 @@ module Mongo
         k, v = tag.split(':')
         set.merge(decode(k).downcase.to_sym => decode(v))
       end
+    end
+
+    # Extract values from the string and put them into an array.
+    #
+    # @param [ String ] value The string to build an array from.
+    #
+    # @return [ Array ] The array built from the string.
+    def array(value)
+      value.split(',')
     end
   end
 end

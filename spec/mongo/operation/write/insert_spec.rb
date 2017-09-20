@@ -257,7 +257,7 @@ describe Mongo::Operation::Write::Insert do
       end
     end
 
-    context 'when write concern { w: 0 } is used' do
+    context 'when write concern { w: 0 } is used', unless: op_msg_enabled? do
 
       let(:spec) do
         { :documents     => documents,

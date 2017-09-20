@@ -345,6 +345,67 @@ module Mongo
           true
         end
       end
+
+      # MongoDB wire protocol serialization strategy for a single byte.
+      #
+      # Writes and fetches a single byte from the byte buffer.
+      module Byte
+
+        # Writes a byte into the buffer.
+        #
+        # @param buffer [ BSON::ByteBuffer ] buffer Buffer to receive the single byte.
+        # @param value [ String ] value The byte to write to the buffer.
+        # @param value [ true, false ] validating_keys Whether to validate keys.
+        #
+        # @return [ BSON::ByteBuffer ] Buffer with serialized value.
+        #
+        # @since 2.5.0
+        def self.serialize(buffer, value, validating_keys = BSON::Config.validating_keys?)
+          buffer.put_byte(value)
+        end
+
+        # Deserializes a byte from the byte buffer.
+        #
+        # @param [ BSON::ByteBuffer ] buffer Buffer containing the value to read.
+        #
+        # @return [ String ] The byte.
+        #
+        # @since 2.5.0
+        def self.deserialize(buffer)
+          buffer.get_byte
+        end
+      end
+
+      # MongoDB wire protocol serialization strategy for n bytes.
+      #
+      # Writes and fetches bytes from the byte buffer.
+      module Bytes
+
+        # Writes bytes into the buffer.
+        #
+        # @param buffer [ BSON::ByteBuffer ] buffer Buffer to receive the bytes.
+        # @param value [ String ] value The bytes to write to the buffer.
+        # @param value [ true, false ] validating_keys Whether to validate keys.
+        #
+        # @return [ BSON::ByteBuffer ] Buffer with serialized value.
+        #
+        # @since 2.5.0
+        def self.serialize(buffer, value, validating_keys = BSON::Config.validating_keys?)
+          buffer.put_bytes(value)
+        end
+
+        # Deserializes bytes from the byte buffer.
+        #
+        # @param [ BSON::ByteBuffer ] buffer Buffer containing the value to read.
+        # @param [ Integer ] num_bytes Number of bytes to read.
+        #
+        # @return [ String ] The bytes.
+        #
+        # @since 2.5.0
+        def self.deserialize(buffer, num_bytes = nil)
+          buffer.get_bytes(num_bytes || buffer.length)
+        end
+      end
     end
   end
 end

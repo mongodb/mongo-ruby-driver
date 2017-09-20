@@ -54,6 +54,7 @@ module Mongo
       def initialize(cluster)
         @app_name = cluster.options[:app_name]
         @platform = cluster.options[:platform]
+        @compressors = cluster.options[:compressors] || []
       end
 
       # Get the bytes of the ismaster message including this metadata.
@@ -89,6 +90,10 @@ module Mongo
       end
 
       def serialize
+        Protocol::Query.new(Database::ADMIN, Database::COMMAND, document, :limit => -1).serialize
+      end
+
+      def document
         client_document = full_client_document
         while client_document.to_bson.to_s.size > MAX_DOCUMENT_SIZE do
           if client_document[:os][:name] || client_document[:os][:architecture]
@@ -101,8 +106,9 @@ module Mongo
           end
         end
         document = Server::Monitor::Connection::ISMASTER
-        document = document.merge(client: client_document) if client_document
-        Protocol::Query.new(Database::ADMIN, Database::COMMAND, document, :limit => -1).serialize
+        document = document.merge(compression: @compressors)
+        document[:client] = client_document
+        document
       end
 
       def driver_doc

@@ -218,6 +218,119 @@ describe Mongo::Client do
 
     context 'when providing options' do
 
+      context 'when compressors are provided' do
+
+        let(:client) do
+          described_class.new([default_address.seed], TEST_OPTIONS.merge(options))
+        end
+
+        after do
+          client.close
+        end
+
+        context 'when the compressor is supported' do
+
+          let(:options) do
+            { compressors: ['zlib'] }
+          end
+
+          it 'sets the compressor' do
+            expect(client.options['compressors']).to eq(options[:compressors])
+          end
+
+          it 'sends the compressor in the compression key of the handshake document' do
+            expect(client.cluster.app_metadata.send(:document)[:compression]).to eq(options[:compressors])
+          end
+
+          it 'uses compression for messages', if: testing_compression? do
+            expect(Mongo::Protocol::Compressed).to receive(:new).and_call_original
+            client[TEST_COLL].find({}, limit: 1).first
+          end
+
+          it 'does not use compression for authentication messages' do
+            expect(Mongo::Protocol::Compressed).not_to receive(:new)
+            client.cluster.next_primary.send(:with_connection) do |conn|
+              conn.send(:authenticate!)
+            end
+          end
+        end
+
+        context 'when the compressor is not supported by the driver' do
+
+          let(:options) do
+            { compressors: ['snoopy'] }
+          end
+
+          it 'does not set the compressor and warns' do
+            expect(Mongo::Logger.logger).to receive(:warn)
+            expect(client.options['compressors']).to be_nil
+          end
+
+          it 'sets the compression key of the handshake document to an empty array' do
+            expect(client.cluster.app_metadata.send(:document)[:compression]).to eq([])
+          end
+
+          context 'when one supported compressor and one unsupported compressor are provided', if: compression_enabled? do
+
+            let(:options) do
+              { compressors: ['zlib', 'snoopy'] }
+            end
+
+            it 'does not set the unsupported compressor and warns' do
+              expect(Mongo::Logger.logger).to receive(:warn).at_least(:once)
+              expect(client.options['compressors']).to eq(['zlib'])
+            end
+
+            it 'sets the compression key of the handshake document to the list of supported compressors' do
+              expect(client.cluster.app_metadata.send(:document)[:compression]).to eq(['zlib'])
+            end
+          end
+        end
+
+        context 'when the compressor is not supported by the server', unless: collation_enabled? do
+
+          let(:options) do
+            { compressors: ['zlib'] }
+          end
+
+          it 'does not set the compressor and warns' do
+            expect(Mongo::Logger.logger).to receive(:warn).at_least(:once)
+            expect(client.cluster.next_primary.monitor.compressor).to be_nil
+          end
+        end
+      end
+
+      context 'when compressors are not provided', unless: compression_enabled? do
+
+        let(:client) do
+          authorized_client
+        end
+
+        it 'does not set the compressor' do
+          expect(client.options['compressors']).to be_nil
+        end
+
+        it 'sets the compression key of the handshake document to an empty array' do
+          expect(client.cluster.app_metadata.send(:document)[:compression]).to eq([])
+        end
+
+        it 'does not use compression for messages' do
+          client[TEST_COLL].find({}, limit: 1).first
+          expect(Mongo::Protocol::Compressed).not_to receive(:new)
+        end
+      end
+
+      context 'when a zlib_compression_level option is provided', if: testing_compression? do
+
+        let(:client) do
+          described_class.new([default_address.seed], TEST_OPTIONS.merge(zlib_compression_level: 1))
+        end
+
+        it 'sets the option on the client' do
+          expect(client.options[:zlib_compression_level]).to eq(1)
+        end
+      end
+
       context 'when ssl options are provided' do
 
         let(:options) do

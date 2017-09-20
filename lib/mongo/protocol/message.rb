@@ -94,6 +94,27 @@ module Mongo
         false
       end
 
+      # Compress a message.
+      #
+      # @param [ String, Symbol ] compressor The compressor to use.
+      # @param [ Integer ] zlib_compression_level The zlib compression level to use.
+      #
+      # @return [ self ] Always returns self. Other message types should override this method.
+      #
+      # @since 2.5.0
+      def compress!(compressor, zlib_compression_level = nil)
+        self
+      end
+
+      # Inflate a message.
+      #
+      # @return [ self ] Always returns self. Other message types should override this method.
+      #
+      # @since 2.5.0
+      def inflate!
+        self
+      end
+
       # Serializes message into bytes that can be sent on the wire
       #
       # @param buffer [String] buffer where the message should be inserted
@@ -138,7 +159,7 @@ module Mongo
             deserialize_field(message, buffer, field)
           end
         end
-        message
+        message.inflate!
       end
 
       # Tests for equality between two wire protocol messages

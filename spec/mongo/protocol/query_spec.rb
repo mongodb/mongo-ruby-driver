@@ -310,4 +310,35 @@ describe Mongo::Protocol::Query do
       end
     end
   end
+
+  describe '#compress' do
+
+    context 'when the selector represents a command that can be compressed' do
+
+      let(:selector) do
+        { ping: 1 }
+      end
+
+      it 'returns a compressed message' do
+        expect(message.compress!('zlib')).to be_a(Mongo::Protocol::Compressed)
+      end
+    end
+
+    context 'when the selector represents a command for which compression is not allowed' do
+
+      Mongo::Monitoring::Event::Secure::REDACTED_COMMANDS.each do |command|
+
+        let(:selector) do
+          { command => 1 }
+        end
+
+        context "when the command is #{command}" do
+
+          it 'does not allow compression for the command' do
+            expect(message.compress!('zlib')).to be(message)
+          end
+        end
+      end
+    end
+  end
 end

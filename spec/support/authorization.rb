@@ -62,6 +62,11 @@ INVALID_WRITE_CONCERN = { w: 4 }
 # @since 2.0.3
 SSL = (ENV['SSL'] == 'ssl') || (ENV['SSL_ENABLED'] == 'true')
 
+# What compressor to use, if any.
+#
+# @since 2.5.0
+COMPRESSORS = ENV['COMPRESSORS'] ? { compressors: ENV['COMPRESSORS'].split(',') } : {}
+
 # SSL options.
 #
 # @since 2.1.0
@@ -87,7 +92,7 @@ BASE_OPTIONS = {
 # Options for test suite clients.
 #
 # @since 2.0.3
-TEST_OPTIONS = BASE_OPTIONS.merge(CONNECT).merge(SSL_OPTIONS)
+TEST_OPTIONS = BASE_OPTIONS.merge(CONNECT).merge(SSL_OPTIONS).merge(COMPRESSORS)
 
 # The root user name.
 #
