@@ -236,6 +236,24 @@ describe Mongo::Protocol::Msg do
         end
       end
 
+      context 'when a no payload type is specified' do
+
+        let(:section) do
+          { payload: { ismaster: 1 } }
+        end
+
+        let(:section_payload_type) { bytes.to_s[36] }
+        let(:section_bytes) { bytes.to_s[37..-1] }
+
+        it 'sets the payload type as 0' do
+          expect(section_payload_type).to eq(0.chr)
+        end
+
+        it 'serializes the section' do
+          expect(section_bytes).to be_bson(section[:payload])
+        end
+      end
+
       context 'when a 1 payload type is specified' do
 
         let(:section) do

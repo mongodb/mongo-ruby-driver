@@ -169,6 +169,8 @@ module Mongo
             case section[:type]
             when PayloadZero::TYPE
               PayloadZero.serialize(buffer, section[:payload], max_bson_size, false)
+            when nil
+              PayloadZero.serialize(buffer, section[:payload], max_bson_size, false)
             when PayloadOne::TYPE
               PayloadOne.serialize(buffer, section[:payload], max_bson_size, validating_keys)
             else
