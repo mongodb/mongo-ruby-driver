@@ -141,6 +141,15 @@ def op_msg_enabled?
   $mongo_client ||= initialize_scanned_client!
   $op_msg_enabled ||= $mongo_client.cluster.servers.first.features.op_msg_enabled?
 end
+alias :change_stream_enabled? :op_msg_enabled?
+
+# Whether change streams can be tested. Change streams are available on server versions 3.6
+#   and higher and when connected to a replica set.
+#
+# @since 2.5.0
+def test_change_streams?
+  !BSON::Environment.jruby? && change_stream_enabled? & replica_set?
+end
 
 # For instances where behaviour is different on different versions, we need to
 # determine in the specs if we are 3.6 or higher.
