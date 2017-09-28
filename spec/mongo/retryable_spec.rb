@@ -29,7 +29,7 @@ describe Mongo::Retryable do
       end
 
       def write
-        write_with_retry do
+        write_with_retry(nil, Proc.new { cluster.next_primary }) do
           operation.execute
         end
       end
@@ -41,7 +41,11 @@ describe Mongo::Retryable do
   end
 
   let(:cluster) do
-    double('cluster')
+    double('cluster', next_primary: server_selector)
+  end
+
+  let(:server_selector) do
+    double('server_selector', select_server: double('server'))
   end
 
   let(:retryable) do

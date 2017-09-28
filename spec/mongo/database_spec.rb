@@ -107,6 +107,19 @@ describe Mongo::Database do
       expect(database.collection_names).to_not include('system.indexes')
     end
 
+    context 'when provided a session' do
+
+      let(:operation) do
+        database.collection_names(session: session)
+      end
+
+      let(:client) do
+        authorized_client
+      end
+
+      it_behaves_like 'an operation using a session'
+    end
+
     context 'when specifying a batch size' do
 
       it 'returns the stripped names of the collections' do
@@ -226,6 +239,24 @@ describe Mongo::Database do
 
     it 'does not mutate the command selector' do
       expect(database.command({:ismaster => 1}.freeze).written_count).to eq(0)
+    end
+
+    context 'when provided a session' do
+
+      let(:operation) do
+        database.command({ :ismaster => 1 }, session: session)
+      end
+
+      let(:failed_operation) do
+        database.command({ :invalid => 1 }, session: session)
+      end
+
+      let(:client) do
+        authorized_client
+      end
+
+      it_behaves_like 'an operation using a session'
+      it_behaves_like 'a failed operation using a session'
     end
 
     context 'when a read concern is provided', if: find_command_enabled? do
@@ -412,6 +443,19 @@ describe Mongo::Database do
       expect {
         database.drop
       }.to raise_error(Mongo::Error::OperationFailure)
+    end
+
+    context 'when provided a session' do
+
+      let(:operation) do
+        database.drop(session: session)
+      end
+
+      let(:client) do
+        authorized_client
+      end
+
+      it_behaves_like 'an operation using a session'
     end
 
     context 'when the client/database has a write concern' do

@@ -25,7 +25,7 @@ module Mongo
         # @return [ Database ] database The view's database.
         attr_reader :database
 
-        def_delegators :database, :cluster, :read_preference
+        def_delegators :database, :cluster, :read_preference, :client
         def_delegators :cluster, :next_primary
 
         # Create a new user in the database.
@@ -36,15 +36,20 @@ module Mongo
         # @param [ Auth::User, String ] user_or_name The user object or user name.
         # @param [ Hash ] options The user options.
         #
+        # @option options [ Session ] :session The session to use for the operation.
+        #
         # @return [ Result ] The command response.
         #
         # @since 2.0.0
         def create(user_or_name, options = {})
           user = generate(user_or_name, options)
-          Operation::Write::CreateUser.new(
-            user: user,
-            db_name: database.name
-          ).execute(next_primary)
+          client.send(:with_session, options) do |session|
+            Operation::Write::CreateUser.new(
+              user: user,
+              db_name: database.name,
+              session: session
+            ).execute(next_primary)
+          end
         end
 
         # Initialize the new user view.
@@ -65,15 +70,21 @@ module Mongo
         #   view.remove('user')
         #
         # @param [ String ] name The user name.
+        # @param [ Hash ] options The options for the remove operation.
+        #
+        # @option options [ Session ] :session The session to use for the operation.
         #
         # @return [ Result ] The command response.
         #
         # @since 2.0.0
-        def remove(name)
-          Operation::Write::RemoveUser.new(
-            user_name: name,
-            db_name: database.name
-          ).execute(next_primary)
+        def remove(name, options = {})
+          client.send(:with_session, options) do |session|
+            Operation::Write::RemoveUser.new(
+              user_name: name,
+              db_name: database.name,
+              session: session
+            ).execute(next_primary)
+          end
         end
 
         # Update a user in the database.
@@ -84,15 +95,20 @@ module Mongo
         # @param [ Auth::User, String ] user_or_name The user object or user name.
         # @param [ Hash ] options The user options.
         #
+        # @option options [ Session ] :session The session to use for the operation.
+        #
         # @return [ Result ] The response.
         #
         # @since 2.0.0
         def update(user_or_name, options = {})
-          user = generate(user_or_name, options)
-          Operation::Write::UpdateUser.new(
-            user: user,
-            db_name: database.name
-          ).execute(next_primary)
+          client.send(:with_session, options) do |session|
+            user = generate(user_or_name, options)
+            Operation::Write::UpdateUser.new(
+              user: user,
+              db_name: database.name,
+              session: session
+            ).execute(next_primary)
+          end
         end
 
         # Get info for a particular user in the database.
@@ -101,21 +117,27 @@ module Mongo
         #   view.info('emily')
         #
         # @param [ String ] name The user name.
+        # @param [ Hash ] options The options for the info operation.
+        #
+        # @option options [ Session ] :session The session to use for the operation.
         #
         # @return [ Hash ] A document containing information on a particular user.
         #
         # @since 2.1.0
-        def info(name)
-          user_query(name).documents
+        def info(name, options = {})
+          user_query(name, options).documents
         end
 
         private
 
-        def user_query(name)
-          Operation::Commands::UserQuery.new(
-            user_name: name,
-            db_name: database.name
-          ).execute(next_primary)
+        def user_query(name, options = {})
+          client.send(:with_session, options) do |session|
+            Operation::Commands::UserQuery.new(
+              user_name: name,
+              db_name: database.name,
+              session: session
+            ).execute(next_primary)
+          end
         end
 
         def generate(user, options)

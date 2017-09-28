@@ -174,21 +174,28 @@ module Mongo
     # @example Force the collection to be created.
     #   collection.create
     #
+    # @param [ Hash ] options The options for the create operation.
+    #
+    # @option options [ Session ] :session The session to use for the operation.
+    #
     # @return [ Result ] The result of the command.
     #
     # @since 2.0.0
-    def create
+    def create(opts = {})
       operation = { :create => name }.merge(options)
       operation.delete(:write)
       server = next_primary
       if (options[:collation] || options[Operation::COLLATION]) && !server.features.collation_enabled?
         raise Error::UnsupportedCollation.new
       end
-      Operation::Commands::Create.new({
-                                        selector: operation,
-                                        db_name: database.name,
-                                        write_concern: write_concern
-                                      }).execute(server)
+      client.send(:with_session, opts) do |session|
+        Operation::Commands::Create.new({
+                                          selector: operation,
+                                          db_name: database.name,
+                                          write_concern: write_concern,
+                                          session: session
+                                        }).execute(server)
+      end
     end
 
     # Drop the collection. Will also drop all indexes associated with the
@@ -199,16 +206,22 @@ module Mongo
     # @example Drop the collection.
     #   collection.drop
     #
+    # @param [ Hash ] options The options for the drop operation.
+    #
+    # @option options [ Session ] :session The session to use for the operation.
+    #
     # @return [ Result ] The result of the command.
     #
     # @since 2.0.0
-    def drop
-      Operation::Commands::Drop.new({
-                                      selector: { :drop => name },
-                                      db_name: database.name,
-                                      write_concern: write_concern
-                                    }).execute(next_primary)
-
+    def drop(opts = {})
+      client.send(:with_session, opts) do |session|
+        Operation::Commands::Drop.new({
+                                        selector: { :drop => name },
+                                        db_name: database.name,
+                                        write_concern: write_concern,
+                                        session: session
+                                      }).execute(next_primary)
+      end
     rescue Error::OperationFailure => ex
       raise ex unless ex.message =~ /ns not found/
       false
@@ -247,6 +260,7 @@ module Mongo
     # @option options [ Hash ] :sort The key and direction pairs by which the result set
     #   will be sorted.
     # @option options [ Hash ] :collation The collation to use.
+    # @option options [ Session ] :session The session to use.
     #
     # @return [ CollectionView ] The collection view.
     #
@@ -273,6 +287,7 @@ module Mongo
     # @option options [ true, false ] :bypass_document_validation Whether or
     #   not to skip document level validation.
     # @option options [ Hash ] :collation The collation to use.
+    # @option options [ Session ] :session The session to use.
     #
     # @return [ Aggregation ] The aggregation object.
     #
@@ -301,6 +316,7 @@ module Mongo
     #   on new documents to satisfy a change stream query.
     # @option options [ Integer ] :batch_size The number of documents to return per batch.
     # @option options [ BSON::Document, Hash ] :collation The collation to use.
+    # @option options [ Session ] :session The session to use.
     #
     # @note A change stream only allows 'majority' read concern.
     # @note This helper method is preferable to running a raw aggregation with a $changeStream stage,
@@ -327,6 +343,7 @@ module Mongo
     # @option options [ Integer ] :skip The number of documents to skip before counting.
     # @option options [ Hash ] :read The read preference options.
     # @option options [ Hash ] :collation The collation to use.
+    # @option options [ Session ] :session The session to use.
     #
     # @return [ Integer ] The document count.
     #
@@ -347,6 +364,7 @@ module Mongo
     # @option options [ Integer ] :max_time_ms The maximum amount of time to allow the command to run.
     # @option options [ Hash ] :read The read preference options.
     # @option options [ Hash ] :collation The collation to use.
+    # @option options [ Session ] :session The session to use.
     #
     # @return [ Array<Object> ] The list of distinct values.
     #
@@ -362,6 +380,8 @@ module Mongo
     #   collection.indexes
     #
     # @param [ Hash ] options Options for getting a list of all indexes.
+    #
+    # @option options [ Session ] :session The session to use.
     #
     # @return [ View::Index ] The index view.
     #
@@ -390,20 +410,25 @@ module Mongo
     # @param [ Hash ] document The document to insert.
     # @param [ Hash ] options The insert options.
     #
+    # @option options [ Session ] :session The session to use for the operation.
+    #
     # @return [ Result ] The database response wrapper.
     #
     # @since 2.0.0
     def insert_one(document, options = {})
-      write_with_retry do
-        Operation::Write::Insert.new(
-          :documents => [ document ],
-          :db_name => database.name,
-          :coll_name => name,
-          :write_concern => write_concern,
-          :bypass_document_validation => !!options[:bypass_document_validation],
-          :options => options,
-          :id_generator => client.options[:id_generator]
-        ).execute(next_primary)
+      client.send(:with_session, options) do |session|
+        write_with_retry(session, Proc.new { next_primary }) do |server|
+          Operation::Write::Insert.new(
+              :documents => [ document ],
+              :db_name => database.name,
+              :coll_name => name,
+              :write_concern => write_concern,
+              :bypass_document_validation => !!options[:bypass_document_validation],
+              :options => options,
+              :id_generator => client.options[:id_generator],
+              :session => session
+          ).execute(server)
+        end
       end
     end
 
@@ -414,6 +439,8 @@ module Mongo
     #
     # @param [ Array<Hash> ] documents The documents to insert.
     # @param [ Hash ] options The insert options.
+    #
+    # @option options [ Session ] :session The session to use for the operation.
     #
     # @return [ Result ] The database response wrapper.
     #
@@ -437,6 +464,7 @@ module Mongo
     #   Can be :w => Integer, :fsync => Boolean, :j => Boolean.
     # @option options [ true, false ] :bypass_document_validation Whether or
     #   not to skip document level validation.
+    # @option options [ Session ] :session The session to use for the set of operations.
     #
     # @return [ BulkWrite::Result ] The result of the operation.
     #
@@ -454,6 +482,7 @@ module Mongo
     # @param [ Hash ] options The options.
     #
     # @option options [ Hash ] :collation The collation to use.
+    # @option options [ Session ] :session The session to use.
     #
     # @return [ Result ] The response from the database.
     #
@@ -471,6 +500,7 @@ module Mongo
     # @param [ Hash ] options The options.
     #
     # @option options [ Hash ] :collation The collation to use.
+    # @option options [ Session ] :session The session to use.
     #
     # @return [ Result ] The response from the database.
     #
@@ -493,12 +523,13 @@ module Mongo
     #
     # @option options [ Integer ] :max_time_ms The maximum amount of time to allow the command
     #   to run in milliseconds.
+    # @option options [ Session ] :session The session to use.
     #
     # @return [ Array<Cursor> ] An array of cursors.
     #
     # @since 2.1
     def parallel_scan(cursor_count, options = {})
-      find.send(:parallel_scan, cursor_count, options)
+      find({}, options).send(:parallel_scan, cursor_count, options)
     end
 
     # Replaces a single document in the collection with the new document.
@@ -515,6 +546,7 @@ module Mongo
     # @option options [ true, false ] :bypass_document_validation Whether or
     #   not to skip document level validation.
     # @option options [ Hash ] :collation The collation to use.
+    # @option options [ Session ] :session The session to use.
     #
     # @return [ Result ] The response from the database.
     #
@@ -539,6 +571,7 @@ module Mongo
     # @option options [ Hash ] :collation The collation to use.
     # @option options [ Array ] :array_filters A set of filters specifying to which array elements
     #   an update should apply.
+    # @option options [ Session ] :session The session to use.
     #
     # @return [ Result ] The response from the database.
     #
@@ -563,6 +596,7 @@ module Mongo
     # @option options [ Hash ] :collation The collation to use.
     # @option options [ Array ] :array_filters A set of filters specifying to which array elements
     #   an update should apply.
+    # @option options [ Session ] :session The session to use.
     #
     # @return [ Result ] The response from the database.
     #
@@ -588,12 +622,13 @@ module Mongo
     # @option options [ Hash ] :write_concern The write concern options.
     #   Defaults to the collection's write concern.
     # @option options [ Hash ] :collation The collation to use.
+    # @option options [ Session ] :session The session to use.
     #
     # @return [ BSON::Document, nil ] The document, if found.
     #
     # @since 2.1.0
     def find_one_and_delete(filter, options = {})
-      find(filter, options).find_one_and_delete
+      find(filter, options).find_one_and_delete(options)
     end
 
     # Finds a single document via findAndModify and updates it, returning the original doc unless
@@ -623,6 +658,7 @@ module Mongo
     # @option options [ Hash ] :collation The collation to use.
     # @option options [ Array ] :array_filters A set of filters specifying to which array elements
     #   an update should apply.
+    # @option options [ Session ] :session The session to use.
     #
     # @return [ BSON::Document ] The document.
     #
@@ -656,6 +692,7 @@ module Mongo
     # @option options [ Hash ] :write_concern The write concern options.
     #   Defaults to the collection's write concern.
     # @option options [ Hash ] :collation The collation to use.
+    # @option options [ Session ] :session The session to use.
     #
     # @return [ BSON::Document ] The document.
     #

@@ -3,7 +3,11 @@ require 'spec_helper'
 describe Mongo::Index::View do
 
   let(:view) do
-    described_class.new(authorized_collection)
+    described_class.new(authorized_collection, options)
+  end
+
+  let(:options) do
+    {}
   end
 
   describe '#drop_one' do
@@ -12,12 +16,34 @@ describe Mongo::Index::View do
       { another: -1 }
     end
 
+    after do
+      begin; view.drop_one('another_-1'); rescue; end
+    end
+
     before do
       view.create_one(spec, unique: true)
     end
 
-    after do
-      begin; view.drop_one('another_-1'); rescue; end
+    context 'when provided a session' do
+
+      let(:view_with_session) do
+        described_class.new(authorized_collection, session: session)
+      end
+
+      let(:client) do
+        authorized_client
+      end
+
+      let(:operation) do
+        view_with_session.drop_one('another_-1')
+      end
+
+      let(:failed_operation) do
+        view_with_session.drop_one('_another_-1')
+      end
+
+      it_behaves_like 'an operation using a session'
+      it_behaves_like 'a failed operation using a session'
     end
 
     context 'when the index exists' do
@@ -123,6 +149,23 @@ describe Mongo::Index::View do
         expect(result).to be_successful
       end
 
+      context 'when provided a session' do
+
+        let(:view_with_session) do
+          described_class.new(authorized_collection, session: session)
+        end
+
+        let(:operation) do
+          view_with_session.drop_all
+        end
+
+        let(:client) do
+          authorized_client
+        end
+
+        it_behaves_like 'an operation using a session'
+      end
+
       context 'when the collection has a write concern' do
 
         let(:collection) do
@@ -182,6 +225,33 @@ describe Mongo::Index::View do
 
           it 'returns ok' do
             expect(result).to be_successful
+          end
+
+          context 'when provided a session' do
+
+            let(:view_with_session) do
+              described_class.new(authorized_collection, session: session)
+            end
+
+            let(:operation) do
+              view_with_session.create_many(
+                  { key: { random: 1 }, unique: true },
+                  { key: { testing: -1 }, unique: true }
+              )
+            end
+
+            let(:client) do
+              authorized_client
+            end
+
+            let(:failed_operation) do
+              view_with_session.create_many(
+                  { key: { random: 1 }, invalid: true }
+              )
+            end
+
+            it_behaves_like 'an operation using a session'
+            it_behaves_like 'a failed operation using a session'
           end
         end
 
@@ -312,6 +382,31 @@ describe Mongo::Index::View do
 
           it 'returns ok' do
             expect(result).to be_successful
+          end
+
+          context 'when provided a session' do
+
+            let(:view_with_session) do
+              described_class.new(authorized_collection, session: session)
+            end
+
+            let(:operation) do
+              view_with_session.create_many([
+                                             { key: { random: 1 }, unique: true },
+                                             { key: { testing: -1 }, unique: true }
+                                            ])
+            end
+
+            let(:failed_operation) do
+              view_with_session.create_many([ { key: { random: 1 }, invalid: true }])
+            end
+
+            let(:client) do
+              authorized_client
+            end
+
+            it_behaves_like 'an operation using a session'
+            it_behaves_like 'a failed operation using a session'
           end
         end
 
@@ -463,15 +558,37 @@ describe Mongo::Index::View do
         view.create_one(spec, unique: true)
       end
 
-      after do
-        begin; view.drop_one('random_1'); rescue; end
-      end
-
       it 'returns ok' do
         expect(result).to be_successful
       end
 
+      context 'when provided a session' do
+
+        let(:view_with_session) do
+          described_class.new(authorized_collection, session: session)
+        end
+
+        let(:operation) do
+          view_with_session.create_one(spec, unique: true)
+        end
+
+        let(:failed_operation) do
+          view_with_session.create_one(spec, invalid: true)
+        end
+
+        let(:client) do
+          authorized_client
+        end
+
+        it_behaves_like 'an operation using a session'
+        it_behaves_like 'a failed operation using a session'
+      end
+
       context 'when the collection has a write concern' do
+
+        after do
+          begin; view.drop_one('random_1'); rescue; end
+        end
 
         let(:collection) do
           authorized_collection.with(write: INVALID_WRITE_CONCERN)
@@ -513,6 +630,10 @@ describe Mongo::Index::View do
       end
 
       context 'when the index is created on an subdocument field' do
+
+        after do
+          begin; view.drop_one('random_1'); rescue; end
+        end
 
         let(:spec) do
           { 'sub_document.random' => 1 }
@@ -632,7 +753,7 @@ describe Mongo::Index::View do
     end
 
     after do
-      view.drop_one('random_name')
+      begin; view.drop_one('random_name'); rescue; end
     end
 
     context 'when providing a name' do
@@ -655,6 +776,23 @@ describe Mongo::Index::View do
       it 'returns the index' do
         expect(index['name']).to eq('random_name')
       end
+    end
+
+    context 'when provided a session' do
+
+      let(:view_with_session) do
+        described_class.new(authorized_collection, session: session)
+      end
+
+      let(:operation) do
+        view_with_session.get(random: 1)
+      end
+
+      let(:client) do
+        authorized_client
+      end
+
+      it_behaves_like 'an operation using a session'
     end
 
     context 'when the index does not exist' do

@@ -138,15 +138,18 @@ module Mongo
           read_with_retry do
             server = selector.select_server(cluster, false)
             apply_collation!(cmd, server, opts)
-            Operation::Commands::Command.new({
-                                               :selector => cmd,
-                                               :db_name => database.name,
-                                               :options => { :limit => -1 },
-                                               :read => read_pref,
-                                             }).execute(server).n.to_i
-
+            with_session do |session|
+              Operation::Commands::Command.new({
+                                                   :selector => cmd,
+                                                   :db_name => database.name,
+                                                   :options => {:limit => -1},
+                                                   :read => read_pref,
+                                                   :session => session
+                                               }).execute(server)
+            end.n.to_i
           end
         end
+
 
         # Get a list of distinct values for a specific field.
         #
@@ -175,13 +178,15 @@ module Mongo
           read_with_retry do
             server = selector.select_server(cluster, false)
             apply_collation!(cmd, server, opts)
-            Operation::Commands::Command.new({
-                                               :selector => cmd,
-                                               :db_name => database.name,
-                                               :options => { :limit => -1 },
-                                               :read => read_pref,
-                                             }).execute(server).first['values']
-
+            with_session do |session|
+              Operation::Commands::Command.new({
+                                                   :selector => cmd,
+                                                   :db_name => database.name,
+                                                   :options => {:limit => -1},
+                                                   :read => read_pref,
+                                                   :session => session
+                                               }).execute(server)
+            end.first['values']
           end
         end
 
@@ -467,28 +472,32 @@ module Mongo
         end
 
         def parallel_scan(cursor_count, options = {})
+          session = client.send(:get_session, @options)
           server = server_selector.select_server(cluster, false)
           cmd = Operation::Commands::ParallelScan.new({
                   :coll_name => collection.name,
                   :db_name => database.name,
                   :cursor_count => cursor_count,
-                  :read_concern => collection.read_concern
+                  :read_concern => collection.read_concern,
+                  :session => session
                 }.merge!(options))
           cmd.execute(server).cursor_ids.map do |cursor_id|
             result = if server.features.find_command_enabled?
-                Operation::Commands::GetMore.new({
-                  :selector => { :getMore => cursor_id, :collection => collection.name },
-                  :db_name  => database.name
-                }).execute(server)
-              else
-                Operation::Read::GetMore.new({
-                  :to_return => 0,
-                  :cursor_id => cursor_id,
-                  :db_name   => database.name,
-                  :coll_name => collection.name
-                }).execute(server)
+                       Operation::Commands::GetMore.new({
+                         :selector => {:getMore => cursor_id,
+                                       :collection => collection.name},
+                         :db_name => database.name,
+                         :session => session
+                       }).execute(server)
+                     else
+                       Operation::Read::GetMore.new({
+                         :to_return => 0,
+                         :cursor_id => cursor_id,
+                         :db_name => database.name,
+                         :coll_name => collection.name
+                     }).execute(server)
             end
-            Cursor.new(self, result, server)
+            Cursor.new(self, result, server, session: session)
           end
         end
 

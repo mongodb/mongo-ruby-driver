@@ -3,7 +3,11 @@ require 'spec_helper'
 describe Mongo::Grid::FSBucket do
 
   let(:fs) do
-    described_class.new(authorized_client.database, options)
+    described_class.new(client.database, options)
+  end
+
+  let(:client) do
+    authorized_client
   end
 
   let(:options) do
@@ -482,7 +486,7 @@ describe Mongo::Grid::FSBucket do
   context 'when a read stream is opened' do
 
     let(:fs) do
-      described_class.new(authorized_client.database)
+      described_class.new(authorized_client.database, options)
     end
 
     let(:io) do
@@ -590,6 +594,29 @@ describe Mongo::Grid::FSBucket do
 
     describe '#download_to_stream' do
 
+      context 'sessions' do
+
+        let(:options) do
+          { session: session }
+        end
+
+        let(:file_id) do
+          fs.open_upload_stream(filename) do |stream|
+            stream.write(file)
+          end.file_id
+        end
+
+        let(:operation) do
+          fs.download_to_stream(file_id, io)
+        end
+
+        let(:client) do
+          authorized_client
+        end
+
+        it_behaves_like 'an operation using a session'
+      end
+
       context 'when the file is found' do
 
         let!(:file_id) do
@@ -680,6 +707,7 @@ describe Mongo::Grid::FSBucket do
 
     describe '#download_to_stream_by_name' do
 
+
       let(:files) do
         [
             StringIO.new('hello 1'),
@@ -689,75 +717,105 @@ describe Mongo::Grid::FSBucket do
         ]
       end
 
-      before do
-        files.each do |file|
-          fs.upload_from_stream('test.txt', file)
+      context ' when using a session' do
+
+        let(:options) do
+          { session: session }
         end
-      end
 
-      let(:io) do
-        StringIO.new
-      end
-
-      context 'when revision is not specified' do
-
-        let!(:result) do
+        let(:operation) do
           fs.download_to_stream_by_name('test.txt', io)
         end
 
-        it 'returns the most recent version' do
-          expect(io.string).to eq('hello 4')
+        let(:client) do
+          authorized_client
         end
+
+        before do
+          files.each do |file|
+            authorized_client.database.fs.upload_from_stream('test.txt', file)
+          end
+        end
+
+        let(:io) do
+          StringIO.new
+        end
+
+        it_behaves_like 'an operation using a session'
       end
 
-      context 'when revision is 0' do
+      context 'when not using a session' do
 
-        let!(:result) do
-          fs.download_to_stream_by_name('test.txt', io, revision: 0)
+        before do
+          files.each do |file|
+            fs.upload_from_stream('test.txt', file)
+          end
         end
 
-        it 'returns the original stored file' do
-          expect(io.string).to eq('hello 1')
-        end
-      end
-
-      context 'when revision is negative' do
-
-        let!(:result) do
-          fs.download_to_stream_by_name('test.txt', io, revision: -2)
+        let(:io) do
+          StringIO.new
         end
 
-        it 'returns that number of versions from the most recent' do
-          expect(io.string).to eq('hello 3')
+        context 'when revision is not specified' do
+
+          let!(:result) do
+            fs.download_to_stream_by_name('test.txt', io)
+          end
+
+          it 'returns the most recent version' do
+            expect(io.string).to eq('hello 4')
+          end
         end
-      end
 
-      context 'when revision is positive' do
+        context 'when revision is 0' do
 
-        let!(:result) do
-          fs.download_to_stream_by_name('test.txt', io, revision: 1)
+          let!(:result) do
+            fs.download_to_stream_by_name('test.txt', io, revision: 0)
+          end
+
+          it 'returns the original stored file' do
+            expect(io.string).to eq('hello 1')
+          end
         end
 
-        it 'returns that number revision' do
-          expect(io.string).to eq('hello 2')
+        context 'when revision is negative' do
+
+          let!(:result) do
+            fs.download_to_stream_by_name('test.txt', io, revision: -2)
+          end
+
+          it 'returns that number of versions from the most recent' do
+            expect(io.string).to eq('hello 3')
+          end
         end
-      end
 
-      context 'when the file revision is not found' do
+        context 'when revision is positive' do
 
-        it 'raises a FileNotFound error' do
-          expect {
-            fs.download_to_stream_by_name('test.txt', io, revision: 100)
-          }.to raise_exception(Mongo::Error::InvalidFileRevision)
+          let!(:result) do
+            fs.download_to_stream_by_name('test.txt', io, revision: 1)
+          end
+
+          it 'returns that number revision' do
+            expect(io.string).to eq('hello 2')
+          end
         end
-      end
 
-      context 'when the file is not found' do
+        context 'when the file revision is not found' do
 
-        it 'raises a FileNotFound error' do
-          expect {
-            fs.download_to_stream_by_name('non-existent.txt', io)
-          }.to raise_exception(Mongo::Error::FileNotFound)
+          it 'raises a FileNotFound error' do
+            expect {
+              fs.download_to_stream_by_name('test.txt', io, revision: 100)
+            }.to raise_exception(Mongo::Error::InvalidFileRevision)
+          end
+        end
+
+        context 'when the file is not found' do
+
+          it 'raises a FileNotFound error' do
+            expect {
+              fs.download_to_stream_by_name('non-existent.txt', io)
+            }.to raise_exception(Mongo::Error::FileNotFound)
+          end
         end
       end
     end
@@ -773,124 +831,154 @@ describe Mongo::Grid::FSBucket do
         ]
       end
 
-      before do
-        files.each do |file|
-          fs.upload_from_stream('test.txt', file)
-        end
-      end
-
       let(:io) do
         StringIO.new
       end
 
-      context 'when a block is provided' do
+      context ' when using a session' do
 
-        let(:stream) do
-          fs.open_download_stream_by_name('test.txt') do |stream|
-            io.write(stream.read)
+        let(:options) do
+          { session: session }
+        end
+
+        let(:operation) do
+          fs.download_to_stream_by_name('test.txt', io)
+        end
+
+        let(:client) do
+          authorized_client
+        end
+
+        before do
+          files.each do |file|
+            authorized_client.database.fs.upload_from_stream('test.txt', file)
           end
         end
 
-        it 'returns a Stream::Read object' do
-          expect(stream).to be_a(Mongo::Grid::FSBucket::Stream::Read)
+        let(:io) do
+          StringIO.new
         end
 
-        it 'closes the stream after the block completes' do
-          expect(stream.closed?).to be(true)
+        it_behaves_like 'an operation using a session'
+      end
+
+      context 'when not using a session' do
+
+        before do
+          files.each do |file|
+            fs.upload_from_stream('test.txt', file)
+          end
         end
 
-        it 'yields the stream to the block' do
-          stream
-          expect(io.size).to eq(files[0].size)
-        end
+        context 'when a block is provided' do
 
-        context 'when revision is not specified' do
-
-          let!(:result) do
+          let(:stream) do
             fs.open_download_stream_by_name('test.txt') do |stream|
               io.write(stream.read)
             end
           end
 
-          it 'returns the most recent version' do
-            expect(io.string).to eq('hello 4')
+          it 'returns a Stream::Read object' do
+            expect(stream).to be_a(Mongo::Grid::FSBucket::Stream::Read)
           end
-        end
 
-        context 'when revision is 0' do
+          it 'closes the stream after the block completes' do
+            expect(stream.closed?).to be(true)
+          end
 
-          let!(:result) do
-            fs.open_download_stream_by_name('test.txt', revision: 0) do |stream|
-              io.write(stream.read)
+          it 'yields the stream to the block' do
+            stream
+            expect(io.size).to eq(files[0].size)
+          end
+
+          context 'when revision is not specified' do
+
+            let!(:result) do
+              fs.open_download_stream_by_name('test.txt') do |stream|
+                io.write(stream.read)
+              end
+            end
+
+            it 'returns the most recent version' do
+              expect(io.string).to eq('hello 4')
             end
           end
 
-          it 'returns the original stored file' do
-            expect(io.string).to eq('hello 1')
-          end
-        end
+          context 'when revision is 0' do
 
-        context 'when revision is negative' do
+            let!(:result) do
+              fs.open_download_stream_by_name('test.txt', revision: 0) do |stream|
+                io.write(stream.read)
+              end
+            end
 
-          let!(:result) do
-            fs.open_download_stream_by_name('test.txt', revision: -2) do |stream|
-              io.write(stream.read)
+            it 'returns the original stored file' do
+              expect(io.string).to eq('hello 1')
             end
           end
 
-          it 'returns that number of versions from the most recent' do
-            expect(io.string).to eq('hello 3')
-          end
-        end
+          context 'when revision is negative' do
 
-        context 'when revision is positive' do
+            let!(:result) do
+              fs.open_download_stream_by_name('test.txt', revision: -2) do |stream|
+                io.write(stream.read)
+              end
+            end
 
-          let!(:result) do
-            fs.open_download_stream_by_name('test.txt', revision: 1) do |stream|
-              io.write(stream.read)
+            it 'returns that number of versions from the most recent' do
+              expect(io.string).to eq('hello 3')
             end
           end
 
-          it 'returns that number revision' do
-            expect(io.string).to eq('hello 2')
+          context 'when revision is positive' do
+
+            let!(:result) do
+              fs.open_download_stream_by_name('test.txt', revision: 1) do |stream|
+                io.write(stream.read)
+              end
+            end
+
+            it 'returns that number revision' do
+              expect(io.string).to eq('hello 2')
+            end
+          end
+
+          context 'when the file revision is not found' do
+
+            it 'raises a FileNotFound error' do
+              expect {
+                fs.open_download_stream_by_name('test.txt', revision: 100)
+              }.to raise_exception(Mongo::Error::InvalidFileRevision)
+            end
+          end
+
+          context 'when the file is not found' do
+
+            it 'raises a FileNotFound error' do
+              expect {
+                fs.open_download_stream_by_name('non-existent.txt')
+              }.to raise_exception(Mongo::Error::FileNotFound)
+            end
           end
         end
 
-        context 'when the file revision is not found' do
+        context 'when a block is not provided' do
 
-          it 'raises a FileNotFound error' do
-            expect {
-              fs.open_download_stream_by_name('test.txt', revision: 100)
-            }.to raise_exception(Mongo::Error::InvalidFileRevision)
+          let!(:stream) do
+            fs.open_download_stream_by_name('test.txt')
           end
-        end
 
-        context 'when the file is not found' do
-
-          it 'raises a FileNotFound error' do
-            expect {
-              fs.open_download_stream_by_name('non-existent.txt')
-            }.to raise_exception(Mongo::Error::FileNotFound)
+          it 'returns a Stream::Read object' do
+            expect(stream).to be_a(Mongo::Grid::FSBucket::Stream::Read)
           end
-        end
-      end
 
-      context 'when a block is not provided' do
+          it 'does not close the stream' do
+            expect(stream.closed?).to be(false)
+          end
 
-        let!(:stream) do
-          fs.open_download_stream_by_name('test.txt')
-        end
-
-        it 'returns a Stream::Read object' do
-          expect(stream).to be_a(Mongo::Grid::FSBucket::Stream::Read)
-        end
-
-        it 'does not close the stream' do
-          expect(stream.closed?).to be(false)
-        end
-
-        it 'does not yield the stream to the block' do
-          expect(io.size).to eq(0)
+          it 'does not yield the stream to the block' do
+            expect(io.size).to eq(0)
+          end
         end
       end
     end
@@ -937,32 +1025,36 @@ describe Mongo::Grid::FSBucket do
 
       context 'when a block is provided' do
 
-        let!(:stream) do
-          fs.open_upload_stream(filename) do |stream|
-            stream.write(file)
+        context 'when a session is not used' do
+
+          let!(:stream) do
+            fs.open_upload_stream(filename) do |stream|
+              stream.write(file)
+            end
+          end
+
+          let(:result) do
+            fs.find_one(filename: filename)
+          end
+
+          it 'returns the stream' do
+            expect(stream).to be_a(Mongo::Grid::FSBucket::Stream::Write)
+          end
+
+          it 'creates an ObjectId for the file' do
+            expect(stream.file_id).to be_a(BSON::ObjectId)
+          end
+
+          it 'yields the stream to the block' do
+            expect(result.data.size).to eq(file.size)
+          end
+
+          it 'closes the stream when the block completes' do
+            expect(stream.closed?).to be(true)
           end
         end
-
-        let(:result) do
-          fs.find_one(filename: filename)
-        end
-
-        it 'returns the stream' do
-          expect(stream).to be_a(Mongo::Grid::FSBucket::Stream::Write)
-        end
-
-        it 'creates an ObjectId for the file' do
-          expect(stream.file_id).to be_a(BSON::ObjectId)
-        end
-
-        it 'yields the stream to the block' do
-          expect(result.data.size).to eq(file.size)
-        end
-
-        it 'closes the stream when the block completes' do
-          expect(stream.closed?).to be(true)
-        end
       end
+
     end
 
     describe '#upload_from_stream' do

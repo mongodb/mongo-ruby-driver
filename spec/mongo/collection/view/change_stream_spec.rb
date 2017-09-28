@@ -10,8 +10,12 @@ describe Mongo::Collection::View::ChangeStream, if: test_change_streams? do
     {}
   end
 
+  let(:view_options) do
+    {}
+  end
+
   let(:view) do
-    Mongo::Collection::View.new(authorized_collection, {}, options)
+    Mongo::Collection::View.new(authorized_collection, {}, view_options)
   end
 
   let(:change_stream) do
@@ -31,7 +35,7 @@ describe Mongo::Collection::View::ChangeStream, if: test_change_streams? do
   end
 
   let(:command_selector) do
-    change_stream.send(:aggregate_spec)[:selector]
+    change_stream.send(:aggregate_spec, double('session'))[:selector]
   end
 
   let(:cursor) do
@@ -194,6 +198,49 @@ describe Mongo::Collection::View::ChangeStream, if: test_change_streams? do
         it 'sends the pipeline to the server without a custom error' do
           expect(change_stream).to be_a(Mongo::Collection::View::ChangeStream)
         end
+
+        context 'when the operation fails', if: sessions_enabled? && test_change_streams? do
+
+          let!(:before_last_use) do
+            session.instance_variable_get(:@server_session).last_use
+          end
+
+          let!(:before_operation_time) do
+            (session.instance_variable_get(:@operation_time) || 0)
+          end
+
+          let(:pipeline) do
+            [ { '$invalid' => '$test' }]
+          end
+
+          let(:options) do
+            { session: session }
+          end
+
+          let!(:operation_result) do
+            begin; change_stream; rescue => e; e; end
+          end
+
+          let(:session) do
+            client.start_session
+          end
+
+          let(:client) do
+            authorized_client
+          end
+
+          it 'raises an error' do
+            expect(operation_result.class).to eq(Mongo::Error::OperationFailure)
+          end
+
+          it 'updates the last use value' do
+            expect(session.instance_variable_get(:@server_session).last_use).not_to eq(before_last_use)
+          end
+
+          it 'updates the operation time value' do
+            expect(session.instance_variable_get(:@operation_time)).not_to eq(before_operation_time)
+          end
+        end
       end
     end
 
@@ -205,6 +252,100 @@ describe Mongo::Collection::View::ChangeStream, if: test_change_streams? do
 
       it 'does not close the cursor' do
         expect(cursor).to be_a(Mongo::Cursor)
+      end
+    end
+
+    context 'when provided a session', if: sessions_enabled? && test_change_streams? do
+
+      let(:options) do
+        { session: session }
+      end
+
+      let(:operation) do
+        change_stream
+        authorized_collection.insert_one(a: 1)
+        change_stream.to_enum.next
+      end
+
+      let(:client) do
+        authorized_client
+      end
+
+      context 'when the session is created from the same client used for the operation' do
+
+        let(:session) do
+          client.start_session
+        end
+
+        let(:server_session) do
+          session.instance_variable_get(:@server_session)
+        end
+
+        let!(:before_last_use) do
+          server_session.last_use
+        end
+
+        let!(:before_operation_time) do
+          (session.instance_variable_get(:@operation_time) || 0)
+        end
+
+        let!(:operation_result) do
+          operation
+        end
+
+        it 'updates the last use value' do
+          expect(server_session.last_use).not_to eq(before_last_use)
+        end
+
+        it 'updates the operation time value' do
+          expect(session.instance_variable_get(:@operation_time)).not_to eq(before_operation_time)
+        end
+
+        it 'does not close the session when the operation completes' do
+          expect(session.ended?).to be(false)
+        end
+      end
+
+      context 'when a session from another client is provided' do
+
+        let(:session) do
+          client.start_session
+        end
+
+        let(:client) do
+          authorized_client.with(read: { mode: :secondary })
+        end
+
+        let(:operation_result) do
+          operation
+        end
+
+        it 'raises an exception' do
+          expect {
+            operation_result
+          }.to raise_exception(Mongo::Error::InvalidSession)
+        end
+      end
+
+      context 'when the session is ended before it is used' do
+
+        let(:session) do
+          client.start_session
+        end
+
+        before do
+          session.end_session
+        end
+
+        let(:operation_result) do
+          operation
+        end
+
+        it 'raises an exception' do
+          expect {
+            operation_result
+          }.to raise_exception(Mongo::Error::InvalidSession)
+        end
       end
     end
   end
@@ -319,6 +460,25 @@ describe Mongo::Collection::View::ChangeStream, if: test_change_streams? do
           expect(document[:fullDocument][:a]).to eq(1)
           expect(change_stream_document[:resumeAfter]).to eq(document[:_id])
         end
+
+        context 'when provided a session' do
+
+          let(:options) do
+            { session: session}
+          end
+
+          let(:session) do
+            authorized_client.start_session
+          end
+
+          before do
+            change_stream.to_enum.next
+          end
+
+          it 'does not close the session' do
+            expect(session.ended?).to be(false)
+          end
+        end
       end
 
       context 'when the error is a SocketError' do
@@ -371,6 +531,25 @@ describe Mongo::Collection::View::ChangeStream, if: test_change_streams? do
           change_stream
         }.to raise_exception(Mongo::Error::OperationFailure)
       end
+
+      context 'when provided a session' do
+
+        let(:options) do
+          { session: session}
+        end
+
+        let(:session) do
+          authorized_client.start_session
+        end
+
+        before do
+          begin; change_stream; rescue; end
+        end
+
+        it 'does not close the session' do
+          expect(session.ended?).to be(false)
+        end
+      end
     end
   end
 
@@ -401,6 +580,25 @@ describe Mongo::Collection::View::ChangeStream, if: test_change_streams? do
         it 'runs the command again while using the same read preference and caching the resume token' do
           expect(document[:fullDocument][:a]).to eq(2)
           expect(change_stream_document[:resumeAfter]).to eq(document[:_id])
+        end
+
+        context 'when provided a session' do
+
+          let(:options) do
+            { session: session}
+          end
+
+          let(:session) do
+            authorized_client.start_session
+          end
+
+          before do
+            enum.next
+          end
+
+          it 'does not close the session' do
+            expect(session.ended?).to be(false)
+          end
         end
       end
 
@@ -459,8 +657,27 @@ describe Mongo::Collection::View::ChangeStream, if: test_change_streams? do
 
       it 'does not run the command again and instead raises the error' do
         expect {
-          change_stream.to_enum.next
+          enum.next
         }.to raise_exception(Mongo::Error::OperationFailure)
+      end
+
+      context 'when provided a session' do
+
+        let(:options) do
+          { session: session}
+        end
+
+        let(:session) do
+          authorized_client.start_session
+        end
+
+        before do
+          begin; enum.next; rescue; end
+        end
+
+        it 'does not close the session' do
+          expect(session.ended?).to be(false)
+        end
       end
     end
   end
@@ -493,6 +710,25 @@ describe Mongo::Collection::View::ChangeStream, if: test_change_streams? do
           expect {
             document
           }.to raise_exception(error)
+        end
+
+        context 'when provided a session' do
+
+          let(:options) do
+            { session: session}
+          end
+
+          let(:session) do
+            authorized_client.start_session
+          end
+
+          before do
+            begin; document; rescue; end
+          end
+
+          it 'does not close the session' do
+            expect(session.ended?).to be(false)
+          end
         end
       end
 
@@ -551,8 +787,27 @@ describe Mongo::Collection::View::ChangeStream, if: test_change_streams? do
 
       it 'does not run the command again and instead raises the error' do
         expect {
-          change_stream.to_enum.next
+          enum.next
         }.to raise_exception(Mongo::Error::OperationFailure)
+      end
+
+      context 'when provided a session' do
+
+        let(:options) do
+          { session: session}
+        end
+
+        let(:session) do
+          authorized_client.start_session
+        end
+
+        before do
+          begin; enum.next; rescue; end
+        end
+
+        it 'does not close the session' do
+          expect(session.ended?).to be(false)
+        end
       end
     end
   end

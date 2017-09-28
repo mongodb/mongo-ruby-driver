@@ -155,11 +155,14 @@ module Mongo
     def command(operation, opts = {})
       preference = ServerSelector.get(opts[:read] || ServerSelector::PRIMARY)
       server = preference.select_server(cluster)
-      Operation::Commands::Command.new({
-        :selector => operation.dup,
-        :db_name => name,
-        :read => preference
-      }).execute(server)
+      client.send(:with_session, opts) do |session|
+        Operation::Commands::Command.new({
+          :selector => operation.dup,
+          :db_name => name,
+          :read => preference,
+          :session => session
+        }).execute(server)
+      end
     end
 
     # Drop the database and all its associated information.
@@ -167,16 +170,23 @@ module Mongo
     # @example Drop the database.
     #   database.drop
     #
+    # @param [ Hash ] options The options for the operation.
+    #
+    # @option options [ Session ] :session The session to use for the operation.
+    #
     # @return [ Result ] The result of the command.
     #
     # @since 2.0.0
-    def drop
+    def drop(options = {})
       operation = { :dropDatabase => 1 }
-      Operation::Commands::DropDatabase.new({
-                                             selector: operation,
-                                             db_name: name,
-                                             write_concern: write_concern
-                                            }).execute(next_primary)
+      client.send(:with_session, options) do |session|
+        Operation::Commands::DropDatabase.new({
+          selector: operation,
+          db_name: name,
+          write_concern: write_concern,
+          session: session
+        }).execute(next_primary)
+      end
     end
 
     # Instantiate a new database object.

@@ -139,9 +139,10 @@ module Mongo
         end
 
         def create_cursor!
+          session = client.send(:get_session, @options)
           server = server_selector.select_server(cluster, false)
-          result = send_initial_query(server)
-          @cursor = Cursor.new(view, result, server, disable_retry: true)
+          result = send_initial_query(server, session)
+          @cursor = Cursor.new(view, result, server, disable_retry: true, session: session)
         end
 
         def pipeline
@@ -150,8 +151,8 @@ module Mongo
           [{ '$changeStream' => change_doc }] + @change_stream_filters
         end
 
-        def send_initial_query(server)
-          initial_query_op.execute(server)
+        def send_initial_query(server, session)
+          initial_query_op(session).execute(server)
         end
       end
     end

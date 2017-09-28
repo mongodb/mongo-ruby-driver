@@ -195,8 +195,8 @@ module Mongo
       #
       # @since 2.1.0
       def delete(id)
-        result = files_collection.find(:_id => id).delete_one
-        chunks_collection.find(:files_id => id).delete_many
+        result = files_collection.find({ :_id => id }, @options).delete_one
+        chunks_collection.find({ :files_id => id }, @options).delete_many
         raise Error::FileNotFound.new(id, :id) if result.n == 0
         result
       end

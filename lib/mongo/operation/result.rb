@@ -253,7 +253,7 @@ module Mongo
       #
       # @since 2.0.0
       def validate!
-        !successful? ? raise(Error::OperationFailure.new(parser.message)) : self
+        !successful? ? raise(Error::OperationFailure.new(parser.message, self)) : self
       end
 
       # Get the number of documents written by the server.
@@ -272,6 +272,30 @@ module Mongo
         end
       end
       alias :n :written_count
+
+      # Get the operation time reported in the server response.
+      #
+      # @example Get the operation time.
+      #   result.operation_time
+      #
+      # @return [ Object ] The operation time value.
+      #
+      # @since 2.5.0
+      def operation_time
+        first_document && first_document[OPERATION_TIME]
+      end
+
+      # Get the cluster time reported in the server response.
+      #
+      # @example Get the cluster time.
+      #   result.cluster_time
+      #
+      # @return [ BSON::Document ] The cluster time document.
+      #
+      # @since 2.5.0
+      def cluster_time
+        first_document && first_document[CLUSTER_TIME]
+      end
 
       private
 

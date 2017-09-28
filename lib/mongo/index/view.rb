@@ -29,7 +29,7 @@ module Mongo
       #   when sending the listIndexes command.
       attr_reader :batch_size
 
-      def_delegators :@collection, :cluster, :database, :read_preference, :write_concern
+      def_delegators :@collection, :cluster, :database, :read_preference, :write_concern, :client
       def_delegators :cluster, :next_primary
 
       # The index key field.
@@ -149,14 +149,16 @@ module Mongo
       # @since 2.0.0
       def create_many(*models)
         server = next_primary
-        spec = {
-                indexes: normalize_models(models.flatten, server),
-                db_name: database.name,
-                coll_name: collection.name
-               }
-
-        spec[:write_concern] = write_concern if server.features.collation_enabled?
-        Operation::Write::CreateIndex.new(spec).execute(server)
+        client.send(:with_session, @options) do |session|
+          spec = {
+                  indexes: normalize_models(models.flatten, server),
+                  db_name: database.name,
+                  coll_name: collection.name,
+                  session: session
+                 }
+          spec[:write_concern] = write_concern if server.features.collation_enabled?
+          Operation::Write::CreateIndex.new(spec).execute(server)
+        end
       end
 
       # Convenience method for getting index information by a specific name or
@@ -189,11 +191,13 @@ module Mongo
       # @since 2.0.0
       def each(&block)
         server = next_primary(false)
-        cursor = Cursor.new(self, send_initial_query(server), server).to_enum
+        session = client.send(:get_session, @options)
+        result = send_initial_query(server, session)
+        cursor = Cursor.new(self, result, server, session: session)
         cursor.each do |doc|
           yield doc
         end if block_given?
-        cursor
+        cursor.to_enum
       end
 
       # Create the new index view.
@@ -213,35 +217,41 @@ module Mongo
       def initialize(collection, options = {})
         @collection = collection
         @batch_size = options[:batch_size]
+        @options = options
       end
 
       private
 
       def drop_by_name(name)
-        spec = {
-                 db_name: database.name,
-                 coll_name: collection.name,
-                 index_name: name
-               }
-        server = next_primary
-        spec[:write_concern] = write_concern if server.features.collation_enabled?
-        Operation::Write::DropIndex.new(spec).execute(server)
+        client.send(:with_session, @options) do |session|
+          spec = {
+                   db_name: database.name,
+                   coll_name: collection.name,
+                   index_name: name,
+                   session: session
+                 }
+          server = next_primary
+          spec[:write_concern] = write_concern if server.features.collation_enabled?
+          Operation::Write::DropIndex.new(spec).execute(server)
+        end
       end
 
       def index_name(spec)
         spec.to_a.join('_')
       end
 
-      def indexes_spec
+      def indexes_spec(session)
         { selector: {
             listIndexes: collection.name,
             cursor: batch_size ? { batchSize: batch_size } : {} },
           coll_name: collection.name,
-          db_name: database.name }
+          db_name: database.name,
+          session: session
+        }
       end
 
-      def initial_query_op
-        Operation::Commands::Indexes.new(indexes_spec)
+      def initial_query_op(session)
+        Operation::Commands::Indexes.new(indexes_spec(session))
       end
 
       def limit; -1; end
@@ -257,8 +267,8 @@ module Mongo
         end
       end
 
-      def send_initial_query(server)
-        initial_query_op.execute(server)
+      def send_initial_query(server, session)
+        initial_query_op(session).execute(server)
       end
 
       def with_generated_names(models, server)

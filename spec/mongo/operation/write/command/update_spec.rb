@@ -95,7 +95,7 @@ describe Mongo::Operation::Write::Command::Update do
 
     context 'when the server supports OP_MSG', if: op_msg_enabled? do
 
-      let(:expected_global_args) do
+      let(:global_args) do
         {
             update: TEST_COLL,
             ordered: true,
@@ -113,9 +113,30 @@ describe Mongo::Operation::Write::Command::Update do
         }
       end
 
-      it 'creates the correct OP_MSG message' do
-        expect(Mongo::Protocol::Msg).to receive(:new).with([:none], {}, expected_global_args, expected_payload_1)
-        op.send(:message, authorized_primary)
+      context 'when the topology is sharded', if: sharded? && op_msg_enabled? do
+
+        let(:expected_global_args) do
+          global_args.merge(Mongo::Operation::CLUSTER_TIME => authorized_client.cluster.cluster_time)
+        end
+
+        it 'creates the correct OP_MSG message' do
+          authorized_client.command(ping:1)
+          expect(Mongo::Protocol::Msg).to receive(:new).with([:none], {}, expected_global_args, expected_payload_1)
+          op.send(:message, authorized_primary)
+        end
+      end
+
+      context 'when the topology is not sharded', if: !sharded? && op_msg_enabled? do
+
+        let(:expected_global_args) do
+          global_args
+        end
+
+        it 'creates the correct OP_MSG message' do
+          authorized_client.command(ping:1)
+          expect(Mongo::Protocol::Msg).to receive(:new).with([:none], {}, expected_global_args, expected_payload_1)
+          op.send(:message, authorized_primary)
+        end
       end
 
       context 'when the write concern is 0' do
@@ -124,9 +145,30 @@ describe Mongo::Operation::Write::Command::Update do
           Mongo::WriteConcern.get(w: 0)
         end
 
-        it 'creates the correct OP_MSG message' do
-          expect(Mongo::Protocol::Msg).to receive(:new).with([:more_to_come], {}, expected_global_args, expected_payload_1)
-          op.send(:message, authorized_primary)
+        context 'when the topology is sharded', if: sharded? && op_msg_enabled? do
+
+          let(:expected_global_args) do
+            global_args.merge(Mongo::Operation::CLUSTER_TIME => authorized_client.cluster.cluster_time)
+          end
+
+          it 'creates the correct OP_MSG message' do
+            authorized_client.command(ping:1)
+            expect(Mongo::Protocol::Msg).to receive(:new).with([:more_to_come], {}, expected_global_args, expected_payload_1)
+            op.send(:message, authorized_primary)
+          end
+        end
+
+        context 'when the topology is not sharded', if: !sharded? && op_msg_enabled? do
+
+          let(:expected_global_args) do
+            global_args
+          end
+
+          it 'creates the correct OP_MSG message' do
+            authorized_client.command(ping:1)
+            expect(Mongo::Protocol::Msg).to receive(:new).with([:more_to_come], {}, expected_global_args, expected_payload_1)
+            op.send(:message, authorized_primary)
+          end
         end
       end
     end
