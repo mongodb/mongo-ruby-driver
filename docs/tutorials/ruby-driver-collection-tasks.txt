@@ -101,3 +101,53 @@ documents must contain an ``age`` field which is a number.
                    { '$type' => "number" }
                  }
              })
+
+
+Change Streams
+```````````````
+
+As of version 3.6 of the MongoDB server, a new ```$changeStream`` pipeline stage is supported in the aggregation framework.
+Specifying this stage first in an aggregation pipeline allows users to request that notifications are sent for all
+changes to a particular collection. The helper method available for change streams on a collection object is preferred
+to running a raw aggregation with a $changeStream stage, for the purpose of supporting resumability.
+
+The change stream will attempt to resume one time upon a network error or a server error indicating that a failover is
+taking place.
+
+To start receiving change notifications, use the method ``#watch`` on a collection:
+
+.. code-block:: ruby
+
+  client = Mongo::Client.new([ '127.0.0.1:27017' ], :database => 'test')
+  stream = client[:test].watch
+
+Each document can be retrieved and processed by your application as in the following code example:
+
+.. code-block:: ruby
+
+  enum = stream.to_enum
+  begin
+    while true
+      change = enum.next
+      # do something
+      sleep(1)
+    end
+  rescue => e
+    # we know for sure it's unrecoverable
+    log_error(e)
+  end
+
+The change documents will expose a resume token at the key '_id'. This token can be used to specify a logical starting
+point for a new a ChangeStream:
+
+.. code-block:: ruby
+
+  stream = client[:test].watch([], resume_token: token)
+
+A subset of aggregation pipeline stages are available to a change stream and can be passed into the ``#watch`` method:
+
+.. code-block:: ruby
+
+  stream = client[:test].watch([ { '$match' => { 'operationType' => 'update' } }])
+
+
