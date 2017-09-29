@@ -104,7 +104,7 @@ module Mongo
       # @example Checkin a session.
       #   pool.checkin(session)
       #
-      # @param [ Session::ServerSession ] The session to checkin.
+      # @param [ Session::ServerSession ] session The session to checkin.
       #
       # @since 2.5.0
       def checkin(session)

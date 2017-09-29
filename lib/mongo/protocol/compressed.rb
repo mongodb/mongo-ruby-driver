@@ -48,7 +48,8 @@ module Mongo
       #
       # @param [ Mongo::Protocol::Message ] message The original message.
       # @param [ String, Symbol ] compressor The compression algorithm to use.
-      # @param [ Integer ] level The zlib compression level to use. -1 and nil imply default.
+      # @param [ Integer ] zlib_compression_level The zlib compression level to use.
+      #   -1 and nil imply default.
       #
       # @since 2.5.0
       def initialize(message, compressor, zlib_compression_level = nil)

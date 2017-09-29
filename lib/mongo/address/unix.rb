@@ -62,7 +62,7 @@ module Mongo
       # @example Get a Unix socket.
       #   address.socket(5)
       #
-      # @param [ Float ] timeout The socket timeout.
+      # @param [ Float ] socket_timeout The socket timeout.
       # @param [ Hash ] ssl_options SSL options - ignored.
       #
       # @return [ Pool::Socket::Unix ] The socket.

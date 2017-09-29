@@ -99,7 +99,7 @@ module Mongo
         # @option opts [ Hash ] :write_concern The write concern options.
         #   Defaults to the collection's write concern.
         # @option opts [ Hash ] :collation The collation to use.
-        # @options opts [ Array ] :array_filters A set of filters specifying to which array elements
+        # @option opts [ Array ] :array_filters A set of filters specifying to which array elements
         # an update should apply.
         #
         # @return [ BSON::Document ] The document.

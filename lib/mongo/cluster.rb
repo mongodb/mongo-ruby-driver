@@ -474,7 +474,7 @@ module Mongo
     # @example Update the cluster time.
     #   cluster.update_cluster_time(result)
     #
-    # @param [ Operation::Result ] The operation result containing the cluster time.
+    # @param [ Operation::Result ] result The operation result containing the cluster time.
     #
     # @return [ Object ] The cluster time.
     #

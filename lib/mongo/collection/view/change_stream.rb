@@ -51,7 +51,7 @@ module Mongo
         #
         # @param [ Collection::View ] view The collection view.
         # @param [ Array<Hash> ] pipeline The pipeline of operators to filter the change notifications.
-        # @param [ Hash ] opts The change stream options.
+        # @param [ Hash ] options The change stream options.
         #
         # @option options [ String ] :full_document Allowed values: ‘default’, ‘updateLookup’. Defaults to ‘default’.
         #   When set to ‘updateLookup’, the change notification for partial updates will include both a delta

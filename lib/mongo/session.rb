@@ -144,7 +144,7 @@ module Mongo
     # @example Process a response from the server.
     #   session.process(result)
     #
-    # @param [ Operation::Result ] The result from the operation.
+    # @param [ Operation::Result ] result The result from the operation.
     #
     # @return [ Operation::Result ] The result.
     #

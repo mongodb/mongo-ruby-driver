@@ -30,7 +30,6 @@ module Mongo
     #
     # @note This only retries read operations on socket errors.
     #
-    # @param [ Integer ] attempt The retry attempt count - for internal use.
     # @param [ Proc ] block The block to execute.
     #
     # @yieldparam [ Server ] server The server to which the write should be sent.

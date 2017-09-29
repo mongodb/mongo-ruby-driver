@@ -355,9 +355,9 @@ module Mongo
 
         # Writes a byte into the buffer.
         #
-        # @param buffer [ BSON::ByteBuffer ] buffer Buffer to receive the single byte.
-        # @param value [ String ] value The byte to write to the buffer.
-        # @param value [ true, false ] validating_keys Whether to validate keys.
+        # @param [ BSON::ByteBuffer ] buffer Buffer to receive the single byte.
+        # @param [ String ] value The byte to write to the buffer.
+        # @param [ true, false ] validating_keys Whether to validate keys.
         #
         # @return [ BSON::ByteBuffer ] Buffer with serialized value.
         #
@@ -385,9 +385,9 @@ module Mongo
 
         # Writes bytes into the buffer.
         #
-        # @param buffer [ BSON::ByteBuffer ] buffer Buffer to receive the bytes.
-        # @param value [ String ] value The bytes to write to the buffer.
-        # @param value [ true, false ] validating_keys Whether to validate keys.
+        # @param [ BSON::ByteBuffer ] buffer Buffer to receive the bytes.
+        # @param [ String ] value The bytes to write to the buffer.
+        # @param [ true, false ] validating_keys Whether to validate keys.
         #
         # @return [ BSON::ByteBuffer ] Buffer with serialized value.
         #

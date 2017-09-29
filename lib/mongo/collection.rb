@@ -174,7 +174,7 @@ module Mongo
     # @example Force the collection to be created.
     #   collection.create
     #
-    # @param [ Hash ] options The options for the create operation.
+    # @param [ Hash ] opts The options for the create operation.
     #
     # @option options [ Session ] :session The session to use for the operation.
     #
@@ -206,7 +206,7 @@ module Mongo
     # @example Drop the collection.
     #   collection.drop
     #
-    # @param [ Hash ] options The options for the drop operation.
+    # @param [ Hash ] opts The options for the drop operation.
     #
     # @option options [ Session ] :session The session to use for the operation.
     #
