@@ -24,12 +24,12 @@ describe 'change streams examples in Ruby' do
         client[:inventory].insert_one(x: 1)
       end
 
-      # Start Example 1
+      # Start Changestream Example 1
 
       cursor = client[:inventory].watch.to_enum
       next_change = cursor.next
 
-      # End Example 1
+      # End Changestream Example 1
 
       expect(next_change["_id"]).not_to be_nil
       expect(next_change["_id"]["_data"]).not_to be_nil
@@ -54,12 +54,12 @@ describe 'change streams examples in Ruby' do
         inventory.update_one({ _id: 1}, { "$set" => { x: 5 }})
       end
 
-      # Start Example 2
+      # Start Changestream Example 2
 
       cursor = inventory.watch([], full_document: 'updateLookup').to_enum
       next_change = cursor.next
 
-      # End Example 2
+      # End Changestream Example 2
 
       expect(next_change["_id"]).not_to be_nil
       expect(next_change["_id"]["_data"]).not_to be_nil
@@ -116,13 +116,13 @@ describe 'change streams examples in Ruby' do
       expect(next_next_change["documentKey"]).not_to be_nil
       expect(next_next_change["documentKey"]["_id"]).to eq(next_next_change["fullDocument"]["_id"])
 
-      # Start Example 3
+      # Start Changestream Example 3
 
       resume_token = next_change["_id"]
       cursor = inventory.watch([], resume_after: resume_token).to_enum
       resumed_change = cursor.next
 
-      # End Example 3
+      # End Changestream Example 3
 
       expect(resumed_change.length).to eq(next_next_change.length)
       resumed_change.each { |key| expect(resumed_change[key]).to eq(next_next_change[key]) }
