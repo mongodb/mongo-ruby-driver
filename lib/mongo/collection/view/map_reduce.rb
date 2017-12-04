@@ -190,7 +190,7 @@ module Mongo
           out.nil? || out == { inline: 1 } || out == { INLINE => 1 }
         end
 
-        def map_reduce_spec(session)
+        def map_reduce_spec(session = nil)
           Builder::MapReduce.new(map, reduce, view, options.merge(session: session)).specification
         end
 
