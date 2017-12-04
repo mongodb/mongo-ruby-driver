@@ -48,14 +48,10 @@ module Mongo
         cluster.scan!
         retry
       rescue Error::OperationFailure => e
-        if cluster.sharded? && e.retryable?
-          raise(e) if attempt > cluster.max_read_retries
-          log_retry(e)
-          sleep(cluster.read_retry_interval)
-          retry
-        else
-          raise e
-        end
+        raise(e) if !e.retryable? || (attempt > cluster.max_read_retries)
+        log_retry(e)
+        cluster.sharded? ? sleep(cluster.read_retry_interval) : cluster.scan!
+        retry
       end
     end
 
