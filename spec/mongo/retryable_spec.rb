@@ -95,45 +95,30 @@ describe Mongo::Retryable do
 
     context 'when an operation failure occurs' do
 
-      context 'when the cluster is not a mongos' do
+      context 'when the operation failure is not retryable' do
 
-        before do
-          expect(operation).to receive(:execute).and_raise(Mongo::Error::OperationFailure).ordered
-          expect(cluster).to receive(:sharded?).and_return(false)
+        let(:error) do
+          Mongo::Error::OperationFailure.new('not authorized')
         end
 
-        it 'raises an exception' do
+        before do
+          expect(operation).to receive(:execute).and_raise(error).ordered
+        end
+
+        it 'raises the exception' do
           expect {
             retryable.read
           }.to raise_error(Mongo::Error::OperationFailure)
         end
       end
 
-      context 'when the cluster is a mongos' do
+      context 'when the operation failure is retryable' do
 
-        context 'when the operation failure is not retryable' do
-
-          let(:error) do
-            Mongo::Error::OperationFailure.new('not authorized')
-          end
-
-          before do
-            expect(operation).to receive(:execute).and_raise(error).ordered
-            expect(cluster).to receive(:sharded?).and_return(true)
-          end
-
-          it 'raises the exception' do
-            expect {
-              retryable.read
-            }.to raise_error(Mongo::Error::OperationFailure)
-          end
+        let(:error) do
+          Mongo::Error::OperationFailure.new('no master')
         end
 
-        context 'when the operation failure is retryable' do
-
-          let(:error) do
-            Mongo::Error::OperationFailure.new('no master')
-          end
+        context 'when the cluster is sharded' do
 
           context 'when the retry succeeds' do
 
@@ -159,6 +144,46 @@ describe Mongo::Retryable do
               expect(cluster).to receive(:read_retry_interval).and_return(0.1).ordered
               expect(operation).to receive(:execute).and_raise(error).ordered
               expect(cluster).to receive(:sharded?).and_return(true)
+              expect(cluster).to receive(:max_read_retries).and_return(2).ordered
+              expect(cluster).to receive(:read_retry_interval).and_return(0.1).ordered
+              expect(operation).to receive(:execute).and_return(true).ordered
+            end
+
+            it 'returns the result' do
+              expect(retryable.read).to be true
+            end
+          end
+        end
+
+        context 'when the cluster is not sharded' do
+
+          context 'when the retry succeeds' do
+
+            before do
+              expect(operation).to receive(:execute).and_raise(error).ordered
+              expect(cluster).to receive(:sharded?).and_return(false)
+              expect(cluster).to receive(:scan!).and_return(true).ordered
+              expect(cluster).to receive(:max_read_retries).and_return(1).ordered
+              expect(cluster).to receive(:read_retry_interval).and_return(0.1).ordered
+              expect(operation).to receive(:execute).and_return(true).ordered
+            end
+
+            it 'returns the result' do
+              expect(retryable.read).to be true
+            end
+          end
+
+          context 'when the retry fails once and then succeeds' do
+
+            before do
+              expect(operation).to receive(:execute).and_raise(error).ordered
+              expect(cluster).to receive(:sharded?).and_return(false)
+              expect(cluster).to receive(:scan!).and_return(true).ordered
+              expect(cluster).to receive(:max_read_retries).and_return(2).ordered
+              expect(cluster).to receive(:read_retry_interval).and_return(0.1).ordered
+              expect(operation).to receive(:execute).and_raise(error).ordered
+              expect(cluster).to receive(:sharded?).and_return(false)
+              expect(cluster).to receive(:scan!).and_return(true).ordered
               expect(cluster).to receive(:max_read_retries).and_return(2).ordered
               expect(cluster).to receive(:read_retry_interval).and_return(0.1).ordered
               expect(operation).to receive(:execute).and_return(true).ordered
