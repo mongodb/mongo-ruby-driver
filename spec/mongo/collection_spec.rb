@@ -4364,8 +4364,11 @@ describe Mongo::Collection do
         context 'when batch_size is provided' do
 
           before do
-            authorized_collection.insert_one(a: 2)
-            authorized_collection.insert_one(a: 3)
+            Thread.new do
+              sleep 1
+              authorized_collection.insert_one(a: 2)
+              authorized_collection.insert_one(a: 3)
+            end
           end
 
           let(:change_stream) do
@@ -4375,31 +4378,28 @@ describe Mongo::Collection do
           it 'returns the documents in the batch size specified' do
             expect(change_stream.instance_variable_get(:@cursor)).to receive(:get_more).once.and_call_original
             enum.next
-            enum.next
           end
         end
 
         context 'when collation is provided' do
-          # pending 'server support for collation with the $changeStream operator'
-          #
-          # before do
-          #   authorized_collection.update_one({ a: 1 }, { '$set' => { a: 2 } })
-          # end
-          #
-          # let(:change_doc) do
-          #   change_stream.next
-          #   change_stream.next
-          # end
-          #
-          # let(:change_stream) do
-          #   authorized_collection.watch([ { '$match' => { operationType: 'UPDATE'}}],
-          #                               collation: { locale: 'en_US', strength: 2 } ).to_enum
-          # end
-          #
-          # it 'returns the change' do
-          #   expect(change_doc[:operationType]).to eq('update')
-          #   expect(change_doc[:fullDocument][:a]).to eq(2)
-          # end
+
+          before do
+            authorized_collection.update_one({ a: 1 }, { '$set' => { a: 2 } })
+          end
+
+          let(:change_doc) do
+            enum.next
+          end
+
+          let(:change_stream) do
+            authorized_collection.watch([ { '$match' => { operationType: 'UPDATE'}}],
+                                        collation: { locale: 'en_US', strength: 2 } ).to_enum
+          end
+
+          it 'returns the change' do
+            expect(change_doc['operationType']).to eq('update')
+            expect(change_doc['updateDescription']['updatedFields']['a']).to eq(2)
+          end
         end
       end
     end

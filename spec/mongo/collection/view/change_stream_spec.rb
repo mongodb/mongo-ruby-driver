@@ -137,8 +137,7 @@ describe Mongo::Collection::View::ChangeStream, if: test_change_streams? do
       end
 
       it 'sets the collation value to the provided document' do
-        expect(error).to be_a(Mongo::Error::OperationFailure)
-        expect(error.message).to include('Only default collation is allowed')
+        expect(command_selector['collation']).to eq(BSON::Document.new(options['collation']))
       end
     end
 
@@ -196,7 +195,9 @@ describe Mongo::Collection::View::ChangeStream, if: test_change_streams? do
         end
 
         it 'sends the pipeline to the server without a custom error' do
-          expect(change_stream).to be_a(Mongo::Collection::View::ChangeStream)
+          expect {
+            change_stream
+          }.to raise_exception(Mongo::Error::OperationFailure)
         end
 
         context 'when the operation fails', if: sessions_enabled? && test_change_streams? do
