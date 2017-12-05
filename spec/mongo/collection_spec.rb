@@ -1762,7 +1762,7 @@ describe Mongo::Collection do
       end
 
       it 'does not apply the collation to the distinct' do
-        expect(result).to eq(['bang', 'BANG'])
+        expect(result).to match_array(['bang', 'BANG'])
       end
     end
   end
