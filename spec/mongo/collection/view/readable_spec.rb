@@ -305,7 +305,7 @@ describe Mongo::Collection::View::Readable do
       end
     end
 
-    it 'takes a read preference option' do
+    it 'takes a read preference option', unless: sharded? do
       expect(view.count(read: { mode: :secondary })).to eq(10)
     end
 
