@@ -23,11 +23,6 @@ module Mongo
     # @since 2.5.0
     class SessionPool
 
-      # The command sent to the server to end a session.
-      #
-      # @since 2.5.0
-      END_SESSION = { :endSessions => 1 }.freeze
-
       # Create a SessionPool.
       #
       # @example
@@ -128,10 +123,10 @@ module Mongo
 
           while !ids.empty?
             begin
-              Operation::Commands::Command.new({
-                                                 :selector => END_SESSION.merge(ids: ids.shift(10_000)),
-                                                 :db_name => Database::ADMIN
-                                               }).execute(@client.cluster.next_primary)
+              Operation::Commands::Command.new(
+                :selector => { endSessions: ids.shift(10_000) },
+                :db_name => Database::ADMIN
+              ).execute(@client.cluster.next_primary)
             rescue
             end
           end

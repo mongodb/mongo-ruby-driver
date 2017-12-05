@@ -139,44 +139,54 @@ describe Mongo::Session::SessionPool do
       EventSubscriber.new
     end
 
-    before do
-      client.database.command(ping: 1)
-      pool.checkin(session_a)
-      pool.checkin(session_b)
-      pool.end_sessions
-    end
-
     after do
       client.close
     end
 
-    let(:end_sessions_command) do
-      subscriber.started_events.find { |c| c.command_name == :endSessions}
-    end
+    context 'when the number of ids is not larger than 10,000' do
 
-    it 'sends the endSessions command with all the session ids' do
-      expect(end_sessions_command.command[:ids]).to include(BSON::Document.new(session_a.session_id))
-      expect(end_sessions_command.command[:ids]).to include(BSON::Document.new(session_b.session_id))
-    end
+      before do
+        client.database.command(ping: 1)
+        pool.checkin(session_a)
+        pool.checkin(session_b)
+        pool.end_sessions
+      end
 
-    context 'when talking to a mongos', if: sessions_enabled? && sharded? do
+      let(:end_sessions_command) do
+        subscriber.started_events.find { |c| c.command_name == :endSessions}
+      end
 
       it 'sends the endSessions command with all the session ids' do
-        expect(end_sessions_command.command[:ids]).to include(BSON::Document.new(session_a.session_id))
-        expect(end_sessions_command.command[:ids]).to include(BSON::Document.new(session_b.session_id))
-        expect(end_sessions_command.command[:$clusterTime]).to eq(client.cluster.cluster_time)
+        expect(end_sessions_command.command[:endSessions]).to include(BSON::Document.new(session_a.session_id))
+        expect(end_sessions_command.command[:endSessions]).to include(BSON::Document.new(session_b.session_id))
+      end
+
+      context 'when talking to a mongos', if: sessions_enabled? && sharded? do
+
+        it 'sends the endSessions command with all the session ids' do
+          expect(end_sessions_command.command[:endSessions]).to include(BSON::Document.new(session_a.session_id))
+          expect(end_sessions_command.command[:endSessions]).to include(BSON::Document.new(session_b.session_id))
+          expect(end_sessions_command.command[:$clusterTime]).to eq(client.cluster.cluster_time)
+        end
       end
     end
 
     context 'when the number of ids is larger than 10_000' do
 
+      let(:ids) do
+        10_001.times.map do |i|
+          bytes = [SecureRandom.uuid.gsub(/\-/, '')].pack('H*')
+          BSON::Document.new(id: BSON::Binary.new(bytes, :uuid))
+        end
+      end
+
       before do
         queue = []
-        10_001.times do |i|
-          queue << double('session', session_id: i)
+        ids.each do |id|
+          queue << double('session', session_id: id)
         end
         pool.instance_variable_set(:@queue, queue)
-        expect(Mongo::Operation::Commands::Command).to receive(:new).at_least(:twice)
+        expect(Mongo::Operation::Commands::Command).to receive(:new).at_least(:twice).and_call_original
       end
 
       let(:end_sessions_commands) do
@@ -185,9 +195,9 @@ describe Mongo::Session::SessionPool do
 
       it 'sends the command more than once' do
         pool.end_sessions
-        # expect(end_sessions_commands.size).to eq(2)
-        # expect(end_sessions_commands[0].command[:ids]).to eq([*0...10_000])
-        # expect(end_sessions_commands[1].command[:ids]).to eq([10_000])
+        expect(end_sessions_commands.size).to eq(2)
+        expect(end_sessions_commands[0].command[:endSessions]).to eq(ids[0...10_000])
+        expect(end_sessions_commands[1].command[:endSessions]).to eq([ids[10_000]])
       end
     end
   end
