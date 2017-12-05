@@ -270,6 +270,11 @@ shared_examples 'an operation updating cluster time' do
         client.cluster.cluster_time
       end
 
+      let(:second_command_cluster_time) do
+        second_operation
+        subscriber.started_events[-1].command['$clusterTime']
+      end
+
       it 'does not update the cluster time of the cluster' do
         second_command_cluster_time
         expect(before_cluster_time).to eq(before_cluster_time)

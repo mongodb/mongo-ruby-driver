@@ -38,15 +38,21 @@ module Mongo
         end
       end
 
+      def add_session_id!(selector)
+        if session && !unacknowledged_write?
+          session.add_id!(selector)
+        end
+      end
+
       def unacknowledged_write?
         write_concern && write_concern.get_last_error.nil?
       end
 
       def command_op_msg(server, selector, options)
         add_cluster_time!(selector, server)
+        add_session_id!(selector)
         selector[Protocol::Msg::DATABASE_IDENTIFIER] = db_name
         selector[READ_PREFERENCE] = read.to_doc if read
-        session.add_id!(selector) if session
         flags = unacknowledged_write? ? [:more_to_come] : [:none]
         Protocol::Msg.new(flags, options, selector)
       end

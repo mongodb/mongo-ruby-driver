@@ -6,13 +6,15 @@ describe Mongo::Operation::Write::Command::Delete do
     Mongo::WriteConcern.get(WRITE_CONCERN)
   end
 
+  let(:session) { nil }
   let(:deletes) { [{:q => { :foo => 1 }, :limit => 1}] }
   let(:spec) do
     { :deletes       => deletes,
       :db_name       => authorized_collection.database.name,
       :coll_name     => authorized_collection.name,
       :write_concern => write_concern,
-      :ordered       => true
+      :ordered       => true,
+      :session       => session
     }
   end
 
@@ -93,7 +95,8 @@ describe Mongo::Operation::Write::Command::Delete do
             delete: TEST_COLL,
             ordered: true,
             writeConcern: write_concern.options,
-            '$db' => TEST_DB
+            '$db' => TEST_DB,
+            lsid: session.session_id
         }
       end
 
@@ -104,6 +107,10 @@ describe Mongo::Operation::Write::Command::Delete do
                        sequence: deletes
             }
         }
+      end
+
+      let(:session) do
+        authorized_client.start_session
       end
 
       context 'when the topology is sharded', if: sharded? && op_msg_enabled? do
@@ -141,7 +148,8 @@ describe Mongo::Operation::Write::Command::Delete do
         context 'when the topology is sharded', if: sharded? && op_msg_enabled? do
 
           let(:expected_global_args) do
-            global_args.merge(Mongo::Operation::CLUSTER_TIME => authorized_client.cluster.cluster_time)
+            global_args.delete(:lsid)
+            global_args.merge!(Mongo::Operation::CLUSTER_TIME => authorized_client.cluster.cluster_time)
           end
 
           it 'creates the correct OP_MSG message' do
@@ -154,6 +162,7 @@ describe Mongo::Operation::Write::Command::Delete do
         context 'when the topology is not sharded', if: !sharded? && op_msg_enabled? do
 
           let(:expected_global_args) do
+            global_args.delete(:lsid)
             global_args
           end
 

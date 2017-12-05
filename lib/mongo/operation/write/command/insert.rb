@@ -47,7 +47,7 @@ module Mongo
                             Protocol::Msg::DATABASE_IDENTIFIER => db_name
                           }.merge!(command_options)
             add_cluster_time!(global_args, server)
-            session.add_id!(global_args) if session
+            add_session_id!(global_args)
 
             section = { type: 1, payload: { identifier: IDENTIFIER, sequence: documents } }
             flags = unacknowledged_write? ? [:more_to_come] : [:none]

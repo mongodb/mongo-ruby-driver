@@ -3,12 +3,14 @@ require 'spec_helper'
 describe Mongo::Operation::Write::Command::Insert do
 
   let(:documents) { [{ :_id => 1, :foo => 1 }] }
+  let(:session) { nil }
   let(:spec) do
     { :documents     => documents,
       :db_name       => authorized_collection.database.name,
       :coll_name     => authorized_collection.name,
       :write_concern => write_concern,
-      :ordered       => true
+      :ordered       => true,
+      :session       => session
     }
   end
 
@@ -97,7 +99,8 @@ describe Mongo::Operation::Write::Command::Insert do
             insert: TEST_COLL,
             ordered: true,
             writeConcern: write_concern.options,
-            '$db' => TEST_DB
+            '$db' => TEST_DB,
+            lsid: session.session_id
         }
       end
 
@@ -108,6 +111,10 @@ describe Mongo::Operation::Write::Command::Insert do
                        sequence: documents
             }
         }
+      end
+
+      let(:session) do
+        authorized_client.start_session
       end
 
       context 'when the topology is sharded', if: sharded? && op_msg_enabled? do
@@ -151,6 +158,7 @@ describe Mongo::Operation::Write::Command::Insert do
         context 'when the topology is sharded', if: sharded? && op_msg_enabled? do
 
           let(:expected_global_args) do
+            global_args.delete(:lsid)
             global_args.merge(Mongo::Operation::CLUSTER_TIME => authorized_client.cluster.cluster_time)
           end
 
@@ -167,6 +175,7 @@ describe Mongo::Operation::Write::Command::Insert do
         context 'when the topology is not sharded', if: !sharded? && op_msg_enabled? do
 
           let(:expected_global_args) do
+            global_args.delete(:lsid)
             global_args
           end
 

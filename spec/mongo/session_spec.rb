@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe Mongo::Session do
+describe Mongo::Session, if: sessions_enabled? do
 
   let(:session) do
     authorized_client.start_session

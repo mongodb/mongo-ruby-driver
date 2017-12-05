@@ -10,13 +10,14 @@ describe Mongo::Operation::Write::Command::Update do
   let(:write_concern) do
     Mongo::WriteConcern.get(WRITE_CONCERN)
   end
-
+  let(:session) { nil }
   let(:spec) do
     { :updates       => updates,
       :db_name       => TEST_DB,
       :coll_name     => TEST_COLL,
       :write_concern => write_concern,
-      :ordered       => true
+      :ordered       => true,
+      :session       => session
     }
   end
 
@@ -100,7 +101,8 @@ describe Mongo::Operation::Write::Command::Update do
             update: TEST_COLL,
             ordered: true,
             writeConcern: write_concern.options,
-            '$db' => TEST_DB
+            '$db' => TEST_DB,
+            lsid: session.session_id
         }
       end
 
@@ -111,6 +113,10 @@ describe Mongo::Operation::Write::Command::Update do
                      sequence: updates
           }
         }
+      end
+
+      let(:session) do
+        authorized_client.start_session
       end
 
       context 'when the topology is sharded', if: sharded? && op_msg_enabled? do
@@ -148,6 +154,7 @@ describe Mongo::Operation::Write::Command::Update do
         context 'when the topology is sharded', if: sharded? && op_msg_enabled? do
 
           let(:expected_global_args) do
+            global_args.delete(:lsid)
             global_args.merge(Mongo::Operation::CLUSTER_TIME => authorized_client.cluster.cluster_time)
           end
 
@@ -161,6 +168,7 @@ describe Mongo::Operation::Write::Command::Update do
         context 'when the topology is not sharded', if: !sharded? && op_msg_enabled? do
 
           let(:expected_global_args) do
+            global_args.delete(:lsid)
             global_args
           end
 
