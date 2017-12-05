@@ -484,8 +484,8 @@ module Mongo
         @cluster_time_lock.synchronize do
           if @cluster_time.nil?
             @cluster_time = cluster_time_doc
-          else
-            @cluster_time = cluster_time_doc if cluster_time_doc[CLUSTER_TIME] > @cluster_time[CLUSTER_TIME]
+          elsif cluster_time_doc[CLUSTER_TIME] > @cluster_time[CLUSTER_TIME]
+            @cluster_time = cluster_time_doc
           end
         end
       end

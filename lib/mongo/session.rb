@@ -34,6 +34,11 @@ module Mongo
     # @since 2.5.0
     attr_reader :client
 
+    # The cluster time for this session.
+    #
+    # @since 2.5.0
+    attr_reader :cluster_time
+
     def_delegators :@server_session, :session_id
 
     # Error message describing that the session was attempted to be used by a client different from the
@@ -67,6 +72,7 @@ module Mongo
       @server_session = server_session
       @client = client
       @options = options
+      @cluster_time = nil
     end
 
     # End this session.
@@ -150,9 +156,30 @@ module Mongo
     #
     # @since 2.5.0
     def process(result)
-      set_operation_time(result)
+      unless implicit_session?
+        set_operation_time(result)
+        set_cluster_time(result)
+      end
       @server_session.set_last_use!
       result
+    end
+
+    # Advance the cached cluster time document for this session.
+    #
+    # @example Advance the cluster time.
+    #   session.advance_cluster_time(doc)
+    #
+    # @param [ BSON::Document, Hash ] new_cluster_time The new cluster time.
+    #
+    # @return [ BSON::Document, Hash ] The new cluster time.
+    #
+    # @since 2.5.0
+    def advance_cluster_time(new_cluster_time)
+      if @cluster_time
+        @cluster_time = [ @cluster_time, new_cluster_time ].max_by { |doc| doc[Cluster::CLUSTER_TIME] }
+      else
+        @cluster_time = new_cluster_time
+      end
     end
 
     private
@@ -164,6 +191,16 @@ module Mongo
     def set_operation_time(result)
       if result && result.operation_time
         @operation_time = result.operation_time
+      end
+    end
+
+    def set_cluster_time(result)
+      if cluster_time_doc = result.cluster_time
+        if @cluster_time.nil?
+          @cluster_time = cluster_time_doc
+        elsif cluster_time_doc[Cluster::CLUSTER_TIME] > @cluster_time[Cluster::CLUSTER_TIME]
+          @cluster_time = cluster_time_doc
+        end
       end
     end
 

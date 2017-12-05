@@ -22,11 +22,19 @@ module Mongo
 
       private
 
+      ZERO_TIMESTAMP = BSON::Timestamp.new(0,0)
+
       READ_PREFERENCE = '$readPreference'.freeze
 
       def add_cluster_time!(selector, server)
-        if cluster_time = server.mongos? && server.cluster_time
-          selector[CLUSTER_TIME] = cluster_time
+        if server.mongos?
+          cluster_time = [ server.cluster_time, (session && session.cluster_time) ].max_by do |doc|
+                            (doc && doc[Cluster::CLUSTER_TIME]) || ZERO_TIMESTAMP
+                          end
+
+          if cluster_time && (cluster_time[Cluster::CLUSTER_TIME] > ZERO_TIMESTAMP)
+            selector[CLUSTER_TIME] = cluster_time
+          end
         end
       end
 

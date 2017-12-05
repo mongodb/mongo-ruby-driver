@@ -126,6 +126,10 @@ shared_examples 'an operation updating cluster time' do
     client.cluster
   end
 
+  let(:session) do
+    client.start_session
+  end
+
   let(:client) do
     authorized_client.with(heartbeat_frequency: 100).tap do |cl|
       cl.subscribe(Mongo::Monitoring::COMMAND, subscriber)
@@ -147,12 +151,16 @@ shared_examples 'an operation updating cluster time' do
       context 'when the server is a mongos', if: (sharded? && sessions_enabled?) do
 
         let!(:reply_cluster_time) do
-          operation
+          operation_with_session
           subscriber.succeeded_events[-1].reply['$clusterTime']
         end
 
         it 'updates the cluster time of the cluster' do
           expect(cluster.cluster_time).to eq(reply_cluster_time)
+        end
+
+        it 'updates the cluster time of the session' do
+          expect(session.cluster_time).to eq(reply_cluster_time)
         end
       end
 
@@ -163,12 +171,16 @@ shared_examples 'an operation updating cluster time' do
         end
 
         let!(:reply_cluster_time) do
-          operation
+          operation_with_session
           subscriber.succeeded_events[-1].reply['$clusterTime']
         end
 
         it 'does not update the cluster time of the cluster' do
           expect(before_cluster_time).to eq(before_cluster_time)
+        end
+
+        it 'does not update the cluster time of the session' do
+          expect(session.cluster_time).to be_nil
         end
       end
     end
@@ -193,19 +205,62 @@ shared_examples 'an operation updating cluster time' do
   context 'when the command is run twice' do
 
     let!(:reply_cluster_time) do
-      operation
+      operation_with_session
       subscriber.succeeded_events[-1].reply['$clusterTime']
-    end
-
-    let(:second_command_cluster_time) do
-      second_operation
-      subscriber.started_events[-1].command['$clusterTime']
     end
 
     context 'when the server is a mongos', if: (sharded? && sessions_enabled?) do
 
-      it 'includes the received cluster time in the second command' do
-        expect(second_command_cluster_time).to eq(reply_cluster_time)
+      context 'when the session cluster time is advanced' do
+
+        before do
+          session.advance_cluster_time(advanced_cluster_time)
+        end
+
+        let(:second_command_cluster_time) do
+          second_operation
+          subscriber.started_events[-1].command['$clusterTime']
+        end
+
+        context 'when the advanced cluster time is greater than the existing cluster time' do
+
+          let(:advanced_cluster_time) do
+            new_timestamp = BSON::Timestamp.new(reply_cluster_time[Mongo::Cluster::CLUSTER_TIME].seconds,
+                                                reply_cluster_time[Mongo::Cluster::CLUSTER_TIME].increment + 1)
+            new_cluster_time = reply_cluster_time.dup
+            new_cluster_time.merge(Mongo::Cluster::CLUSTER_TIME => new_timestamp)
+          end
+
+          it 'includes the advanced cluster time in the second command' do
+            expect(second_command_cluster_time).to eq(advanced_cluster_time)
+          end
+        end
+
+        context 'when the advanced cluster time is not greater than the existing cluster time' do
+
+          let(:advanced_cluster_time) do
+            new_timestamp = BSON::Timestamp.new(reply_cluster_time[Mongo::Cluster::CLUSTER_TIME].seconds,
+                                                reply_cluster_time[Mongo::Cluster::CLUSTER_TIME].increment - 1)
+            new_cluster_time = reply_cluster_time.dup
+            new_cluster_time.merge(Mongo::Cluster::CLUSTER_TIME => new_timestamp)
+          end
+
+          it 'does not advance the cluster time' do
+            expect(second_command_cluster_time).to eq(reply_cluster_time)
+          end
+        end
+      end
+
+      context 'when the session cluster time is not advanced' do
+
+        let(:second_command_cluster_time) do
+          second_operation
+          subscriber.started_events[-1].command['$clusterTime']
+        end
+
+        it 'includes the received cluster time in the second command' do
+          expect(second_command_cluster_time).to eq(reply_cluster_time)
+        end
       end
     end
 

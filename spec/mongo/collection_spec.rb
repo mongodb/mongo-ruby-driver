@@ -763,8 +763,12 @@ describe Mongo::Collection do
         client[TEST_COLL].find.first
       end
 
+      let(:operation_with_session) do
+        client[TEST_COLL].find({}, session: session).first
+      end
+
       let(:second_operation) do
-        client[TEST_COLL].find.first
+        client[TEST_COLL].find({}, session: session).first
       end
 
       it_behaves_like 'an operation updating cluster time'
@@ -1228,8 +1232,12 @@ describe Mongo::Collection do
         client[TEST_COLL].insert_one({ name: 'testing' })
       end
 
+      let(:operation_with_session) do
+        client[TEST_COLL].insert_one({ name: 'testing' }, session: session)
+      end
+
       let(:second_operation) do
-        client[TEST_COLL].insert_one({ name: 'testing' })
+        client[TEST_COLL].insert_one({ name: 'testing' }, session: session)
       end
 
       it_behaves_like 'an operation updating cluster time'
@@ -1459,8 +1467,12 @@ describe Mongo::Collection do
         client[TEST_COLL].aggregate([]).first
       end
 
+      let(:operation_with_session) do
+        client[TEST_COLL].aggregate([], session: session).first
+      end
+
       let(:second_operation) do
-        client[TEST_COLL].aggregate([]).first
+        client[TEST_COLL].aggregate([], session: session).first
       end
 
       it_behaves_like 'an operation updating cluster time'

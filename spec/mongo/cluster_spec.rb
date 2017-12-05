@@ -580,8 +580,12 @@ describe Mongo::Cluster do
       client.command(ping: 1)
     end
 
+    let(:operation_with_session) do
+      client.command({ ping: 1 }, session: session)
+    end
+
     let(:second_operation) do
-      client.command(ping: 1)
+      client.command({ ping: 1 }, session: session)
     end
 
     it_behaves_like 'an operation updating cluster time'
