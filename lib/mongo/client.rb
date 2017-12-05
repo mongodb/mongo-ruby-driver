@@ -451,7 +451,7 @@ module Mongo
     end
 
     def sessions_supported?
-      if cluster.servers.empty?
+      if cluster.servers.empty? && !cluster.topology.single?
         ServerSelector.get(mode: :primary_preferred).select_server(cluster)
       end
       !!logical_session_timeout
