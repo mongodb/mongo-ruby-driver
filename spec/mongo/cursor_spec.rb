@@ -268,7 +268,7 @@ describe Mongo::Cursor do
       end
 
 
-      it 'schedules a kill cursors op' do
+      it 'schedules a kill cursors op', unless: sessions_enabled? do
         sleep(Mongo::Cluster::CursorReaper::FREQUENCY + 0.5)
         expect {
           cursor.to_a
