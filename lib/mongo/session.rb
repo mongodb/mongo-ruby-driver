@@ -184,6 +184,18 @@ module Mongo
 
     private
 
+    def get_causal_consistency_doc(read_concern)
+      if @operation_time && causal_consistency?
+        read_concern.merge(:afterClusterTime => @operation_time)
+      else
+        read_concern
+      end
+    end
+
+    def causal_consistency?
+      @causal_consistency ||= (!@options.key?(:causal_consistency) || @options[:causal_consistency])
+    end
+
     def implicit_session?
       @implicit_session ||= !!(@options.key?(:implicit) && @options[:implicit] == true)
     end
