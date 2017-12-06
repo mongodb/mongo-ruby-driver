@@ -71,7 +71,7 @@ module Mongo
     def initialize(server_session, client, options = {})
       @server_session = server_session
       @client = client
-      @options = options
+      @options = options.dup.freeze
       @cluster_time = nil
     end
 

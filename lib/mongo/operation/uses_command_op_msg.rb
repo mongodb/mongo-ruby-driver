@@ -48,9 +48,15 @@ module Mongo
         write_concern && write_concern.get_last_error.nil?
       end
 
+      def update_selector_for_session!(selector, server)
+        unless session && session.send(:implicit_session?) && !server.features.sessions_enabled?
+          add_cluster_time!(selector, server)
+          add_session_id!(selector)
+        end
+      end
+
       def command_op_msg(server, selector, options)
-        add_cluster_time!(selector, server)
-        add_session_id!(selector)
+        update_selector_for_session!(selector, server)
         selector[Protocol::Msg::DATABASE_IDENTIFIER] = db_name
         selector[READ_PREFERENCE] = read.to_doc if read
         flags = unacknowledged_write? ? [:more_to_come] : [:none]

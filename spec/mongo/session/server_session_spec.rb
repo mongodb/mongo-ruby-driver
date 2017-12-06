@@ -9,6 +9,7 @@ describe Mongo::Session::ServerSession do
     end
 
     it 'sets a UUID as the session id' do
+      expect(described_class.new.instance_variable_get(:@session_id)).to be_a(BSON::Document)
       expect(described_class.new.session_id).to be_a(BSON::Document)
       expect(described_class.new.session_id[:id]).to be_a(BSON::Binary)
     end

@@ -46,6 +46,7 @@ module Mongo
       # @since 2.5.0
       def initialize
         set_last_use!
+        session_id
       end
 
       # Update the last_use attribute of the server session to now.

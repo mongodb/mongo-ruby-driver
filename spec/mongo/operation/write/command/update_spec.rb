@@ -143,6 +143,25 @@ describe Mongo::Operation::Write::Command::Update do
           expect(Mongo::Protocol::Msg).to receive(:new).with([:none], {}, expected_global_args, expected_payload_1)
           op.send(:message, authorized_primary)
         end
+
+        context 'when an implicit session is created and the topology is then updated and the server does not support sessions' do
+
+          let(:expected_global_args) do
+            global_args.delete(:lsid)
+            global_args
+          end
+
+          before do
+            session.instance_variable_set(:@options, { implicit: true })
+            allow(authorized_primary.features).to receive(:sessions_enabled?).and_return(false)
+          end
+
+          it 'creates the correct OP_MSG message' do
+            authorized_client.command(ping:1)
+            expect(Mongo::Protocol::Msg).to receive(:new).with([:none], {}, expected_global_args, expected_payload_1)
+            op.send(:message, authorized_primary)
+          end
+        end
       end
 
       context 'when the write concern is 0' do

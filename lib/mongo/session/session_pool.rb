@@ -65,8 +65,7 @@ module Mongo
       # @since 2.5.0
       def with_session
         server_session = checkout
-        result = yield(server_session)
-        result
+        yield(server_session)
       ensure
         begin; checkin(server_session) if server_session; rescue; end
       end
@@ -123,10 +122,11 @@ module Mongo
 
           while !ids.empty?
             begin
+              server = ServerSelector.get(mode: :primary_preferred).select_server(@client.cluster)
               Operation::Commands::Command.new(
                 :selector => { endSessions: ids.shift(10_000) },
                 :db_name => Database::ADMIN
-              ).execute(@client.cluster.next_primary)
+              ).execute(server)
             rescue
             end
           end
