@@ -38,6 +38,18 @@ module Mongo
           :users_info => 2
         }.freeze
 
+        # Error message if the server is too old for this version of the driver.
+        #
+        # @since 2.5.0
+        SERVER_TOO_OLD = "Server at (%s) reports wire version (%s), but this version of the Ruby driver " +
+                           "requires at least (%s)."
+
+        # Error message if the driver is too old for the version of the server.
+        #
+        # @since 2.5.0
+        DRIVER_TOO_OLD = "Server at (%s) requires wire version (%s), but this version of the Ruby driver " +
+                           "only supports up to (%s)."
+
         # The wire protocol versions that this version of the driver supports.
         #
         # @since 2.0.0
@@ -74,17 +86,22 @@ module Mongo
         #   versions.
         #
         # @since 2.0.0
-        def initialize(server_wire_versions)
+        def initialize(server_wire_versions, address = nil)
           @server_wire_versions = server_wire_versions
-          check_driver_support!
+          check_driver_support!(address)
         end
 
         private
 
-        def check_driver_support!
-          if DRIVER_WIRE_VERSIONS.max < server_wire_versions.min ||
-             DRIVER_WIRE_VERSIONS.min > server_wire_versions.max
-            raise Error::UnsupportedFeatures.new(server_wire_versions)
+        def check_driver_support!(address)
+          if DRIVER_WIRE_VERSIONS.min > server_wire_versions.max
+            raise Error::UnsupportedFeatures.new(SERVER_TOO_OLD % [address,
+                                                                   server_wire_versions.max,
+                                                                   DRIVER_WIRE_VERSIONS.min])
+          elsif DRIVER_WIRE_VERSIONS.max < server_wire_versions.min
+            raise Error::UnsupportedFeatures.new(DRIVER_TOO_OLD % [address,
+                                                                   server_wire_versions.min,
+                                                                   DRIVER_WIRE_VERSIONS.max])
           end
         end
       end

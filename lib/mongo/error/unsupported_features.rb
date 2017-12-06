@@ -20,24 +20,6 @@ module Mongo
     #
     # @since 2.0.0
     class UnsupportedFeatures < Error
-
-      # Initialize the exception.
-      #
-      # @example Initialize the exception.
-      #   Unsupported.new(0..3)
-      #
-      # @param [ Range ] server_wire_versions The server's supported wire
-      #   versions.
-      #
-      # @since 2.0.0
-      def initialize(server_wire_versions)
-        super(
-          "This version of the driver, #{Mongo::VERSION}, only supports wire " +
-          "protocol versions #{Server::Description::Features::DRIVER_WIRE_VERSIONS} " +
-          "and the server supports wire versions #{server_wire_versions}. " + 
-          "Please upgrade the driver to be able to support this server version."
-        )
-      end
     end
   end
 end

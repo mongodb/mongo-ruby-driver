@@ -2,12 +2,16 @@ require 'spec_helper'
 
 describe Mongo::Server::Description::Features do
 
+  let(:features) do
+    described_class.new(wire_versions, default_address)
+  end
+
   describe '#initialize' do
 
     context 'when the server wire version range is the same' do
 
-      let(:features) do
-        described_class.new(0..3)
+      let(:wire_versions) do
+        0..3
       end
 
       it 'sets the server wire version range' do
@@ -17,17 +21,21 @@ describe Mongo::Server::Description::Features do
 
     context 'when the server wire version range min is higher' do
 
+      let(:wire_versions) do
+        described_class::DRIVER_WIRE_VERSIONS.max+1..described_class::DRIVER_WIRE_VERSIONS.max+2
+      end
+
       it 'raises an exception' do
         expect {
-          described_class.new(described_class::DRIVER_WIRE_VERSIONS.max+1..described_class::DRIVER_WIRE_VERSIONS.max+2)
+          features
         }.to raise_error(Mongo::Error::UnsupportedFeatures)
       end
     end
 
     context 'when the server wire version range max is higher' do
 
-      let(:features) do
-        described_class.new(0..4)
+      let(:wire_versions) do
+        0..4
       end
 
       it 'sets the server wire version range' do
@@ -37,17 +45,21 @@ describe Mongo::Server::Description::Features do
 
     context 'when the server wire version range max is lower' do
 
+      let(:wire_versions) do
+        described_class::DRIVER_WIRE_VERSIONS.min-2..described_class::DRIVER_WIRE_VERSIONS.min-1
+      end
+
       it 'raises an exception' do
         expect {
-          described_class.new(described_class::DRIVER_WIRE_VERSIONS.min-2..described_class::DRIVER_WIRE_VERSIONS.min-1)
+          features
         }.to raise_error(Mongo::Error::UnsupportedFeatures)
       end
     end
 
     context 'when the server wire version range max is lower' do
 
-      let(:features) do
-        described_class.new(0..2)
+      let(:wire_versions) do
+        0..2
       end
 
       it 'sets the server wire version range' do
@@ -60,8 +72,8 @@ describe Mongo::Server::Description::Features do
 
     context 'when the wire range includes 5' do
 
-      let(:features) do
-        described_class.new(0..5)
+      let(:wire_versions) do
+        0..5
       end
 
       it 'returns true' do
@@ -71,8 +83,8 @@ describe Mongo::Server::Description::Features do
 
     context 'when the wire range does not include 5' do
 
-      let(:features) do
-        described_class.new(0..2)
+      let(:wire_versions) do
+        0..2
       end
 
       it 'returns false' do
@@ -85,8 +97,8 @@ describe Mongo::Server::Description::Features do
 
     context 'when the wire range includes 5' do
 
-      let(:features) do
-        described_class.new(0..5)
+      let(:wire_versions) do
+        0..5
       end
 
       it 'returns true' do
@@ -96,8 +108,8 @@ describe Mongo::Server::Description::Features do
 
     context 'when the wire range does not include 5' do
 
-      let(:features) do
-        described_class.new(0..2)
+      let(:wire_versions) do
+        0..2
       end
 
       it 'returns false' do
@@ -110,8 +122,8 @@ describe Mongo::Server::Description::Features do
 
     context 'when the wire range includes 4' do
 
-      let(:features) do
-        described_class.new(0..4)
+      let(:wire_versions) do
+        0..4
       end
 
       it 'returns true' do
@@ -121,8 +133,8 @@ describe Mongo::Server::Description::Features do
 
     context 'when the wire range does not include 4' do
 
-      let(:features) do
-        described_class.new(0..2)
+      let(:wire_versions) do
+        0..2
       end
 
       it 'returns false' do
@@ -135,8 +147,8 @@ describe Mongo::Server::Description::Features do
 
     context 'when the wire range includes 3' do
 
-      let(:features) do
-        described_class.new(0..3)
+      let(:wire_versions) do
+        0..3
       end
 
       it 'returns true' do
@@ -146,8 +158,8 @@ describe Mongo::Server::Description::Features do
 
     context 'when the wire range does not include 3' do
 
-      let(:features) do
-        described_class.new(0..2)
+      let(:wire_versions) do
+        0..2
       end
 
       it 'returns false' do
@@ -160,8 +172,8 @@ describe Mongo::Server::Description::Features do
 
     context 'when the wire range includes 3' do
 
-      let(:features) do
-        described_class.new(0..3)
+      let(:wire_versions) do
+        0..3
       end
 
       it 'returns true' do
@@ -171,8 +183,8 @@ describe Mongo::Server::Description::Features do
 
     context 'when the wire range does not include 3' do
 
-      let(:features) do
-        described_class.new(0..2)
+      let(:wire_versions) do
+        0..2
       end
 
       it 'returns false' do
@@ -185,8 +197,8 @@ describe Mongo::Server::Description::Features do
 
     context 'when the wire range includes 2' do
 
-      let(:features) do
-        described_class.new(0..3)
+      let(:wire_versions) do
+        0..3
       end
 
       it 'returns true' do
@@ -196,8 +208,8 @@ describe Mongo::Server::Description::Features do
 
     context 'when the wire range does not include 2' do
 
-      let(:features) do
-        described_class.new(0..1)
+      let(:wire_versions) do
+        0..1
       end
 
       it 'returns false' do
@@ -210,8 +222,8 @@ describe Mongo::Server::Description::Features do
 
     context 'when the wire range includes 3' do
 
-      let(:features) do
-        described_class.new(0..3)
+      let(:wire_versions) do
+        0..3
       end
 
       it 'returns true' do
@@ -221,8 +233,8 @@ describe Mongo::Server::Description::Features do
 
     context 'when the wire range does not include 3' do
 
-      let(:features) do
-        described_class.new(0..2)
+      let(:wire_versions) do
+        0..2
       end
 
       it 'returns false' do
