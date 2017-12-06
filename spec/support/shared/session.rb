@@ -149,7 +149,7 @@ shared_examples 'an operation updating cluster time' do
 
     context 'when the server is version 3.6' do
 
-      context 'when the server is a mongos', if: (sharded? && sessions_enabled?) do
+      context 'when the cluster is sharded or a replica set', if: (!standalone? && sessions_enabled?) do
 
         let!(:reply_cluster_time) do
           operation_with_session
@@ -210,7 +210,7 @@ shared_examples 'an operation updating cluster time' do
       subscriber.succeeded_events[-1].reply['$clusterTime']
     end
 
-    context 'when the server is a mongos', if: (sharded? && sessions_enabled?) do
+    context 'when the cluster is sharded or a replica set', if: (!standalone? && sessions_enabled?) do
 
       context 'when the session cluster time is advanced' do
 
@@ -265,7 +265,7 @@ shared_examples 'an operation updating cluster time' do
       end
     end
 
-    context 'when the server is not a mongos', if: (!sharded? && sessions_enabled?) do
+    context 'when the server is a standalone', if: (standalone? && sessions_enabled?) do
 
       let(:before_cluster_time) do
         client.cluster.cluster_time

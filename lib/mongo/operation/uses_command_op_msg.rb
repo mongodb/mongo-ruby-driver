@@ -27,7 +27,7 @@ module Mongo
       READ_PREFERENCE = '$readPreference'.freeze
 
       def add_cluster_time!(selector, server)
-        if server.mongos?
+        unless server.standalone?
           cluster_time = [ server.cluster_time, (session && session.cluster_time) ].max_by do |doc|
                             (doc && doc[Cluster::CLUSTER_TIME]) || ZERO_TIMESTAMP
                           end
