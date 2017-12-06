@@ -27,7 +27,7 @@ module Mongo
       READ_PREFERENCE = '$readPreference'.freeze
 
       def add_cluster_time!(selector, server)
-        unless server.standalone?
+        if !server.standalone?
           cluster_time = [ server.cluster_time, (session && session.cluster_time) ].max_by do |doc|
                             (doc && doc[Cluster::CLUSTER_TIME]) || ZERO_TIMESTAMP
                           end
@@ -39,9 +39,7 @@ module Mongo
       end
 
       def add_session_id!(selector)
-        if session && !unacknowledged_write?
-          session.add_id!(selector)
-        end
+        session.add_id!(selector) unless unacknowledged_write?
       end
 
       def unacknowledged_write?
@@ -49,7 +47,9 @@ module Mongo
       end
 
       def update_selector_for_session!(selector, server)
-        unless session && session.send(:implicit_session?) && !server.features.sessions_enabled?
+        # the driver MUST ignore any implicit session if at the point it is sending a command
+        # to a specific server it turns out that that particular server doesn't support sessions after all
+        if server.features.sessions_enabled? || !session.send(:implicit_session?)
           add_cluster_time!(selector, server)
           add_session_id!(selector)
         end
