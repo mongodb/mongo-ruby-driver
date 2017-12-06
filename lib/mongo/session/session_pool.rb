@@ -118,7 +118,7 @@ module Mongo
       # @since 2.5.0
       def end_sessions
         if @client
-          while !ids.empty?
+          while !@queue.empty?
             begin
               Operation::Commands::Command.new(
                 :selector => { endSessions: @queue.shift(10_000).collect { |s| s.session_id } },
