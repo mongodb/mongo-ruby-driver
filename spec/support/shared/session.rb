@@ -98,6 +98,7 @@ shared_examples 'a failed operation using a session' do
     end
 
     let!(:operation_result) do
+      sleep 0.2
       begin; failed_operation; rescue => e; e; end
     end
 
@@ -164,7 +165,7 @@ shared_examples 'an operation updating cluster time' do
         end
       end
 
-      context 'when the server is not a mongos', if: (!sharded? && sessions_enabled?) do
+      context 'when the server is a standalone', if: (standalone? && sessions_enabled?) do
 
         let(:before_cluster_time) do
           client.cluster.cluster_time
