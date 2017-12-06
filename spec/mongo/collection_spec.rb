@@ -1492,6 +1492,17 @@ describe Mongo::Collection do
         expect(authorized_collection.aggregate([], options).options).to eq(BSON::Document.new(options))
       end
 
+      context 'when the :comment option is provided' do
+
+        let(:options) do
+          { :comment => 'testing' }
+        end
+
+        it 'sets the options on the Aggregation object' do
+          expect(authorized_collection.aggregate([], options).options).to eq(BSON::Document.new(options))
+        end
+      end
+
       context 'when a session is provided' do
 
         let(:session) do

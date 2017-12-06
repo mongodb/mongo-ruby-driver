@@ -287,6 +287,7 @@ module Mongo
     # @option options [ true, false ] :bypass_document_validation Whether or
     #   not to skip document level validation.
     # @option options [ Hash ] :collation The collation to use.
+    # @option options [ String ] :comment Associate a comment with the aggregation.
     # @option options [ Session ] :session The session to use.
     #
     # @return [ Aggregation ] The aggregation object.

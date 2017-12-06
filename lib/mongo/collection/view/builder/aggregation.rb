@@ -35,7 +35,8 @@ module Mongo
             :explain => 'explain',
             :bypass_document_validation => 'bypassDocumentValidation',
             :collation => 'collation',
-            :hint => 'hint'
+            :hint => 'hint',
+            :comment => 'comment'
           ).freeze
 
           def_delegators :@view, :collection, :database, :read, :write_concern

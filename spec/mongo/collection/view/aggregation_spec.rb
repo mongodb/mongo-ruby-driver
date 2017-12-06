@@ -357,6 +357,17 @@ describe Mongo::Collection::View::Aggregation do
       end
     end
 
+    context 'when comment is an option' do
+
+      let(:options) do
+        { :comment => 'testing' }
+      end
+
+      it 'includes the option in the spec' do
+        expect(aggregation_spec[:selector][:comment]).to eq(options[:comment])
+      end
+    end
+
     context 'when batch_size is set' do
 
       context 'when batch_size is set on the view' do
