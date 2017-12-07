@@ -184,9 +184,9 @@ module Mongo
 
     private
 
-    def get_causal_consistency_doc(read_concern)
+    def causal_consistency_doc(read_concern)
       if @operation_time && causal_consistency?
-        read_concern.merge(:afterClusterTime => @operation_time)
+        (read_concern || {}).merge(:afterClusterTime => @operation_time)
       else
         read_concern
       end

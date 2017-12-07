@@ -26,6 +26,8 @@ module Mongo
 
       READ_PREFERENCE = '$readPreference'.freeze
 
+      SUPPORTS_READ_CONCERN = [ :find, :aggregate, :distinct, :count, :parallelCollectionScan, :geoNear, :geoSearch, :mapReduce]
+
       def apply_cluster_time!(selector, server)
         if !server.standalone?
           cluster_time = [ server.cluster_time, (session && session.cluster_time) ].max_by do |doc|
@@ -46,20 +48,24 @@ module Mongo
         write_concern && write_concern.get_last_error.nil?
       end
 
-      def apply_causal_consistency!(selector)
-        if read_concern
-          full_read_concern_doc = session.send(:get_causal_consistency_doc, read_concern)
-          selector[:readConcern] = full_read_concern_doc unless full_read_concern_doc.empty?
+      def apply_causal_consistency!(selector, server)
+        if supports_read_concern?(server)
+          full_read_concern_doc = session.send(:causal_consistency_doc, selector[:readConcern])
+          selector[:readConcern] = full_read_concern_doc if full_read_concern_doc
         end
+      end
+
+      def supports_read_concern?(server)
+        SUPPORTS_READ_CONCERN && !server.standalone?
       end
 
       def update_selector_for_session!(selector, server)
         # the driver MUST ignore any implicit session if at the point it is sending a command
         # to a specific server it turns out that that particular server doesn't support sessions after all
-        if server.features.sessions_enabled? || !session.send(:implicit_session?)
+        if server.features.sessions_enabled? || (session && !session.send(:implicit_session?))
           apply_cluster_time!(selector, server)
           apply_session_id!(selector)
-          apply_causal_consistency!(selector)
+          apply_causal_consistency!(selector, server)
         end
       end
 

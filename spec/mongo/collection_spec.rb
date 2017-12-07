@@ -867,10 +867,6 @@ describe Mongo::Collection do
 
     context 'when provided options' do
 
-      let(:view) do
-        authorized_collection.find({}, options)
-      end
-
       context 'when a session is provided' do
 
         let(:operation) do
@@ -882,7 +878,7 @@ describe Mongo::Collection do
         end
 
         let(:failed_operation) do
-          authorized_collection.find({ '$._id' => 1 }, session: session).to_a
+          client[authorized_collection.name].find({ '$._id' => 1 }, session: session).to_a
         end
 
         let(:client) do
@@ -925,6 +921,24 @@ describe Mongo::Collection do
         it 'sends the session id' do
           expect(command['lsid']).to eq(session.session_id)
         end
+      end
+      
+      context 'when a session supporting causal consistency is used' do
+
+        let(:operation) do
+          collection.find({}, session: session).to_a
+        end
+
+        let(:command) do
+          operation
+          subscriber.started_events.find { |cmd| cmd.command_name == 'find' }.command
+        end
+
+        it_behaves_like 'an operation supporting causally consistent reads'
+      end
+
+      let(:view) do
+        authorized_collection.find({}, options)
       end
 
       context 'when provided :allow_partial_results' do

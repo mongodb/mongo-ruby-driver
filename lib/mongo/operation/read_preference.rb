@@ -57,7 +57,6 @@ module Mongo
           command_op_msg(server, selector, options)
         else
           sel = update_selector_for_read_pref(selector, server)
-          sel[:readConcern] = read_concern if read_concern && !read_concern.empty?
           opts = update_options_for_slave_ok(options, server)
           Protocol::Query.new(db_name, query_coll, sel, opts)
         end
