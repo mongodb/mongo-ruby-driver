@@ -39,7 +39,7 @@ module Mongo
       end
 
       def add_session_id!(selector)
-        session.add_id!(selector) unless unacknowledged_write?
+        session.add_id!(selector) if session && !unacknowledged_write?
       end
 
       def unacknowledged_write?
