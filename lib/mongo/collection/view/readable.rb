@@ -132,7 +132,6 @@ module Mongo
           cmd[:hint] = opts[:hint] if opts[:hint]
           cmd[:limit] = opts[:limit] if opts[:limit]
           cmd[:maxTimeMS] = opts[:max_time_ms] if opts[:max_time_ms]
-          cmd[:readConcern] = collection.read_concern if collection.read_concern
           read_pref = opts[:read] || read_preference
           selector = ServerSelector.get(read_pref || server_selector)
           read_with_retry do
@@ -144,6 +143,7 @@ module Mongo
                                                    :db_name => database.name,
                                                    :options => {:limit => -1},
                                                    :read => read_pref,
+                                                   :read_concern => collection.read_concern || {},
                                                    :session => session
                                                }).execute(server)
             end.n.to_i
@@ -172,7 +172,6 @@ module Mongo
                   :key => field_name.to_s,
                   :query => filter }
           cmd[:maxTimeMS] = opts[:max_time_ms] if opts[:max_time_ms]
-          cmd[:readConcern] = collection.read_concern if collection.read_concern
           read_pref = opts[:read] || read_preference
           selector = ServerSelector.get(read_pref || server_selector)
           read_with_retry do
@@ -184,6 +183,7 @@ module Mongo
                                                    :db_name => database.name,
                                                    :options => {:limit => -1},
                                                    :read => read_pref,
+                                                   :read_concern => collection.read_concern || {},
                                                    :session => session
                                                }).execute(server)
             end.first['values']

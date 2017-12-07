@@ -39,6 +39,11 @@ module Mongo
     # @since 2.5.0
     attr_reader :cluster_time
 
+    # The latest seen operation time for this session.
+    #
+    # @since 2.5.0
+    attr_reader :operation_time
+
     def_delegators :@server_session, :session_id
 
     # Error message describing that the session was attempted to be used by a client different from the
@@ -185,10 +190,8 @@ module Mongo
     private
 
     def causal_consistency_doc(read_concern)
-      if @operation_time && causal_consistency?
-        (read_concern || {}).merge(:afterClusterTime => @operation_time)
-      else
-        read_concern
+      if read_concern && operation_time && causal_consistency?
+        read_concern.merge(:afterClusterTime => operation_time)
       end
     end
 

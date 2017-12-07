@@ -35,7 +35,11 @@ describe Mongo::Collection::View::ChangeStream, if: test_change_streams? do
   end
 
   let(:command_selector) do
-    change_stream.send(:aggregate_spec, double('session'))[:selector]
+    command_spec[:selector]
+  end
+
+  let(:command_spec) do
+    change_stream.send(:aggregate_spec, double('session'))
   end
 
   let(:cursor) do
@@ -164,7 +168,7 @@ describe Mongo::Collection::View::ChangeStream, if: test_change_streams? do
       end
 
       it 'uses the read concern of the collection' do
-        expect(command_selector[:readConcern]).to eq('level' => 'majority')
+        expect(command_spec[:read_concern]).to eq(level: 'majority')
       end
     end
 
@@ -207,7 +211,7 @@ describe Mongo::Collection::View::ChangeStream, if: test_change_streams? do
           end
 
           let!(:before_operation_time) do
-            (session.instance_variable_get(:@operation_time) || 0)
+            (session.operation_time || 0)
           end
 
           let(:pipeline) do
@@ -239,7 +243,7 @@ describe Mongo::Collection::View::ChangeStream, if: test_change_streams? do
           end
 
           it 'updates the operation time value' do
-            expect(session.instance_variable_get(:@operation_time)).not_to eq(before_operation_time)
+            expect(session.operation_time).not_to eq(before_operation_time)
           end
         end
       end
@@ -287,7 +291,7 @@ describe Mongo::Collection::View::ChangeStream, if: test_change_streams? do
         end
 
         let!(:before_operation_time) do
-          (session.instance_variable_get(:@operation_time) || 0)
+          (session.operation_time || 0)
         end
 
         let!(:operation_result) do
@@ -299,7 +303,7 @@ describe Mongo::Collection::View::ChangeStream, if: test_change_streams? do
         end
 
         it 'updates the operation time value' do
-          expect(session.instance_variable_get(:@operation_time)).not_to eq(before_operation_time)
+          expect(session.operation_time).not_to eq(before_operation_time)
         end
 
         it 'does not close the session when the operation completes' do

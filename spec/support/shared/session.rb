@@ -17,7 +17,7 @@ shared_examples 'an operation using a session' do
       end
 
       let!(:before_operation_time) do
-        (session.instance_variable_get(:@operation_time) || 0)
+        (session.operation_time || 0)
       end
 
       let!(:operation_result) do
@@ -33,7 +33,7 @@ shared_examples 'an operation using a session' do
       end
 
       it 'updates the operation time value' do
-        expect(session.instance_variable_get(:@operation_time)).not_to eq(before_operation_time)
+        expect(session.operation_time).not_to eq(before_operation_time)
       end
 
       it 'does not close the session when the operation completes' do
@@ -90,7 +90,7 @@ shared_examples 'a failed operation using a session' do
     end
 
     let!(:before_operation_time) do
-      (session.instance_variable_get(:@operation_time) || 0)
+      (session.operation_time || 0)
     end
 
     let!(:operation_result) do
@@ -112,12 +112,12 @@ shared_examples 'a failed operation using a session' do
     end
 
     it 'updates the operation time value' do
-      expect(session.instance_variable_get(:@operation_time)).not_to eq(before_operation_time)
+      expect(session.operation_time).not_to eq(before_operation_time)
     end
   end
 end
 
-shared_examples 'an operation supporting causally consistent reads with collection read concern' do
+shared_examples 'an operation supporting causally consistent reads' do
 
   let(:client) do
     authorized_client.with(heartbeat_frequency: 100).tap do |cl|
@@ -237,7 +237,7 @@ shared_examples 'an operation supporting causally consistent reads with collecti
           end
 
           let!(:operation_time) do
-            session.instance_variable_get(:@operation_time)
+            session.operation_time
           end
 
           let(:expected_read_concern) do
@@ -315,7 +315,7 @@ shared_examples 'an operation supporting causally consistent reads with collecti
           end
 
           let!(:operation_time) do
-            session.instance_variable_get(:@operation_time)
+            session.operation_time
           end
 
           let(:expected_read_concern) do
@@ -367,7 +367,7 @@ shared_examples 'an operation supporting causally consistent reads with collecti
           end
 
           let!(:operation_time) do
-            session.instance_variable_get(:@operation_time)
+            session.operation_time
           end
 
           let(:expected_read_concern) do
@@ -377,144 +377,6 @@ shared_examples 'an operation supporting causally consistent reads with collecti
           it 'merges the afterClusterTime with the read concern in the command' do
             expect(command['readConcern']).to eq(expected_read_concern)
           end
-        end
-      end
-    end
-  end
-end
-
-shared_examples 'an operation supporting causally consistent reads' do
-
-  let(:client) do
-    authorized_client.with(heartbeat_frequency: 100).tap do |cl|
-      cl.subscribe(Mongo::Monitoring::COMMAND, subscriber)
-    end
-  end
-
-  let(:subscriber) do
-    EventSubscriber.new
-  end
-
-  after do
-    client.close
-  end
-
-  context 'when connected to a standalone', if: sessions_enabled? && standalone? do
-
-    context 'when the session has causal_consistency set to true' do
-
-      let(:session) do
-        client.start_session(causal_consistency: true)
-      end
-
-      it 'does not include the read concern in the command' do
-        expect(command['readConcern']).to be_nil
-      end
-    end
-
-    context 'when the session has causal_consistency set to false' do
-
-      let(:session) do
-        client.start_session(causal_consistency: false)
-      end
-
-      it 'does not include the read concern in the command' do
-        expect(command['readConcern']).to be_nil
-      end
-    end
-
-    context 'when the session has causal_consistency not set' do
-
-      let(:session) do
-        client.start_session
-      end
-
-      it 'does not include the read concern in the command' do
-        expect(command['readConcern']).to be_nil
-      end
-    end
-  end
-
-  context 'when connected to replica set or sharded cluster', if: sessions_enabled? && !standalone? do
-
-    context 'when the session has causal_consistency set to true' do
-
-      let(:session) do
-        client.start_session(causal_consistency: true)
-      end
-
-      it 'does not include the read concern in the command' do
-        expect(command['readConcern']).to be_nil
-      end
-
-      context 'when the session has an operation time' do
-
-        before do
-          client.database.command({ping: 1}, session: session)
-        end
-
-        let!(:operation_time) do
-          session.instance_variable_get(:@operation_time)
-        end
-
-        let(:expected_read_concern) do
-          BSON::Document.new(afterClusterTime: operation_time)
-        end
-
-        it 'merges the afterClusterTime with the read concern in the command' do
-          expect(command['readConcern']).to eq(expected_read_concern)
-        end
-      end
-    end
-
-    context 'when the session has causal_consistency set to false' do
-
-      let(:session) do
-        client.start_session(causal_consistency: false)
-      end
-
-      it 'does not include the read concern in the command' do
-        expect(command['readConcern']).to be_nil
-      end
-
-      context 'when the session has an operation time' do
-
-        before do
-          client.database.command({ping: 1}, session: session)
-        end
-
-        it 'does not include the read concern in the command' do
-          expect(command['readConcern']).to be_nil
-        end
-      end
-    end
-
-    context 'when the session has causal_consistency not set' do
-
-      let(:session) do
-        client.start_session
-      end
-
-      it 'does not include the read concern in the command' do
-        expect(command['readConcern']).to be_nil
-      end
-
-      context 'when the session has an operation time' do
-
-        before do
-          client.database.command({ping: 1}, session: session)
-        end
-
-        let!(:operation_time) do
-          session.instance_variable_get(:@operation_time)
-        end
-
-        let(:expected_read_concern) do
-          BSON::Document.new(afterClusterTime: operation_time)
-        end
-
-        it 'merges the afterClusterTime with the read concern in the command' do
-          expect(command['readConcern']).to eq(expected_read_concern)
         end
       end
     end

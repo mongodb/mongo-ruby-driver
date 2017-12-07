@@ -137,9 +137,9 @@ module Mongo
               :map => map,
               :reduce => reduce,
               :query => filter,
+              :read_concern => collection.read_concern || {},
               :out => { inline: 1 }
             )
-            command[:readConcern] = collection.read_concern if collection.read_concern
             command.merge!(view_options)
             command.merge!(Options::Mapper.transform_documents(options, MAPPINGS))
             command

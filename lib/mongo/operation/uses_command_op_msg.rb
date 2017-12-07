@@ -26,17 +26,6 @@ module Mongo
 
       READ_PREFERENCE = '$readPreference'.freeze
 
-      SUPPORTS_READ_CONCERN = [
-                                :find,
-                                :aggregate,
-                                :distinct,
-                                :count,
-                                :parallelCollectionScan,
-                                :geoNear,
-                                :geoSearch,
-                                :mapReduce
-                              ]
-
       def apply_cluster_time!(selector, server)
         if !server.standalone?
           cluster_time = [ server.cluster_time, (session && session.cluster_time) ].max_by do |doc|
@@ -58,14 +47,11 @@ module Mongo
       end
 
       def apply_causal_consistency!(selector, server)
-        if supports_read_concern?(server)
-          full_read_concern_doc = session.send(:causal_consistency_doc, selector[:readConcern])
-          selector[:readConcern] = full_read_concern_doc if full_read_concern_doc
+        if server.standalone?
+          selector[:readConcern] = read_concern if read_concern && !read_concern.empty?
+        elsif full_read_concern_doc = session.send(:causal_consistency_doc, read_concern)
+          selector[:readConcern] = full_read_concern_doc unless full_read_concern_doc.empty?
         end
-      end
-
-      def supports_read_concern?(server)
-        SUPPORTS_READ_CONCERN && !server.standalone?
       end
 
       def update_selector_for_session!(selector, server)

@@ -194,7 +194,7 @@ describe Mongo::Collection::View::Readable do
         subscriber.started_events.find { |cmd| cmd.command_name == 'mapreduce' }.command
       end
 
-      it_behaves_like 'an operation supporting causally consistent reads with collection read concern'
+      it_behaves_like 'an operation supporting causally consistent reads'
     end
 
     context 'when not iterating the map/reduce' do

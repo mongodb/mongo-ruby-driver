@@ -244,38 +244,38 @@ describe Mongo::Database do
     context 'when provided a session' do
 
       let(:operation) do
-        database.command({ :ismaster => 1 }, session: session)
+        client.database.command({ :ismaster => 1 }, session: session)
       end
 
       let(:failed_operation) do
-        database.command({ :invalid => 1 }, session: session)
+        client.database.command({ :invalid => 1 }, session: session)
+      end
+
+      let(:session) do
+        client.start_session
       end
 
       let(:client) do
-        authorized_client
+        authorized_client.with(heartbeat_frequency: 100).tap do |cl|
+          cl.subscribe(Mongo::Monitoring::COMMAND, subscriber)
+        end
+      end
+
+      let(:subscriber) do
+        EventSubscriber.new
       end
 
       it_behaves_like 'an operation using a session'
       it_behaves_like 'a failed operation using a session'
-    end
 
-    context 'when a session supporting causal consistency is used' do
 
-      [ :geoNear, :geoSearch ].each do |command_name|
+      let(:full_command) do
+        subscriber.started_events.find { |cmd| cmd.command_name == :ismaster }.command
+      end
 
-        context "when the command is #{command_name}" do
-
-          let(:operation) do
-            client.database.command({ command_name => TEST_COLL }, session: session)
-          end
-
-          let(:command) do
-            begin; operation; rescue; end
-            subscriber.started_events.find { |event| event.command_name == command_name }.command
-          end
-
-          it_behaves_like 'an operation supporting causally consistent reads'
-        end
+      it 'does not add a afterClusterTime field' do
+        operation
+        expect(full_command['afterClusterTime']).to be_nil
       end
     end
 
