@@ -259,6 +259,26 @@ describe Mongo::Database do
       it_behaves_like 'a failed operation using a session'
     end
 
+    context 'when a session supporting causal consistency is used' do
+
+      [ :geoNear, :geoSearch ].each do |command_name|
+
+        context "when the command is #{command_name}" do
+
+          let(:operation) do
+            client.database.command({ command_name => TEST_COLL }, session: session)
+          end
+
+          let(:command) do
+            begin; operation; rescue; end
+            subscriber.started_events.find { |event| event.command_name == command_name }.command
+          end
+
+          it_behaves_like 'an operation supporting causally consistent reads'
+        end
+      end
+    end
+
     context 'when a read concern is provided', if: find_command_enabled? do
 
       context 'when the read concern is valid' do

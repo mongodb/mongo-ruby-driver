@@ -26,7 +26,16 @@ module Mongo
 
       READ_PREFERENCE = '$readPreference'.freeze
 
-      SUPPORTS_READ_CONCERN = [ :find, :aggregate, :distinct, :count, :parallelCollectionScan, :geoNear, :geoSearch, :mapReduce]
+      SUPPORTS_READ_CONCERN = [
+                                :find,
+                                :aggregate,
+                                :distinct,
+                                :count,
+                                :parallelCollectionScan,
+                                :geoNear,
+                                :geoSearch,
+                                :mapReduce
+                              ]
 
       def apply_cluster_time!(selector, server)
         if !server.standalone?

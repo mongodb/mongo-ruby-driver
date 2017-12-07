@@ -934,7 +934,7 @@ describe Mongo::Collection do
           subscriber.started_events.find { |cmd| cmd.command_name == 'find' }.command
         end
 
-        it_behaves_like 'an operation supporting causally consistent reads'
+        it_behaves_like 'an operation supporting causally consistent reads with collection read concern'
       end
 
       let(:view) do
@@ -1540,6 +1540,20 @@ describe Mongo::Collection do
       it_behaves_like 'an operation updating cluster time'
     end
 
+    context 'when a session supporting causal consistency is used' do
+
+      let(:operation) do
+        collection.aggregate([], session: session).first
+      end
+
+      let(:command) do
+        operation
+        subscriber.started_events.find { |cmd| cmd.command_name == 'aggregate' }.command
+      end
+
+      it_behaves_like 'an operation supporting causally consistent reads with collection read concern'
+    end
+
     it 'returns an Aggregation object' do
       expect(authorized_collection.aggregate([])).to be_a(Mongo::Collection::View::Aggregation)
     end
@@ -1690,6 +1704,20 @@ describe Mongo::Collection do
         it_behaves_like 'a failed operation using a session'
       end
 
+      context 'when a session supporting causal consistency is used' do
+
+        let(:operation) do
+          collection.count({}, session: session)
+        end
+
+        let(:command) do
+          operation
+          subscriber.started_events.find { |cmd| cmd.command_name == :count }.command
+        end
+
+        it_behaves_like 'an operation supporting causally consistent reads with collection read concern'
+      end
+
       context 'when a collation is specified' do
 
         let(:selector) do
@@ -1788,6 +1816,20 @@ describe Mongo::Collection do
         it_behaves_like 'an operation using a session'
         it_behaves_like 'a failed operation using a session'
       end
+    end
+
+    context 'when a session supporting causal consistency is used' do
+
+      let(:operation) do
+        collection.distinct(:field, {}, session: session)
+      end
+
+      let(:command) do
+        operation
+        subscriber.started_events.find { |cmd| cmd.command_name == :distinct }.command
+      end
+
+      it_behaves_like 'an operation supporting causally consistent reads with collection read concern'
     end
 
     context 'when a collation is specified' do
