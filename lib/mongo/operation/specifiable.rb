@@ -514,6 +514,18 @@ module Mongo
       def session
         @spec[:session]
       end
+
+      # The transaction number for the operation.
+      #
+      # @example Get the transaction number.
+      #   specifiable.txn_num
+      #
+      # @return [ Integer ] The transaction number.
+      #
+      # @since 2.5.0
+      def txn_num
+        @spec[:txn_num]
+      end
     end
   end
 end

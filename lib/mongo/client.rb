@@ -53,6 +53,7 @@ module Mongo
       :read,
       :read_retry_interval,
       :replica_set,
+      :retry_writes,
       :server_selection_timeout,
       :socket_timeout,
       :ssl,
@@ -236,6 +237,8 @@ module Mongo
     #   mongod logs upon establishing a connection in server versions >= 3.4.
     # @option options [ String ] :platform Platform information to include in the
     #   metadata printed to the mongod logs upon establishing a connection in server versions >= 3.4.
+    # @option options [ true, false ] :retry_writes Retry writes once when connected to a replica set
+    #   or sharded cluster versions 3.6 and up.
     #
     # @since 2.0.0
     def initialize(addresses_or_uri, options = Options::Redacted.new)

@@ -67,7 +67,7 @@ module Mongo
         def each
           @cursor = nil
           session = client.send(:get_session, view.options)
-          write_with_retry(session, Proc.new { server_selector.select_server(cluster, false) }) do |server|
+          legacy_write_with_retry do |server|
             result = send_initial_query(server, session)
             @cursor = Cursor.new(view, result, server, session: session)
           end

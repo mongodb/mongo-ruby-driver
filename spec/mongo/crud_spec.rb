@@ -13,7 +13,7 @@ describe 'CRUD' do
         context(test.description) do
 
           before(:each) do
-            authorized_collection.delete_many
+            test.setup_test(authorized_collection)
           end
 
           after(:each) do

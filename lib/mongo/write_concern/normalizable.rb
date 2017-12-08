@@ -47,6 +47,18 @@ module Mongo
         opts =  Options::Mapper.transform_keys_to_symbols(options)
         @options = Options::Mapper.transform_values_to_strings(opts).freeze
       end
+
+      # Is this write concern acknowledged.
+      #
+      # @example Whether this write concern object is acknowledged.
+      #   write_concern.acknowledged?
+      #
+      # @return [ true, false ] Whether this write concern is acknowledged.
+      #
+      # @since 2.5.0
+      def acknowledged?
+        !!get_last_error
+      end
     end
   end
 end
