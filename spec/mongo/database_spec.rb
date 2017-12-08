@@ -241,7 +241,7 @@ describe Mongo::Database do
       expect(database.command({:ismaster => 1}.freeze).written_count).to eq(0)
     end
 
-    context 'when provided a session' do
+    context 'when provided a session', if: sessions_enabled? do
 
       let(:operation) do
         client.database.command({ :ismaster => 1 }, session: session)
