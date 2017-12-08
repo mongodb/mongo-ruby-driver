@@ -1222,6 +1222,21 @@ describe Mongo::Collection do
         end
       end
     end
+
+    context 'when unacknowledged writes is used' do
+
+      let(:collection_with_unacknowledged_write_concern) do
+        authorized_collection.with(write: { w: 0 })
+      end
+
+      let(:result) do
+        collection_with_unacknowledged_write_concern.insert_many([{ _id: 1 }, { _id: 1 }])
+      end
+
+      it 'does not raise an exception' do
+        expect(result.inserted_count).to be(0)
+      end
+    end
   end
 
   describe '#insert_one' do

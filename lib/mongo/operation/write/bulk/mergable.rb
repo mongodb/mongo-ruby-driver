@@ -34,6 +34,7 @@ module Mongo
           #
           # @since 2.0.0
           def aggregate_write_errors(count)
+            return unless @replies
             @replies.reduce(nil) do |errors, reply|
               if write_errors = reply.documents.first[Error::WRITE_ERRORS]
                 wes = write_errors.collect do |we|
@@ -55,6 +56,7 @@ module Mongo
           #
           # @since 2.0.0
           def aggregate_write_concern_errors(count)
+            return unless @replies
             @replies.each_with_index.reduce(nil) do |errors, (reply, _)|
               if write_concern_errors = reply.documents.first[Error::WRITE_CONCERN_ERRORS]
                 (errors || []) << write_concern_errors.reduce(nil) do |errs, wce|
