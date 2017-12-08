@@ -259,6 +259,25 @@ shared_examples 'an operation supporting causally consistent reads' do
             expect(command['readConcern']).to eq(expected_read_concern)
           end
         end
+
+        context 'when the operation time is advanced' do
+
+          before do
+            session.advance_operation_time(operation_time)
+          end
+
+          let(:operation_time) do
+            BSON::Timestamp.new(0, 1)
+          end
+
+          let(:expected_read_concern) do
+            BSON::Document.new(level: 'majority', afterClusterTime: operation_time)
+          end
+
+          it 'merges the afterClusterTime with the new operation time and read concern in the command' do
+            expect(command['readConcern']).to eq(expected_read_concern)
+          end
+        end
       end
 
       context 'when the session has causal_consistency set to false' do
@@ -274,6 +293,25 @@ shared_examples 'an operation supporting causally consistent reads' do
         it 'leaves the read concern document unchanged' do
           expect(command['readConcern']).to eq(expected_read_concern)
         end
+
+        context 'when the operation time is advanced' do
+
+          before do
+            session.advance_operation_time(operation_time)
+          end
+
+          let(:operation_time) do
+            BSON::Timestamp.new(0, 1)
+          end
+
+          let(:expected_read_concern) do
+            BSON::Document.new(level: 'majority')
+          end
+
+          it 'leaves the read concern document unchanged' do
+            expect(command['readConcern']).to eq(expected_read_concern)
+          end
+        end
       end
 
       context 'when the session has causal_consistency not set' do
@@ -288,6 +326,25 @@ shared_examples 'an operation supporting causally consistent reads' do
 
         it 'leaves the read concern document unchanged' do
           expect(command['readConcern']).to eq(expected_read_concern)
+        end
+
+        context 'when the operation time is advanced' do
+
+          before do
+            session.advance_operation_time(operation_time)
+          end
+
+          let(:operation_time) do
+            BSON::Timestamp.new(0, 1)
+          end
+
+          let(:expected_read_concern) do
+            BSON::Document.new(level: 'majority', afterClusterTime: operation_time)
+          end
+
+          it 'merges the afterClusterTime with the new operation time and read concern in the command' do
+            expect(command['readConcern']).to eq(expected_read_concern)
+          end
         end
       end
     end
@@ -326,6 +383,25 @@ shared_examples 'an operation supporting causally consistent reads' do
             expect(command['readConcern']).to eq(expected_read_concern)
           end
         end
+
+        context 'when the operation time is advanced' do
+
+          before do
+            session.advance_operation_time(operation_time)
+          end
+
+          let(:operation_time) do
+            BSON::Timestamp.new(0, 1)
+          end
+
+          let(:expected_read_concern) do
+            BSON::Document.new(afterClusterTime: operation_time)
+          end
+
+          it 'merges the afterClusterTime with the new operation time in the command' do
+            expect(command['readConcern']).to eq(expected_read_concern)
+          end
+        end
       end
 
       context 'when the session has causal_consistency set to false' do
@@ -342,6 +418,25 @@ shared_examples 'an operation supporting causally consistent reads' do
 
           before do
             client.database.command({ ping: 1 }, session: session)
+          end
+
+          it 'does not include the read concern in the command' do
+            expect(command['readConcern']).to be_nil
+          end
+        end
+
+        context 'when the operation time is advanced' do
+
+          before do
+            session.advance_operation_time(operation_time)
+          end
+
+          let(:operation_time) do
+            BSON::Timestamp.new(0, 1)
+          end
+
+          let(:expected_read_concern) do
+            BSON::Document.new(afterClusterTime: operation_time)
           end
 
           it 'does not include the read concern in the command' do
@@ -375,6 +470,25 @@ shared_examples 'an operation supporting causally consistent reads' do
           end
 
           it 'merges the afterClusterTime with the read concern in the command' do
+            expect(command['readConcern']).to eq(expected_read_concern)
+          end
+        end
+
+        context 'when the operation time is advanced' do
+
+          before do
+            session.advance_operation_time(operation_time)
+          end
+
+          let(:operation_time) do
+            BSON::Timestamp.new(0, 1)
+          end
+
+          let(:expected_read_concern) do
+            BSON::Document.new(afterClusterTime: operation_time)
+          end
+
+          it 'merges the afterClusterTime with the new operation time in the command' do
             expect(command['readConcern']).to eq(expected_read_concern)
           end
         end

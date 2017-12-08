@@ -473,7 +473,7 @@ describe Mongo::Collection::View::Builder::FindCommand do
       end
 
       it 'applies the read concern of the collection' do
-        expect(specification[:read_concern]).to eq(BSON::Document.new(level: 'invalid'))
+        expect(specification[:read_concern]).to eq(level: 'invalid')
       end
     end
 

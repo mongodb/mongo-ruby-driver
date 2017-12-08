@@ -187,6 +187,24 @@ module Mongo
       end
     end
 
+    # Advance the cached operation time for this session.
+    #
+    # @example Advance the operation time.
+    #   session.advance_operation_time(timestamp)
+    #
+    # @param [ BSON::Timestamp ] new_operation_time The new operation time.
+    #
+    # @return [ BSON::Timestamp ] The max operation time, considering the current and new times.
+    #
+    # @since 2.5.0
+    def advance_operation_time(new_operation_time)
+      if @operation_time
+        @operation_time = [ @operation_time, new_operation_time ].max
+      else
+        @operation_time = new_operation_time
+      end
+    end
+
     private
 
     def causal_consistency_doc(read_concern)
