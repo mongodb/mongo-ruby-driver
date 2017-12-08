@@ -275,7 +275,7 @@ describe Mongo::Database do
 
       it 'does not add a afterClusterTime field' do
         operation
-        expect(full_command['afterClusterTime']).to be_nil
+        expect(full_command['readConcern']).to be_nil
       end
     end
 
