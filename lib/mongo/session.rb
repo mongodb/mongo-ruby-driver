@@ -190,8 +190,10 @@ module Mongo
     private
 
     def causal_consistency_doc(read_concern)
-      if read_concern && operation_time && causal_consistency?
+      if operation_time && causal_consistency?
         read_concern.merge(:afterClusterTime => operation_time)
+      else
+        read_concern
       end
     end
 

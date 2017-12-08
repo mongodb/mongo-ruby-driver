@@ -478,7 +478,7 @@ module Mongo
                   :coll_name => collection.name,
                   :db_name => database.name,
                   :cursor_count => cursor_count,
-                  :read_concern => collection.read_concern,
+                  :read_concern => collection.read_concern || {},
                   :session => session
                 }.merge!(options))
           cmd.execute(server).cursor_ids.map do |cursor_id|

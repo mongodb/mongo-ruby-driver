@@ -41,7 +41,6 @@ module Mongo
 
         def selector
           command = { :parallelCollectionScan => coll_name, :numCursors => cursor_count }
-          command[:readConcern] = read_concern if read_concern
           command[:maxTimeMS] = max_time_ms if max_time_ms
           command
         end

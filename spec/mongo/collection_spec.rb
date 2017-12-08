@@ -2270,10 +2270,6 @@ describe Mongo::Collection do
         authorized_collection.parallel_scan(2, session: session)
       end
 
-      let(:session) do
-        authorized_client.start_session(causal_consistency: false)
-      end
-
       let(:operation) do
         cursors.reduce(0) { |total, cursor| total + cursor.to_a.size }
       end
@@ -2286,8 +2282,26 @@ describe Mongo::Collection do
         authorized_client
       end
 
-      #it_behaves_like 'an operation using a session'
-      #it_behaves_like 'a failed operation using a session'
+      it_behaves_like 'an operation using a session'
+      it_behaves_like 'a failed operation using a session'
+    end
+
+    context 'when a session supporting causal consistency is used' do
+
+      let(:cursors) do
+        collection.parallel_scan(2, session: session)
+      end
+
+      let(:operation) do
+        cursors.reduce(0) { |total, cursor| total + cursor.to_a.size }
+      end
+
+      let(:command) do
+        operation
+        subscriber.started_events.find { |cmd| cmd.command_name == :parallelCollectionScan }.command
+      end
+
+      it_behaves_like 'an operation supporting causally consistent reads'
     end
 
     context 'when a read concern is provided', if: find_command_enabled? do

@@ -47,10 +47,12 @@ module Mongo
       end
 
       def apply_causal_consistency!(selector, server)
-        if server.standalone?
-          selector[:readConcern] = read_concern if read_concern && !read_concern.empty?
-        elsif full_read_concern_doc = session.send(:causal_consistency_doc, read_concern)
-          selector[:readConcern] = full_read_concern_doc unless full_read_concern_doc.empty?
+        if read_concern
+          if server.standalone?
+            selector[:readConcern] = read_concern unless read_concern.empty?
+          else full_read_concern_doc = session.send(:causal_consistency_doc, read_concern)
+            selector[:readConcern] = full_read_concern_doc unless full_read_concern_doc.empty?
+          end
         end
       end
 
