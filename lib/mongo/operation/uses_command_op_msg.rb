@@ -67,7 +67,7 @@ module Mongo
       end
 
       def command_op_msg(server, selector, options)
-        update_selector_for_session!(selector, server)
+        update_selector_for_session!(selector, server) if session
         selector[Protocol::Msg::DATABASE_IDENTIFIER] = db_name
         selector[READ_PREFERENCE] = read.to_doc if read
         flags = unacknowledged_write? ? [:more_to_come] : [:none]
