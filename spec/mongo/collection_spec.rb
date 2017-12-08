@@ -14,6 +14,10 @@ describe Mongo::Collection do
     authorized_client[:validating]
   end
 
+  let(:client) do
+    authorized_client
+  end
+
   describe '#==' do
 
     let(:database) do
@@ -1115,6 +1119,19 @@ describe Mongo::Collection do
       it_behaves_like 'a failed operation using a session'
     end
 
+    context 'when unacknowledged writes is used' do
+
+      let(:collection_with_unacknowledged_write_concern) do
+        authorized_collection.with(write: { w: 0 })
+      end
+
+      let(:operation) do
+        collection_with_unacknowledged_write_concern.insert_many([{ name: 'test1' }, { name: 'test2' }], session: session)
+      end
+
+      it_behaves_like 'a causally consistent client session with an unacknowledged write'
+    end
+
     context 'when a document contains invalid keys' do
 
       let(:docs) do
@@ -1342,6 +1359,19 @@ describe Mongo::Collection do
 
       it_behaves_like 'an operation using a session'
       it_behaves_like 'a failed operation using a session'
+    end
+
+    context 'when unacknowledged writes is used' do
+
+      let(:collection_with_unacknowledged_write_concern) do
+        authorized_collection.with(write: { w: 0 })
+      end
+
+      let(:operation) do
+        collection_with_unacknowledged_write_concern.insert_one({ name: 'testing' }, session: session)
+      end
+
+      it_behaves_like 'a causally consistent client session with an unacknowledged write'
     end
 
     context 'when the document contains invalid keys' do
@@ -1969,6 +1999,19 @@ describe Mongo::Collection do
       it_behaves_like 'a failed operation using a session'
     end
 
+    context 'when unacknowledged writes is used' do
+
+      let(:collection_with_unacknowledged_write_concern) do
+        authorized_collection.with(write: { w: 0 })
+      end
+
+      let(:operation) do
+        collection_with_unacknowledged_write_concern.delete_one({}, session: session)
+      end
+
+      it_behaves_like 'a causally consistent client session with an unacknowledged write'
+    end
+
     context 'when a collation is provided' do
 
       let(:selector) do
@@ -2126,6 +2169,19 @@ describe Mongo::Collection do
 
       it_behaves_like 'an operation using a session'
       it_behaves_like 'a failed operation using a session'
+    end
+
+    context 'when unacknowledged writes is used' do
+
+      let(:collection_with_unacknowledged_write_concern) do
+        authorized_collection.with(write: { w: 0 })
+      end
+
+      let(:operation) do
+        collection_with_unacknowledged_write_concern.delete_many({ '$._id' => 1}, session: session)
+      end
+
+      it_behaves_like 'a causally consistent client session with an unacknowledged write'
     end
 
     context 'when a collation is specified' do
@@ -2691,6 +2747,19 @@ describe Mongo::Collection do
       it_behaves_like 'an operation using a session'
       it_behaves_like 'a failed operation using a session'
     end
+
+    context 'when unacknowledged writes is used' do
+
+      let(:collection_with_unacknowledged_write_concern) do
+        authorized_collection.with(write: { w: 0 })
+      end
+
+      let(:operation) do
+        collection_with_unacknowledged_write_concern.replace_one({ a: 1 }, { x: 5 }, session: session)
+      end
+
+      it_behaves_like 'a causally consistent client session with an unacknowledged write'
+    end
   end
 
   describe '#update_many' do
@@ -3093,6 +3162,19 @@ describe Mongo::Collection do
 
       it_behaves_like 'an operation using a session'
       it_behaves_like 'a failed operation using a session'
+    end
+
+    context 'when unacknowledged writes is used' do
+
+      let(:collection_with_unacknowledged_write_concern) do
+        authorized_collection.with(write: { w: 0 })
+      end
+
+      let(:operation) do
+        collection_with_unacknowledged_write_concern.update_many({a: 1}, { '$set' => {x: 1} }, session: session)
+      end
+
+      it_behaves_like 'a causally consistent client session with an unacknowledged write'
     end
   end
 
@@ -3505,6 +3587,19 @@ describe Mongo::Collection do
 
       it_behaves_like 'an operation using a session'
       it_behaves_like 'a failed operation using a session'
+    end
+
+    context 'when unacknowledged writes is used' do
+
+      let(:collection_with_unacknowledged_write_concern) do
+        authorized_collection.with(write: { w: 0 })
+      end
+
+      let(:operation) do
+        collection_with_unacknowledged_write_concern.update_one({a: 1}, { '$set' => {x: 1} }, session: session)
+      end
+
+      it_behaves_like 'a causally consistent client session with an unacknowledged write'
     end
   end
 

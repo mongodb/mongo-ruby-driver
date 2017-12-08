@@ -117,6 +117,21 @@ shared_examples 'a failed operation using a session' do
   end
 end
 
+shared_examples 'a causally consistent client session with an unacknowledged write' do
+
+  context 'when an unacknowledged write is executed in the context of a causally consistent session', if: sessions_enabled? do
+
+    let(:session) do
+      client.start_session(causal_consistency: true)
+    end
+
+    it 'does not update the operation time of the session' do
+      operation
+      expect(session.operation_time).to be_nil
+    end
+  end
+end
+
 shared_examples 'an operation supporting causally consistent reads' do
 
   let(:client) do
