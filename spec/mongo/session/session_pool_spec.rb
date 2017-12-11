@@ -149,10 +149,14 @@ describe Mongo::Session::SessionPool do
         client.database.command(ping: 1)
         pool.checkin(session_a)
         pool.checkin(session_b)
-        pool.end_sessions
       end
 
-      let(:end_sessions_command) do
+      let!(:cluster_time) do
+        client.cluster.cluster_time
+      end
+
+      let!(:end_sessions_command) do
+        pool.end_sessions
         subscriber.started_events.find { |c| c.command_name == :endSessions}
       end
 
