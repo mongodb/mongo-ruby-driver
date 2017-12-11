@@ -19,7 +19,7 @@ describe 'change streams examples in Ruby', if: test_change_streams? do
     it 'returns a change after an insertion' do
 
       Thread.new do
-        sleep 0.5
+        sleep 1
         inventory.insert_one(x: 1)
       end
 
@@ -53,7 +53,7 @@ describe 'change streams examples in Ruby', if: test_change_streams? do
     it 'returns a change and the delta after an insertion' do
 
       Thread.new do
-        sleep 0.5
+        sleep 1
         inventory.update_one({ _id: 1}, { '$set' => { x: 5 }})
       end
 
