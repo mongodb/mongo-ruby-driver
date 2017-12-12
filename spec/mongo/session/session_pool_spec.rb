@@ -165,9 +165,9 @@ describe Mongo::Session::SessionPool do
         expect(end_sessions_command.command[:endSessions]).to include(BSON::Document.new(session_b.session_id))
       end
 
-      context 'when talking to a mongos', if: sessions_enabled? && sharded? do
+      context 'when talking to a replica set or mongos', if: sessions_enabled? && (sharded? || replica_set?) do
 
-        it 'sends the endSessions command with all the session ids' do
+        it 'sends the endSessions command with all the session ids and cluster time' do
           expect(end_sessions_command.command[:endSessions]).to include(BSON::Document.new(session_a.session_id))
           expect(end_sessions_command.command[:endSessions]).to include(BSON::Document.new(session_b.session_id))
           expect(end_sessions_command.command[:$clusterTime]).to eq(client.cluster.cluster_time)

@@ -113,7 +113,7 @@ describe Mongo::Operation::Write::Command::Delete do
         authorized_client.start_session
       end
 
-      context 'when the topology is sharded', if: sharded? && op_msg_enabled? do
+      context 'when the topology is replica set or sharded', if: (replica_set? || sharded?) && op_msg_enabled? do
 
         let(:expected_global_args) do
           global_args.merge(Mongo::Operation::CLUSTER_TIME => authorized_client.cluster.cluster_time)
@@ -126,7 +126,7 @@ describe Mongo::Operation::Write::Command::Delete do
         end
       end
 
-      context 'when the topology is not sharded', if: !sharded? && op_msg_enabled? do
+      context 'when the topology is standalone', if: standalone? && op_msg_enabled? do
 
         let(:expected_global_args) do
           global_args
@@ -164,7 +164,7 @@ describe Mongo::Operation::Write::Command::Delete do
           Mongo::WriteConcern.get(w: 0)
         end
 
-        context 'when the topology is sharded', if: sharded? && op_msg_enabled? do
+        context 'when the topology is replica set or sharded', if: (replica_set? || sharded?) && op_msg_enabled? do
 
           let(:expected_global_args) do
             global_args.delete(:lsid)
@@ -178,7 +178,7 @@ describe Mongo::Operation::Write::Command::Delete do
           end
         end
 
-        context 'when the topology is not sharded', if: !sharded? && op_msg_enabled? do
+        context 'when the topology is standalone', if: standalone? && op_msg_enabled? do
 
           let(:expected_global_args) do
             global_args.delete(:lsid)
