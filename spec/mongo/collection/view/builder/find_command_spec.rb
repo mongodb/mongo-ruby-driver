@@ -473,7 +473,7 @@ describe Mongo::Collection::View::Builder::FindCommand do
       end
 
       it 'applies the read concern of the collection' do
-        expect(specification[:read_concern]).to eq(level: 'invalid')
+        expect(selector['readConcern']).to eq(BSON::Document.new(level: 'invalid'))
       end
 
       context 'when explain is called for the find' do
@@ -487,7 +487,7 @@ describe Mongo::Collection::View::Builder::FindCommand do
         end
 
         it 'applies the read concern of the collection' do
-          expect(builder.explain_specification[:read_concern]).to eq(level: 'invalid')
+          expect( builder.explain_specification[:selector][:explain][:readConcern]).to eq(BSON::Document.new(level: 'invalid'))
         end
       end
     end
@@ -503,7 +503,7 @@ describe Mongo::Collection::View::Builder::FindCommand do
       end
 
       it 'does not apply a read concern' do
-        expect(specification[:read_concern]).to be_nil
+        expect(selector['readConcern']).to be_nil
       end
     end
   end
