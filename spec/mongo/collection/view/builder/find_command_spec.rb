@@ -503,7 +503,7 @@ describe Mongo::Collection::View::Builder::FindCommand do
       end
 
       it 'does not apply a read concern' do
-        expect(specification[:read_concern]).to eq({})
+        expect(specification[:read_concern]).to be_nil
       end
     end
   end

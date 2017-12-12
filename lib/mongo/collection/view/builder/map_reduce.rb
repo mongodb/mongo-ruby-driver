@@ -111,7 +111,6 @@ module Mongo
               selector: map_reduce_command,
               db_name: database.name,
               read: read,
-              read_concern: collection.read_concern || {},
               session: options[:session]
             }
             write?(spec) ? spec.merge!(write_concern: write_concern) : spec
@@ -140,6 +139,7 @@ module Mongo
               :query => filter,
               :out => { inline: 1 }
             )
+            command[:readConcern] = collection.read_concern if collection.read_concern
             command.merge!(view_options)
             command.merge!(Options::Mapper.transform_documents(options, MAPPINGS))
             command

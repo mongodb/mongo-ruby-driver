@@ -26,6 +26,8 @@ module Mongo
 
       READ_PREFERENCE = '$readPreference'.freeze
 
+      def apply_causal_consistency!(selector, server); end
+
       def apply_cluster_time!(selector, server)
         if !server.standalone?
           cluster_time = [ server.cluster_time, (session && session.cluster_time) ].max_by do |doc|
@@ -46,20 +48,8 @@ module Mongo
         write_concern && write_concern.get_last_error.nil?
       end
 
-      def apply_causal_consistency!(selector, server)
-        if read_concern
-          if server.standalone?
-            selector[:readConcern] = read_concern unless read_concern.empty?
-          else full_read_concern_doc = session.send(:causal_consistency_doc, read_concern)
-            selector[:readConcern] = full_read_concern_doc unless full_read_concern_doc.empty?
-          end
-        end
-      end
-
       def update_selector_for_session!(selector, server)
-        # the driver MUST ignore any implicit session if at the point it is sending a command
-        # to a specific server it turns out that that particular server doesn't support sessions after all
-        if server.features.sessions_enabled? || (session && !session.send(:implicit_session?))
+        if session
           apply_cluster_time!(selector, server)
           apply_session_id!(selector)
           apply_causal_consistency!(selector, server)
@@ -67,7 +57,7 @@ module Mongo
       end
 
       def command_op_msg(server, selector, options)
-        update_selector_for_session!(selector, server) if session
+        update_selector_for_session!(selector, server)
         selector[Protocol::Msg::DATABASE_IDENTIFIER] = db_name
         selector[READ_PREFERENCE] = read.to_doc if read
         flags = unacknowledged_write? ? [:more_to_come] : [:none]

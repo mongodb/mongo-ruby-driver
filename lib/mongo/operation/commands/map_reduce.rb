@@ -43,6 +43,7 @@ module Mongo
       # @since 2.0.0
       class MapReduce < Command
         include TakesWriteConcern
+        include CausallyConsistent
 
         private
 
@@ -53,7 +54,6 @@ module Mongo
           else
             sel = update_selector_for_read_pref(sel, server)
             opts = update_options_for_slave_ok(options, server)
-            sel[:readConcern] = read_concern if read_concern && !read_concern.empty?
             Protocol::Query.new(db_name, query_coll, sel, opts)
           end
         end
