@@ -224,6 +224,40 @@ describe Mongo::Collection::View::Aggregation do
       expect(aggregation.explain).to_not be_empty
     end
 
+    context 'session id', if: sessions_enabled? do
+
+      let(:options) do
+        { session: session }
+      end
+
+      let(:client) do
+        authorized_client.with(heartbeat_frequency: 100).tap do |cl|
+          cl.subscribe(Mongo::Monitoring::COMMAND, subscriber)
+        end
+      end
+
+      let(:session) do
+        client.start_session
+      end
+
+      let(:subscriber) do
+        EventSubscriber.new
+      end
+
+      let(:view) do
+        Mongo::Collection::View.new(client[TEST_COLL], selector, view_options)
+      end
+
+      let(:command) do
+        aggregation.explain
+        subscriber.started_events.find { |c| c.command_name == 'aggregate'}.command
+      end
+
+      it 'sends the session id' do
+        expect(command['lsid']).to eq(session.session_id)
+      end
+    end
+
     context 'when a collation is specified' do
 
       before do
