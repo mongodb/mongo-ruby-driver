@@ -475,6 +475,21 @@ describe Mongo::Collection::View::Builder::FindCommand do
       it 'applies the read concern of the collection' do
         expect(specification[:read_concern]).to eq(level: 'invalid')
       end
+
+      context 'when explain is called for the find' do
+
+        let(:collection) do
+          authorized_collection.with(read_concern: { level: 'invalid' })
+        end
+
+        let(:view) do
+          Mongo::Collection::View.new(collection, {})
+        end
+
+        it 'applies the read concern of the collection' do
+          expect(builder.explain_specification[:read_concern]).to eq(level: 'invalid')
+        end
+      end
     end
 
     context 'when the collection does not have a read concern defined' do
@@ -488,7 +503,7 @@ describe Mongo::Collection::View::Builder::FindCommand do
       end
 
       it 'does not apply a read concern' do
-        expect(selector['readConcern']).to be_nil
+        expect(specification[:read_concern]).to eq({})
       end
     end
   end

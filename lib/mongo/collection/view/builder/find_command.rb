@@ -63,7 +63,11 @@ module Mongo
           #
           # @since 2.2.0
           def explain_specification
-            { selector: { explain: find_command }, db_name: database.name, read: read, session: @session }
+            { selector: { explain: find_command },
+              db_name: database.name,
+              read: read,
+              read_concern: collection.read_concern || {},
+              session: @session }
           end
 
           # Create the find command builder.
@@ -89,7 +93,11 @@ module Mongo
           #
           # @since 2.2.0
           def specification
-            { selector: find_command, db_name: database.name, read: read, read_concern: collection.read_concern || {}, session: @session }
+            { selector: find_command,
+              db_name: database.name,
+              read: read,
+              read_concern: collection.read_concern || {},
+              session: @session }
           end
 
           private
