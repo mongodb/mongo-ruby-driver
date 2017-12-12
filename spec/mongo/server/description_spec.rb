@@ -25,6 +25,8 @@ describe Mongo::Server::Description do
       'localTime' => Time.now,
       'lastWrite' => { 'lastWriteDate' => Time.now },
       'logicalSessionTimeoutMinutes' => 7,
+      'operationTime' => 1,
+      '$clusterTime' => 1,
       'ok' => 1
     }
   end
@@ -868,7 +870,8 @@ describe Mongo::Server::Description do
       described_class.new(address, replica.merge(
         'localTime' => 1,
         'lastWrite' => { 'lastWriteDate' => 1 },
-        'operationTime' => 1
+        'operationTime' => 2,
+        '$clusterTime' => 2
       ))
     end
 

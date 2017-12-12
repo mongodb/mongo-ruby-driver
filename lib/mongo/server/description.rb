@@ -169,7 +169,8 @@ module Mongo
       # @since 2.0.6
       EXCLUDE_FOR_COMPARISON = [ LOCAL_TIME,
                                  LAST_WRITE,
-                                 OPERATION_TIME ].freeze
+                                 OPERATION_TIME,
+                                 Operation::CLUSTER_TIME ].freeze
 
       # @return [ Address ] address The server's address.
       attr_reader :address
