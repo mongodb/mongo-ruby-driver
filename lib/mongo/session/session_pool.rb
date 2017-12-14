@@ -117,17 +117,19 @@ module Mongo
       #
       # @since 2.5.0
       def end_sessions
-        begin
-          server = @client.cluster.next_primary
-        rescue Mongo::Error::NoServerAvailable
-          server = ServerSelector.get(mode: :primary_preferred).select_server(@client.cluster)
-        end
-
         while !@queue.empty?
-          Operation::Commands::Command.new(
-              :selector => {endSessions: @queue.shift(10_000).collect { |s| s.session_id }},
-              :db_name => Database::ADMIN).execute(server)
-        end if server
+          begin
+            server = @client.cluster.next_primary
+          rescue Mongo::Error::NoServerAvailable
+            server = ServerSelector.get(mode: :primary_preferred).select_server(@client.cluster)
+          end
+
+          if server
+            Operation::Commands::Command.new(
+                :selector => {endSessions: @queue.shift(10_000).collect { |s| s.session_id }},
+                :db_name => Database::ADMIN).execute(server)
+          end
+        end
       rescue
       end
 
