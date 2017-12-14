@@ -149,6 +149,7 @@ describe Mongo::Session::SessionPool, if: test_sessions? do
         client.database.command(ping: 1)
         pool.checkin(session_a)
         pool.checkin(session_b)
+        expect(Mongo::ServerSelector).to receive(:get).with(mode: :primary_preferred).and_call_original
       end
 
       let!(:cluster_time) do
@@ -175,20 +176,6 @@ describe Mongo::Session::SessionPool, if: test_sessions? do
           expect(end_sessions_command.command[:$clusterTime]).to eq(client.cluster.cluster_time)
         end
       end
-
-      context 'when the primary is not available' do
-
-        before do
-          expect(client.cluster).to receive(:next_primary).and_raise(Mongo::Error::NoServerAvailable.new(Mongo::ServerSelector.get))
-          expect(Mongo::ServerSelector).to receive(:get).with(mode: :primary_preferred).and_call_original
-        end
-
-        it 'sends the endSessions command with all the session ids to the secondary' do
-          end_sessions_command
-          expect(end_sessions_command.command[:endSessions]).to include(BSON::Document.new(session_a.session_id))
-          expect(end_sessions_command.command[:endSessions]).to include(BSON::Document.new(session_b.session_id))
-        end
-      end
     end
 
     context 'when the number of ids is larger than 10_000' do
@@ -207,6 +194,7 @@ describe Mongo::Session::SessionPool, if: test_sessions? do
         end
         pool.instance_variable_set(:@queue, queue)
         expect(Mongo::Operation::Commands::Command).to receive(:new).at_least(:twice).and_call_original
+        expect(Mongo::ServerSelector).to receive(:get).with(mode: :primary_preferred).and_call_original
       end
 
       let(:end_sessions_commands) do
@@ -218,21 +206,6 @@ describe Mongo::Session::SessionPool, if: test_sessions? do
         expect(end_sessions_commands.size).to eq(2)
         expect(end_sessions_commands[0].command[:endSessions]).to eq(ids[0...10_000])
         expect(end_sessions_commands[1].command[:endSessions]).to eq([ids[10_000]])
-      end
-
-      context 'when the primary is not available' do
-
-        before do
-          expect(client.cluster).to receive(:next_primary).and_raise(Mongo::Error::NoServerAvailable.new(Mongo::ServerSelector.get))
-          expect(Mongo::ServerSelector).to receive(:get).with(mode: :primary_preferred).and_call_original
-        end
-
-        it 'sends the command more than once' do
-          pool.end_sessions
-          expect(end_sessions_commands.size).to eq(2)
-          expect(end_sessions_commands[0].command[:endSessions]).to eq(ids[0...10_000])
-          expect(end_sessions_commands[1].command[:endSessions]).to eq([ids[10_000]])
-        end
       end
     end
   end
