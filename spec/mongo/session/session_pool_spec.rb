@@ -155,12 +155,13 @@ describe Mongo::Session::SessionPool do
         client.cluster.cluster_time
       end
 
-      let!(:end_sessions_command) do
+      let(:end_sessions_command) do
         pool.end_sessions
         subscriber.started_events.find { |c| c.command_name == :endSessions}
       end
 
       it 'sends the endSessions command with all the session ids' do
+        end_sessions_command
         expect(end_sessions_command.command[:endSessions]).to include(BSON::Document.new(session_a.session_id))
         expect(end_sessions_command.command[:endSessions]).to include(BSON::Document.new(session_b.session_id))
       end
@@ -168,9 +169,24 @@ describe Mongo::Session::SessionPool do
       context 'when talking to a replica set or mongos', if: sessions_enabled? && (sharded? || replica_set?) do
 
         it 'sends the endSessions command with all the session ids and cluster time' do
+          end_sessions_command
           expect(end_sessions_command.command[:endSessions]).to include(BSON::Document.new(session_a.session_id))
           expect(end_sessions_command.command[:endSessions]).to include(BSON::Document.new(session_b.session_id))
           expect(end_sessions_command.command[:$clusterTime]).to eq(client.cluster.cluster_time)
+        end
+      end
+
+      context 'when the primary is not available' do
+
+        before do
+          expect(client.cluster).to receive(:next_primary).and_raise(Mongo::Error::NoServerAvailable.new(Mongo::ServerSelector.get))
+          expect(Mongo::ServerSelector).to receive(:get).with(mode: :primary_preferred).and_call_original
+        end
+
+        it 'sends the endSessions command with all the session ids to the secondary' do
+          end_sessions_command
+          expect(end_sessions_command.command[:endSessions]).to include(BSON::Document.new(session_a.session_id))
+          expect(end_sessions_command.command[:endSessions]).to include(BSON::Document.new(session_b.session_id))
         end
       end
     end
@@ -202,6 +218,21 @@ describe Mongo::Session::SessionPool do
         expect(end_sessions_commands.size).to eq(2)
         expect(end_sessions_commands[0].command[:endSessions]).to eq(ids[0...10_000])
         expect(end_sessions_commands[1].command[:endSessions]).to eq([ids[10_000]])
+      end
+
+      context 'when the primary is not available' do
+
+        before do
+          expect(client.cluster).to receive(:next_primary).and_raise(Mongo::Error::NoServerAvailable.new(Mongo::ServerSelector.get))
+          expect(Mongo::ServerSelector).to receive(:get).with(mode: :primary_preferred).and_call_original
+        end
+
+        it 'sends the command more than once' do
+          pool.end_sessions
+          expect(end_sessions_commands.size).to eq(2)
+          expect(end_sessions_commands[0].command[:endSessions]).to eq(ids[0...10_000])
+          expect(end_sessions_commands[1].command[:endSessions]).to eq([ids[10_000]])
+        end
       end
     end
   end
