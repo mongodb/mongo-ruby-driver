@@ -205,7 +205,7 @@ describe Mongo::Collection::View::MapReduce do
             begin; client.use('another-db')[TEST_COLL].create; rescue; end
           end
 
-          it 'uses the session when iterating over the output collection', if: sessions_enabled? do
+          it 'uses the session when iterating over the output collection', if: test_sessions? do
             new_map_reduce.to_a
             expect(find_command["lsid"]).to eq(BSON::Document.new(session.session_id))
           end

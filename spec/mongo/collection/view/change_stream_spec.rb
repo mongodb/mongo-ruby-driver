@@ -200,7 +200,7 @@ describe Mongo::Collection::View::ChangeStream, if: test_change_streams? do
           }.to raise_exception(Mongo::Error::OperationFailure)
         end
 
-        context 'when the operation fails', if: sessions_enabled? && test_change_streams? do
+        context 'when the operation fails', if: test_change_streams? do
 
           let!(:before_last_use) do
             session.instance_variable_get(:@server_session).last_use

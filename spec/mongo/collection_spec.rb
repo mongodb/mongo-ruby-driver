@@ -893,7 +893,7 @@ describe Mongo::Collection do
         it_behaves_like 'a failed operation using a session'
       end
 
-      context 'session id', if: sessions_enabled? do
+      context 'session id', if: test_sessions? do
 
         let(:options) do
           { session: session }

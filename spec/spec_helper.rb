@@ -144,6 +144,15 @@ end
 alias :change_stream_enabled? :op_msg_enabled?
 alias :sessions_enabled? :op_msg_enabled?
 
+
+# Whether sessions can be tested. Sessions are available on server versions 3.6
+#   and higher and when connected to a replica set or sharded cluster.
+#
+# @since 2.5.0
+def test_sessions?
+  sessions_enabled? && (replica_set? || sharded?)
+end
+
 # Whether change streams can be tested. Change streams are available on server versions 3.6
 #   and higher and when connected to a replica set.
 #

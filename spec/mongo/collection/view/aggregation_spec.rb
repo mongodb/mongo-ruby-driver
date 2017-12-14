@@ -224,7 +224,7 @@ describe Mongo::Collection::View::Aggregation do
       expect(aggregation.explain).to_not be_empty
     end
 
-    context 'session id', if: sessions_enabled? do
+    context 'session id', if: test_sessions? do
 
       let(:options) do
         { session: session }

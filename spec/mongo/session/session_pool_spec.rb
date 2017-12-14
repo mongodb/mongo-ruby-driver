@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe Mongo::Session::SessionPool do
+describe Mongo::Session::SessionPool, if: test_sessions? do
 
   describe '.create' do
 
@@ -32,7 +32,7 @@ describe Mongo::Session::SessionPool do
     end
   end
 
-  describe 'checkout', if: sessions_enabled? do
+  describe 'checkout' do
 
     let(:pool) do
       described_class.new(authorized_client)
@@ -115,7 +115,7 @@ describe Mongo::Session::SessionPool do
     end
   end
 
-  describe '#end_sessions', if: sessions_enabled? do
+  describe '#end_sessions' do
 
     let(:pool) do
       described_class.create(client)
@@ -166,7 +166,7 @@ describe Mongo::Session::SessionPool do
         expect(end_sessions_command.command[:endSessions]).to include(BSON::Document.new(session_b.session_id))
       end
 
-      context 'when talking to a replica set or mongos', if: sessions_enabled? && (sharded? || replica_set?) do
+      context 'when talking to a replica set or mongos' do
 
         it 'sends the endSessions command with all the session ids and cluster time' do
           end_sessions_command

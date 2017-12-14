@@ -1,6 +1,6 @@
 shared_examples 'an operation using a session' do
 
-  describe 'operation execution', if: sessions_enabled? do
+  describe 'operation execution', if: test_sessions? do
 
     context 'when the session is created from the same client used for the operation' do
 
@@ -87,7 +87,7 @@ end
 
 shared_examples 'a failed operation using a session' do
 
-  context 'when the operation fails', if: sessions_enabled? do
+  context 'when the operation fails', if: test_sessions? do
 
     let!(:before_last_use) do
       session.instance_variable_get(:@server_session).last_use
@@ -210,7 +210,7 @@ shared_examples 'an operation updating cluster time' do
       subscriber.succeeded_events[-1].reply['$clusterTime']
     end
 
-    context 'when the cluster is sharded or a replica set', if: (!standalone? && sessions_enabled?) do
+    context 'when the cluster is sharded or a replica set', if: test_sessions? do
 
       context 'when the session cluster time is advanced' do
 

@@ -1359,7 +1359,7 @@ describe Mongo::Client do
       authorized_client.start_session
     end
 
-    context 'when sessions are supported', if: sessions_enabled? do
+    context 'when sessions are supported', if: test_sessions? do
 
       it 'creates a session' do
         expect(session).to be_a(Mongo::Session)
