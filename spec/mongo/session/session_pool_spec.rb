@@ -149,7 +149,6 @@ describe Mongo::Session::SessionPool, if: test_sessions? do
         client.database.command(ping: 1)
         pool.checkin(session_a)
         pool.checkin(session_b)
-        expect(Mongo::ServerSelector).to receive(:get).with(mode: :primary_preferred).and_call_original
       end
 
       let!(:cluster_time) do
@@ -194,7 +193,6 @@ describe Mongo::Session::SessionPool, if: test_sessions? do
         end
         pool.instance_variable_set(:@queue, queue)
         expect(Mongo::Operation::Commands::Command).to receive(:new).at_least(:twice).and_call_original
-        expect(Mongo::ServerSelector).to receive(:get).with(mode: :primary_preferred).and_call_original
       end
 
       let(:end_sessions_commands) do
