@@ -7,7 +7,7 @@ describe 'change streams examples in Ruby', if: test_change_streams? do
   end
 
   let(:client) do
-    authorized_client.with(heartbeat_frequency: 20)
+    authorized_client.with(max_pool_size: 5, wait_queue_timeout: 3)
   end
 
   before do
