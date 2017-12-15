@@ -160,7 +160,7 @@ module Mongo
       end
 
       def uri
-        @uri ||= Mongo::URI.get(@spec['uri'])
+        @uri ||= Mongo::URI.new(@spec['uri'])
       end
 
       def auth
@@ -198,7 +198,7 @@ module Mongo
       end
 
       def uri
-        @uri ||= Mongo::URI.new(@spec['uri'])
+        @uri ||= Mongo::URI.get(@spec['uri'])
       end
     end
 
