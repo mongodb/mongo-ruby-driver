@@ -465,7 +465,7 @@ module Mongo
     end
 
     def create_from_uri(connection_string, opts = Options::Redacted.new)
-      uri = URI.new(connection_string, opts)
+      uri = URI.get(connection_string, opts)
       @options = validate_options!(Database::DEFAULT_OPTIONS.merge(uri.client_options.merge(opts))).freeze
       @cluster = Cluster.new(uri.servers, @monitoring, options)
       @database = Database.new(self, options[:database], options)

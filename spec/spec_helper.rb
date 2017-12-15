@@ -9,6 +9,7 @@ MAX_STALENESS_TESTS = Dir.glob("#{CURRENT_PATH}/support/max_staleness/**/*.yml")
 CRUD_TESTS = Dir.glob("#{CURRENT_PATH}/support/crud_tests/**/*.yml")
 COMMAND_MONITORING_TESTS = Dir.glob("#{CURRENT_PATH}/support/command_monitoring/**/*.yml")
 CONNECTION_STRING_TESTS = Dir.glob("#{CURRENT_PATH}/support/connection_string_tests/*.yml")
+DNS_SEEDLIST_DISCOVERY_TESTS = Dir.glob("#{CURRENT_PATH}/support/dns_seedlist_discovery_tests/*.yml")
 GRIDFS_TESTS = Dir.glob("#{CURRENT_PATH}/support/gridfs_tests/*.yml")
 
 if ENV['DRIVERS_TOOLS']

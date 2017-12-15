@@ -43,7 +43,7 @@ RSpec::Matchers.define :have_hosts do |test|
       server = find_server(cl, host)
       match_host?(server, host) &&
           match_port?(server, host) if server #&&
-          #match_address_family?(server, host) if server
+      #match_address_family?(server, host) if server
     end
 
     failure_message do |client|
@@ -51,31 +51,6 @@ RSpec::Matchers.define :have_hosts do |test|
           "Expected that test hosts: #{test.hosts} would match " +
           "client hosts: #{cl.cluster.instance_variable_get(:@servers)}"
     end
-  end
-end
-
-RSpec::Matchers.define :match_auth do |test|
-
-  def match_database?(client, auth)
-    client.options[:database] == auth.database || !auth.database
-  end
-
-  def match_password?(client, auth)
-    client.options[:password] == auth.password ||
-      client.options[:password].nil? && auth.password == ''
-  end
-
-  match do |client|
-    auth = test.auth
-    return true unless auth
-    client.options[:user] == auth.username &&
-      match_password?(client, auth) &&
-        match_database?(client, auth)
-  end
-
-  failure_message do |client|
-    "With URI: #{test.uri_string}\n" +
-        "Expected that test auth: #{test.auth} would match client auth: #{client.options}"
   end
 end
 
@@ -89,12 +64,12 @@ RSpec::Matchers.define :match_options do |test|
 
   failure_message do |client|
     "With URI: #{test.uri_string}\n" +
-      "Expected that test options: #{test.options.options} would match client options: #{client.options}"
+        "Expected that test options: #{test.options.options} would match client options: #{client.options}"
   end
 end
 
 module Mongo
-  module ConnectionString
+  module DNSSeedlistDiscovery
 
     class Spec
 
@@ -107,18 +82,16 @@ module Mongo
       #
       # @param [ String ] file The name of the file.
       #
-      # @since 2.0.0
+      # @since 2.5.0
       def initialize(file)
         file = File.new(file)
         @spec = YAML.load(ERB.new(file.read).result)
         file.close
-        @description = File.basename(file)
+        @description = @spec['comment'] || File.basename(file)
       end
 
-      def tests
-        @tests ||= @spec['tests'].collect do |spec|
-          Test.new(spec)
-        end
+      def client
+        Mongo::Client.new(@spec['uri'])
       end
     end
 
@@ -137,10 +110,6 @@ module Mongo
         @spec['valid']
       end
 
-      def raise_error?
-        @spec['error'].nil?
-      end
-
       def warn?
         @spec['warning']
       end
@@ -151,9 +120,7 @@ module Mongo
         end
       end
 
-      def options
-        @options ||= Options.new(@spec['options']) if @spec['options']
-      end
+
 
       def client
         @client ||= Mongo::Client.new(@spec['uri'])
@@ -165,40 +132,6 @@ module Mongo
 
       def auth
         @auth ||= Auth.new(@spec['auth']) if @spec['auth']
-      end
-    end
-
-    class SRVTest
-
-      attr_reader :description
-      attr_reader :uri_string
-
-      def initialize(spec)
-        @spec = spec
-        @description = @spec['description']
-        @uri_string = @spec['uri']
-      end
-
-      def raise_error?
-        @spec['error']
-      end
-
-      def hosts
-        @hosts ||= @spec['hosts'].collect do |host|
-          Host.new(host)
-        end
-      end
-
-      def options
-        @options ||= Options.new(@spec['options']) if @spec['options']
-      end
-
-      def client
-        @client ||= Mongo::Client.new(@spec['uri'])
-      end
-
-      def uri
-        @uri ||= Mongo::URI.new(@spec['uri'])
       end
     end
 
@@ -256,9 +189,9 @@ module Mongo
       end
 
       def match?(opts)
-        @options.all? do |k, v|
-          opts[MAPPINGS[k.downcase]] == v ||
-              opts[MAPPINGS[k.downcase]] == Mongo::URI::AUTH_MECH_MAP[v]
+        @options.keys.all? do |k|
+          opts[MAPPINGS[k]] == @options[k] ||
+              Mongo::URI::AUTH_MECH_MAP[@options[k]] == opts[MAPPINGS[k]]
         end
       end
     end
