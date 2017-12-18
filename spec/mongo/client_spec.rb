@@ -617,6 +617,21 @@ describe Mongo::Client do
 
     context 'when providing a connection string' do
 
+      context 'when the string uses the SRV Protocol' do
+
+        let!(:uri) do
+          'mongodb+srv://test5.test.build.10gen.cc/testdb'
+        end
+
+        let(:client) do
+          described_class.new(uri)
+        end
+
+        it 'sets the database' do
+          expect(client.options[:database]).to eq('testdb')
+        end
+      end
+
       context 'when a database is provided' do
 
         let!(:uri) do

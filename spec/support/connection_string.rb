@@ -137,10 +137,6 @@ module Mongo
         @spec['valid']
       end
 
-      def raise_error?
-        @spec['error'].nil?
-      end
-
       def warn?
         @spec['warning']
       end
@@ -160,46 +156,16 @@ module Mongo
       end
 
       def uri
-        @uri ||= Mongo::URI.new(@spec['uri'])
+        @uri ||= Mongo::URI.get(@spec['uri'])
       end
 
       def auth
         @auth ||= Auth.new(@spec['auth']) if @spec['auth']
       end
-    end
 
-    class SRVTest
-
-      attr_reader :description
-      attr_reader :uri_string
-
-      def initialize(spec)
-        @spec = spec
-        @description = @spec['description']
-        @uri_string = @spec['uri']
-      end
-
-      def raise_error?
-        @spec['error']
-      end
-
-      def hosts
-        @hosts ||= @spec['hosts'].collect do |host|
-          Host.new(host)
+        def raise_error?
+          @spec['error']
         end
-      end
-
-      def options
-        @options ||= Options.new(@spec['options']) if @spec['options']
-      end
-
-      def client
-        @client ||= Mongo::Client.new(@spec['uri'])
-      end
-
-      def uri
-        @uri ||= Mongo::URI.get(@spec['uri'])
-      end
     end
 
     class Host

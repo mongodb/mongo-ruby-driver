@@ -1,8 +1,47 @@
 require 'spec_helper'
 
 describe Mongo::URI do
+
+  describe '.get' do
+
+    let(:uri) { described_class.get(string) }
+
+    context 'when the scheme is mongodb://' do
+
+      let(:string) do
+        'mongodb://localhost:27017'
+      end
+
+      it 'returns a Mongo::URI object' do
+        expect(uri).to be_a(Mongo::URI)
+      end
+    end
+
+    context 'when the scheme is mongodb+srv://' do
+
+      let(:string) do
+        'mongodb+srv://test5.test.build.10gen.cc'
+      end
+
+      it 'returns a Mongo::URI::SRVProtocol object' do
+        expect(uri).to be_a(Mongo::URI::SRVProtocol)
+      end
+    end
+
+    context 'when the scheme is invalid' do
+
+      let(:string) do
+        'mongo://localhost:27017'
+      end
+
+      it 'raises an exception' do
+        expect { uri }.to raise_error(Mongo::Error::InvalidURI)
+      end
+    end
+  end
+
   let(:scheme) { 'mongodb://' }
-  let(:uri) { described_class.get(string) }
+  let(:uri) { described_class.new(string) }
 
   describe 'invalid uris' do
 

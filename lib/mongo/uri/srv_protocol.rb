@@ -1,4 +1,4 @@
-# Copyright (C) 2014-2017 MongoDB, Inc.
+# Copyright (C) 2017 MongoDB, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the 'License');
 # you may not use this file except in compliance with the License.
@@ -18,6 +18,12 @@ module Mongo
 
   class URI
 
+    # Parser for a URI using the mongodb+srv protocol. This URI specifies a DNS to query for SRV records.
+    # The driver will query the DNS server for SRV records on {hostname}.{domainname},
+    # prefixed with _mongodb._tcp
+    # The SRV records can then used as the seedlist for the Mongo::Client.
+    # The driver also queries for TXT records providing default connection string options.
+    #
     # The SRVScheme URI class parses a MongoDB uri formatted as
     # defined in the Initial DNS Seedlist Discovery spec.
     #
@@ -25,21 +31,15 @@ module Mongo
     #
     # @example Use the uri string to make a client connection.
     #   uri = URI.new('mongodb+srv://test6.test.build.10gen.cc/')
-    #   client = Client.new(uri.server, uri.options)
+    #   client = Client.new(uri.servers, uri.options)
     #   client.login(uri.credentials)
     #   client[uri.database]
-
-    # Parser for a URI using the mongodb+srv protocol. This URI specifies a DNS to query for SRV records.
-    # The driver will query the DNS server for SRV records on {hostname}.{domainname},
-    # prefixed with _mongodb._tcp
-    # The SRV records are then used as the seedlist for the Mongo::Client.
-    # The driver also queries for TXT records providing default connection string options.
     #
     # @since 2.5.0
-    class SRVScheme < URI
+    class SRVProtocol < URI
 
       # Gets the options hash that needs to be passed to a Mongo::Client on
-      # instantiation, so we don't have to merge the credentials and database in
+      # instantiation, so we don't have to merge the txt record options, credentials, and database in
       # at that point - we only have a single point here.
       #
       # @example Get the client options.
@@ -56,9 +56,33 @@ module Mongo
 
       private
 
-      RECORD_PREFIX = '_mongodb._tcp.'
+      RECORD_PREFIX = '_mongodb._tcp.'.freeze
 
-      VALID_TXT_OPTIONS = [:auth_source, :replica_set]
+      VALID_TXT_OPTIONS = [:auth_source, :replica_set].freeze
+
+      INVALID_HOST = "One and only one host is required in a connection string with the " +
+                       "'#{MONGODB_SRV_SCHEME}' protocol.".freeze
+
+      INVALID_PORT = "It is not allowed to specify a port in a connection string with the " +
+                       "''#{MONGODB_SRV_SCHEME}'' protocol.".freeze
+
+      INVALID_DOMAIN = "The domain name must consist of at least two parts: the domain name, " +
+                         "and a TLD.".freeze
+
+      NO_SRV_RECORDS = "The DNS query returned no SRV records at hostname (%s)".freeze
+
+      MORE_THAN_ONE_TXT_RECORD_FOUND = "Only one TXT record is allowed. Querying hostname (%s) " +
+                                         "returned more than one result.".freeze
+
+      INVALID_TXT_RECORD_OPTION = "TXT records can only specify the options " +
+                                    "[#{VALID_TXT_OPTIONS.join(', ')}].".freeze
+
+      MISTMATCHED_DOMAINNAME = "Parent domain name in SRV record result (%s) does not match " +
+                                 "hostname (%s)".freeze
+
+      def scheme
+        MONGODB_SRV_SCHEME
+      end
 
       def parse_creds_hosts!(string)
         hostname, creds = split_creds_hosts(string)
@@ -71,13 +95,11 @@ module Mongo
       end
 
       def validate_hostname!(host)
-        # verify no port
-        # verify only one hostname
-        raise Error::InvalidURI.new(host, INVALID_SCHEME) if host.include?(':')
-        raise Error::InvalidURI.new(host, INVALID_SCHEME) if host.include?(',')
-        # verify domain has two parts
+        raise Error::InvalidURI.new(host, INVALID_HOST) if host.empty?
+        raise Error::InvalidURI.new(host, INVALID_HOST) if host.include?(',')
+        raise Error::InvalidURI.new(host, INVALID_PORT) if host.include?(':')
         hostname, _, domain = host.partition('.')
-        raise Error::InvalidURI.new(host, INVALID_SCHEME) unless domain.include?('.')
+        raise Error::InvalidURI.new(host, INVALID_DOMAIN) unless domain.include?('.')
       end
 
       def get_records(hostname)
@@ -87,21 +109,25 @@ module Mongo
           port = record.port
           validate_record!(host, hostname)
           "#{host}:#{port}"
-          end
-        raise Exception if records.empty?
+        end
+        raise Error::NoSRVRecords.new(NO_SRV_RECORDS % name) if records.empty?
         records
       end
 
       def validate_record!(host, domain)
         root = domain.split('.')[1..-1]
         host_parts = host.split('.')
-        raise Exception unless host_parts.size > root.size && root == host_parts[-root.length..-1]
+        unless host_parts.size > root.size && root == host_parts[-root.length..-1]
+          raise Error::MismatchedDomain.new(MISTMATCHED_DOMAINNAME % [host, domain])
+        end
       end
 
       def get_txt_opts(host)
         records = resolver.getresources(host, Resolv::DNS::Resource::IN::TXT)
         unless records.empty?
-          raise Exception if records.size > 1
+          if records.size > 1
+            raise Error::InvalidTXTRecords.new(MORE_THAN_ONE_TXT_RECORD_FOUND % host)
+          end
           options_string = records[0].strings.join
           opts = parse_uri_options!(options_string)
           validate_txt_options!(opts)
@@ -110,7 +136,9 @@ module Mongo
       end
 
       def validate_txt_options!(opts)
-        raise Exception unless opts.keys.all? { |key| VALID_TXT_OPTIONS.include?(key) }
+        unless opts.keys.all? { |key| VALID_TXT_OPTIONS.include?(key) }
+          raise Error::InvalidTXTRecords.new(INVALID_TXT_RECORD_OPTION)
+        end
       end
 
       def resolver

@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/uri/srv_scheme'
+require 'uri'
 
 module Mongo
 
@@ -23,7 +23,7 @@ module Mongo
   #
   # @example Use the uri string to make a client connection.
   #   uri = URI.new('mongodb://localhost:27017')
-  #   client = Client.new(uri.server, uri.options)
+  #   client = Client.new(uri.servers, uri.options)
   #   client.login(uri.credentials)
   #   client[uri.database]
   #
@@ -48,12 +48,19 @@ module Mongo
 
     # The mongodb connection string scheme.
     #
-    # @since 2.0.0
-    MONGODB_SCHEME = 'mongodb'.freeze
-
-    # The mongodb srv connection string scheme.
+    # @deprecated Will be removed in 3.0.
     #
     # @since 2.0.0
+    SCHEME = 'mongodb://'.freeze
+
+    # The mongodb connection string scheme root.
+    #
+    # @since 2.5.0
+    MONGODB_SCHEME = 'mongodb'.freeze
+
+    # The mongodb srv protocol connection string scheme root.
+    #
+    # @since 2.5.0
     MONGODB_SRV_SCHEME = 'mongodb+srv'.freeze
 
     # Error details for an invalid scheme.
@@ -122,6 +129,11 @@ module Mongo
     # @since 2.1.0
     AUTH_DELIM = '@'.freeze
 
+    # Scheme delimiter.
+    #
+    # @since 2.5.0
+    SCHEME_DELIM = '://'.freeze
+
     # Error details for an invalid options format.
     #
     # @since 2.1.0
@@ -185,6 +197,26 @@ module Mongo
     # @since 2.1.0
     REPEATABLE_OPTIONS = [ :tag_sets ]
 
+    # Get either a URI object or a SRVProtocol URI object.
+    #
+    # @example Get the uri object.
+    #   URI.get(string)
+    #
+    # @return [URI, URI::SRVProtocol] The uri object.
+    #
+    # @since 2.5.0
+    def self.get(string, opts = {})
+      scheme, _, remaining = string.partition(SCHEME_DELIM)
+      case scheme
+        when MONGODB_SCHEME
+          URI.new(string, opts)
+        when MONGODB_SRV_SCHEME
+          SRVProtocol.new(string, opts)
+        else
+          raise Error::InvalidURI.new(string, INVALID_SCHEME)
+      end
+    end
+
     # Gets the options hash that needs to be passed to a Mongo::Client on
     # instantiation, so we don't have to merge the credentials and database in
     # at that point - we only have a single point here.
@@ -214,7 +246,9 @@ module Mongo
     def initialize(string, options = {})
       @string = string
       @options = options
-      parse!
+      parsed_scheme, _, remaining = string.partition(SCHEME_DELIM)
+      raise_invalid_error!(INVALID_SCHEME) unless parsed_scheme == scheme
+      parse!(remaining)
     end
 
     # Get the credentials provided in the URI.
@@ -243,27 +277,11 @@ module Mongo
       @database ? @database : Database::ADMIN
     end
 
-    # Get either a URI object or a SRVScheme URI parser object.
-    #
-    # @example Get the uri object.
-    #   URI.get(uri)
-    #
-    # @return [URI, URI::SRVScheme] The uri object.
-    #
-    # @since 2.5.0
-    def self.get(string, opts = {})
-      scheme, _, remaining = string.partition('://')
-      case scheme
-        when MONGODB_SCHEME
-          URI.new(remaining, opts)
-        when MONGODB_SRV_SCHEME
-          SRVScheme.new(remaining, opts)
-        else
-          raise Error::InvalidURI.new(string, INVALID_SCHEME)
-      end
-    end
-
     private
+
+    def scheme
+      MONGODB_SCHEME
+    end
 
     def parse_creds_hosts!(string)
       hosts, creds = split_creds_hosts(string)
@@ -272,14 +290,14 @@ module Mongo
       @password = parse_password!(creds)
     end
 
-    def parse!
-      creds_hosts, db_opts = extract_db_opts!
+    def parse!(remaining)
+      creds_hosts, db_opts = extract_db_opts!(remaining)
       parse_creds_hosts!(creds_hosts)
       parse_db_opts!(db_opts)
     end
 
-    def extract_db_opts!
-      db_opts, _, creds_hosts = @string.reverse.partition(DATABASE_DELIM)
+    def extract_db_opts!(remaining)
+      db_opts, _, creds_hosts = remaining.reverse.partition(DATABASE_DELIM)
       db_opts, creds_hosts = creds_hosts, db_opts if creds_hosts.empty?
       if db_opts.empty? && creds_hosts.include?(URI_OPTS_DELIM)
         raise_invalid_error!(INVALID_OPTS_DELIM)
@@ -608,3 +626,5 @@ module Mongo
     end
   end
 end
+
+require 'mongo/uri/srv_protocol'
