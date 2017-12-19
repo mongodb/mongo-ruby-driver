@@ -228,5 +228,17 @@ describe Mongo::Address do
         expect(address.socket(0.0)).not_to be_nil
       end
     end
+
+    context 'when creating a socket using the resolver' do
+
+      before do
+        address.instance_variable_set(:@resolver, nil)
+        address.send(:initialize_resolver!, (SSL ? SSL_OPTIONS : {}))
+      end
+
+      it 'uses the host, not the IP address' do
+        expect(address.socket(0.0).host).to eq(host)
+      end
+    end
   end
 end
