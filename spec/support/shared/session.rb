@@ -301,12 +301,15 @@ shared_examples 'an operation supporting causally consistent reads' do
           client.start_session(causal_consistency: false)
         end
 
-        let(:expected_read_concern) do
-          BSON::Document.new(level: 'majority')
-        end
+        context 'when the session does not have an operation time' do
 
-        it 'leaves the read concern document unchanged' do
-          expect(command['readConcern']).to eq(expected_read_concern)
+          let(:expected_read_concern) do
+            BSON::Document.new(level: 'majority')
+          end
+
+          it 'leaves the read concern document unchanged' do
+            expect(command['readConcern']).to eq(expected_read_concern)
+          end
         end
 
         context 'when the operation time is advanced' do
@@ -335,12 +338,15 @@ shared_examples 'an operation supporting causally consistent reads' do
           client.start_session
         end
 
-        let(:expected_read_concern) do
-          BSON::Document.new(level: 'majority')
-        end
+        context 'when the session does not have an operation time' do
 
-        it 'leaves the read concern document unchanged' do
-          expect(command['readConcern']).to eq(expected_read_concern)
+          let(:expected_read_concern) do
+            BSON::Document.new(level: 'majority')
+          end
+
+          it 'leaves the read concern document unchanged' do
+            expect(command['readConcern']).to eq(expected_read_concern)
+          end
         end
 
         context 'when the operation time is advanced' do
@@ -376,8 +382,11 @@ shared_examples 'an operation supporting causally consistent reads' do
           client.start_session(causal_consistency: true)
         end
 
-        it 'does not include the read concern in the command' do
-          expect(command['readConcern']).to be_nil
+        context 'when the session does not have an operation time' do
+
+          it 'does not include the read concern in the command' do
+            expect(command['readConcern']).to be_nil
+          end
         end
 
         context 'when the session has an operation time' do
@@ -425,8 +434,11 @@ shared_examples 'an operation supporting causally consistent reads' do
           client.start_session(causal_consistency: false)
         end
 
-        it 'does not include the read concern in the command' do
-          expect(command['readConcern']).to be_nil
+        context 'when the session does not have an operation time' do
+
+          it 'does not include the read concern in the command' do
+            expect(command['readConcern']).to be_nil
+          end
         end
 
         context 'when the session has an operation time' do
@@ -466,8 +478,11 @@ shared_examples 'an operation supporting causally consistent reads' do
           client.start_session
         end
 
-        it 'does not include the read concern in the command' do
-          expect(command['readConcern']).to be_nil
+        context 'when the session does not have an operation time' do
+
+          it 'does not include the read concern in the command' do
+            expect(command['readConcern']).to be_nil
+          end
         end
 
         context 'when the session has an operation time' do
