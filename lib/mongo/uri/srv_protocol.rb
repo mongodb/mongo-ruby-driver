@@ -21,8 +21,8 @@ module Mongo
     # Parser for a URI using the mongodb+srv protocol. This URI specifies a DNS to query for SRV records.
     # The driver will query the DNS server for SRV records on {hostname}.{domainname},
     # prefixed with _mongodb._tcp
-    # The SRV records can then used as the seedlist for the Mongo::Client.
-    # The driver also queries for TXT records providing default connection string options.
+    # The SRV records can then be used as the seedlist for the Mongo::Client.
+    # The driver also queries for a TXT record providing default connection string options.
     #
     # The SRVScheme URI class parses a MongoDB uri formatted as
     # defined in the Initial DNS Seedlist Discovery spec.
@@ -30,17 +30,14 @@ module Mongo
     # https://github.com/mongodb/specifications/blob/master/source/initial-dns-seedlist-discovery
     #
     # @example Use the uri string to make a client connection.
-    #   uri = URI.new('mongodb+srv://test6.test.build.10gen.cc/')
-    #   client = Client.new(uri.servers, uri.options)
-    #   client.login(uri.credentials)
-    #   client[uri.database]
+    #   client = Client.new('mongodb+srv://test6.test.build.10gen.cc/')
     #
     # @since 2.5.0
     class SRVProtocol < URI
 
-      # Gets the options hash that needs to be passed to a Mongo::Client on
-      # instantiation, so we don't have to merge the txt record options, credentials, and database in
-      # at that point - we only have a single point here.
+      # Gets the options hash that needs to be passed to a Mongo::Client on instantiation, so we
+      # don't have to merge the txt record options, credentials, and database in at that point -
+      # we only have a single point here.
       #
       # @example Get the client options.
       #   uri.client_options
@@ -64,7 +61,7 @@ module Mongo
                        "'#{MONGODB_SRV_SCHEME}' protocol.".freeze
 
       INVALID_PORT = "It is not allowed to specify a port in a connection string with the " +
-                       "''#{MONGODB_SRV_SCHEME}'' protocol.".freeze
+                       "'#{MONGODB_SRV_SCHEME}' protocol.".freeze
 
       INVALID_DOMAIN = "The domain name must consist of at least two parts: the domain name, " +
                          "and a TLD.".freeze
@@ -78,10 +75,16 @@ module Mongo
                                     "[#{VALID_TXT_OPTIONS.join(', ')}].".freeze
 
       MISTMATCHED_DOMAINNAME = "Parent domain name in SRV record result (%s) does not match " +
-                                 "hostname (%s)".freeze
+                                 "that of the hostname (%s)".freeze
+
+      FORMAT = 'mongodb+srv://[username:password@]host[/[database][?options]]'.freeze
 
       def scheme
         MONGODB_SRV_SCHEME
+      end
+
+      def raise_invalid_error!(details)
+        raise Error::InvalidURI.new(@string, FORMAT, details)
       end
 
       def parse_creds_hosts!(string)
@@ -95,11 +98,11 @@ module Mongo
       end
 
       def validate_hostname!(host)
-        raise Error::InvalidURI.new(host, INVALID_HOST) if host.empty?
-        raise Error::InvalidURI.new(host, INVALID_HOST) if host.include?(',')
-        raise Error::InvalidURI.new(host, INVALID_PORT) if host.include?(':')
+        raise_invalid_error!(INVALID_HOST) if host.empty?
+        raise_invalid_error!(INVALID_HOST) if host.include?(',')
+        raise_invalid_error!(INVALID_PORT) if host.include?(':')
         hostname, _, domain = host.partition('.')
-        raise Error::InvalidURI.new(host, INVALID_DOMAIN) unless domain.include?('.')
+        raise_invalid_error!(INVALID_DOMAIN) unless domain.include?('.')
       end
 
       def get_records(hostname)
@@ -110,7 +113,7 @@ module Mongo
           validate_record!(host, hostname)
           "#{host}:#{port}"
         end
-        raise Error::NoSRVRecords.new(NO_SRV_RECORDS % name) if records.empty?
+        raise Error::NoSRVRecords.new(NO_SRV_RECORDS % hostname) if records.empty?
         records
       end
 

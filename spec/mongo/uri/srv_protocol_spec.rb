@@ -55,16 +55,7 @@ describe Mongo::URI::SRVProtocol do
       end
     end
 
-    context "mongodb+srv://localhost:27017" do
-
-      let(:string) { "#{scheme}localhost:27017" }
-
-      it 'raises an error' do
-        expect { uri }.to raise_error(Mongo::Error::InvalidURI)
-      end
-    end
-
-    context "mongodb+srv://" do
+    context 'mongodb+srv://' do
 
       let(:string) { "#{scheme}" }
 
@@ -73,16 +64,7 @@ describe Mongo::URI::SRVProtocol do
       end
     end
 
-    context "mongodb+srv://localhost::27017" do
-
-      let(:string) { "#{scheme}localhost::27017" }
-
-      it 'raises an error' do
-        expect { uri }.to raise_error(Mongo::Error::InvalidURI)
-      end
-    end
-
-    context "mongodb+srv://localhost::27017/" do
+    context 'mongodb+srv://localhost::27017/' do
 
       let(:string) { "#{scheme}localhost::27017/" }
 
@@ -91,7 +73,7 @@ describe Mongo::URI::SRVProtocol do
       end
     end
 
-    context "mongodb+srv://::" do
+    context 'mongodb+srv://::' do
 
       let(:string) { "#{scheme}::" }
 
@@ -100,7 +82,7 @@ describe Mongo::URI::SRVProtocol do
       end
     end
 
-    context "mongodb+srv://localhost,localhost::" do
+    context 'mongodb+srv://localhost,localhost::' do
 
       let(:string) { "#{scheme}localhost,localhost::" }
 
@@ -109,7 +91,7 @@ describe Mongo::URI::SRVProtocol do
       end
     end
 
-    context "mongodb+srv://localhost::27017,abc" do
+    context 'mongodb+srv://localhost::27017,abc' do
 
       let(:string) { "#{scheme}localhost::27017,abc" }
 
@@ -118,7 +100,7 @@ describe Mongo::URI::SRVProtocol do
       end
     end
 
-    context "mongodb+srv://localhost:-1" do
+    context 'mongodb+srv://localhost:-1' do
 
       let(:string) { "#{scheme}localhost:-1" }
 
@@ -127,7 +109,7 @@ describe Mongo::URI::SRVProtocol do
       end
     end
 
-    context "mongodb+srv://localhost:0/" do
+    context 'mongodb+srv://localhost:0/' do
 
       let(:string) { "#{scheme}localhost:0/" }
 
@@ -136,7 +118,7 @@ describe Mongo::URI::SRVProtocol do
       end
     end
 
-    context "mongodb+srv://localhost:65536" do
+    context 'mongodb+srv://localhost:65536' do
 
       let(:string) { "#{scheme}localhost:65536" }
 
@@ -145,7 +127,7 @@ describe Mongo::URI::SRVProtocol do
       end
     end
 
-    context "mongodb+srv://localhost:foo" do
+    context 'mongodb+srv://localhost:foo' do
 
       let(:string) { "#{scheme}localhost:foo" }
 
@@ -154,7 +136,7 @@ describe Mongo::URI::SRVProtocol do
       end
     end
 
-    context "mongodb+srv://mongodb://[::1]:-1" do
+    context 'mongodb+srv://mongodb://[::1]:-1' do
 
       let(:string) { "#{scheme}mongodb://[::1]:-1" }
 
@@ -163,7 +145,7 @@ describe Mongo::URI::SRVProtocol do
       end
     end
 
-    context "mongodb+srv://[::1]:0/" do
+    context 'mongodb+srv://[::1]:0/' do
 
       let(:string) { "#{scheme}[::1]:0/" }
 
@@ -172,7 +154,7 @@ describe Mongo::URI::SRVProtocol do
       end
     end
 
-    context "mongodb+srv://[::1]:65536" do
+    context 'mongodb+srv://[::1]:65536' do
 
       let(:string) { "#{scheme}[::1]:65536" }
 
@@ -181,7 +163,7 @@ describe Mongo::URI::SRVProtocol do
       end
     end
 
-    context "mongodb+srv://[::1]:65536/" do
+    context 'mongodb+srv://[::1]:65536/' do
 
       let(:string) { "#{scheme}[::1]:65536/" }
 
@@ -190,7 +172,7 @@ describe Mongo::URI::SRVProtocol do
       end
     end
 
-    context "mongodb+srv://[::1]:foo" do
+    context 'mongodb+srv://[::1]:foo' do
 
       let(:string) { "#{scheme}[::1]:foo" }
 
@@ -199,7 +181,7 @@ describe Mongo::URI::SRVProtocol do
       end
     end
 
-    context "mongodb+srv://example.com?w=1" do
+    context 'mongodb+srv://example.com?w=1' do
 
       let(:string) { "#{scheme}example.com?w=1" }
 
@@ -208,7 +190,7 @@ describe Mongo::URI::SRVProtocol do
       end
     end
 
-    context "mongodb+srv://example.com/?w" do
+    context 'mongodb+srv://example.com/?w' do
 
       let(:string) { "#{scheme}example.com/?w" }
 

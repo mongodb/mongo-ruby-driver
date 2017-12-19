@@ -213,7 +213,7 @@ module Mongo
         when MONGODB_SRV_SCHEME
           SRVProtocol.new(string, opts)
         else
-          raise Error::InvalidURI.new(string, INVALID_SCHEME)
+          raise Error::InvalidURI.new(string, FORMAT, INVALID_SCHEME)
       end
     end
 
@@ -377,7 +377,7 @@ module Mongo
     end
 
     def raise_invalid_error!(details)
-      raise Error::InvalidURI.new(@string, details)
+      raise Error::InvalidURI.new(@string, FORMAT, details)
     end
 
     def decode(value)
