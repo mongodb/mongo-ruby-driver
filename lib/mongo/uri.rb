@@ -174,22 +174,22 @@ module Mongo
     #
     # @since 2.0.0
     READ_MODE_MAP = {
-        'primary'            => :primary,
-        'primarypreferred'   => :primary_preferred,
-        'secondary'          => :secondary,
-        'secondarypreferred' => :secondary_preferred,
-        'nearest'            => :nearest
+      'primary'            => :primary,
+      'primarypreferred'   => :primary_preferred,
+      'secondary'          => :secondary,
+      'secondarypreferred' => :secondary_preferred,
+      'nearest'            => :nearest
     }.freeze
 
     # Map of URI authentication mechanisms to ruby driver mechanisms
     #
     # @since 2.0.0
     AUTH_MECH_MAP = {
-        'PLAIN'        => :plain,
-        'MONGODB-CR'   => :mongodb_cr,
-        'GSSAPI'       => :gssapi,
-        'MONGODB-X509' => :mongodb_x509,
-        'SCRAM-SHA-1'  => :scram
+      'PLAIN'        => :plain,
+      'MONGODB-CR'   => :mongodb_cr,
+      'GSSAPI'       => :gssapi,
+      'MONGODB-X509' => :mongodb_x509,
+      'SCRAM-SHA-1'  => :scram
     }.freeze
 
     # Options that are allowed to appear more than once in the uri.
