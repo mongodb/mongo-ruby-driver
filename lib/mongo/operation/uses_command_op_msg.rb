@@ -51,7 +51,13 @@ module Mongo
       def update_selector_for_session!(selector, server)
         # the driver MUST ignore any implicit session if at the point it is sending a command
         # to a specific server it turns out that that particular server doesn't support sessions after all
-        if session && (server.features.sessions_enabled? || !session.send(:implicit_session?))
+        if server.features.sessions_enabled?
+          apply_cluster_time!(selector, server)
+          if session
+            apply_session_id!(selector)
+            apply_causal_consistency!(selector, server)
+          end
+        elsif session && !session.send(:implicit_session?)
           apply_cluster_time!(selector, server)
           apply_session_id!(selector)
           apply_causal_consistency!(selector, server)

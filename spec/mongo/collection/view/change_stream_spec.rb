@@ -168,7 +168,7 @@ describe Mongo::Collection::View::ChangeStream, if: test_change_streams? do
       end
 
       it 'uses the read concern of the collection' do
-        expect(command_spec[:read_concern]).to eq(level: 'majority')
+        expect(command_selector[:readConcern]).to eq('level' => 'majority')
       end
     end
 
