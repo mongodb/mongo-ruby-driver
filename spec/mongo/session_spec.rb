@@ -107,12 +107,12 @@ describe Mongo::Session, if: test_sessions? do
 
       context 'when the original operation time is less than the new operation time' do
 
-        let(:new_operation_time) do
+        let(:original_operation_time) do
           BSON::Timestamp.new(0, 1)
         end
 
         before do
-          session.instance_variable_set(:@operation_time, new_operation_time)
+          session.instance_variable_set(:@operation_time, original_operation_time)
           session.advance_operation_time(new_operation_time)
         end
 
