@@ -231,7 +231,7 @@ shared_examples 'an operation supporting causally consistent reads' do
     end
   end
 
-  context 'when connected to replica set or sharded cluster', if: sessions_enabled? && !standalone? do
+  context 'when connected to replica set or sharded cluster', if: test_sessions? do
 
     context 'when the collection specifies a read concern' do
 
@@ -555,7 +555,7 @@ shared_examples 'an operation updating cluster time' do
 
     context 'when the server is version 3.6' do
 
-      context 'when the cluster is sharded or a replica set', if: (!standalone? && sessions_enabled?) do
+      context 'when the cluster is sharded or a replica set', if: test_sessions? do
 
         let!(:reply_cluster_time) do
           operation_with_session
