@@ -1,4 +1,4 @@
-# Copyright (C) 2015 MongoDB, Inc.
+# Copyright (C) 2017 MongoDB, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,16 +14,20 @@
 
 module Mongo
   module Operation
-    module Commands
 
-      # Encapsulates behaviour for executing a find command.
-      #
-      # @since 2.2.0
-      class Find < Command
-        include CausallyConsistent
+    # Encapsulates behaviour for adding a causal consistency doc to the command.
+    #
+    # @since 2.5.0
+    module CausallyConsistent
+
+      private
+
+      def apply_causal_consistency!(selector, server)
+        if !server.standalone?
+          full_read_concern_doc = session.send(:causal_consistency_doc, selector[:readConcern])
+          selector[:readConcern] = full_read_concern_doc if full_read_concern_doc
+        end
       end
     end
   end
 end
-
-require 'mongo/operation/commands/find/result'

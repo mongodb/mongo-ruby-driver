@@ -241,22 +241,44 @@ describe Mongo::Database do
       expect(database.command({:ismaster => 1}.freeze).written_count).to eq(0)
     end
 
-    context 'when provided a session' do
+    context 'when provided a session', if: sessions_enabled? do
 
       let(:operation) do
-        database.command({ :ismaster => 1 }, session: session)
+        client.database.command({ :ismaster => 1 }, session: session)
       end
 
       let(:failed_operation) do
-        database.command({ :invalid => 1 }, session: session)
+        client.database.command({ :invalid => 1 }, session: session)
+      end
+
+      let(:session) do
+        client.start_session
       end
 
       let(:client) do
-        authorized_client
+        authorized_client.with(heartbeat_frequency: 100).tap do |cl|
+          cl.subscribe(Mongo::Monitoring::COMMAND, subscriber)
+        end
+      end
+
+      let(:subscriber) do
+        EventSubscriber.new
       end
 
       it_behaves_like 'an operation using a session'
       it_behaves_like 'a failed operation using a session'
+
+
+      let(:full_command) do
+        subscriber.started_events.find { |cmd| cmd.command_name == :ismaster }.command
+      end
+
+      it 'does not add a afterClusterTime field' do
+        # Ensure that the session has an operation time
+        client.database.command({ ping: 1 }, session: session)
+        operation
+        expect(full_command['readConcern']).to be_nil
+      end
     end
 
     context 'when a read concern is provided', if: find_command_enabled? do

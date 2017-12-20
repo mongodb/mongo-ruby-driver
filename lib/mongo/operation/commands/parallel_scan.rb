@@ -36,6 +36,7 @@ module Mongo
       #
       # @since 2.0.0
       class ParallelScan < Command
+        include CausallyConsistent
 
         private
 

@@ -179,6 +179,24 @@ describe Mongo::Collection::View::Readable do
       it_behaves_like 'a read concern aware operation'
     end
 
+    context 'when a session supporting causal consistency is used' do
+
+      let(:view) do
+        Mongo::Collection::View.new(collection, selector, session: session)
+      end
+
+      let(:operation) do
+        begin; view.map_reduce(map, reduce).to_a; rescue; end
+      end
+
+      let(:command) do
+        operation
+        subscriber.started_events.find { |cmd| cmd.command_name == 'mapreduce' }.command
+      end
+
+      it_behaves_like 'an operation supporting causally consistent reads'
+    end
+
     context 'when not iterating the map/reduce' do
 
       it 'returns the map/reduce object' do

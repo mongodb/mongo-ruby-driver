@@ -139,7 +139,7 @@ module Mongo
             server = selector.select_server(cluster, false)
             apply_collation!(cmd, server, opts)
             with_session do |session|
-              Operation::Commands::Command.new({
+              Operation::Commands::Count.new({
                                                    :selector => cmd,
                                                    :db_name => database.name,
                                                    :options => {:limit => -1},
@@ -179,7 +179,7 @@ module Mongo
             server = selector.select_server(cluster, false)
             apply_collation!(cmd, server, opts)
             with_session do |session|
-              Operation::Commands::Command.new({
+              Operation::Commands::Distinct.new({
                                                    :selector => cmd,
                                                    :db_name => database.name,
                                                    :options => {:limit => -1},

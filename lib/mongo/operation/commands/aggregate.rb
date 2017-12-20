@@ -41,6 +41,7 @@ module Mongo
       # @since 2.0.0
       class Aggregate < Command
         include TakesWriteConcern
+        include CausallyConsistent
 
         private
 

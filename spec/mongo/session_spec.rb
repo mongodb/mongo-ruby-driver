@@ -86,6 +86,59 @@ describe Mongo::Session, if: test_sessions? do
     end
   end
 
+  describe '#advance_operation_time' do
+
+    let(:new_operation_time) do
+      BSON::Timestamp.new(0, 5)
+    end
+
+    context 'when the session does not have an operation time' do
+
+      before do
+        session.advance_operation_time(new_operation_time)
+      end
+
+      it 'sets the new operation time' do
+        expect(session.operation_time).to eq(new_operation_time)
+      end
+    end
+
+    context 'when the session already has an operation time' do
+
+      context 'when the original operation time is less than the new operation time' do
+
+        let(:original_operation_time) do
+          BSON::Timestamp.new(0, 1)
+        end
+
+        before do
+          session.instance_variable_set(:@operation_time, original_operation_time)
+          session.advance_operation_time(new_operation_time)
+        end
+
+        it 'sets the new operation time' do
+          expect(session.operation_time).to eq(new_operation_time)
+        end
+      end
+
+      context 'when the original operation time is equal or greater than the new operation time' do
+
+        let(:original_operation_time) do
+          BSON::Timestamp.new(0, 6)
+        end
+
+        before do
+          session.instance_variable_set(:@operation_time, original_operation_time)
+          session.advance_operation_time(new_operation_time)
+        end
+
+        it 'does not update the operation time' do
+          expect(session.operation_time).to eq(original_operation_time)
+        end
+      end
+    end
+  end
+
   describe 'ended?' do
 
     context 'when the session has not been ended' do

@@ -14,6 +14,10 @@ describe Mongo::Collection do
     authorized_client[:validating]
   end
 
+  let(:client) do
+    authorized_client
+  end
+
   describe '#==' do
 
     let(:database) do
@@ -867,10 +871,6 @@ describe Mongo::Collection do
 
     context 'when provided options' do
 
-      let(:view) do
-        authorized_collection.find({}, options)
-      end
-
       context 'when a session is provided' do
 
         let(:operation) do
@@ -882,7 +882,7 @@ describe Mongo::Collection do
         end
 
         let(:failed_operation) do
-          authorized_collection.find({ '$._id' => 1 }, session: session).to_a
+          client[authorized_collection.name].find({ '$._id' => 1 }, session: session).to_a
         end
 
         let(:client) do
@@ -925,6 +925,24 @@ describe Mongo::Collection do
         it 'sends the session id' do
           expect(command['lsid']).to eq(session.session_id)
         end
+      end
+      
+      context 'when a session supporting causal consistency is used' do
+
+        let(:operation) do
+          collection.find({}, session: session).to_a
+        end
+
+        let(:command) do
+          operation
+          subscriber.started_events.find { |cmd| cmd.command_name == 'find' }.command
+        end
+
+        it_behaves_like 'an operation supporting causally consistent reads'
+      end
+
+      let(:view) do
+        authorized_collection.find({}, options)
       end
 
       context 'when provided :allow_partial_results' do
@@ -1099,6 +1117,19 @@ describe Mongo::Collection do
 
       it_behaves_like 'an operation using a session'
       it_behaves_like 'a failed operation using a session'
+    end
+
+    context 'when unacknowledged writes is used' do
+
+      let(:collection_with_unacknowledged_write_concern) do
+        authorized_collection.with(write: { w: 0 })
+      end
+
+      let(:operation) do
+        collection_with_unacknowledged_write_concern.insert_many([{ name: 'test1' }, { name: 'test2' }], session: session)
+      end
+
+      it_behaves_like 'a causally consistent client session with an unacknowledged write'
     end
 
     context 'when a document contains invalid keys' do
@@ -1330,6 +1361,19 @@ describe Mongo::Collection do
       it_behaves_like 'a failed operation using a session'
     end
 
+    context 'when unacknowledged writes is used' do
+
+      let(:collection_with_unacknowledged_write_concern) do
+        authorized_collection.with(write: { w: 0 })
+      end
+
+      let(:operation) do
+        collection_with_unacknowledged_write_concern.insert_one({ name: 'testing' }, session: session)
+      end
+
+      it_behaves_like 'a causally consistent client session with an unacknowledged write'
+    end
+
     context 'when the document contains invalid keys' do
 
       let(:doc) do
@@ -1526,6 +1570,20 @@ describe Mongo::Collection do
       it_behaves_like 'an operation updating cluster time'
     end
 
+    context 'when a session supporting causal consistency is used' do
+
+      let(:operation) do
+        collection.aggregate([], session: session).first
+      end
+
+      let(:command) do
+        operation
+        subscriber.started_events.find { |cmd| cmd.command_name == 'aggregate' }.command
+      end
+
+      it_behaves_like 'an operation supporting causally consistent reads'
+    end
+
     it 'returns an Aggregation object' do
       expect(authorized_collection.aggregate([])).to be_a(Mongo::Collection::View::Aggregation)
     end
@@ -1676,6 +1734,20 @@ describe Mongo::Collection do
         it_behaves_like 'a failed operation using a session'
       end
 
+      context 'when a session supporting causal consistency is used' do
+
+        let(:operation) do
+          collection.count({}, session: session)
+        end
+
+        let(:command) do
+          operation
+          subscriber.started_events.find { |cmd| cmd.command_name == :count }.command
+        end
+
+        it_behaves_like 'an operation supporting causally consistent reads'
+      end
+
       context 'when a collation is specified' do
 
         let(:selector) do
@@ -1774,6 +1846,20 @@ describe Mongo::Collection do
         it_behaves_like 'an operation using a session'
         it_behaves_like 'a failed operation using a session'
       end
+    end
+
+    context 'when a session supporting causal consistency is used' do
+
+      let(:operation) do
+        collection.distinct(:field, {}, session: session)
+      end
+
+      let(:command) do
+        operation
+        subscriber.started_events.find { |cmd| cmd.command_name == :distinct }.command
+      end
+
+      it_behaves_like 'an operation supporting causally consistent reads'
     end
 
     context 'when a collation is specified' do
@@ -1911,6 +1997,19 @@ describe Mongo::Collection do
 
       it_behaves_like 'an operation using a session'
       it_behaves_like 'a failed operation using a session'
+    end
+
+    context 'when unacknowledged writes is used' do
+
+      let(:collection_with_unacknowledged_write_concern) do
+        authorized_collection.with(write: { w: 0 })
+      end
+
+      let(:operation) do
+        collection_with_unacknowledged_write_concern.delete_one({}, session: session)
+      end
+
+      it_behaves_like 'a causally consistent client session with an unacknowledged write'
     end
 
     context 'when a collation is provided' do
@@ -2072,6 +2171,19 @@ describe Mongo::Collection do
       it_behaves_like 'a failed operation using a session'
     end
 
+    context 'when unacknowledged writes is used' do
+
+      let(:collection_with_unacknowledged_write_concern) do
+        authorized_collection.with(write: { w: 0 })
+      end
+
+      let(:operation) do
+        collection_with_unacknowledged_write_concern.delete_many({ '$._id' => 1}, session: session)
+      end
+
+      it_behaves_like 'a causally consistent client session with an unacknowledged write'
+    end
+
     context 'when a collation is specified' do
 
       let(:selector) do
@@ -2214,10 +2326,6 @@ describe Mongo::Collection do
         authorized_collection.parallel_scan(2, session: session)
       end
 
-      let(:session) do
-        authorized_client.start_session
-      end
-
       let(:operation) do
         cursors.reduce(0) { |total, cursor| total + cursor.to_a.size }
       end
@@ -2232,6 +2340,24 @@ describe Mongo::Collection do
 
       it_behaves_like 'an operation using a session'
       it_behaves_like 'a failed operation using a session'
+    end
+
+    context 'when a session supporting causal consistency is used' do
+
+      let(:cursors) do
+        collection.parallel_scan(2, session: session)
+      end
+
+      let(:operation) do
+        cursors.reduce(0) { |total, cursor| total + cursor.to_a.size }
+      end
+
+      let(:command) do
+        operation
+        subscriber.started_events.find { |cmd| cmd.command_name == :parallelCollectionScan }.command
+      end
+
+      it_behaves_like 'an operation supporting causally consistent reads'
     end
 
     context 'when a read concern is provided', if: find_command_enabled? do
@@ -2620,6 +2746,19 @@ describe Mongo::Collection do
 
       it_behaves_like 'an operation using a session'
       it_behaves_like 'a failed operation using a session'
+    end
+
+    context 'when unacknowledged writes is used' do
+
+      let(:collection_with_unacknowledged_write_concern) do
+        authorized_collection.with(write: { w: 0 })
+      end
+
+      let(:operation) do
+        collection_with_unacknowledged_write_concern.replace_one({ a: 1 }, { x: 5 }, session: session)
+      end
+
+      it_behaves_like 'a causally consistent client session with an unacknowledged write'
     end
   end
 
@@ -3023,6 +3162,19 @@ describe Mongo::Collection do
 
       it_behaves_like 'an operation using a session'
       it_behaves_like 'a failed operation using a session'
+    end
+
+    context 'when unacknowledged writes is used' do
+
+      let(:collection_with_unacknowledged_write_concern) do
+        authorized_collection.with(write: { w: 0 })
+      end
+
+      let(:operation) do
+        collection_with_unacknowledged_write_concern.update_many({a: 1}, { '$set' => {x: 1} }, session: session)
+      end
+
+      it_behaves_like 'a causally consistent client session with an unacknowledged write'
     end
   end
 
@@ -3435,6 +3587,19 @@ describe Mongo::Collection do
 
       it_behaves_like 'an operation using a session'
       it_behaves_like 'a failed operation using a session'
+    end
+
+    context 'when unacknowledged writes is used' do
+
+      let(:collection_with_unacknowledged_write_concern) do
+        authorized_collection.with(write: { w: 0 })
+      end
+
+      let(:operation) do
+        collection_with_unacknowledged_write_concern.update_one({a: 1}, { '$set' => {x: 1} }, session: session)
+      end
+
+      it_behaves_like 'a causally consistent client session with an unacknowledged write'
     end
   end
 

@@ -1,4 +1,4 @@
-# Copyright (C) 2015 MongoDB, Inc.
+# Copyright (C) 2017 MongoDB, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,14 +16,12 @@ module Mongo
   module Operation
     module Commands
 
-      # Encapsulates behaviour for executing a find command.
+      # Encapsulates behaviour for executing a count command.
       #
-      # @since 2.2.0
-      class Find < Command
+      # @since 2.5.0
+      class Count < Command
         include CausallyConsistent
       end
     end
   end
 end
-
-require 'mongo/operation/commands/find/result'
