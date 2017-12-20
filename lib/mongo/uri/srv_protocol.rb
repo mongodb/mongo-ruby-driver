@@ -55,7 +55,7 @@ module Mongo
 
       RECORD_PREFIX = '_mongodb._tcp.'.freeze
 
-      VALID_TXT_OPTIONS = [:auth_source, :replica_set].freeze
+      VALID_TXT_OPTIONS = ['replicaset', 'authsource'].freeze
 
       INVALID_HOST = "One and only one host is required in a connection string with the " +
                        "'#{MONGODB_SRV_SCHEME}' protocol.".freeze
@@ -91,7 +91,7 @@ module Mongo
         hostname, creds = split_creds_hosts(string)
         validate_hostname!(hostname)
         records = get_records(hostname)
-        @txt_options = get_txt_opts(hostname)
+        @txt_options = get_txt_opts(hostname) || {}
         @servers = parse_servers!(records.join(','))
         @user = parse_user!(creds)
         @password = parse_password!(creds)
@@ -101,7 +101,7 @@ module Mongo
         raise_invalid_error!(INVALID_HOST) if host.empty?
         raise_invalid_error!(INVALID_HOST) if host.include?(',')
         raise_invalid_error!(INVALID_PORT) if host.include?(':')
-        hostname, _, domain = host.partition('.')
+        _, _, domain = host.partition('.')
         raise_invalid_error!(INVALID_DOMAIN) unless domain.include?('.')
       end
 
@@ -132,15 +132,19 @@ module Mongo
             raise Error::InvalidTXTRecord.new(MORE_THAN_ONE_TXT_RECORD_FOUND % host)
           end
           options_string = records[0].strings.join
-          opts = parse_uri_options!(options_string)
-          validate_txt_options!(opts)
-          opts
-        end || {}
+          parse_txt_options!(options_string)
+        end
       end
 
-      def validate_txt_options!(opts)
-        unless opts.keys.all? { |key| VALID_TXT_OPTIONS.include?(key) }
-          raise Error::InvalidTXTRecord.new(INVALID_TXT_RECORD_OPTION)
+      def parse_txt_options!(string)
+        return {} unless string
+        string.split(INDIV_URI_OPTS_DELIM).reduce({}) do |txt_options, opt|
+          raise Error::InvalidTXTRecord.new(INVALID_OPTS_VALUE_DELIM) unless opt.index(URI_OPTS_VALUE_DELIM)
+          key, value = opt.split(URI_OPTS_VALUE_DELIM)
+          raise Error::InvalidTXTRecord.new(INVALID_TXT_RECORD_OPTION) unless VALID_TXT_OPTIONS.include?(key.downcase)
+          strategy = URI_OPTION_MAP[key.downcase]
+          add_uri_option(strategy, value, txt_options)
+          txt_options
         end
       end
 
