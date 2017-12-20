@@ -58,7 +58,7 @@ describe 'DNS Seedlist Discovery' do
 
         let(:valid_errors) do
           [
-            Mongo::Error::InvalidTXTRecords,
+            Mongo::Error::InvalidTXTRecord,
             Mongo::Error::NoSRVRecords,
             Mongo::Error::InvalidURI,
             Mongo::Error::MismatchedDomain,

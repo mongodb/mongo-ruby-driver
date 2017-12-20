@@ -207,7 +207,7 @@ describe Mongo::URI::SRVProtocol do
       let(:string) { "#{scheme}test6.test.build.10gen.cc/" }
 
       it 'raises an error' do
-        expect { uri }.to raise_exception(Mongo::Error::InvalidTXTRecords)
+        expect { uri }.to raise_exception(Mongo::Error::InvalidTXTRecord)
       end
     end
 
@@ -216,7 +216,7 @@ describe Mongo::URI::SRVProtocol do
       let(:string) { "#{scheme}test10.test.build.10gen.cc" }
 
       it 'raises an error' do
-        expect { uri }.to raise_exception(Mongo::Error::InvalidTXTRecords)
+        expect { uri }.to raise_exception(Mongo::Error::InvalidTXTRecord)
       end
     end
 

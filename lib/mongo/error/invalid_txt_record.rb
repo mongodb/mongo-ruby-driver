@@ -19,9 +19,9 @@ module Mongo
     #   TXT records or the record specifies invalid options.
     #
     # @example Instantiate the exception.
-    #   Mongo::Error::InvalidTXTRecords.new(message)
+    #   Mongo::Error::InvalidTXTRecord.new(message)
     #
     # @since 2.5.0
-    class InvalidTXTRecords < Error; end
+    class InvalidTXTRecord < Error; end
   end
 end

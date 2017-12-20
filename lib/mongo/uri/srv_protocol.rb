@@ -129,7 +129,7 @@ module Mongo
         records = resolver.getresources(host, Resolv::DNS::Resource::IN::TXT)
         unless records.empty?
           if records.size > 1
-            raise Error::InvalidTXTRecords.new(MORE_THAN_ONE_TXT_RECORD_FOUND % host)
+            raise Error::InvalidTXTRecord.new(MORE_THAN_ONE_TXT_RECORD_FOUND % host)
           end
           options_string = records[0].strings.join
           opts = parse_uri_options!(options_string)
@@ -140,7 +140,7 @@ module Mongo
 
       def validate_txt_options!(opts)
         unless opts.keys.all? { |key| VALID_TXT_OPTIONS.include?(key) }
-          raise Error::InvalidTXTRecords.new(INVALID_TXT_RECORD_OPTION)
+          raise Error::InvalidTXTRecord.new(INVALID_TXT_RECORD_OPTION)
         end
       end
 
