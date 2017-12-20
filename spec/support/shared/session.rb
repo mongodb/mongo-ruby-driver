@@ -312,6 +312,21 @@ shared_examples 'an operation supporting causally consistent reads' do
           end
         end
 
+        context 'when the session has an operation time' do
+
+          before do
+            client.database.command({ ping: 1 }, session: session)
+          end
+
+          let(:expected_read_concern) do
+            BSON::Document.new(level: 'majority')
+          end
+
+          it 'leaves the read concern document unchanged' do
+            expect(command['readConcern']).to eq(expected_read_concern)
+          end
+        end
+
         context 'when the operation time is advanced' do
 
           before do
@@ -345,6 +360,25 @@ shared_examples 'an operation supporting causally consistent reads' do
           end
 
           it 'leaves the read concern document unchanged' do
+            expect(command['readConcern']).to eq(expected_read_concern)
+          end
+        end
+
+        context 'when the session has an operation time' do
+
+          before do
+            client.database.command({ ping: 1 }, session: session)
+          end
+
+          let!(:operation_time) do
+            session.operation_time
+          end
+
+          let(:expected_read_concern) do
+            BSON::Document.new(level: 'majority', afterClusterTime: operation_time)
+          end
+
+          it 'merges the afterClusterTime with the new operation time and read concern in the command' do
             expect(command['readConcern']).to eq(expected_read_concern)
           end
         end

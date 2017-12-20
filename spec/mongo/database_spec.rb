@@ -274,6 +274,8 @@ describe Mongo::Database do
       end
 
       it 'does not add a afterClusterTime field' do
+        # Ensure that the session has an operation time
+        client.database.command({ ping: 1 }, session: session)
         operation
         expect(full_command['readConcern']).to be_nil
       end

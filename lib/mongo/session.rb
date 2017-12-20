@@ -216,7 +216,11 @@ module Mongo
     end
 
     def causal_consistency?
-      @causal_consistency ||= (!@options.key?(:causal_consistency) || @options[:causal_consistency])
+      @causal_consistency ||= (if @options.key?(:causal_consistency)
+                                 @options[:causal_consistency] == true
+                               else
+                                 true
+                               end)
     end
 
     def implicit_session?
