@@ -18,19 +18,18 @@ module Mongo
 
   class URI
 
-    # Parser for a URI using the mongodb+srv protocol. This URI specifies a DNS to query for SRV records.
+    # Parser for a URI using the mongodb+srv protocol, which specifies a DNS to query for SRV records.
     # The driver will query the DNS server for SRV records on {hostname}.{domainname},
     # prefixed with _mongodb._tcp
-    # The SRV records can then be used as the seedlist for the Mongo::Client.
+    # The SRV records can then be used as the seedlist for a Mongo::Client.
     # The driver also queries for a TXT record providing default connection string options.
     #
-    # The SRVScheme URI class parses a MongoDB uri formatted as
-    # defined in the Initial DNS Seedlist Discovery spec.
+    # Please refer to the Initial DNS Seedlist Discovery spec for format details.
     #
     # https://github.com/mongodb/specifications/blob/master/source/initial-dns-seedlist-discovery
     #
     # @example Use the uri string to make a client connection.
-    #   client = Client.new('mongodb+srv://test6.test.build.10gen.cc/')
+    #   client = Mongo::Client.new('mongodb+srv://test6.test.build.10gen.cc/')
     #
     # @since 2.5.0
     class SRVProtocol < URI

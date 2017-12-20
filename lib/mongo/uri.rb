@@ -22,8 +22,8 @@ module Mongo
   # http://docs.mongodb.org/manual/reference/connection-string/
   #
   # @example Use the uri string to make a client connection.
-  #   uri = URI.new('mongodb://localhost:27017')
-  #   client = Client.new(uri.servers, uri.options)
+  #   uri = Mongoid::URI.new('mongodb://localhost:27017')
+  #   client = Mongoid::Client.new(uri.servers, uri.options)
   #   client.login(uri.credentials)
   #   client[uri.database]
   #
@@ -296,8 +296,8 @@ module Mongo
       parse_db_opts!(db_opts)
     end
 
-    def extract_db_opts!(remaining)
-      db_opts, _, creds_hosts = remaining.reverse.partition(DATABASE_DELIM)
+    def extract_db_opts!(string)
+      db_opts, _, creds_hosts = string.reverse.partition(DATABASE_DELIM)
       db_opts, creds_hosts = creds_hosts, db_opts if creds_hosts.empty?
       if db_opts.empty? && creds_hosts.include?(URI_OPTS_DELIM)
         raise_invalid_error!(INVALID_OPTS_DELIM)
@@ -586,7 +586,7 @@ module Mongo
       properties = hash_extractor(value)
       if properties[:canonicalize_host_name]
         properties.merge!(canonicalize_host_name:
-                              properties[:canonicalize_host_name] == 'true')
+                            properties[:canonicalize_host_name] == 'true')
       end
       properties
     end

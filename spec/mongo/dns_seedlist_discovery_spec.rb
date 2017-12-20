@@ -43,7 +43,6 @@ describe 'DNS Seedlist Discovery' do
     end
   end
 
-
   DNS_SEEDLIST_DISCOVERY_TESTS.each do |file_name|
 
     file = File.new(file_name)

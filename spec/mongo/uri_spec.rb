@@ -818,8 +818,8 @@ describe Mongo::URI do
       context 'multiple properties' do
         let(:options) do
           "authMechanismProperties=SERVICE_REALM:#{service_realm}," +
-              "CANONICALIZE_HOST_NAME:#{canonicalize_host_name}," +
-              "SERVICE_NAME:#{service_name}"
+            "CANONICALIZE_HOST_NAME:#{canonicalize_host_name}," +
+            "SERVICE_NAME:#{service_name}"
         end
 
         let(:service_name) { 'foo' }
