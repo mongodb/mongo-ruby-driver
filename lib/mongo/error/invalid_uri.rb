@@ -24,7 +24,7 @@ module Mongo
       # Instantiate the new exception.
       #
       # @example Instantiate the exception.
-      #   Mongo::Error::InvalidURI.new(uri, format, details)
+      #   Mongo::Error::InvalidURI.new(uri, details, format)
       #
       # @since 2.0.0
       def initialize(uri, details, format = nil)
