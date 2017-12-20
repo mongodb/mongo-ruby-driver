@@ -84,7 +84,7 @@ module Mongo
       end
 
       def raise_invalid_error!(details)
-        raise Error::InvalidURI.new(@string, FORMAT, details)
+        raise Error::InvalidURI.new(@string, details, FORMAT)
       end
 
       def parse_creds_hosts!(string)

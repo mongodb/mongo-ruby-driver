@@ -138,7 +138,7 @@ module Mongo
     #
     # @since 2.1.0
     INVALID_OPTS_VALUE_DELIM = "Options and their values must be delimited" +
-        " by '#{URI_OPTS_VALUE_DELIM}'".freeze
+       " by '#{URI_OPTS_VALUE_DELIM}'".freeze
 
     # Error details for an non-urlencoded user name or password.
     #
@@ -213,7 +213,7 @@ module Mongo
         when MONGODB_SRV_SCHEME
           SRVProtocol.new(string, opts)
         else
-          raise Error::InvalidURI.new(string, FORMAT, INVALID_SCHEME)
+          raise Error::InvalidURI.new(string, INVALID_SCHEME)
       end
     end
 
@@ -377,7 +377,7 @@ module Mongo
     end
 
     def raise_invalid_error!(details)
-      raise Error::InvalidURI.new(@string, FORMAT, details)
+      raise Error::InvalidURI.new(@string, details, FORMAT)
     end
 
     def decode(value)
