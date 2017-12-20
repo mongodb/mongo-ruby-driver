@@ -41,10 +41,10 @@ module Mongo
         attr_reader :view
 
         # @return [ String ] map The map function.
-        attr_reader :map
+        attr_reader :map_function
 
         # @return [ String ] reduce The reduce function.
-        attr_reader :reduce
+        attr_reader :reduce_function
 
         # Delegate necessary operations to the view.
         def_delegators :view, :collection, :read, :cluster
@@ -105,8 +105,8 @@ module Mongo
         # @since 2.0.0
         def initialize(view, map, reduce, options = {})
           @view = view
-          @map = map.freeze
-          @reduce = reduce.freeze
+          @map_function = map.freeze
+          @reduce_function = reduce.freeze
           @options = BSON::Document.new(options).freeze
         end
 
@@ -191,11 +191,11 @@ module Mongo
         end
 
         def map_reduce_spec(session = nil)
-          Builder::MapReduce.new(map, reduce, view, options.merge(session: session)).specification
+          Builder::MapReduce.new(map_function, reduce_function, view, options.merge(session: session)).specification
         end
 
         def new(options)
-          MapReduce.new(view, map, reduce, options)
+          MapReduce.new(view, map_function, reduce_function, options)
         end
 
         def initial_query_op(session)
@@ -221,11 +221,11 @@ module Mongo
         end
 
         def fetch_query_spec
-          Builder::MapReduce.new(map, reduce, view, options).query_specification
+          Builder::MapReduce.new(map_function, reduce_function, view, options).query_specification
         end
 
         def find_command_spec(session)
-          Builder::MapReduce.new(map, reduce, view, options.merge(session: session)).command_specification
+          Builder::MapReduce.new(map_function, reduce_function, view, options.merge(session: session)).command_specification
         end
 
         def fetch_query_op(server, session)
