@@ -180,6 +180,28 @@ module Mongo
           configure(:verbose, value)
         end
 
+        # Execute the map reduce, without doing a fetch query to retrieve the results
+        #   if outputted to a collection.
+        #
+        # @example Execute the map reduce and get the raw result.
+        #   map_reduce.execute
+        #
+        # @return [ Mongo::Operation::Result ] The raw map reduce result
+        #
+        # @since 2.5.0
+        def execute
+          session = client.send(:get_session, @options)
+          read_with_retry do
+            server = server_selector.select_server(cluster, false)
+            unless valid_server?(server)
+              log_warn(REROUTE)
+              server = cluster.next_primary(false)
+            end
+            validate_collation!(server)
+            initial_query_op(session).execute(server)
+          end
+        end
+
         private
 
         def server_selector

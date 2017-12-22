@@ -413,6 +413,43 @@ describe Mongo::Collection::View::MapReduce do
     end
   end
 
+  describe '#execute' do
+
+    context 'when output is to a collection' do
+
+      let(:options) do
+        { out: 'output_collection' }
+      end
+
+      let!(:result) do
+        map_reduce.execute
+      end
+
+      it 'executes the map reduce' do
+        expect(authorized_client['output_collection'].count).to eq(2)
+      end
+
+      it 'returns a result object' do
+        expect(result).to be_a(Mongo::Operation::Result)
+      end
+    end
+
+    context 'when there is no output' do
+
+      let(:result) do
+        map_reduce.execute
+      end
+
+      it 'executes the map reduce' do
+        expect(result.documents.size).to eq(2)
+      end
+
+      it 'returns a result object' do
+        expect(result).to be_a(Mongo::Operation::Result)
+      end
+    end
+  end
+
   describe '#finalize' do
 
     let(:finalize) do
