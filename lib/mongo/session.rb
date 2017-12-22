@@ -50,7 +50,7 @@ module Mongo
     # one it was originally associated with.
     #
     # @since 2.5.0
-    MISTMATCHED_CLUSTER_ERROR_MSG = 'The client used to create this session does not match that of client ' +
+    MISMATCHED_CLUSTER_ERROR_MSG = 'The client used to create this session does not match that of client ' +
         'initiating this operation. Please only use this session for operations through its parent client.'.freeze
 
     # Error message describing that the session cannot be used because it has already been ended.
@@ -249,7 +249,7 @@ module Mongo
 
     def check_matching_client!(client)
       if @client != client
-        raise Mongo::Error::InvalidSession.new(MISTMATCHED_CLUSTER_ERROR_MSG)
+        raise Mongo::Error::InvalidSession.new(MISMATCHED_CLUSTER_ERROR_MSG)
       end
     end
   end
