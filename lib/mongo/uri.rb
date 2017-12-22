@@ -22,8 +22,8 @@ module Mongo
   # http://docs.mongodb.org/manual/reference/connection-string/
   #
   # @example Use the uri string to make a client connection.
-  #   uri = Mongoid::URI.new('mongodb://localhost:27017')
-  #   client = Mongoid::Client.new(uri.servers, uri.options)
+  #   uri = Mongo::URI.new('mongodb://localhost:27017')
+  #   client = Mongo::Client.new(uri.servers, uri.options)
   #   client.login(uri.credentials)
   #   client[uri.database]
   #
@@ -138,7 +138,7 @@ module Mongo
     #
     # @since 2.1.0
     INVALID_OPTS_VALUE_DELIM = "Options and their values must be delimited" +
-       " by '#{URI_OPTS_VALUE_DELIM}'".freeze
+      " by '#{URI_OPTS_VALUE_DELIM}'".freeze
 
     # Error details for an non-urlencoded user name or password.
     #

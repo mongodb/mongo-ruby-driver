@@ -163,9 +163,9 @@ module Mongo
         @auth ||= Auth.new(@spec['auth']) if @spec['auth']
       end
 
-        def raise_error?
-          @spec['error']
-        end
+      def raise_error?
+        @spec['error']
+      end
     end
 
     class Host

@@ -268,11 +268,11 @@ describe Mongo::URI::SRVProtocol do
       expect(options[:database]).to eq(TEST_DB)
     end
 
-    it 'includes the credentials in the options' do
+    it 'includes the user in the options' do
       expect(options[:user]).to eq(user)
     end
 
-    it 'includes the options in the options' do
+    it 'includes the password in the options' do
       expect(options[:password]).to eq(password)
     end
 
