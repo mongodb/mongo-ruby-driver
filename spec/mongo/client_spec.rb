@@ -1276,6 +1276,22 @@ describe Mongo::Client do
         'admin'
       )
     end
+
+    context 'when filter criteria is present', if: sessions_enabled? do
+
+      let(:result) do
+        root_authorized_client.database_names(filter)
+      end
+
+      let(:filter) do
+        { name: TEST_DB }
+      end
+
+      it 'returns a filtered list of database names' do
+        expect(result.length).to eq(1)
+        expect(result.first).to eq(filter[:name])
+      end
+    end
   end
 
   describe '#list_databases' do
@@ -1287,36 +1303,83 @@ describe Mongo::Client do
         end).to include('admin')
     end
 
-    context 'with filter', if: sessions_enabled? do
-      let(:response) { root_authorized_client.list_databases(filter) }
+    context 'when filter criteria is present', if: sessions_enabled? do
+
+      let(:result) do
+        root_authorized_client.list_databases(filter)
+      end
 
       let(:filter) do
-        { name: 'ruby-driver' }
+        { name: TEST_DB }
       end
 
       it 'returns filtered list of database info documents' do
-        expect(response.length).to eq 1
-        expect(response[0]['name']).to eq filter[:name]
+        expect(result.length).to eq(1)
+        expect(result[0]['name']).to eq(filter[:name])
+      end
+    end
+
+    context 'when name_only is true', if: sessions_enabled? do
+
+      let(:client) do
+        authorized_client.with(heartbeat_frequency: 100).tap do |cl|
+          cl.subscribe(Mongo::Monitoring::COMMAND, subscriber)
+        end
+      end
+
+      let(:subscriber) do
+        EventSubscriber.new
+      end
+
+      let(:command) do
+        subscriber.started_events.find { |c| c.command_name == :listDatabases }.command
+      end
+
+      before do
+        client.list_databases({}, true)
+      end
+
+      it 'lists databases with nameOnly flag set to true' do
+        expect(command[:nameOnly]).to be true
       end
     end
   end
 
   describe '#list_mongo_databases', if: sessions_enabled? do
-    let(:response) { root_authorized_client.list_mongo_databases }
 
-    it 'returns an Iterable of MongoDatabase types' do
-      expect(response.all? { |db| db.is_a?(Mongo::Database) }).to be true
+    let(:options) do
+      { read: { mode: :secondary } }
     end
 
-    context 'with filter' do
-      let(:response) { root_authorized_client.list_mongo_databases(filter) }
-      let(:filter) do
-        { name: 'ruby-driver' }
+    let(:client) do
+      authorized_client.with(options)
+    end
+
+    let(:result) do
+      client.list_mongo_databases
+    end
+
+    it 'returns a list of Mongo::Database objects' do
+      expect(result).to all(be_a(Mongo::Database))
+    end
+
+    it 'creates database with specified options' do
+      expect(result.first.options[:read]).to eq(BSON::Document.new(options)[:read])
+    end
+
+    context 'when filter criteria is present' do
+
+      let(:result) do
+        client.list_mongo_databases(filter)
       end
 
-      it 'returns a filtered Iterable of MongoDatabase types' do
-        expect(response.length).to eq 1
-        expect(response.first.name).to eq filter[:name]
+      let(:filter) do
+        { name: TEST_DB }
+      end
+
+      it 'returns a filtered list of Mongo::Database objects' do
+        expect(result.length).to eq(1)
+        expect(result.first.name).to eq(filter[:name])
       end
     end
   end
