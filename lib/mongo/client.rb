@@ -406,9 +406,26 @@ module Mongo
     #
     # @since 2.0.5
     def list_databases(filter = {}, opts = {})
-      operation = { listDatabases: 1 }.tap { |op| op[:filter] = filter unless filter.empty? }
+      cmd = { listDatabases: 1 }
+      cmd[:filter] = filter unless filter.empty?
+      use(Database::ADMIN).command(cmd, opts).first[Database::DATABASES]
+    end
 
-      use(Database::ADMIN).command(operation, opts).first[Database::DATABASES]
+    # returns an Iterable of MongoDatabase types.
+    #
+    # @example Get an Iterable of MongoDatabase types.
+    #   client.list_mongo_databases
+    #
+    # @param [ Hash ] filter The filter to use on the collection.
+    # @param [ Hash ] opts The command options.
+    #
+    # @return [ Array<Hash> ] The info for each database.
+    #
+    # @since 2.5.0
+    def list_mongo_databases(filter = {}, opts = {})
+      list_databases(filter, opts).collect do |db|
+        Database.new(self, db[Database::NAME], options)
+      end
     end
 
     # Start a session.

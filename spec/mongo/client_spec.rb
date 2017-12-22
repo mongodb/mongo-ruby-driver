@@ -1287,7 +1287,7 @@ describe Mongo::Client do
         end).to include('admin')
     end
 
-    context 'with filter' do
+    context 'with filter', if: sessions_enabled? do
       let(:response) { root_authorized_client.list_databases(filter) }
 
       let(:filter) do
@@ -1300,7 +1300,27 @@ describe Mongo::Client do
       end
     end
   end
-  
+
+  describe '#list_mongo_databases', if: sessions_enabled? do
+    let(:response) { root_authorized_client.list_mongo_databases }
+
+    it 'returns an Iterable of MongoDatabase types' do
+      expect(response.all? { |db| db.is_a?(Mongo::Database) }).to be true
+    end
+
+    context 'with filter' do
+      let(:response) { root_authorized_client.list_mongo_databases(filter) }
+      let(:filter) do
+        { name: 'ruby-driver' }
+      end
+
+      it 'returns a filtered Iterable of MongoDatabase types' do
+        expect(response.length).to eq 1
+        expect(response.first.name).to eq filter[:name]
+      end
+    end
+  end
+
   describe '#close' do
 
     let(:client) do
