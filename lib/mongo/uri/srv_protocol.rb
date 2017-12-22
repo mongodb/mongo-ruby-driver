@@ -23,8 +23,9 @@ module Mongo
     # prefixed with _mongodb._tcp
     # The SRV records can then be used as the seedlist for a Mongo::Client.
     # The driver also queries for a TXT record providing default connection string options.
+    # Only one TXT record is allowed, and only a subset of Mongo::Client options is allowed.
     #
-    # Please refer to the Initial DNS Seedlist Discovery spec for format details.
+    # Please refer to the Initial DNS Seedlist Discovery spec for details.
     #
     # https://github.com/mongodb/specifications/blob/master/source/initial-dns-seedlist-discovery
     #
@@ -54,6 +55,8 @@ module Mongo
 
       RECORD_PREFIX = '_mongodb._tcp.'.freeze
 
+      DOT_PARTITION = '.'.freeze
+
       VALID_TXT_OPTIONS = ['replicaset', 'authsource'].freeze
 
       INVALID_HOST = "One and only one host is required in a connection string with the " +
@@ -73,7 +76,7 @@ module Mongo
       INVALID_TXT_RECORD_OPTION = "TXT records can only specify the options " +
                                     "[#{VALID_TXT_OPTIONS.join(', ')}].".freeze
 
-      MISTMATCHED_DOMAINNAME = "Parent domain name in SRV record result (%s) does not match " +
+      MISMATCHED_DOMAINNAME = "Parent domain name in SRV record result (%s) does not match " +
                                  "that of the hostname (%s)".freeze
 
       FORMAT = 'mongodb+srv://[username:password@]host[/[database][?options]]'.freeze
@@ -86,6 +89,10 @@ module Mongo
         raise Error::InvalidURI.new(@string, details, FORMAT)
       end
 
+      def resolver
+        @resolver ||= Resolv::DNS.new
+      end
+
       def parse_creds_hosts!(string)
         hostname, creds = split_creds_hosts(string)
         validate_hostname!(hostname)
@@ -96,31 +103,31 @@ module Mongo
         @password = parse_password!(creds)
       end
 
-      def validate_hostname!(host)
-        raise_invalid_error!(INVALID_HOST) if host.empty?
-        raise_invalid_error!(INVALID_HOST) if host.include?(',')
-        raise_invalid_error!(INVALID_PORT) if host.include?(':')
-        _, _, domain = host.partition('.')
-        raise_invalid_error!(INVALID_DOMAIN) unless domain.include?('.')
+      def validate_hostname!(hostname)
+        raise_invalid_error!(INVALID_HOST) if hostname.empty?
+        raise_invalid_error!(INVALID_HOST) if hostname.include?(HOST_DELIM)
+        raise_invalid_error!(INVALID_PORT) if hostname.include?(HOST_PORT_DELIM)
+        _, _, domain = hostname.partition(DOT_PARTITION)
+        raise_invalid_error!(INVALID_DOMAIN) unless domain.include?(DOT_PARTITION)
       end
 
       def get_records(hostname)
-        name = RECORD_PREFIX + hostname
-        records = resolver.getresources(name, Resolv::DNS::Resource::IN::SRV).collect do |record|
-          host = record.target.to_s
+        query_name = RECORD_PREFIX + hostname
+        records = resolver.getresources(query_name, Resolv::DNS::Resource::IN::SRV).collect do |record|
+          record_host = record.target.to_s
           port = record.port
-          validate_record!(host, hostname)
-          "#{host}:#{port}"
+          validate_record!(record_host, hostname)
+          "#{record_host}#{HOST_PORT_DELIM}#{port}"
         end
         raise Error::NoSRVRecords.new(NO_SRV_RECORDS % hostname) if records.empty?
         records
       end
 
-      def validate_record!(host, domain)
-        root = domain.split('.')[1..-1]
-        host_parts = host.split('.')
-        unless host_parts.size > root.size && root == host_parts[-root.length..-1]
-          raise Error::MismatchedDomain.new(MISTMATCHED_DOMAINNAME % [host, domain])
+      def validate_record!(record_host, hostname)
+        domainname = hostname.split(DOT_PARTITION)[1..-1]
+        host_parts = record_host.split(DOT_PARTITION)
+        unless (host_parts.size > domainname.size) && (domainname == host_parts[-domainname.length..-1])
+          raise Error::MismatchedDomain.new(MISMATCHED_DOMAINNAME % [record_host, domainname])
         end
       end
 
@@ -145,10 +152,6 @@ module Mongo
           add_uri_option(strategy, value, txt_options)
           txt_options
         end
-      end
-
-      def resolver
-        @resolver ||= Resolv::DNS.new
       end
     end
   end
