@@ -399,11 +399,16 @@ module Mongo
     # @example Get the info for each database.
     #   client.list_databases
     #
+    # @param [ Hash ] filter The filter to use on the collection.
+    # @param [ Hash ] opts The command options.
+    #
     # @return [ Array<Hash> ] The info for each database.
     #
     # @since 2.0.5
-    def list_databases
-      use(Database::ADMIN).command(listDatabases: 1).first[Database::DATABASES]
+    def list_databases(filter = {}, opts = {})
+      operation = { listDatabases: 1 }.tap { |op| op[:filter] = filter unless filter.empty? }
+
+      use(Database::ADMIN).command(operation, opts).first[Database::DATABASES]
     end
 
     # Start a session.

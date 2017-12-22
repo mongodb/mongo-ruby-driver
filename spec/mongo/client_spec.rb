@@ -1286,9 +1286,22 @@ describe Mongo::Client do
           i['name']
         end).to include('admin')
     end
-  end
 
-    describe '#close' do
+    context 'with filter' do
+      let(:response) { root_authorized_client.list_databases(filter) }
+
+      let(:filter) do
+        { name: 'ruby-driver' }
+      end
+
+      it 'returns filtered list of database info documents' do
+        expect(response.length).to eq 1
+        expect(response[0]['name']).to eq filter[:name]
+      end
+    end
+  end
+  
+  describe '#close' do
 
     let(:client) do
       described_class.new(['127.0.0.1:27017'])
