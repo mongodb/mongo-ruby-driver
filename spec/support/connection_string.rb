@@ -156,11 +156,15 @@ module Mongo
       end
 
       def uri
-        @uri ||= Mongo::URI.new(@spec['uri'])
+        @uri ||= Mongo::URI.get(@spec['uri'])
       end
 
       def auth
         @auth ||= Auth.new(@spec['auth']) if @spec['auth']
+      end
+
+      def raise_error?
+        @spec['error']
       end
     end
 
@@ -218,9 +222,9 @@ module Mongo
       end
 
       def match?(opts)
-        @options.keys.all? do |k|
-          opts[MAPPINGS[k]] == @options[k] ||
-              Mongo::URI::AUTH_MECH_MAP[@options[k]] == opts[MAPPINGS[k]]
+        @options.all? do |k, v|
+          opts[MAPPINGS[k.downcase]] == v ||
+              opts[MAPPINGS[k.downcase]] == Mongo::URI::AUTH_MECH_MAP[v]
         end
       end
     end

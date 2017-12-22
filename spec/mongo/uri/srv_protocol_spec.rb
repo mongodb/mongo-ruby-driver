@@ -1,49 +1,41 @@
 require 'spec_helper'
 
-describe Mongo::URI do
+describe Mongo::URI::SRVProtocol do
 
-  describe '.get' do
-
-    let(:uri) { described_class.get(string) }
-
-    context 'when the scheme is mongodb://' do
-
-      let(:string) do
-        'mongodb://localhost:27017'
-      end
-
-      it 'returns a Mongo::URI object' do
-        expect(uri).to be_a(Mongo::URI)
-      end
-    end
-
-    context 'when the scheme is mongodb+srv://' do
-
-      let(:string) do
-        'mongodb+srv://test5.test.build.10gen.cc'
-      end
-
-      it 'returns a Mongo::URI::SRVProtocol object' do
-        expect(uri).to be_a(Mongo::URI::SRVProtocol)
-      end
-    end
-
-    context 'when the scheme is invalid' do
-
-      let(:string) do
-        'mongo://localhost:27017'
-      end
-
-      it 'raises an exception' do
-        expect { uri }.to raise_error(Mongo::Error::InvalidURI)
-      end
-    end
-  end
-
-  let(:scheme) { 'mongodb://' }
+  let(:scheme) { 'mongodb+srv://' }
   let(:uri) { described_class.new(string) }
 
   describe 'invalid uris' do
+
+    context 'when there is more than one hostname' do
+
+      let(:string) { "#{scheme}#{hosts}" }
+      let(:hosts) { 'test5.test.build.10gen.cc,test6.test.build.10gen.cc' }
+
+      it 'raises an error' do
+        expect { uri }.to raise_error(Mongo::Error::InvalidURI)
+      end
+    end
+
+    context 'when the the hostname has a port' do
+
+      let(:string) { "#{scheme}#{hosts}" }
+      let(:hosts) { 'test5.test.build.10gen.cc:8123' }
+
+      it 'raises an error' do
+        expect { uri }.to raise_error(Mongo::Error::InvalidURI)
+      end
+    end
+
+    context 'when the host in URI does not have {hostname}, {domainname} and {tld}' do
+
+      let(:string) { "#{scheme}#{hosts}" }
+      let(:hosts) { '10gen.cc/' }
+
+      it 'raises an error' do
+        expect { uri }.to raise_error(Mongo::Error::InvalidURI)
+      end
+    end
 
     context 'string is not uri' do
 
@@ -63,202 +55,186 @@ describe Mongo::URI do
       end
     end
 
-    context 'mongo://localhost:27017' do
+    context 'mongodb+srv://' do
 
-      let(:string) { 'mongo://localhost:27017' }
-
-      it 'raises an error' do
-        expect { uri }.to raise_error(Mongo::Error::InvalidURI)
-      end
-    end
-
-    context 'mongodb://' do
-
-      let(:string) { 'mongodb://' }
+      let(:string) { "#{scheme}" }
 
       it 'raises an error' do
         expect { uri }.to raise_error(Mongo::Error::InvalidURI)
       end
     end
 
-    context 'mongodb://localhost::27017' do
+    context 'mongodb+srv://localhost::27017/' do
 
-      let(:string) { 'mongodb://localhost::27017' }
-
-      it 'raises an error' do
-        expect { uri }.to raise_error(Mongo::Error::InvalidURI)
-      end
-    end
-
-    context 'mongodb://localhost::27017/' do
-
-      let(:string) { 'mongodb://localhost::27017/' }
+      let(:string) { "#{scheme}localhost::27017/" }
 
       it 'raises an error' do
         expect { uri }.to raise_error(Mongo::Error::InvalidURI)
       end
     end
 
-    context 'mongodb://::' do
+    context 'mongodb+srv://::' do
 
-      let(:string) { 'mongodb://::' }
-
-      it 'raises an error' do
-        expect { uri }.to raise_error(Mongo::Error::InvalidURI)
-      end
-    end
-
-    context 'mongodb://localhost,localhost::' do
-
-      let(:string) { 'mongodb://localhost,localhost::' }
+      let(:string) { "#{scheme}::" }
 
       it 'raises an error' do
         expect { uri }.to raise_error(Mongo::Error::InvalidURI)
       end
     end
 
-    context 'mongodb://localhost::27017,abc' do
+    context 'mongodb+srv://localhost,localhost::' do
 
-      let(:string) { 'mongodb://localhost::27017,abc' }
-
-      it 'raises an error' do
-        expect { uri }.to raise_error(Mongo::Error::InvalidURI)
-      end
-    end
-
-    context 'mongodb://localhost:-1' do
-
-      let(:string) { 'mongodb://localhost:-1' }
+      let(:string) { "#{scheme}localhost,localhost::" }
 
       it 'raises an error' do
         expect { uri }.to raise_error(Mongo::Error::InvalidURI)
       end
     end
 
-    context 'mongodb://localhost:0/' do
+    context 'mongodb+srv://localhost::27017,abc' do
 
-      let(:string) { 'mongodb://localhost:0/' }
-
-      it 'raises an error' do
-        expect { uri }.to raise_error(Mongo::Error::InvalidURI)
-      end
-    end
-
-    context 'mongodb://localhost:65536' do
-
-      let(:string) { 'mongodb://localhost:65536' }
+      let(:string) { "#{scheme}localhost::27017,abc" }
 
       it 'raises an error' do
         expect { uri }.to raise_error(Mongo::Error::InvalidURI)
       end
     end
 
-    context 'mongodb://localhost:foo' do
+    context 'mongodb+srv://localhost:-1' do
 
-      let(:string) { 'mongodb://localhost:foo' }
-
-      it 'raises an error' do
-        expect { uri }.to raise_error(Mongo::Error::InvalidURI)
-      end
-    end
-
-    context 'mongodb://[::1]:-1' do
-
-      let(:string) { 'mongodb://[::1]:-1' }
+      let(:string) { "#{scheme}localhost:-1" }
 
       it 'raises an error' do
         expect { uri }.to raise_error(Mongo::Error::InvalidURI)
       end
     end
 
-    context 'mongodb://[::1]:0/' do
+    context 'mongodb+srv://localhost:0/' do
 
-      let(:string) { 'mongodb://[::1]:0/' }
-
-      it 'raises an error' do
-        expect { uri }.to raise_error(Mongo::Error::InvalidURI)
-      end
-    end
-
-    context 'mongodb://[::1]:65536' do
-
-      let(:string) { 'mongodb://[::1]:65536' }
+      let(:string) { "#{scheme}localhost:0/" }
 
       it 'raises an error' do
         expect { uri }.to raise_error(Mongo::Error::InvalidURI)
       end
     end
 
-    context 'mongodb://[::1]:65536/' do
+    context 'mongodb+srv://localhost:65536' do
 
-      let(:string) { 'mongodb://[::1]:65536/' }
-
-      it 'raises an error' do
-        expect { uri }.to raise_error(Mongo::Error::InvalidURI)
-      end
-    end
-
-    context 'mongodb://[::1]:foo' do
-
-      let(:string) { 'mongodb://[::1]:foo' }
+      let(:string) { "#{scheme}localhost:65536" }
 
       it 'raises an error' do
         expect { uri }.to raise_error(Mongo::Error::InvalidURI)
       end
     end
 
-    context 'mongodb://example.com?w=1' do
+    context 'mongodb+srv://localhost:foo' do
 
-      let(:string) { 'mongodb://example.com?w=1' }
-
-      it 'raises an error' do
-        expect { uri }.to raise_error(Mongo::Error::InvalidURI)
-      end
-    end
-
-    context 'mongodb://example.com/?w' do
-
-      let(:string) { 'mongodb://example.com/?w' }
+      let(:string) { "#{scheme}localhost:foo" }
 
       it 'raises an error' do
         expect { uri }.to raise_error(Mongo::Error::InvalidURI)
       end
     end
 
-    context 'mongodb://alice:foo:bar@127.0.0.1' do
+    context 'mongodb+srv://mongodb://[::1]:-1' do
 
-      let(:string) { 'mongodb://alice:foo:bar@127.0.0.1' }
-
-      it 'raises an error' do
-        expect { uri }.to raise_error(Mongo::Error::InvalidURI)
-      end
-    end
-
-    context 'mongodb://alice@@127.0.0.1' do
-
-      let(:string) { 'mongodb://alice@@127.0.0.1' }
+      let(:string) { "#{scheme}mongodb://[::1]:-1" }
 
       it 'raises an error' do
         expect { uri }.to raise_error(Mongo::Error::InvalidURI)
       end
     end
 
-    context 'mongodb://alice@foo:bar@127.0.0.1' do
+    context 'mongodb+srv://[::1]:0/' do
 
-      let(:string) { 'mongodb://alice@foo:bar@127.0.0.1' }
+      let(:string) { "#{scheme}[::1]:0/" }
 
       it 'raises an error' do
         expect { uri }.to raise_error(Mongo::Error::InvalidURI)
       end
     end
 
+    context 'mongodb+srv://[::1]:65536' do
+
+      let(:string) { "#{scheme}[::1]:65536" }
+
+      it 'raises an error' do
+        expect { uri }.to raise_error(Mongo::Error::InvalidURI)
+      end
+    end
+
+    context 'mongodb+srv://[::1]:65536/' do
+
+      let(:string) { "#{scheme}[::1]:65536/" }
+
+      it 'raises an error' do
+        expect { uri }.to raise_error(Mongo::Error::InvalidURI)
+      end
+    end
+
+    context 'mongodb+srv://[::1]:foo' do
+
+      let(:string) { "#{scheme}[::1]:foo" }
+
+      it 'raises an error' do
+        expect { uri }.to raise_error(Mongo::Error::InvalidURI)
+      end
+    end
+
+    context 'mongodb+srv://example.com?w=1' do
+
+      let(:string) { "#{scheme}example.com?w=1" }
+
+      it 'raises an error' do
+        expect { uri }.to raise_error(Mongo::Error::InvalidURI)
+      end
+    end
+
+    context 'mongodb+srv://example.com/?w' do
+
+      let(:string) { "#{scheme}example.com/?w" }
+
+      it 'raises an error' do
+        expect { uri }.to raise_error(Mongo::Error::InvalidURI)
+      end
+    end
   end
 
-  describe '#initialize' do
-    context 'string is not uri' do
-      let(:string) { 'tyler' }
+  describe 'invalid query results' do
+
+    context 'when there are too many TXT records' do
+
+      let(:string) { "#{scheme}test6.test.build.10gen.cc/" }
+
       it 'raises an error' do
-        expect { uri }.to raise_error(Mongo::Error::InvalidURI)
+        expect { uri }.to raise_exception(Mongo::Error::InvalidTXTRecord)
+      end
+    end
+
+    context 'when the TXT has an invalid option' do
+
+      let(:string) { "#{scheme}test10.test.build.10gen.cc" }
+
+      it 'raises an error' do
+        expect { uri }.to raise_exception(Mongo::Error::InvalidTXTRecord)
+      end
+    end
+
+    context 'when the SRV records domain does not match hostname used for the query' do
+
+      let(:string) { "#{scheme}test12.test.build.10gen.cc" }
+
+      it 'raises an error' do
+        expect { uri }.to raise_exception(Mongo::Error::MismatchedDomain)
+      end
+    end
+
+    context 'when the query returns no SRV records' do
+
+      let(:string) { "#{scheme}test4.test.build.10gen.cc" }
+
+      it 'raises an error' do
+        expect { uri }.to raise_exception(Mongo::Error::NoSRVRecords)
       end
     end
   end
@@ -267,58 +243,10 @@ describe Mongo::URI do
     let(:string) { "#{scheme}#{servers}" }
 
     context 'single server' do
-      let(:servers) { 'localhost' }
+      let(:servers) { 'test5.test.build.10gen.cc' }
 
       it 'returns an array with the parsed server' do
-        expect(uri.servers).to eq([servers])
-      end
-    end
-
-    context 'single server with port' do
-      let(:servers) { 'localhost:27017' }
-
-      it 'returns an array with the parsed server' do
-        expect(uri.servers).to eq([servers])
-      end
-    end
-
-    context 'numerical ipv4 server' do
-      let(:servers) { '127.0.0.1' }
-
-      it 'returns an array with the parsed server' do
-        expect(uri.servers).to eq([servers])
-      end
-    end
-
-    context 'numerical ipv6 server' do
-      let(:servers) { '[::1]:27107' }
-
-      it 'returns an array with the parsed server' do
-        expect(uri.servers).to eq([servers])
-      end
-    end
-
-    context 'unix socket server' do
-      let(:servers) { '%2Ftmp%2Fmongodb-27017.sock' }
-
-      it 'returns an array with the parsed server' do
-        expect(uri.servers).to eq([servers])
-      end
-    end
-
-    context 'multiple servers' do
-      let(:servers) { 'localhost,127.0.0.1' }
-
-      it 'returns an array with the parsed servers' do
-        expect(uri.servers).to eq(servers.split(','))
-      end
-    end
-
-    context 'multiple servers with ports' do
-      let(:servers) { '127.0.0.1:27107,localhost:27018' }
-
-      it 'returns an array with the parsed servers' do
-        expect(uri.servers).to eq(servers.split(','))
+        expect(uri.servers).to eq(['localhost.test.build.10gen.cc:27017'])
       end
     end
   end
@@ -326,7 +254,7 @@ describe Mongo::URI do
   describe '#client_options' do
 
     let(:db)          { TEST_DB }
-    let(:servers)     { 'localhost' }
+    let(:servers)     { 'test5.test.build.10gen.cc' }
     let(:string)      { "#{scheme}#{credentials}@#{servers}/#{db}" }
     let(:user)        { 'tyler' }
     let(:password)    { 's3kr4t' }
@@ -347,10 +275,14 @@ describe Mongo::URI do
     it 'includes the password in the options' do
       expect(options[:password]).to eq(password)
     end
+
+    it 'sets ssl to true' do
+      expect(options[:ssl]).to eq(true)
+    end
   end
 
   describe '#credentials' do
-    let(:servers)    { 'localhost' }
+    let(:servers)    { 'test5.test.build.10gen.cc' }
     let(:string)   { "#{scheme}#{credentials}@#{servers}" }
     let(:user)     { 'tyler' }
 
@@ -377,7 +309,7 @@ describe Mongo::URI do
   end
 
   describe '#database' do
-    let(:servers)  { 'localhost' }
+    let(:servers)  { 'test5.test.build.10gen.cc' }
     let(:string) { "#{scheme}#{servers}/#{db}" }
     let(:db)     { 'auth-db' }
 
@@ -389,7 +321,7 @@ describe Mongo::URI do
   end
 
   describe '#uri_options' do
-    let(:servers)  { 'localhost' }
+    let(:servers)  { 'test5.test.build.10gen.cc' }
     let(:string) { "#{scheme}#{servers}/?#{options}" }
 
     context 'when no options were provided' do
@@ -818,8 +750,8 @@ describe Mongo::URI do
       context 'multiple properties' do
         let(:options) do
           "authMechanismProperties=SERVICE_REALM:#{service_realm}," +
-            "CANONICALIZE_HOST_NAME:#{canonicalize_host_name}," +
-            "SERVICE_NAME:#{service_name}"
+              "CANONICALIZE_HOST_NAME:#{canonicalize_host_name}," +
+              "SERVICE_NAME:#{service_name}"
         end
 
         let(:service_name) { 'foo' }

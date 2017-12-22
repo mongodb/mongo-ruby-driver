@@ -22,8 +22,8 @@ module Mongo
   # http://docs.mongodb.org/manual/reference/connection-string/
   #
   # @example Use the uri string to make a client connection.
-  #   uri = URI.new('mongodb://localhost:27017')
-  #   client = Client.new(uri.server, uri.options)
+  #   uri = Mongo::URI.new('mongodb://localhost:27017')
+  #   client = Mongo::Client.new(uri.servers, uri.options)
   #   client.login(uri.credentials)
   #   client[uri.database]
   #
@@ -46,6 +46,39 @@ module Mongo
     # @since 2.0.0
     attr_reader :servers
 
+    # The mongodb connection string scheme.
+    #
+    # @deprecated Will be removed in 3.0.
+    #
+    # @since 2.0.0
+    SCHEME = 'mongodb://'.freeze
+
+    # The mongodb connection string scheme root.
+    #
+    # @since 2.5.0
+    MONGODB_SCHEME = 'mongodb'.freeze
+
+    # The mongodb srv protocol connection string scheme root.
+    #
+    # @since 2.5.0
+    MONGODB_SRV_SCHEME = 'mongodb+srv'.freeze
+
+    # Error details for an invalid scheme.
+    #
+    # @since 2.1.0
+    INVALID_SCHEME = "Invalid scheme. Scheme must be '#{MONGODB_SCHEME}' or '#{MONGODB_SRV_SCHEME}'".freeze
+
+    # MongoDB URI format specification.
+    #
+    # @since 2.0.0
+    FORMAT = 'mongodb://[username:password@]host1[:port1][,host2[:port2]' +
+        ',...[,hostN[:portN]]][/[database][?options]]'.freeze
+
+    # MongoDB URI (connection string) documentation url
+    #
+    # @since 2.0.0
+    HELP = 'http://docs.mongodb.org/manual/reference/connection-string/'.freeze
+
     # Unsafe characters that must be urlencoded.
     #
     # @since 2.1.0
@@ -55,11 +88,6 @@ module Mongo
     #
     # @since 2.1.0
     UNIX_SOCKET = /.sock/
-
-    # The mongodb connection string scheme.
-    #
-    # @since 2.0.0
-    SCHEME = 'mongodb://'.freeze
 
     # The character delimiting hosts.
     #
@@ -101,10 +129,10 @@ module Mongo
     # @since 2.1.0
     AUTH_DELIM = '@'.freeze
 
-    # Error details for an invalid scheme.
+    # Scheme delimiter.
     #
-    # @since 2.1.0
-    INVALID_SCHEME = "Invalid scheme. Scheme must be '#{SCHEME}'".freeze
+    # @since 2.5.0
+    SCHEME_DELIM = '://'.freeze
 
     # Error details for an invalid options format.
     #
@@ -142,17 +170,6 @@ module Mongo
     # @since 2.1.0
     INVALID_PORT = "Invalid port. Port must be an integer greater than 0 and less than 65536".freeze
 
-    # MongoDB URI format specification.
-    #
-    # @since 2.0.0
-    FORMAT = 'mongodb://[username:password@]host1[:port1][,host2[:port2]' +
-      ',...[,hostN[:portN]]][/[database][?options]]'.freeze
-
-    # MongoDB URI (connection string) documentation url
-    #
-    # @since 2.0.0
-    HELP = 'http://docs.mongodb.org/manual/reference/connection-string/'.freeze
-
     # Map of URI read preference modes to ruby driver read preference modes
     #
     # @since 2.0.0
@@ -180,23 +197,24 @@ module Mongo
     # @since 2.1.0
     REPEATABLE_OPTIONS = [ :tag_sets ]
 
-    # Create the new uri from the provided string.
+    # Get either a URI object or a SRVProtocol URI object.
     #
-    # @example Create the new URI.
-    #   URI.new('mongodb://localhost:27017')
+    # @example Get the uri object.
+    #   URI.get(string)
     #
-    # @param [ String ] string The uri string.
-    # @param [ Hash ] options The options.
+    # @return [URI, URI::SRVProtocol] The uri object.
     #
-    # @raise [ Error::InvalidURI ] If the uri does not match the spec.
-    #
-    # @since 2.0.0
-    def initialize(string, options = {})
-      @string = string
-      @options = options
-      _, scheme, remaining = @string.partition(SCHEME)
-      raise_invalid_error!(INVALID_SCHEME) unless scheme == SCHEME
-      setup!(remaining)
+    # @since 2.5.0
+    def self.get(string, opts = {})
+      scheme, _, remaining = string.partition(SCHEME_DELIM)
+      case scheme
+        when MONGODB_SCHEME
+          URI.new(string, opts)
+        when MONGODB_SRV_SCHEME
+          SRVProtocol.new(string, opts)
+        else
+          raise Error::InvalidURI.new(string, INVALID_SCHEME)
+      end
     end
 
     # Gets the options hash that needs to be passed to a Mongo::Client on
@@ -212,6 +230,25 @@ module Mongo
     def client_options
       opts = uri_options.merge(:database => database)
       @user ? opts.merge(credentials) : opts
+    end
+
+    # Create the new uri from the provided string.
+    #
+    # @example Create the new URI.
+    #   URI.new('mongodb://localhost:27017')
+    #
+    # @param [ String ] string The uri string.
+    # @param [ Hash ] options The options.
+    #
+    # @raise [ Error::InvalidURI ] If the uri does not match the spec.
+    #
+    # @since 2.0.0
+    def initialize(string, options = {})
+      @string = string
+      @options = options
+      parsed_scheme, _, remaining = string.partition(SCHEME_DELIM)
+      raise_invalid_error!(INVALID_SCHEME) unless parsed_scheme == scheme
+      parse!(remaining)
     end
 
     # Get the credentials provided in the URI.
@@ -242,7 +279,18 @@ module Mongo
 
     private
 
-    def setup!(remaining)
+    def scheme
+      MONGODB_SCHEME
+    end
+
+    def parse_creds_hosts!(string)
+      hosts, creds = split_creds_hosts(string)
+      @servers = parse_servers!(hosts)
+      @user = parse_user!(creds)
+      @password = parse_password!(creds)
+    end
+
+    def parse!(remaining)
       creds_hosts, db_opts = extract_db_opts!(remaining)
       parse_creds_hosts!(creds_hosts)
       parse_db_opts!(db_opts)
@@ -255,13 +303,6 @@ module Mongo
         raise_invalid_error!(INVALID_OPTS_DELIM)
       end
       [ creds_hosts, db_opts ].map { |s| s.reverse }
-    end
-
-    def parse_creds_hosts!(string)
-      hosts, creds = split_creds_hosts(string)
-      @servers = parse_servers!(hosts)
-      @user = parse_user!(creds)
-      @password = parse_password!(creds)
     end
 
     def split_creds_hosts(string)
@@ -336,7 +377,7 @@ module Mongo
     end
 
     def raise_invalid_error!(details)
-      raise Error::InvalidURI.new(@string, details)
+      raise Error::InvalidURI.new(@string, details, FORMAT)
     end
 
     def decode(value)
@@ -585,3 +626,5 @@ module Mongo
     end
   end
 end
+
+require 'mongo/uri/srv_protocol'

@@ -24,14 +24,15 @@ module Mongo
       # Instantiate the new exception.
       #
       # @example Instantiate the exception.
-      #   Mongo::Error::InvalidURI.new(uri)
+      #   Mongo::Error::InvalidURI.new(uri, details, format)
       #
       # @since 2.0.0
-      def initialize(uri, details)
-        super("Bad URI: #{uri}\n" +
-        "#{details}\n" +
-        "MongoDB URI must be in the following format: #{Mongo::URI::FORMAT}\n" +
-        "Please see the following URL for more information: #{Mongo::URI::HELP}\n")
+      def initialize(uri, details, format = nil)
+        message = "Bad URI: #{uri}\n" +
+                    "#{details}\n"
+        message += "MongoDB URI must be in the following format: #{format}\n" if format
+        message += "Please see the following URL for more information: #{Mongo::URI::HELP}\n"
+        super(message)
       end
     end
   end
