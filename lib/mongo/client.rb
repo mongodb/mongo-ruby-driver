@@ -387,11 +387,14 @@ module Mongo
     # @example Get the database names.
     #   client.database_names
     #
+    # @param [ Hash ] filter The filter criteria for getting a list of databases.
+    # @param [ Hash ] opts The command options.
+    #
     # @return [ Array<String> ] The names of the databases.
     #
     # @since 2.0.5
-    def database_names
-      list_databases.collect{ |info| info[Database::NAME] }
+    def database_names(filter = {}, opts = {})
+      list_databases(filter, true, opts).collect{ |info| info[Database::NAME] }
     end
 
     # Get info for each database.
@@ -399,11 +402,34 @@ module Mongo
     # @example Get the info for each database.
     #   client.list_databases
     #
+    # @param [ Hash ] filter The filter criteria for getting a list of databases.
+    # @param [ Hash ] opts The command options.
+    #
     # @return [ Array<Hash> ] The info for each database.
     #
     # @since 2.0.5
-    def list_databases
-      use(Database::ADMIN).command(listDatabases: 1).first[Database::DATABASES]
+    def list_databases(filter = {}, name_only = false, opts = {})
+      cmd = { listDatabases: 1 }
+      cmd[:nameOnly] = !!name_only
+      cmd[:filter] = filter unless filter.empty?
+      use(Database::ADMIN).command(cmd, opts).first[Database::DATABASES]
+    end
+
+    # Returns a list of Mongo::Database objects.
+    #
+    # @example Get a list of Mongo::Database objects.
+    #   client.list_mongo_databases
+    #
+    # @param [ Hash ] filter The filter criteria for getting a list of databases.
+    # @param [ Hash ] opts The command options.
+    #
+    # @return [ Array<Mongo::Database> ] The list of database objects.
+    #
+    # @since 2.5.0
+    def list_mongo_databases(filter = {}, opts = {})
+      database_names(filter, opts).collect do |name|
+        Database.new(self, name, options)
+      end
     end
 
     # Start a session.

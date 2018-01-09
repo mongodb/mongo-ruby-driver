@@ -1291,6 +1291,22 @@ describe Mongo::Client do
         'admin'
       )
     end
+
+    context 'when filter criteria is present', if: sessions_enabled? do
+
+      let(:result) do
+        root_authorized_client.database_names(filter)
+      end
+
+      let(:filter) do
+        { name: TEST_DB }
+      end
+
+      it 'returns a filtered list of database names' do
+        expect(result.length).to eq(1)
+        expect(result.first).to eq(filter[:name])
+      end
+    end
   end
 
   describe '#list_databases' do
@@ -1301,9 +1317,89 @@ describe Mongo::Client do
           i['name']
         end).to include('admin')
     end
+
+    context 'when filter criteria is present', if: sessions_enabled? do
+
+      let(:result) do
+        root_authorized_client.list_databases(filter)
+      end
+
+      let(:filter) do
+        { name: TEST_DB }
+      end
+
+      it 'returns filtered list of database info documents' do
+        expect(result.length).to eq(1)
+        expect(result[0]['name']).to eq(filter[:name])
+      end
+    end
+
+    context 'when name_only is true', if: sessions_enabled? do
+
+      let(:client) do
+        authorized_client.with(heartbeat_frequency: 100).tap do |cl|
+          cl.subscribe(Mongo::Monitoring::COMMAND, subscriber)
+        end
+      end
+
+      let(:subscriber) do
+        EventSubscriber.new
+      end
+
+      let(:command) do
+        subscriber.started_events.find { |c| c.command_name == :listDatabases }.command
+      end
+
+      before do
+        client.list_databases({}, true)
+      end
+
+      it 'lists databases with nameOnly flag set to true' do
+        expect(command[:nameOnly]).to be true
+      end
+    end
   end
 
-    describe '#close' do
+  describe '#list_mongo_databases', if: sessions_enabled? do
+
+    let(:options) do
+      { read: { mode: :secondary } }
+    end
+
+    let(:client) do
+      authorized_client.with(options)
+    end
+
+    let(:result) do
+      client.list_mongo_databases
+    end
+
+    it 'returns a list of Mongo::Database objects' do
+      expect(result).to all(be_a(Mongo::Database))
+    end
+
+    it 'creates database with specified options' do
+      expect(result.first.options[:read]).to eq(BSON::Document.new(options)[:read])
+    end
+
+    context 'when filter criteria is present' do
+
+      let(:result) do
+        client.list_mongo_databases(filter)
+      end
+
+      let(:filter) do
+        { name: TEST_DB }
+      end
+
+      it 'returns a filtered list of Mongo::Database objects' do
+        expect(result.length).to eq(1)
+        expect(result.first.name).to eq(filter[:name])
+      end
+    end
+  end
+
+  describe '#close' do
 
     let(:client) do
       described_class.new(['127.0.0.1:27017'])
