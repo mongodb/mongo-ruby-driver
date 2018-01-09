@@ -248,8 +248,9 @@ module Mongo
           when nil
             actual.nil?
           when Hash
-            actual.all? do |k, v|
-              expected[k] == v || handle_upserted_id(k, expected[k], v)
+            results = actual.instance_variable_get(:@results)
+            (results || actual).all? do |k, v|
+              expected[k] == v || handle_upserted_id(k, expected[k], v) || handle_inserted_ids(k, expected[k], v)
             end
           when Integer
             expected == actual
@@ -262,6 +263,12 @@ module Mongo
           if expected_id.is_a?(Integer)
             actual_id.is_a?(BSON::ObjectId) || actual_id.nil?
           end
+        end
+      end
+
+      def handle_inserted_ids(field, expected, actual)
+        if field == 'insertedIds'
+          expected.values == actual
         end
       end
 

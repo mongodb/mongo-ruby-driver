@@ -10,7 +10,7 @@ tests:
         operation:
             name: "replaceOne"
             arguments:
-                filter:
+                filter: 
                     _id: {$gt: 1}
                 replacement: {x: 111}
 

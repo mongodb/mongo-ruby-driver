@@ -99,7 +99,7 @@ module Mongo
         private
 
         def bulk_write(collection)
-          collection.bulk_write(requests, options)
+          collection.bulk_write(bulk_requests, options)
         end
 
         def delete_many(collection)
@@ -212,6 +212,23 @@ module Mongo
             when 'updateOne' then
               update = request['updateOne']
               { update_one: { filter: update['filter'], update: update['update'] }}
+            end
+          end
+        end
+
+        def bulk_requests
+          arguments['requests'].map do |request|
+            case request['name']
+              when 'updateOne' then
+                update = request['arguments']
+                { update_one: { filter: update['filter'],
+                                update: update['update'],
+                                array_filters: update['arrayFilters']}}
+              when 'updateMany' then
+                update = request['arguments']
+                { update_many: { filter: update['filter'],
+                                 update: update['update'],
+                                 array_filters: update['arrayFilters']}}
             end
           end
         end
