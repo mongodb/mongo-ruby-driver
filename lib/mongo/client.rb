@@ -403,6 +403,7 @@ module Mongo
     #   client.list_databases
     #
     # @param [ Hash ] filter The filter criteria for getting a list of databases.
+    # @param [ true, false ] name_only Whether to only return each database name without full metadata.
     # @param [ Hash ] opts The command options.
     #
     # @return [ Array<Hash> ] The info for each database.
