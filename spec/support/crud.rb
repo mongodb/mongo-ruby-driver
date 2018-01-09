@@ -103,29 +103,13 @@ module Mongo
       private
 
       def upper_bound_satisfied?(client)
-        if @max_server_version
-          if @max_server_version < '2.6'
-            !client.cluster.next_primary.features.write_command_enabled?
-          end
-        else
-          true
-        end
+        return true unless @max_server_version
+        client.database.command(buildInfo: 1).first['version'] <= @max_server_version
       end
 
       def lower_bound_satisfied?(client)
-        if @min_server_version
-          if @min_server_version >= '3.6'
-            client.cluster.next_primary.features.array_filters_enabled?
-          elsif @min_server_version >= '3.4'
-            client.cluster.next_primary.features.collation_enabled?
-          elsif @min_server_version >= '2.6'
-            client.cluster.next_primary.features.write_command_enabled?
-          else
-            true
-          end
-        else
-          true
-        end
+        return true unless @min_server_version
+        @min_server_version <= client.database.command(buildInfo: 1).first['version']
       end
     end
 
