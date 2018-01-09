@@ -188,7 +188,7 @@ module Mongo
     def split_execute(name, values, server, operation_id, combiner, session, txn_num)
       execute_operation(name, values.shift(values.size / 2), server, operation_id, combiner, session, txn_num)
 
-      txn_num = session.next_txn_num if session
+      txn_num = session.next_txn_num if txn_num
       execute_operation(name, values, server, operation_id, combiner, session, txn_num)
     end
 
