@@ -448,6 +448,32 @@ describe Mongo::Collection::View::MapReduce do
         expect(result).to be_a(Mongo::Operation::Result)
       end
     end
+
+    context 'when a session is provided' do
+
+      let(:session) do
+        authorized_client.start_session
+      end
+
+      let(:view_options) do
+        { session: session }
+      end
+
+      let(:operation) do
+        map_reduce.execute
+      end
+
+      let(:failed_operation) do
+        described_class.new(view, '$invalid', reduce).execute
+      end
+
+      let(:client) do
+        authorized_client
+      end
+
+      it_behaves_like 'an operation using a session'
+      it_behaves_like 'a failed operation using a session'
+    end
   end
 
   describe '#finalize' do

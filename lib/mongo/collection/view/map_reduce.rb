@@ -190,15 +190,15 @@ module Mongo
         #
         # @since 2.5.0
         def execute
-          session = client.send(:get_session, @options)
-          read_with_retry do
-            server = server_selector.select_server(cluster, false)
-            unless valid_server?(server)
-              log_warn(REROUTE)
-              server = cluster.next_primary(false)
+          view.send(:with_session) do |session|
+            write_with_retry(session, Proc.new { server_selector.select_server(cluster, false) }) do |server|
+              unless valid_server?(server)
+                log_warn(REROUTE)
+                server = cluster.next_primary(false)
+              end
+              validate_collation!(server)
+              initial_query_op(session).execute(server)
             end
-            validate_collation!(server)
-            initial_query_op(session).execute(server)
           end
         end
 
