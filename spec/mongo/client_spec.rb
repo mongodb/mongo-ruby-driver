@@ -1328,16 +1328,21 @@ describe Mongo::Client do
         { name: TEST_DB }
       end
 
-      it 'returns filtered list of database info documents' do
+      it 'returns a filtered list of database info documents' do
         expect(result.length).to eq(1)
         expect(result[0]['name']).to eq(filter[:name])
       end
     end
 
-    context 'when name_only is true', if: sessions_enabled? do
+    context 'when name_only is true' do
+
+      let(:client_options) do
+        root_authorized_client.options.merge(heartbeat_frequency: 100, monitoring: true)
+      end
 
       let(:client) do
-        authorized_client.with(heartbeat_frequency: 100).tap do |cl|
+        # Monitoring subscribers won't be set up when using Client#with, so a new client must be created.
+        Mongo::Client.new(ADDRESSES, client_options).tap do |cl|
           cl.subscribe(Mongo::Monitoring::COMMAND, subscriber)
         end
       end
@@ -1354,20 +1359,20 @@ describe Mongo::Client do
         client.list_databases({}, true)
       end
 
-      it 'lists databases with nameOnly flag set to true' do
-        expect(command[:nameOnly]).to be true
+      it 'sends the command with the nameOnly flag set to true' do
+        expect(command[:nameOnly]).to be(true)
       end
     end
   end
 
-  describe '#list_mongo_databases', if: sessions_enabled? do
+  describe '#list_mongo_databases' do
 
     let(:options) do
       { read: { mode: :secondary } }
     end
 
     let(:client) do
-      authorized_client.with(options)
+      root_authorized_client.with(options)
     end
 
     let(:result) do
@@ -1382,7 +1387,7 @@ describe Mongo::Client do
       expect(result.first.options[:read]).to eq(BSON::Document.new(options)[:read])
     end
 
-    context 'when filter criteria is present' do
+    context 'when filter criteria is present', if: sessions_enabled? do
 
       let(:result) do
         client.list_mongo_databases(filter)
