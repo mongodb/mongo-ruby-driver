@@ -127,10 +127,10 @@ module Mongo
     end
 
     def retry_write(original_error, txn_num, &block)
-      log_retry(original_error)
       cluster.scan!
       server = cluster.next_primary
       raise original_error unless (server.retry_writes? && txn_num)
+      log_retry(original_error)
       yield(server, txn_num)
     rescue Error::SocketError, Error::SocketTimeoutError => e
       cluster.scan!
