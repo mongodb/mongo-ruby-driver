@@ -146,10 +146,12 @@ module Mongo
 
     private
 
+    SINGLE_STATEMENT_OPS = [ :delete_one,
+                             :update_one,
+                             :insert_one ].freeze
+
     def single_statement?(operation)
-      [:delete_one,
-       :update_one,
-       :insert_one].include?(operation.keys.first)
+      SINGLE_STATEMENT_OPS.include?(operation.keys.first)
     end
 
     def base_spec(operation_id, session)
