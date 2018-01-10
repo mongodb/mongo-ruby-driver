@@ -41,10 +41,10 @@ module Mongo
         attr_reader :view
 
         # @return [ String ] map The map function.
-        attr_reader :map
+        attr_reader :map_function
 
         # @return [ String ] reduce The reduce function.
-        attr_reader :reduce
+        attr_reader :reduce_function
 
         # Delegate necessary operations to the view.
         def_delegators :view, :collection, :read, :cluster
@@ -69,6 +69,7 @@ module Mongo
           session = client.send(:get_session, view.options)
           legacy_write_with_retry do |server|
             result = send_initial_query(server, session)
+            result = send_fetch_query(server, session) unless inline?
             @cursor = Cursor.new(view, result, server, session: session)
           end
           @cursor.each do |doc|
@@ -105,8 +106,8 @@ module Mongo
         # @since 2.0.0
         def initialize(view, map, reduce, options = {})
           @view = view
-          @map = map.freeze
-          @reduce = reduce.freeze
+          @map_function = map.freeze
+          @reduce_function = reduce.freeze
           @options = BSON::Document.new(options).freeze
         end
 
@@ -180,6 +181,23 @@ module Mongo
           configure(:verbose, value)
         end
 
+        # Execute the map reduce, without doing a fetch query to retrieve the results
+        #   if outputted to a collection.
+        #
+        # @example Execute the map reduce and get the raw result.
+        #   map_reduce.execute
+        #
+        # @return [ Mongo::Operation::Result ] The raw map reduce result
+        #
+        # @since 2.5.0
+        def execute
+          view.send(:with_session) do |session|
+            legacy_write_with_retry do |server|
+              send_initial_query(server, session)
+            end
+          end
+        end
+
         private
 
         def server_selector
@@ -191,11 +209,11 @@ module Mongo
         end
 
         def map_reduce_spec(session = nil)
-          Builder::MapReduce.new(map, reduce, view, options.merge(session: session)).specification
+          Builder::MapReduce.new(map_function, reduce_function, view, options.merge(session: session)).specification
         end
 
         def new(options)
-          MapReduce.new(view, map, reduce, options)
+          MapReduce.new(view, map_function, reduce_function, options)
         end
 
         def initial_query_op(session)
@@ -216,16 +234,15 @@ module Mongo
             server = cluster.next_primary(false)
           end
           validate_collation!(server)
-          result = initial_query_op(session).execute(server)
-          inline? ? result : send_fetch_query(server, session)
+          initial_query_op(session).execute(server)
         end
 
         def fetch_query_spec
-          Builder::MapReduce.new(map, reduce, view, options).query_specification
+          Builder::MapReduce.new(map_function, reduce_function, view, options).query_specification
         end
 
         def find_command_spec(session)
-          Builder::MapReduce.new(map, reduce, view, options.merge(session: session)).command_specification
+          Builder::MapReduce.new(map_function, reduce_function, view, options.merge(session: session)).command_specification
         end
 
         def fetch_query_op(server, session)
