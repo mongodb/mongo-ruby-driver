@@ -101,7 +101,7 @@ describe 'Retryable Writes' do
         context 'when the error is retryable' do
 
           before do
-            expect(Mongo::Logger.logger).to receive(:warn).once
+            expect(Mongo::Logger.logger).to receive(:warn).once.and_call_original
             expect(client.cluster).to receive(:scan!)
           end
 
@@ -219,7 +219,9 @@ describe 'Retryable Writes' do
           end
         end
 
-        [Mongo::Error::SocketError, Mongo::Error::SocketTimeoutError].each do |retryable_error|
+        [Mongo::Error::SocketError,
+         Mongo::Error::SocketTimeoutError,
+         Mongo::Error::OperationFailure.new('not master')].each do |retryable_error|
 
           context "when the first error is a #{retryable_error}" do
 
