@@ -69,6 +69,7 @@ module Mongo
           session = client.send(:get_session, view.options)
           legacy_write_with_retry do |server|
             result = send_initial_query(server, session)
+            result = send_fetch_query(server, session) unless inline?
             @cursor = Cursor.new(view, result, server, session: session)
           end
           @cursor.each do |doc|
@@ -191,13 +192,8 @@ module Mongo
         # @since 2.5.0
         def execute
           view.send(:with_session) do |session|
-            write_with_retry(session, Proc.new { server_selector.select_server(cluster, false) }) do |server|
-              unless valid_server?(server)
-                log_warn(REROUTE)
-                server = cluster.next_primary(false)
-              end
-              validate_collation!(server)
-              initial_query_op(session).execute(server)
+            legacy_write_with_retry do |server|
+              send_initial_query(server, session)
             end
           end
         end
@@ -238,8 +234,7 @@ module Mongo
             server = cluster.next_primary(false)
           end
           validate_collation!(server)
-          result = initial_query_op(session).execute(server)
-          inline? ? result : send_fetch_query(server, session)
+          initial_query_op(session).execute(server)
         end
 
         def fetch_query_spec
