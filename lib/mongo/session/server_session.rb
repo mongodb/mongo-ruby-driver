@@ -47,6 +47,7 @@ module Mongo
       def initialize
         set_last_use!
         session_id
+        @txn_num = -1
       end
 
       # Update the last_use attribute of the server session to now.
@@ -68,6 +69,18 @@ module Mongo
       def session_id
         @session_id ||= (bytes = [SecureRandom.uuid.gsub(DASH_REGEX, '')].pack(UUID_PACK)
                           BSON::Document.new(id: BSON::Binary.new(bytes, :uuid)))
+      end
+
+      # Increment and return the next transaction number.
+      #
+      # @example Get the next transaction number.
+      #   server_session.next_txn_num
+      #
+      # @return [ Integer ] The next transaction number.
+      #
+      # @since 2.5.0
+      def next_txn_num
+        @txn_num += 1
       end
     end
   end

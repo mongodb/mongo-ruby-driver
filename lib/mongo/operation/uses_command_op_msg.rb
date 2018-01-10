@@ -53,6 +53,7 @@ module Mongo
         # to a specific server it turns out that that particular server doesn't support sessions after all
         if server.features.sessions_enabled?
           apply_cluster_time!(selector, server)
+          selector[:txnNumber] = BSON::Int64.new(txn_num) if txn_num
           if session
             apply_session_id!(selector)
             apply_causal_consistency!(selector, server)
@@ -61,6 +62,7 @@ module Mongo
           apply_cluster_time!(selector, server)
           apply_session_id!(selector)
           apply_causal_consistency!(selector, server)
+          selector[:txnNumber] = BSON::Int64.new(txn_num) if txn_num
         end
       end
 

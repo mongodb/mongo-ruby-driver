@@ -218,6 +218,21 @@ describe Mongo::Client do
 
     context 'when providing options' do
 
+      context 'when retry_writes is defined' do
+
+        let(:options) do
+          { retry_writes: true }
+        end
+
+        let(:client) do
+          described_class.new([default_address.seed], authorized_client.options.merge(options))
+        end
+
+        it 'sets the option' do
+          expect(client.options['retry_writes']).to eq(options[:retry_writes])
+        end
+      end
+
       context 'when compressors are provided' do
 
         let(:client) do
@@ -1526,6 +1541,10 @@ describe Mongo::Client do
         end
 
         before do
+          session_a_server_session.next_txn_num
+          session_a_server_session.next_txn_num
+          session_b_server_session.next_txn_num
+          session_b_server_session.next_txn_num
           session_a.end_session
           session_b.end_session
         end
@@ -1533,6 +1552,11 @@ describe Mongo::Client do
         it 'is returned to the front of the queue' do
           expect(authorized_client.start_session.instance_variable_get(:@server_session)).to be(session_b_server_session)
           expect(authorized_client.start_session.instance_variable_get(:@server_session)).to be(session_a_server_session)
+        end
+
+        it 'preserves the transaction numbers on the server sessions' do
+          expect(authorized_client.start_session.next_txn_num).to be(2)
+          expect(authorized_client.start_session.next_txn_num).to be(2)
         end
       end
 

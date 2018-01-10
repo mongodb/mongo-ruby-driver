@@ -31,6 +31,14 @@ describe Mongo::BulkWrite do
     [{ 'i.y' => 3}]
   end
 
+  let(:collection) do
+    authorized_collection
+  end
+
+  let(:client) do
+    authorized_client
+  end
+
   describe '#execute' do
     shared_examples_for 'an executable bulk write' do
 
@@ -1256,15 +1264,23 @@ describe Mongo::BulkWrite do
 
             context 'when the number of updates exceeds the max batch size', if: write_command_enabled? do
 
+              let(:batch_size) do
+                11
+              end
+
+              before do
+                allow(client.cluster.next_primary).to receive(:max_write_batch_size).and_return(batch_size - 1)
+              end
+
               let(:requests) do
-                1001.times.collect do |i|
+                batch_size.times.collect do |i|
                   { update_one: { filter: { a: i }, update: { "$set" => { a: i, b: 3 }}, upsert: true }}
                 end
               end
 
               it 'updates the documents and reports the correct number of upserted ids' do
-                expect(result.upserted_ids.size).to eq(1001)
-                expect(authorized_collection.find(b: 3).count).to eq(1001)
+                expect(result.upserted_ids.size).to eq(batch_size)
+                expect(authorized_collection.find(b: 3).count).to eq(batch_size)
               end
             end
 
@@ -2033,10 +2049,18 @@ describe Mongo::BulkWrite do
 
       context 'when the operations need to be split' do
 
+        let(:batch_size) do
+          11
+        end
+
+        before do
+          allow(client.cluster.next_primary).to receive(:max_write_batch_size).and_return(batch_size - 1)
+        end
+
         context 'when a write error occurs' do
 
           let(:requests) do
-            1001.times.map do |i|
+            batch_size.times.map do |i|
               { insert_one: { _id: i }}
             end
           end
@@ -2058,14 +2082,14 @@ describe Mongo::BulkWrite do
 
           it 'sets the document index on the error' do
             requests.push({ insert_one: { _id: 5 }})
-            expect(error.result[Mongo::Error::WRITE_ERRORS].first['index']).to eq(1001)
+            expect(error.result[Mongo::Error::WRITE_ERRORS].first['index']).to eq(batch_size)
           end
         end
 
         context 'when no write errors occur' do
 
           let(:requests) do
-            1001.times.map do |i|
+            batch_size.times.map do |i|
               { insert_one: { _id: i }}
             end
           end
@@ -2075,11 +2099,11 @@ describe Mongo::BulkWrite do
           end
 
           it 'inserts the documents' do
-            expect(result.inserted_count).to eq(1001)
+            expect(result.inserted_count).to eq(batch_size)
           end
 
           it 'combines the inserted ids' do
-            expect(result.inserted_ids.size).to eq(1001)
+            expect(result.inserted_ids.size).to eq(batch_size)
           end
 
           context 'when a session is provided' do
@@ -2097,6 +2121,47 @@ describe Mongo::BulkWrite do
             end
 
             it_behaves_like 'an operation using a session'
+          end
+
+          context 'when retryable writes are supported', if: (sessions_enabled? && (replica_set? || sharded?)) do
+
+            let(:client) do
+              authorized_client.with(heartbeat_frequency: 100, retry_writes: true).tap do |cl|
+                cl.subscribe(Mongo::Monitoring::COMMAND, subscriber)
+              end
+            end
+
+            let(:collection) do
+              client[authorized_collection.name]
+            end
+
+            let(:subscriber) do
+              EventSubscriber.new
+            end
+
+            let!(:result) do
+              bulk_write.execute
+            end
+
+            let(:first_txn_number) do
+              subscriber.started_events[-2].command['txnNumber'].instance_variable_get(:@integer)
+            end
+
+            let(:second_txn_number) do
+              subscriber.started_events[-1].command['txnNumber'].instance_variable_get(:@integer)
+            end
+
+            it 'inserts the documents' do
+              expect(result.inserted_count).to eq(batch_size)
+            end
+
+            it 'combines the inserted ids' do
+              expect(result.inserted_ids.size).to eq(batch_size)
+            end
+
+            it 'increments the transaction number' do
+              expect(first_txn_number + 1). to eq(second_txn_number)
+            end
           end
         end
       end
@@ -2139,7 +2204,7 @@ describe Mongo::BulkWrite do
     context 'when the bulk write is unordered' do
 
       let(:bulk_write) do
-        described_class.new(authorized_collection, requests, options)
+        described_class.new(collection, requests, options)
       end
 
       let(:options) do
@@ -2160,7 +2225,7 @@ describe Mongo::BulkWrite do
     context 'when the bulk write is ordered' do
 
       let(:bulk_write) do
-        described_class.new(authorized_collection, requests, options)
+        described_class.new(collection, requests, options)
       end
 
       let(:options) do

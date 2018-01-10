@@ -29,7 +29,7 @@ describe Mongo::Retryable do
       end
 
       def write
-        write_with_retry(nil, Proc.new { cluster.next_primary }) do
+        write_with_retry(nil, nil) do
           operation.execute
         end
       end

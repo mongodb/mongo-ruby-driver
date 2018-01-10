@@ -99,7 +99,15 @@ module Mongo
         private
 
         def bulk_write(collection)
-          collection.bulk_write(requests, options)
+          result = collection.bulk_write(requests, options)
+          return_doc = {}
+          return_doc['deletedCount'] = result.deleted_count if result.deleted_count
+          return_doc['insertedIds'] = result.inserted_ids if result.inserted_ids
+          return_doc['upsertedId'] = result.upserted_id if upsert
+          return_doc['upsertedCount'] = result.upserted_count if result.upserted_count
+          return_doc['matchedCount'] = result.matched_count if result.matched_count
+          return_doc['modifiedCount'] = result.modified_count if result.modified_count
+          return_doc
         end
 
         def delete_many(collection)
@@ -206,33 +214,28 @@ module Mongo
 
         def requests
           arguments['requests'].map do |request|
-            if request['name']
+            case request.keys.first
+            when 'insertOne' then
+              { insert_one: request['insertOne']['document'] }
+            when 'updateOne' then
+              update = request['updateOne']
+              { update_one: { filter: update['filter'], update: update['update'] } }
+            when 'name' then
               bulk_request(request)
-            else
-              case request.keys.first
-              when 'insertOne' then
-                { insert_one: request['insertOne']['document'] }
-              when 'updateOne' then
-                update = request['updateOne']
-                { update_one: { filter: update['filter'], update: update['update'] } }
-              end
             end
           end
         end
 
         def bulk_request(request)
-          case request['name']
-          when 'updateOne' then
-            update = request['arguments']
-            { update_one: { filter: update['filter'],
-                            update: update['update'],
-                            array_filters: update['arrayFilters'] } }
-          when 'updateMany' then
-            update = request['arguments']
-            { update_many: { filter: update['filter'],
-                             update: update['update'],
-                             array_filters: update['arrayFilters'] } }
-          end
+          op_name = OPERATIONS[request['name']]
+          op = { op_name => {} }
+          op[op_name].merge!(filter: request['arguments']['filter']) if request['arguments']['filter']
+          op[op_name].merge!(update: request['arguments']['update']) if request['arguments']['update']
+          op[op_name].merge!(upsert: request['arguments']['upsert']) if request['arguments']['upsert']
+          op[op_name].merge!(replacement: request['arguments']['replacement']) if request['arguments']['replacement']
+          op[op_name].merge!(array_filters: request['arguments']['arrayFilters']) if request['arguments']['arrayFilters']
+          op[op_name] = request['arguments']['document'] if request['arguments']['document']
+          op
         end
 
         def upsert
@@ -240,7 +243,12 @@ module Mongo
         end
 
         def return_document
-          :after if arguments['returnDocument']
+          case arguments['returnDocument']
+          when 'Before'
+            :before
+          when 'After'
+            :after
+          end
         end
 
         def update

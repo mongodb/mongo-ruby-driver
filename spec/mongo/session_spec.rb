@@ -186,4 +186,40 @@ describe Mongo::Session, if: test_sessions? do
       end
     end
   end
+
+  describe '#retry_writes?', if: test_sessions? do
+
+    context 'when the option is set to true' do
+
+      let(:client) do
+        authorized_client.with(retry_writes: true)
+      end
+
+      it 'returns true' do
+        expect(client.start_session.retry_writes?).to be(true)
+      end
+    end
+
+    context 'when the option is set to false' do
+
+      let(:client) do
+        authorized_client.with(retry_writes: false)
+      end
+
+      it 'returns false' do
+        expect(client.start_session.retry_writes?).to be(false)
+      end
+    end
+
+    context 'when the option is not defined' do
+
+      let(:client) do
+        authorized_client
+      end
+
+      it 'returns false' do
+        expect(client.start_session.retry_writes?).to be(false)
+      end
+    end
+  end
 end

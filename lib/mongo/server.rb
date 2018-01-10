@@ -268,5 +268,20 @@ module Mongo
       unknown!
       raise
     end
+
+    # Will writes sent to this server be retried.
+    #
+    # @example Will writes be retried.
+    #   server.retry_writes?
+    #
+    # @return [ true, false ] If writes will be retried.
+    #
+    # @note Retryable writes are only available on server versions 3.6+ and with
+    #   sharded clusters or replica sets.
+    #
+    # @since 2.5.0
+    def retry_writes?
+      !!(features.sessions_enabled? && logical_session_timeout && !standalone?)
+    end
   end
 end

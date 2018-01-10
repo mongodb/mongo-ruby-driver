@@ -125,6 +125,8 @@ module Mongo
       # @since 2.0.0
       attr_reader :description
 
+      FAIL_POINT_BASE_COMMAND = { configureFailPoint: "onPrimaryTransactionalWrite" }
+
       # Instantiate the new CRUDTest.
       #
       # @example Create the test.
@@ -137,6 +139,7 @@ module Mongo
       # @since 2.0.0
       def initialize(data, test)
         @data = data
+        @fail_point_command = FAIL_POINT_BASE_COMMAND.merge(test['failPoint']) if test['failPoint']
         @description = test['description']
         @operation = Operation.get(test['operation'])
         @outcome = test['outcome']
@@ -154,9 +157,25 @@ module Mongo
       #
       # @since 2.0.0
       def run(collection)
-        @collection = collection
-        @collection.insert_many(@data)
         @operation.execute(collection)
+      end
+
+      def setup_test(collection)
+        clear_fail_point(collection)
+        @collection = collection
+        collection.delete_many
+        collection.insert_many(@data)
+        set_up_fail_point(collection)
+      end
+
+      def set_up_fail_point(collection)
+        collection.client.use(:admin).command(@fail_point_command) if @fail_point_command
+      end
+
+      def clear_fail_point(collection)
+        if @fail_point_command
+          collection.client.use(:admin).command(FAIL_POINT_BASE_COMMAND.merge(mode: "off"))
+        end
       end
 
       # The expected result of running the test.
@@ -223,6 +242,10 @@ module Mongo
       # @since 2.4.0
       def outcome_collection_data
         @outcome['collection']['data'] if @outcome['collection']
+      end
+
+      def error?
+        !!@outcome['error']
       end
 
       private

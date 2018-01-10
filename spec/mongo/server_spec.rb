@@ -201,4 +201,91 @@ describe Mongo::Server do
       expect(server.reconnect!).to be(true)
     end
   end
+
+  describe 'retry_writes?' do
+
+    let(:server) do
+      described_class.new(address, cluster, monitoring, listeners, TEST_OPTIONS)
+    end
+
+    before do
+      allow(server).to receive(:features).and_return(features)
+    end
+
+    context 'when the server version is less than 3.6' do
+
+      let(:features) do
+        double('features', sessions_enabled?: false)
+      end
+
+      context 'when the server has a logical_session_timeout value' do
+
+        before do
+          allow(server).to receive(:logical_session_timeout).and_return(true)
+        end
+
+        it 'returns false' do
+          expect(server.retry_writes?).to be(false)
+        end
+      end
+
+      context 'when the server does not have a logical_session_timeout value' do
+
+        before do
+          allow(server).to receive(:logical_session_timeout).and_return(nil)
+        end
+
+        it 'returns false' do
+          expect(server.retry_writes?).to be(false)
+        end
+      end
+    end
+
+    context 'when the server version is at least 3.6' do
+
+      let(:features) do
+        double('features', sessions_enabled?: true)
+      end
+
+      context 'when the server has a logical_session_timeout value' do
+
+        before do
+          allow(server).to receive(:logical_session_timeout).and_return(true)
+        end
+
+        context 'when the server is a standalone' do
+
+          before do
+            allow(server).to receive(:standalone?).and_return(true)
+          end
+
+          it 'returns false' do
+            expect(server.retry_writes?).to be(false)
+          end
+        end
+
+        context 'when the server is not a standalone' do
+
+          before do
+            allow(server).to receive(:standalone?).and_return(true)
+          end
+
+          it 'returns false' do
+            expect(server.retry_writes?).to be(false)
+          end
+        end
+      end
+
+      context 'when the server does not have a logical_session_timeout value' do
+
+        before do
+          allow(server).to receive(:logical_session_timeout).and_return(nil)
+        end
+
+        it 'returns false' do
+          expect(server.retry_writes?).to be(false)
+        end
+      end
+    end
+  end
 end

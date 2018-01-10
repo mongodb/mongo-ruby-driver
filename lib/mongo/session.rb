@@ -44,7 +44,8 @@ module Mongo
     # @since 2.5.0
     attr_reader :operation_time
 
-    def_delegators :@server_session, :session_id
+    def_delegators :@server_session, :session_id, :next_txn_num
+    def_delegators :client, :cluster
 
     # Error message describing that the session was attempted to be used by a client different from the
     # one it was originally associated with.
@@ -203,6 +204,21 @@ module Mongo
       else
         @operation_time = new_operation_time
       end
+    end
+    
+    # Will writes executed with this session be retried.
+    #
+    # @example Will writes be retried.
+    #   session.retry_writes?
+    #
+    # @return [ true, false ] If writes will be retried.
+    #
+    # @note Retryable writes are only available on server versions at least 3.6 and with
+    #   sharded clusters or replica sets.
+    #
+    # @since 2.5.0
+    def retry_writes?
+      !!client.options[:retry_writes] && (cluster.replica_set? || cluster.sharded?)
     end
 
     private
