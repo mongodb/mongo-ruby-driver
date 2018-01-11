@@ -465,7 +465,7 @@ module Mongo
       #
       # @since 2.0.0
       def primary?
-        !!config[PRIMARY] && !replica_set_name.nil?
+        !!config[PRIMARY] && hosts.include?(address.to_s) && !replica_set_name.nil?
       end
 
       # Get the name of the replica set the server belongs to, returns nil if
