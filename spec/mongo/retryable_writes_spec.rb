@@ -539,7 +539,8 @@ describe 'Retryable Writes' do
     context 'when the operation is update_one' do
 
       before do
-        collection.insert_one(a:0)
+        # Account for when the collection has unacknowledged write concern and use authorized_collection here.
+        authorized_collection.insert_one(a:0)
       end
 
       let(:operation) do
@@ -564,7 +565,8 @@ describe 'Retryable Writes' do
     context 'when the operation is replace_one' do
 
       before do
-        collection.insert_one(a:0)
+        # Account for when the collection has unacknowledged write concern and use authorized_collection here.
+        authorized_collection.insert_one(a:0)
       end
 
       let(:operation) do
@@ -589,7 +591,8 @@ describe 'Retryable Writes' do
     context 'when the operation is delete_one' do
 
       before do
-        collection.insert_one(a:1)
+        # Account for when the collection has unacknowledged write concern and use authorized_collection here.
+        authorized_collection.insert_one(a:1)
       end
 
       let(:operation) do
@@ -614,7 +617,8 @@ describe 'Retryable Writes' do
     context 'when the operation is find_one_and_update' do
 
       before do
-        collection.insert_one(a:0)
+        # Account for when the collection has unacknowledged write concern and use authorized_collection here.
+        authorized_collection.insert_one(a:0)
       end
 
       let(:operation) do
@@ -639,7 +643,8 @@ describe 'Retryable Writes' do
     context 'when the operation is find_one_and_replace' do
 
       before do
-        collection.insert_one(a:0)
+        # Account for when the collection has unacknowledged write concern and use authorized_collection here.
+        authorized_collection.insert_one(a:0)
       end
 
       let(:operation) do
@@ -664,7 +669,8 @@ describe 'Retryable Writes' do
     context 'when the operation is find_one_and_delete' do
 
       before do
-        collection.insert_one(a:1)
+        # Account for when the collection has unacknowledged write concern and use authorized_collection here.
+        authorized_collection.insert_one(a:1)
       end
 
       let(:operation) do
@@ -689,8 +695,9 @@ describe 'Retryable Writes' do
     context 'when the operation is update_many' do
 
       before do
-        collection.insert_one(a:0)
-        collection.insert_one(a:0)
+        # Account for when the collection has unacknowledged write concern and use authorized_collection here.
+        authorized_collection.insert_one(a:0)
+        authorized_collection.insert_one(a:0)
       end
 
       let(:operation) do
@@ -711,8 +718,9 @@ describe 'Retryable Writes' do
     context 'when the operation is delete_many' do
 
       before do
-        collection.insert_one(a:1)
-        collection.insert_one(a:1)
+        # Account for when the collection has unacknowledged write concern and use authorized_collection here.
+        authorized_collection.insert_one(a:1)
+        authorized_collection.insert_one(a:1)
       end
 
       let(:operation) do
@@ -733,7 +741,8 @@ describe 'Retryable Writes' do
     context 'when the operation is a bulk write' do
 
       before do
-        collection.insert_one(a: 1)
+        # Account for when the collection has unacknowledged write concern and use authorized_collection here.
+        authorized_collection.insert_one(a: 1)
       end
 
       let(:operation) do
@@ -760,8 +769,9 @@ describe 'Retryable Writes' do
     context 'when the operation is bulk write including delete_many' do
 
       before do
-        collection.insert_one(a:1)
-        collection.insert_one(a:1)
+        # Account for when the collection has unacknowledged write concern and use authorized_collection here.
+        authorized_collection.insert_one(a:1)
+        authorized_collection.insert_one(a:1)
       end
 
       let(:operation) do
@@ -782,8 +792,9 @@ describe 'Retryable Writes' do
     context 'when the operation is bulk write including update_many' do
 
       before do
-        collection.insert_one(a:0)
-        collection.insert_one(a:0)
+        # Account for when the collection has unacknowledged write concern and use authorized_collection here.
+        authorized_collection.insert_one(a:0)
+        authorized_collection.insert_one(a:0)
       end
 
       let(:operation) do
