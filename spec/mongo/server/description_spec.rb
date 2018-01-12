@@ -14,7 +14,7 @@ describe Mongo::Server::Description do
       'arbiters' => [
         '127.0.0.1:27120'
       ],
-      'primary' => '127.0.0.1:27019',
+      'primary' => authorized_primary.address.to_s,
       'tags' => { 'rack' => 'a' },
       'me' => '127.0.0.1:27019',
       'maxBsonObjectSize' => 16777216,
@@ -32,7 +32,7 @@ describe Mongo::Server::Description do
   end
 
   let(:address) do
-    Mongo::Address.new('127.0.0.1:27017')
+    Mongo::Address.new(authorized_primary.address.to_s)
   end
 
   let(:monitoring) do

@@ -124,6 +124,11 @@ module Mongo
       # @since 2.0.0
       PRIMARY = 'ismaster'.freeze
 
+      # Constant for reading primary host field from config.
+      #
+      # @since 2.5.0
+      PRIMARY_HOST = 'primary'.freeze
+
       # Constant for reading secondary info from config.
       #
       # @since 2.0.0
@@ -465,7 +470,9 @@ module Mongo
       #
       # @since 2.0.0
       def primary?
-        !!config[PRIMARY] && config['primary'] == address.to_s && !replica_set_name.nil?
+        !!config[PRIMARY] &&
+          (config[PRIMARY_HOST].nil? || config[PRIMARY_HOST] == address.to_s) &&
+            !replica_set_name.nil?
       end
 
       # Get the name of the replica set the server belongs to, returns nil if
