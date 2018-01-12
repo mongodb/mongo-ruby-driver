@@ -184,7 +184,7 @@ describe Mongo::Collection::View::ChangeStream, if: test_change_streams? do
       context 'when the other pipeline operators are supported' do
 
         let(:pipeline) do
-          [ { '$project' => { '_id' => 0 }}]
+          [{ '$project' => { '_id' => 0 }}]
         end
 
         it 'uses the pipeline operators' do
@@ -195,7 +195,7 @@ describe Mongo::Collection::View::ChangeStream, if: test_change_streams? do
       context 'when the other pipeline operators are not supported' do
 
         let(:pipeline) do
-          [ { '$unwind' => '$test' }]
+          [{ '$unwind' => '$test' }]
         end
 
         it 'sends the pipeline to the server without a custom error' do
@@ -421,7 +421,7 @@ describe Mongo::Collection::View::ChangeStream, if: test_change_streams? do
   context 'when the first response does not contain the resume token' do
 
     let(:pipeline) do
-      [ { '$project' => { _id: 0 } }]
+      [{ '$project' => { _id: 0 } }]
     end
 
     before do
@@ -813,6 +813,68 @@ describe Mongo::Collection::View::ChangeStream, if: test_change_streams? do
         it 'does not close the session' do
           expect(session.ended?).to be(false)
         end
+      end
+    end
+  end
+
+  describe '#inspect' do
+
+    it 'includes the Ruby object_id in the formatted string' do
+      expect(change_stream.inspect).to include(change_stream.object_id.to_s)
+    end
+
+    context 'when resume_after is provided' do
+
+      let(:options) do
+        { resume_after: sample_resume_token }
+      end
+
+      it 'includes resume_after value in the formatted string' do
+        expect(change_stream.inspect).to include(sample_resume_token.to_s)
+      end
+    end
+
+    context 'when max_await_time_ms is provided' do
+
+      let(:options) do
+        { max_await_time_ms: 10 }
+      end
+
+      it 'includes the max_await_time value in the formatted string' do
+        expect(change_stream.inspect).to include({ max_await_time_ms: 10 }.to_s)
+      end
+    end
+
+    context 'when batch_size is provided' do
+
+      let(:options) do
+        { batch_size: 5 }
+      end
+
+      it 'includes the batch_size value in the formatted string' do
+        expect(change_stream.inspect).to include({ batch_size: 5 }.to_s)
+      end
+    end
+
+    context 'when collation is provided'  do
+
+      let(:options) do
+        { 'collation' => { locale: 'en_US', strength: 2 } }
+      end
+
+      it 'includes the collation value in the formatted string' do
+        expect(change_stream.inspect).to include({ 'collation' => { locale: 'en_US', strength: 2 } }.to_s)
+      end
+    end
+
+    context 'when pipeline operators are provided' do
+
+      let(:pipeline) do
+        [{ '$project' => { '_id' => 0 }}]
+      end
+
+      it 'includes the filters in the formatted string' do
+        expect(change_stream.inspect).to include([{ '$project' => { '_id' => 0 }}].to_s)
       end
     end
   end
