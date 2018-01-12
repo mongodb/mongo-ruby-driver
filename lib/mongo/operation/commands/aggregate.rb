@@ -45,14 +45,8 @@ module Mongo
 
         private
 
-        def filter_cursor_from_selector(sel, server)
-          return sel if server.features.write_command_enabled?
-          sel.reject{ |option, value| option.to_s == 'cursor' }
-        end
-
         def message(server)
-          sel = filter_cursor_from_selector(selector, server)
-          sel = update_selector_for_write_concern(sel, server)
+          sel = update_selector_for_write_concern(selector, server)
           if server.features.op_msg_enabled?
             command_op_msg(server, sel, options)
           else
