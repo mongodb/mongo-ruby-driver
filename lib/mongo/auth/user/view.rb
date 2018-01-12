@@ -132,7 +132,7 @@ module Mongo
 
         def user_query(name, options = {})
           client.send(:with_session, options) do |session|
-            Operation::Commands::UserQuery.new(
+            Operation::Commands::UsersInfo.new(
               user_name: name,
               db_name: database.name,
               session: session
