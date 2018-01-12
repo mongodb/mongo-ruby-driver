@@ -82,6 +82,18 @@ module Mongo
       def next_txn_num
         @txn_num += 1
       end
+
+      # Get a formatted string for use in inspection.
+      #
+      # @example Inspect the session object.
+      #   session.inspect
+      #
+      # @return [ String ] The session inspection.
+      #
+      # @since 2.5.0
+      def inspect
+        "#<Mongo::Session::ServerSession:0x#{object_id} session_id=#{session_id} last_use=#{@last_use}>"
+      end
     end
   end
 end
