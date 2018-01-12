@@ -130,6 +130,19 @@ module Mongo
           @cursor.nil?
         end
 
+        # Get a formatted string for use in inspection.
+        #
+        # @example Inspect the change stream object.
+        #   stream.inspect
+        #
+        # @return [ String ] The change stream inspection.
+        #
+        # @since 2.5.0
+        def inspect
+          "#<Mongo::Collection::View:ChangeStream:0x#{object_id} filters=#{@change_stream_filters} " +
+            "options=#{@options} resume_token=#{@resume_token}>"
+        end
+
         private
 
         def cache_resume_token(doc)

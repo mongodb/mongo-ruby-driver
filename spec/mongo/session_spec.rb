@@ -33,6 +33,28 @@ describe Mongo::Session, if: test_sessions? do
     end
   end
 
+  describe '#inspect' do
+
+    it 'includes the Ruby object_id in the formatted string' do
+      expect(session.inspect).to include(session.object_id.to_s)
+    end
+
+    it 'includes the session_id in the formatted string' do
+      expect(session.inspect).to include(session.session_id.to_s)
+    end
+
+    context 'when options are provided' do
+
+      let(:options) do
+        { causal_consistency: true }
+      end
+
+      it 'includes the options in the formatted string' do
+        expect(session.inspect).to include({ causal_consistency: true }.to_s)
+      end
+    end
+  end
+
   describe '#advance_cluster_time' do
 
     let(:new_cluster_time) do

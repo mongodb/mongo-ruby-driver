@@ -52,6 +52,18 @@ module Mongo
         @client = client
       end
 
+      # Get a formatted string for use in inspection.
+      #
+      # @example Inspect the session pool object.
+      #   session_pool.inspect
+      #
+      # @return [ String ] The session pool inspection.
+      #
+      # @since 2.5.0
+      def inspect
+        "#<Mongo::Session::SessionPool:0x#{object_id} current_size=#{@queue.size}>"
+      end
+
       # Checkout a session to be used in the context of a block and return the session back to
       #   the pool after the block completes.
       #

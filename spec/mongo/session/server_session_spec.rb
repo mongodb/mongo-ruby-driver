@@ -37,4 +37,23 @@ describe Mongo::Session::ServerSession do
       end
     end
   end
+
+  describe '#inspect' do
+
+    let(:session) do
+      described_class.new
+    end
+
+    it 'includes the Ruby object_id in the formatted string' do
+      expect(session.inspect).to include(session.object_id.to_s)
+    end
+
+    it 'includes the session_id in the formatted string' do
+      expect(session.inspect).to include(session.session_id.to_s)
+    end
+
+    it 'includes the last_use in the formatted string' do
+      expect(session.inspect).to include(session.last_use.to_s)
+    end
+  end
 end

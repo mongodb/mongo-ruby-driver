@@ -32,6 +32,26 @@ describe Mongo::Session::SessionPool, if: test_sessions? do
     end
   end
 
+  describe '#inspect' do
+
+    let(:pool) do
+      described_class.new(authorized_client)
+    end
+
+    before do
+      s = pool.checkout
+      pool.checkin(s)
+    end
+
+    it 'includes the Ruby object_id in the formatted string' do
+      expect(pool.inspect).to include(pool.object_id.to_s)
+    end
+
+    it 'includes the pool size in the formatted string' do
+      expect(pool.inspect).to include('current_size=1')
+    end
+  end
+
   describe 'checkout' do
 
     let(:pool) do
