@@ -33,6 +33,22 @@ module Mongo
           include TakesWriteConcern
           include UsesCommandOpMsg
 
+          # Execute the operation.
+          #
+          # @example Execute the operation.
+          #   operation.execute(server)
+          #
+          # @param [ Mongo::Server ] server The server to send this operation to.
+          #
+          # @return [ Result ] The operation response, if there is one.
+          #
+          # @since 2.0.0
+          def execute(server)
+            Result.new(server.with_connection do |connection|
+              connection.dispatch([ message(server) ], operation_id)
+            end).validate!
+          end
+
           private
 
           # The query selector for this ensure index command operation.

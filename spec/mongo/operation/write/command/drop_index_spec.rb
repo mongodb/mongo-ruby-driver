@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe Mongo::Operation::Write::DropIndex do
+describe Mongo::Operation::Write::Command::DropIndex do
 
   describe '#execute' do
 

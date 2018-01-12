@@ -157,7 +157,7 @@ module Mongo
                   session: session
                  }
           spec[:write_concern] = write_concern if server.features.collation_enabled?
-          Operation::Write::CreateIndex.new(spec).execute(server)
+          Operation::Write::Command::CreateIndex.new(spec).execute(server)
         end
       end
 
@@ -232,7 +232,7 @@ module Mongo
                  }
           server = next_primary
           spec[:write_concern] = write_concern if server.features.collation_enabled?
-          Operation::Write::DropIndex.new(spec).execute(server)
+          Operation::Write::Command::DropIndex.new(spec).execute(server)
         end
       end
 
