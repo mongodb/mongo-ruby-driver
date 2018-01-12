@@ -275,7 +275,7 @@ describe Mongo::Grid::FSBucket::Stream::Write do
         end
       end
 
-      context 'when the index creation encounters an error', if: write_command_enabled? do
+      context 'when the index creation encounters an error' do
 
         before do
           fs.chunks_collection.drop

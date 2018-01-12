@@ -31,6 +31,7 @@ else
 end
 
 require 'mongo'
+require 'pry-nav'
 
 Mongo::Logger.logger = Logger.new($stdout)
 Mongo::Logger.logger.level = Logger::INFO
@@ -68,13 +69,6 @@ RSpec.configure do |config|
       # databases that will be used in the test suite.
       ADMIN_AUTHORIZED_TEST_CLIENT.database.users.create(TEST_USER)
     rescue Exception => e
-      unless write_command_enabled?
-        # If we are on versions less than 2.6, we need to create a user for
-        # each database, since the users are not stored in the admin database
-        # but in the system.users collection on the databases themselves. Also,
-        # roles in versions lower than 2.6 can only be strings, not hashes.
-        begin ADMIN_AUTHORIZED_TEST_CLIENT.database.users.create(TEST_READ_WRITE_USER); rescue; end
-      end
     end
   end
 end
@@ -192,15 +186,6 @@ def find_command_enabled?
 end
 
 # For instances where behaviour is different on different versions, we need to
-# determine in the specs if we are 2.6 or higher.
-#
-# @since 2.0.0
-def write_command_enabled?
-  $mongo_client ||= initialize_scanned_client!
-  $write_command_enabled ||= $mongo_client.cluster.servers.first.features.write_command_enabled?
-end
-
-# For instances where behaviour is different on different versions, we need to
 # determine in the specs if we are 2.7 or higher.
 #
 # @since 2.0.0
@@ -239,15 +224,6 @@ def testing_compression?
 end
 
 alias :scram_sha_1_enabled? :list_command_enabled?
-
-# Depending on whether write commands are enabled, there are different documents that
-# are guaranteed to cause a delete failure.
-#
-# @since 2.0.0
-def failing_delete_doc
-  write_command_enabled? ? { q: { '$set' => { a: 1 } }, limit: 0 } :
-                           { que: { field: 'test' } }
-end
 
 # Try running a command on the admin database to see if the mongod was started with auth.
 #

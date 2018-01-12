@@ -119,12 +119,8 @@ describe Mongo::Operation::Write::Bulk::Insert do
           op.execute(authorized_primary)
         end
 
-        it 'inserts the documents into the database', if: write_command_enabled? do
+        it 'inserts the documents into the database' do
           expect(response.written_count).to eq(1)
-        end
-
-        it 'inserts the documents into the database', unless: write_command_enabled? do
-          expect(response.written_count).to eq(0)
         end
       end
     end
@@ -141,12 +137,8 @@ describe Mongo::Operation::Write::Bulk::Insert do
           op.execute(authorized_primary)
         end
 
-        it 'inserts the documents into the database', if: write_command_enabled? do
+        it 'inserts the documents into the database' do
           expect(response.written_count).to eq(2)
-        end
-
-        it 'inserts the documents into the database', unless: write_command_enabled? do
-          expect(response.written_count).to eq(0)
         end
       end
     end

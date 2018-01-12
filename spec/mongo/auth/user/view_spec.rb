@@ -200,14 +200,10 @@ describe Mongo::Auth::User::View do
 
       context 'when removal was not successful' do
 
-        it 'raises an exception', if: write_command_enabled? do
+        it 'raises an exception' do
           expect {
             view.remove('notauser')
           }.to raise_error(Mongo::Error::OperationFailure)
-        end
-
-        it 'does not raise an exception', unless: write_command_enabled? do
-          expect(view.remove('notauser').written_count).to eq(0)
         end
       end
     end

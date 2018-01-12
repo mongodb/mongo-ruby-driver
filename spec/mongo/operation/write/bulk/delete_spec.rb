@@ -125,7 +125,7 @@ describe Mongo::Operation::Write::Bulk::Delete do
     context 'when the deletes are ordered' do
 
       let(:documents) do
-        [ failing_delete_doc,
+        [ { q: { '$set' => { a: 1 } }, limit: 0 },
           { 'q' => { field: 'test' }, 'limit' => 1 }
         ]
       end
@@ -174,7 +174,7 @@ describe Mongo::Operation::Write::Bulk::Delete do
     context 'when the deletes are unordered' do
 
       let(:documents) do
-        [ failing_delete_doc,
+        [ { q: { '$set' => { a: 1 } }, limit: 0 },
           { 'q' => { field: 'test' }, 'limit' => 1 }
         ]
       end
