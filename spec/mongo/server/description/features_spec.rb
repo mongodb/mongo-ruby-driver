@@ -214,7 +214,8 @@ describe Mongo::Server::Description::Features do
 
       it 'returns false' do
         expect {
-          features }.to raise_exception(Mongo::Error::UnsupportedFeatures)
+          features
+        }.to raise_exception(Mongo::Error::UnsupportedFeatures)
       end
     end
   end
