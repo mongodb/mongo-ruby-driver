@@ -35,14 +35,10 @@ module Mongo
           #
           # @since 2.0.0
           def execute(server)
-            if server.features.write_command_enabled?
-              result = execute_write_command(server)
-              server.update_cluster_time(result)
-              session.process(result) if session
-              result
-            else
-              execute_message(server)
-            end
+            result = execute_write_command(server)
+            server.update_cluster_time(result)
+            session.process(result) if session
+            result
           end
 
           private
