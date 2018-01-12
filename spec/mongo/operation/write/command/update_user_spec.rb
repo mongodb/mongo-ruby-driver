@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe Mongo::Operation::Write::UpdateUser do
+describe Mongo::Operation::Write::Command::UpdateUser do
 
   describe '#execute' do
 

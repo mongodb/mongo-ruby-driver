@@ -44,7 +44,7 @@ module Mongo
         def create(user_or_name, options = {})
           user = generate(user_or_name, options)
           client.send(:with_session, options) do |session|
-            Operation::Write::CreateUser.new(
+            Operation::Write::Command::CreateUser.new(
               user: user,
               db_name: database.name,
               session: session
@@ -79,7 +79,7 @@ module Mongo
         # @since 2.0.0
         def remove(name, options = {})
           client.send(:with_session, options) do |session|
-            Operation::Write::RemoveUser.new(
+            Operation::Write::Command::RemoveUser.new(
               user_name: name,
               db_name: database.name,
               session: session
@@ -103,7 +103,7 @@ module Mongo
         def update(user_or_name, options = {})
           client.send(:with_session, options) do |session|
             user = generate(user_or_name, options)
-            Operation::Write::UpdateUser.new(
+            Operation::Write::Command::UpdateUser.new(
               user: user,
               db_name: database.name,
               session: session

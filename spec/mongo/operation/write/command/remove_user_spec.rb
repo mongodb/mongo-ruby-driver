@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe Mongo::Operation::Write::RemoveUser do
+describe Mongo::Operation::Write::Command::RemoveUser do
 
   describe '#execute' do
 

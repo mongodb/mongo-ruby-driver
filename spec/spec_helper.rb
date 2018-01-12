@@ -31,7 +31,6 @@ else
 end
 
 require 'mongo'
-require 'pry-nav'
 
 Mongo::Logger.logger = Logger.new($stdout)
 Mongo::Logger.logger.level = Logger::INFO
