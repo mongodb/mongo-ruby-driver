@@ -81,6 +81,18 @@ module Mongo
       @cluster_time = nil
     end
 
+    # Get a formatted string for use in inspection.
+    #
+    # @example Inspect the session object.
+    #   session.inspect
+    #
+    # @return [ String ] The session inspection.
+    #
+    # @since 2.5.0
+    def inspect
+      "#<Mongo::Session:0x#{object_id} session_id=#{session_id} options=#{@options}>"
+    end
+
     # End this session.
     #
     # @example
