@@ -302,7 +302,7 @@ describe Mongo::URI do
       let(:servers) { '%2Ftmp%2Fmongodb-27017.sock' }
 
       it 'returns an array with the parsed server' do
-        expect(uri.servers).to eq([servers])
+        expect(uri.servers).to eq([URI.unescape(servers)])
       end
     end
 
