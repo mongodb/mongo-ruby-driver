@@ -152,7 +152,7 @@ describe Mongo::Operation::Write::Delete do
       context 'when a delete fails' do
 
         let(:document) do
-          failing_delete_doc
+          { q: { '$set' => { a: 1 } }, limit: 0 }
         end
 
         let(:result) do

@@ -143,39 +143,27 @@ describe Mongo::BulkWrite do
 
           context 'when there is a write concern error' do
 
-            context 'when the server version is < 2.6' do
-
-              it 'raises a BulkWriteError', if: !write_command_enabled? && standalone? do
-                expect {
-                  bulk_write_invalid_write_concern.execute
-                }.to raise_error(Mongo::Error::BulkWriteError)
-              end
+            it 'raises an OperationFailure', if: standalone? do
+              expect {
+                bulk_write_invalid_write_concern.execute
+              }.to raise_error(Mongo::Error::OperationFailure)
             end
 
-            context 'when the server version has write commands enabled' do
+            context 'when a session is provided' do
 
-              it 'raises an OperationFailure', if: write_command_enabled? && standalone? do
-                expect {
-                  bulk_write_invalid_write_concern.execute
-                }.to raise_error(Mongo::Error::OperationFailure)
+              let(:extra_options) do
+                {session: session}
               end
 
-              context 'when a session is provided' do
-
-                let(:extra_options) do
-                  { session: session }
-                end
-
-                let(:client) do
-                  collection_invalid_write_concern.client
-                end
-
-                let(:failed_operation) do
-                  bulk_write_invalid_write_concern.execute
-                end
-
-                it_behaves_like 'a failed operation using a session'
+              let(:client) do
+                collection_invalid_write_concern.client
               end
+
+              let(:failed_operation) do
+                bulk_write_invalid_write_concern.execute
+              end
+
+              it_behaves_like 'a failed operation using a session'
             end
           end
         end
@@ -214,39 +202,27 @@ describe Mongo::BulkWrite do
 
           context 'when there is a write concern error' do
 
-            context 'when the server version is < 2.6' do
-
-              it 'raises a BulkWriteError', if: !write_command_enabled? && standalone? do
-                expect {
-                  bulk_write_invalid_write_concern.execute
-                }.to raise_error(Mongo::Error::BulkWriteError)
-              end
+            it 'raises an OperationFailure', if: standalone? do
+              expect {
+                bulk_write_invalid_write_concern.execute
+              }.to raise_error(Mongo::Error::OperationFailure)
             end
 
-            context 'when the server version has write commands enabled' do
+            context 'when a session is provided' do
 
-              it 'raises an OperationFailure', if: write_command_enabled? && standalone? do
-                expect {
-                  bulk_write_invalid_write_concern.execute
-                }.to raise_error(Mongo::Error::OperationFailure)
+              let(:extra_options) do
+                {session: session}
               end
 
-              context 'when a session is provided' do
-
-                let(:extra_options) do
-                  { session: session }
-                end
-
-                let(:client) do
-                  collection_invalid_write_concern.client
-                end
-
-                let(:failed_operation) do
-                  bulk_write_invalid_write_concern.execute
-                end
-
-                it_behaves_like 'a failed operation using a session'
+              let(:client) do
+                collection_invalid_write_concern.client
               end
+
+              let(:failed_operation) do
+                bulk_write_invalid_write_concern.execute
+              end
+
+              it_behaves_like 'a failed operation using a session'
             end
           end
         end
@@ -289,39 +265,27 @@ describe Mongo::BulkWrite do
 
           context 'when there is a write concern error' do
 
-            context 'when the server version is < 2.6' do
-
-              it 'raises a BulkWriteError', if: !write_command_enabled? && standalone? do
-                expect {
-                  bulk_write_invalid_write_concern.execute
-                }.to raise_error(Mongo::Error::BulkWriteError)
-              end
+            it 'raises an OperationFailure', if: standalone? do
+              expect {
+                bulk_write_invalid_write_concern.execute
+              }.to raise_error(Mongo::Error::OperationFailure)
             end
 
-            context 'when the server version has write commands enabled' do
+            context 'when a session is provided' do
 
-              it 'raises an OperationFailure', if: write_command_enabled? && standalone? do
-                expect {
-                  bulk_write_invalid_write_concern.execute
-                }.to raise_error(Mongo::Error::OperationFailure)
+              let(:extra_options) do
+                {session: session}
               end
 
-              context 'when a session is provided' do
-
-                let(:extra_options) do
-                  { session: session }
-                end
-
-                let(:client) do
-                  collection_invalid_write_concern.client
-                end
-
-                let(:failed_operation) do
-                  bulk_write_invalid_write_concern.execute
-                end
-
-                it_behaves_like 'a failed operation using a session'
+              let(:client) do
+                collection_invalid_write_concern.client
               end
+
+              let(:failed_operation) do
+                bulk_write_invalid_write_concern.execute
+              end
+
+              it_behaves_like 'a failed operation using a session'
             end
 
             context 'when the write has a collation specified' do
@@ -566,39 +530,28 @@ describe Mongo::BulkWrite do
 
           context 'when there is a write concern error' do
 
-            context 'when the server version is < 2.6' do
 
-              it 'raises a BulkWriteError', if: !write_command_enabled? && standalone? do
-                expect {
-                  bulk_write_invalid_write_concern.execute
-                }.to raise_error(Mongo::Error::BulkWriteError)
-              end
+            it 'raises an OperationFailure', if: standalone? do
+              expect {
+                bulk_write_invalid_write_concern.execute
+              }.to raise_error(Mongo::Error::OperationFailure)
             end
 
-            context 'when the server version has write commands enabled' do
+            context 'when a session is provided' do
 
-              it 'raises an OperationFailure', if: write_command_enabled? && standalone? do
-                expect {
-                  bulk_write_invalid_write_concern.execute
-                }.to raise_error(Mongo::Error::OperationFailure)
+              let(:extra_options) do
+                {session: session}
               end
 
-              context 'when a session is provided' do
-
-                let(:extra_options) do
-                  { session: session }
-                end
-
-                let(:client) do
-                  collection_invalid_write_concern.client
-                end
-
-                let(:failed_operation) do
-                  bulk_write_invalid_write_concern.execute
-                end
-
-                it_behaves_like 'a failed operation using a session'
+              let(:client) do
+                collection_invalid_write_concern.client
               end
+
+              let(:failed_operation) do
+                bulk_write_invalid_write_concern.execute
+              end
+
+              it_behaves_like 'a failed operation using a session'
             end
           end
 
@@ -717,39 +670,27 @@ describe Mongo::BulkWrite do
 
           context 'when there is a write concern error' do
 
-            context 'when the server version is < 2.6' do
-
-              it 'raises a BulkWriteError', if: !write_command_enabled? && standalone? do
-                expect {
-                  bulk_write_invalid_write_concern.execute
-                }.to raise_error(Mongo::Error::BulkWriteError)
-              end
+            it 'raises an OperationFailure', if: standalone? do
+              expect {
+                bulk_write_invalid_write_concern.execute
+              }.to raise_error(Mongo::Error::OperationFailure)
             end
 
-            context 'when the server version has write commands enabled' do
+            context 'when a session is provided' do
 
-              it 'raises an OperationFailure', if: write_command_enabled? && standalone? do
-                expect {
-                  bulk_write_invalid_write_concern.execute
-                }.to raise_error(Mongo::Error::OperationFailure)
+              let(:extra_options) do
+                {session: session}
               end
 
-              context 'when a session is provided' do
-
-                let(:extra_options) do
-                  { session: session }
-                end
-
-                let(:client) do
-                  collection_invalid_write_concern.client
-                end
-
-                let(:failed_operation) do
-                  bulk_write_invalid_write_concern.execute
-                end
-
-                it_behaves_like 'a failed operation using a session'
+              let(:client) do
+                collection_invalid_write_concern.client
               end
+
+              let(:failed_operation) do
+                bulk_write_invalid_write_concern.execute
+              end
+
+              it_behaves_like 'a failed operation using a session'
             end
           end
 
@@ -871,39 +812,27 @@ describe Mongo::BulkWrite do
 
           context 'when there is a write concern error' do
 
-            context 'when the server version is < 2.6' do
-
-              it 'raises a BulkWriteError', if: !write_command_enabled? && standalone? do
-                expect {
-                  bulk_write_invalid_write_concern.execute
-                }.to raise_error(Mongo::Error::BulkWriteError)
-              end
+            it 'raises an OperationFailure', if: standalone? do
+              expect {
+                bulk_write_invalid_write_concern.execute
+              }.to raise_error(Mongo::Error::OperationFailure)
             end
 
-            context 'when the server version has write commands enabled' do
+            context 'when a session is provided' do
 
-              it 'raises an OperationFailure', if: write_command_enabled? && standalone? do
-                expect {
-                  bulk_write_invalid_write_concern.execute
-                }.to raise_error(Mongo::Error::OperationFailure)
+              let(:operation) do
+                result
               end
 
-              context 'when a session is provided' do
-
-                let(:operation) do
-                  result
-                end
-
-                let(:client) do
-                  authorized_client
-                end
-
-                let(:extra_options) do
-                  { session: session }
-                end
-
-                it_behaves_like 'an operation using a session'
+              let(:client) do
+                authorized_client
               end
+
+              let(:extra_options) do
+                {session: session}
+              end
+
+              it_behaves_like 'an operation using a session'
             end
           end
 
@@ -1000,13 +929,8 @@ describe Mongo::BulkWrite do
             authorized_collection.insert_one({ _id: 0 })
           end
 
-          it 'replaces the document', if: write_command_enabled? do
+          it 'replaces the document' do
             expect(result.modified_count).to eq(1)
-            expect(authorized_collection.find(_id: 0).first[:name]).to eq('test')
-          end
-
-          it 'replaces the document', unless: write_command_enabled? do
-            expect(result.modified_count).to be_nil
             expect(authorized_collection.find(_id: 0).first[:name]).to eq('test')
           end
 
@@ -1029,39 +953,27 @@ describe Mongo::BulkWrite do
 
           context 'when there is a write concern error' do
 
-            context 'when the server version is < 2.6' do
-
-              it 'raises a BulkWriteError', if: !write_command_enabled? && standalone? do
-                expect {
-                  bulk_write_invalid_write_concern.execute
-                }.to raise_error(Mongo::Error::BulkWriteError)
-              end
+            it 'raises an OperationFailure', if: standalone? do
+              expect {
+                bulk_write_invalid_write_concern.execute
+              }.to raise_error(Mongo::Error::OperationFailure)
             end
 
-            context 'when the server version has write commands enabled' do
+            context 'when a session is provided' do
 
-              it 'raises an OperationFailure', if: write_command_enabled? && standalone? do
-                expect {
-                  bulk_write_invalid_write_concern.execute
-                }.to raise_error(Mongo::Error::OperationFailure)
+              let(:extra_options) do
+                {session: session}
               end
 
-              context 'when a session is provided' do
-
-                let(:extra_options) do
-                  { session: session }
-                end
-
-                let(:client) do
-                  collection_invalid_write_concern.client
-                end
-
-                let(:failed_operation) do
-                  bulk_write_invalid_write_concern.execute
-                end
-
-                it_behaves_like 'a failed operation using a session'
+              let(:client) do
+                collection_invalid_write_concern.client
               end
+
+              let(:failed_operation) do
+                bulk_write_invalid_write_concern.execute
+              end
+
+              it_behaves_like 'a failed operation using a session'
             end
           end
 
@@ -1095,12 +1007,8 @@ describe Mongo::BulkWrite do
                 expect(result.upserted_count).to eq(0)
               end
 
-              it 'reports the modified count', if: collation_enabled? && write_command_enabled? do
+              it 'reports the modified count', if: collation_enabled? do
                 expect(result.modified_count).to eq(1)
-              end
-
-              it 'returns nil for the modified count', if: collation_enabled? && !write_command_enabled? do
-                expect(result.modified_count).to be_nil
               end
 
               it 'reports the matched count', if: collation_enabled? do
@@ -1159,12 +1067,8 @@ describe Mongo::BulkWrite do
               expect(result.upserted_count).to eq(0)
             end
 
-            it 'reports the modified count', if: write_command_enabled? do
+            it 'reports the modified count' do
               expect(result.modified_count).to eq(0)
-            end
-
-            it 'returns nil as the modified count', unless: write_command_enabled?  do
-              expect(result.modified_count).to be_nil
             end
 
             it 'reports the matched count' do
@@ -1202,12 +1106,8 @@ describe Mongo::BulkWrite do
               expect(result.upserted_count).to eq(0)
             end
 
-            it 'reports the modified count', if: write_command_enabled? do
+            it 'reports the modified count' do
               expect(result.modified_count).to eq(1)
-            end
-
-            it 'returns nil for the modified count', unless: write_command_enabled? do
-              expect(result.modified_count).to be_nil
             end
 
             it 'reports the matched count' do
@@ -1249,12 +1149,8 @@ describe Mongo::BulkWrite do
                 expect(result.upserted_count).to eq(0)
               end
 
-              it 'reports the modified count', if: write_command_enabled? do
+              it 'reports the modified count' do
                 expect(result.modified_count).to eq(0)
-              end
-
-              it 'returns nil for the modified count', unless: write_command_enabled? do
-                expect(result.modified_count).to be_nil
               end
 
               it 'reports the matched count' do
@@ -1262,7 +1158,7 @@ describe Mongo::BulkWrite do
               end
             end
 
-            context 'when the number of updates exceeds the max batch size', if: write_command_enabled? do
+            context 'when the number of updates exceeds the max batch size' do
 
               let(:batch_size) do
                 11
@@ -1286,39 +1182,27 @@ describe Mongo::BulkWrite do
 
             context 'when there is a write concern error' do
 
-              context 'when the server version is < 2.6' do
-
-                it 'raises a BulkWriteError', if: !write_command_enabled? && standalone? do
-                  expect {
-                    bulk_write_invalid_write_concern.execute
-                  }.to raise_error(Mongo::Error::BulkWriteError)
-                end
+              it 'raises an OperationFailure', if: standalone? do
+                expect {
+                  bulk_write_invalid_write_concern.execute
+                }.to raise_error(Mongo::Error::OperationFailure)
               end
 
-              context 'when the server version has write commands enabled' do
+              context 'when a session is provided' do
 
-                it 'raises an OperationFailure', if: write_command_enabled? && standalone? do
-                  expect {
-                    bulk_write_invalid_write_concern.execute
-                  }.to raise_error(Mongo::Error::OperationFailure)
+                let(:extra_options) do
+                  {session: session}
                 end
 
-                context 'when a session is provided' do
-
-                  let(:extra_options) do
-                    { session: session }
-                  end
-
-                  let(:client) do
-                    collection_invalid_write_concern.client
-                  end
-
-                  let(:failed_operation) do
-                    bulk_write_invalid_write_concern.execute
-                  end
-
-                  it_behaves_like 'a failed operation using a session'
+                let(:client) do
+                  collection_invalid_write_concern.client
                 end
+
+                let(:failed_operation) do
+                  bulk_write_invalid_write_concern.execute
+                end
+
+                it_behaves_like 'a failed operation using a session'
               end
             end
           end
@@ -1342,40 +1226,24 @@ describe Mongo::BulkWrite do
               expect(result.upserted_count).to eq(1)
             end
 
-            it 'reports the modified_count count', if: write_command_enabled? do
+            it 'reports the modified_count count' do
               expect(result.modified_count).to eq(0)
-            end
-
-            it 'returns nil for the modified_count count', unless: write_command_enabled? do
-              expect(result.modified_count).to be_nil
             end
 
             it 'reports the matched count' do
               expect(result.matched_count).to eq(0)
             end
 
-            it 'reports the upserted id', if: write_command_enabled? do
+            it 'reports the upserted id' do
               expect(result.upserted_ids).to eq([0])
             end
 
             context 'when there is a write concern error' do
 
-              context 'when the server version is < 2.6' do
-
-                it 'raises a BulkWriteError', if: !write_command_enabled? && standalone? do
-                  expect {
-                    bulk_write_invalid_write_concern.execute
-                  }.to raise_error(Mongo::Error::BulkWriteError)
-                end
-              end
-
-              context 'when the server version has write commands enabled' do
-
-                it 'raises an OperationFailure', if: write_command_enabled? && standalone? do
-                  expect {
-                    bulk_write_invalid_write_concern.execute
-                  }.to raise_error(Mongo::Error::OperationFailure)
-                end
+              it 'raises an OperationFailure', if: standalone? do
+                expect {
+                  bulk_write_invalid_write_concern.execute
+                }.to raise_error(Mongo::Error::OperationFailure)
               end
             end
           end
@@ -1410,12 +1278,8 @@ describe Mongo::BulkWrite do
                 expect(result.upserted_count).to eq(0)
               end
 
-              it 'reports the modified count', if: collation_enabled? && write_command_enabled? do
+              it 'reports the modified count', if: collation_enabled? do
                 expect(result.modified_count).to eq(1)
-              end
-
-              it 'returns nil for the modified count', if: collation_enabled? && !write_command_enabled? do
-                expect(result.modified_count).to be_nil
               end
 
               it 'reports the matched count', if: collation_enabled? do
@@ -1474,12 +1338,8 @@ describe Mongo::BulkWrite do
               expect(result.upserted_count).to eq(0)
             end
 
-            it 'reports the modified count', if: write_command_enabled? do
+            it 'reports the modified count' do
               expect(result.modified_count).to eq(0)
-            end
-
-            it 'returns nil for the modified count', unless: write_command_enabled? do
-              expect(result.modified_count).to be_nil
             end
 
             it 'reports the matched count' do
@@ -1524,12 +1384,8 @@ describe Mongo::BulkWrite do
                 expect(result.upserted_count).to eq(0)
               end
 
-              it 'reports the modified count', if: collation_enabled? && write_command_enabled? do
+              it 'reports the modified count', if: collation_enabled? do
                 expect(result.modified_count).to eq(2)
-              end
-
-              it 'returns nil for the modified count', if: collation_enabled? && !write_command_enabled? do
-                expect(result.modified_count).to be_nil
               end
 
               it 'reports the matched count', if: collation_enabled? do
@@ -1593,12 +1449,8 @@ describe Mongo::BulkWrite do
               expect(result.upserted_count).to eq(0)
             end
 
-            it 'reports the modified count', if: write_command_enabled? do
+            it 'reports the modified count' do
               expect(result.modified_count).to eq(0)
-            end
-
-            it 'returns nil for the modified count', unless: write_command_enabled? do
-              expect(result.modified_count).to be_nil
             end
 
             it 'reports the matched count' do
@@ -1634,18 +1486,13 @@ describe Mongo::BulkWrite do
               expect(result.upserted_count).to eq(0)
             end
 
-            it 'reports the modified count', if: write_command_enabled? do
+            it 'reports the modified count' do
               expect(result.modified_count).to eq(2)
-            end
-
-            it 'returns nil for the modified count', unless: write_command_enabled? do
-              expect(result.modified_count).to be_nil
             end
 
             it 'reports the matched count' do
               expect(result.matched_count).to eq(2)
             end
-
 
             context 'when there is a mix of updates and matched without an update' do
 
@@ -1675,12 +1522,8 @@ describe Mongo::BulkWrite do
                 expect(result.upserted_count).to eq(0)
               end
 
-              it 'reports the modified count', if: write_command_enabled? do
+              it 'reports the modified count' do
                 expect(result.modified_count).to eq(1)
-              end
-
-              it 'returns nil for the modified count', unless: write_command_enabled? do
-                expect(result.modified_count).to be_nil
               end
 
               it 'reports the matched count' do
@@ -1690,22 +1533,10 @@ describe Mongo::BulkWrite do
 
             context 'when there is a write concern error' do
 
-              context 'when the server version is < 2.6' do
-
-                it 'raises a BulkWriteError', if: !write_command_enabled? && standalone? do
-                  expect {
-                    bulk_write_invalid_write_concern.execute
-                  }.to raise_error(Mongo::Error::BulkWriteError)
-                end
-              end
-
-              context 'when the server version has write commands enabled' do
-
-                it 'raises an OperationFailure', if: write_command_enabled? && standalone? do
-                  expect {
-                    bulk_write_invalid_write_concern.execute
-                  }.to raise_error(Mongo::Error::OperationFailure)
-                end
+              it 'raises an OperationFailure', if: standalone? do
+                expect {
+                  bulk_write_invalid_write_concern.execute
+                }.to raise_error(Mongo::Error::OperationFailure)
               end
             end
           end
@@ -1721,13 +1552,8 @@ describe Mongo::BulkWrite do
               bulk_write.execute
             end
 
-            it 'updates the document', if: write_command_enabled? do
+            it 'updates the document' do
               expect(result.modified_count).to eq(0)
-              expect(authorized_collection.find(name: { '$in' => ['test', 'test1'] }).count).to eq(2)
-            end
-
-            it 'updates the document', unless: write_command_enabled? do
-              expect(result.modified_count).to be_nil
               expect(authorized_collection.find(name: { '$in' => ['test', 'test1'] }).count).to eq(2)
             end
 
@@ -1735,19 +1561,15 @@ describe Mongo::BulkWrite do
               expect(result.upserted_count).to eq(2)
             end
 
-            it 'reports the modified count', if: write_command_enabled? do
+            it 'reports the modified count' do
               expect(result.modified_count).to eq(0)
-            end
-
-            it 'returns nil for the modified count', unless: write_command_enabled? do
-              expect(result.modified_count).to be_nil
             end
 
             it 'reports the matched count' do
               expect(result.matched_count).to eq(0)
             end
 
-            it 'reports the upserted id', if: write_command_enabled? do
+            it 'reports the upserted id' do
               expect(result.upserted_ids).to eq([0, 1])
             end
 
@@ -1773,7 +1595,7 @@ describe Mongo::BulkWrite do
                 expect(authorized_collection.find(a: 4).count).to eq(1)
               end
 
-              it 'reports the upserted id', if: write_command_enabled? do
+              it 'reports the upserted id' do
                 expect(result.upserted_ids).to eq([3])
               end
 
@@ -1781,12 +1603,8 @@ describe Mongo::BulkWrite do
                 expect(result.upserted_count).to eq(1)
               end
 
-              it 'reports the modified count', if: write_command_enabled? do
+              it 'reports the modified count' do
                 expect(result.modified_count).to eq(1)
-              end
-
-              it 'returns nil for the modified count', unless: write_command_enabled? do
-                expect(result.modified_count).to be_nil
               end
 
               it 'reports the matched count' do
@@ -1796,22 +1614,10 @@ describe Mongo::BulkWrite do
 
             context 'when there is a write concern error' do
 
-              context 'when the server version is < 2.6' do
-
-                it 'raises a BulkWriteError', if: !write_command_enabled? && standalone? do
-                  expect {
-                    bulk_write_invalid_write_concern.execute
-                  }.to raise_error(Mongo::Error::BulkWriteError)
-                end
-              end
-
-              context 'when the server version has write commands enabled' do
-
-                it 'raises an OperationFailure', if: write_command_enabled? && standalone? do
-                  expect {
-                    bulk_write_invalid_write_concern.execute
-                  }.to raise_error(Mongo::Error::OperationFailure)
-                end
+              it 'raises an OperationFailure', if: standalone? do
+                expect {
+                  bulk_write_invalid_write_concern.execute
+                }.to raise_error(Mongo::Error::OperationFailure)
               end
             end
           end
@@ -1850,12 +1656,8 @@ describe Mongo::BulkWrite do
                 expect(result.upserted_count).to eq(0)
               end
 
-              it 'reports the modified count', if: collation_enabled? && write_command_enabled? do
+              it 'reports the modified count', if: collation_enabled? do
                 expect(result.modified_count).to eq(2)
-              end
-
-              it 'returns nil for the modified count', if: collation_enabled? && !write_command_enabled? do
-                expect(result.modified_count).to be_nil
               end
 
               it 'reports the matched count', if: collation_enabled? do
@@ -1915,12 +1717,8 @@ describe Mongo::BulkWrite do
               expect(result.upserted_count).to eq(0)
             end
 
-            it 'reports the modified count', if: write_command_enabled? do
+            it 'reports the modified count' do
               expect(result.modified_count).to eq(0)
-            end
-
-            it 'returns nil for the modified count', unless: write_command_enabled? do
-              expect(result.modified_count).to be_nil
             end
 
             it 'reports the matched count' do
@@ -1954,12 +1752,8 @@ describe Mongo::BulkWrite do
               expect(result.upserted_count).to eq(0)
             end
 
-            it 'reports the modified count', if: write_command_enabled? do
+            it 'reports the modified count' do
               expect(result.modified_count).to eq(2)
-            end
-
-            it 'returns nil for the modified count', unless: write_command_enabled? do
-              expect(result.modified_count).to be_nil
             end
 
             it 'reports the matched count' do
@@ -1968,22 +1762,10 @@ describe Mongo::BulkWrite do
 
             context 'when there is a write concern error' do
 
-              context 'when the server version is < 2.6' do
-
-                it 'raises a BulkWriteError', if: !write_command_enabled? && standalone? do
-                  expect {
-                    bulk_write_invalid_write_concern.execute
-                  }.to raise_error(Mongo::Error::BulkWriteError)
-                end
-              end
-
-              context 'when the server version has write commands enabled' do
-
-                it 'raises an OperationFailure', if: write_command_enabled? && standalone? do
-                  expect {
-                    bulk_write_invalid_write_concern.execute
-                  }.to raise_error(Mongo::Error::OperationFailure)
-                end
+              it 'raises an OperationFailure', if: standalone? do
+                expect {
+                  bulk_write_invalid_write_concern.execute
+                }.to raise_error(Mongo::Error::OperationFailure)
               end
             end
           end
@@ -2011,36 +1793,20 @@ describe Mongo::BulkWrite do
               expect(result.matched_count).to eq(0)
             end
 
-            it 'reports the modified count', if: write_command_enabled? do
+            it 'reports the modified count' do
               expect(result.modified_count).to eq(0)
             end
 
-            it 'returns nil for the modified count', unless: write_command_enabled? do
-              expect(result.modified_count).to be_nil
-            end
-
-            it 'reports the upserted id', if: write_command_enabled? do
+            it 'reports the upserted id' do
               expect(result.upserted_ids).to eq([0])
             end
 
             context 'when there is a write concern error' do
 
-              context 'when the server version is < 2.6' do
-
-                it 'raises a BulkWriteError', if: !write_command_enabled? && standalone? do
-                  expect {
-                    bulk_write_invalid_write_concern.execute
-                  }.to raise_error(Mongo::Error::BulkWriteError)
-                end
-              end
-
-              context 'when the server version has write commands enabled' do
-
-                it 'raises an OperationFailure', if: write_command_enabled? && standalone? do
-                  expect {
-                    bulk_write_invalid_write_concern.execute
-                  }.to raise_error(Mongo::Error::OperationFailure)
-                end
+              it 'raises an OperationFailure', if: standalone? do
+                expect {
+                  bulk_write_invalid_write_concern.execute
+                }.to raise_error(Mongo::Error::OperationFailure)
               end
             end
           end
@@ -2378,7 +2144,7 @@ describe Mongo::BulkWrite do
               ops, :bypass_document_validation => true)
         end
 
-        it 'executes successfully', if: write_command_enabled? do
+        it 'executes successfully' do
           expect(result2.modified_count).to eq(2)
           expect(result2.inserted_count).to eq(1)
         end

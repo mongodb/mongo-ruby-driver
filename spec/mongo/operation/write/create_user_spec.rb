@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe Mongo::Operation::Write::CreateUser do
+describe Mongo::Operation::Write::Command::CreateUser do
 
   describe '#execute' do
 

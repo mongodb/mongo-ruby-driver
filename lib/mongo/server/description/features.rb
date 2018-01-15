@@ -53,7 +53,7 @@ module Mongo
         # The wire protocol versions that this version of the driver supports.
         #
         # @since 2.0.0
-        DRIVER_WIRE_VERSIONS = (0..6).freeze
+        DRIVER_WIRE_VERSIONS = (2..6).freeze
 
         # Create the methods for each mapping to tell if they are supported.
         #
@@ -88,10 +88,12 @@ module Mongo
         # @since 2.0.0
         def initialize(server_wire_versions, address = nil)
           @server_wire_versions = server_wire_versions
-          check_driver_support!(address)
+          check_driver_support!(address) unless server_wire_versions == ZERO_RANGE
         end
 
         private
+
+        ZERO_RANGE = (0..0).freeze
 
         def check_driver_support!(address)
           if DRIVER_WIRE_VERSIONS.min > server_wire_versions.max

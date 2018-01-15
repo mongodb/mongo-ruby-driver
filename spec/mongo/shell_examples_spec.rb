@@ -845,7 +845,7 @@ describe 'shell examples in Ruby' do
       # End Example 51
     end
 
-    context 'example 52', if: write_command_enabled? do
+    context 'example 52' do
 
       let!(:example) do
         # Start Example 52
@@ -862,7 +862,7 @@ describe 'shell examples in Ruby' do
       end
     end
 
-    context 'example 53', if: write_command_enabled? do
+    context 'example 53' do
 
       let!(:example) do
         # Start Example 53

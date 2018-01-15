@@ -208,7 +208,7 @@ describe Mongo::Database do
         described_class.new(authorized_client, 'invalid_database')
       end
 
-      it 'returns an empty list', if: write_command_enabled? do
+      it 'returns an empty list' do
         expect(database.collections).to be_empty
       end
     end
@@ -418,7 +418,7 @@ describe Mongo::Database do
         described_class.new(authorized_client.with(client_options), TEST_DB)
       end
 
-      context 'when a write concern is not in the command selector', if: write_command_enabled? do
+      context 'when a write concern is not in the command selector' do
 
         let(:cmd) do
           {
@@ -432,7 +432,7 @@ describe Mongo::Database do
         end
       end
 
-      context 'when a write concern is provided in the command selector', if: write_command_enabled? && standalone? do
+      context 'when a write concern is provided in the command selector', if: standalone? do
 
         let(:cmd) do
           {
@@ -457,14 +457,8 @@ describe Mongo::Database do
       described_class.new(authorized_client, TEST_DB)
     end
 
-    it 'drops the database', if: write_command_enabled? do
+    it 'drops the database' do
       expect(database.drop).to be_successful
-    end
-
-    it 'raises an exception', if: (!write_command_enabled? && auth_enabled?) do
-      expect {
-        database.drop
-      }.to raise_error(Mongo::Error::OperationFailure)
     end
 
     context 'when provided a session' do

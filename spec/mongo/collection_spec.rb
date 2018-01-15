@@ -1326,12 +1326,8 @@ describe Mongo::Collection do
       authorized_collection.insert_one({ name: 'testing' })
     end
 
-    it 'inserts the document into the collection', if: write_command_enabled? do
+    it 'inserts the document into the collection'do
       expect(result.written_count).to eq(1)
-    end
-
-    it 'inserts the document into the collection', unless: write_command_enabled? do
-      expect(result.written_count).to eq(0)
     end
 
     it 'contains the id in the result' do
@@ -2302,22 +2298,16 @@ describe Mongo::Collection do
       authorized_collection.parallel_scan(2)
     end
 
-    it 'returns an array of cursors', if: write_command_enabled? do
+    it 'returns an array of cursors' do
       cursors.each do |cursor|
         expect(cursor.class).to be(Mongo::Cursor)
       end
     end
 
-    it 'returns the correct number of documents', if: write_command_enabled? do
+    it 'returns the correct number of documents' do
       expect(
         cursors.reduce(0) { |total, cursor| total + cursor.to_a.size }
       ).to eq(200)
-    end
-
-    it 'raises an error', unless: write_command_enabled? do
-      expect {
-        cursors
-      }.to raise_error(Mongo::Error::OperationFailure)
     end
 
     context 'when a session is provided' do
@@ -2421,7 +2411,7 @@ describe Mongo::Collection do
       end
     end
 
-    context 'when a max time ms value is provided', if: (!sharded? && write_command_enabled?) do
+    context 'when a max time ms value is provided', if: !sharded? do
 
       let(:result) do
         authorized_collection.parallel_scan(2, options)
@@ -2473,12 +2463,8 @@ describe Mongo::Collection do
         authorized_collection.find(field: 'testing').first
       end
 
-      it 'updates the first matching document in the collection', if: write_command_enabled? do
+      it 'updates the first matching document in the collection' do
         expect(response.modified_count).to eq(1)
-      end
-
-      it 'does not return modified count', unless: write_command_enabled? do
-        expect(response.modified_count).to eq(nil)
       end
 
       it 'updates the documents in the collection' do
@@ -2496,12 +2482,8 @@ describe Mongo::Collection do
         authorized_collection.find(field: 'test1').to_a
       end
 
-      it 'reports that no documents were written', if: write_command_enabled?  do
+      it 'reports that no documents were written'  do
         expect(response.modified_count).to eq(0)
-      end
-
-      it 'does not return modified count', unless: write_command_enabled? do
-        expect(response.modified_count).to eq(nil)
       end
 
       it 'does not insert the document' do
@@ -2538,12 +2520,8 @@ describe Mongo::Collection do
         authorized_collection.find(field: 'test1').to_a
       end
 
-      it 'reports that no documents were written', if: write_command_enabled? do
+      it 'reports that no documents were written' do
         expect(response.modified_count).to eq(0)
-      end
-
-      it 'does not return modified count', unless: write_command_enabled? do
-        expect(response.modified_count).to eq(nil)
       end
 
       it 'does not insert the document' do
@@ -2782,12 +2760,8 @@ describe Mongo::Collection do
         authorized_collection.find(field: 'testing').to_a.last
       end
 
-      it 'returns the number updated', if: write_command_enabled? do
+      it 'returns the number updated' do
         expect(response.modified_count).to eq(2)
-      end
-
-      it 'does not return modified count', unless: write_command_enabled? do
-        expect(response.modified_count).to eq(nil)
       end
 
       it 'updates the documents in the collection' do
@@ -2806,12 +2780,8 @@ describe Mongo::Collection do
         authorized_collection.find.to_a
       end
 
-      it 'reports that no documents were updated', if: write_command_enabled? do
+      it 'reports that no documents were updated' do
         expect(response.modified_count).to eq(0)
-      end
-
-      it 'does not return modified count', unless: write_command_enabled? do
-        expect(response.modified_count).to eq(nil)
       end
 
       it 'updates no documents in the collection' do
@@ -2849,12 +2819,8 @@ describe Mongo::Collection do
         authorized_collection.find.to_a
       end
 
-      it 'reports that no documents were updated', if: write_command_enabled? do
+      it 'reports that no documents were updated' do
         expect(response.modified_count).to eq(0)
-      end
-
-      it 'does not return modified count', unless: write_command_enabled? do
-        expect(response.modified_count).to eq(nil)
       end
 
       it 'updates no documents in the collection' do
@@ -3198,12 +3164,8 @@ describe Mongo::Collection do
         authorized_collection.find(field: 'testing').first
       end
 
-      it 'updates the first matching document in the collection', if: write_command_enabled? do
+      it 'updates the first matching document in the collection' do
         expect(response.modified_count).to eq(1)
-      end
-
-      it 'does not return modified count', unless: write_command_enabled? do
-        expect(response.modified_count).to eq(nil)
       end
 
       it 'updates the documents in the collection' do
@@ -3222,12 +3184,8 @@ describe Mongo::Collection do
         authorized_collection.find.to_a
       end
 
-      it 'reports that no documents were updated', if: write_command_enabled? do
+      it 'reports that no documents were updated' do
         expect(response.modified_count).to eq(0)
-      end
-
-      it 'does not return modified count', unless: write_command_enabled? do
-        expect(response.modified_count).to eq(nil)
       end
 
       it 'updates no documents in the collection' do
@@ -3265,12 +3223,8 @@ describe Mongo::Collection do
         authorized_collection.find.to_a
       end
 
-      it 'reports that no documents were updated', if: write_command_enabled? do
+      it 'reports that no documents were updated' do
         expect(response.modified_count).to eq(0)
-      end
-
-      it 'does not return modified count', unless: write_command_enabled? do
-        expect(response.modified_count).to eq(nil)
       end
 
       it 'updates no documents in the collection' do
@@ -3683,7 +3637,7 @@ describe Mongo::Collection do
         end
       end
 
-      context 'when max_time_ms is provided', if: write_command_enabled? do
+      context 'when max_time_ms is provided' do
 
         it 'includes the max_time_ms value in the command' do
           expect {
@@ -3708,7 +3662,7 @@ describe Mongo::Collection do
       end
     end
 
-    context 'when the operation fails', if: write_command_enabled? do
+    context 'when the operation fails' do
 
       let(:result) do
         authorized_collection.find_one_and_delete(selector, max_time_ms: 0.1)
@@ -3921,7 +3875,7 @@ describe Mongo::Collection do
 
     context 'when max_time_ms is provided' do
 
-      it 'includes the max_time_ms value in the command', if: write_command_enabled? do
+      it 'includes the max_time_ms value in the command' do
         expect {
           authorized_collection.find_one_and_update(selector, { '$set' => { field: 'testing' }}, max_time_ms: 0.1)
         }.to raise_error(Mongo::Error::OperationFailure)
@@ -3976,7 +3930,7 @@ describe Mongo::Collection do
       end
     end
 
-    context 'when the operation fails', if: write_command_enabled? do
+    context 'when the operation fails' do
 
       let(:result) do
         authorized_collection.find_one_and_update(selector, { '$set' => { field: 'testing' }}, max_time_ms: 0.1)
@@ -4352,7 +4306,7 @@ describe Mongo::Collection do
       end
     end
 
-    context 'when max_time_ms is provided', if: write_command_enabled? do
+    context 'when max_time_ms is provided' do
 
       it 'includes the max_time_ms value in the command' do
         expect {
@@ -4361,7 +4315,7 @@ describe Mongo::Collection do
       end
     end
 
-    context 'when the operation fails', if: write_command_enabled? do
+    context 'when the operation fails' do
 
       let(:result) do
         authorized_collection.find_one_and_replace(selector, { field: 'testing' }, max_time_ms: 0.1)

@@ -115,12 +115,8 @@ describe Mongo::Operation::Write::Insert do
           insert.execute(authorized_primary)
         end
 
-        it 'reports the correct written count', if: write_command_enabled? do
+        it 'reports the correct written count' do
           expect(response.written_count).to eq(1)
-        end
-
-        it 'reports the correct written count', unless: write_command_enabled? do
-          expect(response.written_count).to eq(0)
         end
 
         it 'inserts the document into the collection' do
@@ -170,12 +166,8 @@ describe Mongo::Operation::Write::Insert do
           insert.execute(authorized_primary)
         end
 
-        it 'reports the correct written count', if: write_command_enabled? do
+        it 'reports the correct written count' do
           expect(response.written_count).to eq(2)
-        end
-
-        it 'reports the correct written count', unless: write_command_enabled? do
-          expect(response.written_count).to eq(0)
         end
 
         it 'inserts the documents into the collection' do

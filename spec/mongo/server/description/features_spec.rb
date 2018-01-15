@@ -213,7 +213,9 @@ describe Mongo::Server::Description::Features do
       end
 
       it 'returns false' do
-        expect(features).to_not be_write_command_enabled
+        expect {
+          features
+        }.to raise_exception(Mongo::Error::UnsupportedFeatures)
       end
     end
   end

@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe Mongo::Operation::Write::RemoveUser do
+describe Mongo::Operation::Write::Command::RemoveUser do
 
   describe '#execute' do
 
@@ -32,14 +32,10 @@ describe Mongo::Operation::Write::RemoveUser do
         operation.execute(root_authorized_primary)
       end
 
-      it 'raises an exception', if: write_command_enabled? do
+      it 'raises an exception' do
         expect {
           operation.execute(root_authorized_primary)
         }.to raise_error(Mongo::Error::OperationFailure)
-      end
-
-      it 'does not raise an exception', unless: write_command_enabled? do
-        expect(operation.execute(root_authorized_primary).written_count).to eq(0)
       end
     end
   end

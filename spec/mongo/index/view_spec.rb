@@ -347,18 +347,8 @@ describe Mongo::Index::View do
 
           context 'when the server does not accept writeConcern for the createIndexes operation', unless: collation_enabled? do
 
-            context 'when the server supports the createIndexes command', if: write_command_enabled? do
-
-              it 'does not apply the write concern' do
-                expect(result).to be_successful
-              end
-            end
-
-            context 'when the driver inserts into the system.indexes collection', unless: write_command_enabled? do
-
-              it 'does not apply the write concern' do
-                expect(result).to be_successful
-              end
+            it 'does not apply the write concern' do
+              expect(result).to be_successful
             end
           end
         end
@@ -502,18 +492,8 @@ describe Mongo::Index::View do
 
           context 'when the server does not accept writeConcern for the createIndexes operation', unless: collation_enabled? do
 
-            context 'when the server accepts the createIndexes command', if: write_command_enabled? do
-
-              it 'does not apply the write concern' do
-                expect(result).to be_successful
-              end
-            end
-
-            context 'when the driver inserts into the system.indexes collection', unless: write_command_enabled? do
-
-              it 'does not apply the write concern' do
-                expect(result).to be_successful
-              end
+            it 'does not apply the write concern' do
+              expect(result).to be_successful
             end
           end
         end
@@ -533,14 +513,10 @@ describe Mongo::Index::View do
           view.drop_one('name_1')
         end
 
-        it 'raises an exception', if: write_command_enabled? do
+        it 'raises an exception' do
           expect {
             view.create_many([{ key: { name: 1 }, unique: false }])
           }.to raise_error(Mongo::Error::OperationFailure)
-        end
-
-        it 'does not raise an exception', unless: write_command_enabled? do
-          expect(view.create_many([{ key: { name: 1 }, unique: false }])).to be_successful
         end
       end
     end
@@ -613,18 +589,8 @@ describe Mongo::Index::View do
 
         context 'when the server does not accept writeConcern for the createIndexes operation', unless: collation_enabled? do
 
-          context 'when the server supports the createIndexes command', if: write_command_enabled? do
-
-            it 'does not apply the write concern' do
-              expect(result).to be_successful
-            end
-          end
-
-          context 'when the driver inserts into the system.indexes collection', unless: write_command_enabled? do
-
-            it 'does not apply the write concern' do
-              expect(result).to be_successful
-            end
+          it 'does not apply the write concern' do
+            expect(result).to be_successful
           end
         end
       end
@@ -667,14 +633,10 @@ describe Mongo::Index::View do
         view.drop_one('name_1')
       end
 
-      it 'raises an exception', if: write_command_enabled? do
+      it 'raises an exception' do
         expect {
           view.create_one(spec, unique: false)
         }.to raise_error(Mongo::Error::OperationFailure)
-      end
-
-      it 'does not raise an exception', unless: write_command_enabled? do
-        expect(view.create_one(spec, unique: false)).to be_successful
       end
     end
 

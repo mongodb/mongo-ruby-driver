@@ -39,9 +39,7 @@ module Mongo
             raise Error::UnsupportedArrayFilters.new(Error::UnsupportedArrayFilters::UNACKNOWLEDGED_WRITES_MESSAGE) if has_array_filters?
           end
 
-          if !server.features.write_command_enabled? # version < 2.4
-            execute_message(server)
-          elsif server.features.op_msg_enabled? # version 3.6
+          if server.features.op_msg_enabled? # version 3.6
             execute_write_command(server)
           else # server version is 2.6 through 3.4
             if unacknowledged_write?

@@ -22,11 +22,6 @@ module Mongo
     # @since 2.0.0
     class User
 
-      # The users collection for the database.
-      #
-      # @since 2.0.0
-      COLLECTION = 'system.users'.freeze
-
       # @return [ String ] The authorization source, either a database or
       #   external name.
       attr_reader :auth_source

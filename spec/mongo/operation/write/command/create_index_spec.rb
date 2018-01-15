@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe Mongo::Operation::Write::CreateIndex do
+describe Mongo::Operation::Write::Command::CreateIndex do
 
   describe '#execute' do
 
@@ -49,14 +49,10 @@ describe Mongo::Operation::Write::CreateIndex do
         authorized_collection.indexes.drop_one('random_1')
       end
 
-      it 'raises an exception', if: write_command_enabled? do
+      it 'raises an exception' do
         expect {
           second_operation.execute(authorized_primary)
         }.to raise_error(Mongo::Error::OperationFailure)
-      end
-
-      it 'does not raise an exception', unless: write_command_enabled? do
-        expect(second_operation.execute(authorized_primary)).to be_successful
       end
     end
   end

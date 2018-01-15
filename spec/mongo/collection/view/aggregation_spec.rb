@@ -543,7 +543,7 @@ describe Mongo::Collection::View::Aggregation do
     end
   end
 
-  context 'when $out is in the pipeline', if: write_command_enabled? do
+  context 'when $out is in the pipeline' do
 
     let(:pipeline) do
       [{
