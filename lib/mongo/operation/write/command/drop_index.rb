@@ -45,9 +45,12 @@ module Mongo
           #
           # @since 2.5.0
           def execute(server)
-            Result.new(server.with_connection do |connection|
+            result = Result.new(server.with_connection do |connection|
               connection.dispatch([ message(server) ], operation_id)
-            end).validate!
+            end)
+            server.update_cluster_time(result)
+            session.process(result) if session
+            result.validate!
           end
 
           private
