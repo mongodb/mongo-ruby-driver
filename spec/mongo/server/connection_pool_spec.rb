@@ -110,6 +110,17 @@ describe Mongo::Server::ConnectionPool do
         expect(pool.checkout).to_not eql(connection)
       end
     end
+
+    context 'when connections are checked out and checked back in' do
+
+      it 'pulls the connection from the front of the queue' do
+        first = pool.checkout
+        second = pool.checkout
+        pool.checkin(second)
+        pool.checkin(first)
+        expect(pool.checkout).to be(first)
+      end
+    end
   end
 
   describe '#disconnect!' do
@@ -217,7 +228,7 @@ describe Mongo::Server::ConnectionPool do
     before do
      t = Thread.new {
         # Kill the thread when it's authenticating
-        allow(Mongo::Auth).to receive(:get) { t.kill }
+        allow(Mongo::Auth).to receive(:get) { t.kill and t.stop? }
         pool.with_connection { |c| c.send(:ensure_connected) { |socket| socket } }
       }
       t.join
@@ -225,6 +236,228 @@ describe Mongo::Server::ConnectionPool do
 
     it 'disconnects the socket' do
       expect(pool.checkout.send(:socket)).to be_nil
+    end
+  end
+
+  describe '#close_stale_sockets!' do
+
+    let(:server) do
+      Mongo::Server.new(address, authorized_client.cluster, monitoring, listeners, options)
+    end
+
+    let!(:pool) do
+      described_class.get(server)
+    end
+
+    let(:queue) do
+      pool.instance_variable_get(:@queue).queue
+    end
+
+    context 'when there is a max_idle_time specified' do
+
+      let(:options) do
+        TEST_OPTIONS.merge(max_pool_size: 2, max_idle_time: 0.5)
+      end
+
+      context 'when the connections have not been checked out' do
+
+        before do
+          queue.each do |conn|
+            expect(conn).not_to receive(:disconnect!)
+          end
+          sleep(0.5)
+          pool.close_stale_sockets!
+        end
+
+        it 'does not close any sockets' do
+          expect(queue.none? { |c| c.connected? }).to be(true)
+        end
+      end
+
+      context 'when the sockets have already been checked out and returned to the pool' do
+
+        context 'when min size is 0' do
+
+          let(:options) do
+            TEST_OPTIONS.merge(max_pool_size: 2, min_pool_size: 0, max_idle_time: 0.5)
+          end
+
+          before do
+            queue.each do |conn|
+              expect(conn).to receive(:disconnect!).and_call_original
+            end
+            pool.checkin(pool.checkout)
+            pool.checkin(pool.checkout)
+            sleep(0.5)
+            pool.close_stale_sockets!
+          end
+
+          it 'closes all stale sockets' do
+            expect(queue.all? { |c| !c.connected? }).to be(true)
+          end
+        end
+
+        context 'when min size is > 0' do
+
+          context 'when more than the number of min_size are checked out' do
+
+            let(:options) do
+              TEST_OPTIONS.merge(max_pool_size: 5, min_pool_size: 3, max_idle_time: 0.5)
+            end
+
+            before do
+              first = pool.checkout
+              second = pool.checkout
+              third = pool.checkout
+              fourth = pool.checkout
+              fifth = pool.checkout
+
+              pool.checkin(fifth)
+
+              expect(fifth).to receive(:disconnect!).and_call_original
+              expect(fifth).not_to receive(:connect!)
+
+              sleep(0.5)
+              pool.close_stale_sockets!
+            end
+
+            it 'closes all stale sockets and does not connect new ones' do
+              expect(queue.size).to be(1)
+              expect(queue[0].connected?).to be(false)
+            end
+          end
+
+          context 'when between 0 and min_size number of connections are checked out' do
+
+            let(:options) do
+              TEST_OPTIONS.merge(max_pool_size: 5, min_pool_size: 3, max_idle_time: 0.5)
+            end
+
+            before do
+              first = pool.checkout
+              second = pool.checkout
+              third = pool.checkout
+              fourth = pool.checkout
+              fifth = pool.checkout
+
+              pool.checkin(third)
+              pool.checkin(fourth)
+              pool.checkin(fifth)
+
+
+              expect(third).to receive(:disconnect!).and_call_original
+              expect(third).not_to receive(:connect!)
+
+              expect(fourth).to receive(:disconnect!).and_call_original
+              expect(fourth).not_to receive(:connect!)
+
+              expect(fifth).to receive(:disconnect!).and_call_original
+              expect(fifth).to receive(:connect!).and_call_original
+
+              sleep(0.5)
+              pool.close_stale_sockets!
+            end
+
+            it 'closes all stale sockets and does not connect new ones' do
+              expect(queue.size).to be(3)
+              expect(queue[0].connected?).to be(true)
+              expect(queue[1].connected?).to be(false)
+              expect(queue[2].connected?).to be(false)
+            end
+          end
+
+          context 'when a stale connection is unsuccessfully reconnected' do
+
+            let(:options) do
+              TEST_OPTIONS.merge(max_pool_size: 5, min_pool_size: 3, max_idle_time: 0.5)
+            end
+
+            before do
+              first = pool.checkout
+              second = pool.checkout
+              third = pool.checkout
+              fourth = pool.checkout
+              fifth = pool.checkout
+
+              pool.checkin(third)
+              pool.checkin(fourth)
+              pool.checkin(fifth)
+
+
+              expect(third).to receive(:disconnect!).and_call_original
+              expect(third).not_to receive(:connect!)
+
+              expect(fourth).to receive(:disconnect!).and_call_original
+              expect(fourth).not_to receive(:connect!)
+
+              expect(fifth).to receive(:disconnect!).and_call_original
+              allow(fifth).to receive(:connect!).and_raise(Mongo::Error::SocketError)
+
+              sleep(0.5)
+              pool.close_stale_sockets!
+            end
+
+            it 'is kept in the pool' do
+              expect(queue.size).to be(3)
+              expect(queue[0].connected?).to be(false)
+              expect(queue[1].connected?).to be(false)
+              expect(queue[2].connected?).to be(false)
+            end
+          end
+
+          context 'when exactly the min_size number of connections is checked out' do
+
+            let(:options) do
+              TEST_OPTIONS.merge(max_pool_size: 5, min_pool_size: 3, max_idle_time: 0.5)
+            end
+
+            before do
+              first = pool.checkout
+              second = pool.checkout
+              third = pool.checkout
+              fourth = pool.checkout
+              fifth = pool.checkout
+
+              pool.checkin(fourth)
+              pool.checkin(fifth)
+
+              expect(fourth).to receive(:disconnect!).and_call_original
+              expect(fourth).not_to receive(:connect!)
+
+              expect(fifth).to receive(:disconnect!).and_call_original
+              expect(fifth).not_to receive(:connect!)
+
+              sleep(0.5)
+              pool.close_stale_sockets!
+            end
+
+            it 'closes all stale sockets and does not connect new ones' do
+              expect(queue.size).to be(2)
+              expect(queue[0].connected?).to be(false)
+              expect(queue[1].connected?).to be(false)
+            end
+          end
+        end
+      end
+    end
+
+    context 'when there is no max_idle_time specified' do
+
+      let(:connection) do
+        conn = pool.checkout
+        conn.connect!
+        pool.checkin(conn)
+        conn
+      end
+
+      before do
+        expect(connection).not_to receive(:disconnect!)
+        pool.close_stale_sockets!
+      end
+
+      it 'does not close any sockets' do
+        expect(connection.connected?).to be(true)
+      end
     end
   end
 end

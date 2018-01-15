@@ -241,15 +241,15 @@ describe Mongo::Cluster do
       cluster.instance_variable_get(:@servers)
     end
 
-    let(:cursor_reaper) do
-      cluster.instance_variable_get(:@cursor_reaper)
+    let(:periodic_executor) do
+      cluster.instance_variable_get(:@periodic_executor)
     end
 
     before do
       known_servers.each do |server|
         expect(server).to receive(:disconnect!).and_call_original
       end
-      expect(cursor_reaper).to receive(:stop!).and_call_original
+      expect(periodic_executor).to receive(:stop!).and_call_original
     end
 
     it 'disconnects each server and the cursor reaper and returns true' do
@@ -259,15 +259,15 @@ describe Mongo::Cluster do
 
   describe '#reconnect!' do
 
-    let(:cursor_reaper) do
-      cluster.instance_variable_get(:@cursor_reaper)
+    let(:periodic_executor) do
+      cluster.instance_variable_get(:@periodic_executor)
     end
 
     before do
       cluster.servers.each do |server|
         expect(server).to receive(:reconnect!).and_call_original
       end
-      expect(cursor_reaper).to receive(:restart!).and_call_original
+      expect(periodic_executor).to receive(:restart!).and_call_original
     end
 
     it 'reconnects each server and the cursor reaper and returns true' do

@@ -16,9 +16,8 @@ module Mongo
   class Server
     class ConnectionPool
 
-      # A FIFO queue of connections to be used by the connection pool. This is
-      # based on mperham's connection pool, implemented with a queue instead of a
-      # stack.
+      # A LIFO queue of connections to be used by the connection pool. This is
+      # based on mperham's connection pool.
       #
       # @since 2.0.0
       class Queue
@@ -88,7 +87,7 @@ module Mongo
         # @since 2.0.0
         def enqueue(connection)
           mutex.synchronize do
-            queue.unshift(connection)
+            queue.unshift(connection.record_checkin!)
             resource.broadcast
           end
         end
@@ -165,12 +164,58 @@ module Mongo
           @wait_timeout ||= options[:wait_queue_timeout] || WAIT_TIMEOUT
         end
 
+        # The maximum seconds a socket can remain idle since it has been checked in to the pool.
+        #
+        # @example Get the max idle time.
+        #   queue.max_idle_time
+        #
+        # @return [ Float ] The max socket idle time in seconds.
+        #
+        # @since 2.5.0
+        def max_idle_time
+          @max_idle_time ||= options[:max_idle_time]
+        end
+
+        # Close sockets that have been open for longer than the max idle time, if the
+        #   option is set.
+        #
+        # @example Close the stale sockets
+        #   queue.close_stale_sockets!
+        #
+        # @since 2.5.0
+        def close_stale_sockets!
+          return unless max_idle_time
+
+          to_refresh = []
+          queue.each do |connection|
+            if last_checkin = connection.last_checkin
+              if (Time.now - last_checkin) > max_idle_time
+                to_refresh << connection
+              end
+            end
+          end
+
+          mutex.synchronize do
+            num_checked_out = @connections - queue.size
+            min_size_delta = [(min_size - num_checked_out), 0].max
+
+            to_refresh.each do |connection|
+              if queue.include?(connection)
+                connection.disconnect!
+                if queue.index(connection) < min_size_delta
+                  begin; connection.connect!; rescue; end
+                end
+              end
+            end
+          end
+        end
+
         private
 
         def dequeue_connection
           deadline = Time.now + wait_timeout
           loop do
-            return queue.pop unless queue.empty?
+            return queue.shift unless queue.empty?
             connection = create_connection
             return connection if connection
             wait_for_next!(deadline)

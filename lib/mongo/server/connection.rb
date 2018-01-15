@@ -54,6 +54,11 @@ module Mongo
       # @since 2.5.0
       PING_OP_MSG_BYTES = PING_OP_MSG_MESSAGE.serialize.to_s.freeze
 
+      # The last time the connection was checked back into a pool.
+      #
+      # @since 2.5.0
+      attr_reader :last_checkin
+
       def_delegators :@server,
                      :features,
                      :max_bson_object_size,
@@ -97,9 +102,10 @@ module Mongo
       #
       # @since 2.0.0
       def disconnect!
+        @auth_mechanism = nil
+        @last_checkin = nil
         if socket
           socket.close
-          @auth_mechanism = nil
           @socket = nil
         end
         true
@@ -151,6 +157,7 @@ module Mongo
         @server = server
         @ssl_options = options.reject { |k, v| !k.to_s.start_with?(SSL) }
         @socket = nil
+        @last_checkin = nil
         @auth_mechanism = nil
         @pid = Process.pid
       end
@@ -188,6 +195,19 @@ module Mongo
       end
       # @deprecated Please use :socket_timeout instead. Will be removed in 3.0.0
       alias :timeout :socket_timeout
+
+      # Record the last checkin time.
+      #
+      # @example Record the checkin time on this connection.
+      #   connection.record_checkin!
+      #
+      # @return [ self ]
+      #
+      # @since 2.5.0
+      def record_checkin!
+        @last_checkin = Time.now
+        self
+      end
 
       private
 

@@ -13,7 +13,9 @@
 # limitations under the License.
 
 require 'mongo/cluster/topology'
-require 'mongo/cluster/cursor_reaper'
+require 'mongo/cluster/reapers/socket_reaper'
+require 'mongo/cluster/reapers/cursor_reaper'
+require 'mongo/cluster/periodic_executor'
 require 'mongo/cluster/app_metadata'
 
 module Mongo
@@ -189,9 +191,11 @@ module Mongo
       ) if @servers.size > 1
 
       @cursor_reaper = CursorReaper.new
-      @cursor_reaper.run!
+      @socket_reaper = SocketReaper.new(self)
+      @periodic_executor = PeriodicExecutor.new(@cursor_reaper, @socket_reaper)
+      @periodic_executor.run!
 
-      ObjectSpace.define_finalizer(self, self.class.finalize(pools, @cursor_reaper))
+      ObjectSpace.define_finalizer(self, self.class.finalize(pools, @periodic_executor))
     end
 
     # Finalize the cluster for garbage collection. Disconnects all the scoped
@@ -206,10 +210,9 @@ module Mongo
     # @return [ Proc ] The Finalizer.
     #
     # @since 2.2.0
-    def self.finalize(pools, cursor_reaper)
+    def self.finalize(pools, periodic_executor)
       proc do
-        begin; cursor_reaper.kill_cursors; rescue; end
-        cursor_reaper.stop!
+        periodic_executor.stop!
         pools.values.each do |pool|
           pool.disconnect!
         end
@@ -371,8 +374,7 @@ module Mongo
     #
     # @since 2.1.0
     def disconnect!
-      begin; @cursor_reaper.kill_cursors; rescue; end
-      @cursor_reaper.stop!
+      @periodic_executor.stop!
       @servers.each { |server| server.disconnect! } and true
     end
 
@@ -387,7 +389,7 @@ module Mongo
     def reconnect!
       scan!
       servers.each { |server| server.reconnect! }
-      @cursor_reaper.restart! and true
+      @periodic_executor.restart! and true
     end
 
     # Add hosts in a description to the cluster.

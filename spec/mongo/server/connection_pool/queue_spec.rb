@@ -35,6 +35,7 @@ describe Mongo::Server::ConnectionPool::Queue do
     context 'when waiting for a connection to be enqueued' do
 
       before do
+        allow(connection).to receive(:record_checkin!).and_return(connection)
         Thread.new do
           sleep(0.5)
           queue.enqueue(connection)
@@ -66,7 +67,9 @@ describe Mongo::Server::ConnectionPool::Queue do
   describe '#enqueue' do
 
     let(:connection) do
-      double('connection')
+      double('connection').tap do |con|
+        allow(con).to receive(:record_checkin!).and_return(con)
+      end
     end
 
     let(:queue) do
@@ -105,7 +108,7 @@ describe Mongo::Server::ConnectionPool::Queue do
         described_class.new { double('connection') }
       end
 
-      it 'creates the queue with the default connections' do
+      it 'creates the queue with the number of default connections' do
         expect(queue.size).to eq(1)
       end
     end
@@ -185,6 +188,36 @@ describe Mongo::Server::ConnectionPool::Queue do
       it 'returns the default wait timeout' do
         expect(queue.wait_timeout).to eq(1)
       end
+    end
+  end
+
+  describe 'close_stale_sockets!!' do
+
+    let(:queue) do
+      described_class.new(max_pool_size: 2, max_idle_time: 0.5) do
+        double('connection').tap do |con|
+          expect(con).to receive(:disconnect!).and_return(true)
+          allow(con).to receive(:record_checkin!) do
+            allow(con).to receive(:last_checkin).and_return(Time.now)
+            con
+          end
+        end
+      end
+    end
+
+    let(:connection) do
+      queue.dequeue
+    end
+
+    before do
+      queue.enqueue(connection)
+      expect(connection).to receive(:connect!).and_return(true)
+      sleep(0.5)
+      queue.close_stale_sockets!
+    end
+
+    it 'disconnects and reconnects up to min_size the expired connections' do
+      expect(queue.size).to eq(1)
     end
   end
 end
