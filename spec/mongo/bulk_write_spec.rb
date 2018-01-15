@@ -202,7 +202,7 @@ describe Mongo::BulkWrite do
 
           context 'when there is a write concern error' do
 
-            it 'raises an OperationFailure', standalone? do
+            it 'raises an OperationFailure', if: standalone? do
               expect {
                 bulk_write_invalid_write_concern.execute
               }.to raise_error(Mongo::Error::OperationFailure)
@@ -1278,7 +1278,7 @@ describe Mongo::BulkWrite do
                 expect(result.upserted_count).to eq(0)
               end
 
-              it 'reports the modified count', if: collation_enabled?do
+              it 'reports the modified count', if: collation_enabled? do
                 expect(result.modified_count).to eq(1)
               end
 

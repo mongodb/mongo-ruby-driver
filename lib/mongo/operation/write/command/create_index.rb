@@ -42,7 +42,7 @@ module Mongo
           #
           # @return [ Result ] The operation response, if there is one.
           #
-          # @since 2.0.0
+          # @since 2.5.0
           def execute(server)
             Result.new(server.with_connection do |connection|
               connection.dispatch([ message(server) ], operation_id)
