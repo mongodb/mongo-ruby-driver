@@ -371,6 +371,7 @@ module Mongo
           validate_port_string!(p)
         elsif host =~ UNIX_SOCKET
           raise_invalid_error!(UNESCAPED_UNIX_SOCKET) if host =~ UNSAFE
+          host = decode host
         end
         servers << host
       end
