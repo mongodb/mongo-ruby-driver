@@ -138,7 +138,7 @@ module Mongo
           read_with_retry do
             server = selector.select_server(cluster, false)
             apply_collation!(cmd, server, opts)
-            with_session do |session|
+            with_session(opts) do |session|
               Operation::Commands::Count.new({
                                                    :selector => cmd,
                                                    :db_name => database.name,
@@ -178,7 +178,7 @@ module Mongo
           read_with_retry do
             server = selector.select_server(cluster, false)
             apply_collation!(cmd, server, opts)
-            with_session do |session|
+            with_session(opts) do |session|
               Operation::Commands::Distinct.new({
                                                    :selector => cmd,
                                                    :db_name => database.name,
@@ -231,7 +231,7 @@ module Mongo
         #
         # @since 2.0.0
         def map_reduce(map, reduce, options = {})
-          MapReduce.new(self, map, reduce, options)
+          MapReduce.new(self, map, reduce, @options.merge(options))
         end
 
         # Set the max number of documents to scan.

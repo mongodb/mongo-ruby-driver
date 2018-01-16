@@ -66,7 +66,7 @@ module Mongo
         # @yieldparam [ Hash ] Each matching document.
         def each
           @cursor = nil
-          session = client.send(:get_session, view.options)
+          session = client.send(:get_session, @options)
           legacy_write_with_retry do |server|
             result = send_initial_query(server, session)
             result = send_fetch_query(server, session) unless inline?
@@ -191,7 +191,7 @@ module Mongo
         #
         # @since 2.5.0
         def execute
-          view.send(:with_session) do |session|
+          view.send(:with_session, @options) do |session|
             legacy_write_with_retry do |server|
               send_initial_query(server, session)
             end
