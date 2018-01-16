@@ -110,7 +110,7 @@ describe Mongo::Collection::View::MapReduce do
 
     context 'when provided a session' do
 
-      let(:view_options) do
+      let(:options) do
         { session: session }
       end
 
@@ -210,7 +210,7 @@ describe Mongo::Collection::View::MapReduce do
 
         context 'when provided a session' do
 
-          let(:view_options) do
+          let(:options) do
             { session: session }
           end
 
@@ -227,7 +227,7 @@ describe Mongo::Collection::View::MapReduce do
 
         context 'when the output collection is iterated' do
 
-          let(:view_options) do
+          let(:options) do
             { session: session }
           end
 
@@ -455,7 +455,7 @@ describe Mongo::Collection::View::MapReduce do
         authorized_client.start_session
       end
 
-      let(:view_options) do
+      let(:options) do
         { session: session }
       end
 
@@ -464,7 +464,7 @@ describe Mongo::Collection::View::MapReduce do
       end
 
       let(:failed_operation) do
-        described_class.new(view, '$invalid', reduce).execute
+        described_class.new(view, '$invalid', reduce, options).execute
       end
 
       let(:client) do
