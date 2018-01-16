@@ -55,6 +55,8 @@ module Mongo
       # @example Set the last use field to now.
       #   server_session.set_last_use!
       #
+      # @return [ Time ] The last time the session was used.
+      #
       # @since 2.5.0
       def set_last_use!
         @last_use = Time.now
@@ -64,6 +66,8 @@ module Mongo
       #
       # @example Get the session id.
       #   server_session.session_id
+      #
+      # @return [ BSON::Document ] The session id.
       #
       # @since 2.5.0
       def session_id

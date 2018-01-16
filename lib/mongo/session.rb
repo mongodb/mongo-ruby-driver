@@ -44,7 +44,6 @@ module Mongo
     # @since 2.5.0
     attr_reader :operation_time
 
-    def_delegators :@server_session, :session_id, :next_txn_num
     def_delegators :client, :cluster
 
     # Error message describing that the session was attempted to be used by a client different from the
@@ -231,6 +230,30 @@ module Mongo
     # @since 2.5.0
     def retry_writes?
       !!client.options[:retry_writes] && (cluster.replica_set? || cluster.sharded?)
+    end
+
+    # Get the session id.
+    #
+    # @example Get the session id.
+    #   session.session_id
+    #
+    # @return [ BSON::Document ] The session id.
+    #
+    # @since 2.5.0
+    def session_id
+      @server_session.session_id if @server_session
+    end
+
+    # Increment and return the next transaction number.
+    #
+    # @example Get the next transaction number.
+    #   server_session.next_txn_num
+    #
+    # @return [ Integer ] The next transaction number.
+    #
+    # @since 2.5.0
+    def next_txn_num
+      @server_session.next_txn_num if @server_session
     end
 
     private
