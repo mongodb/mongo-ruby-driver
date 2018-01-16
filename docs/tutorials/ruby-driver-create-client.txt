@@ -349,6 +349,63 @@ Ruby Options
      - ``Float``
      - 0.015
 
+   * - ``:app_name``
+     - Application name that is printed to the mongod logs upon establishing a connection
+       in server versions >= 3.4.
+     - ``String``
+     - none
+
+   * - ``:compressors``
+     - A list of potential compressors to use, in order of preference. The driver chooses the first
+       compressor that is also supported by the server. Currently the driver only supports 'zlib'.
+     - ``Array<String>``
+     - none
+
+   * - ``:id_generator``
+     - A custom object to generate ids for documents. Must respond to #generate.
+     - ``Object``
+     - none
+
+   * - ``:logger``
+     - A custom logger.
+     - ``Object``
+     - ``Logger``
+
+   * - ``:max_idle_time``
+     - The maximum seconds a socket can remain idle since it has been checked in to the pool.
+     - ``Integer``
+     - none
+
+   * - ``:max_read_retries``
+     - The maximum number of read retries on mongos query failures.
+     - ``Integer``
+     - 1
+
+   * - ``:monitoring``
+     - The monitoring object.
+     - ``Object``
+     - none
+
+   * - ``:platform``
+     - Platform information to include in the metadata printed to the mongod logs upon establishing a
+       connection in server versions >= 3.4.
+     - ``String``
+     - none
+
+   * - ``:read_retry_interval``
+     - The interval, in seconds, in which reads on a mongos are retried.
+     - ``Integer``
+     - 5
+
+   * - ``:truncate_logs``
+     - Whether to truncate the logs at the default 250 characters.
+     - ``Boolean``
+     - true
+
+   * - ``:zlib_compression_level``
+     - The Zlib compression level to use, if using compression. See Ruby's Zlib module for valid levels.
+     - ``Integer``
+     - none
 
 
 Details on Timeout Options

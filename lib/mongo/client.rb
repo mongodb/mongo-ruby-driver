@@ -178,8 +178,9 @@ module Mongo
     #   seconds, in the connection pool for a connection to be checked in.
     # @option options [ Float ] :connect_timeout The timeout, in seconds, to
     #   attempt a connection.
-    # @option options [ Array<String> ] :compressors The compressor to use. Currently the driver
-    #   only supports zlib.
+    # @option options [ Array<String> ] :compressors A list of potential compressors to use, in order of preference.
+    #  The driver chooses the first compressor that is also supported by the server. Currently the driver only
+    #   supports 'zlib'.
     # @option options [ Hash ] :read The read preference options. They consist of a
     #   mode specified as a symbol, an array of hashes known as tag_sets,
     #   and local_threshold.
@@ -240,6 +241,8 @@ module Mongo
     #   mongod logs upon establishing a connection in server versions >= 3.4.
     # @option options [ String ] :platform Platform information to include in the
     #   metadata printed to the mongod logs upon establishing a connection in server versions >= 3.4.
+    # @option options [ Integer ] :zlib_compression_level The Zlib compression level to use, if using compression.
+    #   See Ruby's Zlib module for valid levels.
     # @option options [ true, false ] :retry_writes Retry writes once when connected to a replica set
     #   or sharded cluster versions 3.6 and up.
     #
