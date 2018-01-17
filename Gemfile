@@ -9,7 +9,7 @@ group :development, :testing do
   gem 'rspec', '~> 3.0'
   gem 'mime-types', '~> 1.25'
   if RUBY_VERSION < '2.0.0'
-    gem 'rake', '12.2.1'
+    gem 'rake', '~> 12.2.0'
     gem 'httparty', '0.14.0'
   else
     gem 'rake'
