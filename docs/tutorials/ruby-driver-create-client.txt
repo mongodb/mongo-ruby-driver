@@ -407,6 +407,12 @@ Ruby Options
      - ``Integer``
      - none
 
+   * - ``:retry_writes``
+     - If a single-statement write operation fails from a network error, the driver automatically retries it once
+       when connected to server versions 3.6+.
+     - ``Boolean``
+     - false
+
 
 Details on Timeout Options
 --------------------------
@@ -530,3 +536,20 @@ When ``#close`` is called on a client by any thread, all connections are closed:
 .. code-block:: ruby
 
     client.close
+
+Details on Retryable Writes
+---------------------------
+
+If the ``retry_writes`` option is set to true, the driver will retry single-statement write operations that fail from
+a network error. The driver automatically retries the operation once.
+
+Most of the write methods you use day-to-day on a collection will be retryable in 3.6. They are:
+
+- ``collection#insert_one``
+- ``collection#update_one``
+- ``collection#delete_one``
+- ``collection#replace_one``
+- ``collection#find_one_and_update``
+- ``collection#find_one_and_replace``
+- ``collection#find_one_and_delete``
+- ``collection#bulk_write`` # for all single statement ops (i.e. not for ``update_many`` or ``delete_many``)

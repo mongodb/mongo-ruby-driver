@@ -19,6 +19,8 @@ operations available in the Ruby driver.
    /tutorials/ruby-driver-crud-operations
    /tutorials/ruby-driver-collection-tasks
    /tutorials/ruby-driver-projections
+   /tutorials/ruby-driver-sessions
+   /tutorials/ruby-driver-change-streams
    /tutorials/ruby-driver-admin-tasks
    /tutorials/ruby-driver-indexing
    /tutorials/ruby-driver-collations
