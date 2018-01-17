@@ -1,7 +1,6 @@
 source 'https://rubygems.org'
 
 gemspec
-gem 'rake'
 gem 'yard'
 
 group :development, :testing do
@@ -10,8 +9,10 @@ group :development, :testing do
   gem 'rspec', '~> 3.0'
   gem 'mime-types', '~> 1.25'
   if RUBY_VERSION < '2.0.0'
+    gem 'rake', '12.2.1'
     gem 'httparty', '0.14.0'
   else
+    gem 'rake'
     gem 'httparty'
   end
   gem 'yajl-ruby', require: 'yajl', platforms: :mri
