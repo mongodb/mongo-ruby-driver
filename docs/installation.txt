@@ -14,14 +14,9 @@ Install the gem
 
 The driver can be installed manually or with bundler.
 
-To install the gem manually:
+To install the mongo gem manually:
 
 .. code-block:: sh
 
-    gem install mongo
+   gem install mongo -v 2.5.0
 
-To install the gem with bundler, include the following in your Gemfile:
-
-.. code-block:: ruby
-
-    gem 'mongo', '~> 2.4'
