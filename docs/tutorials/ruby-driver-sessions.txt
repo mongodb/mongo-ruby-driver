@@ -41,10 +41,9 @@ be aware that if the application calls ``#start_session`` on a client and waits 
 the session, it risks getting errors due to the session going stale before it is used.
 
 
-
 Using a session
 ---------------
-A session can be passed to most operations performed via the driver so that the operation can be executed in the
+A session object can be passed to most driver methods so that the operation can be executed in the
 context of that session. Please see the API docs for which methods support a session argument.
 
 Create a session and execute an insert, then a find using that session:
@@ -53,9 +52,9 @@ Create a session and execute an insert, then a find using that session:
 
   session = client.start_session
   client[:artists].insert_one({ :name => 'FKA Twigs' }, session: session)
-  client[:artists].find({ :name => 'FKA Twigs' }, session: session).first
+  client[:artists].find({ :name => 'FKA Twigs' }, limit: 1, session: session).first
 
-If you like to call methods on a ``Mongo::Collection::View`` that use a particular session, you can create the
+If you like to call methods on a ``Mongo::Collection::View`` in the context of a particular session, you can create the
 ``Mongo::Collection::View`` with the session and then call methods on it:
 
 .. code-block:: ruby
@@ -89,14 +88,14 @@ To create a causally consistent session, set the ``causal_consistency`` option t
   collection.update_one({ '_id' => 1 }, { '$set' => { 'x' => 0 } }, session: session)
 
   # Read your write, even when reading from a secondary!
-  collection.find({ '_id' => 1 }, limit: 1, session: session).first
+  collection.find({ '_id' => 1 }, session: session).first
 
   # This query returns data at least as new as the previous query,
   # even if it chooses a different secondary.
-  collection.find({ '_id' => 2 }, limit: 1, session: session).first
+  collection.find({ '_id' => 2 }, session: session).first
 
 Since unacknowledged writes don't receive a response from the server (or don't wait for a response), the driver
-has no way of keeping track of where the unacknowledged write is in logical time. Therefore, be aware that causally
+has no way of keeping track of where the unacknowledged write is in logical time. Therefore, causally
 consistent reads are not causally consistent with unacknowledged writes.
 
 Note that if you set the causal_consistency option to nil as in ``(causal_consistency: nil)``, it will be interpreted
