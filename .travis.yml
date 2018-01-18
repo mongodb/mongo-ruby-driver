@@ -11,6 +11,7 @@ rvm:
   - jruby-9.1.15.0
 
 before_install:
+  - gem update --system
   - gem update bundler
 
 install: ruby -S bundle install --without release development
