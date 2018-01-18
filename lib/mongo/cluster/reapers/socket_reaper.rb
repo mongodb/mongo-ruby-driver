@@ -29,7 +29,7 @@ module Mongo
       # @example Initialize the socket reaper.
       #   SocketReaper.new(cluster)
       #
-      # @params [ Mongo::Cluster ] cluster The cluster whose pools' stale sockets
+      # @param [ Mongo::Cluster ] cluster The cluster whose pools' stale sockets
       #  need to be reaped at regular intervals.
       #
       # @since 2.5.0
