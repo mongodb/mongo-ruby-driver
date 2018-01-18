@@ -22,8 +22,8 @@ Change streams do not work properly with JRuby because of the issue documented h
 
 .. _here: https://github.com/jruby/jruby/issues/4212
 
-Namely, JRuby eagerly evaluates ```#next`` on an Enumerator in a background green thread.
-So calling ```#next`` on the change stream will cause getmores to be called in a loop in the background.
+Namely, JRuby eagerly evaluates ``#next`` on an Enumerator in a background green thread.
+So calling ``#next`` on the change stream will cause getmores to be called in a loop in the background.
 
 Watching for changes on a particular collection
 -----------------------------------------------

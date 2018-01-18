@@ -552,4 +552,4 @@ Most of the write methods you use day-to-day on a collection will be retryable i
 - ``collection#find_one_and_update``
 - ``collection#find_one_and_replace``
 - ``collection#find_one_and_delete``
-- ``collection#bulk_write`` # for all single statement ops (i.e. not for ``update_many`` or ``delete_many``)
+- ``collection#bulk_write`` (for all single statement ops, i.e. not for ``update_many`` or ``delete_many``)

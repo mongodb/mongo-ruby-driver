@@ -27,7 +27,7 @@ MongoDB Compatibility
      - MongoDB 3.6
 
    * - 2.5
-     - |checkmark|
+     -
      - |checkmark|
      - |checkmark|
      - |checkmark|
