@@ -8,8 +8,9 @@ phases: [
         responses: [
 
                 ["b:27017", {
-
-                    ok: 1
+                    ok: 1,
+                    minWireVersion: 0,
+                    maxWireVersion: 6
                 }]
         ],
 

@@ -46,39 +46,57 @@ describe 'Server Discovery and Monitoring' do
             end
           end
 
-          let(:cluster_addresses) do
-            @client.cluster.instance_variable_get(:@servers).
-                collect(&:address).collect(&:to_s).uniq.sort
-          end
+          if phase.outcome.compatible?
 
-          let(:phase_addresses) do
-            phase.outcome.servers.keys.sort
-          end
-
-          it "sets the cluster topology to #{phase.outcome.topology_type}" do
-            expect(@client.cluster).to be_topology(phase.outcome.topology_type)
-          end
-
-          it "sets the cluster replica set name to #{phase.outcome.set_name.inspect}" do
-            expect(@client.cluster.replica_set_name).to eq(phase.outcome.set_name)
-          end
-
-          it "sets the cluster logical session timeout minutes to #{phase.outcome.logical_session_timeout.inspect}" do
-            expect(@client.cluster.logical_session_timeout).to eq(phase.outcome.logical_session_timeout)
-          end
-
-          it "has the expected servers in the cluster" do
-            expect(cluster_addresses).to eq(phase_addresses)
-          end
-
-          phase.outcome.servers.each do |uri, server|
-
-            it "sets #{uri} to #{server['type']}" do
-              expect(find_server(@client, uri)).to be_server_type(server['type'])
+            let(:cluster_addresses) do
+              @client.cluster.instance_variable_get(:@servers).
+                  collect(&:address).collect(&:to_s).uniq.sort
             end
 
-            it "sets #{uri} replica set name to #{server['setName'].inspect}" do
-              expect(find_server(@client, uri).replica_set_name).to eq(server['setName'])
+            let(:phase_addresses) do
+              phase.outcome.servers.keys.sort
+            end
+
+            it "sets the cluster topology to #{phase.outcome.topology_type}" do
+              expect(@client.cluster).to be_topology(phase.outcome.topology_type)
+            end
+
+            it "sets the cluster replica set name to #{phase.outcome.set_name.inspect}" do
+              expect(@client.cluster.replica_set_name).to eq(phase.outcome.set_name)
+            end
+
+            it "sets the cluster logical session timeout minutes to #{phase.outcome.logical_session_timeout.inspect}" do
+              expect(@client.cluster.logical_session_timeout).to eq(phase.outcome.logical_session_timeout)
+            end
+
+            it "has the expected servers in the cluster" do
+              expect(cluster_addresses).to eq(phase_addresses)
+            end
+
+            phase.outcome.servers.each do |uri, server|
+
+              it "sets #{uri} to #{server['type']}" do
+                expect(find_server(@client, uri)).to be_server_type(server['type'])
+              end
+
+              it "sets #{uri} replica set name to #{server['setName'].inspect}" do
+                expect(find_server(@client, uri).replica_set_name).to eq(server['setName'])
+              end
+            end
+
+          else
+
+            before do
+              @client.cluster.servers.each do |server|
+                allow(server).to receive(:connectable?).and_return(true)
+              end
+            end
+
+            it 'raises an UnsupportedFeatures error' do
+              expect {
+                Mongo::ServerSelector.get(mode: :primary).select_server(@client.cluster)
+                Mongo::ServerSelector.get(mode: :secondary).select_server(@client.cluster)
+              }.to raise_exception(Mongo::Error::UnsupportedFeatures)
             end
           end
         end

@@ -105,8 +105,12 @@ module Mongo
             # There is no point pinging a standalone as the subsequent scan is
             # not going to change anything about the cluster.
             if ping && !cluster.single?
-              return server if server.connectable?
+              if server.connectable?
+                server.features.check_driver_support!
+                return server
+              end
             else
+              server.features.check_driver_support!
               return server
             end
           end
