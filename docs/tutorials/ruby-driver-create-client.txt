@@ -54,6 +54,14 @@ would like to bypass the auto-discovery, pass the
   Mongo::Client.new([ '127.0.0.1:27017' ], :database => 'mydb', :connect => :sharded)
   Mongo::Client.new('mongodb://127.0.0.1:27017/mydb?connect=sharded')
 
+The URI parser in the driver can also accept the protocol ``mongodb+srv`` as a logical
+pre-processing step before it considers the connection string and other options.
+In this protocol, the comma separated list of host names is replaced with a single host name. The format is:
+
+.. code-block:: ruby
+
+  Mongo::Client.new('mongodb+srv://test5.test.build.mongodb.cc')
+
 .. _ruby-driver-client-options:
 
 Client Options
@@ -65,7 +73,7 @@ providing them in the URI.
 
 Since the URI options are required in camel case, which is not the Ruby standard, the
 following table shows the option in the URI and its corresponding option if passed
-to the constructor in Ruby. 
+to the constructor in Ruby.
 
 .. note:: 
   
