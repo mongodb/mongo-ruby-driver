@@ -81,6 +81,9 @@ module Mongo
                    :cluster_time,
                    :update_cluster_time
 
+    def_delegators :features,
+                   :check_driver_support!
+
     # Is this server equal to another?
     #
     # @example Is the server equal to the other?

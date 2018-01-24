@@ -106,11 +106,11 @@ module Mongo
             # not going to change anything about the cluster.
             if ping && !cluster.single?
               if server.connectable?
-                server.features.check_driver_support!
+                server.check_driver_support!
                 return server
               end
             else
-              server.features.check_driver_support!
+              server.check_driver_support!
               return server
             end
           end

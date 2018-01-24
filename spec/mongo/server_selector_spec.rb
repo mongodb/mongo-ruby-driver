@@ -208,13 +208,14 @@ describe Mongo::ServerSelector do
         make_server(:secondary).tap do |s|
           allow(s).to receive(:connectable?).and_return(true)
           allow(s).to receive(:average_round_trip_time).and_return(100)
+          allow(s).to receive(:check_driver_support!).and_return(true)
         end
       end
 
       let(:far_server) do
         make_server(:secondary).tap do |s|
           allow(s).to receive(:connectable?).and_return(true)
-          allow(s).to receive(:average_round_trip_time).and_return(200)
+          allow(s).to receive(:check_driver_support!).and_return(true)
         end
       end
 

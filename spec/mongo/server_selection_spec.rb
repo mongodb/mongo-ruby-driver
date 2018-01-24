@@ -42,6 +42,7 @@ describe 'Server Selection' do
             allow(s).to receive(:secondary?).and_return(server['type'] == 'RSSecondary')
             allow(s).to receive(:primary?).and_return(server['type'] == 'RSPrimary')
             allow(s).to receive(:connectable?).and_return(true)
+            allow(s).to receive(:check_driver_support!).and_return(true)
           end
         end
       end
@@ -53,6 +54,7 @@ describe 'Server Selection' do
             allow(s).to receive(:average_round_trip_time).and_return(server['avg_rtt_ms'] / 1000.0)
             allow(s).to receive(:tags).and_return(server['tags'])
             allow(s).to receive(:connectable?).and_return(true)
+            allow(s).to receive(:check_driver_support!).and_return(true)
           end
         end
       end

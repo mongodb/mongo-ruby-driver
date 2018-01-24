@@ -49,6 +49,7 @@ describe 'Max Staleness Spec' do
         spec.candidate_servers.collect do |server|
           features = double('features').tap do |feat|
             allow(feat).to receive(:max_staleness_enabled?).and_return(server['maxWireVersion'] && server['maxWireVersion'] >= 5)
+            allow(feat).to receive(:check_driver_support!).and_return(true)
           end
           address = Mongo::Address.new(server['address'])
           Mongo::Server.new(address, cluster, monitoring, listeners, options).tap do |s|
