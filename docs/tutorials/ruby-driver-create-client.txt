@@ -145,6 +145,15 @@ URI Options Conversions
    * - authMechanismProperties=Strings
      - ``{ :auth_mech_properties => { :service_realm => String, :canonicalize_host_name => true|false, :service_name => String } }``
 
+   * - appName=String
+     - ``:app_name => String``
+
+   * - compressors=Strings
+     - ``:compressors => Array<String>``
+
+   * - zlibCompressionLevel=Integer
+     - ``:zlib_compression_level => Integer``
+
 
 Ruby Options
 ------------
