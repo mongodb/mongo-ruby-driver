@@ -532,7 +532,7 @@ describe Mongo::Cluster::Topology::ReplicaSet do
             allow(d).to receive(:replica_set_member?).and_return(true)
             allow(d).to receive(:replica_set_name).and_return('testing')
             allow(d).to receive(:lists_server?).and_return(true)
-            allow(d).to receive(:servers).and_return([secondary])
+            allow(d).to receive(:servers).and_return([double('server')])
           end
         end
 

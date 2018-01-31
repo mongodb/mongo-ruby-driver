@@ -91,7 +91,8 @@ module Mongo
           @address = address
         end
 
-        # Check that there is a wire version overlap.
+        # Check that there is an overlap between the driver supported wire version range
+        #   and the server wire version range.
         #
         # @example Verify the wire version overlap.
         #   features.check_driver_support!

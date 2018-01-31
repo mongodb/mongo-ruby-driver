@@ -218,7 +218,8 @@ module Mongo
         def remove_server?(description, server)
           remove_self?(description, server) ||
             (member_of_this_set?(description) &&
-                !(description.servers.empty? || description.lists_server?(server)))
+                !description.servers.empty? &&
+                  !description.lists_server?(server))
         end
 
         # A replica set topology is not sharded.

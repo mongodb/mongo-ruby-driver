@@ -183,9 +183,9 @@ module Mongo
         @compatible = outcome['compatible']
       end
 
-      # Whether the server responses indicate that they are compatible with the driver.
+      # Whether the server responses indicate that their versions are supported by the driver.
       #
-      # @example Do the server responses indicate that they are compatible with the driver.
+      # @example Do the server responses indicate that their versions are supported by the driver.
       #   outcome.compatible?
       #
       # @return [ true, false ] Whether the server versions are compatible with the driver.
