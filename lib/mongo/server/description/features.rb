@@ -88,21 +88,27 @@ module Mongo
         # @since 2.0.0
         def initialize(server_wire_versions, address = nil)
           @server_wire_versions = server_wire_versions
-          check_driver_support!(address) unless server_wire_versions == ZERO_RANGE
+          @address = address
         end
 
-        private
-
-        ZERO_RANGE = (0..0).freeze
-
-        def check_driver_support!(address)
-          if DRIVER_WIRE_VERSIONS.min > server_wire_versions.max
-            raise Error::UnsupportedFeatures.new(SERVER_TOO_OLD % [address,
-                                                                   server_wire_versions.max,
+        # Check that there is an overlap between the driver supported wire version range
+        #   and the server wire version range.
+        #
+        # @example Verify the wire version overlap.
+        #   features.check_driver_support!
+        #
+        # @raise [ Error::UnsupportedFeatures ] If the wire version range is not covered
+        #   by the driver.
+        #
+        # @since 2.5.1
+        def check_driver_support!
+          if DRIVER_WIRE_VERSIONS.min > @server_wire_versions.max
+            raise Error::UnsupportedFeatures.new(SERVER_TOO_OLD % [@address,
+                                                                   @server_wire_versions.max,
                                                                    DRIVER_WIRE_VERSIONS.min])
-          elsif DRIVER_WIRE_VERSIONS.max < server_wire_versions.min
-            raise Error::UnsupportedFeatures.new(DRIVER_TOO_OLD % [address,
-                                                                   server_wire_versions.min,
+          elsif DRIVER_WIRE_VERSIONS.max < @server_wire_versions.min
+            raise Error::UnsupportedFeatures.new(DRIVER_TOO_OLD % [@address,
+                                                                   @server_wire_versions.min,
                                                                    DRIVER_WIRE_VERSIONS.max])
           end
         end

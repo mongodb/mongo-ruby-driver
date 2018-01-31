@@ -180,6 +180,19 @@ module Mongo
         @topology_type = outcome['topologyType']
         @logical_session_timeout = outcome['logicalSessionTimeoutMinutes']
         @events = process_events(outcome['events']) if outcome['events']
+        @compatible = outcome['compatible']
+      end
+
+      # Whether the server responses indicate that their versions are supported by the driver.
+      #
+      # @example Do the server responses indicate that their versions are supported by the driver.
+      #   outcome.compatible?
+      #
+      # @return [ true, false ] Whether the server versions are compatible with the driver.
+      #
+      # @since 2.5.1
+      def compatible?
+        @compatible.nil? || !!@compatible
       end
 
       private

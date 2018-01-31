@@ -27,7 +27,7 @@ describe Mongo::Server::Description::Features do
 
       it 'raises an exception' do
         expect {
-          features
+          features.check_driver_support!
         }.to raise_error(Mongo::Error::UnsupportedFeatures)
       end
     end
@@ -51,7 +51,7 @@ describe Mongo::Server::Description::Features do
 
       it 'raises an exception' do
         expect {
-          features
+          features.check_driver_support!
         }.to raise_error(Mongo::Error::UnsupportedFeatures)
       end
     end
@@ -214,7 +214,7 @@ describe Mongo::Server::Description::Features do
 
       it 'returns false' do
         expect {
-          features
+          features.check_driver_support!
         }.to raise_exception(Mongo::Error::UnsupportedFeatures)
       end
     end

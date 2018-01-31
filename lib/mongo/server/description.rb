@@ -264,7 +264,7 @@ module Mongo
       def initialize(address, config = {}, average_round_trip_time = 0)
         @address = address
         @config = config
-        @features = Features.new(wire_versions, me)
+        @features = Features.new(wire_versions, me || @address.to_s)
         @average_round_trip_time = average_round_trip_time
       end
 

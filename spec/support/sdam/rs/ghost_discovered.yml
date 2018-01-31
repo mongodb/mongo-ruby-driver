@@ -11,7 +11,9 @@ phases: [
 
                     ok: 1,
                     ismaster: false,
-                    isreplicaset: true
+                    isreplicaset: true,
+                    minWireVersion: 0,
+                    maxWireVersion: 6
                 }]
         ],
 
