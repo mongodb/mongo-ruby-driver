@@ -570,3 +570,18 @@ Most of the write methods you use day-to-day on a collection will be retryable i
 - ``collection#find_one_and_replace``
 - ``collection#find_one_and_delete``
 - ``collection#bulk_write`` (for all single statement ops, i.e. not for ``update_many`` or ``delete_many``)
+
+
+TCP keepalive configuration
+---------------------------
+
+The driver sets TCP keepalive by default. The following default values are also set if the system
+value can be determined and if the driver default value is less than the system value.
+
+- ``tcp_keepalive_time``: 300 seconds
+- ``tcp_keepalive_intvl``: 10 seconds
+- ``tcp_keepalive_cnt``: 9 probes
+
+
+Please see the `MongoDB Diagnostics FAQ keepalive section <https://github.com/mongodb/specifications/blob/master/source/server-selection/server-selection.rst#serverselectiontimeoutms>`_
+for instructions on setting these values at the system level.

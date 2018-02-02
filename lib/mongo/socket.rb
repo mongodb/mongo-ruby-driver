@@ -190,8 +190,32 @@ module Mongo
       defined?(UNIXSocket) && sock.is_a?(UNIXSocket)
     end
 
+    DEFAULT_TCP_KEEPINTVL = 10
+
+    DEFAULT_TCP_KEEPCNT = 9
+
+    DEFAULT_TCP_KEEPIDLE = 300
+
+    def set_keepalive_opts(sock)
+      sock.setsockopt(SOL_SOCKET, SO_KEEPALIVE, true)
+      set_option(sock, :TCP_KEEPINTVL, DEFAULT_TCP_KEEPINTVL)
+      set_option(sock, :TCP_KEEPCNT, DEFAULT_TCP_KEEPCNT)
+      set_option(sock, :TCP_KEEPIDLE, DEFAULT_TCP_KEEPIDLE)
+    rescue
+    end
+
+    def set_option(sock, option, default)
+      if Socket.const_defined?(option)
+        system_default = sock.getsockopt(IPPROTO_TCP, option).int
+        if system_default > default
+          sock.setsockopt(IPPROTO_TCP, option, default)
+        end
+      end
+    end
+
     def set_socket_options(sock)
       sock.set_encoding(BSON::BINARY)
+      set_keepalive_opts(sock)
     end
 
     def handle_errors
