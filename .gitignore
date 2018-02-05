@@ -21,3 +21,4 @@ gem-private_key.pem
 nbproject
 tmp
 sandbox/*
+.byebug_history
