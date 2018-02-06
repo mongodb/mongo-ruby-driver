@@ -25,6 +25,7 @@ env:
     - MONGODB=3.0.12
     - MONGODB=3.2.11
     - MONGODB=3.4.1
+    - MONGODB=3.6.2
 
 before_script:
   - wget http://fastdl.mongodb.org/linux/mongodb-linux-x86_64-${MONGODB}.tgz -O /tmp/mongodb.tgz
