@@ -108,18 +108,6 @@ module Mongo
       @server_session = nil
     end
 
-    # End this session if it's an implicit session.
-    #
-    # @example
-    #   session.end_implicit_session
-    #
-    # @return [ nil ] Always nil.
-    #
-    # @since 2.5.0
-    def end_implicit_session
-      end_session if implicit_session?
-    end
-
     # Whether this session has ended.
     #
     # @example
@@ -159,6 +147,7 @@ module Mongo
     def validate!(cluster)
       check_matching_cluster!(cluster)
       check_if_ended!
+      self
     end
 
     # Process a response from the server that used this session.
@@ -172,7 +161,7 @@ module Mongo
     #
     # @since 2.5.0
     def process(result)
-      unless implicit_session?
+      unless implicit?
         set_operation_time(result)
         set_cluster_time(result)
       end
@@ -246,13 +235,25 @@ module Mongo
     # Increment and return the next transaction number.
     #
     # @example Get the next transaction number.
-    #   server_session.next_txn_num
+    #   session.next_txn_num
     #
     # @return [ Integer ] The next transaction number.
     #
     # @since 2.5.0
     def next_txn_num
       @server_session.next_txn_num if @server_session
+    end
+
+    # Is this session an implicit one (not user-created).
+    #
+    # @example Is the session implicit?
+    #   session.implicit?
+    #
+    # @return [ true, false ] Whether this session is implicit.
+    #
+    # @since 2.5.1
+    def implicit?
+      @implicit_session ||= !!(@options.key?(:implicit) && @options[:implicit] == true)
     end
 
     private
@@ -271,10 +272,6 @@ module Mongo
                                else
                                  true
                                end)
-    end
-
-    def implicit_session?
-      @implicit_session ||= !!(@options.key?(:implicit) && @options[:implicit] == true)
     end
 
     def set_operation_time(result)

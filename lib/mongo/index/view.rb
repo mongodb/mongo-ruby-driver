@@ -30,7 +30,7 @@ module Mongo
       attr_reader :batch_size
 
       def_delegators :@collection, :cluster, :database, :read_preference, :write_concern, :client
-      def_delegators :cluster, :next_primary
+      def_delegators :cluster, :next_primary, :with_session, :get_session
 
       # The index key field.
       #
@@ -149,7 +149,7 @@ module Mongo
       # @since 2.0.0
       def create_many(*models)
         server = next_primary
-        client.send(:with_session, @options) do |session|
+        with_session(@options) do |session|
           spec = {
                   indexes: normalize_models(models.flatten, server),
                   db_name: database.name,
@@ -191,7 +191,7 @@ module Mongo
       # @since 2.0.0
       def each(&block)
         server = next_primary(false)
-        session = client.send(:get_session, @options)
+        session = get_session(@options)
         result = send_initial_query(server, session)
         cursor = Cursor.new(self, result, server, session: session)
         cursor.each do |doc|
@@ -223,7 +223,7 @@ module Mongo
       private
 
       def drop_by_name(name)
-        client.send(:with_session, @options) do |session|
+        with_session(@options) do |session|
           spec = {
                    db_name: database.name,
                    coll_name: collection.name,

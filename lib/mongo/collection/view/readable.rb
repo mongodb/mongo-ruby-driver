@@ -472,7 +472,7 @@ module Mongo
         end
 
         def parallel_scan(cursor_count, options = {})
-          session = client.send(:get_session, @options)
+          session = client.get_session(@options)
           server = server_selector.select_server(cluster, false)
           cmd = Operation::Commands::ParallelScan.new({
                   :coll_name => collection.name,

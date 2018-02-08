@@ -36,7 +36,7 @@ module Mongo
         # @yieldparam [ Hash ] Each matching document.
         def each
           @cursor = nil
-          session = client.send(:get_session, @options)
+          session = client.get_session(@options)
           read_with_retry do
             server = server_selector.select_server(cluster, false)
             result = send_initial_query(server, session)

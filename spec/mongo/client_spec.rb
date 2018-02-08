@@ -1585,7 +1585,7 @@ describe Mongo::Client do
       end
     end
 
-    context 'when two clients have the same cluster' do
+    context 'when two clients have the same cluster', if: test_sessions? do
 
       let(:client) do
         authorized_client.with(database: 'another')
@@ -1600,7 +1600,7 @@ describe Mongo::Client do
       end
     end
 
-    context 'when two clients have different clusters' do
+    context 'when two clients have different clusters', if: test_sessions? do
 
       let(:client) do
         authorized_client_with_retry_writes

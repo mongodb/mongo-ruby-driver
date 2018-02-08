@@ -515,10 +515,8 @@ module Mongo
     #
     # @since 2.5.1
     def start_session(options = {})
-      if !sessions_supported?
-        raise Error::InvalidSession.new(Session::SESSIONS_NOT_SUPPORTED)
-      end
-      Session.new(@session_pool.checkout, self, options)
+      return Session.new(@session_pool.checkout, self, options) if sessions_supported?
+      raise Error::InvalidSession.new(Session::SESSIONS_NOT_SUPPORTED) unless !!options[:implicit]
     end
 
     # Get a session, either by extracting it from the options or by creating a new one.
@@ -532,12 +530,8 @@ module Mongo
     #
     # @since 2.5.1
     def get_session(options = {})
-      if options[:session]
-        options[:session].validate!(self)
-        options[:session]
-      elsif sessions_supported?
-        Session.new(@session_pool.checkout, self, options.merge(implicit: true))
-      end
+      return options[:session].validate!(self) if options[:session]
+      start_session(implicit: true)
     end
 
     # Execute a block using a session. The session is either extracted from the options or a new, implicit
@@ -556,16 +550,10 @@ module Mongo
     #
     # @since 2.5.1
     def with_session(options = {})
-      if options[:session]
-        options[:session].validate!(self)
-        yield(options[:session])
-      elsif sessions_supported?
-        @session_pool.with_session do |server_session|
-          yield(Session.new(server_session, self, options))
-        end
-      else
-        yield
-      end
+      session = get_session(options)
+      yield(session)
+    ensure
+      session.end_session if (session && session.implicit?)
     end
 
     private

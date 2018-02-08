@@ -58,7 +58,7 @@ module Mongo
             apply_session_id!(selector)
             apply_causal_consistency!(selector, server)
           end
-        elsif session && !session.send(:implicit_session?)
+        elsif session && !session.implicit?
           apply_cluster_time!(selector, server)
           apply_session_id!(selector)
           apply_causal_consistency!(selector, server)
