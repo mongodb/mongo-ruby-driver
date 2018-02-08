@@ -75,6 +75,11 @@ module Mongo
     # @since 2.5.0
     attr_reader :cluster_time
 
+    # @return [ Mongo::Session::SessionPool ] The session pool.
+    #
+    # @since 2.5.1
+    attr_reader :session_pool
+
     def_delegators :topology, :replica_set?, :replica_set_name, :sharded?,
                    :single?, :unknown?, :member_discovered
     def_delegators :@cursor_reaper, :register_cursor, :schedule_kill_cursor, :unregister_cursor
@@ -173,6 +178,7 @@ module Mongo
       @cluster_time = nil
       @cluster_time_lock = Mutex.new
       @topology = Topology.initial(seeds, monitoring, options)
+      Session::SessionPool.create(self)
 
       publish_sdam_event(
         Monitoring::TOPOLOGY_OPENING,
@@ -195,7 +201,7 @@ module Mongo
       @periodic_executor = PeriodicExecutor.new(@cursor_reaper, @socket_reaper)
       @periodic_executor.run!
 
-      ObjectSpace.define_finalizer(self, self.class.finalize(pools, @periodic_executor))
+      ObjectSpace.define_finalizer(self, self.class.finalize(pools, @periodic_executor, @session_pool))
     end
 
     # Finalize the cluster for garbage collection. Disconnects all the scoped
@@ -204,18 +210,20 @@ module Mongo
     # @example Finalize the cluster.
     #   Cluster.finalize(pools)
     #
-    # @param [ Hash<Address, Server::ConnectionPool> ] pools The connection
-    #   pools.
+    # @param [ Hash<Address, Server::ConnectionPool> ] pools The connection pools.
+    # @param [ PeriodicExecutor ] periodic_executor The periodic executor.
+    # @param [ SessionPool ] session_pool The session pool.
     #
     # @return [ Proc ] The Finalizer.
     #
     # @since 2.2.0
-    def self.finalize(pools, periodic_executor)
+    def self.finalize(pools, periodic_executor, session_pool)
       proc do
         periodic_executor.stop!
         pools.values.each do |pool|
           pool.disconnect!
         end
+        session_pool.end_sessions
       end
     end
 
@@ -493,7 +501,82 @@ module Mongo
       end
     end
 
+    # Start a session.
+    #
+    # @example Start a session.
+    #   cluster.start_session
+    #
+    # @param [ Hash ] options The session options.
+    #
+    # @note A Session cannot be used by multiple threads at once; session objects are not
+    #   thread-safe.
+    #
+    # @return [ Session ] The session.
+    #
+    # @since 2.5.1
+    def start_session(options = {})
+      if !sessions_supported?
+        raise Error::InvalidSession.new(Session::SESSIONS_NOT_SUPPORTED)
+      end
+      Session.new(@session_pool.checkout, self, options)
+    end
+
+    # Get a session, either by extracting it from the options or by creating a new one.
+    #
+    # @example Get a session.
+    #   cluster.get_session
+    #
+    # @param [ Hash ] options Options hash possibly containing a session.
+    #
+    # @return [ Session ] The session.
+    #
+    # @since 2.5.1
+    def get_session(options = {})
+      if options[:session]
+        options[:session].validate!(self)
+        options[:session]
+      elsif sessions_supported?
+        Session.new(@session_pool.checkout, self, options.merge(implicit: true))
+      end
+    end
+
+    # Execute a block using a session. The session is either extracted from the options or a new, implicit
+    #   session is created. The implicit session is closed after the block completes.
+    #
+    # @example Execute a block using a session.
+    #   cluster.with_session do |session|
+    #     ...
+    #   end
+    #
+    # @param [ Hash ] options Options hash possibly containing a session.
+    #
+    # @return [ Object ] The result of the block.
+    #
+    # @yieldparam [ Mongo::Session ] The session.
+    #
+    # @since 2.5.1
+    def with_session(options = {})
+      if options[:session]
+        options[:session].validate!(self)
+        yield(options[:session])
+      elsif sessions_supported?
+        @session_pool.with_session do |server_session|
+          yield(Session.new(server_session, self, options))
+        end
+      else
+        yield
+      end
+    end
+
     private
+
+    def sessions_supported?
+      if servers.empty? && !topology.single?
+        ServerSelector.get(mode: :primary_preferred).select_server(self)
+      end
+      !!logical_session_timeout
+    rescue Error::NoServerAvailable
+    end
 
     def direct_connection?(address)
       address.seed == @topology.seed

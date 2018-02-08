@@ -26,30 +26,30 @@ module Mongo
       # Create a SessionPool.
       #
       # @example
-      #   SessionPool.create(client)
+      #   SessionPool.create(cluster)
       #
-      # @param [ Mongo::Client ] client The client that will be associated with this
+      # @param [ Mongo::Cluster ] cluster The cluster that will be associated with this
       #   session pool.
       #
       # @since 2.5.0
-      def self.create(client)
-        pool = new(client)
-        client.instance_variable_set(:@session_pool, pool)
+      def self.create(cluster)
+        pool = new(cluster)
+        cluster.instance_variable_set(:@session_pool, pool)
       end
 
       # Initialize a SessionPool.
       #
       # @example
-      #   SessionPool.new(client)
+      #   SessionPool.new(cluster)
       #
-      # @param [ Mongo::Client ] client The client that will be associated with this
+      # @param [ Mongo::Cluster ] cluster The cluster that will be associated with this
       #   session pool.
       #
       # @since 2.5.0
-      def initialize(client)
+      def initialize(cluster)
         @queue = []
         @mutex = Mutex.new
-        @client = client
+        @cluster = cluster
       end
 
       # Get a formatted string for use in inspection.
@@ -130,7 +130,7 @@ module Mongo
       # @since 2.5.0
       def end_sessions
         while !@queue.empty?
-          server = ServerSelector.get(mode: :primary_preferred).select_server(@client.cluster)
+          server = ServerSelector.get(mode: :primary_preferred).select_server(@cluster)
           Operation::Commands::Command.new(
               :selector => {endSessions: @queue.shift(10_000).collect { |s| s.session_id }},
               :db_name => Database::ADMIN).execute(server)
@@ -141,9 +141,9 @@ module Mongo
       private
 
       def about_to_expire?(session)
-        if @client.logical_session_timeout
+        if @cluster.logical_session_timeout
           idle_time_minutes = (Time.now - session.last_use) / 60
-          (idle_time_minutes + 1) >= @client.logical_session_timeout
+          (idle_time_minutes + 1) >= @cluster.logical_session_timeout
         end
       end
 
