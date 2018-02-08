@@ -84,6 +84,11 @@ module Mongo
     # @since 2.1.0
     UNSAFE = /[\:\/\+\@]/
 
+    # Percent sign that must be encoded in user creds.
+    #
+    # @since 2.5.1
+    PERCENT_CHAR = /\%/
+
     # Unix socket suffix.
     #
     # @since 2.1.0
@@ -334,15 +339,27 @@ module Mongo
 
     def parse_user!(string)
       if (string && user = string.partition(AUTH_USER_PWD_DELIM)[0])
-        raise_invalid_error!(UNESCAPED_USER_PWD) if user =~ UNSAFE
-        decode(user) if user.length > 0
+        if user.length > 0
+          raise_invalid_error!(UNESCAPED_USER_PWD) if user =~ UNSAFE
+          user_decoded = decode(user)
+          if user_decoded =~ PERCENT_CHAR && encode(user_decoded) != user
+            raise_invalid_error!(UNESCAPED_USER_PWD)
+          end
+          user_decoded
+        end
       end
     end
 
     def parse_password!(string)
       if (string && pwd = string.partition(AUTH_USER_PWD_DELIM)[2])
-        raise_invalid_error!(UNESCAPED_USER_PWD) if pwd =~ UNSAFE
-        decode(pwd) if pwd.length > 0
+        if pwd.length > 0
+          raise_invalid_error!(UNESCAPED_USER_PWD) if pwd =~ UNSAFE
+          pwd_decoded = decode(pwd)
+          if pwd_decoded =~ PERCENT_CHAR && encode(pwd_decoded) != pwd
+            raise_invalid_error!(UNESCAPED_USER_PWD)
+          end
+          pwd_decoded
+        end
       end
     end
 
@@ -382,7 +399,11 @@ module Mongo
     end
 
     def decode(value)
-      ::URI::DEFAULT_PARSER.unescape(value)
+      ::URI.decode(value)
+    end
+
+    def encode(value)
+      ::URI.encode(value)
     end
 
     # Hash for storing map of URI option parameters to conversion strategies
