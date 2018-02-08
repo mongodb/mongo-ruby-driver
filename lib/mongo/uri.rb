@@ -84,10 +84,10 @@ module Mongo
     # @since 2.1.0
     UNSAFE = /[\:\/\+\@]/
 
-    # Percent sign that much be encoded in user creds.
+    # Percent sign that must be encoded in user creds.
     #
     # @since 2.5.1
-    UNESCAPED_PERCENT = /\%/
+    PERCENT_CHAR = /\%/
 
     # Unix socket suffix.
     #
@@ -342,7 +342,7 @@ module Mongo
         if user.length > 0
           raise_invalid_error!(UNESCAPED_USER_PWD) if user =~ UNSAFE
           user_decoded = decode(user)
-          if user_decoded =~ UNESCAPED_PERCENT && encode(user_decoded) != user
+          if user_decoded =~ PERCENT_CHAR && encode(user_decoded) != user
             raise_invalid_error!(UNESCAPED_USER_PWD)
           end
           user_decoded
@@ -355,7 +355,7 @@ module Mongo
         if pwd.length > 0
           raise_invalid_error!(UNESCAPED_USER_PWD) if pwd =~ UNSAFE
           pwd_decoded = decode(pwd)
-          if pwd_decoded =~ UNESCAPED_PERCENT && encode(pwd_decoded) != pwd
+          if pwd_decoded =~ PERCENT_CHAR && encode(pwd_decoded) != pwd
             raise_invalid_error!(UNESCAPED_USER_PWD)
           end
           pwd_decoded
