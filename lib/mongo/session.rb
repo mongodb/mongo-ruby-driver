@@ -102,7 +102,6 @@ module Mongo
     def end_session
       if !ended? && @cluster
         @cluster.session_pool.checkin(@server_session)
-        nil
       end
     ensure
       @server_session = nil

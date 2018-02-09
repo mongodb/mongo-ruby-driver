@@ -507,12 +507,12 @@ module Mongo
 
     def start_session(options = {})
       return Session.new(@session_pool.checkout, self, options) if sessions_supported?
-      raise Error::InvalidSession.new(Session::SESSIONS_NOT_SUPPORTED) unless !!options[:implicit]
+      raise Error::InvalidSession.new(Session::SESSIONS_NOT_SUPPORTED)
     end
 
     def get_session(options = {})
       return options[:session].validate!(self) if options[:session]
-      start_session(implicit: true)
+      Session.new(@session_pool.checkout, self, options.merge(implicit: true)) if sessions_supported?
     end
 
     def with_session(options = {})
