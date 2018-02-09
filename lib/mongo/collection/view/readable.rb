@@ -138,7 +138,7 @@ module Mongo
           read_with_retry do
             server = selector.select_server(cluster, false)
             apply_collation!(cmd, server, opts)
-            with_session(opts) do |session|
+            client.send(:with_session, opts) do |session|
               Operation::Commands::Count.new({
                                                    :selector => cmd,
                                                    :db_name => database.name,
@@ -178,7 +178,7 @@ module Mongo
           read_with_retry do
             server = selector.select_server(cluster, false)
             apply_collation!(cmd, server, opts)
-            with_session(opts) do |session|
+            client.send(:with_session, opts) do |session|
               Operation::Commands::Distinct.new({
                                                    :selector => cmd,
                                                    :db_name => database.name,
@@ -472,7 +472,7 @@ module Mongo
         end
 
         def parallel_scan(cursor_count, options = {})
-          session = client.get_session(@options)
+          session = client.send(:get_session, @options)
           server = server_selector.select_server(cluster, false)
           cmd = Operation::Commands::ParallelScan.new({
                   :coll_name => collection.name,

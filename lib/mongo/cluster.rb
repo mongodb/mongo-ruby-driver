@@ -77,6 +77,8 @@ module Mongo
 
     # @return [ Mongo::Session::SessionPool ] The session pool.
     #
+    # @private
+    #
     # @since 2.5.1
     attr_reader :session_pool
 
@@ -501,62 +503,24 @@ module Mongo
       end
     end
 
-    # Start a session.
-    #
-    # @example Start a session.
-    #   cluster.start_session
-    #
-    # @param [ Hash ] options The session options.
-    #
-    # @note A Session cannot be used by multiple threads at once; session objects are not
-    #   thread-safe.
-    #
-    # @return [ Session ] The session.
-    #
-    # @since 2.5.1
+    private
+
     def start_session(options = {})
       return Session.new(@session_pool.checkout, self, options) if sessions_supported?
       raise Error::InvalidSession.new(Session::SESSIONS_NOT_SUPPORTED) unless !!options[:implicit]
     end
 
-    # Get a session, either by extracting it from the options or by creating a new one.
-    #
-    # @example Get a session.
-    #   cluster.get_session
-    #
-    # @param [ Hash ] options Options hash possibly containing a session.
-    #
-    # @return [ Session ] The session.
-    #
-    # @since 2.5.1
     def get_session(options = {})
       return options[:session].validate!(self) if options[:session]
       start_session(implicit: true)
     end
 
-    # Execute a block using a session. The session is either extracted from the options or a new, implicit
-    #   session is created. The implicit session is closed after the block completes.
-    #
-    # @example Execute a block using a session.
-    #   cluster.with_session do |session|
-    #     ...
-    #   end
-    #
-    # @param [ Hash ] options Options hash possibly containing a session.
-    #
-    # @return [ Object ] The result of the block.
-    #
-    # @yieldparam [ Mongo::Session ] The session.
-    #
-    # @since 2.5.1
     def with_session(options = {})
       session = get_session(options)
       yield(session)
     ensure
       session.end_session if (session && session.implicit?)
     end
-
-    private
 
     def sessions_supported?
       if servers.empty? && !topology.single?

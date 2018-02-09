@@ -64,24 +64,6 @@ module Mongo
         "#<Mongo::Session::SessionPool:0x#{object_id} current_size=#{@queue.size}>"
       end
 
-      # Checkout a session to be used in the context of a block and return the session back to
-      #   the pool after the block completes.
-      #
-      # @example Checkout, use a session, and return it back to the pool after the block.
-      #   pool.with_session do |session|
-      #     ...
-      #   end
-      #
-      # @yieldparam [ ServerSession ] The server session.
-      #
-      # @since 2.5.0
-      def with_session
-        server_session = checkout
-        yield(server_session)
-      ensure
-        begin; checkin(server_session) if server_session; rescue; end
-      end
-
       # Checkout a server session from the pool.
       #
       # @example Checkout a session.

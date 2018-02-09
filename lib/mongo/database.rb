@@ -71,8 +71,7 @@ module Mongo
 
     # @return [ Mongo::Server ] Get the primary server from the cluster.
     def_delegators :cluster,
-                   :next_primary,
-                   :with_session
+                   :next_primary
 
     # Check equality of the database object against another. Will simply check
     # if the names are the same.
@@ -156,7 +155,7 @@ module Mongo
     def command(operation, opts = {})
       preference = ServerSelector.get(opts[:read] || ServerSelector::PRIMARY)
       server = preference.select_server(cluster)
-      client.with_session(opts) do |session|
+      client.send(:with_session, opts) do |session|
         Operation::Commands::Command.new({
           :selector => operation.dup,
           :db_name => name,
@@ -180,7 +179,7 @@ module Mongo
     # @since 2.0.0
     def drop(options = {})
       operation = { :dropDatabase => 1 }
-      client.with_session(options) do |session|
+      client.send(:with_session, options) do |session|
         Operation::Commands::DropDatabase.new({
           selector: operation,
           db_name: name,

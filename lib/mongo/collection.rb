@@ -48,7 +48,7 @@ module Mongo
     def_delegators :database, :client, :cluster
 
     # Delegate to the cluster for the next primary.
-    def_delegators :cluster, :next_primary, :with_session
+    def_delegators :cluster, :next_primary
 
     # Options that can be updated on a new Collection instance via the #with method.
     #
@@ -188,7 +188,7 @@ module Mongo
       if (options[:collation] || options[Operation::COLLATION]) && !server.features.collation_enabled?
         raise Error::UnsupportedCollation.new
       end
-      with_session(opts) do |session|
+      client.send(:with_session, opts) do |session|
         Operation::Commands::Create.new({
                                           selector: operation,
                                           db_name: database.name,
@@ -214,7 +214,7 @@ module Mongo
     #
     # @since 2.0.0
     def drop(opts = {})
-      with_session(opts) do |session|
+      client.send(:with_session, opts) do |session|
         Operation::Commands::Drop.new({
                                         selector: { :drop => name },
                                         db_name: database.name,
@@ -418,7 +418,7 @@ module Mongo
     #
     # @since 2.0.0
     def insert_one(document, opts = {})
-      with_session(opts) do |session|
+      client.send(:with_session, opts) do |session|
         write_with_retry(session, write_concern) do |server, txn_num|
           Operation::Write::Insert.new(
               :documents => [ document ],

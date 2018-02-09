@@ -26,7 +26,7 @@ module Mongo
         attr_reader :database
 
         def_delegators :database, :cluster, :read_preference, :client
-        def_delegators :cluster, :next_primary, :with_session
+        def_delegators :cluster, :next_primary
 
         # Create a new user in the database.
         #
@@ -43,7 +43,7 @@ module Mongo
         # @since 2.0.0
         def create(user_or_name, options = {})
           user = generate(user_or_name, options)
-          with_session(options) do |session|
+          client.send(:with_session, options) do |session|
             Operation::Write::Command::CreateUser.new(
               user: user,
               db_name: database.name,
@@ -78,7 +78,7 @@ module Mongo
         #
         # @since 2.0.0
         def remove(name, options = {})
-          with_session(options) do |session|
+          client.send(:with_session, options) do |session|
             Operation::Write::Command::RemoveUser.new(
               user_name: name,
               db_name: database.name,
@@ -101,7 +101,7 @@ module Mongo
         #
         # @since 2.0.0
         def update(user_or_name, options = {})
-          with_session(options) do |session|
+          client.send(:with_session, options) do |session|
             user = generate(user_or_name, options)
             Operation::Write::Command::UpdateUser.new(
               user: user,
@@ -131,7 +131,7 @@ module Mongo
         private
 
         def user_query(name, options = {})
-          with_session(options) do |session|
+          client.send(:with_session, options) do |session|
             Operation::Commands::UsersInfo.new(
               user_name: name,
               db_name: database.name,

@@ -40,7 +40,7 @@ module Mongo
                    :cluster,
                    :next_primary
 
-    def_delegators :database, :client, :with_session
+    def_delegators :database, :client
 
     # Execute the bulk write operation.
     #
@@ -55,7 +55,7 @@ module Mongo
       result_combiner = ResultCombiner.new
       operations = op_combiner.combine
 
-      with_session(@options) do |session|
+      client.send(:with_session, @options) do |session|
         operations.each do |operation|
           if single_statement?(operation)
             write_with_retry(session, write_concern) do |server, txn_num|

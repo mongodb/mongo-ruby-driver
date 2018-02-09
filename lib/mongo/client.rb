@@ -96,8 +96,6 @@ module Mongo
     # Delegate subscription to monitoring.
     def_delegators :@monitoring, :subscribe, :unsubscribe
 
-    def_delegators :@cluster, :start_session, :get_session, :with_session
-
     # Determine if this client is equivalent to another object.
     #
     # @example Check client equality.
@@ -423,7 +421,32 @@ module Mongo
       end
     end
 
+    # Start a session.
+    #
+    # @example Start a session.
+    #   client.start_session(causal_consistency: true)
+    #
+    # @param [ Hash ] options The session options.
+    #
+    # @note A Session cannot be used by multiple threads at once; session objects are not
+    #   thread-safe.
+    #
+    # @return [ Session ] The session.
+    #
+    # @since 2.5.1
+    def start_session(options = {})
+      cluster.send(:start_session, options)
+    end
+
     private
+
+    def get_session(options = {})
+      cluster.send(:get_session, options)
+    end
+
+    def with_session(options = {}, &block)
+      cluster.send(:with_session, options, &block)
+    end
 
     def create_from_addresses(addresses, opts = Options::Redacted.new)
       @options = Database::DEFAULT_OPTIONS.merge(opts).freeze
