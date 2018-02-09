@@ -1588,7 +1588,7 @@ describe Mongo::Client do
     context 'when two clients have the same cluster', if: test_sessions? do
 
       let(:client) do
-        authorized_client.with(database: 'another')
+        authorized_client.with(read: { mode: :secondary })
       end
 
       let(:session) do
