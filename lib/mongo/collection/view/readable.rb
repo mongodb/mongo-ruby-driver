@@ -138,7 +138,7 @@ module Mongo
           read_with_retry do
             server = selector.select_server(cluster, false)
             apply_collation!(cmd, server, opts)
-            client.send(:with_session, opts) do |session|
+            with_session(opts) do |session|
               Operation::Commands::Count.new({
                                                    :selector => cmd,
                                                    :db_name => database.name,
@@ -178,7 +178,7 @@ module Mongo
           read_with_retry do
             server = selector.select_server(cluster, false)
             apply_collation!(cmd, server, opts)
-            client.send(:with_session, opts) do |session|
+            with_session(opts) do |session|
               Operation::Commands::Distinct.new({
                                                    :selector => cmd,
                                                    :db_name => database.name,
