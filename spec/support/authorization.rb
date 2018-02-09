@@ -166,6 +166,11 @@ AUTHORIZED_CLIENT = Mongo::Client.new(
     password: TEST_USER.password)
 )
 
+# Provides an authorized mongo client that retries writes.
+#
+# @since 2.5.1
+AUTHROIZED_CLIENT_WITH_RETRY_WRITES = AUTHORIZED_CLIENT.with(retry_writes: true)
+
 # Provides an unauthorized mongo client on the default test database.
 #
 # @since 2.0.0
@@ -219,6 +224,11 @@ module Authorization
     #
     # @since 2.0.0
     context.let(:authorized_client) { AUTHORIZED_CLIENT }
+
+    # Provides an authorized mongo client on the default test database that retries writes.
+    #
+    # @since 2.5.1
+    context.let(:authorized_client_with_retry_writes) { AUTHROIZED_CLIENT_WITH_RETRY_WRITES }
 
     # Provides an unauthorized mongo client on the default test database.
     #

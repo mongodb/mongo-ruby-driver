@@ -17,7 +17,7 @@ require 'mongo/session/server_session'
 
 module Mongo
 
-  # A logical client session representing a set of sequential operations executed
+  # A logical session representing a set of sequential operations executed
   #   by an application that are related in some way.
   #
   # @since 2.5.0
@@ -29,10 +29,10 @@ module Mongo
     # @since 2.5.0
     attr_reader :options
 
-    # Get the client through which this session was created.
+    # Get the cluster through which this session was created.
     #
-    # @since 2.5.0
-    attr_reader :client
+    # @since 2.5.1
+    attr_reader :cluster
 
     # The cluster time for this session.
     #
@@ -44,14 +44,13 @@ module Mongo
     # @since 2.5.0
     attr_reader :operation_time
 
-    def_delegators :client, :cluster
-
-    # Error message describing that the session was attempted to be used by a client different from the
-    # one it was originally associated with.
+    # Error message indicating that the session was retrieved from a client with a different cluster than that of the
+    # client through which it is currently being used.
     #
     # @since 2.5.0
-    MISMATCHED_CLUSTER_ERROR_MSG = 'The client used to create this session does not match that of client ' +
-        'initiating this operation. Please only use this session for operations through its parent client.'.freeze
+    MISMATCHED_CLUSTER_ERROR_MSG = 'The configuration of the client used to create this session does not match that ' +
+        'of the client owning this operation. Please only use this session for operations through its parent ' +
+        'client.'.freeze
 
     # Error message describing that the session cannot be used because it has already been ended.
     #
@@ -66,16 +65,16 @@ module Mongo
     # Initialize a Session.
     #
     # @example
-    #   Session.new(server_session, client, options)
+    #   Session.new(server_session, cluster, options)
     #
-    # @param [ ServerSession ] server_session The server session this client session is associated with.
-    # @param [ Client ] client The client through which this session is created.
+    # @param [ ServerSession ] server_session The server session this session is associated with.
+    # @param [ Cluster ] cluster The cluster through which this session is created.
     # @param [ Hash ] options The options for this session.
     #
     # @since 2.5.0
-    def initialize(server_session, client, options = {})
+    def initialize(server_session, cluster, options = {})
       @server_session = server_session
-      @client = client
+      @cluster = cluster
       @options = options.dup.freeze
       @cluster_time = nil
     end
@@ -101,24 +100,11 @@ module Mongo
     #
     # @since 2.5.0
     def end_session
-      if !ended? && @client
-        @client.instance_variable_get(:@session_pool).checkin(@server_session)
-        nil
+      if !ended? && @cluster
+        @cluster.session_pool.checkin(@server_session)
       end
     ensure
       @server_session = nil
-    end
-
-    # End this session if it's an implicit session.
-    #
-    # @example
-    #   session.end_implicit_session
-    #
-    # @return [ nil ] Always nil.
-    #
-    # @since 2.5.0
-    def end_implicit_session
-      end_session if implicit_session?
     end
 
     # Whether this session has ended.
@@ -148,18 +134,19 @@ module Mongo
     # Validate the session.
     #
     # @example
-    #   session.validate!(client)
+    #   session.validate!(cluster)
     #
-    # @param [ Client ] client The client the session is attempted to be used with.
+    # @param [ Cluster ] cluster The cluster the session is attempted to be used with.
     #
     # @return [ nil ] nil if the session is valid.
     #
     # @raise [ Mongo::Error::InvalidSession ] Raise error if the session is not valid.
     #
     # @since 2.5.0
-    def validate!(client)
-      check_matching_client!(client)
+    def validate!(cluster)
+      check_matching_cluster!(cluster)
       check_if_ended!
+      self
     end
 
     # Process a response from the server that used this session.
@@ -173,7 +160,7 @@ module Mongo
     #
     # @since 2.5.0
     def process(result)
-      unless implicit_session?
+      unless implicit?
         set_operation_time(result)
         set_cluster_time(result)
       end
@@ -229,7 +216,7 @@ module Mongo
     #
     # @since 2.5.0
     def retry_writes?
-      !!client.options[:retry_writes] && (cluster.replica_set? || cluster.sharded?)
+      !!cluster.options[:retry_writes] && (cluster.replica_set? || cluster.sharded?)
     end
 
     # Get the session id.
@@ -247,13 +234,25 @@ module Mongo
     # Increment and return the next transaction number.
     #
     # @example Get the next transaction number.
-    #   server_session.next_txn_num
+    #   session.next_txn_num
     #
     # @return [ Integer ] The next transaction number.
     #
     # @since 2.5.0
     def next_txn_num
       @server_session.next_txn_num if @server_session
+    end
+
+    # Is this session an implicit one (not user-created).
+    #
+    # @example Is the session implicit?
+    #   session.implicit?
+    #
+    # @return [ true, false ] Whether this session is implicit.
+    #
+    # @since 2.5.1
+    def implicit?
+      @implicit_session ||= !!(@options.key?(:implicit) && @options[:implicit] == true)
     end
 
     private
@@ -272,10 +271,6 @@ module Mongo
                                else
                                  true
                                end)
-    end
-
-    def implicit_session?
-      @implicit_session ||= !!(@options.key?(:implicit) && @options[:implicit] == true)
     end
 
     def set_operation_time(result)
@@ -298,8 +293,8 @@ module Mongo
       raise Mongo::Error::InvalidSession.new(SESSION_ENDED_ERROR_MSG) if ended?
     end
 
-    def check_matching_client!(client)
-      if @client != client
+    def check_matching_cluster!(cluster)
+      if @cluster != cluster
         raise Mongo::Error::InvalidSession.new(MISMATCHED_CLUSTER_ERROR_MSG)
       end
     end

@@ -44,7 +44,7 @@ shared_examples 'an operation using a session' do
     context 'when a session from another client is provided' do
 
       let(:session) do
-        authorized_client.with(read: { mode: :secondary }).start_session
+        authorized_client_with_retry_writes.start_session
       end
 
       let(:operation_result) do

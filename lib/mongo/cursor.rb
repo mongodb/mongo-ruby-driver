@@ -219,7 +219,7 @@ module Mongo
     end
 
     def end_session
-      @session.end_implicit_session if @session
+      @session.end_session if @session && @session.implicit?
     end
 
     def kill_cursors_operation

@@ -199,10 +199,8 @@ module Mongo
 
       def view; self; end
 
-      def with_session(opts = {})
-        client.send(:with_session, @options.merge(opts)) do |session|
-          yield(session)
-        end
+      def with_session(opts = {}, &block)
+        client.send(:with_session, @options.merge(opts), &block)
       end
     end
   end

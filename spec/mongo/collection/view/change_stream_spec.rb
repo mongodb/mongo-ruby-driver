@@ -314,11 +314,7 @@ describe Mongo::Collection::View::ChangeStream, if: test_change_streams? do
       context 'when a session from another client is provided' do
 
         let(:session) do
-          client.start_session
-        end
-
-        let(:client) do
-          authorized_client.with(read: { mode: :secondary })
+          authorized_client_with_retry_writes.start_session
         end
 
         let(:operation_result) do

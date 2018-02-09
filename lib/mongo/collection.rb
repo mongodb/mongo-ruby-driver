@@ -410,23 +410,23 @@ module Mongo
     #   collection.insert_one({ name: 'test' })
     #
     # @param [ Hash ] document The document to insert.
-    # @param [ Hash ] options The insert options.
+    # @param [ Hash ] opts The insert options.
     #
-    # @option options [ Session ] :session The session to use for the operation.
+    # @option opts [ Session ] :session The session to use for the operation.
     #
     # @return [ Result ] The database response wrapper.
     #
     # @since 2.0.0
-    def insert_one(document, options = {})
-      client.send(:with_session, options) do |session|
+    def insert_one(document, opts = {})
+      client.send(:with_session, opts) do |session|
         write_with_retry(session, write_concern) do |server, txn_num|
           Operation::Write::Insert.new(
               :documents => [ document ],
               :db_name => database.name,
               :coll_name => name,
               :write_concern => write_concern,
-              :bypass_document_validation => !!options[:bypass_document_validation],
-              :options => options,
+              :bypass_document_validation => !!opts[:bypass_document_validation],
+              :options => opts,
               :id_generator => client.options[:id_generator],
               :session => session,
               :txn_num => txn_num

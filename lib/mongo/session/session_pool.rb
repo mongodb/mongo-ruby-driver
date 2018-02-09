@@ -26,30 +26,30 @@ module Mongo
       # Create a SessionPool.
       #
       # @example
-      #   SessionPool.create(client)
+      #   SessionPool.create(cluster)
       #
-      # @param [ Mongo::Client ] client The client that will be associated with this
+      # @param [ Mongo::Cluster ] cluster The cluster that will be associated with this
       #   session pool.
       #
       # @since 2.5.0
-      def self.create(client)
-        pool = new(client)
-        client.instance_variable_set(:@session_pool, pool)
+      def self.create(cluster)
+        pool = new(cluster)
+        cluster.instance_variable_set(:@session_pool, pool)
       end
 
       # Initialize a SessionPool.
       #
       # @example
-      #   SessionPool.new(client)
+      #   SessionPool.new(cluster)
       #
-      # @param [ Mongo::Client ] client The client that will be associated with this
+      # @param [ Mongo::Cluster ] cluster The cluster that will be associated with this
       #   session pool.
       #
       # @since 2.5.0
-      def initialize(client)
+      def initialize(cluster)
         @queue = []
         @mutex = Mutex.new
-        @client = client
+        @cluster = cluster
       end
 
       # Get a formatted string for use in inspection.
@@ -62,24 +62,6 @@ module Mongo
       # @since 2.5.0
       def inspect
         "#<Mongo::Session::SessionPool:0x#{object_id} current_size=#{@queue.size}>"
-      end
-
-      # Checkout a session to be used in the context of a block and return the session back to
-      #   the pool after the block completes.
-      #
-      # @example Checkout, use a session, and return it back to the pool after the block.
-      #   pool.with_session do |session|
-      #     ...
-      #   end
-      #
-      # @yieldparam [ ServerSession ] The server session.
-      #
-      # @since 2.5.0
-      def with_session
-        server_session = checkout
-        yield(server_session)
-      ensure
-        begin; checkin(server_session) if server_session; rescue; end
       end
 
       # Checkout a server session from the pool.
@@ -130,7 +112,7 @@ module Mongo
       # @since 2.5.0
       def end_sessions
         while !@queue.empty?
-          server = ServerSelector.get(mode: :primary_preferred).select_server(@client.cluster)
+          server = ServerSelector.get(mode: :primary_preferred).select_server(@cluster)
           Operation::Commands::Command.new(
               :selector => {endSessions: @queue.shift(10_000).collect { |s| s.session_id }},
               :db_name => Database::ADMIN).execute(server)
@@ -141,9 +123,9 @@ module Mongo
       private
 
       def about_to_expire?(session)
-        if @client.logical_session_timeout
+        if @cluster.logical_session_timeout
           idle_time_minutes = (Time.now - session.last_use) / 60
-          (idle_time_minutes + 1) >= @client.logical_session_timeout
+          (idle_time_minutes + 1) >= @cluster.logical_session_timeout
         end
       end
 

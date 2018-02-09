@@ -2,40 +2,40 @@ require 'spec_helper'
 
 describe Mongo::Session::SessionPool, if: test_sessions? do
 
+  let(:cluster) do
+    authorized_client.cluster
+  end
+
   describe '.create' do
 
-    let(:client) do
-      authorized_client
-    end
-
     let!(:pool) do
-      described_class.create(client)
+      described_class.create(cluster)
     end
 
     it 'creates a session pool' do
       expect(pool).to be_a(Mongo::Session::SessionPool)
     end
 
-    it 'adds the pool as an instance variable on the client' do
-      expect(client.instance_variable_get(:@session_pool)).to eq(pool)
+    it 'adds the pool as an instance variable on the cluster' do
+      expect(cluster.session_pool).to eq(pool)
     end
   end
 
   describe '#initialize' do
 
     let(:pool) do
-      described_class.new(authorized_client)
+      described_class.new(cluster)
     end
 
-    it 'sets the client' do
-      expect(pool.instance_variable_get(:@client)).to be(authorized_client)
+    it 'sets the cluster' do
+      expect(pool.instance_variable_get(:@cluster)).to be(authorized_client.cluster)
     end
   end
 
   describe '#inspect' do
 
     let(:pool) do
-      described_class.new(authorized_client)
+      described_class.new(cluster)
     end
 
     before do
@@ -55,7 +55,7 @@ describe Mongo::Session::SessionPool, if: test_sessions? do
   describe 'checkout' do
 
     let(:pool) do
-      described_class.new(authorized_client)
+      described_class.new(cluster)
     end
 
     context 'when a session is checked out' do
@@ -138,7 +138,7 @@ describe Mongo::Session::SessionPool, if: test_sessions? do
   describe '#end_sessions' do
 
     let(:pool) do
-      described_class.create(client)
+      described_class.create(client.cluster)
     end
 
     let!(:session_a) do
@@ -155,12 +155,12 @@ describe Mongo::Session::SessionPool, if: test_sessions? do
       end
     end
 
-    let(:subscriber) do
-      EventSubscriber.new
-    end
-
     after do
       client.close
+    end
+
+    let(:subscriber) do
+      EventSubscriber.new
     end
 
     context 'when the number of ids is not larger than 10,000' do

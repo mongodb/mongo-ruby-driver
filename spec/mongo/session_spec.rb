@@ -28,8 +28,8 @@ describe Mongo::Session, if: test_sessions? do
       expect(session.cluster_time).to be(nil)
     end
 
-    it 'sets the client' do
-      expect(session.client).to be(authorized_client)
+    it 'sets the cluster' do
+      expect(session.cluster).to be(authorized_client.cluster)
     end
   end
 
@@ -50,7 +50,8 @@ describe Mongo::Session, if: test_sessions? do
       end
 
       it 'includes the options in the formatted string' do
-        expect(session.inspect).to include({ causal_consistency: true }.to_s)
+        expect(session.inspect).to include({ implicit: false,
+                                             causal_consistency: true }.to_s)
       end
     end
   end
@@ -188,13 +189,13 @@ describe Mongo::Session, if: test_sessions? do
       session.instance_variable_get(:@server_session)
     end
 
-    let(:client_session_pool) do
-      session.client.instance_variable_get(:@session_pool)
+    let(:cluster_session_pool) do
+      session.cluster.session_pool
     end
 
-    it 'returns the server session to the client session pool' do
+    it 'returns the server session to the cluster session pool' do
       session.end_session
-      expect(client_session_pool.instance_variable_get(:@queue)).to include(server_session)
+      expect(cluster_session_pool.instance_variable_get(:@queue)).to include(server_session)
     end
 
     context 'when #end_session is called multiple times' do
@@ -214,7 +215,7 @@ describe Mongo::Session, if: test_sessions? do
     context 'when the option is set to true' do
 
       let(:client) do
-        authorized_client.with(retry_writes: true)
+        authorized_client_with_retry_writes
       end
 
       it 'returns true' do
@@ -226,6 +227,10 @@ describe Mongo::Session, if: test_sessions? do
 
       let(:client) do
         authorized_client.with(retry_writes: false)
+      end
+
+      after do
+        client.close
       end
 
       it 'returns false' do

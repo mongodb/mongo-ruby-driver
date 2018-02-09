@@ -96,8 +96,6 @@ module Mongo
     # Delegate subscription to monitoring.
     def_delegators :@monitoring, :subscribe, :unsubscribe
 
-    def_delegators :@cluster, :logical_session_timeout
-
     # Determine if this client is equivalent to another object.
     #
     # @example Check client equality.
@@ -249,30 +247,12 @@ module Mongo
     # @since 2.0.0
     def initialize(addresses_or_uri, options = Options::Redacted.new)
       @monitoring = Monitoring.new(options)
-      Session::SessionPool.create(self)
       if addresses_or_uri.is_a?(::String)
         create_from_uri(addresses_or_uri, validate_options!(options))
       else
         create_from_addresses(addresses_or_uri, validate_options!(options))
       end
-      ObjectSpace.define_finalizer(self, self.class.finalize(@session_pool))
       yield(self) if block_given?
-    end
-
-    # Finalize the client for garbage collection. Ends all sessions in the session pool.
-    #
-    # @example Finalize the client.
-    #   Client.finalize(session_pool)
-    #
-    # @param [ Session::SessionPool ] session_pool The session pool.
-    #
-    # @return [ Proc ] The Finalizer.
-    #
-    # @since 2.5.0
-    def self.finalize(session_pool)
-      proc do
-        begin; session_pool.end_sessions; rescue; end
-      end
     end
 
     # Get an inspection of the client as a string.
@@ -345,7 +325,6 @@ module Mongo
         opts = validate_options!(new_options)
         client.options.update(opts)
         Database.create(client)
-        Session::SessionPool.create(client)
         # We can't use the same cluster if some options that would affect it
         # have changed.
         if cluster_modifying?(opts)
@@ -445,7 +424,7 @@ module Mongo
     # Start a session.
     #
     # @example Start a session.
-    #   client.start_session
+    #   client.start_session(causal_consistency: true)
     #
     # @param [ Hash ] options The session options.
     #
@@ -456,42 +435,18 @@ module Mongo
     #
     # @since 2.5.0
     def start_session(options = {})
-      if !sessions_supported?
-        raise Error::InvalidSession.new(Session::SESSIONS_NOT_SUPPORTED)
-      end
-      Session.new(@session_pool.checkout, self, options)
+      cluster.send(:get_session, options.merge(implicit: false)) ||
+        (raise Error::InvalidSession.new(Session::SESSIONS_NOT_SUPPORTED))
     end
 
     private
 
     def get_session(options = {})
-      if options[:session]
-        options[:session].validate!(self)
-        options[:session]
-      elsif sessions_supported?
-        Session.new(@session_pool.checkout, self, options.merge(implicit: true))
-      end
+      cluster.send(:get_session, options)
     end
 
-    def with_session(options = {})
-      if options[:session]
-        options[:session].validate!(self)
-        yield(options[:session])
-      elsif sessions_supported?
-        @session_pool.with_session do |server_session|
-          yield(Session.new(server_session, self, options))
-        end
-      else
-        yield
-      end
-    end
-
-    def sessions_supported?
-      if cluster.servers.empty? && !cluster.topology.single?
-        ServerSelector.get(mode: :primary_preferred).select_server(cluster)
-      end
-      !!logical_session_timeout
-    rescue Error::NoServerAvailable
+    def with_session(options = {}, &block)
+      cluster.send(:with_session, options, &block)
     end
 
     def create_from_addresses(addresses, opts = Options::Redacted.new)

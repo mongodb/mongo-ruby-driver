@@ -228,6 +228,10 @@ describe Mongo::Client do
           described_class.new([default_address.seed], authorized_client.options.merge(options))
         end
 
+        after do
+          client.close
+        end
+
         it 'sets the option' do
           expect(client.options['retry_writes']).to eq(options[:retry_writes])
         end
@@ -1503,7 +1507,7 @@ describe Mongo::Client do
       context 'when options are provided' do
 
         let(:options) do
-          { causally_consistent: true }
+          { causal_consistency: true }
         end
 
         let(:session) do
@@ -1511,14 +1515,14 @@ describe Mongo::Client do
         end
 
         it 'sets the options on the session' do
-          expect(session.options).to eq(options)
+          expect(session.options[:causal_consistency]).to eq(options[:causal_consistency])
         end
       end
 
       context 'when options are not provided' do
 
         it 'does not set options on the session' do
-          expect(session.options).to be_empty
+          expect(session.options).to eq({ implicit: false })
         end
       end
 
@@ -1567,7 +1571,7 @@ describe Mongo::Client do
         end
 
         let(:pool) do
-          authorized_client.instance_variable_get(:@session_pool)
+          authorized_client.cluster.session_pool
         end
 
         let!(:before_last_use) do
@@ -1578,6 +1582,38 @@ describe Mongo::Client do
           authorized_client.database.command(ping: 1)
           expect(before_last_use).to be < (pool.instance_variable_get(:@queue)[0].last_use)
         end
+      end
+    end
+
+    context 'when two clients have the same cluster', if: test_sessions? do
+
+      let(:client) do
+        authorized_client.with(read: { mode: :secondary })
+      end
+
+      let(:session) do
+        authorized_client.start_session
+      end
+
+      it 'allows the session to be used across the clients' do
+        client[TEST_COLL].insert_one({ a: 1 }, session: session)
+      end
+    end
+
+    context 'when two clients have different clusters', if: test_sessions? do
+
+      let(:client) do
+        authorized_client_with_retry_writes
+      end
+
+      let(:session) do
+        authorized_client.start_session
+      end
+
+      it 'raises an exception' do
+        expect {
+          client[TEST_COLL].insert_one({ a: 1 }, session: session)
+        }.to raise_exception(Mongo::Error::InvalidSession)
       end
     end
 
