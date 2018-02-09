@@ -1507,7 +1507,7 @@ describe Mongo::Client do
       context 'when options are provided' do
 
         let(:options) do
-          { causally_consistent: true }
+          { causal_consistency: true }
         end
 
         let(:session) do
@@ -1515,14 +1515,14 @@ describe Mongo::Client do
         end
 
         it 'sets the options on the session' do
-          expect(session.options).to eq(options)
+          expect(session.options[:causal_consistency]).to eq(options[:causal_consistency])
         end
       end
 
       context 'when options are not provided' do
 
         it 'does not set options on the session' do
-          expect(session.options).to be_empty
+          expect(session.options).to eq({ implicit: false })
         end
       end
 

@@ -75,8 +75,6 @@ module Mongo
     # @since 2.5.0
     attr_reader :cluster_time
 
-    # @return [ Mongo::Session::SessionPool ] The session pool.
-    #
     # @private
     #
     # @since 2.5.1
@@ -221,11 +219,11 @@ module Mongo
     # @since 2.2.0
     def self.finalize(pools, periodic_executor, session_pool)
       proc do
+        session_pool.end_sessions
         periodic_executor.stop!
         pools.values.each do |pool|
           pool.disconnect!
         end
-        session_pool.end_sessions
       end
     end
 
@@ -505,14 +503,11 @@ module Mongo
 
     private
 
-    def start_session(options = {})
-      return Session.new(@session_pool.checkout, self, options) if sessions_supported?
-      raise Error::InvalidSession.new(Session::SESSIONS_NOT_SUPPORTED)
-    end
-
     def get_session(options = {})
       return options[:session].validate!(self) if options[:session]
-      Session.new(@session_pool.checkout, self, options.merge(implicit: true)) if sessions_supported?
+      if sessions_supported?
+        Session.new(@session_pool.checkout, self, { implicit: true }.merge(options))
+      end
     end
 
     def with_session(options = {})

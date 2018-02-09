@@ -50,7 +50,8 @@ describe Mongo::Session, if: test_sessions? do
       end
 
       it 'includes the options in the formatted string' do
-        expect(session.inspect).to include({ causal_consistency: true }.to_s)
+        expect(session.inspect).to include({ implicit: false,
+                                             causal_consistency: true }.to_s)
       end
     end
   end

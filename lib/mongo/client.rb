@@ -433,9 +433,10 @@ module Mongo
     #
     # @return [ Session ] The session.
     #
-    # @since 2.5.1
+    # @since 2.5.0
     def start_session(options = {})
-      cluster.send(:start_session, options)
+      cluster.send(:get_session, options.merge(implicit: false)) ||
+        (raise Error::InvalidSession.new(Session::SESSIONS_NOT_SUPPORTED))
     end
 
     private
