@@ -361,7 +361,7 @@ describe Mongo::Cursor do
       view.client.cluster.session_pool.instance_variable_get(:@queue)
     end
 
-    context 'when all results are retrieved from the server', if :sessions_enabled? do
+    context 'when all results are retrieved from the server', if: sessions_enabled? && !sharded? do
 
       context 'when not all documents are iterated' do
 
