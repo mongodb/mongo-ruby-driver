@@ -301,10 +301,14 @@ describe Mongo::Cursor do
         authorized_collection.find({}, batch_size: 2)
       end
 
+      let(:cursor) do
+        view.instance_variable_get(:@cursor)
+      end
+
       let!(:cursor_id) do
         enum.next
         enum.next
-        view.instance_variable_get(:@cursor).id
+        cursor.id
       end
 
       let(:enum) do
@@ -318,6 +322,61 @@ describe Mongo::Cursor do
       it 'removes the cursor id from the active cursors tracked by the cluster cursor manager' do
         enum.next
         expect(cursor_reaper.instance_variable_get(:@active_cursors)).not_to include(cursor_id)
+      end
+    end
+  end
+
+  context 'when an implicit session is used', if: sessions_enabled? do
+
+    let(:documents) do
+      (1..4).map{ |i| { field: "test#{i}" }}
+    end
+
+    before do
+      authorized_collection.insert_many(documents)
+    end
+
+    after do
+      authorized_collection.delete_many
+    end
+
+    let(:view) do
+      authorized_collection.find({}, batch_size: 2, limit: 4)
+    end
+
+    let(:cursor) do
+      view.instance_variable_get(:@cursor)
+    end
+
+    let(:enum) do
+      view.to_enum
+    end
+
+    let!(:server_session) do
+      enum.next
+      cursor.instance_variable_get(:@session).instance_variable_get(:@server_session)
+    end
+
+    let(:session_pool_queue) do
+      view.client.cluster.session_pool.instance_variable_get(:@queue)
+    end
+
+    context 'when all results are retrieved from the server', if :sessions_enabled? do
+
+      context 'when not all documents are iterated' do
+
+        it 'returns the session to the cluster session pool' do
+          2.times { enum.next }
+          expect(session_pool_queue).to include(server_session)
+        end
+      end
+
+      context 'when all documents are iterated' do
+
+        it 'returns the session to the cluster session pool' do
+          3.times { enum.next }
+          expect(session_pool_queue).to include(server_session)
+        end
       end
     end
   end
