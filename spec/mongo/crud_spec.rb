@@ -6,33 +6,34 @@ describe 'CRUD' do
 
     spec = Mongo::CRUD::Spec.new(file)
 
-    context(spec.description) do
+    if spec.server_version_satisfied?(AUTHORIZED_CLIENT)
 
-      spec.tests.each do |test|
+      context(spec.description) do
 
-        context(test.description) do
+        spec.tests.each do |test|
 
-          before(:each) do
-            test.setup_test(authorized_collection)
-          end
+          context(test.description) do
 
-          after(:each) do
-            authorized_collection.delete_many
-          end
+            before(:each) do
+              test.setup_test(authorized_collection)
+            end
 
-          let(:results) do
-            test.run(authorized_collection)
-          end
+            after(:each) do
+              authorized_collection.delete_many
+            end
 
-          it 'returns the correct result' do
-            skip 'Test cannot be run on this server version' unless spec.server_version_satisfied?(authorized_client)
-            expect(results).to match_operation_result(test)
-          end
+            let(:results) do
+              test.run(authorized_collection)
+            end
 
-          it 'has the correct data in the collection', if: test.outcome_collection_data do
-            skip 'Test cannot be run on this server version' unless spec.server_version_satisfied?(authorized_client)
-            results
-            expect(authorized_collection.find.to_a).to match_collection_data(test)
+            it 'returns the correct result' do
+              expect(results).to match_operation_result(test)
+            end
+
+            it 'has the correct data in the collection', if: test.outcome_collection_data do
+              results
+              expect(authorized_collection.find.to_a).to match_collection_data(test)
+            end
           end
         end
       end
