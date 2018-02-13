@@ -185,7 +185,8 @@ module Mongo
       error = nil
       ::Socket.getaddrinfo(host, nil, family, ::Socket::SOCK_STREAM).each do |info|
         begin
-          res = FAMILY_MAP[info[4]].new(host, port, host)
+          _host = (host == LOCALHOST) ? info[3] : host
+          res = FAMILY_MAP[info[4]].new(_host, port, host)
           res.socket(connect_timeout, ssl_options).connect!(connect_timeout).close
           return res
         rescue IOError, SystemCallError, Error::SocketTimeoutError, Error::SocketError => e
