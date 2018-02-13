@@ -45,6 +45,8 @@ Running Tests
 
 The driver uses RSpec as it's primary testing tool. To run all tests simple run `rspec`.
 
+If you need to run the tests without making any external connections, set the ENV variable EXTERNAL_DISABLED to 'true'.
+
 To run a test at a specific location (where `42` is the line number), use:
 
     rspec path/to/spec.rb:42
