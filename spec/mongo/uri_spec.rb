@@ -17,7 +17,7 @@ describe Mongo::URI do
       end
     end
 
-    context 'when the scheme is mongodb+srv://' do
+    context 'when the scheme is mongodb+srv://', if: test_connecting_externally? do
 
       let(:string) do
         'mongodb+srv://test5.test.build.10gen.cc'

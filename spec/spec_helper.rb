@@ -193,11 +193,18 @@ def list_command_enabled?
   $list_command_enabled ||= $mongo_client.cluster.servers.first.features.list_indexes_enabled?
 end
 
-# Is the test suite running locally (not on Travis or Jenkins).
+# Is the test suite running locally (not on Travis).
 #
 # @since 2.1.0
 def testing_ssl_locally?
-  running_ssl? && !(ENV['CI'] || ENV['JENKINS_CI'])
+  running_ssl? && !(ENV['CI'])
+end
+
+# Should tests relying on external connections be run.
+#
+# @since 2.5.1
+def test_connecting_externally?
+  !ENV['CI'] && !ENV['EXTERNAL_DISABLED']
 end
 
 # Is the test suite running on SSL.
