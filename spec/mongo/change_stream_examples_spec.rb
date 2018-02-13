@@ -147,4 +147,44 @@ describe 'change streams examples in Ruby', if: test_change_streams? do
       resumed_change.each { |key| expect(resumed_change[key]).to eq(next_next_change[key]) }
     end
   end
+
+  context 'example 4 - using a pipeline to filter changes' do
+
+    it 'returns the filtered changes' do
+
+      ops_thread = Thread.new do
+        sleep 2
+        inventory.insert_one(username: 'wallace')
+        inventory.insert_one(username: 'alice')
+        inventory.delete_one(username: 'wallace')
+      end
+
+      stream_thread = Thread.new do
+
+        # Start Changestream Example 4
+
+        pipeline = [ {'$match' => { '$or' => [{ 'fullDocument.username' => 'alice' },
+                                              { 'operationType' => 'delete' }] } }]
+        cursor = inventory.watch(pipeline).to_enum
+        cursor.next
+
+        # End Changestream Example 4
+      end
+
+      ops_thread.value
+      change = stream_thread.value
+
+      expect(change['_id']).not_to be_nil
+      expect(change['_id']['_data']).not_to be_nil
+      expect(change['operationType']).to eq('insert')
+      expect(change['fullDocument']).not_to be_nil
+      expect(change['fullDocument']['_id']).not_to be_nil
+      expect(change['fullDocument']['username']).to eq('alice')
+      expect(change['ns']).not_to be_nil
+      expect(change['ns']['db']).to eq(TEST_DB)
+      expect(change['ns']['coll']).to eq(inventory.name)
+      expect(change['documentKey']).not_to be_nil
+      expect(change['documentKey']['_id']).to eq(change['fullDocument']['_id'])
+    end
+  end
 end
