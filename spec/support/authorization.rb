@@ -36,7 +36,7 @@ if ENV['MONGODB_URI']
     ADDRESSES = MONGODB_URI.servers
     CONNECT = { connect: :direct }
   end
-else # For Jenkins
+else
   ADDRESSES = ENV['MONGODB_ADDRESSES'] ? ENV['MONGODB_ADDRESSES'].split(',').freeze : [ '127.0.0.1:27017' ].freeze
   if ENV['RS_ENABLED']
     CONNECT = { connect: :replica_set, replica_set: ENV['RS_NAME'] }

@@ -636,7 +636,7 @@ describe Mongo::Client do
 
     context 'when providing a connection string' do
 
-      context 'when the string uses the SRV Protocol' do
+      context 'when the string uses the SRV Protocol', if: test_connecting_externally? do
 
         let!(:uri) do
           'mongodb+srv://test5.test.build.10gen.cc/testdb'
