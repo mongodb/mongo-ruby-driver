@@ -214,13 +214,22 @@ describe Mongo::Address do
       address.host
     end
 
+    let(:addr_info) do
+      family = (host == 'localhost') ? ::Socket::AF_INET : ::Socket::AF_UNSPEC
+      ::Socket.getaddrinfo(host, nil, family, ::Socket::SOCK_STREAM)
+    end
+
+    let(:socket_address_or_host) do
+      (host == 'localhost') ? addr_info.first[3] : host
+    end
+
     context 'when providing a DNS entry that resolves to both IPv6 and IPv4' do
 
       before do
         address.instance_variable_set(:@resolver, nil)
         allow(::Socket).to receive(:getaddrinfo).and_return(
           [ ["AF_INET6", 0, '::1', '::1', ::Socket::AF_INET6, 1, 6],
-            ["AF_INET", 0, host, host, ::Socket::AF_INET, 1, 6]]
+            ["AF_INET", 0, socket_address_or_host, socket_address_or_host, ::Socket::AF_INET, 1, 6]]
         )
       end
 
@@ -237,7 +246,7 @@ describe Mongo::Address do
       end
 
       it 'uses the host, not the IP address' do
-        expect(address.socket(0.0).host).to eq(host)
+        expect(address.socket(0.0).host).to eq(socket_address_or_host)
       end
 
       let(:socket) do
