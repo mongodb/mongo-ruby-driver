@@ -230,6 +230,26 @@ module Authorization
     # @since 2.5.1
     context.let(:authorized_client_with_retry_writes) { AUTHROIZED_CLIENT_WITH_RETRY_WRITES }
 
+    # Provides an authorized mongo client that has a Command subscriber.
+    #
+    # @since 2.5.1
+    context.let(:authorized_client_with_subscriber) do
+      Mongo::Client.new(
+          ADDRESSES,
+          TEST_OPTIONS.merge(
+              database: TEST_DB,
+              user: TEST_USER.name,
+              password: TEST_USER.password)
+      ).tap do |client|
+        client.subscribe(Mongo::Monitoring::COMMAND, event_subscriber)
+      end
+    end
+
+    # A command event subscriber.
+    #
+    # @since 2.5.1
+    context.let(:event_subscriber) { EventSubscriber.new }
+
     # Provides an unauthorized mongo client on the default test database.
     #
     # @since 2.0.0

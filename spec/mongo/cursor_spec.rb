@@ -328,20 +328,16 @@ describe Mongo::Cursor do
 
   context 'when an implicit session is used', if: sessions_enabled? do
 
-    let(:documents) do
-      (1..4).map{ |i| { field: "test#{i}" }}
+    let(:collection) do
+      authorized_client_with_subscriber[TEST_COLL]
     end
 
     before do
-      authorized_collection.insert_many(documents)
+      collection.insert_many(documents)
     end
 
     after do
-      authorized_collection.delete_many
-    end
-
-    let(:view) do
-      authorized_collection.find({}, batch_size: 2, limit: 4)
+      collection.delete_many
     end
 
     let(:cursor) do
@@ -352,30 +348,58 @@ describe Mongo::Cursor do
       view.to_enum
     end
 
-    let!(:server_session) do
-      enum.next
-      cursor.instance_variable_get(:@session).instance_variable_get(:@server_session)
+    let(:session_pool_ids) do
+      queue = view.client.cluster.session_pool.instance_variable_get(:@queue)
+      queue.collect { |s| s.session_id }
     end
 
-    let(:session_pool_queue) do
-      view.client.cluster.session_pool.instance_variable_get(:@queue)
+    let(:find_events) do
+      event_subscriber.started_events.select { |e| e.command_name == "find" }
     end
 
-    context 'when all results are retrieved from the server', if: sessions_enabled? && !sharded? do
+    context 'when all results are retrieved in the first response' do
+
+      let(:documents) do
+        (1..2).map{ |i| { field: "test#{i}" }}
+      end
+
+      let(:view) do
+        collection.find
+      end
+
+      it 'returns the session to the cluster session pool' do
+        1.times { enum.next }
+        expect(find_events.collect { |event| event.command['lsid'] }.uniq.size).to eq(1)
+        expect(session_pool_ids).to include(find_events.collect { |event| event.command['lsid'] }.uniq.first)
+      end
+    end
+
+    context 'when a getmore is needed to retrieve all results', if: sessions_enabled? && !sharded? do
+
+      let(:documents) do
+        (1..4).map{ |i| { field: "test#{i}" }}
+      end
+
+      let(:view) do
+        collection.find({}, batch_size: 2, limit: 4)
+      end
+
 
       context 'when not all documents are iterated' do
 
         it 'returns the session to the cluster session pool' do
-          2.times { enum.next }
-          expect(session_pool_queue).to include(server_session)
+          3.times { enum.next }
+          expect(find_events.collect { |event| event.command['lsid'] }.uniq.size).to eq(1)
+          expect(session_pool_ids).to include(find_events.collect { |event| event.command['lsid'] }.uniq.first)
         end
       end
 
       context 'when all documents are iterated' do
 
         it 'returns the session to the cluster session pool' do
-          3.times { enum.next }
-          expect(session_pool_queue).to include(server_session)
+          4.times { enum.next }
+          expect(find_events.collect { |event| event.command['lsid'] }.uniq.size).to eq(1)
+          expect(session_pool_ids).to include(find_events.collect { |event| event.command['lsid'] }.uniq.first)
         end
       end
     end
