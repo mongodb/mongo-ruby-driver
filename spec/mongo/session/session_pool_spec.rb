@@ -150,17 +150,11 @@ describe Mongo::Session::SessionPool, if: test_sessions? do
     end
 
     let(:client) do
-      authorized_client.with(heartbeat_frequency: 100).tap do |cl|
-        cl.subscribe(Mongo::Monitoring::COMMAND, subscriber)
-      end
+      subscribed_client
     end
 
     after do
       client.close
-    end
-
-    let(:subscriber) do
-      EventSubscriber.new
     end
 
     context 'when the number of ids is not larger than 10,000' do
@@ -177,7 +171,7 @@ describe Mongo::Session::SessionPool, if: test_sessions? do
 
       let(:end_sessions_command) do
         pool.end_sessions
-        subscriber.started_events.find { |c| c.command_name == :endSessions}
+        EventSubscriber.started_events.find { |c| c.command_name == :endSessions}
       end
 
       it 'sends the endSessions command with all the session ids' do
@@ -216,7 +210,7 @@ describe Mongo::Session::SessionPool, if: test_sessions? do
       end
 
       let(:end_sessions_commands) do
-        subscriber.started_events.select { |c| c.command_name == :endSessions}
+        EventSubscriber.started_events.select { |c| c.command_name == :endSessions}
       end
 
       it 'sends the command more than once' do

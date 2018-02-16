@@ -17,13 +17,7 @@ describe 'Retryable Writes' do
           end
 
           let(:client) do
-            authorized_client_with_retry_writes.tap do |cl|
-              cl.subscribe(Mongo::Monitoring::COMMAND, subscriber)
-            end
-          end
-
-          let(:subscriber) do
-            EventSubscriber.new
+            authorized_client_with_retry_writes
           end
 
           before do

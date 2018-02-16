@@ -1360,22 +1360,21 @@ describe Mongo::Client do
       end
 
       let(:client) do
-        # Monitoring subscribers won't be set up when using Client#with, so a new client must be created.
         Mongo::Client.new(ADDRESSES, client_options).tap do |cl|
-          cl.subscribe(Mongo::Monitoring::COMMAND, subscriber)
+          cl.subscribe(Mongo::Monitoring::COMMAND, EventSubscriber.clear_events!)
         end
       end
 
-      let(:subscriber) do
-        EventSubscriber.new
-      end
-
       let(:command) do
-        subscriber.started_events.find { |c| c.command_name == :listDatabases }.command
+        EventSubscriber.started_events.find { |c| c.command_name == :listDatabases }.command
       end
 
       before do
         client.list_databases({}, true)
+      end
+
+      after do
+        client.close
       end
 
       it 'sends the command with the nameOnly flag set to true' do

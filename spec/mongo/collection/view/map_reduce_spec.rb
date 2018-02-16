@@ -240,17 +240,11 @@ describe Mongo::Collection::View::MapReduce do
           end
 
           let(:client) do
-            authorized_client.with(monitoring: true).tap do |cl|
-              cl.subscribe(Mongo::Monitoring::COMMAND, subscriber)
-            end
-          end
-
-          let(:subscriber) do
-            EventSubscriber.new
+            subscribed_client
           end
 
           let(:find_command) do
-            subscriber.started_events[-1].command
+            EventSubscriber.started_events[-1].command
           end
 
           before do

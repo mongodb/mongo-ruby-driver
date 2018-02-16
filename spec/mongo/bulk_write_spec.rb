@@ -1889,20 +1889,14 @@ describe Mongo::BulkWrite do
             it_behaves_like 'an operation using a session'
           end
 
-          context 'when retryable writes are supported', if: (sessions_enabled? && (replica_set? || sharded?)) do
+          context 'when retryable writes are supported', if: test_sessions? do
 
             let(:client) do
-              authorized_client.with(heartbeat_frequency: 100, retry_writes: true).tap do |cl|
-                cl.subscribe(Mongo::Monitoring::COMMAND, subscriber)
-              end
+              authorized_client_with_retry_writes
             end
 
             let(:collection) do
               client[authorized_collection.name]
-            end
-
-            let(:subscriber) do
-              EventSubscriber.new
             end
 
             let!(:result) do
@@ -1910,11 +1904,11 @@ describe Mongo::BulkWrite do
             end
 
             let(:first_txn_number) do
-              subscriber.started_events[-2].command['txnNumber'].instance_variable_get(:@integer)
+              EventSubscriber.started_events[-2].command['txnNumber'].instance_variable_get(:@integer)
             end
 
             let(:second_txn_number) do
-              subscriber.started_events[-1].command['txnNumber'].instance_variable_get(:@integer)
+              EventSubscriber.started_events[-1].command['txnNumber'].instance_variable_get(:@integer)
             end
 
             it 'inserts the documents' do
