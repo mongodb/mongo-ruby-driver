@@ -200,6 +200,19 @@ ADMIN_AUTHORIZED_TEST_CLIENT = ADMIN_UNAUTHORIZED_CLIENT.with(
   monitoring: false
 )
 
+# A client that has an event subscriber for commands.
+#
+# @since 2.5.1
+SUBSCRIBED_CLIENT = Mongo::Client.new(
+    ADDRESSES,
+    TEST_OPTIONS.merge(
+        database: TEST_DB,
+        user: TEST_USER.name,
+        password: TEST_USER.password)
+)
+SUBSCRIBED_CLIENT.subscribe(Mongo::Monitoring::COMMAND, EventSubscriber)
+AUTHROIZED_CLIENT_WITH_RETRY_WRITES.subscribe(Mongo::Monitoring::COMMAND, EventSubscriber)
+
 module Authorization
 
   # On inclusion provides helpers for use with testing with and without
@@ -228,27 +241,18 @@ module Authorization
     # Provides an authorized mongo client on the default test database that retries writes.
     #
     # @since 2.5.1
-    context.let(:authorized_client_with_retry_writes) { AUTHROIZED_CLIENT_WITH_RETRY_WRITES }
+    context.let(:authorized_client_with_retry_writes) do
+      EventSubscriber.clear_events!
+      AUTHROIZED_CLIENT_WITH_RETRY_WRITES
+    end
 
     # Provides an authorized mongo client that has a Command subscriber.
     #
     # @since 2.5.1
-    context.let(:authorized_client_with_subscriber) do
-      Mongo::Client.new(
-          ADDRESSES,
-          TEST_OPTIONS.merge(
-              database: TEST_DB,
-              user: TEST_USER.name,
-              password: TEST_USER.password)
-      ).tap do |client|
-        client.subscribe(Mongo::Monitoring::COMMAND, event_subscriber)
-      end
+    context.let(:subscribed_client) do
+      EventSubscriber.clear_events!
+      SUBSCRIBED_CLIENT
     end
-
-    # A command event subscriber.
-    #
-    # @since 2.5.1
-    context.let(:event_subscriber) { EventSubscriber.new }
 
     # Provides an unauthorized mongo client on the default test database.
     #

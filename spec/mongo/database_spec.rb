@@ -256,13 +256,7 @@ describe Mongo::Database do
       end
 
       let(:client) do
-        authorized_client.with(heartbeat_frequency: 100).tap do |cl|
-          cl.subscribe(Mongo::Monitoring::COMMAND, subscriber)
-        end
-      end
-
-      let(:subscriber) do
-        EventSubscriber.new
+        subscribed_client
       end
 
       it_behaves_like 'an operation using a session'
@@ -270,7 +264,7 @@ describe Mongo::Database do
 
 
       let(:full_command) do
-        subscriber.started_events.find { |cmd| cmd.command_name == :ismaster }.command
+        EventSubscriber.started_events.find { |cmd| cmd.command_name == :ismaster }.command
       end
 
       it 'does not add a afterClusterTime field' do

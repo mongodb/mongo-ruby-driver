@@ -329,7 +329,7 @@ describe Mongo::Cursor do
   context 'when an implicit session is used', if: sessions_enabled? do
 
     let(:collection) do
-      authorized_client_with_subscriber[TEST_COLL]
+      subscribed_client[TEST_COLL]
     end
 
     before do
@@ -354,7 +354,7 @@ describe Mongo::Cursor do
     end
 
     let(:find_events) do
-      event_subscriber.started_events.select { |e| e.command_name == "find" }
+      EventSubscriber.started_events.select { |e| e.command_name == "find" }
     end
 
     context 'when all results are retrieved in the first response' do

@@ -900,17 +900,11 @@ describe Mongo::Collection do
         end
 
         let(:client) do
-          authorized_client.with(heartbeat_frequency: 100).tap do |cl|
-            cl.subscribe(Mongo::Monitoring::COMMAND, subscriber)
-          end
+          subscribed_client
         end
 
         let(:session) do
           client.start_session
-        end
-
-        let(:subscriber) do
-          EventSubscriber.new
         end
 
         let(:view) do
@@ -919,7 +913,7 @@ describe Mongo::Collection do
 
         let(:command) do
           client[TEST_COLL].find({}, session: session).explain
-          subscriber.started_events.find { |c| c.command_name == :explain }.command
+          EventSubscriber.started_events.find { |c| c.command_name == :explain }.command
         end
 
         it 'sends the session id' do
@@ -935,7 +929,7 @@ describe Mongo::Collection do
 
         let(:command) do
           operation
-          subscriber.started_events.find { |cmd| cmd.command_name == 'find' }.command
+          EventSubscriber.started_events.find { |cmd| cmd.command_name == 'find' }.command
         end
 
         it_behaves_like 'an operation supporting causally consistent reads'
@@ -1205,13 +1199,7 @@ describe Mongo::Collection do
     context 'when the documents are sent with OP_MSG', if: op_msg_enabled? do
 
       let(:client) do
-        authorized_client.with(heartbeat_frequency: 100).tap do |cl|
-          cl.subscribe(Mongo::Monitoring::COMMAND, subscriber)
-        end
-      end
-
-      let(:subscriber) do
-        EventSubscriber.new
+        subscribed_client
       end
 
       let(:documents) do
@@ -1227,7 +1215,7 @@ describe Mongo::Collection do
       end
 
       let(:insert_events) do
-        subscriber.started_events.select { |e| e.command_name == :insert }
+        EventSubscriber.started_events.select { |e| e.command_name == :insert }
       end
 
       it 'sends the documents in one OP_MSG' do
@@ -1574,7 +1562,7 @@ describe Mongo::Collection do
 
       let(:command) do
         operation
-        subscriber.started_events.find { |cmd| cmd.command_name == 'aggregate' }.command
+        EventSubscriber.started_events.find { |cmd| cmd.command_name == 'aggregate' }.command
       end
 
       it_behaves_like 'an operation supporting causally consistent reads'
@@ -1738,7 +1726,7 @@ describe Mongo::Collection do
 
         let(:command) do
           operation
-          subscriber.started_events.find { |cmd| cmd.command_name == :count }.command
+          EventSubscriber.started_events.find { |cmd| cmd.command_name == :count }.command
         end
 
         it_behaves_like 'an operation supporting causally consistent reads'
@@ -1852,7 +1840,7 @@ describe Mongo::Collection do
 
       let(:command) do
         operation
-        subscriber.started_events.find { |cmd| cmd.command_name == :distinct }.command
+        EventSubscriber.started_events.find { |cmd| cmd.command_name == :distinct }.command
       end
 
       it_behaves_like 'an operation supporting causally consistent reads'
@@ -2344,7 +2332,7 @@ describe Mongo::Collection do
 
       let(:command) do
         operation
-        subscriber.started_events.find { |cmd| cmd.command_name == :parallelCollectionScan }.command
+        EventSubscriber.started_events.find { |cmd| cmd.command_name == :parallelCollectionScan }.command
       end
 
       it_behaves_like 'an operation supporting causally consistent reads'
@@ -3486,13 +3474,7 @@ describe Mongo::Collection do
     context 'when the documents are sent with OP_MSG', if: op_msg_enabled? do
 
       let(:client) do
-        authorized_client.with(heartbeat_frequency: 100).tap do |cl|
-          cl.subscribe(Mongo::Monitoring::COMMAND, subscriber)
-        end
-      end
-
-      let(:subscriber) do
-        EventSubscriber.new
+        subscribed_client
       end
 
       let(:documents) do
@@ -3509,7 +3491,7 @@ describe Mongo::Collection do
       end
 
       let(:update_events) do
-        subscriber.started_events.select { |e| e.command_name == :update }
+        EventSubscriber.started_events.select { |e| e.command_name == :update }
       end
 
       it 'sends the documents in one OP_MSG' do

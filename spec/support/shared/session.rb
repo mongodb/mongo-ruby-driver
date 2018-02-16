@@ -135,17 +135,7 @@ end
 shared_examples 'an operation supporting causally consistent reads' do
 
   let(:client) do
-    authorized_client.with(heartbeat_frequency: 100).tap do |cl|
-      cl.subscribe(Mongo::Monitoring::COMMAND, subscriber)
-    end
-  end
-
-  let(:subscriber) do
-    EventSubscriber.new
-  end
-
-  after do
-    client.close
+    subscribed_client
   end
 
   context 'when connected to a standalone', if: sessions_enabled? && standalone? do
@@ -572,17 +562,7 @@ shared_examples 'an operation updating cluster time' do
   end
 
   let(:client) do
-    authorized_client.with(heartbeat_frequency: 100).tap do |cl|
-      cl.subscribe(Mongo::Monitoring::COMMAND, subscriber)
-    end
-  end
-
-  let(:subscriber) do
-    EventSubscriber.new
-  end
-
-  after do
-    client.close
+    subscribed_client
   end
 
   context 'when the command is run once' do
@@ -593,7 +573,7 @@ shared_examples 'an operation updating cluster time' do
 
         let!(:reply_cluster_time) do
           operation_with_session
-          subscriber.succeeded_events[-1].reply['$clusterTime']
+          EventSubscriber.succeeded_events[-1].reply['$clusterTime']
         end
 
         it 'updates the cluster time of the cluster' do
@@ -613,7 +593,7 @@ shared_examples 'an operation updating cluster time' do
 
         let!(:reply_cluster_time) do
           operation_with_session
-          subscriber.succeeded_events[-1].reply['$clusterTime']
+          EventSubscriber.succeeded_events[-1].reply['$clusterTime']
         end
 
         it 'does not update the cluster time of the cluster' do
@@ -634,7 +614,7 @@ shared_examples 'an operation updating cluster time' do
 
       let!(:reply_cluster_time) do
         operation
-        subscriber.succeeded_events[-1].reply['$clusterTime']
+        EventSubscriber.succeeded_events[-1].reply['$clusterTime']
       end
 
       it 'does not update the cluster time of the cluster' do
@@ -647,7 +627,7 @@ shared_examples 'an operation updating cluster time' do
 
     let!(:reply_cluster_time) do
       operation_with_session
-      subscriber.succeeded_events[-1].reply['$clusterTime']
+      EventSubscriber.succeeded_events[-1].reply['$clusterTime']
     end
 
     context 'when the cluster is sharded or a replica set', if: test_sessions? do
@@ -660,7 +640,7 @@ shared_examples 'an operation updating cluster time' do
 
         let(:second_command_cluster_time) do
           second_operation
-          subscriber.started_events[-1].command['$clusterTime']
+          EventSubscriber.started_events[-1].command['$clusterTime']
         end
 
         context 'when the advanced cluster time is greater than the existing cluster time' do
@@ -696,7 +676,7 @@ shared_examples 'an operation updating cluster time' do
 
         let(:second_command_cluster_time) do
           second_operation
-          subscriber.started_events[-1].command['$clusterTime']
+          EventSubscriber.started_events[-1].command['$clusterTime']
         end
 
         it 'includes the received cluster time in the second command' do
@@ -713,7 +693,7 @@ shared_examples 'an operation updating cluster time' do
 
       let(:second_command_cluster_time) do
         second_operation
-        subscriber.started_events[-1].command['$clusterTime']
+        EventSubscriber.started_events[-1].command['$clusterTime']
       end
 
       it 'does not update the cluster time of the cluster' do
