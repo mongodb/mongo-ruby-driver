@@ -4,20 +4,27 @@
 class EventSubscriber
 
   class << self
+
     # The started events.
     #
     # @since 2.5.0
-    attr_reader :started_events
+    def started_events
+      @started_events ||= []
+    end
 
     # The succeeded events.
     #
     # @since 2.5.0
-    attr_reader :succeeded_events
+    def succeeded_events
+      @succeeded_events ||= []
+    end
 
     # The failed events.
     #
     # @since 2.5.0
-    attr_reader :failed_events
+    def failed_events
+      @failed_events ||= []
+    end
 
     # Cache the succeeded event.
     #
@@ -25,7 +32,7 @@ class EventSubscriber
     #
     # @since 2.5.0
     def succeeded(event)
-      @succeeded_events.push(event)
+      succeeded_events.push(event)
     end
 
     # Cache the started event.
@@ -34,7 +41,7 @@ class EventSubscriber
     #
     # @since 2.5.0
     def started(event)
-      @started_events.push(event)
+      started_events.push(event)
     end
 
     # Cache the failed event.
@@ -43,7 +50,7 @@ class EventSubscriber
     #
     # @since 2.5.0
     def failed(event)
-      @failed_events.push(event)
+      failed_events.push(event)
     end
 
     # Clear all cached events.
