@@ -16,7 +16,7 @@ Bundler.require(*default_groups)
 require 'rspec/core/rake_task'
 
 RSpec::Core::RakeTask.new(:spec) do |t|
-  t.rspec_opts = "--profile 5" if ENV['CI']
+  #t.rspec_opts = "--profile 5" if ENV['CI']
 end
 
 task :default => :spec
