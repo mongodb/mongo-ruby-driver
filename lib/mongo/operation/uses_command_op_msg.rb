@@ -41,28 +41,26 @@ module Mongo
       end
 
       def apply_session_id!(selector)
-        session.add_id!(selector) if session && !unacknowledged_write?
+        session.add_id!(selector)
       end
 
-      def unacknowledged_write?
-        write_concern && write_concern.get_last_error.nil?
+      def acknowledged_write?
+        write_concern.nil? || write_concern.acknowledged?
       end
 
       def update_selector_for_session!(selector, server)
-        # the driver MUST ignore any implicit session if at the point it is sending a command
-        # to a specific server it turns out that that particular server doesn't support sessions after all
         if server.features.sessions_enabled?
           apply_cluster_time!(selector, server)
-          selector[:txnNumber] = BSON::Int64.new(txn_num) if txn_num
-          if session
+          if acknowledged_write? && session
+            selector[:txnNumber] = BSON::Int64.new(txn_num) if txn_num
             apply_session_id!(selector)
             apply_causal_consistency!(selector, server)
           end
-        elsif session && !session.implicit?
+        elsif session && session.explicit?
           apply_cluster_time!(selector, server)
+          selector[:txnNumber] = BSON::Int64.new(txn_num) if txn_num
           apply_session_id!(selector)
           apply_causal_consistency!(selector, server)
-          selector[:txnNumber] = BSON::Int64.new(txn_num) if txn_num
         end
       end
 
@@ -70,7 +68,7 @@ module Mongo
         update_selector_for_session!(selector, server)
         selector[Protocol::Msg::DATABASE_IDENTIFIER] = db_name
         selector[READ_PREFERENCE] = read.to_doc if read
-        flags = unacknowledged_write? ? [:more_to_come] : [:none]
+        flags = acknowledged_write? ? [:none] : [:more_to_come]
         Protocol::Msg.new(flags, options, selector)
       end
     end

@@ -49,7 +49,7 @@ module Mongo
             update_selector_for_session!(global_args, server)
 
             section = { type: 1, payload: { identifier: IDENTIFIER, sequence: documents } }
-            flags = unacknowledged_write? ? [:more_to_come] : [:none]
+            flags = acknowledged_write? ? [:none] : [:more_to_come]
             Protocol::Msg.new(flags, { validating_keys: true }, global_args, section)
           end
 

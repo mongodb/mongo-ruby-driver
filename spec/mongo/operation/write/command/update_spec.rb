@@ -119,7 +119,7 @@ describe Mongo::Operation::Write::Command::Update do
         authorized_client.start_session
       end
 
-      context 'when the topology is replica set or sharded', if: (replica_set? || sharded?) && op_msg_enabled? do
+      context 'when the topology is replica set or sharded', if: test_sessions? do
 
         let(:expected_global_args) do
           global_args.merge(Mongo::Operation::CLUSTER_TIME => authorized_client.cluster.cluster_time)
@@ -132,7 +132,7 @@ describe Mongo::Operation::Write::Command::Update do
         end
       end
 
-      context 'when the topology is standalone', if: standalone? && op_msg_enabled? do
+      context 'when the topology is standalone', if: standalone? && sessions_enabled? do
 
         let(:expected_global_args) do
           global_args
@@ -170,28 +170,54 @@ describe Mongo::Operation::Write::Command::Update do
           Mongo::WriteConcern.get(w: 0)
         end
 
-        context 'when the topology is replica set or sharded', if: (replica_set? || sharded?) && op_msg_enabled? do
+        context 'when the session is implicit' do
+
+          let(:session) do
+            # Use client#get_session so the session is implicit
+            authorized_client.send(:get_session)
+          end
+
+          context 'when the topology is replica set or sharded', if: test_sessions? do
+
+            let(:expected_global_args) do
+              global_args.delete(:lsid)
+              global_args.merge(Mongo::Operation::CLUSTER_TIME => authorized_client.cluster.cluster_time)
+            end
+
+            it 'does not send a session id in the command' do
+              authorized_client.command(ping:1)
+              expect(Mongo::Protocol::Msg).to receive(:new).with([:more_to_come], {}, expected_global_args, expected_payload_1)
+              op.send(:message, authorized_primary)
+            end
+          end
+
+          context 'when the topology is standalone', if: standalone? && sessions_enabled? do
+
+            let(:expected_global_args) do
+              global_args.delete(:lsid)
+              global_args
+            end
+
+            it 'creates the correct OP_MSG message' do
+              authorized_client.command(ping:1)
+              expect(Mongo::Protocol::Msg).to receive(:new).with([:more_to_come], {}, expected_global_args, expected_payload_1)
+              op.send(:message, authorized_primary)
+            end
+          end
+        end
+
+        context 'when the session is explicit', if: test_sessions? do
+
+          let(:session) do
+            authorized_client.start_session
+          end
 
           let(:expected_global_args) do
             global_args.delete(:lsid)
             global_args.merge(Mongo::Operation::CLUSTER_TIME => authorized_client.cluster.cluster_time)
           end
 
-          it 'creates the correct OP_MSG message' do
-            authorized_client.command(ping:1)
-            expect(Mongo::Protocol::Msg).to receive(:new).with([:more_to_come], {}, expected_global_args, expected_payload_1)
-            op.send(:message, authorized_primary)
-          end
-        end
-
-        context 'when the topology is standalone', if: standalone? && op_msg_enabled? do
-
-          let(:expected_global_args) do
-            global_args.delete(:lsid)
-            global_args
-          end
-
-          it 'creates the correct OP_MSG message' do
+          it 'does not send a session id in the command' do
             authorized_client.command(ping:1)
             expect(Mongo::Protocol::Msg).to receive(:new).with([:more_to_come], {}, expected_global_args, expected_payload_1)
             op.send(:message, authorized_primary)
