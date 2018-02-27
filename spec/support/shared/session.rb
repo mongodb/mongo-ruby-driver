@@ -117,17 +117,58 @@ shared_examples 'a failed operation using a session' do
   end
 end
 
-shared_examples 'a causally consistent client session with an unacknowledged write' do
+shared_examples 'an explicit session with an unacknowledged write' do
 
-  context 'when an unacknowledged write is executed in the context of a causally consistent session', if: sessions_enabled? do
+  before do
+    EventSubscriber.clear_events!
+  end
+
+  context 'when sessions are supported', if: sessions_enabled? do
 
     let(:session) do
-      client.start_session(causal_consistency: true)
+      client.start_session
     end
 
-    it 'does not update the operation time of the session' do
+    it 'does not add a session id to the operation' do
       operation
-      expect(session.operation_time).to be_nil
+      expect(EventSubscriber.started_events.collect(&:command).collect { |cmd| cmd['lsid'] }.compact).to be_empty
+    end
+  end
+
+  context 'when sessions are not supported', if: !sessions_enabled? do
+
+    let(:session) do
+      double('session').tap do |s|
+        allow(s).to receive(:validate!)
+      end
+    end
+
+    it 'does not add a session id to the operation' do
+      operation
+      expect(EventSubscriber.started_events.collect(&:command).collect { |cmd| cmd['lsid'] }.compact).to be_empty
+    end
+  end
+end
+
+shared_examples 'an implicit session with an unacknowledged write' do
+
+  before do
+    EventSubscriber.clear_events!
+  end
+
+  context 'when sessions are supported', if: sessions_enabled? do
+
+    it 'does not add a session id to the operation' do
+      operation
+      expect(EventSubscriber.started_events.collect(&:command).collect { |cmd| cmd['lsid'] }.compact).to be_empty
+    end
+  end
+
+  context 'when sessions are not supported', if: !sessions_enabled? do
+
+    it 'does not add a session id to the operation' do
+      operation
+      expect(EventSubscriber.started_events.collect(&:command).collect { |cmd| cmd['lsid'] }.compact).to be_empty
     end
   end
 end
