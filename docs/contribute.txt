@@ -42,5 +42,5 @@ Contribute to the MongoDB Ruby Driver
 The MongoDB Ruby driver source is located at
 `<https://github.com/mongodb/mongo-ruby-driver>`_.
 
-For instructions in contributing to the driver, see
+For instructions on contributing to the driver, see
 `<https://github.com/mongodb/mongo-ruby-driver/blob/master/CONTRIBUTING.md>`_.
