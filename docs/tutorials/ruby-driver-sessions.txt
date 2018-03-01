@@ -73,6 +73,14 @@ the ``Mongo::Collection::View``:
   view = client[:artists].find({ :name => 'FKA Twigs' }, session: session)
   view.count(session: second_session) # will use the second_session
 
+
+Unacknowledged Writes
+---------------------
+
+Unacknowledged writes are only allowed outside the session mechanism; if an explicit session is supplied for an
+unacknowledged write, the driver will not send the session id with the operation. Similarly, the driver will not use
+an implicit session for an unacknowledged write.
+
 Causal Consistency
 ------------------
 A causally consistent session will let you read your writes and guarantee monotonically increasing

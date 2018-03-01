@@ -252,7 +252,19 @@ module Mongo
     #
     # @since 2.5.1
     def implicit?
-      @implicit_session ||= !!(@options.key?(:implicit) && @options[:implicit] == true)
+      @implicit ||= !!(@options.key?(:implicit) && @options[:implicit] == true)
+    end
+
+    # Is this session an explicit one (i.e. user-created).
+    #
+    # @example Is the session explicit?
+    #   session.explicit?
+    #
+    # @return [ true, false ] Whether this session is explicit.
+    #
+    # @since 2.5.2
+    def explicit?
+      @explicit ||= !implicit?
     end
 
     private
