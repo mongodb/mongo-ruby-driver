@@ -71,7 +71,7 @@ module Mongo
     # @since 2.0.0
     def get(preference = {})
       return preference if PREFERENCES.values.include?(preference.class)
-      PREFERENCES.fetch(preference[:mode] || :primary).new(preference)
+      PREFERENCES.fetch((preference[:mode] || :primary).to_sym).new(preference)
     end
   end
 end
