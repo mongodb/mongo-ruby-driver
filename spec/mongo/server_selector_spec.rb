@@ -30,6 +30,17 @@ describe Mongo::ServerSelector do
       it 'returns a read preference of class Primary' do
         expect(selector).to be_a(Mongo::ServerSelector::Primary)
       end
+
+      context 'when the mode is a string' do
+
+        let(:name) do
+          'primary'
+        end
+
+        it 'returns a read preference of class Primary' do
+          expect(selector).to be_a(Mongo::ServerSelector::Primary)
+        end
+      end
     end
 
     context 'when the mode is primary_preferred' do
@@ -39,6 +50,17 @@ describe Mongo::ServerSelector do
 
       it 'returns a read preference of class PrimaryPreferred' do
         expect(selector).to be_a(Mongo::ServerSelector::PrimaryPreferred)
+      end
+
+      context 'when the mode is a string' do
+
+        let(:name) do
+          'primary_preferred'
+        end
+
+        it 'returns a read preference of class PrimaryPreferred' do
+          expect(selector).to be_a(Mongo::ServerSelector::PrimaryPreferred)
+        end
       end
     end
 
@@ -50,6 +72,17 @@ describe Mongo::ServerSelector do
       it 'returns a read preference of class Secondary' do
         expect(selector).to be_a(Mongo::ServerSelector::Secondary)
       end
+
+      context 'when the mode is a string' do
+
+        let(:name) do
+          'secondary'
+        end
+
+        it 'returns a read preference of class Secondary' do
+          expect(selector).to be_a(Mongo::ServerSelector::Secondary)
+        end
+      end
     end
 
     context 'when the mode is secondary_preferred' do
@@ -60,6 +93,17 @@ describe Mongo::ServerSelector do
       it 'returns a read preference of class SecondaryPreferred' do
         expect(selector).to be_a(Mongo::ServerSelector::SecondaryPreferred)
       end
+
+      context 'when the mode is a string' do
+
+        let(:name) do
+          'secondary_preferred'
+        end
+
+        it 'returns a read preference of class SecondaryPreferred' do
+          expect(selector).to be_a(Mongo::ServerSelector::SecondaryPreferred)
+        end
+      end
     end
 
     context 'when the mode is nearest' do
@@ -69,6 +113,17 @@ describe Mongo::ServerSelector do
 
       it 'returns a read preference of class Nearest' do
         expect(selector).to be_a(Mongo::ServerSelector::Nearest)
+      end
+
+      context 'when the mode is a string' do
+
+        let(:name) do
+          'nearest'
+        end
+
+        it 'returns a read preference of class Nearest' do
+          expect(selector).to be_a(Mongo::ServerSelector::Nearest)
+        end
       end
     end
 
