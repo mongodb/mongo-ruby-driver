@@ -29,12 +29,12 @@ branches:
 matrix:
   allow_failures:
     - rvm: ruby-head
-  exclude:
-    - rvm: jruby-9.1.15.0
-      - MONGODB=2.6.12
-      - MONGODB=3.0.12
-      - MONGODB=3.2.11
-      - MONGODB=3.4.1
+#  exclude:
+#    - rvm: jruby-9.1.15.0
+#      - MONGODB=2.6.12
+#      - MONGODB=3.0.12
+#      - MONGODB=3.2.11
+#      - MONGODB=3.4.1
 
 env:
   global:
