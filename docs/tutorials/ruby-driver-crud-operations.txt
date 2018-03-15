@@ -195,7 +195,7 @@ when querying and their corresponding methods as examples.
      - Limits the number of returned documents to the provided value.
    * - ``max_scan(Integer)``
      - Sets the maximum number of documents to scan if a full collection scan
-       would be performed.
+       would be performed. Deprecated as of MongoDB server version 4.0.
    * - ``no_cursor_timeout``
      - MongoDB automatically closes inactive cursors after a period of 10
        minutes. Call this for cursors to remain open indefinitely on the server.

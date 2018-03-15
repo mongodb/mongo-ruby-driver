@@ -244,6 +244,9 @@ module Mongo
         # @return [ Integer, View ] The value or a new +View+.
         #
         # @since 2.0.0
+        #
+        # @deprecated This option is deprecated as of MongoDB server
+        #   version 4.0.
         def max_scan(value = nil)
           configure(:max_scan, value)
         end
