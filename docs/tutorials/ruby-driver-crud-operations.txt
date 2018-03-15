@@ -218,7 +218,7 @@ when querying and their corresponding methods as examples.
    * - ``skip(Integer)``
      - Skip the provided number of documents in the results.
    * - ``snapshot``
-     - Execute the query in snapshot mode.
+     - Execute the query in snapshot mode. Deprecated as of MongoDB server version 4.0.
    * - ``sort(Hash)``
      - Specifies sort criteria for the query.
 
