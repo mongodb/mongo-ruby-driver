@@ -45,28 +45,6 @@ describe Mongo::Server::Connection do
     server.disconnect!
   end
 
-  describe '#connectable?' do
-
-    context 'when the connection is not connectable' do
-
-      let(:bad_address) do
-        Mongo::Address.new('127.0.0.1:666')
-      end
-
-      let(:bad_server) do
-        Mongo::Server.new(bad_address, cluster, monitoring, listeners, TEST_OPTIONS)
-      end
-
-      let(:connection) do
-        described_class.new(bad_server)
-      end
-
-      it 'returns false' do
-        expect(connection).to_not be_connectable
-      end
-    end
-  end
-
   describe '#connect!' do
 
     context 'when no socket exists' do

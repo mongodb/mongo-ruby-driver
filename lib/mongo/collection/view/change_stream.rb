@@ -153,7 +153,7 @@ module Mongo
 
         def create_cursor!
           session = client.send(:get_session, @options)
-          server = server_selector.select_server(cluster, false)
+          server = server_selector.select_server(cluster)
           result = send_initial_query(server, session)
           @cursor = Cursor.new(view, result, server, disable_retry: true, session: session)
         end

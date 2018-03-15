@@ -122,11 +122,9 @@ module Mongo
     # @return [ true, false ] If the server is connectable.
     #
     # @since 2.1.0
-    def connectable?
-      with_connection do |connection|
-        connection.connectable?
-      end
-    end
+    #
+    # @deprecated No longer necessary with Server Selection specification.
+    def connectable?; end
 
     # Disconnect the server from the connection.
     #

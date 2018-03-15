@@ -52,9 +52,9 @@ module Mongo
       # @return [ true, false ] If the connection is connectable.
       #
       # @since 2.1.0
-      def connectable?
-        begin; ping; rescue; false; end
-      end
+      #
+      # @deprecated No longer necessary with Server Selection specification.
+      def connectable?; end
 
       # Determine if the connection is currently connected.
       #
