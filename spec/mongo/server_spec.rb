@@ -81,48 +81,6 @@ describe Mongo::Server do
     end
   end
 
-  describe '#connectable?' do
-
-    context 'when the server is connectable' do
-
-      let(:server) do
-        described_class.new(address, cluster, monitoring, listeners, TEST_OPTIONS)
-      end
-
-      after do
-        server.disconnect!
-      end
-
-      before do
-        expect(cluster).to receive(:pool).with(server).and_return(pool)
-      end
-
-      it 'returns true' do
-        expect(server).to be_connectable
-      end
-    end
-
-    context 'when the server is not connectable' do
-
-      let(:bad_address) do
-        Mongo::Address.new('127.0.0.1:666')
-      end
-
-      let(:server) do
-        described_class.new(bad_address, cluster, monitoring, listeners, TEST_OPTIONS)
-      end
-
-      before do
-        expect(cluster).to receive(:pool).with(server).and_return(pool)
-        server.disconnect!
-      end
-
-      it 'returns false' do
-        expect(server).to_not be_connectable
-      end
-    end
-  end
-
   describe '#disconnect!' do
 
     let(:server) do
