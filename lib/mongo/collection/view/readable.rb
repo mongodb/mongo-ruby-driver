@@ -383,6 +383,9 @@ module Mongo
         # @param [ true, false ] value The snapshot value.
         #
         # @since 2.0.0
+        #
+        # @deprecated This option is deprecated as of MongoDB server
+        #   version 4.0.
         def snapshot(value = nil)
           configure(:snapshot, value)
         end

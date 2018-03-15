@@ -129,7 +129,7 @@ module Mongo
       #   a field in each doc.
       # @option options :skip [ Integer ] The number of documents to skip.
       # @option options :snapshot [ true, false ] Prevents returning a doc more than
-      #   once.
+      #   once. Deprecated as of MongoDB server version 4.0.
       # @option options :sort [ Hash ] The key and direction pairs used to sort the
       #   results.
       # @option options [ Hash ] :collation The collation to use.
