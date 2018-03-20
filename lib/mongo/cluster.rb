@@ -244,14 +244,16 @@ module Mongo
     # @example Get the next primary server.
     #   cluster.next_primary
     #
-    # @param [ true, false ] ping Whether to ping the server before selection.
+    # @param [ true, false ] ping Whether to ping the server before selection. Deprecated,
+    #   not necessary with the implementation of the Server Selection specification.
+    #
     #
     # @return [ Mongo::Server ] A primary server.
     #
     # @since 2.0.0
     def next_primary(ping = true)
       @primary_selector ||= ServerSelector.get(ServerSelector::PRIMARY)
-      @primary_selector.select_server(self, ping)
+      @primary_selector.select_server(self)
     end
 
     # Elect a primary server from the description that has just changed to a

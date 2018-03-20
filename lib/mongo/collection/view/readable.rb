@@ -136,7 +136,7 @@ module Mongo
           read_pref = opts[:read] || read_preference
           selector = ServerSelector.get(read_pref || server_selector)
           read_with_retry do
-            server = selector.select_server(cluster, false)
+            server = selector.select_server(cluster)
             apply_collation!(cmd, server, opts)
             with_session(opts) do |session|
               Operation::Commands::Count.new({
@@ -176,7 +176,7 @@ module Mongo
           read_pref = opts[:read] || read_preference
           selector = ServerSelector.get(read_pref || server_selector)
           read_with_retry do
-            server = selector.select_server(cluster, false)
+            server = selector.select_server(cluster)
             apply_collation!(cmd, server, opts)
             with_session(opts) do |session|
               Operation::Commands::Distinct.new({
@@ -479,7 +479,7 @@ module Mongo
 
         def parallel_scan(cursor_count, options = {})
           session = client.send(:get_session, @options)
-          server = server_selector.select_server(cluster, false)
+          server = server_selector.select_server(cluster)
           cmd = Operation::Commands::ParallelScan.new({
                   :coll_name => collection.name,
                   :db_name => database.name,

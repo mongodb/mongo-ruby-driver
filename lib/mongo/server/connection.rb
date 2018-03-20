@@ -27,31 +27,43 @@ module Mongo
       # The ping command.
       #
       # @since 2.1.0
+      #
+      # @deprecated No longer necessary with Server Selection specification.
       PING = { :ping => 1 }.freeze
 
       # The ping command for an OP_MSG (server versions >= 3.6).
       #
       # @since 2.5.0
+      #
+      # @deprecated No longer necessary with Server Selection specification.
       PING_OP_MSG = { :ping => 1, '$db' => Database::ADMIN }.freeze
 
       # Ping message.
       #
       # @since 2.1.0
+      #
+      # @deprecated No longer necessary with Server Selection specification.
       PING_MESSAGE = Protocol::Query.new(Database::ADMIN, Database::COMMAND, PING, :limit => -1)
 
       # Ping message as an OP_MSG (server versions >= 3.6).
       #
       # @since 2.5.0
+      #
+      # @deprecated No longer necessary with Server Selection specification.
       PING_OP_MSG_MESSAGE = Protocol::Msg.new([:none], {}, PING_OP_MSG)
 
       # The ping message as raw bytes.
       #
       # @since 2.1.0
+      #
+      # @deprecated No longer necessary with Server Selection specification.
       PING_BYTES = PING_MESSAGE.serialize.to_s.freeze
 
       # The ping OP_MSG message as raw bytes (server versions >= 3.6).
       #
       # @since 2.5.0
+      #
+      # @deprecated No longer necessary with Server Selection specification.
       PING_OP_MSG_BYTES = PING_OP_MSG_MESSAGE.serialize.to_s.freeze
 
       # The last time the connection was checked back into a pool.
@@ -173,6 +185,8 @@ module Mongo
       # @return [ true, false ] If the server is accepting connections.
       #
       # @since 2.1.0
+      #
+      # @deprecated No longer necessary with Server Selection specification.
       def ping
         bytes = features.op_msg_enabled? ? PING_OP_MSG_BYTES : PING_BYTES
         ensure_connected do |socket|

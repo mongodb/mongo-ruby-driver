@@ -94,7 +94,7 @@ module Mongo
       # @return [ Mongo::Server ] A server matching the server preference.
       #
       # @since 2.0.0
-      def select_server(cluster, ping = true)
+      def select_server(cluster, ping = nil)
         @local_threshold = cluster.options[:local_threshold] || LOCAL_THRESHOLD
         @server_selection_timeout = cluster.options[:server_selection_timeout] || SERVER_SELECTION_TIMEOUT
         deadline = Time.now + server_selection_timeout
@@ -102,17 +102,8 @@ module Mongo
           servers = candidates(cluster)
           if servers && !servers.compact.empty?
             server = servers.first
-            # There is no point pinging a standalone as the subsequent scan is
-            # not going to change anything about the cluster.
-            if ping && !cluster.single?
-              if server.connectable?
-                server.check_driver_support!
-                return server
-              end
-            else
-              server.check_driver_support!
-              return server
-            end
+            server.check_driver_support!
+            return server
           end
           cluster.scan!
         end
