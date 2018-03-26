@@ -18,6 +18,7 @@ require 'mongo/auth/scram'
 require 'mongo/auth/user'
 require 'mongo/auth/x509'
 require 'mongo/auth/roles'
+require 'mongo/auth/stringprep'
 
 module Mongo
 

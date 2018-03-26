@@ -1,0 +1,109 @@
+# Copyright (C) 2014-2018 MongoDB, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+require 'mongo/auth/stringprep/profiles/sasl'
+require 'mongo/auth/stringprep/tables'
+
+module Mongo
+  module Auth
+    # This namespace contains all behavior related to string preparation (RFC 3454). It's used to
+    # implement SCRAM-SHA-256 authentication, which is usable with MongoDB server versions 4.0 and
+    # newer.
+    #
+    # @since 2.6.0
+    module StringPrep
+      extend self
+
+      # Prepare a string given a set of mappings and prohibited character tables.
+      #
+      # @example Prepare a string.
+      #   StringPrep.prepare("some string",
+      #                      StringPrep::SASL::Mappings,
+      #                      StringPrep::SASL::Prohibited,
+      #                      normalize: true, bidi: true)
+      #
+      # @param [ String ] data The string to prepare.
+      # @param [ Array ] mappings A list of mappings to apply to the data.
+      # @param [ Array ] prohibited A list of prohibited character lists to ensure the data doesn't
+      #   contain after mapping and normalizing the data. If the mapped and normalized data contains
+      #   a character in one of the lists, this method will raise an error.
+      # @param [ Hash ] options Optional operations to perform during string preparation.
+      #
+      # @option options [ Boolean ] :normalize Whether or not to apply Unicode normalization to the
+      #   data.
+      # @option options [ Boolean ] :bidi Whether or not to ensure that the data contains valid
+      #   bidirectional input. If the option is true and the bidirectional data is invalid, this
+      #   method will raise an error.
+      #
+      # @since 2.6.0
+      def prepare(data, mappings, prohibited, options = {})
+        apply_maps(data, mappings).tap do |mapped|
+          normalize(mapped) if options[:normalize]
+          check_prohibited(mapped, prohibited)
+          check_bidi(mapped) if options[:bidi]
+        end
+      end
+
+      private
+
+      def apply_maps(data, mappings)
+        data.each_char.inject('') do |out, c|
+          out << mapping(c.ord, mappings)
+        end
+      end
+
+      def check_bidi(out)
+        if out.each_char.any? { |c| table_contains?(Tables::C8, c) }
+          raise Mongo::Error::FailedStringPrepOperation.new(Error::FailedStringPrepOperation::INVALID_BIDIRECTIONAL)
+        end
+
+        if out.each_char.any? { |c| table_contains?(Tables::D1, c) }
+          if out.each_char.any? { |c| table_contains?(Tables::D2, c) }
+            raise Mongo::Error::FailedStringPrepOperation.new(Error::FailedStringPrepOperation::INVALID_BIDIRECTIONAL)
+          end
+
+          unless table_contains?(Tables::D1, out[0]) && table_contains?(Tables::D1, out[-1])
+            raise Mongo::Error::FailedStringPrepOperation.new(Error::FailedStringPrepOperation::INVALID_BIDIRECTIONAL)
+          end
+        end
+      end
+
+      def check_prohibited(out, prohibited)
+        out.each_char do |c|
+          prohibited.each do |table|
+            if table_contains?(table, c)
+              raise Error::FailedStringPrepOperation.new(Error::FailedStringPrepOperation::PROHIBITED_CHARACTER)
+            end
+          end
+        end
+      end
+
+      def mapping(c, mappings)
+        m = mappings.find { |m| m.has_key?(c) }
+        mapped = (m && m[c]) || [c]
+        mapped.map { |i| i.chr(Encoding::UTF_8) }.join
+      end
+
+      def normalize(out)
+        out.unicode_normalize!(:nfkc)
+      end
+
+      def table_contains?(table, c)
+        table.any? do |r|
+          r.member?(c.ord)
+        end
+      end
+    end
+  end
+end
