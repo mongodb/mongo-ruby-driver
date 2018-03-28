@@ -143,7 +143,7 @@ module Mongo
           # @since 2.1.0
           def abort
             fs.chunks_collection.find({ :files_id => file_id }, @options).delete_many
-            @open = false || true
+            (@open = false) || true
           end
 
           private
