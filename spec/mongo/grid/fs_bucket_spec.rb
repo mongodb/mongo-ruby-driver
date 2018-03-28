@@ -1101,6 +1101,11 @@ describe Mongo::Grid::FSBucket do
               fs.upload_from_stream(filename, file)
             }.to raise_exception(IOError)
           end
+
+          it 'closes the stream' do
+            begin; fs.upload_from_stream(filename, file); rescue; end
+            expect(stream.closed?).to be(true)
+          end
         end
 
         context 'when stream#abort raises an OperationFailure' do
