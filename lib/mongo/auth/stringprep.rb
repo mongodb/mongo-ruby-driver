@@ -45,13 +45,13 @@ module Mongo
       #   bidirectional input.
       #
       # @raise [ Error::FailedStringPrepValidation ] If a prohibited character is present after the
-      #   mapping and normalization or if the bidi option is true and the bidirectional data is
-      #   invalid.
+      #   mapping and normalization, if the bidi option is true and the bidirectional data is
+      #   invalid, or if the normalize option is true and the Ruby version is below 2.2.0.
       #
       # @since 2.6.0
       def prepare(data, mappings, prohibited, options = {})
         apply_maps(data, mappings).tap do |mapped|
-          normalize(mapped) if options[:normalize]
+          normalize!(mapped) if options[:normalize]
           check_prohibited!(mapped, prohibited)
           check_bidi!(mapped) if options[:bidi]
         end
@@ -97,7 +97,11 @@ module Mongo
         mapped.map { |i| i.chr(Encoding::UTF_8) }.join
       end
 
-      def normalize(out)
+      def normalize!(out)
+        if RUBY_VERSION < "2.2.0"
+          raise Error::FailedStringPrepValidation.new(Error::FailedStringPrepValidation::UNABLE_TO_NORMALIZE)
+        end
+
         out.unicode_normalize!(:nfkc)
       end
 
