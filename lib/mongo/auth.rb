@@ -36,7 +36,7 @@ module Mongo
     # Constant for the nonce command.
     #
     # @since 2.0.0
-    GET_NONCE = { getnonce: 1 }.freeze
+    GET_NONCE = {getnonce: 1}.freeze
 
     # Constant for the nonce field.
     #
@@ -50,7 +50,7 @@ module Mongo
       mongodb_cr: CR,
       mongodb_x509: X509,
       plain: LDAP,
-      scram: SCRAM
+      scram: SCRAM,
     }
 
     # Get the authorization strategy for the provided auth mechanism.

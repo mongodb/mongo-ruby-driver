@@ -57,7 +57,7 @@ describe Mongo::Auth::StringPrep do
       it 'raises an error on prohibited input' do
         expect {
           prepare("u\uFFFDer", mappings, prohibited, options)
-        }.to raise_error(Mongo::Error::FailedStringPrepOperation)
+        }.to raise_error(Mongo::Error::FailedStringPrepValidation)
       end
 
       it 'does not raise an error on proper bidi input' do
@@ -69,25 +69,25 @@ describe Mongo::Auth::StringPrep do
       it 'raises an error on bidi input with prohibited bidi character' do
         expect {
           prepare("\u0627\u0589\u0628", mappings, prohibited, options)
-        }.to raise_error(Mongo::Error::FailedStringPrepOperation)
+        }.to raise_error(Mongo::Error::FailedStringPrepValidation)
       end
 
       it 'raises an error on bidi input with invalid first bidi character' do
         expect {
           prepare("\u0031\u0627", mappings, prohibited, options)
-        }.to raise_error(Mongo::Error::FailedStringPrepOperation)
+        }.to raise_error(Mongo::Error::FailedStringPrepValidation)
       end
 
       it 'raises an error on bidi input with invalid first bidi character' do
         expect {
           prepare("\u0627\u0031", mappings, prohibited, options)
-        }.to raise_error(Mongo::Error::FailedStringPrepOperation)
+        }.to raise_error(Mongo::Error::FailedStringPrepValidation)
       end
 
       it 'raises an error on input with prohibited bidi character' do
         expect {
           prepare("\u0627\u0031", mappings, prohibited, options)
-        }.to raise_error(Mongo::Error::FailedStringPrepOperation)
+        }.to raise_error(Mongo::Error::FailedStringPrepValidation)
       end
     end
   end

@@ -39,13 +39,13 @@ describe Mongo::Auth::StringPrep::Profiles::SASL do
     it 'raises an error on prohibited input' do
       expect {
         prepare("\u0007")
-      }.to raise_error(Mongo::Error::FailedStringPrepOperation)
+      }.to raise_error(Mongo::Error::FailedStringPrepValidation)
     end
 
     it 'raises an error on invalid bidi input' do
       expect {
         prepare("\u0627\u0031")
-      }.to raise_error(Mongo::Error::FailedStringPrepOperation)
+      }.to raise_error(Mongo::Error::FailedStringPrepValidation)
     end
   end
 end
