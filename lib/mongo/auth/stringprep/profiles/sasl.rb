@@ -20,6 +20,8 @@ module Mongo
       module Profiles
         # Contains the mappings and prohibited lists for SASLPrep (RFC 4013).
         #
+        # @note Only available for Ruby versions 2.2.0 and up.
+        #
         # @since 2.6.0
         module SASL
           MAP_NON_ASCII_TO_SPACE = {

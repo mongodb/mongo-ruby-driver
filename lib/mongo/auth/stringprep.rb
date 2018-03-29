@@ -44,12 +44,12 @@ module Mongo
       # @option options [ Boolean ] :bidi Whether or not to ensure that the data contains valid
       #   bidirectional input.
       #
-      # @raise [ Error::FailedStringPrepValidation ] If a prohibited character is present after the
-      #   mapping and normalization, if the bidi option is true and the bidirectional data is
-      #   invalid, or if the normalize option is true and the Ruby version is below 2.2.0.
+      # @raise [ Error::FailedStringPrepValidation ] If stringprep validations fails.
       #
       # @since 2.6.0
       def prepare(data, mappings, prohibited, options = {})
+        check_ruby_version! if options[:normalize]
+
         apply_maps(data, mappings).tap do |mapped|
           normalize!(mapped) if options[:normalize]
           check_prohibited!(mapped, prohibited)
@@ -58,6 +58,12 @@ module Mongo
       end
 
       private
+
+      def check_ruby_version!
+        if RUBY_VERSION < "2.2.0"
+          raise Error::FailedStringPrepValidation.new(Error::FailedStringPrepValidation::UNABLE_TO_NORMALIZE)
+        end
+      end
 
       def apply_maps(data, mappings)
         data.each_char.inject('') do |out, c|
@@ -98,10 +104,6 @@ module Mongo
       end
 
       def normalize!(out)
-        if RUBY_VERSION < "2.2.0"
-          raise Error::FailedStringPrepValidation.new(Error::FailedStringPrepValidation::UNABLE_TO_NORMALIZE)
-        end
-
         out.unicode_normalize!(:nfkc)
       end
 

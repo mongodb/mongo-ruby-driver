@@ -4,16 +4,18 @@ describe 'Server Discovery and Monitoring' do
   include Mongo::SDAM
 
   SERVER_DISCOVERY_TESTS.each do |file|
+
     spec = Mongo::SDAM::Spec.new(file)
 
     context(spec.description) do
+
       before(:all) do
         @client = Mongo::Client.new([])
         @client.send(:create_from_uri, spec.uri_string)
         client_options = @client.instance_variable_get(:@options)
         @client.instance_variable_set(:@options, client_options.merge(heartbeat_frequency: 100, connect_timeout: 0.1))
         @client.cluster.instance_variable_set(:@options, client_options.merge(heartbeat_frequency: 100, connect_timeout: 0.1))
-        @client.cluster.instance_variable_get(:@servers).each { |s| s.disconnect!; s.unknown! }
+        @client.cluster.instance_variable_get(:@servers).each { |s| s.disconnect!; s.unknown!; }
       end
 
       after(:all) do
@@ -21,17 +23,19 @@ describe 'Server Discovery and Monitoring' do
       end
 
       spec.phases.each_with_index do |phase, index|
+
         context("Phase: #{index + 1}") do
+
           before(:all) do
             phase.responses.each do |response|
               server = find_server(@client, response.address)
               unless server
                 server = Mongo::Server.new(
-                  Mongo::Address.new(response.address),
-                  @client.cluster,
-                  @client.instance_variable_get(:@monitoring),
-                  @client.cluster.send(:event_listeners),
-                  @client.cluster.options
+                    Mongo::Address.new(response.address),
+                    @client.cluster,
+                    @client.instance_variable_get(:@monitoring),
+                    @client.cluster.send(:event_listeners),
+                    @client.cluster.options
                 )
                 server.disconnect!
                 server.unknown!
@@ -43,9 +47,10 @@ describe 'Server Discovery and Monitoring' do
           end
 
           if phase.outcome.compatible?
+
             let(:cluster_addresses) do
               @client.cluster.instance_variable_get(:@servers).
-                collect(&:address).collect(&:to_s).uniq.sort
+                  collect(&:address).collect(&:to_s).uniq.sort
             end
 
             let(:phase_addresses) do
@@ -69,6 +74,7 @@ describe 'Server Discovery and Monitoring' do
             end
 
             phase.outcome.servers.each do |uri, server|
+
               it "sets #{uri} to #{server['type']}" do
                 expect(find_server(@client, uri)).to be_server_type(server['type'])
               end
@@ -77,7 +83,9 @@ describe 'Server Discovery and Monitoring' do
                 expect(find_server(@client, uri).replica_set_name).to eq(server['setName'])
               end
             end
+
           else
+
             before do
               @client.cluster.servers.each do |server|
                 allow(server).to receive(:connectable?).and_return(true)

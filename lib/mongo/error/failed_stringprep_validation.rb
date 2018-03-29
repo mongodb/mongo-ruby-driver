@@ -28,6 +28,8 @@ module Mongo
       #     Mongo::Error::FailedStringPrepValidation::PROHIBITED_CHARACTER)
       #
       # @param [ String ] msg The error message describing how the validation fa
+      #
+      # @since 2.6.0
       def initialize(msg)
         super(msg)
       end
