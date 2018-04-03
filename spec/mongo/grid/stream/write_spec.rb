@@ -74,6 +74,7 @@ describe Mongo::Grid::FSBucket::Stream::Write do
         end
 
         it 'does not set an md5 for the file' do
+          expect(stream.send(:file_info).document.has_key?(:md5)). to be(false)
           expect(stream.send(:file_info).document[:md5]). to be_nil
         end
       end
