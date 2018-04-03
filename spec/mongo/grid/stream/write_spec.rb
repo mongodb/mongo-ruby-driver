@@ -27,7 +27,7 @@ describe Mongo::Grid::FSBucket::Stream::Write do
   end
 
   let(:options) do
-    { filename: filename }.merge(extra_options)
+    { filename: filename }.merge(extra_options).merge(fs.options)
   end
 
   after do
@@ -51,6 +51,45 @@ describe Mongo::Grid::FSBucket::Stream::Write do
 
     it 'opens a stream' do
       expect(stream.close).to be_a(BSON::ObjectId)
+    end
+
+    context 'when the fs does not have disable_md5 specified' do
+
+      it 'sets an md5 for the file' do
+        stream.send(:file_info).to_bson
+        expect(stream.send(:file_info).document[:md5].size).to eq(32)
+      end
+    end
+
+    context 'when the fs has disable_md5 specified' do
+
+      before do
+        stream.send(:file_info).to_bson
+      end
+
+      context 'when disable_md5 is true' do
+
+        let(:fs_options) do
+          { disable_md5: true }
+        end
+
+        it 'does not set an md5 for the file' do
+          expect(stream.send(:file_info).document.has_key?(:md5)). to be(false)
+          expect(stream.send(:file_info).document[:md5]). to be_nil
+        end
+      end
+
+      context 'when disabled_md5 is false' do
+
+        let(:fs_options) do
+          { disable_md5: false }
+        end
+
+        it 'sets an md5 for the file' do
+          stream.send(:file_info).to_bson
+          expect(stream.send(:file_info).document[:md5].size).to eq(32)
+        end
+      end
     end
 
     context 'when the fs has a write concern', if: standalone? do

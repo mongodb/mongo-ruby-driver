@@ -173,11 +173,11 @@ module Mongo
             io = StringIO.new(io) if io.is_a?(String)
             parts = Enumerator.new { |y| y << io.read(file_info.chunk_size) until io.eof? }
             parts.map.with_index do |bytes, n|
-              file_info.md5.update(bytes)
+              file_info.update_md5(bytes)
               Chunk.new(
                 data: BSON::Binary.new(bytes),
                 files_id: file_info.id,
-                n: n + offset,
+                n: n + offset
               )
             end
           end

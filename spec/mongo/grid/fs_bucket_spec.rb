@@ -98,6 +98,38 @@ describe Mongo::Grid::FSBucket do
             expect(stream.write_concern.options).to eq(Mongo::WriteConcern.get(options[:write]).options)
           end
         end
+
+        context 'when disable_md5 is not specified' do
+
+          it 'does not set the option on the write stream' do
+            expect(stream.options[:disable_md5]).to be_nil
+          end
+        end
+
+        context 'when disable_md5 is specified' do
+
+          context 'when disable_md5 is true' do
+
+            let(:options) do
+              { disable_md5: true }
+            end
+
+            it 'passes the option to the write stream' do
+              expect(stream.options[:disable_md5]).to be(true)
+            end
+          end
+
+          context 'when disable_md5 is false' do
+
+            let(:options) do
+              { disable_md5: false }
+            end
+
+            it 'passes the option to the write stream' do
+              expect(stream.options[:disable_md5]).to be(false)
+            end
+          end
+        end
       end
     end
   end

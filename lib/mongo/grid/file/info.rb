@@ -134,8 +134,8 @@ module Mongo
         #
         # @since 2.0.0
         def initialize(document)
+          @client_md5 = Digest::MD5.new unless document[:disable_md5] == true
           @document = default_document.merge(Options::Mapper.transform(document, MAPPINGS))
-          @client_md5 = Digest::MD5.new
         end
 
         # Get a readable inspection for the object.
@@ -184,8 +184,29 @@ module Mongo
         # @return [ String ] The md5 hash as a string.
         #
         # @since 2.0.0
+        #
+        # @deprecated as of 2.6.0
         def md5
           document[:md5] || @client_md5
+        end
+
+        # Update the md5 hash if there is one.
+        #
+        # @example Update the md5 hash.
+        #   file_info.update_md5(bytes)
+        #
+        # @note This method is transitional and is provided for backwards compatibility.
+        # It will be removed when md5 support is deprecated entirely.
+        #
+        # @param [ String ] The bytes to use to update the digest.
+        #
+        # @return [ Digest::MD5 ] The md5 hash object.
+        #
+        # @since 2.6.0
+        #
+        # @deprecated as of 2.6.0
+        def update_md5(bytes)
+          md5.update(bytes) if md5
         end
 
         # Convert the file information document to BSON for storage.
@@ -203,7 +224,9 @@ module Mongo
         #
         # @since 2.0.0
         def to_bson(buffer = BSON::ByteBuffer.new, validating_keys = BSON::Config.validating_keys?)
-          document[:md5] ||= @client_md5.hexdigest
+          if @client_md5 && !document[:md5]
+            document[:md5] = @client_md5.hexdigest
+          end
           document.to_bson(buffer)
         end
 
