@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/auth/stringprep/profiles/sasl'
 require 'mongo/auth/stringprep/tables'
+require 'mongo/auth/stringprep/profiles/sasl'
 
 module Mongo
   module Auth

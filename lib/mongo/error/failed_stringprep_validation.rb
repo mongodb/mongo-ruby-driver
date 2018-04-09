@@ -8,15 +8,15 @@ module Mongo
       # The error message describing failed bidi validation.
       #
       # @since 2.6.0
-      INVALID_BIDIRECTIONAL = 'StringPrep bidirectional data is invalid'.freeze
+      INVALID_BIDIRECTIONAL = 'Data failed bidirectional validation'.freeze
 
       # The error message describing the discovery of a prohibited character.
       #
       # @since 2.6.0
-      PROHIBITED_CHARACTER = 'StringPrep data contains a prohibited character.'.freeze
+      PROHIBITED_CHARACTER = 'Data contains a prohibited character.'.freeze
 
-      # The error message describing that stringprep normalization can't be done
-      # of Ruby.
+      # The error message describing that stringprep normalization can't be done on Ruby versions
+      # below 2.2.0.
       #
       # @since 2.6.0
       UNABLE_TO_NORMALIZE = 'Unable to perform normalization with Ruby versions below 2.2.0'.freeze

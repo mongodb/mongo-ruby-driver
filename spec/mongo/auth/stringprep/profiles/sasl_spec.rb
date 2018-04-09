@@ -1,30 +1,44 @@
 require 'spec_helper'
 
 describe Mongo::Auth::StringPrep::Profiles::SASL do
-  def prepare(data)
+  let(:prepared_data) do
     Mongo::Auth::StringPrep.prepare(
       data,
-      Mongo::Auth::StringPrep::Profiles::SASL::MAPPINGS,
-      Mongo::Auth::StringPrep::Profiles::SASL::PROHIBITIED,
-      normalize: true,
-      bidi: true,
+      mappings,
+      prohibited,
+      options
     )
+  end
+
+  let(:mappings) do
+    Mongo::Auth::StringPrep::Profiles::SASL::MAPPINGS
+  end
+
+  let(:prohibited) do
+    Mongo::Auth::StringPrep::Profiles::SASL::PROHIBITIED
+  end
+
+  let(:options) do
+    {
+      normalize: true,
+      bidi: true
+    }
   end
 
   describe 'StringPrep#prepare' do
     context 'when Ruby version is below 2.2.0', if: RUBY_VERSION < '2.2.0' do
+      let(:data) do
+        ''
+      end
+
       it 'raises an error' do
         expect {
-          prepare('')
+          prepared_data
         }.to raise_error(Mongo::Error::FailedStringPrepValidation)
       end
     end
 
     context 'when Ruby version is at least 2.2.0', if: RUBY_VERSION >= '2.2.0' do
-      let(:prepared_data) do
-        prepare(data)
-      end
-
       context 'when there is unnecessary punctuation' do
         let(:data) do
           "I\u00ADX"
