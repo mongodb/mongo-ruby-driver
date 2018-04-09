@@ -21,40 +21,92 @@ describe Mongo::Auth::StringPrep::Profiles::SASL do
     end
 
     context 'when Ruby version is at least 2.2.0', if: RUBY_VERSION >= '2.2.0' do
-      it 'removes unnecessary punctuation' do
-        expect(prepare("I\u00ADX")).to eq('IX')
+      let(:prepared_data) do
+        prepare(data)
       end
 
-      it 'replaces non-ASCII spaces' do
-        expect(prepare("I\u2000X")).to eq('I X')
+      context 'when there is unnecessary punctuation' do
+        let(:data) do
+          "I\u00ADX"
+        end
+
+        it 'removes the punctuation' do
+          expect(prepared_data).to eq('IX')
+        end
       end
 
-      it 'returns the same string on ASCII input' do
-        expect(prepare('user')).to eq('user')
+      context 'when there are non-ASCII spaces' do
+        let(:data) do
+          "I\u2000X"
+        end
+
+        it 'replaces them with ASCII spaces' do
+          expect(prepared_data).to eq('I X')
+        end
       end
 
-      it 'preserves case' do
-        expect(prepare('USER')).to eq('USER')
+      context 'when the input is ASCII' do
+        let(:data) do
+          'user'
+        end
+
+        it 'returns the same string' do
+          expect(prepared_data).to eq('user')
+        end
       end
 
-      it 'unicode normalizes single-character codes' do
-        expect(prepare("\u00AA")).to eq('a')
+      context 'when the data contains uppercase characters' do
+        let(:data) do
+          'USER'
+        end
+
+        it 'preserves case' do
+          expect(prepared_data).to eq('USER')
+        end
       end
 
-      it 'unicode normalizes multi-character codes' do
-        expect(prepare("\u2168")).to eq('IX')
+      context 'when the data contains single-character codes' do
+        let(:data) do
+          "\u00AA"
+        end
+
+        it 'normalizes the codes' do
+          expect(prepared_data).to eq('a')
+        end
       end
 
-      it 'raises an error on prohibited input' do
-        expect {
-          prepare("\u0007")
-        }.to raise_error(Mongo::Error::FailedStringPrepValidation)
+      context 'when the data contains multi-character codes' do
+        let(:data) do
+          "\u2168"
+        end
+
+        it 'normalizes the codes' do
+          expect(prepared_data).to eq('IX')
+        end
       end
 
-      it 'raises an error on invalid bidi input' do
-        expect {
-          prepare("\u0627\u0031")
-        }.to raise_error(Mongo::Error::FailedStringPrepValidation)
+      context 'when the data contains prohibited input' do
+        let(:data) do
+          "\u0007"
+        end
+
+        it 'raises an error' do
+          expect {
+            prepared_data
+          }.to raise_error(Mongo::Error::FailedStringPrepValidation)
+        end
+      end
+
+      context 'when the data contains invalid bidi input' do
+        let(:data) do
+          "\u0627\u0031"
+        end
+
+        it 'raises an error' do
+          expect {
+            prepared_data
+          }.to raise_error(Mongo::Error::FailedStringPrepValidation)
+        end
       end
     end
   end

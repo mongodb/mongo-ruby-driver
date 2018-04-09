@@ -4,13 +4,41 @@ describe Mongo::Auth::StringPrep do
   include Mongo::Auth::StringPrep
 
   describe '#prepare' do
+    let(:prepared_data) do
+      prepare(data, mappings, prohibited, options)
+    end
+
     context 'with no options' do
-      it 'does not check bidi' do
-        expect(prepare("\u0627\u0031", [], [])).to eq("\u0627\u0031")
+      let(:mappings) do
+        []
       end
 
-      it 'does not unicode normalize' do
-        expect(prepare("ua\u030Aer", [], [])).to eq("ua\u030Aer")
+      let(:prohibited) do
+        []
+      end
+
+      let(:options) do
+        {}
+      end
+
+      context 'when the data has invalid bidi' do
+        let(:data) do
+          "\u0627\u0031"
+        end
+
+        it 'does not raise an error' do
+          expect(prepared_data).to eq("\u0627\u0031")
+        end
+      end
+
+      context 'when the data has unicode codes' do
+        let(:data) do
+          "ua\u030Aer"
+        end
+
+        it 'does not normalize the data' do
+          expect(prepared_data).to eq("ua\u030Aer")
+        end
       end
     end
 
@@ -35,68 +63,138 @@ describe Mongo::Auth::StringPrep do
       end
 
       context 'when Ruby version is below 2.2.0', if: RUBY_VERSION < '2.2.0' do
+        let(:data) do
+          ''
+        end
+
         it 'raises an error' do
           expect {
-            prepare('', mappings, prohibited, options)
+            prepared_data
           }.to raise_error(Mongo::Error::FailedStringPrepValidation)
         end
       end
 
       context 'when Ruby version is at least 2.2.0', if: RUBY_VERSION >= '2.2.0' do
-        it 'returns the empty string on empty input' do
-          expect(prepare('', mappings, prohibited, options)).to eq('')
+        context 'when the input is empty' do
+          let(:data) do
+            ''
+          end
+
+          it 'returns the empty string' do
+            expect(prepared_data).to eq('')
+          end
         end
 
-        it 'returns the same string on ASCII input' do
-          expect(prepare('user', mappings, prohibited, options)).to eq('user')
+        context 'when the input is ASCII' do
+          let(:data) do
+            'user'
+          end
+
+          it 'returns the same string on ASCII input' do
+            expect(prepared_data).to eq('user')
+          end
         end
 
-        it 'removes zero-width spaces from the input' do
-          expect(prepare("u\u200Ber", mappings, prohibited, options)).to eq('uer')
+        context 'when the input contains zero-width spaces' do
+          let(:data) do
+            "u\u200Ber"
+          end
+
+          it 'removes the zero-width spaces' do
+            expect(prepared_data).to eq('uer')
+          end
         end
 
-        it 'maps non-ASCII characters to ASCII' do
-          expect(prepare("u\u00DFer", mappings, prohibited, options)).to eq('usser')
+        context 'when the input contains non-ASCII characters' do
+          let(:data) do
+            "u\u00DFer"
+          end
+
+          it 'maps the non-ASCII characters to ASCII' do
+            expect(prepared_data).to eq('usser')
+          end
         end
 
-        it 'unicode normalizes the input' do
-          expect(prepare("ua\u030Aer", mappings, prohibited, options)).to eq("u\u00e5er")
+        context 'when the input contains unicode codes' do
+          let(:data) do
+            "ua\u030Aer"
+          end
+
+          it 'unicode normalizes the input' do
+            expect(prepared_data).to eq("u\u00e5er")
+          end
         end
 
-        it 'raises an error on prohibited input' do
-          expect {
-            prepare("u\uFFFDer", mappings, prohibited, options)
-          }.to raise_error(Mongo::Error::FailedStringPrepValidation)
+        context 'when the input contains prohibited characters' do
+          let(:data) do
+            "u\uFFFDer"
+          end
+
+          it 'raises an error' do
+            expect {
+              prepared_data
+            }.to raise_error(Mongo::Error::FailedStringPrepValidation)
+          end
         end
 
-        it 'does not raise an error on proper bidi input' do
-          expect(
-            prepare("\u0627\u0031\u0628", mappings, prohibited, options)
-          ).to eq("\u0627\u0031\u0628")
+        context 'when the data is proper bidi' do
+          let(:data) do
+            "\u0627\u0031\u0628"
+          end
+
+          it 'does not raise an error' do
+            expect(
+              prepared_data
+            ).to eq("\u0627\u0031\u0628")
+          end
         end
 
-        it 'raises an error on bidi input with prohibited bidi character' do
-          expect {
-            prepare("\u0627\u0589\u0628", mappings, prohibited, options)
-          }.to raise_error(Mongo::Error::FailedStringPrepValidation)
+        context 'when bidi input contains prohibited bidi characters' do
+          let(:data) do
+            "\u0627\u0589\u0628"
+          end
+
+          it 'raises an error' do
+            expect {
+              prepared_data
+            }.to raise_error(Mongo::Error::FailedStringPrepValidation)
+          end
         end
 
-        it 'raises an error on bidi input with invalid first bidi character' do
-          expect {
-            prepare("\u0031\u0627", mappings, prohibited, options)
-          }.to raise_error(Mongo::Error::FailedStringPrepValidation)
+        context 'when bidi input has an invalid first bidi character' do
+          let(:data) do
+            "\u0031\u0627"
+          end
+
+          it 'raises an error' do
+            expect {
+              prepared_data
+            }.to raise_error(Mongo::Error::FailedStringPrepValidation)
+          end
         end
 
-        it 'raises an error on bidi input with invalid first bidi character' do
-          expect {
-            prepare("\u0627\u0031", mappings, prohibited, options)
-          }.to raise_error(Mongo::Error::FailedStringPrepValidation)
+        context 'when bidi input has an invalid last bidi character' do
+          let(:data) do
+            "\u0627\u0031"
+          end
+
+          it 'raises an error' do
+            expect {
+              prepared_data
+            }.to raise_error(Mongo::Error::FailedStringPrepValidation)
+          end
         end
 
-        it 'raises an error on input with prohibited bidi character' do
-          expect {
-            prepare("\u0627\u0031", mappings, prohibited, options)
-          }.to raise_error(Mongo::Error::FailedStringPrepValidation)
+        context 'when bidi input has a bad character' do
+          let(:data) do
+            "\u206D"
+          end
+
+          it 'raises an error' do
+            expect {
+              prepared_data
+            }.to raise_error(Mongo::Error::FailedStringPrepValidation)
+          end
         end
       end
     end
