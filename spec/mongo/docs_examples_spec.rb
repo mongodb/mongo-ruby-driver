@@ -110,6 +110,7 @@ describe 'aggregation examples in Ruby' do
                                              'cond' => { '$eq' => ['$$airline.country', 'Canada'] } } } }
             }
           ])
+
       # End Aggregation Example 4
     end
 
