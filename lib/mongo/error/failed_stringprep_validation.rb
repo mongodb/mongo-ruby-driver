@@ -27,7 +27,7 @@ module Mongo
       #   Mongo::Error::FailedStringPrepValidation.new(
       #     Mongo::Error::FailedStringPrepValidation::PROHIBITED_CHARACTER)
       #
-      # @param [ String ] msg The error message describing how the validation fa
+      # @param [ String ] msg The error message describing how the validation failed.
       #
       # @since 2.6.0
       def initialize(msg)
