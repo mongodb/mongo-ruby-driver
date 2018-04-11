@@ -416,7 +416,7 @@ describe Mongo::Cursor do
     end
 
     let(:reply) do
-      Mongo::Operation::Read::Query.new(query_spec)
+      Mongo::Operation::Find.new(query_spec)
     end
 
     let(:cursor) do

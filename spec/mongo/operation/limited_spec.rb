@@ -18,7 +18,7 @@ describe Mongo::Operation::Limited do
       end
 
       it 'returns a limit of -1' do
-        expect(limited.options).to eq({ :skip => 5, :limit => -1 })
+        expect(limited.send(:options)).to eq({ :skip => 5, :limit => -1 })
       end
     end
 
@@ -31,7 +31,7 @@ describe Mongo::Operation::Limited do
         end
 
         it 'returns a limit of -1' do
-          expect(limited.options).to eq({ :skip => 5, :limit => -1 })
+          expect(limited.send(:options)).to eq({ :skip => 5, :limit => -1 })
         end
       end
 
@@ -42,7 +42,7 @@ describe Mongo::Operation::Limited do
         end
 
         it 'returns a limit of -1' do
-          expect(limited.options).to eq({ :skip => 5, :limit => -1 })
+          expect(limited.send(:options)).to eq({ :skip => 5, :limit => -1 })
         end
       end
     end

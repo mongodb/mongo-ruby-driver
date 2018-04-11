@@ -206,10 +206,11 @@ module Mongo
 
     def get_more_operation
       if @server.features.find_command_enabled?
-        Operation::Commands::GetMore.new(Builder::GetMoreCommand.new(self, @session).specification)
+        spec = Builder::GetMoreCommand.new(self, @session).specification
       else
-        Operation::Read::GetMore.new(Builder::OpGetMore.new(self).specification)
+        spec = Builder::OpGetMore.new(self).specification
       end
+      Operation::GetMore.new(spec)
     end
 
     def kill_cursors
@@ -227,11 +228,7 @@ module Mongo
     end
 
     def kill_cursors_operation
-      if @server.features.find_command_enabled?
-        Operation::Commands::Command.new(kill_cursors_op_spec)
-      else
-        Operation::KillCursors.new(kill_cursors_op_spec)
-      end
+      Operation::KillCursors.new(kill_cursors_op_spec)
     end
 
     def kill_cursors_op_spec

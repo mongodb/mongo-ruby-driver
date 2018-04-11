@@ -124,7 +124,7 @@ module Mongo
             if server.features.find_command_enabled?
               Cursor::Builder::KillCursorsCommand.update_cursors(op_spec, active_cursors_copy.to_a)
               if Cursor::Builder::KillCursorsCommand.get_cursors_list(op_spec).size > 0
-                Operation::Commands::Command.new(op_spec).execute(server)
+                Operation::KillCursors.new(op_spec).execute(server)
               end
             else
               Cursor::Builder::OpKillCursors.update_cursors(op_spec, active_cursors_copy.to_a)

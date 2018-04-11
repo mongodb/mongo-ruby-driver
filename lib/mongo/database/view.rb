@@ -111,7 +111,7 @@ module Mongo
       end
 
       def initial_query_op(session)
-        Operation::Commands::CollectionsInfo.new(collections_info_spec(session))
+        Operation::CollectionsInfo.new(collections_info_spec(session))
       end
 
       def send_initial_query(server, session)

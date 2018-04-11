@@ -567,7 +567,7 @@ describe Mongo::Collection::View::ChangeStream, if: test_change_streams? do
           authorized_collection.insert_one(a: 2)
           expect(cursor).to receive(:get_more).once.and_raise(error)
           expect(cursor).to receive(:kill_cursors).and_call_original
-          expect(Mongo::Operation::Commands::Aggregate).to receive(:new).and_call_original
+          expect(Mongo::Operation::Aggregate).to receive(:new).and_call_original
         end
 
         let(:enum) do
@@ -649,7 +649,7 @@ describe Mongo::Collection::View::ChangeStream, if: test_change_streams? do
         authorized_collection.insert_one(a: 2)
         expect(cursor).to receive(:get_more).and_raise(Mongo::Error::OperationFailure)
         expect(cursor).to receive(:kill_cursors).and_call_original
-        expect(Mongo::Operation::Commands::Aggregate).not_to receive(:new)
+        expect(Mongo::Operation::Aggregate).not_to receive(:new)
       end
 
       let(:enum) do

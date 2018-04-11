@@ -217,7 +217,7 @@ module Mongo
         end
 
         def initial_query_op(session)
-          Operation::Commands::MapReduce.new(map_reduce_spec(session))
+          Operation::MapReduce.new(map_reduce_spec(session))
         end
 
         def valid_server?(server)
@@ -247,9 +247,9 @@ module Mongo
 
         def fetch_query_op(server, session)
           if server.features.find_command_enabled?
-            Operation::Commands::Find.new(find_command_spec(session))
+            Operation::Find.new(find_command_spec(session))
           else
-            Operation::Read::Query.new(fetch_query_spec)
+            Operation::Find.new(fetch_query_spec)
           end
         end
 
