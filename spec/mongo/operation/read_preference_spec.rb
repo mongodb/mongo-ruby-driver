@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe Mongo::Operation::ReadPreference do
+describe Mongo::Operation::ReadPreferenceSupported do
 
   let(:selector) do
     { name: 'test' }
@@ -28,7 +28,7 @@ describe Mongo::Operation::ReadPreference do
 
   let(:operation) do
     Class.new do
-      include Mongo::Operation::ReadPreference
+      include Mongo::Operation::ReadPreferenceSupported
     end.new.tap do |rp|
       allow(rp).to receive(:read).and_return(read_pref)
       allow(rp).to receive(:selector).and_return(selector)

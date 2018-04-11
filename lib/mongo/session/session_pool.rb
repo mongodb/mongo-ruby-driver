@@ -113,7 +113,7 @@ module Mongo
       def end_sessions
         while !@queue.empty?
           server = ServerSelector.get(mode: :primary_preferred).select_server(@cluster)
-          Operation::Commands::Command.new(
+          Operation::Command.new(
               :selector => {endSessions: @queue.shift(10_000).collect { |s| s.session_id }},
               :db_name => Database::ADMIN).execute(server)
         end

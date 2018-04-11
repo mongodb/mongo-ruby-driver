@@ -103,7 +103,7 @@ module Mongo
         end
 
         def initial_query_op(session)
-          Operation::Commands::Aggregate.new(aggregate_spec(session))
+          Operation::Aggregate.new(aggregate_spec(session))
         end
 
         def valid_server?(server)

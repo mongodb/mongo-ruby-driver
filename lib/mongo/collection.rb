@@ -189,12 +189,12 @@ module Mongo
         raise Error::UnsupportedCollation.new
       end
       client.send(:with_session, opts) do |session|
-        Operation::Commands::Create.new({
-                                          selector: operation,
-                                          db_name: database.name,
-                                          write_concern: write_concern,
-                                          session: session
-                                        }).execute(server)
+        Operation::Create.new({
+                                selector: operation,
+                                db_name: database.name,
+                                write_concern: write_concern,
+                                session: session
+                                }).execute(server)
       end
     end
 
@@ -215,12 +215,12 @@ module Mongo
     # @since 2.0.0
     def drop(opts = {})
       client.send(:with_session, opts) do |session|
-        Operation::Commands::Drop.new({
-                                        selector: { :drop => name },
-                                        db_name: database.name,
-                                        write_concern: write_concern,
-                                        session: session
-                                      }).execute(next_primary)
+        Operation::Drop.new({
+                              selector: { :drop => name },
+                              db_name: database.name,
+                              write_concern: write_concern,
+                              session: session
+                              }).execute(next_primary)
       end
     rescue Error::OperationFailure => ex
       raise ex unless ex.message =~ /ns not found/
@@ -420,7 +420,7 @@ module Mongo
     def insert_one(document, opts = {})
       client.send(:with_session, opts) do |session|
         write_with_retry(session, write_concern) do |server, txn_num|
-          Operation::Write::Insert.new(
+          Operation::Insert.new(
               :documents => [ document ],
               :db_name => database.name,
               :coll_name => name,

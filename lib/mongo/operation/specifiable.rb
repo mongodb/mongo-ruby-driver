@@ -1,4 +1,4 @@
-# Copyright (C) 2014-2017 MongoDB, Inc.
+# Copyright (C) 2014-2018 MongoDB, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -333,7 +333,7 @@ module Mongo
       # @return [ Hash ] The options.
       #
       # @since 2.0.0
-      def options
+      def options(server = nil)
         spec[OPTIONS] || {}
       end
 
@@ -382,7 +382,7 @@ module Mongo
       #
       # @since 2.4.0
       def collation
-        spec[COLLATION]
+        send(self.class::IDENTIFIER).first[COLLATION]
       end
 
       # The selector for from the specification.
@@ -393,7 +393,7 @@ module Mongo
       # @return [ Hash ] The selector spec.
       #
       # @since 2.0.0
-      def selector
+      def selector(server = nil)
         spec[SELECTOR]
       end
 
@@ -525,6 +525,54 @@ module Mongo
       # @since 2.5.0
       def txn_num
         @spec[:txn_num]
+      end
+
+      # The command.
+      #
+      # @example Get the command.
+      #   specifiable.command
+      #
+      # @return [ Hash ] The command.
+      #
+      # @since 2.5.2
+      def command(server = nil)
+        base_command(server)
+      end
+
+      # The base command.
+      #
+      # @example Get the base command.
+      #   specifiable.base_command
+      #
+      # @return [ Hash ] The base command.
+      #
+      # @since 2.5.2
+      def base_command(server)
+        selector(server)
+      end
+
+      # The array filters.
+      #
+      # @example Get the array filters.
+      #   specifiable.array_filters
+      #
+      # @return [ Hash ] The array filters.
+      #
+      # @since 2.5.2
+      def array_filters
+        selector[Operation::ARRAY_FILTERS] if selector
+      end
+
+      # Does the operation have an acknowledged write concern.
+      #
+      # @example Determine whether the operation has an acknoweldged write.
+      #   specifiable.array_filters
+      #
+      # @return [ Hash ] The array filters.
+      #
+      # @since 2.5.2
+      def acknowledged_write?
+        write_concern.nil? || write_concern.acknowledged?
       end
     end
   end

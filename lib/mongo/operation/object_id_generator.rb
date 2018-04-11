@@ -1,4 +1,4 @@
-# Copyright (C) 2015 MongoDB, Inc.
+# Copyright (C) 2015-2018 MongoDB, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ module Mongo
     # @since 2.2.0
     class ObjectIdGenerator
 
-      # Generate a nwe id.
+      # Generate a new id.
       #
       # @example Generate the id.
       #   object_id_generator.generate
