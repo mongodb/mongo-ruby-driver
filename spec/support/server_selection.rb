@@ -149,7 +149,7 @@ module Mongo
         #
         # @since 2.0.0
         def candidate_servers
-          @candidate_servers.select { |s| s['type'] != 'Unknown' }
+          @candidate_servers.select { |s| !['Unknown', 'PossiblePrimary'].include?(s['type']) }
         end
 
         private
