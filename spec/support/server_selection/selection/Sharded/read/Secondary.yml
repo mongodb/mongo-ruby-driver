@@ -1,18 +1,14 @@
 topology_description:
-  type: ReplicaSetNoPrimary
+  type: Sharded
   servers:
   - &1
-    address: b:27017
+    address: g:27017
     avg_rtt_ms: 5
-    type: RSSecondary
-    tags:
-      data_center: nyc
+    type: Mongos
   - &2
-    address: c:27017
-    avg_rtt_ms: 100
-    type: RSSecondary
-    tags:
-      data_center: nyc
+    address: h:27017
+    avg_rtt_ms: 35
+    type: Mongos
 operation: read
 read_preference:
   mode: Secondary
