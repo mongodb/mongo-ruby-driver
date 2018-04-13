@@ -247,7 +247,7 @@ Additional Query Operations
   client = Mongo::Client.new([ '127.0.0.1:27017' ], :database => 'music')
 
   client[:artists].find.distinct(:name )
-  
+
 Tailable Cursors
 ~~~~~~~~~~~~~~~~
 
@@ -338,10 +338,10 @@ matches a secondary server with tag set ``{ dc: 'ny', rack: 2, size: 'large' }``
 
 A tag set that is an empty document matches any server, because
 the empty tag set is a subset of any tag set. This means the default
-``tag_sets`` parameter ``[{}]`` matches all servers.  
+``tag_sets`` parameter ``[{}]`` matches all servers.
 
 .. _ruby-driver-updating:
-  
+
 Updating
 --------
 
@@ -460,3 +460,14 @@ Deleting
 
   result = artists.delete_many(:label => 'Mute')
   result.deleted_count # Returns the number deleted.
+
+A Note about the BSON Symbol type
+---------------------------------
+
+Because the BSON specification deprecated the BSON symbol type, the `bson` gem 
+will serialize Ruby symbols into BSON strings when used on its own. However, in
+order to maintain backwards compatibility with older datasets, the Ruby driver
+overrides this behavior to serialize Ruby symbols as BSON symbols. This is
+necessary to be able to specify queries for documents which contain BSON
+symbols as fields. Despite this, new documents with symbol type fields should
+*not* be stored in the database; instead, use string fields.
