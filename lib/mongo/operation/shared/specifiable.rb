@@ -536,18 +536,6 @@ module Mongo
       #
       # @since 2.5.2
       def command(server = nil)
-        base_command(server)
-      end
-
-      # The base command.
-      #
-      # @example Get the base command.
-      #   specifiable.base_command
-      #
-      # @return [ Hash ] The base command.
-      #
-      # @since 2.5.2
-      def base_command(server)
         selector(server)
       end
 
