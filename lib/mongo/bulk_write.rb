@@ -175,8 +175,8 @@ module Mongo
         if values.size > server.max_write_batch_size
           split_execute(name, values, server, operation_id, combiner, session, txn_num)
         else
-          r = send(name, values, server, operation_id, session, txn_num)
-          combiner.combine!(r, values.size)
+          result = send(name, values, server, operation_id, session, txn_num)
+          combiner.combine!(result, values.size)
         end
       rescue Error::MaxBSONSize, Error::MaxMessageSize => e
         raise e if values.size <= 1
