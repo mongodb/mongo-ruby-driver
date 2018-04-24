@@ -1,7 +1,7 @@
 require 'forwardable'
 require 'mongo/operation/result'
+
 require 'mongo/operation/shared/executable'
-require 'mongo/operation/object_id_generator'
 require 'mongo/operation/shared/read_preference_supported'
 require 'mongo/operation/shared/bypass_document_validation'
 require 'mongo/operation/shared/write_concern_supported'
@@ -10,7 +10,9 @@ require 'mongo/operation/shared/sessions_supported'
 require 'mongo/operation/shared/causal_consistency_supported'
 require 'mongo/operation/shared/write'
 require 'mongo/operation/shared/idable'
-require 'mongo/operation/specifiable'
+require 'mongo/operation/shared/specifiable'
+require 'mongo/operation/shared/object_id_generator'
+
 require 'mongo/operation/command'
 require 'mongo/operation/aggregate'
 require 'mongo/operation/result'
@@ -37,9 +39,6 @@ require 'mongo/operation/update_user'
 require 'mongo/operation/remove_user'
 require 'mongo/operation/create_index'
 require 'mongo/operation/drop_index'
-
-
-
 
 module Mongo
   module Operation
