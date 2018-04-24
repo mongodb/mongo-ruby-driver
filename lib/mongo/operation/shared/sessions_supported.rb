@@ -55,7 +55,7 @@ module Mongo
       end
 
       def command(server)
-        sel = base_command(server)
+        sel = selector(server)
         sel[:writeConcern] = write_concern.options if write_concern
         sel[Protocol::Msg::DATABASE_IDENTIFIER] = db_name
         sel[READ_PREFERENCE] = read.to_doc if read

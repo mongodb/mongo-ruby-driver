@@ -46,7 +46,7 @@ module Mongo
 
         private
 
-        def base_command(server)
+        def selector(server)
           { insert: coll_name,
             documents: send(IDENTIFIER),
             ordered: ordered? }

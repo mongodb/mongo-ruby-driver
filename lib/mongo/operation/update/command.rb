@@ -45,7 +45,7 @@ module Mongo
 
         private
 
-        def base_command(server)
+        def selector(server)
           { update: coll_name,
             updates: send(IDENTIFIER),
             ordered: ordered? }

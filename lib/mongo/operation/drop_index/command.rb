@@ -29,7 +29,7 @@ module Mongo
 
         private
 
-        def base_command(server = nil)
+        def selector(server = nil)
           { :dropIndexes => coll_name, :index => index_name }
         end
 

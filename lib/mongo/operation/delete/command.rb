@@ -44,7 +44,7 @@ module Mongo
 
         private
 
-        def base_command(server)
+        def selector(server)
           { delete: coll_name,
             deletes: send(IDENTIFIER),
             ordered: ordered? }
