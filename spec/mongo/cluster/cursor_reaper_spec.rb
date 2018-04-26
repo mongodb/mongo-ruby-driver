@@ -143,4 +143,41 @@ describe Mongo::Cluster::CursorReaper do
       end
     end
   end
+
+  context 'when a non-exhausted cursor goes out of scope' do
+
+    let(:docs) do
+      103.times.collect { |i| { a: i } }
+    end
+
+    let(:periodic_executor) do
+      cluster.instance_variable_get(:@periodic_executor)
+    end
+
+    let(:cluster) do
+      authorized_client.cluster
+    end
+
+    let(:cursor) do
+      view = authorized_collection.find
+      view.to_enum.next
+      cursor = view.instance_variable_get(:@cursor)
+    end
+
+    around do |example|
+      authorized_collection.insert_many(docs)
+      periodic_executor.stop!
+      cluster.schedule_kill_cursor(cursor.id, cursor.send(:kill_cursors_op_spec),
+                                   cursor.instance_variable_get(:@server))
+      periodic_executor.flush
+      example.run
+      periodic_executor.run!
+    end
+
+    it 'schedules the kill cursor op' do
+      expect {
+        cursor.to_a
+      }.to raise_exception(Mongo::Error::OperationFailure)
+    end
+  end
 end
