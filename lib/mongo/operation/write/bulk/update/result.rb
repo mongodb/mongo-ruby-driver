@@ -108,7 +108,11 @@ module Mongo
             #
             # @since 2.1.0
             def upserted
-              reply.documents.first[UPSERTED] || []
+              if acknowledged?
+                reply.documents.first[UPSERTED] || []
+              else
+                []
+              end
             end
 
             private
