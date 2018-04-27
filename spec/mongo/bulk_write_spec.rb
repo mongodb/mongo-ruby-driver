@@ -1246,6 +1246,38 @@ describe Mongo::BulkWrite do
                 }.to raise_error(Mongo::Error::OperationFailure)
               end
             end
+
+            context 'when write_concern is specified as an option' do
+
+              let(:extra_options) do
+                { write_concern: { w: 0 } }
+              end
+
+              let(:result) do
+                bulk_write.execute
+              end
+
+              it 'updates the document' do
+                result
+                expect(authorized_collection.find(_id: 0).first[:name]).to eq('test')
+              end
+
+              it 'does not report the upserted count' do
+                expect(result.upserted_count).to eq(0)
+              end
+
+              it 'does not report the modified_count count' do
+                expect(result.modified_count).to eq(0)
+              end
+
+              it 'does not report the matched count' do
+                expect(result.matched_count).to eq(0)
+              end
+
+              it 'does not report the upserted id' do
+                expect(result.upserted_ids).to eq([])
+              end
+            end
           end
 
           context 'when the write has a collation specified' do
@@ -2074,8 +2106,12 @@ describe Mongo::BulkWrite do
 
       context 'when the option is true' do
 
+        let(:options) do
+          { ordered: true }
+        end
+
         let(:bulk_write) do
-          described_class.new(authorized_collection, [], ordered: true)
+          described_class.new(authorized_collection, [], options)
         end
 
         it 'returns true' do
@@ -2085,8 +2121,12 @@ describe Mongo::BulkWrite do
 
       context 'when the option is false' do
 
+        let(:options) do
+          { ordered: false }
+        end
+
         let(:bulk_write) do
-          described_class.new(authorized_collection, [], ordered: false)
+          described_class.new(authorized_collection, [], options)
         end
 
         it 'returns false' do
