@@ -67,7 +67,9 @@ describe 'Max Staleness Spec' do
 
       let(:in_latency_window) do
         spec.in_latency_window.collect do |server|
-          Mongo::Server.new(Mongo::Address.new(server['address']), cluster, monitoring, listeners, options)
+          s = Mongo::Server.new(Mongo::Address.new(server['address']), cluster, monitoring, listeners, options)
+          s.monitor.stop!
+          s
         end
       end
 

@@ -1123,7 +1123,7 @@ describe Mongo::Client do
       end
 
       let(:new_options) do
-        { app_name: 'reports' }
+        { app_name: 'client_test' }
       end
 
       let!(:new_client) do

@@ -491,11 +491,11 @@ describe Mongo::Cluster do
     context 'when the client has an app_name set' do
 
       let(:cluster) do
-        authorized_client.with(app_name: 'reports').cluster
+        authorized_client.with(app_name: 'cluster_test').cluster
       end
 
       it 'constructs an AppMetadata object with the app_name' do
-        expect(cluster.app_metadata.send(:full_client_document)[:application]).to eq('name' => 'reports')
+        expect(cluster.app_metadata.send(:full_client_document)[:application]).to eq('name' => 'cluster_test')
       end
     end
 

@@ -896,10 +896,10 @@ describe Mongo::URI::SRVProtocol do
       end
 
       context 'when an app name option is provided' do
-        let(:options) { "appname=reports" }
+        let(:options) { "appname=srv_test" }
 
         it 'sets the app name on the client' do
-          expect(Mongo::Client.new(string).options[:app_name]).to eq(:reports)
+          expect(Mongo::Client.new(string).options[:app_name]).to eq(:srv_test)
         end
       end
 

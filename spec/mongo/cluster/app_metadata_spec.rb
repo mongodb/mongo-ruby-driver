@@ -14,18 +14,34 @@ describe Mongo::Cluster::AppMetadata do
 
     context 'when the cluster has an app name option set' do
 
+      let(:client) do
+        authorized_client.with(app_name: :app_metadata_test)
+      end
+
       let(:cluster) do
-        authorized_client.with(app_name: :reports).cluster
+        client.cluster
+      end
+
+      after do
+        client.close
       end
 
       it 'sets the app name' do
-        expect(app_metadata.send(:full_client_document)[:application][:name]).to eq(:reports)
+        expect(app_metadata.send(:full_client_document)[:application][:name]).to eq('app_metadata_test')
       end
 
       context 'when the app name exceeds the max length of 128' do
 
+        let(:client) do
+          authorized_client.with(app_name: "\u3042"*43)
+        end
+
         let(:cluster) do
-          authorized_client.with(app_name: "\u3042"*43).cluster
+          client.cluster
+        end
+
+        after do
+          client.close
         end
 
         it 'raises an error' do
