@@ -52,7 +52,7 @@ module Mongo
       #
       # @since 2.4.0
       def initialize(cluster)
-        @app_name = cluster.options[:app_name]
+        @app_name = cluster.options[:app_name].to_s if cluster.options[:app_name]
         @platform = cluster.options[:platform]
         @compressors = cluster.options[:compressors] || []
       end
