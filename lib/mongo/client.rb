@@ -52,6 +52,7 @@ module Mongo
       :password,
       :platform,
       :read,
+      :read_concern,
       :read_retry_interval,
       :replica_set,
       :retry_writes,
@@ -232,6 +233,7 @@ module Mongo
     # @option options [ String ] :user The user name.
     # @option options [ Hash ] :write The write concern options. Can be :w =>
     #   Integer|String, :fsync => Boolean, :j => Boolean.
+    # @option options [ Symbol ] :read_concern The read concern option.
     # @option options [ true, false ] :monitoring Initializes a client without
     #   any default monitoring if false is provided.
     # @option options [ Logger ] :logger A custom logger if desired.
@@ -341,6 +343,19 @@ module Mongo
       end
     end
 
+    # Get the read concern for this client.
+    #
+    # @example Get the client read concern.
+    #   client.read_concern
+    #
+    # @return [ Symbol ] The read concern.
+    #
+    # @since 2.6.0
+    def read_concern
+      @read_concern ||= options[:read_concern]
+    end
+
+
     # Get the write concern for this client. If no option was provided, then a
     # default single server acknowledgement will be used.
     #
@@ -443,18 +458,18 @@ module Mongo
     #
     # @since 2.5.0
     def start_session(options = {})
-      cluster.send(:get_session, options.merge(implicit: false)) ||
+      cluster.send(:get_session, self, options.merge(implicit: false)) ||
         (raise Error::InvalidSession.new(Session::SESSIONS_NOT_SUPPORTED))
     end
 
     private
 
     def get_session(options = {})
-      cluster.send(:get_session, options)
+      cluster.send(:get_session, self, options)
     end
 
     def with_session(options = {}, &block)
-      cluster.send(:with_session, options, &block)
+      cluster.send(:with_session, self, options, &block)
     end
 
     def create_from_addresses(addresses, opts = Options::Redacted.new)

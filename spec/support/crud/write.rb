@@ -49,8 +49,7 @@ module Mongo
                         :ordered => 'ordered',
                         :write_concern => 'writeConcern',
                         :collation => 'collation',
-                        :array_filters => 'arrayFilters',
-                        :ordered => 'ordered'
+                        :array_filters => 'arrayFilters'
                        }.freeze
 
         # The operation name.

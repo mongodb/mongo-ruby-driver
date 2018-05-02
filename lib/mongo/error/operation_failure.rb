@@ -21,6 +21,24 @@ module Mongo
     class OperationFailure < Error
       extend Forwardable
 
+      # These are the error codes that indicate that a write is retryable.
+      #
+      # @since 2.6.0.
+      WRITE_RETRY_CODES = [
+        11600, # InterruptedAtShutdown
+        11602, # InterruptedDueToReplStateChange
+        10107, # NotMaster
+        13435, # NotMasterNoSlaveOk
+        13436, # NotMasterOrSecondary
+        189,   # PrimarySteppedDown
+        91,    # ShutdownInProgress
+        64,    # WriteConcernFailed
+        7,     # HostNotFound
+        6,     # HostUnreachable
+        89,    # NetworkTimeout
+        9001   # SocketException
+      ].freeze
+
       # These are magic error messages that could indicate a master change.
       #
       # @since 2.4.2
@@ -28,7 +46,8 @@ module Mongo
         'no master',
         'not master',
         'could not contact primary',
-        'Not primary'
+        'Not primary',
+        'node is recovering'
       ].freeze
 
       # These are magic error messages that could indicate a cluster
@@ -81,7 +100,28 @@ module Mongo
       #
       # @since 2.4.2
       def write_retryable?
-        WRITE_RETRY_MESSAGES.any? { |m| message.include?(m) }
+        return true if WRITE_RETRY_MESSAGES.any? { |m| message.include?(m) }
+        return true if WRITE_RETRY_CODES.any? { |c| c == @code }
+        return false unless @result
+
+        write_concern_err = @result.send(:first_document)['writeConcernError']
+        return false unless write_concern_err
+
+        WRITE_RETRY_MESSAGES.any? { |m| m.include?(write_concern_err['errmsg']) } ||
+        WRITE_RETRY_CODES.any? { |c| c == write_concern_err['code'] }
+      end
+
+      # Does the error have the given label?
+      #
+      # @example
+      #   error.label?(label)
+      #
+      # @return [ true, false ] Whether the error has the given label.
+      #
+      # @since 2.6.0
+      def label?(label)
+        @labels.include?(label) ||
+          (@result.send(:first_document) && @result.send(:first_document)['errorLabels'])
       end
 
       # Create the operation failure.
@@ -104,7 +144,14 @@ module Mongo
         @result = result
         @code = options[:code]
         @code_name = options[:code_name]
+        @labels = options[:labels] || []
         super(message)
+      end
+
+      private
+
+      def add_label(label)
+        @labels << label unless label?(label)
       end
     end
   end

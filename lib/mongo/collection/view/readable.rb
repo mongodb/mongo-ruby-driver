@@ -135,10 +135,10 @@ module Mongo
           cmd[:readConcern] = collection.read_concern if collection.read_concern
           read_pref = opts[:read] || read_preference
           selector = ServerSelector.get(read_pref || server_selector)
-          read_with_retry do
-            server = selector.select_server(cluster)
-            apply_collation!(cmd, server, opts)
-            with_session(opts) do |session|
+          with_session(opts) do |session|
+            read_with_retry(session) do
+              server = selector.select_server(cluster)
+              apply_collation!(cmd, server, opts)
               Operation::Count.new({
                                      :selector => cmd,
                                      :db_name => database.name,
@@ -146,7 +146,7 @@ module Mongo
                                      :read => read_pref,
                                      :session => session
                                     }).execute(server)
-            end.n.to_i
+              end.n.to_i
           end
         end
 
@@ -175,10 +175,10 @@ module Mongo
           cmd[:readConcern] = collection.read_concern if collection.read_concern
           read_pref = opts[:read] || read_preference
           selector = ServerSelector.get(read_pref || server_selector)
-          read_with_retry do
-            server = selector.select_server(cluster)
-            apply_collation!(cmd, server, opts)
-            with_session(opts) do |session|
+          with_session(opts) do |session|
+            read_with_retry(session) do
+              server = selector.select_server(cluster)
+              apply_collation!(cmd, server, opts)
               Operation::Distinct.new({
                                         :selector => cmd,
                                         :db_name => database.name,
@@ -470,11 +470,19 @@ module Mongo
         end
 
         def read_preference
-          @read_preference ||= (options[:read] || collection.read_preference)
+          if options[:session] && options[:session].in_transaction?
+            options[:session].send(:txn_read_pref) || collection.client.read_preference
+          else
+            @read_preference ||= (options[:read] || collection.read_preference)
+          end
         end
 
         def server_selector
-          @server_selector ||= ServerSelector.get(read_preference || collection.server_selector)
+          if options[:session] && options[:session].in_transaction?
+            ServerSelector.get(read_preference || client.server_selector)
+          else
+            @server_selector ||= ServerSelector.get(read_preference || collection.server_selector)
+          end
         end
 
         def parallel_scan(cursor_count, options = {})
