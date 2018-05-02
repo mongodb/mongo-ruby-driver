@@ -2,6 +2,10 @@ require 'spec_helper'
 
 describe Mongo::Client do
 
+  after do
+    begin; client.close; rescue; end
+  end
+
   describe '#==' do
 
     let(:client) do
@@ -12,11 +16,11 @@ describe Mongo::Client do
       )
     end
 
-    after do
-      client.close
-    end
-
     context 'when the other is a client' do
+
+      after do
+        other.close
+      end
 
       context 'when the options and cluster are equal' do
 
@@ -104,6 +108,10 @@ describe Mongo::Client do
     end
 
     context 'when the other is a client' do
+
+      after do
+        other.close
+      end
 
       context 'when the options and cluster are equal' do
 
@@ -228,10 +236,6 @@ describe Mongo::Client do
           described_class.new([default_address.seed], authorized_client.options.merge(options))
         end
 
-        after do
-          client.close
-        end
-
         it 'sets the option' do
           expect(client.options['retry_writes']).to eq(options[:retry_writes])
         end
@@ -241,10 +245,6 @@ describe Mongo::Client do
 
         let(:client) do
           described_class.new([default_address.seed], authorized_client.options.merge(options))
-        end
-
-        after do
-          client.close
         end
 
         context 'when the compressor is supported' do
@@ -454,10 +454,6 @@ describe Mongo::Client do
 
         let(:client) do
           authorized_client.with(logger: logger)
-        end
-
-        after do
-          client.close
         end
 
         it 'does not use the global logger' do
@@ -1123,7 +1119,7 @@ describe Mongo::Client do
       end
 
       let(:new_options) do
-        { app_name: 'reports' }
+        { app_name: 'client_test' }
       end
 
       let!(:new_client) do
@@ -1373,10 +1369,6 @@ describe Mongo::Client do
         client.list_databases({}, true)
       end
 
-      after do
-        client.close
-      end
-
       it 'sends the command with the nameOnly flag set to true' do
         expect(command[:nameOnly]).to be(true)
       end
@@ -1429,7 +1421,8 @@ describe Mongo::Client do
     end
 
     before do
-      expect(client.cluster).to receive(:disconnect!).and_call_original
+      # note that disconnect! is called also in the after block
+      expect(client.cluster).to receive(:disconnect!).twice.and_call_original
     end
 
     it 'disconnects the cluster and returns true' do

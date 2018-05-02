@@ -139,13 +139,13 @@ module Mongo
             server = selector.select_server(cluster)
             apply_collation!(cmd, server, opts)
             with_session(opts) do |session|
-              Operation::Commands::Count.new({
-                                                   :selector => cmd,
-                                                   :db_name => database.name,
-                                                   :options => {:limit => -1},
-                                                   :read => read_pref,
-                                                   :session => session
-                                               }).execute(server)
+              Operation::Count.new({
+                                     :selector => cmd,
+                                     :db_name => database.name,
+                                     :options => {:limit => -1},
+                                     :read => read_pref,
+                                     :session => session
+                                    }).execute(server)
             end.n.to_i
           end
         end
@@ -179,13 +179,13 @@ module Mongo
             server = selector.select_server(cluster)
             apply_collation!(cmd, server, opts)
             with_session(opts) do |session|
-              Operation::Commands::Distinct.new({
-                                                   :selector => cmd,
-                                                   :db_name => database.name,
-                                                   :options => {:limit => -1},
-                                                   :read => read_pref,
-                                                   :session => session
-                                               }).execute(server)
+              Operation::Distinct.new({
+                                        :selector => cmd,
+                                        :db_name => database.name,
+                                        :options => {:limit => -1},
+                                        :read => read_pref,
+                                        :session => session
+                                       }).execute(server)
             end.first['values']
           end
         end
@@ -480,7 +480,7 @@ module Mongo
         def parallel_scan(cursor_count, options = {})
           session = client.send(:get_session, @options)
           server = server_selector.select_server(cluster)
-          cmd = Operation::Commands::ParallelScan.new({
+          cmd = Operation::ParallelScan.new({
                   :coll_name => collection.name,
                   :db_name => database.name,
                   :cursor_count => cursor_count,
@@ -489,14 +489,14 @@ module Mongo
                 }.merge!(options))
           cmd.execute(server).cursor_ids.map do |cursor_id|
             result = if server.features.find_command_enabled?
-                       Operation::Commands::GetMore.new({
+                       Operation::GetMore.new({
                          :selector => {:getMore => cursor_id,
                                        :collection => collection.name},
                          :db_name => database.name,
                          :session => session
                        }).execute(server)
                      else
-                       Operation::Read::GetMore.new({
+                       Operation::GetMore.new({
                          :to_return => 0,
                          :cursor_id => cursor_id,
                          :db_name => database.name,

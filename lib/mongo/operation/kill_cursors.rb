@@ -1,4 +1,4 @@
-# Copyright (C) 2014-2017 MongoDB, Inc.
+# Copyright (C) 2015-2018 MongoDB, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,28 +12,39 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require 'mongo/operation/kill_cursors/command'
+require 'mongo/operation/kill_cursors/op_msg'
+require 'mongo/operation/kill_cursors/legacy'
+
 module Mongo
   module Operation
 
-    # A MongoDB kill cursors operation.
+    # A MongoDB killcursors operation.
     #
-    # @example Create the kill cursors operation.
-    #   Mongo::Operation::KillCursor.new({ :cursor_ids => [1, 2] })
-    #
-    # Initialization:
-    #   param [ Hash ] spec The specifications for the operation.
-    #
-    #   option spec :cursor_ids [ Array ] The ids of cursors to kill.
+    # @api private
     #
     # @since 2.0.0
     class KillCursors
       include Specifiable
-      include Executable
 
-      private
-
-      def message(server)
-        Protocol::KillCursors.new(coll_name, db_name, cursor_ids)
+      # Execute the operation.
+      #
+      # @example
+      #   operation.execute(server)
+      #
+      # @param [ Mongo::Server ] server The server to send the operation to.
+      #
+      # @return [ Mongo::Operation::Result ] The operation result.
+      #
+      # @since 2.0.0
+      def execute(server)
+        if server.features.op_msg_enabled?
+          OpMsg.new(spec).execute(server)
+        elsif server.features.find_command_enabled?
+          Command.new(spec).execute(server)
+        else
+          Legacy.new(spec).execute(server)
+        end
       end
     end
   end

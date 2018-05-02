@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe Mongo::Operation::KillCursors do
+describe Mongo::Operation::KillCursors::Legacy do
 
   let(:spec) do
     { coll_name: TEST_COLL,
@@ -35,7 +35,7 @@ describe Mongo::Operation::KillCursors do
 
     it 'creates a kill cursors wire protocol message with correct specs' do
       expect(Mongo::Protocol::KillCursors).to receive(:new).with(TEST_COLL, TEST_DB, spec[:cursor_ids])
-      op.send(:message, authorized_primary)
+      op.send(:message, double('server'))
     end
   end
 end

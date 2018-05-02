@@ -206,7 +206,7 @@ describe Mongo::Session::SessionPool, if: test_sessions? do
           queue << double('session', session_id: id)
         end
         pool.instance_variable_set(:@queue, queue)
-        expect(Mongo::Operation::Commands::Command).to receive(:new).at_least(:twice).and_call_original
+        expect(Mongo::Operation::Command).to receive(:new).at_least(:twice).and_call_original
       end
 
       let(:end_sessions_commands) do

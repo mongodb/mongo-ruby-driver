@@ -239,11 +239,15 @@ describe Mongo::Cursor do
         (1..3).map{ |i| { field: "test#{i}" }}
       end
 
+      let(:cluster) do
+        authorized_client.cluster
+      end
+
       before do
         authorized_collection.insert_many(documents)
-        cursor_reaper.schedule_kill_cursor(cursor.id,
-                                            cursor.send(:kill_cursors_op_spec),
-                                            cursor.instance_variable_get(:@server))
+        cluster.schedule_kill_cursor(cursor.id,
+                                     cursor.send(:kill_cursors_op_spec),
+                                     cursor.instance_variable_get(:@server))
       end
 
       after do
@@ -263,12 +267,8 @@ describe Mongo::Cursor do
         view.instance_variable_get(:@cursor)
       end
 
-      let(:cursor_reaper) do
-        authorized_client.cluster.instance_variable_get(:@cursor_reaper)
-      end
-
-      it 'schedules a kill cursors op', unless: sessions_enabled? do
-        sleep(Mongo::Cluster::PeriodicExecutor::FREQUENCY)
+      it 'schedules a kill cursors op' do
+        cluster.instance_variable_get(:@periodic_executor).flush
         expect {
           cursor.to_a
         }.to raise_exception(Mongo::Error::OperationFailure)
@@ -277,7 +277,7 @@ describe Mongo::Cursor do
       context 'when the cursor is unregistered before the kill cursors operations are executed' do
 
         it 'does not send a kill cursors operation for the unregistered cursor' do
-          cursor_reaper.unregister_cursor(cursor.id)
+          cluster.unregister_cursor(cursor.id)
           expect(cursor.to_a.size).to eq(documents.size)
         end
       end
@@ -416,7 +416,7 @@ describe Mongo::Cursor do
     end
 
     let(:reply) do
-      Mongo::Operation::Read::Query.new(query_spec)
+      Mongo::Operation::Find.new(query_spec)
     end
 
     let(:cursor) do

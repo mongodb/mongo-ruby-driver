@@ -156,7 +156,7 @@ module Mongo
       preference = ServerSelector.get(opts[:read] || ServerSelector::PRIMARY)
       server = preference.select_server(cluster)
       client.send(:with_session, opts) do |session|
-        Operation::Commands::Command.new({
+        Operation::Command.new({
           :selector => operation.dup,
           :db_name => name,
           :read => preference,
@@ -180,7 +180,7 @@ module Mongo
     def drop(options = {})
       operation = { :dropDatabase => 1 }
       client.send(:with_session, options) do |session|
-        Operation::Commands::DropDatabase.new({
+        Operation::DropDatabase.new({
           selector: operation,
           db_name: name,
           write_concern: write_concern,

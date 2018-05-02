@@ -61,7 +61,7 @@ module Mongo
             write_with_retry(session, write_concern) do |server, txn_num|
               execute_operation(
                   operation.keys.first,
-                  operation.values.first,
+                  operation.values.flatten,
                   server,
                   operation_id,
                   result_combiner,
@@ -72,7 +72,7 @@ module Mongo
             legacy_write_with_retry do |server|
               execute_operation(
                   operation.keys.first,
-                  operation.values.first,
+                  operation.values.flatten,
                   server,
                   operation_id,
                   result_combiner,
@@ -175,7 +175,8 @@ module Mongo
         if values.size > server.max_write_batch_size
           split_execute(name, values, server, operation_id, combiner, session, txn_num)
         else
-          combiner.combine!(send(name, values, server, operation_id, session, txn_num), values.size)
+          result = send(name, values, server, operation_id, session, txn_num)
+          combiner.combine!(result, values.size)
         end
       rescue Error::MaxBSONSize, Error::MaxMessageSize => e
         raise e if values.size <= 1
@@ -195,35 +196,29 @@ module Mongo
     end
 
     def delete_one(documents, server, operation_id, session, txn_num)
-      Operation::Write::Bulk::Delete.new(
-        base_spec(operation_id, session).merge(:deletes => documents, :txn_num => txn_num)
-      ).execute(server)
+      spec = base_spec(operation_id, session).merge(:deletes => documents, :txn_num => txn_num)
+      Operation::Delete.new(spec).bulk_execute(server)
     end
 
     def delete_many(documents, server, operation_id, session, txn_num)
-      Operation::Write::Bulk::Delete.new(
-          base_spec(operation_id, session).merge(:deletes => documents)
-      ).execute(server)
+      spec = base_spec(operation_id, session).merge(:deletes => documents)
+      Operation::Delete.new(spec).bulk_execute(server)
     end
 
-
     def insert_one(documents, server, operation_id, session, txn_num)
-      Operation::Write::Bulk::Insert.new(
-        base_spec(operation_id, session).merge(:documents => documents, :txn_num => txn_num)
-      ).execute(server)
+      spec = base_spec(operation_id, session).merge(:documents => documents, :txn_num => txn_num)
+      Operation::Insert.new(spec).bulk_execute(server)
     end
 
     def update_one(documents, server, operation_id, session, txn_num)
-      Operation::Write::Bulk::Update.new(
-        base_spec(operation_id, session).merge(:updates => documents, :txn_num => txn_num)
-      ).execute(server)
+      spec = base_spec(operation_id, session).merge(:updates => documents, :txn_num => txn_num)
+      Operation::Update.new(spec).bulk_execute(server)
     end
     alias :replace_one :update_one
 
     def update_many(documents, server, operation_id, session, txn_num)
-      Operation::Write::Bulk::Update.new(
-          base_spec(operation_id, session).merge(:updates => documents)
-      ).execute(server)
+      spec = base_spec(operation_id, session).merge(:updates => documents)
+      Operation::Update.new(spec).bulk_execute(server)
     end
   end
 end

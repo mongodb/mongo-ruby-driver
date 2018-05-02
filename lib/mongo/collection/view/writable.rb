@@ -49,7 +49,7 @@ module Mongo
           with_session(opts) do |session|
             write_with_retry(session, write_concern) do |server, txn_num|
               apply_collation!(cmd, server, opts)
-              Operation::Commands::Command.new(
+              Operation::Command.new(
                   :selector => cmd,
                   :db_name => database.name,
                   :session => session,
@@ -121,7 +121,7 @@ module Mongo
             write_with_retry(session, write_concern) do |server, txn_num|
               apply_collation!(cmd, server, opts)
               apply_array_filters!(cmd, server, opts)
-              Operation::Commands::Command.new(
+              Operation::Command.new(
                   :selector => cmd,
                   :db_name => database.name,
                   :session => session,
@@ -149,8 +149,8 @@ module Mongo
           with_session(opts) do |session|
             legacy_write_with_retry do |server|
               apply_collation!(delete_doc, server, opts)
-              Operation::Write::Delete.new(
-                  :delete => delete_doc,
+              Operation::Delete.new(
+                  :deletes => [ delete_doc ],
                   :db_name => collection.database.name,
                   :coll_name => collection.name,
                   :write_concern => collection.write_concern,
@@ -178,8 +178,8 @@ module Mongo
           with_session(opts) do |session|
             write_with_retry(session, write_concern) do |server, txn_num|
               apply_collation!(delete_doc, server, opts)
-              Operation::Write::Delete.new(
-                  :delete => delete_doc,
+              Operation::Delete.new(
+                  :deletes => [ delete_doc ],
                   :db_name => collection.database.name,
                   :coll_name => collection.name,
                   :write_concern => write_concern,
@@ -217,8 +217,8 @@ module Mongo
               apply_collation!(update_doc, server, opts)
               apply_array_filters!(update_doc, server, opts)
 
-              Operation::Write::Update.new(
-                  :update => update_doc,
+              Operation::Update.new(
+                  :updates => [ update_doc ],
                   :db_name => collection.database.name,
                   :coll_name => collection.name,
                   :write_concern => write_concern,
@@ -256,8 +256,8 @@ module Mongo
             legacy_write_with_retry do |server|
               apply_collation!(update_doc, server, opts)
               apply_array_filters!(update_doc, server, opts)
-              Operation::Write::Update.new(
-                  :update => update_doc,
+              Operation::Update.new(
+                  :updates => [ update_doc ],
                   :db_name => collection.database.name,
                   :coll_name => collection.name,
                   :write_concern => collection.write_concern,
@@ -296,8 +296,8 @@ module Mongo
               apply_collation!(update_doc, server, opts)
               apply_array_filters!(update_doc, server, opts)
 
-              Operation::Write::Update.new(
-                  :update => update_doc,
+              Operation::Update.new(
+                  :updates => [ update_doc ],
                   :db_name => collection.database.name,
                   :coll_name => collection.name,
                   :write_concern => write_concern,

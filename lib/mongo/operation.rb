@@ -1,30 +1,44 @@
-# Copyright (C) 2014-2017 MongoDB, Inc.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#   http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
+require 'forwardable'
 require 'mongo/operation/result'
-require 'mongo/operation/executable'
-require 'mongo/operation/specifiable'
-require 'mongo/operation/limited'
-require 'mongo/operation/object_id_generator'
-require 'mongo/operation/uses_command_op_msg'
-require 'mongo/operation/causally_consistent'
-require 'mongo/operation/read_preference'
-require 'mongo/operation/takes_write_concern'
-require 'mongo/operation/read'
-require 'mongo/operation/write'
-require 'mongo/operation/commands'
+
+require 'mongo/operation/shared/executable'
+require 'mongo/operation/shared/read_preference_supported'
+require 'mongo/operation/shared/bypass_document_validation'
+require 'mongo/operation/shared/write_concern_supported'
+require 'mongo/operation/shared/limited'
+require 'mongo/operation/shared/sessions_supported'
+require 'mongo/operation/shared/causal_consistency_supported'
+require 'mongo/operation/shared/write'
+require 'mongo/operation/shared/idable'
+require 'mongo/operation/shared/specifiable'
+require 'mongo/operation/shared/object_id_generator'
+
+require 'mongo/operation/command'
+require 'mongo/operation/aggregate'
+require 'mongo/operation/result'
+require 'mongo/operation/collections_info'
+require 'mongo/operation/list_collections'
+require 'mongo/operation/update'
+require 'mongo/operation/insert'
+require 'mongo/operation/delete'
+require 'mongo/operation/count'
+require 'mongo/operation/distinct'
+require 'mongo/operation/create'
+require 'mongo/operation/drop'
+require 'mongo/operation/drop_database'
+require 'mongo/operation/get_more'
+require 'mongo/operation/find'
+require 'mongo/operation/explain'
 require 'mongo/operation/kill_cursors'
+require 'mongo/operation/indexes'
+require 'mongo/operation/map_reduce'
+require 'mongo/operation/users_info'
+require 'mongo/operation/parallel_scan'
+require 'mongo/operation/create_user'
+require 'mongo/operation/update_user'
+require 'mongo/operation/remove_user'
+require 'mongo/operation/create_index'
+require 'mongo/operation/drop_index'
 
 module Mongo
   module Operation
