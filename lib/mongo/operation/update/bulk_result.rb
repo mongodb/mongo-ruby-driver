@@ -92,7 +92,7 @@ module Mongo
             if n && reply.documents.first[MODIFIED]
               n += reply.documents.first[MODIFIED]
             else
-              nil
+              0
             end
           end
         end
@@ -106,7 +106,13 @@ module Mongo
         #
         # @since 2.1.0
         def upserted
-          reply.documents.first[UPSERTED] || []
+          return [] unless acknowledged?
+          @replies.reduce([]) do |ids, reply|
+            if upserted_ids = reply.documents.first[UPSERTED]
+              ids += upserted_ids
+            end
+            ids
+          end
         end
 
         private
