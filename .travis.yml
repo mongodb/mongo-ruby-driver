@@ -24,6 +24,7 @@ rvm:
 branches:
   only:
     - master
+    - 2.5-stable
 
 matrix:
   allow_failures:
