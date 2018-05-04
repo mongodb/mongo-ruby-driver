@@ -44,6 +44,11 @@ module Mongo
 
         private
 
+        def selector(server)
+          (spec[SELECTOR] || {}).merge(
+              listCollections: 1, filter: { name: { '$not' => /system\.|\$/ }})
+        end
+
         def message(server)
           Protocol::Msg.new(flags, options, command(server))
         end

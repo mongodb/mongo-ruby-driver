@@ -200,6 +200,10 @@ describe Mongo::Database do
       it 'returns collection objects for each name' do
         expect(database.collections).to include(collection)
       end
+
+      it 'does not include the system collections' do
+        expect(database.collections.collect(&:name).none? { |name| name =~ /system\.|\$/ }).to be(true)
+      end
     end
 
     context 'when the database does not exist' do
