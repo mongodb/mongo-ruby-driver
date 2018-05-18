@@ -50,7 +50,8 @@ module Mongo
       mongodb_cr: CR,
       mongodb_x509: X509,
       plain: LDAP,
-      scram: SCRAM
+      scram: SCRAM,
+      scram256: SCRAM,
     }
 
     # Get the authorization strategy for the provided auth mechanism.
@@ -66,7 +67,12 @@ module Mongo
     def get(user)
       mechanism = user.mechanism
       raise InvalidMechanism.new(mechanism) if !SOURCES.has_key?(mechanism)
-      SOURCES[mechanism].new(user)
+      case SOURCES[mechanism]
+      when SCRAM
+        SOURCES[mechanism].new(user, mechanism)
+      else
+        SOURCES[mechanism].new(user)
+      end
     end
 
     # Raised when trying to get an invalid authorization mechanism.

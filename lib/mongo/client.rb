@@ -158,7 +158,7 @@ module Mongo
     # @param [ Hash ] options The options to be used by the client.
     #
     # @option options [ Symbol ] :auth_mech The authentication mechanism to
-    #   use. One of :mongodb_cr, :mongodb_x509, :plain, :scram
+    #   use. One of :mongodb_cr, :mongodb_x509, :plain, :scram, :scram256
     # @option options [ String ] :auth_source The source to authenticate from.
     # @option options [ Symbol ] :connect The connection method to use. This
     #   forces the cluster to behave in the specified way instead of

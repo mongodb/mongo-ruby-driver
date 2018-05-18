@@ -134,7 +134,7 @@ describe Mongo::Server::Connection do
             TEST_OPTIONS.merge(
               :user => TEST_USER.name,
               :password => TEST_USER.password,
-              :database => TEST_DB )
+              :database => TEST_USER.database )
           )
         end
 
@@ -187,7 +187,7 @@ describe Mongo::Server::Connection do
         TEST_OPTIONS.merge(
           :user => TEST_USER.name,
           :password => TEST_USER.password,
-          :database => TEST_DB )
+          :database => TEST_USER.database )
       )
     end
 
@@ -608,10 +608,10 @@ describe Mongo::Server::Connection do
     context 'when the ismaster response indicates the auth mechanism is :scram' do
 
       let(:features) do
-        Mongo::Server::Description::Features.new(0..3)
+        Mongo::Server::Description::Features.new(0..7)
       end
 
-      context 'when the server auth mechanism is scram', if: scram_sha_1_enabled? do
+      context 'when the server auth mechanism is scram', if: scram_sha_1_enabled? && !scram_sha_256_enabled? do
 
         it 'uses scram' do
           allow(Mongo::Server::Description::Features).to receive(:new).and_return(features)
@@ -636,7 +636,7 @@ describe Mongo::Server::Connection do
         Mongo::Server::Description::Features.new(0..2)
       end
 
-      context 'when the server auth mechanism is scram', if: scram_sha_1_enabled? do
+      context 'when the server auth mechanism is scram', if: scram_sha_1_enabled? && !scram_sha_256_enabled? do
 
         it 'uses scram' do
           allow(Mongo::Server::Description::Features).to receive(:new).and_return(features)

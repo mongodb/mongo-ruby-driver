@@ -119,7 +119,7 @@ describe Mongo::Auth::User do
       end
 
       it 'returns the default' do
-        expect(user.mechanism).to eq(:mongodb_cr)
+        expect(user.mechanism).to be_nil
       end
     end
   end

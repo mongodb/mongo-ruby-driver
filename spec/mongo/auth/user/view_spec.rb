@@ -16,8 +16,11 @@ describe Mongo::Auth::User::View do
 
       let!(:response) do
         view.create(
-            'durran',
-            password: 'password', roles: [Mongo::Auth::Roles::READ_WRITE]
+          'durran',
+          {
+            password: 'password',
+            roles: [Mongo::Auth::Roles::READ_WRITE],
+          }
         )
       end
 

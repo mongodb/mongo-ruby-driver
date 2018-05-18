@@ -29,8 +29,8 @@ module Mongo
       #
       # @example Prepare a string.
       #   StringPrep.prepare("some string",
-      #                      StringPrep::SASL::Mappings,
-      #                      StringPrep::SASL::Prohibited,
+      #                      StringPrep::Profiles::SASL::MAPPINGS,
+      #                      StringPrep::Profiles::SASL::PROHIBITED,
       #                      normalize: true, bidi: true)
       #
       # @param [ String ] data The string to prepare.

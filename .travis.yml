@@ -9,10 +9,11 @@ before_install:
 install: ruby -S bundle install --without release development
 
 before_script:
-  - wget http://fastdl.mongodb.org/linux/mongodb-linux-x86_64-${MONGODB}.tgz -O /tmp/mongodb.tgz
+  - wget http://fastdl.mongodb.org/linux/mongodb-linux-x86_64-${MONGODB_VERSION}.tgz -O /tmp/mongodb.tgz
   - tar -xvf /tmp/mongodb.tgz
   - mkdir /tmp/data
-  - ${PWD}/mongodb-linux-x86_64-${MONGODB}/bin/mongod --dbpath /tmp/data --bind_ip 127.0.0.1 --auth &> /dev/null &
+  - ${PWD}/mongodb-linux-x86_64-${MONGODB_VERSION}/bin/mongod --dbpath /tmp/data --bind_ip 127.0.0.1 --auth &> /dev/null &
+  - export MONGODB_VERSION=${MONGODB_VERSION}
 
 rvm:
   - 1.9.3
@@ -44,11 +45,11 @@ env:
     - CI="travis"
     - JRUBY_OPTS="--server -J-Xms512m -J-Xmx1024m"
   matrix:
-    - MONGODB=2.6.12
-    - MONGODB=3.0.12
-    - MONGODB=3.2.11
-    - MONGODB=3.4.1
-    - MONGODB=3.6.2
+    - MONGODB_VERSION=2.6.12
+    - MONGODB_VERSION=3.0.15
+    - MONGODB_VERSION=3.2.20
+    - MONGODB_VERSION=3.4.14
+    - MONGODB_VERSION=3.6.5
 
 script: bundle exec rake spec:ci
 

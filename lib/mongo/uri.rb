@@ -195,7 +195,8 @@ module Mongo
       'MONGODB-CR'   => :mongodb_cr,
       'GSSAPI'       => :gssapi,
       'MONGODB-X509' => :mongodb_x509,
-      'SCRAM-SHA-1'  => :scram
+      'SCRAM-SHA-1'  => :scram,
+      'SCRAM-SHA-256' => :scram256
     }.freeze
 
     # Options that are allowed to appear more than once in the uri.

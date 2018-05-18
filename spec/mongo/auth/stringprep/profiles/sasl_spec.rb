@@ -15,7 +15,7 @@ describe Mongo::Auth::StringPrep::Profiles::SASL do
   end
 
   let(:prohibited) do
-    Mongo::Auth::StringPrep::Profiles::SASL::PROHIBITIED
+    Mongo::Auth::StringPrep::Profiles::SASL::PROHIBITED
   end
 
   let(:options) do

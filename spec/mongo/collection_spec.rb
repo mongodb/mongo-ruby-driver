@@ -691,7 +691,11 @@ describe Mongo::Collection do
         end
 
         it_behaves_like 'an operation using a session'
-        it_behaves_like 'a failed operation using a session'
+
+        # Due to how rspec interprets nested `if: condition` guards, we can't use one to skip this
+        # test in the case that the server will override the write concern (preventing the expected
+        # failure), so we're forced to use a traditional conditional to avoid defining the test.
+        it_behaves_like 'a failed operation using a session' if can_set_write_concern?
       end
 
       context 'when the collection does not have a write concern set' do
@@ -708,7 +712,7 @@ describe Mongo::Collection do
           expect(database.collection_names).to_not include('specs')
         end
 
-        context 'when the collection does not exist' do
+        context 'when the collection does not exist', if: can_set_write_concern? do
 
           it 'does not raise an error' do
             expect(database['non-existent-coll'].drop).to be(false)
@@ -732,7 +736,7 @@ describe Mongo::Collection do
           collection.drop
         end
 
-        context 'when the server supports write concern on the drop command', if: collation_enabled? do
+        context 'when the server supports write concern on the drop command', if: collation_enabled? && can_set_write_concern? do
 
           it 'applies the write concern' do
             expect{
@@ -750,7 +754,7 @@ describe Mongo::Collection do
       end
     end
 
-    context 'when the collection does not exist' do
+    context 'when the collection does not exist', if: can_set_write_concern? do
 
       it 'returns false' do
         expect(collection.drop).to be(false)
@@ -920,7 +924,7 @@ describe Mongo::Collection do
           expect(command['lsid']).to eq(session.session_id)
         end
       end
-      
+
       context 'when a session supporting causal consistency is used' do
 
         let(:operation) do
@@ -1551,7 +1555,7 @@ describe Mongo::Collection do
       it_behaves_like 'a failed operation using a session'
     end
 
-    context 'when batch size is specified' do
+    context 'when batch size is specified', unless: need_to_skip_on_sharded_auth_40? do
 
       let(:batch_size) { 1 }
 

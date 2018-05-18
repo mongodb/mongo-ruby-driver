@@ -22,6 +22,27 @@ TEST_DB = 'ruby-driver'.freeze
 # @since 2.0.0
 TEST_COLL = 'test'.freeze
 
+# Whether the default auth mechanism needs to be overridden with SCRAM-SHA-1.
+#
+# Because saslprep will raise on error on versions of Ruby before 2.2 (due to the lack of
+# String#unicode_normalize!), we need to avoid using SCRAM-SHA-256 on those Ruby versions. However,
+# we cannot specify SCRAM-SHA-1 as the auth mechanism in server versions before 3.0, so we need
+# to check this as well.
+#
+# @since 2.6.0
+def specify_scram?
+  # If the env var isn't set, assume that the server is at least 3.0.
+  return RUBY_VERSION < '2.2.0' unless ENV['MONGODB_VERSION']
+
+  # Server versions below 3.0 do not support SCRAM-SHA-1
+  if ENV['MONGODB_VERSION'] != 'latest' && ENV['MONGODB_VERSION'].split('.').first.to_i < 3
+    false
+  # SCRAM-SHA-1 is supported, so we fall back to it if Ruby is older than 2.2
+  else
+    RUBY_VERSION < '2.2.0'
+  end
+end
+
 # For Evergreen
 if ENV['MONGODB_URI']
   MONGODB_URI = Mongo::URI.new(ENV['MONGODB_URI'])
@@ -36,6 +57,8 @@ if ENV['MONGODB_URI']
     ADDRESSES = MONGODB_URI.servers
     CONNECT = { connect: :direct }
   end
+
+  URI_OPTIONS[:auth_mech] = :scram if specify_scram?
 else
   ADDRESSES = ENV['MONGODB_ADDRESSES'] ? ENV['MONGODB_ADDRESSES'].split(',').freeze : [ '127.0.0.1:27017' ].freeze
   if ENV['RS_ENABLED']
@@ -114,30 +137,34 @@ ROOT_USER_AUTH_SOURCE = (defined?(URI_OPTIONS) && URI_OPTIONS[:auth_source]) || 
 #
 # @since 2.0.0
 ROOT_USER = Mongo::Auth::User.new(
-  user: ROOT_USER_NAME,
-  password: ROOT_USER_PWD,
-  roles: [
-    Mongo::Auth::Roles::USER_ADMIN_ANY_DATABASE,
-    Mongo::Auth::Roles::DATABASE_ADMIN_ANY_DATABASE,
-    Mongo::Auth::Roles::READ_WRITE_ANY_DATABASE,
-    Mongo::Auth::Roles::HOST_MANAGER,
-    Mongo::Auth::Roles::CLUSTER_ADMIN
-  ]
+  {
+    user: ROOT_USER_NAME,
+    password: ROOT_USER_PWD,
+    roles: [
+      Mongo::Auth::Roles::USER_ADMIN_ANY_DATABASE,
+      Mongo::Auth::Roles::DATABASE_ADMIN_ANY_DATABASE,
+      Mongo::Auth::Roles::READ_WRITE_ANY_DATABASE,
+      Mongo::Auth::Roles::HOST_MANAGER,
+      Mongo::Auth::Roles::CLUSTER_ADMIN
+    ],
+  }.tap { |u| u[:auth_mech] = :scram if specify_scram? }
 )
 
 # Get the default test user for the suite on versions 2.6 and higher.
 #
 # @since 2.0.0
 TEST_USER = Mongo::Auth::User.new(
-  database: Mongo::Database::ADMIN,
-  user: 'test-user',
-  password: 'password',
-  roles: [
-    { role: Mongo::Auth::Roles::READ_WRITE, db: TEST_DB },
-    { role: Mongo::Auth::Roles::DATABASE_ADMIN, db: TEST_DB },
-    { role: Mongo::Auth::Roles::READ_WRITE, db: 'invalid_database' },
-    { role: Mongo::Auth::Roles::DATABASE_ADMIN, db: 'invalid_database' }
-  ]
+  {
+    database: TEST_DB,
+    user: 'test-user',
+    password: 'password',
+    roles: [
+      { role: Mongo::Auth::Roles::READ_WRITE, db: TEST_DB },
+      { role: Mongo::Auth::Roles::DATABASE_ADMIN, db: TEST_DB },
+      { role: Mongo::Auth::Roles::READ_WRITE, db: 'invalid_database' },
+      { role: Mongo::Auth::Roles::DATABASE_ADMIN, db: 'invalid_database' }
+    ],
+  }.tap { |u| u[:auth_mech] = :scram if specify_scram? }
 )
 
 # MongoDB 2.4 and lower does not allow hashes as roles, so we need to create a
@@ -148,10 +175,12 @@ TEST_USER = Mongo::Auth::User.new(
 #
 # @since 2.0.
 TEST_READ_WRITE_USER = Mongo::Auth::User.new(
-  database: TEST_DB,
-  user: TEST_USER.name,
-  password: TEST_USER.password,
-  roles: [ Mongo::Auth::Roles::READ_WRITE, Mongo::Auth::Roles::DATABASE_ADMIN ]
+  {
+    database: TEST_DB,
+    user: TEST_USER.name,
+    password: TEST_USER.password,
+    roles: [ Mongo::Auth::Roles::READ_WRITE, Mongo::Auth::Roles::DATABASE_ADMIN ],
+  }.tap { |u| u[:auth_mech] = :scram if specify_scram? }
 )
 
 # Provides an authorized mongo client on the default test database for the
@@ -161,9 +190,13 @@ TEST_READ_WRITE_USER = Mongo::Auth::User.new(
 AUTHORIZED_CLIENT = Mongo::Client.new(
   ADDRESSES,
   TEST_OPTIONS.merge(
-    database: TEST_DB,
-    user: TEST_USER.name,
-    password: TEST_USER.password)
+    {
+      auth_source: TEST_USER.database,
+      database: TEST_DB,
+      user: TEST_USER.name,
+      password: TEST_USER.password,
+    }.tap { |opts| opts[:auth_mech] = :scram if specify_scram? }
+  )
 )
 
 # Provides an authorized mongo client that retries writes.
@@ -193,11 +226,13 @@ ADMIN_UNAUTHORIZED_CLIENT = Mongo::Client.new(
 #
 # @since 2.0.0
 ADMIN_AUTHORIZED_TEST_CLIENT = ADMIN_UNAUTHORIZED_CLIENT.with(
-  user: ROOT_USER.name,
-  password: ROOT_USER.password,
-  database: TEST_DB,
-  auth_source: ROOT_USER_AUTH_SOURCE,
-  monitoring: false
+  {
+    user: ROOT_USER.name,
+    password: ROOT_USER.password,
+    database: TEST_DB,
+    auth_source: ROOT_USER_AUTH_SOURCE,
+    monitoring: false,
+  }.tap { |opts| opts[:auth_mech] = :scram if specify_scram? }
 )
 
 # A client that has an event subscriber for commands.
@@ -206,9 +241,11 @@ ADMIN_AUTHORIZED_TEST_CLIENT = ADMIN_UNAUTHORIZED_CLIENT.with(
 SUBSCRIBED_CLIENT = Mongo::Client.new(
     ADDRESSES,
     TEST_OPTIONS.merge(
-        database: TEST_DB,
-        user: TEST_USER.name,
-        password: TEST_USER.password)
+        {
+          database: TEST_DB,
+          user: TEST_USER.name,
+          password: TEST_USER.password
+        }.tap { |opts| opts[:auth_mech] = :scram if specify_scram? })
 )
 SUBSCRIBED_CLIENT.subscribe(Mongo::Monitoring::COMMAND, EventSubscriber)
 AUTHROIZED_CLIENT_WITH_RETRY_WRITES.subscribe(Mongo::Monitoring::COMMAND, EventSubscriber)
