@@ -40,11 +40,6 @@ module Mongo
         # @since 2.0.0
         CLIENT_KEY = 'Client Key'.freeze
 
-        # The digest to use for encryption.
-        #
-        # @since 2.0.0
-        DIGEST = OpenSSL::Digest::SHA1.new.freeze
-
         # The key for the done field in the responses.
         #
         # @since 2.0.0
@@ -59,6 +54,13 @@ module Mongo
         #
         # @since 2.0.0
         ITERATIONS = /i=(\d+)/.freeze
+
+        # The minimum iteration count for SCRAM-SHA-256.
+        #
+        # @api private
+        #
+        # @since 2.6.0
+        MIN_ITER_COUNT = 4096
 
         # The payload field.
         #
@@ -178,7 +180,7 @@ module Mongo
         # @since 2.0.0
         def start(connection = nil)
           if connection && connection.features.op_msg_enabled?
-            selector = CLIENT_FIRST_MESSAGE.merge(payload: client_first_message, mechanism: SCRAM::MECHANISM)
+            selector = CLIENT_FIRST_MESSAGE.merge(payload: client_first_message, mechanism: @mechanism)
             selector[Protocol::Msg::DATABASE_IDENTIFIER] = user.auth_source
             cluster_time = connection.mongos? && connection.cluster_time
             selector[Operation::CLUSTER_TIME] = cluster_time if cluster_time
@@ -187,7 +189,7 @@ module Mongo
             Protocol::Query.new(
               user.auth_source,
               Database::COMMAND,
-              CLIENT_FIRST_MESSAGE.merge(payload: client_first_message, mechanism: SCRAM::MECHANISM),
+              CLIENT_FIRST_MESSAGE.merge(payload: client_first_message, mechanism: @mechanism),
               limit: -1
             )
           end
@@ -208,15 +210,16 @@ module Mongo
         # Create the new conversation.
         #
         # @example Create the new conversation.
-        #   Conversation.new(user)
+        #   Conversation.new(user, mechanism)
         #
         # @param [ Auth::User ] user The user to converse about.
         #
         # @since 2.0.0
-        def initialize(user)
+        def initialize(user, mechanism)
           @user = user
           @nonce = SecureRandom.base64
           @client_key = user.send(:client_key)
+          @mechanism = mechanism
         end
 
         private
@@ -339,12 +342,23 @@ module Mongo
         #
         # @since 2.0.0
         def hi(data)
-          OpenSSL::PKCS5.pbkdf2_hmac_sha1(
-            data,
-            Base64.strict_decode64(salt),
-            iterations,
-            digest.size
-          )
+          case @mechanism
+          when SCRAM::SCRAM_SHA_256_MECHANISM
+            OpenSSL::PKCS5.pbkdf2_hmac(
+              data,
+              Base64.strict_decode64(salt),
+              iterations,
+              digest.size,
+              digest
+            )
+          else
+            OpenSSL::PKCS5.pbkdf2_hmac_sha1(
+              data,
+              Base64.strict_decode64(salt),
+              iterations,
+              digest.size
+            )
+          end
         end
 
         # HMAC algorithm implementation.
@@ -364,7 +378,12 @@ module Mongo
         #
         # @since 2.0.0
         def iterations
-          @iterations ||= payload_data.match(ITERATIONS)[1].to_i
+          @iterations ||= payload_data.match(ITERATIONS)[1].to_i.tap do |i|
+            if i < MIN_ITER_COUNT
+              raise Error::InsufficientIterationCount.new(
+                Error::InsufficientIterationCount.message(MIN_ITER_COUNT, 1))
+            end
+          end
         end
 
         # Get the data from the returned payload.
@@ -402,7 +421,7 @@ module Mongo
         #
         # @since 2.0.0
         def salted_password
-          @salted_password ||= hi(user.hashed_password)
+          @salted_password ||= hi(hashed_password)
         end
 
         # Server key algorithm implementation.
@@ -492,8 +511,22 @@ module Mongo
 
         private
 
+        def hashed_password
+          case @mechanism
+          when SCRAM::SCRAM_SHA_256_MECHANISM
+            user.sasl_prepped_hashed_password
+          else
+            user.hashed_password
+          end
+        end
+
         def digest
-          @digest ||= OpenSSL::Digest::SHA1.new.freeze
+          @digest ||= case @mechanism
+                      when SCRAM::SCRAM_SHA_256_MECHANISM
+                        OpenSSL::Digest::SHA256.new.freeze
+                      else
+                        OpenSSL::Digest::SHA1.new.freeze
+                      end
         end
       end
     end

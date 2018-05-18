@@ -1,4 +1,4 @@
-# Copyright (C) 2018 MongoDB, Inc.
+# Copyright (C) 2014-2018 MongoDB, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,28 +13,25 @@
 # limitations under the License.
 
 module Mongo
-  module Operation
-    class UpdateUser
+  class Error
 
-      # A MongoDB updateuser operation sent as a command message.
+    # Exception that is raised when trying to create a database with no name.
+    #
+    # @since 2.6.0
+    class InsufficientIterationCount < Error
+
+      # Instantiate the new exception.
       #
-      # @api private
+      # @example Instantiate the exception.
+      #   Mongo::Error::InvalidDatabaseName.new
       #
-      # @since 2.5.2
-      class Command
-        include Specifiable
-        include Executable
-        include Limited
+      # @since 2.6.0
+      def initialize(msg)
+        super(msg)
+      end
 
-        private
-
-        def selector(server)
-          { :updateUser => user.name }.merge(user.spec)
-        end
-
-        def message(server)
-          Protocol::Query.new(db_name, Database::COMMAND, command(server), options)
-        end
+      def self.message(required_count, given_count)
+        "This auth mechanism requires an iteration count of #{required_count}, but the server only requested #{given_count}"
       end
     end
   end

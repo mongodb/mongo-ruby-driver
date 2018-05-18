@@ -35,32 +35,63 @@ describe Mongo::Auth::SCRAM do
     Mongo::Server::Connection.new(server, TEST_OPTIONS)
   end
 
-  describe '#login' do
+  context 'when SCRAM-SHA-1 is used' do
 
-    context 'when the user is not authorized' do
+    describe '#login' do
 
-      let(:user) do
-        Mongo::Auth::User.new(
-          database: 'driver',
-          user: 'notauser',
-          password: 'password'
-        )
+      context 'when the user is not authorized' do
+
+        let(:user) do
+          Mongo::Auth::User.new(
+            database: 'driver',
+            user: 'notauser',
+            password: 'password',
+            auth_mech: 'SCRAM-SHA-1'
+          )
+        end
+
+        let(:cr) do
+          described_class.new(user)
+        end
+
+        it 'raises an exception', if: scram_sha_1_enabled? do
+          expect {
+            cr.login(connection)
+          }.to raise_error(Mongo::Auth::Unauthorized)
+        end
+
+        context 'when compression is used', if: testing_compression? do
+
+          it 'does not compress the message' do
+            expect(Mongo::Protocol::Compressed).not_to receive(:new)
+            expect {
+              cr.login(connection)
+            }.to raise_error(Mongo::Auth::Unauthorized)
+          end
+        end
       end
 
-      let(:cr) do
-        described_class.new(user)
-      end
+      context 'when the user is authorized for the database' do
 
-      it 'raises an exception', if: list_command_enabled? do
-        expect {
-          cr.login(connection)
-        }.to raise_error(Mongo::Auth::Unauthorized)
-      end
+        let(:cr) do
+          described_class.new(root_user)
+        end
 
-      context 'when compression is used', if: testing_compression? do
+        let(:login) do
+          cr.login(connection).documents[0]
+        end
 
-        it 'does not compress the message' do
-          expect(Mongo::Protocol::Compressed).not_to receive(:new)
+        after do
+          root_user.instance_variable_set(:@client_key, nil)
+        end
+
+        it 'logs the user into the connection and caches the client key', if: scram_sha_1_enabled? do
+          expect(login['ok']).to eq(1)
+          expect(root_user.send(:client_key)).not_to be_nil
+        end
+
+        it 'raises an exception when an incorrect client key is set', if: scram_sha_1_enabled? do
+          root_user.instance_variable_set(:@client_key, "incorrect client key")
           expect {
             cr.login(connection)
           }.to raise_error(Mongo::Auth::Unauthorized)
@@ -69,30 +100,68 @@ describe Mongo::Auth::SCRAM do
     end
   end
 
-  context 'when the user is authorized for the database' do
+  context 'when SCRAM-SHA-256 is used' do
 
-    let(:cr) do
-      described_class.new(root_user)
-    end
+    describe '#login' do
 
-    let(:login) do
-      cr.login(connection).documents[0]
-    end
+      context 'when the user is not authorized' do
 
-    after do
-      root_user.instance_variable_set(:@client_key, nil)
-    end
+        let(:user) do
+          Mongo::Auth::User.new(
+            database: 'driver',
+            user: 'notauser',
+            password: 'password',
+            auth_mech: 'SCRAM-SHA-256'
+          )
+        end
 
-    it 'logs the user into the connection and caches the client key', if: list_command_enabled? do
-      expect(login['ok']).to eq(1)
-      expect(root_user.send(:client_key)).not_to be_nil
-    end
+        let(:cr) do
+          described_class.new(user)
+        end
 
-    it 'raises an exception when an incorrect client key is set', if: list_command_enabled? do
-      root_user.instance_variable_set(:@client_key, "incorrect client key")
-      expect {
-        cr.login(connection)
-      }.to raise_error(Mongo::Auth::Unauthorized)
+        it 'raises an exception', if: scram_sha_256_enabled? do
+          expect {
+            cr.login(connection)
+          }.to raise_error(Mongo::Auth::Unauthorized)
+        end
+
+        context 'when compression is used', if: scram_sha_256_enabled? && testing_compression? do
+
+          it 'does not compress the message' do
+            expect(Mongo::Protocol::Compressed).not_to receive(:new)
+            expect {
+              cr.login(connection)
+            }.to raise_error(Mongo::Auth::Unauthorized)
+          end
+        end
+      end
+
+      context 'when the user is authorized for the database' do
+
+        let(:cr) do
+          described_class.new(test_user)
+        end
+
+        let(:login) do
+          cr.login(connection).documents[0]
+        end
+
+        after do
+          test_user.instance_variable_set(:@client_key, nil)
+        end
+
+        it 'logs the user into the connection and caches the client key', if: scram_sha_256_enabled? && RUBY_VERSION >= '2.2.0' do
+          expect(login['ok']).to eq(1)
+          expect(test_user.send(:client_key)).not_to be_nil
+        end
+
+        it 'raises an exception when an incorrect client key is set', if: scram_sha_256_enabled? && RUBY_VERSION >= '2.2.0' do
+          test_user.instance_variable_set(:@client_key, "incorrect client key")
+          expect {
+            cr.login(connection)
+          }.to raise_error(Mongo::Auth::Unauthorized)
+        end
+      end
     end
   end
 end

@@ -320,7 +320,7 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
-          AUTH=${AUTH} SSL=${SSL} MONGODB_URI="${MONGODB_URI}" TOPOLOGY=${TOPOLOGY} RVM_RUBY="${RVM_RUBY}" .evergreen/run-tests.sh
+          AUTH=${AUTH} SSL=${SSL} MONGODB_URI="${MONGODB_URI}" TOPOLOGY=${TOPOLOGY} RVM_RUBY="${RVM_RUBY}" MONGODB_VERSION=${VERSION} .evergreen/run-tests.sh
 
   "cleanup":
     - command: shell.exec
@@ -424,6 +424,10 @@ axes:
         display_name: "latest"
         variables:
            VERSION: "latest"
+      - id: "4.0"
+        display_name: "4.0"
+        variables:
+          VERSION: "4.0"
       - id: "3.6"
         display_name: "3.6"
         variables:

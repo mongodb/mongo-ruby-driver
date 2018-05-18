@@ -237,14 +237,26 @@ module Mongo
           min_wire_version = response[Description::MIN_WIRE_VERSION] || Description::LEGACY_WIRE_VERSION
           max_wire_version = response[Description::MAX_WIRE_VERSION] || Description::LEGACY_WIRE_VERSION
           features = Description::Features.new(min_wire_version..max_wire_version)
-          @auth_mechanism = (features.scram_sha_1_enabled? || @server.features.scram_sha_1_enabled?) ? :scram : :mongodb_cr
+
+          if response["ok"] == 1
+            @auth_mechanism = if response['saslSupportedMechs']
+                                if response['saslSupportedMechs'].include?(Mongo::Auth::SCRAM::SCRAM_SHA_256_MECHANISM)
+                                  :scram256
+                                else
+                                  :scram
+                                end
+                              elsif features.scram_sha_1_enabled? || @server.features.scram_sha_1_enabled?
+                                :scram
+                              else
+                                :mongodb_cr
+                              end
+          end
         end
       end
 
       def authenticate!
         if options[:user] || options[:auth_mech]
           user = Auth::User.new(Options::Redacted.new(:auth_mech => default_mechanism, :client_key => @client_key).merge(options))
- 
           @server.handle_auth_failure! do
             reply = Auth.get(user).login(self)
             @client_key ||= user.send(:client_key) if user.mechanism == :scram

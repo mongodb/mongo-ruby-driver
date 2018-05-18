@@ -111,6 +111,10 @@ module Mongo
         @hashed_password ||= Digest::MD5.hexdigest("#{name}:mongo:#{password}").encode(BSON::UTF8)
       end
 
+      def sasl_prepped_hashed_password
+        @sasl_prepped_hashed_password ||= sasl_prepped_password.encode(BSON::UTF8)
+      end
+
       # Create the new user.
       #
       # @example Create a new user.
@@ -135,7 +139,7 @@ module Mongo
         @auth_source = options[:auth_source] || @database
         @name = options[:user]
         @password = options[:password] || options[:pwd]
-        @mechanism = options[:auth_mech] || :mongodb_cr
+        @mechanism = options[:auth_mech]
         @auth_mech_properties = options[:auth_mech_properties] || {}
         @roles = options[:roles] || []
         @client_key = options[:client_key]
@@ -150,10 +154,17 @@ module Mongo
       #
       # @since 2.0.0
       def spec
-        { pwd: hashed_password, roles: roles }
+        { pwd: password, roles: roles }
       end
 
       private
+
+      def sasl_prepped_password
+        StringPrep.prepare(password,
+                           StringPrep::Profiles::SASL::MAPPINGS,
+                           StringPrep::Profiles::SASL::PROHIBITED,
+                           normalize: true, bidi: true)
+      end
 
       # The client key for the user.
       #

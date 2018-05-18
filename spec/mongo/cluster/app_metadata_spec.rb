@@ -112,7 +112,20 @@ describe Mongo::Cluster::AppMetadata do
         end
 
         it 'truncates the document to be just an ismaster command and the compressors', unless: compression_enabled? do
-          expect(app_metadata.ismaster_bytes.length).to eq(Mongo::Server::Monitor::Connection::ISMASTER_BYTES.length + 26)
+          # Because we sometimes request that the server provide a list of valid auth mechanisms for
+          # the user, we need to conditionally add the length of that metadata to the expected
+          # length of the isMaster document.
+          sasl_supported_mechs_size = 0
+          sasl_supported_mechs = app_metadata.instance_variable_get(:@request_auth_mech)
+
+          if sasl_supported_mechs
+            sasl_supported_mechs_size += 1                               # length of BSON type byte
+            sasl_supported_mechs_size += 'saslSupportedMechs'.length + 1        # length of BSON key
+            sasl_supported_mechs_size += 4                               # length of BSON string length
+            sasl_supported_mechs_size += sasl_supported_mechs.length + 1 # length of BSON string
+          end
+
+          expect(app_metadata.ismaster_bytes.length).to eq(Mongo::Server::Monitor::Connection::ISMASTER_BYTES.length + sasl_supported_mechs_size + 26)
         end
       end
     end

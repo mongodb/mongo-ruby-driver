@@ -55,6 +55,11 @@ module Mongo
         @app_name = cluster.options[:app_name].to_s if cluster.options[:app_name]
         @platform = cluster.options[:platform]
         @compressors = cluster.options[:compressors] || []
+
+        if cluster.options[:user] && !cluster.options[:auth_mech]
+          auth_db = cluster.options[:auth_source] || 'admin'
+          @request_auth_mech = "#{auth_db}.#{cluster.options[:user]}"
+        end
       end
 
       # Get the bytes of the ismaster message including this metadata.
@@ -108,6 +113,7 @@ module Mongo
         document = Server::Monitor::Connection::ISMASTER
         document = document.merge(compression: @compressors)
         document[:client] = client_document
+        document[:saslSupportedMechs] = @request_auth_mech if @request_auth_mech
         document
       end
 

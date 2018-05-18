@@ -25,6 +25,7 @@ module Mongo
         #
         # @since 2.0.0
         MAPPINGS = {
+          :scram_sha_256 => 7,
           :array_filters => 6,
           :op_msg => 6,
           :sessions => 6,
@@ -53,13 +54,12 @@ module Mongo
         # The wire protocol versions that this version of the driver supports.
         #
         # @since 2.0.0
-        DRIVER_WIRE_VERSIONS = (2..6).freeze
+        DRIVER_WIRE_VERSIONS = (2..7).freeze
 
         # Create the methods for each mapping to tell if they are supported.
         #
         # @since 2.0.0
         MAPPINGS.each do |name, version|
-
           # Determine whether or not the feature is enabled.
           #
           # @example Is a feature enabled?

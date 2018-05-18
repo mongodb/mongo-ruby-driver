@@ -53,7 +53,7 @@ module Mongo
           # The prohibited character lists to use for SASL string preparation.
           #
           # @since 2.6.0
-          PROHIBITIED = [
+          PROHIBITED = [
             Tables::A1,
             Tables::C1_2,
             Tables::C2_1,

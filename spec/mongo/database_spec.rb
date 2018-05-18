@@ -122,7 +122,7 @@ describe Mongo::Database do
 
     context 'when specifying a batch size' do
 
-      it 'returns the stripped names of the collections' do
+      it 'returns the stripped names of the collections', unless: need_to_skip_on_sharded_auth_40? do
         expect(database.collection_names(batch_size: 1).to_a).to include('users')
       end
     end
@@ -141,7 +141,7 @@ describe Mongo::Database do
         end
       end
 
-      it 'returns all collections' do
+      it 'returns all collections', unless: need_to_skip_on_sharded_auth_40? do
         expect(database.collection_names(batch_size: 1).select { |c| c =~ /dalmatians/}.size).to eq(2)
       end
 
