@@ -111,7 +111,12 @@ module Mongo
 
         def options
           ARGUMENT_MAP.reduce({}) do |opts, (key, value)|
-            arguments[value] ? opts.merge!(key => arguments[value]) : opts
+            value = if arguments[value].is_a?(Hash) && arguments[value]['$numberLong']
+                      arguments[value]['$numberLong'].to_i
+                    else
+                      arguments[value]
+                    end
+            value ? opts.merge!(key => value) : opts
           end
         end
 

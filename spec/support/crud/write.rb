@@ -49,7 +49,8 @@ module Mongo
                         :ordered => 'ordered',
                         :write_concern => 'writeConcern',
                         :collation => 'collation',
-                        :array_filters => 'arrayFilters'
+                        :array_filters => 'arrayFilters',
+                        :ordered => 'ordered'
                        }.freeze
 
         # The operation name.
@@ -167,7 +168,12 @@ module Mongo
         end
 
         def options
-          ARGUMENT_MAP.reduce({}) do |opts, (key, value)|
+          args = (arguments['options'] || {}).reduce({}) do |a, kv|
+            a[kv.first.to_sym] = kv.last
+            a
+          end
+
+          ARGUMENT_MAP.reduce(args) do |opts, (key, value)|
             arguments.key?(value) ? opts.merge!(key => send(key)) : opts
           end
         end
