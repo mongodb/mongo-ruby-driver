@@ -487,6 +487,7 @@ module Mongo
         key = k.to_sym
         if VALID_OPTIONS.include?(key)
           validate_max_min_pool_size!(key, opts)
+          validate_read!(key, opts)
           if key == :compressors
             compressors = valid_compressors(v)
             _options[key] = compressors unless compressors.empty?
@@ -516,6 +517,26 @@ module Mongo
       if option == :min_pool_size && opts[:min_pool_size]
         max = opts[:max_pool_size] || Server::ConnectionPool::Queue::MAX_SIZE
         raise Error::InvalidMinPoolSize.new(opts[:min_pool_size], max) unless opts[:min_pool_size] <= max
+      end
+      true
+    end
+
+    def validate_read!(option, opts)
+      if option == :read && opts.has_key?(:read)
+        read = opts[:read]
+        # We could check if read is a Hash, but this would fail
+        # for custom classes implementing key access ([]).
+        # Instead reject common cases of strings and symbols.
+        if read.is_a?(String) || read.is_a?(Symbol)
+          raise Error::InvalidReadOption.new(read, 'must be a hash')
+        end
+
+        if mode = read[:mode]
+          mode = mode.to_sym
+          unless Mongo::ServerSelector::PREFERENCES.include?(mode)
+            raise Error::InvalidReadOption.new(read, "mode #{mode} is not one of recognized modes")
+          end
+        end
       end
       true
     end
