@@ -25,6 +25,7 @@ module Mongo
           private
 
           RETRY_MESSAGES = [
+            'node is recovering',
             'not master',
             '(43)' # cursor not found error code
           ].freeze
