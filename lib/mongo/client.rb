@@ -179,8 +179,8 @@ module Mongo
     # @option options [ Array<String> ] :compressors A list of potential compressors to use, in order of preference.
     #  The driver chooses the first compressor that is also supported by the server. Currently the driver only
     #   supports 'zlib'.
-    # @option options [ Hash ] :read The read preference options. They consist of a
-    #   mode specified as a symbol, an array of hashes known as tag_sets,
+    # @option options [ Hash ] :read The read preference options. They consist
+    #   of a mode specified as a symbol, an array of hashes known as tag_sets,
     #   and local_threshold.
     #   :mode can be one of :secondary, :secondary_preferred, :primary,
     #   :primary_preferred, :nearest.
@@ -267,14 +267,14 @@ module Mongo
       "#<Mongo::Client:0x#{object_id} cluster=#{cluster.addresses.join(', ')}>"
     end
 
-    # Get the server selector. It either uses the read preference defined in the client options
-    #   or defaults to a Primary server selector.
+    # Get the server selector. It either uses the read preference
+    # defined in the client options or defaults to a Primary server selector.
     #
     # @example Get the server selector.
     #   client.server_selector
     #
-    # @return [ Mongo::ServerSelector ] The server selector using the user-defined read preference
-    #  or a Primary server selector default.
+    # @return [ Mongo::ServerSelector ] The server selector using the
+    #  user-defined read preference or a Primary server selector default.
     #
     # @since 2.5.0
     def server_selector
