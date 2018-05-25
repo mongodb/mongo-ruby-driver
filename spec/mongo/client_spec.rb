@@ -37,12 +37,27 @@ describe Mongo::Client do
         end
       end
 
-      context 'when the options and cluster are not equal' do
+      context 'when the options are not equal' do
 
         let(:other) do
           described_class.new(
             ['127.0.0.1:27017'],
             :read => { :mode => :secondary },
+            :database => TEST_DB
+          )
+        end
+
+        it 'returns false' do
+          expect(client).not_to eq(other)
+        end
+      end
+
+      context 'when cluster is not equal' do
+
+        let(:other) do
+          described_class.new(
+            ['127.0.0.1:27010'],
+            :read => { :mode => :primary },
             :database => TEST_DB
           )
         end
@@ -128,12 +143,27 @@ describe Mongo::Client do
         end
       end
 
-      context 'when the options and cluster are not equal' do
+      context 'when the options are not equal' do
 
         let(:other) do
           described_class.new(
             ['127.0.0.1:27017'],
             :read => { :mode => :secondary },
+            :database => TEST_DB
+          )
+        end
+
+        it 'returns false' do
+          expect(client).not_to eql(other)
+        end
+      end
+
+      context 'when the cluster is not equal' do
+
+        let(:other) do
+          described_class.new(
+            ['127.0.0.1:27010'],
+            :read => { :mode => :primary },
             :database => TEST_DB
           )
         end
