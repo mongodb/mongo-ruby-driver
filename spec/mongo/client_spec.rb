@@ -47,7 +47,7 @@ describe Mongo::Client do
           )
         end
 
-        it 'returns true' do
+        it 'returns false' do
           expect(client).not_to eq(other)
         end
       end
@@ -138,7 +138,7 @@ describe Mongo::Client do
           )
         end
 
-        it 'returns true' do
+        it 'returns false' do
           expect(client).not_to eql(other)
         end
       end
