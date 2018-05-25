@@ -177,7 +177,7 @@ module Mongo
     # @option options [ Float ] :connect_timeout The timeout, in seconds, to
     #   attempt a connection.
     # @option options [ Array<String> ] :compressors A list of potential compressors to use, in order of preference.
-    #  The driver chooses the first compressor that is also supported by the server. Currently the driver only
+    #   The driver chooses the first compressor that is also supported by the server. Currently the driver only
     #   supports 'zlib'.
     # @option options [ Hash ] :read The read preference options. They consist
     #   of a mode specified as a symbol, an array of hashes known as tag_sets,
