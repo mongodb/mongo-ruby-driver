@@ -179,11 +179,13 @@ module Mongo
     # @option options [ Array<String> ] :compressors A list of potential compressors to use, in order of preference.
     #   The driver chooses the first compressor that is also supported by the server. Currently the driver only
     #   supports 'zlib'.
-    # @option options [ Hash ] :read The read preference options. They consist
-    #   of a mode specified as a symbol, an array of hashes known as tag_sets,
-    #   and local_threshold.
-    #   :mode can be one of :secondary, :secondary_preferred, :primary,
-    #   :primary_preferred, :nearest.
+    # @option options [ Hash ] :read The read preference options. The hash
+    #   may have the following items:
+    #   - *:read* -- read preference specified as a symbol; valid values are
+    #     *:primary*, *:primary_preferred*, *:secondary*, *:secondary_preferred*
+    #     and *:nearest*.
+    #   - *:tag_sets* -- an array of hashes.
+    #   - *:local_threshold*.
     # @option options [ Symbol ] :replica_set The name of the replica set to
     #   connect to. Servers not in this replica set will be ignored.
     # @option options [ true, false ] :ssl Whether to use SSL.
