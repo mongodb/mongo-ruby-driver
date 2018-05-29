@@ -5,7 +5,8 @@ The officially supported Ruby driver for [MongoDB](http://www.mongodb.org).
 Documentation
 -----
 
-Documentation is located [here](http://docs.mongodb.org/ecosystem/drivers/ruby/).
+High level documentation and usage examples are located
+[here](http://docs.mongodb.org/ecosystem/drivers/ruby/).
 
 API docs can be found [here](http://api.mongodb.org/ruby/).
 
