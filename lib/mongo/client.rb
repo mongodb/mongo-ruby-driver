@@ -142,10 +142,16 @@ module Mongo
     # Instantiate a new driver client.
     #
     # @example Instantiate a single server or mongos client.
-    #   Mongo::Client.new([ '127.0.0.1:27017' ])
+    #   Mongo::Client.new(['127.0.0.1:27017'])
     #
     # @example Instantiate a client for a replica set.
-    #   Mongo::Client.new([ '127.0.0.1:27017', '127.0.0.1:27021' ])
+    #   Mongo::Client.new(['127.0.0.1:27017', '127.0.0.1:27021'])
+    #
+    # @example Directly connect to a mongod in a replica set
+    #   Mongo::Client.new(['127.0.0.1:27017'], :connect => :direct)
+    #   # without `:connect => :direct`, Mongo::Client will discover and
+    #   # connect to the replica set if given the address of a server in
+    #   # a replica set
     #
     # @param [ Array<String>, String ] addresses_or_uri The array of server addresses in the
     #   form of host:port or a MongoDB URI connection string.
