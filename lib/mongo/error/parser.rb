@@ -12,6 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# Sample error - mongo 3.4:
+# {
+#   "ok" : 0,
+#   "errmsg" : "not master",
+#   "code" : 10107,
+#   "codeName" : "NotMaster"
+# }
+
 module Mongo
   class Error
 
@@ -29,6 +37,14 @@ module Mongo
 
       # @return [ Array<Protocol::Message> ] replies The message replies.
       attr_reader :replies
+
+      # @return [ Fixnum ] code The error code parsed from the document.
+      # @since 2.6.0
+      attr_reader :code
+
+      # @return [ String ] code_name The error code name parsed from the document.
+      # @since 2.6.0
+      attr_reader :code_name
 
       # Create the new parser with the returned document.
       #
@@ -55,6 +71,7 @@ module Mongo
         parse_single(@message, ERRMSG,
                      document[WRITE_CONCERN_ERROR]) if document[WRITE_CONCERN_ERROR]
         parse_flag(@message)
+        parse_code
       end
 
       def parse_single(message, key, doc = document)
@@ -84,6 +101,11 @@ module Mongo
         else
           message.concat(error)
         end
+      end
+      
+      def parse_code
+        @code = document['code']
+        @code_name = document['codeName']
       end
     end
   end

@@ -95,4 +95,56 @@ describe Mongo::Error::Parser do
       end
     end
   end
+  
+  describe '#code' do
+    let(:parser) do
+      described_class.new(document)
+    end
+
+    context 'when document contains code' do
+      let(:document) do
+        { 'ok' => 0, 'errmsg' => 'not master', 'code' => 10107, 'codeName' => 'NotMaster' }
+      end
+      
+      it 'returns the code' do
+        expect(parser.code).to eq(10107)
+      end
+    end
+
+    context 'when document does not contain code' do
+      let(:document) do
+        { 'ok' => 0, 'errmsg' => 'not master' }
+      end
+      
+      it 'returns nil' do
+        expect(parser.code).to eq(nil)
+      end
+    end
+  end
+  
+  describe '#code_name' do
+    let(:parser) do
+      described_class.new(document)
+    end
+
+    context 'when document contains code name' do
+      let(:document) do
+        { 'ok' => 0, 'errmsg' => 'not master', 'code' => 10107, 'codeName' => 'NotMaster' }
+      end
+      
+      it 'returns the code name' do
+        expect(parser.code_name).to eq('NotMaster')
+      end
+    end
+
+    context 'when document does not contain code name' do
+      let(:document) do
+        { 'ok' => 0, 'errmsg' => 'not master' }
+      end
+      
+      it 'returns nil' do
+        expect(parser.code_name).to eq(nil)
+      end
+    end
+  end
 end
