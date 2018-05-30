@@ -52,6 +52,14 @@ module Mongo
 
       def_delegators :@result, :operation_time
 
+      # @return [ Fixnum ] code The error code parsed from the document.
+      # @since 2.6.0
+      attr_reader :code
+
+      # @return [ String ] code_name The error code name parsed from the document.
+      # @since 2.6.0
+      attr_reader :code_name
+
       # Can the read operation that caused the error be retried?
       #
       # @example Is the error retryable?
@@ -81,12 +89,21 @@ module Mongo
       # @example Create the error object
       #   OperationFailure.new(message, result)
       #
-      # param [ String ] message The error message.
-      # param [ Operation::Result ] result The result object.
+      # @example Create the error object with a code and a code name
+      #   OperationFailure.new(message, result, :code => code, :code_name => code_name)
       #
-      # @since 2.5.0
-      def initialize(message = nil, result = nil)
+      # @param [ String ] message The error message.
+      # @param [ Operation::Result ] result The result object.
+      # @param [ Hash ] options Additional parameters
+      #
+      # @option options [ Fixnum ] :code Error code
+      # @option options [ String ] :code_name Error code name
+      #
+      # @since 2.5.0, options added in 2.6.0
+      def initialize(message = nil, result = nil, options = {})
         @result = result
+        @code = options[:code]
+        @code_name = options[:code_name]
         super(message)
       end
     end

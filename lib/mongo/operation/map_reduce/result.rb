@@ -103,7 +103,7 @@ module Mongo
         #
         # @since 2.0.0
         def validate!
-          documents.nil? ? raise(Error::OperationFailure.new(parser.message, self)) : self
+          documents.nil? ? raise_operation_failure : self
         end
 
         # Get the cursor id.
