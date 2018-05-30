@@ -147,4 +147,18 @@ describe Mongo::Error::Parser do
       end
     end
   end
+  
+  describe '#document' do
+    let(:parser) do
+      described_class.new(document)
+    end
+
+    let(:document) do
+      { 'ok' => 0, 'errmsg' => 'not master', 'code' => 10107, 'codeName' => 'NotMaster' }
+    end
+    
+    it 'returns the document' do
+      expect(parser.document).to eq(document)
+    end
+  end
 end
