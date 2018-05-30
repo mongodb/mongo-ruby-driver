@@ -254,5 +254,43 @@ describe Mongo::Retryable do
       end
     end
 
+    context 'when a socket error occurs' do
+
+      before do
+        expect(operation).to receive(:execute).and_raise(
+          Mongo::Error::SocketError.new('socket error')).ordered
+        expect(cluster).to receive(:scan!).and_return(true).ordered
+        expect(operation).to receive(:execute).and_return(true).ordered
+      end
+
+      it_behaves_like 'executes the operation twice'
+    end
+
+    context 'when a socket timeout occurs' do
+
+      before do
+        expect(operation).to receive(:execute).and_raise(
+          Mongo::Error::SocketTimeoutError.new('socket timeout')).ordered
+        expect(cluster).to receive(:scan!).and_return(true).ordered
+        expect(operation).to receive(:execute).and_return(true).ordered
+      end
+
+      it_behaves_like 'executes the operation twice'
+    end
+
+    context 'when a non-retryable exception occurs' do
+
+      before do
+        expect(operation).to receive(:execute).and_raise(
+          Mongo::Error::UnsupportedCollation.new('unsupported collation')).ordered
+      end
+
+      it 'raises an exception' do
+        expect {
+          retryable.write
+        }.to raise_error(Mongo::Error::UnsupportedCollation)
+      end
+    end
+
   end
 end
