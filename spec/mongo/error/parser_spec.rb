@@ -161,4 +161,20 @@ describe Mongo::Error::Parser do
       expect(parser.document).to eq(document)
     end
   end
+  
+  describe '#replies' do
+    let(:parser) do
+      described_class.new(document)
+    end
+
+    context 'when there are no replies' do
+      let(:document) do
+        { 'ok' => 0, 'errmsg' => 'not master', 'code' => 10107, 'codeName' => 'NotMaster' }
+      end
+      
+      it 'returns nil' do
+        expect(parser.replies).to eq(nil)
+      end
+    end
+  end
 end
