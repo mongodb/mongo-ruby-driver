@@ -276,4 +276,38 @@ describe Mongo::Address do
       end
     end
   end
+  
+  describe '#to_s' do
+    context 'address with ipv4 host only' do
+      let(:address) { Mongo::Address.new('127.0.0.1') }
+      
+      it 'is host with port' do
+        expect(address.to_s).to eql('127.0.0.1:27017')
+      end
+    end
+    
+    context 'address with ipv4 host and port' do
+      let(:address) { Mongo::Address.new('127.0.0.1:27000') }
+      
+      it 'is host with port' do
+        expect(address.to_s).to eql('127.0.0.1:27000')
+      end
+    end
+    
+    context 'address with ipv6 host only' do
+      let(:address) { Mongo::Address.new('::1') }
+      
+      it 'is host with port' do
+        expect(address.to_s).to eql('[::1]:27017')
+      end
+    end
+    
+    context 'address with ipv6 host and port' do
+      let(:address) { Mongo::Address.new('[::1]:27000') }
+      
+      it 'is host with port' do
+        expect(address.to_s).to eql('[::1]:27000')
+      end
+    end
+  end
 end

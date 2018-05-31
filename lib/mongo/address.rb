@@ -159,7 +159,15 @@ module Mongo
     #
     # @since 2.0.0
     def to_s
-      port ? "#{host}:#{port}" : host
+      if port
+        if host.include?(':')
+          "[#{host}]:#{port}"
+        else
+          "#{host}:#{port}"
+        end
+      else
+        host
+      end
     end
 
     # Connect a socket.
