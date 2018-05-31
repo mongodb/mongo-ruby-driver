@@ -20,6 +20,9 @@ module Mongo
       # client and server.
       #
       # @since 2.0.0
+      # @deprecated MONGODB-CR authentication mechanism is deprecated
+      #   as of MongoDB 3.6. Support for it in the Ruby driver will be
+      #   removed in driver version 3.0. Please use SCRAM instead.
       class Conversation
 
         # The login message base.

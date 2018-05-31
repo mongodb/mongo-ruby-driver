@@ -175,7 +175,7 @@ module Mongo
     # @since 2.1.0
     INVALID_PORT = "Invalid port. Port must be an integer greater than 0 and less than 65536".freeze
 
-    # Map of URI read preference modes to ruby driver read preference modes
+    # Map of URI read preference modes to Ruby driver read preference modes
     #
     # @since 2.0.0
     READ_MODE_MAP = {
@@ -186,11 +186,12 @@ module Mongo
       'nearest'            => :nearest
     }.freeze
 
-    # Map of URI authentication mechanisms to ruby driver mechanisms
+    # Map of URI authentication mechanisms to Ruby driver mechanisms
     #
     # @since 2.0.0
     AUTH_MECH_MAP = {
       'PLAIN'        => :plain,
+      # MONGODB-CR is deprecated and will be removed in driver version 3.0
       'MONGODB-CR'   => :mongodb_cr,
       'GSSAPI'       => :gssapi,
       'MONGODB-X509' => :mongodb_x509,

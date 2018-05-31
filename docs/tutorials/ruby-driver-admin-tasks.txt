@@ -158,6 +158,9 @@ Alternatively, setting the current database and credentials can be done in one s
 MONGODB-CR Mechanism
 ````````````````````
 
+*Deprecated:* MONGODB-CR mechanism is deprecated as of MongoDB version 3.6.
+Please use SCRAM authentication instead.
+
 MONGODB-CR was the default authentication mechanism for MongoDB up through version 2.6.
 
 The mechanism can be explicitly set with the credentials:
