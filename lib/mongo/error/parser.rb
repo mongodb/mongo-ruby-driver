@@ -19,6 +19,22 @@
 #   "code" : 10107,
 #   "codeName" : "NotMaster"
 # }
+#
+# Sample response with a write concern error - mongo 3.4:
+# {
+#   "n" : 1,
+#   "opTime" : {
+#     "ts" : Timestamp(1527728618, 1),
+#     "t" : NumberLong(4)
+#   },
+#   "electionId" : ObjectId("7fffffff0000000000000004"),
+#   "writeConcernError" : {
+#     "code" : 100,
+#     "codeName" : "CannotSatisfyWriteConcern",
+#     "errmsg" : "Not enough data-bearing nodes"
+#   },
+#   "ok" : 1
+# }
 
 module Mongo
   class Error
@@ -106,6 +122,17 @@ module Mongo
       def parse_code
         @code = document['code']
         @code_name = document['codeName']
+        
+        # Since there is only room for one code, do not replace
+        # codes of the top level response with write concern error codes.
+        # In practice this should never be an issue as a write concern
+        # can only fail after the operation succeeds on the primary.
+        if @code.nil? && @code_name.nil?
+          if subdoc = document[WRITE_CONCERN_ERROR]
+            @code = subdoc['code']
+            @code_name = subdoc['codeName']
+          end
+        end
       end
     end
   end

@@ -120,6 +120,28 @@ describe Mongo::Error::Parser do
         expect(parser.code).to eq(nil)
       end
     end
+
+    context 'when the document contains a writeConcernError with a code' do
+
+      let(:document) do
+        { 'writeConcernError' => { 'code' => 100, 'errmsg' => 'Not enough data-bearing nodes' } }
+      end
+
+      it 'returns the code' do
+        expect(parser.code).to eq(100)
+      end
+    end
+
+    context 'when the document contains a writeConcernError without a code' do
+
+      let(:document) do
+        { 'writeConcernError' => { 'errmsg' => 'Not enough data-bearing nodes' } }
+      end
+
+      it 'returns nil' do
+        expect(parser.code).to be nil
+      end
+    end
   end
   
   describe '#code_name' do
@@ -144,6 +166,29 @@ describe Mongo::Error::Parser do
       
       it 'returns nil' do
         expect(parser.code_name).to eq(nil)
+      end
+    end
+
+    context 'when the document contains a writeConcernError with a code' do
+
+      let(:document) do
+        { 'writeConcernError' => { 'code' => 100, 'codeName' => 'CannotSatisfyWriteConcern',
+          'errmsg' => 'Not enough data-bearing nodes' } }
+      end
+
+      it 'returns the code name' do
+        expect(parser.code_name).to eq('CannotSatisfyWriteConcern')
+      end
+    end
+
+    context 'when the document contains a writeConcernError without a code' do
+
+      let(:document) do
+        { 'writeConcernError' => { 'code' => 100, 'errmsg' => 'Not enough data-bearing nodes' } }
+      end
+
+      it 'returns nil' do
+        expect(parser.code_name).to be nil
       end
     end
   end
