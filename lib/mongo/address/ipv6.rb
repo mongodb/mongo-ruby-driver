@@ -61,10 +61,13 @@ module Mongo
           host = address
           port = 27017
         end
-        # Validate host
+        # Validate host.
+        # This will raise IPAddr::InvalidAddressError
+        # on newer rubies which is a subclass of ArgumentError
+        # if host is invalid
         begin
           IPAddr.new(host)
-        rescue IPAddr::InvalidAddressError
+        rescue ArgumentError
           raise ArgumentError, "Invalid IPv6 address: #{address}"
         end
         [ host, port ]
