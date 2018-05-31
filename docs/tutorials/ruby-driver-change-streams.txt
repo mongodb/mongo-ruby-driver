@@ -14,7 +14,7 @@ As of version 3.6 of the MongoDB server, a new ``$changeStream`` pipeline stage 
 framework. The Ruby driver provides an API for receiving notifications for changes to a particular collection using this
 new pipeline stage. Although you can create a change stream using the pipeline operator and aggregation framework
 directly, it is recommended to use the driver API described below as the driver resumes the change stream if there is
-timeout or network error.
+a timeout or a network error.
 
 Change streams on the server requires a ``"majority"`` read concern or no read concern.
 
@@ -38,7 +38,7 @@ A change stream is created by calling the ``#watch`` method on a collection:
   process(doc)
 
 
-You can also receive the notifications as they are available:
+You can also receive the notifications as they become available:
 
 .. code-block:: ruby
 
@@ -64,7 +64,7 @@ The change stream can take filters in the aggregation framework pipeline operato
 Close a Change Stream
 ---------------------
 
-You can close a Change Stream by calling the ``#close`` method:
+You can close a change stream by calling the ``#close`` method:
 
 .. code-block:: ruby
 
