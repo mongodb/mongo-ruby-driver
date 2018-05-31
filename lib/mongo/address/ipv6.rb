@@ -48,23 +48,24 @@ module Mongo
       #
       # @since 2.0.0
       def self.parse(address)
-        # To keep the Ruby driver dependency free, use a basic
-        # parser here rather than using a full IPv6 parser
+        # IPAddr's parser handles IP address only, not port.
+        # Therefore we need to handle the port ourselves
         if address =~ /[\[\]]/
-          parts = address.match(/\[(.+)\]:?(.+)?/)
+          parts = address.match(/\A\[(.+)\](?::(\d+))?\z/)
           if parts.nil?
-            raise ArgumentError, "Invalid IPV6 address: #{address}"
+            raise ArgumentError, "Invalid IPv6 address: #{address}"
           end
           host = parts[1]
           port = (parts[2] || 27017).to_i
         else
-          begin
-            IPAddr.new(address)
-          rescue IPAddr::InvalidAddressError
-            raise ArgumentError, "Invalid IPV6 address: #{address}"
-          end
           host = address
           port = 27017
+        end
+        # Validate host
+        begin
+          IPAddr.new(host)
+        rescue IPAddr::InvalidAddressError
+          raise ArgumentError, "Invalid IPv6 address: #{address}"
         end
         [ host, port ]
       end
