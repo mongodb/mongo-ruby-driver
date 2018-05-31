@@ -6,6 +6,61 @@ describe Mongo::Client do
     begin; client.close; rescue; end
   end
 
+  describe '.new' do
+    describe 'options' do
+      describe 'read' do
+        [
+          :primary, :primary_preferred, :secondary, :secondary_preferred,  :nearest
+        ].each do |sym|
+          it "accepts #{sym} as symbol" do
+            client = described_class.new(['127.0.0.1:27017'],
+              :read => {:mode => sym})
+            # the key got converted to a string here
+            expect(client.read_preference).to eq({'mode' => sym})
+          end
+
+          # string keys are not documented as being allowed
+          # but the code accepts them
+          it "accepts #{sym} as string" do
+            client = described_class.new(['127.0.0.1:27017'],
+              :read => {:mode => sym.to_s})
+            # the key got converted to a string here
+            # the value remains a string
+            expect(client.read_preference).to eq({'mode' => sym.to_s})
+          end
+        end
+
+        it 'rejects bogus read preference as symbol' do
+          expect do
+            client = described_class.new(['127.0.0.1:27017'],
+              :read => {:mode => :bogus})
+          end.to raise_error(Mongo::Error::InvalidReadOption, 'Invalid read option: {:mode=>:bogus}: mode bogus is not one of recognized modes')
+        end
+
+        it 'rejects bogus read preference as string' do
+          expect do
+            client = described_class.new(['127.0.0.1:27017'],
+              :read => {:mode => 'bogus'})
+          end.to raise_error(Mongo::Error::InvalidReadOption, 'Invalid read option: {:mode=>"bogus"}: mode bogus is not one of recognized modes')
+        end
+
+        it 'rejects read option specified as a string' do
+          expect do
+            client = described_class.new(['127.0.0.1:27017'],
+              :read => 'primary')
+          end.to raise_error(Mongo::Error::InvalidReadOption, 'Invalid read option: primary: must be a hash')
+        end
+
+        it 'rejects read option specified as a symbol' do
+          expect do
+            client = described_class.new(['127.0.0.1:27017'],
+              :read => :primary)
+          end.to raise_error(Mongo::Error::InvalidReadOption, 'Invalid read option: primary: must be a hash')
+        end
+      end
+    end
+  end
+
   describe '#==' do
 
     let(:client) do

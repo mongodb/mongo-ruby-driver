@@ -183,13 +183,15 @@ module Mongo
     # @option options [ Float ] :connect_timeout The timeout, in seconds, to
     #   attempt a connection.
     # @option options [ Array<String> ] :compressors A list of potential compressors to use, in order of preference.
-    #  The driver chooses the first compressor that is also supported by the server. Currently the driver only
+    #   The driver chooses the first compressor that is also supported by the server. Currently the driver only
     #   supports 'zlib'.
-    # @option options [ Hash ] :read The read preference options. They consist of a
-    #   mode specified as a symbol, an array of hashes known as tag_sets,
-    #   and local_threshold.
-    #   :mode can be one of :secondary, :secondary_preferred, :primary,
-    #   :primary_preferred, :nearest.
+    # @option options [ Hash ] :read The read preference options. The hash
+    #   may have the following items:
+    #   - *:read* -- read preference specified as a symbol; valid values are
+    #     *:primary*, *:primary_preferred*, *:secondary*, *:secondary_preferred*
+    #     and *:nearest*.
+    #   - *:tag_sets* -- an array of hashes.
+    #   - *:local_threshold*.
     # @option options [ Symbol ] :replica_set The name of the replica set to
     #   connect to. Servers not in this replica set will be ignored.
     # @option options [ true, false ] :ssl Whether to use SSL.
@@ -273,14 +275,14 @@ module Mongo
       "#<Mongo::Client:0x#{object_id} cluster=#{cluster.addresses.join(', ')}>"
     end
 
-    # Get the server selector. It either uses the read preference defined in the client options
-    #   or defaults to a Primary server selector.
+    # Get the server selector. It either uses the read preference
+    # defined in the client options or defaults to a Primary server selector.
     #
     # @example Get the server selector.
     #   client.server_selector
     #
-    # @return [ Mongo::ServerSelector ] The server selector using the user-defined read preference
-    #  or a Primary server selector default.
+    # @return [ Mongo::ServerSelector ] The server selector using the
+    #  user-defined read preference or a Primary server selector default.
     #
     # @since 2.5.0
     def server_selector
@@ -491,6 +493,7 @@ module Mongo
         key = k.to_sym
         if VALID_OPTIONS.include?(key)
           validate_max_min_pool_size!(key, opts)
+          validate_read!(key, opts)
           if key == :compressors
             compressors = valid_compressors(v)
             _options[key] = compressors unless compressors.empty?
@@ -520,6 +523,26 @@ module Mongo
       if option == :min_pool_size && opts[:min_pool_size]
         max = opts[:max_pool_size] || Server::ConnectionPool::Queue::MAX_SIZE
         raise Error::InvalidMinPoolSize.new(opts[:min_pool_size], max) unless opts[:min_pool_size] <= max
+      end
+      true
+    end
+
+    def validate_read!(option, opts)
+      if option == :read && opts.has_key?(:read)
+        read = opts[:read]
+        # We could check if read is a Hash, but this would fail
+        # for custom classes implementing key access ([]).
+        # Instead reject common cases of strings and symbols.
+        if read.is_a?(String) || read.is_a?(Symbol)
+          raise Error::InvalidReadOption.new(read, 'must be a hash')
+        end
+
+        if mode = read[:mode]
+          mode = mode.to_sym
+          unless Mongo::ServerSelector::PREFERENCES.include?(mode)
+            raise Error::InvalidReadOption.new(read, "mode #{mode} is not one of recognized modes")
+          end
+        end
       end
       true
     end
