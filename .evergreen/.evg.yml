@@ -460,27 +460,18 @@ axes:
         display_name: Sharded
         variables:
            TOPOLOGY: "sharded_cluster"
-  - id: "auth"
-    display_name: Authentication
+  - id: "auth-and-ssl"
+    display_name: Authentication and SSL
     values:
-      - id: "auth"
-        display_name: Auth
+      - id: "auth-and-ssl"
+        display_name: Auth SSL
         variables:
            AUTH: "auth"
-      - id: "noauth"
-        display_name: NoAuth
+           SSL: "ssl"
+      - id: "noauth-and-nossl"
+        display_name: NoAuth NoSSL
         variables:
            AUTH: "noauth"
-  - id: "ssl"
-    display_name: SSL
-    values:
-      - id: "ssl"
-        display_name: SSL
-        variables:
-           SSL: "ssl"
-      - id: "nossl"
-        display_name: NoSSL
-        variables:
            SSL: "nossl"
   - id: "ruby"
     display_name: Ruby Version
@@ -533,22 +524,22 @@ axes:
 
 
 buildvariants:
-#- matrix_name: "all-os-all-ruby-auth-nossl-standalone"
-#  matrix_spec: { auth: "auth", ssl: "nossl", ruby: "*", mongodb-version: "*", topology: "standalone", os: "*" }
-#  display_name: "${version} ${topology} ${auth} ${ssl} ${ruby} ${os}"
+#- matrix_name: "all-os-all-ruby-auth-and-ssl-standalone"
+#  matrix_spec: { auth-and-ssl: "auth-and-ssl", ruby: "*", mongodb-version: "*", topology: "standalone", os: "*" }
+#  display_name: "${version} ${topology} ${auth-and-ssl} ${ruby} ${os}"
 #  tasks:
 #     - name: "test"
-- matrix_name: "rhel70-all-mongodbs-all-rubies-all-topologies-all-auth-all-ssl"
-  matrix_spec: { auth: "*", ssl: "*", ruby: "*", mongodb-version: "*", topology: "*" }
-  display_name: "${mongodb-version} ${topology} ${auth} ${ssl} ${ruby}"
+- matrix_name: "rhel70-all-mongodbs-all-rubies-all-topologies-all-auth-and-ssl"
+  matrix_spec: { auth-and-ssl: "*", ruby: "*", mongodb-version: "*", topology: "*" }
+  display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
   run_on:
     - rhel70-small
   tasks:
      - name: "test"
 
 - matrix_name: "rhel70-latest-all-rubies-all-topologies-all-auth-all-ssl-compression"
-  matrix_spec: { auth: "*", ssl: "*", ruby: "*", mongodb-version: "3.6", topology: "*", compressor: 'zlib' }
-  display_name: "${compressor} ${topology} ${auth} ${ssl} ${ruby}"
+  matrix_spec: { auth-and-ssl: "*", ruby: "*", mongodb-version: "3.6", topology: "*", compressor: 'zlib' }
+  display_name: "${compressor} ${topology} ${auth-and-ssl} ${ruby}"
   run_on:
     - rhel70-small
   tasks:
