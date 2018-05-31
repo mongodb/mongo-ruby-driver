@@ -17,7 +17,8 @@ Get Started
 -----------
 
 To get started with the Ruby driver, see :doc:`/installation` and
-:doc:`/quick-start`.
+:doc:`/quick-start`. Continue to :doc:`/ruby-driver-tutorials`
+for high level documentation for common operations.
 
 BSON
 ----
