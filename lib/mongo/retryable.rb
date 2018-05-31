@@ -148,13 +148,7 @@ module Mongo
       begin
         attempt += 1
         yield(server || cluster.next_primary)
-      rescue Error::SocketError, Error::SocketTimeoutError => e
-        server = nil
-        raise(e) if attempt > Cluster::MAX_WRITE_RETRIES
-        log_retry(e)
-        cluster.scan!
-        retry
-      rescue Error::OperationFailure => e
+      rescue Error::SocketError, Error::SocketTimeoutError, Error::OperationFailure => e
         server = nil
         raise(e) if attempt > Cluster::MAX_WRITE_RETRIES
         if e.write_retryable?

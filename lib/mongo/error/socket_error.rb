@@ -18,6 +18,8 @@ module Mongo
     # Raised when a socket has an error.
     #
     # @since 2.0.0
-    class SocketError < Error; end
+    class SocketError < Error
+      include WriteRetryable
+    end
   end
 end

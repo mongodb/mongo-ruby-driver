@@ -73,6 +73,7 @@ module Mongo
 end
 
 require 'mongo/error/parser'
+require 'mongo/error/write_retryable'
 require 'mongo/error/bulk_write_error'
 require 'mongo/error/closed_stream'
 require 'mongo/error/extra_file_chunk'
