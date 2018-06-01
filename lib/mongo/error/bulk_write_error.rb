@@ -27,7 +27,7 @@ module Mongo
       # Instantiate the new exception.
       #
       # @example Instantiate the exception.
-      #   Mongo::Error::BulkWriteFailure.new(response)
+      #   Mongo::Error::BulkWriteError.new(response)
       #
       # @param [ Hash ] result A processed response from the server
       #   reporting results of the operation.
