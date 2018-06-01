@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require 'ipaddr'
+
 module Mongo
   class Address
 
@@ -38,7 +40,7 @@ module Mongo
       # Parse an IPv6 address into its host and port.
       #
       # @example Parse the address.
-      #   IPv4.parse("[::1]:28011")
+      #   IPv6.parse("[::1]:28011")
       #
       # @param [ String ] address The address to parse.
       #
@@ -46,9 +48,28 @@ module Mongo
       #
       # @since 2.0.0
       def self.parse(address)
-        parts = address.match(/\[(.+)\]:?(.+)?/)
-        host = parts[1]
-        port = (parts[2] || 27017).to_i
+        # IPAddr's parser handles IP address only, not port.
+        # Therefore we need to handle the port ourselves
+        if address =~ /[\[\]]/
+          parts = address.match(/\A\[(.+)\](?::(\d+))?\z/)
+          if parts.nil?
+            raise ArgumentError, "Invalid IPv6 address: #{address}"
+          end
+          host = parts[1]
+          port = (parts[2] || 27017).to_i
+        else
+          host = address
+          port = 27017
+        end
+        # Validate host.
+        # This will raise IPAddr::InvalidAddressError
+        # on newer rubies which is a subclass of ArgumentError
+        # if host is invalid
+        begin
+          IPAddr.new(host)
+        rescue ArgumentError
+          raise ArgumentError, "Invalid IPv6 address: #{address}"
+        end
         [ host, port ]
       end
 

@@ -1327,6 +1327,33 @@ describe Mongo::Client do
         expect(new_client.options.keys).not_to include('invalid')
       end
     end
+    
+    context 'when client is created with ipv6 address' do
+      let(:client) do
+        described_class.new(['[::1]:27017'], :database => TEST_DB)
+      end
+      
+      context 'when providing nil' do
+
+        it 'returns the cloned client' do
+          expect(client.with(nil)).to eq(client)
+        end
+      end
+      
+      context 'when changing options' do
+        let(:new_options) do
+          { app_name: 'client_test' }
+        end
+
+        let!(:new_client) do
+          client.with(new_options)
+        end
+
+        it 'returns a new client' do
+          expect(new_client).not_to equal(client)
+        end
+      end
+    end
   end
 
   describe '#write_concern' do
