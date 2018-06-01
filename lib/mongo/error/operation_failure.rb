@@ -49,11 +49,7 @@ module Mongo
       ].freeze
 
       # These are magic error messages that could indicate a cluster
-      # reconfiguration behind a mongos. We cannot always check error codes
-      # as they change between versions, for example 15988 which has two
-      # completely different meanings between 2.4 and 3.0.
-      # That said, as of mongo 4.0 there are some codes that have fixed
-      # meaning.
+      # reconfiguration behind a mongos.
       #
       # @since 2.1.1
       RETRY_MESSAGES = WRITE_RETRY_MESSAGES + [
