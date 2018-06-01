@@ -143,16 +143,20 @@ module Mongo
         change_stream_resumable_message? ||
         change_stream_resumable_code?
       end
-      
+
       private def change_stream_resumable_message?
         CHANGE_STREAM_RESUME_MESSAGES.any? { |m| message.include?(m) }
       end
-      
+
       private def change_stream_resumable_code?
-        if code
-          !CHANGE_STREAM_NOT_RESUME_ERRORS.any? { |e| e[:code] == code }
+        if @result && @result.is_a?(Mongo::Operation::GetMore::Result)
+          if code
+            !CHANGE_STREAM_NOT_RESUME_ERRORS.any? { |e| e[:code] == code }
+          else
+            true
+          end
         else
-          true
+          false
         end
       end
 
