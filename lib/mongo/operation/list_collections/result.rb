@@ -74,7 +74,11 @@ module Mongo
         #
         # @since 2.0.0
         def validate!
-          !successful? ? raise(Error::OperationFailure.new(parser.message, self)) : self
+          if successful?
+            self
+          else
+            raise(Error::OperationFailure.new(parser.message, self))
+          end
         end
 
         private
