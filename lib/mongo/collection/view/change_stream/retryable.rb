@@ -24,12 +24,6 @@ module Mongo
 
           private
 
-          RETRY_MESSAGES = [
-            'node is recovering',
-            'not master',
-            '(43)' # cursor not found error code
-          ].freeze
-
           def read_with_one_retry
             yield
           rescue => e
@@ -49,7 +43,7 @@ module Mongo
           end
 
           def retryable_operation_failure?(error)
-            error.is_a?(Error::OperationFailure) && RETRY_MESSAGES.any? { |m| error.message.include?(m) }
+            error.is_a?(Error::OperationFailure) && error.change_stream_resumable?
           end
         end
       end

@@ -25,6 +25,7 @@ module Mongo
       # being retried.
       #
       # @since 2.6.0
+      # @api private
       WRITE_RETRY_ERRORS = [
         {:code_name => 'InterruptedAtShutdown', :code => 11600},
         {:code_name => 'InterruptedDueToReplStateChange', :code => 11602},
@@ -43,6 +44,7 @@ module Mongo
       # These are magic error messages that could indicate a master change.
       #
       # @since 2.4.2
+      # @api private
       WRITE_RETRY_MESSAGES = [
         'not master',
         'node is recovering',
@@ -52,6 +54,7 @@ module Mongo
       # reconfiguration behind a mongos.
       #
       # @since 2.1.1
+      # @api private
       RETRY_MESSAGES = WRITE_RETRY_MESSAGES + [
         'transport error',
         'socket exception',
@@ -106,6 +109,50 @@ module Mongo
         else
           # return false rather than nil
           false
+        end
+      end
+
+      # Error codes and code names that should result in a failing getMore
+      # command on a change stream NOT being resumed.
+      #
+      # @since 2.6.0
+      # @api private
+      CHANGE_STREAM_NOT_RESUME_ERRORS = [
+        {:code_name => 'CappedPositionLost', :code => 136},
+        {:code_name => 'CursorKilled', :code => 237},
+        {:code_name => 'Interrupted', :code => 11601},
+      ].freeze
+      
+      # Change stream can be resumed when these error messages are encountered.
+      #
+      # @since 2.6.0
+      # @api private
+      CHANGE_STREAM_RESUME_MESSAGES = WRITE_RETRY_MESSAGES
+      
+      # Can the change stream on which this error occurred be resumed?
+      #
+      # Note: only errors from getMore commands are resumable.
+      #
+      # @example Is the error resumable for the change stream?
+      #   error.change_stream_resumable?
+      #
+      # @return [ true, false ] Whether the error is resumable.
+      #
+      # @since 2.6.0
+      def change_stream_resumable?
+        change_stream_resumable_message? ||
+        change_stream_resumable_code?
+      end
+      
+      private def change_stream_resumable_message?
+        CHANGE_STREAM_RESUME_MESSAGES.any? { |m| message.include?(m) }
+      end
+      
+      private def change_stream_resumable_code?
+        if code
+          !CHANGE_STREAM_NOT_RESUME_ERRORS.any? { |e| e[:code] == code }
+        else
+          true
         end
       end
 
