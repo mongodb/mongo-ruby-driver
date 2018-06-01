@@ -44,15 +44,8 @@ module Mongo
       #
       # @since 2.4.2
       WRITE_RETRY_MESSAGES = [
-        # write retry messages in the current spec
         'not master',
         'node is recovering',
-        
-        # write retry messages not in the current spec
-        # but which were retried historically by the Ruby driver
-        'no master',
-        'could not contact primary',
-        'Not primary',
       ].freeze
 
       # These are magic error messages that could indicate a cluster
