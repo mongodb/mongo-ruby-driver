@@ -1,3 +1,31 @@
+# The tests run against a mongo server or a replica set which is
+# configured and started externally to the test suite. This allows
+# running the entire test suite against, for example, a standalone
+# mongod as well as a replica set. The flip side to this is the
+# test suite will not work without a running mongo cluster, and
+# tests which are not applicable to or cannot be performed on the
+# running mongo cluster are skipped.
+#
+# Not only does the test suite require an externally launched cluster,
+# the test suite must also be told how the cluster is configured
+# via RS_ENABLED and SHARDED_ENABLED environment variables.
+#
+# Use the following environment variables to configure the tests:
+#
+# MONGODB_URI: Connection string to use instead of 127.0.0.1:27017.
+# Specify RS_ENABLED or SHARDED_ENABLED if connecting to a replica set
+# or a sharded cluster, otherwise the test suite will establish a
+# direct connection to the first host in the URI.
+#   MONGODB_URI=127.0.0.1:27001,127.0.0.1:27002
+#
+# RS_ENALBED: Instruct the test suite to connect to the replica set.
+# Set MONGODB_URI appropriately as well.
+#   RS_ENABLED=1
+#
+# SHARDED_ENABLED: Instruct the test suite to connect to the sharded cluster.
+# Set MONGODB_URI appropriately as well.
+#   SHARDED_ENABLED=1
+
 TEST_SET = 'ruby-driver-rs'
 COVERAGE_MIN = 90
 CURRENT_PATH = File.expand_path(File.dirname(__FILE__))
