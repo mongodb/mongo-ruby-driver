@@ -12,6 +12,9 @@
 #
 # Use the following environment variables to configure the tests:
 #
+# CLIENT_DEBUG: Show debug messages from the client.
+#   CLIENT_DEBUG=1
+#
 # MONGODB_URI: Connection string to use instead of 127.0.0.1:27017.
 # Specify RS_ENABLED or SHARDED_ENABLED if connecting to a replica set
 # or a sharded cluster, otherwise the test suite will establish a
@@ -61,7 +64,9 @@ end
 require 'mongo'
 
 Mongo::Logger.logger = Logger.new($stdout)
-Mongo::Logger.logger.level = Logger::INFO
+unless %w(1 true yes).include?((ENV['CLIENT_DEBUG'] || '').downcase)
+  Mongo::Logger.logger.level = Logger::INFO
+end
 Encoding.default_external = Encoding::UTF_8
 
 require 'support/travis'
