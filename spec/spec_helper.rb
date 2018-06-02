@@ -10,6 +10,16 @@
 # the test suite must also be told how the cluster is configured
 # via RS_ENABLED and SHARDED_ENABLED environment variables.
 #
+# The test suite seems to have issues connecting to a replica set
+# via IP addresses if the replica set hosts are defined with hostnames
+# (i.e., 127.0.0.1 vs localhost). Try to exactly match the contents of
+# MONGODB_URI and `rs.isMaster()` output, either by adjusting MONGODB_URI
+# or by reconfiguring the replica set.
+#
+# In order to run spec tests, the mongo cluster needs to have failpoints
+# enabled. This is accomplished by starting mongod with the following option:
+#   --setParameter enableTestCommands=1
+#
 # Use the following environment variables to configure the tests:
 #
 # CLIENT_DEBUG: Show debug messages from the client.
