@@ -108,6 +108,12 @@ BASE_OPTIONS = {
                   write: WRITE_CONCERN,
                   heartbeat_frequency: 20,
                   max_read_retries: 5,
+                  # The test suite seems to perform a number of operations
+                  # requiring server selection. Hence a timeout of 1 here,
+                  # together with e.g. a misconfigured replica set,
+                  # means the test suite hangs for about 4 seconds before
+                  # failing.
+                  server_selection_timeout: 1,
                   wait_queue_timeout: 2,
                   connect_timeout: 3,
                   max_idle_time: 5
