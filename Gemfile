@@ -23,4 +23,5 @@ group :development do
   gem 'ruby-prof', :platforms => :mri
   gem 'pry-rescue'
   gem 'pry-nav'
+  gem 'rspec-instafail'
 end

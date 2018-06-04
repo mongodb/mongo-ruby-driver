@@ -50,8 +50,6 @@ require 'support/connection_string'
 require 'support/gridfs'
 
 RSpec.configure do |config|
-  config.color     = true
-  config.formatter = 'documentation'
   config.include(Authorization)
 
   config.before(:suite) do
