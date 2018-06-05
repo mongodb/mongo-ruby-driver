@@ -95,4 +95,131 @@ describe Mongo::Error::Parser do
       end
     end
   end
+  
+  describe '#code' do
+    let(:parser) do
+      described_class.new(document)
+    end
+
+    context 'when document contains code' do
+      let(:document) do
+        { 'ok' => 0, 'errmsg' => 'not master', 'code' => 10107, 'codeName' => 'NotMaster' }
+      end
+      
+      it 'returns the code' do
+        expect(parser.code).to eq(10107)
+      end
+    end
+
+    context 'when document does not contain code' do
+      let(:document) do
+        { 'ok' => 0, 'errmsg' => 'not master' }
+      end
+      
+      it 'returns nil' do
+        expect(parser.code).to eq(nil)
+      end
+    end
+
+    context 'when the document contains a writeConcernError with a code' do
+
+      let(:document) do
+        { 'writeConcernError' => { 'code' => 100, 'errmsg' => 'Not enough data-bearing nodes' } }
+      end
+
+      it 'returns the code' do
+        expect(parser.code).to eq(100)
+      end
+    end
+
+    context 'when the document contains a writeConcernError without a code' do
+
+      let(:document) do
+        { 'writeConcernError' => { 'errmsg' => 'Not enough data-bearing nodes' } }
+      end
+
+      it 'returns nil' do
+        expect(parser.code).to be nil
+      end
+    end
+  end
+  
+  describe '#code_name' do
+    let(:parser) do
+      described_class.new(document)
+    end
+
+    context 'when document contains code name' do
+      let(:document) do
+        { 'ok' => 0, 'errmsg' => 'not master', 'code' => 10107, 'codeName' => 'NotMaster' }
+      end
+      
+      it 'returns the code name' do
+        expect(parser.code_name).to eq('NotMaster')
+      end
+    end
+
+    context 'when document does not contain code name' do
+      let(:document) do
+        { 'ok' => 0, 'errmsg' => 'not master' }
+      end
+      
+      it 'returns nil' do
+        expect(parser.code_name).to eq(nil)
+      end
+    end
+
+    context 'when the document contains a writeConcernError with a code' do
+
+      let(:document) do
+        { 'writeConcernError' => { 'code' => 100, 'codeName' => 'CannotSatisfyWriteConcern',
+          'errmsg' => 'Not enough data-bearing nodes' } }
+      end
+
+      it 'returns the code name' do
+        expect(parser.code_name).to eq('CannotSatisfyWriteConcern')
+      end
+    end
+
+    context 'when the document contains a writeConcernError without a code' do
+
+      let(:document) do
+        { 'writeConcernError' => { 'code' => 100, 'errmsg' => 'Not enough data-bearing nodes' } }
+      end
+
+      it 'returns nil' do
+        expect(parser.code_name).to be nil
+      end
+    end
+  end
+  
+  describe '#document' do
+    let(:parser) do
+      described_class.new(document)
+    end
+
+    let(:document) do
+      { 'ok' => 0, 'errmsg' => 'not master', 'code' => 10107, 'codeName' => 'NotMaster' }
+    end
+    
+    it 'returns the document' do
+      expect(parser.document).to eq(document)
+    end
+  end
+  
+  describe '#replies' do
+    let(:parser) do
+      described_class.new(document)
+    end
+
+    context 'when there are no replies' do
+      let(:document) do
+        { 'ok' => 0, 'errmsg' => 'not master', 'code' => 10107, 'codeName' => 'NotMaster' }
+      end
+      
+      it 'returns nil' do
+        expect(parser.replies).to eq(nil)
+      end
+    end
+  end
 end

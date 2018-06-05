@@ -255,8 +255,16 @@ module Mongo
       #
       # @since 2.0.0
       def validate!
-        !successful? ? raise(Error::OperationFailure.new(parser.message, self)) : self
+        !successful? ? raise_operation_failure : self
       end
+
+      def raise_operation_failure
+        raise Error::OperationFailure.new(
+          parser.message,
+          self,
+          :code => parser.code, :code_name => parser.code_name)
+      end
+      private :raise_operation_failure
 
       # Get the number of documents written by the server.
       #
