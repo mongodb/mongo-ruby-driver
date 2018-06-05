@@ -53,7 +53,7 @@ module Mongo
         server = next_primary(false)
         @limit = -1 if server.features.list_collections_enabled?
         session = client.send(:get_session, options)
-        collections_info(server, session).collect do |info|
+        collections_info(server, session, name_only: true).collect do |info|
           if server.features.list_collections_enabled?
             info[Database::NAME]
           else
@@ -93,29 +93,29 @@ module Mongo
 
       private
 
-      def collections_info(server, session, &block)
-        cursor = Cursor.new(self, send_initial_query(server, session), server, session: session)
+      def collections_info(server, session, options = {}, &block)
+        cursor = Cursor.new(self, send_initial_query(server, session, options), server, session: session)
         cursor.each do |doc|
           yield doc
         end if block_given?
         cursor.to_enum
       end
 
-      def collections_info_spec(session)
+      def collections_info_spec(session, options = {})
         { selector: {
             listCollections: 1,
             cursor: batch_size ? { batchSize: batch_size } : {} },
           db_name: @database.name,
           session: session
-        }
+        }.tap { |spec| spec[:selector][:nameOnly] = true if options[:name_only] }
       end
 
-      def initial_query_op(session)
-        Operation::CollectionsInfo.new(collections_info_spec(session))
+      def initial_query_op(session, options = {})
+        Operation::CollectionsInfo.new(collections_info_spec(session, options))
       end
 
-      def send_initial_query(server, session)
-        initial_query_op(session).execute(server)
+      def send_initial_query(server, session, options = {})
+        initial_query_op(session, options).execute(server)
       end
     end
   end
