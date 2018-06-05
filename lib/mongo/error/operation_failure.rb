@@ -52,7 +52,7 @@ module Mongo
 
       def_delegators :@result, :operation_time
 
-      # @return [ Fixnum ] code The error code parsed from the document.
+      # @return [ Integer ] code The error code parsed from the document.
       # @since 2.6.0
       attr_reader :code
 
@@ -96,7 +96,7 @@ module Mongo
       # @param [ Operation::Result ] result The result object.
       # @param [ Hash ] options Additional parameters
       #
-      # @option options [ Fixnum ] :code Error code
+      # @option options [ Integer ] :code Error code
       # @option options [ String ] :code_name Error code name
       #
       # @since 2.5.0, options added in 2.6.0

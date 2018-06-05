@@ -54,7 +54,7 @@ module Mongo
       # @return [ Array<Protocol::Message> ] replies The message replies.
       attr_reader :replies
 
-      # @return [ Fixnum ] code The error code parsed from the document.
+      # @return [ Integer ] code The error code parsed from the document.
       # @since 2.6.0
       attr_reader :code
 
@@ -118,11 +118,11 @@ module Mongo
           message.concat(error)
         end
       end
-      
+
       def parse_code
         @code = document['code']
         @code_name = document['codeName']
-        
+
         # Since there is only room for one code, do not replace
         # codes of the top level response with write concern error codes.
         # In practice this should never be an issue as a write concern
