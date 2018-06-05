@@ -113,7 +113,8 @@ BASE_OPTIONS = {
                   # together with e.g. a misconfigured replica set,
                   # means the test suite hangs for about 4 seconds before
                   # failing.
-                  server_selection_timeout: 1,
+                  # Server selection timeout of 1 is insufficient for evergreen.
+                  server_selection_timeout: 2,
                   wait_queue_timeout: 2,
                   connect_timeout: 3,
                   max_idle_time: 5
