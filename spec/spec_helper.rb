@@ -51,7 +51,7 @@ require 'support/gridfs'
 
 RSpec.configure do |config|
   if ENV['CI'] && RUBY_PLATFORM =~ /\bjava\b/
-    config.formatter = 'progress'
+    config.formatter = 'documentation'
   end
 
   config.include(Authorization)
