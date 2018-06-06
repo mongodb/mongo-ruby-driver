@@ -1,4 +1,4 @@
-# The tests run against a mongo server or a replica set which is
+# The tests run against a MongoDB cluster which is
 # configured and started externally to the test suite. This allows
 # running the entire test suite against, for example, a standalone
 # mongod as well as a replica set. The flip side to this is the
