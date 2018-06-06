@@ -17,6 +17,7 @@ group :development, :testing do
   end
   gem 'yajl-ruby', require: 'yajl', platforms: :mri
   gem 'celluloid', platforms: :mri
+  gem 'fuubar'
 end
 
 group :development do

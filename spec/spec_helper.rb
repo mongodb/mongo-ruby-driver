@@ -50,8 +50,10 @@ require 'support/connection_string'
 require 'support/gridfs'
 
 RSpec.configure do |config|
-  config.color     = true
-  config.formatter = 'documentation'
+  if ENV['CI'] && RUBY_PLATFORM =~ /\bjava\b/
+    config.formatter = 'documentation'
+  end
+
   config.include(Authorization)
 
   config.before(:suite) do
