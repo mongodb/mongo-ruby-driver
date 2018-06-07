@@ -1,3 +1,44 @@
+# The tests run against a MongoDB cluster which is
+# configured and started externally to the test suite. This allows
+# running the entire test suite against, for example, a standalone
+# mongod as well as a replica set. The flip side to this is the
+# test suite will not work without a running mongo cluster, and
+# tests which are not applicable to or cannot be performed on the
+# running mongo cluster are skipped.
+#
+# Not only does the test suite require an externally launched cluster,
+# the test suite must also be told how the cluster is configured
+# via RS_ENABLED and SHARDED_ENABLED environment variables.
+#
+# The test suite seems to have issues connecting to a replica set
+# via IP addresses if the replica set hosts are defined with hostnames
+# (i.e., 127.0.0.1 vs localhost). Try to exactly match the contents of
+# MONGODB_URI and `rs.isMaster()` output, either by adjusting MONGODB_URI
+# or by reconfiguring the replica set.
+#
+# In order to run spec tests, the mongo cluster needs to have failpoints
+# enabled. This is accomplished by starting mongod with the following option:
+#   --setParameter enableTestCommands=1
+#
+# Use the following environment variables to configure the tests:
+#
+# CLIENT_DEBUG: Show debug messages from the client.
+#   CLIENT_DEBUG=1
+#
+# MONGODB_URI: Connection string to use instead of 127.0.0.1:27017.
+# Specify RS_ENABLED or SHARDED_ENABLED if connecting to a replica set
+# or a sharded cluster, otherwise the test suite will establish a
+# direct connection to the first host in the URI.
+#   MONGODB_URI=127.0.0.1:27001,127.0.0.1:27002
+#
+# RS_ENALBED: Instruct the test suite to connect to the replica set.
+# Set MONGODB_URI appropriately as well.
+#   RS_ENABLED=1
+#
+# SHARDED_ENABLED: Instruct the test suite to connect to the sharded cluster.
+# Set MONGODB_URI appropriately as well.
+#   SHARDED_ENABLED=1
+
 TEST_SET = 'ruby-driver-rs'
 COVERAGE_MIN = 90
 CURRENT_PATH = File.expand_path(File.dirname(__FILE__))
@@ -33,7 +74,9 @@ end
 require 'mongo'
 
 Mongo::Logger.logger = Logger.new($stdout)
-Mongo::Logger.logger.level = Logger::INFO
+unless %w(1 true yes).include?((ENV['CLIENT_DEBUG'] || '').downcase)
+  Mongo::Logger.logger.level = Logger::INFO
+end
 Encoding.default_external = Encoding::UTF_8
 
 require 'support/travis'

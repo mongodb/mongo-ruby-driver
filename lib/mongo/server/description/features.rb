@@ -60,12 +60,12 @@ module Mongo
         #
         # @since 2.0.0
         MAPPINGS.each do |name, version|
-          # Determine whether or not the feature is enabled.
+          # Determine whether or not the feature is supported.
           #
           # @example Is a feature enabled?
           #   features.list_collections_enabled?
           #
-          # @return [ true, false ] If the feature is enabled.
+          # @return [ true, false ] Whether the feature is supported.
           #
           # @since 2.0.0
           define_method("#{name}_enabled?") do
