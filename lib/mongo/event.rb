@@ -12,14 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/event/listeners'
-require 'mongo/event/publisher'
-require 'mongo/event/subscriber'
-require 'mongo/event/primary_elected'
-require 'mongo/event/member_discovered'
-require 'mongo/event/description_changed'
-require 'mongo/event/standalone_discovered'
-
 module Mongo
   module Event
 
@@ -44,5 +36,19 @@ module Mongo
     #
     # @since 2.0.6
     DESCRIPTION_CHANGED = 'description_changed'.freeze
+
+    class Base
+      def inspect
+        "#<{#{self.class}>"
+      end
+    end
   end
 end
+
+require 'mongo/event/listeners'
+require 'mongo/event/publisher'
+require 'mongo/event/subscriber'
+require 'mongo/event/primary_elected'
+require 'mongo/event/member_discovered'
+require 'mongo/event/description_changed'
+require 'mongo/event/standalone_discovered'

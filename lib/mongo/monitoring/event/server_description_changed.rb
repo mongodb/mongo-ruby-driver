@@ -19,7 +19,7 @@ module Mongo
       # Event fired when a server's description changes.
       #
       # @since 2.4.0
-      class ServerDescriptionChanged
+      class ServerDescriptionChanged < Mongo::Event::Base
 
         # @return [ Address ] address The server address.
         attr_reader :address

@@ -19,7 +19,7 @@ module Mongo
       # Event that is fired when a command operation fails.
       #
       # @since 2.1.0
-      class CommandFailed
+      class CommandFailed < Mongo::Event::Base
 
         # @return [ Server::Address ] address The server address.
         attr_reader :address

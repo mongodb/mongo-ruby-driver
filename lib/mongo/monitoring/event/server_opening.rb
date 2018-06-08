@@ -19,7 +19,7 @@ module Mongo
       # Event fired when the server is opening.
       #
       # @since 2.4.0
-      class ServerOpening
+      class ServerOpening < Mongo::Event::Base
 
         # @return [ Address ] address The server address.
         attr_reader :address
@@ -39,6 +39,10 @@ module Mongo
         def initialize(address, topology)
           @address = address
           @topology = topology
+        end
+
+        def inspect
+          "#<#{self.class} address=#{address} topology=#{topology.class.name.sub(/.*::/, '')}>"
         end
       end
     end

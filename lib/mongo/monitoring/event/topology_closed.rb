@@ -19,7 +19,7 @@ module Mongo
       # Event fired when the topology closes.
       #
       # @since 2.4.0
-      class TopologyClosed
+      class TopologyClosed < Mongo::Event::Base
 
         # @return [ Topology ] topology The topology.
         attr_reader :topology
