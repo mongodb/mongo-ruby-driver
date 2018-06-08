@@ -102,7 +102,12 @@ module Mongo
           servers = candidates(cluster)
           if servers && !servers.compact.empty?
             server = servers.first
-            server.check_driver_support!
+            # HACK: all servers in a topology must satisfy wire protocol
+            # constraints. There is probably a better implementation than
+            # checking all servers here
+            cluster.servers.each do |a_server|
+              a_server.check_driver_support!
+            end
             return server
           end
           cluster.scan!
