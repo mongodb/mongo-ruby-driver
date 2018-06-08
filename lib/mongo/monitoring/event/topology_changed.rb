@@ -19,7 +19,7 @@ module Mongo
       # Event fired when the topology changes.
       #
       # @since 2.4.0
-      class TopologyChanged
+      class TopologyChanged < Mongo::Event::Base
 
         # @return [ Cluster::Topology ] previous_topology The previous topology.
         attr_reader :previous_topology
@@ -39,6 +39,12 @@ module Mongo
         def initialize(previous_topology, new_topology)
           @previous_topology = previous_topology
           @new_topology = new_topology
+        end
+
+        def inspect
+          "#<Mongo::Monitoring::Event::TopologyChanged" +
+          " prev=#{previous_topology.class.name.sub(/.*::/, '')}" +
+          " new=#{new_topology.class.name.sub(/.*::/, '')}>"
         end
       end
     end

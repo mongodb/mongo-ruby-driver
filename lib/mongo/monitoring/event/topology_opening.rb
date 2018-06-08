@@ -19,7 +19,7 @@ module Mongo
       # Event fired when the topology is opening.
       #
       # @since 2.4.0
-      class TopologyOpening
+      class TopologyOpening < Mongo::Event::Base
 
         # @return [ Topology ] topology The topology.
         attr_reader :topology
@@ -34,6 +34,10 @@ module Mongo
         # @since 2.4.0
         def initialize(topology)
           @topology = topology
+        end
+
+        def inspect
+          "#<#{self.class} topology=#{topology.class.name.sub(/.*::/, '')}>"
         end
       end
     end
