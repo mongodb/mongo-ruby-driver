@@ -126,7 +126,9 @@ module Mongo
     # @example Create the new monitoring.
     #   Monitoring.new(:monitoring => true)
     #
-    # @param [ Hash ] options The options.
+    # @param [ Hash ] options Options. Client constructor forwards its
+    #   options to Monitoring constructor, although Monitoring recognizes
+    #   only a subset of the options recognized by Client.
     #
     # @since 2.1.0
     def initialize(options = {})
