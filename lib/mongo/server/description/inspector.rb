@@ -34,8 +34,8 @@ module Mongo
         #
         # @since 2.0.0
         INSPECTORS = [
-            Inspector::StandaloneDiscovered,
             Inspector::DescriptionChanged,
+            Inspector::StandaloneDiscovered,
             Inspector::MemberDiscovered
         ].freeze
 
