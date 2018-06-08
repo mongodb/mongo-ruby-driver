@@ -196,6 +196,27 @@ module Mongo
       "#<Mongo::Server:0x#{object_id} address=#{address.host}:#{address.port}>"
     end
 
+    def inspect_verbose
+      status = case
+      when primary?
+        'PRIMARY'
+      when secondary?
+        'SECONDARY'
+      when standalone?
+        'STANDALONE'
+      when arbiter?
+        'ARBITER'
+      when ghost?
+        'GHOST'
+      when other?
+        'OTHER'
+      end
+      if replica_set_name
+        status += " replica_set=#{replica_set_name}"
+      end
+      "#<Mongo::Server:0x#{object_id} address=#{address.host}:#{address.port} #{status}>"
+    end
+
     # Get the connection pool for this server.
     #
     # @example Get the connection pool for the server.
