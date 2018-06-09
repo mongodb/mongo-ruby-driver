@@ -41,6 +41,11 @@ module Mongo
           @topology = topology
         end
 
+        # Returns a concise yet useful summary of the event.
+        #
+        # @return [ String ] String summary of the event.
+        #
+        # @since 2.6.0
         def inspect
           "#<#{self.class} address=#{address} topology=#{topology.class.name.sub(/.*::/, '')}>"
         end
