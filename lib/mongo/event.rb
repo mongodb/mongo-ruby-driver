@@ -36,15 +36,10 @@ module Mongo
     #
     # @since 2.0.6
     DESCRIPTION_CHANGED = 'description_changed'.freeze
-
-    class Base
-      def inspect
-        "#<{#{self.class}>"
-      end
-    end
   end
 end
 
+require 'mongo/event/base'
 require 'mongo/event/listeners'
 require 'mongo/event/publisher'
 require 'mongo/event/subscriber'
