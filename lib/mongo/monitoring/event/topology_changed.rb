@@ -41,6 +41,11 @@ module Mongo
           @new_topology = new_topology
         end
 
+        # Returns a concise yet useful summary of the event.
+        #
+        # @return [ String ] String summary of the event.
+        #
+        # @since 2.6.0
         def inspect
           "#<Mongo::Monitoring::Event::TopologyChanged" +
           " prev=#{previous_topology.class.name.sub(/.*::/, '')}" +
