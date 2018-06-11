@@ -63,9 +63,19 @@ module Mongo
       # of the connection.
       def_delegators :connection, :compressor
 
-      # Force the monitor to immediately do a check of its server.
+      # Perform a check of the server with throttling, and update
+      # the server's description.
       #
-      # @example Force a scan.
+      # If the server was checked less than MIN_SCAN_FREQUENCY seconds
+      # ago, sleep until MIN_SCAN_FREQUENCY seconds have passed since the last
+      # check. Then perform the check which involves running isMaster
+      # on the server being monitored and updating the server description
+      # as a result.
+      #
+      # @note If the system clock is set to a time in the past, this method
+      #   can sleep for a very long time.
+      #
+      # @example Run a scan.
       #   monitor.scan!
       #
       # @return [ Description ] The updated description.
@@ -179,6 +189,8 @@ module Mongo
         end
       end
 
+      # @note If the system clock is set to a time in the past, this method
+      #   can sleep for a very long time.
       def throttle_scan_frequency!
         if @last_scan
           difference = (Time.now - @last_scan)
