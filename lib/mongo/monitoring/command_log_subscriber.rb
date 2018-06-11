@@ -68,7 +68,7 @@ module Mongo
       # @since 2.1.0
       def succeeded(event)
         if logger.debug?
-          log_debug("#{prefix(event)} | SUCCEEDED | #{event.duration}s")
+          log_debug("#{prefix(event)} | SUCCEEDED | #{'%.3f' % event.duration}s")
         end
       end
 
