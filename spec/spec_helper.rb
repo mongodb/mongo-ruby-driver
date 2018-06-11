@@ -43,6 +43,9 @@ require 'lite_spec_helper'
 
 TEST_SET = 'ruby-driver-rs'
 
+require 'support/travis'
+require 'support/authorization'
+
 RSpec.configure do |config|
   config.include(Authorization)
 
