@@ -100,6 +100,9 @@ module Mongo
         #
         # @since 2.0.0
         def initialize(options, monitoring, seeds = [])
+          if seeds.length != 1
+            raise ArgumentError, 'Single topology must be initialized with exactly one seed'
+          end
           @options = options
           @monitoring = monitoring
           @seed = seeds.first
