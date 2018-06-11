@@ -161,9 +161,16 @@ module Mongo
     #
     # @note Cluster should never be directly instantiated outside of a Client.
     #
-    # @param [ Array<String> ] seeds The addresses of the configured servers.
+    # @note When connecting to a mongodb+srv:// URI, the client expands such a
+    #   URI into a list of servers and passes that list to the Cluster
+    #   constructor. When connecting to a standalone mongod, the Cluster
+    #   constructor receives the corresponding address as an array of one string.
+    #
+    # @param [ Array<String> ] seeds The addresses of the configured servers
     # @param [ Monitoring ] monitoring The monitoring.
-    # @param [ Hash ] options The options.
+    # @param [ Hash ] options Options. Client constructor forwards its
+    #   options to Cluster constructor, although Cluster recognizes
+    #   only a subset of the options recognized by Client.
     #
     # @since 2.0.0
     def initialize(seeds, monitoring, options = Options::Redacted.new)
