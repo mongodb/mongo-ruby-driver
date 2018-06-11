@@ -26,6 +26,10 @@ RSpec::Matchers.define :match_topology_description_changed_event do |expectation
   match do |event|
     topologies_match?(event, expectation)
   end
+
+  failure_message do |event|
+    diff_topologies(event, expectation)
+  end
 end
 
 RSpec::Matchers.define :match_server_opening_event do |expectation|
@@ -71,6 +75,65 @@ module Mongo
           topology_matches?(event.new_topology, expectation.data['newDescription'])
       end
 
+      def diff_topologies(event, expectation)
+        msg = []
+
+        unless topology_matches?(event.previous_topology, expectation.data['previousDescription'])
+          msg << "Previous topologies mismatch: expected: #{inspect_spec_topology(expectation.data['previousDescription'])}, actual: #{inspect_ruby_topology(event.previous_topology)}"
+        end
+
+        unless topology_matches?(event.new_topology, expectation.data['newDescription'])
+          msg << "New topologies mismatch: expected: #{inspect_spec_topology(expectation.data['newDescription'])}, actual: #{inspect_ruby_topology(event.new_topology)}"
+        end
+
+        msg = "Topologies mismatch: #{msg.join(', ')}"
+        # HACK: Returning the message doesn't seem to do anything,
+        # print it out for now
+        puts msg
+        msg
+      end
+
+      def inspect_ruby_topology(actual)
+        "type=#{ruby_topology_type(actual)}"
+      end
+
+      def inspect_spec_topology(expected)
+        "type=#{spec_topology_type(expected)}"
+      end
+
+      def ruby_description(actual)
+        type = if actual.standalone?
+          'Standalone'
+        elsif actual.primary?
+          'RSPrimary'
+        elsif actual.secondary?
+          'RSSecondary'
+        elsif actual.arbiter?
+          'RSArbiter'
+        elsif actual.mongos?
+          'Mongos'
+        elsif actual.unknown?
+          'Unknown/PossiblePrimary'
+        elsif actual.ghost?
+          'RSGhost'
+        elsif actual.other?
+          'RSOther'
+        else
+          'Unhandled'
+        end
+      end
+
+      def spec_description(expected)
+        case expected['type']
+        when 'Unknown'
+          'Unknown/PossiblePrimary'
+        when 'PossiblePrimary'
+          'Unknown/PossiblePrimary'
+        else
+          expected['type']
+        end
+      end
+
       def description_matches?(actual, expected)
         case expected['type']
           when 'Standalone' then actual.standalone?
@@ -82,6 +145,37 @@ module Mongo
           when 'PossiblePrimary' then actual.unknown?
           when 'RSGhost' then actual.ghost?
           when 'RSOther' then actual.other?
+        end
+      end
+
+      def ruby_topology_type(actual)
+        if actual.replica_set?
+          'Replica Set'
+        elsif actual.sharded?
+          'Sharded'
+        elsif actual.single?
+          'Single'
+        elsif actual.unknown?
+          'Unknown'
+        else
+          'Unhandled'
+        end
+      end
+
+      def spec_topology_type(expected)
+        case expected['topologyType']
+        when 'ReplicaSetWithPrimary'
+          'Replica Set'
+        when 'ReplicaSetNoPrimary'
+          'Replica Set/Unknown'
+        when 'Sharded'
+          'Sharded'
+        when 'Single'
+          'Single'
+        when 'Unknown'
+          'Unknown'
+        else
+          'Unhandled'
         end
       end
 
