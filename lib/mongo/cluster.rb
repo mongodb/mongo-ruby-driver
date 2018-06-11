@@ -246,6 +246,14 @@ module Mongo
       "#<Mongo::Cluster:0x#{object_id} servers=#{servers} topology=#{topology.display_name}>"
     end
 
+    def inspect_verbose
+      %Q~#<Mongo::Cluster:0x#{object_id}
+  addresses=#{addresses.map(&:to_s)}
+  topology=#{topology.display_name}
+  servers=#{servers.map(&:inspect_verbose)}
+>~
+    end
+
     # Get the next primary server we can send an operation to.
     #
     # @example Get the next primary server.
