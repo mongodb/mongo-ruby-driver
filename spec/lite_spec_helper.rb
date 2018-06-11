@@ -37,10 +37,8 @@ unless %w(1 true yes).include?((ENV['CLIENT_DEBUG'] || '').downcase)
 end
 Encoding.default_external = Encoding::UTF_8
 
-require 'support/travis'
 require 'support/matchers'
 require 'support/event_subscriber'
-require 'support/authorization'
 require 'support/server_discovery_and_monitoring'
 require 'support/server_selection_rtt'
 require 'support/server_selection'
