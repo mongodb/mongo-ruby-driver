@@ -252,6 +252,15 @@ module Mongo
           )
         end
 
+        def description_acceptable?(cluster, updated)
+          # We can always transition from Unknown to any other topology.
+          true
+        end
+
+        def for_server_description(server, updated)
+          self
+        end
+
         private
 
         def initialize_replica_set(description, servers)

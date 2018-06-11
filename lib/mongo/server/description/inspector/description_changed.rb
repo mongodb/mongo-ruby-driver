@@ -32,7 +32,8 @@ module Mongo
           # @param [ Event::Listeners ] event_listeners The event listeners.
           #
           # @since 2.0.0
-          def initialize(event_listeners)
+          def initialize(server, event_listeners)
+            @server = server
             @event_listeners = event_listeners
           end
 
@@ -46,8 +47,9 @@ module Mongo
           #
           # @since 2.0.0
           def run(description, updated)
+      #require'byebug';byebug
             unless (description.unknown? && updated.unknown?) || (description == updated)
-              publish(Event::DESCRIPTION_CHANGED, description, updated)
+              publish(Event::DESCRIPTION_CHANGED, @server, description, updated)
             end
           end
         end

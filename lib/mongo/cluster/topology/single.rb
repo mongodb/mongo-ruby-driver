@@ -232,6 +232,15 @@ module Mongo
             Monitoring::Event::TopologyChanged.new(self, self)
           )
         end
+
+        def description_acceptable?(cluster, updated)
+          # Single topology implies no replica set name.
+          updated.replica_set_name.nil?
+        end
+
+        def for_server_description(server, updated)
+          self
+        end
       end
     end
   end

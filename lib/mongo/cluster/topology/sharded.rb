@@ -227,6 +227,17 @@ module Mongo
         # @since 2.4.0
         def member_discovered; end;
 
+        def description_acceptable?(cluster, updated)
+          # There is no discovery of mongos possible - all must be specified
+          # as initial seeds. When connecting to mongos, all of them are
+          # acceptable.
+          updated.replica_set_name.nil?
+        end
+
+        def for_server_description(server, updated)
+          self
+        end
+
         private
 
         def remove_self?(description, server)

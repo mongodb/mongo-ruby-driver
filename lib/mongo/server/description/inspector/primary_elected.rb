@@ -24,6 +24,10 @@ module Mongo
         #
         # @deprecated. Will be removed in 3.0
         class PrimaryElected
+          # Note: this class is no longer used by the driver itself.
+          # MemberDiscovered event triggers primary selection logic on the
+          # client.
+
           include Event::Publisher
 
           # Instantiate the primary elected inspection.
@@ -34,7 +38,7 @@ module Mongo
           # @param [ Event::Listeners ] event_listeners The event listeners.
           #
           # @since 2.0.0
-          def initialize(event_listeners)
+          def initialize(server, event_listeners)
             @event_listeners = event_listeners
           end
 

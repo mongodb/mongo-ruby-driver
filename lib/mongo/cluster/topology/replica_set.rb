@@ -18,6 +18,10 @@ module Mongo
 
       # Defines behaviour when a cluster is in replica set topology.
       #
+      # ReplicaSet instances are tied to their respective Cluster
+      # instances, as ReplicaSet instances, for example, always contain
+      # the replica set name.
+      #
       # @since 2.0.0
       class ReplicaSet
         include Loggable
@@ -269,6 +273,16 @@ module Mongo
         #
         # @since 2.4.0
         def member_discovered; end;
+
+        def description_acceptable?(cluster, updated)
+          # We should always have a non-nil replica set name
+          # (our own) but it seems that the code doesn't currently enforce this
+          updated.replica_set_name && replica_set_name == updated.replica_set_name
+        end
+
+        def for_server_description(server, updated)
+          self
+        end
 
         private
 

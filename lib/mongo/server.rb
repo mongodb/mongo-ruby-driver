@@ -178,7 +178,7 @@ module Mongo
         Monitoring::SERVER_OPENING,
         Monitoring::Event::ServerOpening.new(address, cluster.topology)
       )
-      @monitor = Monitor.new(address, event_listeners, options.merge(app_metadata: cluster.app_metadata))
+      @monitor = Monitor.new(self, address, event_listeners, options.merge(app_metadata: cluster.app_metadata))
       monitor.scan!
       monitor.run!
       ObjectSpace.define_finalizer(self, self.class.finalize(monitor))

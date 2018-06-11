@@ -31,10 +31,10 @@ module Mongo
       # @return [ Monitoring ] monitoring The monitoring.
       attr_reader :monitoring
 
-      # Initialize the new host added event handler.
+      # Initialize the description changed event handler.
       #
       # @example Create the new handler.
-      #   ServerAdded.new(cluster)
+      #   DescriptionChanged.new(cluster)
       #
       # @param [ Mongo::Cluster ] cluster The cluster to publish from.
       #
@@ -49,12 +49,17 @@ module Mongo
       # configuration change.
       #
       # @example Handle the event.
-      #   server_added.handle('127.0.0.1:27018')
+      #   description_changed.handle('127.0.0.1:27018')
       #
       # @param [ Server::Description ] updated The changed description.
       #
       # @since 2.0.0
-      def handle(previous, updated)
+      def handle(server, previous, updated)
+        cluster.server_description_changed(server, previous, updated)
+
+        # The SERVER_DESCRIPTION_CHANGED event is only used for logging,
+        # all SDAM logic is in the server_description_changed method call
+        # above
         publish_sdam_event(
           Monitoring::SERVER_DESCRIPTION_CHANGED,
           Monitoring::Event::ServerDescriptionChanged.new(
@@ -64,6 +69,8 @@ module Mongo
             updated
           )
         )
+
+        return
         cluster.add_hosts(updated)
         cluster.remove_hosts(updated)
       end

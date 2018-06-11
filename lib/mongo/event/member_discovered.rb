@@ -55,7 +55,8 @@ module Mongo
       # @param [ Server::Description ] updated The updated description of the server.
       #
       # @since 2.4.0
-      def handle(previous, updated)
+      def handle(server, previous, updated)
+      #require 'byebug';byebug
         if updated.primary? || updated.mongos?
           cluster.elect_primary!(updated)
         else

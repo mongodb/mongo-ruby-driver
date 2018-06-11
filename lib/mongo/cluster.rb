@@ -200,10 +200,12 @@ module Mongo
         add(seed)
       end
 
+=begin
       publish_sdam_event(
         Monitoring::TOPOLOGY_CHANGED,
         Monitoring::Event::TopologyChanged.new(@topology, @topology)
       ) if @servers.size > 1
+=end
 
       @cursor_reaper = CursorReaper.new
       @socket_reaper = SocketReaper.new(self)
@@ -518,6 +520,90 @@ module Mongo
           end
         end
       end
+    end
+
+    def server_description_changed(server, previous, updated)
+      # A server description change does the following things:
+      #
+      # 1. The Server which returned the updated description
+      #    may be removed from the Cluster object, if it is
+      #    determined that it is not part of the cluster *requested
+      #    by the client* (per the new description).
+      #    This usually indicates a configuration problem because
+      #    the client managed to connect to a mongod/mongos, yet some
+      #    parameters specified by the client did not match the configuration
+      #    of mongod/mongos. This could be, for example, because the client
+      #    requested to connect to a replica set and the mongod is not part
+      #    of a replica set. We want to surface server removal as a warning
+      #    so that the user knows to adjust their client or cluster
+      #    configuration.
+      # 2. The description object on the server object is updated.
+      #    Sounds circular but this update happens after
+      #    server_description_changed is invoked, though the order should not
+      #    be relied on - use `previous` and `updated` descriptions
+      #    explicitly depending on which one is needed.
+      # 3. New Server objects may be created and added to the Cluster
+      #    object - this happens when the topology is a replica set.
+      #    Any node can add servers to a cluster, however only the active
+      #    primary can remove servers from a cluster.
+      # 4. When the updated description is coming from the active primary
+      #    in a replica set topology, we set the set of servers to exactly
+      #    match whatever the primary returned. This can result in server
+      #    removal as well as addition.
+      #
+      # Added servers always start out with Unknown description.
+
+      #require 'byebug';byebug
+      1
+
+      if topology.description_acceptable?(self, updated)
+        # The cluster we connected to matches client requirements - good.
+        # Add all new servers to our list of servers
+        updated.servers.each do |host|
+          # host here is a string like localhost:27017 or 127.0.0.1:27017
+          add(host)
+        end
+      else
+        # We established a connection to a cluster but the cluster does not
+        # match client requirements. Warn the user to fix either the client
+        # or the cluster configuration
+        warn "Discarding #{server.address} due to a configuration mismatch - check replica set name"
+        # Remove the server as we know it because updated.me may well be
+        # different
+        remove(server.address.to_s)
+      end
+
+      # description contains the address of the server but not the server object
+      if updated.me_mismatch?
+        warn "#{server.address} self-reports as #{updated.me} - removing #{server.address}"
+        # We may still connect to the server we are removing here IF
+        # we are connecting to a replica set, the replica set configuration
+        # on the server matches what we requested, and the "correct" address
+        # of the server is listed in `updated.servers`.
+        # Note that the new connection may take a different network path,
+        # for example if connecting to a hostname that maps to 127.0.0.1
+        # in /etc/hosts but self-identifies with a non-loopback IP address.
+        remove(server.address.to_s)
+      end
+
+      if topology.is_a?(Topology::ReplicaSet) && updated.primary?
+        # Replace all of our servers with the list from the primary
+        updated.servers.each do |host|
+          unless addresses.any? { |address| address.to_s == host }
+            add(host)
+          end
+        end
+
+        addresses.each do |address|
+          unless updated.servers.any? { |host| host == address.to_s }
+            remove(address.to_s)
+          end
+        end
+      end
+
+      new_topology = @topology.for_server_description(server, updated)
+
+      @topology = new_topology
     end
 
     private
