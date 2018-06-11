@@ -196,7 +196,9 @@ module Mongo
       subscribe_to(Event::DESCRIPTION_CHANGED, Event::DescriptionChanged.new(self))
       subscribe_to(Event::MEMBER_DISCOVERED, Event::MemberDiscovered.new(self))
 
-      seeds.each{ |seed| add(seed) }
+      seeds.each do |seed|
+        add(seed)
+      end
 
       publish_sdam_event(
         Monitoring::TOPOLOGY_CHANGED,
