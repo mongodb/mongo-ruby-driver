@@ -184,6 +184,7 @@ module Mongo
       @pool_lock = Mutex.new
       @cluster_time = nil
       @cluster_time_lock = Mutex.new
+      p seeds, options
       @topology = Topology.initial(seeds, monitoring, options)
       Session::SessionPool.create(self)
 
@@ -191,6 +192,16 @@ module Mongo
         Monitoring::TOPOLOGY_OPENING,
         Monitoring::Event::TopologyOpening.new(@topology)
       )
+
+      if @topology.is_a?(Topology::Unknown)
+        # The spec wants us to emit a topology changed event going from
+        # no servers to our seed list of servers, with unknown topology
+        empty_topology = Topology::Unknown.new(options, monitoring, [])
+        publish_sdam_event(
+          Monitoring::TOPOLOGY_CHANGED,
+          Monitoring::Event::TopologyChanged.new(empty_topology, @topology)
+        )
+      end
 
       subscribe_to(Event::STANDALONE_DISCOVERED, Event::StandaloneDiscovered.new(self))
       subscribe_to(Event::DESCRIPTION_CHANGED, Event::DescriptionChanged.new(self))
@@ -556,6 +567,9 @@ module Mongo
       #require 'byebug';byebug
       1
 
+      # addresses method already dups, we don't have to here
+      previous_addresses = addresses
+
       if topology.description_acceptable?(self, updated)
         # The cluster we connected to matches client requirements - good.
         # Add all new servers to our list of servers
@@ -601,7 +615,36 @@ module Mongo
         end
       end
 
+      previous_topology = @topology
+
+      # At this point we have the new set of servers but old topology.
+      # When transitioning from unknown topology to replica set,
+      # specifications require sending a topology changed message
+      # with the unknown topology type and new server set, do that now
+      if @topology.is_a?(Topology::Unknown)
+      p [:XX,previous_addresses,addresses]
+        if previous_addresses != addresses
+          int_topology = Topology::Unknown.new(@topology.options, @topology.monitoring, addresses.map(&:to_s))
+          p :unk_transition
+          publish_sdam_event(
+            Monitoring::TOPOLOGY_CHANGED,
+            Monitoring::Event::TopologyChanged.new(@topology, int_topology)
+          )
+          previous_topology = int_topology
+        end
+      end
+
       new_topology = @topology.for_server_description(server, updated)
+
+p :hm
+p @topology
+      if new_topology != @topology
+      p :triggered, new_topology.class
+        publish_sdam_event(
+          Monitoring::TOPOLOGY_CHANGED,
+          Monitoring::Event::TopologyChanged.new(previous_topology, new_topology)
+        )
+      end
 
       @topology = new_topology
     end

@@ -258,7 +258,19 @@ module Mongo
         end
 
         def for_server_description(server, updated)
-          self
+          if updated.mongos?
+            Topology::Sharded.new(options, monitoring, addresses)
+          elsif updated.standalone?
+            Topology::Single.new(options, monitoring, updated.servers)
+          else
+            # various replica set possibilities
+            hosts = if updated.primary?
+              updated.servers
+            else
+              (updated.servers + addresses.map(&:to_s)).uniq
+            end
+            Topology::ReplicaSet.new(options, monitoring, hosts)
+          end
         end
 
         private
