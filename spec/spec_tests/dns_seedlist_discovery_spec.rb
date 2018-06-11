@@ -54,7 +54,7 @@ describe 'DNS Seedlist Discovery' do
 
       test = Mongo::ConnectionString::Test.new(spec)
 
-      context(File.basename(file_name), if: test_connecting_externally?) do
+      context(File.basename(file_name)) do
 
         context 'when the uri is invalid', if: test.raise_error? do
 

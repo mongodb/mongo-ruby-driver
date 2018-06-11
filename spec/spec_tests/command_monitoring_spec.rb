@@ -41,7 +41,13 @@ describe 'Command Monitoring Events' do
 
         test.expectations.each do |expectation|
 
-          it "generates a #{expectation.event_name} for #{expectation.command_name}", unless: ignore?(test) do
+          before do
+            if ignore?(test)
+              skip 'Preconditions not met'
+            end
+          end
+
+          it "generates a #{expectation.event_name} for #{expectation.command_name}" do
             begin
               test.run(authorized_collection)
               event = subscriber.send(expectation.event_type)[expectation.command_name]
