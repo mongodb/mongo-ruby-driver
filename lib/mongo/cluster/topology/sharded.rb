@@ -234,7 +234,7 @@ module Mongo
           updated.replica_set_name.nil?
         end
 
-        def for_server_description(server, updated)
+        def for_server_description(cluster, server, updated)
           self
         end
 

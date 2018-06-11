@@ -257,7 +257,7 @@ module Mongo
           true
         end
 
-        def for_server_description(server, updated)
+        def for_server_description(cluster, server, updated)
           if updated.mongos?
             Topology::Sharded.new(options, monitoring, addresses)
           elsif updated.standalone?
@@ -267,7 +267,7 @@ module Mongo
             hosts = if updated.primary?
               updated.servers
             else
-              (updated.servers + addresses.map(&:to_s)).uniq
+              (updated.servers + cluster.addresses.map(&:to_s)).uniq
             end
             Topology::ReplicaSet.new(options, monitoring, hosts)
           end

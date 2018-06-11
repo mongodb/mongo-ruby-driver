@@ -634,7 +634,7 @@ module Mongo
         end
       end
 
-      new_topology = @topology.for_server_description(server, updated)
+      new_topology = @topology.for_server_description(self, server, updated)
 
 p :hm
 p @topology

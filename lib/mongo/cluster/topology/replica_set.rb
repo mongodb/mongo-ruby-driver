@@ -280,7 +280,7 @@ module Mongo
           updated.replica_set_name && replica_set_name == updated.replica_set_name
         end
 
-        def for_server_description(server, updated)
+        def for_server_description(cluster, server, updated)
           self
         end
 
