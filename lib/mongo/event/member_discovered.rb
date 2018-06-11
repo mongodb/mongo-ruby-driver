@@ -12,13 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require 'mongo/monitoring/publishable'
+
 module Mongo
   module Event
 
     # This handles member discovered events for server descriptions.
     #
     # @since 2.4.0
-    class MemberDiscovered
+    class MemberDiscovered < Base
       include Monitoring::Publishable
 
       # @return [ Mongo::Cluster ] cluster The cluster.

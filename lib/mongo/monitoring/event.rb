@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require 'mongo/event'
 require 'mongo/monitoring/event/secure'
 require 'mongo/monitoring/event/command_started'
 require 'mongo/monitoring/event/command_succeeded'

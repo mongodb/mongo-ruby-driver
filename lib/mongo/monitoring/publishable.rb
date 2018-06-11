@@ -19,6 +19,7 @@ module Mongo
     #
     # @since 2.1.0
     module Publishable
+      include Loggable
 
       # @return [ Monitoring ] monitoring The monitoring.
       attr_reader :monitoring
@@ -60,7 +61,10 @@ module Mongo
       end
 
       def publish_sdam_event(topic, event)
-        monitoring.succeeded(topic, event) if monitoring?
+        return unless monitoring?
+
+        log_debug("EVENT: #{event.inspect}")
+        monitoring.succeeded(topic, event)
       end
 
       private

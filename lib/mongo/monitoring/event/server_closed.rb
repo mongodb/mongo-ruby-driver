@@ -19,7 +19,7 @@ module Mongo
       # Event fired when the server is closed.
       #
       # @since 2.4.0
-      class ServerClosed
+      class ServerClosed < Mongo::Event::Base
 
         # @return [ Address ] address The server address.
         attr_reader :address

@@ -19,7 +19,7 @@ module Mongo
     # This handles a change in description.
     #
     # @since 2.0.6
-    class DescriptionChanged
+    class DescriptionChanged < Base
       include Monitoring::Publishable
 
       # @return [ Mongo::Cluster ] cluster The cluster.

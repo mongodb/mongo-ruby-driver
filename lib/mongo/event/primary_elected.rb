@@ -20,7 +20,7 @@ module Mongo
     # @since 2.0.0
     #
     # @deprecated. Will be removed in 3.0
-    class PrimaryElected
+    class PrimaryElected < Base
 
       # @return [ Mongo::Cluster ] cluster The cluster.
       attr_reader :cluster

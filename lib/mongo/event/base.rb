@@ -1,4 +1,4 @@
-# Copyright (C) 2016 MongoDB, Inc.
+# Copyright (C) 2018 MongoDB, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the 'License');
 # you may not use this file except in compliance with the License.
@@ -13,28 +13,20 @@
 # limitations under the License.
 
 module Mongo
-  class Monitoring
-    module Event
+  module Event
 
-      # Event fired when the topology closes.
+    # Base class for all events.
+    #
+    # @since 2.6.0
+    class Base
+      # Returns a concise yet useful summary of the event.
+      # Meant to be overridden in derived classes.
       #
-      # @since 2.4.0
-      class TopologyClosed < Mongo::Event::Base
-
-        # @return [ Topology ] topology The topology.
-        attr_reader :topology
-
-        # Create the event.
-        #
-        # @example Create the event.
-        #   TopologyClosed.new(topology)
-        #
-        # @param [ Integer ] topology The topology.
-        #
-        # @since 2.4.0
-        def initialize(topology)
-          @topology = topology
-        end
+      # @return [ String ] String summary of the event.
+      #
+      # @since 2.6.0
+      def inspect
+        "#<{#{self.class}>"
       end
     end
   end

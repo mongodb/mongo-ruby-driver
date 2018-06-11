@@ -19,7 +19,7 @@ module Mongo
       # Event that is fired when a command operation succeeds.
       #
       # @since 2.1.0
-      class CommandSucceeded
+      class CommandSucceeded < Mongo::Event::Base
         include Secure
 
         # @return [ Server::Address ] address The server address.
