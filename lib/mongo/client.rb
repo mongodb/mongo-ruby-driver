@@ -300,6 +300,18 @@ module Mongo
       "#<Mongo::Client:0x#{object_id} cluster=#{cluster.addresses.join(', ')}>"
     end
 
+    # Get a verbose inspection of the client as a string.
+    #
+    # @example Inspect the client.
+    #   client.inspect
+    #
+    # @return [ String ] Verbose inspection string.
+    #
+    # @since 2.6.0
+    def inspect_verbose
+      "#<Mongo::Client:0x#{object_id} cluster=#{cluster.inspect_verbose}>"
+    end
+
     # Get the server selector. It either uses the read preference
     # defined in the client options or defaults to a Primary server selector.
     #
