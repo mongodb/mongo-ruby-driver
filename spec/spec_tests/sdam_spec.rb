@@ -10,8 +10,7 @@ describe 'Server Discovery and Monitoring' do
     context(spec.description) do
 
       before(:all) do
-        @client = Mongo::Client.new([])
-        @client.send(:create_from_uri, spec.uri_string)
+        @client = Mongo::Client.new(spec.uri_string)
         client_options = @client.instance_variable_get(:@options)
         @client.instance_variable_set(:@options, client_options.merge(heartbeat_frequency: 100, connect_timeout: 0.1))
         @client.cluster.instance_variable_set(:@options, client_options.merge(heartbeat_frequency: 100, connect_timeout: 0.1))
