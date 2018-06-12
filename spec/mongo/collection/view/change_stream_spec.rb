@@ -509,10 +509,10 @@ describe Mongo::Collection::View::ChangeStream, if: test_change_streams? do
         it_behaves_like 'a resumable change stream'
       end
 
-      context "when the error is a 'cursor not found (43)' error" do
+      context "when the error is a 'node is recovering' error" do
 
         let(:error) do
-          Mongo::Error::OperationFailure.new('cursor not found (43)')
+          Mongo::Error::OperationFailure.new('node is recovering')
         end
 
         it_behaves_like 'a resumable change stream'
@@ -621,7 +621,7 @@ describe Mongo::Collection::View::ChangeStream, if: test_change_streams? do
         it_behaves_like 'a change stream that encounters an error from a getMore'
       end
 
-      context "when the error is a not 'master error'" do
+      context "when the error is 'not master'" do
 
         let(:error) do
           Mongo::Error::OperationFailure.new('not master')
@@ -630,10 +630,10 @@ describe Mongo::Collection::View::ChangeStream, if: test_change_streams? do
         it_behaves_like 'a change stream that encounters an error from a getMore'
       end
 
-      context "when the error is a not 'cursor not found error'" do
+      context "when the error is 'node is recovering'" do
 
         let(:error) do
-          Mongo::Error::OperationFailure.new('cursor not found (43)')
+          Mongo::Error::OperationFailure.new('node is recovering')
         end
 
         it_behaves_like 'a change stream that encounters an error from a getMore'
@@ -751,7 +751,7 @@ describe Mongo::Collection::View::ChangeStream, if: test_change_streams? do
         it_behaves_like 'a change stream that sent getMores, that then encounters an error when resuming'
       end
 
-      context "when the error is a 'not master error'" do
+      context "when the error is 'not master'" do
 
         let(:error) do
           Mongo::Error::OperationFailure.new('not master')
@@ -760,10 +760,10 @@ describe Mongo::Collection::View::ChangeStream, if: test_change_streams? do
         it_behaves_like 'a change stream that sent getMores, that then encounters an error when resuming'
       end
 
-      context "when the error is a not 'cursor not found error'" do
+      context "when the error is 'node is recovering'" do
 
         let(:error) do
-          Mongo::Error::OperationFailure.new('cursor not found (43)')
+          Mongo::Error::OperationFailure.new('node is recovering')
         end
 
         it_behaves_like 'a change stream that sent getMores, that then encounters an error when resuming'
