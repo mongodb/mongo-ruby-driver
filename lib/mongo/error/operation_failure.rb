@@ -102,7 +102,7 @@ module Mongo
         WRITE_RETRY_MESSAGES.any? { |m| message.include?(m) } ||
         write_retryable_code?
       end
-      
+
       private def write_retryable_code?
         if code
           WRITE_RETRY_ERRORS.any? { |e| e[:code] == code }
@@ -122,13 +122,13 @@ module Mongo
         {:code_name => 'CursorKilled', :code => 237},
         {:code_name => 'Interrupted', :code => 11601},
       ].freeze
-      
+
       # Change stream can be resumed when these error messages are encountered.
       #
       # @since 2.6.0
       # @api private
       CHANGE_STREAM_RESUME_MESSAGES = WRITE_RETRY_MESSAGES
-      
+
       # Can the change stream on which this error occurred be resumed?
       #
       # Note: only errors from getMore commands are resumable.
