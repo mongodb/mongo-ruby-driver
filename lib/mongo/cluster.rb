@@ -20,8 +20,8 @@ require 'mongo/cluster/app_metadata'
 
 module Mongo
 
-  # Represents a group of servers on the server side, either as a single server, a
-  # replica set, or a single or multiple mongos.
+  # Represents a group of servers on the server side, either as a
+  # single server, a replica set, or a single or multiple mongos.
   #
   # @since 2.0.0
   class Cluster
