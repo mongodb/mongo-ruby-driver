@@ -55,8 +55,6 @@ module Mongo
       #
       # @since 2.0.0
       def handle(server, previous, updated)
-        cluster.server_description_changed(server, previous, updated)
-
         # The SERVER_DESCRIPTION_CHANGED event is only used for logging,
         # all SDAM logic is in the server_description_changed method call
         # above
@@ -69,6 +67,8 @@ module Mongo
             updated
           )
         )
+
+        cluster.server_description_changed(server, previous, updated)
 
         return
         cluster.add_hosts(updated)

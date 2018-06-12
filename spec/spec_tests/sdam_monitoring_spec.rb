@@ -43,6 +43,10 @@ describe 'SDAM Monitoring' do
               description = monitor.inspector.run(server.description, response.ismaster, 0.5)
               monitor.instance_variable_set(:@description, description)
             end
+
+            require 'byebug';
+            byebug
+            1
           end
 
           phase.outcome.events.each do |expectation|

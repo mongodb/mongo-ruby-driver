@@ -185,7 +185,7 @@ module Mongo
       @cluster_time = nil
       @cluster_time_lock = Mutex.new
       p seeds, options
-      @topology = Topology.initial(seeds, monitoring, options)
+      @topology = Topology.initial(seeds, monitoring, options.merge(cluster: self))
       Session::SessionPool.create(self)
 
       publish_sdam_event(
@@ -193,14 +193,7 @@ module Mongo
         Monitoring::Event::TopologyOpening.new(@topology)
       )
 
-      if @topology.is_a?(Topology::Unknown)
-        # The spec wants us to emit a topology changed event going from
-        # no servers to our seed list of servers, with unknown topology
-        empty_topology = Topology::Unknown.new(options, monitoring, [])
-        publish_sdam_event(
-          Monitoring::TOPOLOGY_CHANGED,
-          Monitoring::Event::TopologyChanged.new(empty_topology, @topology)
-        )
+      if @topology.is_a?(Topology::Unknown) && servers.length > 0 && options[:connect] != :direct
       end
 
       subscribe_to(Event::STANDALONE_DISCOVERED, Event::StandaloneDiscovered.new(self))
@@ -211,12 +204,22 @@ module Mongo
         add(seed)
       end
 
+      if addresses.size > 0
+        # The spec wants us to emit a topology changed event going from
+        # no servers to our seed list of servers, with unknown topology
+        empty_topology = @topology.class.new(@topology.options, monitoring, [])
+        publish_sdam_event(
+          Monitoring::TOPOLOGY_CHANGED,
+          Monitoring::Event::TopologyChanged.new(empty_topology, @topology)
+        )
+
 =begin
-      publish_sdam_event(
-        Monitoring::TOPOLOGY_CHANGED,
-        Monitoring::Event::TopologyChanged.new(@topology, @topology)
-      ) if @servers.size > 1
+        publish_sdam_event(
+          Monitoring::TOPOLOGY_CHANGED,
+          Monitoring::Event::TopologyChanged.new(@topology, @topology)
+        )
 =end
+      end
 
       @cursor_reaper = CursorReaper.new
       @socket_reaper = SocketReaper.new(self)
@@ -353,7 +356,7 @@ module Mongo
     #
     # @since 2.0.6
     def standalone_discovered
-      @topology = topology.standalone_discovered
+      #@topology = topology.standalone_discovered
     end
 
     # Remove the server from the cluster for the provided address, if it
@@ -564,7 +567,7 @@ module Mongo
       #
       # Added servers always start out with Unknown description.
 
-      #require 'byebug';byebug
+      require 'byebug';byebug
       1
 
       # addresses method already dups, we don't have to here
@@ -617,34 +620,47 @@ module Mongo
 
       previous_topology = @topology
 
-      # At this point we have the new set of servers but old topology.
+      new_topology = @topology.for_server_description(self, server, updated)
+
       # When transitioning from unknown topology to replica set,
       # specifications require sending a topology changed message
-      # with the unknown topology type and new server set, do that now
-      if @topology.is_a?(Topology::Unknown)
+      # with the unknown topology type and new server set.
+      # However, when transitioning from unknown to standalone
+      # the expectation is to go from Unknown with no servers to
+      # Single with one server.
+      if previous_topology.is_a?(Topology::Unknown) && new_topology.is_a?(Topology::ReplicaSet)
       p [:XX,previous_addresses,addresses]
         if previous_addresses != addresses
-          int_topology = Topology::Unknown.new(@topology.options, @topology.monitoring, addresses.map(&:to_s))
+          int_topology = Topology::Unknown.new(previous_topology.options,
+            previous_topology.monitoring, addresses.map(&:to_s))
           p :unk_transition
           publish_sdam_event(
             Monitoring::TOPOLOGY_CHANGED,
-            Monitoring::Event::TopologyChanged.new(@topology, int_topology)
+            Monitoring::Event::TopologyChanged.new(previous_topology, int_topology)
           )
           previous_topology = int_topology
         end
       end
 
-      new_topology = @topology.for_server_description(self, server, updated)
-
 p :hm
 p @topology
-      if new_topology != @topology
+p previous_topology
+      #if new_topology != @topology
+      # Always publish a topology change event, because in the specification
+      # a topology change event comes with the (updated) server set and
+      # we are currently handling a server description change.
+      # In the Ruby driver topology change event doesn't come with the
+      # new or old server lists, and the topology class doesn't have any
+      # knowledge of servers in any event, so that this event requires the
+      # application to maintain cluster references in order to do something
+      # useful as a response to topology change event when topology itself
+      # remains the same.
       p :triggered, new_topology.class
         publish_sdam_event(
           Monitoring::TOPOLOGY_CHANGED,
           Monitoring::Event::TopologyChanged.new(previous_topology, new_topology)
         )
-      end
+      #end
 
       @topology = new_topology
     end

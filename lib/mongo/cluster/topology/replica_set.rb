@@ -23,7 +23,7 @@ module Mongo
       # the replica set name.
       #
       # @since 2.0.0
-      class ReplicaSet
+      class ReplicaSet < Base
         include Loggable
         include Monitoring::Publishable
 
@@ -129,10 +129,18 @@ module Mongo
         #
         # @since 2.0.0
         def initialize(options, monitoring, seeds = [])
+          #@cluster = options[:cluster]
+          #@servers = @cluster.servers
+          #@addresses = @cluster.addresses
           @options = options
           @monitoring = monitoring
           @max_election_id = nil
           @max_set_version = nil
+
+          if replica_set_name.nil? || replica_set_name == ''
+          require 'byebug';byebug
+            raise ArgumentError, 'Cannot have a replica set without a replica set name'
+          end
         end
 
         # A replica set topology is a replica set.

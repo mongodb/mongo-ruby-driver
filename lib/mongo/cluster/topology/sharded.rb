@@ -19,7 +19,7 @@ module Mongo
       # Defines behaviour for when a cluster is in sharded topology.
       #
       # @since 2.0.0
-      class Sharded
+      class Sharded < Base
         include Monitoring::Publishable
 
         # The display name for the topology.
@@ -97,6 +97,9 @@ module Mongo
         #
         # @since 2.0.0
         def initialize(options, monitoring, seeds = [])
+          #@cluster = options[:cluster]
+          #@servers = @cluster.servers
+          #@addresses = @cluster.addresses
           @options = options
           @monitoring = monitoring
         end

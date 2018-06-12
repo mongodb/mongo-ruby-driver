@@ -19,7 +19,7 @@ module Mongo
       # Defines behaviour for when a cluster is in single topology.
       #
       # @since 2.0.0
-      class Single
+      class Single < Base
         include Monitoring::Publishable
 
         # The display name for the topology.
@@ -100,9 +100,12 @@ module Mongo
         #
         # @since 2.0.0
         def initialize(options, monitoring, seeds = [])
-          if seeds.length != 1
-            raise ArgumentError, 'Single topology must be initialized with exactly one seed'
+          if seeds.length > 1
+            raise ArgumentError, "Single topology must be initialized with no more than one seed (given: #{seeds})"
           end
+          #@cluster = options[:cluster]
+          #@servers = @cluster.servers
+          #@addresses = @cluster.addresses
           @options = options
           @monitoring = monitoring
           @seed = seeds.first
@@ -230,6 +233,7 @@ module Mongo
         #
         # @since 2.4.0
         def member_discovered
+        return
           publish_sdam_event(
             Monitoring::TOPOLOGY_CHANGED,
             Monitoring::Event::TopologyChanged.new(self, self)

@@ -12,11 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/cluster/topology/replica_set'
-require 'mongo/cluster/topology/sharded'
-require 'mongo/cluster/topology/single'
-require 'mongo/cluster/topology/unknown'
-
 module Mongo
   class Cluster
 
@@ -29,11 +24,6 @@ module Mongo
       # The various topologies for server selection.
       #
       # @since 2.0.0
-      OPTIONS = {
-        replica_set: ReplicaSet,
-        sharded: Sharded,
-        direct: Single
-      }.freeze
 
       # Get the initial cluster topology for the provided options.
       #
@@ -48,14 +38,38 @@ module Mongo
       #
       # @since 2.0.0
       def initial(seeds, monitoring, options)
+      #p 1,options,2
+        classes = {
+          replica_set: ReplicaSet,
+          sharded: Sharded,
+          direct: Single
+        }
+
         if options.has_key?(:connect)
-          OPTIONS.fetch(options[:connect].to_sym).new(options, monitoring, seeds)
+          classes.fetch(options[:connect].to_sym).new(options, monitoring, seeds)
         elsif options.has_key?(:replica_set)
           ReplicaSet.new(options, monitoring, seeds)
         else
           Unknown.new(options, monitoring, seeds)
         end
       end
+
+      class Base
+        def xto_s
+          if @addresses
+            "#<#{self.class.name.sub(/.*::/, '')}:[#{@addresses.map(&:to_s).join(', ')}]>"
+          else
+            super
+          end
+        end
+
+        attr_reader :cluster
+      end
     end
   end
 end
+
+require 'mongo/cluster/topology/replica_set'
+require 'mongo/cluster/topology/sharded'
+require 'mongo/cluster/topology/single'
+require 'mongo/cluster/topology/unknown'
