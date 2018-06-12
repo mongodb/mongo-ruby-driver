@@ -57,7 +57,7 @@ module Mongo
       def handle(server, previous, updated)
         # The SERVER_DESCRIPTION_CHANGED event is only used for logging,
         # all SDAM logic is in the server_description_changed method call
-        # above
+        # below
         publish_sdam_event(
           Monitoring::SERVER_DESCRIPTION_CHANGED,
           Monitoring::Event::ServerDescriptionChanged.new(
