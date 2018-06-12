@@ -144,11 +144,14 @@ module Mongo
     end
 
     def legacy_write_with_retry(server = nil)
+      # This is the pre-session retry logic, and is not subject to
+      # current retryable write specifications.
+      # In particular it does not retry on SocketError and SocketTimeoutError.
       attempt = 0
       begin
         attempt += 1
         yield(server || cluster.next_primary)
-      rescue Error::SocketError, Error::SocketTimeoutError, Error::OperationFailure => e
+      rescue Error::OperationFailure => e
         server = nil
         raise(e) if attempt > Cluster::MAX_WRITE_RETRIES
         if e.write_retryable?

@@ -29,6 +29,8 @@ describe Mongo::Retryable do
       end
 
       def write
+        # This passes a nil session and therefore triggers
+        # legacy_write_with_retry code path
         write_with_retry(nil, nil) do
           operation.execute
         end
@@ -173,6 +175,7 @@ describe Mongo::Retryable do
     end
   end
 
+  # This tests legacy_write_with_retry
   describe '#write_with_retry' do
 
     context 'when no exception occurs' do
@@ -247,11 +250,13 @@ describe Mongo::Retryable do
       before do
         expect(operation).to receive(:execute).and_raise(
           Mongo::Error::SocketError.new('socket error')).ordered
-        expect(cluster).to receive(:scan!).and_return(true).ordered
-        expect(operation).to receive(:execute).and_return(true).ordered
       end
 
-      it_behaves_like 'executes the operation twice'
+      it 'raises an exception' do
+        expect {
+          retryable.write
+        }.to raise_error(Mongo::Error::SocketError)
+      end
     end
 
     context 'when a socket timeout occurs' do
@@ -259,11 +264,13 @@ describe Mongo::Retryable do
       before do
         expect(operation).to receive(:execute).and_raise(
           Mongo::Error::SocketTimeoutError.new('socket timeout')).ordered
-        expect(cluster).to receive(:scan!).and_return(true).ordered
-        expect(operation).to receive(:execute).and_return(true).ordered
       end
 
-      it_behaves_like 'executes the operation twice'
+      it 'raises an exception' do
+        expect {
+          retryable.write
+        }.to raise_error(Mongo::Error::SocketTimeoutError)
+      end
     end
 
     context 'when a non-retryable exception occurs' do
