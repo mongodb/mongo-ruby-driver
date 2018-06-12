@@ -12,14 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/event/listeners'
-require 'mongo/event/publisher'
-require 'mongo/event/subscriber'
-require 'mongo/event/primary_elected'
-require 'mongo/event/member_discovered'
-require 'mongo/event/description_changed'
-require 'mongo/event/standalone_discovered'
-
 module Mongo
   module Event
 
@@ -46,3 +38,12 @@ module Mongo
     DESCRIPTION_CHANGED = 'description_changed'.freeze
   end
 end
+
+require 'mongo/event/base'
+require 'mongo/event/listeners'
+require 'mongo/event/publisher'
+require 'mongo/event/subscriber'
+require 'mongo/event/primary_elected'
+require 'mongo/event/member_discovered'
+require 'mongo/event/description_changed'
+require 'mongo/event/standalone_discovered'

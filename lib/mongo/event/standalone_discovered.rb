@@ -18,7 +18,7 @@ module Mongo
     # This handles when a standalone is discovered.
     #
     # @since 2.0.6
-    class StandaloneDiscovered
+    class StandaloneDiscovered < Base
 
       # @return [ Mongo::Cluster ] cluster The cluster.
       attr_reader :cluster
