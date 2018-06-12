@@ -18,6 +18,12 @@
 # is not quite correctly configured. The result is usually a mass of test
 # failures that are indistinguishable from legitimate failures.
 #
+# Additionally some of the tests assume that the seed list (given in
+# MONGODB_URI or MONGODB_ADDRESSES) encompasses all servers in the cluster,
+# and will fail when MONGODB_URI includes only one host of a replica set.
+# It is best to include all hosts of the cluster in MONGODB_URI and
+# MONGODB_ADDRESSES.
+#
 # The test suite seems to have issues connecting to a replica set
 # via IP addresses if the replica set hosts are defined with hostnames
 # (i.e., 127.0.0.1 vs localhost). Try to exactly match the contents of
