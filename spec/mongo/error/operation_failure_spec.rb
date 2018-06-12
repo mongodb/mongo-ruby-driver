@@ -71,8 +71,8 @@ describe Mongo::Error::OperationFailure do
   describe '#change_stream_resumable?' do
     context 'when there is a read retryable message' do
       let(:error) { Mongo::Error::OperationFailure.new('problem: socket exception', nil) }
-        
-      it 'returns false' do
+
+      xit 'returns false' do
         pending 'Need to distinguish between getMore responses and others'
         expect(error.change_stream_resumable?).to eql(false)
       end
