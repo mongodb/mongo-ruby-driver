@@ -31,7 +31,7 @@ module Mongo
           # @param [ Event::Listeners ] event_listeners The event listeners.
           #
           # @since 2.0.6
-          def initialize(event_listeners)
+          def initialize(server, event_listeners)
             @event_listeners = event_listeners
           end
 

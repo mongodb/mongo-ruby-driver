@@ -19,7 +19,7 @@ module Mongo
       # Defines behaviour for when a cluster is in an unknown state.
       #
       # @since 2.0.0
-      class Unknown
+      class Unknown < Base
         include Loggable
         include Monitoring::Publishable
 
@@ -106,6 +106,10 @@ module Mongo
         #
         # @since 2.0.0
         def initialize(options, monitoring, seeds = [])
+          #@cluster = options[:cluster]
+          #p options
+          #@servers = @cluster.servers
+          #@addresses = @cluster.addresses
           @options = options
           @monitoring = monitoring
           @seeds = seeds
@@ -232,7 +236,7 @@ module Mongo
         def standalone_discovered
           if @seeds.size == 1
             single = Single.new(options, monitoring, @seeds)
-            topology_changed(single)
+            #topology_changed(single)
             single
           else
             self
@@ -246,10 +250,33 @@ module Mongo
         #
         # @since 2.4.0
         def member_discovered
+        return
           publish_sdam_event(
             Monitoring::TOPOLOGY_CHANGED,
             Monitoring::Event::TopologyChanged.new(self, self)
           )
+        end
+
+        def description_acceptable?(cluster, updated)
+          # We can always transition from Unknown to any other topology.
+          true
+        end
+
+        def for_server_description(cluster, server, updated)
+          if updated.mongos?
+            Topology::Sharded.new(options, monitoring, addresses)
+          elsif updated.standalone?
+            Topology::Single.new(options, monitoring, updated.servers)
+          else
+            # various replica set possibilities
+            hosts = if updated.primary?
+              updated.servers
+            else
+              (updated.servers + cluster.addresses.map(&:to_s)).uniq
+            end
+            Topology::ReplicaSet.new(options.merge(replica_set: updated.replica_set_name),
+              monitoring, hosts)
+          end
         end
 
         private

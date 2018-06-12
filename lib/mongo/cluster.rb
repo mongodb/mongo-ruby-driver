@@ -20,8 +20,8 @@ require 'mongo/cluster/app_metadata'
 
 module Mongo
 
-  # Represents a group of servers on the server side, either as a single server, a
-  # replica set, or a single or multiple mongos.
+  # Represents a group of servers on the server side, either as a
+  # single server, a replica set, or a single or multiple mongos.
   #
   # @since 2.0.0
   class Cluster
@@ -184,7 +184,8 @@ module Mongo
       @pool_lock = Mutex.new
       @cluster_time = nil
       @cluster_time_lock = Mutex.new
-      @topology = Topology.initial(seeds, monitoring, options)
+      #p seeds, options
+      @topology = Topology.initial(seeds, monitoring, options.merge(cluster: self))
       Session::SessionPool.create(self)
 
       publish_sdam_event(
@@ -192,16 +193,33 @@ module Mongo
         Monitoring::Event::TopologyOpening.new(@topology)
       )
 
+      if @topology.is_a?(Topology::Unknown) && servers.length > 0 && options[:connect] != :direct
+      end
+
       subscribe_to(Event::STANDALONE_DISCOVERED, Event::StandaloneDiscovered.new(self))
       subscribe_to(Event::DESCRIPTION_CHANGED, Event::DescriptionChanged.new(self))
       subscribe_to(Event::MEMBER_DISCOVERED, Event::MemberDiscovered.new(self))
 
-      seeds.each{ |seed| add(seed) }
+      seeds.each do |seed|
+        add(seed)
+      end
 
-      publish_sdam_event(
-        Monitoring::TOPOLOGY_CHANGED,
-        Monitoring::Event::TopologyChanged.new(@topology, @topology)
-      ) if @servers.size > 1
+      if addresses.size > 0
+        # The spec wants us to emit a topology changed event going from
+        # no servers to our seed list of servers, with unknown topology
+        empty_topology = @topology.class.new(@topology.options, monitoring, [])
+        publish_sdam_event(
+          Monitoring::TOPOLOGY_CHANGED,
+          Monitoring::Event::TopologyChanged.new(empty_topology, @topology)
+        )
+
+=begin
+        publish_sdam_event(
+          Monitoring::TOPOLOGY_CHANGED,
+          Monitoring::Event::TopologyChanged.new(@topology, @topology)
+        )
+=end
+      end
 
       @cursor_reaper = CursorReaper.new
       @socket_reaper = SocketReaper.new(self)
@@ -244,6 +262,14 @@ module Mongo
     # @since 2.0.0
     def inspect
       "#<Mongo::Cluster:0x#{object_id} servers=#{servers} topology=#{topology.display_name}>"
+    end
+
+    def inspect_verbose
+      %Q~#<Mongo::Cluster:0x#{object_id}
+  addresses=#{addresses.map(&:to_s)}
+  topology=#{topology.display_name}
+  servers=#{servers.map(&:inspect_verbose)}
+>~
     end
 
     # Get the next primary server we can send an operation to.
@@ -330,7 +356,7 @@ module Mongo
     #
     # @since 2.0.6
     def standalone_discovered
-      @topology = topology.standalone_discovered
+      #@topology = topology.standalone_discovered
     end
 
     # Remove the server from the cluster for the provided address, if it
@@ -508,6 +534,135 @@ module Mongo
           end
         end
       end
+    end
+
+    def server_description_changed(server, previous, updated)
+      # A server description change does the following things:
+      #
+      # 1. The Server which returned the updated description
+      #    may be removed from the Cluster object, if it is
+      #    determined that it is not part of the cluster *requested
+      #    by the client* (per the new description).
+      #    This usually indicates a configuration problem because
+      #    the client managed to connect to a mongod/mongos, yet some
+      #    parameters specified by the client did not match the configuration
+      #    of mongod/mongos. This could be, for example, because the client
+      #    requested to connect to a replica set and the mongod is not part
+      #    of a replica set. We want to surface server removal as a warning
+      #    so that the user knows to adjust their client or cluster
+      #    configuration.
+      # 2. The description object on the server object is updated.
+      #    Sounds circular but this update happens after
+      #    server_description_changed is invoked, though the order should not
+      #    be relied on - use `previous` and `updated` descriptions
+      #    explicitly depending on which one is needed.
+      # 3. New Server objects may be created and added to the Cluster
+      #    object - this happens when the topology is a replica set.
+      #    Any node can add servers to a cluster, however only the active
+      #    primary can remove servers from a cluster.
+      # 4. When the updated description is coming from the active primary
+      #    in a replica set topology, we set the set of servers to exactly
+      #    match whatever the primary returned. This can result in server
+      #    removal as well as addition.
+      #
+      # Added servers always start out with Unknown description.
+
+      #require 'byebug';byebug
+      1
+
+      # addresses method already dups, we don't have to here
+      previous_addresses = addresses
+
+      if topology.description_acceptable?(self, updated)
+        # The cluster we connected to matches client requirements - good.
+        # Add all new servers to our list of servers
+        updated.servers.each do |host|
+          # host here is a string like localhost:27017 or 127.0.0.1:27017
+          add(host)
+        end
+      else
+        # We established a connection to a cluster but the cluster does not
+        # match client requirements. Warn the user to fix either the client
+        # or the cluster configuration
+        warn "Discarding #{server.address} due to a configuration mismatch - check replica set name"
+        # Remove the server as we know it because updated.me may well be
+        # different
+        remove(server.address.to_s)
+      end
+
+      # description contains the address of the server but not the server object
+      if updated.me_mismatch?
+        warn "#{server.address} self-reports as #{updated.me} - removing #{server.address}"
+        # We may still connect to the server we are removing here IF
+        # we are connecting to a replica set, the replica set configuration
+        # on the server matches what we requested, and the "correct" address
+        # of the server is listed in `updated.servers`.
+        # Note that the new connection may take a different network path,
+        # for example if connecting to a hostname that maps to 127.0.0.1
+        # in /etc/hosts but self-identifies with a non-loopback IP address.
+        remove(server.address.to_s)
+      end
+
+      if topology.is_a?(Topology::ReplicaSet) && updated.primary?
+        # Replace all of our servers with the list from the primary
+        updated.servers.each do |host|
+          unless addresses.any? { |address| address.to_s == host }
+            add(host)
+          end
+        end
+
+        addresses.each do |address|
+          unless updated.servers.any? { |host| host == address.to_s }
+            remove(address.to_s)
+          end
+        end
+      end
+
+      previous_topology = @topology
+
+      new_topology = @topology.for_server_description(self, server, updated)
+
+      # When transitioning from unknown topology to replica set,
+      # specifications require sending a topology changed message
+      # with the unknown topology type and new server set.
+      # However, when transitioning from unknown to standalone
+      # the expectation is to go from Unknown with no servers to
+      # Single with one server.
+      if previous_topology.is_a?(Topology::Unknown) && new_topology.is_a?(Topology::ReplicaSet)
+      #p [:XX,previous_addresses,addresses]
+        if previous_addresses != addresses
+          int_topology = Topology::Unknown.new(previous_topology.options,
+            previous_topology.monitoring, addresses.map(&:to_s))
+          #p :unk_transition
+          publish_sdam_event(
+            Monitoring::TOPOLOGY_CHANGED,
+            Monitoring::Event::TopologyChanged.new(previous_topology, int_topology)
+          )
+          previous_topology = int_topology
+        end
+      end
+
+#p :hm
+#p @topology
+#p previous_topology
+      #if new_topology != @topology
+      # Always publish a topology change event, because in the specification
+      # a topology change event comes with the (updated) server set and
+      # we are currently handling a server description change.
+      # In the Ruby driver topology change event doesn't come with the
+      # new or old server lists, and the topology class doesn't have any
+      # knowledge of servers in any event, so that this event requires the
+      # application to maintain cluster references in order to do something
+      # useful as a response to topology change event when topology itself
+      # remains the same.
+      #p :triggered, new_topology.class
+        publish_sdam_event(
+          Monitoring::TOPOLOGY_CHANGED,
+          Monitoring::Event::TopologyChanged.new(previous_topology, new_topology)
+        )
+      #end
+
+      @topology = new_topology
     end
 
     private

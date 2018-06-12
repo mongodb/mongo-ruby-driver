@@ -26,6 +26,7 @@ module Mongo
       # events should be fired.
       #
       # @since 2.0.0
+      # @api private
       class Inspector
 
         # Static list of inspections that are performed on the result of an
@@ -50,9 +51,9 @@ module Mongo
         # @param [ Event::Listeners ] listeners The event listeners.
         #
         # @since 2.0.0
-        def initialize(listeners)
+        def initialize(server, listeners)
           @inspectors = INSPECTORS.map do |inspector|
-            inspector.new(listeners)
+            inspector.new(server, listeners)
           end
         end
 

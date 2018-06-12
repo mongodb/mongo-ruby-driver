@@ -32,7 +32,8 @@ module Mongo
           # @param [ Event::Listeners ] event_listeners The event listeners.
           #
           # @since 2.4.0
-          def initialize(event_listeners)
+          def initialize(server, event_listeners)
+            @server = server
             @event_listeners = event_listeners
           end
 
@@ -49,7 +50,7 @@ module Mongo
             if (!description.primary? && updated.primary?) ||
                 (!description.mongos? && updated.mongos?) ||
                 (description.unknown? && !updated.unknown?)
-              publish(Event::MEMBER_DISCOVERED, description, updated)
+              publish(Event::MEMBER_DISCOVERED, @server, description, updated)
             end
           end
         end

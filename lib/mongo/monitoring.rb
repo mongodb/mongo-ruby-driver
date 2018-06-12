@@ -12,16 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/monitoring/event'
-require 'mongo/monitoring/publishable'
-require 'mongo/monitoring/command_log_subscriber'
-require 'mongo/monitoring/sdam_log_subscriber'
-require 'mongo/monitoring/server_description_changed_log_subscriber'
-require 'mongo/monitoring/server_closed_log_subscriber'
-require 'mongo/monitoring/server_opening_log_subscriber'
-require 'mongo/monitoring/topology_changed_log_subscriber'
-require 'mongo/monitoring/topology_opening_log_subscriber'
-
 module Mongo
 
   # The class defines behaviour for the performance monitoring API.
@@ -236,3 +226,13 @@ module Mongo
     end
   end
 end
+
+require 'mongo/monitoring/event'
+require 'mongo/monitoring/publishable'
+require 'mongo/monitoring/command_log_subscriber'
+require 'mongo/monitoring/sdam_log_subscriber'
+require 'mongo/monitoring/server_description_changed_log_subscriber'
+require 'mongo/monitoring/server_closed_log_subscriber'
+require 'mongo/monitoring/server_opening_log_subscriber'
+require 'mongo/monitoring/topology_changed_log_subscriber'
+require 'mongo/monitoring/topology_opening_log_subscriber'

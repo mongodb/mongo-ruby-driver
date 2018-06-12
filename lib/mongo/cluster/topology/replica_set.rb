@@ -18,8 +18,12 @@ module Mongo
 
       # Defines behaviour when a cluster is in replica set topology.
       #
+      # ReplicaSet instances are tied to their respective Cluster
+      # instances, as ReplicaSet instances, for example, always contain
+      # the replica set name.
+      #
       # @since 2.0.0
-      class ReplicaSet
+      class ReplicaSet < Base
         include Loggable
         include Monitoring::Publishable
 
@@ -123,8 +127,19 @@ module Mongo
         # @param [ Monitoring ] monitoring The monitoring.
         # @param [ Array<String> ] seeds The seeds.
         #
+        # @option options [ Symbol ] :replica_set Name of the replica set to
+        #   connect to. Can be left blank (either nil or the empty string are
+        #   accepted) to discover the name from the seeds. If the seeds
+        #   belong to different replica sets there is no guarantee which
+        #   replica set is selected - in particular, the driver may choose
+        #   the replica set name of a secondary if it returns its response
+        #   prior to a primary belonging to a different replica set.
+        #
         # @since 2.0.0
         def initialize(options, monitoring, seeds = [])
+          #@cluster = options[:cluster]
+          #@servers = @cluster.servers
+          #@addresses = @cluster.addresses
           @options = options
           @monitoring = monitoring
           @max_election_id = nil
@@ -269,6 +284,16 @@ module Mongo
         #
         # @since 2.4.0
         def member_discovered; end;
+
+        def description_acceptable?(cluster, updated)
+          # We should always have a non-nil replica set name
+          # (our own) but it seems that the code doesn't currently enforce this
+          updated.replica_set_name && replica_set_name == updated.replica_set_name
+        end
+
+        def for_server_description(cluster, server, updated)
+          self
+        end
 
         private
 

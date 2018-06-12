@@ -41,6 +41,8 @@ module Mongo
       # @since 2.0.0
       RTT_WEIGHT_FACTOR = 0.2.freeze
 
+      attr_reader :server
+
       # @return [ Mongo::Connection ] connection The connection to use.
       attr_reader :connection
 
@@ -113,9 +115,10 @@ module Mongo
       # @param [ Hash ] options The options.
       #
       # @since 2.0.0
-      def initialize(address, listeners, options = {})
+      def initialize(server, address, listeners, options = {})
+        @server = server
         @description = Description.new(address, {})
-        @inspector = Description::Inspector.new(listeners)
+        @inspector = Description::Inspector.new(server, listeners)
         @options = options.freeze
         @connection = Connection.new(address, options)
         @last_round_trip_time = nil

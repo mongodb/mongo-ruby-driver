@@ -1,34 +1,24 @@
-description: "Direct connection to slave"
-
+description: "Standalone with default maxWireVersion of 0"
 uri: "mongodb://a"
-
 phases: [
-
     {
         responses: [
-
                 ["a:27017", {
-
                     ok: 1,
-                    ismaster: false,
-                    minWireVersion: 0,
-                    maxWireVersion: 6
+                    ismaster: true
                 }]
         ],
-
         outcome: {
-
             servers: {
-
                 "a:27017": {
-
                     type: "Standalone",
                     setName:
                 }
             },
             topologyType: "Single",
             logicalSessionTimeoutMinutes: null,
-            setName:
+            setName: ,
+            compatible: false
         }
     }
 ]

@@ -1,4 +1,4 @@
-require 'spec_helper'
+require 'lite_spec_helper'
 
 describe 'Server Discovery and Monitoring' do
   include Mongo::SDAM
@@ -7,11 +7,10 @@ describe 'Server Discovery and Monitoring' do
 
     spec = Mongo::SDAM::Spec.new(file)
 
-    context(spec.description) do
+    context("#{spec.description} (#{file.sub(%r'.*support/sdam/', '')})") do
 
       before(:all) do
-        @client = Mongo::Client.new([])
-        @client.send(:create_from_uri, spec.uri_string)
+        @client = Mongo::Client.new(spec.uri_string)
         client_options = @client.instance_variable_get(:@options)
         @client.instance_variable_set(:@options, client_options.merge(heartbeat_frequency: 100, connect_timeout: 0.1))
         @client.cluster.instance_variable_set(:@options, client_options.merge(heartbeat_frequency: 100, connect_timeout: 0.1))
@@ -94,8 +93,9 @@ describe 'Server Discovery and Monitoring' do
 
             it 'raises an UnsupportedFeatures error' do
               expect {
-                Mongo::ServerSelector.get(mode: :primary).select_server(@client.cluster)
-                Mongo::ServerSelector.get(mode: :secondary).select_server(@client.cluster)
+                p = Mongo::ServerSelector.get(mode: :primary).select_server(@client.cluster)
+                s = Mongo::ServerSelector.get(mode: :secondary).select_server(@client.cluster)
+                raise "UnsupportedFeatures not raised but we got #{p.inspect} as primary and #{s.inspect} as secondary"
               }.to raise_exception(Mongo::Error::UnsupportedFeatures)
             end
           end

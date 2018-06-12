@@ -6,15 +6,15 @@ describe 'CRUD' do
 
     spec = Mongo::CRUD::Spec.new(file)
 
+    before do
+      unless spec.server_version_satisfied?(authorized_client)
+        skip 'Version requirement not satisfied'
+      end
+    end
+
     context(spec.description) do
 
       spec.tests.each do |test|
-
-        around do |example|
-          if spec.server_version_satisfied?(authorized_client)
-            example.run
-          end
-        end
 
         context(test.description) do
 

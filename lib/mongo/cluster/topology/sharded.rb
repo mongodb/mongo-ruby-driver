@@ -19,7 +19,7 @@ module Mongo
       # Defines behaviour for when a cluster is in sharded topology.
       #
       # @since 2.0.0
-      class Sharded
+      class Sharded < Base
         include Monitoring::Publishable
 
         # The display name for the topology.
@@ -97,6 +97,9 @@ module Mongo
         #
         # @since 2.0.0
         def initialize(options, monitoring, seeds = [])
+          #@cluster = options[:cluster]
+          #@servers = @cluster.servers
+          #@addresses = @cluster.addresses
           @options = options
           @monitoring = monitoring
         end
@@ -226,6 +229,17 @@ module Mongo
         #
         # @since 2.4.0
         def member_discovered; end;
+
+        def description_acceptable?(cluster, updated)
+          # There is no discovery of mongos possible - all must be specified
+          # as initial seeds. When connecting to mongos, all of them are
+          # acceptable.
+          updated.replica_set_name.nil?
+        end
+
+        def for_server_description(cluster, server, updated)
+          self
+        end
 
         private
 
