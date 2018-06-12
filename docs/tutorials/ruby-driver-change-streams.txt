@@ -10,20 +10,23 @@ Change Streams
    :depth: 1
    :class: singlecol
 
-As of version 3.6 of the MongoDB server, a new ``$changeStream`` pipeline stage is supported in the aggregation
-framework. The Ruby driver provides an API for receiving notifications for changes to a particular collection using this
-new pipeline stage. Although you can create a change stream using the pipeline operator and aggregation framework
-directly, it is recommended to use the driver API described below as the driver resumes the change stream if there is
+As of version 3.6 of the MongoDB server, a new ``$changeStream`` pipeline stage
+is supported in the aggregation framework. The Ruby driver provides an API for
+receiving notifications for changes to a particular collection using this
+new pipeline stage. Although you can create a change stream using the pipeline
+operator and aggregation framework directly, it is recommended to use the
+driver API described below as the driver resumes the change stream if there is
 a timeout or a network error.
 
-Change streams on the server requires a ``"majority"`` read concern or no read concern.
+Change streams on the server require a ``"majority"`` read concern or no
+read concern.
 
 Change streams do not work properly with JRuby because of the issue documented here_.
+Namely, JRuby eagerly evaluates ``#next`` on an Enumerator in a background
+green thread, therefore calling ``#next`` on the change stream will cause
+getMores to be called in a loop in the background.
 
 .. _here: https://github.com/jruby/jruby/issues/4212
-
-Namely, JRuby eagerly evaluates ``#next`` on an Enumerator in a background green thread.
-So calling ``#next`` on the change stream will cause getmores to be called in a loop in the background.
 
 Watching for changes on a particular collection
 -----------------------------------------------
@@ -49,7 +52,8 @@ You can also receive the notifications as they become available:
   end
 
 
-The change stream can take filters in the aggregation framework pipeline operator format:
+The change stream can take filters in the aggregation framework pipeline
+operator format:
 
 .. code-block:: ruby
 
