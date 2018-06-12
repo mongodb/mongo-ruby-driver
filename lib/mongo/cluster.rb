@@ -184,7 +184,7 @@ module Mongo
       @pool_lock = Mutex.new
       @cluster_time = nil
       @cluster_time_lock = Mutex.new
-      p seeds, options
+      #p seeds, options
       @topology = Topology.initial(seeds, monitoring, options.merge(cluster: self))
       Session::SessionPool.create(self)
 
@@ -629,11 +629,11 @@ module Mongo
       # the expectation is to go from Unknown with no servers to
       # Single with one server.
       if previous_topology.is_a?(Topology::Unknown) && new_topology.is_a?(Topology::ReplicaSet)
-      p [:XX,previous_addresses,addresses]
+      #p [:XX,previous_addresses,addresses]
         if previous_addresses != addresses
           int_topology = Topology::Unknown.new(previous_topology.options,
             previous_topology.monitoring, addresses.map(&:to_s))
-          p :unk_transition
+          #p :unk_transition
           publish_sdam_event(
             Monitoring::TOPOLOGY_CHANGED,
             Monitoring::Event::TopologyChanged.new(previous_topology, int_topology)
@@ -642,9 +642,9 @@ module Mongo
         end
       end
 
-p :hm
-p @topology
-p previous_topology
+#p :hm
+#p @topology
+#p previous_topology
       #if new_topology != @topology
       # Always publish a topology change event, because in the specification
       # a topology change event comes with the (updated) server set and
@@ -655,7 +655,7 @@ p previous_topology
       # application to maintain cluster references in order to do something
       # useful as a response to topology change event when topology itself
       # remains the same.
-      p :triggered, new_topology.class
+      #p :triggered, new_topology.class
         publish_sdam_event(
           Monitoring::TOPOLOGY_CHANGED,
           Monitoring::Event::TopologyChanged.new(previous_topology, new_topology)
