@@ -132,7 +132,7 @@ describe Mongo::Retryable do
         context 'when the operation failure is retryable' do
 
           let(:error) do
-            Mongo::Error::OperationFailure.new('no master')
+            Mongo::Error::OperationFailure.new('not master')
           end
 
           context 'when the retry succeeds' do
@@ -209,18 +209,6 @@ describe Mongo::Retryable do
       before do
         expect(operation).to receive(:execute).and_raise(
           Mongo::Error::OperationFailure.new('node is recovering')).ordered
-        expect(cluster).to receive(:scan!).and_return(true).ordered
-        expect(operation).to receive(:execute).and_return(true).ordered
-      end
-
-      it_behaves_like 'executes the operation twice'
-    end
-
-    context 'when a not primary error occurs' do
-
-      before do
-        expect(operation).to receive(:execute).and_raise(
-          Mongo::Error::OperationFailure.new('Not primary')).ordered
         expect(cluster).to receive(:scan!).and_return(true).ordered
         expect(operation).to receive(:execute).and_return(true).ordered
       end
