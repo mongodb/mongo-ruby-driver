@@ -221,7 +221,7 @@ module Mongo
       #
       # @return [ Event ] The matching event.
       def first_event(name)
-  require 'byebug';byebug
+  #require 'byebug';byebug
         matching = events.find do |event|
           event.class == MAPPINGS[name]
         end

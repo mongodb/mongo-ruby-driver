@@ -37,7 +37,7 @@ module Mongo
         #
         # @since 2.4.0
         def initialize(previous_topology, new_topology)
-      require 'byebug';byebug
+      #require 'byebug';byebug
           @previous_topology = previous_topology
           @new_topology = new_topology
         end

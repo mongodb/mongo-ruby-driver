@@ -567,7 +567,7 @@ module Mongo
       #
       # Added servers always start out with Unknown description.
 
-      require 'byebug';byebug
+      #require 'byebug';byebug
       1
 
       # addresses method already dups, we don't have to here

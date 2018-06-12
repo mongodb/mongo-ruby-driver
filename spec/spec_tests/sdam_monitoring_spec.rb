@@ -44,8 +44,8 @@ describe 'SDAM Monitoring' do
               monitor.instance_variable_set(:@description, description)
             end
 
-            require 'byebug';
-            byebug
+            #require 'byebug';
+            #byebug
             1
           end
 

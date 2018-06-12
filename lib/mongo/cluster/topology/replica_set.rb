@@ -138,7 +138,7 @@ module Mongo
           @max_set_version = nil
 
           if replica_set_name.nil? || replica_set_name == ''
-          require 'byebug';byebug
+          #require 'byebug';byebug
             raise ArgumentError, 'Cannot have a replica set without a replica set name'
           end
         end
