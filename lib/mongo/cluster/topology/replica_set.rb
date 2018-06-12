@@ -123,6 +123,14 @@ module Mongo
         # @param [ Monitoring ] monitoring The monitoring.
         # @param [ Array<String> ] seeds The seeds.
         #
+        # @option options [ Symbol ] :replica_set Name of the replica set to
+        #   connect to. Can be left blank (either nil or the empty string are
+        #   accepted) to discover the name from the seeds. If the seeds
+        #   belong to different replica sets there is no guarantee which
+        #   replica set is selected - in particular, the driver may choose
+        #   the replica set name of a secondary if it returns its response
+        #   prior to a primary belonging to a different replica set.
+        #
         # @since 2.0.0
         def initialize(options, monitoring, seeds = [])
           @options = options
