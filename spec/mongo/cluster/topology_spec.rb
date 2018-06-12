@@ -1,4 +1,4 @@
-require 'spec_helper'
+require 'lite_spec_helper'
 
 describe Mongo::Cluster::Topology do
 
@@ -103,28 +103,6 @@ describe Mongo::Cluster::Topology do
 
         it 'returns an unknown topology' do
           expect(topology).to be_a(Mongo::Cluster::Topology::Unknown)
-        end
-      end
-
-      context 'when provided a single mongos', if: single_mongos? do
-
-        let(:topology) do
-          described_class.initial(ADDRESSES, monitoring, TEST_OPTIONS)
-        end
-
-        it 'returns a sharded topology' do
-          expect(topology).to be_a(Mongo::Cluster::Topology::Sharded)
-        end
-      end
-
-      context 'when provided a single replica set member', if: single_rs_member? do
-
-        let(:topology) do
-          described_class.initial(ADDRESSES, monitoring, TEST_OPTIONS)
-        end
-
-        it 'returns a single topology' do
-          expect(topology).to be_a(Mongo::Cluster::Topology::Single)
         end
       end
     end
