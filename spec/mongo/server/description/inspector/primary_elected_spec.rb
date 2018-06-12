@@ -6,8 +6,10 @@ describe Mongo::Server::Description::Inspector::PrimaryElected do
     Mongo::Event::Listeners.new
   end
 
+  let(:server) { double('server') }
+
   let(:inspection) do
-    described_class.new(listeners)
+    described_class.new(server, listeners)
   end
 
   let(:address) do

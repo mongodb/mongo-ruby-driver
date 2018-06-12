@@ -12,10 +12,12 @@ describe Mongo::Server::Monitor do
 
   describe '#scan!' do
 
+    let(:server) { double('server') }
+
     context 'when calling multiple times in succession' do
 
       let(:monitor) do
-        described_class.new(address, listeners, TEST_OPTIONS)
+        described_class.new(server, address, listeners, TEST_OPTIONS)
       end
 
       it 'throttles the scans to minimum 500ms' do
@@ -29,7 +31,7 @@ describe Mongo::Server::Monitor do
     context 'when the ismaster fails the first time' do
 
       let(:monitor) do
-        described_class.new(address, listeners, TEST_OPTIONS)
+        described_class.new(server, address, listeners, TEST_OPTIONS)
       end
 
       let(:socket) do
@@ -59,7 +61,7 @@ describe Mongo::Server::Monitor do
     context 'when the ismaster command succeeds' do
 
       let(:monitor) do
-        described_class.new(address, listeners, TEST_OPTIONS)
+        described_class.new(server, address, listeners, TEST_OPTIONS)
       end
 
       before do
@@ -81,6 +83,8 @@ describe Mongo::Server::Monitor do
 
     context 'when the ismaster command fails' do
 
+      let(:server) { double('server') }
+
       context 'when no server is running on the address' do
 
         let(:bad_address) do
@@ -88,7 +92,7 @@ describe Mongo::Server::Monitor do
         end
 
         let(:monitor) do
-          described_class.new(bad_address, listeners)
+          described_class.new(server, bad_address, listeners)
         end
 
         before do
@@ -107,7 +111,7 @@ describe Mongo::Server::Monitor do
         end
 
         let(:monitor) do
-          described_class.new(bad_address, listeners)
+          described_class.new(server, bad_address, listeners)
         end
 
         let(:socket) do
@@ -133,10 +137,12 @@ describe Mongo::Server::Monitor do
 
   describe '#heartbeat_frequency' do
 
+    let(:server) { double('server') }
+
     context 'when an option is provided' do
 
       let(:monitor) do
-        described_class.new(address, listeners, :heartbeat_frequency => 5)
+        described_class.new(server, address, listeners, :heartbeat_frequency => 5)
       end
 
       it 'returns the option' do
@@ -147,7 +153,7 @@ describe Mongo::Server::Monitor do
     context 'when no option is provided' do
 
       let(:monitor) do
-        described_class.new(address, listeners)
+        described_class.new(server, address, listeners)
       end
 
       it 'defaults to 10' do
@@ -158,8 +164,10 @@ describe Mongo::Server::Monitor do
 
   describe '#run!' do
 
+    let(:server) { double('server') }
+
     let(:monitor) do
-      described_class.new(address, listeners, :heartbeat_frequency => 1)
+      described_class.new(server, address, listeners, :heartbeat_frequency => 1)
     end
 
     before do
@@ -174,8 +182,10 @@ describe Mongo::Server::Monitor do
 
   describe '#restart!' do
 
+    let(:server) { double('server') }
+
     let(:monitor) do
-      described_class.new(address, listeners, TEST_OPTIONS)
+      described_class.new(server, address, listeners, TEST_OPTIONS)
     end
 
     let!(:thread) do
@@ -204,8 +214,10 @@ describe Mongo::Server::Monitor do
 
   describe '#stop' do
 
+    let(:server) { double('server') }
+
     let(:monitor) do
-      described_class.new(address, listeners, TEST_OPTIONS)
+      described_class.new(server, address, listeners, TEST_OPTIONS)
     end
 
     let!(:thread) do
@@ -225,6 +237,8 @@ describe Mongo::Server::Monitor do
 
   describe '#connection' do
 
+    let(:server) { double('server') }
+
     context 'when there is a connect_timeout option set' do
 
       let(:connect_timeout) do
@@ -232,7 +246,7 @@ describe Mongo::Server::Monitor do
       end
 
       let(:monitor) do
-        described_class.new(address, listeners, TEST_OPTIONS.merge(connect_timeout: connect_timeout))
+        described_class.new(server, address, listeners, TEST_OPTIONS.merge(connect_timeout: connect_timeout))
       end
 
       it 'sets the value as the timeout on the connection' do
