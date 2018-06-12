@@ -7,7 +7,7 @@ describe 'Server Discovery and Monitoring' do
 
     spec = Mongo::SDAM::Spec.new(file)
 
-    context(spec.description) do
+    context("#{spec.description} (#{file.sub(%r'.*support/sdam/', '')})") do
 
       before(:all) do
         @client = Mongo::Client.new([])
@@ -94,8 +94,9 @@ describe 'Server Discovery and Monitoring' do
 
             it 'raises an UnsupportedFeatures error' do
               expect {
-                Mongo::ServerSelector.get(mode: :primary).select_server(@client.cluster)
-                Mongo::ServerSelector.get(mode: :secondary).select_server(@client.cluster)
+                p = Mongo::ServerSelector.get(mode: :primary).select_server(@client.cluster)
+                s = Mongo::ServerSelector.get(mode: :secondary).select_server(@client.cluster)
+                raise "UnsupportedFeatures not raised but we got #{p.inspect} as primary and #{s.inspect} as secondary"
               }.to raise_exception(Mongo::Error::UnsupportedFeatures)
             end
           end
