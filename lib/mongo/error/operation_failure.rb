@@ -21,22 +21,40 @@ module Mongo
     class OperationFailure < Error
       extend Forwardable
 
+      # Error codes and code names that should result in a failing write
+      # being retried.
+      #
+      # @since 2.6.0
+      # @api private
+      WRITE_RETRY_ERRORS = [
+        {:code_name => 'InterruptedAtShutdown', :code => 11600},
+        {:code_name => 'InterruptedDueToReplStateChange', :code => 11602},
+        {:code_name => 'NotMaster', :code => 10107},
+        {:code_name => 'NotMasterNoSlaveOk', :code => 13435},
+        {:code_name => 'NotMasterOrSecondary', :code => 13436},
+        {:code_name => 'PrimarySteppedDown', :code => 189},
+        {:code_name => 'ShutdownInProgress', :code => 91},
+        {:code_name => 'WriteConcernFailed', :code => 64},
+        {:code_name => 'HostNotFound', :code => 7},
+        {:code_name => 'HostUnreachable', :code => 6},
+        {:code_name => 'NetworkTimeout', :code => 89},
+        {:code_name => 'SocketException', :code => 9001},
+      ].freeze
+
       # These are magic error messages that could indicate a master change.
       #
       # @since 2.4.2
+      # @api private
       WRITE_RETRY_MESSAGES = [
-        'no master',
         'not master',
-        'could not contact primary',
-        'Not primary'
+        'node is recovering',
       ].freeze
 
       # These are magic error messages that could indicate a cluster
-      # reconfiguration behind a mongos. We cannot check error codes as they
-      # change between versions, for example 15988 which has 2 completely
-      # different meanings between 2.4 and 3.0.
+      # reconfiguration behind a mongos.
       #
       # @since 2.1.1
+      # @api private
       RETRY_MESSAGES = WRITE_RETRY_MESSAGES + [
         'transport error',
         'socket exception',
@@ -65,7 +83,7 @@ module Mongo
       # @example Is the error retryable?
       #   error.retryable?
       #
-      # @return [ true, false ] If the error is retryable.
+      # @return [ true, false ] Whether the error is retryable.
       #
       # @since 2.1.1
       def retryable?
@@ -77,11 +95,69 @@ module Mongo
       # @example Is the error retryable for writes?
       #   error.write_retryable?
       #
-      # @return [ true, false ] If the error is retryable.
+      # @return [ true, false ] Whether the error is retryable.
       #
       # @since 2.4.2
       def write_retryable?
-        WRITE_RETRY_MESSAGES.any? { |m| message.include?(m) }
+        WRITE_RETRY_MESSAGES.any? { |m| message.include?(m) } ||
+        write_retryable_code?
+      end
+      
+      private def write_retryable_code?
+        if code
+          WRITE_RETRY_ERRORS.any? { |e| e[:code] == code }
+        else
+          # return false rather than nil
+          false
+        end
+      end
+
+      # Error codes and code names that should result in a failing getMore
+      # command on a change stream NOT being resumed.
+      #
+      # @since 2.6.0
+      # @api private
+      CHANGE_STREAM_NOT_RESUME_ERRORS = [
+        {:code_name => 'CappedPositionLost', :code => 136},
+        {:code_name => 'CursorKilled', :code => 237},
+        {:code_name => 'Interrupted', :code => 11601},
+      ].freeze
+      
+      # Change stream can be resumed when these error messages are encountered.
+      #
+      # @since 2.6.0
+      # @api private
+      CHANGE_STREAM_RESUME_MESSAGES = WRITE_RETRY_MESSAGES
+      
+      # Can the change stream on which this error occurred be resumed?
+      #
+      # Note: only errors from getMore commands are resumable.
+      #
+      # @example Is the error resumable for the change stream?
+      #   error.change_stream_resumable?
+      #
+      # @return [ true, false ] Whether the error is resumable.
+      #
+      # @since 2.6.0
+      def change_stream_resumable?
+        change_stream_resumable_message? ||
+        change_stream_resumable_code?
+      end
+
+      private def change_stream_resumable_message?
+        CHANGE_STREAM_RESUME_MESSAGES.any? { |m| message.include?(m) }
+      end
+
+      private def change_stream_resumable_code?
+        if @result && @result.is_a?(Mongo::Operation::GetMore::Result)
+          if code
+            !CHANGE_STREAM_NOT_RESUME_ERRORS.any? { |e| e[:code] == code }
+          else
+            true
+          end
+        else
+          false
+        end
       end
 
       # Create the operation failure.

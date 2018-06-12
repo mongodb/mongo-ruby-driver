@@ -23,4 +23,85 @@ describe Mongo::Error::OperationFailure do
       expect(subject.code_name).to eq('NotMaster')
     end
   end
+  
+  describe '#write_retryable?' do
+    context 'when there is a read retryable message' do
+      let(:error) { Mongo::Error::OperationFailure.new('problem: socket exception', nil) }
+        
+      it 'returns false' do
+        expect(error.write_retryable?).to eql(false)
+      end
+    end
+    
+    context 'when there is a write retryable message' do
+      let(:error) { Mongo::Error::OperationFailure.new('problem: node is recovering', nil) }
+        
+      it 'returns true' do
+        expect(error.write_retryable?).to eql(true)
+      end
+    end
+    
+    context 'when there is a non-retryable message' do
+      let(:error) { Mongo::Error::OperationFailure.new('something happened', nil) }
+        
+      it 'returns false' do
+        expect(error.write_retryable?).to eql(false)
+      end
+    end
+    
+    context 'when there is a retryable code' do
+      let(:error) { Mongo::Error::OperationFailure.new('no message', nil,
+        :code => 91, :code_name => 'ShutdownInProgress') }
+        
+      it 'returns true' do
+        expect(error.write_retryable?).to eql(true)
+      end
+    end
+    
+    context 'when there is a non-retryable code' do
+      let(:error) { Mongo::Error::OperationFailure.new('no message', nil,
+        :code => 43, :code_name => 'SomethingHappened') }
+        
+      it 'returns false' do
+        expect(error.write_retryable?).to eql(false)
+      end
+    end
+  end
+  
+  describe '#change_stream_resumable?' do
+    context 'when there is a read retryable message' do
+      let(:error) { Mongo::Error::OperationFailure.new('problem: socket exception', nil) }
+        
+      it 'returns false' do
+        pending 'Need to distinguish between getMore responses and others'
+        expect(error.change_stream_resumable?).to eql(false)
+      end
+    end
+    
+    context 'when there is a resumable message' do
+      let(:error) { Mongo::Error::OperationFailure.new('problem: node is recovering', nil) }
+        
+      it 'returns true' do
+        expect(error.change_stream_resumable?).to eql(true)
+      end
+    end
+    
+    context 'when there is a resumable code' do
+      let(:error) { Mongo::Error::OperationFailure.new('no message', nil,
+        :code => 91, :code_name => 'ShutdownInProgress') }
+        
+      it 'returns true' do
+        expect(error.change_stream_resumable?).to eql(true)
+      end
+    end
+    
+    context 'when there is a non-resumable code' do
+      let(:error) { Mongo::Error::OperationFailure.new('no message', nil,
+        :code => 136, :code_name => 'CappedPositionLost') }
+        
+      it 'returns false' do
+        expect(error.change_stream_resumable?).to eql(false)
+      end
+    end
+  end
 end

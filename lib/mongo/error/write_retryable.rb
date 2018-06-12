@@ -1,4 +1,4 @@
-# Copyright (C) 2015-2017 MongoDB, Inc.
+# Copyright (C) 2018 MongoDB, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,11 +15,13 @@
 module Mongo
   class Error
 
-    # Raised when a socket connection times out.
+    # A module signifying the error is always write retryable.
     #
-    # @since 2.0.0
-    class SocketTimeoutError < Error
-      include WriteRetryable
+    # @since 2.6.0
+    module WriteRetryable
+      def write_retryable?
+        true
+      end
     end
   end
 end
