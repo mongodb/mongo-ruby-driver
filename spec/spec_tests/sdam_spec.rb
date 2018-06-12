@@ -1,4 +1,4 @@
-require 'spec_helper'
+require 'lite_spec_helper'
 
 describe 'Server Discovery and Monitoring' do
   include Mongo::SDAM
