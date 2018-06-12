@@ -20,7 +20,17 @@ require 'mongo/cluster/topology/unknown'
 module Mongo
   class Cluster
 
-    # Defines behaviour for getting servers.
+    # Defines behavior for getting servers.
+    #
+    # Topologies are associated with their clusters - for example, a
+    # ReplicaSet topology contains the replica set name. A topology
+    # object therefore cannot be used with multiple cluster objects.
+    #
+    # At the same time, topology objects do not know anything about
+    # specific *servers* in a cluster, despite what their constructor
+    # may suggest. Which means, in particular, that topology change events
+    # require the application to maintain cluster references on its own
+    # if it wants to track server changes within a replica set.
     #
     # @since 2.0.0
     module Topology
