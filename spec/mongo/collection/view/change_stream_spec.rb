@@ -624,7 +624,8 @@ describe Mongo::Collection::View::ChangeStream, if: test_change_streams? do
       context "when the error is 'not master'" do
 
         let(:error) do
-          Mongo::Error::OperationFailure.new('not master')
+          Mongo::Error::OperationFailure.new('not master',
+            Mongo::Operation::GetMore::Result.new([]))
         end
 
         it_behaves_like 'a change stream that encounters an error from a getMore'
@@ -633,7 +634,8 @@ describe Mongo::Collection::View::ChangeStream, if: test_change_streams? do
       context "when the error is 'node is recovering'" do
 
         let(:error) do
-          Mongo::Error::OperationFailure.new('node is recovering')
+          Mongo::Error::OperationFailure.new('node is recovering',
+            Mongo::Operation::GetMore::Result.new([]))
         end
 
         it_behaves_like 'a change stream that encounters an error from a getMore'
