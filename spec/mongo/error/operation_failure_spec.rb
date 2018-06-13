@@ -69,12 +69,22 @@ describe Mongo::Error::OperationFailure do
   end
 
   describe '#change_stream_resumable?' do
-    context 'when there is a read retryable message' do
-      let(:error) { Mongo::Error::OperationFailure.new('problem: socket exception', nil) }
+    context 'when there is a network error' do
+      context 'getMore' do
+        let(:error) { Mongo::Error::OperationFailure.new('problem: socket exception',
+          Mongo::Operation::GetMore::Result.new([])) }
 
-      xit 'returns false' do
-        pending 'Need to distinguish between getMore responses and others'
-        expect(error.change_stream_resumable?).to eql(false)
+        it 'returns true' do
+          expect(error.change_stream_resumable?).to be true
+        end
+      end
+
+      context 'not getMore' do
+        let(:error) { Mongo::Error::OperationFailure.new('problem: socket exception', nil) }
+
+        it 'returns false' do
+          expect(error.change_stream_resumable?).to be false
+        end
       end
     end
 
