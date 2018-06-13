@@ -545,7 +545,7 @@ buildvariants:
 
 -
   #matrix_name: "rhel70-latest-all-rubies-all-topologies-all-auth-all-ssl-compression"
-  matrix_name: "3.6-compression"
+  matrix_name: "zlib"
   matrix_spec: { auth-and-ssl: "*", ruby: "*", mongodb-version: "3.6", topology: "*", compressor: 'zlib' }
   display_name: "${compressor} ${topology} ${auth-and-ssl} ${ruby}"
   run_on:
