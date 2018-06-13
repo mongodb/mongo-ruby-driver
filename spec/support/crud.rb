@@ -139,7 +139,9 @@ module Mongo
       # @since 2.0.0
       def initialize(data, test)
         @data = data
-        @fail_point_command = FAIL_POINT_BASE_COMMAND.merge(test['failPoint']) if test['failPoint']
+        if test['failPoint']
+          @fail_point_command = FAIL_POINT_BASE_COMMAND.merge(test['failPoint'])
+        end
         @description = test['description']
         @operation = Operation.get(test['operation'])
         @outcome = test['outcome']
@@ -169,7 +171,9 @@ module Mongo
       end
 
       def set_up_fail_point(collection)
-        collection.client.use(:admin).command(@fail_point_command) if @fail_point_command
+        if @fail_point_command
+          collection.client.use(:admin).command(@fail_point_command)
+        end
       end
 
       def clear_fail_point(collection)
