@@ -103,7 +103,7 @@ module Mongo
         write_retryable_code?
       end
 
-      private def write_retryable_code?
+      def write_retryable_code?
         if code
           WRITE_RETRY_ERRORS.any? { |e| e[:code] == code }
         else
@@ -111,6 +111,7 @@ module Mongo
           false
         end
       end
+      private :write_retryable_code?
 
       # Error codes and code names that should result in a failing getMore
       # command on a change stream NOT being resumed.
@@ -144,11 +145,12 @@ module Mongo
         change_stream_resumable_code?
       end
 
-      private def change_stream_resumable_message?
+      def change_stream_resumable_message?
         CHANGE_STREAM_RESUME_MESSAGES.any? { |m| message.include?(m) }
       end
+      private :change_stream_resumable_message?
 
-      private def change_stream_resumable_code?
+      def change_stream_resumable_code?
         if @result && @result.is_a?(Mongo::Operation::GetMore::Result)
           if code
             !CHANGE_STREAM_NOT_RESUME_ERRORS.any? { |e| e[:code] == code }
@@ -159,6 +161,7 @@ module Mongo
           false
         end
       end
+      private :change_stream_resumable_code?
 
       # Create the operation failure.
       #
