@@ -87,11 +87,23 @@ describe Mongo::Error::OperationFailure do
     end
 
     context 'when there is a resumable code' do
-      let(:error) { Mongo::Error::OperationFailure.new('no message', nil,
-        :code => 91, :code_name => 'ShutdownInProgress') }
+      context 'getMore response' do
+        let(:error) { Mongo::Error::OperationFailure.new('no message',
+          Mongo::Operation::GetMore::Result.new([]),
+          :code => 91, :code_name => 'ShutdownInProgress') }
 
-      it 'returns true' do
-        expect(error.change_stream_resumable?).to eql(true)
+        it 'returns true' do
+          expect(error.change_stream_resumable?).to eql(true)
+        end
+      end
+
+      context 'not a getMore response' do
+        let(:error) { Mongo::Error::OperationFailure.new('no message', nil,
+          :code => 91, :code_name => 'ShutdownInProgress') }
+
+        it 'returns false' do
+          expect(error.change_stream_resumable?).to eql(false)
+        end
       end
     end
 
