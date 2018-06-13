@@ -1,42 +1,40 @@
 require 'spec_helper'
 
-describe Mongo::Retryable do
+class LegacyRetryableTestConsumer
+  include Mongo::Retryable
 
-  let(:klass) do
-    Class.new do
-      include Mongo::Retryable
+  attr_reader :cluster
+  attr_reader :operation
 
-      attr_reader :cluster
-      attr_reader :operation
+  def initialize(operation, cluster)
+    @operation = operation
+    @cluster = cluster
+  end
 
-      def initialize(operation, cluster)
-        @operation = operation
-        @cluster = cluster
-      end
+  def max_read_retries
+    cluster.max_read_retries
+  end
 
-      def max_read_retries
-        cluster.max_read_retries
-      end
+  def read_retry_interval
+    cluster.read_retry_interval
+  end
 
-      def read_retry_interval
-        cluster.read_retry_interval
-      end
-
-      def read
-        read_with_retry do
-          operation.execute
-        end
-      end
-
-      def write
-        # This passes a nil session and therefore triggers
-        # legacy_write_with_retry code path
-        write_with_retry(nil, nil) do
-          operation.execute
-        end
-      end
+  def read
+    read_with_retry do
+      operation.execute
     end
   end
+
+  def write
+    # This passes a nil session and therefore triggers
+    # legacy_write_with_retry code path
+    write_with_retry(nil, nil) do
+      operation.execute
+    end
+  end
+end
+
+describe Mongo::Retryable do
 
   let(:operation) do
     double('operation')
@@ -51,7 +49,7 @@ describe Mongo::Retryable do
   end
 
   let(:retryable) do
-    klass.new(operation, cluster)
+    LegacyRetryableTestConsumer.new(operation, cluster)
   end
 
   describe '#read_with_retry' do
