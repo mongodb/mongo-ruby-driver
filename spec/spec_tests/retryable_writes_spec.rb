@@ -19,7 +19,7 @@ describe 'Retryable writes spec tests' do
           let(:client) do
             authorized_client_with_retry_writes
           end
-          
+
           before do
             unless sessions_enabled?
               skip 'Sessions not enabled'
@@ -44,7 +44,11 @@ describe 'Retryable writes spec tests' do
           let(:results) do
             if test.error?
               error = nil
-              begin; test.run(collection); rescue => e; error = e; end
+              begin
+                test.run(collection)
+              rescue => e
+                error = e
+              end
               error
             else
               test.run(collection)
