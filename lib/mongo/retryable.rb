@@ -123,7 +123,7 @@ module Mongo
 
     def retry_write_allowed?(session, write_concern)
       session && session.retry_writes? &&
-          (write_concern.nil? || write_concern.acknowledged?)
+          (write_concern.nil? || write_concern.acknowledged?) or false
     end
 
     def retry_write(original_error, txn_num, &block)
