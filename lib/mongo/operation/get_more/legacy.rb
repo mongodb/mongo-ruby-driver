@@ -16,7 +16,7 @@ module Mongo
   module Operation
     class GetMore
 
-      # A MongoDB getmore operation sent as a legacy wire protocol message.
+      # A MongoDB getMore operation sent as a legacy wire protocol message.
       #
       # @api private
       #

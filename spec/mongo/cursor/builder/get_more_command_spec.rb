@@ -47,13 +47,13 @@ describe Mongo::Cursor::Builder::GetMoreCommand do
       end
     end
 
-    shared_examples_for 'a getmore command builder' do
+    shared_examples_for 'a getMore command builder' do
 
       it 'includes the database name' do
         expect(specification[:db_name]).to eq(TEST_DB)
       end
 
-      it 'includes getmore with cursor id' do
+      it 'includes getMore with cursor id' do
         expect(selector[:getMore]).to eq(cursor.id)
       end
 
@@ -68,7 +68,7 @@ describe Mongo::Cursor::Builder::GetMoreCommand do
         Mongo::Collection::View.new(authorized_collection)
       end
 
-      it_behaves_like 'a getmore command builder'
+      it_behaves_like 'a getMore command builder'
 
       it 'does not include max time' do
         expect(selector[:maxTimeMS]).to be_nil
@@ -85,7 +85,7 @@ describe Mongo::Cursor::Builder::GetMoreCommand do
         Mongo::Collection::View.new(authorized_collection, {}, batch_size: 10)
       end
 
-      it_behaves_like 'a getmore command builder'
+      it_behaves_like 'a getMore command builder'
 
       it 'does not include max time' do
         expect(selector[:maxTimeMS]).to be_nil
@@ -104,7 +104,7 @@ describe Mongo::Cursor::Builder::GetMoreCommand do
           Mongo::Collection::View.new(authorized_collection, {}, max_await_time_ms: 100)
         end
 
-        it_behaves_like 'a getmore command builder'
+        it_behaves_like 'a getMore command builder'
 
         it 'does not include max time' do
           expect(selector[:maxTimeMS]).to be_nil
@@ -133,7 +133,7 @@ describe Mongo::Cursor::Builder::GetMoreCommand do
             )
           end
 
-          it_behaves_like 'a getmore command builder'
+          it_behaves_like 'a getMore command builder'
 
           it 'includes max time' do
             expect(selector[:maxTimeMS]).to eq(100)
@@ -159,7 +159,7 @@ describe Mongo::Cursor::Builder::GetMoreCommand do
             )
           end
 
-          it_behaves_like 'a getmore command builder'
+          it_behaves_like 'a getMore command builder'
 
           it 'does not include max time' do
             expect(selector[:maxTimeMS]).to be_nil

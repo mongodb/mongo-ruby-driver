@@ -15,7 +15,7 @@
 module Mongo
   module Protocol
 
-    # MongoDB Wire protocol GetMore message.
+    # MongoDB Wire protocol getMore message.
     #
     # This is a client request message that is sent to the server in order
     # to retrieve additional documents from a cursor that has already been
@@ -27,7 +27,7 @@ module Mongo
     # @api semipublic
     class GetMore < Message
 
-      # Creates a new GetMore message
+      # Creates a new getMore message
       #
       # @example Get 15 additional documents from cursor 123 in 'xgen.users'.
       #   GetMore.new('xgen', 'users', 15, 123)
@@ -80,7 +80,7 @@ module Mongo
 
       private
 
-      # The operation code required to specify a GetMore message.
+      # The operation code required to specify a getMore message.
       # @return [Fixnum] the operation code.
       #
       # @since 2.5.0
@@ -90,18 +90,18 @@ module Mongo
       field :zero, Zero
 
       # @!attribute
-      # @return [String] The namespace for this GetMore message.
+      # @return [String] The namespace for this getMore message.
       field :namespace, CString
 
       # @!attribute
-      # @return [Fixnum] The number to return for this GetMore message.
+      # @return [Fixnum] The number to return for this getMore message.
       field :number_to_return, Int32
 
       # @!attribute
       # @return [Fixnum] The cursor id to get more documents from.
       field :cursor_id, Int64
 
-      # Converts legacy getmore messages to the appropriare OP_COMMAND style
+      # Converts legacy getMore messages to the appropriare OP_COMMAND style
       # message.
       #
       # @since 2.1.0

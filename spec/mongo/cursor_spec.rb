@@ -61,7 +61,7 @@ describe Mongo::Cursor do
           authorized_collection.delete_many
         end
 
-        context 'when a getmore gets a socket error' do
+        context 'when a getMore gets a socket error' do
 
           let(:op) do
             double('operation')
@@ -374,7 +374,7 @@ describe Mongo::Cursor do
       end
     end
 
-    context 'when a getmore is needed to retrieve all results', if: sessions_enabled? && !sharded? do
+    context 'when a getMore is needed to retrieve all results', if: sessions_enabled? && !sharded? do
 
       let(:documents) do
         (1..4).map{ |i| { field: "test#{i}" }}
