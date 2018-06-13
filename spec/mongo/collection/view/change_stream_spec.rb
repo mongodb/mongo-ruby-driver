@@ -372,7 +372,7 @@ describe Mongo::Collection::View::ChangeStream, if: test_change_streams? do
       end
     end
 
-    context 'when some documents have been retrieved and the stream is closed before sending getmore' do
+    context 'when some documents have been retrieved and the stream is closed before sending getMore' do
 
       before do
         change_stream
@@ -554,11 +554,11 @@ describe Mongo::Collection::View::ChangeStream, if: test_change_streams? do
     end
   end
 
-  context 'when a server error is encountered during a getmore' do
+  context 'when a server error is encountered during a getMore' do
 
     context 'when the error is a resumable error' do
 
-      shared_examples_for 'a change stream that encounters an error from a getmore' do
+      shared_examples_for 'a change stream that encounters an error from a getMore' do
 
         before do
           change_stream
@@ -609,7 +609,7 @@ describe Mongo::Collection::View::ChangeStream, if: test_change_streams? do
           Mongo::Error::SocketError
         end
 
-        it_behaves_like 'a change stream that encounters an error from a getmore'
+        it_behaves_like 'a change stream that encounters an error from a getMore'
       end
 
       context 'when the error is a SocketTimeoutError' do
@@ -618,7 +618,7 @@ describe Mongo::Collection::View::ChangeStream, if: test_change_streams? do
           Mongo::Error::SocketTimeoutError
         end
 
-        it_behaves_like 'a change stream that encounters an error from a getmore'
+        it_behaves_like 'a change stream that encounters an error from a getMore'
       end
 
       context "when the error is a not 'master error'" do
@@ -627,7 +627,7 @@ describe Mongo::Collection::View::ChangeStream, if: test_change_streams? do
           Mongo::Error::OperationFailure.new('not master')
         end
 
-        it_behaves_like 'a change stream that encounters an error from a getmore'
+        it_behaves_like 'a change stream that encounters an error from a getMore'
       end
 
       context "when the error is a not 'cursor not found error'" do
@@ -636,7 +636,7 @@ describe Mongo::Collection::View::ChangeStream, if: test_change_streams? do
           Mongo::Error::OperationFailure.new('cursor not found (43)')
         end
 
-        it_behaves_like 'a change stream that encounters an error from a getmore'
+        it_behaves_like 'a change stream that encounters an error from a getMore'
       end
     end
 
@@ -683,11 +683,11 @@ describe Mongo::Collection::View::ChangeStream, if: test_change_streams? do
     end
   end
 
-  context 'when a server error is encountered during the command following an error during getmore' do
+  context 'when a server error is encountered during the command following an error during getMore' do
 
     context 'when the error is a resumable error' do
 
-      shared_examples_for 'a change stream that sent getmores, that then encounters an error when resuming' do
+      shared_examples_for 'a change stream that sent getMores, that then encounters an error when resuming' do
 
         before do
           change_stream
@@ -739,7 +739,7 @@ describe Mongo::Collection::View::ChangeStream, if: test_change_streams? do
           Mongo::Error::SocketError
         end
 
-        it_behaves_like 'a change stream that sent getmores, that then encounters an error when resuming'
+        it_behaves_like 'a change stream that sent getMores, that then encounters an error when resuming'
       end
 
       context 'when the error is a SocketTimeoutError' do
@@ -748,7 +748,7 @@ describe Mongo::Collection::View::ChangeStream, if: test_change_streams? do
           Mongo::Error::SocketTimeoutError
         end
 
-        it_behaves_like 'a change stream that sent getmores, that then encounters an error when resuming'
+        it_behaves_like 'a change stream that sent getMores, that then encounters an error when resuming'
       end
 
       context "when the error is a 'not master error'" do
@@ -757,7 +757,7 @@ describe Mongo::Collection::View::ChangeStream, if: test_change_streams? do
           Mongo::Error::OperationFailure.new('not master')
         end
 
-        it_behaves_like 'a change stream that sent getmores, that then encounters an error when resuming'
+        it_behaves_like 'a change stream that sent getMores, that then encounters an error when resuming'
       end
 
       context "when the error is a not 'cursor not found error'" do
@@ -766,7 +766,7 @@ describe Mongo::Collection::View::ChangeStream, if: test_change_streams? do
           Mongo::Error::OperationFailure.new('cursor not found (43)')
         end
 
-        it_behaves_like 'a change stream that sent getmores, that then encounters an error when resuming'
+        it_behaves_like 'a change stream that sent getMores, that then encounters an error when resuming'
       end
     end
 
