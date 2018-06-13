@@ -34,7 +34,6 @@ module Mongo
         {:code_name => 'NotMasterOrSecondary', :code => 13436},
         {:code_name => 'PrimarySteppedDown', :code => 189},
         {:code_name => 'ShutdownInProgress', :code => 91},
-        {:code_name => 'WriteConcernFailed', :code => 64},
         {:code_name => 'HostNotFound', :code => 7},
         {:code_name => 'HostUnreachable', :code => 6},
         {:code_name => 'NetworkTimeout', :code => 89},
