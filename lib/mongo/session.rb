@@ -611,7 +611,8 @@ module Mongo
     #
     # @since 2.6.0
     def txn_read_pref
-      rp = txn_options && txn_options[:read_preference].dup || @client.read_preference.dup
+      rp = (txn_options && txn_options[:read_preference] && txn_options[:read_preference].dup) ||
+        (@client.read_preference && @client.read_preference.dup)
       rp[:mode] = rp[:mode].to_s if rp
       rp
     end

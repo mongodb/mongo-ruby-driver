@@ -14,7 +14,7 @@
 
 # Converts a 'camelCase' string or symbol to a :snake_case symbol.
 def camel_to_snake(ident)
-  ident = ident.dup.to_s
+  ident = ident.is_a?(String) ? ident.dup : ident.to_s
   ident[0] = ident[0].downcase
   ident.chars.reduce('') { |s, c| s + (/[A-Z]/ =~ c ? "_#{c.downcase}" : c) }.to_sym
 end
