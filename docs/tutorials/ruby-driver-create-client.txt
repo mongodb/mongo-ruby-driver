@@ -593,7 +593,7 @@ be automatically retried:
 - ``collection#bulk_write`` (for all single statement ops, i.e. not for ``update_many`` or ``delete_many``)
 
 
-TCP keepalive configuration
+TCP Keepalive Configuration
 ---------------------------
 
 The driver sets TCP keepalive by default. The following default values are also set if the system
