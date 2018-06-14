@@ -12,9 +12,10 @@ Creating a Client
 
 Using ``Mongo::Client``
 -----------------------
-To start a Ruby driver connection, create a ``Mongo::Client`` object.
+
+To connect to a MongoDB cluster, create a ``Mongo::Client`` object.
 Provide a list of hosts and options or a connection URI to the
-``Mongo::Client`` constructor. The client's oselected database
+``Mongo::Client`` constructor. The client's selected database
 defaults to ``admin``.
 
 To create a client to a standalone server, provide one host in the
