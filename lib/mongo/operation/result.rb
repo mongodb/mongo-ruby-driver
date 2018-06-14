@@ -237,6 +237,11 @@ module Mongo
       #
       # @since 2.1.0
       def ok?
+        # first_document[OK] is a float, and the server can return
+        # ok as a BSON int32, BSON int64 or a BSON double.
+        # The number 1 is exactly representable in a float, hence
+        # 1.0 == 1 is going to perform correctly all of the time
+        # (until the server returns something other than 1 for success, that is)
         first_document[OK] == 1
       end
 
