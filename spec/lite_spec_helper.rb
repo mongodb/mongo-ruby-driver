@@ -30,6 +30,10 @@ else
 end
 
 require 'mongo'
+begin
+  require 'byebug'
+rescue LoadError
+end
 
 Mongo::Logger.logger = Logger.new($stdout)
 unless %w(1 true yes).include?((ENV['CLIENT_DEBUG'] || '').downcase)
