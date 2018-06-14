@@ -203,7 +203,7 @@ module Mongo
         @operation_time = new_operation_time
       end
     end
-    
+
     # Will writes executed with this session be retried.
     #
     # @example Will writes be retried.
@@ -211,8 +211,8 @@ module Mongo
     #
     # @return [ true, false ] If writes will be retried.
     #
-    # @note Retryable writes are only available on server versions at least 3.6 and with
-    #   sharded clusters or replica sets.
+    # @note Retryable writes are only available on server versions at least 3.6
+    #   and with sharded clusters or replica sets.
     #
     # @since 2.5.0
     def retry_writes?
