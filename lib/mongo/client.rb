@@ -348,7 +348,7 @@ module Mongo
     # @example Get the client read concern.
     #   client.read_concern
     #
-    # @return [ Symbol ] The read concern.
+    # @return [ Hash ] The read concern.
     #
     # @since 2.6.0
     def read_concern
