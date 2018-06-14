@@ -557,10 +557,31 @@ When ``#close`` is called on a client by any thread, all connections are closed:
 Details on Retryable Writes
 ---------------------------
 
-If the ``retry_writes`` option is set to true, the driver will retry single-statement write operations that fail from
-a network error. The driver automatically retries the operation once.
+The driver implements two mechanisms for retrying writes: modern and legacy.
+The modern mechanism is used when the driver connects to a MongoDB 3.6+
+replica set or a sharded cluster, and the ``retry_writes`` client option is
+set to true. This mechanism retries writes once on network errors
+(timeout, connection reset, etc.) as well as transient errors resulting
+from servers being unavailable due to initialization, shutdown, replica
+set elections and similar events (the corresponding errors are not master,
+node is recovering, etc.). Prior to retrying the write the driver attempts
+to select a new primary, since the server that was previously used is
+likely to no longer be usable.
 
-Most of the write methods you use day-to-day on a collection will be retryable in 3.6. They are:
+The legacy mechanism is used when the driver connects to MongoDB 3.4 or
+earlier clusters, or to MongoDB 3.6 or later standalone servers, or when
+``retry_writes`` client option is not given. In this mode the driver will
+retry write operations once due to transient errors resulting from
+servers being unavailable due to initialization, shutdown, replica set
+elections and similar events, but will not retry writes on network errors
+like timeouts.
+
+Note that writes are always retried on transient server status-related
+errors like "not master" and "node is recovering", regardless of what
+``retry_writes`` option is set to.
+
+The following write methods used in day-to-day operations on collections will
+be automatically retried:
 
 - ``collection#insert_one``
 - ``collection#update_one``
