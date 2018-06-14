@@ -105,7 +105,7 @@ module Mongo
     end
     alias_method :collection, :[]
 
-    # Get all the names of the non system collections in the database.
+    # Get all the names of the non-system collections in the database.
     #
     # @example Get the collection names.
     #   database.collection_names
