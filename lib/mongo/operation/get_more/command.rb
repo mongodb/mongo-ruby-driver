@@ -16,7 +16,7 @@ module Mongo
   module Operation
     class GetMore
 
-      # A MongoDB getmore operation sent as a command message.
+      # A MongoDB getMore operation sent as a command message.
       #
       # @api private
       #

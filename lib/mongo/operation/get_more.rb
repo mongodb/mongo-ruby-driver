@@ -20,7 +20,7 @@ require 'mongo/operation/get_more/result'
 module Mongo
   module Operation
 
-    # A MongoDB getmore operation.
+    # A MongoDB getMore operation.
     #
     # @api private
     #

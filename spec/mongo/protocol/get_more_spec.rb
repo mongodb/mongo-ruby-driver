@@ -30,7 +30,7 @@ describe Mongo::Protocol::GetMore do
 
   describe '#==' do
 
-    context 'when the other is a getmore' do
+    context 'when the other is a getMore' do
 
       context 'when the fields are equal' do
         let(:other) do
@@ -83,7 +83,7 @@ describe Mongo::Protocol::GetMore do
       end
     end
 
-    context 'when the other is not a getmore' do
+    context 'when the other is not a getMore' do
       let(:other) do
         expect(message).not_to eq('test')
       end

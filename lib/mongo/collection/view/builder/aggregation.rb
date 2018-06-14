@@ -29,8 +29,8 @@ module Mongo
           MAPPINGS = BSON::Document.new(
             :allow_disk_use => 'allowDiskUse',
             :max_time_ms => 'maxTimeMS',
-            # This is intentional; max_await_time_ms is an alias for maxTimeMS used on getmore
-            # commands for change streams.
+            # This is intentional; max_await_time_ms is an alias for maxTimeMS
+            # used on getMore commands for change streams.
             :max_await_time_ms => 'maxTimeMS',
             :explain => 'explain',
             :bypass_document_validation => 'bypassDocumentValidation',
