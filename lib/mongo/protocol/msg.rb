@@ -15,7 +15,8 @@
 module Mongo
   module Protocol
 
-    # MongoDB Wire protocol Msg message (OP_MSG), a bi-directional wire protocol opcode.
+    # MongoDB Wire protocol Msg message (OP_MSG), a bi-directional wire
+    # protocol opcode.
     #
     # OP_MSG is only available in MongoDB 3.6 (maxWireVersion >= 6) and later.
     #
@@ -36,11 +37,12 @@ module Mongo
       #   Msg.new([:more_to_come], {}, { ismaster: 1 },
       #           { type: 1, payload: { identifier: 'documents', sequence: [..] } })
       #
-      # @param [ Array<Symbol> ] flags The flag bits. Current supported values are
-      #  :more_to_come and :checksum_present.
-      # @param [ Hash ] options The options. There are currently no supported options, this is a
-      #   place-holder for the future.
-      # @param [ BSON::Document, Hash ] global_args The global arguments, becomes a section of payload type 0.
+      # @param [ Array<Symbol> ] flags The flag bits. Current supported values
+      # are :more_to_come and :checksum_present.
+      # @param [ Hash ] options The options. There are currently no supported
+      #   options, this is a placeholder for the future.
+      # @param [ BSON::Document, Hash ] global_args The global arguments,
+      #   becomes a section of payload type 0.
       # @param [ BSON::Document, Hash ] sections Zero or more sections, in the format
       #   { type: 1, payload: { identifier: <String>, sequence: <Array<BSON::Document, Hash>> } } or
       #   { type: 0, payload: <BSON::Document, Hash> }
