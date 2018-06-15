@@ -26,7 +26,7 @@ module Mongo
   end
 end
 
-describe 'SCRAM-SHA auth mechanism negotiation', if: scram_sha_256_enabled? && RUBY_VERSION >= '2.2.0' do
+describe 'SCRAM-SHA auth mechanism negotiation', if: scram_sha_256_enabled? do
 
   let(:create_user!) do
     ADMIN_AUTHORIZED_TEST_CLIENT.with(

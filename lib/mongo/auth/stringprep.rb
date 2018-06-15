@@ -48,8 +48,6 @@ module Mongo
       #
       # @since 2.6.0
       def prepare(data, mappings, prohibited, options = {})
-        check_ruby_version! if options[:normalize]
-
         apply_maps(data, mappings).tap do |mapped|
           normalize!(mapped) if options[:normalize]
           check_prohibited!(mapped, prohibited)
@@ -58,12 +56,6 @@ module Mongo
       end
 
       private
-
-      def check_ruby_version!
-        if RUBY_VERSION < "2.2.0"
-          raise Error::FailedStringPrepValidation.new(Error::FailedStringPrepValidation::UNABLE_TO_NORMALIZE)
-        end
-      end
 
       def apply_maps(data, mappings)
         data.each_char.inject('') do |out, c|
@@ -104,7 +96,12 @@ module Mongo
       end
 
       def normalize!(out)
-        out.unicode_normalize!(:nfkc)
+        if RUBY_VERSION < '2.2.0'
+          require 'mongo/auth/stringprep/unicode_normalize/normalize'
+          out.replace(UnicodeNormalize.normalize(out, :nfkc))
+        else
+          out.unicode_normalize!(:nfkc)
+        end
       end
 
       def table_contains?(table, c)
