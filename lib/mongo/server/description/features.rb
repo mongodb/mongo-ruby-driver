@@ -25,6 +25,7 @@ module Mongo
         #
         # @since 2.0.0
         MAPPINGS = {
+          :transactions => 7,
           :scram_sha_256 => 7,
           :array_filters => 6,
           :op_msg => 6,

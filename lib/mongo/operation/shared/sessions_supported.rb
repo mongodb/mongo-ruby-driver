@@ -26,7 +26,28 @@ module Mongo
 
       READ_PREFERENCE = '$readPreference'.freeze
 
-      def apply_causal_consistency!(selector, server); end
+      READ_COMMANDS = [
+        :aggregate,
+        :collStats,
+        :count,
+        :dbStats,
+        :distinct,
+        :find,
+        :geoNear,
+        :geoSearch,
+        :group,
+        :mapReduce,
+        :parallelCollectionScan
+      ].freeze
+
+      def apply_causal_consistency!(selector, server)
+        return unless selector[:startTransaction]
+
+        if !server.standalone?
+          full_read_concern_doc = session.send(:causal_consistency_doc, selector[:readConcern] || read_concern)
+          selector[:readConcern] = full_read_concern_doc if full_read_concern_doc
+        end
+      end
 
       def flags
         acknowledged_write? ? [:none] : [:more_to_come]
@@ -44,34 +65,84 @@ module Mongo
         end
       end
 
+      def read_command?(sel)
+        READ_COMMANDS.any? { |c| sel[c] }
+      end
+
       def add_write_concern!(sel)
-        if write_concern
-          sel[:writeConcern] = write_concern.options
-        end
+        sel[:writeConcern] = write_concern.options if write_concern
+      end
+
+      def apply_autocommit!(selector)
+        session.add_autocommit!(selector)
       end
 
       def apply_session_id!(selector)
         session.add_id!(selector)
       end
 
+      def apply_start_transaction!(selector)
+        session.add_start_transaction!(selector)
+      end
+
+      def apply_txn_num!(selector)
+        session.add_txn_num!(selector)
+      end
+
+      def apply_read_pref!(selector)
+        session.apply_read_pref!(selector) if read_command?(selector)
+      end
+
+      def apply_txn_opts!(selector)
+        session.add_txn_opts!(selector, read_command?(selector))
+      end
+
+      def suppress_read_write_concern!(selector)
+        session.suppress_read_write_concern!(selector)
+      end
+
+      def validate_read_pref!(selector)
+        session.validate_read_pref!(selector) if read_command?(selector)
+      end
+
+      def update_session_state!
+        session.update_state!
+      end
+
       def command(server)
         sel = selector(server)
-        sel[:writeConcern] = write_concern.options if write_concern
+        add_write_concern!(sel)
         sel[Protocol::Msg::DATABASE_IDENTIFIER] = db_name
         sel[READ_PREFERENCE] = read.to_doc if read
+
         if server.features.sessions_enabled?
           apply_cluster_time!(sel, server)
-          if acknowledged_write? && session
+          if session && (acknowledged_write? || session.in_transaction?)
             sel[:txnNumber] = BSON::Int64.new(txn_num) if txn_num
             apply_session_id!(sel)
+            apply_start_transaction!(sel)
             apply_causal_consistency!(sel, server)
+            apply_autocommit!(sel)
+            apply_txn_opts!(sel)
+            suppress_read_write_concern!(sel)
+            validate_read_pref!(sel)
+            update_session_state!
+            apply_txn_num!(sel)
           end
         elsif session && session.explicit?
           apply_cluster_time!(sel, server)
           sel[:txnNumber] = BSON::Int64.new(txn_num) if txn_num
           apply_session_id!(sel)
+          apply_start_transaction!(sel)
           apply_causal_consistency!(sel, server)
+          apply_autocommit!(sel)
+          apply_txn_opts!(sel)
+          suppress_read_write_concern!(sel)
+          validate_read_pref!(sel)
+          update_session_state!
+          apply_txn_num!(sel)
         end
+
         sel
       end
     end

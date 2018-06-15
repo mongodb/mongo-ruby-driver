@@ -41,6 +41,9 @@ module Mongo
         def execute(server)
           result = Result.new(dispatch_message(server), @ids)
           process_result(result, server)
+        rescue Mongo::Error::SocketError => e
+          e.send(:add_label, Mongo::Session::TRANSIENT_TRANSACTION_ERROR_LABEL) if session.in_transaction?
+          raise e
         end
 
         private

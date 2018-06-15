@@ -30,6 +30,7 @@ module Mongo
     #
     # @note This only retries read operations on socket errors.
     #
+    # @param [ Mongo::Session ] session The session that the operation is being run on.
     # @param [ Proc ] block The block to execute.
     #
     # @yieldparam [ Server ] server The server to which the write should be sent.
@@ -37,18 +38,18 @@ module Mongo
     # @return [ Result ] The result of the operation.
     #
     # @since 2.1.0
-    def read_with_retry
+    def read_with_retry(session = nil)
       attempt = 0
       begin
         attempt += 1
         yield
       rescue Error::SocketError, Error::SocketTimeoutError => e
-        raise(e) if attempt > cluster.max_read_retries
+        raise(e) if attempt > cluster.max_read_retries || (session && session.in_transaction?)
         log_retry(e)
         cluster.scan!
         retry
       rescue Error::OperationFailure => e
-        if cluster.sharded? && e.retryable?
+        if cluster.sharded? && e.retryable? && !(session && session.in_transaction?)
           raise(e) if attempt > cluster.max_read_retries
           log_retry(e)
           sleep(cluster.read_retry_interval)
@@ -93,28 +94,32 @@ module Mongo
     # @note This only retries operations on not master failures, since it is
     #   the only case we can be sure a partial write did not already occur.
     #
+    # @param [ true | false ] ending_transaction True if the write operation is abortTransaction or
+    #   commitTransaction, false otherwise.
     # @param [ Proc ] block The block to execute.
     #
     # @return [ Result ] The result of the operation.
     #
     # @since 2.1.0
-    def write_with_retry(session, write_concern, &block)
-      unless retry_write_allowed?(session, write_concern)
-        return legacy_write_with_retry(&block)
+    def write_with_retry(session, write_concern, ending_transaction = false, &block)
+      unless retry_write_allowed?(session, write_concern) || ending_transaction
+        return legacy_write_with_retry(nil, session, &block)
       end
 
       server = cluster.next_primary
-      unless server.retry_writes?
-        return legacy_write_with_retry(server, &block)
+
+      unless server.retry_writes? || ending_transaction
+        return legacy_write_with_retry(server, session, &block)
       end
 
       begin
-        txn_num = session.next_txn_num
+        txn_num = session.in_transaction? ? session.txn_num : session.next_txn_num
         yield(server, txn_num)
       rescue Error::SocketError, Error::SocketTimeoutError => e
+        raise e if session.in_transaction? && !ending_transaction
         retry_write(e, txn_num, &block)
       rescue Error::OperationFailure => e
-        raise e unless e.write_retryable?
+        raise e if (session.in_transaction? && !ending_transaction) || !e.write_retryable?
         retry_write(e, txn_num, &block)
       end
     end
@@ -143,7 +148,7 @@ module Mongo
       raise original_error
     end
 
-    def legacy_write_with_retry(server = nil)
+    def legacy_write_with_retry(server = nil, session = nil)
       attempt = 0
       begin
         attempt += 1
@@ -151,7 +156,7 @@ module Mongo
       rescue Error::OperationFailure => e
         server = nil
         raise(e) if attempt > Cluster::MAX_WRITE_RETRIES
-        if e.write_retryable?
+        if e.write_retryable? && !(session && session.in_transaction?)
           log_retry(e)
           cluster.scan!
           retry

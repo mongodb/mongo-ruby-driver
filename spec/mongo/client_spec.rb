@@ -1327,19 +1327,19 @@ describe Mongo::Client do
         expect(new_client.options.keys).not_to include('invalid')
       end
     end
-    
+
     context 'when client is created with ipv6 address' do
       let(:client) do
         described_class.new(['[::1]:27017'], :database => TEST_DB)
       end
-      
+
       context 'when providing nil' do
 
         it 'returns the cloned client' do
           expect(client.with(nil)).to eq(client)
         end
       end
-      
+
       context 'when changing options' do
         let(:new_options) do
           { app_name: 'client_test' }
@@ -1663,8 +1663,8 @@ describe Mongo::Client do
         end
 
         it 'preserves the transaction numbers on the server sessions' do
-          expect(authorized_client.start_session.next_txn_num).to be(2)
-          expect(authorized_client.start_session.next_txn_num).to be(2)
+          expect(authorized_client.start_session.next_txn_num).to be(3)
+          expect(authorized_client.start_session.next_txn_num).to be(3)
         end
       end
 

@@ -153,8 +153,10 @@ module Mongo
     #
     # @return [ Hash ] The result of the command execution.
     def command(operation, opts = {})
-      preference = ServerSelector.get(opts[:read] || ServerSelector::PRIMARY)
+      txn_read_pref = opts[:session] && opts[:session].in_transaction? && opts[:session].txn_read_pref
+      preference = ServerSelector.get(txn_read_pref || opts[:read] || ServerSelector::PRIMARY)
       server = preference.select_server(cluster)
+
       client.send(:with_session, opts) do |session|
         Operation::Command.new({
           :selector => operation.dup,

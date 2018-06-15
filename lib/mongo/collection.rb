@@ -109,7 +109,7 @@ module Mongo
     #
     # @since 2.0.0
     def server_selector
-     @server_selector ||= ServerSelector.get(read_preference || database.server_selector)
+      @server_selector ||= ServerSelector.get(read_preference || database.server_selector)
     end
 
     # Get the read preference on this collection.
@@ -295,7 +295,7 @@ module Mongo
     #
     # @since 2.1.0
     def aggregate(pipeline, options = {})
-      View.new(self, {}).aggregate(pipeline, options)
+      View.new(self, {}, options).aggregate(pipeline, options)
     end
 
     # As of version 3.6 of the MongoDB server, a ``$changeStream`` pipeline stage is supported
