@@ -1,7 +1,7 @@
 # Assumes the default for transactions is the same as for all ops, tests
 # setting the writeConcern to "majority".
-database_name: &database_name "transaction-tests"
-collection_name: &collection_name "test"
+database_name: &database_name "ruby-driver"
+collection_name: &collection_name "transactions-tests"
 
 data: []
 

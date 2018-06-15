@@ -32,7 +32,6 @@ module Mongo
         13436, # NotMasterOrSecondary
         189,   # PrimarySteppedDown
         91,    # ShutdownInProgress
-        64,    # WriteConcernFailed
         7,     # HostNotFound
         6,     # HostUnreachable
         89,    # NetworkTimeout

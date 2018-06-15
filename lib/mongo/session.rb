@@ -108,7 +108,10 @@ module Mongo
     # @since 2.6.0
     TRANSACTION_ABORTED_STATE = :transaction_aborted
 
-    UNLABELED_WRITE_CONCERN_CODES = ['CannotSatisfyWriteConcern', 'UnknownReplWriteConcern'].freeze
+    UNLABELED_WRITE_CONCERN_CODES = [
+      79,  # UnknownReplWriteConcern
+      100, # CannotSatisfyWriteConcern,
+    ].freeze
 
     # Initialize a Session.
     #
@@ -509,7 +512,6 @@ module Mongo
             :abortTransaction, :commitTransaction))
       end
 
-
       begin
         # If commitTransaction is called twice, we need to run the same commit operation again, so
         # we revert the session to the previous state.
@@ -537,8 +539,8 @@ module Mongo
       rescue Mongo::Error::OperationFailure => e
         err_doc = e.instance_variable_get(:@result).send(:first_document)
 
-        if err_doc['writeConcernError'] &&
-            !UNLABELED_WRITE_CONCERN_CODES.include?(err_doc['writeConcernError']['codeName'])
+        if e.write_retryable? || (err_doc['writeConcernError'] &&
+            !UNLABELED_WRITE_CONCERN_CODES.include?(err_doc['writeConcernError']['code']))
           e.send(:add_label, UNKNOWN_TRANSACTION_COMMIT_LABEL)
         end
 
@@ -572,22 +574,24 @@ module Mongo
           Mongo::Error::InvalidTransactionOperation.cannot_call_twice_msg(:abortTransaction))
       end
 
-      unless starting_transaction?
-        write_with_retry(self, txn_options[:write_concern], true) do |server, txn_num|
-          Operation::Command.new(
-            selector: { abortTransaction: 1 },
-            db_name: 'admin',
-            session: self,
-            txn_num: txn_num
-          ).execute(server)
+      begin
+        unless starting_transaction?
+          write_with_retry(self, txn_options[:write_concern], true) do |server, txn_num|
+            Operation::Command.new(
+              selector: { abortTransaction: 1 },
+              db_name: 'admin',
+              session: self,
+              txn_num: txn_num
+            ).execute(server)
+          end
         end
-      end
 
-      @state = TRANSACTION_ABORTED_STATE
-    rescue Mongo::Error::InvalidTransactionOperation
-      raise
-    rescue Mongo::Error
-      @state = TRANSACTION_ABORTED_STATE
+        @state = TRANSACTION_ABORTED_STATE
+      rescue Mongo::Error::InvalidTransactionOperation
+        raise
+      rescue Mongo::Error
+        @state = TRANSACTION_ABORTED_STATE
+      end
     end
 
     # Whether or not the session is currently in a transaction.

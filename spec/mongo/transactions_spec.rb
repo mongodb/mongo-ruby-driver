@@ -8,23 +8,14 @@ describe 'Transactions' do
 
     context(spec.description) do
       spec.tests.each do |test|
-
-        # Fixing this test is blocked on SPEC-1112
-        next if spec.description == 'error-labels.yml' && test.description == 'add unknown commit label to retryable commit errors'
-
         context(test.description) do
 
           before(:each) do
-            test.setup_test(ADDRESSES)
+            test.setup_test
           end
 
           let(:results) do
             test.run
-          end
-
-          let(:collection) do
-            AUTHORIZED_CLIENT.use(
-                Mongo::Transactions::Spec::DATABASE_NAME)[Mongo::Transactions::Spec::COLLECTION_NAME]
           end
 
           it 'returns the correct result', if: test_transactions? do

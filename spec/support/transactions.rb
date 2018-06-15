@@ -45,15 +45,10 @@ module Mongo
     # @since 2.6.0
     class Spec
 
-      # The name of the database to run the tests against.
+      # The name of the collection to run the tests against.
       #
       # @since 2.6.0
-      DATABASE_NAME = 'transaction-tests'.freeze
-
-      # The name of the database to run the tests against.
-      #
-      # @since 2.6.0
-      COLLECTION_NAME = 'test'.freeze
+      COLLECTION_NAME = 'transactions-tests'.freeze
 
       # @return [ String ] description The spec description.
       #
@@ -195,6 +190,10 @@ module Mongo
             end
           end
 
+          # This write concern is sent for some server topologies/configurations, but not all, so it
+          # doesn't appear in the expected events.
+          e.command.delete('writeConcern') if e.command['writeConcern'] == { 'w' => 2 }
+
           # The spec tests use 42 as a placeholder value for any getMore cursorId.
           e.command['getMore'] = { '$numberLong' => '42' } if e.command['getMore']
 
@@ -212,8 +211,11 @@ module Mongo
           }
         end
 
+        # Remove any events from authentication commands.
+        events.reject! { |c| c['command_started_event']['command_name'].start_with?('sasl') }
+
         if @failpoint
-          @collection.client.use('admin').command(configureFailPoint: 'failCommand', mode: 'off')
+          ADMIN_AUTHORIZED_TEST_CLIENT.use('admin').command(configureFailPoint: 'failCommand', mode: 'off')
         end
 
         {
@@ -223,15 +225,15 @@ module Mongo
         }
       end
 
-      def setup_test(address)
-        client = Mongo::Client.new(address, database: :admin)
+      def setup_test
+        client = ADMIN_AUTHORIZED_TEST_CLIENT.use('admin')
 
         begin
           client.command(killAllSessions: [])
         rescue Mongo::Error
         end
 
-        db = client.use(Mongo::Transactions::Spec::DATABASE_NAME)
+        db = client.use(AUTHORIZED_CLIENT.database.name)
         coll = db[Mongo::Transactions::Spec::COLLECTION_NAME]
         coll.with(write: { w: :majority }).drop
         db.command(
@@ -243,10 +245,8 @@ module Mongo
 
         client.close
 
-        test_client = Mongo::Client.new(
-          address,
-          @client_options.merge(database: Mongo::Transactions::Spec::DATABASE_NAME))
-
+        test_client = AUTHORIZED_CLIENT.with(
+          @client_options.merge(app_name: 'this is used solely to force the new client to create its own cluster'))
         @collection = test_client[Mongo::Transactions::Spec::COLLECTION_NAME]
 
         @session0 = test_client.start_session(@session_options[:session0] || {})
