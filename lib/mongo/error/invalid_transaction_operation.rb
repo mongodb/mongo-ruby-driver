@@ -15,7 +15,7 @@
 module Mongo
   class Error
 
-    # Exception raised if the object is not a valid update document.
+    # Exception raised if an invalid operation is attempted as part of a transaction.
     #
     # @since 2.6.0
     class InvalidTransactionOperation < Error
@@ -45,7 +45,7 @@ module Mongo
       # Instantiate the new exception.
       #
       # @example Instantiate the exception.
-      #   Mongo::Error::InvalidUpdateDocument.new
+      #   Mongo::Error::InvalidUpdateDocument.new(msg)
       #
       # @since 2.6.0
       def initialize(msg)
@@ -60,7 +60,7 @@ module Mongo
       # @param [ Symbol ] op The operation which was run twice.
       #
       # @since 2.6.0
-      def self.cannot_call_twice(op)
+      def self.cannot_call_twice_msg(op)
         "cannot call #{op} twice"
       end
 
@@ -74,7 +74,7 @@ module Mongo
       # @param [ Symbol ] current_op The operation which cannot be run.
       #
       # @since 2.6.0
-      def self.cannot_call_after(last_op, current_op)
+      def self.cannot_call_after_msg(last_op, current_op)
         "Cannot call #{current_op} after calling #{last_op}"
       end
     end

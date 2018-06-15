@@ -116,6 +116,8 @@ module Mongo
       # @example
       #   error.label?(label)
       #
+      # @param [ String ] label The label to check if the error has.
+      #
       # @return [ true, false ] Whether the error has the given label.
       #
       # @since 2.6.0

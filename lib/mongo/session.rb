@@ -505,7 +505,7 @@ module Mongo
 
       if within_states?(TRANSACTION_ABORTED_STATE)
         raise Mongo::Error::InvalidTransactionOperation.new(
-          Mongo::Error::InvalidTransactionOperation.cannot_call_after(
+          Mongo::Error::InvalidTransactionOperation.cannot_call_after_msg(
             :abortTransaction, :commitTransaction))
       end
 
@@ -563,13 +563,13 @@ module Mongo
 
       if within_states?(TRANSACTION_COMMITTED_STATE)
         raise Mongo::Error::InvalidTransactionOperation.new(
-          Mongo::Error::InvalidTransactionOperation.cannot_call_after(
+          Mongo::Error::InvalidTransactionOperation.cannot_call_after_msg(
             :commitTransaction, :abortTransaction))
       end
 
       if within_states?(TRANSACTION_ABORTED_STATE)
         raise Mongo::Error::InvalidTransactionOperation.new(
-          Mongo::Error::InvalidTransactionOperation.cannot_call_twice(:abortTransaction))
+          Mongo::Error::InvalidTransactionOperation.cannot_call_twice_msg(:abortTransaction))
       end
 
       unless starting_transaction?

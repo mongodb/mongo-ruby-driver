@@ -27,6 +27,7 @@ module Mongo
       #
       # @param [ Hash ] server_selector The server preference that could not be
       #   satisfied.
+      # @param [ Array<String> ] labels A set of labels describing the error.
       #
       # @since 2.0.0
       def initialize(server_selector, labels = nil)
@@ -40,6 +41,8 @@ module Mongo
       #
       # @example
       #   error.label?(label)
+      #
+      # @param [ String ] label The label to check if the error has.
       #
       # @return [ true, false ] Whether the error has the given label.
       #
