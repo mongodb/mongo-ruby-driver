@@ -172,7 +172,7 @@ module Mongo
       #
       # @since 2.0.0
       def inspect
-        "#<Mongo::Operation::Result:#{object_id} documents=#{documents}>"
+        "#<#{self.class.name}:0x#{object_id} documents=#{documents}>"
       end
 
       # Get the first reply from the result.
