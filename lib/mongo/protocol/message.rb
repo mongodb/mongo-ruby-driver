@@ -72,14 +72,14 @@ module Mongo
       # @since 2.2.1
       MAX_MESSAGE_SIZE = 50331648.freeze
 
+      def initialize(*args) # :nodoc:
+        @request_id = nil
+      end
+
       # Returns the request id for the message
       #
       # @return [Fixnum] The request id for this message
       attr_reader :request_id
-
-      def initialize(*args) # :nodoc:
-        @request_id = nil
-      end
 
       # The default for messages is not to require a reply after sending a
       # message to the server.

@@ -64,6 +64,18 @@ module Mongo
       # @since 2.2.0
       RESULT = 'result'.freeze
 
+      # Initialize a new result.
+      #
+      # @example Instantiate the result.
+      #   Result.new(replies)
+      #
+      # @param [ Protocol::Reply ] replies The wire protocol replies.
+      #
+      # @since 2.0.0
+      def initialize(replies)
+        @replies = [ *replies ] if replies
+      end
+
       # @return [ Array<Protocol::Reply> ] replies The wrapped wire protocol replies.
       attr_reader :replies
 
@@ -149,18 +161,6 @@ module Mongo
       # @yieldparam [ BSON::Document ] Each document in the result.
       def each(&block)
         documents.each(&block)
-      end
-
-      # Initialize a new result.
-      #
-      # @example Instantiate the result.
-      #   Result.new(replies)
-      #
-      # @param [ Protocol::Reply ] replies The wire protocol replies.
-      #
-      # @since 2.0.0
-      def initialize(replies)
-        @replies = [ *replies ] if replies
       end
 
       # Get the pretty formatted inspection of the result.
