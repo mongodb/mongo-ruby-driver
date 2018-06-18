@@ -72,7 +72,7 @@ describe 'Command monitoring' do
     failed_event = subscriber.failed_events.first
     expect(failed_event.command_name).to eql(:bogus)
     expect(failed_event.command.to_hash.slice('bogus')).to eql('bogus' => 1)
-    expect(failed_event.message).to match(/no such command/)
+    expect(failed_event.message).to match(/no such c(om)?m(an)?d/)
     expect(failed_event.address).to be_a(Mongo::Address)
     expect(failed_event.duration).to be_a(Float)
   end
