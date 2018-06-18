@@ -36,7 +36,14 @@ module Mongo
         # @return [ Float ] duration The duration of the command in seconds.
         attr_reader :duration
 
-        # @return [ String ] message The error message.
+        # @return [ BSON::Document ] failure The error document, if present.
+        #   This will only be filled out for errors communicated by a
+        #   MongoDB server. In other situations, for example in case of
+        #   a network error, this attribute may be nil.
+        attr_reader :failure
+
+        # @return [ String ] message The error message. Unlike the error
+        #   document, the error message should always be present.
         attr_reader :message
 
         # @return [ Integer ] operation_id The operation id.
@@ -49,6 +56,7 @@ module Mongo
         #
         # @example Create the event.
         #
+        # @param [ BSON::Document ] failure The error document, if any.
         # @param [ String ] command_name The name of the command.
         # @param [ BSON::Document ] command The command arguments.
         # @param [ String ] database_name The database_name name.
@@ -59,7 +67,8 @@ module Mongo
         # @param [ Float ] duration The duration the command took in seconds.
         #
         # @since 2.1.0
-        def initialize(command_name, command, database_name, address, request_id, operation_id, message, duration)
+        def initialize(failure, command_name, command, database_name, address, request_id, operation_id, message, duration)
+          @failure = failure
           @command_name = command_name
           @command = command
           @database_name = database_name
@@ -75,6 +84,7 @@ module Mongo
         # @example Create the event.
         #   CommandFailed.generate(address, 1, payload, duration)
         #
+        # @param [ BSON::Document ] failure The error document, if any.
         # @param [ Server::Address ] address The server address.
         # @param [ Integer ] operation_id The operation id.
         # @param [ Hash ] payload The message payload.
@@ -84,8 +94,9 @@ module Mongo
         # @return [ CommandFailed ] The event.
         #
         # @since 2.1.0
-        def self.generate(address, operation_id, payload, message, duration)
+        def self.generate(failure, address, operation_id, payload, message, duration)
           new(
+            failure,
             payload[:command_name],
             payload[:command],
             payload[:database_name],

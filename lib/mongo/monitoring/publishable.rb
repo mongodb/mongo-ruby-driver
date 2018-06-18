@@ -51,7 +51,7 @@ module Mongo
           result
         rescue Exception => e
           total_duration = duration(receive_start) + send_duration
-          command_failed(address, operation_id, payload, e.message, total_duration)
+          command_failed(nil, address, operation_id, payload, e.message, total_duration)
           raise e
         end
       end
@@ -80,7 +80,7 @@ module Mongo
         document = result ? (result.documents || []).first : nil
         if error?(document)
           parser = Error::Parser.new(document)
-          command_failed(address, operation_id, payload, parser.message, duration)
+          command_failed(document, address, operation_id, payload, parser.message, duration)
         else
           command_succeeded(result, address, operation_id, payload, duration)
         end
@@ -99,10 +99,10 @@ module Mongo
         )
       end
 
-      def command_failed(address, operation_id, payload, message, duration)
+      def command_failed(failure, address, operation_id, payload, message, duration)
         monitoring.failed(
           Monitoring::COMMAND,
-          Event::CommandFailed.generate(address, operation_id, payload, message, duration)
+          Event::CommandFailed.generate(failure, address, operation_id, payload, message, duration)
         )
       end
 
