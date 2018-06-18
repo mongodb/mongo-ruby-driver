@@ -42,13 +42,13 @@ describe 'Command monitoring' do
     expect(subscriber.started_events.length).to eql(1)
     started_event = subscriber.started_events.first
     expect(started_event.command_name).to eql(:ismaster)
-    expect(started_event.command.slice('ismaster')).to eql('ismaster' => 1)
+    expect(started_event.command.to_hash.slice('ismaster')).to eql('ismaster' => 1)
     expect(started_event.address).to be_a(Mongo::Address)
 
     expect(subscriber.succeeded_events.length).to eql(1)
     succeeded_event = subscriber.succeeded_events.first
     expect(succeeded_event.command_name).to eql(:ismaster)
-    expect(succeeded_event.reply.slice('ismaster')).to eql('ismaster' => true)
+    expect(succeeded_event.reply.to_hash.slice('ismaster')).to eql('ismaster' => true)
     expect(succeeded_event.address).to be_a(Mongo::Address)
     expect(succeeded_event.duration).to be_a(Float)
 
@@ -58,7 +58,7 @@ describe 'Command monitoring' do
   it 'notifies on failed commands' do
     expect do
       result = client.database.command(:bogus => 1)
-    end.to raise_error(Mongo::Error::OperationFailure, /no such command/)
+    end.to raise_error(Mongo::Error::OperationFailure, /no such c(om)?m(an)?d/)
 
     expect(subscriber.started_events.length).to eql(1)
     started_event = subscriber.started_events.first
