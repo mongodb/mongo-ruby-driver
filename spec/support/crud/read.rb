@@ -70,7 +70,7 @@ module Mongo
         #
         # @since 2.0.0
         def execute(collection)
-          send(name.to_sym, collection)
+          send(camel_to_snake(name), collection)
         end
 
         # Whether the operation is expected to have restuls.
@@ -94,6 +94,22 @@ module Mongo
             opts
           end
           collection.count(filter, options)
+        end
+
+        def count_documents(collection)
+          options = ARGUMENT_MAP.reduce({}) do |opts, (key, value)|
+            opts.merge!(key => arguments[value]) if arguments[value]
+            opts
+          end
+          collection.count_documents(filter, options)
+        end
+
+        def estimated_document_count(collection)
+          options = ARGUMENT_MAP.reduce({}) do |opts, (key, value)|
+            opts.merge!(key => arguments[value]) if arguments[value]
+            opts
+          end
+          collection.estimated_document_count(options)
         end
 
         def aggregate(collection)

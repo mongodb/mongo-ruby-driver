@@ -112,12 +112,12 @@ module Mongo
         # @example Get the number of documents in the collection.
         #   collection_view.count
         #
-        # @param [ Hash ] opts Options for the count command.
+        # @param [ Hash ] opts Options for the operation.
         #
         # @option opts :skip [ Integer ] The number of documents to skip.
         # @option opts :hint [ Hash ] Override default index selection and force
         #   MongoDB to use a specific index for the query.
-        # @option opts :limit [ Integer ] Max number of docs to return.
+        # @option opts :limit [ Integer ] Max number of docs to count.
         # @option opts :max_time_ms [ Integer ] The maximum amount of time to allow the
         #   command to run.
         # @option opts [ Hash ] :read The read preference options.
@@ -126,6 +126,8 @@ module Mongo
         # @return [ Integer ] The document count.
         #
         # @since 2.0.0
+        #
+        # @deprecated Call count_documents or estimated_document_count instead.
         def count(opts = {})
           cmd = { :count => collection.name, :query => filter }
           cmd[:skip] = opts[:skip] if opts[:skip]
@@ -150,6 +152,67 @@ module Mongo
           end
         end
 
+        # Get a count of matching documents in the collection.
+        #
+        # @example Get the number of documents in the collection.
+        #   collection_view.count
+        #
+        # @param [ Hash ] opts Options for the operation.
+        #
+        # @option opts :skip [ Integer ] The number of documents to skip.
+        # @option opts :hint [ Hash ] Override default index selection and force
+        #   MongoDB to use a specific index for the query. Requires server version 3.6+.
+        # @option opts :limit [ Integer ] Max number of docs to count.
+        # @option opts :max_time_ms [ Integer ] The maximum amount of time to allow the
+        #   command to run.
+        # @option opts [ Hash ] :read The read preference options.
+        # @option opts [ Hash ] :collation The collation to use.
+        #
+        # @return [ Integer ] The document count.
+        #
+        # @since 2.6.0
+        def count_documents(opts = {})
+          pipeline = [:'$match' => filter]
+          pipeline << { :'$skip' => opts[:skip] } if opts[:skip]
+          pipeline << { :'$limit' => opts[:limit] } if opts[:limit]
+          pipeline << { :'$group' => { _id: nil, n: { :'$sum' => 1 } } }
+
+          opts.select! { |k, _| [:hint, :max_time_ms, :read, :collation].include?(k) }
+          aggregate(pipeline, opts).first['n'].to_i
+        end
+
+        # Gets an estimate of the count of documents in a collection using collection metadata.
+        #
+        # @example Get the number of documents in the collection.
+        #   collection_view.estimated_document_count
+        #
+        # @param [ Hash ] opts Options for the operation.
+        #
+        # @option opts :max_time_ms [ Integer ] The maximum amount of time to allow the command to
+        #   run.
+        # @option opts [ Hash ] :read The read preference options.
+        #
+        # @return [ Integer ] The document count.
+        #
+        # @since 2.6.0
+        def estimated_document_count(opts = {})
+          cmd = { count: collection.name }
+          cmd[:maxTimeMS] = opts[:max_time_ms] if opts[:max_time_ms]
+          cmd[:readConcern] = collection.read_concern if collection.read_concern
+          read_pref = opts[:read] || read_preference
+          selector = ServerSelector.get(read_pref || server_selector)
+          with_session(opts) do |session|
+            read_with_retry(session) do
+              server = selector.select_server(cluster)
+              Operation::Count.new(
+                selector: cmd,
+                db_name: database.name,
+                read: read_pref,
+                session: session
+              ).execute(server)
+            end.n.to_i
+          end
+        end
 
         # Get a list of distinct values for a specific field.
         #

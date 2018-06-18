@@ -6,12 +6,6 @@ describe 'CRUD' do
 
     spec = Mongo::CRUD::Spec.new(file)
 
-    before do
-      unless spec.server_version_satisfied?(authorized_client)
-        skip 'Version requirement not satisfied'
-      end
-    end
-
     context(spec.description) do
 
       spec.tests.each do |test|
@@ -19,6 +13,10 @@ describe 'CRUD' do
         context(test.description) do
 
           before(:each) do
+            unless spec.server_version_satisfied?(authorized_client)
+              skip 'Version requirement not satisfied'
+            end
+
             test.setup_test(authorized_collection)
           end
 
@@ -26,7 +24,7 @@ describe 'CRUD' do
             authorized_collection.delete_many
           end
 
-          let(:results) do
+          let!(:results) do
             test.run(authorized_collection)
           end
 
