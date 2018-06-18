@@ -42,14 +42,17 @@ describe 'Command monitoring' do
     expect(subscriber.started_events.length).to eql(1)
     started_event = subscriber.started_events.first
     expect(started_event.command_name).to eql(:ismaster)
-    expect(started_event.command.to_hash.slice('ismaster')).to eql('ismaster' => 1)
+    expect(started_event.command).to be_a(BSON::Document)
+    expect(started_event.command['ismaster']).to eql(1)
     expect(started_event.address).to be_a(Mongo::Address)
 
     expect(subscriber.succeeded_events.length).to eql(1)
     succeeded_event = subscriber.succeeded_events.first
     expect(succeeded_event.command_name).to eql(:ismaster)
-    expect(succeeded_event.command.to_hash.slice('ismaster')).to eql('ismaster' => 1)
-    expect(succeeded_event.reply.to_hash.slice('ismaster')).to eql('ismaster' => true)
+    expect(succeeded_event.command).to be_a(BSON::Document)
+    expect(succeeded_event.command['ismaster']).to eql(1)
+    expect(succeeded_event.reply).to be_a(BSON::Document)
+    expect(succeeded_event.reply['ismaster']).to eql(true)
     expect(succeeded_event.address).to be_a(Mongo::Address)
     expect(succeeded_event.duration).to be_a(Float)
 
@@ -71,7 +74,8 @@ describe 'Command monitoring' do
     expect(subscriber.failed_events.length).to eql(1)
     failed_event = subscriber.failed_events.first
     expect(failed_event.command_name).to eql(:bogus)
-    expect(failed_event.command.to_hash.slice('bogus')).to eql('bogus' => 1)
+    expect(failed_event.command).to be_a(BSON::Document)
+    expect(failed_event.command['bogus']).to eql(1)
     expect(failed_event.message).to match(/no such c(om)?m(an)?d/)
     expect(failed_event.address).to be_a(Mongo::Address)
     expect(failed_event.duration).to be_a(Float)
