@@ -28,6 +28,9 @@ module Mongo
         # @return [ String ] command_name The name of the command.
         attr_reader :command_name
 
+        # @return [ BSON::Document ] command The command arguments.
+        attr_reader :command
+
         # @return [ BSON::Document ] reply The command reply.
         attr_reader :reply
 
@@ -48,6 +51,7 @@ module Mongo
         # @example Create the event.
         #
         # @param [ String ] command_name The name of the command.
+        # @param [ BSON::Document ] command The command arguments.
         # @param [ String ] database_name The database name.
         # @param [ Server::Address ] address The server address.
         # @param [ Integer ] request_id The request id.
@@ -56,8 +60,9 @@ module Mongo
         # @param [ Float ] duration The duration the command took in seconds.
         #
         # @since 2.1.0
-        def initialize(command_name, database_name, address, request_id, operation_id, reply, duration)
+        def initialize(command_name, command, database_name, address, request_id, operation_id, reply, duration)
           @command_name = command_name
+          @command = command
           @database_name = database_name
           @address = address
           @request_id = request_id
@@ -83,6 +88,7 @@ module Mongo
         def self.generate(address, operation_id, command_payload, reply_payload, duration)
           new(
             command_payload[:command_name],
+            command_payload[:command],
             command_payload[:database_name],
             address,
             command_payload[:request_id],

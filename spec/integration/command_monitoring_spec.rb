@@ -48,6 +48,7 @@ describe 'Command monitoring' do
     expect(subscriber.succeeded_events.length).to eql(1)
     succeeded_event = subscriber.succeeded_events.first
     expect(succeeded_event.command_name).to eql(:ismaster)
+    expect(succeeded_event.command.to_hash.slice('ismaster')).to eql('ismaster' => 1)
     expect(succeeded_event.reply.to_hash.slice('ismaster')).to eql('ismaster' => true)
     expect(succeeded_event.address).to be_a(Mongo::Address)
     expect(succeeded_event.duration).to be_a(Float)
@@ -70,6 +71,7 @@ describe 'Command monitoring' do
     expect(subscriber.failed_events.length).to eql(1)
     failed_event = subscriber.failed_events.first
     expect(failed_event.command_name).to eql(:bogus)
+    expect(failed_event.command.to_hash.slice('bogus')).to eql('bogus' => 1)
     expect(failed_event.message).to match(/no such command/)
     expect(failed_event.address).to be_a(Mongo::Address)
     expect(failed_event.duration).to be_a(Float)
