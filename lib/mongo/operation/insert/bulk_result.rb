@@ -38,7 +38,37 @@ module Mongo
         # @since 2.0.0
         def initialize(replies, ids)
           @replies = [*replies] if replies
-          @inserted_ids = ids
+          if replies.first && (doc = replies.first.documents.first)
+            if errors = doc['writeErrors']
+              # some documents were potentially inserted
+              bad_indices = {}
+              errors.map do |error|
+                bad_indices[error['index']] = true
+              end
+              @inserted_ids = []
+              ids.each_with_index do |id, index|
+                if bad_indices[index].nil?
+                  @inserted_ids << id
+                end
+              end
+            # I don't know if acknowledged? check here is necessary,
+            # as best as I can tell it doesn't hurt
+            elsif acknowledged? && successful?
+              # We have a reply and the reply is successful and the
+              # reply has no writeErrors - everything got inserted
+              @inserted_ids = ids
+            else
+              # We have a reply and the reply is not successful and
+              # it has no writeErrors - nothing got inserted.
+              # If something got inserted the reply will be not successful
+              # but will have writeErrors
+              @inserted_ids = []
+            end
+          else
+            # I don't think we should ever get here but who knows,
+            # make this behave as old drivers did
+            @inserted_ids = ids
+          end
         end
 
         # Gets the number of documents inserted.
