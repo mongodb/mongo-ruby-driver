@@ -64,10 +64,16 @@ module Mongo
       #
       # @since 2.0.0
       def tests
+<<<<<<< HEAD
         tests = @spec_tests.map do |test|
           ChangeStreamsTest.new(test, @coll1, @coll2, @db1, @db2)
         end
         tests.select(&:configuration_satisfied?)
+=======
+        @spec_tests.map do |test|
+          ChangeStreamsTest.new(test, @coll1, @coll2, @db1, @db2)
+        end
+>>>>>>> RUBY-1342 Add change stream helpers for Database and Client
       end
 
       class ChangeStreamsTest
@@ -78,8 +84,13 @@ module Mongo
         # @since 2.0.0
         attr_reader :description
 
+<<<<<<< HEAD
         def configuration_satisfied?
           server_version_satisfied? && topology_satisfied?
+=======
+        def configuration_satisfied?(client)
+          server_version_satisfied?(client) && topology_satisfied?
+>>>>>>> RUBY-1342 Add change stream helpers for Database and Client
         end
 
         def initialize(test, coll1, coll2, db1, db2)
@@ -120,7 +131,11 @@ module Mongo
                      client.database
                    when 'collection'
                      client[@coll1_name]
+<<<<<<< HEAD
                     end
+=======
+                   end
+>>>>>>> RUBY-1342 Add change stream helpers for Database and Client
         end
 
         def run
@@ -243,22 +258,22 @@ module Mongo
           end
         end
 
-        def server_version_satisfied?
-          lower_bound_satisfied? && upper_bound_satisfied?
+        def server_version_satisfied?(client)
+          lower_bound_satisfied?(client) && upper_bound_satisfied?(client)
         end
 
-        def server_version
-          @server_version ||= AUTHORIZED_CLIENT.database.command(buildInfo: 1).first['version']
+        def server_version(client)
+          @server_version ||= client.database.command(buildInfo: 1).first['version']
         end
 
-        def upper_bound_satisfied?
+        def upper_bound_satisfied?(client)
           return true unless @max_server_version
-          server_version <= @max_server_version
+          server_version(client) <= @max_server_version
         end
 
-        def lower_bound_satisfied?
+        def lower_bound_satisfied?(client)
           return true unless @min_server_version
-          @min_server_version <= server_version
+          @min_server_version <= server_version(client)
         end
       end
     end

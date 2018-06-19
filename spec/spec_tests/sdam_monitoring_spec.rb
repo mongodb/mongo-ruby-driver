@@ -35,10 +35,11 @@ describe 'SDAM Monitoring' do
               server ||= Mongo::Server.new(
                            Mongo::Address.new(response.address),
                            @client.cluster,
-                           @client.instance_variable_get(:@monitoring),
+                           @client.send(:monitoring),
                            @client.cluster.send(:event_listeners),
                            @client.cluster.options
                          )
+
               monitor = server.instance_variable_get(:@monitor)
               description = monitor.inspector.run(server.description, response.ismaster, 0.5)
               monitor.instance_variable_set(:@description, description)

@@ -26,7 +26,7 @@ describe 'Command Monitoring Events' do
         end
 
         let(:monitoring) do
-          authorized_client.instance_variable_get(:@monitoring)
+          authorized_client.send(:monitoring)
         end
 
         before do

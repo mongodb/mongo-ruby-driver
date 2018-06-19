@@ -455,7 +455,7 @@ module Mongo
     def self.create(client)
       cluster = Cluster.new(
         client.cluster.addresses.map(&:to_s),
-        client.instance_variable_get(:@monitoring).dup,
+        Monitoring.new,
         client.options
       )
       client.instance_variable_set(:@cluster, cluster)

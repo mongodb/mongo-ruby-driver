@@ -100,6 +100,8 @@ module Mongo
     # Delegate monitoring to cluster.
     def_delegators :cluster, :monitoring
 
+    private :monitoring
+
     # Determine if this client is equivalent to another object.
     #
     # @example Check client equality.
@@ -525,13 +527,13 @@ module Mongo
     def create_from_uri(connection_string, opts = Options::Redacted.new)
       uri = URI.get(connection_string, opts)
       @options = validate_options!(Database::DEFAULT_OPTIONS.merge(uri.client_options.merge(opts))).freeze
-      @cluster = Cluster.new(uri.servers, Monitoring.new(options), options)
+      @cluster = Cluster.new(uri.servers, @cluster ? monitoring : Monitoring.new(options), options)
       @database = Database.new(self, options[:database], options)
     end
 
     def initialize_copy(original)
       @options = original.options.dup
-      @monitoring = Monitoring.new(@options)
+      @monitoring = @cluster ? monitoring : Monitoring.new(options)
       @database = nil
       @read_preference = nil
       @write_concern = nil

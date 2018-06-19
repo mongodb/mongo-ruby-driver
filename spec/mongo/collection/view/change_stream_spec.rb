@@ -19,7 +19,7 @@ describe Mongo::Collection::View::ChangeStream, if: test_change_streams? do
   end
 
   let(:change_stream) do
-    described_class.new(view, pipeline, options)
+    described_class.new(view, pipeline, nil, options)
   end
 
   let(:change_stream_document) do
