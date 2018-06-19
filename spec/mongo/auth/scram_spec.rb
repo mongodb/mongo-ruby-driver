@@ -150,12 +150,12 @@ describe Mongo::Auth::SCRAM do
           test_user.instance_variable_set(:@client_key, nil)
         end
 
-        it 'logs the user into the connection and caches the client key', if: scram_sha_256_enabled? && RUBY_VERSION >= '2.2.0' do
+        it 'logs the user into the connection and caches the client key', if: scram_sha_256_enabled? do
           expect(login['ok']).to eq(1)
           expect(test_user.send(:client_key)).not_to be_nil
         end
 
-        it 'raises an exception when an incorrect client key is set', if: scram_sha_256_enabled? && RUBY_VERSION >= '2.2.0' do
+        it 'raises an exception when an incorrect client key is set', if: scram_sha_256_enabled? do
           test_user.instance_variable_set(:@client_key, "incorrect client key")
           expect {
             cr.login(connection)

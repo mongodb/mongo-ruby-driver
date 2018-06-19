@@ -288,7 +288,7 @@ def auth_enabled?
     begin
       $mongo_client.use(:admin).command(getCmdLineOpts: 1).first["argv"].include?("--auth")
     rescue => e
-      e.message =~ /(not authorized)|(unauthorized)/
+      e.message =~ /(not authorized)|(unauthorized)|(no users authenticated)|(requires authentication)/
     end
   end
 end
