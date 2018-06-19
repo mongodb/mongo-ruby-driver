@@ -96,8 +96,12 @@ module Mongo
       end
 
       def normalize!(out)
-        require 'mongo/auth/stringprep/unicode_normalize/normalize' unless defined?(UnicodeNormalize)
-        out.replace(UnicodeNormalize.normalize(out, :nfkc))
+        if defined?(UnicodeNormalize)
+          out.unicode_normalize!(:nfkc)
+        else
+          require 'mongo/auth/stringprep/unicode_normalize/normalize'
+          out.replace(UnicodeNormalize.normalize(out, :nfkc))
+        end
       end
 
       def table_contains?(table, c)
