@@ -96,7 +96,7 @@ module Mongo
       end
 
       def normalize!(out)
-        if defined?(UnicodeNormalize)
+        if String.method_defined?(:unicode_normalize!)
           out.unicode_normalize!(:nfkc)
         else
           require 'mongo/auth/stringprep/unicode_normalize/normalize'
