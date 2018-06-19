@@ -95,7 +95,10 @@ module Mongo
     def_delegators :@database, :command, :collections
 
     # Delegate subscription to monitoring.
-    def_delegators :@monitoring, :subscribe, :unsubscribe
+    def_delegators :monitoring, :subscribe, :unsubscribe
+
+    # Delegate monitoring to cluster.
+    def_delegators :cluster, :monitoring
 
     # Determine if this client is equivalent to another object.
     #
@@ -256,7 +259,6 @@ module Mongo
     #
     # @since 2.0.0
     def initialize(addresses_or_uri, options = Options::Redacted.new)
-      @monitoring = Monitoring.new(options)
       if addresses_or_uri.is_a?(::String)
         create_from_uri(addresses_or_uri, validate_options!(options))
       else
@@ -462,6 +464,48 @@ module Mongo
         (raise Error::InvalidSession.new(Session::SESSIONS_NOT_SUPPORTED))
     end
 
+    # As of version 3.6 of the MongoDB server, a ``$changeStream`` pipeline stage is supported
+    # in the aggregation framework. As of version 4.0, this stage allows users to request that
+    # notifications are sent for all changes that occur in the client's cluster.
+    #
+    # @example Get change notifications for the client's cluster.
+    #  client.watch([{ '$match' => { operationType: { '$in' => ['insert', 'replace'] } } }])
+    #
+    # @param [ Array<Hash> ] pipeline Optional additional filter operators.
+    # @param [ Hash ] options The change stream options.
+    #
+    # @option options [ String ] :full_document Allowed values: 'default', 'updateLookup'.
+    #   Defaults to 'default'. When set to 'updateLookup', the change notification for partial
+    #   updates will include both a delta describing the changes to the document, as well as a copy
+    #   of the entire document that was changed from some time after the change occurred.
+    # @option options [ BSON::Document, Hash ] :resume_after Specifies the logical starting point
+    #   for the new change stream.
+    # @option options [ Integer ] :max_await_time_ms The maximum amount of time for the server to
+    #   wait on new documents to satisfy a change stream query.
+    # @option options [ Integer ] :batch_size The number of documents to return per batch.
+    # @option options [ BSON::Document, Hash ] :collation The collation to use.
+    # @option options [ Session ] :session The session to use.
+    # @option options [ BSON::Timestamp ] :start_at_cluster_time Only return changes that occurred
+    #   after the specified timestamp. Any command run against the server will return a cluster time
+    #   that can be used here. Only valid in server versions 4.0+.
+    #
+    # @note A change stream only allows 'majority' read concern.
+    # @note This helper method is preferable to running a raw aggregation with a $changeStream
+    #   stage, for the purpose of supporting resumability.
+    #
+    # @return [ ChangeStream ] The change stream object.
+    #
+    # @since 2.6.0
+    def watch(pipeline = [], options = {})
+      return use(Database::ADMIN).watch(pipeline, options) unless database.name == Database::ADMIN
+
+      Mongo::Collection::View::ChangeStream.new(
+        Mongo::Collection::View.new(self["#{Database::COMMAND}.aggregate"]),
+        pipeline,
+        Mongo::Collection::View::ChangeStream::CLUSTER,
+        options)
+    end
+
     private
 
     def get_session(options = {})
@@ -474,14 +518,14 @@ module Mongo
 
     def create_from_addresses(addresses, opts = Options::Redacted.new)
       @options = Database::DEFAULT_OPTIONS.merge(opts).freeze
-      @cluster = Cluster.new(addresses, @monitoring, options)
+      @cluster = Cluster.new(addresses, Monitoring.new(options), options)
       @database = Database.new(self, options[:database], options)
     end
 
     def create_from_uri(connection_string, opts = Options::Redacted.new)
       uri = URI.get(connection_string, opts)
       @options = validate_options!(Database::DEFAULT_OPTIONS.merge(uri.client_options.merge(opts))).freeze
-      @cluster = Cluster.new(uri.servers, @monitoring, options)
+      @cluster = Cluster.new(uri.servers, Monitoring.new(options), options)
       @database = Database.new(self, options[:database], options)
     end
 

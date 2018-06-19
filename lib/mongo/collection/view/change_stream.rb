@@ -40,6 +40,18 @@ module Mongo
         # @since 2.5.0
         FULL_DOCUMENT_DEFAULT = 'default'.freeze
 
+        # @return [ Symbol ] Used to indicate that the change stream should listen for changes on
+        #   the entire database rather than just the collection.
+        #
+        # @since 2.6.0
+        DATABASE = :database
+
+        # @return [ Symbol ] Used to indicate that the change stream should listen for changes on
+        #   the entire cluster rather than just the collection.
+        #
+        # @since 2.6.0
+        CLUSTER = :cluster
+
         # @return [ BSON::Document ] The change stream options.
         #
         # @since 2.5.0
@@ -55,8 +67,8 @@ module Mongo
         # @param [ Array<Hash> ] pipeline The pipeline of operators to filter the change notifications.
         # @param [ Hash ] options The change stream options.
         #
-        # @option options [ String ] :full_document Allowed values: ‘default’, ‘updateLookup’. Defaults to ‘default’.
-        #   When set to ‘updateLookup’, the change notification for partial updates will include both a delta
+        # @option options [ String ] :full_document Allowed values: 'default', 'updateLookup'. Defaults to 'default'.
+        #   When set to 'updateLookup', the change notification for partial updates will include both a delta
         #   describing the changes to the document, as well as a copy of the entire document that was changed
         #   from some time after the change occurred.
         # @option options [ BSON::Document, Hash ] :resume_after Specifies the logical starting point for the
@@ -65,10 +77,14 @@ module Mongo
         #   on new documents to satisfy a change stream query.
         # @option options [ Integer ] :batch_size The number of documents to return per batch.
         # @option options [ BSON::Document, Hash ] :collation The collation to use.
+        # @option options [ BSON::Timestamp ] :start_at_cluster_time Only return changes that occurred
+        #   after the specified timestamp. Any command run against the server will return a cluster time
+        #   that can be used here. Only valid in server versions 4.0+.
         #
         # @since 2.5.0
-        def initialize(view, pipeline, options = {})
+        def initialize(view, pipeline, changes_for, options = {})
           @view = view
+          @changes_for = changes_for
           @change_stream_filters = pipeline && pipeline.dup
           @options = options && options.dup.freeze
           @resume_token = @options[:resume_after]
@@ -147,6 +163,18 @@ module Mongo
 
         private
 
+        def for_cluster?
+          @changes_for == CLUSTER
+        end
+
+        def for_database?
+          @changes_for == DATABASE
+        end
+
+        def for_collection?
+          !for_cluster? && !for_database?
+        end
+
         def cache_resume_token(doc)
           unless @resume_token = (doc[:_id] && doc[:_id].dup)
             raise Error::MissingResumeToken.new
@@ -161,9 +189,20 @@ module Mongo
         end
 
         def pipeline
-          change_doc = { fullDocument: ( @options[:full_document] || FULL_DOCUMENT_DEFAULT ) }
-          change_doc[:resumeAfter] = @resume_token if @resume_token
           [{ '$changeStream' => change_doc }] + @change_stream_filters
+        end
+
+        def aggregate_spec(session)
+          super(session).tap do |spec|
+            spec[:selector][:aggregate] = 1 unless for_collection?
+          end
+        end
+
+        def change_doc
+          { fullDocument: ( @options[:full_document] || FULL_DOCUMENT_DEFAULT ) }.tap do |doc|
+            doc[:resumeAfter] = @resume_token if @resume_token
+            doc[:allChangesForCluster] = true if for_cluster?
+          end
         end
 
         def send_initial_query(server, session)
