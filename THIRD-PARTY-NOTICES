@@ -1,6 +1,18 @@
-------------------------------------------------------------------------
-License notice for the Ruby standard library unicode normalization code
-------------------------------------------------------------------------
+The `mongo` gem uses third-party libraries or other resources that may
+be distributed under licenses different than the `mongo` gem.
+
+In the event that we accidentally failed to list a required notice,
+please bring it to our attention through any of the ways detailed here:
+
+           mongodb-dev@googlegroups.com
+
+The attached notices are provided for information only.
+
+For any licenses that require disclosure of source, sources are available at
+https://github.com/mongodb/mongo-ruby-driver.  
+
+1) License Notice for the files https://github.com/ruby/ruby/blob/v2_5_1/lib/unicode_normalize/normalize.rb and https://github.com/ruby/ruby/blob/v2_5_1/lib/unicode_normalize/tables.rb
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 Ruby is copyrighted free software by Yukihiro Matsumoto <matz@netlab.jp>.
 You can redistribute it and/or modify it under either the terms of the
