@@ -298,9 +298,10 @@ module Mongo
       View.new(self, {}, options).aggregate(pipeline, options)
     end
 
-    # As of version 3.6 of the MongoDB server, a ``$changeStream`` pipeline stage is supported
-    # in the aggregation framework. This stage allows users to request that notifications are sent for
-    # all changes to a particular collection.
+    # As of version 3.6 of the MongoDB server, a ``$changeStream`` pipeline
+    # stage is supported in the aggregation framework. This stage allows users
+    # to request that notifications are sent for all changes to a particular
+    # collection.
     #
     # @example Get change notifications for a given collection.
     #   collection.watch([{ '$match' => { operationType: { '$in' => ['insert', 'replace'] } } }])
@@ -308,21 +309,23 @@ module Mongo
     # @param [ Array<Hash> ] pipeline Optional additional filter operators.
     # @param [ Hash ] options The change stream options.
     #
-    # @option options [ String ] :full_document Allowed values: ‘default’, ‘updateLookup’. Defaults to ‘default’.
-    #   When set to ‘updateLookup’, the change notification for partial updates will include both a delta
-    #   describing the changes to the document, as well as a copy of the entire document that was changed
-    #   from some time after the change occurred.
-    # @option options [ BSON::Document, Hash ] :resume_after Specifies the logical starting point for the
-    #   new change stream.
-    # @option options [ Integer ] :max_await_time_ms The maximum amount of time for the server to wait
-    #   on new documents to satisfy a change stream query.
-    # @option options [ Integer ] :batch_size The number of documents to return per batch.
+    # @option options [ String ] :full_document Allowed values: ‘default’,
+    #   ‘updateLookup’. Defaults to ‘default’. When set to ‘updateLookup’,
+    #   the change notification for partial updates will include both a delta
+    #   describing the changes to the document, as well as a copy of the entire
+    #   document that was changed from some time after the change occurred.
+    # @option options [ BSON::Document, Hash ] :resume_after Specifies the
+    #   logical starting point for the new change stream.
+    # @option options [ Integer ] :max_await_time_ms The maximum amount of time
+    #   for the server to wait on new documents to satisfy a change stream query.
+    # @option options [ Integer ] :batch_size The number of documents to return
+    #   per batch.
     # @option options [ BSON::Document, Hash ] :collation The collation to use.
     # @option options [ Session ] :session The session to use.
     #
     # @note A change stream only allows 'majority' read concern.
-    # @note This helper method is preferable to running a raw aggregation with a $changeStream stage,
-    #   for the purpose of supporting resumability.
+    # @note This helper method is preferable to running a raw aggregation with
+    #   a $changeStream stage, for the purpose of supporting resumability.
     #
     # @return [ ChangeStream ] The change stream object.
     #
