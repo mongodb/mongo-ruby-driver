@@ -125,6 +125,30 @@ module Mongo
       end
     end
 
+    def try_next
+      if @documents.nil?
+        @documents = process(@initial_result)
+      elsif @documents.empty?
+        if more?
+          if exhausted?
+            kill_cursors
+            return nil
+          end
+
+          @documents = get_more
+        end
+      else
+        # cursor is closed here
+        # keep documents as an empty array
+      end
+
+      if @documents
+        return @documents.shift
+      end
+
+      nil
+    end
+
     # Get the batch size.
     #
     # @example Get the batch size.

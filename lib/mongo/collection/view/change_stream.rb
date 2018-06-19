@@ -121,6 +121,26 @@ module Mongo
           end
         end
 
+        def try_next
+          raise StopIteration.new if closed?
+          doc = @cursor.try_next
+          if doc
+            cache_resume_token(doc)
+          end
+          doc
+        end
+
+        def to_enum
+          enum = super
+          enum.send(:instance_variable_set, '@obj', self)
+          class << enum
+            def try_next
+              @obj.try_next
+            end
+          end
+          enum
+        end
+
         # Close the change stream.
         #
         # @example Close the change stream.
