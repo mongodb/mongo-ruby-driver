@@ -1474,7 +1474,7 @@ describe Mongo::Client do
       end
 
       let(:command) do
-        EventSubscriber.started_events.find { |c| c.command_name == :listDatabases }.command
+        EventSubscriber.started_events.find { |c| c.command_name == 'listDatabases' }.command
       end
 
       before do

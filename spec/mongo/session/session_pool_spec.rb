@@ -171,7 +171,7 @@ describe Mongo::Session::SessionPool, if: test_sessions? do
 
       let(:end_sessions_command) do
         pool.end_sessions
-        EventSubscriber.started_events.find { |c| c.command_name == :endSessions}
+        EventSubscriber.started_events.find { |c| c.command_name == 'endSessions'}
       end
 
       it 'sends the endSessions command with all the session ids' do
@@ -210,7 +210,7 @@ describe Mongo::Session::SessionPool, if: test_sessions? do
       end
 
       let(:end_sessions_commands) do
-        EventSubscriber.started_events.select { |c| c.command_name == :endSessions}
+        EventSubscriber.started_events.select { |c| c.command_name == 'endSessions'}
       end
 
       it 'sends the command more than once' do
