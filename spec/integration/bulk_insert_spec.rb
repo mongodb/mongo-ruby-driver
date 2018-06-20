@@ -54,6 +54,7 @@ describe 'Bulk insert' do
 
     context 'entire operation fails' do
       min_server_version '4.0'
+      require_topology :single, :replica_set
 
       it 'is an empty array' do
         collection.client.use(:admin).command(FAIL_POINT_BASE_COMMAND.merge(
