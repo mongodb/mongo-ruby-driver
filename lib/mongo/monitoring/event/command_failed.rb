@@ -27,9 +27,6 @@ module Mongo
         # @return [ String ] command_name The name of the command.
         attr_reader :command_name
 
-        # @return [ BSON::Document ] command The command arguments.
-        attr_reader :command
-
         # @return [ String ] database_name The name of the database_name.
         attr_reader :database_name
 
@@ -58,7 +55,6 @@ module Mongo
         #
         # @param [ BSON::Document ] failure The error document, if any.
         # @param [ String ] command_name The name of the command.
-        # @param [ BSON::Document ] command The command arguments.
         # @param [ String ] database_name The database_name name.
         # @param [ Server::Address ] address The server address.
         # @param [ Integer ] request_id The request id.
@@ -67,10 +63,9 @@ module Mongo
         # @param [ Float ] duration The duration the command took in seconds.
         #
         # @since 2.1.0
-        def initialize(failure, command_name, command, database_name, address, request_id, operation_id, message, duration)
+        def initialize(failure, command_name, database_name, address, request_id, operation_id, message, duration)
           @failure = failure
           @command_name = command_name.to_s
-          @command = command
           @database_name = database_name
           @address = address
           @request_id = request_id
@@ -98,7 +93,6 @@ module Mongo
           new(
             failure,
             payload[:command_name],
-            payload[:command],
             payload[:database_name],
             address,
             payload[:request_id],
