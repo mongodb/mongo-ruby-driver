@@ -28,6 +28,7 @@ module Mongo
 
       private
 
+      # Returns a Protocol::Message or nil
       def dispatch_message(server)
         server.with_connection do |connection|
           connection.dispatch([ message(server) ], operation_id)

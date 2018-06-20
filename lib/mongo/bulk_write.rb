@@ -168,19 +168,19 @@ module Mongo
       }
     end
 
-    def execute_operation(name, values, server, operation_id, combiner, session, txn_num = nil)
+    def execute_operation(name, values, server, operation_id, result_combiner, session, txn_num = nil)
       raise Error::UnsupportedCollation.new if op_combiner.has_collation && !server.features.collation_enabled?
       raise Error::UnsupportedArrayFilters.new if op_combiner.has_array_filters && !server.features.array_filters_enabled?
       begin
         if values.size > server.max_write_batch_size
-          split_execute(name, values, server, operation_id, combiner, session, txn_num)
+          split_execute(name, values, server, operation_id, result_combiner, session, txn_num)
         else
           result = send(name, values, server, operation_id, session, txn_num)
-          combiner.combine!(result, values.size)
+          result_combiner.combine!(result, values.size)
         end
       rescue Error::MaxBSONSize, Error::MaxMessageSize => e
         raise e if values.size <= 1
-        split_execute(name, values, server, operation_id, combiner, session, txn_num)
+        split_execute(name, values, server, operation_id, result_combiner, session, txn_num)
       end
     end
 
@@ -188,11 +188,11 @@ module Mongo
       @op_combiner ||= ordered? ? OrderedCombiner.new(requests) : UnorderedCombiner.new(requests)
     end
 
-    def split_execute(name, values, server, operation_id, combiner, session, txn_num)
-      execute_operation(name, values.shift(values.size / 2), server, operation_id, combiner, session, txn_num)
+    def split_execute(name, values, server, operation_id, result_combiner, session, txn_num)
+      execute_operation(name, values.shift(values.size / 2), server, operation_id, result_combiner, session, txn_num)
 
       txn_num = session.next_txn_num if txn_num
-      execute_operation(name, values, server, operation_id, combiner, session, txn_num)
+      execute_operation(name, values, server, operation_id, result_combiner, session, txn_num)
     end
 
     def delete_one(documents, server, operation_id, session, txn_num)

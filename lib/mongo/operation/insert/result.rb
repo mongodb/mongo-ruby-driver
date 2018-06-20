@@ -34,7 +34,7 @@ module Mongo
         # @example Instantiate the result.
         #   Result.new(replies, inserted_ids)
         #
-        # @param [ Protocol::Message ] replies The wire protocol replies.
+        # @param [ Array<Protocol::Message> | nil ] replies The wire protocol replies, if any.
         # @param [ Array<Object> ] ids The ids of the inserted documents.
         #
         # @since 2.0.0

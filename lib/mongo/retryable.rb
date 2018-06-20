@@ -128,7 +128,7 @@ module Mongo
 
     def retry_write_allowed?(session, write_concern)
       session && session.retry_writes? &&
-          (write_concern.nil? || write_concern.acknowledged?)
+          (write_concern.nil? || write_concern.acknowledged?) or false
     end
 
     def retry_write(original_error, txn_num, &block)
@@ -149,6 +149,9 @@ module Mongo
     end
 
     def legacy_write_with_retry(server = nil, session = nil)
+      # This is the pre-session retry logic, and is not subject to
+      # current retryable write specifications.
+      # In particular it does not retry on SocketError and SocketTimeoutError.
       attempt = 0
       begin
         attempt += 1

@@ -64,6 +64,18 @@ module Mongo
       # @since 2.2.0
       RESULT = 'result'.freeze
 
+      # Initialize a new result.
+      #
+      # @example Instantiate the result.
+      #   Result.new(replies)
+      #
+      # @param [ Protocol::Reply ] replies The wire protocol replies.
+      #
+      # @since 2.0.0
+      def initialize(replies)
+        @replies = [ *replies ] if replies
+      end
+
       # @return [ Array<Protocol::Reply> ] replies The wrapped wire protocol replies.
       attr_reader :replies
 
@@ -151,18 +163,6 @@ module Mongo
         documents.each(&block)
       end
 
-      # Initialize a new result.
-      #
-      # @example Instantiate the result.
-      #   Result.new(replies)
-      #
-      # @param [ Protocol::Reply ] replies The wire protocol replies.
-      #
-      # @since 2.0.0
-      def initialize(replies)
-        @replies = [ *replies ] if replies
-      end
-
       # Get the pretty formatted inspection of the result.
       #
       # @example Inspect the result.
@@ -172,7 +172,7 @@ module Mongo
       #
       # @since 2.0.0
       def inspect
-        "#<Mongo::Operation::Result:#{object_id} documents=#{documents}>"
+        "#<#{self.class.name}:0x#{object_id} documents=#{documents}>"
       end
 
       # Get the first reply from the result.
@@ -237,6 +237,11 @@ module Mongo
       #
       # @since 2.1.0
       def ok?
+        # first_document[OK] is a float, and the server can return
+        # ok as a BSON int32, BSON int64 or a BSON double.
+        # The number 1 is exactly representable in a float, hence
+        # 1.0 == 1 is going to perform correctly all of the time
+        # (until the server returns something other than 1 for success, that is)
         first_document[OK] == 1
       end
 

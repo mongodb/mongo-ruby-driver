@@ -26,7 +26,7 @@ module Mongo
       #
       # @since 2.6.0
       def inspect
-        "#<{#{self.class}>"
+        "#<#{self.class}>"
       end
     end
   end

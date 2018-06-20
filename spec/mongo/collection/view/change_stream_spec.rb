@@ -434,53 +434,60 @@ describe Mongo::Collection::View::ChangeStream, if: test_change_streams? do
   end
 
   context 'when an error is encountered the first time the command is run' do
+    include PrimarySocket
 
-    let(:primary_socket) do
-      primary = authorized_collection.client.cluster.servers.find { |s| s.primary? }
-      connection = primary.pool.checkout
-      primary.pool.checkin(connection)
-      connection.send(:socket)
+    let(:client) { authorized_collection.client }
+
+    before do
+      expect(primary_socket).to receive(:write).and_raise(error).once
     end
 
-    context 'when the error is a resumable error' do
+    let(:document) do
+      change_stream.to_enum.next
+    end
 
-      shared_examples_for 'a resumable change stream' do
+    shared_examples_for 'a resumable change stream' do
 
-        before do
-          expect(primary_socket).to receive(:write).and_raise(error).once
-          expect(view.send(:server_selector)).to receive(:select_server).twice.and_call_original
-          change_stream
-          authorized_collection.insert_one(a: 1)
+      before do
+        expect(view.send(:server_selector)).to receive(:select_server).twice.and_call_original
+        change_stream
+        authorized_collection.insert_one(a: 1)
+      end
+
+      it 'runs the command again while using the same read preference and caches the resume token' do
+        expect(document[:fullDocument][:a]).to eq(1)
+        expect(change_stream_document[:resumeAfter]).to eq(document[:_id])
+      end
+
+      context 'when provided a session' do
+
+        let(:options) do
+          { session: session}
         end
 
-        let(:document) do
+        let(:session) do
+          authorized_client.start_session
+        end
+
+        before do
           change_stream.to_enum.next
         end
 
-        it 'runs the command again while using the same read preference and caches the resume token' do
-          expect(document[:fullDocument][:a]).to eq(1)
-          expect(change_stream_document[:resumeAfter]).to eq(document[:_id])
-        end
-
-        context 'when provided a session' do
-
-          let(:options) do
-            { session: session}
-          end
-
-          let(:session) do
-            authorized_client.start_session
-          end
-
-          before do
-            change_stream.to_enum.next
-          end
-
-          it 'does not close the session' do
-            expect(session.ended?).to be(false)
-          end
+        it 'does not close the session' do
+          expect(session.ended?).to be(false)
         end
       end
+    end
+
+    shared_examples_for 'a non-resumed change stream' do
+      it 'does not run the command again and instead raises the error' do
+        expect do
+          document
+        end.to raise_exception(error)
+      end
+    end
+
+    context 'when the error is a resumable error' do
 
       context 'when the error is a SocketError' do
 
@@ -506,32 +513,31 @@ describe Mongo::Collection::View::ChangeStream, if: test_change_streams? do
           Mongo::Error::OperationFailure.new('not master')
         end
 
-        it_behaves_like 'a resumable change stream'
+        it_behaves_like 'a non-resumed change stream'
       end
 
-      context "when the error is a 'cursor not found (43)' error" do
+      context "when the error is a 'node is recovering' error" do
 
         let(:error) do
-          Mongo::Error::OperationFailure.new('cursor not found (43)')
+          Mongo::Error::OperationFailure.new('node is recovering')
         end
 
-        it_behaves_like 'a resumable change stream'
+        it_behaves_like 'a non-resumed change stream'
       end
     end
 
     context 'when the error is another server error' do
 
+      let(:error) do
+        Mongo::Error::MissingResumeToken
+      end
+
       before do
-        expect(primary_socket).to receive(:write).and_raise(Mongo::Error::OperationFailure)
         #expect twice because of kill_cursors in after block
         expect(view.send(:server_selector)).to receive(:select_server).twice.and_call_original
       end
 
-      it 'does not run the command again and instead raises the error' do
-        expect {
-          change_stream
-        }.to raise_exception(Mongo::Error::OperationFailure)
-      end
+      it_behaves_like 'a non-resumed change stream'
 
       context 'when provided a session' do
 
@@ -544,7 +550,9 @@ describe Mongo::Collection::View::ChangeStream, if: test_change_streams? do
         end
 
         before do
-          begin; change_stream; rescue; end
+          expect do
+            change_stream
+          end.to raise_error(error)
         end
 
         it 'does not close the session' do
@@ -621,19 +629,21 @@ describe Mongo::Collection::View::ChangeStream, if: test_change_streams? do
         it_behaves_like 'a change stream that encounters an error from a getMore'
       end
 
-      context "when the error is a not 'master error'" do
+      context "when the error is 'not master'" do
 
         let(:error) do
-          Mongo::Error::OperationFailure.new('not master')
+          Mongo::Error::OperationFailure.new('not master',
+            Mongo::Operation::GetMore::Result.new([]))
         end
 
         it_behaves_like 'a change stream that encounters an error from a getMore'
       end
 
-      context "when the error is a not 'cursor not found error'" do
+      context "when the error is 'node is recovering'" do
 
         let(:error) do
-          Mongo::Error::OperationFailure.new('cursor not found (43)')
+          Mongo::Error::OperationFailure.new('node is recovering',
+            Mongo::Operation::GetMore::Result.new([]))
         end
 
         it_behaves_like 'a change stream that encounters an error from a getMore'
@@ -647,7 +657,7 @@ describe Mongo::Collection::View::ChangeStream, if: test_change_streams? do
         authorized_collection.insert_one(a: 1)
         enum.next
         authorized_collection.insert_one(a: 2)
-        expect(cursor).to receive(:get_more).and_raise(Mongo::Error::OperationFailure)
+        expect(cursor).to receive(:get_more).and_raise(Mongo::Error::MissingResumeToken)
         expect(cursor).to receive(:kill_cursors).and_call_original
         expect(Mongo::Operation::Aggregate).not_to receive(:new)
       end
@@ -659,137 +669,7 @@ describe Mongo::Collection::View::ChangeStream, if: test_change_streams? do
       it 'does not run the command again and instead raises the error' do
         expect {
           enum.next
-        }.to raise_exception(Mongo::Error::OperationFailure)
-      end
-
-      context 'when provided a session' do
-
-        let(:options) do
-          { session: session}
-        end
-
-        let(:session) do
-          authorized_client.start_session
-        end
-
-        before do
-          begin; enum.next; rescue; end
-        end
-
-        it 'does not close the session' do
-          expect(session.ended?).to be(false)
-        end
-      end
-    end
-  end
-
-  context 'when a server error is encountered during the command following an error during getMore' do
-
-    context 'when the error is a resumable error' do
-
-      shared_examples_for 'a change stream that sent getMores, that then encounters an error when resuming' do
-
-        before do
-          change_stream
-          authorized_collection.insert_one(a: 1)
-          enum.next
-          authorized_collection.insert_one(a: 2)
-          expect(cursor).to receive(:get_more).and_raise(error)
-          expect(cursor).to receive(:kill_cursors).and_call_original
-          expect(change_stream).to receive(:send_initial_query).and_raise(error).once.ordered
-        end
-
-        let(:enum) do
-          change_stream.to_enum
-        end
-
-        let(:document) do
-          enum.next
-        end
-
-        it 'raises the error' do
-          expect {
-            document
-          }.to raise_exception(error)
-        end
-
-        context 'when provided a session' do
-
-          let(:options) do
-            { session: session}
-          end
-
-          let(:session) do
-            authorized_client.start_session
-          end
-
-          before do
-            begin; document; rescue; end
-          end
-
-          it 'does not close the session' do
-            expect(session.ended?).to be(false)
-          end
-        end
-      end
-
-      context 'when the error is a SocketError' do
-
-        let(:error) do
-          Mongo::Error::SocketError
-        end
-
-        it_behaves_like 'a change stream that sent getMores, that then encounters an error when resuming'
-      end
-
-      context 'when the error is a SocketTimeoutError' do
-
-        let(:error) do
-          Mongo::Error::SocketTimeoutError
-        end
-
-        it_behaves_like 'a change stream that sent getMores, that then encounters an error when resuming'
-      end
-
-      context "when the error is a 'not master error'" do
-
-        let(:error) do
-          Mongo::Error::OperationFailure.new('not master')
-        end
-
-        it_behaves_like 'a change stream that sent getMores, that then encounters an error when resuming'
-      end
-
-      context "when the error is a not 'cursor not found error'" do
-
-        let(:error) do
-          Mongo::Error::OperationFailure.new('cursor not found (43)')
-        end
-
-        it_behaves_like 'a change stream that sent getMores, that then encounters an error when resuming'
-      end
-    end
-
-    context 'when the error is another server error' do
-
-      before do
-        change_stream
-        authorized_collection.insert_one(a: 1)
-        enum.next
-        authorized_collection.insert_one(a: 2)
-        expect(cursor).to receive(:get_more).and_raise(Mongo::Error::OperationFailure.new('not master'))
-        expect(cursor).to receive(:kill_cursors).and_call_original
-        expect(change_stream).to receive(:send_initial_query).and_raise(Mongo::Error::OperationFailure).once.ordered
-      end
-
-      let(:enum) do
-        change_stream.to_enum
-      end
-
-      it 'does not run the command again and instead raises the error' do
-        expect {
-          enum.next
-        }.to raise_exception(Mongo::Error::OperationFailure)
+        }.to raise_exception(Mongo::Error::MissingResumeToken)
       end
 
       context 'when provided a session' do

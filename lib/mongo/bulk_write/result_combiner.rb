@@ -22,7 +22,7 @@ module Mongo
     # @since 2.1.0
     class ResultCombiner
 
-      # @return [ Integer ] count The count of documents in the entire batch.
+      # @return [ Integer ] count The number of documents in the entire batch.
       attr_reader :count
 
       # @return [ Hash ] results The results hash.
@@ -41,11 +41,11 @@ module Mongo
         @count = 0
       end
 
-      # Combines a result into the overall results.
+      # Adds a result to the overall results.
       #
       # @api private
       #
-      # @example Combine the result.
+      # @example Add the result.
       #   combiner.combine!(result, count)
       #
       # @param [ Operation::Result ] result The result to combine.

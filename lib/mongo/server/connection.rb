@@ -135,7 +135,7 @@ module Mongo
       # @param [ Array<Message> ] messages The messages to dispatch.
       # @param [ Integer ] operation_id The operation id to link messages.
       #
-      # @return [ Protocol::Message ] The reply if needed.
+      # @return [ Protocol::Message | nil ] The reply if needed.
       #
       # @since 2.0.0
       def dispatch(messages, operation_id = nil)

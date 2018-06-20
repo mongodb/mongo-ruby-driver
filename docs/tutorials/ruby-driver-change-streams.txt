@@ -16,7 +16,7 @@ receiving notifications for changes to a particular collection using this
 new pipeline stage. Although you can create a change stream using the pipeline
 operator and aggregation framework directly, it is recommended to use the
 driver API described below as the driver resumes the change stream if there is
-a timeout or a network error.
+a timeout, a network error or another type of a resumable error.
 
 Change streams on the server require a ``"majority"`` read concern or no
 read concern.

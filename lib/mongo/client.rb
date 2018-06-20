@@ -251,8 +251,8 @@ module Mongo
     #   metadata printed to the mongod logs upon establishing a connection in server versions >= 3.4.
     # @option options [ Integer ] :zlib_compression_level The Zlib compression level to use, if using compression.
     #   See Ruby's Zlib module for valid levels.
-    # @option options [ true, false ] :retry_writes Retry writes once when connected to a replica set
-    #   or sharded cluster versions 3.6 and up.
+    # @option options [ true, false ] :retry_writes Retry writes once when
+    #   connected to a replica set or sharded cluster versions 3.6 and up.
     #
     # @since 2.0.0
     def initialize(addresses_or_uri, options = Options::Redacted.new)

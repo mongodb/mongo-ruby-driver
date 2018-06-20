@@ -136,15 +136,6 @@ module Mongo
         # @since 2.1.0
         ID = 'id'.freeze
 
-        # @return [ Array<BSON::Document> ] documents The documents.
-        attr_reader :documents
-
-        # @return [ Integer ] cursor_id The cursor id.
-        attr_reader :cursor_id
-
-        # @return [ Integer ] starting_from The starting point in the cursor.
-        attr_reader :starting_from
-
         # Initialize the new upconverter.
         #
         # @example Create the upconverter.
@@ -160,6 +151,15 @@ module Mongo
           @cursor_id = cursor_id
           @starting_from = starting_from
         end
+
+        # @return [ Array<BSON::Document> ] documents The documents.
+        attr_reader :documents
+
+        # @return [ Integer ] cursor_id The cursor id.
+        attr_reader :cursor_id
+
+        # @return [ Integer ] starting_from The starting point in the cursor.
+        attr_reader :starting_from
 
         # Get the upconverted command.
         #

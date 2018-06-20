@@ -1,40 +1,73 @@
 require 'spec_helper'
 
-describe Mongo::Retryable do
+class RetryableTestConsumer
+  include Mongo::Retryable
 
-  let(:klass) do
-    Class.new do
-      include Mongo::Retryable
+  attr_reader :cluster
+  attr_reader :operation
 
-      attr_reader :cluster
-      attr_reader :operation
+  def initialize(operation, cluster)
+    @operation = operation
+    @cluster = cluster
+  end
 
-      def initialize(operation, cluster)
-        @operation = operation
-        @cluster = cluster
-      end
+  def max_read_retries
+    cluster.max_read_retries
+  end
 
-      def max_read_retries
-        cluster.max_read_retries
-      end
+  def read_retry_interval
+    cluster.read_retry_interval
+  end
 
-      def read_retry_interval
-        cluster.read_retry_interval
-      end
-
-      def read
-        read_with_retry do
-          operation.execute
-        end
-      end
-
-      def write
-        write_with_retry(nil, nil) do
-          operation.execute
-        end
-      end
+  def read
+    read_with_retry do
+      operation.execute
     end
   end
+
+  def write
+    # This passes a nil session and therefore triggers
+    # legacy_write_with_retry code path
+    write_with_retry(session, write_concern) do
+      operation.execute
+    end
+  end
+
+  def retry_write_allowed_as_configured?
+    retry_write_allowed?(session, write_concern)
+  end
+end
+
+class LegacyRetryableTestConsumer < RetryableTestConsumer
+  def session
+    nil
+  end
+
+  def write_concern
+    nil
+  end
+end
+
+class ModernRetryableTestConsumer < LegacyRetryableTestConsumer
+  include RSpec::Mocks::ExampleMethods
+
+  def session
+    double('session').tap do |session|
+      expect(session).to receive(:retry_writes?).and_return(true)
+
+      # mock everything else that is in the way
+      i = 1
+      allow(session).to receive(:next_txn_num) { i += 1 }
+      allow(session).to receive(:in_transaction?).and_return(false)
+    end
+  end
+
+  def write_concern
+    nil
+  end
+end
+
+describe Mongo::Retryable do
 
   let(:operation) do
     double('operation')
@@ -49,7 +82,7 @@ describe Mongo::Retryable do
   end
 
   let(:retryable) do
-    klass.new(operation, cluster)
+    LegacyRetryableTestConsumer.new(operation, cluster)
   end
 
   describe '#read_with_retry' do
@@ -132,7 +165,7 @@ describe Mongo::Retryable do
         context 'when the operation failure is retryable' do
 
           let(:error) do
-            Mongo::Error::OperationFailure.new('no master')
+            Mongo::Error::OperationFailure.new('not master')
           end
 
           context 'when the retry succeeds' do
@@ -173,7 +206,12 @@ describe Mongo::Retryable do
     end
   end
 
-  describe '#write_with_retry' do
+  describe '#write_with_retry - legacy' do
+
+    before do
+      # Quick sanity check that the expected code path is being exercised
+      expect(retryable.retry_write_allowed_as_configured?).to be false
+    end
 
     context 'when no exception occurs' do
 
@@ -186,30 +224,47 @@ describe Mongo::Retryable do
       end
     end
 
-    context 'when a not master error occurs' do
-
-      before do
-        expect(operation).to receive(:execute).and_raise(Mongo::Error::OperationFailure.new('not master')).ordered
-        expect(cluster).to receive(:scan!).and_return(true).ordered
-        expect(operation).to receive(:execute).and_return(true).ordered
-      end
-
+    shared_examples 'executes the operation twice' do
       it 'executes the operation twice' do
         expect(retryable.write).to be true
       end
     end
 
-    context 'when a not primary error occurs' do
+    context 'when a not master error occurs' do
 
       before do
-        expect(operation).to receive(:execute).and_raise(Mongo::Error::OperationFailure.new('Not primary')).ordered
+        expect(operation).to receive(:execute).and_raise(
+          Mongo::Error::OperationFailure.new('not master')).ordered
         expect(cluster).to receive(:scan!).and_return(true).ordered
         expect(operation).to receive(:execute).and_return(true).ordered
       end
 
-      it 'executes the operation twice' do
-        expect(retryable.write).to be true
+      it_behaves_like 'executes the operation twice'
+    end
+
+    context 'when a node is recovering error occurs' do
+
+      before do
+        expect(operation).to receive(:execute).and_raise(
+          Mongo::Error::OperationFailure.new('node is recovering')).ordered
+        expect(cluster).to receive(:scan!).and_return(true).ordered
+        expect(operation).to receive(:execute).and_return(true).ordered
       end
+
+      it_behaves_like 'executes the operation twice'
+    end
+
+    context 'when a retryable error occurs with a code' do
+
+      before do
+        expect(operation).to receive(:execute).and_raise(
+          Mongo::Error::OperationFailure.new('message missing', nil,
+            :code => 91, :code_name => 'ShutdownInProgress')).ordered
+        expect(cluster).to receive(:scan!).and_return(true).ordered
+        expect(operation).to receive(:execute).and_return(true).ordered
+      end
+
+      it_behaves_like 'executes the operation twice'
     end
 
     context 'when a normal operation failure occurs' do
@@ -222,6 +277,169 @@ describe Mongo::Retryable do
         expect {
           retryable.write
         }.to raise_error(Mongo::Error::OperationFailure)
+      end
+    end
+
+    context 'when a socket error occurs' do
+
+      before do
+        expect(operation).to receive(:execute).and_raise(
+          Mongo::Error::SocketError.new('socket error')).ordered
+      end
+
+      it 'raises an exception' do
+        expect {
+          retryable.write
+        }.to raise_error(Mongo::Error::SocketError)
+      end
+    end
+
+    context 'when a socket timeout occurs' do
+
+      before do
+        expect(operation).to receive(:execute).and_raise(
+          Mongo::Error::SocketTimeoutError.new('socket timeout')).ordered
+      end
+
+      it 'raises an exception' do
+        expect {
+          retryable.write
+        }.to raise_error(Mongo::Error::SocketTimeoutError)
+      end
+    end
+
+    context 'when a non-retryable exception occurs' do
+
+      before do
+        expect(operation).to receive(:execute).and_raise(
+          Mongo::Error::UnsupportedCollation.new('unsupported collation')).ordered
+      end
+
+      it 'raises an exception' do
+        expect {
+          retryable.write
+        }.to raise_error(Mongo::Error::UnsupportedCollation)
+      end
+    end
+
+  end
+
+  describe '#write_with_retry - modern' do
+
+    let(:retryable) do
+      ModernRetryableTestConsumer.new(operation, cluster)
+    end
+
+    before do
+      # Quick sanity check that the expected code path is being exercised
+      expect(retryable.retry_write_allowed_as_configured?).to be true
+
+      allow(server_selector).to receive(:retry_writes?).and_return(true)
+      allow(cluster).to receive(:scan!)
+    end
+
+    context 'when no exception occurs' do
+
+      before do
+        expect(operation).to receive(:execute).and_return(true)
+      end
+
+      it 'executes the operation once' do
+        expect(retryable.write).to be true
+      end
+    end
+
+    shared_examples 'executes the operation twice' do
+      it 'executes the operation twice' do
+        expect(retryable.write).to be true
+      end
+    end
+
+    context 'when a not master error occurs' do
+
+      before do
+        expect(operation).to receive(:execute).and_raise(
+          Mongo::Error::OperationFailure.new('not master')).ordered
+        expect(cluster).to receive(:scan!).and_return(true).ordered
+        expect(operation).to receive(:execute).and_return(true).ordered
+      end
+
+      it_behaves_like 'executes the operation twice'
+    end
+
+    context 'when a node is recovering error occurs' do
+
+      before do
+        expect(operation).to receive(:execute).and_raise(
+          Mongo::Error::OperationFailure.new('node is recovering')).ordered
+        expect(cluster).to receive(:scan!).and_return(true).ordered
+        expect(operation).to receive(:execute).and_return(true).ordered
+      end
+
+      it_behaves_like 'executes the operation twice'
+    end
+
+    context 'when a retryable error occurs with a code' do
+
+      before do
+        expect(operation).to receive(:execute).and_raise(
+          Mongo::Error::OperationFailure.new('message missing', nil,
+            :code => 91, :code_name => 'ShutdownInProgress')).ordered
+        expect(cluster).to receive(:scan!).and_return(true).ordered
+        expect(operation).to receive(:execute).and_return(true).ordered
+      end
+
+      it_behaves_like 'executes the operation twice'
+    end
+
+    context 'when a normal operation failure occurs' do
+
+      before do
+        expect(operation).to receive(:execute).and_raise(Mongo::Error::OperationFailure).ordered
+      end
+
+      it 'raises an exception' do
+        expect {
+          retryable.write
+        }.to raise_error(Mongo::Error::OperationFailure)
+      end
+    end
+
+    context 'when a socket error occurs' do
+
+      before do
+        expect(operation).to receive(:execute).and_raise(
+          Mongo::Error::SocketError.new('socket error')).ordered
+        expect(cluster).to receive(:scan!).and_return(true).ordered
+        expect(operation).to receive(:execute).and_return(true).ordered
+      end
+
+      it_behaves_like 'executes the operation twice'
+    end
+
+    context 'when a socket timeout occurs' do
+
+      before do
+        expect(operation).to receive(:execute).and_raise(
+          Mongo::Error::SocketTimeoutError.new('socket timeout')).ordered
+        expect(cluster).to receive(:scan!).and_return(true).ordered
+        expect(operation).to receive(:execute).and_return(true).ordered
+      end
+
+      it_behaves_like 'executes the operation twice'
+    end
+
+    context 'when a non-retryable exception occurs' do
+
+      before do
+        expect(operation).to receive(:execute).and_raise(
+          Mongo::Error::UnsupportedCollation.new('unsupported collation')).ordered
+      end
+
+      it 'raises an exception' do
+        expect {
+          retryable.write
+        }.to raise_error(Mongo::Error::UnsupportedCollation)
       end
     end
 

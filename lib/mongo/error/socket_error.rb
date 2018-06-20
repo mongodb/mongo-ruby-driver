@@ -19,6 +19,7 @@ module Mongo
     #
     # @since 2.0.0
     class SocketError < Error
+      include WriteRetryable
 
       # Instantiate the new exception.
       #
