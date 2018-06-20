@@ -53,24 +53,24 @@ module Mongo
         #
         # @example Create the event.
         #
-        # @param [ BSON::Document ] failure The error document, if any.
         # @param [ String ] command_name The name of the command.
         # @param [ String ] database_name The database_name name.
         # @param [ Server::Address ] address The server address.
         # @param [ Integer ] request_id The request id.
         # @param [ Integer ] operation_id The operation id.
         # @param [ String ] message The error message.
+        # @param [ BSON::Document ] failure The error document, if any.
         # @param [ Float ] duration The duration the command took in seconds.
         #
         # @since 2.1.0
-        def initialize(failure, command_name, database_name, address, request_id, operation_id, message, duration)
-          @failure = failure
+        def initialize(command_name, database_name, address, request_id, operation_id, message, failure, duration)
           @command_name = command_name.to_s
           @database_name = database_name
           @address = address
           @request_id = request_id
           @operation_id = operation_id
           @message = message
+          @failure = failure
           @duration = duration
         end
 
@@ -79,25 +79,25 @@ module Mongo
         # @example Create the event.
         #   CommandFailed.generate(address, 1, payload, duration)
         #
-        # @param [ BSON::Document ] failure The error document, if any.
         # @param [ Server::Address ] address The server address.
         # @param [ Integer ] operation_id The operation id.
         # @param [ Hash ] payload The message payload.
         # @param [ String ] message The error message.
+        # @param [ BSON::Document ] failure The error document, if any.
         # @param [ Float ] duration The duration of the command in seconds.
         #
         # @return [ CommandFailed ] The event.
         #
         # @since 2.1.0
-        def self.generate(failure, address, operation_id, payload, message, duration)
+        def self.generate(address, operation_id, payload, message, failure, duration)
           new(
-            failure,
             payload[:command_name],
             payload[:database_name],
             address,
             payload[:request_id],
             operation_id,
             message,
+            failure,
             duration
           )
         end

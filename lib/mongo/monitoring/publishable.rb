@@ -102,7 +102,7 @@ module Mongo
       def command_failed(failure, address, operation_id, payload, message, duration)
         monitoring.failed(
           Monitoring::COMMAND,
-          Event::CommandFailed.generate(failure, address, operation_id, payload, message, duration)
+          Event::CommandFailed.generate(address, operation_id, payload, message, failure, duration)
         )
       end
 

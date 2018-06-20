@@ -6,14 +6,10 @@ describe Mongo::Monitoring::Event::CommandFailed do
     Mongo::Address.new('127.0.0.1:27017')
   end
 
-  let(:reply) do
-    BSON::Document.new(test: 'value')
-  end
-
   describe '#command_name' do
     context 'when command_name is given as a string' do
       let(:event) do
-        described_class.new(nil, 'find', 'admin', address, 1, 2, reply, 0.5)
+        described_class.new('find', 'admin', address, 1, 2, 'Uh oh', nil, 0.5)
       end
 
       it 'is a string' do
@@ -23,7 +19,7 @@ describe Mongo::Monitoring::Event::CommandFailed do
 
     context 'when command_name is given as a symbol' do
       let(:event) do
-        described_class.new(nil, :find, 'admin', address, 1, 2, reply, 0.5)
+        described_class.new(:find, 'admin', address, 1, 2, 'Uh oh', nil, 0.5)
       end
 
       it 'is a string' do
