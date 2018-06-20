@@ -32,13 +32,13 @@ module Mongo
         # @example Instantiate the result.
         #   Result.new(replies, inserted_ids)
         #
-        # @param [ Protocol::Message ] replies The wire protocol replies.
+        # @param [ Array<Protocol::Message> | nil ] replies The wire protocol replies, if any.
         # @param [ Array<Object> ] ids The ids of the inserted documents.
         #
         # @since 2.0.0
         def initialize(replies, ids)
           @replies = [*replies] if replies
-          if replies.first && (doc = replies.first.documents.first)
+          if replies && replies.first && (doc = replies.first.documents.first)
             if errors = doc['writeErrors']
               # some documents were potentially inserted
               bad_indices = {}
