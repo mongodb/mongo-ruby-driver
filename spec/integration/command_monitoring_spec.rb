@@ -39,15 +39,21 @@ describe 'Command monitoring' do
     result = client.database.command(:ismaster => 1)
     expect(result.documents.first['ismaster']).to be true
 
-    expect(subscriber.started_events.length).to eql(1)
-    started_event = subscriber.started_events.first
+    started_events = subscriber.started_events.select do |event|
+      event.command_name == :ismaster
+    end
+    expect(started_events.length).to eql(1)
+    started_event = started_events.first
     expect(started_event.command_name).to eql(:ismaster)
     expect(started_event.command).to be_a(BSON::Document)
     expect(started_event.command['ismaster']).to eql(1)
     expect(started_event.address).to be_a(Mongo::Address)
 
-    expect(subscriber.succeeded_events.length).to eql(1)
-    succeeded_event = subscriber.succeeded_events.first
+    succeeded_events = subscriber.succeeded_events.select do |event|
+      event.command_name == :ismaster
+    end
+    expect(succeeded_events.length).to eql(1)
+    succeeded_event = succeeded_events.first
     expect(succeeded_event.command_name).to eql(:ismaster)
     expect(succeeded_event.command).to be_a(BSON::Document)
     expect(succeeded_event.command['ismaster']).to eql(1)
@@ -64,15 +70,24 @@ describe 'Command monitoring' do
       result = client.database.command(:bogus => 1)
     end.to raise_error(Mongo::Error::OperationFailure, /no such c(om)?m(an)?d/)
 
-    expect(subscriber.started_events.length).to eql(1)
-    started_event = subscriber.started_events.first
+    started_events = subscriber.started_events.select do |event|
+      event.command_name == :bogus
+    end
+    expect(started_events.length).to eql(1)
+    started_event = started_events.first
     expect(started_event.command_name).to eql(:bogus)
     expect(started_event.address).to be_a(Mongo::Address)
 
-    expect(subscriber.succeeded_events.length).to eql(0)
+    succeeded_events = subscriber.succeeded_events.select do |event|
+      event.command_name == :ismaster
+    end
+    expect(succeeded_events.length).to eql(0)
 
-    expect(subscriber.failed_events.length).to eql(1)
-    failed_event = subscriber.failed_events.first
+    failed_events = subscriber.failed_events.select do |event|
+      event.command_name == :bogus
+    end
+    expect(failed_events.length).to eql(1)
+    failed_event = failed_events.first
     expect(failed_event.command_name).to eql(:bogus)
     expect(failed_event.command).to be_a(BSON::Document)
     expect(failed_event.command['bogus']).to eql(1)
