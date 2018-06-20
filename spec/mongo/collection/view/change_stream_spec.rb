@@ -434,13 +434,9 @@ describe Mongo::Collection::View::ChangeStream, if: test_change_streams? do
   end
 
   context 'when an error is encountered the first time the command is run' do
+    include PrimarySocket
 
-    let(:primary_socket) do
-      primary = authorized_collection.client.cluster.servers.find { |s| s.primary? }
-      connection = primary.pool.checkout
-      primary.pool.checkin(connection)
-      connection.send(:socket)
-    end
+    let(:client) { authorized_collection.client }
 
     before do
       expect(primary_socket).to receive(:write).and_raise(error).once

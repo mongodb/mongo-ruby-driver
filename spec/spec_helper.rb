@@ -77,6 +77,7 @@ TEST_SET = 'ruby-driver-rs'
 
 require 'support/travis'
 require 'support/authorization'
+require 'support/primary_socket'
 
 RSpec.configure do |config|
   config.include(Authorization)

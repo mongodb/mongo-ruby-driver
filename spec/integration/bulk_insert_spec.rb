@@ -1,6 +1,8 @@
 require 'spec_helper'
 
 describe 'Bulk insert' do
+  include PrimarySocket
+
   FAIL_POINT_BASE_COMMAND = { 'configureFailPoint' => "failCommand" }
 
   let(:collection_name) { 'bulk_insert_spec' }

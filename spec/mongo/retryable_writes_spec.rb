@@ -1,21 +1,7 @@
 require 'spec_helper'
 
 describe 'Retryable writes integration tests' do
-
-  let(:primary) do
-    primary = client.cluster.next_primary
-  end
-
-  let(:primary_connection) do
-    connection = primary.pool.checkout
-    connection.connect!
-    primary.pool.checkin(connection)
-    connection
-  end
-
-  let(:primary_socket) do
-    primary_connection.send(:socket)
-  end
+  include PrimarySocket
 
   after do
     authorized_collection.delete_many
@@ -27,7 +13,7 @@ describe 'Retryable writes integration tests' do
 
       before do
         # Note that for writes, server.connectable? is called, refreshing the socket
-        allow(primary).to receive(:connectable?).and_return(true)
+        allow(primary_server).to receive(:connectable?).and_return(true)
         expect(primary_socket).to receive(:write).and_raise(error)
       end
 
@@ -97,7 +83,7 @@ describe 'Retryable writes integration tests' do
 
       before do
         # Note that for writes, server.connectable? is called, refreshing the socket
-        allow(primary).to receive(:connectable?).and_return(true)
+        allow(primary_server).to receive(:connectable?).and_return(true)
         allow(primary_socket).to receive(:write).and_raise(error)
       end
 
@@ -105,7 +91,7 @@ describe 'Retryable writes integration tests' do
 
         before do
           legacy_primary = double('legacy primary', :'retry_writes?' => false)
-          allow(client.cluster).to receive(:next_primary).and_return(primary, legacy_primary)
+          allow(client.cluster).to receive(:next_primary).and_return(primary_server, legacy_primary)
           expect(primary_socket).to receive(:write).and_raise(error)
         end
 
@@ -265,7 +251,7 @@ describe 'Retryable writes integration tests' do
 
     before do
       # Note that for writes, server.connectable? is called, refreshing the socket
-      allow(primary).to receive(:connectable?).and_return(true)
+      allow(primary_server).to receive(:connectable?).and_return(true)
       expect(primary_socket).to receive(:write).and_raise(Mongo::Error::SocketError)
       expect(client.cluster).not_to receive(:scan!)
     end
@@ -290,7 +276,7 @@ describe 'Retryable writes integration tests' do
 
     before do
       # Note that for writes, server.connectable? is called, refreshing the socket
-      allow(primary).to receive(:connectable?).and_return(true)
+      allow(primary_server).to receive(:connectable?).and_return(true)
       expect(primary_socket).to receive(:write).and_raise(Mongo::Error::SocketError)
       expect(client.cluster).not_to receive(:scan!)
     end
@@ -320,7 +306,7 @@ describe 'Retryable writes integration tests' do
         context 'when the server supports retryable writes' do
 
           before do
-            allow(primary).to receive(:retry_writes?).and_return(true)
+            allow(primary_server).to receive(:retry_writes?).and_return(true)
           end
 
           if standalone? && sessions_enabled?
@@ -333,7 +319,7 @@ describe 'Retryable writes integration tests' do
         context 'when the server does not support retryable writes' do
 
           before do
-            allow(primary).to receive(:retry_writes?).and_return(false)
+            allow(primary_server).to receive(:retry_writes?).and_return(false)
           end
 
           it_behaves_like 'an operation that is not retried'
@@ -358,7 +344,7 @@ describe 'Retryable writes integration tests' do
         context 'when the server supports retryable writes' do
 
           before do
-            allow(primary).to receive(:retry_writes?).and_return(true)
+            allow(primary_server).to receive(:retry_writes?).and_return(true)
           end
 
           if standalone? && sessions_enabled?
@@ -371,7 +357,7 @@ describe 'Retryable writes integration tests' do
         context 'when the server does not support retryable writes' do
 
           before do
-            allow(primary).to receive(:retry_writes?).and_return(false)
+            allow(primary_server).to receive(:retry_writes?).and_return(false)
           end
 
           it_behaves_like 'an operation that is not retried'
