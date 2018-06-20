@@ -11,6 +11,7 @@ COMMAND_MONITORING_TESTS = Dir.glob("#{CURRENT_PATH}/support/command_monitoring/
 CONNECTION_STRING_TESTS = Dir.glob("#{CURRENT_PATH}/support/connection_string_tests/*.yml")
 DNS_SEEDLIST_DISCOVERY_TESTS = Dir.glob("#{CURRENT_PATH}/support/dns_seedlist_discovery_tests/*.yml")
 GRIDFS_TESTS = Dir.glob("#{CURRENT_PATH}/support/gridfs_tests/*.yml")
+TRANSACTIONS_TESTS = Dir.glob("#{CURRENT_PATH}/support/transactions_tests/*.yml")
 
 if ENV['DRIVERS_TOOLS']
   CLIENT_CERT_PEM = ENV['DRIVER_TOOLS_CLIENT_CERT_PEM']
@@ -51,6 +52,7 @@ require 'support/crud'
 require 'support/command_monitoring'
 require 'support/connection_string'
 require 'support/gridfs'
+require 'support/transactions'
 
 RSpec.configure do |config|
   if ENV['CI'] && RUBY_PLATFORM =~ /\bjava\b/

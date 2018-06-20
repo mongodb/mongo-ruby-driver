@@ -512,15 +512,15 @@ module Mongo
 
     private
 
-    def get_session(options = {})
+    def get_session(client, options = {})
       return options[:session].validate!(self) if options[:session]
       if sessions_supported?
-        Session.new(@session_pool.checkout, self, { implicit: true }.merge(options))
+        Session.new(@session_pool.checkout, client, { implicit: true }.merge(options))
       end
     end
 
-    def with_session(options = {})
-      session = get_session(options)
+    def with_session(client, options = {})
+      session = get_session(client, options)
       yield(session)
     ensure
       session.end_session if (session && session.implicit?)

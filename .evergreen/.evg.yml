@@ -533,7 +533,8 @@ buildvariants:
 #  display_name: "${version} ${topology} ${auth-and-ssl} ${ruby} ${os}"
 #  tasks:
 #     - name: "test"
-- matrix_name: "rhel70-all-mongodbs-all-rubies-all-topologies-all-auth-and-ssl"
+-
+  matrix_name: "all"
   matrix_spec: { auth-and-ssl: "*", ruby: "*", mongodb-version: "*", topology: "*" }
   display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
   run_on:
@@ -541,8 +542,9 @@ buildvariants:
   tasks:
      - name: "test"
 
-- matrix_name: "rhel70-latest-all-rubies-all-topologies-all-auth-all-ssl-compression"
-  matrix_spec: { auth-and-ssl: "*", ruby: "*", mongodb-version: "3.6", topology: "*", compressor: 'zlib' }
+-
+  matrix_name: "zlib"
+  matrix_spec: { auth-and-ssl: "*", ruby: "*", mongodb-version: ["3.6", "4.0", "latest"], topology: "*", compressor: 'zlib' }
   display_name: "${compressor} ${topology} ${auth-and-ssl} ${ruby}"
   run_on:
     - rhel70-small

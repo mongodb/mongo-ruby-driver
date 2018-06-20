@@ -40,7 +40,7 @@ module Mongo
         #
         # @since 2.0.0
         def find_one_and_delete(opts = {})
-          cmd = { :findandmodify => collection.name, :query => filter, :remove => true }
+          cmd = { :findAndModify => collection.name, :query => filter, :remove => true }
           cmd[:fields] = projection if projection
           cmd[:sort] = sort if sort
           cmd[:maxTimeMS] = max_time_ms if max_time_ms
@@ -107,7 +107,7 @@ module Mongo
         #
         # @since 2.0.0
         def find_one_and_update(document, opts = {})
-          cmd = { :findandmodify => collection.name, :query => filter }
+          cmd = { :findAndModify => collection.name, :query => filter }
           cmd[:update] = document
           cmd[:fields] = projection if projection
           cmd[:sort] = sort if sort

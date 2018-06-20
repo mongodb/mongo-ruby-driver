@@ -20,6 +20,37 @@ module Mongo
     # @since 2.0.0
     class SocketError < Error
       include WriteRetryable
+
+      # Instantiate the new exception.
+      #
+      # @example Instantiate the exception.
+      #   Mongo::Error::SocketError.new(msg)
+      #
+      # @param [ String ] msg The error message.
+      #
+      # @since 2.0.0
+      def initialize(msg = nil, labels = nil)
+        @labels = labels || []
+        super(msg) if msg
+      end
+
+      # Does the error have the given label?
+      #
+      # @example
+      #   error.label?(label)
+      #
+      # @return [ true, false ] Whether the error has the given label.
+      #
+      # @since 2.6.0
+      def label?(label)
+        @labels.include?(label)
+      end
+
+      private
+
+      def add_label(label)
+        @labels << label unless label?(label)
+      end
     end
   end
 end

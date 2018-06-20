@@ -18,7 +18,7 @@ describe Mongo::Session::ServerSession do
   describe '#next_txn_number' do
 
     it 'advances and returns the next transaction number' do
-      expect(described_class.new.next_txn_num).to be(0)
+      expect(described_class.new.next_txn_num).to be(1)
     end
 
     context 'when the method is called multiple times' do
@@ -33,7 +33,7 @@ describe Mongo::Session::ServerSession do
       end
 
       it 'advances and returns the next transaction number' do
-        expect(server_session.next_txn_num).to be(2)
+        expect(server_session.next_txn_num).to be(3)
       end
     end
   end

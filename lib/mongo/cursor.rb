@@ -198,7 +198,7 @@ module Mongo
       if @options[:disable_retry]
         process(get_more_operation.execute(@server))
       else
-        read_with_retry do
+        read_with_retry(@session) do
           process(get_more_operation.execute(@server))
         end
       end

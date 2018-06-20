@@ -42,7 +42,7 @@ describe Mongo::Server::Description do
   let(:topology) do
     double('topology')
   end
-  
+
   let(:cluster) do
     double('cluster').tap do |cl|
       allow(cl).to receive(:topology).and_return(topology)
@@ -431,19 +431,36 @@ describe Mongo::Server::Description do
         described_class.new(address, { 'ismaster' => false })
       end
 
-      it 'returns true' do
+      it 'returns false' do
         expect(description).to_not be_primary
       end
     end
 
     context 'when the server is a primary' do
 
-      let(:description) do
-        described_class.new(address, replica)
+      context 'when the hostname contains no capital letters' do
+
+        let(:description) do
+          described_class.new(address, replica)
+        end
+
+        it 'returns true' do
+          expect(description).to be_primary
+        end
       end
 
-      it 'returns false' do
-        expect(description).to be_primary
+      context 'when the hostname contains capital letters' do
+
+        let(:description) do
+          described_class.new('localhost:27017',
+                              { 'ismaster' => true,
+                                'primary' => 'LOCALHOST:27017',
+                                'setName' => 'itsASet!'})
+        end
+
+        it 'returns true' do
+          expect(description).to be_primary
+        end
       end
     end
   end

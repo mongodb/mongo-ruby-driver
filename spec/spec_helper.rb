@@ -186,6 +186,14 @@ def test_change_streams?
   !BSON::Environment.jruby? && change_stream_enabled? & replica_set?
 end
 
+# Whether transactions can be tested. Transactions are available on server versions 4.0 and higher
+#   and when connected to a replica set.
+#
+# @since 2.6.0
+def test_transactions?
+  transactions_enabled? && replica_set?
+end
+
 # For instances where behaviour is different on different versions, we need to
 # determine in the specs if we are 3.6 or higher.
 #
@@ -231,6 +239,8 @@ def scram_sha_256_enabled?
   $mongo_client ||= initialize_scanned_client!
   $scram_sha_256_enabled ||= $mongo_client.cluster.servers.first.features.scram_sha_256_enabled?
 end
+
+alias :transactions_enabled? :scram_sha_256_enabled?
 
 # Is the test suite running locally (not on Travis).
 #
@@ -281,7 +291,7 @@ def auth_enabled?
     begin
       $mongo_client.use(:admin).command(getCmdLineOpts: 1).first["argv"].include?("--auth")
     rescue => e
-      e.message =~ /(not authorized)|(unauthorized)/
+      e.message =~ /(not authorized)|(unauthorized)|(no users authenticated)|(requires authentication)/
     end
   end
 end

@@ -461,6 +461,18 @@ module Mongo
         @passives ||= (config[PASSIVES] || []).map { |s| s.downcase }
       end
 
+      # Get the address of the primary host.
+      #
+      # @example Get the address of the primary.
+      #   description.primary_host
+      #
+      # @return [ String | nil ] The address of the primary.
+      #
+      # @since 2.6.0
+      def primary_host
+        config[PRIMARY_HOST] && config[PRIMARY_HOST].downcase
+      end
+
       # Will return true if the server is a primary.
       #
       # @example Is the server a primary?
@@ -471,7 +483,7 @@ module Mongo
       # @since 2.0.0
       def primary?
         !!config[PRIMARY] &&
-          (config[PRIMARY_HOST].nil? || config[PRIMARY_HOST] == address.to_s) &&
+          (primary_host.nil? || primary_host == address.to_s) &&
             !replica_set_name.nil?
       end
 

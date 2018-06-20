@@ -38,6 +38,11 @@ module Mongo
       # @since 2.5.0
       attr_reader :last_use
 
+      # The current transactions number.
+      #
+      # @since 2.5.0
+      attr_reader :txn_num
+
       # Initialize a ServerSession.
       #
       # @example
@@ -47,7 +52,7 @@ module Mongo
       def initialize
         set_last_use!
         session_id
-        @txn_num = -1
+        @txn_num = 0
       end
 
       # Update the last_use attribute of the server session to now.
