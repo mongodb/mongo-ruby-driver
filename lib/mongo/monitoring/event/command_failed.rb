@@ -69,7 +69,7 @@ module Mongo
         # @since 2.1.0
         def initialize(failure, command_name, command, database_name, address, request_id, operation_id, message, duration)
           @failure = failure
-          @command_name = command_name
+          @command_name = command_name.to_s
           @command = command
           @database_name = database_name
           @address = address

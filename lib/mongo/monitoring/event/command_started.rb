@@ -53,7 +53,7 @@ module Mongo
         #
         # @since 2.1.0
         def initialize(command_name, database_name, address, request_id, operation_id, command)
-          @command_name = command_name
+          @command_name = command_name.to_s
           @database_name = database_name
           @address = address
           @request_id = request_id
