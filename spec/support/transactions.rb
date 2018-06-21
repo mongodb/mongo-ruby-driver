@@ -118,7 +118,7 @@ module Mongo
         @data = data
         @description = test['description']
         @client_options = convert_client_options(test['clientOptions'] || {})
-        @session_options = symbolize_hash(test['sessionOptions'] || {})
+        @session_options = snakeize_hash(test['sessionOptions'] || {})
         @failpoint = test['failPoint']
         @operations = test['operations']
         @expectations = test['expectations']

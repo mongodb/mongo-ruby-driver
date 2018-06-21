@@ -12,27 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Converts a 'camelCase' string or symbol to a :snake_case symbol.
-def camel_to_snake(ident)
-  ident = ident.is_a?(String) ? ident.dup : ident.to_s
-  ident[0] = ident[0].downcase
-  ident.chars.reduce('') { |s, c| s + (/[A-Z]/ =~ c ? "_#{c.downcase}" : c) }.to_sym
-end
-
-# Creates a copy of a hash where all keys and string values are converted to camel-case symbols.
-# For example, `{ 'fooBar' => { 'baz' => 'bingBing', :x => 1 } }` converts to
-# `{ :foo_bar => { :baz => :bing_bing, :x => 1 } }`.
-def symbolize_hash(value)
-  return camel_to_snake(value) if value.is_a?(String)
-  return value unless value.is_a?(Hash)
-
-  value.reduce({}) do |hash, kv|
-    hash.tap do |h|
-      h[camel_to_snake(kv.first)] = symbolize_hash(kv.last)
-    end
-  end
-end
-
 module Mongo
   module Transactions
     class Operation
@@ -147,7 +126,7 @@ module Mongo
       private
 
       def start_transaction(session)
-        session.start_transaction(symbolize_hash(arguments['options'])) ; nil
+        session.start_transaction(snakeize_hash(arguments['options'])) ; nil
       end
 
       def commit_transaction(session)
@@ -165,7 +144,7 @@ module Mongo
         command_value = cmd.delete(command_name)
         cmd = { command_name.to_sym => command_value }.merge(cmd)
 
-        opts = symbolize_hash(options)
+        opts = snakeize_hash(options)
         opts[:read] = opts.delete(:read_preference)
         database.command(cmd, opts).documents.first
       end
@@ -375,19 +354,19 @@ module Mongo
       end
 
       def read_concern
-        symbolize_hash(@spec['collectionOptions'] && @spec['collectionOptions']['readConcern'])
+        snakeize_hash(@spec['collectionOptions'] && @spec['collectionOptions']['readConcern'])
       end
 
       def write_concern
-        symbolize_hash(@spec['collectionOptions'] && @spec['collectionOptions']['writeConcern'])
+        snakeize_hash(@spec['collectionOptions'] && @spec['collectionOptions']['writeConcern'])
       end
 
       def read_preference
-        symbolize_hash(arguments['readPreference'])
+        snakeize_hash(arguments['readPreference'])
       end
 
       def collection_read_preference
-        symbolize_hash(@spec['collectionOptions'] && @spec['collectionOptions']['readPreference'])
+        snakeize_hash(@spec['collectionOptions'] && @spec['collectionOptions']['readPreference'])
       end
     end
   end

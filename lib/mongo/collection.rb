@@ -334,7 +334,7 @@ module Mongo
       View::ChangeStream.new(View.new(self, {}, options), pipeline, options)
     end
 
-    # Get a count of matching documents in the collection.
+    # Gets the number of matching documents in the collection.
     #
     # @example Get the count.
     #   collection.count(name: 1)
@@ -353,8 +353,53 @@ module Mongo
     # @return [ Integer ] The document count.
     #
     # @since 2.1.0
+    #
+    # @deprecated Use count_documents or estimated_document_count instead.
     def count(filter = nil, options = {})
       View.new(self, filter || {}, options).count(options)
+    end
+
+    # Gets the number of of matching documents in the collection. Unlike the deprecated #count
+    # method, this will return the exact number of documents matching the filter rather than the estimate.
+    #
+    # @example Get the number of documents in the collection.
+    #   collection_view.count_documents
+    #
+    # @param [ Hash ] filter A filter for matching documents.
+    # @param [ Hash ] options Options for the operation.
+    #
+    # @option opts :skip [ Integer ] The number of documents to skip.
+    # @option opts :hint [ Hash ] Override default index selection and force
+    #   MongoDB to use a specific index for the query. Requires server version 3.6+.
+    # @option opts :limit [ Integer ] Max number of docs to count.
+    # @option opts :max_time_ms [ Integer ] The maximum amount of time to allow the
+    #   command to run.
+    # @option opts [ Hash ] :read The read preference options.
+    # @option opts [ Hash ] :collation The collation to use.
+    #
+    # @return [ Integer ] The document count.
+    #
+    # @since 2.6.0
+    def count_documents(filter, options = {})
+      View.new(self, filter, options).count_documents(options)
+    end
+
+    # Gets an estimate of the count of documents in a collection using collection metadata.
+    #
+    # @example Get the number of documents in the collection.
+    #   collection_view.estimated_document_count
+    #
+    # @param [ Hash ] options Options for the operation.
+    #
+    # @option opts :max_time_ms [ Integer ] The maximum amount of time to allow the command to
+    #   run.
+    # @option opts [ Hash ] :read The read preference options.
+    #
+    # @return [ Integer ] The document count.
+    #
+    # @since 2.6.0
+    def estimated_document_count(options = {})
+      View.new(self, {}, options).estimated_document_count(options)
     end
 
     # Get a list of distinct values for a specific field.
