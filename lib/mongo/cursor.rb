@@ -128,7 +128,11 @@ module Mongo
     def try_next
       if @documents.nil?
         @documents = process(@initial_result)
-      elsif @documents.empty?
+        # the docuemnts here can be an empty array, hence
+        # we may end up issuing a getMore in the first try_next call
+      end
+
+      if @documents.empty?
         if more?
           if exhausted?
             kill_cursors
