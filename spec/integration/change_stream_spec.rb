@@ -39,5 +39,14 @@ describe 'Change stream integration' do
         expect(doc).to eql('a' => 1)
       end
     end
+
+    context 'there are no changes' do
+      it 'returns nil' do
+        cs = authorized_collection.watch
+
+        change = cs.to_enum.try_next
+        expect(change).to be nil
+      end
+    end
   end
 end
