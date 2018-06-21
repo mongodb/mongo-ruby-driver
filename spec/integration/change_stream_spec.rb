@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe Mongo::Collection::View::ChangeStream do
+describe 'Change stream integration' do
   before do
     unless test_change_streams?
       skip 'Not testing change streams'
