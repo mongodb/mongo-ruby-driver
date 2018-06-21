@@ -52,8 +52,9 @@ module Mongo
         # @param [ BSON::Document ] command The command arguments.
         #
         # @since 2.1.0
+        # @api private
         def initialize(command_name, database_name, address, request_id, operation_id, command)
-          @command_name = command_name
+          @command_name = command_name.to_s
           @database_name = database_name
           @address = address
           @request_id = request_id
@@ -73,6 +74,7 @@ module Mongo
         # @return [ CommandStarted ] The event.
         #
         # @since 2.1.0
+        # @api private
         def self.generate(address, operation_id, payload)
           new(
             payload[:command_name],
@@ -82,6 +84,15 @@ module Mongo
             operation_id,
             payload[:command]
           )
+        end
+
+        # Returns a concise yet useful summary of the event.
+        #
+        # @return [ String ] String summary of the event.
+        #
+        # @since 2.6.0
+        def inspect
+          "#<{#{self.class} command=#{command_name}>"
         end
       end
     end

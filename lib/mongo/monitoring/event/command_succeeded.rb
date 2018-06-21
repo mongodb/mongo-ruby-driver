@@ -56,8 +56,9 @@ module Mongo
         # @param [ Float ] duration The duration the command took in seconds.
         #
         # @since 2.1.0
+        # @api private
         def initialize(command_name, database_name, address, request_id, operation_id, reply, duration)
-          @command_name = command_name
+          @command_name = command_name.to_s
           @database_name = database_name
           @address = address
           @request_id = request_id
@@ -80,6 +81,7 @@ module Mongo
         # @return [ CommandCompleted ] The event.
         #
         # @since 2.1.0
+        # @api private
         def self.generate(address, operation_id, command_payload, reply_payload, duration)
           new(
             command_payload[:command_name],

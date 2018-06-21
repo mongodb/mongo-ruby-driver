@@ -85,12 +85,37 @@ describe Mongo::Monitoring do
       double('subscriber')
     end
 
-    before do
+    it 'subscribes to the topic' do
       monitoring.subscribe('topic', subscriber)
+      expect(monitoring.subscribers['topic']).to eq([ subscriber ])
     end
 
-    it 'subscribes to the topic' do
-      expect(monitoring.subscribers['topic']).to eq([ subscriber ])
+    it 'subscribes to the topic twice' do
+      monitoring.subscribe('topic', subscriber)
+      monitoring.subscribe('topic', subscriber)
+      expect(monitoring.subscribers['topic']).to eq([ subscriber, subscriber ])
+    end
+  end
+
+  describe '#unsubscribe' do
+
+    let(:monitoring) do
+      described_class.new(monitoring: false)
+    end
+
+    let(:subscriber) do
+      double('subscriber')
+    end
+
+    it 'unsubscribes from the topic' do
+      monitoring.subscribe('topic', subscriber)
+      monitoring.unsubscribe('topic', subscriber)
+      expect(monitoring.subscribers['topic']).to eq([ ])
+    end
+
+    it 'unsubscribes from the topic when not subscribed' do
+      monitoring.unsubscribe('topic', subscriber)
+      expect(monitoring.subscribers['topic']).to eq([ ])
     end
   end
 

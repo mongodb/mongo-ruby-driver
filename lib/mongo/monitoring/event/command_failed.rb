@@ -33,7 +33,14 @@ module Mongo
         # @return [ Float ] duration The duration of the command in seconds.
         attr_reader :duration
 
-        # @return [ String ] message The error message.
+        # @return [ BSON::Document ] failure The error document, if present.
+        #   This will only be filled out for errors communicated by a
+        #   MongoDB server. In other situations, for example in case of
+        #   a network error, this attribute may be nil.
+        attr_reader :failure
+
+        # @return [ String ] message The error message. Unlike the error
+        #   document, the error message should always be present.
         attr_reader :message
 
         # @return [ Integer ] operation_id The operation id.
@@ -52,16 +59,19 @@ module Mongo
         # @param [ Integer ] request_id The request id.
         # @param [ Integer ] operation_id The operation id.
         # @param [ String ] message The error message.
+        # @param [ BSON::Document ] failure The error document, if any.
         # @param [ Float ] duration The duration the command took in seconds.
         #
         # @since 2.1.0
-        def initialize(command_name, database_name, address, request_id, operation_id, message, duration)
-          @command_name = command_name
+        # @api private
+        def initialize(command_name, database_name, address, request_id, operation_id, message, failure, duration)
+          @command_name = command_name.to_s
           @database_name = database_name
           @address = address
           @request_id = request_id
           @operation_id = operation_id
           @message = message
+          @failure = failure
           @duration = duration
         end
 
@@ -74,12 +84,14 @@ module Mongo
         # @param [ Integer ] operation_id The operation id.
         # @param [ Hash ] payload The message payload.
         # @param [ String ] message The error message.
+        # @param [ BSON::Document ] failure The error document, if any.
         # @param [ Float ] duration The duration of the command in seconds.
         #
         # @return [ CommandFailed ] The event.
         #
         # @since 2.1.0
-        def self.generate(address, operation_id, payload, message, duration)
+        # @api private
+        def self.generate(address, operation_id, payload, message, failure, duration)
           new(
             payload[:command_name],
             payload[:database_name],
@@ -87,6 +99,7 @@ module Mongo
             payload[:request_id],
             operation_id,
             message,
+            failure,
             duration
           )
         end

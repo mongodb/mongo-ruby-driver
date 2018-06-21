@@ -268,7 +268,7 @@ describe Mongo::Database do
 
 
       let(:full_command) do
-        EventSubscriber.started_events.find { |cmd| cmd.command_name == :ismaster }.command
+        EventSubscriber.started_events.find { |cmd| cmd.command_name == 'ismaster' }.command
       end
 
       it 'does not add a afterClusterTime field' do

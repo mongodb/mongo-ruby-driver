@@ -917,7 +917,7 @@ describe Mongo::Collection do
 
         let(:command) do
           client[TEST_COLL].find({}, session: session).explain
-          EventSubscriber.started_events.find { |c| c.command_name == :explain }.command
+          EventSubscriber.started_events.find { |c| c.command_name == 'explain' }.command
         end
 
         it 'sends the session id' do
@@ -1232,7 +1232,7 @@ describe Mongo::Collection do
       end
 
       let(:insert_events) do
-        EventSubscriber.started_events.select { |e| e.command_name == :insert }
+        EventSubscriber.started_events.select { |e| e.command_name == 'insert' }
       end
 
       it 'sends the documents in one OP_MSG' do
@@ -1756,7 +1756,7 @@ describe Mongo::Collection do
 
         let(:command) do
           operation
-          EventSubscriber.started_events.find { |cmd| cmd.command_name == :count }.command
+          EventSubscriber.started_events.find { |cmd| cmd.command_name == 'count' }.command
         end
 
         it_behaves_like 'an operation supporting causally consistent reads'
@@ -1870,7 +1870,7 @@ describe Mongo::Collection do
 
       let(:command) do
         operation
-        EventSubscriber.started_events.find { |cmd| cmd.command_name == :distinct }.command
+        EventSubscriber.started_events.find { |cmd| cmd.command_name == 'distinct' }.command
       end
 
       it_behaves_like 'an operation supporting causally consistent reads'
@@ -2388,7 +2388,7 @@ describe Mongo::Collection do
 
       let(:command) do
         operation
-        EventSubscriber.started_events.find { |cmd| cmd.command_name == :parallelCollectionScan }.command
+        EventSubscriber.started_events.find { |cmd| cmd.command_name == 'parallelCollectionScan' }.command
       end
 
       it_behaves_like 'an operation supporting causally consistent reads'
@@ -3573,7 +3573,7 @@ describe Mongo::Collection do
       end
 
       let(:update_events) do
-        EventSubscriber.started_events.select { |e| e.command_name == :update }
+        EventSubscriber.started_events.select { |e| e.command_name == 'update' }
       end
 
       it 'sends the documents in one OP_MSG' do
