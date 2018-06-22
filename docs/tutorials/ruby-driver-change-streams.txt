@@ -77,3 +77,24 @@ You can close a change stream by calling the ``#close`` method:
   doc = stream.to_enum.next
   process(doc)
   stream.close
+
+Resuming a Change Stream
+------------------------
+
+The driver will automatically retry getMore operations on a change stream
+once. Initial aggregation is never retried. In practical terms this means
+that, for example:
+
+- Calling ``collection.watch`` will fail if the cluster does not have
+enough available nodes to satisfy the ``"majority"`` read preference;
+- Once ``collection.watch`` successfully returns, if the cluster subsequently
+experiences an election or loses a node, but heals quickly enough,
+change stream reads via ``next`` or ``each`` methods will continue
+transparently to the application.
+
+If the cluster loses enough nodes to not be able to satisfy the ``"majority"``
+read preference and does not heal quickly enough, ``next`` and ``each``
+will raise an error. In these cases the application must track which
+documents from the change stream it has processed and create a new
+change stream object via the ``watch`` call, passing an appropriate
+``:resume_after`` argument.
