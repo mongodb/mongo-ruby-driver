@@ -150,7 +150,29 @@ module Mongo
         # @api private
         def try_next
           raise StopIteration.new if closed?
-          doc = @cursor.try_next
+          retried = false
+
+          begin
+            doc = @cursor.try_next
+          rescue Mongo::Error => e
+            unless e.change_stream_resumable?
+              raise
+            end
+
+            if retried
+              # Rerun initial aggregation.
+              # Any errors here will stop iteration and break out of this
+              # method
+              close
+              create_cursor!
+              retried = false
+            else
+              # Attempt to retry a getMore once
+              retried = true
+              retry
+            end
+          end
+
           if doc
             cache_resume_token(doc)
           end
