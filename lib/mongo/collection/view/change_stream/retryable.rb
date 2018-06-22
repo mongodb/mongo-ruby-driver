@@ -26,24 +26,12 @@ module Mongo
 
           def read_with_one_retry
             yield
-          rescue => e
-            if retryable?(e)
+          rescue Mongo::Error => e
+            if e.change_stream_resumable?
               yield
             else
               raise(e)
             end
-          end
-
-          def retryable?(error)
-             network_error?(error) || retryable_operation_failure?(error)
-          end
-
-          def network_error?(error)
-            [ Error::SocketError, Error::SocketTimeoutError].include?(error.class)
-          end
-
-          def retryable_operation_failure?(error)
-            error.is_a?(Error::OperationFailure) && error.change_stream_resumable?
           end
         end
       end

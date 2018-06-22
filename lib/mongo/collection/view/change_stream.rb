@@ -88,7 +88,7 @@ module Mongo
           @change_stream_filters = pipeline && pipeline.dup
           @options = options && options.dup.freeze
           @resume_token = @options[:resume_after]
-          read_with_one_retry { create_cursor! }
+          create_cursor!
         end
 
         # Iterate through documents returned by the change stream.
@@ -107,19 +107,30 @@ module Mongo
         # @yieldparam [ BSON::Document ] Each change stream document.
         def each
           raise StopIteration.new if closed?
+          retried = false
           begin
             @cursor.each do |doc|
               cache_resume_token(doc)
               yield doc
             end if block_given?
             @cursor.to_enum
-          rescue => e
-            close
-            if retryable?(e)
+          rescue Mongo::Error => e
+            unless e.change_stream_resumable?
+              raise
+            end
+
+            if retried
+              # Rerun initial aggregation.
+              # Any errors here will stop iteration and break out of this
+              # method
+              close
               create_cursor!
+              retried = false
+            else
+              # Attempt to retry a getMore once
+              retried = true
               retry
             end
-            raise
           end
         end
 

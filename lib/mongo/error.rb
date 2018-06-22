@@ -69,11 +69,16 @@ module Mongo
     #
     # @since 2.2.3
     CURSOR_NOT_FOUND = 'Cursor not found.'
+
+    def change_stream_resumable?
+      false
+    end
   end
 end
 
 require 'mongo/error/parser'
 require 'mongo/error/write_retryable'
+require 'mongo/error/change_stream_resumable'
 require 'mongo/error/bulk_write_error'
 require 'mongo/error/closed_stream'
 require 'mongo/error/extra_file_chunk'
