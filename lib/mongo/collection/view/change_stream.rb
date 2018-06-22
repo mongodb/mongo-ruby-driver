@@ -93,6 +93,8 @@ module Mongo
 
         # Iterate through documents returned by the change stream.
         #
+        # This method retries indefinitely on resumable errors.
+        #
         # @example Iterate through the stream of documents.
         #   stream.each do |document|
         #     p document
@@ -121,6 +123,20 @@ module Mongo
           end
         end
 
+        # Return one document from the change stream, if one is available.
+        #
+        # Retries once on a resumable error.
+        #
+        # Raises StopIteration if the change stream is closed.
+        #
+        # This method will wait up to max_await_time_ms milliseconds
+        # for changes from the server, and if no changes are received
+        # it will return nil.
+        #
+        # @note This method is experimental and subject to change.
+        #
+        # @return [ BSON::Document | nil ] A change stream document.
+        # @api private
         def try_next
           raise StopIteration.new if closed?
           doc = @cursor.try_next
