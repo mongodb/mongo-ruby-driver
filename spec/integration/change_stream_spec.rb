@@ -44,6 +44,8 @@ describe 'Change stream integration' do
     end
 
     context 'error on initial aggregation' do
+      min_server_version '4.0'
+
       before do
         authorized_collection.client.use(:admin).command(FAIL_POINT_BASE_COMMAND.merge(
           :mode => {:times => 1},
@@ -58,6 +60,8 @@ describe 'Change stream integration' do
     end
 
     context 'one error on getMore' do
+      min_server_version '4.0'
+
       before do
         authorized_collection.client.use(:admin).command(FAIL_POINT_BASE_COMMAND.merge(
           :mode => {:times => 1},
@@ -68,6 +72,8 @@ describe 'Change stream integration' do
     end
 
     context 'two errors on getMore' do
+      min_server_version '4.0'
+
       before do
         authorized_collection.client.use(:admin).command(FAIL_POINT_BASE_COMMAND.merge(
           :mode => {:times => 2},
@@ -80,6 +86,8 @@ describe 'Change stream integration' do
     end
 
     context 'two errors on getMore followed by an error on aggregation' do
+      min_server_version '4.0'
+
       it 'next raises error' do
         cs = authorized_collection.watch
 
@@ -133,6 +141,8 @@ describe 'Change stream integration' do
     end
 
     context 'one error on getMore' do
+      min_server_version '4.0'
+
       before do
         authorized_collection.client.use(:admin).command(FAIL_POINT_BASE_COMMAND.merge(
           :mode => {:times => 1},
@@ -143,6 +153,8 @@ describe 'Change stream integration' do
     end
 
     context 'two errors on getMore' do
+      min_server_version '4.0'
+
       before do
         authorized_collection.client.use(:admin).command(FAIL_POINT_BASE_COMMAND.merge(
           :mode => {:times => 2},
@@ -155,6 +167,8 @@ describe 'Change stream integration' do
     end
 
     context 'two errors on getMore followed by an error on aggregation' do
+      min_server_version '4.0'
+
       it 'next raises error' do
         cs = authorized_collection.watch
 
