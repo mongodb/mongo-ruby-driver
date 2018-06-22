@@ -70,6 +70,15 @@ module Mongo
     # @since 2.2.3
     CURSOR_NOT_FOUND = 'Cursor not found.'
 
+    # Can the change stream on which this error occurred be resumed,
+    # provided the operation that triggered this error was a getMore?
+    #
+    # @example Is the error resumable for the change stream?
+    #   error.change_stream_resumable?
+    #
+    # @return [ true, false ] Whether the error is resumable.
+    #
+    # @since 2.6.0
     def change_stream_resumable?
       false
     end

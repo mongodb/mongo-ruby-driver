@@ -129,9 +129,8 @@ module Mongo
       # @api private
       CHANGE_STREAM_RESUME_MESSAGES = WRITE_RETRY_MESSAGES
 
-      # Can the change stream on which this error occurred be resumed?
-      #
-      # Note: only errors from getMore commands are resumable.
+      # Can the change stream on which this error occurred be resumed,
+      # provided the operation that triggered this error was a getMore?
       #
       # @example Is the error resumable for the change stream?
       #   error.change_stream_resumable?
