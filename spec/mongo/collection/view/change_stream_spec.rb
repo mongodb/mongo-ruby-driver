@@ -495,7 +495,7 @@ describe Mongo::Collection::View::ChangeStream, if: test_change_streams? do
           Mongo::Error::SocketError
         end
 
-        it_behaves_like 'a resumable change stream'
+        it_behaves_like 'a non-resumed change stream'
       end
 
       context 'when the error is a SocketTimeoutError' do
@@ -504,7 +504,7 @@ describe Mongo::Collection::View::ChangeStream, if: test_change_streams? do
           Mongo::Error::SocketTimeoutError
         end
 
-        it_behaves_like 'a resumable change stream'
+        it_behaves_like 'a non-resumed change stream'
       end
 
       context "when the error is a 'not master' error" do
