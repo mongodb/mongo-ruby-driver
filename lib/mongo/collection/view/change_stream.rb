@@ -115,22 +115,17 @@ module Mongo
             end if block_given?
             @cursor.to_enum
           rescue Mongo::Error => e
-            unless e.change_stream_resumable?
+            if retried || !e.change_stream_resumable?
               raise
             end
 
-            if retried
-              # Rerun initial aggregation.
-              # Any errors here will stop iteration and break out of this
-              # method
-              close
-              create_cursor!
-              retried = false
-            else
-              # Attempt to retry a getMore once
-              retried = true
-              retry
-            end
+            retried = true
+            # Rerun initial aggregation.
+            # Any errors here will stop iteration and break out of this
+            # method
+            close
+            create_cursor!
+            retry
           end
         end
 
