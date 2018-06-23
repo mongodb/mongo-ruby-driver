@@ -97,7 +97,7 @@ describe 'Change stream integration' do
         enum = cs.to_enum
 
         authorized_collection.client.use(:admin).command(FAIL_POINT_BASE_COMMAND.merge(
-          :mode => {:times => 3},
+          :mode => {:times => 2},
           :data => {:failCommands => ['getMore', 'aggregate'], errorCode: 101}))
 
         sleep 0.5
