@@ -312,4 +312,34 @@ describe 'Change stream integration' do
       end
     end
   end
+
+  describe ':start_at_operation_time option' do
+    before do
+      authorized_collection.delete_many
+    end
+
+    it 'respects start time prior to beginning of aggregation' do
+      time = Time.now - 1
+      authorized_collection.insert_one(:a => 1)
+      sleep 0.5
+
+      cs = authorized_collection.watch([], start_at_operation_time: time)
+
+      document = cs.to_enum.next
+      expect(document).to be_a(BSON::Document)
+    end
+
+    it 'respects start time after beginning of aggregation' do
+      time = Time.now + 10
+      cs = authorized_collection.watch([], start_at_operation_time: time)
+      sleep 0.5
+
+      authorized_collection.insert_one(:a => 1)
+
+      sleep 0.5
+
+      document = cs.to_enum.try_next
+      expect(document).to be_nil
+    end
+  end
 end

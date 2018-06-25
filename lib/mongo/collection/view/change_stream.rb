@@ -265,6 +265,10 @@ module Mongo
 
         def change_doc
           { fullDocument: ( @options[:full_document] || FULL_DOCUMENT_DEFAULT ) }.tap do |doc|
+            if options[:start_at_operation_time]
+              doc[:startAtOperationTime] = time_to_bson_timestamp(
+                options[:start_at_operation_time])
+            end
             doc[:resumeAfter] = @resume_token if @resume_token
             doc[:allChangesForCluster] = true if for_cluster?
           end
@@ -272,6 +276,11 @@ module Mongo
 
         def send_initial_query(server, session)
           initial_query_op(session).execute(server)
+        end
+
+        def time_to_bson_timestamp(time)
+          seconds = time.to_f
+          BSON::Timestamp.new(seconds.to_i, ((seconds - seconds.to_i) * 1000000).to_i)
         end
       end
     end
