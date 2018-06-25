@@ -267,9 +267,10 @@ module Mongo
     # @option options [ Integer ] :batch_size The number of documents to return per batch.
     # @option options [ BSON::Document, Hash ] :collation The collation to use.
     # @option options [ Session ] :session The session to use.
-    # @option options [ BSON::Timestamp ] :start_at_cluster_time Only return changes that occurred
-    #   after the specified timestamp. Any command run against the server will return a cluster time
-    #   that can be used here. Only valid in server versions 4.0+.
+    # @option options [ BSON::Timestamp ] :start_at_operation_time Only return
+    #   changes that occurred after the specified timestamp. Any command run
+    #   against the server will return a cluster time that can be used here.
+    #   Only recognized by server versions 4.0+.
     #
     # @note A change stream only allows 'majority' read concern.
     # @note This helper method is preferable to running a raw aggregation with a $changeStream
