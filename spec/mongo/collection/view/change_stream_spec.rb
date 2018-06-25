@@ -19,7 +19,7 @@ describe Mongo::Collection::View::ChangeStream, if: test_change_streams? do
   end
 
   let(:change_stream) do
-    described_class.new(view, pipeline, options)
+    described_class.new(view, pipeline, nil, options)
   end
 
   let(:change_stream_document) do
@@ -751,43 +751,6 @@ describe Mongo::Collection::View::ChangeStream, if: test_change_streams? do
 
       it 'includes the filters in the formatted string' do
         expect(change_stream.inspect).to include([{ '$project' => { '_id' => 0 }}].to_s)
-      end
-    end
-  end
-end
-
-describe 'ChangeStreams' do
-
-  CHANGE_STREAMS_TESTS.each do |file|
-
-    spec = Mongo::ChangeStreams::Spec.new(file)
-
-    context(spec.description) do
-
-      spec.tests.each do |test|
-
-        context(test.description) do
-
-          before(:each) do
-            test.setup_test
-          end
-
-          after(:each) do
-            test.teardown_test
-          end
-
-          let(:result) do
-            test.run
-          end
-
-          it 'returns the correct result' do
-            expect(result[:result]).to match_result(test)
-          end
-
-          it 'has the correct command_started events' do
-            expect(result[:events]).to match_commands(test)
-          end
-        end
       end
     end
   end

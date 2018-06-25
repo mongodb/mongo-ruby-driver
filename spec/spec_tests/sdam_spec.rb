@@ -32,7 +32,7 @@ describe 'Server Discovery and Monitoring' do
                 server = Mongo::Server.new(
                     Mongo::Address.new(response.address),
                     @client.cluster,
-                    @client.instance_variable_get(:@monitoring),
+                    @client.send(:monitoring),
                     @client.cluster.send(:event_listeners),
                     @client.cluster.options
                 )
