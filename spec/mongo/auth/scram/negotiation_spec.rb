@@ -28,6 +28,11 @@ end
 
 describe 'SCRAM-SHA auth mechanism negotiation', if: scram_sha_256_enabled? do
 
+  URI_OPTION_MAP = {
+    :auth_source => 'authsource',
+    :replica_set => 'replicaSet',
+  }
+
   let(:create_user!) do
     ADMIN_AUTHORIZED_TEST_CLIENT.with(
       database: 'admin',
@@ -313,7 +318,8 @@ describe 'SCRAM-SHA auth mechanism negotiation', if: scram_sha_256_enabled? do
             uri << (first ? '?' : '&')
             first = false
 
-            k = 'authsource' if k == :auth_source
+            k = URI_OPTION_MAP[k] || k
+
             uri << "#{k}=#{v}"
           end
         end
