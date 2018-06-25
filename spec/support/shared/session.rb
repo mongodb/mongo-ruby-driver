@@ -756,3 +756,109 @@ shared_examples 'an operation updating cluster time' do
     end
   end
 end
+
+shared_examples 'an operation not using a session' do
+
+  describe 'operation execution' do
+
+    context 'when the client has a session' do
+
+      let(:session) do
+        client.start_session
+      end
+
+      let(:server_session) do
+        session.instance_variable_get(:@server_session)
+      end
+
+      let!(:before_last_use) do
+        server_session.last_use
+      end
+
+      let!(:before_operation_time) do
+        session.operation_time
+      end
+
+      let!(:operation_result) do
+        operation
+      end
+
+      after do
+        session.end_session
+      end
+
+      it 'does not send session id in command' do
+        expect(command).not_to have_key('lsid')
+      end
+
+      it 'does not update the last use value' do
+        expect(server_session.last_use).to eq(before_last_use)
+      end
+
+      it 'does not update the operation time value' do
+        expect(session.operation_time).to eq(before_operation_time)
+      end
+
+      it 'does not close the session when the operation completes' do
+        expect(session.ended?).to be(false)
+      end
+    end
+
+    context 'when the session is ended before it is used' do
+
+      let(:session) do
+        client.start_session
+      end
+
+      before do
+        session.end_session
+      end
+
+      let(:operation_result) do
+        operation
+      end
+
+      it 'does not raise an exception' do
+        expect {
+          operation_result
+        }.not_to raise_exception(Mongo::Error::InvalidSession)
+      end
+    end
+  end
+end
+
+shared_examples 'a failed operation not using a session' do
+
+  context 'when the operation fails', if: test_sessions? do
+
+    let!(:before_last_use) do
+      session.instance_variable_get(:@server_session).last_use
+    end
+
+    let!(:before_operation_time) do
+      session.operation_time
+    end
+
+    let!(:operation_result) do
+      sleep 0.2
+      begin; failed_operation; rescue => e; e; end
+    end
+
+    let(:session) do
+      client.start_session
+    end
+
+    it 'raises an error' do
+      expect([Mongo::Error::OperationFailure,
+              Mongo::Error::BulkWriteError]).to include(operation_result.class)
+    end
+
+    it 'does not update the last use value' do
+      expect(session.instance_variable_get(:@server_session).last_use).to eq(before_last_use)
+    end
+
+    it 'does not update the operation time value' do
+      expect(session.operation_time).to eq(before_operation_time)
+    end
+  end
+end

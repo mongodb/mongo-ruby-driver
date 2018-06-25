@@ -2376,6 +2376,33 @@ describe Mongo::Collection do
       it_behaves_like 'a failed operation using a session'
     end
 
+    context 'when a session is not provided' do
+      let(:client) { subscribed_client }
+      let(:collection) { client['test'] }
+
+      let(:cursors) do
+        collection.parallel_scan(2)
+      end
+
+      let(:operation) do
+        cursors.reduce(0) { |total, cursor| total + cursor.to_a.size }
+      end
+
+      let(:failed_operation) do
+        collection.parallel_scan(-2)
+      end
+
+      let(:command) do
+        operation
+        event = EventSubscriber.started_events.find { |cmd| cmd.command_name == 'parallelCollectionScan' }
+        expect(event).not_to be_nil
+        event.command
+      end
+
+      it_behaves_like 'an operation not using a session'
+      it_behaves_like 'a failed operation not using a session'
+    end
+
     context 'when a session supporting causal consistency is used' do
 
       let(:cursors) do
@@ -2388,7 +2415,9 @@ describe Mongo::Collection do
 
       let(:command) do
         operation
-        EventSubscriber.started_events.find { |cmd| cmd.command_name == 'parallelCollectionScan' }.command
+        event = EventSubscriber.started_events.find { |cmd| cmd.command_name == 'parallelCollectionScan' }
+        expect(event).not_to be_nil
+        event.command
       end
 
       it_behaves_like 'an operation supporting causally consistent reads'

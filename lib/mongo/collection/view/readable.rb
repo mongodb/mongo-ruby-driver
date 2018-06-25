@@ -549,22 +549,26 @@ module Mongo
         end
 
         def parallel_scan(cursor_count, options = {})
-          session = client.send(:get_session, @options)
+          if options[:session]
+            session = client.send(:get_session, @options)
+          else
+            session = nil
+          end
           server = server_selector.select_server(cluster)
           cmd = Operation::ParallelScan.new({
                   :coll_name => collection.name,
                   :db_name => database.name,
                   :cursor_count => cursor_count,
                   :read_concern => collection.read_concern,
-                  :session => session
+                  :session => session,
                 }.merge!(options))
           cmd.execute(server).cursor_ids.map do |cursor_id|
             result = if server.features.find_command_enabled?
                        Operation::GetMore.new({
-                         :selector => {:getMore => cursor_id,
+                          :selector => {:getMore => cursor_id,
                                        :collection => collection.name},
-                         :db_name => database.name,
-                         :session => session
+                          :db_name => database.name,
+                          :session => session,
                        }).execute(server)
                      else
                        Operation::GetMore.new({
@@ -574,7 +578,7 @@ module Mongo
                          :coll_name => collection.name
                      }).execute(server)
             end
-            Cursor.new(self, result, server, session: session)
+            Cursor.new(self, result, server)
           end
         end
 
