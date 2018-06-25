@@ -397,17 +397,37 @@ pre:
   - func: "install dependencies"
 
 axes:
-  - id: "atlas"
-    display_name: Atlas
+  - id: "ruby"
+    display_name: Ruby Version
     values:
-      - id: "atlas"
-        display_name: "atlas"
+      - id: "ruby-1.9"
+        display_name: ruby-1.9
+        variables:
+           RVM_RUBY: "ruby-1.9"
+      - id: "ruby-2.3"
+        display_name: ruby-2.3
+        variables:
+           RVM_RUBY: "ruby-2.3"
+      - id: "ruby-2.4"
+        display_name: ruby-2.4
+        variables:
+           RVM_RUBY: "ruby-2.4"
+      - id: "ruby-2.5.0"
+        display_name: ruby-2.5.0
         variables:
            RVM_RUBY: "ruby-2.5.0"
+#      - id: "jruby-1.7"
+#        display_name: jruby-1.7
+#        variables:
+#           RVM_RUBY: "jruby-1.7"
+#      - id: "jruby-9.1"
+#        display_name: jruby-9.1
+#        variables:
+#           RVM_RUBY: "jruby-9.1"
 
 buildvariants:
   - matrix_name: "all"
-    matrix_spec: { atlas: 'atlas' }
+    matrix_spec: { ruby: '*' }
     #matrix_spec: { }
     run_on:
       - rhel70-small
