@@ -758,6 +758,7 @@ shared_examples 'an operation updating cluster time' do
 end
 
 shared_examples 'an operation not using a session' do
+  require_sessions
 
   describe 'operation execution' do
 
@@ -805,7 +806,6 @@ shared_examples 'an operation not using a session' do
     end
 
     context 'when the session is ended before it is used' do
-
       let(:session) do
         client.start_session
       end
@@ -828,8 +828,9 @@ shared_examples 'an operation not using a session' do
 end
 
 shared_examples 'a failed operation not using a session' do
+  require_sessions
 
-  context 'when the operation fails', if: test_sessions? do
+  context 'when the operation fails' do
 
     let!(:before_last_use) do
       session.instance_variable_get(:@server_session).last_use

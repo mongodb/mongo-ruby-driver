@@ -14,6 +14,14 @@ module Constraints
     end
   end
 
+  def require_sessions
+    before do
+      unless sessions_enabled?
+        skip 'Sessions are not enabled'
+      end
+    end
+  end
+
   def require_topology(*topologies)
     topologies = topologies.map { |t| t.to_s }
     invalid_topologies = topologies - %w(single replica_set sharded)
