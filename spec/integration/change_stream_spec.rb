@@ -1,6 +1,9 @@
 require 'spec_helper'
 
 describe 'Change stream integration' do
+  only_mri
+  max_example_run_time 7
+
   FAIL_POINT_BASE_COMMAND = { 'configureFailPoint' => "failCommand" }
 
   before do

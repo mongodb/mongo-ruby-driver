@@ -30,3 +30,9 @@ group :development do
   gem 'pry-rescue'
   gem 'pry-nav'
 end
+
+group :testing do
+  platforms :mri do
+    gem 'timeout-interrupt'
+  end
+end
