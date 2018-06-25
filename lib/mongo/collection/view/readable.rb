@@ -127,7 +127,11 @@ module Mongo
         #
         # @since 2.0.0
         #
-        # @deprecated Call count_documents or estimated_document_count instead.
+        # @deprecated Use #count_documents or #estimated_document_count instead. However, note that
+        #   the following operators will need to be substituted when switching to #count_documents:
+        #     * $where should be replaced with $expr (only works on 3.6+)
+        #     * $near should be replaced with $geoWithin with $center
+        #     * $nearSphere should be replaced with $geoWithin with $centerSphere
         def count(opts = {})
           cmd = { :count => collection.name, :query => filter }
           cmd[:skip] = opts[:skip] if opts[:skip]
