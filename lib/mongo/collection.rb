@@ -322,9 +322,6 @@ module Mongo
     #   per batch.
     # @option options [ BSON::Document, Hash ] :collation The collation to use.
     # @option options [ Session ] :session The session to use.
-    # @option options [ BSON::Timestamp ] :start_at_cluster_time Only return changes that occurred
-    #   after the specified timestamp. Any command run against the server will return a cluster time
-    #   that can be used here. Only valid in server versions 4.0+.
     #
     # @note A change stream only allows 'majority' read concern.
     # @note This helper method is preferable to running a raw aggregation with
@@ -334,7 +331,7 @@ module Mongo
     #
     # @since 2.5.0
     def watch(pipeline = [], options = {})
-      View::ChangeStream.new(View.new(self, {}, options), pipeline, nil, options)
+      View::ChangeStream.new(View.new(self, {}, options), pipeline, options)
     end
 
     # Gets the number of matching documents in the collection.
