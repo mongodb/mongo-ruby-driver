@@ -13,11 +13,18 @@ describe 'Change stream integration' do
     collection.client.use(:admin).command(FAIL_POINT_BASE_COMMAND.merge(mode: "off"))
   end
 
+  class << self
+    def clear_fail_point_before
+      before do
+        clear_fail_point(authorized_collection)
+      end
+    end
+  end
+
   before do
     unless test_change_streams?
       skip 'Not testing change streams'
     end
-    clear_fail_point(authorized_collection)
   end
 
   describe 'watch+next' do
@@ -58,6 +65,7 @@ describe 'Change stream integration' do
 
     context 'error on initial aggregation' do
       min_server_version '4.0'
+      clear_fail_point_before
 
       before do
         authorized_collection.client.use(:admin).command(FAIL_POINT_BASE_COMMAND.merge(
@@ -74,6 +82,7 @@ describe 'Change stream integration' do
 
     context 'one error on getMore' do
       min_server_version '4.0'
+      clear_fail_point_before
 
       xcontext 'error on first getMore' do
         before do
@@ -111,6 +120,7 @@ describe 'Change stream integration' do
 
     context 'two errors on getMore' do
       min_server_version '4.0'
+      clear_fail_point_before
 
       xcontext 'error of first getMores' do
         before do
@@ -152,6 +162,7 @@ describe 'Change stream integration' do
 
     context 'two errors on getMore followed by an error on aggregation' do
       min_server_version '4.0'
+      clear_fail_point_before
 
       it 'next raises error' do
         change_stream
@@ -209,6 +220,7 @@ describe 'Change stream integration' do
 
     context 'one error on getMore' do
       min_server_version '4.0'
+      clear_fail_point_before
 
       xcontext 'error on first getMore' do
         before do
@@ -238,6 +250,7 @@ describe 'Change stream integration' do
 
     context 'two errors on getMore' do
       min_server_version '4.0'
+      clear_fail_point_before
 
       before do
         authorized_collection.client.use(:admin).command(FAIL_POINT_BASE_COMMAND.merge(
@@ -252,6 +265,7 @@ describe 'Change stream integration' do
 
     context 'two errors on getMore followed by an error on aggregation' do
       min_server_version '4.0'
+      clear_fail_point_before
 
       xcontext 'error on first getMore' do
         it 'next raises error' do
