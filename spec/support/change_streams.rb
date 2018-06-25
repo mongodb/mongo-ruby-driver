@@ -64,16 +64,9 @@ module Mongo
       #
       # @since 2.0.0
       def tests
-<<<<<<< HEAD
-        tests = @spec_tests.map do |test|
-          ChangeStreamsTest.new(test, @coll1, @coll2, @db1, @db2)
-        end
-        tests.select(&:configuration_satisfied?)
-=======
         @spec_tests.map do |test|
           ChangeStreamsTest.new(test, @coll1, @coll2, @db1, @db2)
         end
->>>>>>> RUBY-1342 Add change stream helpers for Database and Client
       end
 
       class ChangeStreamsTest
@@ -84,13 +77,8 @@ module Mongo
         # @since 2.0.0
         attr_reader :description
 
-<<<<<<< HEAD
-        def configuration_satisfied?
-          server_version_satisfied? && topology_satisfied?
-=======
         def configuration_satisfied?(client)
           server_version_satisfied?(client) && topology_satisfied?
->>>>>>> RUBY-1342 Add change stream helpers for Database and Client
         end
 
         def initialize(test, coll1, coll2, db1, db2)
@@ -131,11 +119,7 @@ module Mongo
                      client.database
                    when 'collection'
                      client[@coll1_name]
-<<<<<<< HEAD
-                    end
-=======
                    end
->>>>>>> RUBY-1342 Add change stream helpers for Database and Client
         end
 
         def run
