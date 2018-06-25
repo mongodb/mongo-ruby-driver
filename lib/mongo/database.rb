@@ -246,6 +246,46 @@ module Mongo
       Auth::User::View.new(self)
     end
 
+    # As of version 3.6 of the MongoDB server, a ``$changeStream`` pipeline stage is supported
+    # in the aggregation framework. As of version 4.0, this stage allows users to request that
+    # notifications are sent for all changes that occur in the client's database.
+    #
+    # @example Get change notifications for a given database..
+    #  database.watch([{ '$match' => { operationType: { '$in' => ['insert', 'replace'] } } }])
+    #
+    # @param [ Array<Hash> ] pipeline Optional additional filter operators.
+    # @param [ Hash ] options The change stream options.
+    #
+    # @option options [ String ] :full_document Allowed values: 'default', 'updateLookup'.
+    #   Defaults to 'default'. When set to 'updateLookup', the change notification for partial
+    #   updates will include both a delta describing the changes to the document, as well as a copy
+    #   of the entire document that was changed from some time after the change occurred.
+    # @option options [ BSON::Document, Hash ] :resume_after Specifies the logical starting point
+    #   for the new change stream.
+    # @option options [ Integer ] :max_await_time_ms The maximum amount of time for the server to
+    #   wait on new documents to satisfy a change stream query.
+    # @option options [ Integer ] :batch_size The number of documents to return per batch.
+    # @option options [ BSON::Document, Hash ] :collation The collation to use.
+    # @option options [ Session ] :session The session to use.
+    # @option options [ BSON::Timestamp ] :start_at_cluster_time Only return changes that occurred
+    #   after the specified timestamp. Any command run against the server will return a cluster time
+    #   that can be used here. Only valid in server versions 4.0+.
+    #
+    # @note A change stream only allows 'majority' read concern.
+    # @note This helper method is preferable to running a raw aggregation with a $changeStream
+    #   stage, for the purpose of supporting resumability.
+    #
+    # @return [ ChangeStream ] The change stream object.
+    #
+    # @since 2.6.0
+    def watch(pipeline = [], options = {})
+      Mongo::Collection::View::ChangeStream.new(
+        Mongo::Collection::View.new(collection("#{COMMAND}.aggregate")),
+        pipeline,
+        Mongo::Collection::View::ChangeStream::DATABASE,
+        options)
+    end
+
     # Create a database for the provided client, for use when we don't want the
     # client's original database instance to be the same.
     #
