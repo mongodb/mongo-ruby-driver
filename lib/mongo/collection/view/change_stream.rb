@@ -255,7 +255,6 @@ module Mongo
           unless @resume_token = (doc[:_id] && doc[:_id].dup)
             raise Error::MissingResumeToken
           end
-          @start_at_operation_time = doc['clusterTime']
         end
 
         def create_cursor!
