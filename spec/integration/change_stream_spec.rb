@@ -184,6 +184,7 @@ describe 'Change stream integration' do
       it 'returns a change document' do
         change_stream
 
+        sleep 0.5
         authorized_collection.insert_one(:a => 1)
         sleep 0.5
 
