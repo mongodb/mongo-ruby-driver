@@ -77,9 +77,10 @@ module Mongo
         #   on new documents to satisfy a change stream query.
         # @option options [ Integer ] :batch_size The number of documents to return per batch.
         # @option options [ BSON::Document, Hash ] :collation The collation to use.
-        # @option options [ BSON::Timestamp ] :start_at_cluster_time Only return changes that occurred
-        #   after the specified timestamp. Any command run against the server will return a cluster time
-        #   that can be used here. Only valid in server versions 4.0+.
+        # @option options [ BSON::Timestamp ] :start_at_operation_time Only
+        #   return changes that occurred at or after the specified timestamp. Any
+        #   command run against the server will return a cluster time that can
+        #   be used here. Only recognized by server versions 4.0+.
         #
         # @since 2.5.0
         def initialize(view, pipeline, changes_for, options = {})
@@ -88,10 +89,18 @@ module Mongo
           @change_stream_filters = pipeline && pipeline.dup
           @options = options && options.dup.freeze
           @resume_token = @options[:resume_after]
-          read_with_one_retry { create_cursor! }
+          create_cursor!
+
+          # We send different parameters when we resume a change stream
+          # compared to when we send the first query
+          @resuming = true
         end
 
         # Iterate through documents returned by the change stream.
+        #
+        # This method retries once per error on resumable errors
+        # (two consecutive errors result in the second error being raised,
+        # an error which is recovered from resets the error count to zero).
         #
         # @example Iterate through the stream of documents.
         #   stream.each do |document|
@@ -105,20 +114,82 @@ module Mongo
         # @yieldparam [ BSON::Document ] Each change stream document.
         def each
           raise StopIteration.new if closed?
+          retried = false
           begin
             @cursor.each do |doc|
               cache_resume_token(doc)
               yield doc
             end if block_given?
             @cursor.to_enum
-          rescue => e
+          rescue Mongo::Error => e
+            if retried || !e.change_stream_resumable?
+              raise
+            end
+
+            retried = true
+            # Rerun initial aggregation.
+            # Any errors here will stop iteration and break out of this
+            # method
             close
-            if retryable?(e)
+            create_cursor!
+            retry
+          end
+        end
+
+        # Return one document from the change stream, if one is available.
+        #
+        # Retries once on a resumable error.
+        #
+        # Raises StopIteration if the change stream is closed.
+        #
+        # This method will wait up to max_await_time_ms milliseconds
+        # for changes from the server, and if no changes are received
+        # it will return nil.
+        #
+        # @note This method is experimental and subject to change.
+        #
+        # @return [ BSON::Document | nil ] A change stream document.
+        # @api private
+        def try_next
+          raise StopIteration.new if closed?
+          retried = false
+
+          begin
+            doc = @cursor.try_next
+          rescue Mongo::Error => e
+            unless e.change_stream_resumable?
+              raise
+            end
+
+            if retried
+              # Rerun initial aggregation.
+              # Any errors here will stop iteration and break out of this
+              # method
+              close
               create_cursor!
+              retried = false
+            else
+              # Attempt to retry a getMore once
+              retried = true
               retry
             end
-            raise
           end
+
+          if doc
+            cache_resume_token(doc)
+          end
+          doc
+        end
+
+        def to_enum
+          enum = super
+          enum.send(:instance_variable_set, '@obj', self)
+          class << enum
+            def try_next
+              @obj.try_next
+            end
+          end
+          enum
         end
 
         # Close the change stream.
@@ -176,15 +247,30 @@ module Mongo
         end
 
         def cache_resume_token(doc)
+          # Always record both resume token and operation time,
+          # in case we get an older or newer server during rolling
+          # upgrades/downgrades
           unless @resume_token = (doc[:_id] && doc[:_id].dup)
-            raise Error::MissingResumeToken.new
+            raise Error::MissingResumeToken
           end
         end
 
         def create_cursor!
+          # clear the cache because we may get a newer or an older server
+          # (rolling upgrades)
+          @start_at_operation_time_supported = nil
+
           session = client.send(:get_session, @options)
           server = server_selector.select_server(cluster)
           result = send_initial_query(server, session)
+          if doc = result.replies.first && result.replies.first.documents.first
+            @start_at_operation_time = doc['operationTime']
+          else
+            # The above may set @start_at_operation_time to nil
+            # if it was not in the document for some reason,
+            # for consistency set it to nil here as well
+            @start_at_operation_time = nil
+          end
           @cursor = Cursor.new(view, result, server, disable_retry: true, session: session)
         end
 
@@ -200,6 +286,32 @@ module Mongo
 
         def change_doc
           { fullDocument: ( @options[:full_document] || FULL_DOCUMENT_DEFAULT ) }.tap do |doc|
+            if resuming?
+              # We have a resume token once we retrieved any documents.
+              # However, if the first getMore fails and the user didn't pass
+              # a resume token we won't have a resume token to use.
+              # Use start_at_operation time in this case
+              if @resume_token
+                # Spec says we need to remove startAtOperationTime if
+                # one was passed in by user, thus we won't forward it
+              elsif start_at_operation_time_supported? && @start_at_operation_time
+                # It is crucial to check @start_at_operation_time_supported
+                # here - we may have switched to an older server that
+                # does not support operation times and therefore shouldn't
+                # try to send one to it!
+                #
+                # @start_at_operation_time is already a BSON::Timestamp
+                doc[:startAtOperationTime] = @start_at_operation_time
+              else
+                # Can't resume if we don't have either
+                raise Mongo::Error::MissingResumeToken
+              end
+            else
+              if options[:start_at_operation_time]
+                doc[:startAtOperationTime] = time_to_bson_timestamp(
+                  options[:start_at_operation_time])
+              end
+            end
             doc[:resumeAfter] = @resume_token if @resume_token
             doc[:allChangesForCluster] = true if for_cluster?
           end
@@ -207,6 +319,29 @@ module Mongo
 
         def send_initial_query(server, session)
           initial_query_op(session).execute(server)
+        end
+
+        def time_to_bson_timestamp(time)
+          if time.is_a?(Time)
+            seconds = time.to_f
+            BSON::Timestamp.new(seconds.to_i, ((seconds - seconds.to_i) * 1000000).to_i)
+          elsif time.is_a?(BSON::Timestamp)
+            time
+          else
+            raise ArgumentError, 'Time must be a Time or a BSON::Timestamp instance'
+          end
+        end
+
+        def resuming?
+          !!@resuming
+        end
+
+        def start_at_operation_time_supported?
+          if @start_at_operation_time_supported.nil?
+            server = server_selector.select_server(cluster)
+            @start_at_operation_time_supported = server.description.max_wire_version >= 7
+          end
+          @start_at_operation_time_supported
         end
       end
     end

@@ -125,6 +125,46 @@ module Mongo
       end
     end
 
+    # Return one document from the query, if one is available.
+    #
+    # Retries once on a resumable error.
+    #
+    # This method will wait up to max_await_time_ms milliseconds
+    # for changes from the server, and if no changes are received
+    # it will return nil.
+    #
+    # @note This method is experimental and subject to change.
+    #
+    # @return [ BSON::Document | nil ] A document.
+    # @api private
+    def try_next
+      if @documents.nil?
+        @documents = process(@initial_result)
+        # the documents here can be an empty array, hence
+        # we may end up issuing a getMore in the first try_next call
+      end
+
+      if @documents.empty?
+        if more?
+          if exhausted?
+            kill_cursors
+            return nil
+          end
+
+          @documents = get_more
+        end
+      else
+        # cursor is closed here
+        # keep documents as an empty array
+      end
+
+      if @documents
+        return @documents.shift
+      end
+
+      nil
+    end
+
     # Get the batch size.
     #
     # @example Get the batch size.

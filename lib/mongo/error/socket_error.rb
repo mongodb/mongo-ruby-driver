@@ -20,6 +20,7 @@ module Mongo
     # @since 2.0.0
     class SocketError < Error
       include WriteRetryable
+      include ChangeStreamResumable
     end
   end
 end
