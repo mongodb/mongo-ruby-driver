@@ -23,6 +23,7 @@ describe Mongo::Collection::View::ChangeStream, if: test_change_streams? do
   end
 
   let(:change_stream_document) do
+    change_stream.send(:instance_variable_set, '@resuming', false)
     change_stream.send(:pipeline)[0]['$changeStream']
   end
 
@@ -39,6 +40,7 @@ describe Mongo::Collection::View::ChangeStream, if: test_change_streams? do
   end
 
   let(:command_spec) do
+    change_stream.send(:instance_variable_set, '@resuming', false)
     change_stream.send(:aggregate_spec, double('session'))
   end
 
