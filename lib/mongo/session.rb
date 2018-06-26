@@ -68,18 +68,6 @@ module Mongo
     # @since 2.5.0
     SESSIONS_NOT_SUPPORTED = 'Sessions are not supported by the connected servers.'.freeze
 
-    # Error label describing commitTransaction errors that may or may not occur again if a commit is
-    # manually retried by the user.
-    #
-    # @since 2.6.0
-    UNKNOWN_TRANSACTION_COMMIT_LABEL = 'UnknownTransactionCommitResult'.freeze
-
-    # Error label describing errors that will likely not occur if a transaction is manually retried
-    # from the start.
-    #
-    # @since 2.6.0
-    TRANSIENT_TRANSACTION_ERROR_LABEL = 'TransientTransactionError'.freeze
-
     # The state of a session in which the last operation was not related to any transaction or no
     # operations have yet occurred.
     #
@@ -534,14 +522,14 @@ module Mongo
           end
         end
       rescue Mongo::Error::NoServerAvailable, Mongo::Error::SocketError => e
-        e.send(:add_label, UNKNOWN_TRANSACTION_COMMIT_LABEL)
+        e.send(:add_label, Mongo::Error::UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL)
         raise e
       rescue Mongo::Error::OperationFailure => e
         err_doc = e.instance_variable_get(:@result).send(:first_document)
 
         if e.write_retryable? || (err_doc['writeConcernError'] &&
             !UNLABELED_WRITE_CONCERN_CODES.include?(err_doc['writeConcernError']['code']))
-          e.send(:add_label, UNKNOWN_TRANSACTION_COMMIT_LABEL)
+          e.send(:add_label, Mongo::Error::UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL)
         end
 
         raise e
