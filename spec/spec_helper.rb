@@ -70,6 +70,10 @@
 
 require 'lite_spec_helper'
 
+if RUBY_PLATFORM !~ /\bjava\b/
+  require 'timeout_interrupt'
+end
+
 # Replica set name can be overridden via replicaSet parameter in MONGODB_URI
 # environment variable or by specifying RS_NAME environment variable when
 # not using MONGODB_URI.
@@ -79,6 +83,7 @@ require 'support/travis'
 require 'support/authorization'
 require 'support/primary_socket'
 require 'support/constraints'
+require 'rspec/retry'
 
 RSpec.configure do |config|
   config.include(Authorization)

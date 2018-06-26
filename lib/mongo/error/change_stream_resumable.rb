@@ -1,4 +1,4 @@
-# Copyright (C) 2015-2018 MongoDB, Inc.
+# Copyright (C) 2018 MongoDB, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,12 +15,23 @@
 module Mongo
   class Error
 
-    # Raised when a socket connection times out.
+    # A module signifying the error will always cause change stream to
+    # resume once.
     #
-    # @since 2.0.0
-    class SocketTimeoutError < Error
-      include WriteRetryable
-      include ChangeStreamResumable
+    # @since 2.6.0
+    module ChangeStreamResumable
+      # Can the change stream on which this error occurred be resumed,
+      # provided the operation that triggered this error was a getMore?
+      #
+      # @example Is the error resumable for the change stream?
+      #   error.change_stream_resumable?
+      #
+      # @return [ true, false ] Whether the error is resumable.
+      #
+      # @since 2.6.0
+      def change_stream_resumable?
+        true
+      end
     end
   end
 end

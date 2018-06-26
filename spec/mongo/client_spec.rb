@@ -1604,8 +1604,8 @@ describe Mongo::Client do
         expect(session).to be_a(Mongo::Session)
       end
 
-      it 'sets the last use field to the current time' do
-        expect(session.instance_variable_get(:@server_session).last_use).to be_within(2).of(Time.now)
+      it 'sets the last use field to the current time', retry: 4 do
+        expect(session.instance_variable_get(:@server_session).last_use).to be_within(1).of(Time.now)
       end
 
       context 'when options are provided' do

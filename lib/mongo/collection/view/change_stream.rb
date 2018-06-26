@@ -88,10 +88,14 @@ module Mongo
           @change_stream_filters = pipeline && pipeline.dup
           @options = options && options.dup.freeze
           @resume_token = @options[:resume_after]
-          read_with_one_retry { create_cursor! }
+          create_cursor!
         end
 
         # Iterate through documents returned by the change stream.
+        #
+        # This method retries once per error on resumable errors
+        # (two consecutive errors result in the second error being raised,
+        # an error which is recovered from resets the error count to zero).
         #
         # @example Iterate through the stream of documents.
         #   stream.each do |document|
@@ -105,20 +109,82 @@ module Mongo
         # @yieldparam [ BSON::Document ] Each change stream document.
         def each
           raise StopIteration.new if closed?
+          retried = false
           begin
             @cursor.each do |doc|
               cache_resume_token(doc)
               yield doc
             end if block_given?
             @cursor.to_enum
-          rescue => e
+          rescue Mongo::Error => e
+            if retried || !e.change_stream_resumable?
+              raise
+            end
+
+            retried = true
+            # Rerun initial aggregation.
+            # Any errors here will stop iteration and break out of this
+            # method
             close
-            if retryable?(e)
+            create_cursor!
+            retry
+          end
+        end
+
+        # Return one document from the change stream, if one is available.
+        #
+        # Retries once on a resumable error.
+        #
+        # Raises StopIteration if the change stream is closed.
+        #
+        # This method will wait up to max_await_time_ms milliseconds
+        # for changes from the server, and if no changes are received
+        # it will return nil.
+        #
+        # @note This method is experimental and subject to change.
+        #
+        # @return [ BSON::Document | nil ] A change stream document.
+        # @api private
+        def try_next
+          raise StopIteration.new if closed?
+          retried = false
+
+          begin
+            doc = @cursor.try_next
+          rescue Mongo::Error => e
+            unless e.change_stream_resumable?
+              raise
+            end
+
+            if retried
+              # Rerun initial aggregation.
+              # Any errors here will stop iteration and break out of this
+              # method
+              close
               create_cursor!
+              retried = false
+            else
+              # Attempt to retry a getMore once
+              retried = true
               retry
             end
-            raise
           end
+
+          if doc
+            cache_resume_token(doc)
+          end
+          doc
+        end
+
+        def to_enum
+          enum = super
+          enum.send(:instance_variable_set, '@obj', self)
+          class << enum
+            def try_next
+              @obj.try_next
+            end
+          end
+          enum
         end
 
         # Close the change stream.

@@ -28,4 +28,21 @@ module Constraints
       end
     end
   end
+
+  # Constrain tests that use TimeoutInterrupt to MRI (and Unix)
+  def only_mri
+    before do
+      if RUBY_PLATFORM =~ /\bjava\b/
+        skip "MRI required, we have #{RUBY_PLATFORM}"
+      end
+    end
+  end
+
+  def max_example_run_time(timeout)
+    around do |example|
+      TimeoutInterrupt.timeout(timeout) do
+        example.run
+      end
+    end
+  end
 end
