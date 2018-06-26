@@ -94,7 +94,9 @@ module Mongo
 
         # Iterate through documents returned by the change stream.
         #
-        # This method retries indefinitely on resumable errors.
+        # This method retries once per error on resumable errors
+        # (two consecutive errors result in the second error being raised,
+        # an error which is recovered from resets the error count to zero).
         #
         # @example Iterate through the stream of documents.
         #   stream.each do |document|
