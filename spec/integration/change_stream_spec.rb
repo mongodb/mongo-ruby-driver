@@ -307,6 +307,8 @@ describe 'Change stream integration' do
   end
 
   describe ':start_at_operation_time option' do
+    min_server_version '4.0'
+
     before do
       authorized_collection.delete_many
     end
