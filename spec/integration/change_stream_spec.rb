@@ -334,5 +334,29 @@ describe 'Change stream integration' do
       document = cs.to_enum.try_next
       expect(document).to be_nil
     end
+
+    it 'accepts a Time' do
+      time = Time.now
+      cs = authorized_collection.watch([], start_at_operation_time: time)
+    end
+
+    it 'accepts a BSON::Timestamp' do
+      time = BSON::Timestamp.new(Time.now.to_i, 1)
+      cs = authorized_collection.watch([], start_at_operation_time: time)
+    end
+
+    it 'rejects a Date' do
+      time = Date.today
+      expect do
+        authorized_collection.watch([], start_at_operation_time: time)
+      end.to raise_error(ArgumentError, 'Time must be a Time or a BSON::Timestamp instance')
+    end
+
+    it 'rejects an integer' do
+      time = 1
+      expect do
+        authorized_collection.watch([], start_at_operation_time: time)
+      end.to raise_error(ArgumentError, 'Time must be a Time or a BSON::Timestamp instance')
+    end
   end
 end

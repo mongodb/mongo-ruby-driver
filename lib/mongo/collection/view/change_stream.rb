@@ -326,8 +326,14 @@ module Mongo
         end
 
         def time_to_bson_timestamp(time)
-          seconds = time.to_f
-          BSON::Timestamp.new(seconds.to_i, ((seconds - seconds.to_i) * 1000000).to_i)
+          if time.is_a?(Time)
+            seconds = time.to_f
+            BSON::Timestamp.new(seconds.to_i, ((seconds - seconds.to_i) * 1000000).to_i)
+          elsif time.is_a?(BSON::Timestamp)
+            time
+          else
+            raise ArgumentError, 'Time must be a Time or a BSON::Timestamp instance'
+          end
         end
 
         def resuming?
