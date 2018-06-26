@@ -25,6 +25,10 @@ group :development, :testing do
   end
 end
 
+group :testing do
+  gem 'rspec-retry'
+end
+
 group :development do
   gem 'ruby-prof', :platforms => :mri
   gem 'pry-rescue'

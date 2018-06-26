@@ -79,6 +79,7 @@ require 'support/travis'
 require 'support/authorization'
 require 'support/primary_socket'
 require 'support/constraints'
+require 'rspec/retry'
 
 RSpec.configure do |config|
   config.include(Authorization)
