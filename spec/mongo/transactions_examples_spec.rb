@@ -47,8 +47,8 @@ describe 'transactions examples in Ruby', if: test_transactions? do
         rescue Mongo::Error::OperationFailure, Mongo::Error::SocketError,
                Mongo::Error::NoServerAvailable => e
 
-          if e.label?(Mongo::Session::UNKNOWN_TRANSACTION_COMMIT_LABEL)
-            puts "#{Mongo::Session::UNKNOWN_TRANSACTION_COMMIT_LABEL}, retrying commit operation..."
+          if e.label?(Mongo::Error::UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL)
+            puts "#{Mongo::Error::UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL}, retrying commit operation..."
             next
           else
             puts 'Error during commit ...'
@@ -87,9 +87,9 @@ describe 'transactions examples in Ruby', if: test_transactions? do
                  Mongo::Error::NoServerAvailable => e
 
             puts 'Transaction aborted. Caught exception during transaction.'
-            raise unless e.label?(Mongo::Session::TRANSIENT_TRANSACTION_ERROR_LABEL)
+            raise unless e.label?(Mongo::Error::TRANSIENT_TRANSACTION_ERROR_LABEL)
 
-            puts "#{Mongo::Session::TRANSIENT_TRANSACTION_ERROR_LABEL}, retrying transaction ..."
+            puts "#{Mongo::Error::TRANSIENT_TRANSACTION_ERROR_LABEL}, retrying transaction ..."
             next
           end
         end
@@ -122,8 +122,8 @@ describe 'transactions examples in Ruby', if: test_transactions? do
           rescue Mongo::Error::OperationFailure, Mongo::Error::SocketError,
                  Mongo::Error::NoServerAvailable => e
 
-            if e.label?(Mongo::Session::UNKNOWN_TRANSACTION_COMMIT_LABEL)
-              puts "#{Mongo::Session::UNKNOWN_TRANSACTION_COMMIT_LABEL}, retrying commit operation..."
+            if e.label?(Mongo::Error::UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL)
+              puts "#{Mongo::Error::UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL}, retrying commit operation..."
               next
             else
               puts 'Error during commit ...'
@@ -171,9 +171,9 @@ describe 'transactions examples in Ruby', if: test_transactions? do
                  Mongo::Error::NoServerAvailable => e
 
             puts 'Transaction aborted. Caught exception during transaction.'
-            raise unless e.label?(Mongo::Session::TRANSIENT_TRANSACTION_ERROR_LABEL)
+            raise unless e.label?(Mongo::Error::TRANSIENT_TRANSACTION_ERROR_LABEL)
 
-            puts "#{Mongo::Session::TRANSIENT_TRANSACTION_ERROR_LABEL}, retrying transaction ..."
+            puts "#{Mongo::Error::TRANSIENT_TRANSACTION_ERROR_LABEL}, retrying transaction ..."
             next
           end
         end
@@ -188,8 +188,8 @@ describe 'transactions examples in Ruby', if: test_transactions? do
           rescue Mongo::Error::OperationFailure, Mongo::Error::SocketError,
                  Mongo::Error::NoServerAvailable => e
 
-            if e.label?(Mongo::Session::UNKNOWN_TRANSACTION_COMMIT_LABEL)
-              puts "#{Mongo::Session::UNKNOWN_TRANSACTION_COMMIT_LABEL}, retrying commit operation ..."
+            if e.label?(Mongo::Error::UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL)
+              puts "#{Mongo::Error::UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL}, retrying commit operation ..."
               next
             else
               puts 'Error during commit ...'
