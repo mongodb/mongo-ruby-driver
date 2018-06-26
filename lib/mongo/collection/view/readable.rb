@@ -578,7 +578,7 @@ module Mongo
                          :coll_name => collection.name
                      }).execute(server)
             end
-            Cursor.new(self, result, server)
+            Cursor.new(self, result, server, session: session)
           end
         end
 
