@@ -78,7 +78,7 @@ module Mongo
         # @option options [ Integer ] :batch_size The number of documents to return per batch.
         # @option options [ BSON::Document, Hash ] :collation The collation to use.
         # @option options [ BSON::Timestamp ] :start_at_operation_time Only
-        #   return changes that occurred after the specified timestamp. Any
+        #   return changes that occurred at or after the specified timestamp. Any
         #   command run against the server will return a cluster time that can
         #   be used here. Only recognized by server versions 4.0+.
         #
@@ -267,7 +267,7 @@ module Mongo
           server = server_selector.select_server(cluster)
           result = send_initial_query(server, session)
           if doc = result.replies.first && result.replies.first.documents.first
-            @start_at_operation_time = doc['$clusterTime'] && doc['$clusterTime']['clusterTime']
+            @start_at_operation_time = doc['operationTime']
           else
             # The above may set @start_at_operation_time to nil
             # if it was not in the document for some reason,

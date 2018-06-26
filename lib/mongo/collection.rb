@@ -323,7 +323,7 @@ module Mongo
     # @option options [ BSON::Document, Hash ] :collation The collation to use.
     # @option options [ Session ] :session The session to use.
     # @option options [ BSON::Timestamp ] :start_at_operation_time Only return
-    #   changes that occurred after the specified timestamp. Any command run
+    #   changes that occurred at or after the specified timestamp. Any command run
     #   against the server will return a cluster time that can be used here.
     #   Only recognized by server versions 4.0+.
     #
