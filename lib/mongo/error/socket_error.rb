@@ -1,4 +1,4 @@
-# Copyright (C) 2015-2017 MongoDB, Inc.
+# Copyright (C) 2015-2018 MongoDB, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,37 +21,6 @@ module Mongo
     class SocketError < Error
       include WriteRetryable
       include ChangeStreamResumable
-
-      # Instantiate the new exception.
-      #
-      # @example Instantiate the exception.
-      #   Mongo::Error::SocketError.new(msg)
-      #
-      # @param [ String ] msg The error message.
-      #
-      # @since 2.0.0
-      def initialize(msg = nil, labels = nil)
-        @labels = labels || []
-        super(msg) if msg
-      end
-
-      # Does the error have the given label?
-      #
-      # @example
-      #   error.label?(label)
-      #
-      # @return [ true, false ] Whether the error has the given label.
-      #
-      # @since 2.6.0
-      def label?(label)
-        @labels.include?(label)
-      end
-
-      private
-
-      def add_label(label)
-        @labels << label unless label?(label)
-      end
     end
   end
 end

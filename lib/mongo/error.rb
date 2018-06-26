@@ -1,4 +1,4 @@
-# Copyright (C) 2014-2017 MongoDB, Inc.
+# Copyright (C) 2014-2018 MongoDB, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -81,6 +81,43 @@ module Mongo
     # @since 2.6.0
     def change_stream_resumable?
       false
+    end
+
+    # Error label describing commitTransaction errors that may or may not occur again if a commit is
+    # manually retried by the user.
+    #
+    # @since 2.6.0
+    UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL = 'UnknownTransactionCommitResult'.freeze
+
+    # Error label describing errors that will likely not occur if a transaction is manually retried
+    # from the start.
+    #
+    # @since 2.6.0
+    TRANSIENT_TRANSACTION_ERROR_LABEL = 'TransientTransactionError'.freeze
+
+    def initialize(msg = nil)
+      @labels = []
+      super(msg)
+    end
+
+    # Does the error have the given label?
+    #
+    # @example
+    #   error.label?(label)
+    #
+    # @param [ String ] label The label to check if the error has.
+    #
+    # @return [ true, false ] Whether the error has the given label.
+    #
+    # @since 2.6.0
+    def label?(label)
+      @labels.include?(label)
+    end
+
+    private
+
+    def add_label(label)
+      @labels << label unless label?(label)
     end
   end
 end

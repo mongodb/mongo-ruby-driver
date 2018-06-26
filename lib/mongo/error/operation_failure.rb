@@ -1,4 +1,4 @@
-# Copyright (C) 2015-2017 MongoDB, Inc.
+# Copyright (C) 2015-2018 MongoDB, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -161,21 +161,6 @@ module Mongo
       end
       private :change_stream_resumable_code?
 
-      # Does the error have the given label?
-      #
-      # @example
-      #   error.label?(label)
-      #
-      # @param [ String ] label The label to check if the error has.
-      #
-      # @return [ true, false ] Whether the error has the given label.
-      #
-      # @since 2.6.0
-      def label?(label)
-        @labels.include?(label) ||
-          (@result.send(:first_document) && @result.send(:first_document)['errorLabels'])
-      end
-
       # Create the operation failure.
       #
       # @example Create the error object
@@ -196,14 +181,7 @@ module Mongo
         @result = result
         @code = options[:code]
         @code_name = options[:code_name]
-        @labels = options[:labels] || []
         super(message)
-      end
-
-      private
-
-      def add_label(label)
-        @labels << label unless label?(label)
       end
     end
   end

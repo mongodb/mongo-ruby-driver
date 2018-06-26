@@ -1,4 +1,4 @@
-# Copyright (C) 2009-2017 MongoDB, Inc.
+# Copyright (C) 2009-2018 MongoDB, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -143,7 +143,12 @@ TEST_USER = Mongo::Auth::User.new(
     { role: Mongo::Auth::Roles::READ_WRITE, db: TEST_DB },
     { role: Mongo::Auth::Roles::DATABASE_ADMIN, db: TEST_DB },
     { role: Mongo::Auth::Roles::READ_WRITE, db: 'invalid_database' },
-    { role: Mongo::Auth::Roles::DATABASE_ADMIN, db: 'invalid_database' }
+    { role: Mongo::Auth::Roles::DATABASE_ADMIN, db: 'invalid_database' },
+		{ role: Mongo::Auth::Roles::READ_WRITE, db: 'hr' },           # For transactions examples
+		{ role: Mongo::Auth::Roles::DATABASE_ADMIN, db: 'hr' },       # For transactions examples
+		{ role: Mongo::Auth::Roles::READ_WRITE, db: 'reporting' },    # For transactions examples
+		{ role: Mongo::Auth::Roles::DATABASE_ADMIN, db: 'reporting' } # For transactions examples
+
   ]
 )
 
