@@ -84,11 +84,7 @@ describe 'Change stream integration' do
       min_server_version '4.0'
       clear_fail_point_before
 
-      xcontext 'error on first getMore' do
-        before do
-          pending 'Requires startAtOperationTime support'
-        end
-
+      context 'error on first getMore' do
         before do
           authorized_collection.client.use(:admin).command(FAIL_POINT_BASE_COMMAND.merge(
             :mode => {:times => 1},
@@ -122,11 +118,7 @@ describe 'Change stream integration' do
       min_server_version '4.0'
       clear_fail_point_before
 
-      xcontext 'error of first getMores' do
-        before do
-          pending 'Requires startAtOperationTime support'
-        end
-
+      context 'error of first getMores' do
         before do
           authorized_collection.client.use(:admin).command(FAIL_POINT_BASE_COMMAND.merge(
             :mode => {:times => 2},
@@ -222,7 +214,7 @@ describe 'Change stream integration' do
       min_server_version '4.0'
       clear_fail_point_before
 
-      xcontext 'error on first getMore' do
+      context 'error on first getMore' do
         before do
           authorized_collection.client.use(:admin).command(FAIL_POINT_BASE_COMMAND.merge(
             :mode => {:times => 1},
@@ -267,10 +259,11 @@ describe 'Change stream integration' do
       min_server_version '4.0'
       clear_fail_point_before
 
-      xcontext 'error on first getMore' do
+      context 'error on first getMore' do
         it 'next raises error' do
           change_stream
 
+          sleep 0.5
           authorized_collection.insert_one(:a => 1)
           sleep 0.5
 

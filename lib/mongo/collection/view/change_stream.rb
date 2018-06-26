@@ -84,12 +84,18 @@ module Mongo
         #
         # @since 2.5.0
         def initialize(view, pipeline, changes_for, options = {})
+          @resuming = false
+
           @view = view
           @changes_for = changes_for
           @change_stream_filters = pipeline && pipeline.dup
           @options = options && options.dup.freeze
           @resume_token = @options[:resume_after]
           create_cursor!
+
+          # We send different parameters when we resume a change stream
+          # compared to when we send the first query
+          @resuming = true
         end
 
         # Iterate through documents returned by the change stream.
@@ -243,15 +249,31 @@ module Mongo
         end
 
         def cache_resume_token(doc)
+          # Always record both resume token and operation time,
+          # in case we get an older or newer server during rolling
+          # upgrades/downgrades
           unless @resume_token = (doc[:_id] && doc[:_id].dup)
-            raise Error::MissingResumeToken.new
+            raise Error::MissingResumeToken
           end
+          @start_at_operation_time = doc['clusterTime']
         end
 
         def create_cursor!
+          # clear the cache because we may get a newer or an older server
+          # (rolling upgrades)
+          @start_at_operation_time_supported = nil
+
           session = client.send(:get_session, @options)
           server = server_selector.select_server(cluster)
           result = send_initial_query(server, session)
+          if doc = result.replies.first && result.replies.first.documents.first
+            @start_at_operation_time = doc['$clusterTime'] && doc['$clusterTime']['clusterTime']
+          else
+            # The above may set @start_at_operation_time to nil
+            # if it was not in the document for some reason,
+            # for consistency set it to nil here as well
+            @start_at_operation_time = nil
+          end
           @cursor = Cursor.new(view, result, server, disable_retry: true, session: session)
         end
 
@@ -267,9 +289,32 @@ module Mongo
 
         def change_doc
           { fullDocument: ( @options[:full_document] || FULL_DOCUMENT_DEFAULT ) }.tap do |doc|
-            if options[:start_at_operation_time]
-              doc[:startAtOperationTime] = time_to_bson_timestamp(
-                options[:start_at_operation_time])
+            if resuming?
+              # We have a resume token once we retrieved any documents.
+              # However, if the first getMore fails and the user didn't pass
+              # a resume token we won't have a resume token to use.
+              # Use start_at_operation time in this case
+              if @resume_token
+                # Spec says we need to remove startAtOperationTime if
+                # one was passed in by user, thus we won't forward it
+              elsif start_at_operation_time_supported? && @start_at_operation_time
+                # It is crucial to check @start_at_operation_time_supported
+                # here - we may have switched to an older server that
+                # does not support operation times and therefore shouldn't
+                # try to send one to it!
+                #
+                # @start_at_operation_time is already a BSON::Timestamp
+                doc[:startAtOperationTime] = @start_at_operation_time
+              else
+                # Can't resume if we don't have either
+                byebug
+                raise Mongo::Error::MissingResumeToken
+              end
+            else
+              if options[:start_at_operation_time]
+                doc[:startAtOperationTime] = time_to_bson_timestamp(
+                  options[:start_at_operation_time])
+              end
             end
             doc[:resumeAfter] = @resume_token if @resume_token
             doc[:allChangesForCluster] = true if for_cluster?
@@ -283,6 +328,18 @@ module Mongo
         def time_to_bson_timestamp(time)
           seconds = time.to_f
           BSON::Timestamp.new(seconds.to_i, ((seconds - seconds.to_i) * 1000000).to_i)
+        end
+
+        def resuming?
+          @resuming
+        end
+
+        def start_at_operation_time_supported?
+          if @start_at_operation_time_supported.nil?
+            server = server_selector.select_server(cluster)
+            @start_at_operation_time_supported = server.description.max_wire_version >= 7
+          end
+          @start_at_operation_time_supported
         end
       end
     end
