@@ -307,7 +307,6 @@ module Mongo
                 doc[:startAtOperationTime] = @start_at_operation_time
               else
                 # Can't resume if we don't have either
-                byebug
                 raise Mongo::Error::MissingResumeToken
               end
             else
