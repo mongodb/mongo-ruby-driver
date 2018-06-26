@@ -94,7 +94,7 @@ transparently to the application.
 
 If the cluster loses enough nodes to not be able to satisfy the ``"majority"``
 read preference and does not heal quickly enough, ``next`` and ``each``
-will raise an error. In these cases the application must track which
-documents from the change stream it has processed and create a new
-change stream object via the ``watch`` call, passing an appropriate
-``:resume_after`` argument.
+will raise an error. In these cases the application must track, via the
+resume token, which documents from the change stream it has processed and
+create a new change stream object via the ``watch`` call, passing an
+appropriate ``:resume_after`` argument.
