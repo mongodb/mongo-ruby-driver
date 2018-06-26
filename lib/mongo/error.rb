@@ -82,7 +82,7 @@ module Mongo
     # @since 2.6.0
     TRANSIENT_TRANSACTION_ERROR_LABEL = 'TransientTransactionError'.freeze
 
-    def initialize(msg)
+    def initialize(msg = nil)
       @labels = []
       super(msg)
     end
