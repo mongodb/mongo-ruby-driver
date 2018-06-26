@@ -20,10 +20,6 @@ module Mongo
     # @since 2.0.0
     class SocketTimeoutError < Error
       include WriteRetryable
-
-      def initialize(msg = nil)
-        super(msg) if msg
-      end
     end
   end
 end
