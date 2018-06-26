@@ -84,8 +84,6 @@ module Mongo
         #
         # @since 2.5.0
         def initialize(view, pipeline, changes_for, options = {})
-          @resuming = false
-
           @view = view
           @changes_for = changes_for
           @change_stream_filters = pipeline && pipeline.dup
@@ -335,7 +333,7 @@ module Mongo
         end
 
         def resuming?
-          @resuming
+          !!@resuming
         end
 
         def start_at_operation_time_supported?
