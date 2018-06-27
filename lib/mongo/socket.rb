@@ -169,11 +169,14 @@ module Mongo
     private
 
     def read_from_socket(length)
-      data = String.new
+      data = []
+      read_size = 0
       deadline = (Time.now + timeout) if timeout
       begin
-        while (data.length < length)
-          data << @socket.read_nonblock(length - data.length)
+        while read_size < length
+          chunk = @socket.read_nonblock(length - read_size)
+          read_size += chunk.length
+          data << chunk
         end
       rescue IO::WaitReadable
         select_timeout = (deadline - Time.now) if deadline
@@ -183,7 +186,7 @@ module Mongo
         retry
       end
 
-      data
+      data.join('')
     end
 
     def unix_socket?(sock)
