@@ -169,11 +169,26 @@ module Mongo
     private
 
     def read_from_socket(length)
-      data = String.new
+      data = ('x'*length).force_encoding('BINARY')
       deadline = (Time.now + timeout) if timeout
+      # OpenSSL reads in 16 KB chunks max, there is no benefit to allocating
+      # a larger buffer as extra space won't be used anyway:
+      # https://linux.die.net/man/3/ssl_read
+      #
+      # The binary encoding is important, otherwise ruby performs encoding
+      # conversions of some sort during the write into the buffer which
+      # kills performance
+      buf = ('x'*16384).force_encoding('BINARY')
+      retrieved = 0
       begin
-        while (data.length < length)
-          data << @socket.read_nonblock(length - data.length)
+        while retrieved < length
+          retrieve = length - retrieved
+          if retrieve > 16384
+            retrieve = 16384
+          end
+          chunk = @socket.read_nonblock(retrieve, buf)
+          data[retrieved, chunk.length] = chunk
+          retrieved += chunk.length
         end
       rescue IO::WaitReadable
         select_timeout = (deadline - Time.now) if deadline
