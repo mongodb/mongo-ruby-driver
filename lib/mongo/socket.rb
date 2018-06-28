@@ -178,13 +178,14 @@ module Mongo
       # The binary encoding is important, otherwise ruby performs encoding
       # conversions of some sort during the write into the buffer which
       # kills performance
-      buf = ('x'*16384).force_encoding('BINARY')
+      buf_size = read_buffer_size
+      buf = ('x'*buf_size).force_encoding('BINARY')
       retrieved = 0
       begin
         while retrieved < length
           retrieve = length - retrieved
-          if retrieve > 16384
-            retrieve = 16384
+          if retrieve > buf_size
+            retrieve = buf_size
           end
           chunk = @socket.read_nonblock(retrieve, buf)
           data[retrieved, chunk.length] = chunk
@@ -199,6 +200,11 @@ module Mongo
       end
 
       data
+    end
+
+    def read_buffer_size
+      # Buffer size for non-SSL reads
+      65536
     end
 
     def unix_socket?(sock)

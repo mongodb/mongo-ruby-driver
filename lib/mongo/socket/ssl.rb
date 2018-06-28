@@ -168,6 +168,12 @@ module Mongo
           end
         end
       end
+
+      def read_buffer_size
+        # Buffer size for SSL reads.
+        # Capped at 16k due to https://linux.die.net/man/3/ssl_read
+        16384
+      end
     end
   end
 end
