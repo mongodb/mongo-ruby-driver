@@ -249,9 +249,9 @@ Ruby Options
      - none
 
    * - ``:ssl_verify``
-     - Whether or not to do peer certification validation.
+     - Whether to perform peer certificate validation.
      - ``Boolean``
-     - false
+     - true
 
    * - ``:connect_timeout``
      - The number of seconds to wait to establish a socket connection
