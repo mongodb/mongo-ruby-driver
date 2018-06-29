@@ -171,9 +171,10 @@ module Mongo
     def read_from_socket(length)
       data = ('x'*length).force_encoding('BINARY')
       deadline = (Time.now + timeout) if timeout
-      # OpenSSL reads in 16 KB chunks max, there is no benefit to allocating
-      # a larger buffer as extra space won't be used anyway:
-      # https://linux.die.net/man/3/ssl_read
+      # We want to have a fixed and reasonably small size buffer for reads
+      # because, for example, OpenSSL reads in 16 kb chunks max.
+      # Having a 16 mb buffer means there will be 1000 reads each allocating
+      # 16 mb of memory and using 16 kb of it.
       #
       # The binary encoding is important, otherwise ruby performs encoding
       # conversions of some sort during the write into the buffer which
