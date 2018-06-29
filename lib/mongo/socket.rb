@@ -169,17 +169,29 @@ module Mongo
     private
 
     def read_from_socket(length)
-      data = ('x'*length).force_encoding('BINARY')
+      # Just in case
+      if length == 0
+        return ''.force_encoding('BINARY')
+      end
+
       deadline = (Time.now + timeout) if timeout
+
       # We want to have a fixed and reasonably small size buffer for reads
       # because, for example, OpenSSL reads in 16 kb chunks max.
       # Having a 16 mb buffer means there will be 1000 reads each allocating
       # 16 mb of memory and using 16 kb of it.
-      #
+      buf_size = read_buffer_size
+      data = nil
+
+      # If we want to read less than the buffer size, just allocate the
+      # memory that is necessary
+      if length < buf_size
+        buf_size = length
+      end
+
       # The binary encoding is important, otherwise ruby performs encoding
       # conversions of some sort during the write into the buffer which
       # kills performance
-      buf_size = read_buffer_size
       buf = ('x'*buf_size).force_encoding('BINARY')
       retrieved = 0
       begin
@@ -189,6 +201,23 @@ module Mongo
             retrieve = buf_size
           end
           chunk = @socket.read_nonblock(retrieve, buf)
+
+          # If we read the entire wanted length in one operation,
+          # return the data as is which saves one memory allocation and
+          # one copy per read
+          if retrieved == 0 && chunk.length == length
+            return chunk
+          end
+
+          # If we are here, we are reading the wanted length in
+          # multiple operations. Allocate the total buffer here rather
+          # than up front so that the special case above won't be
+          # allocating twice
+          if data.nil?
+            data = ('x'*length).force_encoding('BINARY')
+          end
+
+          # ... and we need to copy the chunks at this point
           data[retrieved, chunk.length] = chunk
           retrieved += chunk.length
         end
