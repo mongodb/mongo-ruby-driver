@@ -219,18 +219,18 @@ module Mongo
     # @option options [ OpenSSL::PKey ] :ssl_key_object The private key used to identify the
     #   connection against MongoDB
     # @option options [ String ] :ssl_key_pass_phrase A passphrase for the private key.
-    # @option options [ true, false ] :ssl_verify Whether or not to do peer certification
+    # @option options [ true, false ] :ssl_verify Whether to do peer certificate
     #   validation.
-    # @option options [ String ] :ssl_ca_cert The file containing a set of concatenated
-    #   certification authority certifications used to validate certs passed from the
+    # @option options [ String ] :ssl_ca_cert The file containing concatenated
+    #   certificate authority certificates used to validate certs passed from the
     #   other end of the connection. One of :ssl_ca_cert, :ssl_ca_cert_string or
     #   :ssl_ca_cert_object (in order of priority) is required for :ssl_verify.
-    # @option options [ String ] :ssl_ca_cert_string A string containing a set of concatenated
-    #   certification authority certifications used to validate certs passed from the
+    # @option options [ String ] :ssl_ca_cert_string A string containing concatenated
+    #   certificate authority certificatess used to validate certs passed from the
     #   other end of the connection. One of :ssl_ca_cert, :ssl_ca_cert_string or
     #   :ssl_ca_cert_object (in order of priority) is required for :ssl_verify.
     # @option options [ Array<OpenSSL::X509::Certificate> ] :ssl_ca_cert_object An array of
-    #   OpenSSL::X509::Certificate representing the certification authority certifications used
+    #   OpenSSL::X509::Certificate representing the certificate authority certificates used
     #   to validate certs passed from the other end of the connection. One of :ssl_ca_cert,
     #   :ssl_ca_cert_string or :ssl_ca_cert_object (in order of priority) is required for :ssl_verify.
     # @option options [ Float ] :socket_timeout The timeout, in seconds, to
