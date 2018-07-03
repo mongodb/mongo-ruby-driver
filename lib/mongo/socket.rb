@@ -234,6 +234,7 @@ module Mongo
 
     def read_buffer_size
       # Buffer size for non-SSL reads
+      # 64kb
       65536
     end
 
