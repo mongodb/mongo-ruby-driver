@@ -192,7 +192,7 @@ module Mongo
       # The binary encoding is important, otherwise ruby performs encoding
       # conversions of some sort during the write into the buffer which
       # kills performance
-      buf = ('x'*buf_size).force_encoding('BINARY')
+      buf = allocate_string(buf_size)
       retrieved = 0
       begin
         while retrieved < length
@@ -214,7 +214,7 @@ module Mongo
           # than up front so that the special case above won't be
           # allocating twice
           if data.nil?
-            data = ('x'*length).force_encoding('BINARY')
+            data = allocate_string(length)
           end
 
           # ... and we need to copy the chunks at this point
@@ -230,6 +230,14 @@ module Mongo
       end
 
       data
+    end
+
+    def allocate_string(capacity)
+      if RUBY_VERSION >= '2.4.0'
+        String.new('', :capacity => capacity, :encoding => 'BINARY')
+      else
+        ('x'*capacity).force_encoding('BINARY')
+      end
     end
 
     def read_buffer_size
