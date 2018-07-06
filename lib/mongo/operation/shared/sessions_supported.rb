@@ -24,8 +24,6 @@ module Mongo
 
       ZERO_TIMESTAMP = BSON::Timestamp.new(0, 0)
 
-      READ_PREFERENCE = '$readPreference'.freeze
-
       READ_COMMANDS = [
         :aggregate,
         :collStats,
@@ -113,7 +111,7 @@ module Mongo
         sel = selector(server)
         add_write_concern!(sel)
         sel[Protocol::Msg::DATABASE_IDENTIFIER] = db_name
-        sel[READ_PREFERENCE] = read.to_doc if read
+        sel['$readPreference'] = read.to_doc if read
 
         if server.features.sessions_enabled?
           apply_cluster_time!(sel, server)

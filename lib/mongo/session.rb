@@ -110,9 +110,16 @@ module Mongo
     # @param [ Client ] client The client through which this session is created.
     # @param [ Hash ] options The options for this session.
     #
+    # @option options [ Hash ] :read_preference The read preference options hash,
+    #   with the following optional keys:
+    #   - *:mode* -- the read preference as a string or symbol; valid values are
+    #     *:primary*, *:primary_preferred*, *:secondary*, *:secondary_preferred*
+    #     and *:nearest*.
+    #
     # @since 2.5.0
     def initialize(server_session, client, options = {})
       @server_session = server_session
+      options = options.dup
 
       # Because the read preference will need to be inserted into a command as a string, we convert
       # it from a symbol immediately upon receiving it.
@@ -121,7 +128,7 @@ module Mongo
       end
 
       @client = client.use(:admin)
-      @options = options.dup.freeze
+      @options = options.freeze
       @cluster_time = nil
       @state = NO_TRANSACTION_STATE
     end

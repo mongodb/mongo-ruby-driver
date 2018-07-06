@@ -193,7 +193,7 @@ module Mongo
     #   supports 'zlib'.
     # @option options [ Hash ] :read The read preference options. The hash
     #   may have the following items:
-    #   - *:read* -- read preference specified as a symbol; valid values are
+    #   - *:mode* -- read preference specified as a symbol; valid values are
     #     *:primary*, *:primary_preferred*, *:secondary*, *:secondary_preferred*
     #     and *:nearest*.
     #   - *:tag_sets* -- an array of hashes.
@@ -301,6 +301,12 @@ module Mongo
     #   client.read_preference
     #
     # @return [ BSON::Document ] The user-defined read preference.
+    #   The document may have the following fields:
+    #   - *:read* -- read preference specified as a symbol; valid values are
+    #     *:primary*, *:primary_preferred*, *:secondary*, *:secondary_preferred*
+    #     and *:nearest*.
+    #   - *:tag_sets* -- an array of hashes.
+    #   - *:local_threshold*.
     #
     # @since 2.0.0
     def read_preference
