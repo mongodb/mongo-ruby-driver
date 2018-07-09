@@ -471,6 +471,21 @@ module Mongo
     # @example Start a new transaction
     #   session.start_transaction(options)
     #
+    # @param [ Hash ] options The options for the transaction being started.
+    #
+    # @option options [ Hash ] read_concern The read concern options hash, with the following
+    #   optional keys:
+    #   - *:level* -- the read preference level as a symbol; valid values are *:local*, *:majority*,
+    #   and *:snapshot*
+    #   - *:after_cluster_time* -- the cluster time BSON::Document or hash specifying which cluster
+    #   time reads should occur after
+    # @option options [ Hash ] :write_concern The write concern options. Can be :w =>
+    #   Integer|String, :fsync => Boolean, :j => Boolean.
+    # @option options [ Hash ] :read The read preference options. The hash may have the following
+    #   items:
+    #   - *:mode* -- read preference specified as a symbol; the only valid value is
+    #     *:primary*.
+    #
     # @raise [ InvalidTransactionOperation ] If a transaction is already in
     # progress or if the write concern is unacknowledged.
     #
