@@ -71,7 +71,7 @@ module Mongo
             @read_formatted ||= begin
               if read
                 read_pref = ServerSelector.get(read).to_mongos
-                Mongo::Lint.validate_camel_case_read_preference_mode(read_pref)
+                Mongo::Lint.validate_camel_case_read_preference(read_pref)
                 read_pref
               else
                 nil
