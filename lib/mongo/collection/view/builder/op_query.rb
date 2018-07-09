@@ -68,7 +68,15 @@ module Mongo
           end
 
           def read_pref_formatted
-            @read_formatted ||= ServerSelector.get(read).to_mongos if read
+            @read_formatted ||= begin
+              if read
+                read_pref = ServerSelector.get(read).to_mongos
+                Mongo::Lint.validate_camel_case_read_preference(read_pref)
+                read_pref
+              else
+                nil
+              end
+            end
           end
 
           def special_filter

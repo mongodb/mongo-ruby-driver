@@ -30,8 +30,9 @@ module Mongo
 
       def update_selector_for_read_pref(sel, server)
         if read && server.mongos? && read_pref = read.to_mongos
+          Mongo::Lint.validate_camel_case_read_preference(read_pref)
           sel = sel[:$query] ? sel : {:$query => sel}
-          sel.merge(:$readPreference => read_pref)
+          sel = sel.merge(:$readPreference => read_pref)
         else
           sel
         end

@@ -139,6 +139,7 @@ module Mongo
           cmd[:limit] = opts[:limit] if opts[:limit]
           cmd[:maxTimeMS] = opts[:max_time_ms] if opts[:max_time_ms]
           cmd[:readConcern] = collection.read_concern if collection.read_concern
+          Mongo::Lint.validate_underscore_read_preference(opts[:read])
           read_pref = opts[:read] || read_preference
           selector = ServerSelector.get(read_pref || server_selector)
           with_session(opts) do |session|
@@ -203,6 +204,7 @@ module Mongo
           cmd = { count: collection.name }
           cmd[:maxTimeMS] = opts[:max_time_ms] if opts[:max_time_ms]
           cmd[:readConcern] = collection.read_concern if collection.read_concern
+          Mongo::Lint.validate_underscore_read_preference(opts[:read])
           read_pref = opts[:read] || read_preference
           selector = ServerSelector.get(read_pref || server_selector)
           with_session(opts) do |session|
@@ -240,6 +242,7 @@ module Mongo
                   :query => filter }
           cmd[:maxTimeMS] = opts[:max_time_ms] if opts[:max_time_ms]
           cmd[:readConcern] = collection.read_concern if collection.read_concern
+          Mongo::Lint.validate_underscore_read_preference(opts[:read])
           read_pref = opts[:read] || read_preference
           selector = ServerSelector.get(read_pref || server_selector)
           with_session(opts) do |session|
@@ -537,11 +540,13 @@ module Mongo
         end
 
         def read_preference
-          if options[:session] && options[:session].in_transaction?
-            options[:session].send(:txn_read_pref) || collection.client.read_preference
+          rp = if options[:session] && options[:session].in_transaction?
+            options[:session].txn_read_preference || collection.client.read_preference
           else
             @read_preference ||= (options[:read] || collection.read_preference)
           end
+          Mongo::Lint.validate_underscore_read_preference(rp)
+          rp
         end
 
         def server_selector

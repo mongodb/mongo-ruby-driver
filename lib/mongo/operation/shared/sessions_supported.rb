@@ -99,8 +99,8 @@ module Mongo
         session.suppress_read_write_concern!(selector)
       end
 
-      def validate_read_pref!(selector)
-        session.validate_read_pref!(selector) if read_command?(selector)
+      def validate_read_preference!(selector)
+        session.validate_read_preference!(selector) if read_command?(selector)
       end
 
       def update_session_state!
@@ -123,7 +123,7 @@ module Mongo
             apply_autocommit!(sel)
             apply_txn_opts!(sel)
             suppress_read_write_concern!(sel)
-            validate_read_pref!(sel)
+            validate_read_preference!(sel)
             update_session_state!
             apply_txn_num!(sel)
           end
@@ -136,7 +136,7 @@ module Mongo
           apply_autocommit!(sel)
           apply_txn_opts!(sel)
           suppress_read_write_concern!(sel)
-          validate_read_pref!(sel)
+          validate_read_preference!(sel)
           update_session_state!
           apply_txn_num!(sel)
         end

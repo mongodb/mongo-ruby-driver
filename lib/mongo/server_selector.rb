@@ -71,6 +71,7 @@ module Mongo
     # @since 2.0.0
     def get(preference = {})
       return preference if PREFERENCES.values.include?(preference.class)
+      Mongo::Lint.validate_underscore_read_preference(preference)
       PREFERENCES.fetch((preference[:mode] || :primary).to_sym).new(preference)
     end
   end

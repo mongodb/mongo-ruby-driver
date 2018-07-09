@@ -301,6 +301,7 @@ module Mongo
           OPTION_MAPPINGS.each do |legacy, option|
             document.store(option, options[legacy]) unless options[legacy].nil?
           end
+          Mongo::Lint.validate_camel_case_read_preference(filter['readPreference'])
           SPECIAL_FIELD_MAPPINGS.each do |special, normal|
             document.store(normal, filter[special]) unless filter[special].nil?
           end
