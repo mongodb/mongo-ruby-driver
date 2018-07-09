@@ -226,7 +226,7 @@ module Mongo
     #   other end of the connection. One of :ssl_ca_cert, :ssl_ca_cert_string or
     #   :ssl_ca_cert_object (in order of priority) is required for :ssl_verify.
     # @option options [ String ] :ssl_ca_cert_string A string containing concatenated
-    #   certificate authority certificatess used to validate certs passed from the
+    #   certificate authority certificates used to validate certs passed from the
     #   other end of the connection. One of :ssl_ca_cert, :ssl_ca_cert_string or
     #   :ssl_ca_cert_object (in order of priority) is required for :ssl_verify.
     # @option options [ Array<OpenSSL::X509::Certificate> ] :ssl_ca_cert_object An array of
