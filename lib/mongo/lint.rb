@@ -38,9 +38,7 @@ module Mongo
     module_function :validate_camel_case_read_preference_mode
 
     def enabled?
-      @enabled ||= begin
-        ENV['MONGO_RUBY_DRIVER_LINT'] && %w(1 yes true).include?(ENV['MONGO_RUBY_DRIVER_LINT'].downcase)
-      end
+      ENV['MONGO_RUBY_DRIVER_LINT'] && %w(1 yes true).include?(ENV['MONGO_RUBY_DRIVER_LINT'].downcase)
     end
     module_function :enabled?
   end
