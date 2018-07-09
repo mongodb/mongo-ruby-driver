@@ -239,7 +239,10 @@ module Mongo
     def add_txn_opts!(command, read)
       command.tap do |c|
         # The read preference should be added for all read operations.
-        if read && txn_read_pref
+        if read && txn_read_pref = txn_read_preference
+          Mongo::Lint.validate_underscore_read_preference(txn_read_pref)
+          txn_read_pref = txn_read_pref.dup
+          txn_read_pref[:mode] = txn_read_pref[:mode].to_s.gsub(/(_\w)/) { |match| match[1].upcase }
           Mongo::Lint.validate_camel_case_read_preference(txn_read_pref)
           c['$readPreference'] = txn_read_pref
         end
@@ -287,14 +290,14 @@ module Mongo
     # Ensure that the read preference of a command primary.
     #
     # @example
-    #   session.validate_read_pref!(command)
+    #   session.validate_read_preference!(command)
     #
     # @raise [ Mongo::Error::InvalidTransactionOperation ] If the read preference of the command is
     # not primary.
     #
     # @since 2.6.0
-    def validate_read_pref!(command)
-      return unless in_transaction? && non_primary_readpref?(command)
+    def validate_read_preference!(command)
+      return unless in_transaction? && non_primary_read_preference_mode?(command)
 
       raise Mongo::Error::InvalidTransactionOperation.new(
         Mongo::Error::InvalidTransactionOperation::INVALID_READ_PREFERENCE)
@@ -604,23 +607,21 @@ module Mongo
       within_states?(STARTING_TRANSACTION_STATE, TRANSACTION_IN_PROGRESS_STATE)
     end
 
-    # Get the read preference document the session will use in the currently
+    # Get the read preference the session will use in the currently
     # active transaction.
     #
-    # @example Get the transaction's read preference
-    #   session.txn_read_pref
+    # This is a driver style hash with underscore keys.
     #
-    # @return [ Hash ] The read preference document of the transaction.
+    # @example Get the transaction's read preference
+    #   session.txn_read_preference
+    #
+    # @return [ Hash ] The read preference of the transaction.
     #
     # @since 2.6.0
-    def txn_read_pref
+    def txn_read_preference
       rp = txn_options && txn_options[:read_preference] ||
         @client.read_preference
-      if rp
-        rp = rp.dup
-        rp[:mode] = rp[:mode].to_s.gsub(/(_\w)/) { |match| match[1].upcase }
-      end
-      Mongo::Lint.validate_camel_case_read_preference(rp)
+      Mongo::Lint.validate_underscore_read_preference(rp)
       rp
     end
 
@@ -654,7 +655,7 @@ module Mongo
         (@client.write_concern && @client.write_concern.options)
     end
 
-    def non_primary_readpref?(command)
+    def non_primary_read_preference_mode?(command)
       return false unless command['$readPreference']
 
       mode = command['$readPreference']['mode'] || command['$readPreference'][:mode]
