@@ -261,6 +261,7 @@ module Mongo
     #
     # @since 2.0.0
     def initialize(addresses_or_uri, options = Options::Redacted.new)
+      Mongo::Lint.validate_underscore_read_preference(options[:read])
       if addresses_or_uri.is_a?(::String)
         create_from_uri(addresses_or_uri, validate_options!(options))
       else
