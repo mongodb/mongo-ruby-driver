@@ -53,7 +53,7 @@ module Mongo
         # @example Dequeue a connection.
         #   queue.dequeue
         #
-        # @return [ Mongo::Pool::Connection ] The next connection.
+        # @return [ Mongo::Server::Connection ] The next connection.
         #
         # @since 2.0.0
         def dequeue
@@ -82,7 +82,7 @@ module Mongo
         # @example Enqueue a connection.
         #   queue.enqueue(connection)
         #
-        # @param [ Mongo::Pool::Connection ] connection The connection.
+        # @param [ Mongo::Server::Connection ] connection The connection.
         #
         # @since 2.0.0
         def enqueue(connection)
@@ -96,7 +96,7 @@ module Mongo
         # the initial size of the queue.
         #
         # @example Create the queue.
-        #   Mongo::Pool::Queue.new(max_pool_size: 5) { Connection.new }
+        #   Mongo::Server::ConnectionPool::Queue.new(max_pool_size: 5) { Connection.new }
         #
         # @param [ Hash ] options The options.
         #
@@ -124,7 +124,7 @@ module Mongo
         #
         # @since 2.0.0
         def inspect
-          "#<Mongo::Pool::Queue:0x#{object_id} min_size=#{min_size} max_size=#{max_size} " +
+          "#<Mongo::Server::ConnectionPool::Queue:0x#{object_id} min_size=#{min_size} max_size=#{max_size} " +
             "wait_timeout=#{wait_timeout} current_size=#{queue.size}>"
         end
 

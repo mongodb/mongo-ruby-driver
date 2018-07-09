@@ -47,7 +47,7 @@ module Mongo
       # @example Check a connection out from the pool.
       #   pool.checkout
       #
-      # @return [ Mongo::Pool::Connection ] The checked out connection.
+      # @return [ Mongo::Server::Connection ] The checked out connection.
       #
       # @since 2.0.0
       def checkout
@@ -120,14 +120,14 @@ module Mongo
 
       class << self
 
-        # Get a connection pool for the provided server.
+        # Creates a new connection pool for the provided server.
         #
-        # @example Get a connection pool.
-        #   Mongo::Pool.get(server)
+        # @example Create a new connection pool.
+        #   Mongo::Server::ConnectionPool.get(server)
         #
         # @param [ Mongo::Server ] server The server.
         #
-        # @return [ Mongo::Pool ] The connection pool.
+        # @return [ Mongo::Server::ConnectionPool ] The connection pool.
         #
         # @since 2.0.0
         def get(server)
