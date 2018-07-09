@@ -80,7 +80,7 @@ module Mongo
       # @param [ Float ] socket_timeout The socket timeout.
       # @param [ Hash ] ssl_options SSL options.
       #
-      # @return [ Pool::Socket::SSL, Pool::Socket::TCP ] The socket.
+      # @return [ Mongo::Socket::SSL, Mongo::Socket::TCP ] The socket.
       #
       # @since 2.0.0
       def socket(socket_timeout, ssl_options = {})

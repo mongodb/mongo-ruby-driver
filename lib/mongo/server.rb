@@ -201,7 +201,7 @@ module Mongo
     # @example Get the connection pool for the server.
     #   server.pool
     #
-    # @return [ Mongo::Pool ] The connection pool.
+    # @return [ Mongo::Server::ConnectionPool ] The connection pool.
     #
     # @since 2.0.0
     def pool
