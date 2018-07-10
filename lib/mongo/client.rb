@@ -421,7 +421,13 @@ module Mongo
     #
     # @since 2.1.0
     def reconnect
-      @cluster.reconnect! and true
+      addresses = cluster.addresses.map(&:to_s)
+      monitoring = cluster.monitoring
+
+      @cluster.disconnect! rescue nil
+
+      @cluster = Cluster.new(addresses, monitoring, options)
+      true
     end
 
     # Get the names of all databases.
