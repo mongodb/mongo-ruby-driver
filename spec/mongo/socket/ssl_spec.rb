@@ -561,7 +561,7 @@ describe Mongo::Socket::SSL, if: running_ssl? do
 
       it 'should raise EOFError' do
         expect { socket.readbyte }
-          .to raise_error(Mongo::Error::SocketError).with_message("EOFError")
+          .to raise_error(Mongo::Error::SocketError).with_message("EOFError: EOFError")
       end
     end
   end
