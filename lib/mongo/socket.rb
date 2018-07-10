@@ -29,7 +29,7 @@ module Mongo
     # Error message for SSL related exceptions.
     #
     # @since 2.0.0
-    SSL_ERROR = 'SSL handshake failed. MongoDB may not be configured with SSL support.'.freeze
+    SSL_ERROR = 'MongoDB may not be configured with SSL support'.freeze
 
     # Error message for timeouts on socket calls.
     #
@@ -284,9 +284,9 @@ module Mongo
       rescue Errno::ETIMEDOUT
         raise Error::SocketTimeoutError, TIMEOUT_ERROR
       rescue IOError, SystemCallError => e
-        raise Error::SocketError, e.message
-      rescue OpenSSL::SSL::SSLError
-        raise Error::SocketError, SSL_ERROR
+        raise Error::SocketError, "#{e.class}: #{e}"
+      rescue OpenSSL::SSL::SSLError => e
+        raise Error::SocketError, "#{e.class}: #{e} (#{SSL_ERROR})"
       end
     end
   end
