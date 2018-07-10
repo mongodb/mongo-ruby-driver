@@ -10,8 +10,8 @@ describe 'SDAM Monitoring' do
     context("#{spec.description} (#{file.sub(%r'.*support/sdam_monitoring/', '')})") do
 
       before(:all) do
+        @subscriber = Mongo::SDAMMonitoring::TestSubscriber.new
         sdam_proc = lambda do |client|
-          @subscriber = Mongo::SDAMMonitoring::TestSubscriber.new
           client.subscribe(Mongo::Monitoring::SERVER_OPENING, @subscriber)
           client.subscribe(Mongo::Monitoring::SERVER_CLOSED, @subscriber)
           client.subscribe(Mongo::Monitoring::SERVER_DESCRIPTION_CHANGED, @subscriber)
