@@ -28,7 +28,7 @@ module Mongo
     # to the server, to flag failures sooner. This exception is raised on
     # such failures.
     #
-    # @since 2.7.0
+    # @since 2.6.1
     class LintError < Error
     end
   end
