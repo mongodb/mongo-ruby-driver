@@ -251,7 +251,7 @@ alias :transactions_enabled? :scram_sha_256_enabled?
 #
 # @since 2.1.0
 def testing_ssl_locally?
-  running_ssl? && !(ENV['CI'])
+  SpecConfig.instance.ssl? && !(ENV['CI'])
 end
 
 # Should tests relying on external connections be run.
@@ -259,13 +259,6 @@ end
 # @since 2.5.1
 def test_connecting_externally?
   !ENV['CI'] && !ENV['EXTERNAL_DISABLED']
-end
-
-# Is the test suite running on SSL.
-#
-# @since 2.0.2
-def running_ssl?
-  SSL
 end
 
 # Is the test suite using compression.

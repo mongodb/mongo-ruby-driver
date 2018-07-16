@@ -32,11 +32,6 @@ WRITE_CONCERN = SpecConfig.instance.connect_replica_set? ? { w: 2 } : { w: 1 }
 # @since 2.4.2
 INVALID_WRITE_CONCERN = { w: 4 }
 
-# Whether to use SSL.
-#
-# @since 2.0.3
-SSL = (ENV['SSL'] == 'ssl') || (ENV['SSL_ENABLED'] == 'true')
-
 # What compressor to use, if any.
 #
 # @since 2.5.0
@@ -46,7 +41,7 @@ COMPRESSORS = ENV['COMPRESSORS'] ? { compressors: ENV['COMPRESSORS'].split(',') 
 #
 # @since 2.1.0
 SSL_OPTIONS = {
-                  ssl: SSL,
+                  ssl: SpecConfig.instance.ssl?,
                   ssl_verify: false,
                   ssl_cert:  CLIENT_CERT_PEM,
                   ssl_key:  CLIENT_KEY_PEM

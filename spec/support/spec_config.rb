@@ -66,4 +66,8 @@ class SpecConfig
   def any_port
     addresses.first.split(':')[1] || '27017'
   end
+
+  def ssl?
+    (ENV['SSL'] == 'ssl') || (ENV['SSL_ENABLED'] == 'true')
+  end
 end
