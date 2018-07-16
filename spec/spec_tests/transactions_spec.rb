@@ -14,6 +14,10 @@ describe 'Transactions' do
             test.setup_test
           end
 
+          after(:each) do
+            test.teardown_test
+          end
+
           let(:results) do
             test.run
           end
