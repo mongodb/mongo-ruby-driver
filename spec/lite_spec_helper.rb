@@ -37,6 +37,8 @@ begin
 rescue LoadError
 end
 
+require 'support/spec_config'
+
 Mongo::Logger.logger = Logger.new($stdout)
 unless SpecConfig.instance.client_debug?
   Mongo::Logger.logger.level = Logger::INFO
@@ -55,7 +57,6 @@ require 'support/connection_string'
 require 'support/gridfs'
 require 'support/transactions'
 require 'support/change_streams'
-require 'support/spec_config'
 
 RSpec.configure do |config|
   if ENV['CI'] && SpecConfig.instance.jruby?

@@ -7,7 +7,7 @@ describe Mongo::Cluster do
   end
 
   let(:cluster) do
-    described_class.new(ADDRESSES, monitoring, TEST_OPTIONS)
+    described_class.new(SpecConfig.instance.addresses, monitoring, TEST_OPTIONS)
   end
 
   describe '#==' do
@@ -19,7 +19,7 @@ describe Mongo::Cluster do
         context 'when the options are the same' do
 
           let(:other) do
-            described_class.new(ADDRESSES, monitoring, TEST_OPTIONS)
+            described_class.new(SpecConfig.instance.addresses, monitoring, TEST_OPTIONS)
           end
 
           it 'returns true' do
@@ -594,7 +594,7 @@ describe Mongo::Cluster do
   describe '#update_cluster_time' do
 
     let(:cluster) do
-      described_class.new(ADDRESSES, monitoring, TEST_OPTIONS.merge(heartbeat_frequency: 1000))
+      described_class.new(SpecConfig.instance.addresses, monitoring, TEST_OPTIONS.merge(heartbeat_frequency: 1000))
     end
 
     let(:result) do

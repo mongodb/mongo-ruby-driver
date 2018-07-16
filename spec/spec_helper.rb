@@ -160,7 +160,7 @@ end
 #
 # @since 2.0.0
 def single_seed?
-  ADDRESSES.size == 1
+  SpecConfig.instance.addresses.size == 1
 end
 
 # For instances where behaviour is different on different versions, we need to
@@ -317,7 +317,7 @@ end
 #
 # @since 2.0.0
 def initialize_scanned_client!
-  Mongo::Client.new(ADDRESSES, TEST_OPTIONS.merge(database: TEST_DB))
+  Mongo::Client.new(SpecConfig.instance.addresses, TEST_OPTIONS.merge(database: TEST_DB))
 end
 
 # Converts a 'camelCase' string or symbol to a :snake_case symbol.

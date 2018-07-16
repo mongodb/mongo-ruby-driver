@@ -40,8 +40,8 @@ module Constraints
   # Constrain tests that use TimeoutInterrupt to MRI (and Unix)
   def only_mri
     before do
-      if SpecConfig.mri?
-        skip "MRI required, we have #{SpecConfig.platform}"
+      if SpecConfig.instance.mri?
+        skip "MRI required, we have #{SpecConfig.instance.platform}"
       end
     end
   end

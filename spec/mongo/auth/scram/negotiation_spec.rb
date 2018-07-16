@@ -65,7 +65,7 @@ describe 'SCRAM-SHA auth mechanism negotiation', if: scram_sha_256_enabled? do
       end
 
       Mongo::Client.new(
-        ADDRESSES,
+        SpecConfig.instance.addresses,
         TEST_OPTIONS.merge(opts)
       )
     end
@@ -310,11 +310,11 @@ describe 'SCRAM-SHA auth mechanism negotiation', if: scram_sha_256_enabled? do
   context 'when the configuration is specified in the URI' do
 
     let(:uri) do
-      "mongodb://#{user.name}:#{password}@#{ADDRESSES.join(',')}/admin".tap do |uri|
+      "mongodb://#{user.name}:#{password}@#{SpecConfig.instance.addresses.join(',')}/admin".tap do |uri|
         first = true
 
-        if defined?(URI_OPTIONS)
-          URI_OPTIONS.each do |k, v|
+        if SpecConfig.instance.uri_options
+          SpecConfig.instance.uri_options.each do |k, v|
             uri << (first ? '?' : '&')
             first = false
 
