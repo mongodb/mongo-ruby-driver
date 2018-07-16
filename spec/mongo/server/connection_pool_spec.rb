@@ -7,7 +7,7 @@ describe Mongo::Server::ConnectionPool do
   end
 
   let(:address) do
-    Mongo::Address.new('127.0.0.1:27017')
+    Mongo::Address.new(SpecConfig.instance.addresses.first)
   end
 
   let(:monitoring) do
