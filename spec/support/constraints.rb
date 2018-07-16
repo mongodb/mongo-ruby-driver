@@ -40,8 +40,8 @@ module Constraints
   # Constrain tests that use TimeoutInterrupt to MRI (and Unix)
   def only_mri
     before do
-      if RUBY_PLATFORM =~ /\bjava\b/
-        skip "MRI required, we have #{RUBY_PLATFORM}"
+      if SpecConfig.mri?
+        skip "MRI required, we have #{SpecConfig.platform}"
       end
     end
   end

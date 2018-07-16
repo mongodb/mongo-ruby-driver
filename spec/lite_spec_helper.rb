@@ -55,9 +55,10 @@ require 'support/connection_string'
 require 'support/gridfs'
 require 'support/transactions'
 require 'support/change_streams'
+require 'support/spec_config'
 
 RSpec.configure do |config|
-  if ENV['CI'] && RUBY_PLATFORM =~ /\bjava\b/
+  if ENV['CI'] && SpecConfig.instance.jruby?
     config.formatter = 'documentation'
   end
 end

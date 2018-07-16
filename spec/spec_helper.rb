@@ -70,7 +70,7 @@
 
 require 'lite_spec_helper'
 
-if RUBY_PLATFORM !~ /\bjava\b/
+if SpecConfig.instance.mri?
   require 'timeout_interrupt'
 end
 
