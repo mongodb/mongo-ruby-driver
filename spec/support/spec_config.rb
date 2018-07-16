@@ -62,4 +62,8 @@ class SpecConfig
   def connect_replica_set?
     connect[:connect] == :replica_set
   end
+
+  def any_port
+    addresses.first.split(':')[1] || '27017'
+  end
 end
