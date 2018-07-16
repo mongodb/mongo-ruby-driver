@@ -38,7 +38,7 @@ rescue LoadError
 end
 
 Mongo::Logger.logger = Logger.new($stdout)
-unless %w(1 true yes).include?((ENV['CLIENT_DEBUG'] || '').downcase)
+unless SpecConfig.instance.client_debug?
   Mongo::Logger.logger.level = Logger::INFO
 end
 Encoding.default_external = Encoding::UTF_8

@@ -17,4 +17,8 @@ class SpecConfig
   def platform
     RUBY_PLATFORM
   end
+
+  def client_debug?
+    %w(1 true yes).include?((ENV['CLIENT_DEBUG'] || '').downcase)
+  end
 end
