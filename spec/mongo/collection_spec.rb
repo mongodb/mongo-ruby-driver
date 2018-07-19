@@ -2327,6 +2327,7 @@ describe Mongo::Collection do
   end
 
   describe '#parallel_scan', unless: sharded? do
+    max_server_version '4.0'
 
     let(:documents) do
       (1..200).map do |i|
