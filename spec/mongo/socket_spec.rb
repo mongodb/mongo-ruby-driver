@@ -18,9 +18,9 @@ describe Mongo::Socket do
     it 'maps SystemCallError and preserves message' do
       expect do
         socket.send(:handle_errors) do
-          raise SystemCallError.new('Test error', Errno::ENOMEDIUM::Errno)
+          raise SystemCallError.new('Test error', Errno::ENFILE::Errno)
         end
-      end.to raise_error(Mongo::Error::SocketError, 'Errno::ENOMEDIUM: No medium found - Test error')
+      end.to raise_error(Mongo::Error::SocketError, 'Errno::ENFILE: Too many open files in system - Test error')
     end
 
     it 'maps IOError and preserves message' do
