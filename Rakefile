@@ -22,7 +22,43 @@ end
 task :default => :spec
 
 namespace :spec do
-  task :ci => [:spec]
+  MONGODB_VERSION = ENV['MONGODB_VERSION']
+  TMP_DIR = 'tmp'
+  mongod_cmd = 'mongod'
+  archive_url = nil
+  if MONGODB_VERSION
+    mongod_cmd = File.join(TMP_DIR, "mongodb-linux-x86_64-#{MONGODB_VERSION}", "bin", mongod_cmd)
+    mongod_cmd = File.expand_path(mongod_cmd)
+    archive_url = "http://fastdl.mongodb.org/linux/mongodb-linux-x86_64-#{MONGODB_VERSION}.tgz"
+  end
+  DATA_DIR = File.join(TMP_DIR, 'data')
+  LOG_FILE = File.join(TMP_DIR, 'mongod.log')
+
+  desc "Run RSpec code examples for CI"
+  task :ci => [:start_mongod, :spec, :stop_mongod]
+
+  desc "Start mongod"
+  task :start_mongod do
+    # Initialize temporary directory.
+    rm_rf TMP_DIR
+    mkdir_p TMP_DIR
+
+    # Download and extract MongoDB.
+    if MONGODB_VERSION
+      archive_file = File.join(TMP_DIR, 'mongodb.tgz')
+      sh "wget #{archive_url} -O #{archive_file}"
+      sh "tar -xvf #{archive_file} -C #{TMP_DIR}"
+    end
+
+    # Start mongod
+    mkdir_p DATA_DIR
+    sh "#{mongod_cmd} --dbpath #{DATA_DIR} --bind_ip 127.0.0.1 --auth --fork --logpath #{LOG_FILE}"
+  end
+
+  desc "Stop mongod"
+  task :stop_mongod do
+    sh "#{mongod_cmd} --shutdown --dbpath #{DATA_DIR}"
+  end
 end
 
 task :release => :spec do
