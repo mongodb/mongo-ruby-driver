@@ -259,7 +259,7 @@ module Mongo
     # @option options [ true, false ] :retry_writes Retry writes once when
     #   connected to a replica set or sharded cluster versions 3.6 and up.
     # @option options [ Proc ] :sdam_proc A Proc to invoke with the client
-    #   as the argument prior to performing service discovery and monitoring.
+    #   as the argument prior to performing server discovery and monitoring.
     #   Use this to set up SDAM event listeners to receive events dispatched
     #   during client construction.
     #
@@ -283,10 +283,8 @@ module Mongo
       if sdam_proc
         @cluster = Cluster.new([], monitoring, @options)
         sdam_proc.call(self)
-        @cluster = Cluster.new(addresses, monitoring, @options)
-      else
-        @cluster = Cluster.new(addresses, monitoring, @options)
       end
+      @cluster = Cluster.new(addresses, monitoring, @options)
       yield(self) if block_given?
     end
 
