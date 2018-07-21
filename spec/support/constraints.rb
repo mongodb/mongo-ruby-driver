@@ -58,4 +58,12 @@ module Constraints
     min_server_version '4.0'
     require_topology :replica_set
   end
+
+  def require_scram_sha_256_support
+    $mongo_server_features ||= begin
+      $mongo_client ||= initialize_scanned_client!
+      $mongo_client.cluster.servers.first.features
+    end
+    $mongo_server_features.scram_sha_256_enabled?
+  end
 end

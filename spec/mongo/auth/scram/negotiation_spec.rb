@@ -26,7 +26,8 @@ module Mongo
   end
 end
 
-describe 'SCRAM-SHA auth mechanism negotiation', if: scram_sha_256_enabled? do
+describe 'SCRAM-SHA auth mechanism negotiation' do
+  require_scram_sha_256_support
 
   URI_OPTION_MAP = {
     :auth_source => 'authsource',
