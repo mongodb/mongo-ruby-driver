@@ -53,4 +53,9 @@ module Constraints
       end
     end
   end
+
+  def require_transaction_support
+    min_server_version '4.0'
+    require_topology :replica_set
+  end
 end
