@@ -424,7 +424,7 @@ describe Mongo::BulkWrite do
                                                    }])
               end
 
-              let(:selector) do 
+              let(:selector) do
                 { '$or' => [{ _id: 1 }, { _id: 2 }]}
               end
 
@@ -2136,7 +2136,8 @@ describe Mongo::BulkWrite do
     end
   end
 
-  describe 'when the collection has a validator', if: find_command_enabled? do
+  describe 'when the collection has a validator' do
+    min_server_version '3.2'
 
     before do
       collection_with_validator.insert_many([{ :a => 1 }, { :a => 2 }])

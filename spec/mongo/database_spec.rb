@@ -279,7 +279,8 @@ describe Mongo::Database do
       end
     end
 
-    context 'when a read concern is provided', if: find_command_enabled? do
+    context 'when a read concern is provided' do
+      min_server_version '3.2'
 
       context 'when the read concern is valid' do
 
@@ -291,8 +292,7 @@ describe Mongo::Database do
       end
 
       context 'when the read concern is not valid' do
-
-        it 'raises an exception', if: (find_command_enabled? && !sharded?) do
+        it 'raises an exception', if: !sharded? do
           expect {
             database.command(:ismaster => 1, readConcern: { level: 'yay' })
           }.to raise_error(Mongo::Error::OperationFailure)
