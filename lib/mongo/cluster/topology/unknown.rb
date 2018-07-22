@@ -46,6 +46,10 @@ module Mongo
           NAME
         end
 
+        def summary
+          "#{display_name}[#{@seeds.join(', ')}]"
+        end
+
         # Elect a primary server within this topology.
         #
         # @example Elect a primary server.

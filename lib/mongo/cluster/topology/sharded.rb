@@ -45,6 +45,10 @@ module Mongo
           NAME
         end
 
+        def summary
+          display_name
+        end
+
         # Elect a primary server within this topology.
         #
         # @example Elect a primary server.

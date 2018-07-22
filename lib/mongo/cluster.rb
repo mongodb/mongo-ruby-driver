@@ -243,7 +243,7 @@ module Mongo
     #
     # @since 2.0.0
     def inspect
-      "#<Mongo::Cluster:0x#{object_id} servers=#{servers} topology=#{topology.display_name}>"
+      "#<Mongo::Cluster:0x#{object_id} servers=#{servers} topology=#{topology.summary}>"
     end
 
     def inspect_verbose

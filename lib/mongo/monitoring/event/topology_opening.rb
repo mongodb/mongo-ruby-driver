@@ -42,7 +42,7 @@ module Mongo
         #
         # @since 2.6.0
         def inspect
-          "#<#{self.class} topology=#{topology.class.name.sub(/.*::/, '')}>"
+          "#<#{self.class} topology=#{topology.summary}>"
         end
       end
     end
