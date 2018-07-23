@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe 'Change stream integration' do
+describe 'Change stream integration', retry: 4 do
   only_mri
   max_example_run_time 7
 
