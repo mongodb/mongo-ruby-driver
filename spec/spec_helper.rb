@@ -72,6 +72,9 @@ require 'lite_spec_helper'
 
 if RUBY_PLATFORM !~ /\bjava\b/
   require 'timeout_interrupt'
+else
+  require 'timeout'
+  TimeoutInterrupt = Timeout
 end
 
 # Replica set name can be overridden via replicaSet parameter in MONGODB_URI
