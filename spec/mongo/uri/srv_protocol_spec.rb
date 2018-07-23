@@ -200,7 +200,8 @@ describe Mongo::URI::SRVProtocol do
     end
   end
 
-  describe 'valid uris', if: test_connecting_externally? do
+  describe 'valid uris' do
+    require_external_connectivity
 
     describe 'invalid query results' do
 

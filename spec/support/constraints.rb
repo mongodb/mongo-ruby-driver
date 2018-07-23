@@ -37,15 +37,6 @@ module Constraints
     end
   end
 
-  # Constrain tests that use TimeoutInterrupt to MRI (and Unix)
-  def only_mri
-    before do
-      if SpecConfig.instance.mri?
-        skip "MRI required, we have #{SpecConfig.instance.platform}"
-      end
-    end
-  end
-
   def max_example_run_time(timeout)
     around do |example|
       TimeoutInterrupt.timeout(timeout) do

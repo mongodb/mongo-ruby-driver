@@ -46,6 +46,7 @@ end
 Encoding.default_external = Encoding::UTF_8
 
 require 'support/matchers'
+require 'support/lite_constraints'
 require 'support/event_subscriber'
 require 'support/server_discovery_and_monitoring'
 require 'support/server_selection_rtt'
@@ -62,4 +63,6 @@ RSpec.configure do |config|
   if ENV['CI'] && SpecConfig.instance.jruby?
     config.formatter = 'documentation'
   end
+
+  config.extend(LiteConstraints)
 end
