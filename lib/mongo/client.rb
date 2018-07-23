@@ -258,15 +258,33 @@ module Mongo
     #   See Ruby's Zlib module for valid levels.
     # @option options [ true, false ] :retry_writes Retry writes once when
     #   connected to a replica set or sharded cluster versions 3.6 and up.
+    # @option options [ Proc ] :sdam_proc A Proc to invoke with the client
+    #   as the argument prior to performing server discovery and monitoring.
+    #   Use this to set up SDAM event listeners to receive events dispatched
+    #   during client construction.
     #
     # @since 2.0.0
     def initialize(addresses_or_uri, options = Options::Redacted.new)
       Mongo::Lint.validate_underscore_read_preference(options[:read])
       if addresses_or_uri.is_a?(::String)
-        create_from_uri(addresses_or_uri, validate_options!(options))
+        uri = URI.get(addresses_or_uri, options)
+        addresses = uri.servers
+        options = uri.client_options.merge(options)
       else
-        create_from_addresses(addresses_or_uri, validate_options!(options))
+        addresses = addresses_or_uri
       end
+      options = options.dup
+      # Special handling for sdam_proc as it is only used during client
+      # construction
+      sdam_proc = options.delete(:sdam_proc)
+      @options = validate_options!(Database::DEFAULT_OPTIONS.merge(options)).freeze
+      @database = Database.new(self, @options[:database], @options)
+      monitoring = Monitoring.new(@options)
+      if sdam_proc
+        @cluster = Cluster.new([], monitoring, @options)
+        sdam_proc.call(self)
+      end
+      @cluster = Cluster.new(addresses, monitoring, @options)
       yield(self) if block_given?
     end
 
@@ -401,7 +419,13 @@ module Mongo
     #
     # @since 2.1.0
     def reconnect
-      @cluster.reconnect! and true
+      addresses = cluster.addresses.map(&:to_s)
+      monitoring = cluster.monitoring
+
+      @cluster.disconnect! rescue nil
+
+      @cluster = Cluster.new(addresses, monitoring, options)
+      true
     end
 
     # Get the names of all databases.
@@ -524,19 +548,6 @@ module Mongo
 
     def with_session(options = {}, &block)
       cluster.send(:with_session, self, options, &block)
-    end
-
-    def create_from_addresses(addresses, opts = Options::Redacted.new)
-      @options = Database::DEFAULT_OPTIONS.merge(opts).freeze
-      @cluster = Cluster.new(addresses, Monitoring.new(options), options)
-      @database = Database.new(self, options[:database], options)
-    end
-
-    def create_from_uri(connection_string, opts = Options::Redacted.new)
-      uri = URI.get(connection_string, opts)
-      @options = validate_options!(Database::DEFAULT_OPTIONS.merge(uri.client_options.merge(opts))).freeze
-      @cluster = Cluster.new(uri.servers, @cluster ? monitoring : Monitoring.new(options), options)
-      @database = Database.new(self, options[:database], options)
     end
 
     def initialize_copy(original)

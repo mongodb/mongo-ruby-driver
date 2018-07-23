@@ -494,6 +494,22 @@ Details on Timeout Options
   `CRUD specification <https://github.com/mongodb/specifications/blob/master/source/crud/crud.rst>`_ for details on
   operations that support this option.
 
+
+TCP Keepalive Configuration
+---------------------------
+
+The driver sets TCP keepalive by default. The following default values are also set if the system
+value can be determined and if the driver default value is less than the system value.
+
+- ``tcp_keepalive_time``: 300 seconds
+- ``tcp_keepalive_intvl``: 10 seconds
+- ``tcp_keepalive_cnt``: 9 probes
+
+
+Please see the `MongoDB Diagnostics FAQ keepalive section <https://github.com/mongodb/specifications/blob/master/source/server-selection/server-selection.rst#serverselectiontimeoutms>`_
+for instructions on setting these values at the system level.
+
+
 Details on Connection Pooling
 -----------------------------
 
@@ -555,6 +571,49 @@ When ``#close`` is called on a client by any thread, all connections are closed:
 
     client.close
 
+
+Use with Forking Servers
+------------------------
+
+When using the Mongo Ruby driver with a forking web server such as Unicorn,
+worker processes should generally each have their own Mongo::Client instances.
+This is because:
+
+1. The background threads remain in the parent process and are not transfered
+   to the child process.
+2. File descriptors like network sockets are shared between parent and
+   child processes.
+
+It is easiest to not create any Mongo::Client instances prior to the fork.
+If the parent process needs to perform operations on the MongoDB database,
+reset the client in an ``after_fork`` handler which is defined in
+``unicorn.rb``::
+
+.. code-block:: ruby
+
+    after_fork do |server, worker|
+      $client.close
+      $client.reconnect
+    end
+
+The above code assumes your Mongo::Client instance is stored in the $client
+global variable. It also keeps the MongoDB connection in the parent process
+around, and this connection will continue to consume resources such as
+a connection slot. If the parent process performs one time operation(s) on
+MongoDB and does not need its MongoDB connection once workers are forked,
+the following code will close the connection in the parent::
+
+.. code-block:: ruby
+
+    before_fork do |server, worker|
+      $client.close
+    end
+
+    after_fork do |server, worker|
+      $client.reconnect
+    end
+
+
 Details on Retryable Writes
 ---------------------------
 
@@ -592,18 +651,3 @@ be automatically retried:
 - ``collection#find_one_and_replace``
 - ``collection#find_one_and_delete``
 - ``collection#bulk_write`` (for all single statement ops, i.e. not for ``update_many`` or ``delete_many``)
-
-
-TCP Keepalive Configuration
----------------------------
-
-The driver sets TCP keepalive by default. The following default values are also set if the system
-value can be determined and if the driver default value is less than the system value.
-
-- ``tcp_keepalive_time``: 300 seconds
-- ``tcp_keepalive_intvl``: 10 seconds
-- ``tcp_keepalive_cnt``: 9 probes
-
-
-Please see the `MongoDB Diagnostics FAQ keepalive section <https://github.com/mongodb/specifications/blob/master/source/server-selection/server-selection.rst#serverselectiontimeoutms>`_
-for instructions on setting these values at the system level.

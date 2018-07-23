@@ -34,14 +34,14 @@ describe Mongo::Client do
           expect do
             client = described_class.new(['127.0.0.1:27017'],
               :read => {:mode => :bogus})
-          end.to raise_error(Mongo::Error::InvalidReadOption, 'Invalid read option: {:mode=>:bogus}: mode bogus is not one of recognized modes')
+          end.to raise_error(Mongo::Error::InvalidReadOption, 'Invalid read option: {"mode"=>:bogus}: mode bogus is not one of recognized modes')
         end
 
         it 'rejects bogus read preference as string' do
           expect do
             client = described_class.new(['127.0.0.1:27017'],
               :read => {:mode => 'bogus'})
-          end.to raise_error(Mongo::Error::InvalidReadOption, 'Invalid read option: {:mode=>"bogus"}: mode bogus is not one of recognized modes')
+          end.to raise_error(Mongo::Error::InvalidReadOption, 'Invalid read option: {"mode"=>"bogus"}: mode bogus is not one of recognized modes')
         end
 
         it 'rejects read option specified as a string' do
@@ -1548,11 +1548,14 @@ describe Mongo::Client do
       described_class.new(['127.0.0.1:27017'])
     end
 
-    before do
-      expect(client.cluster).to receive(:reconnect!).and_call_original
+    it 'replaces the cluster' do
+      old_id = client.cluster.object_id
+      client.reconnect
+      new_id = client.cluster.object_id
+      expect(new_id).not_to eql(old_id)
     end
 
-    it 'reconnects the cluster and returns true' do
+    it 'returns true' do
       expect(client.reconnect).to be(true)
     end
   end

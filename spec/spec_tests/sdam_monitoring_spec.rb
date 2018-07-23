@@ -10,14 +10,17 @@ describe 'SDAM Monitoring' do
     context("#{spec.description} (#{file.sub(%r'.*support/sdam_monitoring/', '')})") do
 
       before(:all) do
-        @client = Mongo::Client.new([], heartbeat_frequency: 100, connect_timeout: 0.1)
         @subscriber = Mongo::SDAMMonitoring::TestSubscriber.new
-        @client.subscribe(Mongo::Monitoring::SERVER_OPENING, @subscriber)
-        @client.subscribe(Mongo::Monitoring::SERVER_CLOSED, @subscriber)
-        @client.subscribe(Mongo::Monitoring::SERVER_DESCRIPTION_CHANGED, @subscriber)
-        @client.subscribe(Mongo::Monitoring::TOPOLOGY_OPENING, @subscriber)
-        @client.subscribe(Mongo::Monitoring::TOPOLOGY_CHANGED, @subscriber)
-        @client.send(:create_from_uri, spec.uri_string)
+        sdam_proc = lambda do |client|
+          client.subscribe(Mongo::Monitoring::SERVER_OPENING, @subscriber)
+          client.subscribe(Mongo::Monitoring::SERVER_CLOSED, @subscriber)
+          client.subscribe(Mongo::Monitoring::SERVER_DESCRIPTION_CHANGED, @subscriber)
+          client.subscribe(Mongo::Monitoring::TOPOLOGY_OPENING, @subscriber)
+          client.subscribe(Mongo::Monitoring::TOPOLOGY_CHANGED, @subscriber)
+        end
+        @client = Mongo::Client.new(spec.uri_string,
+          sdam_proc: sdam_proc,
+          heartbeat_frequency: 100, connect_timeout: 0.1)
       end
 
       after(:all) do
