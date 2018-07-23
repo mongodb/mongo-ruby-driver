@@ -159,6 +159,7 @@ describe 'Change stream integration', retry: 4 do
       it 'next raises error' do
         change_stream
 
+        sleep 0.5
         authorized_collection.insert_one(:a => 1)
         sleep 0.5
 
