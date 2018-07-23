@@ -587,7 +587,7 @@ This is because:
 It is easiest to not create any Mongo::Client instances prior to the fork.
 If the parent process needs to perform operations on the MongoDB database,
 reset the client in an ``after_fork`` handler which is defined in
-``unicorn.rb``::
+``unicorn.rb``:
 
 .. code-block:: ruby
 
@@ -601,7 +601,7 @@ global variable. It also keeps the MongoDB connection in the parent process
 around, and this connection will continue to consume resources such as
 a connection slot. If the parent process performs one time operation(s) on
 MongoDB and does not need its MongoDB connection once workers are forked,
-the following code will close the connection in the parent::
+the following code will close the connection in the parent:
 
 .. code-block:: ruby
 
