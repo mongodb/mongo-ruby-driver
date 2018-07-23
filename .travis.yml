@@ -8,50 +8,37 @@ before_install:
 
 install: ruby -S bundle install --without release development
 
-before_script:
-  - wget http://fastdl.mongodb.org/linux/mongodb-linux-x86_64-${MONGODB_VERSION}.tgz -O /tmp/mongodb.tgz
-  - tar -xvf /tmp/mongodb.tgz
-  - mkdir /tmp/data
-  - ${PWD}/mongodb-linux-x86_64-${MONGODB_VERSION}/bin/mongod --dbpath /tmp/data --bind_ip 127.0.0.1 --auth &> /dev/null &
-  - export MONGODB_VERSION=${MONGODB_VERSION}
-
-rvm:
-  - 1.9.3
-  - 2.4.2
-  - 2.5
-  - ruby-head
-  - jruby-9.1.16.0
-
 branches:
   only:
     - master
     - 2.5-stable
 
 matrix:
+  include:
+    - rvm: 1.9.3
+      env: MONGODB_VERSIONS="2.6.12 3.0.15 3.2.20 3.4.14 3.6.5"
+    - rvm: 2.4.2
+      env: MONGODB_VERSIONS="2.6.12 3.0.15 3.2.20 3.4.14 3.6.5"
+    - rvm: 2.5
+      env: MONGODB_VERSIONS="2.6.12 3.0.15 3.2.20 3.4.14 3.6.5"
+    - rvm: ruby-head
+      env: MONGODB_VERSIONS="2.6.12 3.0.15 3.2.20 3.4.14 3.6.5"
+    - rvm: jruby-9.1.16.0
+      env: MONGODB_VERSIONS="3.6.5"
   allow_failures:
     - rvm: ruby-head
-  exclude:
-    - rvm: jruby-9.1.16.0
-      env: MONGODB=2.6.12
-    - rvm: jruby-9.1.16.0
-      env: MONGODB=3.0.12
-    - rvm: jruby-9.1.16.0
-      env: MONGODB=3.2.11
-    - rvm: jruby-9.1.16.0
-      env: MONGODB=3.4.1
 
 env:
   global:
     - CI="travis"
     - JRUBY_OPTS="--server -J-Xms512m -J-Xmx1024m"
-  matrix:
-    - MONGODB_VERSION=2.6.12
-    - MONGODB_VERSION=3.0.15
-    - MONGODB_VERSION=3.2.20
-    - MONGODB_VERSION=3.4.14
-    - MONGODB_VERSION=3.6.5
 
-script: bundle exec rake spec:ci
+script:
+  - |
+    for MONGODB_VERSION in ${MONGODB_VERSIONS}; do
+      echo "CI test on MONGODB_VERSION: ${MONGODB_VERSION}"
+      MONGODB_VERSION="${MONGODB_VERSION}" bundle exec rake spec:ci
+    done
 
 notifications:
   email: false
