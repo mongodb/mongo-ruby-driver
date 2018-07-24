@@ -22,45 +22,15 @@ TEST_DB = 'ruby-driver'.freeze
 # @since 2.0.0
 TEST_COLL = 'test'.freeze
 
-# For Evergreen
-if ENV['MONGODB_URI']
-  MONGODB_URI = Mongo::URI.new(ENV['MONGODB_URI'])
-  URI_OPTIONS = Mongo::Options::Mapper.transform_keys_to_symbols(MONGODB_URI.uri_options)
-  if URI_OPTIONS[:replica_set]
-    ADDRESSES = MONGODB_URI.servers
-    CONNECT = { connect: :replica_set, replica_set: URI_OPTIONS[:replica_set] }
-  elsif ENV['TOPOLOGY'] == 'sharded_cluster'
-    ADDRESSES = [ MONGODB_URI.servers.first ] # See SERVER-16836 for why we can only use one host:port
-    CONNECT = { connect: :sharded }
-  else
-    ADDRESSES = MONGODB_URI.servers
-    CONNECT = { connect: :direct }
-  end
-else
-  ADDRESSES = ENV['MONGODB_ADDRESSES'] ? ENV['MONGODB_ADDRESSES'].split(',').freeze : [ '127.0.0.1:27017' ].freeze
-  if ENV['RS_ENABLED']
-    CONNECT = { connect: :replica_set, replica_set: ENV['RS_NAME'] }
-  elsif ENV['SHARDED_ENABLED']
-    CONNECT = { connect: :sharded }
-  else
-    CONNECT = { connect: :direct }
-  end
-end
-
 # The write concern to use in the tests.
 #
 # @since 2.0.0
-WRITE_CONCERN = CONNECT[:connect] == :replica_set ? { w: 2 } : { w: 1 }
+WRITE_CONCERN = SpecConfig.instance.connect_replica_set? ? { w: 2 } : { w: 1 }
 
 # An invalid write concern.
 #
 # @since 2.4.2
 INVALID_WRITE_CONCERN = { w: 4 }
-
-# Whether to use SSL.
-#
-# @since 2.0.3
-SSL = (ENV['SSL'] == 'ssl') || (ENV['SSL_ENABLED'] == 'true')
 
 # What compressor to use, if any.
 #
@@ -71,7 +41,7 @@ COMPRESSORS = ENV['COMPRESSORS'] ? { compressors: ENV['COMPRESSORS'].split(',') 
 #
 # @since 2.1.0
 SSL_OPTIONS = {
-                  ssl: SSL,
+                  ssl: SpecConfig.instance.ssl?,
                   ssl_verify: false,
                   ssl_cert:  CLIENT_CERT_PEM,
                   ssl_key:  CLIENT_KEY_PEM
@@ -100,29 +70,14 @@ BASE_OPTIONS = {
 # Options for test suite clients.
 #
 # @since 2.0.3
-TEST_OPTIONS = BASE_OPTIONS.merge(CONNECT).merge(SSL_OPTIONS).merge(COMPRESSORS)
-
-# The root user name.
-#
-# @since 2.0.0
-ROOT_USER_NAME = (defined?(MONGODB_URI) && MONGODB_URI.credentials[:user]) || 'root-user'
-
-# The root user password.
-#
-# @since 2.0.0
-ROOT_USER_PWD = (defined?(MONGODB_URI) && MONGODB_URI.credentials[:password]) || 'password'
-
-# The root user auth source.
-#
-# @since 2.4.2
-ROOT_USER_AUTH_SOURCE = (defined?(URI_OPTIONS) && URI_OPTIONS[:auth_source]) || Mongo::Database::ADMIN
+TEST_OPTIONS = BASE_OPTIONS.merge(SpecConfig.instance.connect).merge(SSL_OPTIONS).merge(COMPRESSORS)
 
 # Gets the root system administrator user.
 #
 # @since 2.0.0
 ROOT_USER = Mongo::Auth::User.new(
-  user: ROOT_USER_NAME,
-  password: ROOT_USER_PWD,
+  user: SpecConfig.instance.user || 'root-user',
+  password: SpecConfig.instance.password || 'password',
   roles: [
     Mongo::Auth::Roles::USER_ADMIN_ANY_DATABASE,
     Mongo::Auth::Roles::DATABASE_ADMIN_ANY_DATABASE,
@@ -171,7 +126,7 @@ TEST_READ_WRITE_USER = Mongo::Auth::User.new(
 #
 # @since 2.0.0
 AUTHORIZED_CLIENT = Mongo::Client.new(
-  ADDRESSES,
+  SpecConfig.instance.addresses,
   TEST_OPTIONS.merge(
     database: TEST_DB,
     user: TEST_USER.name,
@@ -187,7 +142,7 @@ AUTHROIZED_CLIENT_WITH_RETRY_WRITES = AUTHORIZED_CLIENT.with(retry_writes: true)
 #
 # @since 2.0.0
 UNAUTHORIZED_CLIENT = Mongo::Client.new(
-  ADDRESSES,
+  SpecConfig.instance.addresses,
   TEST_OPTIONS.merge(database: TEST_DB, monitoring: false)
 )
 
@@ -196,7 +151,7 @@ UNAUTHORIZED_CLIENT = Mongo::Client.new(
 #
 # @since 2.0.0
 ADMIN_UNAUTHORIZED_CLIENT = Mongo::Client.new(
-  ADDRESSES,
+  SpecConfig.instance.addresses,
   TEST_OPTIONS.merge(database: Mongo::Database::ADMIN, monitoring: false)
 )
 
@@ -208,7 +163,7 @@ ADMIN_AUTHORIZED_TEST_CLIENT = ADMIN_UNAUTHORIZED_CLIENT.with(
   user: ROOT_USER.name,
   password: ROOT_USER.password,
   database: TEST_DB,
-  auth_source: ROOT_USER_AUTH_SOURCE,
+  auth_source: SpecConfig.instance.auth_source || Mongo::Database::ADMIN,
   monitoring: false
 )
 
@@ -216,7 +171,7 @@ ADMIN_AUTHORIZED_TEST_CLIENT = ADMIN_UNAUTHORIZED_CLIENT.with(
 #
 # @since 2.5.1
 SUBSCRIBED_CLIENT = Mongo::Client.new(
-    ADDRESSES,
+    SpecConfig.instance.addresses,
     TEST_OPTIONS.merge(
       database: TEST_DB,
       user: TEST_USER.name,

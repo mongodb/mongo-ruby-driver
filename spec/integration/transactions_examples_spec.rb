@@ -1,6 +1,7 @@
 require 'spec_helper'
 
-describe 'transactions examples in Ruby', if: test_transactions? do
+describe 'Transactions examples' do
+  require_transaction_support
 
   let(:hr) do
     authorized_client.use(:hr).database

@@ -53,19 +53,27 @@ module Constraints
     end
   end
 
-  # Constrain tests that use TimeoutInterrupt to MRI (and Unix)
-  def only_mri
-    before do
-      if RUBY_PLATFORM =~ /\bjava\b/
-        skip "MRI required, we have #{RUBY_PLATFORM}"
-      end
-    end
-  end
-
   def max_example_run_time(timeout)
     around do |example|
       TimeoutInterrupt.timeout(timeout) do
         example.run
+      end
+    end
+  end
+
+  def require_transaction_support
+    min_server_version '4.0'
+    require_topology :replica_set
+  end
+
+  def require_scram_sha_256_support
+    before do
+      $mongo_server_features ||= begin
+        $mongo_client ||= initialize_scanned_client!
+        $mongo_client.cluster.servers.first.features
+      end
+      unless $mongo_server_features.scram_sha_256_enabled?
+        skip "SCRAM SHA 256 is not enabled on the server"
       end
     end
   end

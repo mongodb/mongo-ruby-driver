@@ -101,7 +101,7 @@ describe Mongo::Collection do
   describe '#with' do
 
     let(:client) do
-      Mongo::Client.new(ADDRESSES, TEST_OPTIONS)
+      Mongo::Client.new(SpecConfig.instance.addresses, TEST_OPTIONS)
     end
 
     let(:database) do
@@ -133,7 +133,7 @@ describe Mongo::Collection do
       context 'when the client has a server selection timeout setting' do
 
         let(:client) do
-          Mongo::Client.new(ADDRESSES, TEST_OPTIONS.merge(server_selection_timeout: 2))
+          Mongo::Client.new(SpecConfig.instance.addresses, TEST_OPTIONS.merge(server_selection_timeout: 2))
         end
 
         it 'passes the the server_selection_timeout to the cluster' do
@@ -144,7 +144,7 @@ describe Mongo::Collection do
       context 'when the client has a read preference set' do
 
         let(:client) do
-          Mongo::Client.new(ADDRESSES, TEST_OPTIONS.merge(read: { mode: :primary_preferred }))
+          Mongo::Client.new(SpecConfig.instance.addresses, TEST_OPTIONS.merge(read: { mode: :primary_preferred }))
         end
 
         it 'sets the new read options on the new collection' do
@@ -156,7 +156,7 @@ describe Mongo::Collection do
       context 'when the client has a read preference and server selection timeout set' do
 
         let(:client) do
-          Mongo::Client.new(ADDRESSES, TEST_OPTIONS.merge(read: { mode: :primary_preferred }, server_selection_timeout: 2))
+          Mongo::Client.new(SpecConfig.instance.addresses, TEST_OPTIONS.merge(read: { mode: :primary_preferred }, server_selection_timeout: 2))
         end
 
         it 'sets the new read options on the new collection' do
@@ -186,7 +186,7 @@ describe Mongo::Collection do
       context 'when the client has a write concern set' do
 
         let(:client) do
-          Mongo::Client.new(ADDRESSES, TEST_OPTIONS.merge(write: INVALID_WRITE_CONCERN))
+          Mongo::Client.new(SpecConfig.instance.addresses, TEST_OPTIONS.merge(write: INVALID_WRITE_CONCERN))
         end
 
         it 'sets the new write options on the new collection' do
@@ -219,7 +219,7 @@ describe Mongo::Collection do
       context 'when the client has a server selection timeout setting' do
 
         let(:client) do
-          Mongo::Client.new(ADDRESSES, TEST_OPTIONS.merge(server_selection_timeout: 2))
+          Mongo::Client.new(SpecConfig.instance.addresses, TEST_OPTIONS.merge(server_selection_timeout: 2))
         end
 
         it 'passes the server_selection_timeout setting to the cluster' do
@@ -230,7 +230,7 @@ describe Mongo::Collection do
       context 'when the client has a read preference set' do
 
         let(:client) do
-          Mongo::Client.new(ADDRESSES, TEST_OPTIONS.merge(read: { mode: :primary_preferred }))
+          Mongo::Client.new(SpecConfig.instance.addresses, TEST_OPTIONS.merge(read: { mode: :primary_preferred }))
         end
 
         it 'sets the new read options on the new collection' do
@@ -489,7 +489,8 @@ describe Mongo::Collection do
 
           it_behaves_like 'a capped collection command'
 
-          context 'when validators can be set', if: find_command_enabled? do
+          context 'when validators can be set' do
+            min_server_version '3.2'
             it_behaves_like 'a validated collection command'
           end
         end
@@ -502,7 +503,8 @@ describe Mongo::Collection do
 
           it_behaves_like 'a capped collection command'
 
-          context 'when validators can be set', if: find_command_enabled? do
+          context 'when validators can be set' do
+            min_server_version '3.2'
             it_behaves_like 'a validated collection command'
           end
         end
@@ -1241,7 +1243,8 @@ describe Mongo::Collection do
       end
     end
 
-    context 'when collection has a validator', if: find_command_enabled? do
+    context 'when collection has a validator' do
+      min_server_version '3.2'
 
       around(:each) do |spec|
         authorized_client[:validating,
@@ -1446,7 +1449,8 @@ describe Mongo::Collection do
       end
     end
 
-    context 'when collection has a validator', if: find_command_enabled? do
+    context 'when collection has a validator' do
+      min_server_version '3.2'
 
       around(:each) do |spec|
         authorized_client[:validating,
@@ -2424,7 +2428,8 @@ describe Mongo::Collection do
       it_behaves_like 'an operation supporting causally consistent reads'
     end
 
-    context 'when a read concern is provided', if: find_command_enabled? do
+    context 'when a read concern is provided' do
+      min_server_version '3.2'
 
       let(:result) do
         authorized_collection.with(options).parallel_scan(2)
@@ -2616,7 +2621,8 @@ describe Mongo::Collection do
       end
     end
 
-    context 'when collection has a validator', if: find_command_enabled? do
+    context 'when collection has a validator' do
+      min_server_version '3.2'
 
       around(:each) do |spec|
         authorized_client[:validating,
@@ -3028,7 +3034,8 @@ describe Mongo::Collection do
       end
     end
 
-    context 'when collection has a validator', if: find_command_enabled? do
+    context 'when collection has a validator' do
+      min_server_version '3.2'
 
       around(:each) do |spec|
         authorized_client[:validating,
@@ -3345,7 +3352,8 @@ describe Mongo::Collection do
       end
     end
 
-    context 'when collection has a validator', if: find_command_enabled? do
+    context 'when collection has a validator' do
+      min_server_version '3.2'
 
       around(:each) do |spec|
         authorized_client[:validating,
@@ -3782,7 +3790,8 @@ describe Mongo::Collection do
       end
     end
 
-    context 'when write_concern is provided', if: find_command_enabled? && standalone? do
+    context 'when write_concern is provided', if: standalone? do
+      min_server_version '3.2'
 
       it 'uses the write concern' do
         expect {
@@ -3792,7 +3801,8 @@ describe Mongo::Collection do
       end
     end
 
-    context 'when the collection has a write concern', if: find_command_enabled? && standalone? do
+    context 'when the collection has a write concern', if: standalone? do
+      min_server_version '3.2'
 
       let(:collection) do
         authorized_collection.with(write: { w: 2 })
@@ -4050,7 +4060,8 @@ describe Mongo::Collection do
       end
     end
 
-    context 'when collection has a validator', if: find_command_enabled? do
+    context 'when collection has a validator' do
+      min_server_version '3.2'
 
       around(:each) do |spec|
         authorized_client[:validating,
@@ -4109,7 +4120,8 @@ describe Mongo::Collection do
       end
     end
 
-    context 'when write_concern is provided', if: find_command_enabled? && standalone? do
+    context 'when write_concern is provided', if: standalone? do
+      min_server_version '3.2'
 
       it 'uses the write concern' do
         expect {
@@ -4120,7 +4132,8 @@ describe Mongo::Collection do
       end
     end
 
-    context 'when the collection has a write concern', if: find_command_enabled? && standalone? do
+    context 'when the collection has a write concern', if: standalone? do
+      min_server_version '3.2'
 
       let(:collection) do
         authorized_collection.with(write: { w: 2 })
@@ -4435,7 +4448,8 @@ describe Mongo::Collection do
       end
     end
 
-    context 'when collection has a validator', if: find_command_enabled? do
+    context 'when collection has a validator' do
+      min_server_version '3.2'
 
       around(:each) do |spec|
         authorized_client[:validating,
@@ -4494,7 +4508,8 @@ describe Mongo::Collection do
       end
     end
 
-    context 'when write_concern is provided', if: find_command_enabled? && standalone? do
+    context 'when write_concern is provided', if: standalone? do
+      min_server_version '3.2'
 
       it 'uses the write concern' do
         expect {
@@ -4505,7 +4520,8 @@ describe Mongo::Collection do
       end
     end
 
-    context 'when the collection has a write concern', if: find_command_enabled? && standalone? do
+    context 'when the collection has a write concern', if: standalone? do
+      min_server_version '3.2'
 
       let(:collection) do
         authorized_collection.with(write: { w: 2 })

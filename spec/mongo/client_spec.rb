@@ -717,7 +717,8 @@ describe Mongo::Client do
 
     context 'when providing a connection string' do
 
-      context 'when the string uses the SRV Protocol', if: test_connecting_externally? do
+      context 'when the string uses the SRV Protocol' do
+        require_external_connectivity
 
         let!(:uri) do
           'mongodb+srv://test5.test.build.10gen.cc/testdb'
@@ -1468,7 +1469,7 @@ describe Mongo::Client do
       end
 
       let(:client) do
-        Mongo::Client.new(ADDRESSES, client_options).tap do |cl|
+        Mongo::Client.new(SpecConfig.instance.addresses, client_options).tap do |cl|
           cl.subscribe(Mongo::Monitoring::COMMAND, EventSubscriber.clear_events!)
         end
       end
@@ -1479,6 +1480,10 @@ describe Mongo::Client do
 
       before do
         client.list_databases({}, true)
+      end
+
+      after do
+        client.close
       end
 
       it 'sends the command with the nameOnly flag set to true' do

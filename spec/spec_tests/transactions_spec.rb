@@ -9,24 +9,29 @@ describe 'Transactions' do
     context(spec.description) do
       spec.tests.each do |test|
         context(test.description) do
+          require_transaction_support
 
           before(:each) do
             test.setup_test
+          end
+
+          after(:each) do
+            test.teardown_test
           end
 
           let(:results) do
             test.run
           end
 
-          it 'returns the correct result', if: test_transactions? do
+          it 'returns the correct result' do
             expect(results[:results]).to match_operation_result(test)
           end
 
-          it 'has the correct data in the collection', if: test_transactions? && test.outcome_collection_data do
+          it 'has the correct data in the collection', if: test.outcome_collection_data do
             expect(results[:contents]).to match_collection_data(test)
           end
 
-          it 'has the correct command_started events', if: test_transactions? && test.expectations do
+          it 'has the correct command_started events', if: test.expectations do
             test.expectations.each do |expectation|
               # We convert the hashes to sorted arrays to ensure that asserting equality between
               # the expected and actual event descriptions don't fail due to the same entries being

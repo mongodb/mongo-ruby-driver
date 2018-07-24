@@ -37,13 +37,16 @@ begin
 rescue LoadError
 end
 
+require 'support/spec_config'
+
 Mongo::Logger.logger = Logger.new($stdout)
-unless %w(1 true yes).include?((ENV['CLIENT_DEBUG'] || '').downcase)
+unless SpecConfig.instance.client_debug?
   Mongo::Logger.logger.level = Logger::INFO
 end
 Encoding.default_external = Encoding::UTF_8
 
 require 'support/matchers'
+require 'support/lite_constraints'
 require 'support/event_subscriber'
 require 'support/server_discovery_and_monitoring'
 require 'support/server_selection_rtt'
@@ -57,7 +60,9 @@ require 'support/transactions'
 require 'support/change_streams'
 
 RSpec.configure do |config|
-  if ENV['CI'] && RUBY_PLATFORM =~ /\bjava\b/
+  if ENV['CI'] && SpecConfig.instance.jruby?
     config.formatter = 'documentation'
   end
+
+  config.extend(LiteConstraints)
 end

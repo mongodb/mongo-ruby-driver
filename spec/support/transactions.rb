@@ -235,6 +235,7 @@ module Mongo
 
         db = client.use(AUTHORIZED_CLIENT.database.name)
         coll = db[Mongo::Transactions::Spec::COLLECTION_NAME]
+        coll.database.drop
         coll.with(write: { w: :majority }).drop
         db.command(
           { create: Mongo::Transactions::Spec::COLLECTION_NAME },
@@ -267,7 +268,6 @@ module Mongo
       end
 
       def teardown_test
-        @collection.database.drop
         @collection.client.close
       end
 

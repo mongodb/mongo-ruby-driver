@@ -70,7 +70,7 @@
 
 require 'lite_spec_helper'
 
-if RUBY_PLATFORM !~ /\bjava\b/
+if SpecConfig.instance.mri?
   require 'timeout_interrupt'
 else
   require 'timeout'
@@ -163,7 +163,7 @@ end
 #
 # @since 2.0.0
 def single_seed?
-  ADDRESSES.size == 1
+  SpecConfig.instance.addresses.size == 1
 end
 
 # For instances where behaviour is different on different versions, we need to
@@ -192,14 +192,6 @@ end
 # @since 2.5.0
 def test_change_streams?
   !BSON::Environment.jruby? && change_stream_enabled? & replica_set?
-end
-
-# Whether transactions can be tested. Transactions are available on server versions 4.0 and higher
-#   and when connected to a replica set.
-#
-# @since 2.6.0
-def test_transactions?
-  transactions_enabled? && replica_set?
 end
 
 # For instances where behaviour is different on different versions, we need to
@@ -248,27 +240,11 @@ def scram_sha_256_enabled?
   $scram_sha_256_enabled ||= $mongo_client.cluster.servers.first.features.scram_sha_256_enabled?
 end
 
-alias :transactions_enabled? :scram_sha_256_enabled?
-
 # Is the test suite running locally (not on Travis).
 #
 # @since 2.1.0
 def testing_ssl_locally?
-  running_ssl? && !(ENV['CI'])
-end
-
-# Should tests relying on external connections be run.
-#
-# @since 2.5.1
-def test_connecting_externally?
-  !ENV['CI'] && !ENV['EXTERNAL_DISABLED']
-end
-
-# Is the test suite running on SSL.
-#
-# @since 2.0.2
-def running_ssl?
-  SSL
+  SpecConfig.instance.ssl? && !(ENV['CI'])
 end
 
 # Is the test suite using compression.
@@ -320,7 +296,7 @@ end
 #
 # @since 2.0.0
 def initialize_scanned_client!
-  Mongo::Client.new(ADDRESSES, TEST_OPTIONS.merge(database: TEST_DB))
+  Mongo::Client.new(SpecConfig.instance.addresses, TEST_OPTIONS.merge(database: TEST_DB))
 end
 
 # Converts a 'camelCase' string or symbol to a :snake_case symbol.

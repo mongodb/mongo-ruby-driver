@@ -27,7 +27,7 @@ describe Mongo::Address::Unix do
   describe '#socket' do
 
     let(:address) do
-      '/tmp/mongodb-27017.sock'
+      "/tmp/mongodb-#{SpecConfig.instance.any_port}.sock"
     end
 
     let(:socket) do

@@ -204,7 +204,8 @@ describe Mongo::Auth::SCRAM::Conversation do
     end
   end
 
-  context 'when SCRAM-SHA-256 is used', if: scram_sha_256_enabled? do
+  context 'when SCRAM-SHA-256 is used' do
+    require_scram_sha_256_support
 
     let(:user) do
       Mongo::Auth::User.new(

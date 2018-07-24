@@ -1,4 +1,4 @@
-require 'spec_helper'
+require 'lite_spec_helper'
 
 describe Mongo::URI do
 
@@ -17,7 +17,8 @@ describe Mongo::URI do
       end
     end
 
-    context 'when the scheme is mongodb+srv://', if: test_connecting_externally? do
+    context 'when the scheme is mongodb+srv://' do
+      require_external_connectivity
 
       let(:string) do
         'mongodb+srv://test5.test.build.10gen.cc'
@@ -325,7 +326,7 @@ describe Mongo::URI do
 
   describe '#client_options' do
 
-    let(:db)          { TEST_DB }
+    let(:db)          { 'dummy_db' }
     let(:servers)     { 'localhost' }
     let(:string)      { "#{scheme}#{credentials}@#{servers}/#{db}" }
     let(:user)        { 'tyler' }
@@ -337,7 +338,7 @@ describe Mongo::URI do
     end
 
     it 'includes the database in the options' do
-      expect(options[:database]).to eq(TEST_DB)
+      expect(options[:database]).to eq('dummy_db')
     end
 
     it 'includes the user in the options' do
@@ -624,7 +625,7 @@ describe Mongo::URI do
     end
 
     context 'replica set option provided' do
-      let(:rs_name) { TEST_SET }
+      let(:rs_name) { 'dummy_rs' }
       let(:options) { "replicaSet=#{rs_name}" }
 
       it 'sets the replica set option' do
