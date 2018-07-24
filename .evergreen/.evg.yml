@@ -496,6 +496,10 @@ axes:
         display_name: ruby-2.5.0
         variables:
            RVM_RUBY: "ruby-2.5.0"
+      - id: "ruby-head"
+        display_name: ruby-head
+        variables:
+           RVM_RUBY: "ruby-head"
 #      - id: "jruby-1.7"
 #        display_name: jruby-1.7
 #        variables:
@@ -535,7 +539,8 @@ buildvariants:
 #     - name: "test"
 -
   matrix_name: "all"
-  matrix_spec: { auth-and-ssl: "*", ruby: "*", mongodb-version: "*", topology: "*" }
+  matrix_spec: { auth-and-ssl: "*", ruby: ["ruby-1.9","ruby-2.3","ruby-2.4","ruby-2.5.0"], mongodb-version: "*", topology: "*" }
+  #exclude_spec: { ruby: ["ruby-head"] }
   display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
   run_on:
     - rhel70-small
@@ -544,9 +549,18 @@ buildvariants:
 
 -
   matrix_name: "zlib"
-  matrix_spec: { auth-and-ssl: "*", ruby: "*", mongodb-version: ["3.6", "4.0", "latest"], topology: "*", compressor: 'zlib' }
-  display_name: "${compressor} ${topology} ${auth-and-ssl} ${ruby}"
+  matrix_spec: { auth-and-ssl: "*", ruby: ["ruby-1.9", "ruby-2.5.0"], mongodb-version: ["3.6", "4.0", "latest"], topology: "*", compressor: 'zlib' }
+  display_name: "${compressor} ${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
   run_on:
     - rhel70-small
+  tasks:
+     - name: "test"
+
+-
+  matrix_name: "ruby-head"
+  matrix_spec: { auth-and-ssl: "*", ruby: ["ruby-head"], mongodb-version: ["3.6", "4.0", "latest"], topology: "*" }
+  display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
+  run_on:
+    - ubuntu1604-test
   tasks:
      - name: "test"
