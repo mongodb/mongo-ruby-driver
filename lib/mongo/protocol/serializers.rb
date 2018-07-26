@@ -187,7 +187,7 @@ module Mongo
         #
         # @since 2.5.0
         def self.deserialize(buffer)
-          end_length = (@flag_bits & Msg::FLAGS.index(:checksum_present)) == 1 ? 32 : 0
+          end_length = 0
           sections = []
           until buffer.length == end_length
             case byte = buffer.get_byte
