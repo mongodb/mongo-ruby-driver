@@ -40,19 +40,16 @@ describe 'Transactions examples' do
       events_coll.insert_one({ employee: 3, status: { new: 'Inactive', old: 'Active' } },
                              session: session)
 
-      loop do
-        begin
-          session.commit_transaction
-          puts 'Transaction committed.'
-          break
-        rescue Mongo::Error => e
-          if e.label?(Mongo::Error::UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL)
-            puts "#{Mongo::Error::UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL}, retrying commit operation..."
-            next
-          else
-            puts 'Error during commit ...'
-            raise
-          end
+      begin
+        session.commit_transaction
+        puts 'Transaction committed.'
+      rescue Mongo::Error => e
+        if e.label?(Mongo::Error::UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL)
+          puts "#{Mongo::Error::UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL}, retrying commit operation..."
+          retry
+        else
+          puts 'Error during commit ...'
+          raise
         end
       end
     end
@@ -78,18 +75,15 @@ describe 'Transactions examples' do
       # Start Transactions Retry Example 1
 
       def run_transaction_with_retry(session)
-        loop do
-          begin
-            yield session # performs transaction
-            break
-          rescue Mongo::Error => e
+        begin
+          yield session # performs transaction
+        rescue Mongo::Error => e
 
-            puts 'Transaction aborted. Caught exception during transaction.'
-            raise unless e.label?(Mongo::Error::TRANSIENT_TRANSACTION_ERROR_LABEL)
+          puts 'Transaction aborted. Caught exception during transaction.'
+          raise unless e.label?(Mongo::Error::TRANSIENT_TRANSACTION_ERROR_LABEL)
 
-            puts "#{Mongo::Error::TRANSIENT_TRANSACTION_ERROR_LABEL}, retrying transaction ..."
-            next
-          end
+          puts "#{Mongo::Error::TRANSIENT_TRANSACTION_ERROR_LABEL}, retrying transaction ..."
+          retry
         end
       end
 
@@ -112,19 +106,16 @@ describe 'Transactions examples' do
       # Start Transactions Retry Example 2
 
       def commit_with_retry(session)
-        loop do
-          begin
-            session.commit_transaction
-            puts 'Transaction committed.'
-            break
-          rescue Mongo::Error=> e
-            if e.label?(Mongo::Error::UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL)
-              puts "#{Mongo::Error::UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL}, retrying commit operation..."
-              next
-            else
-              puts 'Error during commit ...'
-              raise
-            end
+        begin
+          session.commit_transaction
+          puts 'Transaction committed.'
+        rescue Mongo::Error=> e
+          if e.label?(Mongo::Error::UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL)
+            puts "#{Mongo::Error::UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL}, retrying commit operation..."
+            retry
+          else
+            puts 'Error during commit ...'
+            raise
           end
         end
       end
@@ -159,34 +150,27 @@ describe 'Transactions examples' do
       # Start Transactions Retry Example 3
 
       def run_transaction_with_retry(session)
-        loop do
-          begin
-            yield session # performs transaction
-            break
-          rescue Mongo::Error=> e
-            puts 'Transaction aborted. Caught exception during transaction.'
-            raise unless e.label?(Mongo::Error::TRANSIENT_TRANSACTION_ERROR_LABEL)
-
-            puts "#{Mongo::Error::TRANSIENT_TRANSACTION_ERROR_LABEL}, retrying transaction ..."
-            next
-          end
+        begin
+          yield session # performs transaction
+        rescue Mongo::Error => e
+          puts 'Transaction aborted. Caught exception during transaction.'
+          raise unless e.label?(Mongo::Error::TRANSIENT_TRANSACTION_ERROR_LABEL)
+          puts "#{Mongo::Error::TRANSIENT_TRANSACTION_ERROR_LABEL}, retrying transaction ..."
+          retry
         end
       end
 
       def commit_with_retry(session)
-        loop do
-          begin
-            session.commit_transaction
-            puts 'Transaction committed.'
-            break
-          rescue Mongo::Error => e
-            if e.label?(Mongo::Error::UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL)
-              puts "#{Mongo::Error::UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL}, retrying commit operation ..."
-              next
-            else
-              puts 'Error during commit ...'
-              raise
-            end
+        begin
+          session.commit_transaction
+          puts 'Transaction committed.'
+        rescue Mongo::Error => e
+          if e.label?(Mongo::Error::UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL)
+            puts "#{Mongo::Error::UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL}, retrying commit operation ..."
+            retry
+          else
+            puts 'Error during commit ...'
+            raise
           end
         end
       end
