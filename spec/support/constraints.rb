@@ -69,8 +69,7 @@ module Constraints
   def require_scram_sha_256_support
     before do
       $mongo_server_features ||= begin
-        $mongo_client ||= initialize_scanned_client!
-        $mongo_client.cluster.servers.first.features
+        scanned_client_server!.features
       end
       unless $mongo_server_features.scram_sha_256_enabled?
         skip "SCRAM SHA 256 is not enabled on the server"

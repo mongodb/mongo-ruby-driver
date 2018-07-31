@@ -154,9 +154,8 @@ end
 #
 # @since 2.0.0
 def single_mongos?
-  $mongo_client ||= initialize_scanned_client!
   $single_mongos ||= (single_seed? &&
-      $mongo_client.cluster.servers.first.mongos?)
+      scanned_client_server!.first.mongos?)
 end
 
 # Determine whether a single address was provided.
@@ -171,8 +170,7 @@ end
 #
 # @since 2.5.0
 def op_msg_enabled?
-  $mongo_client ||= initialize_scanned_client!
-  $op_msg_enabled ||= $mongo_client.cluster.servers.first.features.op_msg_enabled?
+  $op_msg_enabled ||= scanned_client_server!.features.op_msg_enabled?
 end
 alias :change_stream_enabled? :op_msg_enabled?
 alias :sessions_enabled? :op_msg_enabled?
@@ -199,8 +197,7 @@ end
 #
 # @since 2.5.0
 def array_filters_enabled?
-  $mongo_client ||= initialize_scanned_client!
-  $array_filters_enabled ||= $mongo_client.cluster.servers.first.features.array_filters_enabled?
+  $array_filters_enabled ||= scanned_client_server!.features.array_filters_enabled?
 end
 
 
@@ -209,8 +206,7 @@ end
 #
 # @since 2.4.0
 def collation_enabled?
-  $mongo_client ||= initialize_scanned_client!
-  $collation_enabled ||= $mongo_client.cluster.servers.first.features.collation_enabled?
+  $collation_enabled ||= scanned_client_server!.features.collation_enabled?
 end
 
 # For instances where behaviour is different on different versions, we need to
@@ -218,8 +214,7 @@ end
 #
 # @since 2.0.0
 def find_command_enabled?
-  $mongo_client ||= initialize_scanned_client!
-  $find_command_enabled ||= $mongo_client.cluster.servers.first.features.find_command_enabled?
+  $find_command_enabled ||= scanned_client_server!.features.find_command_enabled?
 end
 
 # For instances where behaviour is different on different versions, we need to
@@ -227,8 +222,7 @@ end
 #
 # @since 2.0.0
 def list_command_enabled?
-  $mongo_client ||= initialize_scanned_client!
-  $list_command_enabled ||= $mongo_client.cluster.servers.first.features.list_indexes_enabled?
+  $list_command_enabled ||= scanned_client_server!.features.list_indexes_enabled?
 end
 
 # For instances where behavior is different on different versions, we need to
@@ -236,8 +230,7 @@ end
 #
 # @since 2.6.0
 def scram_sha_256_enabled?
-  $mongo_client ||= initialize_scanned_client!
-  $scram_sha_256_enabled ||= $mongo_client.cluster.servers.first.features.scram_sha_256_enabled?
+  $scram_sha_256_enabled ||= scanned_client_server!.features.scram_sha_256_enabled?
 end
 
 # Is the test suite running locally (not on Travis).
@@ -297,6 +290,17 @@ end
 # @since 2.0.0
 def initialize_scanned_client!
   Mongo::Client.new(SpecConfig.instance.addresses, TEST_OPTIONS.merge(database: TEST_DB))
+end
+
+class ScannedClientHasNoServers < StandardError; end
+
+def scanned_client_server!
+  $mongo_client ||= initialize_scanned_client!
+  server = $mongo_client.cluster.servers.first
+  if server.nil?
+    raise ScannedClientHasNoServers
+  end
+  server
 end
 
 # Converts a 'camelCase' string or symbol to a :snake_case symbol.
