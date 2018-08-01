@@ -23,11 +23,7 @@ describe Mongo::Auth::CR do
     end
   end
 
-  let(:topology) do
-    double('topology').tap do |topology|
-      allow(topology).to receive(:summary)
-    end
-  end
+  declare_topology_double
 
   let(:server) do
     Mongo::Server.new(address, cluster, monitoring, listeners, TEST_OPTIONS)
