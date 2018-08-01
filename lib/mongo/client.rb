@@ -300,16 +300,17 @@ module Mongo
       "#<Mongo::Client:0x#{object_id} cluster=#{cluster.addresses.join(', ')}>"
     end
 
-    # Get a verbose inspection of the client as a string.
+    # Get a summary of the client state.
     #
     # @example Inspect the client.
-    #   client.inspect
+    #   client.summary
     #
-    # @return [ String ] Verbose inspection string.
+    # @return [ String ] Summary string.
     #
     # @since 2.6.0
-    def inspect_verbose
-      "#<Mongo::Client:0x#{object_id} cluster=#{cluster.inspect_verbose}>"
+    # @api experimental
+    def summary
+      "#<Client cluster=#{cluster.summary}>"
     end
 
     # Get the server selector. It either uses the read preference

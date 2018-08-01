@@ -196,7 +196,7 @@ module Mongo
       "#<Mongo::Server:0x#{object_id} address=#{address.host}:#{address.port}>"
     end
 
-    def inspect_verbose
+    def summary
       status = case
       when primary?
         'PRIMARY'
@@ -214,7 +214,7 @@ module Mongo
       if replica_set_name
         status += " replica_set=#{replica_set_name}"
       end
-      "#<Mongo::Server:0x#{object_id} address=#{address.host}:#{address.port} #{status}>"
+      "#<Server address=#{address.host}:#{address.port} #{status}>"
     end
 
     # Get the connection pool for this server.

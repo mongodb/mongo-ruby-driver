@@ -246,11 +246,11 @@ module Mongo
       "#<Mongo::Cluster:0x#{object_id} servers=#{servers} topology=#{topology.summary}>"
     end
 
-    def inspect_verbose
-      %Q~#<Mongo::Cluster:0x#{object_id}
+    def summary
+      %Q~#<Cluster
   addresses=#{addresses.map(&:to_s)}
   topology=#{topology.display_name}
-  servers=#{servers.map(&:inspect_verbose)}
+  servers=#{servers.map(&:summary).join(',')}
 >~
     end
 
