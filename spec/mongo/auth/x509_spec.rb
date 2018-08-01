@@ -24,7 +24,9 @@ describe Mongo::Auth::X509 do
   end
 
   let(:topology) do
-    double('topology')
+    double('topology').tap do |topology|
+      allow(topology).to receive(:summary)
+    end
   end
 
   let(:server) do

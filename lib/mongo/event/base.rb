@@ -25,7 +25,7 @@ module Mongo
       # @return [ String ] String summary of the event.
       #
       # @since 2.6.0
-      def inspect
+      def summary
         "#<#{self.class}>"
       end
     end
