@@ -39,9 +39,7 @@ describe Mongo::Server::Description do
     Mongo::Monitoring.new(monitoring: false)
   end
 
-  let(:topology) do
-    double('topology')
-  end
+  declare_topology_double
 
   let(:cluster) do
     double('cluster').tap do |cl|
