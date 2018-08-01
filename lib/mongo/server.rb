@@ -214,7 +214,12 @@ module Mongo
       if replica_set_name
         status += " replica_set=#{replica_set_name}"
       end
-      "#<Server address=#{address.host}:#{address.port} #{status}>"
+      address_bit = if address
+        "#{address.host}:#{address.port}"
+      else
+        'nil'
+      end
+      "#<Server address=#{address_bit} #{status}>"
     end
 
     # Get the connection pool for this server.
