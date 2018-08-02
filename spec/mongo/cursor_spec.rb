@@ -1,6 +1,10 @@
 require 'spec_helper'
 
 describe Mongo::Cursor do
+  before do
+    authorized_collection.indexes.drop_all
+    authorized_collection.delete_many
+  end
 
   describe '#each' do
 
@@ -29,11 +33,8 @@ describe Mongo::Cursor do
         end
 
         before do
-          authorized_collection.insert_many(documents)
-        end
-
-        after do
           authorized_collection.delete_many
+          authorized_collection.insert_many(documents)
         end
 
         it 'returns the correct amount' do
@@ -54,11 +55,8 @@ describe Mongo::Cursor do
         end
 
         before do
-          authorized_collection.insert_many(documents)
-        end
-
-        after do
           authorized_collection.delete_many
+          authorized_collection.insert_many(documents)
         end
 
         context 'when a getMore gets a socket error' do
@@ -102,11 +100,8 @@ describe Mongo::Cursor do
       end
 
       before do
-        authorized_collection.insert_many(documents)
-      end
-
-      after do
         authorized_collection.delete_many
+        authorized_collection.insert_many(documents)
       end
 
       context 'when a limit is provided' do
@@ -244,14 +239,11 @@ describe Mongo::Cursor do
       end
 
       before do
+        authorized_collection.delete_many
         authorized_collection.insert_many(documents)
         cluster.schedule_kill_cursor(cursor.id,
                                      cursor.send(:kill_cursors_op_spec),
                                      cursor.instance_variable_get(:@server))
-      end
-
-      after do
-        authorized_collection.delete_many
       end
 
       let(:view) do
@@ -290,11 +282,8 @@ describe Mongo::Cursor do
       end
 
       before do
-        authorized_collection.insert_many(documents)
-      end
-
-      after do
         authorized_collection.delete_many
+        authorized_collection.insert_many(documents)
       end
 
       let(:view) do
@@ -333,11 +322,8 @@ describe Mongo::Cursor do
     end
 
     before do
-      collection.insert_many(documents)
-    end
-
-    after do
       collection.delete_many
+      collection.insert_many(documents)
     end
 
     let(:cursor) do

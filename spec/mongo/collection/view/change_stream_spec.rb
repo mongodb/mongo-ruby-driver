@@ -56,8 +56,11 @@ describe Mongo::Collection::View::ChangeStream, if: test_change_streams? do
     end
   end
 
-  after do
+  before do
     authorized_collection.delete_many
+  end
+
+  after do
     begin; change_stream.close; rescue; end
   end
 

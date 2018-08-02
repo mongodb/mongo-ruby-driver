@@ -10,14 +10,21 @@ describe Mongo::Index::View do
     {}
   end
 
+  before do
+    begin
+      authorized_collection.delete_many
+    rescue Mongo::Error::OperationFailure
+    end
+    begin
+      authorized_collection.indexes.drop_all
+    rescue Mongo::Error::OperationFailure
+    end
+  end
+
   describe '#drop_one' do
 
     let(:spec) do
       { another: -1 }
-    end
-
-    after do
-      begin; view.drop_one('another_-1'); rescue; end
     end
 
     before do
@@ -180,10 +187,6 @@ describe Mongo::Index::View do
           view_with_write_concern.drop_all
         end
 
-        after do
-          view.drop_all
-        end
-
         context 'when the server accepts writeConcern for the dropIndexes operation', if: collation_enabled? do
 
           it 'applies the write concern' do
@@ -216,11 +219,6 @@ describe Mongo::Index::View do
               { key: { random: 1 }, unique: true },
               { key: { testing: -1 }, unique: true }
             )
-          end
-
-          after do
-            view.drop_one('random_1')
-            view.drop_one('testing_-1')
           end
 
           it 'returns ok' do
@@ -263,10 +261,6 @@ describe Mongo::Index::View do
                 unique: true,
                 collation: { locale: 'en_US', strength: 2 } }
             )
-          end
-
-          after do
-            begin; view.drop_one('random_1'); rescue; end
           end
 
           let(:index_info) do
@@ -316,11 +310,6 @@ describe Mongo::Index::View do
 
         context 'when the collection has a write concern' do
 
-          after do
-            begin; view.drop_one('random_1'); rescue; end
-            begin; view.drop_one('testing_-1'); rescue; end
-          end
-
           let(:collection) do
             authorized_collection.with(write: INVALID_WRITE_CONCERN)
           end
@@ -363,11 +352,6 @@ describe Mongo::Index::View do
                                  { key: { random: 1 }, unique: true },
                                  { key: { testing: -1 }, unique: true }
                              ])
-          end
-
-          after do
-            view.drop_one('random_1')
-            view.drop_one('testing_-1')
           end
 
           it 'returns ok' do
@@ -414,10 +398,6 @@ describe Mongo::Index::View do
             view.get('random_1')
           end
 
-          after do
-            begin; view.drop_one('random_1'); rescue; end
-          end
-
           context 'when the server supports collations', if: collation_enabled? do
 
             it 'returns ok' do
@@ -461,11 +441,6 @@ describe Mongo::Index::View do
 
         context 'when the collection has a write concern' do
 
-          after do
-            begin; view.drop_one('random_1'); rescue; end
-            begin; view.drop_one('testing_-1'); rescue; end
-          end
-
           let(:collection) do
             authorized_collection.with(write: INVALID_WRITE_CONCERN)
           end
@@ -507,10 +482,6 @@ describe Mongo::Index::View do
 
         before do
           view.create_one(spec, unique: true)
-        end
-
-        after do
-          view.drop_one('name_1')
         end
 
         it 'raises an exception' do
@@ -562,10 +533,6 @@ describe Mongo::Index::View do
 
       context 'when the collection has a write concern' do
 
-        after do
-          begin; view.drop_one('random_1'); rescue; end
-        end
-
         let(:collection) do
           authorized_collection.with(write: INVALID_WRITE_CONCERN)
         end
@@ -597,20 +564,12 @@ describe Mongo::Index::View do
 
       context 'when the index is created on an subdocument field' do
 
-        after do
-          begin; view.drop_one('random_1'); rescue; end
-        end
-
         let(:spec) do
           { 'sub_document.random' => 1 }
         end
 
         let(:result) do
           view.create_one(spec, unique: true)
-        end
-
-        after do
-          begin; view.drop_one('sub_document.random_1'); rescue; end
         end
 
         it 'returns ok' do
@@ -629,10 +588,6 @@ describe Mongo::Index::View do
         view.create_one(spec, unique: true)
       end
 
-      after do
-        view.drop_one('name_1')
-      end
-
       it 'raises an exception' do
         expect {
           view.create_one(spec, unique: false)
@@ -648,10 +603,6 @@ describe Mongo::Index::View do
 
       let!(:result) do
         view.create_one(spec, unique: true, name: 'random_name')
-      end
-
-      after do
-        view.drop_one('random_name')
       end
 
       it 'returns ok' do
@@ -688,10 +639,6 @@ describe Mongo::Index::View do
         authorized_collection.indexes.get('x_1')
       end
 
-      after do
-        view.drop_one('x_1')
-      end
-
       it 'returns ok' do
         expect(result).to be_successful
       end
@@ -714,10 +661,6 @@ describe Mongo::Index::View do
 
     let!(:result) do
       view.create_one(spec, unique: true, name: 'random_name')
-    end
-
-    after do
-      begin; view.drop_one('random_name'); rescue; end
     end
 
     context 'when providing a name' do
@@ -777,10 +720,6 @@ describe Mongo::Index::View do
 
       before do
         view.create_one(spec, unique: true)
-      end
-
-      after do
-        view.drop_one('name_1')
       end
 
       let(:indexes) do

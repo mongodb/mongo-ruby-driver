@@ -1,6 +1,16 @@
 require 'spec_helper'
 
 describe Mongo::Operation::Indexes do
+  before do
+    begin
+      authorized_collection.delete_many
+    rescue Mongo::Error::OperationFailure
+    end
+    begin
+      authorized_collection.indexes.drop_all
+    rescue Mongo::Error::OperationFailure
+    end
+  end
 
   describe '#execute' do
 

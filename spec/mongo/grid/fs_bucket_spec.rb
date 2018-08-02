@@ -6,6 +6,11 @@ describe Mongo::Grid::FSBucket do
     described_class.new(client.database, options)
   end
 
+  # A different instance so that fs creates indexes correctly
+  let(:support_fs) do
+    described_class.new(client.database, options)
+  end
+
   let(:client) do
     authorized_client
   end
@@ -20,6 +25,11 @@ describe Mongo::Grid::FSBucket do
 
   let(:file) do
     File.open(__FILE__)
+  end
+
+  before do
+    support_fs.files_collection.drop rescue nil
+    support_fs.chunks_collection.drop rescue nil
   end
 
   describe '#initialize' do
@@ -155,11 +165,6 @@ describe Mongo::Grid::FSBucket do
         end
       end
 
-      after do
-        fs.files_collection.delete_many
-        fs.chunks_collection.delete_many
-      end
-
       it 'returns a collection view' do
         expect(fs.find).to be_a(Mongo::Collection::View)
       end
@@ -259,11 +264,6 @@ describe Mongo::Grid::FSBucket do
       fs.insert_one(file)
     end
 
-    after do
-      fs.files_collection.delete_many
-      fs.chunks_collection.delete_many
-    end
-
     let(:from_db) do
       fs.find_one(:filename => 'test.txt')
     end
@@ -296,15 +296,14 @@ describe Mongo::Grid::FSBucket do
       Mongo::Grid::File.new('Hello!', :filename => 'test.txt')
     end
 
+    let(:support_file) do
+      Mongo::Grid::File.new('Hello!', :filename => 'support_test.txt')
+    end
+
     context 'when inserting the file once' do
 
       let!(:result) do
         fs.insert_one(file)
-      end
-
-      after do
-        fs.files_collection.delete_many
-        fs.chunks_collection.delete_many
       end
 
       let(:from_db) do
@@ -325,18 +324,14 @@ describe Mongo::Grid::FSBucket do
     end
 
     context 'when the files collection is empty' do
+      before do
+        fs.database[fs.files_collection.name].indexes
+      end
 
       before do
-        fs.files_collection.delete_many
-        fs.chunks_collection.delete_many
         expect(fs.files_collection).to receive(:indexes).and_call_original
         expect(fs.chunks_collection).to receive(:indexes).and_call_original
         fs.insert_one(file)
-      end
-
-      after do
-        fs.files_collection.delete_many
-        fs.chunks_collection.delete_many
       end
 
       let(:chunks_index) do
@@ -374,14 +369,9 @@ describe Mongo::Grid::FSBucket do
     context 'when the index creation encounters an error' do
 
       before do
-        fs.chunks_collection.drop
         fs.chunks_collection.indexes.create_one(Mongo::Grid::FSBucket::CHUNKS_INDEX, :unique => false)
         expect(fs.chunks_collection).to receive(:indexes).and_call_original
         expect(fs.files_collection).not_to receive(:indexes)
-      end
-
-      after do
-        fs.database[fs.chunks_collection.name].indexes.drop_one('files_id_1_n_1')
       end
 
       it 'raises the error to the user' do
@@ -394,15 +384,10 @@ describe Mongo::Grid::FSBucket do
     context 'when the files collection is not empty' do
 
       before do
-        fs.files_collection.insert_one(a: 1)
+        support_fs.insert_one(support_file)
         expect(fs.files_collection).not_to receive(:indexes)
         expect(fs.chunks_collection).not_to receive(:indexes)
         fs.insert_one(file)
-      end
-
-      after do
-        fs.files_collection.delete_many
-        fs.chunks_collection.delete_many
       end
 
       let(:files_index) do
@@ -415,11 +400,6 @@ describe Mongo::Grid::FSBucket do
     end
 
     context 'when inserting the file more than once' do
-
-      after do
-        fs.files_collection.delete_many
-        fs.chunks_collection.delete_many
-      end
 
       it 'raises an error' do
         expect {
@@ -442,11 +422,6 @@ describe Mongo::Grid::FSBucket do
 
       before do
         fs.insert_one(file)
-      end
-
-      after do
-        fs.files_collection.delete_many
-        fs.chunks_collection.delete_many
       end
 
       it 'successfully inserts the file' do
@@ -523,11 +498,6 @@ describe Mongo::Grid::FSBucket do
 
     let(:io) do
       StringIO.new
-    end
-
-    after do
-      fs.files_collection.delete_many
-      fs.chunks_collection.delete_many
     end
 
     describe '#open_download_stream' do
@@ -1020,11 +990,6 @@ describe Mongo::Grid::FSBucket do
 
     let(:stream) do
       fs.open_upload_stream(filename)
-    end
-
-    after do
-      fs.files_collection.delete_many
-      fs.chunks_collection.delete_many
     end
 
     describe '#open_upload_stream' do

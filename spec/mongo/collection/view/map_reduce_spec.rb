@@ -48,11 +48,8 @@ describe Mongo::Collection::View::MapReduce do
   end
 
   before do
-    authorized_collection.insert_many(documents)
-  end
-
-  after do
     authorized_collection.delete_many
+    authorized_collection.insert_many(documents)
   end
 
   let(:map_reduce) do
@@ -127,7 +124,7 @@ describe Mongo::Collection::View::MapReduce do
 
     context 'when out is in the options' do
 
-      after do
+      before do
         authorized_client['output_collection'].delete_many
       end
 
@@ -173,7 +170,7 @@ describe Mongo::Collection::View::MapReduce do
 
     context 'when out is a collection' do
 
-      after do
+      before do
         authorized_client['output_collection'].delete_many
       end
 

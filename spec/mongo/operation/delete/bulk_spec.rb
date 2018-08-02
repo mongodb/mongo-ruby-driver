@@ -64,6 +64,15 @@ describe Mongo::Operation::Delete do
   describe '#bulk_execute' do
 
     before do
+      begin
+        authorized_collection.delete_many
+      rescue Mongo::Error::OperationFailure
+      end
+      begin
+        authorized_collection.indexes.drop_all
+      rescue Mongo::Error::OperationFailure
+      end
+
       authorized_collection.insert_many([
         { name: 'test', field: 'test' },
         { name: 'testing', field: 'test' }

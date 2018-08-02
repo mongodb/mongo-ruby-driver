@@ -50,7 +50,7 @@ describe Mongo::Operation::Update do
       end
 
       context 'when two ops have different specs' do
-        let(:other_docs) do 
+        let(:other_docs) do
           [ {:q => { :foo => 1 },
              :u => { :$set => { :bar => 1 } },
              :multi => true,
@@ -76,8 +76,8 @@ describe Mongo::Operation::Update do
   end
 
   describe '#bulk_execute' do
-
     before do
+      authorized_collection.drop
       authorized_collection.insert_many([
         { name: 'test', field: 'test', other: 'test' },
         { name: 'testing', field: 'test', other: 'test' }

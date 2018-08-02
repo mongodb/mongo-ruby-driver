@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe Mongo::Cluster::CursorReaper do
 
-  after do
+  before do
     authorized_collection.delete_many
   end
 

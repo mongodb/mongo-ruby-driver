@@ -233,7 +233,7 @@ module Mongo
           value
         elsif value['$oid']
           BSON::ObjectId.from_string(value['$oid'])
-        else          
+        else
           BSON::ObjectId.new
         end
       end
@@ -333,6 +333,7 @@ module Mongo
       #
       # @since 2.1.0
       def run(fs)
+        clear_collections(fs)
         setup(fs)
         @operation.run(fs)
       end
@@ -347,8 +348,10 @@ module Mongo
       # @since 2.1.0
       def clear_collections(fs)
         fs.files_collection.delete_many
+        fs.files_collection.indexes.drop_all rescue nil
         fs.chunks_collection.delete_many
-        @operation.clear_collections(fs)
+        fs.chunks_collection.indexes.drop_all rescue nil
+        #@operation.clear_collections(fs)
       end
 
       private
@@ -498,7 +501,7 @@ module Mongo
           end
           coll.insert_many(transform_docs(data['documents'], opts))
         end
-    
+
         def delete_exp_data(fs, data)
           coll = fs.database[data['delete']]
           data['deletes'].each do |del|
@@ -589,7 +592,7 @@ module Mongo
           false
         end
       end
-  
+
       class UnsuccessfulOp
         include Convertible
         include Test::Operable

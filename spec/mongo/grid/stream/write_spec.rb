@@ -2,6 +2,15 @@ require 'spec_helper'
 
 describe Mongo::Grid::FSBucket::Stream::Write do
 
+  let(:support_fs) do
+    authorized_client.database.fs(fs_options)
+  end
+
+  before do
+    support_fs.files_collection.drop rescue nil
+    support_fs.chunks_collection.drop rescue nil
+  end
+
   let(:file) do
     File.open(__FILE__)
   end
@@ -28,11 +37,6 @@ describe Mongo::Grid::FSBucket::Stream::Write do
 
   let(:options) do
     { filename: filename }.merge(extra_options).merge(fs.options)
-  end
-
-  after do
-    fs.files_collection.delete_many
-    fs.chunks_collection.delete_many
   end
 
   let(:stream) do
@@ -231,11 +235,6 @@ describe Mongo::Grid::FSBucket::Stream::Write do
 
   describe '#write' do
 
-    after do
-      fs.files_collection.delete_many
-      fs.chunks_collection.delete_many
-    end
-
     let(:file_from_db) do
       fs.find_one(filename: filename)
     end
@@ -256,8 +255,6 @@ describe Mongo::Grid::FSBucket::Stream::Write do
       context 'when the files collection is empty' do
 
         before do
-          fs.files_collection.delete_many
-          fs.chunks_collection.delete_many
           expect(fs.files_collection).to receive(:indexes).and_call_original
           expect(fs.chunks_collection).to receive(:indexes).and_call_original
           stream.write(file)
@@ -294,15 +291,11 @@ describe Mongo::Grid::FSBucket::Stream::Write do
       context 'when the files collection is not empty' do
 
         before do
-          fs.files_collection.insert_one(a: 1)
+          support_fs.send(:ensure_indexes!)
+          support_fs.files_collection.insert_one(a: 1)
           expect(fs.files_collection).not_to receive(:indexes)
           expect(fs.chunks_collection).not_to receive(:indexes)
           stream.write(file)
-        end
-
-        after do
-          fs.files_collection.delete_many
-          fs.chunks_collection.delete_many
         end
 
         let(:files_index) do
@@ -317,14 +310,9 @@ describe Mongo::Grid::FSBucket::Stream::Write do
       context 'when the index creation encounters an error' do
 
         before do
-          fs.chunks_collection.drop
           fs.chunks_collection.indexes.create_one(Mongo::Grid::FSBucket::CHUNKS_INDEX, :unique => false)
           expect(fs.chunks_collection).to receive(:indexes).and_call_original
           expect(fs.files_collection).not_to receive(:indexes)
-        end
-
-        after do
-          fs.database[fs.chunks_collection.name].indexes.drop_one('files_id_1_n_1')
         end
 
         it 'raises the error to the user' do

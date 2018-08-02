@@ -1565,11 +1565,8 @@ describe Mongo::Client do
   describe '#collections' do
 
     before do
-      authorized_client.database[:users].create
-    end
-
-    after do
       authorized_client.database[:users].drop
+      authorized_client.database[:users].create
     end
 
     let(:collection) do

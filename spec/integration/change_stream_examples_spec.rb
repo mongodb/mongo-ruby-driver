@@ -16,7 +16,6 @@ describe 'change streams examples in Ruby', if: test_change_streams? do
 
   after do
     client.close
-    inventory.drop
   end
 
   context 'example 1 - basic watching'do

@@ -1,6 +1,16 @@
 require 'spec_helper'
 
 describe Mongo::Operation::Insert do
+  before do
+    begin
+      authorized_collection.delete_many
+    rescue Mongo::Error::OperationFailure
+    end
+    begin
+      authorized_collection.indexes.drop_all
+    rescue Mongo::Error::OperationFailure
+    end
+  end
 
   let(:documents) do
     [{ :name => 'test' }]
@@ -169,7 +179,7 @@ describe Mongo::Operation::Insert do
         end
 
         context 'when the insert fails' do
-    
+
           it 'aborts after first error' do
             failing_insert.bulk_execute(authorized_primary)
             expect(authorized_collection.find.count).to eq(1)
@@ -215,7 +225,7 @@ describe Mongo::Operation::Insert do
       context 'when write concern is acknowledged' do
 
         context 'when the insert fails' do
-    
+
           it 'does not abort after first error' do
             failing_insert.bulk_execute(authorized_primary)
             expect(authorized_collection.find.count).to eq(2)

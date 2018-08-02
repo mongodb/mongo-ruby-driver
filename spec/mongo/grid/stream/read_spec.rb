@@ -2,6 +2,15 @@ require 'spec_helper'
 
 describe Mongo::Grid::FSBucket::Stream::Read do
 
+  let(:support_fs) do
+    authorized_client.database.fs(fs_options)
+  end
+
+  before do
+    support_fs.files_collection.drop rescue nil
+    support_fs.chunks_collection.drop rescue nil
+  end
+
   let(:fs_options) do
     { }
   end
@@ -20,11 +29,6 @@ describe Mongo::Grid::FSBucket::Stream::Read do
 
   let!(:file_id) do
     fs.upload_from_stream(filename, File.open(__FILE__))
-  end
-
-  after do
-    fs.files_collection.delete_many
-    fs.chunks_collection.delete_many
   end
 
   let(:stream) do
@@ -93,11 +97,6 @@ describe Mongo::Grid::FSBucket::Stream::Read do
 
     let!(:file_id) do
       fs.upload_from_stream(filename, File.open(__FILE__))
-    end
-
-    after do
-      fs.files_collection.delete_many
-      fs.chunks_collection.delete_many
     end
 
     let(:fs_options) do
@@ -193,11 +192,6 @@ describe Mongo::Grid::FSBucket::Stream::Read do
 
     let(:file_id) do
       fs.upload_from_stream(filename, file)
-    end
-
-    after do
-      fs.files_collection.delete_many
-      fs.chunks_collection.delete_many
     end
 
     it 'returns a string of all data' do
