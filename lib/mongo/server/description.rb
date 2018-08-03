@@ -640,7 +640,7 @@ module Mongo
       #
       # @since 2.0.6
       def me_mismatch?
-        !!(address.to_s != me if me)
+        !!(address.to_s.downcase != me.downcase if me)
       end
 
       # Check equality of two descriptions.

@@ -514,6 +514,9 @@ describe Mongo::Cluster::Topology::ReplicaSet do
           allow(d).to receive(:replica_set_name).and_return('test')
           allow(d).to receive(:is_server?).and_return(true)
           allow(d).to receive(:ghost?).and_return(false)
+          allow(d).to receive(:address).and_return(address)
+          allow(d).to receive(:me_mismatch?).and_return(false)
+          allow(d).to receive(:unknown?).and_return(false)
         end
       end
 
@@ -533,6 +536,10 @@ describe Mongo::Cluster::Topology::ReplicaSet do
             allow(d).to receive(:replica_set_name).and_return('testing')
             allow(d).to receive(:lists_server?).and_return(true)
             allow(d).to receive(:servers).and_return([double('server')])
+            allow(d).to receive(:address).and_return(address)
+            allow(d).to receive(:me_mismatch?).and_return(false)
+            allow(d).to receive(:unknown?).and_return(false)
+            allow(d).to receive(:server_type).and_return(:secondary)
           end
         end
 
@@ -543,19 +550,46 @@ describe Mongo::Cluster::Topology::ReplicaSet do
 
       context 'when the description does not include the server in question' do
 
-        let(:description) do
-          double('description').tap do |d|
-            allow(d).to receive(:config).and_return({ 'setName' => 'testing' })
-            allow(d).to receive(:replica_set_member?).and_return(true)
-            allow(d).to receive(:replica_set_name).and_return('testing')
-            allow(d).to receive(:is_server?).and_return(false)
-            allow(d).to receive(:lists_server?).and_return(false)
-            allow(d).to receive(:servers).and_return([double('server')])
+        context 'when the description is primary' do
+          let(:description) do
+            double('description').tap do |d|
+              allow(d).to receive(:config).and_return({ 'setName' => 'testing' })
+              allow(d).to receive(:replica_set_member?).and_return(true)
+              allow(d).to receive(:replica_set_name).and_return('testing')
+              allow(d).to receive(:is_server?).and_return(false)
+              allow(d).to receive(:lists_server?).and_return(false)
+              allow(d).to receive(:servers).and_return([double('server')])
+              allow(d).to receive(:address).and_return("127.0.0.1:27018")
+              allow(d).to receive(:me_mismatch?).and_return(false)
+              allow(d).to receive(:unknown?).and_return(false)
+              allow(d).to receive(:server_type).and_return(:primary)
+            end
+          end
+
+          it 'returns true' do
+            expect(topology.remove_server?(description, secondary)).to eq(true)
           end
         end
 
-        it 'returns true' do
-          expect(topology.remove_server?(description, secondary)).to eq(true)
+        context 'when the description is not' do
+          let(:description) do
+            double('description').tap do |d|
+              allow(d).to receive(:config).and_return({ 'setName' => 'testing' })
+              allow(d).to receive(:replica_set_member?).and_return(true)
+              allow(d).to receive(:replica_set_name).and_return('testing')
+              allow(d).to receive(:is_server?).and_return(false)
+              allow(d).to receive(:lists_server?).and_return(false)
+              allow(d).to receive(:servers).and_return([double('server')])
+              allow(d).to receive(:address).and_return('127.0.0.1:27018')
+              allow(d).to receive(:me_mismatch?).and_return(false)
+              allow(d).to receive(:unknown?).and_return(false)
+              allow(d).to receive(:server_type).and_return(:secondary)
+            end
+          end
+
+          it 'returns false' do
+            expect(topology.remove_server?(description, secondary)).to eq(false)
+          end
         end
       end
     end
@@ -568,6 +602,8 @@ describe Mongo::Cluster::Topology::ReplicaSet do
           allow(d).to receive(:replica_set_member?).and_return(true)
           allow(d).to receive(:replica_set_name).and_return('test')
           allow(d).to receive(:is_server?).and_return(false)
+          allow(d).to receive(:address).and_return('127.0.0.1:27018')
+          allow(d).to receive(:unknown?).and_return(false)
         end
       end
 

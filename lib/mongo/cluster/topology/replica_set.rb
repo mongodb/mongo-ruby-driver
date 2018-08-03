@@ -224,8 +224,10 @@ module Mongo
         #
         # @since 2.0.6
         def remove_server?(description, server)
+          ((server.address == description.address) && description.me_mismatch?) ||
           remove_self?(description, server) ||
             (member_of_this_set?(description) &&
+                description.server_type == :primary &&
                 !description.servers.empty? &&
                   !description.lists_server?(server))
         end
@@ -317,9 +319,10 @@ module Mongo
         end
 
         def remove_self?(description, server)
-          !member_of_this_set?(description) &&
-            description.is_server?(server) &&
-              !description.ghost?
+          !description.unknown? &&
+            !member_of_this_set?(description) &&
+              description.is_server?(server) &&
+                !description.ghost?
         end
       end
     end
