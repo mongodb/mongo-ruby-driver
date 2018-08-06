@@ -1,6 +1,8 @@
-============================
-Creating and using Sessions
-============================
+.. _sessions:
+
+========
+Sessions
+========
 
 .. default-domain:: mongodb
 
@@ -11,7 +13,7 @@ Creating and using Sessions
    :class: singlecol
 
 
-Version 3.6 of the server introduces the concept of logical sessions for clients.
+Version 3.6 of the MongoDB server introduces the concept of logical sessions for clients.
 A session is an abstract concept that represents a set of sequential operations executed
 by an application that are related in some way. A session object can be create via a ``Mongo::Client``
 and passed to operation methods that should be executed in the context of that session.
