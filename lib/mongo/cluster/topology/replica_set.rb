@@ -213,6 +213,12 @@ module Mongo
         end
 
         # Whether a specific server in the cluster can be removed, given a description.
+        # As described in the SDAM spec, a server should be removed if the server's
+        # address does not match the "me" field of the isMaster response, if the server
+        # has a different replica set name, or if an isMaster response from the primary
+        # does not contain the server's address in the list of known hosts. Note that as
+        # described by the spec, a server determined to be of type Unknown from its
+        # isMaster response is NOT removed from the topology.
         #
         # @example Check if a specific server can be removed from the cluster.
         #   topology.remove_server?(description, server)
@@ -318,6 +324,9 @@ module Mongo
             description.replica_set_name == replica_set_name
         end
 
+        # As described by the SDAM spec, a server should be removed from the
+        # topology upon receiving its isMaster response if no error occurred
+        # and replica set name does not match that of the topology.
         def remove_self?(description, server)
           !description.unknown? &&
             !member_of_this_set?(description) &&
