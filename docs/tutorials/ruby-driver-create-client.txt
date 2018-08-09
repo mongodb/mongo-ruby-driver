@@ -613,7 +613,7 @@ the following code will close the connection in the parent:
       $client.reconnect
     end
 
-*Note:* This pattern should be used with Ruby driver version 2.7.0 or higher.
+*Note:* This pattern should be used with Ruby driver version 2.6.2 or higher.
 Previous driver versions did not recreate monitoring threads when reconnecting.
 
 Details on Retryable Writes
