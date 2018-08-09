@@ -492,10 +492,10 @@ axes:
         display_name: ruby-2.4
         variables:
            RVM_RUBY: "ruby-2.4"
-      - id: "ruby-2.5.0"
-        display_name: ruby-2.5.0
+      - id: "ruby-2.5"
+        display_name: ruby-2.5
         variables:
-           RVM_RUBY: "ruby-2.5.0"
+           RVM_RUBY: "ruby-2.5"
       - id: "ruby-head"
         display_name: ruby-head
         variables:
@@ -504,10 +504,14 @@ axes:
 #        display_name: jruby-1.7
 #        variables:
 #           RVM_RUBY: "jruby-1.7"
-#      - id: "jruby-9.1"
-#        display_name: jruby-9.1
-#        variables:
-#           RVM_RUBY: "jruby-9.1"
+      - id: "jruby-9.1"
+        display_name: jruby-9.1
+        variables:
+           RVM_RUBY: "jruby-9.1"
+      - id: "jruby-9.2"
+        display_name: jruby-9.2
+        variables:
+           RVM_RUBY: "jruby-9.2"
   - id: "os"
     display_name: OS
     values:
@@ -515,7 +519,7 @@ axes:
         display_name: "Ubuntu 12.04"
         run_on: ubuntu1204-test
 
-      - id: ubuntu-14.04
+      - id: ubuntu1404
         display_name: "Ubuntu 14.04"
         run_on: ubuntu1404-test
 
@@ -539,20 +543,29 @@ buildvariants:
 #     - name: "test"
 -
   matrix_name: "all"
-  matrix_spec: { auth-and-ssl: "*", ruby: ["ruby-1.9","ruby-2.3","ruby-2.4","ruby-2.5.0"], mongodb-version: "*", topology: "*" }
+  matrix_spec: { auth-and-ssl: "*", ruby: ["ruby-1.9","ruby-2.3","ruby-2.4","ruby-2.5"], mongodb-version: "*", topology: "*" }
   #exclude_spec: { ruby: ["ruby-head"] }
   display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
   run_on:
-    - rhel70-small
+    - ubuntu1404-test
+  tasks:
+     - name: "test"
+
+-
+  matrix_name: "jruby"
+  matrix_spec: { auth-and-ssl: "*", ruby: ["jruby-9.1","jruby-9.2"], mongodb-version: ["2.6","4.0","latest"], topology: "*" }
+  display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
+  run_on:
+    - ubuntu1404-test
   tasks:
      - name: "test"
 
 -
   matrix_name: "zlib"
-  matrix_spec: { auth-and-ssl: "*", ruby: ["ruby-1.9", "ruby-2.5.0"], mongodb-version: ["3.6", "4.0", "latest"], topology: "*", compressor: 'zlib' }
+  matrix_spec: { auth-and-ssl: "*", ruby: ["ruby-1.9", "ruby-2.5"], mongodb-version: ["3.6", "4.0", "latest"], topology: "*", compressor: 'zlib' }
   display_name: "${compressor} ${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
   run_on:
-    - rhel70-small
+    - ubuntu1404-test
   tasks:
      - name: "test"
 
