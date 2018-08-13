@@ -332,22 +332,22 @@ module Mongo
       @read_preference ||= options[:read]
     end
 
-    # Use the database with the provided name. This will switch the current
-    # database the client is operating on.
+    # Creates a new client configured to use the database with the provided
+    # name, and using the other options configured in this client.
     #
-    # @example Use the provided database.
+    # @example Create a client for the `users' database.
     #   client.use(:users)
     #
     # @param [ String, Symbol ] name The name of the database to use.
     #
-    # @return [ Mongo::Client ] The new client with new database.
+    # @return [ Mongo::Client ] A new client instance.
     #
     # @since 2.0.0
     def use(name)
       with(database: name)
     end
 
-    # Provides a new client with the passed options merged over the existing
+    # Creates a new client with the passed options merged over the existing
     # options of this client. Useful for one-offs to change specific options
     # without altering the original client.
     #
