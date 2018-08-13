@@ -39,18 +39,19 @@ when starting a transaction:
     write_concern: {w: 3},
     read: {mode: :primary})
 
-A transaction must be committed or aborted. The corresponding methods
-to do so are ``commit_transaction`` and ``abort_transaction``, again on the
-session instance:
+To persist changes made in a transaction to the database, the transaction
+must be explicitly committed. If a session ends with an open transaction,
+`the transaction is aborted <https://docs.mongodb.com/manual/core/transactions/#transactions-and-sessions>`_.
+A transaction may also be aborted explicitly.
+
+To commit or abort a transaction, call ``commit_transaction`` or
+``abort_transaction`` on the session instance:
 
 .. code-block:: ruby
 
   session.commit_transaction
   
   session.abort_transaction
-
-If a session ends with an open transaction,
-`the transaction is aborted <https://docs.mongodb.com/manual/core/transactions/#transactions-and-sessions>`_.
 
 
 Retrying Commits
