@@ -57,7 +57,7 @@ To commit or abort a transaction, call ``commit_transaction`` or
 Retrying Commits
 ----------------
 
-Transaction commit `can be retried
+The transaction commit `can be retried
 <https://docs.mongodb.com/manual/core/transactions/#retry-commit-operation>`_
 if it fails. Here is the Ruby code to do so:
 
