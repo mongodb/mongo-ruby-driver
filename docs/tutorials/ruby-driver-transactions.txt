@@ -1,0 +1,74 @@
+============
+Transactions
+============
+
+.. default-domain:: mongodb
+
+.. contents:: On this page
+   :local:
+   :backlinks: none
+   :depth: 1
+   :class: singlecol
+
+
+Version 4.0 of the MongoDB server introduces
+`multi-document transactions <https://docs.mongodb.com/manual/core/transactions/>`_.
+(Updates to multiple fields within a single document are atomic in all
+versions of MongoDB.) Ruby driver version 2.6.0 adds support for transactions.
+
+Using Transactions
+------------------
+
+In order to start a transaction, the application must have a :ref:`session <sessions>`.
+
+A transaction can be started by calling the ``start_transaction`` method on a session:
+
+.. code-block:: ruby
+
+  session = client.start_session
+  session.start_transaction
+
+It is also possible to specify read concern, write concern and read preference
+when starting a transaction:
+
+.. code-block:: ruby
+
+  session = client.start_session
+  session.start_transaction(
+    read_concern: {level: :majority},
+    write_concern: {w: 3},
+    read: {mode: :primary})
+
+To persist changes made in a transaction to the database, the transaction
+must be explicitly committed. If a session ends with an open transaction,
+`the transaction is aborted <https://docs.mongodb.com/manual/core/transactions/#transactions-and-sessions>`_.
+A transaction may also be aborted explicitly.
+
+To commit or abort a transaction, call ``commit_transaction`` or
+``abort_transaction`` on the session instance:
+
+.. code-block:: ruby
+
+  session.commit_transaction
+  
+  session.abort_transaction
+
+
+Retrying Commits
+----------------
+
+The transaction commit `can be retried
+<https://docs.mongodb.com/manual/core/transactions/#retry-commit-operation>`_
+if it fails. Here is the Ruby code to do so:
+
+.. code-block:: ruby
+
+  begin
+    session.commit_transaction
+  rescue Mongo::Error => e
+    if e.label?(Mongo::Error::UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL)
+      retry
+    else
+      raise
+    end
+  end

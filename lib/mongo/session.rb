@@ -18,7 +18,7 @@ require 'mongo/session/server_session'
 module Mongo
 
   # A logical session representing a set of sequential operations executed
-  #   by an application that are related in some way.
+  # by an application that are related in some way.
   #
   # @since 2.5.0
   class Session
@@ -293,7 +293,7 @@ module Mongo
     #   session.validate_read_preference!(command)
     #
     # @raise [ Mongo::Error::InvalidTransactionOperation ] If the read preference of the command is
-    # not primary.
+    #   not primary.
     #
     # @since 2.6.0
     def validate_read_preference!(command)
@@ -463,7 +463,7 @@ module Mongo
       @explicit ||= !implicit?
     end
 
-    # Start a new transaction.
+    # Places subsequent operations in this session into a new transaction.
     #
     # Note that the transaction will not be started on the server until an
     # operation is performed after start_transaction is called.
@@ -476,9 +476,9 @@ module Mongo
     # @option options [ Hash ] read_concern The read concern options hash, with the following
     #   optional keys:
     #   - *:level* -- the read preference level as a symbol; valid values are *:local*, *:majority*,
-    #   and *:snapshot*
+    #     and *:snapshot*
     #   - *:after_cluster_time* -- the cluster time BSON::Document or hash specifying which cluster
-    #   time reads should occur after
+    #     time reads should occur after
     # @option options [ Hash ] :write_concern The write concern options. Can be :w =>
     #   Integer|String, :fsync => Boolean, :j => Boolean.
     # @option options [ Hash ] :read The read preference options. The hash may have the following
@@ -486,8 +486,8 @@ module Mongo
     #   - *:mode* -- read preference specified as a symbol; the only valid value is
     #     *:primary*.
     #
-    # @raise [ InvalidTransactionOperation ] If a transaction is already in
-    # progress or if the write concern is unacknowledged.
+    # @raise [ Error::InvalidTransactionOperation ] If a transaction is already in
+    #   progress or if the write concern is unacknowledged.
     #
     # @since 2.6.0
     def start_transaction(options = nil)
@@ -514,8 +514,7 @@ module Mongo
     # @example Commits the transaction.
     #   session.commit_transaction
     #
-    # @raise [ InvalidTransactionOperation ] If a transaction was just aborted and no new one was
-    #   started.
+    # @raise [ Error::InvalidTransactionOperation ] If there is no active transaction.
     #
     # @since 2.6.0
     def commit_transaction
@@ -571,8 +570,7 @@ module Mongo
     # @example Abort the transaction.
     #   session.abort_transaction
     #
-    # @raise [ Mongo::Error::InvalidTransactionOperation ] If a transaction was just committed or
-    #   aborted and no new one was started.
+    # @raise [ Error::InvalidTransactionOperation ] If there is no active transaction.
     #
     # @since 2.6.0
     def abort_transaction
