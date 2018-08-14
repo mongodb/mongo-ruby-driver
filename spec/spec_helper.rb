@@ -86,6 +86,7 @@ require 'support/travis'
 require 'support/authorization'
 require 'support/primary_socket'
 require 'support/constraints'
+require 'support/cluster_config'
 require 'rspec/retry'
 
 RSpec.configure do |config|
@@ -142,9 +143,7 @@ end
 #
 # @since 2.0.0
 def single_rs_member?
-  $mongo_client ||= initialize_scanned_client!
-  $single_rs_member ||= (single_seed? &&
-      $mongo_client.cluster.servers.first.replica_set_name)
+  ClusterConfig.instance.single_server? && ClusterConfig.instance.replica_set_name
 end
 
 # Determine whether the single address provided is a mongos.
@@ -154,15 +153,7 @@ end
 #
 # @since 2.0.0
 def single_mongos?
-  $single_mongos ||= (single_seed? &&
-      scanned_client_server!.mongos?)
-end
-
-# Determine whether a single address was provided.
-#
-# @since 2.0.0
-def single_seed?
-  SpecConfig.instance.addresses.size == 1
+  ClusterConfig.instance.single_server? && ClusterConfig.instance.mongos?
 end
 
 # For instances where behaviour is different on different versions, we need to
