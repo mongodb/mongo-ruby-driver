@@ -86,11 +86,11 @@ once. Initial aggregation is never retried. In practical terms this means
 that, for example:
 
 - Calling ``collection.watch`` will fail if the cluster does not have
-enough available nodes to satisfy the ``"majority"`` read preference;
+  enough available nodes to satisfy the ``"majority"`` read preference.
 - Once ``collection.watch`` successfully returns, if the cluster subsequently
-experiences an election or loses a node, but heals quickly enough,
-change stream reads via ``next`` or ``each`` methods will continue
-transparently to the application.
+  experiences an election or loses a node, but heals quickly enough,
+  change stream reads via ``next`` or ``each`` methods will continue
+  transparently to the application.
 
 If the cluster loses enough nodes to not be able to satisfy the ``"majority"``
 read preference and does not heal quickly enough, ``next`` and ``each``
