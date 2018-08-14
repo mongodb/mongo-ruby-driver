@@ -118,7 +118,11 @@ module Mongo
         context = OpenSSL::SSL::SSLContext.new
         set_cert(context, options)
         set_key(context, options)
-        set_cert_verification(context, options) unless options[:ssl_verify] == false
+        if options[:ssl_verify] == false
+          context.verify_mode = OpenSSL::SSL::VERIFY_NONE
+        else
+          set_cert_verification(context, options)
+        end
         context
       end
 

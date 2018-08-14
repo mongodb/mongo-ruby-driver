@@ -67,6 +67,13 @@
 # SHARDED_ENABLED: Instruct the test suite to connect to the sharded cluster.
 # Set MONGODB_URI appropriately as well.
 #   SHARDED_ENABLED=1
+#
+# SSL_ENABLED: Instruct the test suite to connect to the cluster via SSL.
+#   SSL_ENABLED=1
+#   # Also acceptable:
+#   SSL=ssl
+#
+# Note: SSL can also be enabled by giving ssl=true in the MONGODB_URI options.
 
 require 'lite_spec_helper'
 

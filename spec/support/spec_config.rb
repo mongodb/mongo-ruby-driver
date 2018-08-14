@@ -17,6 +17,11 @@ class SpecConfig
         @addresses = @mongodb_uri.servers
         @connect = { connect: :direct }
       end
+      if @uri_options[:ssl].nil?
+        @ssl = (ENV['SSL'] == 'ssl') || (ENV['SSL_ENABLED'] == 'true')
+      else
+        @ssl = @uri_options[:ssl]
+      end
     else
       @addresses = ENV['MONGODB_ADDRESSES'] ? ENV['MONGODB_ADDRESSES'].split(',').freeze : [ '127.0.0.1:27017' ].freeze
       if ENV['RS_ENABLED']
@@ -68,6 +73,6 @@ class SpecConfig
   end
 
   def ssl?
-    (ENV['SSL'] == 'ssl') || (ENV['SSL_ENABLED'] == 'true')
+    @ssl
   end
 end
