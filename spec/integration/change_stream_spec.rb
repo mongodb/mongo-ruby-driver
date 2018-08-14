@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe 'Change stream integration' do
+describe 'Change stream integration', retry: 4 do
   only_mri
   max_example_run_time 7
 
@@ -159,6 +159,7 @@ describe 'Change stream integration' do
       it 'next raises error' do
         change_stream
 
+        sleep 0.5
         authorized_collection.insert_one(:a => 1)
         sleep 0.5
 
