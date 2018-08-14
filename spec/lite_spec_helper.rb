@@ -64,10 +64,26 @@ require 'support/gridfs'
 require 'support/transactions'
 require 'support/change_streams'
 
+if SpecConfig.instance.mri?
+  require 'timeout_interrupt'
+else
+  require 'timeout'
+  TimeoutInterrupt = Timeout
+end
+
 RSpec.configure do |config|
   if ENV['CI'] && SpecConfig.instance.jruby?
     config.formatter = 'documentation'
   end
 
   config.extend(LiteConstraints)
+
+  unless SpecConfig.instance.client_debug?
+    # allow a max of 10 seconds per test
+    config.around(:each) do |example|
+      TimeoutInterrupt.timeout(10) do
+        example.run
+      end
+    end
+  end
 end
