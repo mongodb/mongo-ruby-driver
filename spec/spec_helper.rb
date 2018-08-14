@@ -155,7 +155,7 @@ end
 # @since 2.0.0
 def single_mongos?
   $single_mongos ||= (single_seed? &&
-      scanned_client_server!.first.mongos?)
+      scanned_client_server!.mongos?)
 end
 
 # Determine whether a single address was provided.
