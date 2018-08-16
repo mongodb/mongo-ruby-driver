@@ -355,7 +355,13 @@ describe Mongo::Socket::SSL do
           # https://github.com/jruby/jruby-openssl/issues/171
           Exception
         else
-          OpenSSL::OpenSSLError
+          # mri
+          if RUBY_VERSION >= '2.4.0'
+            # ArgumentError: Could not parse PKey: no start line
+            ArgumentError
+          else
+            OpenSSL::OpenSSLError
+          end
         end
       end
 
