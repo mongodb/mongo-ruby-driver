@@ -357,10 +357,11 @@ describe Mongo::Socket::SSL do
         else
           # mri
           if RUBY_VERSION >= '2.4.0'
+            # OpenSSL::PKey::PKeyError: Could not parse PKey: no start line
+            OpenSSL::OpenSSLError
+          else
             # ArgumentError: Could not parse PKey: no start line
             ArgumentError
-          else
-            OpenSSL::OpenSSLError
           end
         end
       end
