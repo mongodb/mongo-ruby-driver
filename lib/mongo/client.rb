@@ -297,7 +297,7 @@ module Mongo
     #
     # @since 2.0.0
     def inspect
-      "#<Mongo::Client:0x#{object_id} cluster=#{cluster.addresses.join(', ')}>"
+      "#<Mongo::Client:0x#{object_id} cluster=#{cluster.summary}>"
     end
 
     # Get a summary of the client state.
