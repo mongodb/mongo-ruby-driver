@@ -248,7 +248,7 @@ module Mongo
 
     def summary
       %Q~#<Cluster
-  addresses=#{addresses.map(&:to_s)}
+  addresses=#{addresses.map(&:to_s).join(',')}
   topology=#{topology.display_name}
   servers=#{servers.map(&:summary).join(',')}
 >~
