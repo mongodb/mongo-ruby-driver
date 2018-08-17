@@ -284,9 +284,7 @@ describe Mongo::Client do
     end
 
     it 'returns the cluster information' do
-      expect(client.inspect).to include(
-        "<Mongo::Client:0x#{client.object_id} cluster=127.0.0.1:27017"
-      )
+      expect(client.inspect).to match(/Cluster(.|\n)*addresses=(.|\n)*topology=(.|\n)*servers=/)
     end
 
     context 'when there is sensitive data in the options' do
