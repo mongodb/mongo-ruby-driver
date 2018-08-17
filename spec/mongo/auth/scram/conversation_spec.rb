@@ -1,6 +1,7 @@
 require 'spec_helper'
 
-describe Mongo::Auth::SCRAM::Conversation do
+# fails intermittently on jruby in Evergreen
+describe Mongo::Auth::SCRAM::Conversation, retry: 3 do
 
   let(:conversation) do
     described_class.new(user, mechanism)
