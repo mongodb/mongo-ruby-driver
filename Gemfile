@@ -26,6 +26,7 @@ group :development, :testing do
 end
 
 group :testing do
+  gem 'ice_nine'
   gem 'rspec-retry'
 end
 

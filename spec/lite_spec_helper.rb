@@ -50,6 +50,7 @@ unless SpecConfig.instance.client_debug?
 end
 Encoding.default_external = Encoding::UTF_8
 
+require 'ice_nine'
 require 'support/matchers'
 require 'support/lite_constraints'
 require 'support/event_subscriber'

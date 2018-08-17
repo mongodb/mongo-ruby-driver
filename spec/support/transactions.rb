@@ -65,7 +65,8 @@ module Mongo
       # @since 2.6.0
       def initialize(file)
         file = File.new(file)
-        @spec = YAML.load(ERB.new(file.read).result)
+        contents = ERB.new(file.read).result
+        @spec = YAML.load(contents)
         file.close
         @description = File.basename(file)
         @data = @spec['data']
@@ -81,8 +82,8 @@ module Mongo
       #
       # @since 2.6.0
       def tests
-        @transaction_tests.collect do |test|
-          Mongo::Transactions::TransactionsTest.new(@data, test)
+        @transaction_tests.map do |test|
+          Proc.new { Mongo::Transactions::TransactionsTest.new(@data, test) }
         end
       end
     end
@@ -115,6 +116,7 @@ module Mongo
       #
       # @since 2.6.0
       def initialize(data, test)
+        test = IceNine.deep_freeze(test)
         @data = data
         @description = test['description']
         @client_options = convert_client_options(test['clientOptions'] || {})
@@ -128,13 +130,30 @@ module Mongo
           next result unless result.class == Hash
 
           # Change maps of result ids to arrays of ids
-          result.tap do |r|
+          result.dup.tap do |r|
             r.each do |k, v|
               next unless ['insertedIds', 'upsertedIds'].include?(k)
               r[k] = v.to_a.sort_by(&:first).map(&:last)
             end
           end
         end
+      end
+
+      def support_client
+        ADMIN_AUTHORIZED_TEST_CLIENT
+      end
+
+      def admin_support_client
+        @admin_support_client ||= support_client.use('admin')
+      end
+
+      def test_client
+        @test_client ||= AUTHORIZED_CLIENT.with(
+          @client_options.merge(app_name: 'this is used solely to force the new client to create its own cluster'))
+      end
+
+      def event_subscriber
+        @event_subscriber ||= EventSubscriber.new
       end
 
       # Run the test.
@@ -146,7 +165,7 @@ module Mongo
       #
       # @since 2.6.0
       def run
-        @collection.client.subscribe(Mongo::Monitoring::COMMAND, EventSubscriber.clear_events!)
+        test_client.subscribe(Mongo::Monitoring::COMMAND, event_subscriber)
 
         results = @ops.map { |o| o.execute(@collection, @session0, @session1) }
 
@@ -156,7 +175,7 @@ module Mongo
         @session0.end_session
         @session1.end_session
 
-        events = EventSubscriber.started_events.map do |e|
+        events = event_subscriber.started_events.map do |e|
 
           # Convert txnNumber field from a BSON integer to an extended JSON int64
           if e.command['txnNumber']
@@ -215,7 +234,7 @@ module Mongo
         events.reject! { |c| c['command_started_event']['command_name'].start_with?('sasl') }
 
         if @failpoint
-          ADMIN_AUTHORIZED_TEST_CLIENT.use('admin').command(configureFailPoint: 'failCommand', mode: 'off')
+          admin_support_client.command(configureFailPoint: 'failCommand', mode: 'off')
         end
 
         {
@@ -226,28 +245,21 @@ module Mongo
       end
 
       def setup_test
-        client = ADMIN_AUTHORIZED_TEST_CLIENT.use('admin')
-
         begin
-          client.command(killAllSessions: [])
+          admin_support_client.command(killAllSessions: [])
         rescue Mongo::Error
         end
 
-        db = client.use(AUTHORIZED_CLIENT.database.name)
-        coll = db[Mongo::Transactions::Spec::COLLECTION_NAME]
+        coll = support_client[Mongo::Transactions::Spec::COLLECTION_NAME]
         coll.database.drop
         coll.with(write: { w: :majority }).drop
-        db.command(
+        support_client.command(
           { create: Mongo::Transactions::Spec::COLLECTION_NAME },
           { write_concern: { w: :majority } })
 
         coll.with(write: { w: :majority }).insert_many(@data) unless @data.empty?
-        client.command(@failpoint) if @failpoint
+        admin_support_client.command(@failpoint) if @failpoint
 
-        client.close
-
-        test_client = AUTHORIZED_CLIENT.with(
-          @client_options.merge(app_name: 'this is used solely to force the new client to create its own cluster'))
         @collection = test_client[Mongo::Transactions::Spec::COLLECTION_NAME]
 
         @session0 = test_client.start_session(@session_options[:session0] || {})
@@ -268,7 +280,12 @@ module Mongo
       end
 
       def teardown_test
-        @collection.client.close
+        if @admin_support_client
+          @admin_support_client.close
+        end
+        if @test_client
+          @test_client.close
+        end
       end
 
       # Compare the existing collection data and the expected collection data.

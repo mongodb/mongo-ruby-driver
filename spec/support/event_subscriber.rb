@@ -3,7 +3,7 @@
 # @since 2.5.0
 class EventSubscriber
 
-  class << self
+  module Impl
 
     # The started events.
     #
@@ -63,4 +63,7 @@ class EventSubscriber
       self
     end
   end
+
+  include Impl
+  extend Impl
 end
