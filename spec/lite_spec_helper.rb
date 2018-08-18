@@ -81,7 +81,7 @@ RSpec.configure do |config|
   unless SpecConfig.instance.client_debug?
     # allow a max of 10 seconds per test
     config.around(:each) do |example|
-      TimeoutInterrupt.timeout(10) do
+      TimeoutInterrupt.timeout(30) do
         example.run
       end
     end
