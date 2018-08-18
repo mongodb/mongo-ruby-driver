@@ -1,31 +1,6 @@
 require 'spec_helper'
 require 'cgi'
 
-# In order to properly test that a user that can be authenticated with either SCRAM-SHA-1 or
-# SCRAM-SHA-256 uses SCRAM-SHA-256 by default, we need to monkey patch the authenticate method to
-# save the authentication method chosen.
-#
-# Note that this will cease to be effective if the tests are parallelized, so another strategy for
-# testing the above condition will need to be implemented.
-module Mongo
-  class Server
-    class Connection
-      @last_mechanism_used = nil
-
-      class << self
-        attr_accessor :last_mechanism_used
-      end
-
-      alias old_authenticate! authenticate!
-
-      def authenticate!
-        Connection.last_mechanism_used = options[:auth_mech] || default_mechanism
-        old_authenticate!
-      end
-    end
-  end
-end
-
 describe 'SCRAM-SHA auth mechanism negotiation' do
   require_scram_sha_256_support
 
@@ -217,7 +192,16 @@ describe 'SCRAM-SHA auth mechanism negotiation' do
           it 'authenticates successfully' do
             create_user!
 
+            mechanism = nil
+            expect(Mongo::Auth).to receive(:get).and_wrap_original do |m, *args|
+              # copy mechanism here rather than whole user
+              # in case something mutates mechanism later
+              mechanism = args.first.mechanism
+              m.call(*args)
+            end
+
             expect { result }.not_to raise_error
+            expect(mechanism).to eq(:scram)
           end
         end
 
@@ -230,9 +214,16 @@ describe 'SCRAM-SHA auth mechanism negotiation' do
           it 'authenticates successfully with SCRAM-SHA-256' do
             create_user!
 
-            Mongo::Server::Connection.last_mechanism_used = nil
+            mechanism = nil
+            expect(Mongo::Auth).to receive(:get).and_wrap_original do |m, *args|
+              # copy mechanism here rather than whole user
+              # in case something mutates mechanism later
+              mechanism = args.first.mechanism
+              m.call(*args)
+            end
+
             expect { result }.not_to raise_error
-            expect(Mongo::Server::Connection.last_mechanism_used).to eq(:scram256)
+            expect(mechanism).to eq(:scram256)
           end
         end
       end
@@ -482,7 +473,16 @@ describe 'SCRAM-SHA auth mechanism negotiation' do
           it 'authenticates successfully' do
             create_user!
 
+            mechanism = nil
+            expect(Mongo::Auth).to receive(:get).and_wrap_original do |m, *args|
+              # copy mechanism here rather than whole user
+              # in case something mutates mechanism later
+              mechanism = args.first.mechanism
+              m.call(*args)
+            end
+
             expect { result }.not_to raise_error
+            expect(mechanism).to eq(:scram)
           end
         end
 
@@ -495,9 +495,16 @@ describe 'SCRAM-SHA auth mechanism negotiation' do
           it 'authenticates successfully with SCRAM-SHA-256' do
             create_user!
 
-            Mongo::Server::Connection.last_mechanism_used = nil
+            mechanism = nil
+            expect(Mongo::Auth).to receive(:get).and_wrap_original do |m, *args|
+              # copy mechanism here rather than whole user
+              # in case something mutates mechanism later
+              mechanism = args.first.mechanism
+              m.call(*args)
+            end
+
             expect { result }.not_to raise_error
-            expect(Mongo::Server::Connection.last_mechanism_used).to eq(:scram256)
+            expect(mechanism).to eq(:scram256)
           end
         end
       end
