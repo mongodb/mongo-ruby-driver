@@ -12,7 +12,6 @@
 .idea/*
 .yardoc
 coverage
-data
 yard-docs
 Gemfile.lock
 .ruby-gemset
