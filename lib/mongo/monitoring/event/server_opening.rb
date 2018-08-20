@@ -47,7 +47,8 @@ module Mongo
         #
         # @since 2.6.0
         def summary
-          "#<#{self.class} address=#{address} topology=#{topology.summary}>"
+          "#<#{self.class.name.sub(/^Mongo::Monitoring::Event::/, '')}" +
+          " address=#{address} topology=#{topology.summary}>"
         end
       end
     end

@@ -46,8 +46,8 @@ module Mongo
         # @return [ String ] String summary of the event.
         #
         # @since 2.6.0
-        def inspect
-          "#<Mongo::Monitoring::Event::TopologyChanged" +
+        def summary
+          "#<#{self.class.name.sub(/^Mongo::Monitoring::Event::/, '')}" +
           " prev=#{previous_topology.summary}" +
           " new=#{new_topology.summary}>"
         end
