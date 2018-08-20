@@ -75,4 +75,8 @@ class SpecConfig
   def ssl?
     @ssl
   end
+
+  def ci?
+    !!ENV['CI']
+  end
 end

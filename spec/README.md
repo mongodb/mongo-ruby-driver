@@ -37,6 +37,8 @@ enabled. This is accomplished by starting mongod with the following option:
 
     --setParameter enableTestCommands=1
 
+## Configuration
+
 Use the following environment variables to configure the tests:
 
 CLIENT_DEBUG: Show debug messages from the client.
@@ -82,3 +84,9 @@ SSL_ENABLED: Instruct the test suite to connect to the cluster via SSL.
   SSL=ssl
 
 Note: SSL can also be enabled by giving ssl=true in the MONGODB_URI options.
+
+## Per-Test Timeout
+
+When running in a continuous integration environment (or with CI=1 environment
+variable set), each test is limited to 30 seconds of wall clock execution
+time.
