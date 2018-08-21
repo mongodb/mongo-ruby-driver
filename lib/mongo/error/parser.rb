@@ -133,6 +133,19 @@ module Mongo
             @code_name = subdoc['codeName']
           end
         end
+
+        if @code.nil? && @code_name.nil?
+          # If we have writeErrors, and all of their codes are the same,
+          # use that code. Otherwise don't set the code
+          if write_errors = document[WRITE_ERRORS]
+            codes = write_errors.map { |e| e['code'] }.compact
+            if codes.uniq.length == 1
+              @code = codes.first
+              # code name may not be returned by the server
+              @code_name = write_errors.map { |e| e['codeName'] }.compact.first
+            end
+          end
+        end
       end
     end
   end
