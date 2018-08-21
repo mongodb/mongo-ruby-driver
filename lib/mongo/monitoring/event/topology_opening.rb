@@ -40,7 +40,8 @@ module Mongo
         #
         # @return [ String ] String summary of the event.
         #
-        # @since 2.6.0
+        # @since 2.7.0
+        # @api experimental
         def summary
           "#<#{self.class.name.sub(/^Mongo::Monitoring::Event::/, '')} topology=#{topology.summary}>"
         end

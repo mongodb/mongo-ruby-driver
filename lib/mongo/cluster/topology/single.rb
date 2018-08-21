@@ -48,6 +48,7 @@ module Mongo
           NAME
         end
 
+        # @api experimental
         def summary
           display_name
         end

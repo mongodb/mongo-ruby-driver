@@ -307,7 +307,7 @@ module Mongo
     #
     # @return [ String ] Summary string.
     #
-    # @since 2.6.0
+    # @since 2.7.0
     # @api experimental
     def summary
       "#<Client cluster=#{cluster.summary}>"

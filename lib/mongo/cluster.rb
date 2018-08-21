@@ -246,6 +246,7 @@ module Mongo
       "#<Mongo::Cluster:0x#{object_id} servers=#{servers} topology=#{topology.summary}>"
     end
 
+    # @api experimental
     def summary
       %Q~#<Cluster
   addresses=#{addresses.map(&:to_s).join(',')}
