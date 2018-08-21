@@ -12,15 +12,12 @@ before_script:
   - wget http://fastdl.mongodb.org/linux/mongodb-linux-x86_64-${MONGODB_VERSION}.tgz -O /tmp/mongodb.tgz
   - tar -xvf /tmp/mongodb.tgz
   - mkdir /tmp/data
-  - ${PWD}/mongodb-linux-x86_64-${MONGODB_VERSION}/bin/mongod --dbpath /tmp/data --bind_ip 127.0.0.1 --auth &> /dev/null &
+  - ${PWD}/mongodb-linux-x86_64-${MONGODB_VERSION}/bin/mongod --setParameter enableTestCommands=1 --dbpath /tmp/data --bind_ip 127.0.0.1 --auth &> /dev/null &
   - export MONGODB_VERSION=${MONGODB_VERSION}
 
 rvm:
   - 1.9.3
-  - 2.4.2
   - 2.5
-  - ruby-head
-  - jruby-9.1.16.0
 
 branches:
   only:
@@ -28,28 +25,18 @@ branches:
     - 2.5-stable
 
 matrix:
-  allow_failures:
-    - rvm: ruby-head
   exclude:
-    - rvm: jruby-9.1.16.0
-      env: MONGODB=2.6.12
-    - rvm: jruby-9.1.16.0
-      env: MONGODB=3.0.12
-    - rvm: jruby-9.1.16.0
-      env: MONGODB=3.2.11
-    - rvm: jruby-9.1.16.0
-      env: MONGODB=3.4.1
+    - rvm: 1.9.3
+      env: MONGODB_VERSION=4.0.1
+    - rvm: 2.5
+      env: MONGODB_VERSION=2.6.12
 
 env:
   global:
     - CI="travis"
-    - JRUBY_OPTS="--server -J-Xms512m -J-Xmx1024m"
   matrix:
     - MONGODB_VERSION=2.6.12
-    - MONGODB_VERSION=3.0.15
-    - MONGODB_VERSION=3.2.20
-    - MONGODB_VERSION=3.4.14
-    - MONGODB_VERSION=3.6.5
+    - MONGODB_VERSION=4.0.1
 
 script: bundle exec rake spec:ci
 
