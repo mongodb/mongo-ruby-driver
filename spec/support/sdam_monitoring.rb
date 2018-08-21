@@ -67,8 +67,19 @@ module Mongo
       end
 
       def topologies_match?(event, expectation)
-        topology_matches?(event.previous_topology, expectation.data['previousDescription']) &&
-          topology_matches?(event.new_topology, expectation.data['newDescription'])
+        unless topology_matches?(event.previous_topology, expectation.data['previousDescription'])
+          if ENV['VERBOSE_MATCHERS']
+            $stderr.puts "Previous topology mismatch"
+          end
+          return false
+        end
+        unless topology_matches?(event.new_topology, expectation.data['newDescription'])
+          if ENV['VERBOSE_MATCHERS']
+            $stderr.puts "New topology mismatch:\nHave: #{event.new_topology}\nWant: #{expectation.data['newDescription']}"
+          end
+          return false
+        end
+        true
       end
 
       def description_matches?(actual, expected)
