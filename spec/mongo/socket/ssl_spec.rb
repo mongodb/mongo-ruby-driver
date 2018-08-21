@@ -1,6 +1,7 @@
 require 'spec_helper'
 
-describe Mongo::Socket::SSL, if: SpecConfig.instance.ssl? do
+describe Mongo::Socket::SSL do
+  require_ssl
 
   let(:address) do
     default_address
@@ -278,7 +279,7 @@ describe Mongo::Socket::SSL, if: SpecConfig.instance.ssl? do
       end
     end
 
-    context 'when ruby version is < 2.4.1', if: (RUBY_VERSION < '2.4.1' && SpecConfig.instance.ssl?) do
+    context 'when ruby version is < 2.4.1', if: (RUBY_VERSION < '2.4.1') do
 
       context 'when a key is passed, but it is not of the right type' do
 
@@ -302,7 +303,9 @@ describe Mongo::Socket::SSL, if: SpecConfig.instance.ssl? do
 
     # Note that as of MRI 2.4, Creating a socket with the wrong key type raises
     # a NoMethodError because #private? is attempted to be called on the key.
-    context 'when ruby version is >= 2.4.1', if: (RUBY_VERSION >= '2.4.1' && SpecConfig.instance.ssl?) do
+    # In jruby 9.2 a TypeError is raised.
+    # In jruby 9.1 a OpenSSL::PKey::PKeyError is raised.
+    context 'when ruby version is >= 2.4.1', if: (RUBY_VERSION >= '2.4.1') do
 
       context 'when a key is passed, but it is not of the right type' do
 
@@ -316,10 +319,24 @@ describe Mongo::Socket::SSL, if: SpecConfig.instance.ssl? do
           }
         end
 
+        let(:expected_exception) do
+          if SpecConfig.instance.jruby?
+            if RUBY_VERSION >= '2.5.0'
+              # jruby 9.2
+              TypeError
+            else
+              # jruby 9.1
+              OpenSSL::OpenSSLError
+            end
+          else
+            NoMethodError
+          end
+        end
+
         it 'raises a NoMethodError' do
           expect{
             socket.connect!
-          }.to raise_exception(NoMethodError)
+          }.to raise_exception(expected_exception)
         end
       end
     end
@@ -332,10 +349,27 @@ describe Mongo::Socket::SSL, if: SpecConfig.instance.ssl? do
         )
       end
 
+      let(:expected_exception) do
+        if SpecConfig.instance.jruby?
+          # java.lang.ClassCastException: org.bouncycastle.asn1.DERApplicationSpecific cannot be cast to org.bouncycastle.asn1.ASN1Sequence
+          # https://github.com/jruby/jruby-openssl/issues/171
+          Exception
+        else
+          # mri
+          if RUBY_VERSION >= '2.4.0'
+            # OpenSSL::PKey::PKeyError: Could not parse PKey: no start line
+            OpenSSL::OpenSSLError
+          else
+            # ArgumentError: Could not parse PKey: no start line
+            ArgumentError
+          end
+        end
+      end
+
       it 'raises an exception' do
         expect {
           socket.connect!
-        }.to raise_exception
+        }.to raise_exception(expected_exception)
       end
     end
 
@@ -464,7 +498,7 @@ describe Mongo::Socket::SSL, if: SpecConfig.instance.ssl? do
       end
 
       before do
-        ENV['SSL_CERT_FILE']= CA_PEM
+        ENV['SSL_CERT_FILE'] = CA_PEM
         socket.connect!
       end
 

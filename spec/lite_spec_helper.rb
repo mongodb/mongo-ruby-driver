@@ -35,6 +35,11 @@ require 'mongo'
 begin
   require 'byebug'
 rescue LoadError
+  # jruby - try pry
+  begin
+    require 'pry'
+  rescue LoadError
+  end
 end
 
 require 'support/spec_config'

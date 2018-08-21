@@ -77,4 +77,12 @@ module Constraints
       end
     end
   end
+
+  def require_ssl
+    before do
+      unless SpecConfig.instance.ssl?
+        skip "SSL not enabled"
+      end
+    end
+  end
 end
