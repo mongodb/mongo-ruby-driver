@@ -33,10 +33,20 @@ export DRIVER_TOOLS_CLIENT_KEY_PEM="${DRIVERS_TOOLS}/.evergreen/x509gen/client-p
 export DRIVER_TOOLS_CA_PEM="${DRIVERS_TOOLS}/.evergreen/x509gen/ca.pem"
 export DRIVER_TOOLS_CLIENT_KEY_ENCRYPTED_PEM="${DRIVERS_TOOLS}/.evergreen/x509gen/password_protected.pem"
 
+ls /opt
 
 # Necessary for jruby
-export JAVACMD=/opt/java/jdk8/bin/java
-export PATH=$PATH:/opt/java/jdk8/bin
+# Use toolchain java if it exists
+if [ -f /opt/java/jdk8/bin/java ]; then
+  export JAVACMD=/opt/java/jdk8/bin/java
+  export PATH=$PATH:/opt/java/jdk8/bin
+fi
+  
+# ppc64le has it in a different place
+if test -z "$JAVACMD" && [ -f /usr/lib/jvm/java-1.8.0/bin/java ]; then
+  export JAVACMD=/usr/lib/jvm/java-1.8.0/bin/java
+  export PATH=$PATH:/usr/lib/jvm/java-1.8.0/bin
+fi
 
 if [ "$RVM_RUBY" == "ruby-head" ]; then
   # 12.04, 14.04 and 16.04 are good
@@ -48,12 +58,14 @@ if [ "$RVM_RUBY" == "ruby-head" ]; then
   
   #rvm reinstall $RVM_RUBY
 else
-  . ~/.rvm/scripts/rvm
-
-  # Don't errexit because this may call scripts which error
-  set +o errexit
-  rvm use $RVM_RUBY
-  set -o errexit
+  # For testing toolchains:
+  #toolchain_url=https://s3.amazonaws.com//mciuploads/mongo-ruby-toolchain/rhel70/07f2c6cf44624721cfc614547de3b2db8fb29919/mongo_ruby_driver_toolchain_rhel70_07f2c6cf44624721cfc614547de3b2db8fb29919_18_07_27_19_35_52.tar.gz
+  #curl -fL $toolchain_url |tar zxf -
+  #export PATH=`pwd`/rubies/$RVM_RUBY/bin:$PATH
+  
+  export PATH=~/.rubies/$RVM_RUBY/bin:$PATH
+  
+  ruby --version
 
   # Ensure we're using the right ruby
   python - <<EOH
@@ -62,12 +74,13 @@ version = "${RVM_RUBY}".split("-")[1]
 assert(ruby in "`ruby --version`")
 assert(version in "`ruby --version`")
 EOH
-fi
 
-if [ "$RVM_RUBY" != "ruby-head" ]; then
-  echo 'updating rubygems'
-  gem update --system
+  # We shouldn't need to update rubygems, and there is value in
+  # testing on whatever rubygems came with each supported ruby version
+  #echo 'updating rubygems'
+  #gem update --system
 
+  # Only install bundler when not using ruby-head.
   # ruby-head comes with bundler and gem complains
   # because installing bundler would overwrite the bundler binary
   gem install bundler
