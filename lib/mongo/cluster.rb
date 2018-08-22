@@ -248,11 +248,10 @@ module Mongo
 
     # @api experimental
     def summary
-      %Q~#<Cluster
-  addresses=#{addresses.map(&:to_s).join(',')}
-  topology=#{topology.display_name}
-  servers=#{servers.map(&:summary).join(',')}
->~
+      "#<Cluster " +
+      "addresses=[#{addresses.map(&:to_s).join(',')}] " +
+      "topology=#{topology.summary} "+
+      "servers=[#{servers.map(&:summary).join(',')}]>"
     end
 
     # Get the next primary server we can send an operation to.

@@ -47,7 +47,7 @@ module Mongo
 
         # @api experimental
         def summary
-          display_name
+          display_name.gsub(' ', '')
         end
 
         # Elect a primary server within this topology.
