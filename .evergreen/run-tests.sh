@@ -33,7 +33,7 @@ export DRIVER_TOOLS_CLIENT_KEY_PEM="${DRIVERS_TOOLS}/.evergreen/x509gen/client-p
 export DRIVER_TOOLS_CA_PEM="${DRIVERS_TOOLS}/.evergreen/x509gen/ca.pem"
 export DRIVER_TOOLS_CLIENT_KEY_ENCRYPTED_PEM="${DRIVERS_TOOLS}/.evergreen/x509gen/password_protected.pem"
 
-ls /opt
+ls -l /opt
 
 # Necessary for jruby
 # Use toolchain java if it exists
@@ -63,7 +63,18 @@ else
   #curl -fL $toolchain_url |tar zxf -
   #export PATH=`pwd`/rubies/$RVM_RUBY/bin:$PATH
   
-  export PATH=~/.rubies/$RVM_RUBY/bin:$PATH
+  # Normal operation
+  if ! test -d $HOME/.rubies/$RVM_RUBY/bin; then
+    echo "Ruby directory does not exist: $HOME/.rubies/$RVM_RUBY/bin" 1>&2
+    echo "Contents of /opt:" 1>&2
+    ls -l /opt 1>&2 || true
+    echo ".rubies symlink:" 1>&2
+    ls -ld $HOME/.rubies 1>&2 || true
+    echo "Our rubies:" 1>&2
+    ls -l $HOME/.rubies 1>&2 || true
+    exit 2
+  fi
+  export PATH=$HOME/.rubies/$RVM_RUBY/bin:$PATH
   
   ruby --version
 
