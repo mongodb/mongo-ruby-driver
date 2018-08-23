@@ -2,9 +2,7 @@ require 'spec_helper'
 
 describe Mongo::Server do
 
-  let(:topology) do
-    double('topology')
-  end
+  declare_topology_double
 
   let(:cluster) do
     double('cluster').tap do |cl|

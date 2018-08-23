@@ -10,9 +10,11 @@ describe Mongo::Server::Monitor::Connection do
     client.cluster.next_primary.address
   end
 
+  declare_topology_double
+
   let(:cluster) do
     double('cluster').tap do |cl|
-      allow(cl).to receive(:topology).and_return(double('topology'))
+      allow(cl).to receive(:topology).and_return(topology)
       allow(cl).to receive(:app_metadata).and_return(Mongo::Cluster::AppMetadata.new(authorized_client.cluster))
     end
   end

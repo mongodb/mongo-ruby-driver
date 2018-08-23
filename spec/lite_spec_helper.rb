@@ -64,6 +64,7 @@ require 'support/connection_string'
 require 'support/gridfs'
 require 'support/transactions'
 require 'support/change_streams'
+require 'support/common_shortcuts'
 
 if SpecConfig.instance.mri?
   require 'timeout_interrupt'
@@ -77,6 +78,7 @@ RSpec.configure do |config|
     config.formatter = 'documentation'
   end
 
+  config.extend(CommonShortcuts)
   config.extend(LiteConstraints)
 
   if SpecConfig.instance.ci?

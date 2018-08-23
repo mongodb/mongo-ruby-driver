@@ -34,6 +34,7 @@ describe 'Max Staleness Spec' do
 
       let(:cluster) do
         double('cluster').tap do |c|
+          allow(c).to receive(:summary)
           allow(c).to receive(:topology).and_return(topology)
           allow(c).to receive(:single?).and_return(topology.single?)
           allow(c).to receive(:sharded?).and_return(topology.sharded?)

@@ -112,7 +112,7 @@ module Mongo
           end
           cluster.scan!
         end
-        raise Error::NoServerAvailable.new(self)
+        raise Error::NoServerAvailable.new(self, cluster)
       end
 
       # Get the timeout for server selection.

@@ -243,7 +243,15 @@ module Mongo
     #
     # @since 2.0.0
     def inspect
-      "#<Mongo::Cluster:0x#{object_id} servers=#{servers} topology=#{topology.display_name}>"
+      "#<Mongo::Cluster:0x#{object_id} servers=#{servers} topology=#{topology.summary}>"
+    end
+
+    # @api experimental
+    def summary
+      "#<Cluster " +
+      "addresses=[#{addresses.map(&:to_s).join(',')}] " +
+      "topology=#{topology.summary} "+
+      "servers=[#{servers.map(&:summary).join(',')}]>"
     end
 
     # Get the next primary server we can send an operation to.

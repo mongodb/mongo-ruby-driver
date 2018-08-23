@@ -38,9 +38,7 @@ shared_context 'server selector' do
   let(:monitoring) do
     Mongo::Monitoring.new(monitoring: false)
   end
-  let(:topology) do
-    double('topology')
-  end
+  declare_topology_double
 
   before(:all) do
     module Mongo

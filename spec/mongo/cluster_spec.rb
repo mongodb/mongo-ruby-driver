@@ -143,16 +143,31 @@ describe Mongo::Cluster do
 
   describe '#servers' do
 
-    context 'when topology is single', if: single_seed? do
+    context 'when topology is single' do
+      before do
+        unless ClusterConfig.instance.single_server?
+          skip 'Topology is not a single server'
+        end
+      end
 
-      context 'when the server is a mongos', if: single_mongos?  do
+      context 'when the server is a mongos' do
+        before do
+          unless ClusterConfig.instance.mongos?
+            skip 'Topology is not a sharded cluster'
+          end
+        end
 
         it 'returns the mongos' do
           expect(cluster.servers.size).to eq(1)
         end
       end
 
-      context 'when the server is a replica set member', if: single_rs_member? do
+      context 'when the server is a replica set member' do
+        before do
+          unless ClusterConfig.instance.replica_set_name
+            skip 'Topology is not a replica set'
+          end
+        end
 
         it 'returns the replica set member' do
           expect(cluster.servers.size).to eq(1)

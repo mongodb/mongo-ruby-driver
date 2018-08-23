@@ -27,10 +27,13 @@ module Mongo
       #
       # @param [ Hash ] server_selector The server preference that could not be
       #   satisfied.
+      # @param [ Cluster ] cluster The cluster that server selection was
+      #   performed on. (added in 2.7.0)
       #
       # @since 2.0.0
-      def initialize(server_selector)
-        super("No server is available matching preference: #{server_selector.inspect} " +
+      def initialize(server_selector, cluster=nil)
+        super("No server is available in cluster: #{cluster.summary} " +
+                "matching preference: #{server_selector.inspect} " +
                 "using server_selection_timeout=#{server_selector.server_selection_timeout} " +
                 "and local_threshold=#{server_selector.local_threshold}")
       end

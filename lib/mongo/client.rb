@@ -297,7 +297,20 @@ module Mongo
     #
     # @since 2.0.0
     def inspect
-      "#<Mongo::Client:0x#{object_id} cluster=#{cluster.addresses.join(', ')}>"
+      "#<Mongo::Client:0x#{object_id} cluster=#{cluster.summary}>"
+    end
+
+    # Get a summary of the client state.
+    #
+    # @example Inspect the client.
+    #   client.summary
+    #
+    # @return [ String ] Summary string.
+    #
+    # @since 2.7.0
+    # @api experimental
+    def summary
+      "#<Client cluster=#{cluster.summary}>"
     end
 
     # Get the server selector. It either uses the read preference

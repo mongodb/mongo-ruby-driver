@@ -23,9 +23,7 @@ describe Mongo::Auth::LDAP do
     end
   end
 
-  let(:topology) do
-    double('topology')
-  end
+  declare_topology_double
 
   let(:server) do
     Mongo::Server.new(address, cluster, monitoring, listeners, TEST_OPTIONS)

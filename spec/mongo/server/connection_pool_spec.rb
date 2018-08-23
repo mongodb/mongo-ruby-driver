@@ -18,9 +18,7 @@ describe Mongo::Server::ConnectionPool do
     Mongo::Event::Listeners.new
   end
 
-  let(:topology) do
-    double('topology')
-  end
+  declare_topology_double
 
   let(:cluster) do
     double('cluster').tap do |cl|
