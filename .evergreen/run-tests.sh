@@ -19,6 +19,7 @@ MONGODB_URI=${MONGODB_URI:-}
 TOPOLOGY=${TOPOLOGY:-server}
 DRIVERS_TOOLS=${DRIVERS_TOOLS:-}
 
+echo "We are in `pwd`"
 
 if [ "$AUTH" != "noauth" ]; then
   export ROOT_USER_NAME="bob"
