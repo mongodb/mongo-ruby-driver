@@ -82,6 +82,11 @@ RSpec.configure do |config|
   config.extend(LiteConstraints)
 
   if SpecConfig.instance.ci?
+    require 'rspec_junit_formatter'
+    config.add_formatter('RSpecJUnitFormatter', File.join(File.dirname(__FILE__), '../tmp/rspec.xml'))
+  end
+
+  if SpecConfig.instance.ci?
     # Allow a max of 30 seconds per test.
     # Tests should take under 10 seconds ideally but it seems
     # we have some that run for more than 10 seconds in CI.

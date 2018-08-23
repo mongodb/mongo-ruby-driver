@@ -28,6 +28,7 @@ end
 group :testing do
   gem 'ice_nine'
   gem 'rspec-retry'
+  gem 'rspec_junit_formatter'
 end
 
 group :development do
