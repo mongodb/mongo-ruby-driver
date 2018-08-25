@@ -28,7 +28,7 @@ end
 group :testing do
   gem 'ice_nine'
   gem 'rspec-retry'
-  gem 'rspec_junit_formatter'
+  gem 'rspec_junit_formatter', git: 'https://github.com/p-mongo/rspec_junit_formatter', branch: 'mongodb'
 end
 
 group :development do
