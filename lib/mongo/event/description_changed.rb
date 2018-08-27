@@ -1,4 +1,3 @@
-
 # Copyright (C) 2014-2018 MongoDB, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -64,8 +63,22 @@ module Mongo
             updated
           )
         )
+        had_primary = cluster.topology.replica_set? && cluster.has_writable_server?
         cluster.add_hosts(updated)
         cluster.remove_hosts(updated)
+        # Spec test requires a transition from ReplicaSetNoPrimary to
+        # ReplicaSetWithPrimary, however the driver has a single ReplicaSet
+        # topology for both of those types and hence doesn't naturally
+        # transition. Fabricate the transition here until
+        # https://jira.mongodb.org/browse/RUBY-1443 is resolved.
+        if cluster.topology.replica_set? && !had_primary && updated.primary?
+          publish_sdam_event(
+            Monitoring::TOPOLOGY_CHANGED,
+            Monitoring::Event::TopologyChanged.new(
+              cluster.topology, cluster.topology,
+            )
+          )
+        end
       end
     end
   end

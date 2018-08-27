@@ -187,9 +187,13 @@ module Mongo
       @topology = Topology.initial(seeds, monitoring, options)
       Session::SessionPool.create(self)
 
+      # The opening topology is always unknown with no servers.
+      # https://github.com/mongodb/specifications/pull/388
+      opening_topology = Topology::Unknown.new(options, monitoring, [])
+
       publish_sdam_event(
         Monitoring::TOPOLOGY_OPENING,
-        Monitoring::Event::TopologyOpening.new(@topology)
+        Monitoring::Event::TopologyOpening.new(opening_topology)
       )
 
       subscribe_to(Event::STANDALONE_DISCOVERED, Event::StandaloneDiscovered.new(self))
@@ -200,8 +204,8 @@ module Mongo
 
       publish_sdam_event(
         Monitoring::TOPOLOGY_CHANGED,
-        Monitoring::Event::TopologyChanged.new(@topology, @topology)
-      ) if @servers.size > 1
+        Monitoring::Event::TopologyChanged.new(opening_topology, @topology)
+      ) if seeds.size > 1
 
       @cursor_reaper = CursorReaper.new
       @socket_reaper = SocketReaper.new(self)
