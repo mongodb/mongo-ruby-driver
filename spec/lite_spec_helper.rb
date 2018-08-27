@@ -82,8 +82,7 @@ RSpec.configure do |config|
   config.extend(LiteConstraints)
 
   if SpecConfig.instance.ci?
-    require 'rspec_junit_formatter'
-    config.add_formatter('RSpecJUnitFormatter', File.join(File.dirname(__FILE__), '../tmp/rspec.xml'))
+    config.add_formatter(RSpec::Core::Formatters::JsonFormatter, File.join(File.dirname(__FILE__), '../tmp/rspec.json'))
   end
 
   if SpecConfig.instance.ci?
