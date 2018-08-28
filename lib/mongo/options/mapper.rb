@@ -24,20 +24,34 @@ module Mongo
       # Transforms the provided options to a new set of options given the
       # provided mapping.
       #
+      # If drop_extra is true, options which are not present in the provided
+      # mapping are dropped. This is the default behavior in version 2.x of
+      # the driver.
+      #
+      # If drop_extra is false, options which are not present in the provided
+      # mapping are returned unmodified. This will be the default behavior in
+      # version 3.0 of the driver.
+      #
       # @example Transform the options.
       #   Mapper.transform({ name: 1 }, { :name => :nombre })
       #
       # @param [ Hash ] options The options to transform
       # @param [ Hash ] mappings The key mappings.
+      # @param [ true|false ] drop_extra Whether to ignore options not present
+      #   in mappings
       #
       # @return [ Hash ] The transformed options.
       #
       # @since 2.0.0
-      def transform(options, mappings)
+      def transform(options, mappings, drop_extra=true)
         map = transform_keys_to_strings(mappings)
         opts = transform_keys_to_strings(options)
         opts.reduce({}) do |transformed, (key, value)|
-          transformed[map[key]] = value if map[key]
+          if map[key]
+            transformed[map[key]] = value
+          elsif !drop_extra
+            transformed[key] = value
+          end
           transformed
         end
       end
