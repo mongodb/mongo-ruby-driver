@@ -570,7 +570,7 @@ buildvariants:
      - name: "test"
 
 -
-  matrix_name: "rubies-mid"
+  matrix_name: "ruby-mid"
   matrix_spec:
     auth-and-ssl: "auth-and-ssl"
     ruby: ["ruby-2.2","ruby-2.3","ruby-2.4"]
@@ -583,7 +583,7 @@ buildvariants:
      - name: "test"
 
 -
-  matrix_name: "mongos"
+  matrix_name: "mongo"
   matrix_spec:
     auth-and-ssl: "*"
     ruby: "ruby-2.5"
