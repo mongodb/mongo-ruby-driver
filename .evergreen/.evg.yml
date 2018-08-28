@@ -573,7 +573,7 @@ buildvariants:
   matrix_name: "rubies-mid"
   matrix_spec:
     auth-and-ssl: "auth-and-ssl"
-    ruby: ["ruby-2.3","ruby-2.4","ruby-2.5"]
+    ruby: ["ruby-2.2","ruby-2.3","ruby-2.4"]
     mongodb-version: "4.0"
     topology: "*"
   display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
