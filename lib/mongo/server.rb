@@ -173,12 +173,27 @@ module Mongo
       @address = address
       @cluster = cluster
       @monitoring = monitoring
+      options = options.dup
+      monitor = options.delete(:monitor)
       @options = options.freeze
+      @monitor = Monitor.new(address, event_listeners, options.merge(
+        app_metadata: cluster.app_metadata))
+      unless monitor == false
+        start_monitoring
+      end
+    end
+
+    # Start monitoring the server.
+    #
+    # Used internally by the driver to add a server to a cluster
+    # while delaying monitoring until the server is in the cluster.
+    #
+    # @api private
+    def start_monitoring
       publish_sdam_event(
         Monitoring::SERVER_OPENING,
         Monitoring::Event::ServerOpening.new(address, cluster.topology)
       )
-      @monitor = Monitor.new(address, event_listeners, options.merge(app_metadata: cluster.app_metadata))
       monitor.scan!
       monitor.run!
       ObjectSpace.define_finalizer(self, self.class.finalize(monitor))
