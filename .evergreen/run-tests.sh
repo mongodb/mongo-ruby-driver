@@ -62,7 +62,7 @@ else
   if test "$RVM_RUBY" = ruby-2.2; then
   
   # For testing toolchains:
-  toolchain_url=https://s3.amazonaws.com//mciuploads/mongo-ruby-toolchain/rhel70/07f2c6cf44624721cfc614547de3b2db8fb29919/mongo_ruby_driver_toolchain_rhel70_07f2c6cf44624721cfc614547de3b2db8fb29919_18_07_27_19_35_52.tar.gz
+  toolchain_url=https://s3.amazonaws.com//mciuploads/mongo-ruby-toolchain/ubuntu1404/8cd47ac2cf636710740a6d79167f055e4c0a0154/mongo_ruby_driver_toolchain_ubuntu1404_8cd47ac2cf636710740a6d79167f055e4c0a0154_18_08_24_03_45_11.tar.gz
   curl -fL $toolchain_url |tar zxf -
   export PATH=`pwd`/rubies/$RVM_RUBY/bin:$PATH
   
