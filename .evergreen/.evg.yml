@@ -499,6 +499,10 @@ axes:
         display_name: ruby-1.9
         variables:
            RVM_RUBY: "ruby-1.9"
+      - id: "ruby-2.2"
+        display_name: ruby-2.2
+        variables:
+           RVM_RUBY: "ruby-2.2"
       - id: "ruby-2.3"
         display_name: ruby-2.3
         variables:
@@ -557,9 +561,12 @@ buildvariants:
 #  tasks:
 #     - name: "test"
 -
-  matrix_name: "all"
-  matrix_spec: { auth-and-ssl: "*", ruby: ["ruby-1.9","ruby-2.3","ruby-2.4","ruby-2.5"], mongodb-version: "*", topology: "*" }
-  #exclude_spec: { ruby: ["ruby-head"] }
+  matrix_name: "ruby-min"
+  matrix_spec:
+    auth-and-ssl: "*"
+    ruby: "ruby-1.9"
+    mongodb-version: "3.6"
+    topology: "*"
   display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
   run_on:
     - ubuntu1404-test
@@ -567,8 +574,12 @@ buildvariants:
      - name: "test"
 
 -
-  matrix_name: "jruby"
-  matrix_spec: { auth-and-ssl: "*", ruby: ["jruby-9.1","jruby-9.2"], mongodb-version: ["2.6","4.0","latest"], topology: "*" }
+  matrix_name: "ruby-mid"
+  matrix_spec:
+    auth-and-ssl: "auth-and-ssl"
+    ruby: ["ruby-2.2","ruby-2.3","ruby-2.4"]
+    mongodb-version: "4.0"
+    topology: "*"
   display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
   run_on:
     - ubuntu1404-test
@@ -576,8 +587,66 @@ buildvariants:
      - name: "test"
 
 -
-  matrix_name: "zlib"
-  matrix_spec: { auth-and-ssl: "*", ruby: ["ruby-1.9", "ruby-2.5"], mongodb-version: ["3.6", "4.0", "latest"], topology: "*", compressor: 'zlib' }
+  matrix_name: "mongo"
+  matrix_spec:
+    auth-and-ssl: "*"
+    ruby: "ruby-2.5"
+    mongodb-version: "*"
+    topology: "*"
+  display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
+  run_on:
+    - ubuntu1404-test
+  tasks:
+     - name: "test"
+
+-
+  matrix_name: "jruby-new"
+  matrix_spec:
+    auth-and-ssl: "auth-and-ssl"
+    ruby: "jruby-9.2"
+    mongodb-version: "4.0"
+    topology: "*"
+  display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
+  run_on:
+    - ubuntu1404-test
+  tasks:
+     - name: "test"
+
+-
+  matrix_name: "jruby-old"
+  matrix_spec:
+    auth-and-ssl: "noauth-and-nossl"
+    ruby: "jruby-9.1"
+    mongodb-version: "2.6"
+    topology: "*"
+  display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
+  run_on:
+    - ubuntu1404-test
+  tasks:
+     - name: "test"
+
+-
+  matrix_name: "zlib-auth"
+  matrix_spec:
+    auth-and-ssl: "auth-and-ssl"
+    ruby: "ruby-2.5"
+    mongodb-version: "4.0"
+    topology: "*"
+    compressor: 'zlib'
+  display_name: "${compressor} ${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
+  run_on:
+    - ubuntu1404-test
+  tasks:
+     - name: "test"
+
+-
+  matrix_name: "zlib-noauth"
+  matrix_spec:
+    auth-and-ssl: "noauth-and-nossl"
+    ruby: "ruby-1.9"
+    mongodb-version: "3.6"
+    topology: "*"
+    compressor: 'zlib'
   display_name: "${compressor} ${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
   run_on:
     - ubuntu1404-test
@@ -586,7 +655,7 @@ buildvariants:
 
 -
   matrix_name: "ruby-head"
-  matrix_spec: { auth-and-ssl: "*", ruby: ["ruby-head"], mongodb-version: ["3.6", "4.0", "latest"], topology: "*" }
+  matrix_spec: { auth-and-ssl: "*", ruby: ["ruby-head"], mongodb-version: "4.0", topology: "*" }
   display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
   run_on:
     - ubuntu1604-test
