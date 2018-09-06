@@ -287,7 +287,16 @@ module Mongo
     #
     # @since 2.0.0
     def elect_primary!(description)
+      old_topology = @topology
       @topology = topology.elect_primary(description, servers_list)
+      if @topology != old_topology
+        publish_sdam_event(
+          Monitoring::TOPOLOGY_CHANGED,
+          Monitoring::Event::TopologyChanged.new(
+            old_topology, @topology,
+          )
+        )
+      end
     end
 
     # Get the maximum number of times the cluster can retry a read operation on

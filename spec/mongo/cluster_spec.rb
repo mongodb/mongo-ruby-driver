@@ -197,10 +197,10 @@ describe Mongo::Cluster do
         end
       end
 
-      context 'when topology is ReplicaSet' do
+      context 'when topology is ReplicaSetNoPrimary' do
 
         let(:topology) do
-          Mongo::Cluster::Topology::ReplicaSet.new({}, monitoring)
+          Mongo::Cluster::Topology::ReplicaSetNoPrimary.new({}, monitoring)
         end
 
         it 'returns an empty array' do

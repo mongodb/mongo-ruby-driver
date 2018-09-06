@@ -15,7 +15,7 @@ describe Mongo::Cluster::Topology do
       end
 
       it 'returns a replica set topology' do
-        expect(topology).to be_a(Mongo::Cluster::Topology::ReplicaSet)
+        expect(topology).to be_a(Mongo::Cluster::Topology::ReplicaSetNoPrimary)
       end
 
       context 'when the option is a String (due to YAML parsing)' do
@@ -25,7 +25,7 @@ describe Mongo::Cluster::Topology do
         end
 
         it 'returns a replica set topology' do
-          expect(topology).to be_a(Mongo::Cluster::Topology::ReplicaSet)
+          expect(topology).to be_a(Mongo::Cluster::Topology::ReplicaSetNoPrimary)
         end
       end
     end
@@ -91,7 +91,7 @@ describe Mongo::Cluster::Topology do
         end
 
         it 'returns a replica set topology' do
-          expect(topology).to be_a(Mongo::Cluster::Topology::ReplicaSet)
+          expect(topology).to be_a(Mongo::Cluster::Topology::ReplicaSetNoPrimary)
         end
       end
 

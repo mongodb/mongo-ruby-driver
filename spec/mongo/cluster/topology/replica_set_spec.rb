@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe Mongo::Cluster::Topology::ReplicaSet do
+describe Mongo::Cluster::Topology::ReplicaSetNoPrimary do
 
   let(:address) do
     Mongo::Address.new('127.0.0.1:27017')

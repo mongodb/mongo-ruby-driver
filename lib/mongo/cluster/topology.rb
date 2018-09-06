@@ -12,14 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/cluster/topology/replica_set'
-require 'mongo/cluster/topology/sharded'
-require 'mongo/cluster/topology/single'
-require 'mongo/cluster/topology/unknown'
-
 module Mongo
   class Cluster
-
     # Defines behavior for getting servers.
     #
     # Topologies are associated with their clusters - for example, a
@@ -35,14 +29,26 @@ module Mongo
     # @since 2.0.0
     module Topology
       extend self
+    end
+  end
+end
 
+require 'mongo/cluster/topology/replica_set_no_primary'
+require 'mongo/cluster/topology/replica_set_with_primary'
+require 'mongo/cluster/topology/sharded'
+require 'mongo/cluster/topology/single'
+require 'mongo/cluster/topology/unknown'
+
+module Mongo
+  class Cluster
+    module Topology
       # The various topologies for server selection.
       #
       # @since 2.0.0
       OPTIONS = {
-        replica_set: ReplicaSet,
+        replica_set: ReplicaSetNoPrimary,
         sharded: Sharded,
-        direct: Single
+        direct: Single,
       }.freeze
 
       # Get the initial cluster topology for the provided options.
@@ -61,7 +67,7 @@ module Mongo
         if options.has_key?(:connect)
           OPTIONS.fetch(options[:connect].to_sym).new(options, monitoring, seeds)
         elsif options.has_key?(:replica_set)
-          ReplicaSet.new(options, monitoring, seeds)
+          ReplicaSetNoPrimary.new(options, monitoring, seeds)
         else
           Unknown.new(options, monitoring, seeds)
         end
