@@ -42,7 +42,7 @@ describe Mongo::Cluster do
       context 'when the addresses are not the same' do
 
         let(:other) do
-          described_class.new([ '127.0.0.1:27018' ], monitoring, TEST_OPTIONS)
+          described_class.new([ '127.0.0.1:27999' ], monitoring, TEST_OPTIONS)
         end
 
         it 'returns false' do
@@ -322,7 +322,6 @@ describe Mongo::Cluster do
 
     before do
       cluster.instance_variable_set(:@servers, servers)
-      cluster.instance_variable_set(:@addresses, addresses)
       cluster.remove('127.0.0.1:27017')
     end
 
@@ -331,7 +330,7 @@ describe Mongo::Cluster do
     end
 
     it 'removes the host from the list of addresses' do
-      expect(cluster.instance_variable_get(:@addresses)).to eq([address_b])
+      expect(cluster.addresses).to eq([address_b])
     end
   end
 

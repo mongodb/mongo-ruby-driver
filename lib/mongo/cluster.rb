@@ -116,9 +116,10 @@ module Mongo
       address = Address.new(host, options)
       if !addresses.include?(address)
         if addition_allowed?(address)
-          @update_lock.synchronize { @addresses.push(address) }
-          server = Server.new(address, self, @monitoring, event_listeners, options)
+          server = Server.new(address, self, @monitoring, event_listeners, options.merge(
+            monitor: false))
           @update_lock.synchronize { @servers.push(server) }
+          server.start_monitoring
           server
         end
       end
@@ -174,7 +175,6 @@ module Mongo
     #
     # @since 2.0.0
     def initialize(seeds, monitoring, options = Options::Redacted.new)
-      @addresses = []
       @servers = []
       @monitoring = monitoring
       @event_listeners = Event::Listeners.new
@@ -253,7 +253,6 @@ module Mongo
     # @api experimental
     def summary
       "#<Cluster " +
-      "addresses=[#{addresses.map(&:to_s).join(',')}] " +
       "topology=#{topology.summary} "+
       "servers=[#{servers.map(&:summary).join(',')}]>"
     end
@@ -363,7 +362,6 @@ module Mongo
         Monitoring::SERVER_CLOSED,
         Monitoring::Event::ServerClosed.new(address, topology)
       )
-      @update_lock.synchronize { @addresses.reject! { |addr| addr == address } }
     end
 
     # Force a scan of all known servers in the cluster.
@@ -482,7 +480,7 @@ module Mongo
     #
     # @since 2.0.6
     def addresses
-      addresses_list
+      servers_list.map(&:address).dup
     end
 
     # The logical session timeout value in minutes.
@@ -560,10 +558,6 @@ module Mongo
 
     def servers_list
       @update_lock.synchronize { @servers.dup }
-    end
-
-    def addresses_list
-      @update_lock.synchronize { @addresses.dup }
     end
   end
 end
