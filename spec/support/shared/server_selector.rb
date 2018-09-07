@@ -14,7 +14,10 @@ def make_server(mode, options = {})
   monitoring = Mongo::Monitoring.new
   address = options[:address]
 
-  server = Mongo::Server.new(address, double('cluster'), monitoring, listeners, TEST_OPTIONS)
+  cluster = double('cluster')
+  allow(cluster).to receive(:topology).and_return(topology)
+  allow(cluster).to receive(:app_metadata)
+  server = Mongo::Server.new(address, cluster, monitoring, listeners, TEST_OPTIONS)
   description = Mongo::Server::Description.new(address, ismaster, average_round_trip_time)
   server.tap do |s|
     allow(s).to receive(:description).and_return(description)
@@ -40,42 +43,11 @@ shared_context 'server selector' do
   end
   declare_topology_double
 
-  before(:all) do
-    module Mongo
-      # We monkey-patch the server here, so the monitors do not run and no
-      # real TCP connection is attempted.
-      #
-      # @since 2.1.0
-      class Server
-
-        alias :original_initialize :initialize
-        def initialize(address, cluster, monitoring, event_listeners, options = {})
-          @address = address
-          @cluster = cluster
-          @monitoring = monitoring
-          @options = options.freeze
-          @monitor = Monitor.new(address, event_listeners, options)
-        end
-
-        alias :original_disconnect! :disconnect!
-        def disconnect!; true; end
-      end
-    end
-  end
-
-  after(:all) do
-
-    # Return the server implementation to its original for the other
-    # tests in the suite.
-    module Mongo
-      class Server
-        alias :initialize :original_initialize
-        remove_method(:original_initialize)
-
-        alias :disconnect! :original_disconnect!
-        remove_method(:original_disconnect!)
-      end
-    end
+  before do
+    # Do not run monitors and do not attempt real TCP connections
+    # in server selector tests
+    allow_any_instance_of(Mongo::Server).to receive(:start_monitoring)
+    allow_any_instance_of(Mongo::Server).to receive(:disconnect!)
   end
 end
 

@@ -407,10 +407,75 @@ describe Mongo::ServerSelector do
         { max_staleness: 123 }
       end
 
-      it 'includes the tag sets in the inspect string' do
+      it 'includes staleness in the inspect string' do
         expect(read_pref.inspect).to match(/max_staleness/i)
         expect(read_pref.inspect).to match(/123/)
       end
+    end
+  end
+
+  describe '#filter_stale_servers' do
+    include_context 'server selector'
+    let(:name) do
+      :secondary
+    end
+    let(:selector) { Mongo::ServerSelector::Secondary.new(
+      mode: name, max_staleness: max_staleness) }
+
+    def make_server_with_staleness(last_write_date)
+      make_server(:secondary).tap do |server|
+        allow(server.description.features).to receive(:max_staleness_enabled?).and_return(true)
+        allow(server).to receive(:last_scan).and_return(Time.now)
+        allow(server).to receive(:last_write_date).and_return(last_write_date)
+      end
+    end
+
+    shared_context 'staleness filter' do
+      let(:servers) do
+        [recent_server, stale_server]
+      end
+
+      context 'when max staleness is not set' do
+        let(:max_staleness) { nil }
+
+        it 'filters correctly' do
+          result = selector.send(:filter_stale_servers, servers, primary)
+          expect(result).to eq([recent_server, stale_server])
+        end
+      end
+
+      context 'when max staleness is set' do
+        let(:max_staleness) { 100 }
+
+        it 'filters correctly' do
+          result = selector.send(:filter_stale_servers, servers, primary)
+          expect(result).to eq([recent_server])
+        end
+      end
+    end
+
+    context 'primary is given' do
+      let(:primary) do
+        make_server(:primary).tap do |server|
+          allow(server).to receive(:last_scan).and_return(Time.now)
+          allow(server).to receive(:last_write_date).and_return(Time.now-100)
+        end
+      end
+
+      # staleness is relative to primary, which itself is 100 seconds stale
+      let(:recent_server) { make_server_with_staleness(Time.now-110) }
+      let(:stale_server) { make_server_with_staleness(Time.now-210) }
+
+      it_behaves_like 'staleness filter'
+    end
+
+    context 'primary is not given' do
+      let(:primary) { nil }
+
+      let(:recent_server) { make_server_with_staleness(Time.now-1) }
+      let(:stale_server) { make_server_with_staleness(Time.now-110) }
+
+      it_behaves_like 'staleness filter'
     end
   end
 end

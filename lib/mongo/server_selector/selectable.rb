@@ -60,6 +60,10 @@ module Mongo
       #
       # @option options [ Integer ] :local_threshold The local threshold boundary for
       #  nearest selection in seconds.
+      # @option options [ Integer ] max_staleness The maximum replication lag,
+      #   in seconds, that a secondary can suffer and still be eligible for a read.
+      #   A value of -1 is treated identically to nil, which is to not
+      #   have a maximum staleness.
       #
       # @raise [ Error::InvalidServerPreference ] If tag sets are specified
       #   but not allowed.
@@ -233,22 +237,21 @@ module Mongo
 
       def filter_stale_servers(candidates, primary = nil)
         return candidates unless @max_staleness
-        max_staleness_ms = @max_staleness * 1000
 
         if primary
           candidates.select do |server|
             validate_max_staleness_support!(server)
             staleness = (server.last_scan - server.last_write_date) -
                         (primary.last_scan - primary.last_write_date)  +
-                        (server.heartbeat_frequency_seconds * 1000)
-            staleness <= max_staleness_ms
+                        server.heartbeat_frequency_seconds
+            staleness <= @max_staleness
           end
         else
           max_write_date = candidates.collect(&:last_write_date).max
           candidates.select do |server|
             validate_max_staleness_support!(server)
-            staleness = max_write_date - server.last_write_date + (server.heartbeat_frequency_seconds * 1000)
-            staleness <= max_staleness_ms
+            staleness = max_write_date - server.last_write_date + server.heartbeat_frequency_seconds
+            staleness <= @max_staleness
           end
         end
       end
