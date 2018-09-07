@@ -59,8 +59,10 @@ describe 'Max Staleness Spec' do
             allow(s).to receive(:secondary?).and_return(server['type'] == 'RSSecondary')
             allow(s).to receive(:primary?).and_return(server['type'] == 'RSPrimary')
             allow(s).to receive(:connectable?).and_return(true)
-            allow(s).to receive(:last_write_date).and_return(server['lastWrite']['lastWriteDate']['$numberLong'].to_i) if server['lastWrite']
-            allow(s).to receive(:last_scan).and_return(server['lastUpdateTime'])
+            allow(s).to receive(:last_write_date).and_return(
+              Time.at(server['lastWrite']['lastWriteDate']['$numberLong'].to_f / 1000)) if server['lastWrite']
+            allow(s).to receive(:last_scan).and_return(
+              Time.at(server['lastUpdateTime'].to_f / 1000))
             allow(s).to receive(:features).and_return(features)
           end
         end
@@ -68,9 +70,7 @@ describe 'Max Staleness Spec' do
 
       let(:in_latency_window) do
         spec.in_latency_window.collect do |server|
-          s = Mongo::Server.new(Mongo::Address.new(server['address']), cluster, monitoring, listeners, options)
-          s.monitor.stop!
-          s
+          Mongo::Server.new(Mongo::Address.new(server['address']), cluster, monitoring, listeners, options.merge(monitor: false))
         end
       end
 

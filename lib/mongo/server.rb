@@ -168,6 +168,9 @@ module Mongo
     # @param [ Event::Listeners ] event_listeners The event listeners.
     # @param [ Hash ] options The server options.
     #
+    # @option options [ Boolean ] :monitor For internal driver use only:
+    #   whether to monitor the server after instantiating it.
+    #
     # @since 2.0.0
     def initialize(address, cluster, monitoring, event_listeners, options = {})
       @address = address
