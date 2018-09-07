@@ -97,13 +97,7 @@ module Mongo
       end
 
       def topology_matches?(actual, expected)
-        case expected['topologyType']
-          when 'ReplicaSetWithPrimary' then actual.replica_set?
-          when 'ReplicaSetNoPrimary' then (actual.replica_set? || actual.unknown?)
-          when 'Sharded' then actual.sharded?
-          when 'Single' then actual.single?
-          when 'Unknown' then actual.unknown?
-        end
+        actual.is_a?(::Mongo::Cluster::Topology.const_get(expected['topologyType']))
       end
     end
 

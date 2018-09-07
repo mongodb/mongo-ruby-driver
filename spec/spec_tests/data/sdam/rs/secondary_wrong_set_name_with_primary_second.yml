@@ -1,0 +1,73 @@
+description: "Secondary wrong setName with primary when secondary responds first"
+
+uri: "mongodb://a,b/"
+
+phases: [
+
+
+    {
+        responses: [
+
+                ["b:27017", {
+
+                    ok: 1,
+                    ismaster: false,
+                    secondary: true,
+                    hosts: ["a:27017", "b:27017"],
+                    setName: "set-b",
+                    minWireVersion: 0,
+                    maxWireVersion: 6
+                }]
+        ],
+
+        outcome: {
+
+            servers: {
+
+                "a:27017": {
+
+                    type: "Unknown",
+                },
+
+                "b:27017": {
+
+                    type: "RSSecondary",
+                    setName: "set-b"
+                }
+            },
+            topologyType: "ReplicaSetNoPrimary",
+            logicalSessionTimeoutMinutes: null,
+            setName: "set-b"
+        }
+    },
+
+    {
+        responses: [
+
+                ["a:27017", {
+
+                    ok: 1,
+                    ismaster: true,
+                    hosts: ["a:27017", "b:27017"],
+                    setName: "set-a",
+                    minWireVersion: 0,
+                    maxWireVersion: 6
+                }]
+        ],
+
+        outcome: {
+
+            servers: {
+
+                "b:27017": {
+
+                    type: "RSSecondary",
+                    setName: "set-b",
+                }
+            },
+            topologyType: "ReplicaSetNoPrimary",
+            logicalSessionTimeoutMinutes: null,
+            setName: "set-b"
+        }
+    },
+]

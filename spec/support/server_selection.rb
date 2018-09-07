@@ -7,17 +7,6 @@ module Mongo
       # @since 2.0.0
       class Spec
 
-        # Mapping of topology description strings to topology type classes.
-        #
-        # @since 2.0.0
-        TOPOLOGY_TYPES = {
-          'ReplicaSetNoPrimary' => Mongo::Cluster::Topology::ReplicaSet,
-          'ReplicaSetWithPrimary' => Mongo::Cluster::Topology::ReplicaSet,
-          'Sharded' => Mongo::Cluster::Topology::Sharded,
-          'Single' => Mongo::Cluster::Topology::Single,
-          'Unknown' => Mongo::Cluster::Topology::Unknown
-        }
-
         # Mapping of read preference modes.
         #
         # @since 2.0.0
@@ -86,7 +75,7 @@ module Mongo
           @candidate_servers = @test['topology_description']['servers']
           @suitable_servers = @test['suitable_servers'] || []
           @in_latency_window = @test['in_latency_window'] || []
-          @type = TOPOLOGY_TYPES[@test['topology_description']['type']]
+          @type = Mongo::Cluster::Topology.const_get(@test['topology_description']['type'])
         end
 
         # Whether this spec describes a replica set.
@@ -98,7 +87,8 @@ module Mongo
         #
         # @since 2.0.0
         def replica_set?
-          type == Mongo::Cluster::Topology::ReplicaSet
+          type == Mongo::Cluster::Topology::ReplicaSetNoPrimary ||
+          type == Mongo::Cluster::Topology::ReplicaSetWithPrimary
         end
 
         # Does this spec expect a server to be found.

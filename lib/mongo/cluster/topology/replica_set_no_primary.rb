@@ -16,10 +16,12 @@ module Mongo
   class Cluster
     module Topology
 
-      # Defines behaviour when a cluster is in replica set topology.
+      # Defines behavior when a cluster is in replica set topology,
+      # and there is no primary or the primary has not yet been discovered
+      # by the driver.
       #
       # @since 2.0.0
-      class ReplicaSet
+      class ReplicaSetNoPrimary
         include Loggable
         include Monitoring::Publishable
 
@@ -37,6 +39,7 @@ module Mongo
         # The display name for the topology.
         #
         # @since 2.0.0
+        # @deprecated
         NAME = 'Replica Set'.freeze
 
         # Get the display name.
@@ -48,7 +51,7 @@ module Mongo
         #
         # @since 2.0.0
         def display_name
-          NAME
+          self.class.name.gsub(/.*::/, '')
         end
 
         # @api experimental
@@ -66,7 +69,7 @@ module Mongo
         # @param [ Array<Server> ] servers The list of known servers to the
         #   cluster.
         #
-        # @return [ ReplicaSet ] The topology.
+        # @return [ ReplicaSetWithPrimary ] The topology.
         def elect_primary(description, servers)
           if description.replica_set_name == replica_set_name
             unless detect_stale_primary!(description)
@@ -84,7 +87,7 @@ module Mongo
               "'#{description.replica_set_name}'. The current replica set name is '#{replica_set_name}'."
             )
           end
-          self
+          ReplicaSetWithPrimary.new(options, monitoring, [], @max_election_id, @max_set_version)
         end
 
         # Determine if the topology would select a readable server for the
@@ -122,11 +125,13 @@ module Mongo
         # Initialize the topology with the options.
         #
         # @example Initialize the topology.
-        #   ReplicaSet.new(options)
+        #   ReplicaSetNoPrimary.new(options)
         #
         # @param [ Hash ] options The options.
         # @param [ Monitoring ] monitoring The monitoring.
         # @param [ Array<String> ] seeds The seeds.
+        # @param max_election_id For internal driver use only.
+        # @param max_set_version For internal driver use only.
         #
         # @option options [ Symbol ] :replica_set Name of the replica set to
         #   connect to. Can be left blank (either nil or the empty string are
@@ -137,17 +142,19 @@ module Mongo
         #   prior to a primary belonging to a different replica set.
         #
         # @since 2.0.0
-        def initialize(options, monitoring, seeds = [])
+        def initialize(options, monitoring, seeds = [],
+          max_election_id = nil, max_set_version = nil
+        )
           @options = options
           @monitoring = monitoring
-          @max_election_id = nil
-          @max_set_version = nil
+          @max_election_id = max_election_id
+          @max_set_version = max_set_version
         end
 
         # A replica set topology is a replica set.
         #
         # @example Is the topology a replica set?
-        #   ReplicaSet.replica_set?
+        #   topology.replica_set?
         #
         # @return [ true ] Always true.
         #

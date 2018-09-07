@@ -63,19 +63,25 @@ module Mongo
             updated
           )
         )
-        had_primary = cluster.topology.replica_set? && cluster.has_writable_server?
         cluster.add_hosts(updated)
         cluster.remove_hosts(updated)
-        # Spec test requires a transition from ReplicaSetNoPrimary to
-        # ReplicaSetWithPrimary, however the driver has a single ReplicaSet
-        # topology for both of those types and hence doesn't naturally
-        # transition. Fabricate the transition here until
-        # https://jira.mongodb.org/browse/RUBY-1443 is resolved.
-        if cluster.topology.replica_set? && !had_primary && updated.primary?
+
+        if cluster.topology.is_a?(::Mongo::Cluster::Topology::Unknown) && updated.replica_set_name && updated.replica_set_name != ''
+          old_topology = cluster.topology
+          new_cls = if updated.primary?
+            ::Mongo::Cluster::Topology::ReplicaSetWithPrimary
+          else
+            ::Mongo::Cluster::Topology::ReplicaSetNoPrimary
+          end
+          new_topology = new_cls.new(
+            cluster.topology.options.merge(
+              replica_set: updated.replica_set_name,
+            ), cluster.topology.monitoring)
+          cluster.send(:instance_variable_set, '@topology', new_topology)
           publish_sdam_event(
             Monitoring::TOPOLOGY_CHANGED,
             Monitoring::Event::TopologyChanged.new(
-              cluster.topology, cluster.topology,
+              old_topology, new_topology,
             )
           )
         end

@@ -45,7 +45,7 @@ module Mongo
         #
         # @since 2.0.0
         def display_name
-          NAME
+          self.class.name.gsub(/.*::/, '')
         end
 
         # @api experimental

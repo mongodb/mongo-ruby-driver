@@ -43,7 +43,7 @@ module Mongo
         #
         # @since 2.0.0
         def display_name
-          NAME
+          self.class.name.gsub(/.*::/, '')
         end
 
         # @api experimental
@@ -61,7 +61,7 @@ module Mongo
         # @param [ Array<Server> ] servers The list of known servers to the
         #   cluster.
         #
-        # @return [ Sharded, ReplicaSet ] The new topology.
+        # @return [ Sharded, ReplicaSetNoPrimary, ReplicaSetWithPrimary ] The new topology.
         def elect_primary(description, servers)
           if description.mongos?
             sharded = Sharded.new(options, monitoring)
@@ -265,7 +265,12 @@ module Mongo
               server.description.unknown!
             end
           end
-          replica_set = ReplicaSet.new(options.merge(:replica_set => description.replica_set_name), monitoring)
+          cls = if description.primary?
+            ReplicaSetWithPrimary
+          else
+            ReplicaSetNoPrimary
+          end
+          replica_set = cls.new(options.merge(:replica_set => description.replica_set_name), monitoring)
           topology_changed(replica_set)
           replica_set
         end
