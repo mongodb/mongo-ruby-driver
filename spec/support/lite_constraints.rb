@@ -2,7 +2,7 @@ module LiteConstraints
   # Constrain tests that use TimeoutInterrupt to MRI (and Unix)
   def only_mri
     before do
-      if SpecConfig.instance.mri?
+      unless SpecConfig.instance.mri?
         skip "MRI required, we have #{SpecConfig.instance.platform}"
       end
     end
