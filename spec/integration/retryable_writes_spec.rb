@@ -3,7 +3,7 @@ require 'spec_helper'
 describe 'Retryable writes integration tests' do
   include PrimarySocket
 
-  after do
+  before do
     authorized_collection.delete_many
   end
 
