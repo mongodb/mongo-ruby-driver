@@ -289,17 +289,20 @@ describe Mongo::Operation::Result do
   end
 
   context 'when there is a top-level Result class defined' do
+    let(:client) do
+      new_local_client(SpecConfig.instance.addresses, TEST_OPTIONS)
+    end
 
     before do
       class Result
-        def get_result(address)
-          Mongo::Client.new([address], TEST_OPTIONS).database.command(:ping => 1)
+        def get_result(client)
+          client.database.command(:ping => 1)
         end
       end
     end
 
     let(:result) do
-      Result.new.get_result(default_address.to_s)
+      Result.new.get_result(client)
     end
 
     it 'uses the Result class of the operation' do

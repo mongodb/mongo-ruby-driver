@@ -83,15 +83,22 @@ require 'lite_spec_helper'
 TEST_SET = 'ruby-driver-rs'
 
 require 'support/travis'
+require 'support/client_registry'
 require 'support/authorization'
 require 'support/primary_socket'
 require 'support/constraints'
 require 'support/cluster_config'
 require 'rspec/retry'
+require 'support/client_registry_macros'
 
 RSpec.configure do |config|
   config.include(Authorization)
   config.extend(Constraints)
+
+  config.include(ClientRegistryMacros)
+  config.after(:each) do
+    close_local_clients
+  end
 
   config.before(:suite) do
     begin
@@ -280,7 +287,8 @@ end
 #
 # @since 2.0.0
 def initialize_scanned_client!
-  Mongo::Client.new(SpecConfig.instance.addresses, TEST_OPTIONS.merge(database: TEST_DB))
+  ClientRegistry.instance.new_global_client(
+    SpecConfig.instance.addresses, TEST_OPTIONS.merge(database: TEST_DB))
 end
 
 class ScannedClientHasNoServers < StandardError; end

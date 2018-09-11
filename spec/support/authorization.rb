@@ -125,7 +125,7 @@ TEST_READ_WRITE_USER = Mongo::Auth::User.new(
 # default test user.
 #
 # @since 2.0.0
-AUTHORIZED_CLIENT = Mongo::Client.new(
+AUTHORIZED_CLIENT = ClientRegistry.instance.new_global_client(
   SpecConfig.instance.addresses,
   TEST_OPTIONS.merge(
     database: TEST_DB,
@@ -141,7 +141,7 @@ AUTHROIZED_CLIENT_WITH_RETRY_WRITES = AUTHORIZED_CLIENT.with(retry_writes: true)
 # Provides an unauthorized mongo client on the default test database.
 #
 # @since 2.0.0
-UNAUTHORIZED_CLIENT = Mongo::Client.new(
+UNAUTHORIZED_CLIENT = ClientRegistry.instance.new_global_client(
   SpecConfig.instance.addresses,
   TEST_OPTIONS.merge(database: TEST_DB, monitoring: false)
 )
@@ -150,7 +150,7 @@ UNAUTHORIZED_CLIENT = Mongo::Client.new(
 # setting up the first admin root user.
 #
 # @since 2.0.0
-ADMIN_UNAUTHORIZED_CLIENT = Mongo::Client.new(
+ADMIN_UNAUTHORIZED_CLIENT = ClientRegistry.instance.new_global_client(
   SpecConfig.instance.addresses,
   TEST_OPTIONS.merge(database: Mongo::Database::ADMIN, monitoring: false)
 )
@@ -170,7 +170,7 @@ ADMIN_AUTHORIZED_TEST_CLIENT = ADMIN_UNAUTHORIZED_CLIENT.with(
 # A client that has an event subscriber for commands.
 #
 # @since 2.5.1
-SUBSCRIBED_CLIENT = Mongo::Client.new(
+SUBSCRIBED_CLIENT = ClientRegistry.instance.new_global_client(
     SpecConfig.instance.addresses,
     TEST_OPTIONS.merge(
       database: TEST_DB,
