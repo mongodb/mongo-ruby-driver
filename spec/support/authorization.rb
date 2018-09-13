@@ -107,20 +107,6 @@ TEST_USER = Mongo::Auth::User.new(
   ]
 )
 
-# MongoDB 2.4 and lower does not allow hashes as roles, so we need to create a
-# user on those versions for each database permission in order to ensure the
-# legacy roles work with users. The following users are those.
-
-# Gets the default test user for the suite on 2.4 and lower.
-#
-# @since 2.0.
-TEST_READ_WRITE_USER = Mongo::Auth::User.new(
-  database: TEST_DB,
-  user: TEST_USER.name,
-  password: TEST_USER.password,
-  roles: [ Mongo::Auth::Roles::READ_WRITE, Mongo::Auth::Roles::DATABASE_ADMIN ]
-)
-
 # Provides an authorized mongo client on the default test database for the
 # default test user.
 #
