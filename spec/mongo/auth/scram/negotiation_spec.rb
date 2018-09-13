@@ -40,7 +40,7 @@ describe 'SCRAM-SHA auth mechanism negotiation' do
         o[:auth_mech] = auth_mech if auth_mech
       end
 
-      Mongo::Client.new(
+      new_local_client(
         SpecConfig.instance.addresses,
         TEST_OPTIONS.merge(opts)
       )
@@ -333,7 +333,7 @@ describe 'SCRAM-SHA auth mechanism negotiation' do
     end
 
     let(:client) do
-      Mongo::Client.new(uri, SSL_OPTIONS)
+      new_local_client(uri, SSL_OPTIONS)
     end
 
     context 'when the user exists' do

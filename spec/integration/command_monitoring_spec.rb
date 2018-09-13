@@ -33,7 +33,7 @@ describe 'Command monitoring' do
     Mongo::Monitoring::Global.unsubscribe(Mongo::Monitoring::COMMAND, subscriber)
   end
 
-  let(:client) { Mongo::Client.new(authorized_client.cluster.addresses.map(&:to_s), authorized_client.options) }
+  let(:client) { new_local_client(authorized_client.cluster.addresses.map(&:to_s), authorized_client.options) }
 
   it 'notifies on successful commands' do
     result = client.database.command(:ismaster => 1)
