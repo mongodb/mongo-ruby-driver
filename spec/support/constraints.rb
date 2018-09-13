@@ -47,6 +47,9 @@ module Constraints
     before do
       topology = authorized_client.cluster.topology.class.name.sub(/.*::/, '')
       topology = topology.gsub(/([A-Z])/) { |match| '_' + match.downcase }.sub(/^_/, '')
+      if topology =~ /^replica_set/
+        topology = 'replica_set'
+      end
       unless topologies.include?(topology)
         skip "Topology #{topologies.join(' or ')} required, we have #{topology}"
       end
