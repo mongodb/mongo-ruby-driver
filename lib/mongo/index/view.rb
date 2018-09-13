@@ -263,7 +263,7 @@ module Mongo
 
       def normalize_models(models, server)
         with_generated_names(models, server).map do |model|
-          Options::Mapper.transform(model, OPTIONS, false)
+          Options::Mapper.transform(model, OPTIONS)
         end
       end
 
