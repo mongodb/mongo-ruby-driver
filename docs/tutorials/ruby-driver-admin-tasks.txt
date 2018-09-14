@@ -27,8 +27,11 @@ To get a list of collections or collection names for a database, use
   client = Mongo::Client.new([ '127.0.0.1:27017' ], :database => 'music')
   database = client.database
 
-  database.collections # Returns an array of Collection objects.
+  database.collections      # Returns an array of Collection objects.
   database.collection_names # Returns an array of collection names as strings.
+
+Arbitrary Comands
+`````````````````
 
 To execute any command on the database, use the ``command`` method.
 
@@ -49,44 +52,3 @@ To drop a database, use the ``drop`` method.
 
   client = Mongo::Client.new([ '127.0.0.1:27017' ], :database => 'music')
   client.database.drop
-
-Collections
------------
-
-The driver provides some helpers for administrative tasks with
-collections.
-
-To create a collection with options (such as creating a capped collection),
-pass the options when getting the collection from the client, then call
-``create``.
-
-.. code-block:: ruby
-
-  client = Mongo::Client.new([ '127.0.0.1:27017' ], :database => 'music')
-  artists = client[:artists, :capped => true, :size => 1024]
-  artists.create
-  artists.capped? # Returns true.
-
-Drop Collection
-```````````````
-
-To drop a collection, call ``drop`` on the collection object.
-
-.. code-block:: ruby
-
-  client = Mongo::Client.new([ '127.0.0.1:27017' ], :database => 'music')
-  artists = client[:artists]
-  artists.drop
-
-Changing Read/Write Preferences
-```````````````````````````````
-
-To change the default read preference or write concern for specific operations,
-use the ``with`` method on the collection.
-
-.. code-block:: ruby
-
-  client = Mongo::Client.new([ '127.0.0.1:27017' ], :database => 'music')
-  artists = client[:artists]
-  artists.with(:read => { :mode => :primary_preferred }).find.to_a
-  artists.with(:write => { :w => :3 }).insert_one( { :name => 'Depeche Mode' } )

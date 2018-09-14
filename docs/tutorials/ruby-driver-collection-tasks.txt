@@ -17,8 +17,8 @@ document in that collection.
 You can also explicitly create a collection with various options,
 such as setting the maximum size or the documentation validation rules.
 
-Capped Collection
-`````````````````
+Capped Collections
+``````````````````
 
 Capped collections have maximum size or document counts that prevent
 them from growing beyond maximum thresholds. All capped collections must
@@ -32,7 +32,9 @@ the ``capped: true`` option along with a ``size`` in bytes.
 .. code-block:: ruby
 
   client = Mongo::Client.new([ '127.0.0.1:27017' ], :database => 'music')
-  client[:artists, capped: true, size: 10000].create
+  collection = client[:artists, capped: true, size: 10000]
+  collection.create
+  collection.capped? # => true
 
 Convert an Existing Collection to Capped
 ````````````````````````````````````````
@@ -42,9 +44,9 @@ the ``convertToCapped`` command.
 
 .. code-block:: ruby
 
-  client = Mongo::Client.new([ '127.0.0.1:27017' ], :database => 'test')
+  client = Mongo::Client.new([ '127.0.0.1:27017' ], :database => 'music')
   db = client.database
-  db.command({ 'convertToCapped' => 'contacts', 'size' => 8192 })
+  db.command({ 'convertToCapped' => 'artists', 'size' => 10000 })
 
 
 Document Validation
@@ -102,52 +104,27 @@ documents must contain an ``age`` field which is a number.
                  }
              })
 
+Listing Collections
+```````````````````
 
-Change Streams
-```````````````
-
-As of version 3.6 of the MongoDB server, a new ```$changeStream`` pipeline stage is supported in the aggregation framework.
-Specifying this stage first in an aggregation pipeline allows users to request that notifications are sent for all
-changes to a particular collection. The helper method available for change streams on a collection object is preferred
-to running a raw aggregation with a $changeStream stage, for the purpose of supporting resumability.
-
-The change stream will attempt to resume one time upon a network error or a server error indicating that a failover is
-taking place.
-
-To start receiving change notifications, use the method ``#watch`` on a collection:
+Use ``collections`` or ``collection_names`` methods on a database
+objects to list collections:
 
 .. code-block:: ruby
 
-  client = Mongo::Client.new([ '127.0.0.1:27017' ], :database => 'test')
-  stream = client[:test].watch
+  client = Mongo::Client.new([ '127.0.0.1:27017' ], :database => 'music')
+  database = client.database
 
-Each document can be retrieved and processed by your application as in the following code example:
+  database.collections      # Returns an array of Collection objects.
+  database.collection_names # Returns an array of collection names as strings.
 
-.. code-block:: ruby
+Dropping Collections
+````````````````````
 
-  enum = stream.to_enum
-  begin
-    while true
-      change = enum.next
-      # do something
-      sleep(1)
-    end
-  rescue => e
-    # we know for sure it's unrecoverable
-    log_error(e)
-  end
-
-The change documents will expose a resume token at the key '_id'. This token can be used to specify a logical starting
-point for a new a ChangeStream:
+To drop a collection, call ``drop`` on the collection object.
 
 .. code-block:: ruby
 
-  stream = client[:test].watch([], resume_token: token)
-
-A subset of aggregation pipeline stages are available to a change stream and can be passed into the ``#watch`` method:
-
-.. code-block:: ruby
-
-  stream = client[:test].watch([ { '$match' => { 'operationType' => 'update' } }])
-
-
+  client = Mongo::Client.new([ '127.0.0.1:27017' ], :database => 'music')
+  artists = client[:artists]
+  artists.drop

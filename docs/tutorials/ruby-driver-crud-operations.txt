@@ -299,8 +299,8 @@ refer to the `Server Selection documentation, available on GitHub
 <https://github.com/mongodb/specifications/blob/master/source/server-sel
 ection/server-selection.rst>`_.
 
-The read preference is set as an option on the client or passed an
-option when a command is run on a database.
+Read preference can be set as an option on the client or passed an
+option when a command is run on a database:
 
 .. code-block:: ruby
 
@@ -313,6 +313,15 @@ option when a command is run on a database.
   # Set read preference for a given command
   client.database.command( { collstats: 'test' }, read: { mode: secondary,
                                                        tag_sets: [ { 'dc' => 'nyc' } ] } )
+
+Read preference can also be set for specific operations on a collection
+using the ``with`` method:
+
+.. code-block:: ruby
+
+  client = Mongo::Client.new([ '127.0.0.1:27017' ], :database => 'music')
+  artists = client[:artists]
+  artists.with(:read => { :mode => :primary_preferred }).find.to_a
 
 Mode
 ~~~~
@@ -434,6 +443,18 @@ the modification occurs.
     :return_document => :after
   )
   doc # Return the document after the update.
+
+Write Concern
+`````````````
+
+Write concern can be given for specific operations on a collection
+using the ``with`` method, similarly to read preference:
+
+.. code-block:: ruby
+
+  client = Mongo::Client.new([ '127.0.0.1:27017' ], :database => 'music')
+  artists = client[:artists]
+  artists.with(:write => { :w => :3 }).insert_one( { :name => 'Depeche Mode' } )
 
 Deleting
 --------
