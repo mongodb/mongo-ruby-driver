@@ -658,3 +658,41 @@ be automatically retried:
 - ``collection#find_one_and_replace``
 - ``collection#find_one_and_delete``
 - ``collection#bulk_write`` (for all single statement ops, i.e. not for ``update_many`` or ``delete_many``)
+
+Logging
+-------
+
+You can either use the default global driver logger or set your own. To set your own:
+
+.. code-block:: ruby
+
+  Mongo::Logger.logger = other_logger
+
+See the `Ruby Logger documentation <http://ruby-doc.org/stdlib-2.2.0/libdoc/logger/rdoc/Logger.html>`_
+for more information on the default logger API and available levels. 
+
+Changing the Logger Level
+`````````````````````````
+
+To change the logger level:
+
+.. code-block:: ruby
+
+  Mongo::Logger.logger.level = Logger::WARN
+
+For more control, a logger can be passed to a client for per-client control over logging.
+
+.. code-block:: ruby
+
+  my_logger = Logger.new($stdout)
+  Mongo::Client.new([ '127.0.0.1:27017' ], :database => 'test', :logger => my_logger )
+
+Truncation
+``````````
+
+The default logging truncates logs at 250 characters by default. To turn this off pass an
+option to the client instance.
+
+.. code-block:: ruby
+
+  Mongo::Client.new([ '127.0.0.1:27017' ], :database => 'test', :truncate_logs => false )

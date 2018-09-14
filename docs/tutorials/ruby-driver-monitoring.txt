@@ -1,0 +1,86 @@
+==========
+Monitoring
+==========
+
+.. default-domain:: mongodb
+
+.. contents:: On this page
+   :local:
+   :backlinks: none
+   :depth: 1
+   :class: singlecol
+
+All user-initiated commands that are sent to the server publish events that can be
+subscribed to for fine grained information. The monitoring API publishes a guaranteed
+start event for each command, then either a succeeded or failed event. A subscriber
+must implement 3 methods: ``started``, ``succeeded``, and ``failed``, each which takes
+a single parameter for the event. An example is the default logging subscriber included
+in the driver:
+
+.. code-block:: ruby
+
+  module Mongo
+    class Monitoring
+      class CommandLogSubscriber
+        include Loggable
+
+        attr_reader :options
+
+        LOG_STRING_LIMIT = 250
+
+        def initialize(options = {})
+          @options = options
+        end
+
+        def started(event)
+          log_debug("#{prefix(event)} | STARTED | #{format_command(event.command)}")
+        end
+
+        def succeeded(event)
+          log_debug("#{prefix(event)} | SUCCEEDED | #{event.duration}s")
+        end
+
+        def failed(event)
+          log_debug("#{prefix(event)} | FAILED | #{event.message} | #{event.duration}s")
+        end
+
+        private
+
+        def format_command(args)
+          begin
+            truncating? ? truncate(args) : args.inspect
+          rescue Exception
+            '<Unable to inspect arguments>'
+          end
+        end
+
+        def prefix(event)
+          "#{event.address.to_s} | #{event.database_name}.#{event.command_name}"
+        end
+
+        def truncate(command)
+          ((s = command.inspect).length > LOG_STRING_LIMIT) ? "#{s[0..LOG_STRING_LIMIT]}..." : s
+        end
+
+        def truncating?
+          @truncating ||= (options[:truncate_logs] != false)
+        end
+      end
+    end
+  end
+
+To register a custom subscriber, you can do so globally for
+all clients or on a per-client basis:
+
+.. code-block:: ruby
+
+  Mongo::Monitoring::Global.subscribe(Mongo::Monitoring::COMMAND, my_subscriber)
+
+  client = Mongo::Client.new([ '127.0.0.1:27017' ], :database => 'test' )
+  client.subscribe( Mongo::Monitoring::COMMAND, my_subscriber )
+
+To turn off monitoring, set the client monitoring option to ``false``:
+
+.. code-block:: ruby
+
+  client = Mongo::Client.new([ '127.0.0.1:27017' ], :database => 'test', :monitoring => false )
