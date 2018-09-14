@@ -1,6 +1,6 @@
-==============
-Administration
-==============
+=========
+Databases
+=========
 
 .. default-domain:: mongodb
 
