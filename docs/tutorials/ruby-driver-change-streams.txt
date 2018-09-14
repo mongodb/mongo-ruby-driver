@@ -13,10 +13,12 @@ Change Streams
 As of version 3.6 of the MongoDB server, a new ``$changeStream`` pipeline stage
 is supported in the aggregation framework. Specifying this stage first in an
 aggregation pipeline allows users to request that notifications are sent for all
-changes to a particular collection.
+changes to a particular collection. As of MongoDB 4.0, change streams are
+supported on databases and clusters in addition to collections.
 
 The Ruby driver provides an API for
-receiving notifications for changes to a particular collection using this
+receiving notifications for changes to a particular collection, database
+or cluster using this
 new pipeline stage. Although you can create a change stream using the pipeline
 operator and aggregation framework directly, it is recommended to use the
 driver API described below as the driver resumes the change stream one time
@@ -33,10 +35,11 @@ getMores to be called in a loop in the background.
 
 .. _here: https://github.com/jruby/jruby/issues/4212
 
-Watching for Changes on a Particular Collection
------------------------------------------------
+Watching for Changes on a Collection
+------------------------------------
 
-A change stream is created by calling the ``#watch`` method on a collection:
+A collection change stream is created by calling the ``#watch`` method on a
+collection:
 
 .. code-block:: ruby
 
@@ -76,14 +79,52 @@ operator format:
     process(doc)
   end
 
-Close a Change Stream
----------------------
+Watching for Changes on a Database
+----------------------------------
 
-You can close a change stream by calling the ``#close`` method:
+A database change stream notifies on changes on any collection within the
+database as well as database-wide events, such as the database being dropped.
+
+A database change stream is created by calling the ``#watch`` method on a
+database object:
+
+.. code-block:: ruby
+
+  client = Mongo::Client.new([ '127.0.0.1:27017' ], :database => 'test')
+  database = client.database
+  stream = database.watch
+  client[:test].insert_one(a: 1)
+  doc = stream.to_enum.next
+  process(doc)
+
+
+Watching for Changes on a Cluster
+---------------------------------
+
+A cluster change stream notifies on changes on any collection, any database
+within the cluster as well as cluster-wide events.
+
+A cluster change stream is created by calling the ``#watch`` method on a
+client object (not the cluster object):
+
+.. code-block:: ruby
+
+  client = Mongo::Client.new([ '127.0.0.1:27017' ], :database => 'test')
+  stream = client.watch
+  client[:test].insert_one(a: 1)
+  doc = stream.to_enum.next
+  process(doc)
+
+
+Closing a Change Stream
+-----------------------
+
+You can close a change stream by calling its ``#close`` method:
 
 .. code-block:: ruby
 
   stream.close
+
 
 Resuming a Change Stream
 ------------------------
@@ -109,7 +150,7 @@ at the key ``_id`` in each change document.
 
 .. code-block:: ruby
 
-  token = doc._id
+  token = doc['_id']
   stream = collection.watch([], resume_after: token)
 
 To watch a collection indefinitely, retrying on all MongoDB errors:
