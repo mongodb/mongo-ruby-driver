@@ -135,6 +135,12 @@ module Mongo
         # @since 2.0.0
         def initialize(document)
           @client_md5 = Digest::MD5.new unless document[:disable_md5] == true
+          # document contains a mix of user options and keys added
+          # internally by the driver, like session.
+          # Remove the keys that driver adds but keep user options.
+          document = document.reject do |key, value|
+            key.to_s == 'session'
+          end
           @document = default_document.merge(Options::Mapper.transform(document, MAPPINGS))
         end
 

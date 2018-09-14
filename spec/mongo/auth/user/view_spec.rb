@@ -6,7 +6,7 @@ describe Mongo::Auth::User::View do
     described_class.new(root_authorized_client.database)
   end
 
-  after do
+  before do
     begin; view.remove('durran'); rescue; end
   end
 
@@ -260,6 +260,10 @@ describe Mongo::Auth::User::View do
 
     context 'when a session is not used' do
 
+      before do
+        view.remove('emily') rescue nil
+      end
+
       context 'when a user exists in the database' do
 
         before do
@@ -267,10 +271,6 @@ describe Mongo::Auth::User::View do
               'emily',
               password: 'password'
           )
-        end
-
-        after do
-          view.remove('emily')
         end
 
         it 'returns information for that user' do

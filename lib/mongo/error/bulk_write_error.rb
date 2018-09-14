@@ -36,6 +36,22 @@ module Mongo
       def initialize(result)
         @result = result
       end
+
+      def to_s
+        messages = if errors = result['writeErrors']
+          frag = ': ' + errors[0..10].map do |error|
+            "#{error['errmsg']} (#{error['code']})"
+          end.join(', ')
+          if errors.length > 10
+            frag += '...'
+          else
+            frag
+          end
+        else
+          ''
+        end
+        self.class.name + messages
+      end
     end
   end
 end

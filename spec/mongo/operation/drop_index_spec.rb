@@ -1,6 +1,9 @@
 require 'spec_helper'
 
 describe Mongo::Operation::DropIndex do
+  before do
+    authorized_collection.indexes.drop_all
+  end
 
   describe '#execute' do
 

@@ -6,19 +6,6 @@ describe Mongo::BulkWrite do
     authorized_collection.delete_many
   end
 
-  after do
-    authorized_collection.delete_many
-    collection_with_validator.drop
-  end
-
-  let(:collection_with_validator) do
-    begin; authorized_client[:validating].drop; rescue; end
-    authorized_client[:validating,
-                      :validator => { :a => { '$exists' => true } }].tap do |c|
-      c.create
-    end
-  end
-
   let(:collection_invalid_write_concern) do
     authorized_collection.client.with(write: INVALID_WRITE_CONCERN)[authorized_collection.name]
   end
@@ -2139,12 +2126,17 @@ describe Mongo::BulkWrite do
   describe 'when the collection has a validator' do
     min_server_version '3.2'
 
-    before do
-      collection_with_validator.insert_many([{ :a => 1 }, { :a => 2 }])
+    let(:collection_with_validator) do
+      authorized_client[:validating,
+                        :validator => { :a => { '$exists' => true } }].tap do |c|
+        c.create
+      end
     end
 
-    after do
+    before do
+      begin; authorized_client[:validating].drop; rescue; end
       collection_with_validator.delete_many
+      collection_with_validator.insert_many([{ :a => 1 }, { :a => 2 }])
     end
 
     context 'when the documents are invalid' do

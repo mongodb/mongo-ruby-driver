@@ -24,6 +24,9 @@ module Mongo
       # Transforms the provided options to a new set of options given the
       # provided mapping.
       #
+      # Options which are not present in the provided mapping
+      # are returned unmodified.
+      #
       # @example Transform the options.
       #   Mapper.transform({ name: 1 }, { :name => :nombre })
       #
@@ -37,7 +40,11 @@ module Mongo
         map = transform_keys_to_strings(mappings)
         opts = transform_keys_to_strings(options)
         opts.reduce({}) do |transformed, (key, value)|
-          transformed[map[key]] = value if map[key]
+          if map[key]
+            transformed[map[key]] = value
+          else
+            transformed[key] = value
+          end
           transformed
         end
       end

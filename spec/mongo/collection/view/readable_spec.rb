@@ -14,7 +14,7 @@ describe Mongo::Collection::View::Readable do
     Mongo::Collection::View.new(authorized_collection, selector, options)
   end
 
-  after do
+  before do
     authorized_collection.delete_many
   end
 
@@ -282,11 +282,8 @@ describe Mongo::Collection::View::Readable do
     end
 
     before do
-      authorized_collection.insert_many(documents)
-    end
-
-    after do
       authorized_collection.delete_many
+      authorized_collection.insert_many(documents)
     end
 
     let(:result) do

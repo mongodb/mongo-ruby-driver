@@ -138,11 +138,8 @@ describe 'aggregation examples in Ruby' do
   context 'runCommand Example 2' do
 
     before do
-      client[:restaurants].create
-    end
-
-    after do
       client[:restaurants].drop
+      client[:restaurants].create
     end
 
     let(:example_code) do

@@ -279,7 +279,9 @@ describe Mongo::Server::Connection do
           connection.dispatch([ query_alice ])
         }.to raise_error(Mongo::Error::UnexpectedResponse)
 
-        expect(connection.dispatch([ query_alice ]).documents.first['name']).to eq('alice')
+        docs = connection.dispatch([ query_alice ]).documents
+        expect(docs).to_not be_empty
+        expect(docs.first['name']).to eq('alice')
       end
     end
 

@@ -92,11 +92,8 @@ describe Mongo::Database do
     end
 
     before do
-      database[:users].create
-    end
-
-    after do
       database[:users].drop
+      database[:users].create
     end
 
     it 'returns the stripped names of the collections' do
@@ -131,13 +128,10 @@ describe Mongo::Database do
 
       before do
         2.times do |i|
-          database["#{i}_dalmatians"].create
-        end
-      end
-
-      after do
-        2.times do |i|
           database["#{i}_dalmatians"].drop
+        end
+        2.times do |i|
+          database["#{i}_dalmatians"].create
         end
       end
 
@@ -161,11 +155,8 @@ describe Mongo::Database do
     end
 
     before do
-      database[:users].create
-    end
-
-    after do
       database[:users].drop
+      database[:users].create
     end
 
     it 'returns a list of the collections info', if: list_command_enabled?  do
@@ -190,11 +181,8 @@ describe Mongo::Database do
       end
 
       before do
-        database[:users].create
-      end
-
-      after do
         database[:users].drop
+        database[:users].create
       end
 
       it 'returns collection objects for each name' do
@@ -567,7 +555,7 @@ describe Mongo::Database do
           Mongo::Grid::File.new('Hello!', :filename => 'test.txt')
         end
 
-        after do
+        before do
           fs.files_collection.delete_many
           fs.chunks_collection.delete_many
         end

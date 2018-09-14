@@ -14,7 +14,7 @@ describe Mongo::Collection::View::Writable do
     Mongo::Collection::View.new(authorized_collection, selector, options)
   end
 
-  after do
+  before do
     authorized_collection.delete_many
   end
 

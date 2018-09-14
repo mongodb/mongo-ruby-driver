@@ -71,6 +71,7 @@ describe Mongo::Operation::Update do
   describe '#execute' do
 
     before do
+      authorized_collection.drop
       authorized_collection.insert_many([
         { name: 'test', field: 'test', other: 'test' },
         { name: 'testing', field: 'test', other: 'test' }

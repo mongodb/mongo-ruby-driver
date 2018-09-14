@@ -14,7 +14,7 @@ describe Mongo::Collection::View do
     described_class.new(authorized_collection, filter, options)
   end
 
-  after do
+  before do
     authorized_collection.delete_many
   end
 
@@ -112,11 +112,8 @@ describe Mongo::Collection::View do
     end
 
     before do
-      authorized_collection.insert_many(documents)
-    end
-
-    after do
       authorized_collection.delete_many
+      authorized_collection.insert_many(documents)
     end
 
     context 'when a block is not provided' do
