@@ -1,0 +1,176 @@
+==============
+Authentication
+==============
+
+.. default-domain:: mongodb
+
+.. contents:: On this page
+   :local:
+   :backlinks: none
+   :depth: 1
+   :class: singlecol
+
+MongoDB supports a variety of 
+:manual:`authentication mechanisms </core/authentication/>`.
+
+For more information about configuring your MongoDB server for each of
+these authentication mechanisms see MongoDB's 
+:manual:`online documentation </tutorial/enable-authentication>`.
+
+Creating a user
+```````````````
+
+To create a user in specific database, use the ``create`` method with the
+username, password and roles parameters.
+
+.. code-block:: ruby
+
+  client.database.users.create(
+        'durran',
+        password: 'password',
+        roles: [ Mongo::Auth::Roles::READ_WRITE ])
+		
+.. seealso::
+  :manual:`Built-in roles</reference/built-in-roles/>`
+
+Providing credentials
+`````````````````````
+
+If authentication is enabled, provide credentials when creating a new
+client.
+
+.. code-block:: ruby
+
+  client = Mongo::Client.new([ '127.0.0.1:27017' ],
+                             user: 'test',
+                             password: '123' )
+
+For MongoDB 2.6 and later, ``:auth_source`` defaults to **admin**,
+otherwise the current database is used.
+
+The current database can be changed with the client's ``use`` method.
+
+.. code-block:: ruby
+
+  client = Mongo::Client.new([ '127.0.0.1:27017' ])
+  music_client = client.use( 'music')
+
+A new client can be created with the authentication credentials.
+
+.. code-block:: ruby
+
+  authenticated_client = client.with( user: 'test',
+                                     password: '123' )
+
+Alternatively, setting the current database and credentials can be done in one step:
+
+.. code-block:: ruby
+
+  authenticated_music_client = client.with( :database => 'music',
+                                           user:'test',
+                                           password:'123' )
+
+
+MONGODB-CR Mechanism
+````````````````````
+
+*Deprecated:* MONGODB-CR mechanism is deprecated as of MongoDB version 3.6.
+Please use SCRAM authentication instead.
+
+MONGODB-CR was the default authentication mechanism for MongoDB up through version 2.6.
+
+The mechanism can be explicitly set with the credentials:
+
+.. code-block:: ruby
+
+  client = Mongo::Client.new([ '127.0.0.1:27017' ],
+                             :database => 'music',
+                             user: 'test',
+                             password: '123',
+                             auth_mech: :mongodb_cr )
+
+
+Client Certificate (x509)
+`````````````````````````
+*Requires MongoDB v2.6 or greater.*
+
+The driver presents an X.509 certificate during SSL negotiation.
+The Client Certificate (x509) mechanism authenticates a username
+derived from the distinguished subject name of this certificate.
+
+This authentication method requires the use of SSL connections with
+certificate validation.
+
+For more information about configuring X.509 authentication in MongoDB,
+see the :manual:`X.509 tutorial in the MongoDB Manual
+</tutorial/configure-x509/>`.
+
+.. code-block:: ruby
+
+  client = Mongo::Client.new([ '127.0.0.1:27017' ],
+                             auth_mech: :mongodb_x509,
+                             ssl: true,
+                             ssl_cert: '/path/to/client.pem',
+                             ssl_ca_cert: '/path/to/ca.pem' )
+
+
+LDAP (SASL PLAIN) mechanism
+```````````````````````````
+*Requires MongoDB Enterprise Edition v2.6 or greater.*
+
+MongoDB Enterprise Edition supports the LDAP authentication mechanism
+which allows you to delegate authentication using a Lightweight Directory
+Access Protocol `LDAP <http://en.wikipedia.org/wiki/LDAP>`_ server. 
+
+.. warning::
+
+  When using LDAP, passwords are sent to the server in plain text. For this
+  reason, we strongly recommend enabling SSL when using LDAP as your
+  authentication mechanism.
+
+For more information about configuring LDAP authentication in
+MongoDB, see the :manual:`SASL/LDAP tutorial in the MongoDB Manual
+</tutorial/configure-ldap-sasl-authentication/>`.
+
+.. code-block:: ruby
+
+  client = Mongo::Client.new([ '127.0.0.1:27017' ],
+                             auth_mech: :plain,
+                             ssl: true,
+                             ssl_verify: true,
+                             ssl_cert: '/path/to/client.pem',
+                             ssl_ca_cert: '/path/to/ca.pem' )
+
+Kerberos (GSSAPI) mechanism
+```````````````````````````
+*Requires MongoDB Enterprise Edition v2.4 or greater.*
+
+MongoDB Enterprise Edition v2.4+ supports Kerberos authentication.
+
+To use Kerberos in the Ruby driver with **JRuby**, do the following:
+
+1. Specify several system properties so that the underlying GSSAPI Java
+   libraries can acquire a Kerberos ticket. See the `MongoDB Java
+   Driver authentication documentation
+   <http://mongodb.github.io/mongo-java-driver/3.0/driver/reference/connecting/authenticating/#kerberos-gssapi>`_
+   for more information.
+
+2. Either provide a password OR set the 'java.security.auth.login.config'
+   system property to a config file that references a keytab file.
+
+To use Kerberos in the Ruby driver
+with **Matz's Ruby Interpreter (MRI)**, create a
+ticket-granting ticket using ``kinit``. See 
+`this documentation <http://linux.die.net/man/1/kinit>`_ for more
+information.
+
+For more information about deploying MongoDB with Kerberos
+authentication, see the :manual:`manual
+</tutorial/control-access-to-mongodb-with-kerberos-authentication/>`.
+
+.. code-block:: ruby
+
+  client = Mongo::Client.new([ '127.0.0.1:27017' ],
+                             auth_mech: :gssapi,
+                             user: 'test',
+                             password: '123' )

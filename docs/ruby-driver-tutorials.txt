@@ -16,6 +16,7 @@ operations available in the Ruby driver.
    :titlesonly:
 
    /tutorials/ruby-driver-create-client
+   /tutorials/ruby-driver-authentication
    /tutorials/ruby-driver-crud-operations
    /tutorials/ruby-driver-collection-tasks
    /tutorials/ruby-driver-projections
@@ -23,6 +24,7 @@ operations available in the Ruby driver.
    /tutorials/ruby-driver-transactions
    /tutorials/ruby-driver-change-streams
    /tutorials/ruby-driver-admin-tasks
+   /tutorials/ruby-driver-monitoring
    /tutorials/ruby-driver-indexing
    /tutorials/ruby-driver-collations
    /tutorials/ruby-driver-aggregation
