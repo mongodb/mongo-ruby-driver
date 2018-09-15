@@ -15,10 +15,10 @@ Sessions
 
 Version 3.6 of the MongoDB server introduces the concept of logical sessions for clients.
 A session is an abstract concept that represents a set of sequential operations executed
-by an application that are related in some way. A session object can be create via a ``Mongo::Client``
+by an application that are related in some way. A session object can be created via a ``Mongo::Client``
 and passed to operation methods that should be executed in the context of that session.
 
-Please note that sessions are not thread safe. They can only be used by one thread at a time.
+Please note that session objects are not thread safe. They must only be used by one thread at a time.
 
 Creating a session from a ``Mongo::Client``
 -------------------------------------------
@@ -38,8 +38,8 @@ session options.
 An error will be thrown if the driver is connected to a deployment that does not support sessions and the
 ``start_session`` method is called.
 
-Note that server sessions are discarded server-side if not used for a certain period of time. That said,
-be aware that if the application calls ``#start_session`` on a client and waits more than 1 minute to use
+Note that server sessions are discarded server-side if not used for a certain period of time.
+Be aware that if the application calls ``#start_session`` on a client and waits more than 1 minute to use
 the session, it risks getting errors due to the session going stale before it is used.
 
 
