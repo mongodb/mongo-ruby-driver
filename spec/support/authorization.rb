@@ -22,41 +22,6 @@ TEST_COLL = 'test'.freeze
 # @since 2.4.2
 INVALID_WRITE_CONCERN = { w: 4 }
 
-# Gets the root system administrator user.
-#
-# @since 2.0.0
-ROOT_USER = Mongo::Auth::User.new(
-  user: SpecConfig.instance.user || 'root-user',
-  password: SpecConfig.instance.password || 'password',
-  roles: [
-    Mongo::Auth::Roles::USER_ADMIN_ANY_DATABASE,
-    Mongo::Auth::Roles::DATABASE_ADMIN_ANY_DATABASE,
-    Mongo::Auth::Roles::READ_WRITE_ANY_DATABASE,
-    Mongo::Auth::Roles::HOST_MANAGER,
-    Mongo::Auth::Roles::CLUSTER_ADMIN
-  ]
-)
-
-# Get the default test user for the suite on versions 2.6 and higher.
-#
-# @since 2.0.0
-TEST_USER = Mongo::Auth::User.new(
-  database: SpecConfig.instance.test_db,
-  user: 'test-user',
-  password: 'password',
-  roles: [
-    { role: Mongo::Auth::Roles::READ_WRITE, db: SpecConfig.instance.test_db },
-    { role: Mongo::Auth::Roles::DATABASE_ADMIN, db: SpecConfig.instance.test_db },
-    { role: Mongo::Auth::Roles::READ_WRITE, db: 'invalid_database' },
-    { role: Mongo::Auth::Roles::DATABASE_ADMIN, db: 'invalid_database' },
-		{ role: Mongo::Auth::Roles::READ_WRITE, db: 'hr' },           # For transactions examples
-		{ role: Mongo::Auth::Roles::DATABASE_ADMIN, db: 'hr' },       # For transactions examples
-		{ role: Mongo::Auth::Roles::READ_WRITE, db: 'reporting' },    # For transactions examples
-		{ role: Mongo::Auth::Roles::DATABASE_ADMIN, db: 'reporting' } # For transactions examples
-
-  ]
-)
-
 # Provides an authorized mongo client on the default test database for the
 # default test user.
 #

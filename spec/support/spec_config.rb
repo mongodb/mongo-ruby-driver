@@ -174,6 +174,41 @@ class SpecConfig
     'ruby-driver'.freeze
   end
 
+  # Gets the root system administrator user.
+  def root_user
+    Mongo::Auth::User.new(
+      user: user || 'root-user',
+      password: password || 'password',
+      roles: [
+        Mongo::Auth::Roles::USER_ADMIN_ANY_DATABASE,
+        Mongo::Auth::Roles::DATABASE_ADMIN_ANY_DATABASE,
+        Mongo::Auth::Roles::READ_WRITE_ANY_DATABASE,
+        Mongo::Auth::Roles::HOST_MANAGER,
+        Mongo::Auth::Roles::CLUSTER_ADMIN
+      ]
+    )
+  end
+
+  # Get the default test user for the suite on versions 2.6 and higher.
+  def test_user
+    Mongo::Auth::User.new(
+      database: test_db,
+      user: 'test-user',
+      password: 'password',
+      roles: [
+        { role: Mongo::Auth::Roles::READ_WRITE, db: test_db },
+        { role: Mongo::Auth::Roles::DATABASE_ADMIN, db: test_db },
+        { role: Mongo::Auth::Roles::READ_WRITE, db: 'invalid_database' },
+        { role: Mongo::Auth::Roles::DATABASE_ADMIN, db: 'invalid_database' },
+                    { role: Mongo::Auth::Roles::READ_WRITE, db: 'hr' },           # For transactions examples
+                    { role: Mongo::Auth::Roles::DATABASE_ADMIN, db: 'hr' },       # For transactions examples
+                    { role: Mongo::Auth::Roles::READ_WRITE, db: 'reporting' },    # For transactions examples
+                    { role: Mongo::Auth::Roles::DATABASE_ADMIN, db: 'reporting' } # For transactions examples
+
+      ]
+    )
+  end
+
   def ci?
     !!ENV['CI']
   end
