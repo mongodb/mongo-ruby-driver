@@ -37,16 +37,6 @@ INVALID_WRITE_CONCERN = { w: 4 }
 # @since 2.5.0
 COMPRESSORS = ENV['COMPRESSORS'] ? { compressors: ENV['COMPRESSORS'].split(',') } : {}
 
-# SSL options.
-#
-# @since 2.1.0
-SSL_OPTIONS = {
-                  ssl: SpecConfig.instance.ssl?,
-                  ssl_verify: false,
-                  ssl_cert:  CLIENT_CERT_PEM,
-                  ssl_key:  CLIENT_KEY_PEM
-                }
-
 # Base test options.
 #
 # @since 2.1.0
@@ -70,7 +60,8 @@ BASE_OPTIONS = {
 # Options for test suite clients.
 #
 # @since 2.0.3
-TEST_OPTIONS = BASE_OPTIONS.merge(SpecConfig.instance.connect).merge(SSL_OPTIONS).merge(COMPRESSORS)
+TEST_OPTIONS = BASE_OPTIONS.merge(SpecConfig.instance.connect).
+  merge(SpecConfig.instance.ssl_options).merge(COMPRESSORS)
 
 # Gets the root system administrator user.
 #

@@ -242,7 +242,7 @@ describe Mongo::Address do
 
       before do
         address.instance_variable_set(:@resolver, nil)
-        address.send(:initialize_resolver!, (SpecConfig.instance.ssl? ? SSL_OPTIONS : {}))
+        address.send(:initialize_resolver!, SpecConfig.instance.ssl_options)
       end
 
       it 'uses the host, not the IP address' do
@@ -251,7 +251,7 @@ describe Mongo::Address do
 
       let(:socket) do
         if SpecConfig.instance.ssl?
-          address.socket(0.0, SSL_OPTIONS).instance_variable_get(:@tcp_socket)
+          address.socket(0.0, SpecConfig.instance.ssl_options).instance_variable_get(:@tcp_socket)
         else
           address.socket(0.0).instance_variable_get(:@socket)
         end

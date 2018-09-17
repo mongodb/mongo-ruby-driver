@@ -72,8 +72,49 @@ class SpecConfig
     addresses.first.split(':')[1] || '27017'
   end
 
+  def drivers_tools?
+    !!ENV['DRIVERS_TOOLS']
+  end
+
   def ssl?
     @ssl
+  end
+
+  def spec_root
+    File.join(File.dirname(__FILE__), '..')
+  end
+
+  def ssl_certs_dir
+    "#{spec_root}/support/certificates"
+  end
+
+  def client_cert_pem
+    if drivers_tools?
+      ENV['DRIVER_TOOLS_CLIENT_CERT_PEM']
+    else
+      "#{ssl_certs_dir}/client_cert.pem"
+    end
+  end
+
+  def client_key_pem
+    if drivers_tools?
+      ENV['DRIVER_TOOLS_CLIENT_KEY_PEM']
+    else
+      "#{ssl_certs_dir}/client_key.pem"
+    end
+  end
+
+  def ssl_options
+    if ssl?
+      {
+        ssl: true,
+        ssl_verify: false,
+        ssl_cert:  client_cert_pem,
+        ssl_key:  client_key_pem,
+      }
+    else
+      {}
+    end
   end
 
   def ci?
