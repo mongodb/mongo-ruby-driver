@@ -8,7 +8,7 @@ describe Mongo::Operation::Update::OpMsg do
                     :upsert => false }] }
 
   let(:write_concern) do
-    Mongo::WriteConcern.get(WRITE_CONCERN)
+    Mongo::WriteConcern.get(SpecConfig.instance.write_concern)
   end
   let(:session) { nil }
   let(:spec) do
@@ -54,7 +54,7 @@ describe Mongo::Operation::Update::OpMsg do
           { :updates       => other_updates,
             :db_name       => TEST_DB,
             :coll_name     => TEST_COLL,
-            :write_concern => Mongo::WriteConcern.get(WRITE_CONCERN),
+            :write_concern => Mongo::WriteConcern.get(SpecConfig.instance.write_concern),
             :ordered       => true
           }
         end

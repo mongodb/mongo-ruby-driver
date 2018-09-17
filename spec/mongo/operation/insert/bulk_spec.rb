@@ -17,7 +17,7 @@ describe Mongo::Operation::Insert do
   end
 
   let(:write_concern) do
-    Mongo::WriteConcern.get(WRITE_CONCERN)
+    Mongo::WriteConcern.get(SpecConfig.instance.write_concern)
   end
 
   let(:spec) do

@@ -68,6 +68,15 @@ class SpecConfig
     connect[:connect] == :replica_set
   end
 
+  # The write concern to use in the tests.
+  def write_concern
+    if connect_replica_set?
+      {w: 2}
+    else
+      {w: 1}
+    end
+  end
+
   def any_port
     addresses.first.split(':')[1] || '27017'
   end

@@ -3,7 +3,7 @@ require 'spec_helper'
 describe Mongo::Operation::Delete::Command do
 
   let(:write_concern) do
-    Mongo::WriteConcern.get(WRITE_CONCERN)
+    Mongo::WriteConcern.get(SpecConfig.instance.write_concern)
   end
 
   let(:session) { nil }

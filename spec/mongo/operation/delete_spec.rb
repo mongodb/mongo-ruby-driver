@@ -23,7 +23,7 @@ describe Mongo::Operation::Delete do
     { :deletes        => [ document ],
       :db_name       => TEST_DB,
       :coll_name     => TEST_COLL,
-      :write_concern => Mongo::WriteConcern.get(WRITE_CONCERN),
+      :write_concern => Mongo::WriteConcern.get(SpecConfig.instance.write_concern),
       :ordered       => true
     }
   end
@@ -59,7 +59,7 @@ describe Mongo::Operation::Delete do
           { :deletes        => [ other_doc ],
             :db_name       => TEST_DB,
             :coll_name     => TEST_COLL,
-            :write_concern => Mongo::WriteConcern.get(WRITE_CONCERN),
+            :write_concern => Mongo::WriteConcern.get(SpecConfig.instance.write_concern),
             :ordered       => true
           }
         end
@@ -92,7 +92,7 @@ describe Mongo::Operation::Delete do
           deletes: [ document ],
           db_name: TEST_DB,
           coll_name: TEST_COLL,
-          write_concern: Mongo::WriteConcern.get(WRITE_CONCERN)
+          write_concern: Mongo::WriteConcern.get(SpecConfig.instance.write_concern)
         })
       end
 
@@ -136,7 +136,7 @@ describe Mongo::Operation::Delete do
           deletes: [ document ],
           db_name: TEST_DB,
           coll_name: TEST_COLL,
-          write_concern: Mongo::WriteConcern.get(WRITE_CONCERN)
+          write_concern: Mongo::WriteConcern.get(SpecConfig.instance.write_concern)
         })
       end
 

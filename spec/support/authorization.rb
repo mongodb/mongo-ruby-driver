@@ -22,11 +22,6 @@ TEST_DB = 'ruby-driver'.freeze
 # @since 2.0.0
 TEST_COLL = 'test'.freeze
 
-# The write concern to use in the tests.
-#
-# @since 2.0.0
-WRITE_CONCERN = SpecConfig.instance.connect_replica_set? ? { w: 2 } : { w: 1 }
-
 # An invalid write concern.
 #
 # @since 2.4.2
@@ -37,7 +32,7 @@ INVALID_WRITE_CONCERN = { w: 4 }
 # @since 2.1.0
 BASE_OPTIONS = {
                   max_pool_size: 1,
-                  write: WRITE_CONCERN,
+                  write: SpecConfig.instance.write_concern,
                   heartbeat_frequency: 20,
                   max_read_retries: 5,
                   # The test suite seems to perform a number of operations
