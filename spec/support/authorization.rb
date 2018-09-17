@@ -27,32 +27,6 @@ TEST_COLL = 'test'.freeze
 # @since 2.4.2
 INVALID_WRITE_CONCERN = { w: 4 }
 
-# Base test options.
-#
-# @since 2.1.0
-BASE_OPTIONS = {
-                  max_pool_size: 1,
-                  write: SpecConfig.instance.write_concern,
-                  heartbeat_frequency: 20,
-                  max_read_retries: 5,
-                  # The test suite seems to perform a number of operations
-                  # requiring server selection. Hence a timeout of 1 here,
-                  # together with e.g. a misconfigured replica set,
-                  # means the test suite hangs for about 4 seconds before
-                  # failing.
-                  # Server selection timeout of 1 is insufficient for evergreen.
-                  server_selection_timeout: 2,
-                  wait_queue_timeout: 2,
-                  connect_timeout: 3,
-                  max_idle_time: 5
-               }
-
-# Options for test suite clients.
-#
-# @since 2.0.3
-TEST_OPTIONS = BASE_OPTIONS.merge(SpecConfig.instance.connect).
-  merge(SpecConfig.instance.ssl_options).merge(SpecConfig.instance.compressor_options)
-
 # Gets the root system administrator user.
 #
 # @since 2.0.0

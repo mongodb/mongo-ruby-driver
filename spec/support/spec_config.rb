@@ -9,13 +9,13 @@ class SpecConfig
       @uri_options = Mongo::Options::Mapper.transform_keys_to_symbols(@mongodb_uri.uri_options)
       if @uri_options[:replica_set]
         @addresses = @mongodb_uri.servers
-        @connect = { connect: :replica_set, replica_set: @uri_options[:replica_set] }
+        @connect_options = { connect: :replica_set, replica_set: @uri_options[:replica_set] }
       elsif ENV['TOPOLOGY'] == 'sharded_cluster'
         @addresses = [ @mongodb_uri.servers.first ] # See SERVER-16836 for why we can only use one host:port
-        @connect = { connect: :sharded }
+        @connect_options = { connect: :sharded }
       else
         @addresses = @mongodb_uri.servers
-        @connect = { connect: :direct }
+        @connect_options = { connect: :direct }
       end
       if @uri_options[:ssl].nil?
         @ssl = (ENV['SSL'] == 'ssl') || (ENV['SSL_ENABLED'] == 'true')
@@ -25,11 +25,11 @@ class SpecConfig
     else
       @addresses = ENV['MONGODB_ADDRESSES'] ? ENV['MONGODB_ADDRESSES'].split(',').freeze : [ '127.0.0.1:27017' ].freeze
       if ENV['RS_ENABLED']
-        @connect = { connect: :replica_set, replica_set: ENV['RS_NAME'] }
+        @connect_options = { connect: :replica_set, replica_set: ENV['RS_NAME'] }
       elsif ENV['SHARDED_ENABLED']
-        @connect = { connect: :sharded }
+        @connect_options = { connect: :sharded }
       else
-        @connect = { connect: :direct }
+        @connect_options = { connect: :direct }
       end
     end
   end
@@ -50,7 +50,7 @@ class SpecConfig
     %w(1 true yes).include?((ENV['CLIENT_DEBUG'] || '').downcase)
   end
 
-  attr_reader :uri_options, :addresses, :connect
+  attr_reader :uri_options, :addresses, :connect_options
 
   def user
     @mongodb_uri && @mongodb_uri.credentials[:user]
@@ -65,7 +65,7 @@ class SpecConfig
   end
 
   def connect_replica_set?
-    connect[:connect] == :replica_set
+    connect_options[:connect] == :replica_set
   end
 
   # The write concern to use in the tests.
@@ -141,6 +141,32 @@ class SpecConfig
     else
       {}
     end
+  end
+
+  # Base test options.
+  def base_test_options
+    {
+      max_pool_size: 1,
+      write: write_concern,
+      heartbeat_frequency: 20,
+      max_read_retries: 5,
+      # The test suite seems to perform a number of operations
+      # requiring server selection. Hence a timeout of 1 here,
+      # together with e.g. a misconfigured replica set,
+      # means the test suite hangs for about 4 seconds before
+      # failing.
+      # Server selection timeout of 1 is insufficient for evergreen.
+      server_selection_timeout: 2,
+      wait_queue_timeout: 2,
+      connect_timeout: 3,
+      max_idle_time: 5
+   }
+  end
+
+  # Options for test suite clients.
+  def test_options
+    base_test_options.merge(connect_options).
+      merge(ssl_options).merge(compressor_options)
   end
 
   def ci?
