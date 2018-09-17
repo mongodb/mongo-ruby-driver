@@ -32,11 +32,6 @@ WRITE_CONCERN = SpecConfig.instance.connect_replica_set? ? { w: 2 } : { w: 1 }
 # @since 2.4.2
 INVALID_WRITE_CONCERN = { w: 4 }
 
-# What compressor to use, if any.
-#
-# @since 2.5.0
-COMPRESSORS = ENV['COMPRESSORS'] ? { compressors: ENV['COMPRESSORS'].split(',') } : {}
-
 # Base test options.
 #
 # @since 2.1.0
@@ -61,7 +56,7 @@ BASE_OPTIONS = {
 #
 # @since 2.0.3
 TEST_OPTIONS = BASE_OPTIONS.merge(SpecConfig.instance.connect).
-  merge(SpecConfig.instance.ssl_options).merge(COMPRESSORS)
+  merge(SpecConfig.instance.ssl_options).merge(SpecConfig.instance.compressor_options)
 
 # Gets the root system administrator user.
 #

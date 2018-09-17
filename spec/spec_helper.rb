@@ -242,7 +242,7 @@ end
 #
 # @since 2.5.0
 def compression_enabled?
-  COMPRESSORS[:compressors]
+  !SpecConfig.instance.compressors.nil?
 end
 
 # Is the test suite testing compression.

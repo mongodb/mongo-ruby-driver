@@ -117,6 +117,23 @@ class SpecConfig
     end
   end
 
+  # What compressor to use, if any.
+  def compressors
+    if ENV['COMPRESSORS']
+      ENV['COMPRESSORS'].split(',')
+    else
+      nil
+    end
+  end
+
+  def compressor_options
+    if compressors
+      {compressors: compressors}
+    else
+      {}
+    end
+  end
+
   def ci?
     !!ENV['CI']
   end
