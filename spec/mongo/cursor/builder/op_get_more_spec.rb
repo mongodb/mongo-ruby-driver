@@ -42,7 +42,7 @@ describe Mongo::Cursor::Builder::OpGetMore do
     end
 
     it 'includes the database name' do
-      expect(specification[:db_name]).to eq(TEST_DB)
+      expect(specification[:db_name]).to eq(SpecConfig.instance.test_db)
     end
 
     it 'includes the collection name' do

@@ -19,7 +19,7 @@ describe Mongo::Operation::DropIndex do
 
       let(:operation) do
         described_class.new(
-          db_name: TEST_DB,
+          db_name: SpecConfig.instance.test_db,
           coll_name: TEST_COLL,
           index_name: 'another_-1'
         )
@@ -38,7 +38,7 @@ describe Mongo::Operation::DropIndex do
 
       let(:operation) do
         described_class.new(
-          db_name: TEST_DB,
+          db_name: SpecConfig.instance.test_db,
           coll_name: TEST_COLL,
           index_name: 'another_blah'
         )

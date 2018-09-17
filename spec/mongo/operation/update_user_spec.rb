@@ -21,7 +21,7 @@ describe Mongo::Operation::UpdateUser do
     end
 
     let(:operation) do
-      described_class.new(user: user_updated, db_name: TEST_DB)
+      described_class.new(user: user_updated, db_name: SpecConfig.instance.test_db)
     end
 
     before do

@@ -95,7 +95,7 @@ describe Mongo::Operation::Delete::OpMsg do
             delete: TEST_COLL,
             ordered: true,
             writeConcern: write_concern.options,
-            '$db' => TEST_DB,
+            '$db' => SpecConfig.instance.test_db,
             lsid: session.session_id
         }
       end

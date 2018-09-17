@@ -34,7 +34,7 @@ describe Mongo::Auth::X509 do
   end
 
   let(:user) do
-    Mongo::Auth::User.new(database: TEST_DB, user: 'driver', password: 'password')
+    Mongo::Auth::User.new(database: SpecConfig.instance.test_db, user: 'driver', password: 'password')
   end
 
   describe '#login' do

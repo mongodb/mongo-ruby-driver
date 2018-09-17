@@ -169,6 +169,11 @@ class SpecConfig
       merge(ssl_options).merge(compressor_options)
   end
 
+  # The default test database for all specs.
+  def test_db
+    'ruby-driver'.freeze
+  end
+
   def ci?
     !!ENV['CI']
   end

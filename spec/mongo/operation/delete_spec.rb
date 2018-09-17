@@ -21,7 +21,7 @@ describe Mongo::Operation::Delete do
 
   let(:spec) do
     { :deletes        => [ document ],
-      :db_name       => TEST_DB,
+      :db_name       => SpecConfig.instance.test_db,
       :coll_name     => TEST_COLL,
       :write_concern => Mongo::WriteConcern.get(SpecConfig.instance.write_concern),
       :ordered       => true
@@ -57,7 +57,7 @@ describe Mongo::Operation::Delete do
 
         let(:other_spec) do
           { :deletes        => [ other_doc ],
-            :db_name       => TEST_DB,
+            :db_name       => SpecConfig.instance.test_db,
             :coll_name     => TEST_COLL,
             :write_concern => Mongo::WriteConcern.get(SpecConfig.instance.write_concern),
             :ordered       => true
@@ -90,7 +90,7 @@ describe Mongo::Operation::Delete do
       let(:delete) do
         described_class.new({
           deletes: [ document ],
-          db_name: TEST_DB,
+          db_name: SpecConfig.instance.test_db,
           coll_name: TEST_COLL,
           write_concern: Mongo::WriteConcern.get(SpecConfig.instance.write_concern)
         })
@@ -134,7 +134,7 @@ describe Mongo::Operation::Delete do
       let(:delete) do
         described_class.new({
           deletes: [ document ],
-          db_name: TEST_DB,
+          db_name: SpecConfig.instance.test_db,
           coll_name: TEST_COLL,
           write_concern: Mongo::WriteConcern.get(SpecConfig.instance.write_concern)
         })
@@ -198,7 +198,7 @@ describe Mongo::Operation::Delete do
       let(:delete) do
         described_class.new({
                               deletes: [ document ],
-                              db_name: TEST_DB,
+                              db_name: SpecConfig.instance.test_db,
                               coll_name: TEST_COLL,
                               write_concern: Mongo::WriteConcern.get(:w => 0)
                             })

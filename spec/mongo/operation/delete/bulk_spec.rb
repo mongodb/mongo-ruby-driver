@@ -8,7 +8,7 @@ describe Mongo::Operation::Delete do
 
   let(:spec) do
     { :deletes       => documents,
-      :db_name       => TEST_DB,
+      :db_name       => SpecConfig.instance.test_db,
       :coll_name     => TEST_COLL,
       :write_concern => Mongo::WriteConcern.get(SpecConfig.instance.write_concern),
       :ordered       => true
@@ -46,7 +46,7 @@ describe Mongo::Operation::Delete do
 
         let(:other_spec) do
           { :deletes       => other_docs,
-            :db_name       => TEST_DB,
+            :db_name       => SpecConfig.instance.test_db,
             :coll_name     => TEST_COLL,
             :write_concern => Mongo::WriteConcern.get(SpecConfig.instance.write_concern),
             :ordered       => true
@@ -88,7 +88,7 @@ describe Mongo::Operation::Delete do
       let(:op) do
         described_class.new({
           deletes: documents,
-          db_name: TEST_DB,
+          db_name: SpecConfig.instance.test_db,
           coll_name: TEST_COLL,
           write_concern: Mongo::WriteConcern.get(w: 1)
         })
@@ -112,7 +112,7 @@ describe Mongo::Operation::Delete do
       let(:op) do
         described_class.new({
           deletes: documents,
-          db_name: TEST_DB,
+          db_name: SpecConfig.instance.test_db,
           coll_name: TEST_COLL,
           write_concern: Mongo::WriteConcern.get(SpecConfig.instance.write_concern)
         })
@@ -141,7 +141,7 @@ describe Mongo::Operation::Delete do
 
       let(:spec) do
         { :deletes       => documents,
-          :db_name       => TEST_DB,
+          :db_name       => SpecConfig.instance.test_db,
           :coll_name     => TEST_COLL,
           :write_concern => Mongo::WriteConcern.get(SpecConfig.instance.write_concern),
           :ordered       => true
@@ -190,7 +190,7 @@ describe Mongo::Operation::Delete do
 
       let(:spec) do
         { :deletes       => documents,
-          :db_name       => TEST_DB,
+          :db_name       => SpecConfig.instance.test_db,
           :coll_name     => TEST_COLL,
           :write_concern => Mongo::WriteConcern.get(SpecConfig.instance.write_concern),
           :ordered       => false

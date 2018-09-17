@@ -256,7 +256,7 @@ describe Mongo::URI::SRVProtocol do
 
     describe '#client_options' do
 
-      let(:db)          { TEST_DB }
+      let(:db)          { SpecConfig.instance.test_db }
       let(:servers)     { 'test5.test.build.10gen.cc' }
       let(:string)      { "#{scheme}#{credentials}@#{servers}/#{db}" }
       let(:user)        { 'tyler' }
@@ -268,7 +268,7 @@ describe Mongo::URI::SRVProtocol do
       end
 
       it 'includes the database in the options' do
-        expect(options[:database]).to eq(TEST_DB)
+        expect(options[:database]).to eq(SpecConfig.instance.test_db)
       end
 
       it 'includes the user in the options' do

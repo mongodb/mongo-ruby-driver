@@ -288,7 +288,7 @@ end
 # @since 2.0.0
 def initialize_scanned_client!
   ClientRegistry.instance.new_global_client(
-    SpecConfig.instance.addresses, SpecConfig.instance.test_options.merge(database: TEST_DB))
+    SpecConfig.instance.addresses, SpecConfig.instance.test_options.merge(database: SpecConfig.instance.test_db))
 end
 
 class ScannedClientHasNoServers < StandardError; end

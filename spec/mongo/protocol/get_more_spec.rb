@@ -3,7 +3,7 @@ require 'spec_helper'
 describe Mongo::Protocol::GetMore do
 
   let(:opcode)    { 2005 }
-  let(:db)        { TEST_DB }
+  let(:db)        { SpecConfig.instance.test_db }
   let(:coll)      { TEST_COLL }
   let(:ns)        { "#{db}.#{coll}" }
   let(:limit)     { 25 }

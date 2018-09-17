@@ -13,7 +13,7 @@ describe Mongo::Operation::CreateUser do
     end
 
     let(:operation) do
-      described_class.new(user: user, db_name: TEST_DB)
+      described_class.new(user: user, db_name: SpecConfig.instance.test_db)
     end
 
     after do

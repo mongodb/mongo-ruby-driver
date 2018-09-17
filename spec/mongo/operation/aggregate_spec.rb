@@ -14,7 +14,7 @@ describe Mongo::Operation::Aggregate do
   let(:spec) do
     { :selector => selector,
       :options => options,
-      :db_name => TEST_DB
+      :db_name => SpecConfig.instance.test_db
     }
   end
   let(:op) { described_class.new(spec) }
@@ -41,7 +41,7 @@ describe Mongo::Operation::Aggregate do
       let(:other_spec) do
         { :selector => other_selector,
           :options => options,
-          :db_name => TEST_DB,
+          :db_name => SpecConfig.instance.test_db,
         }
       end
       let(:other) { described_class.new(other_spec) }

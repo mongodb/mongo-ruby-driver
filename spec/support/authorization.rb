@@ -12,11 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# The default test database for all specs.
-#
-# @since 2.0.0
-TEST_DB = 'ruby-driver'.freeze
-
 # The default test collection.
 #
 # @since 2.0.0
@@ -46,12 +41,12 @@ ROOT_USER = Mongo::Auth::User.new(
 #
 # @since 2.0.0
 TEST_USER = Mongo::Auth::User.new(
-  database: TEST_DB,
+  database: SpecConfig.instance.test_db,
   user: 'test-user',
   password: 'password',
   roles: [
-    { role: Mongo::Auth::Roles::READ_WRITE, db: TEST_DB },
-    { role: Mongo::Auth::Roles::DATABASE_ADMIN, db: TEST_DB },
+    { role: Mongo::Auth::Roles::READ_WRITE, db: SpecConfig.instance.test_db },
+    { role: Mongo::Auth::Roles::DATABASE_ADMIN, db: SpecConfig.instance.test_db },
     { role: Mongo::Auth::Roles::READ_WRITE, db: 'invalid_database' },
     { role: Mongo::Auth::Roles::DATABASE_ADMIN, db: 'invalid_database' },
 		{ role: Mongo::Auth::Roles::READ_WRITE, db: 'hr' },           # For transactions examples
@@ -69,7 +64,7 @@ TEST_USER = Mongo::Auth::User.new(
 AUTHORIZED_CLIENT = ClientRegistry.instance.new_global_client(
   SpecConfig.instance.addresses,
   SpecConfig.instance.test_options.merge(
-    database: TEST_DB,
+    database: SpecConfig.instance.test_db,
     user: TEST_USER.name,
     password: TEST_USER.password)
 )
@@ -84,7 +79,7 @@ AUTHROIZED_CLIENT_WITH_RETRY_WRITES = AUTHORIZED_CLIENT.with(retry_writes: true)
 # @since 2.0.0
 UNAUTHORIZED_CLIENT = ClientRegistry.instance.new_global_client(
   SpecConfig.instance.addresses,
-  SpecConfig.instance.test_options.merge(database: TEST_DB, monitoring: false)
+  SpecConfig.instance.test_options.merge(database: SpecConfig.instance.test_db, monitoring: false)
 )
 
 # Provides an unauthorized mongo client on the admin database, for use in
@@ -103,7 +98,7 @@ ADMIN_UNAUTHORIZED_CLIENT = ClientRegistry.instance.new_global_client(
 ADMIN_AUTHORIZED_TEST_CLIENT = ADMIN_UNAUTHORIZED_CLIENT.with(
   user: ROOT_USER.name,
   password: ROOT_USER.password,
-  database: TEST_DB,
+  database: SpecConfig.instance.test_db,
   auth_source: SpecConfig.instance.auth_source || Mongo::Database::ADMIN,
   monitoring: false
 )
@@ -114,7 +109,7 @@ ADMIN_AUTHORIZED_TEST_CLIENT = ADMIN_UNAUTHORIZED_CLIENT.with(
 SUBSCRIBED_CLIENT = ClientRegistry.instance.new_global_client(
     SpecConfig.instance.addresses,
     SpecConfig.instance.test_options.merge(
-      database: TEST_DB,
+      database: SpecConfig.instance.test_db,
       user: TEST_USER.name,
       password: TEST_USER.password)
 )
@@ -152,7 +147,7 @@ module Authorization
       new_local_client(
         SpecConfig.instance.addresses,
         SpecConfig.instance.test_options.merge(
-          database: TEST_DB,
+          database: SpecConfig.instance.test_db,
           user: TEST_USER.name,
           password: TEST_USER.password,
           heartbeat_frequency: 10,

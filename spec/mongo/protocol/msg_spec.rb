@@ -5,7 +5,7 @@ describe Mongo::Protocol::Msg do
   let(:opcode) { 2013 }
   let(:flags)     { [:none] }
   let(:options)   { {} }
-  let(:global_args)     { { '$db' => TEST_DB, ping: 1 } }
+  let(:global_args)     { { '$db' => SpecConfig.instance.test_db, ping: 1 } }
   let(:sections)   { [ ] }
 
   let(:message) do
@@ -88,7 +88,7 @@ describe Mongo::Protocol::Msg do
       context 'when the global_args are not equal' do
 
         let(:other) do
-          described_class.new(flags, nil, { '$db'=> TEST_DB, ismaster: 1 })
+          described_class.new(flags, nil, { '$db'=> SpecConfig.instance.test_db, ismaster: 1 })
         end
 
         it 'returns false' do
@@ -441,7 +441,7 @@ describe Mongo::Protocol::Msg do
 
       it 'creates a payload with the command' do
         expect(message.payload[:command_name]).to eq(:ping)
-        expect(message.payload[:database_name]).to eq(TEST_DB)
+        expect(message.payload[:database_name]).to eq(SpecConfig.instance.test_db)
         expect(message.payload[:command]).to eq('ping' => 1)
         expect(message.payload[:request_id]).to eq(message.request_id)
       end
@@ -456,7 +456,7 @@ describe Mongo::Protocol::Msg do
       end
 
       let(:global_args) do
-        { '$db' => TEST_DB,
+        { '$db' => SpecConfig.instance.test_db,
           'insert' => TEST_COLL,
           'ordered' => true
         }
@@ -476,7 +476,7 @@ describe Mongo::Protocol::Msg do
 
       it 'creates a payload with the command' do
         expect(message.payload[:command_name]).to eq('insert')
-        expect(message.payload[:database_name]).to eq(TEST_DB)
+        expect(message.payload[:database_name]).to eq(SpecConfig.instance.test_db)
         expect(message.payload[:command]).to eq(expected_command_doc)
         expect(message.payload[:request_id]).to eq(message.request_id)
       end

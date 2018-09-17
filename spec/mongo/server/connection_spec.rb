@@ -102,7 +102,7 @@ describe Mongo::Server::Connection do
             SpecConfig.instance.test_options.merge(
               :user => 'notauser',
               :password => 'password',
-              :database => TEST_DB,
+              :database => SpecConfig.instance.test_db,
               :heartbeat_frequency => 30)
           )
         end
@@ -194,11 +194,11 @@ describe Mongo::Server::Connection do
     end
 
     let(:insert) do
-      Mongo::Protocol::Insert.new(TEST_DB, TEST_COLL, documents)
+      Mongo::Protocol::Insert.new(SpecConfig.instance.test_db, TEST_COLL, documents)
     end
 
     let(:query) do
-      Mongo::Protocol::Query.new(TEST_DB, TEST_COLL, { 'name' => 'testing' })
+      Mongo::Protocol::Query.new(SpecConfig.instance.test_db, TEST_COLL, { 'name' => 'testing' })
     end
 
     context 'when providing a single message' do
@@ -223,7 +223,7 @@ describe Mongo::Server::Connection do
       end
 
       let(:command) do
-        Mongo::Protocol::Query.new(TEST_DB, '$cmd', selector, :limit => -1)
+        Mongo::Protocol::Query.new(SpecConfig.instance.test_db, '$cmd', selector, :limit => -1)
       end
 
       let(:reply) do
@@ -246,15 +246,15 @@ describe Mongo::Server::Connection do
       end
 
       let(:insert) do
-        Mongo::Protocol::Insert.new(TEST_DB, TEST_COLL, documents)
+        Mongo::Protocol::Insert.new(SpecConfig.instance.test_db, TEST_COLL, documents)
       end
 
       let(:query_bob) do
-        Mongo::Protocol::Query.new(TEST_DB, TEST_COLL, { name: 'bob' })
+        Mongo::Protocol::Query.new(SpecConfig.instance.test_db, TEST_COLL, { name: 'bob' })
       end
 
       let(:query_alice) do
-        Mongo::Protocol::Query.new(TEST_DB, TEST_COLL, { name: 'alice' })
+        Mongo::Protocol::Query.new(SpecConfig.instance.test_db, TEST_COLL, { name: 'alice' })
       end
 
       after do
@@ -292,15 +292,15 @@ describe Mongo::Server::Connection do
       end
 
       let(:insert) do
-        Mongo::Protocol::Insert.new(TEST_DB, TEST_COLL, documents)
+        Mongo::Protocol::Insert.new(SpecConfig.instance.test_db, TEST_COLL, documents)
       end
 
       let(:query_bob) do
-        Mongo::Protocol::Query.new(TEST_DB, TEST_COLL, { name: 'bob' })
+        Mongo::Protocol::Query.new(SpecConfig.instance.test_db, TEST_COLL, { name: 'bob' })
       end
 
       let(:query_alice) do
-        Mongo::Protocol::Query.new(TEST_DB, TEST_COLL, { name: 'alice' })
+        Mongo::Protocol::Query.new(SpecConfig.instance.test_db, TEST_COLL, { name: 'alice' })
       end
 
       before do
@@ -357,7 +357,7 @@ describe Mongo::Server::Connection do
         end
 
         let(:command) do
-          Mongo::Protocol::Query.new(TEST_DB, '$cmd', selector, :limit => -1)
+          Mongo::Protocol::Query.new(SpecConfig.instance.test_db, '$cmd', selector, :limit => -1)
         end
 
         let(:reply) do
@@ -460,7 +460,7 @@ describe Mongo::Server::Connection do
     context 'when the process is forked' do
 
       let(:insert) do
-        Mongo::Protocol::Insert.new(TEST_DB, TEST_COLL, documents)
+        Mongo::Protocol::Insert.new(SpecConfig.instance.test_db, TEST_COLL, documents)
       end
 
       before do
@@ -570,14 +570,14 @@ describe Mongo::Server::Connection do
           server,
           :user => TEST_USER.name,
           :password => TEST_USER.password,
-          :database => TEST_DB,
+          :database => SpecConfig.instance.test_db,
           :auth_mech => :mongodb_cr
         )
       end
 
       let(:user) do
         Mongo::Auth::User.new(
-          database: TEST_DB,
+          database: SpecConfig.instance.test_db,
           user: TEST_USER.name,
           password: TEST_USER.password
         )
