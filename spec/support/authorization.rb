@@ -30,8 +30,8 @@ AUTHORIZED_CLIENT = ClientRegistry.instance.new_global_client(
   SpecConfig.instance.addresses,
   SpecConfig.instance.test_options.merge(
     database: SpecConfig.instance.test_db,
-    user: TEST_USER.name,
-    password: TEST_USER.password)
+    user: SpecConfig.instance.test_user.name,
+    password: SpecConfig.instance.test_user.password)
 )
 
 # Provides an authorized mongo client that retries writes.
@@ -75,8 +75,8 @@ SUBSCRIBED_CLIENT = ClientRegistry.instance.new_global_client(
     SpecConfig.instance.addresses,
     SpecConfig.instance.test_options.merge(
       database: SpecConfig.instance.test_db,
-      user: TEST_USER.name,
-      password: TEST_USER.password)
+      user: SpecConfig.instance.test_user.name,
+      password: SpecConfig.instance.test_user.password)
 )
 SUBSCRIBED_CLIENT.subscribe(Mongo::Monitoring::COMMAND, EventSubscriber)
 AUTHROIZED_CLIENT_WITH_RETRY_WRITES.subscribe(Mongo::Monitoring::COMMAND, EventSubscriber)
@@ -98,7 +98,7 @@ module Authorization
     # Get the default test user for the suite.
     #
     # @since 2.0.0
-    context.let(:test_user) { TEST_USER }
+    context.let(:test_user) { SpecConfig.instance.test_user }
 
     # Provides an authorized mongo client on the default test database for the
     # default test user.
@@ -113,8 +113,8 @@ module Authorization
         SpecConfig.instance.addresses,
         SpecConfig.instance.test_options.merge(
           database: SpecConfig.instance.test_db,
-          user: TEST_USER.name,
-          password: TEST_USER.password,
+          user: SpecConfig.instance.test_user.name,
+          password: SpecConfig.instance.test_user.password,
           heartbeat_frequency: 10,
         ),
       )

@@ -112,7 +112,7 @@ RSpec.configure do |config|
     begin
       # Adds the test user to the test database with permissions on all
       # databases that will be used in the test suite.
-      ADMIN_AUTHORIZED_TEST_CLIENT.database.users.create(TEST_USER)
+      ADMIN_AUTHORIZED_TEST_CLIENT.database.users.create(SpecConfig.instance.test_user)
     rescue Exception => e
     end
   end

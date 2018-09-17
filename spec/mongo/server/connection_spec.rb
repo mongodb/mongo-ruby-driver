@@ -130,9 +130,9 @@ describe Mongo::Server::Connection do
           described_class.new(
             server,
             SpecConfig.instance.test_options.merge(
-              :user => TEST_USER.name,
-              :password => TEST_USER.password,
-              :database => TEST_USER.database )
+              :user => SpecConfig.instance.test_user.name,
+              :password => SpecConfig.instance.test_user.password,
+              :database => SpecConfig.instance.test_user.database )
           )
         end
 
@@ -183,9 +183,9 @@ describe Mongo::Server::Connection do
       described_class.new(
         server,
         SpecConfig.instance.test_options.merge(
-          :user => TEST_USER.name,
-          :password => TEST_USER.password,
-          :database => TEST_USER.database )
+          :user => SpecConfig.instance.test_user.name,
+          :password => SpecConfig.instance.test_user.password,
+          :database => SpecConfig.instance.test_user.database )
       )
     end
 
@@ -568,8 +568,8 @@ describe Mongo::Server::Connection do
       let(:connection) do
         described_class.new(
           server,
-          :user => TEST_USER.name,
-          :password => TEST_USER.password,
+          :user => SpecConfig.instance.test_user.name,
+          :password => SpecConfig.instance.test_user.password,
           :database => SpecConfig.instance.test_db,
           :auth_mech => :mongodb_cr
         )
@@ -578,8 +578,8 @@ describe Mongo::Server::Connection do
       let(:user) do
         Mongo::Auth::User.new(
           database: SpecConfig.instance.test_db,
-          user: TEST_USER.name,
-          password: TEST_USER.password
+          user: SpecConfig.instance.test_user.name,
+          password: SpecConfig.instance.test_user.password
         )
       end
 
