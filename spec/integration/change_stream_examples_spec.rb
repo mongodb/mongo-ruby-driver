@@ -47,7 +47,7 @@ describe 'change streams examples in Ruby', if: test_change_streams? do
       expect(change['fullDocument']['_id']).not_to be_nil
       expect(change['fullDocument']['x']).to eq(1)
       expect(change['ns']).not_to be_nil
-      expect(change['ns']['db']).to eq(TEST_DB)
+      expect(change['ns']['db']).to eq(SpecConfig.instance.test_db)
       expect(change['ns']['coll']).to eq(inventory.name)
       expect(change['documentKey']).not_to be_nil
       expect(change['documentKey']['_id']).to eq(change['fullDocument']['_id'])
@@ -86,7 +86,7 @@ describe 'change streams examples in Ruby', if: test_change_streams? do
       expect(change['fullDocument']['_id']).to eq(1)
       expect(change['fullDocument']['x']).to eq(5)
       expect(change['ns']).not_to be_nil
-      expect(change['ns']['db']).to eq(TEST_DB)
+      expect(change['ns']['db']).to eq(SpecConfig.instance.test_db)
       expect(change['ns']['coll']).to eq(inventory.name)
       expect(change['documentKey']).not_to be_nil
       expect(change['documentKey']['_id']).to eq(1)
@@ -113,7 +113,7 @@ describe 'change streams examples in Ruby', if: test_change_streams? do
       expect(next_change['fullDocument']['_id']).not_to be_nil
       expect(next_change['fullDocument']['x']).to eq(1)
       expect(next_change['ns']).not_to be_nil
-      expect(next_change['ns']['db']).to eq(TEST_DB)
+      expect(next_change['ns']['db']).to eq(SpecConfig.instance.test_db)
       expect(next_change['ns']['coll']).to eq(inventory.name)
       expect(next_change['documentKey']).not_to be_nil
       expect(next_change['documentKey']['_id']).to eq(next_change['fullDocument']['_id'])
@@ -129,7 +129,7 @@ describe 'change streams examples in Ruby', if: test_change_streams? do
       expect(next_next_change['fullDocument']['_id']).not_to be_nil
       expect(next_next_change['fullDocument']['x']).to eq(2)
       expect(next_next_change['ns']).not_to be_nil
-      expect(next_next_change['ns']['db']).to eq(TEST_DB)
+      expect(next_next_change['ns']['db']).to eq(SpecConfig.instance.test_db)
       expect(next_next_change['ns']['coll']).to eq(inventory.name)
       expect(next_next_change['documentKey']).not_to be_nil
       expect(next_next_change['documentKey']['_id']).to eq(next_next_change['fullDocument']['_id'])
@@ -180,7 +180,7 @@ describe 'change streams examples in Ruby', if: test_change_streams? do
       expect(change['fullDocument']['_id']).not_to be_nil
       expect(change['fullDocument']['username']).to eq('alice')
       expect(change['ns']).not_to be_nil
-      expect(change['ns']['db']).to eq(TEST_DB)
+      expect(change['ns']['db']).to eq(SpecConfig.instance.test_db)
       expect(change['ns']['coll']).to eq(inventory.name)
       expect(change['documentKey']).not_to be_nil
       expect(change['documentKey']['_id']).to eq(change['fullDocument']['_id'])

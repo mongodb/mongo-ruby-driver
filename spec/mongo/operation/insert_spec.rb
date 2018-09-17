@@ -9,7 +9,7 @@ describe Mongo::Operation::Insert do
 
   let(:spec) do
     { :documents     => documents,
-      :db_name       => TEST_DB,
+      :db_name       => SpecConfig.instance.test_db,
       :coll_name     => TEST_COLL,
       :write_concern => Mongo::WriteConcern.get(:w => 1)
     }
@@ -132,7 +132,7 @@ describe Mongo::Operation::Insert do
 
         let(:spec) do
           { :documents     => documents,
-            :db_name       => TEST_DB,
+            :db_name       => SpecConfig.instance.test_db,
             :coll_name     => TEST_COLL,
             :write_concern => Mongo::WriteConcern.get(:w => 1)
           }
@@ -183,7 +183,7 @@ describe Mongo::Operation::Insert do
 
         let(:spec) do
           { :documents     => documents,
-            :db_name       => TEST_DB,
+            :db_name       => SpecConfig.instance.test_db,
             :coll_name     => TEST_COLL,
             :write_concern => Mongo::WriteConcern.get(:w => 1)
           }
@@ -209,7 +209,7 @@ describe Mongo::Operation::Insert do
 
         let(:spec) do
           { :documents     => documents,
-            :db_name       => TEST_DB,
+            :db_name       => SpecConfig.instance.test_db,
             :coll_name     => TEST_COLL,
             :write_concern => Mongo::WriteConcern.get(:w => 1)
           }
@@ -253,7 +253,7 @@ describe Mongo::Operation::Insert do
 
       let(:spec) do
         { :documents     => documents,
-          :db_name       => TEST_DB,
+          :db_name       => SpecConfig.instance.test_db,
           :coll_name     => TEST_COLL,
           :write_concern => Mongo::WriteConcern.get(:w => 0)
         }

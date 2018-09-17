@@ -6,7 +6,7 @@ describe Mongo::Protocol::KillCursors do
   let(:cursor_ids) { [123, 456, 789] }
   let(:id_count)   { cursor_ids.size }
   let(:collection) { TEST_COLL }
-  let(:database)   { TEST_DB }
+  let(:database)   { SpecConfig.instance.test_db }
   let(:message) do
     described_class.new(collection, database, cursor_ids)
   end

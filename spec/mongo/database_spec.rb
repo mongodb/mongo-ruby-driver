@@ -5,13 +5,13 @@ describe Mongo::Database do
   describe '#==' do
 
     let(:database) do
-      described_class.new(authorized_client, TEST_DB)
+      described_class.new(authorized_client, SpecConfig.instance.test_db)
     end
 
     context 'when the names are the same' do
 
       let(:other) do
-        described_class.new(authorized_client, TEST_DB)
+        described_class.new(authorized_client, SpecConfig.instance.test_db)
       end
 
       it 'returns true' do
@@ -41,7 +41,7 @@ describe Mongo::Database do
   describe '#[]' do
 
     let(:database) do
-      described_class.new(authorized_client, TEST_DB)
+      described_class.new(authorized_client, SpecConfig.instance.test_db)
     end
 
     context 'when providing a valid name' do
@@ -67,7 +67,7 @@ describe Mongo::Database do
     context 'when the client has options' do
 
       let(:client) do
-        new_local_client([default_address.host], TEST_OPTIONS.merge(read: { mode: :secondary }))
+        new_local_client([default_address.host], SpecConfig.instance.test_options.merge(read: { mode: :secondary }))
       end
 
       let(:database) do
@@ -88,7 +88,7 @@ describe Mongo::Database do
   describe '#collection_names' do
 
     let(:database) do
-      described_class.new(authorized_client, TEST_DB)
+      described_class.new(authorized_client, SpecConfig.instance.test_db)
     end
 
     before do
@@ -145,7 +145,7 @@ describe Mongo::Database do
   describe '#list_collections' do
 
     let(:database) do
-      described_class.new(authorized_client, TEST_DB)
+      described_class.new(authorized_client, SpecConfig.instance.test_db)
     end
 
     let(:result) do
@@ -164,7 +164,7 @@ describe Mongo::Database do
     end
 
     it 'returns a list of the collections info', unless: list_command_enabled?  do
-      expect(result).to include("#{TEST_DB}.users")
+      expect(result).to include("#{SpecConfig.instance.test_db}.users")
     end
   end
 
@@ -173,7 +173,7 @@ describe Mongo::Database do
     context 'when the database exists' do
 
       let(:database) do
-        described_class.new(authorized_client, TEST_DB)
+        described_class.new(authorized_client, SpecConfig.instance.test_db)
       end
 
       let(:collection) do
@@ -208,7 +208,7 @@ describe Mongo::Database do
     context 'when the user is not authorized', if: auth_enabled? do
 
       let(:database) do
-        described_class.new(unauthorized_client, TEST_DB)
+        described_class.new(unauthorized_client, SpecConfig.instance.test_db)
       end
 
       it 'raises an exception' do
@@ -222,7 +222,7 @@ describe Mongo::Database do
   describe '#command' do
 
     let(:database) do
-      described_class.new(authorized_client, TEST_DB)
+      described_class.new(authorized_client, SpecConfig.instance.test_db)
     end
 
     it 'sends the query command to the cluster' do
@@ -318,7 +318,7 @@ describe Mongo::Database do
       end
 
       let(:database) do
-        described_class.new(client, TEST_DB, client.options)
+        described_class.new(client, SpecConfig.instance.test_db, client.options)
       end
 
       before do
@@ -341,7 +341,7 @@ describe Mongo::Database do
       end
 
       let(:database) do
-        described_class.new(client, TEST_DB, client.options)
+        described_class.new(client, SpecConfig.instance.test_db, client.options)
       end
 
       before do
@@ -362,7 +362,7 @@ describe Mongo::Database do
       end
 
       let(:database) do
-        described_class.new(client, TEST_DB, client.options)
+        described_class.new(client, SpecConfig.instance.test_db, client.options)
       end
 
       it 'uses the client server_selection_timeout' do
@@ -401,7 +401,7 @@ describe Mongo::Database do
       end
 
       let(:database) do
-        described_class.new(authorized_client.with(client_options), TEST_DB)
+        described_class.new(authorized_client.with(client_options), SpecConfig.instance.test_db)
       end
 
       context 'when a write concern is not in the command selector' do
@@ -440,7 +440,7 @@ describe Mongo::Database do
   describe '#drop' do
 
     let(:database) do
-      described_class.new(authorized_client, TEST_DB)
+      described_class.new(authorized_client, SpecConfig.instance.test_db)
     end
 
     it 'drops the database' do
@@ -500,11 +500,11 @@ describe Mongo::Database do
     context 'when provided a valid name' do
 
       let(:database) do
-        described_class.new(authorized_client, TEST_DB)
+        described_class.new(authorized_client, SpecConfig.instance.test_db)
       end
 
       it 'sets the name as a string' do
-        expect(database.name).to eq(TEST_DB)
+        expect(database.name).to eq(SpecConfig.instance.test_db)
       end
 
       it 'sets the client' do
@@ -525,7 +525,7 @@ describe Mongo::Database do
   describe '#inspect' do
 
     let(:database) do
-      described_class.new(authorized_client, TEST_DB)
+      described_class.new(authorized_client, SpecConfig.instance.test_db)
     end
 
     it 'includes the object id' do
@@ -540,7 +540,7 @@ describe Mongo::Database do
   describe '#fs', unless: sharded? do
 
     let(:database) do
-      described_class.new(authorized_client, TEST_DB)
+      described_class.new(authorized_client, SpecConfig.instance.test_db)
     end
 
     shared_context 'a GridFS database' do

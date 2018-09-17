@@ -15,7 +15,7 @@ describe Mongo::Operation::Insert::OpMsg do
   end
 
   let(:write_concern) do
-    Mongo::WriteConcern.get(WRITE_CONCERN)
+    Mongo::WriteConcern.get(SpecConfig.instance.write_concern)
   end
 
   let(:op) { described_class.new(spec) }
@@ -99,7 +99,7 @@ describe Mongo::Operation::Insert::OpMsg do
             insert: TEST_COLL,
             ordered: true,
             writeConcern: write_concern.options,
-            '$db' => TEST_DB,
+            '$db' => SpecConfig.instance.test_db,
             lsid: session.session_id
         }
       end

@@ -20,15 +20,15 @@ describe Mongo::Socket::SSL do
   end
 
   let(:options) do
-    SSL_OPTIONS
+    SpecConfig.instance.ssl_options
   end
 
   let (:key_string) do
-    File.read(CLIENT_KEY_PEM)
+    File.read(SpecConfig.instance.client_key_pem)
   end
 
   let (:cert_string) do
-    File.read(CLIENT_CERT_PEM)
+    File.read(SpecConfig.instance.client_cert_pem)
   end
 
   let (:ca_cert_string) do

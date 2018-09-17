@@ -8,12 +8,12 @@ describe Mongo::Operation::Update::OpMsg do
                     :upsert => false }] }
 
   let(:write_concern) do
-    Mongo::WriteConcern.get(WRITE_CONCERN)
+    Mongo::WriteConcern.get(SpecConfig.instance.write_concern)
   end
   let(:session) { nil }
   let(:spec) do
     { :updates       => updates,
-      :db_name       => TEST_DB,
+      :db_name       => SpecConfig.instance.test_db,
       :coll_name     => TEST_COLL,
       :write_concern => write_concern,
       :ordered       => true,
@@ -52,9 +52,9 @@ describe Mongo::Operation::Update::OpMsg do
                                 :upsert => false }] }
         let(:other_spec) do
           { :updates       => other_updates,
-            :db_name       => TEST_DB,
+            :db_name       => SpecConfig.instance.test_db,
             :coll_name     => TEST_COLL,
-            :write_concern => Mongo::WriteConcern.get(WRITE_CONCERN),
+            :write_concern => Mongo::WriteConcern.get(SpecConfig.instance.write_concern),
             :ordered       => true
           }
         end
@@ -73,7 +73,7 @@ describe Mongo::Operation::Update::OpMsg do
 
       let(:spec) do
         { :updates       => updates,
-          :db_name       => TEST_DB,
+          :db_name       => SpecConfig.instance.test_db,
           :coll_name     => TEST_COLL,
           :ordered       => true
         }
@@ -101,7 +101,7 @@ describe Mongo::Operation::Update::OpMsg do
             update: TEST_COLL,
             ordered: true,
             writeConcern: write_concern.options,
-            '$db' => TEST_DB,
+            '$db' => SpecConfig.instance.test_db,
             lsid: session.session_id
         }
       end

@@ -26,15 +26,15 @@ describe Mongo::Auth::X509 do
   declare_topology_double
 
   let(:server) do
-    Mongo::Server.new(address, cluster, monitoring, listeners, TEST_OPTIONS)
+    Mongo::Server.new(address, cluster, monitoring, listeners, SpecConfig.instance.test_options)
   end
 
   let(:connection) do
-    Mongo::Server::Connection.new(server, TEST_OPTIONS)
+    Mongo::Server::Connection.new(server, SpecConfig.instance.test_options)
   end
 
   let(:user) do
-    Mongo::Auth::User.new(database: TEST_DB, user: 'driver', password: 'password')
+    Mongo::Auth::User.new(database: SpecConfig.instance.test_db, user: 'driver', password: 'password')
   end
 
   describe '#login' do

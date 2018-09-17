@@ -3,7 +3,7 @@ require 'spec_helper'
 describe Mongo::Operation::Delete::OpMsg do
 
   let(:write_concern) do
-    Mongo::WriteConcern.get(WRITE_CONCERN)
+    Mongo::WriteConcern.get(SpecConfig.instance.write_concern)
   end
 
   let(:session) { nil }
@@ -95,7 +95,7 @@ describe Mongo::Operation::Delete::OpMsg do
             delete: TEST_COLL,
             ordered: true,
             writeConcern: write_concern.options,
-            '$db' => TEST_DB,
+            '$db' => SpecConfig.instance.test_db,
             lsid: session.session_id
         }
       end

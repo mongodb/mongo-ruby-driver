@@ -105,14 +105,14 @@ RSpec.configure do |config|
       # Create the root user administrator as the first user to be added to the
       # database. This user will need to be authenticated in order to add any
       # more users to any other databases.
-      ADMIN_UNAUTHORIZED_CLIENT.database.users.create(ROOT_USER)
+      ADMIN_UNAUTHORIZED_CLIENT.database.users.create(SpecConfig.instance.root_user)
       ADMIN_UNAUTHORIZED_CLIENT.close
     rescue Exception => e
     end
     begin
       # Adds the test user to the test database with permissions on all
       # databases that will be used in the test suite.
-      ADMIN_AUTHORIZED_TEST_CLIENT.database.users.create(TEST_USER)
+      ADMIN_AUTHORIZED_TEST_CLIENT.database.users.create(SpecConfig.instance.test_user)
     rescue Exception => e
     end
   end
@@ -242,7 +242,7 @@ end
 #
 # @since 2.5.0
 def compression_enabled?
-  COMPRESSORS[:compressors]
+  !SpecConfig.instance.compressors.nil?
 end
 
 # Is the test suite testing compression.
@@ -288,7 +288,7 @@ end
 # @since 2.0.0
 def initialize_scanned_client!
   ClientRegistry.instance.new_global_client(
-    SpecConfig.instance.addresses, TEST_OPTIONS.merge(database: TEST_DB))
+    SpecConfig.instance.addresses, SpecConfig.instance.test_options.merge(database: SpecConfig.instance.test_db))
 end
 
 class ScannedClientHasNoServers < StandardError; end

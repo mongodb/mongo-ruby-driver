@@ -4,7 +4,7 @@ describe Mongo::Operation::KillCursors::Legacy do
 
   let(:spec) do
     { coll_name: TEST_COLL,
-      db_name: TEST_DB,
+      db_name: SpecConfig.instance.test_db,
       :cursor_ids => [1,2]
     }
   end
@@ -34,7 +34,7 @@ describe Mongo::Operation::KillCursors::Legacy do
   describe '#message' do
 
     it 'creates a kill cursors wire protocol message with correct specs' do
-      expect(Mongo::Protocol::KillCursors).to receive(:new).with(TEST_COLL, TEST_DB, spec[:cursor_ids])
+      expect(Mongo::Protocol::KillCursors).to receive(:new).with(TEST_COLL, SpecConfig.instance.test_db, spec[:cursor_ids])
       op.send(:message, double('server'))
     end
   end

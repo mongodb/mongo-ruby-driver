@@ -4,7 +4,7 @@ describe Mongo::Operation::CollectionsInfo do
 
   let(:spec) do
     { selector: { listCollections: 1 },
-      db_name: TEST_DB
+      db_name: SpecConfig.instance.test_db
     }
   end
 
@@ -32,7 +32,7 @@ describe Mongo::Operation::CollectionsInfo do
 
     let(:info) do
       docs = op.execute(authorized_primary).documents
-      docs.collect { |info| info['name'].sub("#{TEST_DB}.", '') }
+      docs.collect { |info| info['name'].sub("#{SpecConfig.instance.test_db}.", '') }
     end
 
     it 'returns the list of collection info' do

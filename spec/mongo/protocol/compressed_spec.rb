@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe Mongo::Protocol::Compressed do
 
-  let(:original_message) { Mongo::Protocol::Query.new(TEST_DB, TEST_COLL, { ping: 1 }) }
+  let(:original_message) { Mongo::Protocol::Query.new(SpecConfig.instance.test_db, TEST_COLL, { ping: 1 }) }
   let(:compressor) { 'zlib' }
   let(:level)      { nil }
 

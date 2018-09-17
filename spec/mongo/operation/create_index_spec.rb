@@ -11,7 +11,7 @@ describe Mongo::Operation::CreateIndex do
       end
 
       let(:operation) do
-        described_class.new(indexes: [ spec ], db_name: TEST_DB, coll_name: TEST_COLL)
+        described_class.new(indexes: [ spec ], db_name: SpecConfig.instance.test_db, coll_name: TEST_COLL)
       end
 
       let(:response) do
@@ -34,11 +34,11 @@ describe Mongo::Operation::CreateIndex do
       end
 
       let(:operation) do
-        described_class.new(indexes: [ spec ], db_name: TEST_DB, coll_name: TEST_COLL)
+        described_class.new(indexes: [ spec ], db_name: SpecConfig.instance.test_db, coll_name: TEST_COLL)
       end
 
       let(:second_operation) do
-        described_class.new(indexes: [ spec.merge(unique: false) ], db_name: TEST_DB, coll_name: TEST_COLL)
+        described_class.new(indexes: [ spec.merge(unique: false) ], db_name: SpecConfig.instance.test_db, coll_name: TEST_COLL)
       end
 
       before do

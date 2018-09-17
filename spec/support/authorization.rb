@@ -12,100 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# The default test database for all specs.
-#
-# @since 2.0.0
-TEST_DB = 'ruby-driver'.freeze
-
 # The default test collection.
 #
 # @since 2.0.0
 TEST_COLL = 'test'.freeze
 
-# The write concern to use in the tests.
-#
-# @since 2.0.0
-WRITE_CONCERN = SpecConfig.instance.connect_replica_set? ? { w: 2 } : { w: 1 }
-
 # An invalid write concern.
 #
 # @since 2.4.2
 INVALID_WRITE_CONCERN = { w: 4 }
-
-# What compressor to use, if any.
-#
-# @since 2.5.0
-COMPRESSORS = ENV['COMPRESSORS'] ? { compressors: ENV['COMPRESSORS'].split(',') } : {}
-
-# SSL options.
-#
-# @since 2.1.0
-SSL_OPTIONS = {
-                  ssl: SpecConfig.instance.ssl?,
-                  ssl_verify: false,
-                  ssl_cert:  CLIENT_CERT_PEM,
-                  ssl_key:  CLIENT_KEY_PEM
-                }
-
-# Base test options.
-#
-# @since 2.1.0
-BASE_OPTIONS = {
-                  max_pool_size: 1,
-                  write: WRITE_CONCERN,
-                  heartbeat_frequency: 20,
-                  max_read_retries: 5,
-                  # The test suite seems to perform a number of operations
-                  # requiring server selection. Hence a timeout of 1 here,
-                  # together with e.g. a misconfigured replica set,
-                  # means the test suite hangs for about 4 seconds before
-                  # failing.
-                  # Server selection timeout of 1 is insufficient for evergreen.
-                  server_selection_timeout: 2,
-                  wait_queue_timeout: 2,
-                  connect_timeout: 3,
-                  max_idle_time: 5
-               }
-
-# Options for test suite clients.
-#
-# @since 2.0.3
-TEST_OPTIONS = BASE_OPTIONS.merge(SpecConfig.instance.connect).merge(SSL_OPTIONS).merge(COMPRESSORS)
-
-# Gets the root system administrator user.
-#
-# @since 2.0.0
-ROOT_USER = Mongo::Auth::User.new(
-  user: SpecConfig.instance.user || 'root-user',
-  password: SpecConfig.instance.password || 'password',
-  roles: [
-    Mongo::Auth::Roles::USER_ADMIN_ANY_DATABASE,
-    Mongo::Auth::Roles::DATABASE_ADMIN_ANY_DATABASE,
-    Mongo::Auth::Roles::READ_WRITE_ANY_DATABASE,
-    Mongo::Auth::Roles::HOST_MANAGER,
-    Mongo::Auth::Roles::CLUSTER_ADMIN
-  ]
-)
-
-# Get the default test user for the suite on versions 2.6 and higher.
-#
-# @since 2.0.0
-TEST_USER = Mongo::Auth::User.new(
-  database: TEST_DB,
-  user: 'test-user',
-  password: 'password',
-  roles: [
-    { role: Mongo::Auth::Roles::READ_WRITE, db: TEST_DB },
-    { role: Mongo::Auth::Roles::DATABASE_ADMIN, db: TEST_DB },
-    { role: Mongo::Auth::Roles::READ_WRITE, db: 'invalid_database' },
-    { role: Mongo::Auth::Roles::DATABASE_ADMIN, db: 'invalid_database' },
-		{ role: Mongo::Auth::Roles::READ_WRITE, db: 'hr' },           # For transactions examples
-		{ role: Mongo::Auth::Roles::DATABASE_ADMIN, db: 'hr' },       # For transactions examples
-		{ role: Mongo::Auth::Roles::READ_WRITE, db: 'reporting' },    # For transactions examples
-		{ role: Mongo::Auth::Roles::DATABASE_ADMIN, db: 'reporting' } # For transactions examples
-
-  ]
-)
 
 # Provides an authorized mongo client on the default test database for the
 # default test user.
@@ -113,10 +28,10 @@ TEST_USER = Mongo::Auth::User.new(
 # @since 2.0.0
 AUTHORIZED_CLIENT = ClientRegistry.instance.new_global_client(
   SpecConfig.instance.addresses,
-  TEST_OPTIONS.merge(
-    database: TEST_DB,
-    user: TEST_USER.name,
-    password: TEST_USER.password)
+  SpecConfig.instance.test_options.merge(
+    database: SpecConfig.instance.test_db,
+    user: SpecConfig.instance.test_user.name,
+    password: SpecConfig.instance.test_user.password)
 )
 
 # Provides an authorized mongo client that retries writes.
@@ -129,7 +44,7 @@ AUTHROIZED_CLIENT_WITH_RETRY_WRITES = AUTHORIZED_CLIENT.with(retry_writes: true)
 # @since 2.0.0
 UNAUTHORIZED_CLIENT = ClientRegistry.instance.new_global_client(
   SpecConfig.instance.addresses,
-  TEST_OPTIONS.merge(database: TEST_DB, monitoring: false)
+  SpecConfig.instance.test_options.merge(database: SpecConfig.instance.test_db, monitoring: false)
 )
 
 # Provides an unauthorized mongo client on the admin database, for use in
@@ -138,7 +53,7 @@ UNAUTHORIZED_CLIENT = ClientRegistry.instance.new_global_client(
 # @since 2.0.0
 ADMIN_UNAUTHORIZED_CLIENT = ClientRegistry.instance.new_global_client(
   SpecConfig.instance.addresses,
-  TEST_OPTIONS.merge(database: Mongo::Database::ADMIN, monitoring: false)
+  SpecConfig.instance.test_options.merge(database: Mongo::Database::ADMIN, monitoring: false)
 )
 
 # Get an authorized client on the test database logged in as the admin
@@ -146,9 +61,9 @@ ADMIN_UNAUTHORIZED_CLIENT = ClientRegistry.instance.new_global_client(
 #
 # @since 2.0.0
 ADMIN_AUTHORIZED_TEST_CLIENT = ADMIN_UNAUTHORIZED_CLIENT.with(
-  user: ROOT_USER.name,
-  password: ROOT_USER.password,
-  database: TEST_DB,
+  user: SpecConfig.instance.root_user.name,
+  password: SpecConfig.instance.root_user.password,
+  database: SpecConfig.instance.test_db,
   auth_source: SpecConfig.instance.auth_source || Mongo::Database::ADMIN,
   monitoring: false
 )
@@ -158,10 +73,10 @@ ADMIN_AUTHORIZED_TEST_CLIENT = ADMIN_UNAUTHORIZED_CLIENT.with(
 # @since 2.5.1
 SUBSCRIBED_CLIENT = ClientRegistry.instance.new_global_client(
     SpecConfig.instance.addresses,
-    TEST_OPTIONS.merge(
-      database: TEST_DB,
-      user: TEST_USER.name,
-      password: TEST_USER.password)
+    SpecConfig.instance.test_options.merge(
+      database: SpecConfig.instance.test_db,
+      user: SpecConfig.instance.test_user.name,
+      password: SpecConfig.instance.test_user.password)
 )
 SUBSCRIBED_CLIENT.subscribe(Mongo::Monitoring::COMMAND, EventSubscriber)
 AUTHROIZED_CLIENT_WITH_RETRY_WRITES.subscribe(Mongo::Monitoring::COMMAND, EventSubscriber)
@@ -178,12 +93,12 @@ module Authorization
     # Gets the root system administrator user.
     #
     # @since 2.0.0
-    context.let(:root_user) { ROOT_USER }
+    context.let(:root_user) { SpecConfig.instance.root_user }
 
     # Get the default test user for the suite.
     #
     # @since 2.0.0
-    context.let(:test_user) { TEST_USER }
+    context.let(:test_user) { SpecConfig.instance.test_user }
 
     # Provides an authorized mongo client on the default test database for the
     # default test user.
@@ -196,10 +111,10 @@ module Authorization
     context.let(:another_authorized_client) do
       new_local_client(
         SpecConfig.instance.addresses,
-        TEST_OPTIONS.merge(
-          database: TEST_DB,
-          user: TEST_USER.name,
-          password: TEST_USER.password,
+        SpecConfig.instance.test_options.merge(
+          database: SpecConfig.instance.test_db,
+          user: SpecConfig.instance.test_user.name,
+          password: SpecConfig.instance.test_user.password,
           heartbeat_frequency: 10,
         ),
       )

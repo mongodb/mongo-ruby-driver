@@ -30,7 +30,7 @@ describe Mongo::Server::Connection do
   declare_topology_double
 
   let(:server) do
-    Mongo::Server.new(address, cluster, monitoring, listeners, TEST_OPTIONS)
+    Mongo::Server.new(address, cluster, monitoring, listeners, SpecConfig.instance.test_options)
   end
 
   let(:pool) do
@@ -99,10 +99,10 @@ describe Mongo::Server::Connection do
         let(:connection) do
           described_class.new(
             server,
-            TEST_OPTIONS.merge(
+            SpecConfig.instance.test_options.merge(
               :user => 'notauser',
               :password => 'password',
-              :database => TEST_DB,
+              :database => SpecConfig.instance.test_db,
               :heartbeat_frequency => 30)
           )
         end
@@ -129,10 +129,10 @@ describe Mongo::Server::Connection do
         let(:connection) do
           described_class.new(
             server,
-            TEST_OPTIONS.merge(
-              :user => TEST_USER.name,
-              :password => TEST_USER.password,
-              :database => TEST_USER.database )
+            SpecConfig.instance.test_options.merge(
+              :user => SpecConfig.instance.test_user.name,
+              :password => SpecConfig.instance.test_user.password,
+              :database => SpecConfig.instance.test_user.database )
           )
         end
 
@@ -182,10 +182,10 @@ describe Mongo::Server::Connection do
     let!(:connection) do
       described_class.new(
         server,
-        TEST_OPTIONS.merge(
-          :user => TEST_USER.name,
-          :password => TEST_USER.password,
-          :database => TEST_USER.database )
+        SpecConfig.instance.test_options.merge(
+          :user => SpecConfig.instance.test_user.name,
+          :password => SpecConfig.instance.test_user.password,
+          :database => SpecConfig.instance.test_user.database )
       )
     end
 
@@ -194,11 +194,11 @@ describe Mongo::Server::Connection do
     end
 
     let(:insert) do
-      Mongo::Protocol::Insert.new(TEST_DB, TEST_COLL, documents)
+      Mongo::Protocol::Insert.new(SpecConfig.instance.test_db, TEST_COLL, documents)
     end
 
     let(:query) do
-      Mongo::Protocol::Query.new(TEST_DB, TEST_COLL, { 'name' => 'testing' })
+      Mongo::Protocol::Query.new(SpecConfig.instance.test_db, TEST_COLL, { 'name' => 'testing' })
     end
 
     context 'when providing a single message' do
@@ -223,7 +223,7 @@ describe Mongo::Server::Connection do
       end
 
       let(:command) do
-        Mongo::Protocol::Query.new(TEST_DB, '$cmd', selector, :limit => -1)
+        Mongo::Protocol::Query.new(SpecConfig.instance.test_db, '$cmd', selector, :limit => -1)
       end
 
       let(:reply) do
@@ -246,15 +246,15 @@ describe Mongo::Server::Connection do
       end
 
       let(:insert) do
-        Mongo::Protocol::Insert.new(TEST_DB, TEST_COLL, documents)
+        Mongo::Protocol::Insert.new(SpecConfig.instance.test_db, TEST_COLL, documents)
       end
 
       let(:query_bob) do
-        Mongo::Protocol::Query.new(TEST_DB, TEST_COLL, { name: 'bob' })
+        Mongo::Protocol::Query.new(SpecConfig.instance.test_db, TEST_COLL, { name: 'bob' })
       end
 
       let(:query_alice) do
-        Mongo::Protocol::Query.new(TEST_DB, TEST_COLL, { name: 'alice' })
+        Mongo::Protocol::Query.new(SpecConfig.instance.test_db, TEST_COLL, { name: 'alice' })
       end
 
       after do
@@ -292,15 +292,15 @@ describe Mongo::Server::Connection do
       end
 
       let(:insert) do
-        Mongo::Protocol::Insert.new(TEST_DB, TEST_COLL, documents)
+        Mongo::Protocol::Insert.new(SpecConfig.instance.test_db, TEST_COLL, documents)
       end
 
       let(:query_bob) do
-        Mongo::Protocol::Query.new(TEST_DB, TEST_COLL, { name: 'bob' })
+        Mongo::Protocol::Query.new(SpecConfig.instance.test_db, TEST_COLL, { name: 'bob' })
       end
 
       let(:query_alice) do
-        Mongo::Protocol::Query.new(TEST_DB, TEST_COLL, { name: 'alice' })
+        Mongo::Protocol::Query.new(SpecConfig.instance.test_db, TEST_COLL, { name: 'alice' })
       end
 
       before do
@@ -357,7 +357,7 @@ describe Mongo::Server::Connection do
         end
 
         let(:command) do
-          Mongo::Protocol::Query.new(TEST_DB, '$cmd', selector, :limit => -1)
+          Mongo::Protocol::Query.new(SpecConfig.instance.test_db, '$cmd', selector, :limit => -1)
         end
 
         let(:reply) do
@@ -460,7 +460,7 @@ describe Mongo::Server::Connection do
     context 'when the process is forked' do
 
       let(:insert) do
-        Mongo::Protocol::Insert.new(TEST_DB, TEST_COLL, documents)
+        Mongo::Protocol::Insert.new(SpecConfig.instance.test_db, TEST_COLL, documents)
       end
 
       before do
@@ -568,18 +568,18 @@ describe Mongo::Server::Connection do
       let(:connection) do
         described_class.new(
           server,
-          :user => TEST_USER.name,
-          :password => TEST_USER.password,
-          :database => TEST_DB,
+          :user => SpecConfig.instance.test_user.name,
+          :password => SpecConfig.instance.test_user.password,
+          :database => SpecConfig.instance.test_db,
           :auth_mech => :mongodb_cr
         )
       end
 
       let(:user) do
         Mongo::Auth::User.new(
-          database: TEST_DB,
-          user: TEST_USER.name,
-          password: TEST_USER.password
+          database: SpecConfig.instance.test_db,
+          user: SpecConfig.instance.test_user.name,
+          password: SpecConfig.instance.test_user.password
         )
       end
 
@@ -683,7 +683,7 @@ describe Mongo::Server::Connection do
       context 'when a socket_timeout is in the options' do
 
         let(:options) do
-          TEST_OPTIONS.merge(connect_timeout: 3, socket_timeout: 5)
+          SpecConfig.instance.test_options.merge(connect_timeout: 3, socket_timeout: 5)
         end
 
         before do
@@ -702,7 +702,7 @@ describe Mongo::Server::Connection do
       context 'when a socket_timeout is not in the options' do
 
         let(:options) do
-          TEST_OPTIONS.merge(connect_timeout: 3, socket_timeout: nil)
+          SpecConfig.instance.test_options.merge(connect_timeout: 3, socket_timeout: nil)
         end
 
         before do
@@ -724,7 +724,7 @@ describe Mongo::Server::Connection do
       context 'when a socket_timeout is in the options' do
 
         let(:options) do
-          TEST_OPTIONS.merge(connect_timeout: nil, socket_timeout: 5)
+          SpecConfig.instance.test_options.merge(connect_timeout: nil, socket_timeout: 5)
         end
 
         before do
@@ -743,7 +743,7 @@ describe Mongo::Server::Connection do
       context 'when a socket_timeout is not in the options' do
 
         let(:options) do
-          TEST_OPTIONS.merge(connect_timeout: nil, socket_timeout: nil)
+          SpecConfig.instance.test_options.merge(connect_timeout: nil, socket_timeout: nil)
         end
 
         before do

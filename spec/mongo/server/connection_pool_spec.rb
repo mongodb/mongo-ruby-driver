@@ -3,7 +3,7 @@ require 'spec_helper'
 describe Mongo::Server::ConnectionPool do
 
   let(:options) do
-    TEST_OPTIONS.merge(max_pool_size: 2)
+    SpecConfig.instance.test_options.merge(max_pool_size: 2)
   end
 
   let(:address) do
@@ -220,7 +220,7 @@ describe Mongo::Server::ConnectionPool do
     end
 
     let(:options) do
-      { user: ROOT_USER.name, password: ROOT_USER.password }.merge(TEST_OPTIONS).merge(max_pool_size: 1)
+      { user: SpecConfig.instance.root_user.name, password: SpecConfig.instance.root_user.password }.merge(SpecConfig.instance.test_options).merge(max_pool_size: 1)
     end
 
     before do
@@ -254,7 +254,7 @@ describe Mongo::Server::ConnectionPool do
     context 'when there is a max_idle_time specified' do
 
       let(:options) do
-        TEST_OPTIONS.merge(max_pool_size: 2, max_idle_time: 0.5)
+        SpecConfig.instance.test_options.merge(max_pool_size: 2, max_idle_time: 0.5)
       end
 
       context 'when the connections have not been checked out' do
@@ -277,7 +277,7 @@ describe Mongo::Server::ConnectionPool do
         context 'when min size is 0' do
 
           let(:options) do
-            TEST_OPTIONS.merge(max_pool_size: 2, min_pool_size: 0, max_idle_time: 0.5)
+            SpecConfig.instance.test_options.merge(max_pool_size: 2, min_pool_size: 0, max_idle_time: 0.5)
           end
 
           before do
@@ -300,7 +300,7 @@ describe Mongo::Server::ConnectionPool do
           context 'when more than the number of min_size are checked out' do
 
             let(:options) do
-              TEST_OPTIONS.merge(max_pool_size: 5, min_pool_size: 3, max_idle_time: 0.5)
+              SpecConfig.instance.test_options.merge(max_pool_size: 5, min_pool_size: 3, max_idle_time: 0.5)
             end
 
             before do
@@ -328,7 +328,7 @@ describe Mongo::Server::ConnectionPool do
           context 'when between 0 and min_size number of connections are checked out' do
 
             let(:options) do
-              TEST_OPTIONS.merge(max_pool_size: 5, min_pool_size: 3, max_idle_time: 0.5)
+              SpecConfig.instance.test_options.merge(max_pool_size: 5, min_pool_size: 3, max_idle_time: 0.5)
             end
 
             before do
@@ -367,7 +367,7 @@ describe Mongo::Server::ConnectionPool do
           context 'when a stale connection is unsuccessfully reconnected' do
 
             let(:options) do
-              TEST_OPTIONS.merge(max_pool_size: 5, min_pool_size: 3, max_idle_time: 0.5)
+              SpecConfig.instance.test_options.merge(max_pool_size: 5, min_pool_size: 3, max_idle_time: 0.5)
             end
 
             before do
@@ -406,7 +406,7 @@ describe Mongo::Server::ConnectionPool do
           context 'when exactly the min_size number of connections is checked out' do
 
             let(:options) do
-              TEST_OPTIONS.merge(max_pool_size: 5, min_pool_size: 3, max_idle_time: 0.5)
+              SpecConfig.instance.test_options.merge(max_pool_size: 5, min_pool_size: 3, max_idle_time: 0.5)
             end
 
             before do

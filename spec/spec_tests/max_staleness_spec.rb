@@ -24,9 +24,9 @@ describe 'Max Staleness Spec' do
 
       let(:options) do
         if spec.heartbeat_frequency
-          TEST_OPTIONS.merge(heartbeat_frequency: spec.heartbeat_frequency)
+          SpecConfig.instance.test_options.merge(heartbeat_frequency: spec.heartbeat_frequency)
         else
-          TEST_OPTIONS.dup.tap do |opts|
+          SpecConfig.instance.test_options.dup.tap do |opts|
             opts.delete(:heartbeat_frequency)
           end
         end.merge!(server_selection_timeout: 0.2, connect_timeout: 0.1)

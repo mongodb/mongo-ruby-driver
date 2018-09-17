@@ -29,7 +29,7 @@ describe Mongo::Operation::Indexes do
     let(:operation) do
       described_class.new({ selector: { listIndexes: TEST_COLL },
                             coll_name: TEST_COLL,
-                            db_name: TEST_DB })
+                            db_name: SpecConfig.instance.test_db })
     end
 
     let(:indexes) do

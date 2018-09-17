@@ -3,7 +3,7 @@ require 'spec_helper'
 describe Mongo::Protocol::Insert do
 
   let(:opcode) { 2002 }
-  let(:db)     { TEST_DB }
+  let(:db)     { SpecConfig.instance.test_db }
   let(:coll)   { TEST_COLL }
   let(:ns)     { "#{db}.#{coll}" }
   let(:doc1)   { { :name => 'Tyler' } }

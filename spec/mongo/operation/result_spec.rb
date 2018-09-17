@@ -290,7 +290,7 @@ describe Mongo::Operation::Result do
 
   context 'when there is a top-level Result class defined' do
     let(:client) do
-      new_local_client(SpecConfig.instance.addresses, TEST_OPTIONS)
+      new_local_client(SpecConfig.instance.addresses, SpecConfig.instance.test_options)
     end
 
     before do

@@ -15,7 +15,7 @@ describe Mongo::Operation::Insert::Command do
   end
 
   let(:write_concern) do
-    Mongo::WriteConcern.get(WRITE_CONCERN)
+    Mongo::WriteConcern.get(SpecConfig.instance.write_concern)
   end
 
   let(:op) { described_class.new(spec) }

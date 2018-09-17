@@ -11,7 +11,7 @@ describe Mongo::Operation::Update do
 
   let(:spec) do
     { :updates        => [ document ],
-      :db_name       => TEST_DB,
+      :db_name       => SpecConfig.instance.test_db,
       :coll_name     => TEST_COLL,
       :write_concern => Mongo::WriteConcern.get(:w => 1),
       :ordered       => true
@@ -52,7 +52,7 @@ describe Mongo::Operation::Update do
                            :upsert => true } }
         let(:other_spec) do
           { :update        => other_doc,
-            :db_name       => TEST_DB,
+            :db_name       => SpecConfig.instance.test_db,
             :coll_name     => TEST_COLL,
             :write_concern => Mongo::WriteConcern.get(:w => 1),
             :ordered       => true
@@ -87,7 +87,7 @@ describe Mongo::Operation::Update do
       let(:update) do
         described_class.new({
           updates: [ document ],
-          db_name: TEST_DB,
+          db_name: SpecConfig.instance.test_db,
           coll_name: TEST_COLL,
           write_concern: Mongo::WriteConcern.get(:w => 1)
         })
@@ -139,7 +139,7 @@ describe Mongo::Operation::Update do
       let(:update) do
         described_class.new({
           updates: [ document ],
-          db_name: TEST_DB,
+          db_name: SpecConfig.instance.test_db,
           coll_name: TEST_COLL,
           write_concern: Mongo::WriteConcern.get(:w => 1)
         })
@@ -231,7 +231,7 @@ describe Mongo::Operation::Update do
       let(:update) do
         described_class.new({
                                 updates: [ document ],
-                                db_name: TEST_DB,
+                                db_name: SpecConfig.instance.test_db,
                                 coll_name: TEST_COLL,
                                 write_concern: Mongo::WriteConcern.get(:w => 0)
                             })

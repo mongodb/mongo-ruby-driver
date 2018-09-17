@@ -11,7 +11,7 @@ describe Mongo::Operation::GetMore::Legacy do
   end
 
   let(:spec) do
-    { :db_name   => TEST_DB,
+    { :db_name   => SpecConfig.instance.test_db,
       :coll_name => TEST_COLL,
       :to_return => to_return,
       :cursor_id => cursor_id }
@@ -46,7 +46,7 @@ describe Mongo::Operation::GetMore::Legacy do
   describe '#message' do
 
     it 'creates a get more wire protocol message with correct specs' do
-      expect(Mongo::Protocol::GetMore).to receive(:new).with(TEST_DB, TEST_COLL, to_return, cursor_id).and_call_original
+      expect(Mongo::Protocol::GetMore).to receive(:new).with(SpecConfig.instance.test_db, TEST_COLL, to_return, cursor_id).and_call_original
       begin; op.execute(authorized_primary); rescue; end
     end
   end

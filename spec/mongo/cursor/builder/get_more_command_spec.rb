@@ -50,7 +50,7 @@ describe Mongo::Cursor::Builder::GetMoreCommand do
     shared_examples_for 'a getMore command builder' do
 
       it 'includes the database name' do
-        expect(specification[:db_name]).to eq(TEST_DB)
+        expect(specification[:db_name]).to eq(SpecConfig.instance.test_db)
       end
 
       it 'includes getMore with cursor id' do

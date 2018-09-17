@@ -398,7 +398,7 @@ describe Mongo::Cursor do
     end
 
     let(:query_spec) do
-      { :selector => {}, :options => {}, :db_name => TEST_DB, :coll_name => TEST_COLL }
+      { :selector => {}, :options => {}, :db_name => SpecConfig.instance.test_db, :coll_name => TEST_COLL }
     end
 
     let(:reply) do
