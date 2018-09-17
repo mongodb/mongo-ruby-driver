@@ -220,7 +220,7 @@ describe Mongo::Server::ConnectionPool do
     end
 
     let(:options) do
-      { user: ROOT_USER.name, password: ROOT_USER.password }.merge(SpecConfig.instance.test_options).merge(max_pool_size: 1)
+      { user: SpecConfig.instance.root_user.name, password: SpecConfig.instance.root_user.password }.merge(SpecConfig.instance.test_options).merge(max_pool_size: 1)
     end
 
     before do

@@ -105,7 +105,7 @@ RSpec.configure do |config|
       # Create the root user administrator as the first user to be added to the
       # database. This user will need to be authenticated in order to add any
       # more users to any other databases.
-      ADMIN_UNAUTHORIZED_CLIENT.database.users.create(ROOT_USER)
+      ADMIN_UNAUTHORIZED_CLIENT.database.users.create(SpecConfig.instance.root_user)
       ADMIN_UNAUTHORIZED_CLIENT.close
     rescue Exception => e
     end

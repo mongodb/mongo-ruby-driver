@@ -61,8 +61,8 @@ ADMIN_UNAUTHORIZED_CLIENT = ClientRegistry.instance.new_global_client(
 #
 # @since 2.0.0
 ADMIN_AUTHORIZED_TEST_CLIENT = ADMIN_UNAUTHORIZED_CLIENT.with(
-  user: ROOT_USER.name,
-  password: ROOT_USER.password,
+  user: SpecConfig.instance.root_user.name,
+  password: SpecConfig.instance.root_user.password,
   database: SpecConfig.instance.test_db,
   auth_source: SpecConfig.instance.auth_source || Mongo::Database::ADMIN,
   monitoring: false
@@ -93,7 +93,7 @@ module Authorization
     # Gets the root system administrator user.
     #
     # @since 2.0.0
-    context.let(:root_user) { ROOT_USER }
+    context.let(:root_user) { SpecConfig.instance.root_user }
 
     # Get the default test user for the suite.
     #
