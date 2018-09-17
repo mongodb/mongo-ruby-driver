@@ -30,7 +30,7 @@ module Mongo
     # @since 2.5.0
     attr_reader :options
 
-    # Get the cluster through which this session was created.
+    # Get the client through which this session was created.
     #
     # @since 2.5.1
     attr_reader :client
@@ -400,7 +400,7 @@ module Mongo
     #
     # @since 2.5.0
     def retry_writes?
-      !!cluster.options[:retry_writes] && (cluster.replica_set? || cluster.sharded?)
+      !!client.options[:retry_writes] && (cluster.replica_set? || cluster.sharded?)
     end
 
     # Get the session id.

@@ -26,7 +26,7 @@ module Mongo
     # subcomponents.
     #
     # @since 2.1.0
-    CRUD_OPTIONS = [ :database, :read, :write ].freeze
+    CRUD_OPTIONS = [ :database, :read, :write, :retry_writes ].freeze
 
     # Valid client options.
     #
@@ -283,6 +283,12 @@ module Mongo
       if sdam_proc
         @cluster = Cluster.new([], monitoring, @options)
         sdam_proc.call(self)
+      end
+      # We share clusters when a new client with different CRUD_OPTIONS
+      # is requested; therefore, cluster should not be getting any of these
+      # options upon instantiation
+      cluster_options = @options.reject do |key, value|
+        CRUD_OPTIONS.include?(key.to_sym)
       end
       @cluster = Cluster.new(addresses, monitoring, @options)
       yield(self) if block_given?

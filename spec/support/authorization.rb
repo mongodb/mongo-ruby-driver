@@ -191,6 +191,20 @@ module Authorization
     # @since 2.0.0
     context.let(:authorized_client) { AUTHORIZED_CLIENT }
 
+    # A client with a different cluster, for testing session use across
+    # clients
+    context.let(:another_authorized_client) do
+      new_local_client(
+        SpecConfig.instance.addresses,
+        TEST_OPTIONS.merge(
+          database: TEST_DB,
+          user: TEST_USER.name,
+          password: TEST_USER.password,
+          heartbeat_frequency: 10,
+        ),
+      )
+    end
+
     # Provides an authorized mongo client on the default test database that retries writes.
     #
     # @since 2.5.1
