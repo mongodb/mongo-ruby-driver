@@ -42,7 +42,7 @@ describe 'SCRAM-SHA auth mechanism negotiation' do
 
       new_local_client(
         SpecConfig.instance.addresses,
-        TEST_OPTIONS.merge(opts)
+        SpecConfig.instance.test_options.merge(opts)
       )
     end
 

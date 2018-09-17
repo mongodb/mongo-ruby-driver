@@ -68,7 +68,7 @@ TEST_USER = Mongo::Auth::User.new(
 # @since 2.0.0
 AUTHORIZED_CLIENT = ClientRegistry.instance.new_global_client(
   SpecConfig.instance.addresses,
-  TEST_OPTIONS.merge(
+  SpecConfig.instance.test_options.merge(
     database: TEST_DB,
     user: TEST_USER.name,
     password: TEST_USER.password)
@@ -84,7 +84,7 @@ AUTHROIZED_CLIENT_WITH_RETRY_WRITES = AUTHORIZED_CLIENT.with(retry_writes: true)
 # @since 2.0.0
 UNAUTHORIZED_CLIENT = ClientRegistry.instance.new_global_client(
   SpecConfig.instance.addresses,
-  TEST_OPTIONS.merge(database: TEST_DB, monitoring: false)
+  SpecConfig.instance.test_options.merge(database: TEST_DB, monitoring: false)
 )
 
 # Provides an unauthorized mongo client on the admin database, for use in
@@ -93,7 +93,7 @@ UNAUTHORIZED_CLIENT = ClientRegistry.instance.new_global_client(
 # @since 2.0.0
 ADMIN_UNAUTHORIZED_CLIENT = ClientRegistry.instance.new_global_client(
   SpecConfig.instance.addresses,
-  TEST_OPTIONS.merge(database: Mongo::Database::ADMIN, monitoring: false)
+  SpecConfig.instance.test_options.merge(database: Mongo::Database::ADMIN, monitoring: false)
 )
 
 # Get an authorized client on the test database logged in as the admin
@@ -113,7 +113,7 @@ ADMIN_AUTHORIZED_TEST_CLIENT = ADMIN_UNAUTHORIZED_CLIENT.with(
 # @since 2.5.1
 SUBSCRIBED_CLIENT = ClientRegistry.instance.new_global_client(
     SpecConfig.instance.addresses,
-    TEST_OPTIONS.merge(
+    SpecConfig.instance.test_options.merge(
       database: TEST_DB,
       user: TEST_USER.name,
       password: TEST_USER.password)
@@ -151,7 +151,7 @@ module Authorization
     context.let(:another_authorized_client) do
       new_local_client(
         SpecConfig.instance.addresses,
-        TEST_OPTIONS.merge(
+        SpecConfig.instance.test_options.merge(
           database: TEST_DB,
           user: TEST_USER.name,
           password: TEST_USER.password,

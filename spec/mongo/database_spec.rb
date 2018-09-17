@@ -67,7 +67,7 @@ describe Mongo::Database do
     context 'when the client has options' do
 
       let(:client) do
-        new_local_client([default_address.host], TEST_OPTIONS.merge(read: { mode: :secondary }))
+        new_local_client([default_address.host], SpecConfig.instance.test_options.merge(read: { mode: :secondary }))
       end
 
       let(:database) do

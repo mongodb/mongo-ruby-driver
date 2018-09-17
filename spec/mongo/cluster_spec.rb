@@ -7,7 +7,7 @@ describe Mongo::Cluster do
   end
 
   let(:cluster) do
-    described_class.new(SpecConfig.instance.addresses, monitoring, TEST_OPTIONS)
+    described_class.new(SpecConfig.instance.addresses, monitoring, SpecConfig.instance.test_options)
   end
 
   describe '#==' do
@@ -19,7 +19,7 @@ describe Mongo::Cluster do
         context 'when the options are the same' do
 
           let(:other) do
-            described_class.new(SpecConfig.instance.addresses, monitoring, TEST_OPTIONS)
+            described_class.new(SpecConfig.instance.addresses, monitoring, SpecConfig.instance.test_options)
           end
 
           it 'returns true' do
@@ -30,7 +30,7 @@ describe Mongo::Cluster do
         context 'when the options are not the same' do
 
           let(:other) do
-            described_class.new([ '127.0.0.1:27017' ], monitoring, TEST_OPTIONS.merge(:replica_set => 'test'))
+            described_class.new([ '127.0.0.1:27017' ], monitoring, SpecConfig.instance.test_options.merge(:replica_set => 'test'))
           end
 
           it 'returns false' do
@@ -42,7 +42,7 @@ describe Mongo::Cluster do
       context 'when the addresses are not the same' do
 
         let(:other) do
-          described_class.new([ '127.0.0.1:27999' ], monitoring, TEST_OPTIONS)
+          described_class.new([ '127.0.0.1:27999' ], monitoring, SpecConfig.instance.test_options)
         end
 
         it 'returns false' do
@@ -101,7 +101,7 @@ describe Mongo::Cluster do
         described_class.new(
           [ '127.0.0.1:27017' ],
           monitoring,
-          TEST_OPTIONS.merge(:connect => :replica_set, :replica_set => 'testing')
+          SpecConfig.instance.test_options.merge(:connect => :replica_set, :replica_set => 'testing')
         )
       end
 
@@ -113,7 +113,7 @@ describe Mongo::Cluster do
     context 'when the option is not provided' do
 
       let(:cluster) do
-        described_class.new([ '127.0.0.1:27017' ], monitoring, TEST_OPTIONS.merge(connect: :direct).delete_if { |k| k == :replica_set })
+        described_class.new([ '127.0.0.1:27017' ], monitoring, SpecConfig.instance.test_options.merge(connect: :direct).delete_if { |k| k == :replica_set })
       end
 
       it 'returns nil' do
@@ -608,7 +608,7 @@ describe Mongo::Cluster do
   describe '#update_cluster_time' do
 
     let(:cluster) do
-      described_class.new(SpecConfig.instance.addresses, monitoring, TEST_OPTIONS.merge(heartbeat_frequency: 1000))
+      described_class.new(SpecConfig.instance.addresses, monitoring, SpecConfig.instance.test_options.merge(heartbeat_frequency: 1000))
     end
 
     let(:result) do

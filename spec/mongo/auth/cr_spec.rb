@@ -26,11 +26,11 @@ describe Mongo::Auth::CR do
   declare_topology_double
 
   let(:server) do
-    Mongo::Server.new(address, cluster, monitoring, listeners, TEST_OPTIONS)
+    Mongo::Server.new(address, cluster, monitoring, listeners, SpecConfig.instance.test_options)
   end
 
   let(:connection) do
-    Mongo::Server::Connection.new(server, TEST_OPTIONS)
+    Mongo::Server::Connection.new(server, SpecConfig.instance.test_options)
   end
 
   describe '#login' do

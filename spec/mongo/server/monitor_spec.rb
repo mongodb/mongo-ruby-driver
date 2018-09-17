@@ -15,7 +15,7 @@ describe Mongo::Server::Monitor do
     context 'when calling multiple times in succession' do
 
       let(:monitor) do
-        described_class.new(address, listeners, TEST_OPTIONS)
+        described_class.new(address, listeners, SpecConfig.instance.test_options)
       end
 
       it 'throttles the scans to minimum 500ms' do
@@ -29,7 +29,7 @@ describe Mongo::Server::Monitor do
     context 'when the ismaster fails the first time' do
 
       let(:monitor) do
-        described_class.new(address, listeners, TEST_OPTIONS)
+        described_class.new(address, listeners, SpecConfig.instance.test_options)
       end
 
       let(:socket) do
@@ -59,7 +59,7 @@ describe Mongo::Server::Monitor do
     context 'when the ismaster command succeeds' do
 
       let(:monitor) do
-        described_class.new(address, listeners, TEST_OPTIONS)
+        described_class.new(address, listeners, SpecConfig.instance.test_options)
       end
 
       before do
@@ -175,7 +175,7 @@ describe Mongo::Server::Monitor do
   describe '#restart!' do
 
     let(:monitor) do
-      described_class.new(address, listeners, TEST_OPTIONS)
+      described_class.new(address, listeners, SpecConfig.instance.test_options)
     end
 
     let!(:thread) do
@@ -205,7 +205,7 @@ describe Mongo::Server::Monitor do
   describe '#stop' do
 
     let(:monitor) do
-      described_class.new(address, listeners, TEST_OPTIONS)
+      described_class.new(address, listeners, SpecConfig.instance.test_options)
     end
 
     let!(:thread) do
@@ -232,7 +232,7 @@ describe Mongo::Server::Monitor do
       end
 
       let(:monitor) do
-        described_class.new(address, listeners, TEST_OPTIONS.merge(connect_timeout: connect_timeout))
+        described_class.new(address, listeners, SpecConfig.instance.test_options.merge(connect_timeout: connect_timeout))
       end
 
       it 'sets the value as the timeout on the connection' do

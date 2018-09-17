@@ -69,7 +69,7 @@ describe 'Server Selection moving average round trip time calculation' do
 
       let(:monitor) do
         Mongo::Server::Monitor.new(address, Mongo::Event::Listeners.new,
-                                   TEST_OPTIONS.merge(avg_rtt_ms: spec.avg_rtt_ms))
+                                   SpecConfig.instance.test_options.merge(avg_rtt_ms: spec.avg_rtt_ms))
       end
 
       before do

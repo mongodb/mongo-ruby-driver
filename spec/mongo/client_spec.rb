@@ -413,7 +413,7 @@ describe Mongo::Client do
       context 'when a zlib_compression_level option is provided', if: testing_compression? do
 
         let(:client) do
-          new_local_client([default_address.seed], TEST_OPTIONS.merge(zlib_compression_level: 1))
+          new_local_client([default_address.seed], SpecConfig.instance.test_options.merge(zlib_compression_level: 1))
         end
 
         it 'sets the option on the client' do
@@ -441,7 +441,7 @@ describe Mongo::Client do
         end
 
         let(:client) do
-          new_local_client(['127.0.0.1:27017'], TEST_OPTIONS.merge(options))
+          new_local_client(['127.0.0.1:27017'], SpecConfig.instance.test_options.merge(options))
         end
 
         it 'sets the ssl option' do

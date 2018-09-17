@@ -17,7 +17,7 @@ def make_server(mode, options = {})
   cluster = double('cluster')
   allow(cluster).to receive(:topology).and_return(topology)
   allow(cluster).to receive(:app_metadata)
-  server = Mongo::Server.new(address, cluster, monitoring, listeners, TEST_OPTIONS)
+  server = Mongo::Server.new(address, cluster, monitoring, listeners, SpecConfig.instance.test_options)
   description = Mongo::Server::Description.new(address, ismaster, average_round_trip_time)
   server.tap do |s|
     allow(s).to receive(:description).and_return(description)
