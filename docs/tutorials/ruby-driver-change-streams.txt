@@ -1,3 +1,5 @@
+.. _change-streams:
+
 ==============
 Change Streams
 ==============
