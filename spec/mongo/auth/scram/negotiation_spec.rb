@@ -10,7 +10,7 @@ describe 'SCRAM-SHA auth mechanism negotiation' do
   }
 
   let(:create_user!) do
-    ADMIN_AUTHORIZED_TEST_CLIENT.with(
+    ClientRegistry.instance.global_client('root_authorized').with(
       database: 'admin',
       app_name: 'this is used solely to force the new client to create its own cluster',
     ).database.command(

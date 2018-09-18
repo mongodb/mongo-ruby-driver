@@ -99,7 +99,7 @@ module Mongo
         end
 
         def setup_test
-          @global_client = ADMIN_AUTHORIZED_TEST_CLIENT.use('admin')
+          @global_client = ClientRegistry.instance.global_client('root_authorized').use('admin')
 
           @db1 = @global_client.use(@db1_name).database.tap(&:drop)
           @db2 = @global_client.use(@db2_name).database.tap(&:drop)
@@ -107,7 +107,7 @@ module Mongo
           @db1[@coll1_name].create
           @db2[@coll2_name].create
 
-          client = ADMIN_AUTHORIZED_TEST_CLIENT.with(
+          client = ClientRegistry.instance.global_client('root_authorized').with(
             database: @db1_name,
             app_name: 'this is used solely to force the new client to create its own cluster')
           client.subscribe(Mongo::Monitoring::COMMAND, EventSubscriber.clear_events!)

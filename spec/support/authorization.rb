@@ -22,65 +22,6 @@ TEST_COLL = 'test'.freeze
 # @since 2.4.2
 INVALID_WRITE_CONCERN = { w: 4 }
 
-# Provides an authorized mongo client on the default test database for the
-# default test user.
-#
-# @since 2.0.0
-AUTHORIZED_CLIENT = ClientRegistry.instance.new_global_client(
-  SpecConfig.instance.addresses,
-  SpecConfig.instance.test_options.merge(
-    database: SpecConfig.instance.test_db,
-    user: SpecConfig.instance.test_user.name,
-    password: SpecConfig.instance.test_user.password)
-)
-
-# Provides an authorized mongo client that retries writes.
-#
-# @since 2.5.1
-AUTHROIZED_CLIENT_WITH_RETRY_WRITES = AUTHORIZED_CLIENT.with(retry_writes: true)
-
-# Provides an unauthorized mongo client on the default test database.
-#
-# @since 2.0.0
-UNAUTHORIZED_CLIENT = ClientRegistry.instance.new_global_client(
-  SpecConfig.instance.addresses,
-  SpecConfig.instance.test_options.merge(database: SpecConfig.instance.test_db, monitoring: false)
-)
-
-# Provides an unauthorized mongo client on the admin database, for use in
-# setting up the first admin root user.
-#
-# @since 2.0.0
-ADMIN_UNAUTHORIZED_CLIENT = ClientRegistry.instance.new_global_client(
-  SpecConfig.instance.addresses,
-  SpecConfig.instance.test_options.merge(database: Mongo::Database::ADMIN, monitoring: false)
-)
-
-# Get an authorized client on the test database logged in as the admin
-# root user.
-#
-# @since 2.0.0
-ADMIN_AUTHORIZED_TEST_CLIENT = ADMIN_UNAUTHORIZED_CLIENT.with(
-  user: SpecConfig.instance.root_user.name,
-  password: SpecConfig.instance.root_user.password,
-  database: SpecConfig.instance.test_db,
-  auth_source: SpecConfig.instance.auth_source || Mongo::Database::ADMIN,
-  monitoring: false
-)
-
-# A client that has an event subscriber for commands.
-#
-# @since 2.5.1
-SUBSCRIBED_CLIENT = ClientRegistry.instance.new_global_client(
-    SpecConfig.instance.addresses,
-    SpecConfig.instance.test_options.merge(
-      database: SpecConfig.instance.test_db,
-      user: SpecConfig.instance.test_user.name,
-      password: SpecConfig.instance.test_user.password)
-)
-SUBSCRIBED_CLIENT.subscribe(Mongo::Monitoring::COMMAND, EventSubscriber)
-AUTHROIZED_CLIENT_WITH_RETRY_WRITES.subscribe(Mongo::Monitoring::COMMAND, EventSubscriber)
-
 module Authorization
 
   # On inclusion provides helpers for use with testing with and without
@@ -104,7 +45,7 @@ module Authorization
     # default test user.
     #
     # @since 2.0.0
-    context.let(:authorized_client) { AUTHORIZED_CLIENT }
+    context.let(:authorized_client) { ClientRegistry.instance.global_client('authorized') }
 
     # A client with a different cluster, for testing session use across
     # clients
@@ -125,7 +66,7 @@ module Authorization
     # @since 2.5.1
     context.let(:authorized_client_with_retry_writes) do
       EventSubscriber.clear_events!
-      AUTHROIZED_CLIENT_WITH_RETRY_WRITES
+      ClientRegistry.instance.global_client('authorized_with_retry_writes')
     end
 
     # Provides an authorized mongo client that has a Command subscriber.
@@ -133,25 +74,25 @@ module Authorization
     # @since 2.5.1
     context.let(:subscribed_client) do
       EventSubscriber.clear_events!
-      SUBSCRIBED_CLIENT
+      ClientRegistry.instance.global_client('subscribed')
     end
 
     # Provides an unauthorized mongo client on the default test database.
     #
     # @since 2.0.0
-    context.let!(:unauthorized_client) { UNAUTHORIZED_CLIENT }
+    context.let(:unauthorized_client) { ClientRegistry.instance.global_client('unauthorized') }
 
     # Provides an unauthorized mongo client on the admin database, for use in
     # setting up the first admin root user.
     #
     # @since 2.0.0
-    context.let!(:admin_unauthorized_client) { ADMIN_UNAUTHORIZED_CLIENT }
+    context.let(:admin_unauthorized_client) { ClientRegistry.instance.global_client('admin_unauthorized') }
 
     # Get an authorized client on the test database logged in as the admin
     # root user.
     #
     # @since 2.0.0
-    context.let!(:root_authorized_client) { ADMIN_AUTHORIZED_TEST_CLIENT }
+    context.let(:root_authorized_client) { ClientRegistry.instance.global_client('root_authorized') }
 
     # Gets the default test collection from the authorized client.
     #

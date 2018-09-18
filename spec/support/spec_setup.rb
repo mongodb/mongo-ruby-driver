@@ -1,4 +1,5 @@
 require_relative './spec_config'
+require_relative './client_registry'
 
 class SpecSetup
   def run
@@ -50,27 +51,11 @@ class SpecSetup
     end
   end
 
-  # Temporarily duplicates code in support/authorization
-  # until client registry changes are made
   def admin_unauthorized_client
-    @admin_unauthorized_client ||= Mongo::Client.new(
-      SpecConfig.instance.addresses,
-      SpecConfig.instance.test_options.merge(
-        database: Mongo::Database::ADMIN, monitoring: false),
-    )
+    ClientRegistry.instance.global_client('admin_unauthorized')
   end
 
-  # Temporarily duplicates code in support/authorization
-  # until client registry changes are made
   def admin_authorized_test_client
-    @admin_authorized_test_client ||= Mongo::Client.new(
-      SpecConfig.instance.addresses,
-      SpecConfig.instance.test_options.merge(
-        database: SpecConfig.instance.test_db, monitoring: false,
-        user: SpecConfig.instance.root_user.name,
-        password: SpecConfig.instance.root_user.password,
-        auth_source: SpecConfig.instance.auth_source || Mongo::Database::ADMIN,
-      ),
-    )
+    ClientRegistry.instance.global_client('root_authorized')
   end
 end

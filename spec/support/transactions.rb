@@ -140,7 +140,7 @@ module Mongo
       end
 
       def support_client
-        ADMIN_AUTHORIZED_TEST_CLIENT
+        ClientRegistry.instance.global_client('root_authorized')
       end
 
       def admin_support_client
@@ -148,7 +148,7 @@ module Mongo
       end
 
       def test_client
-        @test_client ||= AUTHORIZED_CLIENT.with(
+        @test_client ||= ClientRegistry.instance.global_client('authorized').with(
           @client_options.merge(app_name: 'this is used solely to force the new client to create its own cluster'))
       end
 

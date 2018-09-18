@@ -86,7 +86,9 @@ module Mongo
           success = true
           result
         ensure
-          success or disconnect!
+          unless success
+            disconnect!
+          end
         end
       end
 
