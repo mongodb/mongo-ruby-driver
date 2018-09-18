@@ -80,19 +80,19 @@ module Authorization
     # Provides an unauthorized mongo client on the default test database.
     #
     # @since 2.0.0
-    context.let!(:unauthorized_client) { ClientRegistry.instance.global_client('unauthorized') }
+    context.let(:unauthorized_client) { ClientRegistry.instance.global_client('unauthorized') }
 
     # Provides an unauthorized mongo client on the admin database, for use in
     # setting up the first admin root user.
     #
     # @since 2.0.0
-    context.let!(:admin_unauthorized_client) { ClientRegistry.instance.global_client('admin_unauthorized') }
+    context.let(:admin_unauthorized_client) { ClientRegistry.instance.global_client('admin_unauthorized') }
 
     # Get an authorized client on the test database logged in as the admin
     # root user.
     #
     # @since 2.0.0
-    context.let!(:root_authorized_client) { ClientRegistry.instance.global_client('root_authorized') }
+    context.let(:root_authorized_client) { ClientRegistry.instance.global_client('root_authorized') }
 
     # Gets the default test collection from the authorized client.
     #
