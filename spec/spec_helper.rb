@@ -82,7 +82,6 @@ require 'lite_spec_helper'
 # not using MONGODB_URI.
 TEST_SET = 'ruby-driver-rs'
 
-require 'support/travis'
 require 'support/client_registry'
 require 'support/authorization'
 require 'support/primary_socket'
