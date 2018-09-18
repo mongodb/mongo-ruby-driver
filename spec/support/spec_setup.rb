@@ -2,6 +2,9 @@ require_relative './spec_config'
 
 class SpecSetup
   def run
+    # Create the root user administrator as the first user to be added to the
+    # database. This user will need to be authenticated in order to add any
+    # more users to any other databases.
     begin
       create_user(admin_unauthorized_client, SpecConfig.instance.root_user)
     rescue Mongo::Error::OperationFailure => e
@@ -27,6 +30,8 @@ class SpecSetup
     end
     admin_unauthorized_client.close
 
+    # Adds the test user to the test database with permissions on all
+    # databases that will be used in the test suite.
     create_user(admin_authorized_test_client, SpecConfig.instance.test_user)
     admin_authorized_test_client.close
   end
