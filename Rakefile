@@ -19,10 +19,17 @@ RSpec::Core::RakeTask.new(:spec) do |t|
   #t.rspec_opts = "--profile 5" if ENV['CI']
 end
 
-task :default => :spec
+task :default => ['spec:prepare', :spec]
 
 namespace :spec do
-  task :ci => [:spec]
+  task :prepare do
+    $: << File.join(File.dirname(__FILE__), 'spec')
+
+    require 'support/spec_setup'
+    SpecSetup.new.run
+  end
+
+  task :ci => ['spec:prepare', :spec]
 end
 
 task :release => :spec do
