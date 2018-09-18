@@ -41,7 +41,7 @@ module Mongo
       # @since 2.0.0
       RTT_WEIGHT_FACTOR = 0.2.freeze
 
-      # @return [ Mongo::Connection ] connection The connection to use.
+      # @return [ Mongo::Server::Monitor::Connection ] connection The connection to use.
       attr_reader :connection
 
       # @return [ Server::Description ] description The server
@@ -117,6 +117,7 @@ module Mongo
         @description = Description.new(address, {})
         @inspector = Description::Inspector.new(listeners)
         @options = options.freeze
+        # This is a Mongo::Server::Monitor::Connection
         @connection = Connection.new(address, options)
         @last_round_trip_time = nil
         @last_scan = nil
@@ -151,7 +152,9 @@ module Mongo
       #
       # @since 2.0.0
       def stop!
-        connection.disconnect! && begin
+        # Although disconnect! documentation implies a possibility of
+        # failure, all of our disconnects always return true
+        if connection.disconnect!
           if @thread
             @thread.kill && @thread.stop?
           else

@@ -213,6 +213,8 @@ module Mongo
       @periodic_executor.run!
 
       ObjectSpace.define_finalizer(self, self.class.finalize(pools, @periodic_executor, @session_pool))
+
+      @connected = true
     end
 
     # Finalize the cluster for garbage collection. Disconnects all the scoped
@@ -366,7 +368,11 @@ module Mongo
       address = Address.new(host)
       removed_servers = @servers.select { |s| s.address == address }
       @update_lock.synchronize { @servers = @servers - removed_servers }
-      removed_servers.each{ |server| server.disconnect! } if removed_servers
+      if removed_servers
+        removed_servers.each do |server|
+          server.disconnect!
+        end
+      end
       publish_sdam_event(
         Monitoring::SERVER_CLOSED,
         Monitoring::Event::ServerClosed.new(address, topology)
@@ -411,7 +417,11 @@ module Mongo
     # @since 2.1.0
     def disconnect!
       @periodic_executor.stop!
-      @servers.each { |server| server.disconnect! } and true
+      @servers.each do |server|
+        server.disconnect!
+      end
+      @connected = false
+      true
     end
 
     # Reconnect all servers.
@@ -424,8 +434,21 @@ module Mongo
     # @since 2.1.0
     def reconnect!
       scan!
-      servers.each { |server| server.reconnect! }
-      @periodic_executor.restart! and true
+      servers.each do |server|
+        server.reconnect!
+      end
+      @periodic_executor.restart!
+      @connected = true
+    end
+
+    # Whether the cluster object is connected to its cluster.
+    #
+    # @return [ true|false ] Whether the cluster is connected.
+    #
+    # @api private
+    # @since 2.7.0
+    def connected?
+      !!@connected
     end
 
     # Add hosts in a description to the cluster.
