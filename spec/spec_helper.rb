@@ -99,23 +99,6 @@ RSpec.configure do |config|
   config.after(:each) do
     close_local_clients
   end
-
-  config.before(:suite) do
-    begin
-      # Create the root user administrator as the first user to be added to the
-      # database. This user will need to be authenticated in order to add any
-      # more users to any other databases.
-      ADMIN_UNAUTHORIZED_CLIENT.database.users.create(SpecConfig.instance.root_user)
-      ADMIN_UNAUTHORIZED_CLIENT.close
-    rescue Exception => e
-    end
-    begin
-      # Adds the test user to the test database with permissions on all
-      # databases that will be used in the test suite.
-      ADMIN_AUTHORIZED_TEST_CLIENT.database.users.create(SpecConfig.instance.test_user)
-    rescue Exception => e
-    end
-  end
 end
 
 # Determine whether the test clients are connecting to a standalone.

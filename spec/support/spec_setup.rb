@@ -1,0 +1,71 @@
+require_relative './spec_config'
+
+class SpecSetup
+  def run
+    begin
+      create_user(admin_unauthorized_client, SpecConfig.instance.root_user)
+    rescue Mongo::Error::OperationFailure => e
+      # When testing a cluster that requires auth, root user is already set up
+      # and it is not creatable without auth.
+      # Seems like every mongodb version has its own error message
+      # for trying to make a user when not authenticated,
+      # and prior to 4.0 or so the codes are supposedly not reliable either.
+      # In order: 4.0, 3.6, 3.4 through 2.6
+      if e.message =~ /command createUser requires authentication|there are no users authenticated|not authorized on admin to execute command.*createUser/
+        # However, if the cluster is configured to require auth but
+        # test suite has wrong credentials, then admin_authorized_test_client
+        # won't be authenticated and the following line will raise an
+        # exception
+        if admin_authorized_test_client.with(database: 'admin').database.users.info(SpecConfig.instance.root_user.name).any?
+          warn "Skipping root user creation, likely auth is enabled on cluster"
+        else
+          raise
+        end
+      else
+        raise
+      end
+    end
+    admin_unauthorized_client.close
+
+    create_user(admin_authorized_test_client, SpecConfig.instance.test_user)
+    admin_authorized_test_client.close
+  end
+
+  def create_user(client, user)
+    users = client.database.users
+    begin
+      users.create(user)
+    rescue Mongo::Error::OperationFailure => e
+      if e.message =~ /User.*already exists/
+        users.remove(user.name)
+        users.create(user)
+      else
+        raise
+      end
+    end
+  end
+
+  # Temporarily duplicates code in support/authorization
+  # until client registry changes are made
+  def admin_unauthorized_client
+    @admin_unauthorized_client ||= Mongo::Client.new(
+      SpecConfig.instance.addresses,
+      SpecConfig.instance.test_options.merge(
+        database: Mongo::Database::ADMIN, monitoring: false),
+    )
+  end
+
+  # Temporarily duplicates code in support/authorization
+  # until client registry changes are made
+  def admin_authorized_test_client
+    @admin_authorized_test_client ||= Mongo::Client.new(
+      SpecConfig.instance.addresses,
+      SpecConfig.instance.test_options.merge(
+        database: SpecConfig.instance.test_db, monitoring: false,
+        user: SpecConfig.instance.root_user.name,
+        password: SpecConfig.instance.root_user.password,
+        auth_source: SpecConfig.instance.auth_source || Mongo::Database::ADMIN,
+      ),
+    )
+  end
+end

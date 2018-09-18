@@ -109,7 +109,7 @@ bundle install
 bundle exec rake clean
 
 echo "Running specs"
-bundle exec rake spec
+bundle exec rake spec:ci
 test_status=$?
 echo "TEST STATUS"
 echo ${test_status}
