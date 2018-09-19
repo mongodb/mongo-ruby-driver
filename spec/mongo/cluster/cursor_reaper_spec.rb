@@ -3,7 +3,7 @@ require 'spec_helper'
 describe Mongo::Cluster::CursorReaper do
 
   before do
-    authorized_collection.delete_many
+    authorized_collection.drop
   end
 
   let(:reaper) do

@@ -2,6 +2,11 @@ require 'spec_helper'
 
 describe Mongo::Operation::CreateIndex do
 
+  before do
+    authorized_collection.drop
+    authorized_collection.insert_one(test: 1)
+  end
+
   describe '#execute' do
 
     context 'when the index is created' do
@@ -16,10 +21,6 @@ describe Mongo::Operation::CreateIndex do
 
       let(:response) do
         operation.execute(authorized_primary)
-      end
-
-      after do
-        authorized_collection.indexes.drop_one('random_1')
       end
 
       it 'returns ok' do
@@ -43,10 +44,6 @@ describe Mongo::Operation::CreateIndex do
 
       before do
         operation.execute(authorized_primary)
-      end
-
-      after do
-        authorized_collection.indexes.drop_one('random_1')
       end
 
       it 'raises an exception' do

@@ -5,7 +5,11 @@ describe Mongo::Operation::RemoveUser do
   describe '#execute' do
 
     before do
-      root_authorized_client.database.users.create(
+      users = root_authorized_client.database.users
+      if users.info('durran').any?
+        users.remove('durran')
+      end
+      users.create(
         'durran',
         password: 'password', roles: [ Mongo::Auth::Roles::READ_WRITE ]
       )

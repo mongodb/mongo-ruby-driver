@@ -25,11 +25,11 @@ describe Mongo::Operation::UpdateUser do
     end
 
     before do
-      root_authorized_client.database.users.create(user)
-    end
-
-    after do
-      root_authorized_client.database.users.remove('durran')
+      users = root_authorized_client.database.users
+      if users.info('durran').any?
+        users.remove('durran')
+      end
+      users.create(user)
     end
 
     context 'when user update was successful' do

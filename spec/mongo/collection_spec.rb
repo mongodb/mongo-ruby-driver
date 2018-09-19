@@ -3,14 +3,7 @@ require 'spec_helper'
 describe Mongo::Collection do
 
   before do
-    begin
-      authorized_collection.delete_many
-    rescue Mongo::Error::OperationFailure
-    end
-    begin
-      authorized_collection.indexes.drop_all
-    rescue Mongo::Error::OperationFailure
-    end
+    authorized_collection.drop
   end
 
   let(:collection_invalid_write_concern) do
@@ -1517,7 +1510,6 @@ describe Mongo::Collection do
     end
 
     before do
-      authorized_collection.indexes.drop_all
       authorized_collection.indexes.create_one(index_spec, unique: true)
     end
 
@@ -1705,8 +1697,6 @@ describe Mongo::Collection do
     end
 
     before do
-      authorized_collection.indexes.drop_all
-      authorized_collection.delete_many
       authorized_collection.insert_many(documents)
     end
 
