@@ -1164,6 +1164,7 @@ describe Mongo::Collection do
 
       before do
         custom_client.close
+        custom_collection.delete_many
         custom_collection.insert_many([{ name: 'testing' }])
       end
 
@@ -1421,6 +1422,7 @@ describe Mongo::Collection do
       end
 
       before do
+        custom_collection.delete_many
         custom_collection.insert_one({ name: 'testing' })
       end
 
