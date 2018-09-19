@@ -1163,9 +1163,12 @@ describe Mongo::Collection do
       end
 
       before do
-        custom_client.close
         custom_collection.delete_many
         custom_collection.insert_many([{ name: 'testing' }])
+      end
+
+      after do
+        custom_client.close
       end
 
       it 'inserts with the custom id' do
