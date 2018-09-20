@@ -1,5 +1,40 @@
 require 'singleton'
 
+module Mongo
+  class Client
+    alias :with_without_registry :with
+    def with(*args)
+      with_without_registry(*args).tap do |client|
+        ClientRegistry.instance.register_local_client(client)
+      end
+    end
+  end
+end
+
+# Test suite uses a number of global clients (with lifetimes spanning
+# several tests) as well as local clients (created for a single example
+# or shared across several examples in one example group).
+#
+# To make client cleanup easy, all local clients are automatically closed
+# after every example. This means there is no need for an individual example
+# to worry about closing its local clients.
+#
+# In SDAM tests, having global clients is problematic because mocks can
+# be executed on global clients instead of the local clients.
+# To address this, tests can close all global clients. This kills monitoring
+# threads and SDAM on the global clients. Later tests that need one of the
+# global clients will have the respective global client reconnected
+# automatically by the client registry.
+#
+# Lastly, Client#with sometimes creates a new cluster and sometimes reuses
+# the cluster on the receiver. Client registry patches Mongo::Client to
+# track all clients returned by Client#with, and considers these clients
+# local to the example being run. This means global clients should not be
+# created via #with. Being local clients, clients created by #with will be
+# automatically closed after each example. If these clients shared their
+# cluster with a global client, this will make the global client not do
+# SDAM anymore; this situation is automatically fixed by the client registry
+# when a subsequent test requests the global client in question.
 class ClientRegistry
   include Singleton
 
@@ -95,6 +130,10 @@ class ClientRegistry
     Mongo::Client.new(*args).tap do |client|
       @local_clients << client
     end
+  end
+
+  def register_local_client(client)
+    @local_clients << client
   end
 
   def close_local_clients
