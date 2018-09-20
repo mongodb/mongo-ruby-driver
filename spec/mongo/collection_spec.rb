@@ -1159,12 +1159,13 @@ describe Mongo::Collection do
       end
 
       let(:custom_collection) do
-        custom_client[TEST_COLL]
+        custom_client['custom_id_generator_test_collection']
       end
 
       before do
         custom_collection.delete_many
         custom_collection.insert_many([{ name: 'testing' }])
+        expect(custom_collection.count).to eq(1)
       end
 
       after do
