@@ -1172,6 +1172,7 @@ describe Mongo::Collection do
       end
 
       it 'inserts with the custom id' do
+        expect(custom_collection.count).to eq(1)
         expect(custom_collection.find.first[:_id]).to eq(1)
       end
     end
