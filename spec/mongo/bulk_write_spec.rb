@@ -3,7 +3,7 @@ require 'spec_helper'
 describe Mongo::BulkWrite do
 
   before do
-    authorized_collection.delete_many
+    authorized_collection.drop
   end
 
   let(:collection_invalid_write_concern) do

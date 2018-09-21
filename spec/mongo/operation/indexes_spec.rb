@@ -1,17 +1,6 @@
 require 'spec_helper'
 
 describe Mongo::Operation::Indexes do
-  before do
-    begin
-      authorized_collection.delete_many
-    rescue Mongo::Error::OperationFailure
-    end
-    begin
-      authorized_collection.indexes.drop_all
-    rescue Mongo::Error::OperationFailure
-    end
-  end
-
   describe '#execute' do
 
     let(:index_spec) do
@@ -19,6 +8,8 @@ describe Mongo::Operation::Indexes do
     end
 
     before do
+      authorized_collection.drop
+      authorized_collection.insert_one(test: 1)
       authorized_collection.indexes.create_one(index_spec, unique: true)
     end
 

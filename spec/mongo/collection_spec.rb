@@ -3,14 +3,7 @@ require 'spec_helper'
 describe Mongo::Collection do
 
   before do
-    begin
-      authorized_collection.delete_many
-    rescue Mongo::Error::OperationFailure
-    end
-    begin
-      authorized_collection.indexes.drop_all
-    rescue Mongo::Error::OperationFailure
-    end
+    authorized_collection.drop
   end
 
   let(:collection_invalid_write_concern) do
@@ -1166,15 +1159,21 @@ describe Mongo::Collection do
       end
 
       let(:custom_collection) do
-        custom_client[TEST_COLL]
+        custom_client['custom_id_generator_test_collection']
       end
 
       before do
-        custom_client.close
+        custom_collection.delete_many
         custom_collection.insert_many([{ name: 'testing' }])
+        expect(custom_collection.count).to eq(1)
+      end
+
+      after do
+        custom_client.close
       end
 
       it 'inserts with the custom id' do
+        expect(custom_collection.count).to eq(1)
         expect(custom_collection.find.first[:_id]).to eq(1)
       end
     end
@@ -1428,6 +1427,7 @@ describe Mongo::Collection do
       end
 
       before do
+        custom_collection.delete_many
         custom_collection.insert_one({ name: 'testing' })
       end
 
@@ -1517,7 +1517,6 @@ describe Mongo::Collection do
     end
 
     before do
-      authorized_collection.indexes.drop_all
       authorized_collection.indexes.create_one(index_spec, unique: true)
     end
 
@@ -1705,8 +1704,6 @@ describe Mongo::Collection do
     end
 
     before do
-      authorized_collection.indexes.drop_all
-      authorized_collection.delete_many
       authorized_collection.insert_many(documents)
     end
 
