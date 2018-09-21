@@ -194,16 +194,23 @@ module Mongo
 
     # Initialize the monitoring.
     #
-    # @api private
-    #
     # @example Create the new monitoring.
     #   Monitoring.new(:monitoring => true)
     #
     # @param [ Hash ] options Options. Client constructor forwards its
     #   options to Monitoring constructor, although Monitoring recognizes
     #   only a subset of the options recognized by Client.
+    # @option options [ true, false ] :monitoring If false is given, the
+    #   Monitoring instance is initialized without global monitoring event
+    #   subscribers, which also disables logging provided by the driver.
+    #   It is still possible to add event subscribers to this instance
+    #   and if any are added they will be invoked as normal.
+    #   Values other than false result in default behavior which is to
+    #   notify global event subscribers of events and perform
+    #   logging as configured elsewhere in the driver.
     #
     # @since 2.1.0
+    # @api private
     def initialize(options = {})
       if options[:monitoring] != false
         Global.subscribers.each do |topic, subscribers|
