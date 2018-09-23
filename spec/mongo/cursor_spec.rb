@@ -97,6 +97,7 @@ describe Mongo::Cursor do
       end
 
       before do
+        authorized_collection.drop
         authorized_collection.insert_many(documents)
       end
 
