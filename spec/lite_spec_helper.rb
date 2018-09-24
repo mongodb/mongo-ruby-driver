@@ -96,3 +96,5 @@ RSpec.configure do |config|
     end
   end
 end
+
+EventSubscriber.initialize
