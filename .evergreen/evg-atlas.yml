@@ -47,7 +47,7 @@ functions:
            export DRIVERS_TOOLS="$(pwd)/../drivers-tools"
 
            # Python has cygwin path problems on Windows. Detect prospective mongo-orchestration home directory
-           if [ "Windows_NT" == "$OS" ]; then # Magic variable in cygwin
+           if [ "Windows_NT" = "$OS" ]; then # Magic variable in cygwin
               export DRIVERS_TOOLS=$(cygpath -m $DRIVERS_TOOLS)
            fi
 
@@ -80,6 +80,7 @@ functions:
               export ATLAS_FREE_TIER_URI="${atlas_free_tier_uri}"
               export ATLAS_TLS11_URI="${atlas_tls11_uri}"
               export ATLAS_TLS12_URI="${atlas_tls12_uri}"
+              export RVM_RUBY="${RVM_RUBY}"
            EOT
            # See what we've done
            cat expansion.yml
@@ -403,34 +404,34 @@ axes:
       - id: "ruby-1.9"
         display_name: ruby-1.9
         variables:
-           RVM_RUBY: "ruby-1.9"
+          RVM_RUBY: "ruby-1.9"
       - id: "ruby-2.3"
         display_name: ruby-2.3
         variables:
-           RVM_RUBY: "ruby-2.3"
+          RVM_RUBY: "ruby-2.3"
       - id: "ruby-2.4"
         display_name: ruby-2.4
         variables:
-           RVM_RUBY: "ruby-2.4"
-      - id: "ruby-2.5.0"
-        display_name: ruby-2.5.0
+          RVM_RUBY: "ruby-2.4"
+      - id: "ruby-2.5"
+        display_name: ruby-2.5
         variables:
-           RVM_RUBY: "ruby-2.5.0"
-#      - id: "jruby-1.7"
-#        display_name: jruby-1.7
-#        variables:
-#           RVM_RUBY: "jruby-1.7"
-#      - id: "jruby-9.1"
-#        display_name: jruby-9.1
-#        variables:
-#           RVM_RUBY: "jruby-9.1"
+          RVM_RUBY: "ruby-2.5"
+      - id: "jruby-9.1"
+        display_name: jruby-9.1
+        variables:
+          RVM_RUBY: "jruby-9.1"
+      - id: "jruby-9.2"
+        display_name: jruby-9.2
+        variables:
+          RVM_RUBY: "jruby-9.2"
 
 buildvariants:
   - matrix_name: "all"
     matrix_spec: { ruby: '*' }
     #matrix_spec: { }
     run_on:
-      - rhel70-small
+      - ubuntu1404-test
     tasks:
        - name: "test"
 

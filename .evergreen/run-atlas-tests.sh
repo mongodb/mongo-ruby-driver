@@ -13,58 +13,13 @@ set -o errexit  # Exit the script with error if any of the commands fail
 #                               For example: "ruby-2.3" or "jruby-9.1"
 #       DRIVER_TOOLS            Path to driver tools.
 
-AUTH=${AUTH:-noauth}
-SSL=${SSL:-nossl}
-MONGODB_URI=${MONGODB_URI:-}
-TOPOLOGY=${TOPOLOGY:-server}
-DRIVERS_TOOLS=${DRIVERS_TOOLS:-}
+. `dirname "$0"`/functions.sh
 
+set_env_vars
 
-if [ "$AUTH" != "noauth" ]; then
-  export ROOT_USER_NAME="bob"
-  export ROOT_USER_PWD="pwd123"
-fi
-if [ "$COMPRESSOR" == "zlib" ]; then
-  export COMPRESSOR="zlib"
-fi
-export CI=true
+setup_ruby
 
-
-set +x
-source ~/.rvm/scripts/rvm
-set -x
-
-# Necessary for jruby
-export JAVACMD=/opt/java/jdk8/bin/java
-export PATH=$PATH:/opt/java/jdk8/bin
-
-if [ "$RVM_RUBY" == "ruby-head" ]; then
-  rvm reinstall $RVM_RUBY
-fi
-
-export RVM_RUBY=2.5.0
-
-# Don't errexit because this may call scripts which error
-set +o errexit
-set +x
-rvm use $RVM_RUBY
-set -x
-set -o errexit
-
-which ruby
-export PATH=/opt/ruby-*/rvm/rubies/ruby-2.5.0/bin:$PATH
-ruby --version
-
-echo 'updating rubygems'
-gem update --system
-
-gem install bundler
-
-echo "Installing all gem dependencies"
-bundle install
-bundle exec rake clean
-
-env
+install_deps
 
 echo "Running specs"
 bundle exec rspec spec/atlas -fd
@@ -72,10 +27,6 @@ test_status=$?
 echo "TEST STATUS"
 echo ${test_status}
 
-jruby_running=`ps -ef | grep 'jruby' | grep -v grep | awk '{print $2}'`
-if [ -n "$jruby_running" ];then
-  echo "terminating remaining jruby processes"
-  for pid in $(ps -ef | grep "jruby" | grep -v grep | awk '{print $2}'); do kill -9 $pid; done
-fi
+kill_jruby
 
 exit ${test_status}
