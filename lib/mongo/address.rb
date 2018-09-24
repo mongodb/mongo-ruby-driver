@@ -39,6 +39,39 @@ module Mongo
     # @since 2.1.0
     LOCALHOST = 'localhost'.freeze
 
+    # Initialize the address.
+    #
+    # @example Initialize the address with a DNS entry and port.
+    #   Mongo::Address.new("app.example.com:27017")
+    #
+    # @example Initialize the address with a DNS entry and no port.
+    #   Mongo::Address.new("app.example.com")
+    #
+    # @example Initialize the address with an IPV4 address and port.
+    #   Mongo::Address.new("127.0.0.1:27017")
+    #
+    # @example Initialize the address with an IPV4 address and no port.
+    #   Mongo::Address.new("127.0.0.1")
+    #
+    # @example Initialize the address with an IPV6 address and port.
+    #   Mongo::Address.new("[::1]:27017")
+    #
+    # @example Initialize the address with an IPV6 address and no port.
+    #   Mongo::Address.new("[::1]")
+    #
+    # @example Initialize the address with a unix socket.
+    #   Mongo::Address.new("/path/to/socket.sock")
+    #
+    # @param [ String ] seed The provided address.
+    # @param [ Hash ] options The address options.
+    #
+    # @since 2.0.0
+    def initialize(seed, options = {})
+      @seed = seed
+      @host, @port = parse_host_port
+      @options = options
+    end
+
     # @return [ String ] seed The seed address.
     attr_reader :seed
 
@@ -87,39 +120,6 @@ module Mongo
     # @since 2.0.0
     def hash
       [ host, port ].hash
-    end
-
-    # Initialize the address.
-    #
-    # @example Initialize the address with a DNS entry and port.
-    #   Mongo::Address.new("app.example.com:27017")
-    #
-    # @example Initialize the address with a DNS entry and no port.
-    #   Mongo::Address.new("app.example.com")
-    #
-    # @example Initialize the address with an IPV4 address and port.
-    #   Mongo::Address.new("127.0.0.1:27017")
-    #
-    # @example Initialize the address with an IPV4 address and no port.
-    #   Mongo::Address.new("127.0.0.1")
-    #
-    # @example Initialize the address with an IPV6 address and port.
-    #   Mongo::Address.new("[::1]:27017")
-    #
-    # @example Initialize the address with an IPV6 address and no port.
-    #   Mongo::Address.new("[::1]")
-    #
-    # @example Initialize the address with a unix socket.
-    #   Mongo::Address.new("/path/to/socket.sock")
-    #
-    # @param [ String ] seed The provided address.
-    # @param [ Hash ] options The address options.
-    #
-    # @since 2.0.0
-    def initialize(seed, options = {})
-      @seed = seed
-      @host, @port = parse_host_port
-      @options = options
     end
 
     # Get a pretty printed address inspection.

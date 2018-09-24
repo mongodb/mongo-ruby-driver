@@ -66,6 +66,32 @@ module Mongo
       # @deprecated No longer necessary with Server Selection specification.
       PING_OP_MSG_BYTES = PING_OP_MSG_MESSAGE.serialize.to_s.freeze
 
+      # Initialize a new socket connection from the client to the server.
+      #
+      # @api private
+      #
+      # @example Create the connection.
+      #   Connection.new(server)
+      #
+      # @note Connection must never be directly instantiated outside of a
+      #   Server.
+      #
+      # @param [ Mongo::Server ] server The server the connection is for.
+      # @param [ Hash ] options The connection options.
+      #
+      # @since 2.0.0
+      def initialize(server, options = {})
+        @address = server.address
+        @monitoring = server.monitoring
+        @options = options.freeze
+        @server = server
+        @ssl_options = options.reject { |k, v| !k.to_s.start_with?(SSL) }
+        @socket = nil
+        @last_checkin = nil
+        @auth_mechanism = nil
+        @pid = Process.pid
+      end
+
       # The last time the connection was checked back into a pool.
       #
       # @since 2.5.0
@@ -146,32 +172,6 @@ module Mongo
         else
           deliver(messages)
         end
-      end
-
-      # Initialize a new socket connection from the client to the server.
-      #
-      # @api private
-      #
-      # @example Create the connection.
-      #   Connection.new(server)
-      #
-      # @note Connection must never be directly instantiated outside of a
-      #   Server.
-      #
-      # @param [ Mongo::Server ] server The server the connection is for.
-      # @param [ Hash ] options The connection options.
-      #
-      # @since 2.0.0
-      def initialize(server, options = {})
-        @address = server.address
-        @monitoring = server.monitoring
-        @options = options.freeze
-        @server = server
-        @ssl_options = options.reject { |k, v| !k.to_s.start_with?(SSL) }
-        @socket = nil
-        @last_checkin = nil
-        @auth_mechanism = nil
-        @pid = Process.pid
       end
 
       # Ping the connection to see if the server is responding to commands.

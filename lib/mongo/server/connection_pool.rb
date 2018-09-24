@@ -24,6 +24,23 @@ module Mongo
       include Loggable
       extend Forwardable
 
+      # Create the new connection pool.
+      #
+      # @example Create the new connection pool.
+      #   Pool.new(timeout: 0.5) do
+      #     Connection.new
+      #   end
+      #
+      # @note A block must be passed to set up the connections on initialization.
+      #
+      # @param [ Hash ] options The connection pool options.
+      #
+      # @since 2.0.0
+      def initialize(options = {}, &block)
+        @options = options.freeze
+        @queue = Queue.new(options, &block)
+      end
+
       # @return [ Hash ] options The pool options.
       attr_reader :options
 
@@ -64,23 +81,6 @@ module Mongo
       # @since 2.1.0
       def disconnect!
         queue.disconnect!
-      end
-
-      # Create the new connection pool.
-      #
-      # @example Create the new connection pool.
-      #   Pool.new(timeout: 0.5) do
-      #     Connection.new
-      #   end
-      #
-      # @note A block must be passed to set up the connections on initialization.
-      #
-      # @param [ Hash ] options The connection pool options.
-      #
-      # @since 2.0.0
-      def initialize(options = {}, &block)
-        @options = options.freeze
-        @queue = Queue.new(options, &block)
       end
 
       # Get a pretty printed string inspection for the pool.
