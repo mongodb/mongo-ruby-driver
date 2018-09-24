@@ -250,4 +250,15 @@ Language Compatibility
      -
      - |checkmark|
 
+Atlas Compatibility
+~~~~~~~~~~~~~~~~~~~
+
+`Driver version 2.6.1 <https://github.com/mongodb/mongo-ruby-driver/releases/tag/v2.6.1>`_
+or higher is recommended when using MongoDB Atlas, as this version has
+significant SSL performance improvements.
+
+When running on JRuby and connecting to Atlas Free Tier,
+`driver version 2.6.3 <https://github.com/mongodb/mongo-ruby-driver/releases/tag/v2.6.3>`_
+or higher and Java 8 or higher are required.
+
 .. include:: /includes/unicode-checkmark.rst

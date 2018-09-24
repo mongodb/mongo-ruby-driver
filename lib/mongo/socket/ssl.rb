@@ -56,7 +56,7 @@ module Mongo
         Timeout.timeout(connect_timeout, Error::SocketTimeoutError) do
           handle_errors { @tcp_socket.connect(::Socket.pack_sockaddr_in(port, host)) }
           @socket = OpenSSL::SSL::SSLSocket.new(@tcp_socket, context)
-          @socket.hostname = @host_name unless BSON::Environment.jruby?
+          @socket.hostname = @host_name
           @socket.sync_close = true
           handle_errors { @socket.connect }
           verify_certificate!(@socket)
