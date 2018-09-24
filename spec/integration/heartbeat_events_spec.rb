@@ -40,7 +40,7 @@ describe 'Heartbeat events' do
   end
 
   let(:client) { new_local_client([SpecConfig.instance.addresses.first],
-    server_selection_timeout: 0.1, connect: :direct) }
+    authorized_client.options.merge(server_selection_timeout: 0.1, connect: :direct)) }
 
   it 'notifies on successful heartbeats' do
     client.database.command(ismaster: 1)
