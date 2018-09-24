@@ -1922,12 +1922,18 @@ describe Mongo::BulkWrite do
               bulk_write.execute
             end
 
+            let(:started_events) do
+              EventSubscriber.started_events.select do |event|
+                event.command['insert']
+              end
+            end
+
             let(:first_txn_number) do
-              EventSubscriber.started_events[-2].command['txnNumber'].instance_variable_get(:@integer)
+              started_events[-2].command['txnNumber'].instance_variable_get(:@integer)
             end
 
             let(:second_txn_number) do
-              EventSubscriber.started_events[-1].command['txnNumber'].instance_variable_get(:@integer)
+              started_events[-1].command['txnNumber'].instance_variable_get(:@integer)
             end
 
             it 'inserts the documents' do

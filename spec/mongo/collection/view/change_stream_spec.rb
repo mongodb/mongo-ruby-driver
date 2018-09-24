@@ -19,7 +19,7 @@ describe Mongo::Collection::View::ChangeStream, if: test_change_streams? do
   end
 
   let(:change_stream) do
-    described_class.new(view, pipeline, nil, options)
+    @change_stream = described_class.new(view, pipeline, nil, options)
   end
 
   let(:change_stream_document) do
@@ -53,6 +53,8 @@ describe Mongo::Collection::View::ChangeStream, if: test_change_streams? do
       change_stream
     rescue => e
       e
+    else
+      nil
     end
   end
 
@@ -61,7 +63,10 @@ describe Mongo::Collection::View::ChangeStream, if: test_change_streams? do
   end
 
   after do
-    begin; change_stream.close; rescue; end
+    # Only close the change stream if one was successfully created by the test
+    if @change_stream
+      @change_stream.close
+    end
   end
 
   describe '#initialize' do
@@ -422,6 +427,8 @@ describe Mongo::Collection::View::ChangeStream, if: test_change_streams? do
   context 'when the first response does not contain the resume token' do
 
     let(:pipeline) do
+      # This removes id from change stream document which is used as
+      # resume token
       [{ '$project' => { _id: 0 } }]
     end
 
@@ -538,8 +545,7 @@ describe Mongo::Collection::View::ChangeStream, if: test_change_streams? do
       end
 
       before do
-        #expect twice because of kill_cursors in after block
-        expect(view.send(:server_selector)).to receive(:select_server).twice.and_call_original
+        expect(view.send(:server_selector)).to receive(:select_server).and_call_original
       end
 
       it_behaves_like 'a non-resumed change stream'
@@ -688,7 +694,9 @@ describe Mongo::Collection::View::ChangeStream, if: test_change_streams? do
         end
 
         before do
-          begin; enum.next; rescue; end
+          expect do
+            enum.next
+          end.to raise_error(Mongo::Error::MissingResumeToken)
         end
 
         it 'does not close the session' do

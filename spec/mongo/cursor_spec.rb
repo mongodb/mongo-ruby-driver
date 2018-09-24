@@ -2,8 +2,7 @@ require 'spec_helper'
 
 describe Mongo::Cursor do
   before do
-    authorized_collection.indexes.drop_all
-    authorized_collection.delete_many
+    authorized_collection.drop
   end
 
   describe '#each' do
@@ -33,7 +32,6 @@ describe Mongo::Cursor do
         end
 
         before do
-          authorized_collection.delete_many
           authorized_collection.insert_many(documents)
         end
 
@@ -55,7 +53,6 @@ describe Mongo::Cursor do
         end
 
         before do
-          authorized_collection.delete_many
           authorized_collection.insert_many(documents)
         end
 
@@ -100,7 +97,7 @@ describe Mongo::Cursor do
       end
 
       before do
-        authorized_collection.delete_many
+        authorized_collection.drop
         authorized_collection.insert_many(documents)
       end
 
@@ -239,7 +236,6 @@ describe Mongo::Cursor do
       end
 
       before do
-        authorized_collection.delete_many
         authorized_collection.insert_many(documents)
         cluster.schedule_kill_cursor(cursor.id,
                                      cursor.send(:kill_cursors_op_spec),
@@ -322,7 +318,6 @@ describe Mongo::Cursor do
     end
 
     before do
-      collection.delete_many
       collection.insert_many(documents)
     end
 
