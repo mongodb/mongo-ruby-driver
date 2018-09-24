@@ -18,7 +18,7 @@ describe 'DNS Seedlist Discovery' do
           @cluster = cluster
           @monitoring = monitoring
           @options = options.freeze
-          @monitor = Monitor.new(address, event_listeners, options)
+          @monitor = Monitor.new(address, event_listeners, Monitoring.new, options)
         end
 
         # Disconnect simply needs to return true since we have no monitor and

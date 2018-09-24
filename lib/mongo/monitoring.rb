@@ -54,6 +54,11 @@ module Mongo
     # @since 2.4.0
     TOPOLOGY_OPENING = 'TopologyOpening'.freeze
 
+    # Server heartbeat started topic.
+    #
+    # @since 2.7.0
+    SERVER_HEARTBEAT = 'ServerHeartbeat'.freeze
+
     @@operation_id = 0
     @@operation_id_lock = Mutex.new
 

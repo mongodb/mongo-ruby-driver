@@ -179,8 +179,8 @@ module Mongo
       options = options.dup
       monitor = options.delete(:monitor)
       @options = options.freeze
-      @monitor = Monitor.new(address, event_listeners, options.merge(
-        app_metadata: cluster.app_metadata))
+      @monitor = Monitor.new(address, event_listeners, monitoring,
+        options.merge(app_metadata: cluster.app_metadata))
       unless monitor == false
         start_monitoring
       end

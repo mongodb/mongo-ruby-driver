@@ -10,62 +10,64 @@ Monitoring
    :depth: 1
    :class: singlecol
 
-All user-initiated commands that are sent to the server publish events that can be
-subscribed to for fine grained information. The monitoring API publishes a guaranteed
-start event for each command, then either a succeeded or failed event. A subscriber
-must implement 3 methods: ``started``, ``succeeded``, and ``failed``, each which takes
-a single parameter for the event. An example is the default logging subscriber included
-in the driver:
+The driver allows the application to be notified when certain events happen.
+These events are organized into the following categories:
+
+- Command monitoring;
+- Topology lifecycle;
+- Server lifecycle;
+- Server heartbeats.
+
+Topology and server events are part of Server Discovery and Monitoring (SDAM).
+
+Command Monitoring
+------------------
+
+All user-initiated commands that are sent to the server publish events that
+can be subscribed to for fine grained information. The monitoring API
+publishes a guaranteed start event for each command, then either a succeeded
+or a failed event. A subscriber must implement 3 methods: ``started``,
+``succeeded``, and ``failed``, each which takes a single parameter for
+the event. The following is an example logging subscriber based on a
+logging subscriber used internally by the driver:
 
 .. code-block:: ruby
 
-  module Mongo
-    class Monitoring
-      class CommandLogSubscriber
-        include Loggable
+  class CommandLogSubscriber
+    include Mongo::Loggable
 
-        attr_reader :options
+    def started(event)
+      log_debug("#{prefix(event)} | STARTED | #{format_command(event.command)}")
+    end
 
-        LOG_STRING_LIMIT = 250
+    def succeeded(event)
+      log_debug("#{prefix(event)} | SUCCEEDED | #{event.duration}s")
+    end
 
-        def initialize(options = {})
-          @options = options
-        end
+    def failed(event)
+      log_debug("#{prefix(event)} | FAILED | #{event.message} | #{event.duration}s")
+    end
 
-        def started(event)
-          log_debug("#{prefix(event)} | STARTED | #{format_command(event.command)}")
-        end
+    private
 
-        def succeeded(event)
-          log_debug("#{prefix(event)} | SUCCEEDED | #{event.duration}s")
-        end
+    def logger
+      Mongo::Logger.logger
+    end
 
-        def failed(event)
-          log_debug("#{prefix(event)} | FAILED | #{event.message} | #{event.duration}s")
-        end
-
-        private
-
-        def format_command(args)
-          begin
-            truncating? ? truncate(args) : args.inspect
-          rescue Exception
-            '<Unable to inspect arguments>'
-          end
-        end
-
-        def prefix(event)
-          "#{event.address.to_s} | #{event.database_name}.#{event.command_name}"
-        end
-
-        def truncate(command)
-          ((s = command.inspect).length > LOG_STRING_LIMIT) ? "#{s[0..LOG_STRING_LIMIT]}..." : s
-        end
-
-        def truncating?
-          @truncating ||= (options[:truncate_logs] != false)
-        end
+    def format_command(args)
+      begin
+        args.inspect
+      rescue Exception
+        '<Unable to inspect arguments>'
       end
+    end
+
+    def format_message(message)
+      format("COMMAND | %s".freeze, message)
+    end
+
+    def prefix(event)
+      "#{event.address.to_s} | #{event.database_name}.#{event.command_name}"
     end
   end
 
@@ -74,10 +76,85 @@ all clients or on a per-client basis:
 
 .. code-block:: ruby
 
-  Mongo::Monitoring::Global.subscribe(Mongo::Monitoring::COMMAND, my_subscriber)
+  subscriber = CommandLogSubscriber.new
+
+  Mongo::Monitoring::Global.subscribe(Mongo::Monitoring::COMMAND, subscriber)
 
   client = Mongo::Client.new([ '127.0.0.1:27017' ], :database => 'test' )
-  client.subscribe( Mongo::Monitoring::COMMAND, my_subscriber )
+  client.subscribe( Mongo::Monitoring::COMMAND, subscriber )
+
+Sample output:
+
+  D, [2018-09-23T13:47:31.258020 #4692] DEBUG -- : COMMAND | 127.0.0.1:27027 | test.ismaster | STARTED | {"ismaster"=>1, "$readPreference"=>{"mode"=>"primary"}, "lsid"=>{"id"=><BSON::Binary:0x47111693353080 type=uuid data=0x730341e880dc40a2...>}}
+  D, [2018-09-23T13:47:31.259145 #4692] DEBUG -- : COMMAND | 127.0.0.1:27027 | test.ismaster | SUCCEEDED | 0.000791175s
+
+
+Server Heartbeats
+-----------------
+
+The application can be notified of each server heartbeat by subscribing
+to SERVER_HEARTBEAT topic. A server heartbeat listener must implement
+three methods: `started`, `succeeded` and `failed`. Each heartbeat invokes
+the `started` method on the listener, and then either `succeeded` or `failed`
+method depending on the outcome of the heartbeat.
+
+All heartbeat events contain the address of the server that the heartbeat
+was sent to. Succeeded and failed events contain the round trip time for
+the ismaster command. Failed event also contains the exception instance that
+was raised during ismaster command execution. Please review the API
+documentation for ServerHeartbeatStarted, ServerHeartbeatSucceeded and
+ServerHeartbeatFailed for event attribute details.
+
+The following is an example logging heartbeat event subscriber:
+
+.. code-block:: ruby
+
+  class HeartbeatLogSubscriber
+    include Mongo::Loggable
+
+    def started(event)
+      log_debug("#{event.address} | STARTED")
+    end
+
+    def succeeded(event)
+      log_debug("#{event.address} | SUCCEEDED | #{event.duration}s")
+    end
+
+    def failed(event)
+      log_debug("#{event.address} | FAILED | #{event.error.class}: #{event.error.message} | #{event.duration}s")
+    end
+    
+    private
+    
+    def logger
+      Mongo::Logger.logger
+    end
+
+    def format_message(message)
+      format("HEARTBEAT | %s".freeze, message)
+    end
+  end
+
+Similarly to command events, the application can subscribe to heartbeat
+events globally or for a specific client:
+
+.. code-block:: ruby
+
+  subscriber = HeartbeatLogSubscriber.new
+
+  Mongo::Monitoring::Global.subscribe(Mongo::Monitoring::SERVER_HEARTBEAT, subscriber)
+
+  client = Mongo::Client.new([ '127.0.0.1:27017' ], :database => 'test' )
+  client.subscribe( Mongo::Monitoring::SERVER_HEARTBEAT, subscriber )
+
+Sample output:
+
+D, [2018-09-23T13:44:10.707018 #1739] DEBUG -- : HEARTBEAT | 127.0.0.1:27027 | STARTED
+D, [2018-09-23T13:44:10.707778 #1739] DEBUG -- : HEARTBEAT | 127.0.0.1:27027 | SUCCEEDED | 0.000772381s
+
+
+Disabling Monitoring
+--------------------
 
 To turn off monitoring, set the client monitoring option to ``false``:
 
