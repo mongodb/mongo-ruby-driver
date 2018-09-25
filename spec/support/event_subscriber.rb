@@ -8,23 +8,17 @@ class EventSubscriber
     # The started events.
     #
     # @since 2.5.0
-    def started_events
-      @started_events ||= []
-    end
+    attr_reader :started_events
 
     # The succeeded events.
     #
     # @since 2.5.0
-    def succeeded_events
-      @succeeded_events ||= []
-    end
+    attr_reader :succeeded_events
 
     # The failed events.
     #
     # @since 2.5.0
-    def failed_events
-      @failed_events ||= []
-    end
+    attr_reader :failed_events
 
     # Cache the succeeded event.
     #
@@ -32,7 +26,9 @@ class EventSubscriber
     #
     # @since 2.5.0
     def succeeded(event)
-      succeeded_events.push(event)
+      @mutex.synchronize do
+        succeeded_events.push(event)
+      end
     end
 
     # Cache the started event.
@@ -41,7 +37,9 @@ class EventSubscriber
     #
     # @since 2.5.0
     def started(event)
-      started_events.push(event)
+      @mutex.synchronize do
+        started_events.push(event)
+      end
     end
 
     # Cache the failed event.
@@ -50,7 +48,9 @@ class EventSubscriber
     #
     # @since 2.5.0
     def failed(event)
-      failed_events.push(event)
+      @mutex.synchronize do
+        failed_events.push(event)
+      end
     end
 
     # Clear all cached events.
@@ -62,8 +62,17 @@ class EventSubscriber
       @failed_events = []
       self
     end
+
+    def initialize
+      @mutex = Mutex.new
+      clear_events!
+    end
   end
 
   include Impl
-  extend Impl
+
+  class << self
+    include Impl
+    public :initialize
+  end
 end

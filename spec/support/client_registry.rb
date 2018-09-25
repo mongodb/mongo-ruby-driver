@@ -109,6 +109,19 @@ class ClientRegistry
           monitoring: false
         ),
       )
+    # Get an authorized client on the admin database logged in as the admin
+    # root user.
+    when 'root_authorized_admin'
+      Mongo::Client.new(
+        SpecConfig.instance.addresses,
+        SpecConfig.instance.test_options.merge(
+          user: SpecConfig.instance.root_user.name,
+          password: SpecConfig.instance.root_user.password,
+          database: 'admin',
+          auth_source: SpecConfig.instance.auth_source || Mongo::Database::ADMIN,
+          monitoring: false
+        ),
+      )
     # A client that has an event subscriber for commands.
     when 'subscribed'
       Mongo::Client.new(

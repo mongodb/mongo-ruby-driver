@@ -4,21 +4,29 @@ require 'cgi'
 describe 'SCRAM-SHA auth mechanism negotiation' do
   require_scram_sha_256_support
 
+  before(:all) do
+    ClientRegistry.instance.close_all_clients
+  end
+
   URI_OPTION_MAP = {
     :auth_source => 'authsource',
     :replica_set => 'replicaSet',
   }
 
   let(:create_user!) do
-    ClientRegistry.instance.global_client('root_authorized').with(
-      database: 'admin',
-      app_name: 'this is used solely to force the new client to create its own cluster',
-    ).database.command(
-      createUser: user.name,
-      pwd: user.password,
-      roles: ['root'],
-      mechanisms: auth_mechanisms
-    ) rescue Mongo::Error::OperationFailure
+    ClientRegistry.instance.global_client('root_authorized_admin').tap do |client|
+      users = client.database.users
+      if users.info(user.name).any?
+        users.remove(user.name)
+      end
+      client.database.command(
+        createUser: user.name,
+        pwd: password,
+        roles: ['root'],
+        mechanisms: auth_mechanisms
+      )
+      client.close
+    end
   end
 
   let(:password) do
@@ -193,9 +201,8 @@ describe 'SCRAM-SHA auth mechanism negotiation' do
             create_user!
 
             mechanism = nil
-            # On jruby authentication is attempted more than once due to
-            # https://jira.mongodb.org/browse/RUBY-1441.
-            # Try to pick out the correct user...
+            # Negotiation currently happens on monitoring sockets,
+            # hence may be invoked more than once here
             expect(Mongo::Auth).to receive(:get).at_least(:once).and_wrap_original do |m, *args|
               # copy mechanism here rather than whole user
               # in case something mutates mechanism later
@@ -218,9 +225,8 @@ describe 'SCRAM-SHA auth mechanism negotiation' do
             create_user!
 
             mechanism = nil
-            # On jruby authentication is attempted more than once due to
-            # https://jira.mongodb.org/browse/RUBY-1441.
-            # Try to pick out the correct user...
+            # Negotiation currently happens on monitoring sockets,
+            # hence may be invoked more than once here
             expect(Mongo::Auth).to receive(:get).at_least(:once).and_wrap_original do |m, *args|
               if args.first.name == 'both'
                 # copy mechanism here rather than whole user
@@ -482,9 +488,8 @@ describe 'SCRAM-SHA auth mechanism negotiation' do
             create_user!
 
             mechanism = nil
-            # On jruby authentication is attempted more than once due to
-            # https://jira.mongodb.org/browse/RUBY-1441.
-            # Try to pick out the correct user...
+            # Negotiation currently happens on monitoring sockets,
+            # hence may be invoked more than once here
             expect(Mongo::Auth).to receive(:get).at_least(:once).and_wrap_original do |m, *args|
               # copy mechanism here rather than whole user
               # in case something mutates mechanism later
@@ -507,9 +512,8 @@ describe 'SCRAM-SHA auth mechanism negotiation' do
             create_user!
 
             mechanism = nil
-            # On jruby authentication is attempted more than once due to
-            # https://jira.mongodb.org/browse/RUBY-1441.
-            # Try to pick out the correct user...
+            # Negotiation currently happens on monitoring sockets,
+            # hence may be invoked more than once here
             expect(Mongo::Auth).to receive(:get).at_least(:once).and_wrap_original do |m, *args|
               if args.first.name == 'both'
                 # copy mechanism here rather than whole user
