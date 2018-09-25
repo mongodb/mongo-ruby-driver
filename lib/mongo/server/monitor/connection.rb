@@ -73,6 +73,30 @@ module Mongo
         COMPRESSION_WARNING = 'The server has no compression algorithms in common with those requested. ' +
                                 'Compression will not be used.'.freeze
 
+        # Initialize a new socket connection from the client to the server.
+        #
+        # @api private
+        #
+        # @example Create the connection.
+        #   Connection.new(address)
+        #
+        # @note Connection must never be directly instantiated outside of a
+        #   Monitor.
+        #
+        # @param [ Mongo::Address ] address The address the connection is for.
+        # @param [ Hash ] options The connection options.
+        #
+        # @since 2.0.0
+        def initialize(address, options = {})
+          @address = address
+          @options = options.freeze
+          @app_metadata = options[:app_metadata]
+          @ssl_options = options.reject { |k, v| !k.to_s.start_with?(SSL) }
+          @socket = nil
+          @pid = Process.pid
+          @compressor = nil
+        end
+
         # The compressor, which is determined during the handshake.
         #
         # @since 2.5.0
@@ -132,30 +156,6 @@ module Mongo
             @socket = nil
           end
           true
-        end
-
-        # Initialize a new socket connection from the client to the server.
-        #
-        # @api private
-        #
-        # @example Create the connection.
-        #   Connection.new(address)
-        #
-        # @note Connection must never be directly instantiated outside of a
-        #   Monitor.
-        #
-        # @param [ Mongo::Address ] address The address the connection is for.
-        # @param [ Hash ] options The connection options.
-        #
-        # @since 2.0.0
-        def initialize(address, options = {})
-          @address = address
-          @options = options.freeze
-          @app_metadata = options[:app_metadata]
-          @ssl_options = options.reject { |k, v| !k.to_s.start_with?(SSL) }
-          @socket = nil
-          @pid = Process.pid
-          @compressor = nil
         end
 
         # Get the socket timeout.

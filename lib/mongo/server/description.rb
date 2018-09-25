@@ -177,6 +177,25 @@ module Mongo
                                  OPERATION_TIME,
                                  Operation::CLUSTER_TIME ].freeze
 
+      # Instantiate the new server description from the result of the ismaster
+      # command.
+      #
+      # @example Instantiate the new description.
+      #   Description.new(address, { 'ismaster' => true }, 0.5)
+      #
+      # @param [ Address ] address The server address.
+      # @param [ Hash ] config The result of the ismaster command.
+      # @param [ Float ] average_round_trip_time The moving average time (sec) the ismaster
+      #   call took to complete.
+      #
+      # @since 2.0.0
+      def initialize(address, config = {}, average_round_trip_time = 0)
+        @address = address
+        @config = config
+        @features = Features.new(wire_versions, me || @address.to_s)
+        @average_round_trip_time = average_round_trip_time
+      end
+
       # @return [ Address ] address The server's address.
       attr_reader :address
 
@@ -247,25 +266,6 @@ module Mongo
       # @since 2.0.0
       def hosts
         @hosts ||= (config[HOSTS] || []).map { |s| s.downcase }
-      end
-
-      # Instantiate the new server description from the result of the ismaster
-      # command.
-      #
-      # @example Instantiate the new description.
-      #   Description.new(address, { 'ismaster' => true }, 0.5)
-      #
-      # @param [ Address ] address The server address.
-      # @param [ Hash ] config The result of the ismaster command.
-      # @param [ Float ] average_round_trip_time The moving average time (sec) the ismaster
-      #   call took to complete.
-      #
-      # @since 2.0.0
-      def initialize(address, config = {}, average_round_trip_time = 0)
-        @address = address
-        @config = config
-        @features = Features.new(wire_versions, me || @address.to_s)
-        @average_round_trip_time = average_round_trip_time
       end
 
       # Inspect the server description.

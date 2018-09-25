@@ -24,6 +24,18 @@ module Mongo
     class Context
       extend Forwardable
 
+      # Instantiate a server context.
+      #
+      # @example Instantiate a server context.
+      #   Mongo::Server::Context.new(server)
+      #
+      # @param [ Mongo::Server ] server The server the context is for.
+      #
+      # @since 2.0.0
+      def initialize(server)
+        @server = server
+      end
+
       # @return [ Mongo::Server ] server The server the context is for.
       attr_reader :server
 
@@ -37,18 +49,6 @@ module Mongo
                      :primary?,
                      :secondary?,
                      :standalone?
-
-      # Instantiate a server context.
-      #
-      # @example Instantiate a server context.
-      #   Mongo::Server::Context.new(server)
-      #
-      # @param [ Mongo::Server ] server The server the context is for.
-      #
-      # @since 2.0.0
-      def initialize(server)
-        @server = server
-      end
 
       # Execute a block of code with a connection, that is checked out of the
       # pool and then checked back in.

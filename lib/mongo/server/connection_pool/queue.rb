@@ -35,6 +35,29 @@ module Mongo
         # The default timeout, in seconds, to wait for a connection.
         WAIT_TIMEOUT = 1.freeze
 
+        # Initialize the new queue. Will yield the block the number of times for
+        # the initial size of the queue.
+        #
+        # @example Create the queue.
+        #   Mongo::Server::ConnectionPool::Queue.new(max_pool_size: 5) { Connection.new }
+        #
+        # @param [ Hash ] options The options.
+        #
+        # @option options [ Integer ] :max_pool_size The maximum size.
+        # @option options [ Integer ] :min_pool_size The minimum size.
+        # @option options [ Float ] :wait_queue_timeout The time to wait, in
+        #   seconds, for a free connection.
+        #
+        # @since 2.0.0
+        def initialize(options = {}, &block)
+          @block = block
+          @connections = 0
+          @options = options
+          @queue = Array.new(min_size) { create_connection }
+          @mutex = Mutex.new
+          @resource = ConditionVariable.new
+        end
+
         # @return [ Array ] queue The underlying array of connections.
         attr_reader :queue
 
@@ -90,29 +113,6 @@ module Mongo
             queue.unshift(connection.record_checkin!)
             resource.broadcast
           end
-        end
-
-        # Initialize the new queue. Will yield the block the number of times for
-        # the initial size of the queue.
-        #
-        # @example Create the queue.
-        #   Mongo::Server::ConnectionPool::Queue.new(max_pool_size: 5) { Connection.new }
-        #
-        # @param [ Hash ] options The options.
-        #
-        # @option options [ Integer ] :max_pool_size The maximum size.
-        # @option options [ Integer ] :min_pool_size The minimum size.
-        # @option options [ Float ] :wait_queue_timeout The time to wait, in
-        #   seconds, for a free connection.
-        #
-        # @since 2.0.0
-        def initialize(options = {}, &block)
-          @block = block
-          @connections = 0
-          @options = options
-          @queue = Array.new(min_size) { create_connection }
-          @mutex = Mutex.new
-          @resource = ConditionVariable.new
         end
 
         # Get a pretty printed string inspection for the queue.
