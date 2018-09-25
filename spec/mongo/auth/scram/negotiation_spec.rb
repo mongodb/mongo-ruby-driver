@@ -201,7 +201,9 @@ describe 'SCRAM-SHA auth mechanism negotiation' do
             create_user!
 
             mechanism = nil
-            expect(Mongo::Auth).to receive(:get).and_wrap_original do |m, *args|
+            # Negotiation currently happens on monitoring sockets,
+            # hence may be invoked more than once here
+            expect(Mongo::Auth).to receive(:get).at_least(:once).and_wrap_original do |m, *args|
               # copy mechanism here rather than whole user
               # in case something mutates mechanism later
               mechanism = args.first.mechanism
@@ -223,7 +225,9 @@ describe 'SCRAM-SHA auth mechanism negotiation' do
             create_user!
 
             mechanism = nil
-            expect(Mongo::Auth).to receive(:get).and_wrap_original do |m, *args|
+            # Negotiation currently happens on monitoring sockets,
+            # hence may be invoked more than once here
+            expect(Mongo::Auth).to receive(:get).at_least(:once).and_wrap_original do |m, *args|
               if args.first.name == 'both'
                 # copy mechanism here rather than whole user
                 # in case something mutates mechanism later
@@ -484,7 +488,9 @@ describe 'SCRAM-SHA auth mechanism negotiation' do
             create_user!
 
             mechanism = nil
-            expect(Mongo::Auth).to receive(:get).and_wrap_original do |m, *args|
+            # Negotiation currently happens on monitoring sockets,
+            # hence may be invoked more than once here
+            expect(Mongo::Auth).to receive(:get).at_least(:once).and_wrap_original do |m, *args|
               # copy mechanism here rather than whole user
               # in case something mutates mechanism later
               mechanism = args.first.mechanism
@@ -506,7 +512,9 @@ describe 'SCRAM-SHA auth mechanism negotiation' do
             create_user!
 
             mechanism = nil
-            expect(Mongo::Auth).to receive(:get).and_wrap_original do |m, *args|
+            # Negotiation currently happens on monitoring sockets,
+            # hence may be invoked more than once here
+            expect(Mongo::Auth).to receive(:get).at_least(:once).and_wrap_original do |m, *args|
               if args.first.name == 'both'
                 # copy mechanism here rather than whole user
                 # in case something mutates mechanism later
