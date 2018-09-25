@@ -16,7 +16,6 @@ require 'mongo/cluster/topology'
 require 'mongo/cluster/reapers/socket_reaper'
 require 'mongo/cluster/reapers/cursor_reaper'
 require 'mongo/cluster/periodic_executor'
-require 'mongo/cluster/app_metadata'
 
 module Mongo
 
@@ -81,7 +80,7 @@ module Mongo
       @monitoring = monitoring
       @event_listeners = Event::Listeners.new
       @options = options.freeze
-      @app_metadata = AppMetadata.new(self)
+      @app_metadata = Server::AppMetadata.new(@options)
       @update_lock = Mutex.new
       @pool_lock = Mutex.new
       @cluster_time = nil
@@ -128,7 +127,7 @@ module Mongo
     # @return [ Object ] The cluster topology.
     attr_reader :topology
 
-    # @return [ Mongo::Cluster::AppMetadata ] The application metadata, used for connection
+    # @return [ Mongo::Server::AppMetadata ] The application metadata, used for connection
     #   handshakes.
     #
     # @since 2.4.0

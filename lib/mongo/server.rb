@@ -12,13 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/server/connectable'
-require 'mongo/server/connection'
-require 'mongo/server/connection_pool'
-require 'mongo/server/context'
-require 'mongo/server/description'
-require 'mongo/server/monitor'
-
 module Mongo
 
   # Represents a single server on the server side that can be standalone, part of
@@ -331,3 +324,11 @@ module Mongo
     end
   end
 end
+
+require 'mongo/server/app_metadata'
+require 'mongo/server/connectable'
+require 'mongo/server/connection'
+require 'mongo/server/connection_pool'
+require 'mongo/server/context'
+require 'mongo/server/description'
+require 'mongo/server/monitor'
