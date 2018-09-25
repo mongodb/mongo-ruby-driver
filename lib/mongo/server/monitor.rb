@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/server/monitor/connection'
-
 module Mongo
   class Server
 
@@ -245,3 +243,6 @@ module Mongo
     end
   end
 end
+
+require 'mongo/server/monitor/connection'
+require 'mongo/server/monitor/app_metadata'

@@ -86,6 +86,22 @@ module Mongo
         # @param [ Mongo::Address ] address The address the connection is for.
         # @param [ Hash ] options The connection options.
         #
+        # @option options [ Mongo::Server::Monitor::AppMetadata ] :app_metadata
+        #   Metadata to use for handshake. If missing or nil, handshake will
+        #   not be performed. Although a Mongo::Server::AppMetadata instance
+        #   will also work, monitoring connections are meant to use
+        #   Mongo::Server::Monitor::AppMetadata instances in order to omit
+        #   performing SCRAM negotiation with the server, as monitoring
+        #   sockets do not authenticate.
+        # @option options [ Array<String> ] :compressors A list of potential
+        #   compressors to use, in order of preference. The driver chooses the
+        #   first compressor that is also supported by the server. Currently the
+        #   driver only supports 'zlib'.
+        # @option options [ Float ] :connect_timeout The timeout, in seconds,
+        #   to use for network operations. This timeout is used for all
+        #   socket operations rather than connect calls only, contrary to
+        #   what the name implies,
+        #
         # @since 2.0.0
         def initialize(address, options = {})
           @address = address

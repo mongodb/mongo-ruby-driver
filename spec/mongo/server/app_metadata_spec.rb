@@ -130,4 +130,16 @@ describe Mongo::Server::AppMetadata do
       end
     end
   end
+
+  describe '#document' do
+    context 'when user is given and auth_mech is not given' do
+      let(:app_metadata) do
+        described_class.new(user: 'foo')
+      end
+
+      it 'includes saslSupportedMechs' do
+        expect(app_metadata.send(:document)[:saslSupportedMechs]).to eq('admin.foo')
+      end
+    end
+  end
 end
