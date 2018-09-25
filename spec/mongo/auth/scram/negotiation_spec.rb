@@ -4,9 +4,7 @@ require 'cgi'
 describe 'SCRAM-SHA auth mechanism negotiation' do
   require_scram_sha_256_support
 
-  before do
-    # Since we take options off global cilents, we end up instantiating those
-    # as well in each example...
+  before(:all) do
     ClientRegistry.instance.close_all_clients
   end
 
@@ -16,15 +14,19 @@ describe 'SCRAM-SHA auth mechanism negotiation' do
   }
 
   let(:create_user!) do
-    ClientRegistry.instance.global_client('root_authorized').with(
-      database: 'admin',
-      app_name: 'this is used solely to force the new client to create its own cluster',
-    ).database.command(
-      createUser: user.name,
-      pwd: user.password,
-      roles: ['root'],
-      mechanisms: auth_mechanisms
-    ) rescue Mongo::Error::OperationFailure
+    ClientRegistry.instance.global_client('root_authorized_admin').tap do |client|
+      users = client.database.users
+      if users.info(user.name).any?
+        users.remove(user.name)
+      end
+      client.database.command(
+        createUser: user.name,
+        pwd: password,
+        roles: ['root'],
+        mechanisms: auth_mechanisms
+      )
+      client.close
+    end
   end
 
   let(:password) do
