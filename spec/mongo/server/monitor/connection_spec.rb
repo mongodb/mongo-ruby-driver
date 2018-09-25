@@ -15,7 +15,7 @@ describe Mongo::Server::Monitor::Connection do
   let(:cluster) do
     double('cluster').tap do |cl|
       allow(cl).to receive(:topology).and_return(topology)
-      allow(cl).to receive(:app_metadata).and_return(Mongo::Cluster::AppMetadata.new(authorized_client.cluster))
+      allow(cl).to receive(:app_metadata).and_return(Mongo::Server::AppMetadata.new(authorized_client.cluster.options))
     end
   end
 

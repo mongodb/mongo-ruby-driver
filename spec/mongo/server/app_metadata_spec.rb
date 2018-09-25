@@ -1,9 +1,9 @@
 require 'spec_helper'
 
-describe Mongo::Cluster::AppMetadata do
+describe Mongo::Server::AppMetadata do
 
   let(:app_metadata) do
-    described_class.new(cluster)
+    described_class.new(cluster.options)
   end
 
   let(:cluster) do

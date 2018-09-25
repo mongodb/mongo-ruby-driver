@@ -499,7 +499,7 @@ describe Mongo::Cluster do
   describe '#app_metadata' do
 
     it 'returns an AppMetadata object' do
-      expect(cluster.app_metadata).to be_a(Mongo::Cluster::AppMetadata)
+      expect(cluster.app_metadata).to be_a(Mongo::Server::AppMetadata)
     end
 
     context 'when the client has an app_name set' do

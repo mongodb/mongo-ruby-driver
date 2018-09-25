@@ -15,8 +15,7 @@
 require 'rbconfig'
 
 module Mongo
-  class Cluster
-
+  class Server
     # Application metadata that is sent to the server in an ismaster command,
     #   when a new connection is established.
     #
@@ -46,19 +45,33 @@ module Mongo
       # @api private
       #
       # @example Instantiate the app metadata.
-      #   Mongo::Cluster.AppMetadata.new(cluster)
+      #   Mongo::Server::AppMetadata.new(options)
       #
-      # @param [ Mongo::Cluster ] cluster The cluster.
+      # @param [ Hash ] options Metadata options.
+      # @option options [ String, Symbol ] :app_name Application name that is
+      #   printed to the mongod logs upon establishing a connection in server
+      #   versions >= 3.4.
+      # @option options [ Symbol ] :auth_mech The authentication mechanism to
+      #   use. One of :mongodb_cr, :mongodb_x509, :plain, :scram, :scram256
+      # @option options [ String ] :auth_source The source to authenticate from.
+      # @option options [ Array<String> ] :compressors A list of potential
+      #   compressors to use, in order of preference. The driver chooses the
+      #   first compressor that is also supported by the server. Currently the
+      #   driver only supports 'zlib'.
+      # @option options [ String ] :platform Platform information to include in
+      #   the metadata printed to the mongod logs upon establishing a connection
+      #   in server versions >= 3.4.
+      # @option options [ String ] :user The user name.
       #
       # @since 2.4.0
-      def initialize(cluster)
-        @app_name = cluster.options[:app_name].to_s if cluster.options[:app_name]
-        @platform = cluster.options[:platform]
-        @compressors = cluster.options[:compressors] || []
+      def initialize(options)
+        @app_name = options[:app_name].to_s if options[:app_name]
+        @platform = options[:platform]
+        @compressors = options[:compressors] || []
 
-        if cluster.options[:user] && !cluster.options[:auth_mech]
-          auth_db = cluster.options[:auth_source] || 'admin'
-          @request_auth_mech = "#{auth_db}.#{cluster.options[:user]}"
+        if options[:user] && !options[:auth_mech]
+          auth_db = options[:auth_source] || 'admin'
+          @request_auth_mech = "#{auth_db}.#{options[:user]}"
         end
       end
 

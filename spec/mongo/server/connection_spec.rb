@@ -15,7 +15,7 @@ describe Mongo::Server::Connection do
   end
 
   let(:app_metadata) do
-    Mongo::Cluster::AppMetadata.new(authorized_client.cluster)
+    Mongo::Server::AppMetadata.new(authorized_client.cluster.options)
   end
 
   let(:cluster) do
