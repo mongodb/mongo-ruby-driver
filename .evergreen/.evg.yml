@@ -336,6 +336,16 @@ functions:
           ${PREPARE_SHELL}
           AUTH=${AUTH} SSL=${SSL} MONGODB_URI="${MONGODB_URI}" TOPOLOGY=${TOPOLOGY} RVM_RUBY="${RVM_RUBY}" MONGODB_VERSION=${VERSION} .evergreen/run-tests.sh
 
+  "run enterprise auth tests":
+    - command: shell.exec
+      type: test
+      params:
+        shell: bash
+        working_dir: "src"
+        script: |
+            # DO NOT ECHO WITH XTRACE (which PREPARE_SHELL does)
+            ENTERPRISE_AUTH_TESTS=1 SASL_HOST=${sasl_host} SASL_PORT=${sasl_port} SASL_USER=${sasl_user} SASL_PASS=${sasl_pass} SASL_DB=${sasl_db} PRINCIPAL=${principal} KERBEROS_DB=${kerberos_db} KEYTAB_BASE64=${keytab_base64} PROJECT_DIRECTORY=${PROJECT_DIRECTORY} RVM_RUBY="${RVM_RUBY}" ${PROJECT_DIRECTORY}/.evergreen/run-enterprise-auth-tests.sh
+
   "cleanup":
     - command: shell.exec
       params:
@@ -430,6 +440,9 @@ tasks:
       commands:
         - func: "bootstrap mongo-orchestration"
         - func: "run tests"
+    - name: "enterprise-auth-tests"
+      commands:
+        - func: "run enterprise auth tests"
 
 axes:
   - id: "mongodb-version"
@@ -684,3 +697,14 @@ buildvariants:
     - ubuntu1604-test
   tasks:
      - name: "test"
+
+-
+  matrix_name: "enterprise-auth-tests"
+  matrix_spec:
+    auth-and-ssl: "auth-and-ssl"
+    ruby: "ruby-2.5"
+  display_name: "Enterprise Auth"
+  run_on:
+    - ubuntu1404-test
+  tasks:
+    - name: "enterprise-auth-tests"
