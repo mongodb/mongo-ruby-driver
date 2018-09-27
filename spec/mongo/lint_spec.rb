@@ -2,6 +2,12 @@ require 'lite_spec_helper'
 
 describe Mongo::Lint do
 
+  before(:all) do
+    # Since we are installing an expectation on ENV, close any open clients
+    # which may have background threads reading ENV
+    ClientRegistry.instance.close_all_clients
+  end
+
   before do
     expect(ENV).to receive(:[]).with('MONGO_RUBY_DRIVER_LINT').at_least(:once).and_return('1')
   end
