@@ -1,6 +1,10 @@
 require 'spec_helper'
 
 describe Mongo::Cursor do
+  let(:authorized_collection) do
+    authorized_client['cursor_spec_collection']
+  end
+
   before do
     authorized_collection.drop
   end
