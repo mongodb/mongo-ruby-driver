@@ -31,6 +31,7 @@ describe 'Server Selection' do
           allow(c).to receive(:replica_set?).and_return(topology.replica_set?)
           allow(c).to receive(:unknown?).and_return(topology.unknown?)
           allow(c).to receive(:app_metadata).and_return(app_metadata)
+          allow(c).to receive(:options).and_return({})
         end
       end
 

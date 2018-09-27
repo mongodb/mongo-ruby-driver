@@ -8,6 +8,7 @@ describe Mongo::Server do
     double('cluster').tap do |cl|
       allow(cl).to receive(:topology).and_return(topology)
       allow(cl).to receive(:app_metadata).and_return(app_metadata)
+      allow(cl).to receive(:options).and_return({})
     end
   end
 
@@ -119,6 +120,10 @@ describe Mongo::Server do
 
     it 'sets the options' do
       expect(server.options).to eq(SpecConfig.instance.test_options.merge(:heartbeat_frequency => 5))
+    end
+
+    it 'creates monitor with monitoring app metadata' do
+      expect(server.monitor.options[:app_metadata]).to be_a(Mongo::Server::Monitor::AppMetadata)
     end
   end
 
