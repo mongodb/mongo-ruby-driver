@@ -27,13 +27,18 @@ module Mongo
       # Create the new connection pool.
       #
       # @example Create the new connection pool.
-      #   Pool.new(timeout: 0.5) do
+      #   Pool.new(wait_queue_timeout: 0.5) do
       #     Connection.new
       #   end
       #
       # @note A block must be passed to set up the connections on initialization.
       #
       # @param [ Hash ] options The connection pool options.
+      #
+      # @option options [ Integer ] :max_pool_size The maximum pool size.
+      # @option options [ Integer ] :min_pool_size The minimum pool size.
+      # @option options [ Float ] :wait_queue_timeout The time to wait, in
+      #   seconds, for a free connection.
       #
       # @since 2.0.0
       def initialize(options = {}, &block)

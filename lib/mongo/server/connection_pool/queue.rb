@@ -19,43 +19,62 @@ module Mongo
       # A LIFO queue of connections to be used by the connection pool. This is
       # based on mperham's connection pool.
       #
+      # @note The queue contains active connections that are available for
+      #   use. It does not track connections which are in use (checked out).
+      #   It is easy to confuse the size of the connection pool (number of
+      #   connections that are used plus number of connections that are
+      #   available for use) and the size of the queue (number of connections
+      #   that have already been created that are available for use).
+      #   API documentation for this class states whether each size refers
+      #   to the pool or to the queue size. Note that minimum and maximum
+      #   sizes only make sense when talking about the connection pool,
+      #   as the size of the queue of available connections is determined by
+      #   the size constraints of the pool plus how many connections are
+      #   currently checked out.
+      #
       # @since 2.0.0
       class Queue
         extend Forwardable
 
-        # Size of the queue delegates to the wrapped queue.
-        def_delegators :queue, :size
-
-        # The default max size for the queue.
+        # The default max size for the connection pool.
         MAX_SIZE = 5.freeze
 
-        # The default min size for the queue.
+        # The default min size for the connection pool.
         MIN_SIZE = 1.freeze
 
         # The default timeout, in seconds, to wait for a connection.
         WAIT_TIMEOUT = 1.freeze
 
-        # Initialize the new queue. Will yield the block the number of times for
-        # the initial size of the queue.
+        # Initialize the new queue. Will yield the block the number of times
+        # equal to the initial connection pool size.
         #
         # @example Create the queue.
         #   Mongo::Server::ConnectionPool::Queue.new(max_pool_size: 5) { Connection.new }
         #
         # @param [ Hash ] options The options.
         #
-        # @option options [ Integer ] :max_pool_size The maximum size.
-        # @option options [ Integer ] :min_pool_size The minimum size.
+        # @option options [ Integer ] :max_pool_size The maximum pool size.
+        # @option options [ Integer ] :min_pool_size The minimum pool size.
         # @option options [ Float ] :wait_queue_timeout The time to wait, in
         #   seconds, for a free connection.
         #
         # @since 2.0.0
         def initialize(options = {}, &block)
+          if options[:min_pool_size] && options[:max_pool_size] &&
+            options[:min_pool_size] > options[:max_pool_size]
+          then
+            raise ArgumentError, "Cannot have min size > max size"
+          end
           @block = block
-          @connections = 0
+          # This is the number of connections in the pool.
+          # Includes available connections in the queue and the checked
+          # out connections that we don't otherwise track.
+          @pool_size = 0
           @options = options
           @queue = Array.new(min_size) { create_connection }
           @mutex = Mutex.new
           @resource = ConditionVariable.new
+          check_count_invariants
         end
 
         # @return [ Array ] queue The underlying array of connections.
@@ -70,19 +89,43 @@ module Mongo
         # @return [ ConditionVariable ] resource The resource.
         attr_reader :resource
 
-        # Dequeue a connection from the queue, waiting for the provided timeout
-        # for an item if none is in the queue.
+        # Number of connections that the pool has which are ready to be
+        # checked out. This is NOT the size of the connection pool (total
+        # number of active connections created by the pool).
+        def_delegators :queue, :size
+
+        # Number of connections that the pool has which are ready to be
+        # checked out.
+        #
+        # @since 2.7.0
+        alias_method :queue_size, :size
+
+        # Number of connections in the pool (active connections ready to
+        # be checked out plus connections already checked out).
+        #
+        # @since 2.7.0
+        attr_reader :pool_size
+
+        # Retrieves a connection. If there are active connections in the
+        # queue, the most recently used connection is returned. Otherwise
+        # if the connection pool size is less than the max size, creates a
+        # new connection and returns it. Otherwise raises Timeout::Error.
         #
         # @example Dequeue a connection.
         #   queue.dequeue
         #
         # @return [ Mongo::Server::Connection ] The next connection.
+        # @raise [ Timeout::Error ] If the connection pool is at maximum size
+        #   and remains so for longer than the wait timeout.
         #
         # @since 2.0.0
         def dequeue
+          check_count_invariants
           mutex.synchronize do
             dequeue_connection
           end
+        ensure
+          check_count_invariants
         end
 
         # Disconnect all connections in the queue.
@@ -94,13 +137,27 @@ module Mongo
         #
         # @since 2.1.0
         def disconnect!
+          check_count_invariants
           mutex.synchronize do
             queue.each{ |connection| connection.disconnect! }
             true
           end
+        ensure
+          check_count_invariants
         end
 
         # Enqueue a connection in the queue.
+        #
+        # Only connections created by this queue should be enqueued
+        # back into it, however the queue does not verify whether it
+        # originally created the connection being enqueued.
+        #
+        # If linting is enabled (see Mongo::Lint), attempting to enqueue
+        # connections beyond the pool's capacity will raise Mongo::Error::LintError
+        # (since some of those connections must not have originated from
+        # the queue into which they are being enqueued). If linting is
+        # not enabled, the queue can grow beyond its max size with undefined
+        # results.
         #
         # @example Enqueue a connection.
         #   queue.enqueue(connection)
@@ -109,10 +166,14 @@ module Mongo
         #
         # @since 2.0.0
         def enqueue(connection)
+          check_count_invariants
           mutex.synchronize do
             queue.unshift(connection.record_checkin!)
             resource.broadcast
           end
+          nil
+        ensure
+          check_count_invariants
         end
 
         # Get a pretty printed string inspection for the queue.
@@ -125,27 +186,27 @@ module Mongo
         # @since 2.0.0
         def inspect
           "#<Mongo::Server::ConnectionPool::Queue:0x#{object_id} min_size=#{min_size} max_size=#{max_size} " +
-            "wait_timeout=#{wait_timeout} current_size=#{queue.size}>"
+            "wait_timeout=#{wait_timeout} current_size=#{queue_size}>"
         end
 
-        # Get the maximum size of the queue.
+        # Get the maximum size of the connection pool.
         #
         # @example Get the max size.
         #   queue.max_size
         #
-        # @return [ Integer ] The maximum size of the queue.
+        # @return [ Integer ] The maximum size of the connection pool.
         #
         # @since 2.0.0
         def max_size
-          @max_size ||= options[:max_pool_size] || MAX_SIZE
+          @max_size ||= options[:max_pool_size] || [MAX_SIZE, min_size].max
         end
 
-        # Get the minimum size of the queue.
+        # Get the minimum size of the connection pool.
         #
         # @example Get the min size.
         #   queue.min_size
         #
-        # @return [ Integer ] The minimum size of the queue.
+        # @return [ Integer ] The minimum size of the connection pool.
         #
         # @since 2.0.0
         def min_size
@@ -164,7 +225,8 @@ module Mongo
           @wait_timeout ||= options[:wait_queue_timeout] || WAIT_TIMEOUT
         end
 
-        # The maximum seconds a socket can remain idle since it has been checked in to the pool.
+        # The maximum seconds a socket can remain idle since it has been
+        # checked in to the pool.
         #
         # @example Get the max idle time.
         #   queue.max_idle_time
@@ -176,14 +238,15 @@ module Mongo
           @max_idle_time ||= options[:max_idle_time]
         end
 
-        # Close sockets that have been open for longer than the max idle time, if the
-        #   option is set.
+        # Close sockets that have been open for longer than the max idle time,
+        #   if the option is set.
         #
         # @example Close the stale sockets
         #   queue.close_stale_sockets!
         #
         # @since 2.5.0
         def close_stale_sockets!
+          check_count_invariants
           return unless max_idle_time
 
           to_refresh = []
@@ -196,7 +259,7 @@ module Mongo
           end
 
           mutex.synchronize do
-            num_checked_out = @connections - queue.size
+            num_checked_out = pool_size - queue_size
             min_size_delta = [(min_size - num_checked_out), 0].max
 
             to_refresh.each do |connection|
@@ -208,6 +271,8 @@ module Mongo
               end
             end
           end
+        ensure
+          check_count_invariants
         end
 
         private
@@ -223,9 +288,9 @@ module Mongo
         end
 
         def create_connection
-          if @connections < max_size
-            @connections += 1
-            @block.call
+          if pool_size < max_size
+            @pool_size += 1
+            @block.call(@generation)
           end
         end
 
@@ -235,6 +300,17 @@ module Mongo
             raise Timeout::Error.new("Timed out attempting to dequeue connection after #{wait_timeout} sec.")
           end
           resource.wait(mutex, wait)
+        end
+
+        def check_count_invariants
+          if Mongo::Lint.enabled?
+            if pool_size < min_size
+              raise Error::LintError, 'connection pool queue: underflow'
+            end
+            if pool_size > max_size
+              raise Error::LintError, 'connection pool queue: overflow'
+            end
+          end
         end
       end
     end
