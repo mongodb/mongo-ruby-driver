@@ -487,6 +487,16 @@ axes:
         variables:
            AUTH: "auth"
            SSL: "ssl"
+      - id: "auth-and-nossl"
+        display_name: Auth NoSSL
+        variables:
+           AUTH: "auth"
+           SSL: "nossl"
+      - id: "noauth-and-ssl"
+        display_name: NoAuth SSL
+        variables:
+           AUTH: "noauth"
+           SSL: "ssl"
       - id: "noauth-and-nossl"
         display_name: NoAuth NoSSL
         variables:
@@ -563,7 +573,7 @@ buildvariants:
 -
   matrix_name: "ruby-min"
   matrix_spec:
-    auth-and-ssl: "*"
+    auth-and-ssl: ["auth-and-ssl", "noauth-and-nossl"]
     ruby: "ruby-1.9"
     mongodb-version: "3.6"
     topology: "*"
@@ -589,9 +599,22 @@ buildvariants:
 -
   matrix_name: "mongo"
   matrix_spec:
-    auth-and-ssl: "*"
+    auth-and-ssl: ["auth-and-ssl", "noauth-and-nossl"]
     ruby: "ruby-2.5"
     mongodb-version: "*"
+    topology: "*"
+  display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
+  run_on:
+    - ubuntu1404-test
+  tasks:
+     - name: "test"
+
+-
+  matrix_name: "partial-auth-ssl"
+  matrix_spec:
+    auth-and-ssl: ["auth-and-nossl", "noauth-and-ssl"]
+    ruby: "ruby-2.5"
+    mongodb-version: ["4.0"]
     topology: "*"
   display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
   run_on:
@@ -655,7 +678,7 @@ buildvariants:
 
 -
   matrix_name: "ruby-head"
-  matrix_spec: { auth-and-ssl: "*", ruby: ["ruby-head"], mongodb-version: "4.0", topology: "*" }
+  matrix_spec: { auth-and-ssl: ["auth-and-ssl", "noauth-and-nossl"], ruby: ["ruby-head"], mongodb-version: "4.0", topology: "*" }
   display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
   run_on:
     - ubuntu1604-test
