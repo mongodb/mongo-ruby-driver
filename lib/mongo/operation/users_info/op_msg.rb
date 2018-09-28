@@ -41,7 +41,7 @@ module Mongo
           process_result(result, server)
           result.validate!
         rescue Mongo::Error::SocketError => e
-          e.send(:add_label, Mongo::Error::TRANSIENT_TRANSACTION_ERROR_LABEL) if session.in_transaction?
+          e.send(:add_label, Mongo::Error::TRANSIENT_TRANSACTION_ERROR_LABEL) if session && session.in_transaction?
           raise e
         end
 
