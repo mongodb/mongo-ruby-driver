@@ -34,6 +34,7 @@ module Mongo
       #
       # @since 2.0.0
       class Queue
+        include Loggable
         extend Forwardable
 
         # The default max size for the connection pool.
@@ -71,11 +72,22 @@ module Mongo
           # out connections that we don't otherwise track.
           @pool_size = 0
           @options = options
+          @generation = 1
+          if min_size > max_size
+            raise ArgumentError, "min_size (#{min_size}) cannot exceed max_size (#{max_size})"
+          end
           @queue = Array.new(min_size) { create_connection }
           @mutex = Mutex.new
           @resource = ConditionVariable.new
           check_count_invariants
         end
+
+        # @return [ Integer ] generation Generation of connections currently
+        #   being used by the queue.
+        #
+        # @since 2.7.0
+        # @api private
+        attr_reader :generation
 
         # @return [ Array ] queue The underlying array of connections.
         attr_reader :queue
@@ -140,6 +152,18 @@ module Mongo
           check_count_invariants
           mutex.synchronize do
             queue.each{ |connection| connection.disconnect! }
+            @pool_size -= queue.length
+            if @pool_size < 0
+              # This should never happen
+              log_warn("ConnectionPool::Queue: connection accounting problem")
+              @pool_size = 0
+            end
+            queue.clear
+            @generation += 1
+            while @pool_size < min_size
+              @pool_size += 1
+              queue.unshift(@block.call(@generation))
+            end
             true
           end
         ensure
@@ -168,8 +192,25 @@ module Mongo
         def enqueue(connection)
           check_count_invariants
           mutex.synchronize do
-            queue.unshift(connection.record_checkin!)
-            resource.broadcast
+            if connection.generation == @generation
+              queue.unshift(connection.record_checkin!)
+              resource.broadcast
+            else
+              connection.disconnect!
+
+              @pool_size = if @pool_size > 0
+                @pool_size - 1
+              else
+                # This should never happen
+                log_warn("ConnectionPool::Queue: unexpected enqueue")
+                0
+              end
+
+              while @pool_size < min_size
+                @pool_size += 1
+                queue.unshift(@block.call(@generation))
+              end
+            end
           end
           nil
         ensure

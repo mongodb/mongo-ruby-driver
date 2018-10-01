@@ -136,8 +136,8 @@ module Mongo
         #
         # @since 2.0.0
         def get(server)
-          ConnectionPool.new(server.options) do
-            Connection.new(server, server.options)
+          ConnectionPool.new(server.options) do |generation|
+            Connection.new(server, server.options.merge(generation: generation))
           end
         end
       end

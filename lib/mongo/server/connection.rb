@@ -79,6 +79,9 @@ module Mongo
       # @param [ Mongo::Server ] server The server the connection is for.
       # @param [ Hash ] options The connection options.
       #
+      # @option options [ Integer ] :generation Connection pool's generation
+      #   for this connection.
+      #
       # @since 2.0.0
       def initialize(server, options = {})
         @address = server.address
@@ -96,6 +99,15 @@ module Mongo
       #
       # @since 2.5.0
       attr_reader :last_checkin
+
+      # Connection pool generation from which this connection was created.
+      # May be nil.
+      #
+      # @since 2.7.0
+      # @api private
+      def generation
+        options[:generation]
+      end
 
       def_delegators :@server,
                      :features,

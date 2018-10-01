@@ -23,9 +23,11 @@ describe Mongo::Server::Connection do
       allow(cl).to receive(:topology).and_return(topology)
       allow(cl).to receive(:app_metadata).and_return(app_metadata)
       allow(cl).to receive(:options).and_return({})
-      allow(cl).to receive(:options).and_return({})
       allow(cl).to receive(:cluster_time).and_return(nil)
       allow(cl).to receive(:update_cluster_time)
+      pool = double('pool')
+      allow(pool).to receive(:disconnect!)
+      allow(cl).to receive(:pool).and_return(pool)
     end
   end
 
@@ -109,20 +111,39 @@ describe Mongo::Server::Connection do
           )
         end
 
-        let!(:error) do
+        let(:error) do
           e = begin; connection.send(:ensure_connected); rescue => ex; ex; end
         end
 
-        it 'raises an error' do
-          expect(error).to be_a(Mongo::Auth::Unauthorized)
+        context 'not checking pool disconnection' do
+          before do
+            allow(cluster).to receive(:pool).with(server).and_return(pool)
+            allow(pool).to receive(:disconnect!).and_return(true)
+          end
+
+          it 'raises an error' do
+            expect(error).to be_a(Mongo::Auth::Unauthorized)
+          end
+
+          it 'disconnects the socket' do
+            error
+            expect(connection.send(:socket)).to be(nil)
+          end
+
+          it 'marks the server as unknown' do
+            error
+            expect(server).to be_unknown
+          end
         end
 
-        it 'disconnects the socket' do
-          expect(connection.send(:socket)).to be(nil)
-        end
-
-        it 'marks the server as unknown' do
-          expect(server).to be_unknown
+        # need a separate context here, otherwise disconnect expectation
+        # is ignored due to allowing disconnects in the other context
+        context 'checking pool disconnection' do
+          it 'disconnects non-monitoring sockets' do
+            expect(cluster).to receive(:pool).with(server).and_return(pool)
+            expect(pool).to receive(:disconnect!).and_return(true)
+            error
+          end
         end
       end
 

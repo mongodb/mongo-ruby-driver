@@ -2,8 +2,11 @@ require 'spec_helper'
 
 describe Mongo::Server::ConnectionPool::Queue do
 
-  def create_connection
-    double('connection')
+  def create_connection(generation=-1)
+    double('connection').tap do |connection|
+      allow(connection).to receive(:generation).and_return(generation)
+      allow(connection).to receive(:disconnect!)
+    end
   end
 
   let(:connection) do
@@ -55,8 +58,8 @@ describe Mongo::Server::ConnectionPool::Queue do
   describe '#disconnect!' do
 
     def create_queue(min_pool_size)
-      described_class.new(max_pool_size: 3, min_pool_size: min_pool_size) do
-        create_connection
+      described_class.new(max_pool_size: 3, min_pool_size: min_pool_size) do |generation|
+        create_connection(generation)
       end.tap do |queue|
         # make queue be of size 2 so that it has enqueued connections
         # when told to disconnect
@@ -66,7 +69,8 @@ describe Mongo::Server::ConnectionPool::Queue do
         allow(c2).to receive(:record_checkin!).and_return(c2)
         queue.enqueue(c1)
         queue.enqueue(c2)
-        expect(queue.queue.length).to eq(2)
+        expect(queue.queue_size).to eq(2)
+        expect(queue.pool_size).to eq(2)
       end
     end
 
@@ -75,13 +79,35 @@ describe Mongo::Server::ConnectionPool::Queue do
         create_queue(0)
       end
 
-      it 'disconnects all connections in the queue' do
+      it 'disconnects and removes all connections in the queue' do
         queue.queue.each do |connection|
           expect(connection).to receive(:disconnect!)
         end
-        expect(queue.queue.length).to eq(2)
+        expect(queue.queue_size).to eq(2)
+        expect(queue.pool_size).to eq(2)
         queue.disconnect!
-        expect(queue.queue.length).to eq(2)
+        expect(queue.queue_size).to eq(0)
+        expect(queue.pool_size).to eq(0)
+      end
+    end
+
+    context 'min size is not 0' do
+      let(:queue) do
+        create_queue(1)
+      end
+
+      it 'disconnects all connections in the queue and recreates up to min size with new generation' do
+        expect(queue.queue_size).to eq(2)
+        expect(queue.pool_size).to eq(2)
+
+        queue.disconnect!
+
+        expect(queue.queue_size).to eq(1)
+        expect(queue.pool_size).to eq(1)
+
+        new_connection = queue.dequeue
+        expect(new_connection).not_to eq(connection)
+        expect(new_connection.generation).to eq(2)
       end
     end
   end
@@ -89,8 +115,9 @@ describe Mongo::Server::ConnectionPool::Queue do
   describe '#enqueue' do
 
     let(:connection) do
-      double('connection').tap do |con|
-        allow(con).to receive(:record_checkin!).and_return(con)
+      queue.dequeue.tap do |connection|
+        allow(connection).to receive(:generation).and_return(1)
+        allow(connection).to receive(:record_checkin!).and_return(connection)
       end
     end
 
@@ -100,11 +127,60 @@ describe Mongo::Server::ConnectionPool::Queue do
       described_class.new(:max_pool_size => 2) { create_connection }
     end
 
-    it 'adds the connection to the queue' do
-      expect(queue.queue.length).to eq(1)
-      queue.enqueue(connection)
-      expect(queue.queue.length).to eq(2)
-      expect(queue.dequeue).to eq(connection)
+    context 'connection of the same generation as queue' do
+      before do
+        expect(queue.generation).to eq(connection.generation)
+      end
+
+      it 'adds the connection to the queue' do
+        # connection is checked out
+        expect(queue.queue_size).to eq(0)
+        expect(queue.pool_size).to eq(1)
+        queue.enqueue(connection)
+        # now connection is in the queue
+        expect(queue.queue_size).to eq(1)
+        expect(queue.pool_size).to eq(1)
+        expect(queue.dequeue).to eq(connection)
+      end
+    end
+
+    shared_examples 'does not add connection to queue' do
+      before do
+        expect(queue.generation).not_to eq(connection.generation)
+      end
+
+      it 'disconnects connection and does not add connection to queue' do
+        # connection was checked out
+        expect(queue.queue_size).to eq(0)
+        expect(queue.pool_size).to eq(1)
+        expect(connection).to receive(:disconnect!)
+        queue.enqueue(connection)
+        expect(queue.queue_size).to eq(1)
+        expect(queue.pool_size).to eq(1)
+        expect(queue.dequeue).not_to eq(connection)
+      end
+    end
+
+    context 'connection of earlier generation than queue' do
+      let(:connection) do
+        queue.dequeue.tap do |connection|
+          allow(connection).to receive(:generation).and_return(0)
+          allow(connection).to receive(:record_checkin!).and_return(connection)
+        end
+      end
+
+      it_behaves_like 'does not add connection to queue'
+    end
+
+    context 'connection of later generation than queue' do
+      let(:connection) do
+        queue.dequeue.tap do |connection|
+          allow(connection).to receive(:generation).and_return(7)
+          allow(connection).to receive(:record_checkin!).and_return(connection)
+        end
+      end
+
+      it_behaves_like 'does not add connection to queue'
     end
   end
 
@@ -232,6 +308,8 @@ describe Mongo::Server::ConnectionPool::Queue do
     let(:queue) do
       described_class.new(max_pool_size: 2, max_idle_time: 0.5) do
         double('connection').tap do |con|
+          expect(con).to receive(:generation).and_return(1)
+          expect(con).to receive(:disconnect!).and_return(true)
           allow(con).to receive(:record_checkin!) do
             allow(con).to receive(:last_checkin).and_return(Time.now)
             con
