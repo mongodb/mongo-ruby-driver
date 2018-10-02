@@ -220,9 +220,20 @@ describe Mongo::Server::Connection do
             expect(connection.send(:socket)).to be(nil)
           end
 
-          it 'marks the server as unknown' do
+          it "keeps server's type" do
+            old_type = server.description.server_type
+            expect(old_type).not_to eq(:unknown)
+            old_oid = server.description.object_id
             error
-            expect(server).to be_unknown
+            expect(server.description.server_type).to eq(old_type)
+            expect(server.description.object_id).to eq(old_oid)
+          end
+
+          it "keeps topology" do
+            old_topology = server.cluster.topology
+            expect(old_topology).not_to be(Mongo::Cluster::Topology::Unknown)
+            error
+            expect(server.cluster.topology).to eql(old_topology)
           end
         end
 
@@ -258,6 +269,7 @@ describe Mongo::Server::Connection do
         end
       end
     end
+
   end
 
   describe '#disconnect!' do
