@@ -304,7 +304,6 @@ module Mongo
     def handle_auth_failure!
       yield
     rescue Auth::Unauthorized
-      unknown!
       pool.disconnect!
       raise
     end
