@@ -305,6 +305,7 @@ module Mongo
       yield
     rescue Auth::Unauthorized
       unknown!
+      pool.disconnect!
       raise
     end
 
