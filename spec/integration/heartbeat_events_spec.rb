@@ -23,7 +23,7 @@ class TestHeartbeatSubscriber
 end
 
 describe 'Heartbeat events' do
-  class TestException < StandardError; end
+  class HeartbeatEventsSpecTestException < StandardError; end
 
   let(:subscriber) { TestHeartbeatSubscriber.new }
 
@@ -60,7 +60,7 @@ describe 'Heartbeat events' do
   end
 
   it 'notifies on failed heartbeats' do
-    exc = TestException.new
+    exc = HeartbeatEventsSpecTestException.new
     expect_any_instance_of(Mongo::Server::Monitor::Connection).to receive(:ismaster).at_least(:once).and_raise(exc)
 
     expect do

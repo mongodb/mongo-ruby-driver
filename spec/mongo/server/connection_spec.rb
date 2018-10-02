@@ -1,6 +1,7 @@
 require 'spec_helper'
 
 describe Mongo::Server::Connection do
+  class ConnectionSpecTestException < Exception; end
 
   let(:address) do
     default_address
@@ -55,7 +56,7 @@ describe Mongo::Server::Connection do
         described_class.new(server, server.options)
       end
 
-      let!(:result) do
+      let(:result) do
         connection.connect!
       end
 
@@ -68,11 +69,95 @@ describe Mongo::Server::Connection do
       end
 
       it 'creates a socket' do
+        result
         expect(socket).to_not be_nil
       end
 
       it 'connects the socket' do
+        result
         expect(socket).to be_alive
+      end
+
+      shared_examples_for 'failing connection' do
+        it 'raises an exception' do
+          expect(result).to be_a(Exception)
+        end
+
+        it 'clears socket' do
+          result
+          expect(connection.send(:socket)).to be nil
+        end
+
+        it 'attempts to reconnect after failure when asked' do
+          # for some reason referencing result here instead of
+          # copy pasting it like this doesn't work
+          expect(connection).to receive(:authenticate!).and_raise(exception)
+          expect do
+            connection.connect!
+          end.to raise_error(exception)
+
+          expect(connection).to receive(:authenticate!).and_raise(ConnectionSpecTestException)
+          expect do
+            connection.connect!
+          end.to raise_error(ConnectionSpecTestException)
+        end
+      end
+
+      context 'when #handshake! raises an exception' do
+        let(:exception) do
+          Mongo::Error::SocketError.new
+        end
+
+        let(:result) do
+          expect(connection).to receive(:handshake!).and_raise(exception)
+          begin
+            connection.connect!
+          rescue Exception => e
+            e
+          else
+            nil
+          end
+        end
+
+        it_behaves_like 'failing connection'
+      end
+
+      context 'when #authenticate! raises an exception' do
+        let(:exception) do
+          Mongo::Error::OperationFailure.new
+        end
+
+        let(:result) do
+          expect(connection).to receive(:authenticate!).and_raise(exception)
+          begin
+            connection.connect!
+          rescue Exception => e
+            e
+          else
+            nil
+          end
+        end
+
+        it_behaves_like 'failing connection'
+      end
+
+      context 'when a non-Mongo exception is raised' do
+        let(:exception) do
+          SystemExit.new
+        end
+
+        let(:result) do
+          expect(connection).to receive(:authenticate!).and_raise(exception)
+          begin
+            connection.connect!
+          rescue Exception => e
+            e
+          else
+            nil
+          end
+        end
+
+        it_behaves_like 'failing connection'
       end
     end
 
@@ -82,17 +167,22 @@ describe Mongo::Server::Connection do
         described_class.new(server, server.options)
       end
 
-      before do
-        connection.connect!
-        connection.connect!
-      end
-
       let(:socket) do
         connection.send(:socket)
       end
 
       it 'keeps the socket alive' do
+        expect(connection.connect!).to be true
+        expect(connection.connect!).to be true
         expect(socket).to be_alive
+      end
+
+      it 'retains socket object' do
+        expect(connection.connect!).to be true
+        socket_id = connection.send(:socket).object_id
+        expect(connection.connect!).to be true
+        new_socket_id = connection.send(:socket).object_id
+        expect(new_socket_id).to eq(socket_id)
       end
     end
 

@@ -132,10 +132,17 @@ module Mongo
       # @since 2.0.0
       def connect!
         unless socket && socket.connectable?
-          @socket = address.socket(socket_timeout, ssl_options)
-          address.connect_socket!(socket)
-          handshake!
-          authenticate!
+          begin
+            # Need to assign to the instance variable here because
+            # I/O done by #handshake! and #connect! reference the socket
+            @socket = address.socket(socket_timeout, ssl_options)
+            address.connect_socket!(socket)
+            handshake!
+            authenticate!
+          rescue Exception
+            @socket = nil
+            raise
+          end
         end
         true
       end
