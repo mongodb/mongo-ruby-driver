@@ -22,6 +22,45 @@ module Mongo
     extend Forwardable
     include Monitoring::Publishable
 
+    # The default time in seconds to timeout a connection attempt.
+    #
+    # @since 2.4.3
+    CONNECT_TIMEOUT = 10.freeze
+
+    # Instantiate a new server object. Will start the background refresh and
+    # subscribe to the appropriate events.
+    #
+    # @api private
+    #
+    # @example Initialize the server.
+    #   Mongo::Server.new('127.0.0.1:27017', cluster, monitoring, listeners)
+    #
+    # @note Server must never be directly instantiated outside of a Cluster.
+    #
+    # @param [ Address ] address The host:port address to connect to.
+    # @param [ Cluster ] cluster  The cluster the server belongs to.
+    # @param [ Monitoring ] monitoring The monitoring.
+    # @param [ Event::Listeners ] event_listeners The event listeners.
+    # @param [ Hash ] options The server options.
+    #
+    # @option options [ Boolean ] :monitor For internal driver use only:
+    #   whether to monitor the server after instantiating it.
+    #
+    # @since 2.0.0
+    def initialize(address, cluster, monitoring, event_listeners, options = {})
+      @address = address
+      @cluster = cluster
+      @monitoring = monitoring
+      options = options.dup
+      monitor = options.delete(:monitor)
+      @options = options.freeze
+      @monitor = Monitor.new(address, event_listeners, monitoring,
+        options.merge(app_metadata: Monitor::AppMetadata.new(cluster.options)))
+      unless monitor == false
+        start_monitoring
+      end
+    end
+
     # @return [ String ] The configured address for the server.
     attr_reader :address
 
@@ -36,11 +75,6 @@ module Mongo
 
     # @return [ Monitoring ] monitoring The monitoring.
     attr_reader :monitoring
-
-    # The default time in seconds to timeout a connection attempt.
-    #
-    # @since 2.4.3
-    CONNECT_TIMEOUT = 10.freeze
 
     # Get the description from the monitor and scan on monitor.
     def_delegators :monitor, :description, :scan!, :heartbeat_frequency, :last_scan, :compressor
@@ -143,40 +177,6 @@ module Mongo
     # @since 2.2.0
     def self.finalize(monitor)
       proc { monitor.stop! }
-    end
-
-    # Instantiate a new server object. Will start the background refresh and
-    # subscribe to the appropriate events.
-    #
-    # @api private
-    #
-    # @example Initialize the server.
-    #   Mongo::Server.new('127.0.0.1:27017', cluster, monitoring, listeners)
-    #
-    # @note Server must never be directly instantiated outside of a Cluster.
-    #
-    # @param [ Address ] address The host:port address to connect to.
-    # @param [ Cluster ] cluster  The cluster the server belongs to.
-    # @param [ Monitoring ] monitoring The monitoring.
-    # @param [ Event::Listeners ] event_listeners The event listeners.
-    # @param [ Hash ] options The server options.
-    #
-    # @option options [ Boolean ] :monitor For internal driver use only:
-    #   whether to monitor the server after instantiating it.
-    #
-    # @since 2.0.0
-    def initialize(address, cluster, monitoring, event_listeners, options = {})
-      @address = address
-      @cluster = cluster
-      @monitoring = monitoring
-      options = options.dup
-      monitor = options.delete(:monitor)
-      @options = options.freeze
-      @monitor = Monitor.new(address, event_listeners, monitoring,
-        options.merge(app_metadata: Monitor::AppMetadata.new(cluster.options)))
-      unless monitor == false
-        start_monitoring
-      end
     end
 
     # Start monitoring the server.
