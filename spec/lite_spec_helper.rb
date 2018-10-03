@@ -38,7 +38,9 @@ rescue LoadError
   # jruby - try pry
   begin
     require 'pry'
-  rescue LoadError
+  # jruby likes to raise random error classes, in this case
+  # NameError in addition to LoadError
+  rescue
   end
 end
 
