@@ -146,7 +146,7 @@ module Mongo
     #
     # @since 2.0.0
     def socket(socket_timeout, ssl_options = {})
-      @resolver ||= initialize_resolver!(ssl_options)
+      @resolver = initialize_resolver!(ssl_options)
       @resolver.socket(socket_timeout, ssl_options)
     end
 
@@ -193,8 +193,7 @@ module Mongo
       error = nil
       ::Socket.getaddrinfo(host, nil, family, ::Socket::SOCK_STREAM).each do |info|
         begin
-          _host = (host == LOCALHOST) ? info[3] : host
-          res = FAMILY_MAP[info[4]].new(_host, port, host)
+          res = FAMILY_MAP[info[4]].new(info[3], port, host)
           res.socket(connect_timeout, ssl_options).connect!(connect_timeout).close
           return res
         rescue IOError, SystemCallError, Error::SocketTimeoutError, Error::SocketError => e
