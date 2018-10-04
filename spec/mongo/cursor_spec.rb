@@ -9,6 +9,47 @@ describe Mongo::Cursor do
     authorized_collection.drop
   end
 
+  describe '#initialize' do
+    let(:server) do
+      view.send(:server_selector).select_server(authorized_client.cluster)
+    end
+
+    let(:reply) do
+      view.send(:send_initial_query, server)
+    end
+
+    let(:cursor) do
+      described_class.new(view, reply, server)
+    end
+
+    before do
+      documents = [{test: 1}] * 10
+      authorized_collection.insert_many(documents)
+    end
+
+    context 'cursor exhausted by initial result' do
+      let(:view) do
+        Mongo::Collection::View.new(authorized_collection)
+      end
+
+      it 'does not schedule the finalizer' do
+        expect(ObjectSpace).not_to receive(:define_finalizer)
+        cursor
+      end
+    end
+
+    context 'cursor not exhausted by initial result' do
+      let(:view) do
+        Mongo::Collection::View.new(authorized_collection, {}, batch_size: 2)
+      end
+
+      it 'schedules the finalizer' do
+        expect(ObjectSpace).to receive(:define_finalizer)
+        cursor
+      end
+    end
+  end
+
   describe '#each' do
 
     let(:server) do
