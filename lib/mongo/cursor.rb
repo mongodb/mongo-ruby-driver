@@ -66,11 +66,13 @@ module Mongo
       @options = options
       @session = @options[:session]
       register
-      ObjectSpace.define_finalizer(self, self.class.finalize(result.cursor_id,
-                                                             cluster,
-                                                             kill_cursors_op_spec,
-                                                             server,
-                                                             @session))
+      if @cursor_id && @cursor_id > 0
+        ObjectSpace.define_finalizer(self, self.class.finalize(@cursor_id,
+          cluster,
+          kill_cursors_op_spec,
+          server,
+          @session))
+      end
     end
 
 
