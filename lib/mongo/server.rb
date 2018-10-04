@@ -303,7 +303,16 @@ module Mongo
     # @since 2.3.0
     def handle_auth_failure!
       yield
+    rescue Mongo::Error::SocketTimeoutError
+      # possibly cluster is slow, do not give up on it
+      raise
+    rescue Mongo::Error::SocketError
+      # non-timeout network error
+      unknown!
+      pool.disconnect!
+      raise
     rescue Auth::Unauthorized
+      # auth error, keep server description and topology as they are
       pool.disconnect!
       raise
     end

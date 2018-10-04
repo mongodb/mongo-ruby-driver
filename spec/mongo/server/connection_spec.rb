@@ -42,12 +42,6 @@ describe Mongo::Server::Connection do
     double('pool')
   end
 
-  after do
-    allow(cluster).to receive(:pool).with(server).and_return(pool)
-    allow(pool).to receive(:disconnect!).and_return(true)
-    server.disconnect!
-  end
-
   describe '#connect!' do
 
     context 'when no socket exists' do
@@ -186,6 +180,56 @@ describe Mongo::Server::Connection do
       end
     end
 
+    shared_examples_for 'does not disconnect connection pool' do
+      it 'does not disconnect non-monitoring sockets' do
+        allow(cluster).to receive(:pool).with(server).and_return(pool)
+        expect(pool).not_to receive(:disconnect!)
+        error
+      end
+    end
+
+    shared_examples_for 'disconnects connection pool' do
+      it 'disconnects non-monitoring sockets' do
+        expect(cluster).to receive(:pool).with(server).and_return(pool)
+        expect(pool).to receive(:disconnect!).and_return(true)
+        error
+      end
+    end
+
+    shared_examples_for 'keeps server type and topology' do
+      it 'keeps server type' do
+        old_type = server.description.server_type
+        expect(old_type).not_to eq(:unknown)
+        old_oid = server.description.object_id
+        error
+        expect(server.description.server_type).to eq(old_type)
+        expect(server.description.object_id).to eq(old_oid)
+      end
+
+      it "keeps topology" do
+        old_topology = server.cluster.topology
+        expect(old_topology).not_to be(Mongo::Cluster::Topology::Unknown)
+        error
+        expect(server.cluster.topology).to eql(old_topology)
+      end
+    end
+
+    shared_examples_for 'marks server unknown' do
+      it 'marks server unknown' do
+        expect(server).not_to be_unknown
+        error
+        expect(server).to be_unknown
+      end
+    end
+
+    let(:auth_mechanism) do
+      if ClusterConfig.instance.server_version >= '3'
+        Mongo::Auth::SCRAM
+      else
+        Mongo::Auth::CR
+      end
+    end
+
     context 'when user credentials exist' do
 
       context 'when the user is not authorized' do
@@ -202,7 +246,13 @@ describe Mongo::Server::Connection do
         end
 
         let(:error) do
-          e = begin; connection.send(:ensure_connected); rescue => ex; ex; end
+          begin
+            connection.send(:connect!)
+          rescue => ex
+            ex
+          else
+            nil
+          end
         end
 
         context 'not checking pool disconnection' do
@@ -215,37 +265,75 @@ describe Mongo::Server::Connection do
             expect(error).to be_a(Mongo::Auth::Unauthorized)
           end
 
-          it 'disconnects the socket' do
-            error
-            expect(connection.send(:socket)).to be(nil)
-          end
-
-          it "keeps server's type" do
-            old_type = server.description.server_type
-            expect(old_type).not_to eq(:unknown)
-            old_oid = server.description.object_id
-            error
-            expect(server.description.server_type).to eq(old_type)
-            expect(server.description.object_id).to eq(old_oid)
-          end
-
-          it "keeps topology" do
-            old_topology = server.cluster.topology
-            expect(old_topology).not_to be(Mongo::Cluster::Topology::Unknown)
-            error
-            expect(server.cluster.topology).to eql(old_topology)
-          end
+          it_behaves_like 'disconnects connection pool'
+          it_behaves_like 'keeps server type and topology'
         end
 
         # need a separate context here, otherwise disconnect expectation
         # is ignored due to allowing disconnects in the other context
         context 'checking pool disconnection' do
-          it 'disconnects non-monitoring sockets' do
-            expect(cluster).to receive(:pool).with(server).and_return(pool)
-            expect(pool).to receive(:disconnect!).and_return(true)
-            error
+          it_behaves_like 'disconnects connection pool'
+        end
+      end
+
+      context 'socket timeout during auth' do
+        let(:connection) do
+          described_class.new(
+            server,
+            SpecConfig.instance.test_options.merge(
+              :user => SpecConfig.instance.test_user.name,
+              :password => SpecConfig.instance.test_user.password,
+              :database => SpecConfig.instance.test_user.database )
+          )
+        end
+
+        let(:error) do
+          expect_any_instance_of(auth_mechanism).to receive(:login).and_raise(Mongo::Error::SocketTimeoutError)
+          begin
+            connection.send(:connect!)
+          rescue => ex
+            ex
+          else
+            nil
           end
         end
+
+        it 'propagates the error' do
+          expect(error).to be_a(Mongo::Error::SocketTimeoutError)
+        end
+
+        it_behaves_like 'does not disconnect connection pool'
+        it_behaves_like 'keeps server type and topology'
+      end
+
+      context 'non-timeout socket exception during auth' do
+        let(:connection) do
+          described_class.new(
+            server,
+            SpecConfig.instance.test_options.merge(
+              :user => SpecConfig.instance.test_user.name,
+              :password => SpecConfig.instance.test_user.password,
+              :database => SpecConfig.instance.test_user.database )
+          )
+        end
+
+        let(:error) do
+          expect_any_instance_of(auth_mechanism).to receive(:login).and_raise(Mongo::Error::SocketError)
+          begin
+            connection.send(:connect!)
+          rescue => ex
+            ex
+          else
+            nil
+          end
+        end
+
+        it 'propagates the error' do
+          expect(error).to be_a(Mongo::Error::SocketError)
+        end
+
+        it_behaves_like 'disconnects connection pool'
+        it_behaves_like 'marks server unknown'
       end
 
       describe 'when the user is authorized' do

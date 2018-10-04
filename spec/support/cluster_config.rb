@@ -26,4 +26,13 @@ class ClusterConfig
   def replica_set_name
     server!.replica_set_name
   end
+
+  def server_version
+    client = ClientRegistry.instance.global_client('authorized')
+    @server_version ||= client.database.command(buildInfo: 1).first['version']
+  end
+
+  def short_server_version
+    server_version.split('.')[0..1].join('.')
+  end
 end
