@@ -18,18 +18,6 @@ describe 'Cursor reaping' do
       EventSubscriber.clear_events!
     end
 
-    let(:events) do
-      EventSubscriber.started_events.select do |event|
-        event.command['killCursors']
-      end
-    end
-
-    let(:succeeded_events) do
-      EventSubscriber.succeeded_events.select do |event|
-        event.command_name == 'killCursors'
-      end
-    end
-
     it 'reaps nothing when we do not query' do
       # this is a base line test to ensure that the reaps in the other test
       # aren't done on some global cursor
@@ -37,6 +25,10 @@ describe 'Cursor reaping' do
 
       # just the scope, no query is happening
       collection.find.batch_size(2).no_cursor_timeout
+
+      events = EventSubscriber.started_events.select do |event|
+        event.command['killCursors']
+      end
 
       expect(events).to be_empty
     end
@@ -66,15 +58,22 @@ describe 'Cursor reaping' do
       # force periodic executor to run because its frequency is not configurable
       client.cluster.instance_variable_get('@periodic_executor').execute
 
-      expect(events).not_to be_empty
-      expect(succeeded_events).not_to be_empty
+      started_event = EventSubscriber.started_events.detect do |event|
+        event.command['killCursors'] && event.command['cursors'].include?(cursor_id)
+      end
 
-      event = succeeded_events.first
-      expect(event.request_id).to eq(events.first.request_id)
+      expect(started_event).not_to be_nil
+
+      succeeded_event = EventSubscriber.succeeded_events.detect do |event|
+        event.command_name == 'killCursors' && event.request_id == started_event.request_id
+      end
+
+      expect(succeeded_event).not_to be_nil
+
       # ok is integer on older versions, float on newer versions
-      expect(event.reply['ok'].to_i).to be 1
+      expect(succeeded_event.reply['ok'].to_i).to be 1
 
-      [cursor_id, event]
+      [cursor_id, succeeded_event]
     end
 
     it 'is reaped' do
