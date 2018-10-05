@@ -295,3 +295,12 @@ When running on JRuby and connecting to Atlas Free Tier,
 or higher and Java 8 or higher are required.
 
 .. include:: /includes/unicode-checkmark.rst
+
+JRuby Kerberos
+~~~~~~~~~~~~~~
+
+If the ``mongo_kerberos`` gem is used for Kerberos authentication with JRuby, the the JVM system
+property "sun.security.jgss.native" to will be set to "true" in order to facilitate the use of
+the system cache of TGTs (e.g. TGTs obtained with ``kinit``). Any other use of the JGSS library
+will also be affected by this setting, meaning any TGTs in the system cache will be available for
+obtaining Kerberos credentials as well.
