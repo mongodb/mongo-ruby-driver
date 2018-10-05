@@ -24,6 +24,12 @@ describe 'Cursor reaping' do
       end
     end
 
+    let(:succeeded_events) do
+      EventSubscriber.succeeded_events.select do |event|
+        event.command_name == 'killCursors'
+      end
+    end
+
     it 'reaps nothing when we do not query' do
       # this is a base line test to ensure that the reaps in the other test
       # aren't done on some global cursor
@@ -35,12 +41,25 @@ describe 'Cursor reaping' do
       expect(events).to be_empty
     end
 
-    it 'is reaped' do
+    # this let block is a kludge to avoid copy pasting all of this code
+    let(:cursor_id_and_kill_event) do
       expect(Mongo::Operation::KillCursors).to receive(:new).at_least(:once).and_call_original
+
+      cursor_id = nil
 
       # scopes are weird, having this result in a let block
       # makes it not garbage collected
-      2.times { collection.find.batch_size(2).no_cursor_timeout.first }
+      2.times do
+        scope = collection.find.batch_size(2).no_cursor_timeout
+
+        # there is no API for retrieving the cursor
+        scope.each.first
+        # and keep the first cursor
+        cursor_id ||= scope.instance_variable_get('@cursor').id
+      end
+
+      expect(cursor_id).to be_a(Integer)
+      expect(cursor_id > 0).to be true
 
       GC.start
 
@@ -48,6 +67,31 @@ describe 'Cursor reaping' do
       client.cluster.instance_variable_get('@periodic_executor').execute
 
       expect(events).not_to be_empty
+      expect(succeeded_events).not_to be_empty
+
+      event = succeeded_events.first
+      expect(event.request_id).to eq(events.first.request_id)
+      # ok is integer on older versions, float on newer versions
+      expect(event.reply['ok'].to_i).to be 1
+
+      [cursor_id, event]
+    end
+
+    it 'is reaped' do
+      cursor_id_and_kill_event
+    end
+
+    context 'newer servers' do
+      min_server_version '3.2'
+
+      it 'is really killed' do
+        cursor_id, event = cursor_id_and_kill_event
+
+        expect(event.reply['cursorsKilled']).to eq([cursor_id])
+        expect(event.reply['cursorsNotFound']).to be_empty
+        expect(event.reply['cursorsAlive']).to be_empty
+        expect(event.reply['cursorsUnknown']).to be_empty
+      end
     end
   end
 end
