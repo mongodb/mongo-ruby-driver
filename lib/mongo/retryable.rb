@@ -33,8 +33,6 @@ module Mongo
     # @param [ Mongo::Session ] session The session that the operation is being run on.
     # @param [ Proc ] block The block to execute.
     #
-    # @yieldparam [ Server ] server The server to which the write should be sent.
-    #
     # @return [ Result ] The result of the operation.
     #
     # @since 2.1.0
@@ -97,6 +95,9 @@ module Mongo
     # @param [ true | false ] ending_transaction True if the write operation is abortTransaction or
     #   commitTransaction, false otherwise.
     # @param [ Proc ] block The block to execute.
+    #
+    # @yieldparam [ Server ] server The server to which the write should be sent.
+    # @yieldparam [ Integer ] txn_num Transaction number (NOT the ACID kind).
     #
     # @return [ Result ] The result of the operation.
     #
