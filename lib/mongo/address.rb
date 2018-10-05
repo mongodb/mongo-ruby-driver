@@ -136,6 +136,12 @@ module Mongo
 
     # Get a socket for the provided address, given the options.
     #
+    # The address the socket connects to is determined by the algorithm described in the
+    # #intialize_resolver! documentation. Each time this method is called, #initialize_resolver!
+    # will be called, meaning that a new hostname lookup will occur. This is done so that any
+    # changes to which addresses the hostname resolves to will be picked up even if a socket has
+    # been connected to it before.
+    #
     # @example Get a socket.
     #   address.socket(5, :ssl => true)
     #
@@ -186,6 +192,10 @@ module Mongo
       @connect_timeout ||= @options[:connect_timeout] || Server::CONNECT_TIMEOUT
     end
 
+    # To determine which address the socket will connect to, the driver will attempt to connect to
+    # each IP address returned by Socket::getaddrinfo in sequence. Once a successful connection is
+    # made, a resolver with that IP address specified is returned. If no successful connection is
+    # made, the error made by the last connection attempt is raised.
     def initialize_resolver!(ssl_options)
       return Unix.new(seed.downcase) if seed.downcase =~ Unix::MATCH
 
