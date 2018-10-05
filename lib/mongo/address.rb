@@ -152,7 +152,7 @@ module Mongo
     #
     # @since 2.0.0
     def socket(socket_timeout, ssl_options = {})
-      @resolver = initialize_resolver!(ssl_options)
+      @resolver = create_resolver(ssl_options)
       @resolver.socket(socket_timeout, ssl_options)
     end
 
@@ -196,7 +196,7 @@ module Mongo
     # each IP address returned by Socket::getaddrinfo in sequence. Once a successful connection is
     # made, a resolver with that IP address specified is returned. If no successful connection is
     # made, the error made by the last connection attempt is raised.
-    def initialize_resolver!(ssl_options)
+    def create_resolver(ssl_options)
       return Unix.new(seed.downcase) if seed.downcase =~ Unix::MATCH
 
       family = (host == LOCALHOST) ? ::Socket::AF_INET : ::Socket::AF_UNSPEC

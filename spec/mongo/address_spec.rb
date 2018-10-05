@@ -242,7 +242,7 @@ describe Mongo::Address do
 
       before do
         address.instance_variable_set(:@resolver, nil)
-        address.send(:initialize_resolver!, SpecConfig.instance.ssl_options)
+        address.send(:create_resolver, SpecConfig.instance.ssl_options)
       end
 
       it 'uses the host, not the IP address' do
