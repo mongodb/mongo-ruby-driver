@@ -58,6 +58,11 @@ describe 'Connections' do
 
         let(:server) { client.cluster.servers.detect { |server| server.primary? } }
 
+        before do
+          # insert to perform server selection and get topology to primary
+          client[:test].insert_one(foo: 'bar')
+        end
+
         it 'sets cluster type to replica set without primary' do
           expect(client.cluster.topology).to be_a(Mongo::Cluster::Topology::ReplicaSetWithPrimary)
           error
