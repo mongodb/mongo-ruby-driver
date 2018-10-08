@@ -289,6 +289,17 @@ module Mongo
       pool.with_connection(&block)
     end
 
+    # Handle handshake failure.
+    #
+    # @since 2.7.0
+    # @api private
+    def handle_handshake_failure!
+      yield
+    rescue Mongo::Error::SocketError, Mongo::Error::SocketTimeoutError
+      unknown!
+      raise
+    end
+
     # Handle authentication failure.
     #
     # @example Handle possible authentication failure.

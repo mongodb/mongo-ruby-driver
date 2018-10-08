@@ -44,6 +44,32 @@ describe Mongo::Server::Connection do
 
   describe '#connect!' do
 
+    shared_examples_for 'keeps server type and topology' do
+      it 'keeps server type' do
+        old_type = server.description.server_type
+        expect(old_type).not_to eq(:unknown)
+        old_oid = server.description.object_id
+        error
+        expect(server.description.server_type).to eq(old_type)
+        expect(server.description.object_id).to eq(old_oid)
+      end
+
+      it "keeps topology" do
+        old_topology = server.cluster.topology
+        expect(old_topology).not_to be(Mongo::Cluster::Topology::Unknown)
+        error
+        expect(server.cluster.topology).to eql(old_topology)
+      end
+    end
+
+    shared_examples_for 'marks server unknown' do
+      it 'marks server unknown' do
+        expect(server).not_to be_unknown
+        error
+        expect(server).to be_unknown
+      end
+    end
+
     context 'when no socket exists' do
 
       let(:connection) do
@@ -74,16 +100,16 @@ describe Mongo::Server::Connection do
 
       shared_examples_for 'failing connection' do
         it 'raises an exception' do
-          expect(result).to be_a(Exception)
+          expect(error).to be_a(Exception)
         end
 
         it 'clears socket' do
-          result
+          error
           expect(connection.send(:socket)).to be nil
         end
 
         it 'attempts to reconnect after failure when asked' do
-          # for some reason referencing result here instead of
+          # for some reason referencing error here instead of
           # copy pasting it like this doesn't work
           expect(connection).to receive(:authenticate!).and_raise(exception)
           expect do
@@ -97,13 +123,13 @@ describe Mongo::Server::Connection do
         end
       end
 
-      context 'when #handshake! raises an exception' do
+      context 'when #handshake! dependency raises a non-network exception' do
         let(:exception) do
-          Mongo::Error::SocketError.new
+          Mongo::Error::OperationFailure.new
         end
 
-        let(:result) do
-          expect(connection).to receive(:handshake!).and_raise(exception)
+        let(:error) do
+          expect_any_instance_of(Mongo::Socket).to receive(:write).and_raise(exception)
           begin
             connection.connect!
           rescue Exception => e
@@ -114,6 +140,27 @@ describe Mongo::Server::Connection do
         end
 
         it_behaves_like 'failing connection'
+        it_behaves_like 'keeps server type and topology'
+      end
+
+      context 'when #handshake! dependency raises a network exception' do
+        let(:exception) do
+          Mongo::Error::SocketError.new
+        end
+
+        let(:error) do
+          expect_any_instance_of(Mongo::Socket).to receive(:write).and_raise(exception)
+          begin
+            connection.connect!
+          rescue Exception => e
+            e
+          else
+            nil
+          end
+        end
+
+        it_behaves_like 'failing connection'
+        it_behaves_like 'marks server unknown'
       end
 
       context 'when #authenticate! raises an exception' do
@@ -121,7 +168,7 @@ describe Mongo::Server::Connection do
           Mongo::Error::OperationFailure.new
         end
 
-        let(:result) do
+        let(:error) do
           expect(connection).to receive(:authenticate!).and_raise(exception)
           begin
             connection.connect!
@@ -140,7 +187,7 @@ describe Mongo::Server::Connection do
           SystemExit.new
         end
 
-        let(:result) do
+        let(:error) do
           expect(connection).to receive(:authenticate!).and_raise(exception)
           begin
             connection.connect!
@@ -193,32 +240,6 @@ describe Mongo::Server::Connection do
         expect(cluster).to receive(:pool).with(server).and_return(pool)
         expect(pool).to receive(:disconnect!).and_return(true)
         error
-      end
-    end
-
-    shared_examples_for 'keeps server type and topology' do
-      it 'keeps server type' do
-        old_type = server.description.server_type
-        expect(old_type).not_to eq(:unknown)
-        old_oid = server.description.object_id
-        error
-        expect(server.description.server_type).to eq(old_type)
-        expect(server.description.object_id).to eq(old_oid)
-      end
-
-      it "keeps topology" do
-        old_topology = server.cluster.topology
-        expect(old_topology).not_to be(Mongo::Cluster::Topology::Unknown)
-        error
-        expect(server.cluster.topology).to eql(old_topology)
-      end
-    end
-
-    shared_examples_for 'marks server unknown' do
-      it 'marks server unknown' do
-        expect(server).not_to be_unknown
-        error
-        expect(server).to be_unknown
       end
     end
 
