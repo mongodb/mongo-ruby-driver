@@ -152,6 +152,14 @@ module Mongo
         @description
       end
 
+      # Sets server description to unknown.
+      #
+      # @since 2.7.0
+      # @api private
+      def unknown!
+        @description = Description.new(description.address)
+      end
+
       # Stops the server monitor. Kills the thread so it doesn't continue
       # taking memory and sending commands to the connection.
       #

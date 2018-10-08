@@ -139,8 +139,6 @@ module Mongo
         matching
       end
 
-      private
-
       def events
         @events ||= []
       end
