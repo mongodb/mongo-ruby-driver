@@ -250,7 +250,11 @@ module Mongo
       end
 
       def handshake!
-        if socket && socket.connectable?
+        unless socket && socket.connectable?
+          raise Error::HandshakeError, "Cannot handshake because there is no usable socket"
+        end
+
+        @server.handle_handshake_failure! do
           socket.write(app_metadata.ismaster_bytes)
           response = Protocol::Message.deserialize(socket, max_message_size).documents[0]
           min_wire_version = response[Description::MIN_WIRE_VERSION] || Description::LEGACY_WIRE_VERSION
@@ -259,16 +263,18 @@ module Mongo
 
           if response["ok"] == 1
             @auth_mechanism = if response['saslSupportedMechs']
-                                if response['saslSupportedMechs'].include?(Mongo::Auth::SCRAM::SCRAM_SHA_256_MECHANISM)
-                                  :scram256
-                                else
-                                  :scram
-                                end
-                              elsif features.scram_sha_1_enabled? || @server.features.scram_sha_1_enabled?
-                                :scram
-                              else
-                                :mongodb_cr
-                              end
+              if response['saslSupportedMechs'].include?(Mongo::Auth::SCRAM::SCRAM_SHA_256_MECHANISM)
+                :scram256
+              else
+                :scram
+              end
+            elsif features.scram_sha_1_enabled? || @server.features.scram_sha_1_enabled?
+              :scram
+            else
+              :mongodb_cr
+            end
+          else
+            @auth_mechanism = nil
           end
         end
       end
