@@ -8,7 +8,7 @@ describe Mongo::Socket::SSL do
   end
 
   let(:resolver) do
-    address.send(:create_resolver)
+    address.send(:create_resolver, {})
   end
 
   let(:socket_timeout) do
