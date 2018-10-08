@@ -70,8 +70,7 @@ describe 'Cursor reaping' do
 
       expect(succeeded_event).not_to be_nil
 
-      # ok is integer on older versions, float on newer versions
-      expect(succeeded_event.reply['ok'].to_i).to be 1
+      expect(succeeded_event.reply['ok']).to eq 1
 
       [cursor_id, succeeded_event]
     end
