@@ -152,8 +152,7 @@ module Mongo
     #
     # @since 2.0.0
     def socket(socket_timeout, ssl_options = {})
-      @resolver = create_resolver(ssl_options)
-      @resolver.socket(socket_timeout, ssl_options)
+      create_resolver(ssl_options).socket(socket_timeout, ssl_options)
     end
 
     # Get the address as a string.
