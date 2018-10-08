@@ -51,7 +51,7 @@ describe 'ConnectionString' do
           # Return the implementations to their originals for the other
           # tests in the suite.
           class Address
-            alias :initialize_resolver! :original_create_resolver
+            alias :create_resolver :original_create_resolver
             remove_method(:original_create_resolver)
           end
 
