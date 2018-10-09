@@ -26,7 +26,7 @@ describe 'kerberos authentication' do
   end
 
   before do
-    skip unless ENV['ENTERPRISE_AUTH_TESTS']
+    skip 'ENTERPRISE_AUTH_TESTS env var not specified' unless ENV['ENTERPRISE_AUTH_TESTS']
   end
 
   let(:doc) do
@@ -38,5 +38,20 @@ describe 'kerberos authentication' do
   it 'correctly authenticates' do
     expect(doc['kerberos']).to eq(true)
     expect(doc['authenticated']).to eq('yeah')
+  end
+
+  context 'when canonicalize_host_name is true' do
+    let(:host) do
+      "#{ENV['IP_ADDR']}"
+    end
+
+    let(:uri) do
+      uri = "mongodb://#{user}@#{host}/#{kerberos_db}?authMechanism=GSSAPI&authSource=#{auth_source}&authMechanismProperties=CANONICALIZE_HOST_NAME:true"
+    end
+
+    it 'correctly authenticates when using the IP' do
+      expect(doc['kerberos']).to eq(true)
+      expect(doc['authenticated']).to eq('yeah')
+    end
   end
 end

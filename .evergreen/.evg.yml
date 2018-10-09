@@ -344,7 +344,20 @@ functions:
         working_dir: "src"
         script: |
             # DO NOT ECHO WITH XTRACE (which PREPARE_SHELL does)
-            ENTERPRISE_AUTH_TESTS=1 SASL_HOST=${sasl_host} SASL_PORT=${sasl_port} SASL_USER=${sasl_user} SASL_PASS=${sasl_pass} SASL_DB=${sasl_db} PRINCIPAL=${principal} KERBEROS_DB=${kerberos_db} KEYTAB_BASE64=${keytab_base64} PROJECT_DIRECTORY=${PROJECT_DIRECTORY} RVM_RUBY="${RVM_RUBY}" ${PROJECT_DIRECTORY}/.evergreen/run-enterprise-auth-tests.sh
+            case "$OS" in
+              cygwin*)
+                 IP_ADDR=`getent hosts ${sasl_host} | head -n 1 | awk '{print $1}'`
+                 ;;
+
+              darwin)
+                 IP_ADDR=`dig ${sasl_host} +short | tail -1`
+                 ;;
+
+              *)
+                 IP_ADDR=`getent hosts ${sasl_host} | head -n 1 | awk '{print $1}'`
+            esac
+
+            ENTERPRISE_AUTH_TESTS=1 IP_ADDR=$IP_ADDR SASL_HOST=${sasl_host} SASL_PORT=${sasl_port} SASL_USER=${sasl_user} SASL_PASS=${sasl_pass} SASL_DB=${sasl_db} PRINCIPAL=${principal} KERBEROS_DB=${kerberos_db} KEYTAB_BASE64=${keytab_base64} PROJECT_DIRECTORY=${PROJECT_DIRECTORY} RVM_RUBY="${RVM_RUBY}" ${PROJECT_DIRECTORY}/.evergreen/run-enterprise-auth-tests.sh
 
   "cleanup":
     - command: shell.exec
