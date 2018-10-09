@@ -84,6 +84,22 @@ module Mongo
               old_topology, new_topology,
             )
           )
+        elsif cluster.topology.is_a?(Cluster::Topology::ReplicaSetWithPrimary) && updated.unknown?
+          # here the unknown server is already removed from the topology
+          # TODO this is a checkIfHasPrimary implementation, move/refactor it
+          # as part of https://jira.mongodb.org/browse/RUBY-1492
+          unless cluster.servers.any?(&:primary?)
+            old_topology = cluster.topology
+            new_topology = Cluster::Topology::ReplicaSetNoPrimary.new(
+              cluster.topology.options, cluster.topology.monitoring)
+            cluster.send(:instance_variable_set, '@topology', new_topology)
+            publish_sdam_event(
+              Monitoring::TOPOLOGY_CHANGED,
+              Monitoring::Event::TopologyChanged.new(
+                old_topology, new_topology,
+              )
+            )
+          end
         end
       end
     end
