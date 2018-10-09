@@ -225,24 +225,34 @@ describe Mongo::Address do
 
     context 'when providing a DNS entry that resolves to both IPv6 and IPv4' do
 
+      let(:custom_hostname) do
+        'not_localhost'
+      end
+
+      let(:ip) do
+        '127.0.0.1'
+      end
+
+      let(:address) do
+        Mongo::Address.new(custom_hostname)
+      end
+
       before do
-        address.instance_variable_set(:@resolver, nil)
         allow(::Socket).to receive(:getaddrinfo).and_return(
-          [ ["AF_INET6", 0, '::1', '::1', ::Socket::AF_INET6, 1, 6],
-            ["AF_INET", 0, socket_address_or_host, socket_address_or_host, ::Socket::AF_INET, 1, 6]]
+          [ ["AF_INET6", 0, '::2', '::2', ::Socket::AF_INET6, 1, 6],
+            ["AF_INET", 0, custom_hostname, ip, ::Socket::AF_INET, 1, 6]]
         )
       end
 
       it "attempts to use IPv6 and fallbacks to IPv4" do
-        expect(address.socket(0.0)).not_to be_nil
+        expect(address.socket(0.0).host).to eq(ip)
       end
     end
 
     context 'when creating a socket using the resolver' do
 
       before do
-        address.instance_variable_set(:@resolver, nil)
-        address.send(:initialize_resolver!, SpecConfig.instance.ssl_options)
+        address.send(:create_resolver, SpecConfig.instance.ssl_options)
       end
 
       it 'uses the host, not the IP address' do
