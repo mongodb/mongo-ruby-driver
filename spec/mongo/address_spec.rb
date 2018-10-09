@@ -239,7 +239,7 @@ describe Mongo::Address do
 
       before do
         allow(::Socket).to receive(:getaddrinfo).and_return(
-          [ ["AF_INET6", 0, '::1', '::1', ::Socket::AF_INET6, 1, 6],
+          [ ["AF_INET6", 0, '::2', '::2', ::Socket::AF_INET6, 1, 6],
             ["AF_INET", 0, custom_hostname, ip, ::Socket::AF_INET, 1, 6]]
         )
       end
