@@ -15,7 +15,7 @@
 module Mongo
   class Monitoring
 
-    # Subscribes to Topology Openeing events and logs them.
+    # Subscribes to Topology Opening events and logs them.
     #
     # @since 2.4.0
     class TopologyOpeningLogSubscriber < SDAMLogSubscriber
