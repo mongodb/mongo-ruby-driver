@@ -19,7 +19,7 @@ module Mongo
       # Defines behaviour for when a cluster is in an unknown state.
       #
       # @since 2.0.0
-      class Unknown
+      class Unknown < Base
         include Loggable
         include Monitoring::Publishable
 
@@ -27,12 +27,6 @@ module Mongo
         #
         # @since 2.0.0
         NAME = 'Unknown'.freeze
-
-        # @return [ Hash ] options The options.
-        attr_reader :options
-
-        # @return [ Monitoring ] monitoring The monitoring.
-        attr_reader :monitoring
 
         # Get the display name.
         #
@@ -48,7 +42,7 @@ module Mongo
 
         # @api experimental
         def summary
-          "#{display_name}[#{@seeds.join(', ')}]"
+          "#{display_name}[#{@addresses.join(', ')}]"
         end
 
         # Elect a primary server within this topology.
@@ -99,22 +93,6 @@ module Mongo
         #
         # @since 2.4.0
         def has_writable_server?(cluster); false; end
-
-        # Initialize the topology with the options.
-        #
-        # @example Initialize the topology.
-        #   Unknown.new(options)
-        #
-        # @param [ Hash ] options The options.
-        # @param [ Monitoring ] monitoring The monitoring.
-        # @param [ Array<String> ] seeds The seeds.
-        #
-        # @since 2.0.0
-        def initialize(options, monitoring, seeds = [])
-          @options = options
-          @monitoring = monitoring
-          @seeds = seeds
-        end
 
         # An unknown topology is not a replica set.
         #
@@ -235,8 +213,8 @@ module Mongo
         #
         # @since 2.0.6
         def standalone_discovered
-          if @seeds.size == 1
-            single = Single.new(options, monitoring, @seeds)
+          if @addresses.size == 1
+            single = Single.new(options, monitoring, @addresses)
             topology_changed(single)
             single
           else

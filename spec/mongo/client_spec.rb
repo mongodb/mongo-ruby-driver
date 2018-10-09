@@ -304,7 +304,7 @@ describe Mongo::Client do
         end
 
         let(:client) do
-          new_local_client([default_address.seed], authorized_client.options.merge(options))
+          new_local_client(SpecConfig.instance.addresses, authorized_client.options.merge(options))
         end
 
         it 'sets the option' do
@@ -315,7 +315,7 @@ describe Mongo::Client do
       context 'when compressors are provided' do
 
         let(:client) do
-          new_local_client([default_address.seed], authorized_client.options.merge(options))
+          new_local_client(SpecConfig.instance.addresses, authorized_client.options.merge(options))
         end
 
         context 'when the compressor is supported' do
@@ -413,7 +413,7 @@ describe Mongo::Client do
       context 'when a zlib_compression_level option is provided', if: testing_compression? do
 
         let(:client) do
-          new_local_client([default_address.seed], SpecConfig.instance.test_options.merge(zlib_compression_level: 1))
+          new_local_client(SpecConfig.instance.addresses, SpecConfig.instance.test_options.merge(zlib_compression_level: 1))
         end
 
         it 'sets the option on the client' do
@@ -1014,7 +1014,7 @@ describe Mongo::Client do
       context 'when the read preference is printed' do
 
         let(:client) do
-          new_local_client([ default_address.to_s ], options)
+          new_local_client(SpecConfig.instance.addresses, options)
         end
 
         let(:options) do

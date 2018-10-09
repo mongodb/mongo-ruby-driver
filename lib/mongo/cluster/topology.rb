@@ -33,6 +33,7 @@ module Mongo
   end
 end
 
+require 'mongo/cluster/topology/base'
 require 'mongo/cluster/topology/replica_set_no_primary'
 require 'mongo/cluster/topology/replica_set_with_primary'
 require 'mongo/cluster/topology/sharded'

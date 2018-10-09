@@ -21,7 +21,7 @@ module Mongo
       # by the driver.
       #
       # @since 2.0.0
-      class ReplicaSetNoPrimary
+      class ReplicaSetNoPrimary < Base
         include Loggable
         include Monitoring::Publishable
 
@@ -30,11 +30,34 @@ module Mongo
         # @since 2.0.0
         REPLICA_SET_NAME = :replica_set.freeze
 
-        # @return [ Hash ] options The options.
-        attr_reader :options
-
-        # @return [ Monitoring ] monitoring The monitoring.
-        attr_reader :monitoring
+        # Initialize the topology with the options.
+        #
+        # @example Initialize the topology.
+        #   ReplicaSetNoPrimary.new(options)
+        #
+        # @param [ Hash ] options The options.
+        # @param [ Monitoring ] monitoring The monitoring.
+        # @param [ Array<String> ] addresses Addresses of servers in the topology.
+        # @param max_election_id For internal driver use only.
+        # @param max_set_version For internal driver use only.
+        #
+        # @option options [ Symbol ] :replica_set Name of the replica set to
+        #   connect to. Can be left blank (either nil or the empty string are
+        #   accepted) to discover the name from the cluster. If the addresses
+        #   belong to different replica sets there is no guarantee which
+        #   replica set is selected - in particular, the driver may choose
+        #   the replica set name of a secondary if it returns its response
+        #   prior to a primary belonging to a different replica set.
+        #
+        # @since 2.7.0
+        # @api private
+        def initialize(options, monitoring, addresses = [],
+          max_election_id = nil, max_set_version = nil
+        )
+          super(options, monitoring, addresses)
+          @max_election_id = max_election_id
+          @max_set_version = max_set_version
+        end
 
         # The display name for the topology.
         #
@@ -120,35 +143,6 @@ module Mongo
         # @since 2.4.0
         def has_writable_server?(cluster)
           cluster.servers.any?{ |server| server.primary? }
-        end
-
-        # Initialize the topology with the options.
-        #
-        # @example Initialize the topology.
-        #   ReplicaSetNoPrimary.new(options)
-        #
-        # @param [ Hash ] options The options.
-        # @param [ Monitoring ] monitoring The monitoring.
-        # @param [ Array<String> ] seeds The seeds.
-        # @param max_election_id For internal driver use only.
-        # @param max_set_version For internal driver use only.
-        #
-        # @option options [ Symbol ] :replica_set Name of the replica set to
-        #   connect to. Can be left blank (either nil or the empty string are
-        #   accepted) to discover the name from the seeds. If the seeds
-        #   belong to different replica sets there is no guarantee which
-        #   replica set is selected - in particular, the driver may choose
-        #   the replica set name of a secondary if it returns its response
-        #   prior to a primary belonging to a different replica set.
-        #
-        # @since 2.0.0
-        def initialize(options, monitoring, seeds = [],
-          max_election_id = nil, max_set_version = nil
-        )
-          @options = options
-          @monitoring = monitoring
-          @max_election_id = max_election_id
-          @max_set_version = max_set_version
         end
 
         # A replica set topology is a replica set.
