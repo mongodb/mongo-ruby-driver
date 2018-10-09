@@ -226,7 +226,6 @@ describe Mongo::Address do
     context 'when providing a DNS entry that resolves to both IPv6 and IPv4' do
 
       before do
-        address.instance_variable_set(:@resolver, nil)
         allow(::Socket).to receive(:getaddrinfo).and_return(
           [ ["AF_INET6", 0, '::1', '::1', ::Socket::AF_INET6, 1, 6],
             ["AF_INET", 0, socket_address_or_host, socket_address_or_host, ::Socket::AF_INET, 1, 6]]
@@ -241,7 +240,6 @@ describe Mongo::Address do
     context 'when creating a socket using the resolver' do
 
       before do
-        address.instance_variable_set(:@resolver, nil)
         address.send(:create_resolver, SpecConfig.instance.ssl_options)
       end
 
