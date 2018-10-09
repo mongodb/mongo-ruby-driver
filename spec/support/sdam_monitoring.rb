@@ -112,6 +112,7 @@ module Mongo
       MAPPINGS = {
         'topology_opening_event' => Mongo::Monitoring::Event::TopologyOpening,
         'topology_description_changed_event' => Mongo::Monitoring::Event::TopologyChanged,
+        'topology_closed_event' => Mongo::Monitoring::Event::TopologyClosed,
         'server_opening_event' => Mongo::Monitoring::Event::ServerOpening,
         'server_description_changed_event' => Mongo::Monitoring::Event::ServerDescriptionChanged,
         'server_closed_event' => Mongo::Monitoring::Event::ServerClosed
@@ -132,8 +133,12 @@ module Mongo
       #
       # @return [ Event ] The matching event.
       def first_event(name)
+        cls = MAPPINGS[name]
+        if cls.nil?
+          raise ArgumentError, "Bogus event name #{name}"
+        end
         matching = events.find do |event|
-          event.class == MAPPINGS[name]
+          cls === event
         end
         events.delete(matching)
         matching

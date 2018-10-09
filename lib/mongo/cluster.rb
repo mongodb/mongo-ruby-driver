@@ -115,6 +115,7 @@ module Mongo
 
       ObjectSpace.define_finalizer(self, self.class.finalize(pools, @periodic_executor, @session_pool))
 
+      @connecting = false
       @connected = true
     end
 
@@ -408,6 +409,10 @@ module Mongo
 
     # Disconnect all servers.
     #
+    # @note Applications should call Client#close to disconnect from
+    # the cluster rather than calling this method. This method is for
+    # internal driver use only.
+    #
     # @example Disconnect the cluster's servers.
     #   cluster.disconnect!
     #
@@ -415,11 +420,22 @@ module Mongo
     #
     # @since 2.1.0
     def disconnect!
+      unless @connecting || @connected
+        return true
+      end
       @periodic_executor.stop!
       @servers.each do |server|
         server.disconnect!
+        publish_sdam_event(
+          Monitoring::SERVER_CLOSED,
+          Monitoring::Event::ServerClosed.new(server.address, topology)
+        )
       end
-      @connected = false
+      publish_sdam_event(
+        Monitoring::TOPOLOGY_CLOSED,
+        Monitoring::Event::TopologyClosed.new(topology)
+      )
+      @connecting = @connected = false
       true
     end
 
@@ -431,12 +447,16 @@ module Mongo
     # @return [ true ] Always true.
     #
     # @since 2.1.0
+    # @deprecated Use Client#reconnect to reconnect to the cluster instead of
+    #   calling this method. This method does not send SDAM events.
     def reconnect!
+      @connecting = true
       scan!
       servers.each do |server|
         server.reconnect!
       end
       @periodic_executor.restart!
+      @connecting = false
       @connected = true
     end
 

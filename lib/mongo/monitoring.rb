@@ -217,6 +217,7 @@ module Mongo
         subscribe(SERVER_DESCRIPTION_CHANGED, ServerDescriptionChangedLogSubscriber.new(options))
         subscribe(TOPOLOGY_OPENING, TopologyOpeningLogSubscriber.new(options))
         subscribe(TOPOLOGY_CHANGED, TopologyChangedLogSubscriber.new(options))
+        subscribe(TOPOLOGY_CLOSED, TopologyClosedLogSubscriber.new(options))
       end
     end
 
@@ -276,3 +277,4 @@ require 'mongo/monitoring/server_closed_log_subscriber'
 require 'mongo/monitoring/server_opening_log_subscriber'
 require 'mongo/monitoring/topology_changed_log_subscriber'
 require 'mongo/monitoring/topology_opening_log_subscriber'
+require 'mongo/monitoring/topology_closed_log_subscriber'

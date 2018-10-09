@@ -45,7 +45,7 @@ describe Mongo::Monitoring do
       end
 
       it 'includes the global subscribers' do
-        expect(monitoring.subscribers.size).to eq(6)
+        expect(monitoring.subscribers.size).to eq(7)
       end
     end
 
@@ -58,7 +58,7 @@ describe Mongo::Monitoring do
         end
 
         it 'includes the global subscribers' do
-          expect(monitoring.subscribers.size).to eq(6)
+          expect(monitoring.subscribers.size).to eq(7)
         end
       end
 
