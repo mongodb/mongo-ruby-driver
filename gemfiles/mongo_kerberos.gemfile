@@ -1,7 +1,7 @@
 source "https://rubygems.org"
 gemspec path: '..'
 
-gem 'mongo_kerberos', github: "mongodb/mongo-ruby-kerberos"
+gem 'mongo_kerberos', github: "mongodb/mongo-ruby-kerberos", branch: "testing"
 
 group :test do
   gem 'fuubar'
