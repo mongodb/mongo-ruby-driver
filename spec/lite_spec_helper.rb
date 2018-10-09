@@ -40,7 +40,7 @@ rescue LoadError
     require 'pry'
   # jruby likes to raise random error classes, in this case
   # NameError in addition to LoadError
-  rescue
+  rescue Exception
   end
 end
 
