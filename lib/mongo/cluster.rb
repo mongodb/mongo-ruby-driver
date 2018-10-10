@@ -595,12 +595,8 @@ module Mongo
     rescue Error::NoServerAvailable
     end
 
-    def direct_connection?(address)
-      address.seed == @topology.seed
-    end
-
     def addition_allowed?(address)
-      !@topology.single? || direct_connection?(address)
+      !@topology.single? || [address.seed] == @topology.addresses
     end
 
     def pools

@@ -19,22 +19,13 @@ module Mongo
       # Defines behaviour for when a cluster is in single topology.
       #
       # @since 2.0.0
-      class Single
+      class Single < Base
         include Monitoring::Publishable
 
         # The display name for the topology.
         #
         # @since 2.0.0
         NAME = 'Single'.freeze
-
-        # @return [ Hash ] options The options.
-        attr_reader :options
-
-        # @return [ String ] seed The seed address.
-        attr_reader :seed
-
-        # @return [ monitoring ] monitoring the monitoring.
-        attr_reader :monitoring
 
         # Get the display name.
         #
@@ -93,22 +84,6 @@ module Mongo
         #
         # @since 2.4.0
         def has_writable_server?(cluster); true; end
-
-        # Initialize the topology with the options.
-        #
-        # @example Initialize the topology.
-        #   Single.new(options)
-        #
-        # @param [ Hash ] options The options.
-        # @param [ Monitoring ] monitoring The monitoring.
-        # @param [ Array<String> ] seeds The seeds.
-        #
-        # @since 2.0.0
-        def initialize(options, monitoring, seeds = [])
-          @options = options
-          @monitoring = monitoring
-          @seed = seeds.first
-        end
 
         # A single topology is not a replica set.
         #

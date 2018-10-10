@@ -35,4 +35,15 @@ class ClusterConfig
   def short_server_version
     server_version.split('.')[0..1].join('.')
   end
+
+  def primary_address
+    @primary_address ||= begin
+      client = ClientRegistry.instance.global_client('authorized')
+      if client.cluster.topology.is_a?(Mongo::Cluster::Topology::ReplicaSetWithPrimary)
+        client.cluster.servers.detect { |server| server.primary? }.address
+      else
+        client.cluster.servers.first.address
+      end.seed
+    end
+  end
 end

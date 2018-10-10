@@ -41,7 +41,7 @@ describe Mongo::Cluster::Topology do
       end
 
       it 'sets the seed on the topology' do
-        expect(topology.seed).to eq('a')
+        expect(topology.addresses).to eq(['a'])
       end
 
       context 'when the option is a String (due to YAML parsing)' do
@@ -55,7 +55,7 @@ describe Mongo::Cluster::Topology do
         end
 
         it 'sets the seed on the topology' do
-          expect(topology.seed).to eq('a')
+          expect(topology.addresses).to eq(['a'])
         end
       end
     end
