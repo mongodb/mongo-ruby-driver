@@ -105,6 +105,10 @@ module Mongo
         while (deadline - Time.now) > 0
           servers = candidates(cluster)
           if servers && !servers.compact.empty?
+            # This list of servers may be ordered in a specific way
+            # by the selector (e.g. for secondary preferred, the first
+            # server may be a secondary and the second server may be primary)
+            # and we should take the first server here respecting the order
             server = servers.first
             # HACK: all servers in a topology must satisfy wire protocol
             # constraints. There is probably a better implementation than
@@ -199,6 +203,10 @@ module Mongo
         matching_servers = candidates.select(&:secondary?)
         matching_servers = filter_stale_servers(matching_servers, primary(candidates).first)
         matching_servers = match_tag_sets(matching_servers) unless tag_sets.empty?
+        # Per server selection spec the server selected MUST be a random
+        # one matching staleness and latency requirements.
+        # Selectors always pass the output of #secondaries to #nearest
+        # which shuffles the server list, fulfilling this requirement.
         matching_servers
       end
 
