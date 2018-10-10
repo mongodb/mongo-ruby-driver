@@ -71,5 +71,42 @@ describe 'Connections' do
         end
       end
     end
+
+    describe 'wire protocol version range update' do
+      # 3.2 wire protocol is 4.
+      # Wire protocol < 2 means only scram auth is available,
+      # which is not supported by modern mongos.
+      # Instead of mucking with this we just limit this test to 3.2+
+      # so that we can downgrade protocol range to 0..3 instead of 0..1.
+      min_server_version '3.2'
+
+      let(:client) { ClientRegistry.instance.global_client('authorized').with(app_name: 'wire_protocol_update') }
+
+      it 'does not update on ismaster response from non-monitoring connections' do
+        # connect server
+        client['test'].insert_one(test: 1)
+
+        # kill background threads so that they are not interfering with
+        # our mocked ismaster response
+        client.cluster.servers.each do |server|
+          server.monitor.stop!
+        end
+
+        server = client.cluster.servers.first
+        expect(server.features.server_wire_versions.max >= 4).to be true
+        max_version = server.features.server_wire_versions.max
+
+        # now pretend an ismaster returned a different range
+        features = Mongo::Server::Description::Features.new(0..3)
+        expect(Mongo::Server::Description::Features).to receive(:new).and_return(features)
+
+        connection = Mongo::Server::Connection.new(server, server.options)
+        expect(connection.connect!).to be true
+
+        # ismaster response should not update wire version range stored
+        # in description
+        expect(server.features.server_wire_versions.max).to eq(max_version)
+      end
+    end
   end
 end
