@@ -368,10 +368,8 @@ module Mongo
       address = Address.new(host)
       removed_servers = @servers.select { |s| s.address == address }
       @update_lock.synchronize { @servers = @servers - removed_servers }
-      if removed_servers
-        removed_servers.each do |server|
-          server.disconnect!
-        end
+      removed_servers.each do |server|
+        server.disconnect!
       end
       publish_sdam_event(
         Monitoring::SERVER_CLOSED,
