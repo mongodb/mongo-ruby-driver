@@ -835,57 +835,60 @@ describe Mongo::Server::Connection do
       end
     end
 
-    before do
-      connection.connect!
+    context 'when the ismaster response includes saslSupportedMechs' do
+      min_server_version '4.0'
+
+      let(:server_options) do
+        SpecConfig.instance.test_options.merge(
+          user: SpecConfig.instance.test_user.name,
+          password: SpecConfig.instance.test_user.password,
+          auth_source: SpecConfig.instance.test_db,
+        )
+      end
+
+      let(:app_metadata) do
+        Mongo::Server::AppMetadata.new(server_options)
+      end
+
+      let(:connection) do
+        described_class.new(server, server_options)
+      end
+
+      before do
+        client = authorized_client.with(database: SpecConfig.instance.test_db)
+        info = client.database.users.info(SpecConfig.instance.test_user.name)
+        expect(info.length).to eq(1)
+      end
+
+      it 'uses scram256' do
+        connection.connect!
+        expect(connection.send(:default_mechanism)).to eq(:scram256)
+      end
     end
 
     context 'when the ismaster response indicates the auth mechanism is :scram' do
-
       let(:features) do
         Mongo::Server::Description::Features.new(0..7)
       end
 
-      context 'when the server auth mechanism is scram', if: scram_sha_1_enabled? && !scram_sha_256_enabled? do
-
-        it 'uses scram' do
-          allow(Mongo::Server::Description::Features).to receive(:new).and_return(features)
-          connection.send(:handshake!)
-          expect(connection.send(:default_mechanism)).to eq(:scram)
-        end
-      end
-
-      context 'when the server auth mechanism is the default (mongodb_cr)', unless: scram_sha_1_enabled?  do
-
-        it 'uses scram' do
-          allow(Mongo::Server::Description::Features).to receive(:new).and_return(features)
-          connection.send(:handshake!)
-          expect(connection.send(:default_mechanism)).to eq(:scram)
-        end
+      it 'uses scram' do
+        connection
+        expect(Mongo::Server::Description::Features).to receive(:new).and_return(features)
+        connection.connect!
+        expect(connection.send(:default_mechanism)).to eq(:scram)
       end
     end
 
     context 'when the ismaster response indicates the auth mechanism is :mongodb_cr' do
-
       let(:features) do
         Mongo::Server::Description::Features.new(0..2)
       end
 
-      context 'when the server auth mechanism is scram', if: scram_sha_1_enabled? && !scram_sha_256_enabled? do
-
-        it 'uses scram' do
-          allow(Mongo::Server::Description::Features).to receive(:new).and_return(features)
-          connection.send(:handshake!)
-          expect(connection.send(:default_mechanism)).to eq(:scram)
-        end
-      end
-
-      context 'when the server auth mechanism is the default (mongodb_cr)', unless: scram_sha_1_enabled?  do
-
-        it 'uses mongodb_cr' do
-          allow(Mongo::Server::Description::Features).to receive(:new).and_return(features)
-          connection.send(:handshake!)
-          expect(connection.send(:default_mechanism)).to eq(:mongodb_cr)
-        end
+      it 'uses mongodb_cr' do
+        connection
+        expect(Mongo::Server::Description::Features).to receive(:new).and_return(features)
+        connection.connect!
+        expect(connection.send(:default_mechanism)).to eq(:mongodb_cr)
       end
     end
   end

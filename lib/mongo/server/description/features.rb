@@ -23,6 +23,15 @@ module Mongo
 
         # List of features and the wire protocol version they appear in.
         #
+        # Wire protocol versions map to server releases as follows:
+        # - 2 => 2.6
+        # - 3 => 3.0
+        # - 4 => 3.2
+        # - 5 => 3.4
+        # - 6 => 3.6
+        # - 7 => 4.0
+        # - 8 => 4.2
+        #
         # @since 2.0.0
         MAPPINGS = {
           :transactions => 7,

@@ -257,21 +257,31 @@ module Mongo
         @server.handle_handshake_failure! do
           socket.write(app_metadata.ismaster_bytes)
           response = Protocol::Message.deserialize(socket, max_message_size).documents[0]
-          min_wire_version = response[Description::MIN_WIRE_VERSION] || Description::LEGACY_WIRE_VERSION
-          max_wire_version = response[Description::MAX_WIRE_VERSION] || Description::LEGACY_WIRE_VERSION
-          features = Description::Features.new(min_wire_version..max_wire_version)
 
           if response["ok"] == 1
+            # Auth mechanism is entirely dependent on the contents of
+            # ismaster response *for this connection*.
+            # Ismaster received by the monitoring connection should advertise
+            # the same wire protocol, but if it doesn't, we use whatever
+            # the monitoring connection advertised for filling out the
+            # server description and whatever the non-monitoring connection
+            # (that's this one) advertised for performing auth on that
+            # connection.
             @auth_mechanism = if response['saslSupportedMechs']
               if response['saslSupportedMechs'].include?(Mongo::Auth::SCRAM::SCRAM_SHA_256_MECHANISM)
                 :scram256
               else
                 :scram
               end
-            elsif features.scram_sha_1_enabled? || @server.features.scram_sha_1_enabled?
-              :scram
             else
-              :mongodb_cr
+              min_wire_version = response[Description::MIN_WIRE_VERSION] || Description::LEGACY_WIRE_VERSION
+              max_wire_version = response[Description::MAX_WIRE_VERSION] || Description::LEGACY_WIRE_VERSION
+              features = Description::Features.new(min_wire_version..max_wire_version)
+              if features.scram_sha_1_enabled?
+                :scram
+              else
+                :mongodb_cr
+              end
             end
           else
             @auth_mechanism = nil

@@ -6,7 +6,7 @@ module Constraints
 
     before do
       if version > ClusterConfig.instance.server_version
-        skip "Server version #{version} or higher required, we have #{$server_version}"
+        skip "Server version #{version} or higher required, we have #{ClusterConfig.instance.server_version}"
       end
     end
   end
@@ -18,7 +18,7 @@ module Constraints
 
     before do
       if version < ClusterConfig.instance.short_server_version
-        skip "Server version #{version} or lower required, we have #{$server_version}"
+        skip "Server version #{version} or lower required, we have #{ClusterConfig.instance.server_version}"
       end
     end
   end
