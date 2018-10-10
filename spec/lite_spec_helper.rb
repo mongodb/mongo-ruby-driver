@@ -32,15 +32,18 @@ else
 end
 
 require 'mongo'
-begin
-  require 'byebug'
-rescue LoadError
-  # jruby - try pry
+
+unless ENV['CI']
   begin
-    require 'pry'
-  # jruby likes to raise random error classes, in this case
-  # NameError in addition to LoadError
-  rescue Exception
+    require 'byebug'
+  rescue LoadError
+    # jruby - try pry
+    begin
+      require 'pry'
+    # jruby likes to raise random error classes, in this case
+    # NameError in addition to LoadError
+    rescue Exception
+    end
   end
 end
 
