@@ -42,7 +42,7 @@ module Mongo
 
         # @api experimental
         def summary
-          "#{display_name}[#{@addresses.join(', ')}]"
+          "#{display_name}[#{addresses.join(', ')}]"
         end
 
         # Elect a primary server within this topology.
@@ -58,7 +58,7 @@ module Mongo
         # @return [ Sharded, ReplicaSetNoPrimary, ReplicaSetWithPrimary ] The new topology.
         def elect_primary(description, servers)
           if description.mongos?
-            sharded = Sharded.new(options, monitoring)
+            sharded = Sharded.new(options, monitoring, cluster)
             topology_changed(sharded)
             sharded
           else
@@ -213,8 +213,8 @@ module Mongo
         #
         # @since 2.0.6
         def standalone_discovered
-          if @addresses.size == 1
-            single = Single.new(options, monitoring, @addresses)
+          if @cluster.seeds.length == 1
+            single = Single.new(options, monitoring, self)
             topology_changed(single)
             single
           else

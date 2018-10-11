@@ -37,7 +37,7 @@ module Mongo
         #
         # @param [ Hash ] options The options.
         # @param [ Monitoring ] monitoring The monitoring.
-        # @param [ Array<String> ] addresses Addresses of servers in the topology.
+        # @param [ Cluster ] cluster The cluster.
         # @param max_election_id For internal driver use only.
         # @param max_set_version For internal driver use only.
         #
@@ -51,10 +51,10 @@ module Mongo
         #
         # @since 2.7.0
         # @api private
-        def initialize(options, monitoring, addresses = [],
+        def initialize(options, monitoring, cluster,
           max_election_id = nil, max_set_version = nil
         )
-          super(options, monitoring, addresses)
+          super(options, monitoring, cluster)
           @max_election_id = max_election_id
           @max_set_version = max_set_version
         end
