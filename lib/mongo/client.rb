@@ -266,6 +266,10 @@ module Mongo
     #   Use this to set up SDAM event listeners to receive events dispatched
     #   during client construction.
     #
+    #   Note: the client is not fully constructed when sdam_proc is invoked,
+    #   in particular the cluster is nil at this time. sdam_proc should
+    #   limit itself to calling #subscribe and #unsubscribe methods only.
+    #
     # @since 2.0.0
     def initialize(addresses_or_uri, options = Options::Redacted.new)
       Mongo::Lint.validate_underscore_read_preference(options[:read])
