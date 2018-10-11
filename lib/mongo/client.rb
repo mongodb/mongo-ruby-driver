@@ -97,9 +97,9 @@ module Mongo
     # Delegate subscription to monitoring.
     def_delegators :monitoring, :subscribe, :unsubscribe
 
-    # Delegate monitoring to cluster.
+    # @return [ Monitoring ] monitoring The monitoring.
+    # @api private
     attr_reader :monitoring
-
     private :monitoring
 
     # Determine if this client is equivalent to another object.
