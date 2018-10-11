@@ -98,7 +98,7 @@ module Mongo
     def_delegators :monitoring, :subscribe, :unsubscribe
 
     # Delegate monitoring to cluster.
-    def_delegators :cluster, :monitoring
+    attr_reader :monitoring
 
     private :monitoring
 
@@ -282,7 +282,7 @@ module Mongo
       sdam_proc = options.delete(:sdam_proc)
       @options = validate_options!(Database::DEFAULT_OPTIONS.merge(options)).freeze
       @database = Database.new(self, @options[:database], @options)
-      monitoring = Monitoring.new(@options)
+      @monitoring = Monitoring.new(@options)
       if sdam_proc
         #@cluster = Cluster.new([], monitoring, @options)
         sdam_proc.call(self)
@@ -293,7 +293,7 @@ module Mongo
       cluster_options = @options.reject do |key, value|
         CRUD_OPTIONS.include?(key.to_sym)
       end
-      @cluster = Cluster.new(addresses, monitoring, @options)
+      @cluster = Cluster.new(addresses, @monitoring, @options)
       yield(self) if block_given?
     end
 
