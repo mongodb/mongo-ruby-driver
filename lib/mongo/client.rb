@@ -446,7 +446,6 @@ module Mongo
     # @since 2.1.0
     def reconnect
       addresses = cluster.addresses.map(&:to_s)
-      monitoring = cluster.monitoring
 
       @cluster.disconnect! rescue nil
 
@@ -578,7 +577,7 @@ module Mongo
 
     def initialize_copy(original)
       @options = original.options.dup
-      @monitoring = @cluster ? monitoring : Monitoring.new(options)
+      @monitoring = original.send(:monitoring).dup
       @database = nil
       @read_preference = nil
       @write_concern = nil
