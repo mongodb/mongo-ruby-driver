@@ -284,7 +284,7 @@ module Mongo
       @database = Database.new(self, @options[:database], @options)
       monitoring = Monitoring.new(@options)
       if sdam_proc
-        @cluster = Cluster.new([], monitoring, @options)
+        #@cluster = Cluster.new([], monitoring, @options)
         sdam_proc.call(self)
       end
       # We share clusters when a new client with different CRUD_OPTIONS
