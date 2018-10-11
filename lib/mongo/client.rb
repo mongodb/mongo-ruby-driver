@@ -293,6 +293,8 @@ module Mongo
       sdam_proc = options.delete(:sdam_proc)
       @options = validate_options!(Database::DEFAULT_OPTIONS.merge(options)).freeze
       @database = Database.new(self, @options[:database], @options)
+      # Temporarily set monitoring so that event subscriptions can be
+      # set up without there being a cluster
       @monitoring = Monitoring.new(@options)
       if sdam_proc
         sdam_proc.call(self)
@@ -304,6 +306,7 @@ module Mongo
         CRUD_OPTIONS.include?(key.to_sym)
       end
       @cluster = Cluster.new(addresses, @monitoring, @options)
+      # Unset monitoring, it will be taken out of cluster from now on
       remove_instance_variable('@monitoring')
       yield(self) if block_given?
     end
@@ -368,6 +371,10 @@ module Mongo
     # Creates a new client configured to use the database with the provided
     # name, and using the other options configured in this client.
     #
+    # @note The new client shares the cluster with the original client,
+    #   and as a result also shares the monitoring instance and monitoring
+    #   event subscribers.
+    #
     # @example Create a client for the `users' database.
     #   client.use(:users)
     #
@@ -383,6 +390,12 @@ module Mongo
     # Creates a new client with the passed options merged over the existing
     # options of this client. Useful for one-offs to change specific options
     # without altering the original client.
+    #
+    # @note Depending on options given, the returned client may share the
+    #   cluster with the original client or be created with a new cluster.
+    #   If a new cluster is created, the monitoring event subscribers on
+    #   the new client are set to the default event subscriber set and
+    #   none of the subscribers on the original client are copied over.
     #
     # @example Get a client with changed options.
     #   client.with(:read => { :mode => :primary_preferred })
