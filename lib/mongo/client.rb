@@ -97,9 +97,9 @@ module Mongo
     # Delegate subscription to monitoring.
     def_delegators :monitoring, :subscribe, :unsubscribe
 
-    # Delegate monitoring to cluster.
-    def_delegators :cluster, :monitoring
-
+    # @return [ Monitoring ] monitoring The monitoring.
+    # @api private
+    attr_reader :monitoring
     private :monitoring
 
     # Determine if this client is equivalent to another object.
@@ -266,6 +266,11 @@ module Mongo
     #   Use this to set up SDAM event listeners to receive events dispatched
     #   during client construction.
     #
+    #   Note: the client is not fully constructed when sdam_proc is invoked,
+    #   in particular the cluster is nil at this time. sdam_proc should
+    #   limit itself to calling #subscribe and #unsubscribe methods on the
+    #   client only.
+    #
     # @since 2.0.0
     def initialize(addresses_or_uri, options = Options::Redacted.new)
       Mongo::Lint.validate_underscore_read_preference(options[:read])
@@ -282,9 +287,8 @@ module Mongo
       sdam_proc = options.delete(:sdam_proc)
       @options = validate_options!(Database::DEFAULT_OPTIONS.merge(options)).freeze
       @database = Database.new(self, @options[:database], @options)
-      monitoring = Monitoring.new(@options)
+      @monitoring = Monitoring.new(@options)
       if sdam_proc
-        @cluster = Cluster.new([], monitoring, @options)
         sdam_proc.call(self)
       end
       # We share clusters when a new client with different CRUD_OPTIONS
@@ -293,7 +297,7 @@ module Mongo
       cluster_options = @options.reject do |key, value|
         CRUD_OPTIONS.include?(key.to_sym)
       end
-      @cluster = Cluster.new(addresses, monitoring, @options)
+      @cluster = Cluster.new(addresses, @monitoring, @options)
       yield(self) if block_given?
     end
 
@@ -442,7 +446,6 @@ module Mongo
     # @since 2.1.0
     def reconnect
       addresses = cluster.addresses.map(&:to_s)
-      monitoring = cluster.monitoring
 
       @cluster.disconnect! rescue nil
 
@@ -574,7 +577,7 @@ module Mongo
 
     def initialize_copy(original)
       @options = original.options.dup
-      @monitoring = @cluster ? monitoring : Monitoring.new(options)
+      @monitoring = original.send(:monitoring).dup
       @database = nil
       @read_preference = nil
       @write_concern = nil
