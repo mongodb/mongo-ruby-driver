@@ -268,7 +268,8 @@ module Mongo
     #
     #   Note: the client is not fully constructed when sdam_proc is invoked,
     #   in particular the cluster is nil at this time. sdam_proc should
-    #   limit itself to calling #subscribe and #unsubscribe methods only.
+    #   limit itself to calling #subscribe and #unsubscribe methods on the
+    #   client only.
     #
     # @since 2.0.0
     def initialize(addresses_or_uri, options = Options::Redacted.new)
