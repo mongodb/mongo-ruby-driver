@@ -263,7 +263,10 @@ module Mongo
     private
 
     def initialize_copy(original)
-      @subscribers = original.subscribers.dup
+      @subscribers = {}
+      original.subscribers.each do |k, v|
+        @subscribers[k] = v.dup
+      end
     end
   end
 end
