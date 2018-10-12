@@ -655,6 +655,12 @@ module Mongo
     #
     # @api private
     def server_description_changed(previous_description, updated_description)
+      servers_list.each do |server|
+        if server.address == updated_description.address
+          server.update_description(updated_description)
+        end
+      end
+
       publish_sdam_event(
         Monitoring::SERVER_DESCRIPTION_CHANGED,
         Monitoring::Event::ServerDescriptionChanged.new(
