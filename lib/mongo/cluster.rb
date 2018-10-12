@@ -588,7 +588,7 @@ module Mongo
       publish_sdam_event(
         Monitoring::SERVER_DESCRIPTION_CHANGED,
         Monitoring::Event::ServerDescriptionChanged.new(
-          updated_descriptoin.address,
+          updated_description.address,
           topology,
           previous_description,
           updated_description,
