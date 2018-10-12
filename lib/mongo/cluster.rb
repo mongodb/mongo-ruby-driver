@@ -361,7 +361,13 @@ module Mongo
     #
     # @since 2.0.6
     def standalone_discovered
-      @topology = topology.standalone_discovered
+      if topology.unknown?
+        if seeds.length == 1
+          update_topology(
+            Single.new(topology.options, topology.monitoring, self))
+        end
+      end
+      topology
     end
 
     # Remove the server from the cluster for the provided address, if it
