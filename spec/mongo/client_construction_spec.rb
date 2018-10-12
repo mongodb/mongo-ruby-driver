@@ -688,6 +688,89 @@ describe Mongo::Client do
     end
   end
 
+  shared_examples_for 'duplicated client with duplicated monitoring' do
+    let(:monitoring) { client.send(:monitoring) }
+    let(:new_monitoring) { new_client.send(:monitoring) }
+
+    it 'duplicates monitoring' do
+      expect(new_monitoring).not_to eql(monitoring)
+    end
+
+    it 'copies monitoring subscribers' do
+      monitoring.subscribers.clear
+      client.subscribe(Mongo::Monitoring::SERVER_HEARTBEAT, EventSubscriber.new)
+      expect(monitoring.present_subscribers.length).to eq(1)
+      expect(monitoring.subscribers[Mongo::Monitoring::SERVER_HEARTBEAT].length).to eq(1)
+
+      # this duplicates the client
+      expect(new_monitoring.present_subscribers.length).to eq(1)
+      expect(new_monitoring.subscribers[Mongo::Monitoring::SERVER_HEARTBEAT].length).to eq(1)
+    end
+
+    it 'does not change subscribers on original client' do
+      monitoring.subscribers.clear
+      client.subscribe(Mongo::Monitoring::SERVER_HEARTBEAT, EventSubscriber.new)
+      expect(monitoring.present_subscribers.length).to eq(1)
+      expect(monitoring.subscribers[Mongo::Monitoring::SERVER_HEARTBEAT].length).to eq(1)
+
+      new_client.subscribe(Mongo::Monitoring::SERVER_HEARTBEAT, EventSubscriber.new)
+      new_client.subscribe(Mongo::Monitoring::SERVER_HEARTBEAT, EventSubscriber.new)
+      expect(new_monitoring.present_subscribers.length).to eq(1)
+      expect(new_monitoring.subscribers[Mongo::Monitoring::SERVER_HEARTBEAT].length).to eq(3)
+      # original client should not have gotten any of the new subscribers
+      expect(monitoring.present_subscribers.length).to eq(1)
+      expect(monitoring.subscribers[Mongo::Monitoring::SERVER_HEARTBEAT].length).to eq(1)
+    end
+  end
+
+  shared_examples_for 'duplicated client with reused monitoring' do
+    let(:monitoring) { client.send(:monitoring) }
+    let(:new_monitoring) { new_client.send(:monitoring) }
+
+    it 'reuses monitoring' do
+      expect(new_monitoring).to eql(monitoring)
+    end
+  end
+
+  shared_examples_for 'duplicated client with clean slate monitoring' do
+    let(:monitoring) { client.send(:monitoring) }
+    let(:new_monitoring) { new_client.send(:monitoring) }
+
+    it 'does not reuse monitoring' do
+      expect(new_monitoring).not_to eql(monitoring)
+    end
+
+    it 'resets monitoring subscribers' do
+      monitoring.subscribers.clear
+      client.subscribe(Mongo::Monitoring::SERVER_HEARTBEAT, EventSubscriber.new)
+      expect(monitoring.present_subscribers.length).to eq(1)
+      expect(monitoring.subscribers[Mongo::Monitoring::SERVER_HEARTBEAT].length).to eq(1)
+
+      # this duplicates the client
+      # 7 is how many subscribers driver sets up by default
+      expect(new_monitoring.present_subscribers.length).to eq(7)
+      # ... none of which are for heartbeats
+      expect(new_monitoring.subscribers[Mongo::Monitoring::SERVER_HEARTBEAT].length).to eq(0)
+    end
+
+    it 'does not change subscribers on original client' do
+      monitoring.subscribers.clear
+      client.subscribe(Mongo::Monitoring::SERVER_HEARTBEAT, EventSubscriber.new)
+      expect(monitoring.present_subscribers.length).to eq(1)
+      expect(monitoring.subscribers[Mongo::Monitoring::SERVER_HEARTBEAT].length).to eq(1)
+
+      new_client.subscribe(Mongo::Monitoring::SERVER_HEARTBEAT, EventSubscriber.new)
+      new_client.subscribe(Mongo::Monitoring::SERVER_HEARTBEAT, EventSubscriber.new)
+      # 7 default subscribers + heartbeat
+      expect(new_monitoring.present_subscribers.length).to eq(8)
+      # the heartbeat subscriber on the original client is not inherited
+      expect(new_monitoring.subscribers[Mongo::Monitoring::SERVER_HEARTBEAT].length).to eq(2)
+      # original client should not have gotten any of the new subscribers
+      expect(monitoring.present_subscribers.length).to eq(1)
+      expect(monitoring.subscribers[Mongo::Monitoring::SERVER_HEARTBEAT].length).to eq(1)
+    end
+  end
+
   describe '#use' do
 
     let(:client) do
@@ -907,6 +990,26 @@ describe Mongo::Client do
         end
       end
     end
+
+    context 'when new client has a new cluster' do
+      let(:new_client) do
+        client.with(app_name: 'client_construction_spec').tap do |new_client|
+          expect(new_client.cluster).not_to eql(client.cluster)
+        end
+      end
+
+      it_behaves_like 'duplicated client with clean slate monitoring'
+    end
+
+    context 'when new client shares cluster with original client' do
+      let(:new_client) do
+        client.with(database: 'client_construction_spec').tap do |new_client|
+          expect(new_client.cluster).to eql(client.cluster)
+        end
+      end
+
+      it_behaves_like 'duplicated client with reused monitoring'
+    end
   end
 
   describe '#dup' do
@@ -919,8 +1022,12 @@ describe Mongo::Client do
       )
     end
 
+    let(:new_client) { client.dup }
+
     it 'creates a client with Redacted options' do
-      expect(client.dup.options).to be_a(Mongo::Options::Redacted)
+      expect(new_client.options).to be_a(Mongo::Options::Redacted)
     end
+
+    it_behaves_like 'duplicated client with reused monitoring'
   end
 end
