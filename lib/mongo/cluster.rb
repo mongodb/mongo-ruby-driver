@@ -610,7 +610,10 @@ module Mongo
       then
         transition_to_replica_set(updated_description)
       elsif topology.is_a?(Cluster::Topology::ReplicaSetWithPrimary) &&
-        (updated_description.unknown? || updated_description.standalone? || updated_description.mongos?)
+        (updated_description.unknown? ||
+          updated_description.standalone? ||
+          updated_description.mongos? ||
+          updated_description.ghost?)
       then
         # here the unknown server is already removed from the topology
         check_if_has_primary
