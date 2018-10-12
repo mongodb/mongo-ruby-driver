@@ -6,12 +6,14 @@ describe Mongo::Cluster::Topology do
     Mongo::Monitoring.new(monitoring: false)
   end
 
+  let(:cluster) { Mongo::Cluster.new(['a'], Mongo::Monitoring.new(monitoring: false)) }
+
   describe '.initial' do
 
     context 'when provided a replica set option' do
 
       let(:topology) do
-        described_class.initial([ 'a' ], monitoring, connect: :replica_set)
+        described_class.initial(cluster, monitoring, connect: :replica_set)
       end
 
       it 'returns a replica set topology' do
@@ -21,7 +23,7 @@ describe Mongo::Cluster::Topology do
       context 'when the option is a String (due to YAML parsing)' do
 
         let(:topology) do
-          described_class.initial([ 'a' ], monitoring, connect: 'replica_set')
+          described_class.initial(cluster, monitoring, connect: 'replica_set')
         end
 
         it 'returns a replica set topology' do
@@ -33,7 +35,7 @@ describe Mongo::Cluster::Topology do
     context 'when provided a single option' do
 
       let(:topology) do
-        described_class.initial([ 'a' ], monitoring, connect: :direct)
+        described_class.initial(cluster, monitoring, connect: :direct)
       end
 
       it 'returns a single topology' do
@@ -47,7 +49,7 @@ describe Mongo::Cluster::Topology do
       context 'when the option is a String (due to YAML parsing)' do
 
         let(:topology) do
-          described_class.initial([ 'a' ], monitoring, connect: 'direct')
+          described_class.initial(cluster, monitoring, connect: 'direct')
         end
 
         it 'returns a single topology' do
@@ -63,7 +65,7 @@ describe Mongo::Cluster::Topology do
     context 'when provided a sharded option' do
 
       let(:topology) do
-        described_class.initial([ 'a' ], monitoring, connect: :sharded)
+        described_class.initial(cluster, monitoring, connect: :sharded)
       end
 
       it 'returns a sharded topology' do
@@ -73,7 +75,7 @@ describe Mongo::Cluster::Topology do
       context 'when the option is a String (due to YAML parsing)' do
 
         let(:topology) do
-          described_class.initial([ 'a' ], monitoring, connect: 'sharded')
+          described_class.initial(cluster, monitoring, connect: 'sharded')
         end
 
         it 'returns a sharded topology' do
@@ -87,7 +89,7 @@ describe Mongo::Cluster::Topology do
       context 'when a set name is in the options' do
 
         let(:topology) do
-          described_class.initial([], monitoring, replica_set: 'testing')
+          described_class.initial(cluster, monitoring, replica_set: 'testing')
         end
 
         it 'returns a replica set topology' do
@@ -98,7 +100,7 @@ describe Mongo::Cluster::Topology do
       context 'when no set name is in the options' do
 
         let(:topology) do
-          described_class.initial([], monitoring, {})
+          described_class.initial(cluster, monitoring, {})
         end
 
         it 'returns an unknown topology' do
