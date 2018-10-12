@@ -634,4 +634,82 @@ describe Mongo::Cluster::Topology::ReplicaSetNoPrimary do
       end
     end
   end
+
+  describe '#new_max_set_version' do
+    context 'initially nil' do
+      let(:topology) do
+        described_class.new({}, monitoring, nil).tap do |topology|
+          expect(topology.max_set_version).to be nil
+        end
+      end
+
+      context 'description with non-nil max set id' do
+        let(:description) do
+          Mongo::Server::Description.new('a', 'setVersion' => 5).tap do |description|
+            expect(description.set_version).to eq(5)
+          end
+        end
+
+        it 'is set to max set id in description' do
+          expect(topology.new_max_set_version(description)).to eq(5)
+        end
+      end
+
+      context 'description with nil max set id' do
+        let(:description) do
+          Mongo::Server::Description.new('a').tap do |description|
+            expect(description.set_version).to be nil
+          end
+        end
+
+        it 'is nil' do
+          expect(topology.new_max_set_version(description)).to be nil
+        end
+      end
+    end
+
+    context 'initially not nil' do
+      let(:topology) do
+        described_class.new({}, monitoring, nil, nil, 4).tap do |topology|
+          expect(topology.max_set_version).to eq(4)
+        end
+      end
+
+      context 'description with a higher max set id' do
+        let(:description) do
+          Mongo::Server::Description.new('a', 'setVersion' => 5).tap do |description|
+            expect(description.set_version).to eq(5)
+          end
+        end
+
+        it 'is set to max set id in description' do
+          expect(topology.new_max_set_version(description)).to eq(5)
+        end
+      end
+
+      context 'description with a lower max set id' do
+        let(:description) do
+          Mongo::Server::Description.new('a', 'setVersion' => 3).tap do |description|
+            expect(description.set_version).to eq(3)
+          end
+        end
+
+        it 'is set to topology max set id' do
+          expect(topology.new_max_set_version(description)).to eq(4)
+        end
+      end
+
+      context 'description with nil max set id' do
+        let(:description) do
+          Mongo::Server::Description.new('a').tap do |description|
+            expect(description.set_version).to be nil
+          end
+        end
+
+        it 'is set to topology max set id' do
+          expect(topology.new_max_set_version(description)).to eq(4)
+        end
+      end
+    end
+  end
 end
