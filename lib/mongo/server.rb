@@ -353,6 +353,11 @@ module Mongo
       inspector = Description::Inspector::DescriptionChanged.new(@event_listeners)
       inspector.run(old_description, description)
     end
+
+    # @api private
+    def update_description(description)
+      monitor.instance_variable_set('@description', description)
+    end
   end
 end
 

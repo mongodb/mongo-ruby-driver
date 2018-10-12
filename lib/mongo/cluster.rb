@@ -378,7 +378,9 @@ module Mongo
     #
     # @param [ String ] host The host/port or socket address.
     #
-    # @since 2.0.0
+    # @return [ true|false ] Whether any servers were removed.
+    #
+    # @since 2.0.0, return value added in 2.7.0
     def remove(host)
       address = Address.new(host)
       removed_servers = @servers.select { |s| s.address == address }
@@ -390,6 +392,7 @@ module Mongo
         Monitoring::SERVER_CLOSED,
         Monitoring::Event::ServerClosed.new(address, topology)
       )
+      removed_servers.any?
     end
 
     # Force a scan of all known servers in the cluster.
@@ -603,6 +606,14 @@ module Mongo
 
       add_hosts(updated_description)
       remove_hosts(updated_description)
+
+      if updated_description.ghost? && !topology.is_a?(Topology::Sharded)
+        servers.each do |server|
+          if server.address == updated_description.address
+            server.update_description(updated_description)
+          end
+        end
+      end
 
       if topology.is_a?(::Mongo::Cluster::Topology::Unknown) &&
         updated_description.replica_set_name &&
