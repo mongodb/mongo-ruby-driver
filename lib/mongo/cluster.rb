@@ -619,11 +619,11 @@ module Mongo
     #
     # @api private
     def check_if_has_primary
-      unless cluster.topology.is_a?(Topology::ReplicaSetWithPrimary)
+      unless topology.is_a?(Topology::ReplicaSetWithPrimary)
         raise ArgumentError, 'check_if_has_primary should only be called when topology is replica sets with primary'
       end
 
-      unless cluster.servers.any?(&:primary?)
+      unless servers.any?(&:primary?)
         old_topology = topology
         @topology = Topology::ReplicaSetNoPrimary.new(
           topology.options, topology.monitoring, self)
