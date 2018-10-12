@@ -103,6 +103,7 @@ module Mongo
               end
               update_max_election_id(description)
               update_max_set_version(description)
+              return ReplicaSetWithPrimary.new(options, monitoring, [], @max_election_id, @max_set_version)
             end
           else
             log_warn(
@@ -110,7 +111,7 @@ module Mongo
               "'#{description.replica_set_name}'. The current replica set name is '#{replica_set_name}'."
             )
           end
-          ReplicaSetWithPrimary.new(options, monitoring, [], @max_election_id, @max_set_version)
+          self
         end
 
         # Determine if the topology would select a readable server for the
