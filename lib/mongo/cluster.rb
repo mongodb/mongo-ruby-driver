@@ -578,6 +578,41 @@ module Mongo
       end
     end
 
+    # Handles a change in server description.
+    #
+    # @param [ Server::Description ] previous_description Previous server description.
+    # @param [ Server::Description ] updated_description The changed description.
+    #
+    # @api private
+    def server_description_changed(previous_description, updated_description)
+      publish_sdam_event(
+        Monitoring::SERVER_DESCRIPTION_CHANGED,
+        Monitoring::Event::ServerDescriptionChanged.new(
+          updated_descriptoin.address,
+          topology,
+          previous_description,
+          updated_description,
+        )
+      )
+
+      add_hosts(updated_description)
+      remove_hosts(updated_description)
+
+      if topology.is_a?(::Mongo::Cluster::Topology::Unknown) &&
+        updated_description.replica_set_name &&
+        updated_description.replica_set_name != ''
+      then
+        transition_to_replica_set(updated_description)
+      elsif topology.is_a?(Cluster::Topology::ReplicaSetWithPrimary) &&
+        updated_description.unknown?
+      then
+        # here the unknown server is already removed from the topology
+        check_if_has_primary
+      end
+    end
+
+    private
+
     # Checks if the cluster has a primary, and if not, transitions the topology
     # to ReplicaSetNoPrimary. Topology must be ReplicaSetWithPrimary when
     # invoking this method.
@@ -626,8 +661,6 @@ module Mongo
         )
       )
     end
-
-    private
 
     def get_session(client, options = {})
       return options[:session].validate!(self) if options[:session]
