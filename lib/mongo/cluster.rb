@@ -364,7 +364,7 @@ module Mongo
       if topology.unknown?
         if seeds.length == 1
           update_topology(
-            Single.new(topology.options, topology.monitoring, self))
+            Topology::Single.new(topology.options, topology.monitoring, self))
         end
       end
       topology
