@@ -79,7 +79,7 @@ module Mongo
 
         # @api experimental
         def summary
-          display_name.gsub(' ', '')
+          "#{display_name.gsub(' ', '')}[v=#{@max_set_version},e=#{@max_election_id && @max_election_id.to_s.sub(/^0+/, '')}]"
         end
 
         # Elect a primary server within this topology.

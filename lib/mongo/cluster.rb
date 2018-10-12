@@ -312,7 +312,13 @@ module Mongo
         end
       elsif topology.replica_set?
         if description.replica_set_name == replica_set_name
-          unless detect_stale_primary!(description)
+          if detect_stale_primary!(description)
+      servers.each do |server|
+        if server.address == description.address
+          server.update_description(description)
+        end
+      end
+          else
             servers.each do |server|
               if server.primary? && server.address != description.address
                 server.description.unknown!
@@ -335,7 +341,6 @@ module Mongo
         end
       end
 
-      #byebug
       if new_topology
         update_topology(new_topology)
         if topology.replica_set?
@@ -356,9 +361,11 @@ module Mongo
       else
         Topology::ReplicaSetNoPrimary
       end
-          cls.new(topology.options.merge(:replica_set => description.replica_set_name), topology.monitoring, self)
+          cls.new(topology.options.merge(:replica_set => description.replica_set_name), topology.monitoring, self,
+          topology.max_election_id, topology.max_set_version)
         end
 
+# private
         def detect_stale_primary!(description)
           if description.election_id && description.set_version
             if topology.max_set_version && topology.max_election_id &&
@@ -719,7 +726,8 @@ module Mongo
       end
       unless primary
         update_topology(Topology::ReplicaSetNoPrimary.new(
-          topology.options, topology.monitoring, self))
+          topology.options, topology.monitoring, self,
+          topology.max_election_id, topology.max_set_version))
       end
     end
 
