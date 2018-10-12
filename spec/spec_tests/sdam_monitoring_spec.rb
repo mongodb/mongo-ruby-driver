@@ -7,7 +7,7 @@ describe 'SDAM Monitoring' do
 
     spec = Mongo::SDAM::Spec.new(file)
 
-    context("#{spec.description} (#{file.sub(%r'.*support/sdam_monitoring/', '')})") do
+    context("#{spec.description} (#{file.sub(%r'.*/data/sdam_monitoring/', '')})") do
 
       before(:all) do
         @subscriber = Mongo::SDAMMonitoring::TestSubscriber.new
