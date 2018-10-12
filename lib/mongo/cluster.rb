@@ -594,7 +594,7 @@ module Mongo
     end
 
     def addition_allowed?(address)
-      !@topology.single? || [address.seed] == @topology.addresses
+      !@topology.single?
     end
 
     def pools
