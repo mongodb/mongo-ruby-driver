@@ -1,4 +1,4 @@
-description: "Primary becomes standalone"
+description: "Primary becomes mongos"
 
 uri: "mongodb://a/?replicaSet=rs"
 
