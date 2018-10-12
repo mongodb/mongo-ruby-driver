@@ -47,7 +47,14 @@ phases: [
 
         outcome: {
 
-            servers: {},
+            servers: {
+
+                "a:27017": {
+
+                    type: "RSGhost",
+                    setName:
+                }
+            },
             topologyType: "ReplicaSetNoPrimary",
             logicalSessionTimeoutMinutes: null,
             setName: "rs"
