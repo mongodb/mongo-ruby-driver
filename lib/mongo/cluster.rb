@@ -297,17 +297,78 @@ module Mongo
     #
     # @since 2.0.0
     def elect_primary!(description)
-      old_topology = @topology
-      @topology = topology.elect_primary(description, servers_list)
-      if @topology != old_topology
-        publish_sdam_event(
-          Monitoring::TOPOLOGY_CHANGED,
-          Monitoring::Event::TopologyChanged.new(
-            old_topology, @topology,
+      servers = servers_list
+      servers.each do |server|
+        if server.address == description.address
+          server.update_description(description)
+        end
+      end
+      new_topology = nil
+      if topology.unknown?
+        new_topology = if description.mongos?
+          Topology::Sharded.new(topology.options, topology.monitoring, self)
+        else
+          initialize_replica_set(description, servers)
+        end
+      elsif topology.replica_set?
+        if description.replica_set_name == replica_set_name
+          unless detect_stale_primary!(description)
+            servers.each do |server|
+              if server.primary? && server.address != description.address
+                server.description.unknown!
+              end
+            end
+            topology.update_max_election_id(description)
+            topology.update_max_set_version(description)
+      cls = if servers.any?(&:primary?)
+        Topology::ReplicaSetWithPrimary
+      else
+        Topology::ReplicaSetNoPrimary
+      end
+            new_topology = cls.new(topology.options, topology.monitoring, self, topology.max_election_id, topology.max_set_version)
+          end
+        else
+          log_warn(
+            "Server #{description.address.to_s} has incorrect replica set name: " +
+            "'#{description.replica_set_name}'. The current replica set name is '#{topology.replica_set_name}'."
           )
-        )
+        end
+      end
+
+      #byebug
+      if new_topology
+        update_topology(new_topology)
+        if topology.replica_set?
+          check_if_has_primary
+        end
       end
     end
+
+# private
+        def initialize_replica_set(description, servers)
+          servers.each do |server|
+            if server.standalone? && server.address != description.address
+              server.description.unknown!
+            end
+          end
+      cls = if servers.any?(&:primary?)
+        Topology::ReplicaSetWithPrimary
+      else
+        Topology::ReplicaSetNoPrimary
+      end
+          cls.new(topology.options.merge(:replica_set => description.replica_set_name), topology.monitoring, self)
+        end
+
+        def detect_stale_primary!(description)
+          if description.election_id && description.set_version
+            if topology.max_set_version && topology.max_election_id &&
+                (description.set_version < topology.max_set_version ||
+                    (description.set_version == topology.max_set_version &&
+                        description.election_id < topology.max_election_id))
+              description.unknown!
+            end
+          end
+        end
 
     # Get the maximum number of times the cluster can retry a read operation on
     # a mongos.
@@ -627,8 +688,12 @@ module Mongo
           updated_description.ghost?)
       then
         # here the unknown server is already removed from the topology
-        check_if_has_primary
+        #check_if_has_primary
       end
+
+        if topology.replica_set?
+          check_if_has_primary
+        end
     end
 
     private
@@ -639,11 +704,14 @@ module Mongo
     #
     # @api private
     def check_if_has_primary
-      unless topology.is_a?(Topology::ReplicaSetWithPrimary)
-        raise ArgumentError, 'check_if_has_primary should only be called when topology is replica sets with primary'
+      unless topology.replica_set?
+        raise ArgumentError, 'check_if_has_primary should only be called when topology is replica set'
       end
 
-      unless servers.any?(&:primary?)
+      primary = servers.detect do |server|
+        server.primary? && server.description.replica_set_name == topology.replica_set_name
+      end
+      unless primary
         update_topology(Topology::ReplicaSetNoPrimary.new(
           topology.options, topology.monitoring, self))
       end

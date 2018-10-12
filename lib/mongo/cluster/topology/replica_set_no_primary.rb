@@ -94,23 +94,6 @@ module Mongo
         #
         # @return [ ReplicaSetWithPrimary ] The topology.
         def elect_primary(description, servers)
-          if description.replica_set_name == replica_set_name
-            unless detect_stale_primary!(description)
-              servers.each do |server|
-                if server.primary? && server.address != description.address
-                  server.description.unknown!
-                end
-              end
-              update_max_election_id(description)
-              update_max_set_version(description)
-              return ReplicaSetWithPrimary.new(options, monitoring, [], @max_election_id, @max_set_version)
-            end
-          else
-            log_warn(
-              "Server #{description.address.to_s} has incorrect replica set name: " +
-              "'#{description.replica_set_name}'. The current replica set name is '#{replica_set_name}'."
-            )
-          end
           self
         end
 
@@ -283,8 +266,13 @@ module Mongo
         # @since 2.4.0
         def member_discovered; end;
 
-        private
+        # @api private
+        attr_reader :max_election_id
 
+        # @api private
+        attr_reader :max_set_version
+
+        # @api private
         def update_max_election_id(description)
           if description.election_id &&
               (@max_election_id.nil? ||
@@ -293,6 +281,7 @@ module Mongo
           end
         end
 
+        # @api private
         def update_max_set_version(description)
           if description.set_version &&
               (@max_set_version.nil? ||
@@ -301,16 +290,7 @@ module Mongo
           end
         end
 
-        def detect_stale_primary!(description)
-          if description.election_id && description.set_version
-            if @max_set_version && @max_election_id &&
-                (description.set_version < @max_set_version ||
-                    (description.set_version == @max_set_version &&
-                        description.election_id < @max_election_id))
-              description.unknown!
-            end
-          end
-        end
+        private
 
         def has_primary?(servers)
           servers.find { |s| s.primary? }
