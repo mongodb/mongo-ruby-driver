@@ -349,34 +349,6 @@ module Mongo
       end
     end
 
-# private
-        def initialize_replica_set(description, servers)
-          servers.each do |server|
-            if server.standalone? && server.address != description.address
-              server.description.unknown!
-            end
-          end
-      cls = if servers.any?(&:primary?)
-        Topology::ReplicaSetWithPrimary
-      else
-        Topology::ReplicaSetNoPrimary
-      end
-          cls.new(topology.options.merge(:replica_set => description.replica_set_name), topology.monitoring, self,
-          topology.max_election_id, topology.max_set_version)
-        end
-
-# private
-        def detect_stale_primary!(description)
-          if description.election_id && description.set_version
-            if topology.max_set_version && topology.max_election_id &&
-                (description.set_version < topology.max_set_version ||
-                    (description.set_version == topology.max_set_version &&
-                        description.election_id < topology.max_election_id))
-              description.unknown!
-            end
-          end
-        end
-
     # Get the maximum number of times the cluster can retry a read operation on
     # a mongos.
     #
@@ -748,6 +720,40 @@ module Mongo
         topology.options.merge(
           replica_set: updated_description.replica_set_name,
         ), topology.monitoring, self))
+    end
+
+    # Creates a replica set topology, either having the primary or
+    # not, based on description and servers provided.
+    # May mutate servers' descriptions.
+    #
+    # Description must be of a server in the replica set topology, and
+    # is used to obtain the replica set name among other things.
+    def initialize_replica_set(description, servers)
+      servers.each do |server|
+        if server.standalone? && server.address != description.address
+          server.description.unknown!
+        end
+      end
+      cls = if servers.any?(&:primary?)
+        Topology::ReplicaSetWithPrimary
+      else
+        Topology::ReplicaSetNoPrimary
+      end
+      cls.new(topology.options.merge(:replica_set => description.replica_set_name),
+        topology.monitoring, self)
+    end
+
+    # Checks whether description is for a stale primary, and if so,
+    # changes the description to be unknown.
+    def detect_stale_primary!(description)
+      if description.election_id && description.set_version
+        if topology.max_set_version && topology.max_election_id &&
+            (description.set_version < topology.max_set_version ||
+                (description.set_version == topology.max_set_version &&
+                    description.election_id < topology.max_election_id))
+          description.unknown!
+        end
+      end
     end
 
     def update_topology(new_topology)
