@@ -51,6 +51,17 @@ module Mongo
 
         # @return [ monitoring ] monitoring the monitoring.
         attr_reader :monitoring
+
+        # Notify the topology that a standalone was discovered.
+        #
+        # @example Notify the topology that a standalone was discovered.
+        #   topology.standalone_discovered
+        #
+        # @return [ Topology::ReplicaSet ] Always returns self.
+        #
+        # @since 2.0.6
+        # @deprecated Does nothing and will be removed in version 3.0.0
+        def standalone_discovered; self; end
       end
     end
   end

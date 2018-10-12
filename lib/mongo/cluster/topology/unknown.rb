@@ -203,25 +203,6 @@ module Mongo
           description.standalone? && description.is_server?(server)
         end
 
-        # Notify the topology that a standalone was discovered.
-        #
-        # @example Notify the topology that a standalone was discovered.
-        #   topology.standalone_discovered
-        #
-        # @return [ Topology::Unknown, Topology::Single ] Either self or a
-        #   new Single topology.
-        #
-        # @since 2.0.6
-        def standalone_discovered
-          if @cluster.seeds.length == 1
-            single = Single.new(options, monitoring, self)
-            topology_changed(single)
-            single
-          else
-            self
-          end
-        end
-
         # Notify the topology that a member was discovered.
         #
         # @example Notify the topology that a member was discovered.

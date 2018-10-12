@@ -21,16 +21,9 @@ module Mongo
     #
     # @since 2.4.0
     class MemberDiscovered < Base
-      include Monitoring::Publishable
 
       # @return [ Mongo::Cluster ] cluster The cluster.
       attr_reader :cluster
-
-      # @return [ Hash ] options The options.
-      attr_reader :options
-
-      # @return [ Monitoring ] monitoring The monitoring.
-      attr_reader :monitoring
 
       # Initialize the new member discovered event handler.
       #
@@ -42,8 +35,6 @@ module Mongo
       # @since 2.0.0
       def initialize(cluster)
         @cluster = cluster
-        @options = cluster.options
-        @monitoring = cluster.monitoring
       end
 
       # This event tells the cluster that a member of a topology is discovered.
