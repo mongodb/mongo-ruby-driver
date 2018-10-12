@@ -15,7 +15,7 @@ describe 'Server Selection' do
       end
 
       let(:topology) do
-        spec.type.new({}, monitoring)
+        spec.type.new({}, monitoring, nil)
       end
 
       let(:listeners) do

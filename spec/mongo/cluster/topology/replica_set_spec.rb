@@ -81,7 +81,7 @@ describe Mongo::Cluster::Topology::ReplicaSetNoPrimary do
     context 'when a replica set name is provided' do
 
       let(:topology) do
-        described_class.new({ :replica_set => 'testing' }, monitoring)
+        described_class.new({ :replica_set => 'testing' }, monitoring, nil)
       end
 
       let(:servers) do
@@ -97,21 +97,21 @@ describe Mongo::Cluster::Topology::ReplicaSetNoPrimary do
   describe '.replica_set?' do
 
     it 'returns true' do
-      expect(described_class.new({}, monitoring)).to be_replica_set
+      expect(described_class.new({}, monitoring, nil)).to be_replica_set
     end
   end
 
   describe '.sharded?' do
 
     it 'returns false' do
-      expect(described_class.new({}, monitoring)).to_not be_sharded
+      expect(described_class.new({}, monitoring, nil)).to_not be_sharded
     end
   end
 
   describe '.single?' do
 
     it 'returns false' do
-      expect(described_class.new({}, monitoring)).to_not be_single
+      expect(described_class.new({}, monitoring, nil)).to_not be_single
     end
   end
 
@@ -343,7 +343,7 @@ describe Mongo::Cluster::Topology::ReplicaSetNoPrimary do
     end
 
     let(:topology) do
-      described_class.new({ :replica_set => 'testing' }, monitoring)
+      described_class.new({ :replica_set => 'testing' }, monitoring, nil)
     end
 
     before do
@@ -417,7 +417,7 @@ describe Mongo::Cluster::Topology::ReplicaSetNoPrimary do
     end
 
     let(:topology) do
-      described_class.new({ :replica_set => 'testing' }, monitoring)
+      described_class.new({ :replica_set => 'testing' }, monitoring, nil)
     end
 
     before do
@@ -499,7 +499,7 @@ describe Mongo::Cluster::Topology::ReplicaSetNoPrimary do
     end
 
     let(:topology) do
-      described_class.new({ :replica_set => 'testing' }, monitoring)
+      described_class.new({ :replica_set => 'testing' }, monitoring, nil)
     end
 
     before do

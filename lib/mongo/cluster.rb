@@ -85,12 +85,12 @@ module Mongo
       @pool_lock = Mutex.new
       @cluster_time = nil
       @cluster_time_lock = Mutex.new
-      @topology = Topology.initial(seeds, monitoring, options)
+      @topology = Topology.initial(self, monitoring, options)
       Session::SessionPool.create(self)
 
       # The opening topology is always unknown with no servers.
       # https://github.com/mongodb/specifications/pull/388
-      opening_topology = Topology::Unknown.new(options, monitoring, [])
+      opening_topology = Topology::Unknown.new(options, monitoring, self)
 
       publish_sdam_event(
         Monitoring::TOPOLOGY_OPENING,
@@ -101,6 +101,7 @@ module Mongo
       subscribe_to(Event::DESCRIPTION_CHANGED, Event::DescriptionChanged.new(self))
       subscribe_to(Event::MEMBER_DISCOVERED, Event::MemberDiscovered.new(self))
 
+      @seeds = seeds
       seeds.each{ |seed| add(seed) }
 
       publish_sdam_event(
@@ -138,6 +139,14 @@ module Mongo
     #
     # @since 2.5.0
     attr_reader :cluster_time
+
+    # @return [ Array<String> ] The addresses of seed servers. Contains
+    #   addresses that were given to Cluster when it was instantiated, not
+    #   current addresses that the cluster is using as a result of SDAM.
+    #
+    # @since 2.7.0
+    # @api private
+    attr_reader :seeds
 
     # @private
     #
@@ -594,7 +603,11 @@ module Mongo
     end
 
     def addition_allowed?(address)
-      !@topology.single? || [address.seed] == @topology.addresses
+      if @topology.single?
+        [address.seed] == @seeds
+      else
+        true
+      end
     end
 
     def pools

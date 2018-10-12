@@ -76,7 +76,7 @@ module Mongo
           new_topology = new_cls.new(
             cluster.topology.options.merge(
               replica_set: updated.replica_set_name,
-            ), cluster.topology.monitoring)
+            ), cluster.topology.monitoring, cluster)
           cluster.send(:instance_variable_set, '@topology', new_topology)
           publish_sdam_event(
             Monitoring::TOPOLOGY_CHANGED,
@@ -91,7 +91,7 @@ module Mongo
           unless cluster.servers.any?(&:primary?)
             old_topology = cluster.topology
             new_topology = Cluster::Topology::ReplicaSetNoPrimary.new(
-              cluster.topology.options, cluster.topology.monitoring)
+              cluster.topology.options, cluster.topology.monitoring, cluster)
             cluster.send(:instance_variable_set, '@topology', new_topology)
             publish_sdam_event(
               Monitoring::TOPOLOGY_CHANGED,
