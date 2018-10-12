@@ -216,7 +216,7 @@ module Mongo
             (description.primary? ||
               description.me_mismatch? ||
                 description.hosts.empty? ||
-                  (!ghost && !member_of_this_set?(description)))
+                  (!description.ghost? && !member_of_this_set?(description)))
         end
 
         # Whether a specific server in the cluster can be removed, given a description.
