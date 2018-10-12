@@ -37,7 +37,7 @@ module Mongo
         #
         # @param [ Hash ] options The options.
         # @param [ Monitoring ] monitoring The monitoring.
-        # @param [ Array<String> ] addresses Addresses of servers in the topology.
+        # @param [ Cluster ] cluster The cluster.
         # @param max_election_id For internal driver use only.
         # @param max_set_version For internal driver use only.
         #
@@ -51,10 +51,10 @@ module Mongo
         #
         # @since 2.7.0
         # @api private
-        def initialize(options, monitoring, addresses = [],
+        def initialize(options, monitoring, cluster,
           max_election_id = nil, max_set_version = nil
         )
-          super(options, monitoring, addresses)
+          super(options, monitoring, cluster)
           @max_election_id = max_election_id
           @max_set_version = max_set_version
         end
@@ -273,16 +273,6 @@ module Mongo
         #
         # @since 2.0.0
         def unknown?; false; end
-
-        # Notify the topology that a standalone was discovered.
-        #
-        # @example Notify the topology that a standalone was discovered.
-        #   topology.standalone_discovered
-        #
-        # @return [ Topology::ReplicaSet ] Always returns self.
-        #
-        # @since 2.0.6
-        def standalone_discovered; self; end
 
         # Notify the topology that a member was discovered.
         #

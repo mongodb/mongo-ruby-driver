@@ -97,9 +97,15 @@ module Mongo
     # Delegate subscription to monitoring.
     def_delegators :monitoring, :subscribe, :unsubscribe
 
-    # Delegate monitoring to cluster.
-    def_delegators :cluster, :monitoring
-
+    # @return [ Monitoring ] monitoring The monitoring.
+    # @api private
+    def monitoring
+      if cluster
+        cluster.monitoring
+      else
+        @monitoring
+      end
+    end
     private :monitoring
 
     # Determine if this client is equivalent to another object.
@@ -266,6 +272,11 @@ module Mongo
     #   Use this to set up SDAM event listeners to receive events dispatched
     #   during client construction.
     #
+    #   Note: the client is not fully constructed when sdam_proc is invoked,
+    #   in particular the cluster is nil at this time. sdam_proc should
+    #   limit itself to calling #subscribe and #unsubscribe methods on the
+    #   client only.
+    #
     # @since 2.0.0
     def initialize(addresses_or_uri, options = Options::Redacted.new)
       Mongo::Lint.validate_underscore_read_preference(options[:read])
@@ -282,9 +293,10 @@ module Mongo
       sdam_proc = options.delete(:sdam_proc)
       @options = validate_options!(Database::DEFAULT_OPTIONS.merge(options)).freeze
       @database = Database.new(self, @options[:database], @options)
-      monitoring = Monitoring.new(@options)
+      # Temporarily set monitoring so that event subscriptions can be
+      # set up without there being a cluster
+      @monitoring = Monitoring.new(@options)
       if sdam_proc
-        @cluster = Cluster.new([], monitoring, @options)
         sdam_proc.call(self)
       end
       # We share clusters when a new client with different CRUD_OPTIONS
@@ -293,7 +305,9 @@ module Mongo
       cluster_options = @options.reject do |key, value|
         CRUD_OPTIONS.include?(key.to_sym)
       end
-      @cluster = Cluster.new(addresses, monitoring, @options)
+      @cluster = Cluster.new(addresses, @monitoring, @options)
+      # Unset monitoring, it will be taken out of cluster from now on
+      remove_instance_variable('@monitoring')
       yield(self) if block_given?
     end
 
@@ -357,6 +371,10 @@ module Mongo
     # Creates a new client configured to use the database with the provided
     # name, and using the other options configured in this client.
     #
+    # @note The new client shares the cluster with the original client,
+    #   and as a result also shares the monitoring instance and monitoring
+    #   event subscribers.
+    #
     # @example Create a client for the `users' database.
     #   client.use(:users)
     #
@@ -372,6 +390,12 @@ module Mongo
     # Creates a new client with the passed options merged over the existing
     # options of this client. Useful for one-offs to change specific options
     # without altering the original client.
+    #
+    # @note Depending on options given, the returned client may share the
+    #   cluster with the original client or be created with a new cluster.
+    #   If a new cluster is created, the monitoring event subscribers on
+    #   the new client are set to the default event subscriber set and
+    #   none of the subscribers on the original client are copied over.
     #
     # @example Get a client with changed options.
     #   client.with(:read => { :mode => :primary_preferred })
@@ -442,7 +466,6 @@ module Mongo
     # @since 2.1.0
     def reconnect
       addresses = cluster.addresses.map(&:to_s)
-      monitoring = cluster.monitoring
 
       @cluster.disconnect! rescue nil
 

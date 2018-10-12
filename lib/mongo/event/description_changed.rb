@@ -19,16 +19,9 @@ module Mongo
     #
     # @since 2.0.6
     class DescriptionChanged < Base
-      include Monitoring::Publishable
 
       # @return [ Mongo::Cluster ] cluster The cluster.
       attr_reader :cluster
-
-      # @return [ Hash ] options The options.
-      attr_reader :options
-
-      # @return [ Monitoring ] monitoring The monitoring.
-      attr_reader :monitoring
 
       # Initialize the new host added event handler.
       #
@@ -40,67 +33,17 @@ module Mongo
       # @since 2.0.0
       def initialize(cluster)
         @cluster = cluster
-        @options = cluster.options
-        @monitoring = cluster.monitoring
       end
 
       # This event publishes an event to add the cluster and logs the
       # configuration change.
       #
-      # @example Handle the event.
-      #   server_added.handle('127.0.0.1:27018')
-      #
+      # @param [ Server::Description ] previous Previous server description.
       # @param [ Server::Description ] updated The changed description.
       #
       # @since 2.0.0
       def handle(previous, updated)
-        publish_sdam_event(
-          Monitoring::SERVER_DESCRIPTION_CHANGED,
-          Monitoring::Event::ServerDescriptionChanged.new(
-            updated.address,
-            cluster.topology,
-            previous,
-            updated
-          )
-        )
-        cluster.add_hosts(updated)
-        cluster.remove_hosts(updated)
-
-        if cluster.topology.is_a?(::Mongo::Cluster::Topology::Unknown) && updated.replica_set_name && updated.replica_set_name != ''
-          old_topology = cluster.topology
-          new_cls = if updated.primary?
-            ::Mongo::Cluster::Topology::ReplicaSetWithPrimary
-          else
-            ::Mongo::Cluster::Topology::ReplicaSetNoPrimary
-          end
-          new_topology = new_cls.new(
-            cluster.topology.options.merge(
-              replica_set: updated.replica_set_name,
-            ), cluster.topology.monitoring)
-          cluster.send(:instance_variable_set, '@topology', new_topology)
-          publish_sdam_event(
-            Monitoring::TOPOLOGY_CHANGED,
-            Monitoring::Event::TopologyChanged.new(
-              old_topology, new_topology,
-            )
-          )
-        elsif cluster.topology.is_a?(Cluster::Topology::ReplicaSetWithPrimary) && updated.unknown?
-          # here the unknown server is already removed from the topology
-          # TODO this is a checkIfHasPrimary implementation, move/refactor it
-          # as part of https://jira.mongodb.org/browse/RUBY-1492
-          unless cluster.servers.any?(&:primary?)
-            old_topology = cluster.topology
-            new_topology = Cluster::Topology::ReplicaSetNoPrimary.new(
-              cluster.topology.options, cluster.topology.monitoring)
-            cluster.send(:instance_variable_set, '@topology', new_topology)
-            publish_sdam_event(
-              Monitoring::TOPOLOGY_CHANGED,
-              Monitoring::Event::TopologyChanged.new(
-                old_topology, new_topology,
-              )
-            )
-          end
-        end
+        cluster.server_description_changed(previous, updated)
       end
     end
   end

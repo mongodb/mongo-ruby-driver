@@ -89,6 +89,7 @@ require 'support/constraints'
 require 'support/cluster_config'
 require 'rspec/retry'
 require 'support/client_registry_macros'
+require 'support/monitoring_ext'
 
 RSpec.configure do |config|
   config.include(Authorization)

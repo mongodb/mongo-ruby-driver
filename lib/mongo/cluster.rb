@@ -85,12 +85,12 @@ module Mongo
       @pool_lock = Mutex.new
       @cluster_time = nil
       @cluster_time_lock = Mutex.new
-      @topology = Topology.initial(seeds, monitoring, options)
+      @topology = Topology.initial(self, monitoring, options)
       Session::SessionPool.create(self)
 
       # The opening topology is always unknown with no servers.
       # https://github.com/mongodb/specifications/pull/388
-      opening_topology = Topology::Unknown.new(options, monitoring, [])
+      opening_topology = Topology::Unknown.new(options, monitoring, self)
 
       publish_sdam_event(
         Monitoring::TOPOLOGY_OPENING,
@@ -101,6 +101,7 @@ module Mongo
       subscribe_to(Event::DESCRIPTION_CHANGED, Event::DescriptionChanged.new(self))
       subscribe_to(Event::MEMBER_DISCOVERED, Event::MemberDiscovered.new(self))
 
+      @seeds = seeds
       seeds.each{ |seed| add(seed) }
 
       publish_sdam_event(
@@ -138,6 +139,14 @@ module Mongo
     #
     # @since 2.5.0
     attr_reader :cluster_time
+
+    # @return [ Array<String> ] The addresses of seed servers. Contains
+    #   addresses that were given to Cluster when it was instantiated, not
+    #   current addresses that the cluster is using as a result of SDAM.
+    #
+    # @since 2.7.0
+    # @api private
+    attr_reader :seeds
 
     # @private
     #
@@ -352,7 +361,13 @@ module Mongo
     #
     # @since 2.0.6
     def standalone_discovered
-      @topology = topology.standalone_discovered
+      if topology.unknown?
+        if seeds.length == 1
+          update_topology(
+            Topology::Single.new(topology.options, topology.monitoring, self))
+        end
+      end
+      topology
     end
 
     # Remove the server from the cluster for the provided address, if it
@@ -569,7 +584,84 @@ module Mongo
       end
     end
 
+    # Handles a change in server description.
+    #
+    # @param [ Server::Description ] previous_description Previous server description.
+    # @param [ Server::Description ] updated_description The changed description.
+    #
+    # @api private
+    def server_description_changed(previous_description, updated_description)
+      publish_sdam_event(
+        Monitoring::SERVER_DESCRIPTION_CHANGED,
+        Monitoring::Event::ServerDescriptionChanged.new(
+          updated_description.address,
+          topology,
+          previous_description,
+          updated_description,
+        )
+      )
+
+      add_hosts(updated_description)
+      remove_hosts(updated_description)
+
+      if topology.is_a?(::Mongo::Cluster::Topology::Unknown) &&
+        updated_description.replica_set_name &&
+        updated_description.replica_set_name != ''
+      then
+        transition_to_replica_set(updated_description)
+      elsif topology.is_a?(Cluster::Topology::ReplicaSetWithPrimary) &&
+        updated_description.unknown?
+      then
+        # here the unknown server is already removed from the topology
+        check_if_has_primary
+      end
+    end
+
     private
+
+    # Checks if the cluster has a primary, and if not, transitions the topology
+    # to ReplicaSetNoPrimary. Topology must be ReplicaSetWithPrimary when
+    # invoking this method.
+    #
+    # @api private
+    def check_if_has_primary
+      unless topology.is_a?(Topology::ReplicaSetWithPrimary)
+        raise ArgumentError, 'check_if_has_primary should only be called when topology is replica sets with primary'
+      end
+
+      unless servers.any?(&:primary?)
+        update_topology(Topology::ReplicaSetNoPrimary.new(
+          topology.options, topology.monitoring, self))
+      end
+    end
+
+    # Transitions topology from unknown to one of the two replica set
+    # topologies, depending on whether the updated description came from
+    # a primary. Topology must be Unknown when invoking this method.
+    #
+    # @param [ Server::Description ] updated_description The changed description.
+    #
+    # @api private
+    def transition_to_replica_set(updated_description)
+      new_cls = if updated_description.primary?
+        ::Mongo::Cluster::Topology::ReplicaSetWithPrimary
+      else
+        ::Mongo::Cluster::Topology::ReplicaSetNoPrimary
+      end
+      update_topology(new_cls.new(
+        topology.options.merge(
+          replica_set: updated_description.replica_set_name,
+        ), topology.monitoring, self))
+    end
+
+    def update_topology(new_topology)
+      old_topology = topology
+      @topology = new_topology
+      publish_sdam_event(
+        Monitoring::TOPOLOGY_CHANGED,
+        Monitoring::Event::TopologyChanged.new(old_topology, topology)
+      )
+    end
 
     def get_session(client, options = {})
       return options[:session].validate!(self) if options[:session]
@@ -594,7 +686,11 @@ module Mongo
     end
 
     def addition_allowed?(address)
-      !@topology.single? || [address.seed] == @topology.addresses
+      if @topology.single?
+        [address.seed] == @seeds
+      else
+        true
+      end
     end
 
     def pools

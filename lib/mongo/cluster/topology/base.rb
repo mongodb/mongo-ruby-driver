@@ -20,29 +20,48 @@ module Mongo
       #
       # @since 2.7.0
       class Base
+        extend Forwardable
 
         # Initialize the topology with the options.
         #
         # @param [ Hash ] options The options.
         # @param [ Monitoring ] monitoring The monitoring.
-        # @param [ Array<String> ] addresses Addresses of servers in the topology.
+        # @param [ Cluster ] cluster The cluster.
         #
         # @since 2.7.0
         # @api private
-        def initialize(options, monitoring, addresses = [])
+        def initialize(options, monitoring, cluster)
           @options = options
           @monitoring = monitoring
-          @addresses = addresses
+          @cluster = cluster
         end
 
         # @return [ Hash ] options The options.
         attr_reader :options
 
+        # @return [ Cluster ] The cluster.
+        # @api private
+        attr_reader :cluster
+        private :cluster
+
         # @return [ Array<String> ] addresses Server addresses.
-        attr_reader :addresses
+        def addresses
+          cluster.addresses.map(&:seed)
+        end
 
         # @return [ monitoring ] monitoring the monitoring.
         attr_reader :monitoring
+
+        # Notify the topology that a standalone was discovered.
+        #
+        # @example Notify the topology that a standalone was discovered.
+        #   topology.standalone_discovered
+        #
+        # @return [ Topology::ReplicaSet ] Always returns self.
+        #
+        # @since 2.0.6
+        # @deprecated Does nothing and will be removed in version 3.0.0
+        def standalone_discovered; self; end
       end
     end
   end

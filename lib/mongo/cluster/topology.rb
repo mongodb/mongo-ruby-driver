@@ -57,20 +57,21 @@ module Mongo
       # @example Get the initial cluster topology.
       #   Topology.initial(topology: :replica_set)
       #
-      # @param [ Array<String> ] seeds The addresses of the configured servers.
+      # @param [ Cluster ] cluster The cluster.
       # @param [ Monitoring ] monitoring The monitoring.
       # @param [ Hash ] options The cluster options.
       #
       # @return [ ReplicaSet, Sharded, Single ] The topology.
       #
       # @since 2.0.0
-      def initial(seeds, monitoring, options)
+      # @api private
+      def initial(cluster, monitoring, options)
         if options.has_key?(:connect)
-          OPTIONS.fetch(options[:connect].to_sym).new(options, monitoring, seeds)
+          OPTIONS.fetch(options[:connect].to_sym).new(options, monitoring, cluster)
         elsif options.has_key?(:replica_set)
-          ReplicaSetNoPrimary.new(options, monitoring, seeds)
+          ReplicaSetNoPrimary.new(options, monitoring, cluster)
         else
-          Unknown.new(options, monitoring, seeds)
+          Unknown.new(options, monitoring, cluster)
         end
       end
     end

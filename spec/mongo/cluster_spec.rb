@@ -189,7 +189,7 @@ describe Mongo::Cluster do
       context 'when topology is Single' do
 
         let(:topology) do
-          Mongo::Cluster::Topology::Single.new({}, monitoring)
+          Mongo::Cluster::Topology::Single.new({}, monitoring, cluster)
         end
 
         it 'returns an empty array' do
@@ -200,7 +200,7 @@ describe Mongo::Cluster do
       context 'when topology is ReplicaSetNoPrimary' do
 
         let(:topology) do
-          Mongo::Cluster::Topology::ReplicaSetNoPrimary.new({}, monitoring)
+          Mongo::Cluster::Topology::ReplicaSetNoPrimary.new({}, monitoring, cluster)
         end
 
         it 'returns an empty array' do
@@ -211,7 +211,7 @@ describe Mongo::Cluster do
       context 'when topology is Sharded' do
 
         let(:topology) do
-          Mongo::Cluster::Topology::Sharded.new({}, monitoring)
+          Mongo::Cluster::Topology::Sharded.new({}, monitoring, cluster)
         end
 
         it 'returns an empty array' do
@@ -222,7 +222,7 @@ describe Mongo::Cluster do
       context 'when topology is Unknown' do
 
         let(:topology) do
-          Mongo::Cluster::Topology::Unknown.new({}, monitoring)
+          Mongo::Cluster::Topology::Unknown.new({}, monitoring, cluster)
         end
 
         it 'returns an empty array' do
@@ -237,7 +237,7 @@ describe Mongo::Cluster do
     context 'when topology is Single' do
 
       let(:topology) do
-        Mongo::Cluster::Topology::Single.new({})
+        Mongo::Cluster::Topology::Single.new({}, cluster)
       end
 
       before do

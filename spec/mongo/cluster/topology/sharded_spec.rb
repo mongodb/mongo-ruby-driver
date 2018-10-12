@@ -7,7 +7,7 @@ describe Mongo::Cluster::Topology::Sharded do
   end
 
   let(:topology) do
-    described_class.new({}, monitoring)
+    described_class.new({}, monitoring, nil)
   end
 
   let(:monitoring) do
