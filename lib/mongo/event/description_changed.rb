@@ -50,6 +50,7 @@ module Mongo
       # @example Handle the event.
       #   server_added.handle('127.0.0.1:27018')
       #
+      # @param [ Server::Description ] previous Previous server description.
       # @param [ Server::Description ] updated The changed description.
       #
       # @since 2.0.0
@@ -67,39 +68,10 @@ module Mongo
         cluster.remove_hosts(updated)
 
         if cluster.topology.is_a?(::Mongo::Cluster::Topology::Unknown) && updated.replica_set_name && updated.replica_set_name != ''
-          old_topology = cluster.topology
-          new_cls = if updated.primary?
-            ::Mongo::Cluster::Topology::ReplicaSetWithPrimary
-          else
-            ::Mongo::Cluster::Topology::ReplicaSetNoPrimary
-          end
-          new_topology = new_cls.new(
-            cluster.topology.options.merge(
-              replica_set: updated.replica_set_name,
-            ), cluster.topology.monitoring, cluster)
-          cluster.send(:instance_variable_set, '@topology', new_topology)
-          publish_sdam_event(
-            Monitoring::TOPOLOGY_CHANGED,
-            Monitoring::Event::TopologyChanged.new(
-              old_topology, new_topology,
-            )
-          )
+          cluster.transition_to_replica_set(updated)
         elsif cluster.topology.is_a?(Cluster::Topology::ReplicaSetWithPrimary) && updated.unknown?
           # here the unknown server is already removed from the topology
-          # TODO this is a checkIfHasPrimary implementation, move/refactor it
-          # as part of https://jira.mongodb.org/browse/RUBY-1492
-          unless cluster.servers.any?(&:primary?)
-            old_topology = cluster.topology
-            new_topology = Cluster::Topology::ReplicaSetNoPrimary.new(
-              cluster.topology.options, cluster.topology.monitoring, cluster)
-            cluster.send(:instance_variable_set, '@topology', new_topology)
-            publish_sdam_event(
-              Monitoring::TOPOLOGY_CHANGED,
-              Monitoring::Event::TopologyChanged.new(
-                old_topology, new_topology,
-              )
-            )
-          end
+          cluster.check_if_has_primary
         end
       end
     end

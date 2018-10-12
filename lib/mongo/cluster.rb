@@ -578,6 +578,55 @@ module Mongo
       end
     end
 
+    # Checks if the cluster has a primary, and if not, transitions the topology
+    # to ReplicaSetNoPrimary. Topology must be ReplicaSetWithPrimary when
+    # invoking this method.
+    #
+    # @api private
+    def check_if_has_primary
+      unless cluster.topology.is_a?(Topology::ReplicaSetWithPrimary)
+        raise ArgumentError, 'check_if_has_primary should only be called when topology is replica sets with primary'
+      end
+
+      unless cluster.servers.any?(&:primary?)
+        old_topology = topology
+        @topology = Topology::ReplicaSetNoPrimary.new(
+          topology.options, topology.monitoring, self)
+        publish_sdam_event(
+          Monitoring::TOPOLOGY_CHANGED,
+          Monitoring::Event::TopologyChanged.new(
+            old_topology, topology,
+          )
+        )
+      end
+    end
+
+    # Transitions topology from unknown to one of the two replica set
+    # topologies, depending on whether the updated description came from
+    # a primary. Topology must be Unknown when invoking this method.
+    #
+    # @param [ Server::Description ] updated_description The changed description.
+    #
+    # @api private
+    def transition_to_replica_set(updated_description)
+      old_topology = topology
+      new_cls = if updated_description.primary?
+        ::Mongo::Cluster::Topology::ReplicaSetWithPrimary
+      else
+        ::Mongo::Cluster::Topology::ReplicaSetNoPrimary
+      end
+      @topology = new_cls.new(
+        topology.options.merge(
+          replica_set: updated_description.replica_set_name,
+        ), topology.monitoring, self)
+      publish_sdam_event(
+        Monitoring::TOPOLOGY_CHANGED,
+        Monitoring::Event::TopologyChanged.new(
+          old_topology, topology,
+        )
+      )
+    end
+
     private
 
     def get_session(client, options = {})
