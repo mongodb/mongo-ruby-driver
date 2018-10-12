@@ -7,7 +7,7 @@ describe 'Server Discovery and Monitoring' do
 
     spec = Mongo::SDAM::Spec.new(file)
 
-    context("#{spec.description} (#{file.sub(%r'.*support/sdam/', '')})") do
+    context("#{spec.description} (#{file.sub(%r'.*/data/sdam/', '')})") do
 
       before(:all) do
         @client = Mongo::Client.new(spec.uri_string)
