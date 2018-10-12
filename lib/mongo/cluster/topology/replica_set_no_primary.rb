@@ -266,10 +266,20 @@ module Mongo
         # @since 2.4.0
         def member_discovered; end;
 
-        # @api private
+        # The largest electionId ever reported by a primary.
+        # May be nil.
+        #
+        # @return [ BSON::ObjectId ] The election id.
+        #
+        # @since 2.7.0
         attr_reader :max_election_id
 
-        # @api private
+        # The largest setVersion ever reported by a primary.
+        # May be nil.
+        #
+        # @return [ Integer ] The set version.
+        #
+        # @since 2.7.0
         attr_reader :max_set_version
 
         # @api private
