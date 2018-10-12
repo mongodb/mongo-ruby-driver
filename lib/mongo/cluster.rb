@@ -624,15 +624,8 @@ module Mongo
       end
 
       unless servers.any?(&:primary?)
-        old_topology = topology
-        @topology = Topology::ReplicaSetNoPrimary.new(
-          topology.options, topology.monitoring, self)
-        publish_sdam_event(
-          Monitoring::TOPOLOGY_CHANGED,
-          Monitoring::Event::TopologyChanged.new(
-            old_topology, topology,
-          )
-        )
+        update_topology(Topology::ReplicaSetNoPrimary.new(
+          topology.options, topology.monitoring, self))
       end
     end
 
@@ -644,21 +637,23 @@ module Mongo
     #
     # @api private
     def transition_to_replica_set(updated_description)
-      old_topology = topology
       new_cls = if updated_description.primary?
         ::Mongo::Cluster::Topology::ReplicaSetWithPrimary
       else
         ::Mongo::Cluster::Topology::ReplicaSetNoPrimary
       end
-      @topology = new_cls.new(
+      update_topology(new_cls.new(
         topology.options.merge(
           replica_set: updated_description.replica_set_name,
-        ), topology.monitoring, self)
+        ), topology.monitoring, self))
+    end
+
+    def update_topology(new_topology)
+      old_topology = topology
+      @topology = new_topology
       publish_sdam_event(
         Monitoring::TOPOLOGY_CHANGED,
-        Monitoring::Event::TopologyChanged.new(
-          old_topology, topology,
-        )
+        Monitoring::Event::TopologyChanged.new(old_topology, topology)
       )
     end
 
