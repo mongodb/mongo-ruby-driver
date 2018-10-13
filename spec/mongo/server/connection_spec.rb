@@ -441,7 +441,7 @@ describe Mongo::Server::Connection do
         connection.dispatch([ insert, query ])
       end
 
-      after do
+      before do
         authorized_collection.delete_many
       end
 
@@ -464,7 +464,7 @@ describe Mongo::Server::Connection do
         connection.dispatch([ insert, command ])
       end
 
-      after do
+      before do
         authorized_collection.delete_many
       end
 
@@ -491,7 +491,7 @@ describe Mongo::Server::Connection do
         Mongo::Protocol::Query.new(SpecConfig.instance.test_db, TEST_COLL, { name: 'alice' })
       end
 
-      after do
+      before do
         authorized_collection.delete_many
       end
 
@@ -538,11 +538,8 @@ describe Mongo::Server::Connection do
       end
 
       before do
-        connection.dispatch([ insert ])
-      end
-
-      after do
         authorized_collection.delete_many
+        connection.dispatch([ insert ])
       end
 
       it 'closes the socket and does not use it for subsequent requests' do
@@ -811,76 +808,6 @@ describe Mongo::Server::Connection do
 
       it 'sets the auth options' do
         expect(connection.options[:user]).to eq(user.name)
-      end
-    end
-  end
-
-  describe '#auth_mechanism' do
-
-    let(:connection) do
-      described_class.new(server, server.options)
-    end
-
-    let(:reply) do
-      double('reply').tap do |r|
-        allow(r).to receive(:documents).and_return([ ismaster ])
-      end
-    end
-
-    context 'when the ismaster response includes saslSupportedMechs' do
-      min_server_version '4.0'
-
-      let(:server_options) do
-        SpecConfig.instance.test_options.merge(
-          user: SpecConfig.instance.test_user.name,
-          password: SpecConfig.instance.test_user.password,
-          auth_source: SpecConfig.instance.test_db,
-        )
-      end
-
-      let(:app_metadata) do
-        Mongo::Server::AppMetadata.new(server_options)
-      end
-
-      let(:connection) do
-        described_class.new(server, server_options)
-      end
-
-      before do
-        client = authorized_client.with(database: SpecConfig.instance.test_db)
-        info = client.database.users.info(SpecConfig.instance.test_user.name)
-        expect(info.length).to eq(1)
-      end
-
-      it 'uses scram256' do
-        connection.connect!
-        expect(connection.send(:default_mechanism)).to eq(:scram256)
-      end
-    end
-
-    context 'when the ismaster response indicates the auth mechanism is :scram' do
-      let(:features) do
-        Mongo::Server::Description::Features.new(0..7)
-      end
-
-      it 'uses scram' do
-        connection
-        expect(Mongo::Server::Description::Features).to receive(:new).and_return(features)
-        connection.connect!
-        expect(connection.send(:default_mechanism)).to eq(:scram)
-      end
-    end
-
-    context 'when the ismaster response indicates the auth mechanism is :mongodb_cr' do
-      let(:features) do
-        Mongo::Server::Description::Features.new(0..2)
-      end
-
-      it 'uses mongodb_cr' do
-        connection
-        expect(Mongo::Server::Description::Features).to receive(:new).and_return(features)
-        connection.connect!
-        expect(connection.send(:default_mechanism)).to eq(:mongodb_cr)
       end
     end
   end
