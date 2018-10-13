@@ -196,11 +196,8 @@ module Mongo
         #   topology.member_discovered
         #
         # @since 2.4.0
+        # @deprecated Does nothing.
         def member_discovered
-          publish_sdam_event(
-            Monitoring::TOPOLOGY_CHANGED,
-            Monitoring::Event::TopologyChanged.new(self, self)
-          )
         end
       end
     end

@@ -473,6 +473,7 @@ describe Mongo::Cluster::Topology::ReplicaSetNoPrimary do
         double('description').tap do |d|
           allow(d).to receive(:config).and_return({ 'ismaster' => true })
           allow(d).to receive(:primary?).and_return(false)
+          allow(d).to receive(:ghost?).and_return(false)
           allow(d).to receive(:hosts).and_return([ primary ])
           allow(d).to receive(:replica_set_name).and_return('test')
           allow(d).to receive(:replica_set_member?).and_return(true)
