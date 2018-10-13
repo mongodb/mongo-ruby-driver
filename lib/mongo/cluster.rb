@@ -154,7 +154,7 @@ module Mongo
     attr_reader :session_pool
 
     def_delegators :topology, :replica_set?, :replica_set_name, :sharded?,
-                   :single?, :unknown?, :member_discovered
+                   :single?, :unknown?
     def_delegators :@cursor_reaper, :register_cursor, :schedule_kill_cursor, :unregister_cursor
 
     # Determine if this cluster of servers is equal to another object. Checks the
@@ -836,6 +836,16 @@ module Mongo
 
     def servers_list
       @update_lock.synchronize { @servers.dup }
+    end
+
+    public
+
+    # @api private
+    def member_discovered
+      if topology.unknown? || topology.single?
+        publish_sdam_event(Monitoring::TOPOLOGY_CHANGED,
+          Monitoring::Event::TopologyChanged.new(topology, topology))
+      end
     end
   end
 end
