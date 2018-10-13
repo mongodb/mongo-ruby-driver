@@ -715,6 +715,14 @@ module Mongo
       end
     end
 
+    # @api private
+    def member_discovered
+      if topology.unknown? || topology.single?
+        publish_sdam_event(Monitoring::TOPOLOGY_CHANGED,
+          Monitoring::Event::TopologyChanged.new(topology, topology))
+      end
+    end
+
     private
 
     # Checks if the cluster has a primary, and if not, transitions the topology
@@ -836,16 +844,6 @@ module Mongo
 
     def servers_list
       @update_lock.synchronize { @servers.dup }
-    end
-
-    public
-
-    # @api private
-    def member_discovered
-      if topology.unknown? || topology.single?
-        publish_sdam_event(Monitoring::TOPOLOGY_CHANGED,
-          Monitoring::Event::TopologyChanged.new(topology, topology))
-      end
     end
   end
 end
