@@ -14,7 +14,7 @@ describe Mongo::Server::Connection do
   end
 
   let(:app_metadata) do
-    Mongo::Server::AppMetadata.new(authorized_client.cluster.options)
+    Mongo::Server::AppMetadata.new(SpecConfig.instance.test_options)
   end
 
   let(:cluster) do
@@ -34,6 +34,10 @@ describe Mongo::Server::Connection do
 
   let(:server) do
     Mongo::Server.new(address, cluster, monitoring, listeners, SpecConfig.instance.test_options)
+  end
+
+  before do
+    ClientRegistry.instance.close_all_clients
   end
 
   describe '#auth_mechanism' do
@@ -71,6 +75,7 @@ describe Mongo::Server::Connection do
         client = authorized_client.with(database: SpecConfig.instance.test_db)
         info = client.database.users.info(SpecConfig.instance.test_user.name)
         expect(info.length).to eq(1)
+        client.close
       end
 
       it 'uses scram256' do
