@@ -202,12 +202,14 @@ module Mongo
     #   only a subset of the options recognized by Client.
     # @option options [ true, false ] :monitoring If false is given, the
     #   Monitoring instance is initialized without global monitoring event
-    #   subscribers, which also disables logging provided by the driver.
-    #   It is still possible to add event subscribers to this instance
-    #   and if any are added they will be invoked as normal.
-    #   Values other than false result in default behavior which is to
-    #   notify global event subscribers of events and perform
-    #   logging as configured elsewhere in the driver.
+    #   subscribers and will not publish SDAM events. Command monitoring events
+    #   will still be published, and the driver will still perform SDAM and
+    #   monitor its cluster in order to perform server selection. Built-in
+    #   driver logging of SDAM events will be disabled because it is
+    #   implemented through SDAM event subscription. Client#subscribe will
+    #   succeed for all event types, but subscribers to SDAM events will
+    #   not be invoked. Values other than false result in default behavior
+    #   which is to perform normal SDAM event publication.
     #
     # @since 2.1.0
     # @api private

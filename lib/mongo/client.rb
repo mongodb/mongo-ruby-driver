@@ -247,14 +247,15 @@ module Mongo
     #   Integer|String, :fsync => Boolean, :j => Boolean.
     # @option options [ Hash ] :read_concern The read concern option.
     # @option options [ true, false ] :monitoring If false is given, the
-    #   client is initialized without global monitoring event subscribers
-    #   and without logging provided by the driver (which is implemented
-    #   through monitoring event subscribers). The client will still perform
-    #   SDAM and will monitor the cluster in order to perform server selection.
-    #   It also remains possible to add monitoring event subscribers to this
-    #   particular client. Values other than false result in default behavior
-    #   which is to notify global event subscribers of events and perform
-    #   logging as configured elsewhere in the driver.
+    #   client is initialized without global SDAM event subscribers and
+    #   will not publish SDAM events. Command monitoring and legacy events
+    #   will still be published, and the driver will still perform SDAM and
+    #   monitor its cluster in order to perform server selection. Built-in
+    #   driver logging of SDAM events will be disabled because it is
+    #   implemented through SDAM event subscription. Client#subscribe will
+    #   succeed for all event types, but subscribers to SDAM events will
+    #   not be invoked. Values other than false result in default behavior
+    #   which is to perform normal SDAM event publication.
     # @option options [ Logger ] :logger A custom logger if desired.
     # @option options [ true, false ] :truncate_logs Whether to truncate the
     #   logs at the default 250 characters.
