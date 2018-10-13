@@ -32,9 +32,6 @@ module Mongo
 
         # Initialize the topology with the options.
         #
-        # @example Initialize the topology.
-        #   ReplicaSetNoPrimary.new(options)
-        #
         # @param [ Hash ] options The options.
         # @param [ Monitoring ] monitoring The monitoring.
         # @param [ Cluster ] cluster The cluster.
