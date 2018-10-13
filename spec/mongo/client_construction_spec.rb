@@ -1010,6 +1010,35 @@ describe Mongo::Client do
 
       it_behaves_like 'duplicated client with reused monitoring'
     end
+
+    # Since we either reuse monitoring or reset it to a clean slate
+    # in #with, the consistent behavior is to never transfer sdam_proc to
+    # the new client.
+    context 'when sdam_proc is given on original client' do
+      let(:subscriber) { EventSubscriber.new }
+
+      let(:sdam_proc) do
+        Proc.new do |client|
+          client.subscribe(Mongo::Monitoring::SERVER_HEARTBEAT, subscriber)
+        end
+      end
+
+      let(:new_client) { client.with(database: 'foo') }
+
+      it 'does not copy sdam_proc option to new client' do
+        client = new_local_client(['a'], sdam_proc: sdam_proc)
+        expect(new_client.options[:sdam_proc]).to be nil
+      end
+
+      it 'does not notify subscribers set up by sdam_proc' do
+        client = new_local_client(['a'], sdam_proc: sdam_proc)
+        expect(subscriber.started_events.length).to eq 1
+        subscriber.started_events.clear
+
+        new_client
+        expect(subscriber.started_events.length).to eq 0
+      end
+    end
   end
 
   describe '#dup' do
