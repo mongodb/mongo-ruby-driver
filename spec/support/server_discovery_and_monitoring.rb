@@ -25,13 +25,7 @@ end
 RSpec::Matchers.define :be_topology do |expected|
 
   match do |actual|
-    case expected
-      when 'ReplicaSetWithPrimary' then actual.replica_set?
-      when 'ReplicaSetNoPrimary' then actual.replica_set?
-      when 'Sharded' then actual.sharded?
-      when 'Single' then actual.single?
-      when 'Unknown' then actual.unknown?
-    end
+    actual.topology.class.name.sub(/.*::/, '') == expected
   end
 end
 

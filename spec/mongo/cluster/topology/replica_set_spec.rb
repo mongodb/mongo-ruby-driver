@@ -115,6 +115,26 @@ describe Mongo::Cluster::Topology::ReplicaSetNoPrimary do
     end
   end
 
+  describe '#max_election_id' do
+    let(:election_id) { BSON::ObjectId.new }
+
+    it 'returns value set in constructor' do
+      topology = described_class.new({}, monitoring, nil,
+        election_id, nil)
+
+      expect(topology.max_election_id).to eql(election_id)
+    end
+  end
+
+  describe '#max_set_version' do
+    it 'returns value set in constructor' do
+      topology = described_class.new({}, monitoring, nil,
+        nil, 5)
+
+      expect(topology.max_set_version).to eq(5)
+    end
+  end
+
   describe '#has_readable_servers?' do
 
     let(:topology) do
@@ -473,6 +493,7 @@ describe Mongo::Cluster::Topology::ReplicaSetNoPrimary do
         double('description').tap do |d|
           allow(d).to receive(:config).and_return({ 'ismaster' => true })
           allow(d).to receive(:primary?).and_return(false)
+          allow(d).to receive(:ghost?).and_return(false)
           allow(d).to receive(:hosts).and_return([ primary ])
           allow(d).to receive(:replica_set_name).and_return('test')
           allow(d).to receive(:replica_set_member?).and_return(true)
@@ -610,6 +631,170 @@ describe Mongo::Cluster::Topology::ReplicaSetNoPrimary do
 
       it 'returns false' do
         expect(topology.remove_server?(description, secondary)).to eq(false)
+      end
+    end
+  end
+
+  describe '#new_max_set_version' do
+    context 'initially nil' do
+      let(:topology) do
+        described_class.new({}, monitoring, nil).tap do |topology|
+          expect(topology.max_set_version).to be nil
+        end
+      end
+
+      context 'description with non-nil max set version' do
+        let(:description) do
+          Mongo::Server::Description.new('a', 'setVersion' => 5).tap do |description|
+            expect(description.set_version).to eq(5)
+          end
+        end
+
+        it 'is set to max set version in description' do
+          expect(topology.new_max_set_version(description)).to eq(5)
+        end
+      end
+
+      context 'description with nil max set version' do
+        let(:description) do
+          Mongo::Server::Description.new('a').tap do |description|
+            expect(description.set_version).to be nil
+          end
+        end
+
+        it 'is nil' do
+          expect(topology.new_max_set_version(description)).to be nil
+        end
+      end
+    end
+
+    context 'initially not nil' do
+      let(:topology) do
+        described_class.new({}, monitoring, nil, nil, 4).tap do |topology|
+          expect(topology.max_set_version).to eq(4)
+        end
+      end
+
+      context 'description with a higher max set version' do
+        let(:description) do
+          Mongo::Server::Description.new('a', 'setVersion' => 5).tap do |description|
+            expect(description.set_version).to eq(5)
+          end
+        end
+
+        it 'is set to max set version in description' do
+          expect(topology.new_max_set_version(description)).to eq(5)
+        end
+      end
+
+      context 'description with a lower max set version' do
+        let(:description) do
+          Mongo::Server::Description.new('a', 'setVersion' => 3).tap do |description|
+            expect(description.set_version).to eq(3)
+          end
+        end
+
+        it 'is set to topology max set version' do
+          expect(topology.new_max_set_version(description)).to eq(4)
+        end
+      end
+
+      context 'description with nil max set version' do
+        let(:description) do
+          Mongo::Server::Description.new('a').tap do |description|
+            expect(description.set_version).to be nil
+          end
+        end
+
+        it 'is set to topology max set version' do
+          expect(topology.new_max_set_version(description)).to eq(4)
+        end
+      end
+    end
+  end
+
+  describe '#new_max_election_id' do
+    context 'initially nil' do
+      let(:topology) do
+        described_class.new({}, monitoring, nil).tap do |topology|
+          expect(topology.max_election_id).to be nil
+        end
+      end
+
+      context 'description with non-nil max election id' do
+        let(:new_election_id) { BSON::ObjectId.from_string('7fffffff000000000000004f') }
+
+        let(:description) do
+          Mongo::Server::Description.new('a', 'electionId' => new_election_id).tap do |description|
+            expect(description.election_id).to be new_election_id
+          end
+        end
+
+        it 'is set to max election id in description' do
+          expect(topology.new_max_election_id(description)).to be new_election_id
+        end
+      end
+
+      context 'description with nil max election id' do
+        let(:description) do
+          Mongo::Server::Description.new('a').tap do |description|
+            expect(description.election_id).to be nil
+          end
+        end
+
+        it 'is nil' do
+          expect(topology.new_max_election_id(description)).to be nil
+        end
+      end
+    end
+
+    context 'initially not nil' do
+      let(:old_election_id) { BSON::ObjectId.from_string('7fffffff000000000000004c') }
+
+      let(:topology) do
+        described_class.new({}, monitoring, nil, old_election_id, nil).tap do |topology|
+          expect(topology.max_election_id).to be old_election_id
+        end
+      end
+
+      context 'description with a higher max election id' do
+        let(:new_election_id) { BSON::ObjectId.from_string('7fffffff000000000000004f') }
+
+        let(:description) do
+          Mongo::Server::Description.new('a', 'electionId' => new_election_id).tap do |description|
+            expect(description.election_id).to be new_election_id
+          end
+        end
+
+        it 'is set to max election id in description' do
+          expect(topology.new_max_election_id(description)).to be new_election_id
+        end
+      end
+
+      context 'description with a lower max election id' do
+        let(:low_election_id) { BSON::ObjectId.from_string('7fffffff0000000000000042') }
+
+        let(:description) do
+          Mongo::Server::Description.new('a', 'electionId' => low_election_id).tap do |description|
+            expect(description.election_id).to be low_election_id
+          end
+        end
+
+        it 'is set to topology max election id' do
+          expect(topology.new_max_election_id(description)).to be old_election_id
+        end
+      end
+
+      context 'description with nil max election id' do
+        let(:description) do
+          Mongo::Server::Description.new('a').tap do |description|
+            expect(description.election_id).to be nil
+          end
+        end
+
+        it 'is set to topology max election id' do
+          expect(topology.new_max_election_id(description)).to be old_election_id
+        end
       end
     end
   end

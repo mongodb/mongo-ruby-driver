@@ -79,7 +79,7 @@ module Mongo
 
         # @api experimental
         def summary
-          display_name.gsub(' ', '')
+          "#{display_name.gsub(' ', '')}[v=#{@max_set_version},e=#{@max_election_id && @max_election_id.to_s.sub(/^0+/, '')}]"
         end
 
         # Elect a primary server within this topology.
@@ -94,23 +94,7 @@ module Mongo
         #
         # @return [ ReplicaSetWithPrimary ] The topology.
         def elect_primary(description, servers)
-          if description.replica_set_name == replica_set_name
-            unless detect_stale_primary!(description)
-              servers.each do |server|
-                if server.primary? && server.address != description.address
-                  server.description.unknown!
-                end
-              end
-              update_max_election_id(description)
-              update_max_set_version(description)
-            end
-          else
-            log_warn(
-              "Server #{description.address.to_s} has incorrect replica set name: " +
-              "'#{description.replica_set_name}'. The current replica set name is '#{replica_set_name}'."
-            )
-          end
-          ReplicaSetWithPrimary.new(options, monitoring, [], @max_election_id, @max_set_version)
+          self
         end
 
         # Determine if the topology would select a readable server for the
@@ -215,7 +199,7 @@ module Mongo
             (description.primary? ||
               description.me_mismatch? ||
                 description.hosts.empty? ||
-                  !member_of_this_set?(description))
+                  (!description.ghost? && !member_of_this_set?(description)))
         end
 
         # Whether a specific server in the cluster can be removed, given a description.
@@ -282,34 +266,45 @@ module Mongo
         # @since 2.4.0
         def member_discovered; end;
 
-        private
+        # The largest electionId ever reported by a primary.
+        # May be nil.
+        #
+        # @return [ BSON::ObjectId ] The election id.
+        #
+        # @since 2.7.0
+        attr_reader :max_election_id
 
-        def update_max_election_id(description)
+        # The largest setVersion ever reported by a primary.
+        # May be nil.
+        #
+        # @return [ Integer ] The set version.
+        #
+        # @since 2.7.0
+        attr_reader :max_set_version
+
+        # @api private
+        def new_max_election_id(description)
           if description.election_id &&
               (@max_election_id.nil? ||
                   description.election_id > @max_election_id)
-            @max_election_id = description.election_id
+            description.election_id
+          else
+            @max_election_id
           end
         end
 
-        def update_max_set_version(description)
+        # @api private
+        def new_max_set_version(description)
           if description.set_version &&
               (@max_set_version.nil? ||
                   description.set_version > @max_set_version)
-            @max_set_version = description.set_version
+            description.set_version
+          else
+            @max_set_version
           end
         end
 
-        def detect_stale_primary!(description)
-          if description.election_id && description.set_version
-            if @max_set_version && @max_election_id &&
-                (description.set_version < @max_set_version ||
-                    (description.set_version == @max_set_version &&
-                        description.election_id < @max_election_id))
-              description.unknown!
-            end
-          end
-        end
+        private
 
         def has_primary?(servers)
           servers.find { |s| s.primary? }
