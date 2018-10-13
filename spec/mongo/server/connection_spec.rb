@@ -640,13 +640,8 @@ describe Mongo::Server::Connection do
       end
 
       before do
-        authorized_collection.insert_one(a: 1)
-      end
-
-      after do
-        sleep(0.5)
         authorized_collection.delete_many
-        client.close
+        authorized_collection.insert_one(a: 1)
       end
 
       it 'raises a timeout when it expires' do
@@ -698,11 +693,8 @@ describe Mongo::Server::Connection do
       end
 
       before do
-        expect(Process).to receive(:pid).at_least(:once).and_return(1)
-      end
-
-      after do
         authorized_collection.delete_many
+        expect(Process).to receive(:pid).at_least(:once).and_return(1)
       end
 
       it 'disconnects the connection' do
