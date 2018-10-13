@@ -205,6 +205,7 @@ module Mongo
     #
     # @since 2.1.0
     def initialize(options = {})
+      @options = options
       if options[:monitoring] != false
         Global.subscribers.each do |topic, subscribers|
           subscribers.each do |subscriber|
@@ -219,6 +220,14 @@ module Mongo
         subscribe(TOPOLOGY_CHANGED, TopologyChangedLogSubscriber.new(options))
         subscribe(TOPOLOGY_CLOSED, TopologyClosedLogSubscriber.new(options))
       end
+    end
+
+    # @api private
+    attr_reader :options
+
+    # @api private
+    def monitoring?
+      options[:monitoring] != false
     end
 
     # Publish a started event.
