@@ -56,14 +56,8 @@ module Mongo
         #   cluster.
         #
         # @return [ Sharded, ReplicaSetNoPrimary, ReplicaSetWithPrimary ] The new topology.
+        # @deprecated Does nothing.
         def elect_primary(description, servers)
-          if description.mongos?
-            sharded = Sharded.new(options, monitoring, cluster)
-            topology_changed(sharded)
-            sharded
-          else
-            initialize_replica_set(description, servers)
-          end
         end
 
         # Determine if the topology would select a readable server for the
@@ -209,36 +203,8 @@ module Mongo
         #   topology.member_discovered
         #
         # @since 2.4.0
+        # @deprecated Does nothing.
         def member_discovered
-          publish_sdam_event(
-            Monitoring::TOPOLOGY_CHANGED,
-            Monitoring::Event::TopologyChanged.new(self, self)
-          )
-        end
-
-        private
-
-        def initialize_replica_set(description, servers)
-          servers.each do |server|
-            if server.standalone? && server.address != description.address
-              server.description.unknown!
-            end
-          end
-          cls = if description.primary?
-            ReplicaSetWithPrimary
-          else
-            ReplicaSetNoPrimary
-          end
-          replica_set = cls.new(options.merge(:replica_set => description.replica_set_name), monitoring)
-          topology_changed(replica_set)
-          replica_set
-        end
-
-        def topology_changed(new_topology)
-          publish_sdam_event(
-            Monitoring::TOPOLOGY_CHANGED,
-            Monitoring::Event::TopologyChanged.new(self, new_topology)
-          )
         end
       end
     end
