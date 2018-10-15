@@ -115,6 +115,26 @@ describe Mongo::Cluster::Topology::ReplicaSetNoPrimary do
     end
   end
 
+  describe '#max_election_id' do
+    let(:election_id) { BSON::ObjectId.new }
+
+    it 'returns value set in constructor' do
+      topology = described_class.new({}, monitoring, nil,
+        election_id, nil)
+
+      expect(topology.max_election_id).to eql(election_id)
+    end
+  end
+
+  describe '#max_set_version' do
+    it 'returns value set in constructor' do
+      topology = described_class.new({}, monitoring, nil,
+        nil, 5)
+
+      expect(topology.max_set_version).to eq(5)
+    end
+  end
+
   describe '#has_readable_servers?' do
 
     let(:topology) do
