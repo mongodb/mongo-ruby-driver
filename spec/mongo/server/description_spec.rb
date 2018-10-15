@@ -935,5 +935,23 @@ describe Mongo::Server::Description do
         expect(description == other).to be(false)
       end
     end
+
+    context 'when one config is a subset of the other' do
+      let(:one) do
+        described_class.new(address, { 'ismaster' => true, 'ok' => 1 })
+      end
+
+      let(:two) do
+        described_class.new(address, { 'ismaster' => true, 'ok' => 1, 'setName' => 'mongodb_set' })
+      end
+
+      it 'returns false when first config is the receiver' do
+        expect(one == two).to be false
+      end
+
+      it 'returns false when second config is the receiver' do
+        expect(two == one).to be false
+      end
+    end
   end
 end
