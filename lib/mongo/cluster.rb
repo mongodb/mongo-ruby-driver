@@ -120,6 +120,28 @@ module Mongo
       @connected = true
     end
 
+    # Create a cluster for the provided client, for use when we don't want the
+    # client's original cluster instance to be the same.
+    #
+    # @api private
+    #
+    # @example Create a cluster for the client.
+    #   Cluster.create(client)
+    #
+    # @param [ Client ] client The client to create on.
+    #
+    # @return [ Cluster ] The cluster.
+    #
+    # @since 2.0.0
+    def self.create(client)
+      cluster = Cluster.new(
+        client.cluster.addresses.map(&:to_s),
+        Monitoring.new,
+        client.options
+      )
+      client.instance_variable_set(:@cluster, cluster)
+    end
+
     # @return [ Hash ] The options hash.
     attr_reader :options
 
@@ -157,6 +179,192 @@ module Mongo
                    :single?, :unknown?
     def_delegators :@cursor_reaper, :register_cursor, :schedule_kill_cursor, :unregister_cursor
 
+    # Get the maximum number of times the cluster can retry a read operation on
+    # a mongos.
+    #
+    # @example Get the max read retries.
+    #   cluster.max_read_retries
+    #
+    # @return [ Integer ] The maximum retries.
+    #
+    # @since 2.1.1
+    def max_read_retries
+      options[:max_read_retries] || MAX_READ_RETRIES
+    end
+
+    # Get the interval, in seconds, in which a mongos read operation is
+    # retried.
+    #
+    # @example Get the read retry interval.
+    #   cluster.read_retry_interval
+    #
+    # @return [ Float ] The interval.
+    #
+    # @since 2.1.1
+    def read_retry_interval
+      options[:read_retry_interval] || READ_RETRY_INTERVAL
+    end
+
+    # Whether the cluster object is connected to its cluster.
+    #
+    # @return [ true|false ] Whether the cluster is connected.
+    #
+    # @api private
+    # @since 2.7.0
+    def connected?
+      !!@connected
+    end
+
+    # Get a list of server candidates from the cluster that can have operations
+    # executed on them.
+    #
+    # @example Get the server candidates for an operation.
+    #   cluster.servers
+    #
+    # @return [ Array<Server> ] The candidate servers.
+    #
+    # @since 2.0.0
+    def servers
+      topology.servers(servers_list.compact).compact
+    end
+
+    # The addresses in the cluster.
+    #
+    # @example Get the addresses in the cluster.
+    #   cluster.addresses
+    #
+    # @return [ Array<Mongo::Address> ] The addresses.
+    #
+    # @since 2.0.6
+    def addresses
+      servers_list.map(&:address).dup
+    end
+
+    # The logical session timeout value in minutes.
+    #
+    # @example Get the logical session timeout in minutes.
+    #   cluster.logical_session_timeout
+    #
+    # @return [ Integer, nil ] The logical session timeout.
+    #
+    # @since 2.5.0
+    def logical_session_timeout
+      servers.inject(nil) do |min, server|
+        break unless timeout = server.logical_session_timeout
+        [timeout, (min || timeout)].min
+      end
+    end
+
+    # Get the nicer formatted string for use in inspection.
+    #
+    # @example Inspect the cluster.
+    #   cluster.inspect
+    #
+    # @return [ String ] The cluster inspection.
+    #
+    # @since 2.0.0
+    def inspect
+      "#<Mongo::Cluster:0x#{object_id} servers=#{servers} topology=#{topology.summary}>"
+    end
+
+    # @api experimental
+    def summary
+      "#<Cluster " +
+      "topology=#{topology.summary} "+
+      "servers=[#{servers.map(&:summary).join(',')}]>"
+    end
+
+    # Finalize the cluster for garbage collection. Disconnects all the scoped
+    # connection pools.
+    #
+    # @example Finalize the cluster.
+    #   Cluster.finalize(pools)
+    #
+    # @param [ Hash<Address, Server::ConnectionPool> ] pools The connection pools.
+    # @param [ PeriodicExecutor ] periodic_executor The periodic executor.
+    # @param [ SessionPool ] session_pool The session pool.
+    #
+    # @return [ Proc ] The Finalizer.
+    #
+    # @since 2.2.0
+    def self.finalize(pools, periodic_executor, session_pool)
+      proc do
+        session_pool.end_sessions
+        periodic_executor.stop!
+        pools.values.each do |pool|
+          pool.disconnect!
+        end
+      end
+    end
+
+    # Disconnect all servers.
+    #
+    # @note Applications should call Client#close to disconnect from
+    # the cluster rather than calling this method. This method is for
+    # internal driver use only.
+    #
+    # @example Disconnect the cluster's servers.
+    #   cluster.disconnect!
+    #
+    # @return [ true ] Always true.
+    #
+    # @since 2.1.0
+    def disconnect!
+      unless @connecting || @connected
+        return true
+      end
+      @periodic_executor.stop!
+      @servers.each do |server|
+        server.disconnect!
+        publish_sdam_event(
+          Monitoring::SERVER_CLOSED,
+          Monitoring::Event::ServerClosed.new(server.address, topology)
+        )
+      end
+      publish_sdam_event(
+        Monitoring::TOPOLOGY_CLOSED,
+        Monitoring::Event::TopologyClosed.new(topology)
+      )
+      @connecting = @connected = false
+      true
+    end
+
+    # Reconnect all servers.
+    #
+    # @example Reconnect the cluster's servers.
+    #   cluster.reconnect!
+    #
+    # @return [ true ] Always true.
+    #
+    # @since 2.1.0
+    # @deprecated Use Client#reconnect to reconnect to the cluster instead of
+    #   calling this method. This method does not send SDAM events.
+    def reconnect!
+      @connecting = true
+      scan!
+      servers.each do |server|
+        server.reconnect!
+      end
+      @periodic_executor.restart!
+      @connecting = false
+      @connected = true
+    end
+
+    # Force a scan of all known servers in the cluster.
+    #
+    # @example Force a full cluster scan.
+    #   cluster.scan!
+    #
+    # @note This operation is done synchronously. If servers in the cluster are
+    #   down or slow to respond this can potentially be a slow operation.
+    #
+    # @return [ true ] Always true.
+    #
+    # @since 2.0.0
+    def scan!
+      servers_list.each{ |server| server.scan! } and true
+    end
+
     # Determine if this cluster of servers is equal to another object. Checks the
     # servers currently in the cluster, not what was configured.
     #
@@ -171,31 +379,6 @@ module Mongo
     def ==(other)
       return false unless other.is_a?(Cluster)
       addresses == other.addresses && options == other.options
-    end
-
-    # Add a server to the cluster with the provided address. Useful in
-    # auto-discovery of new servers when an existing server executes an ismaster
-    # and potentially non-configured servers were included.
-    #
-    # @example Add the server for the address to the cluster.
-    #   cluster.add('127.0.0.1:27018')
-    #
-    # @param [ String ] host The address of the server to add.
-    #
-    # @return [ Server ] The newly added server, if not present already.
-    #
-    # @since 2.0.0
-    def add(host)
-      address = Address.new(host, options)
-      if !addresses.include?(address)
-        if addition_allowed?(address)
-          server = Server.new(address, self, @monitoring, event_listeners, options.merge(
-            monitor: false))
-          @update_lock.synchronize { @servers.push(server) }
-          server.start_monitoring
-          server
-        end
-      end
     end
 
     # Determine if the cluster would select a readable server for the
@@ -226,48 +409,6 @@ module Mongo
       topology.has_writable_server?(self)
     end
 
-    # Finalize the cluster for garbage collection. Disconnects all the scoped
-    # connection pools.
-    #
-    # @example Finalize the cluster.
-    #   Cluster.finalize(pools)
-    #
-    # @param [ Hash<Address, Server::ConnectionPool> ] pools The connection pools.
-    # @param [ PeriodicExecutor ] periodic_executor The periodic executor.
-    # @param [ SessionPool ] session_pool The session pool.
-    #
-    # @return [ Proc ] The Finalizer.
-    #
-    # @since 2.2.0
-    def self.finalize(pools, periodic_executor, session_pool)
-      proc do
-        session_pool.end_sessions
-        periodic_executor.stop!
-        pools.values.each do |pool|
-          pool.disconnect!
-        end
-      end
-    end
-
-    # Get the nicer formatted string for use in inspection.
-    #
-    # @example Inspect the cluster.
-    #   cluster.inspect
-    #
-    # @return [ String ] The cluster inspection.
-    #
-    # @since 2.0.0
-    def inspect
-      "#<Mongo::Cluster:0x#{object_id} servers=#{servers} topology=#{topology.summary}>"
-    end
-
-    # @api experimental
-    def summary
-      "#<Cluster " +
-      "topology=#{topology.summary} "+
-      "servers=[#{servers.map(&:summary).join(',')}]>"
-    end
-
     # Get the next primary server we can send an operation to.
     #
     # @example Get the next primary server.
@@ -283,6 +424,124 @@ module Mongo
     def next_primary(ping = true)
       @primary_selector ||= ServerSelector.get(ServerSelector::PRIMARY)
       @primary_selector.select_server(self)
+    end
+
+    # Get the scoped connection pool for the server.
+    #
+    # @example Get the connection pool.
+    #   cluster.pool(server)
+    #
+    # @param [ Server ] server The server.
+    #
+    # @return [ Server::ConnectionPool ] The connection pool.
+    #
+    # @since 2.2.0
+    def pool(server)
+      @pool_lock.synchronize do
+        pools[server.address] ||= Server::ConnectionPool.get(server)
+      end
+    end
+
+    # Update the max cluster time seen in a response.
+    #
+    # @example Update the cluster time.
+    #   cluster.update_cluster_time(result)
+    #
+    # @param [ Operation::Result ] result The operation result containing the cluster time.
+    #
+    # @return [ Object ] The cluster time.
+    #
+    # @since 2.5.0
+    def update_cluster_time(result)
+      if cluster_time_doc = result.cluster_time
+        @cluster_time_lock.synchronize do
+          if @cluster_time.nil?
+            @cluster_time = cluster_time_doc
+          elsif cluster_time_doc[CLUSTER_TIME] > @cluster_time[CLUSTER_TIME]
+            @cluster_time = cluster_time_doc
+          end
+        end
+      end
+    end
+
+    # Add a server to the cluster with the provided address. Useful in
+    # auto-discovery of new servers when an existing server executes an ismaster
+    # and potentially non-configured servers were included.
+    #
+    # @example Add the server for the address to the cluster.
+    #   cluster.add('127.0.0.1:27018')
+    #
+    # @param [ String ] host The address of the server to add.
+    #
+    # @return [ Server ] The newly added server, if not present already.
+    #
+    # @since 2.0.0
+    def add(host)
+      address = Address.new(host, options)
+      if !addresses.include?(address)
+        if addition_allowed?(address)
+          server = Server.new(address, self, @monitoring, event_listeners, options.merge(
+            monitor: false))
+          @update_lock.synchronize { @servers.push(server) }
+          server.start_monitoring
+          server
+        end
+      end
+    end
+
+    # Remove the server from the cluster for the provided address, if it
+    # exists.
+    #
+    # @example Remove the server from the cluster.
+    #   server.remove('127.0.0.1:27017')
+    #
+    # @param [ String ] host The host/port or socket address.
+    #
+    # @return [ true|false ] Whether any servers were removed.
+    #
+    # @since 2.0.0, return value added in 2.7.0
+    def remove(host)
+      address = Address.new(host)
+      removed_servers = @servers.select { |s| s.address == address }
+      @update_lock.synchronize { @servers = @servers - removed_servers }
+      removed_servers.each do |server|
+        server.disconnect!
+      end
+      publish_sdam_event(
+        Monitoring::SERVER_CLOSED,
+        Monitoring::Event::ServerClosed.new(address, topology)
+      )
+      removed_servers.any?
+    end
+
+    # Add hosts in a description to the cluster.
+    #
+    # @example Add hosts in a description to the cluster.
+    #   cluster.add_hosts(description)
+    #
+    # @param [ Mongo::Server::Description ] description The description.
+    #
+    # @since 2.0.6
+    def add_hosts(description)
+      if topology.add_hosts?(description, servers_list)
+        description.servers.each { |s| add(s) }
+      end
+    end
+
+    # Remove hosts in a description from the cluster.
+    #
+    # @example Remove hosts in a description from the cluster.
+    #   cluster.remove_hosts(description)
+    #
+    # @param [ Mongo::Server::Description ] description The description.
+    #
+    # @since 2.0.6
+    def remove_hosts(description)
+      if topology.remove_hosts?(description)
+        servers_list.each do |s|
+          remove(s.address.to_s) if topology.remove_server?(description, s)
+        end
+      end
     end
 
     # Elect a primary server from the description that has just changed to a
@@ -374,48 +633,6 @@ module Mongo
       end
     end
 
-    # Get the maximum number of times the cluster can retry a read operation on
-    # a mongos.
-    #
-    # @example Get the max read retries.
-    #   cluster.max_read_retries
-    #
-    # @return [ Integer ] The maximum retries.
-    #
-    # @since 2.1.1
-    def max_read_retries
-      options[:max_read_retries] || MAX_READ_RETRIES
-    end
-
-    # Get the scoped connection pool for the server.
-    #
-    # @example Get the connection pool.
-    #   cluster.pool(server)
-    #
-    # @param [ Server ] server The server.
-    #
-    # @return [ Server::ConnectionPool ] The connection pool.
-    #
-    # @since 2.2.0
-    def pool(server)
-      @pool_lock.synchronize do
-        pools[server.address] ||= Server::ConnectionPool.get(server)
-      end
-    end
-
-    # Get the interval, in seconds, in which a mongos read operation is
-    # retried.
-    #
-    # @example Get the read retry interval.
-    #   cluster.read_retry_interval
-    #
-    # @return [ Float ] The interval.
-    #
-    # @since 2.1.1
-    def read_retry_interval
-      options[:read_retry_interval] || READ_RETRY_INTERVAL
-    end
-
     # Notify the cluster that a standalone server was discovered so that the
     # topology can be updated accordingly.
     #
@@ -433,223 +650,6 @@ module Mongo
         end
       end
       topology
-    end
-
-    # Remove the server from the cluster for the provided address, if it
-    # exists.
-    #
-    # @example Remove the server from the cluster.
-    #   server.remove('127.0.0.1:27017')
-    #
-    # @param [ String ] host The host/port or socket address.
-    #
-    # @return [ true|false ] Whether any servers were removed.
-    #
-    # @since 2.0.0, return value added in 2.7.0
-    def remove(host)
-      address = Address.new(host)
-      removed_servers = @servers.select { |s| s.address == address }
-      @update_lock.synchronize { @servers = @servers - removed_servers }
-      removed_servers.each do |server|
-        server.disconnect!
-      end
-      publish_sdam_event(
-        Monitoring::SERVER_CLOSED,
-        Monitoring::Event::ServerClosed.new(address, topology)
-      )
-      removed_servers.any?
-    end
-
-    # Force a scan of all known servers in the cluster.
-    #
-    # @example Force a full cluster scan.
-    #   cluster.scan!
-    #
-    # @note This operation is done synchronously. If servers in the cluster are
-    #   down or slow to respond this can potentially be a slow operation.
-    #
-    # @return [ true ] Always true.
-    #
-    # @since 2.0.0
-    def scan!
-      servers_list.each{ |server| server.scan! } and true
-    end
-
-    # Get a list of server candidates from the cluster that can have operations
-    # executed on them.
-    #
-    # @example Get the server candidates for an operation.
-    #   cluster.servers
-    #
-    # @return [ Array<Server> ] The candidate servers.
-    #
-    # @since 2.0.0
-    def servers
-      topology.servers(servers_list.compact).compact
-    end
-
-    # Disconnect all servers.
-    #
-    # @note Applications should call Client#close to disconnect from
-    # the cluster rather than calling this method. This method is for
-    # internal driver use only.
-    #
-    # @example Disconnect the cluster's servers.
-    #   cluster.disconnect!
-    #
-    # @return [ true ] Always true.
-    #
-    # @since 2.1.0
-    def disconnect!
-      unless @connecting || @connected
-        return true
-      end
-      @periodic_executor.stop!
-      @servers.each do |server|
-        server.disconnect!
-        publish_sdam_event(
-          Monitoring::SERVER_CLOSED,
-          Monitoring::Event::ServerClosed.new(server.address, topology)
-        )
-      end
-      publish_sdam_event(
-        Monitoring::TOPOLOGY_CLOSED,
-        Monitoring::Event::TopologyClosed.new(topology)
-      )
-      @connecting = @connected = false
-      true
-    end
-
-    # Reconnect all servers.
-    #
-    # @example Reconnect the cluster's servers.
-    #   cluster.reconnect!
-    #
-    # @return [ true ] Always true.
-    #
-    # @since 2.1.0
-    # @deprecated Use Client#reconnect to reconnect to the cluster instead of
-    #   calling this method. This method does not send SDAM events.
-    def reconnect!
-      @connecting = true
-      scan!
-      servers.each do |server|
-        server.reconnect!
-      end
-      @periodic_executor.restart!
-      @connecting = false
-      @connected = true
-    end
-
-    # Whether the cluster object is connected to its cluster.
-    #
-    # @return [ true|false ] Whether the cluster is connected.
-    #
-    # @api private
-    # @since 2.7.0
-    def connected?
-      !!@connected
-    end
-
-    # Add hosts in a description to the cluster.
-    #
-    # @example Add hosts in a description to the cluster.
-    #   cluster.add_hosts(description)
-    #
-    # @param [ Mongo::Server::Description ] description The description.
-    #
-    # @since 2.0.6
-    def add_hosts(description)
-      if topology.add_hosts?(description, servers_list)
-        description.servers.each { |s| add(s) }
-      end
-    end
-
-    # Remove hosts in a description from the cluster.
-    #
-    # @example Remove hosts in a description from the cluster.
-    #   cluster.remove_hosts(description)
-    #
-    # @param [ Mongo::Server::Description ] description The description.
-    #
-    # @since 2.0.6
-    def remove_hosts(description)
-      if topology.remove_hosts?(description)
-        servers_list.each do |s|
-          remove(s.address.to_s) if topology.remove_server?(description, s)
-        end
-      end
-    end
-
-    # Create a cluster for the provided client, for use when we don't want the
-    # client's original cluster instance to be the same.
-    #
-    # @api private
-    #
-    # @example Create a cluster for the client.
-    #   Cluster.create(client)
-    #
-    # @param [ Client ] client The client to create on.
-    #
-    # @return [ Cluster ] The cluster.
-    #
-    # @since 2.0.0
-    def self.create(client)
-      cluster = Cluster.new(
-        client.cluster.addresses.map(&:to_s),
-        Monitoring.new,
-        client.options
-      )
-      client.instance_variable_set(:@cluster, cluster)
-    end
-
-    # The addresses in the cluster.
-    #
-    # @example Get the addresses in the cluster.
-    #   cluster.addresses
-    #
-    # @return [ Array<Mongo::Address> ] The addresses.
-    #
-    # @since 2.0.6
-    def addresses
-      servers_list.map(&:address).dup
-    end
-
-    # The logical session timeout value in minutes.
-    #
-    # @example Get the logical session timeout in minutes.
-    #   cluster.logical_session_timeout
-    #
-    # @return [ Integer, nil ] The logical session timeout.
-    #
-    # @since 2.5.0
-    def logical_session_timeout
-      servers.inject(nil) do |min, server|
-        break unless timeout = server.logical_session_timeout
-        [timeout, (min || timeout)].min
-      end
-    end
-
-    # Update the max cluster time seen in a response.
-    #
-    # @example Update the cluster time.
-    #   cluster.update_cluster_time(result)
-    #
-    # @param [ Operation::Result ] result The operation result containing the cluster time.
-    #
-    # @return [ Object ] The cluster time.
-    #
-    # @since 2.5.0
-    def update_cluster_time(result)
-      if cluster_time_doc = result.cluster_time
-        @cluster_time_lock.synchronize do
-          if @cluster_time.nil?
-            @cluster_time = cluster_time_doc
-          elsif cluster_time_doc[CLUSTER_TIME] > @cluster_time[CLUSTER_TIME]
-            @cluster_time = cluster_time_doc
-          end
-        end
-      end
     end
 
     # Handles a change in server description.
@@ -712,6 +712,14 @@ module Mongo
       # the topology does not transition.
       if topology.replica_set?
         check_if_has_primary
+      end
+    end
+
+    # @api private
+    def member_discovered
+      if topology.unknown? || topology.single?
+        publish_sdam_event(Monitoring::TOPOLOGY_CHANGED,
+          Monitoring::Event::TopologyChanged.new(topology, topology))
       end
     end
 
@@ -836,16 +844,6 @@ module Mongo
 
     def servers_list
       @update_lock.synchronize { @servers.dup }
-    end
-
-    public
-
-    # @api private
-    def member_discovered
-      if topology.unknown? || topology.single?
-        publish_sdam_event(Monitoring::TOPOLOGY_CHANGED,
-          Monitoring::Event::TopologyChanged.new(topology, topology))
-      end
     end
   end
 end
