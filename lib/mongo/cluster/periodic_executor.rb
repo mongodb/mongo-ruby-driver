@@ -59,12 +59,19 @@ module Mongo
       # @example Stop the executors's thread.
       #   periodic_executor.stop!
       #
+      # @param [ Boolean ] wait Whether to wait for background threads to
+      #   finish running.
+      #
       # @api private
       #
       # @since 2.5.0
-      def stop!
+      def stop!(wait=false)
         begin; flush; rescue; end
-        @thread.kill && @thread.stop?
+        @thread.kill
+        if wait
+          @thread.join
+        end
+        !@thread.alive?
       end
 
       # Trigger an execute call on each reaper.
