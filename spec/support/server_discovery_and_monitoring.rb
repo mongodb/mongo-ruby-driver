@@ -5,17 +5,7 @@
 RSpec::Matchers.define :be_server_type do |expected|
 
   match do |actual|
-    case expected
-      when 'Standalone' then actual.standalone?
-      when 'RSPrimary' then actual.primary?
-      when 'RSSecondary' then actual.secondary?
-      when 'RSArbiter' then actual.arbiter?
-      when 'Mongos' then actual.mongos?
-      when 'Unknown' then actual.unknown?
-      when 'PossiblePrimary' then actual.unknown?
-      when 'RSGhost' then actual.ghost?
-      when 'RSOther' then actual.other?
-    end
+    Mongo::SDAM.server_of_type?(actual, expected)
   end
 end
 
@@ -31,6 +21,25 @@ end
 
 module Mongo
   module SDAM
+
+    module UniversalMethods
+      def server_of_type?(server, type)
+        case type
+          when 'Standalone' then server.standalone?
+          when 'RSPrimary' then server.primary?
+          when 'RSSecondary' then server.secondary?
+          when 'RSArbiter' then server.arbiter?
+          when 'Mongos' then server.mongos?
+          when 'Unknown' then server.unknown?
+          when 'PossiblePrimary' then server.unknown?
+          when 'RSGhost' then server.ghost?
+          when 'RSOther' then server.other?
+        end
+      end
+    end
+
+    include UniversalMethods
+    extend UniversalMethods
 
     # Convenience helper to find a server by it's URI.
     #

@@ -147,6 +147,7 @@ class ClientRegistry
 
   def register_local_client(client)
     @local_clients << client
+    client
   end
 
   def close_local_clients

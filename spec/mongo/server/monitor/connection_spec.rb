@@ -2,6 +2,10 @@ require 'spec_helper'
 
 describe Mongo::Server::Monitor::Connection do
 
+  before do
+    ClientRegistry.instance.close_all_clients
+  end
+
   let(:client) do
     authorized_client.with(options)
   end
@@ -23,16 +27,28 @@ describe Mongo::Server::Monitor::Connection do
   let(:server) do
     Mongo::Server.new(address,
                       cluster,
-                      Mongo::Monitoring.new(monitoring: false),
+                      Mongo::Monitoring.new,
                       Mongo::Event::Listeners.new, options)
   end
 
   let(:connection) do
-    server.monitor.connection
-  end
+    # NB this connection is set up in the background thread,
+    # when the :scan option to client is changed to default to false
+    # we must wait here for the connection to be established.
+    # Do not call connect! on this connection as then the main thread
+    # will be racing the monitoring thread to connect.
+    server.monitor.connection.tap do |connection|
+      expect(connection).not_to be nil
 
-  after do
-    client.close
+      deadline = Time.now + 1
+      while Time.now < deadline
+        if connection.send(:socket)
+          break
+        end
+        sleep 0.1
+      end
+      expect(connection.send(:socket)).not_to be nil
+    end
   end
 
   context 'when a connect_timeout is in the options' do
@@ -41,10 +57,6 @@ describe Mongo::Server::Monitor::Connection do
 
       let(:options) do
         SpecConfig.instance.test_options.merge(connect_timeout: 3, socket_timeout: 5)
-      end
-
-      before do
-        connection.connect!
       end
 
       it 'uses the connect_timeout for the address' do
@@ -60,10 +72,6 @@ describe Mongo::Server::Monitor::Connection do
 
       let(:options) do
         SpecConfig.instance.test_options.merge(connect_timeout: 3, socket_timeout: nil)
-      end
-
-      before do
-        connection.connect!
       end
 
       it 'uses the connect_timeout for the address' do
@@ -84,10 +92,6 @@ describe Mongo::Server::Monitor::Connection do
         SpecConfig.instance.test_options.merge(connect_timeout: nil, socket_timeout: 5)
       end
 
-      before do
-        connection.connect!
-      end
-
       it 'uses the default connect_timeout for the address' do
         expect(connection.address.send(:connect_timeout)).to eq(10)
       end
@@ -101,10 +105,6 @@ describe Mongo::Server::Monitor::Connection do
 
       let(:options) do
         SpecConfig.instance.test_options.merge(connect_timeout: nil, socket_timeout: nil)
-      end
-
-      before do
-        connection.connect!
       end
 
       it 'uses the default connect_timeout for the address' do

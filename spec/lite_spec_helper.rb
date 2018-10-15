@@ -95,7 +95,7 @@ RSpec.configure do |config|
     # Tests should take under 10 seconds ideally but it seems
     # we have some that run for more than 10 seconds in CI.
     config.around(:each) do |example|
-      TimeoutInterrupt.timeout(30) do
+      TimeoutInterrupt.timeout(45) do
         example.run
       end
     end
