@@ -185,6 +185,8 @@ module Mongo
           else
             true
           end
+        else
+          false
         end
       end
 

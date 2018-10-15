@@ -315,11 +315,13 @@ module Mongo
       end
       @periodic_executor.stop!
       @servers.each do |server|
-        server.disconnect!
-        publish_sdam_event(
-          Monitoring::SERVER_CLOSED,
-          Monitoring::Event::ServerClosed.new(server.address, topology)
-        )
+        if server.connected?
+          server.disconnect!
+          publish_sdam_event(
+            Monitoring::SERVER_CLOSED,
+            Monitoring::Event::ServerClosed.new(server.address, topology)
+          )
+        end
       end
       publish_sdam_event(
         Monitoring::TOPOLOGY_CLOSED,
@@ -505,12 +507,14 @@ module Mongo
       removed_servers = @servers.select { |s| s.address == address }
       @update_lock.synchronize { @servers = @servers - removed_servers }
       removed_servers.each do |server|
-        server.disconnect!
+        if server.connected?
+          server.disconnect!
+          publish_sdam_event(
+            Monitoring::SERVER_CLOSED,
+            Monitoring::Event::ServerClosed.new(address, topology)
+          )
+        end
       end
-      publish_sdam_event(
-        Monitoring::SERVER_CLOSED,
-        Monitoring::Event::ServerClosed.new(address, topology)
-      )
       removed_servers.any?
     end
 

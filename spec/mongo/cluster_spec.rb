@@ -260,15 +260,38 @@ describe Mongo::Cluster do
       cluster.instance_variable_get(:@periodic_executor)
     end
 
-    before do
-      known_servers.each do |server|
-        expect(server).to receive(:disconnect!).and_call_original
+    describe 'disconnection' do
+      before do
+        known_servers.each do |server|
+          expect(server).to receive(:disconnect!).and_call_original
+        end
+        expect(periodic_executor).to receive(:stop!).and_call_original
       end
-      expect(periodic_executor).to receive(:stop!).and_call_original
+
+      it 'disconnects each server and the cursor reaper and returns true' do
+        expect(cluster.disconnect!).to be(true)
+      end
     end
 
-    it 'disconnects each server and the cursor reaper and returns true' do
-      expect(cluster.disconnect!).to be(true)
+    describe 'repeated disconnection' do
+      before do
+        known_servers.each do |server|
+          expect(server).to receive(:disconnect!).and_call_original
+        end
+        expect(periodic_executor).to receive(:stop!).and_call_original
+      end
+
+      let(:monitoring) { Mongo::Monitoring.new }
+      let(:subscriber) { Mongo::SDAMMonitoring::TestSubscriber.new }
+
+      it 'publishes server closed event once' do
+        monitoring.subscribe(Mongo::Monitoring::SERVER_CLOSED, subscriber)
+        expect(cluster.disconnect!).to be(true)
+        expect(subscriber.first_event('server_closed_event')).not_to be nil
+        subscriber.events.clear
+        expect(cluster.disconnect!).to be(true)
+        expect(subscriber.first_event('server_closed_event')).to be nil
+      end
     end
   end
 

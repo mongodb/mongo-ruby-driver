@@ -60,6 +60,7 @@ module Mongo
       unless monitor == false
         start_monitoring
       end
+      @connected = true
     end
 
     # @return [ String ] The configured address for the server.
@@ -167,7 +168,18 @@ module Mongo
     def disconnect!(wait=false)
       pool.disconnect!
       monitor.stop!(wait)
+      @connected = false
       true
+    end
+
+    # Whether the server is connected.
+    #
+    # @return [ true|false ] Whether the server is connected.
+    #
+    # @api private
+    # @since 2.7.0
+    def connected?
+      @connected
     end
 
     # When the server is flagged for garbage collection, stop the monitor
@@ -275,7 +287,8 @@ module Mongo
     #
     # @since 2.1.0
     def reconnect!
-      monitor.restart! and true
+      monitor.restart!
+      @connected = true
     end
 
     # Execute a block of code with a connection, that is checked out of the
