@@ -280,20 +280,24 @@ module Mongo
         attr_reader :max_set_version
 
         # @api private
-        def update_max_election_id(description)
+        def new_max_election_id(description)
           if description.election_id &&
               (@max_election_id.nil? ||
                   description.election_id > @max_election_id)
-            @max_election_id = description.election_id
+            description.election_id
+          else
+            @max_election_id
           end
         end
 
         # @api private
-        def update_max_set_version(description)
+        def new_max_set_version(description)
           if description.set_version &&
               (@max_set_version.nil? ||
                   description.set_version > @max_set_version)
-            @max_set_version = description.set_version
+            description.set_version
+          else
+            @max_set_version
           end
         end
 

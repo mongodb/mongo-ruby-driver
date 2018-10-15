@@ -599,8 +599,8 @@ module Mongo
             # and the new values should only be given to the new topology.
             # But since there is some logic in these methods,
             # this will be addressed by https://jira.mongodb.org/browse/RUBY-1511
-            topology.update_max_election_id(description)
-            topology.update_max_set_version(description)
+            max_election_id = topology.new_max_election_id(description)
+            max_set_version = topology.new_max_set_version(description)
 
             cls = if servers.any?(&:primary?)
               Topology::ReplicaSetWithPrimary
@@ -610,8 +610,8 @@ module Mongo
             new_topology = cls.new(topology.options,
               topology.monitoring,
               self,
-              topology.max_election_id,
-              topology.max_set_version)
+              max_election_id,
+              max_set_version)
           end
         else
           log_warn(
