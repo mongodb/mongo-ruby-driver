@@ -85,22 +85,23 @@ module Mongo
       @pool_lock = Mutex.new
       @cluster_time = nil
       @cluster_time_lock = Mutex.new
-      @topology = Topology.initial(self, monitoring, options)
       Session::SessionPool.create(self)
 
       # The opening topology is always unknown with no servers.
       # https://github.com/mongodb/specifications/pull/388
-      opening_topology = Topology::Unknown.new(options, monitoring, self)
+      @topology = Topology::Unknown.new(options, monitoring, self)
 
       publish_sdam_event(
         Monitoring::TOPOLOGY_OPENING,
-        Monitoring::Event::TopologyOpening.new(opening_topology)
+        Monitoring::Event::TopologyOpening.new(@topology)
       )
 
       subscribe_to(Event::STANDALONE_DISCOVERED, Event::StandaloneDiscovered.new(self))
       subscribe_to(Event::DESCRIPTION_CHANGED, Event::DescriptionChanged.new(self))
       subscribe_to(Event::MEMBER_DISCOVERED, Event::MemberDiscovered.new(self))
 
+      opening_topology = @topology
+      @topology = Topology.initial(self, monitoring, options)
       @seeds = seeds
       seeds.each{ |seed| add(seed) }
 
