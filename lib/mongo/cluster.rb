@@ -746,13 +746,13 @@ module Mongo
       end
 
       new_cls = nil
-      if topology.is_a?(Topology::ReplicaSetNoPrimary)
-        if primary
-          new_cls = Topology::ReplicaSetWithPrimary
-        end
-      else
+      if topology.is_a?(Topology::ReplicaSetWithPrimary)
         unless primary
           new_cls = Topology::ReplicaSetNoPrimary
+        end
+      else
+        if primary
+          new_cls = Topology::ReplicaSetWithPrimary
         end
       end
 
