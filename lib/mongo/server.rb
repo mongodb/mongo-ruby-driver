@@ -158,12 +158,16 @@ module Mongo
     # @example Disconnect the server.
     #   server.disconnect!
     #
-    # @return [ true ] Always tru with no exception.
+    # @param [ Boolean ] wait Whether to wait for background threads to
+    #   finish running.
+    #
+    # @return [ true ] Always true with no exception.
     #
     # @since 2.0.0
-    def disconnect!
+    def disconnect!(wait=false)
       pool.disconnect!
-      monitor.stop! and true
+      monitor.stop!(wait)
+      true
     end
 
     # When the server is flagged for garbage collection, stop the monitor

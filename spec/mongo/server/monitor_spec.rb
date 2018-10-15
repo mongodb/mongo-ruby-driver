@@ -219,7 +219,7 @@ describe Mongo::Server::Monitor do
     end
 
     it 'kills the monitor thread' do
-      expect(thread.stop?).to be(true)
+      expect(thread.alive?).to be(false)
     end
   end
 

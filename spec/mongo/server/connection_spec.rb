@@ -548,7 +548,7 @@ describe Mongo::Server::Connection do
       it 'closes the socket and does not use it for subsequent requests' do
         t = Thread.new {
           # Kill the thread just before the reply is read
-          allow(Mongo::Protocol::Reply).to receive(:deserialize_header) { t.kill and t.stop? }
+          allow(Mongo::Protocol::Reply).to receive(:deserialize_header) { t.kill && !t.alive? }
           connection.dispatch([ query_bob ])
         }
         t.join

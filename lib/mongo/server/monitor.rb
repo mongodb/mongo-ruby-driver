@@ -166,15 +166,22 @@ module Mongo
       # @example Stop the monitor.
       #   monitor.stop!
       #
+      # @param [ Boolean ] wait Whether to wait for background threads to
+      #   finish running.
+      #
       # @return [ Boolean ] Is the thread stopped?
       #
       # @since 2.0.0
-      def stop!
+      def stop!(wait=false)
         # Although disconnect! documentation implies a possibility of
         # failure, all of our disconnects always return true
         if connection.disconnect!
           if @thread
-            @thread.kill && @thread.stop?
+            @thread.kill
+            if wait
+              @thread.join
+            end
+            !@thread.alive?
           else
             true
           end
