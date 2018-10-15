@@ -744,8 +744,20 @@ module Mongo
         # A primary with the wrong set name is not a primary
         server.primary? && server.description.replica_set_name == topology.replica_set_name
       end
-      unless primary
-        update_topology(Topology::ReplicaSetNoPrimary.new(
+
+      new_cls = nil
+      if topology.is_a?(Topology::ReplicaSetNoPrimary)
+        if primary
+          new_cls = Topology::ReplicaSetWithPrimary
+        end
+      else
+        unless primary
+          new_cls = Topology::ReplicaSetNoPrimary
+        end
+      end
+
+      if new_cls
+        update_topology(new_cls.new(
           topology.options, topology.monitoring, self,
           topology.max_election_id, topology.max_set_version))
       end
