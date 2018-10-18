@@ -45,8 +45,8 @@ module Mongo
       #   server.
       #
       # @since 2.0.6
-      def handle(description)
-        cluster.standalone_discovered
+      def handle(previous, description)
+        cluster.standalone_discovered(previous, description)
       end
     end
   end

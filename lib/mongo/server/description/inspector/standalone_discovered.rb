@@ -46,7 +46,7 @@ module Mongo
           # @since 2.0.6
           def run(description, updated)
             if !description.standalone? && updated.standalone?
-              publish(Event::STANDALONE_DISCOVERED, updated)
+              publish(Event::STANDALONE_DISCOVERED, description, updated)
             end
           end
         end

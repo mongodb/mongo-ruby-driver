@@ -107,7 +107,7 @@ module Mongo
       publish_sdam_event(
         Monitoring::TOPOLOGY_CHANGED,
         Monitoring::Event::TopologyChanged.new(opening_topology, @topology)
-      ) if seeds.size > 1
+      ) if seeds.size >= 1
 
       @cursor_reaper = CursorReaper.new
       @socket_reaper = SocketReaper.new(self)
@@ -642,13 +642,28 @@ module Mongo
     # @return [ Topology ] The cluster topology.
     #
     # @since 2.0.6
-    def standalone_discovered
+    def standalone_discovered(previous_description, updated_description)
+      servers_list.each do |server|
+        if server.address == updated_description.address
+          server.update_description(updated_description)
+          publish_sdam_event(
+            Monitoring::SERVER_DESCRIPTION_CHANGED,
+            Monitoring::Event::ServerDescriptionChanged.new(
+              updated_description.address,
+              topology,
+              previous_description,
+              updated_description,
+            )
+          )
+        end
+      end
       if topology.unknown?
         if seeds.length == 1
           update_topology(
             Topology::Single.new(topology.options, topology.monitoring, self))
         end
       end
+      throw :done
       topology
     end
 
