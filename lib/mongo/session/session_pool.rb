@@ -123,9 +123,11 @@ module Mongo
       private
 
       def about_to_expire?(session)
-        if @cluster.logical_session_timeout
+        logical_session_timeout = @cluster.logical_session_timeout
+
+        if logical_session_timeout
           idle_time_minutes = (Time.now - session.last_use) / 60
-          (idle_time_minutes + 1) >= @cluster.logical_session_timeout
+          (idle_time_minutes + 1) >= logical_session_timeout
         end
       end
 
