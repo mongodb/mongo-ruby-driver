@@ -663,7 +663,7 @@ module Mongo
       private
 
       def compare_config(other)
-        config.keys.all? do |k|
+        (config.keys + other.config.keys).uniq.all? do |k|
           config[k] == other.config[k] || EXCLUDE_FOR_COMPARISON.include?(k)
         end
       end
