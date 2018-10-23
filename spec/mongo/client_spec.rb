@@ -551,7 +551,7 @@ describe Mongo::Client do
       end
 
       let(:client) do
-        Mongo::Client.new(SpecConfig.instance.addresses, client_options).tap do |cl|
+        ClientRegistry.instance.new_local_client(SpecConfig.instance.addresses, client_options).tap do |cl|
           cl.subscribe(Mongo::Monitoring::COMMAND, EventSubscriber.clear_events!)
         end
       end

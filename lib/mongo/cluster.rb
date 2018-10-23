@@ -73,6 +73,13 @@ module Mongo
     # @param [ Hash ] options Options. Client constructor forwards its
     #   options to Cluster constructor, although Cluster recognizes
     #   only a subset of the options recognized by Client.
+    # @option options [ true, false ] :scan Whether to scan all seeds
+    #   in constructor. The default in driver version 2.x is to do so;
+    #   driver version 3.x will not scan seeds in constructor. Opt in to the
+    #   new behavior by setting this option to false. *Note:* setting
+    #   this option to nil enables scanning seeds in constructor in driver
+    #   version 2.x. Driver version 3.x will recognize this option but
+    #   will ignore it and will never scan seeds in the constructor.
     #
     # @since 2.0.0
     def initialize(seeds, monitoring, options = Options::Redacted.new)
@@ -118,6 +125,34 @@ module Mongo
 
       @connecting = false
       @connected = true
+
+      if options[:scan] != false
+        server_selection_timeout = options[:server_selection_timeout] || ServerSelector::SERVER_SELECTION_TIMEOUT
+        # The server selection timeout can be very short especially in
+        # tests, when the client waits for a synchronous scan before
+        # starting server selection. Limiting the scan to server selection time
+        # then aborts the scan before it can process even local servers.
+        # Therefore, allow at least 3 seconds for the scan here.
+        if server_selection_timeout < 3
+          server_selection_timeout = 3
+        end
+        begin
+          Timeout.timeout(server_selection_timeout) do
+            # Wait for the first scan of each server to complete, for
+            # backwards compatibility.
+            # If any servers are discovered during this SDAM round we do NOT
+            # wait for newly discovered servers to be queried.
+            servers = servers_list.dup
+            while true
+              if servers.all? { |server| server.last_scan_completed_at }
+                break
+              end
+              sleep 0.5
+            end
+          end
+        rescue Timeout::Error
+        end
+      end
     end
 
     # Create a cluster for the provided client, for use when we don't want the

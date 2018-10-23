@@ -1,6 +1,9 @@
 require 'spec_helper'
 
 describe Mongo::Client do
+  before do
+    ClientRegistry.instance.close_all_clients
+  end
 
   describe '.new' do
     describe 'options' do
@@ -53,6 +56,37 @@ describe Mongo::Client do
               :read => :primary)
           end.to raise_error(Mongo::Error::InvalidReadOption, 'Invalid read option: primary: must be a hash')
         end
+      end
+    end
+
+    context 'with scan: false' do
+      it 'does not perform i/o' do
+        allow_any_instance_of(Mongo::Server::Monitor).to receive(:run!)
+        expect_any_instance_of(Mongo::Server::Monitor).not_to receive(:scan!)
+        start_time = Time.now
+        # return should be instant
+        c = Timeout.timeout(1) do
+          ClientRegistry.instance.new_local_client(['1.1.1.1'], scan: false)
+        end
+        expect(c.cluster.servers).to be_empty
+        c.close
+      end
+    end
+
+    context 'with default scan: true' do
+      # TODO this test requires there being no outstanding background
+      # monitoring threads running, as otherwise the scan! expectation
+      # can be executed on a thread that belongs to one of the global
+      # clients for instance
+      it 'performs one round of sdam' do
+        # Does not work due to
+        # https://github.com/rspec/rspec-mocks/issues/1242.
+        #expect_any_instance_of(Mongo::Server::Monitor).to receive(:scan!).
+        #  exactly(SpecConfig.instance.addresses.length).times.and_call_original
+        c = ClientRegistry.instance.new_local_client(
+          SpecConfig.instance.addresses, SpecConfig.instance.test_options)
+        expect(c.cluster.servers).not_to be_empty
+        c.close
       end
     end
   end

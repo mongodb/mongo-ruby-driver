@@ -56,6 +56,7 @@ module Mongo
       :read_retry_interval,
       :replica_set,
       :retry_writes,
+      :scan,
       :server_selection_timeout,
       :socket_timeout,
       :ssl,
@@ -279,6 +280,13 @@ module Mongo
     #   as the argument prior to performing server discovery and monitoring.
     #   Use this to set up SDAM event listeners to receive events dispatched
     #   during client construction.
+    # @option options [ true, false ] :scan Whether to scan all seeds
+    #   in constructor. The default in driver version 2.x is to do so;
+    #   driver version 3.x will not scan seeds in constructor. Opt in to the
+    #   new behavior by setting this option to false. *Note:* setting
+    #   this option to nil enables scanning seeds in constructor in driver
+    #   version 2.x. Driver version 3.x will recognize this option but
+    #   will ignore it and will never scan seeds in the constructor.
     #
     #   Note: the client is not fully constructed when sdam_proc is invoked,
     #   in particular the cluster is nil at this time. sdam_proc should

@@ -83,10 +83,17 @@ module Mongo
       # @return [ Hash ] options The server options.
       attr_reader :options
 
-      # @return [ Time ] last_scan The time of the last server scan.
+      # @return [ Time ] last_scan The time when the last server scan started.
       #
       # @since 2.4.0
       attr_reader :last_scan
+
+      # @return [ Time ] last_scan_completed_at The time when the last server
+      #   scan completed.
+      #
+      # @since 2.7.0
+      # @api private
+      attr_reader :last_scan_completed_at
 
       # The compressor is determined during the handshake, so it must be an attribute
       # of the connection.
@@ -120,8 +127,8 @@ module Mongo
       def run!
         @thread = Thread.new(heartbeat_frequency) do |i|
           loop do
-            sleep(i)
             scan!
+            sleep(i)
           end
         end
       end
@@ -149,6 +156,7 @@ module Mongo
         # ismaster call updates @average_round_trip_time
         result = ismaster
         @description = inspector.run(description, result, @average_round_trip_time)
+        @last_scan_completed_at = Time.now
         @description
       end
 

@@ -78,8 +78,17 @@ module Mongo
     attr_reader :monitoring
 
     # Get the description from the monitor and scan on monitor.
-    def_delegators :monitor, :description, :scan!, :heartbeat_frequency, :last_scan, :compressor
+    def_delegators :monitor,
+      :description,
+      :scan!,
+      :heartbeat_frequency,
+      :last_scan,
+      :compressor
     alias :heartbeat_frequency_seconds :heartbeat_frequency
+
+    # @api private
+    def_delegators :monitor,
+      :last_scan_completed_at
 
     # Delegate convenience methods to the monitor description.
     def_delegators :description,
@@ -194,7 +203,6 @@ module Mongo
         Monitoring::SERVER_OPENING,
         Monitoring::Event::ServerOpening.new(address, cluster.topology)
       )
-      monitor.scan!
       monitor.run!
       ObjectSpace.define_finalizer(self, self.class.finalize(monitor))
     end

@@ -35,7 +35,9 @@ describe Mongo::Server::Connection do
   declare_topology_double
 
   let(:server) do
-    Mongo::Server.new(address, cluster, monitoring, listeners, SpecConfig.instance.test_options)
+    Mongo::Server.new(address, cluster, monitoring, listeners,
+      SpecConfig.instance.test_options.merge(monitor: false),
+    )
   end
 
   let(:pool) do
@@ -45,6 +47,12 @@ describe Mongo::Server::Connection do
   describe '#connect!' do
 
     shared_examples_for 'keeps server type and topology' do
+      before do
+        # we want the server to not start in unknown state,
+        # hence scan it and transition to some other state here
+        server.scan!
+      end
+
       it 'keeps server type' do
         old_type = server.description.server_type
         expect(old_type).not_to eq(:unknown)
@@ -63,6 +71,12 @@ describe Mongo::Server::Connection do
     end
 
     shared_examples_for 'marks server unknown' do
+      before do
+        # we want the server to not start in unknown state,
+        # hence scan it and transition to some other state here
+        server.scan!
+      end
+
       it 'marks server unknown' do
         expect(server).not_to be_unknown
         error

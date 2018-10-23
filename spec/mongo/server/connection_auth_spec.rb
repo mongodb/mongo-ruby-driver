@@ -33,7 +33,8 @@ describe Mongo::Server::Connection do
   declare_topology_double
 
   let(:server) do
-    Mongo::Server.new(address, cluster, monitoring, listeners, SpecConfig.instance.test_options)
+    Mongo::Server.new(address, cluster, monitoring, listeners,
+      SpecConfig.instance.test_options.merge(monitor: false))
   end
 
   before do
