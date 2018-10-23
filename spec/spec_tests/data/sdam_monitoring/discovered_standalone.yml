@@ -1,5 +1,7 @@
-description: "Monitoring a forced standalone connection"
-uri: "mongodb://a:27017/?connect=direct"
+# This is a Ruby driver-specific test because other drivers
+# do not allow discovering a standalone topology.
+description: "Monitoring a discovered standalone connection"
+uri: "mongodb://a:27017"
 phases:
   -
     responses:
@@ -19,7 +21,7 @@ phases:
               topologyType: "Unknown"
               servers: []
             newDescription:
-              topologyType: "Single"
+              topologyType: "Unknown"
               servers:
                 -
                   address: "a:27017"
@@ -51,14 +53,14 @@ phases:
           topology_description_changed_event:
             topologyId: "42"
             previousDescription:
-              topologyType: "Single"
+              topologyType: "Unknown"
               servers:
                 -
                   address: "a:27017"
                   arbiters: []
                   hosts: []
                   passives: []
-                  type: "Unknown"
+                  type: "Standalone"
             newDescription:
               topologyType: "Single"
               servers:

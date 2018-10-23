@@ -71,7 +71,9 @@ module Mongo
         def run(description, ismaster, average_round_trip_time)
           new_description = Description.new(description.address, ismaster, average_round_trip_time)
           inspectors.each do |inspector|
-            inspector.run(description, new_description)
+            catch :done do
+              inspector.run(description, new_description)
+            end
           end
           new_description
         end
