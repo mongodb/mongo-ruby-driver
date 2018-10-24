@@ -24,7 +24,7 @@ describe Mongo::Server::Connection, retry: 3 do
       allow(cl).to receive(:app_metadata).and_return(app_metadata)
       allow(cl).to receive(:options).and_return({})
       allow(cl).to receive(:cluster_time).and_return(nil)
-      allow(cl).to receive(:update_cluster_time)
+      expect(cl).to receive(:update_cluster_time)
       pool = double('pool')
       allow(pool).to receive(:disconnect!)
       allow(cl).to receive(:pool).and_return(pool)
