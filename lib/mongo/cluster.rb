@@ -302,7 +302,10 @@ module Mongo
       "#<Mongo::Cluster:0x#{object_id} servers=#{servers} topology=#{topology.summary}>"
     end
 
+    # @note This method is experimental and subject to change.
+    #
     # @api experimental
+    # @since 2.7.0
     def summary
       "#<Cluster " +
       "topology=#{topology.summary} "+

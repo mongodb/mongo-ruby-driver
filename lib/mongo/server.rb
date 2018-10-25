@@ -231,7 +231,10 @@ module Mongo
       "#<Mongo::Server:0x#{object_id} address=#{address.host}:#{address.port}>"
     end
 
+    # @note This method is experimental and subject to change.
+    #
     # @api experimental
+    # @since 2.7.0
     def summary
       status = case
       when primary?

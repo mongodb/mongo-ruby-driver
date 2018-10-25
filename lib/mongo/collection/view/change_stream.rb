@@ -149,7 +149,8 @@ module Mongo
         # @note This method is experimental and subject to change.
         #
         # @return [ BSON::Document | nil ] A change stream document.
-        # @api private
+        # @api experimental
+        # @since 2.6.0
         def try_next
           raise StopIteration.new if closed?
           retried = false

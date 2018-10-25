@@ -341,6 +341,8 @@ module Mongo
 
     # Get a summary of the client state.
     #
+    # @note This method is experimental and subject to change.
+    #
     # @example Inspect the client.
     #   client.summary
     #
