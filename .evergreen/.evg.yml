@@ -715,7 +715,7 @@ buildvariants:
   matrix_name: "enterprise-auth-tests"
   matrix_spec:
     auth-and-ssl: "auth-and-ssl"
-    ruby: ["ruby-2.5", "jruby-9.2"]
+    ruby: ["ruby-1.9", "ruby-2.5", "jruby-9.1", "jruby-9.2"]
   display_name: "Enterprise Auth ${ruby}"
   run_on:
     - ubuntu1404-test
