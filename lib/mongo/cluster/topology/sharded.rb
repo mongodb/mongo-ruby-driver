@@ -39,7 +39,10 @@ module Mongo
           self.class.name.gsub(/.*::/, '')
         end
 
+        # @note This method is experimental and subject to change.
+        #
         # @api experimental
+        # @since 2.7.0
         def summary
           display_name.gsub(' ', '')
         end

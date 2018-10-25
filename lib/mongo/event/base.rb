@@ -24,6 +24,8 @@ module Mongo
       #
       # @return [ String ] String summary of the event.
       #
+      # @note This method is experimental and subject to change.
+      #
       # @since 2.7.0
       # @api experimental
       def summary
