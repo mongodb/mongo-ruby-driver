@@ -13,7 +13,6 @@
 # limitations under the License.
 
 require 'mongo/server/description/features'
-require 'mongo/server/description/inspector'
 
 module Mongo
   class Server

@@ -237,3 +237,11 @@ module Mongo
     end
   end
 end
+
+class SdamSpecEventPublisher
+  include Mongo::Event::Publisher
+
+  def initialize(event_listeners)
+    @event_listeners = event_listeners
+  end
+end

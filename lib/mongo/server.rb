@@ -21,6 +21,7 @@ module Mongo
   class Server
     extend Forwardable
     include Monitoring::Publishable
+    include Event::Publisher
 
     # The default time in seconds to timeout a connection attempt.
     #
@@ -378,8 +379,7 @@ module Mongo
     def unknown!
       old_description = description
       monitor.unknown!
-      inspector = Description::Inspector::DescriptionChanged.new(@event_listeners)
-      inspector.run(old_description, description)
+      publish(Event::DESCRIPTION_CHANGED, old_description, description)
     end
 
     # @api private

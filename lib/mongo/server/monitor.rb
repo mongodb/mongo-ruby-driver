@@ -22,6 +22,7 @@ module Mongo
     class Monitor
       include Loggable
       extend Forwardable
+      include Event::Publisher
 
       # The default time for a server to refresh its status is 10 seconds.
       #
@@ -47,7 +48,7 @@ module Mongo
       # @note Monitor must never be directly instantiated outside of a Server.
       #
       # @param [ Address ] address The address to monitor.
-      # @param [ Event::Listeners ] listeners The event listeners.
+      # @param [ Event::Listeners ] event_listeners The event listeners.
       # @param [ Monitoring ] monitoring The monitoring..
       # @param [ Hash ] options The options.
       # @option options [ Float ] :heartbeat_frequency The interval, in seconds,
@@ -55,12 +56,12 @@ module Mongo
       #
       # @since 2.0.0
       # @api private
-      def initialize(address, listeners, monitoring, options = {})
+      def initialize(address, event_listeners, monitoring, options = {})
         unless monitoring.is_a?(Monitoring)
           raise ArgumentError, "Wrong monitoring type: #{monitoring.inspect}"
         end
         @description = Description.new(address, {})
-        @inspector = Description::Inspector.new(listeners)
+        @event_listeners = event_listeners
         @monitoring = monitoring
         @options = options.freeze
         # This is a Mongo::Server::Monitor::Connection
@@ -76,9 +77,6 @@ module Mongo
       # @return [ Server::Description ] description The server
       #   description the monitor refreshes.
       attr_reader :description
-
-      # @return [ Description::Inspector ] inspector The description inspector.
-      attr_reader :inspector
 
       # @return [ Hash ] options The server options.
       attr_reader :options
@@ -155,9 +153,10 @@ module Mongo
         throttle_scan_frequency!
         # ismaster call updates @average_round_trip_time
         result = ismaster
-        @description = inspector.run(description, result, @average_round_trip_time)
+        new_description = Description.new(description.address, result, @average_round_trip_time)
+        publish(Event::DESCRIPTION_CHANGED, description, new_description)
         @last_scan_completed_at = Time.now
-        @description
+        @description = new_description
       end
 
       # Sets server description to unknown.

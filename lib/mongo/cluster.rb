@@ -685,77 +685,98 @@ module Mongo
     #
     # @since 2.0.6
     def standalone_discovered(previous_description, updated_description)
-      servers_list.each do |server|
-        if server.address == updated_description.address
-          server.update_description(updated_description)
-          publish_sdam_event(
-            Monitoring::SERVER_DESCRIPTION_CHANGED,
-            Monitoring::Event::ServerDescriptionChanged.new(
-              updated_description.address,
-              topology,
-              previous_description,
-              updated_description,
-            )
-          )
-        end
-      end
-      if topology.unknown?
-        if seeds.length == 1
-          update_topology(
-            Topology::Single.new(topology.options, topology.monitoring, self))
-        end
-      end
-      throw :done
       topology
     end
 
     # Handles a change in server description.
     #
-    # @param [ Server::Description ] previous_description Previous server description.
-    # @param [ Server::Description ] updated_description The changed description.
+    # @param [ Server::Description ] previous_desc Previous server description.
+    # @param [ Server::Description ] updated_desc The new description.
     #
     # @api private
-    def server_description_changed(previous_description, updated_description)
+    def server_description_changed(previous_desc, updated_desc)
+      # When a server description change leads to a topology type change,
+      # the topology is changed first (i.e. as visible through SDAM events),
+      # with the server being present in the new topology as unknown,
+      # and the server is then changed in the new topology to its correct type.
+      if updated_desc.standalone? && !previous_desc.standalone?
+        # standalone discovered
+        if topology.unknown? && seeds.length == 1
+          update_topology(
+            Topology::Single.new(topology.options, topology.monitoring, self))
+        else
+          # TODO warn that the discovered standalone is dropped
+        end
+      end
+
+      if updated_desc != previous_desc && (!updated_desc.unknown? || !previous_desc.unknown?)
+        # server description changed
+        # transitioning from an unknown to another unknown does not
+        # generate sdam events, apparently
+        handle_server_description_changed(previous_desc, updated_desc)
+      end
+
+      if updated_desc.primary? && !previous_desc.primary? ||
+        updated_desc.mongos? && !previous_desc.mongos?
+      then
+        elect_primary!(updated_desc)
+      end
+
+      if !updated_desc.unknown? && previous_desc.unknown?
+        if topology.unknown? || topology.single?
+          publish_sdam_event(Monitoring::TOPOLOGY_CHANGED,
+            Monitoring::Event::TopologyChanged.new(topology, topology))
+        end
+      end
+    end
+
+    # Handles a change in server description.
+    #
+    # @param [ Server::Description ] previous_desc Previous server description.
+    # @param [ Server::Description ] updated_desc The new description.
+    #
+    # @api private
+    def handle_server_description_changed(previous_desc, updated_desc)
       # https://jira.mongodb.org/browse/RUBY-1509
       servers_list.each do |server|
-        if server.address == updated_description.address
-          server.update_description(updated_description)
+        if server.address == updated_desc.address
+          server.update_description(updated_desc)
         end
       end
 
       publish_sdam_event(
         Monitoring::SERVER_DESCRIPTION_CHANGED,
         Monitoring::Event::ServerDescriptionChanged.new(
-          updated_description.address,
+          updated_desc.address,
           topology,
-          previous_description,
-          updated_description,
+          previous_desc,
+          updated_desc,
         )
       )
 
-      add_hosts(updated_description)
-      remove_hosts(updated_description)
+      add_hosts(updated_desc)
+      remove_hosts(updated_desc)
 
-      if updated_description.ghost? && !topology.is_a?(Topology::Sharded)
+      if updated_desc.ghost? && !topology.is_a?(Topology::Sharded)
         # https://jira.mongodb.org/browse/RUBY-1509
         servers.each do |server|
-          if server.address == updated_description.address
-            server.update_description(updated_description)
+          if server.address == updated_desc.address
+            server.update_description(updated_desc)
           end
         end
       end
 
       if topology.is_a?(::Mongo::Cluster::Topology::Unknown) &&
-        updated_description.replica_set_name &&
-        updated_description.replica_set_name != ''
+        updated_desc.replica_set_name &&
+        updated_desc.replica_set_name != ''
       then
-        transition_to_replica_set(updated_description)
+        transition_to_replica_set(updated_desc)
 =begin pending further refactoring
       elsif topology.is_a?(Cluster::Topology::ReplicaSetWithPrimary) &&
-        (updated_description.unknown? ||
-          updated_description.standalone? ||
-          updated_description.mongos? ||
-          updated_description.ghost?)
+        (updated_desc.unknown? ||
+          updated_desc.standalone? ||
+          updated_desc.mongos? ||
+          updated_desc.ghost?)
       then
         # here the unknown server is already removed from the topology
         check_if_has_primary
@@ -773,11 +794,8 @@ module Mongo
     end
 
     # @api private
+    # @deprecated
     def member_discovered
-      if topology.unknown? || topology.single?
-        publish_sdam_event(Monitoring::TOPOLOGY_CHANGED,
-          Monitoring::Event::TopologyChanged.new(topology, topology))
-      end
     end
 
     private
