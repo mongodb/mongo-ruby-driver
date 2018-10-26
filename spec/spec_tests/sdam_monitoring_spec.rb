@@ -44,8 +44,11 @@ describe 'SDAM Monitoring' do
                          )
 
               monitor = server.instance_variable_get(:@monitor)
-              description = monitor.inspector.run(server.description, response.ismaster, 0.5)
-              monitor.instance_variable_set(:@description, description)
+              new_description = Mongo::Server::Description.new(
+                server.description.address, response.ismaster, 0.5)
+              publisher = SdamSpecEventPublisher.new(@client.cluster.send(:event_listeners))
+              publisher.publish(Mongo::Event::DESCRIPTION_CHANGED, server.description, new_description)
+              monitor.instance_variable_set(:@description, new_description)
             end
           end
 
