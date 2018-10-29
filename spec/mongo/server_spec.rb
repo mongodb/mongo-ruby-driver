@@ -125,6 +125,22 @@ describe Mongo::Server do
     it 'creates monitor with monitoring app metadata' do
       expect(server.monitor.options[:app_metadata]).to be_a(Mongo::Server::Monitor::AppMetadata)
     end
+
+    context 'monitoring_io: false' do
+      let(:server) do
+        described_class.new(
+          address,
+          cluster,
+          monitoring,
+          listeners,
+          SpecConfig.instance.test_options.merge(monitoring_io: false)
+        )
+      end
+
+      it 'does not create monitoring thread' do
+        expect(server.monitor.instance_variable_get('@thread')).to be nil
+      end
+    end
   end
 
   describe '#scan!' do

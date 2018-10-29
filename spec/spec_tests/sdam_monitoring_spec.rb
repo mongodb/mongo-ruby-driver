@@ -19,7 +19,7 @@ describe 'SDAM Monitoring' do
           client.subscribe(Mongo::Monitoring::TOPOLOGY_CHANGED, @subscriber)
         end
         @client = Mongo::Client.new(spec.uri_string,
-          sdam_proc: sdam_proc,
+          sdam_proc: sdam_proc, monitoring_io: false,
           heartbeat_frequency: 100, connect_timeout: 0.1)
       end
 

@@ -46,6 +46,11 @@ module Mongo
     #
     # @option options [ Boolean ] :monitor For internal driver use only:
     #   whether to monitor the server after instantiating it.
+    # @option options [ true, false ] :monitoring_io For internal driver
+    #   use only. Set to false to prevent SDAM-related I/O from being
+    #   done by this server. Note: setting this option to false will make
+    #   the server non-functional. It is intended for use in tests which
+    #   manually invoke SDAM state transitions.
     #
     # @since 2.0.0
     def initialize(address, cluster, monitoring, event_listeners, options = {})
@@ -216,8 +221,10 @@ module Mongo
         Monitoring::SERVER_OPENING,
         Monitoring::Event::ServerOpening.new(address, cluster.topology)
       )
-      monitor.run!
-      ObjectSpace.define_finalizer(self, self.class.finalize(monitor))
+      if options[:monitoring_io] != false
+        monitor.run!
+        ObjectSpace.define_finalizer(self, self.class.finalize(monitor))
+      end
     end
 
     # Get a pretty printed server inspection.

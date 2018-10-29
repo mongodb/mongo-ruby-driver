@@ -75,7 +75,8 @@ module Mongo
       :user,
       :wait_queue_timeout,
       :write,
-      :zlib_compression_level
+      :zlib_compression_level,
+      :monitoring_io,
     ].freeze
 
     # The compression algorithms supported by the driver.
@@ -292,6 +293,11 @@ module Mongo
     #   in particular the cluster is nil at this time. sdam_proc should
     #   limit itself to calling #subscribe and #unsubscribe methods on the
     #   client only.
+    # @option options [ true, false ] :monitoring_io For internal driver
+    #   use only. Set to false to prevent SDAM-related I/O from being
+    #   done by this client or servers under it. Note: setting this option
+    #   to false will make the client non-functional. It is intended for
+    #   use in tests which manually invoke SDAM state transitions.
     #
     # @since 2.0.0
     def initialize(addresses_or_uri, options = Options::Redacted.new)
