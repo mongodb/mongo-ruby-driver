@@ -89,6 +89,16 @@ describe Mongo::Client do
         c.close
       end
     end
+
+    context 'with monitoring_io: false' do
+      let(:client) do
+        new_local_client(['127.0.0.1:27017'], monitoring_io: false)
+      end
+
+      it 'passes monitoring_io: false to cluster' do
+        expect(client.cluster.options[:monitoring_io]).to be false
+      end
+    end
   end
 
   describe '#initialize' do

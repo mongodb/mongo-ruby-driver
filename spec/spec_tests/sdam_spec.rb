@@ -29,17 +29,10 @@ describe 'Server Discovery and Monitoring' do
       before(:all) do
         # Since we supply all server descriptions and drive events,
         # background monitoring only gets in the way. Disable it.
-        # Client does complain about monitor being an unupported option,
-        # but passes it down to server nonetheless.
-        @client = Mongo::Client.new(spec.uri_string, scan: false, monitor: false)
-        @client.cluster.instance_variable_get('@periodic_executor').stop!(true)
+        @client = Mongo::Client.new(spec.uri_string, monitoring_io: false)
         client_options = @client.instance_variable_get(:@options)
         @client.instance_variable_set(:@options, client_options.merge(heartbeat_frequency: 100, connect_timeout: 0.1))
         @client.cluster.instance_variable_set(:@options, client_options.merge(heartbeat_frequency: 100, connect_timeout: 0.1))
-        @client.cluster.instance_variable_get(:@servers).each do |s|
-          s.disconnect!(true)
-          s.unknown!
-        end
       end
 
       after(:all) do
@@ -61,8 +54,6 @@ describe 'Server Discovery and Monitoring' do
                     @client.cluster.send(:event_listeners),
                     @client.cluster.options,
                 )
-                server.disconnect!
-                server.unknown!
               end
               monitor = server.instance_variable_get(:@monitor)
               new_description = Mongo::Server::Description.new(

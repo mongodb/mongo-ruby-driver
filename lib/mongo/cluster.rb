@@ -80,6 +80,11 @@ module Mongo
     #   this option to nil enables scanning seeds in constructor in driver
     #   version 2.x. Driver version 3.x will recognize this option but
     #   will ignore it and will never scan seeds in the constructor.
+    # @option options [ true, false ] :monitoring_io For internal driver
+    #   use only. Set to false to prevent SDAM-related I/O from being
+    #   done by this cluster or servers under it. Note: setting this option
+    #   to false will make the cluster non-functional. It is intended for
+    #   use in tests which manually invoke SDAM state transitions.
     #
     # @since 2.0.0
     def initialize(seeds, monitoring, options = Options::Redacted.new)
@@ -115,6 +120,16 @@ module Mongo
         Monitoring::TOPOLOGY_CHANGED,
         Monitoring::Event::TopologyChanged.new(opening_topology, @topology)
       ) if seeds.size >= 1
+
+      if options[:monitoring_io] == false
+        # Omit periodic executor construction, because without servers
+        # no commands can be sent to the cluster and there shouldn't ever
+        # be anything that needs to be cleaned up.
+        #
+        # Also omit legacy single round of SDAM on the main thread,
+        # as it would race with tests that mock SDAM responses.
+        return
+      end
 
       @cursor_reaper = CursorReaper.new
       @socket_reaper = SocketReaper.new(self)
