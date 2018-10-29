@@ -49,31 +49,6 @@ describe Mongo::Server::Description do
     end
   end
 
-  describe '#arbiter?' do
-
-    context 'when the server is an arbiter' do
-
-      let(:description) do
-        described_class.new(address, { 'arbiterOnly' => true, 'setName' => 'test' })
-      end
-
-      it 'returns true' do
-        expect(description).to be_arbiter
-      end
-    end
-
-    context 'when the server is not an arbiter' do
-
-      let(:description) do
-        described_class.new(address, replica)
-      end
-
-      it 'returns false' do
-        expect(description).to_not be_arbiter
-      end
-    end
-  end
-
   describe '#arbiters' do
 
     context 'when the replica set has arbiters' do
@@ -116,60 +91,6 @@ describe Mongo::Server::Description do
 
       it 'normalizes the addresses to lowercase' do
         expect(description.arbiters).to eq(['server:27017'])
-      end
-    end
-  end
-
-  describe '#ghost?' do
-
-    context 'when the server is a ghost' do
-
-      let(:config) do
-        { 'isreplicaset' => true }
-      end
-
-      let(:description) do
-        described_class.new(address, config)
-      end
-
-      it 'returns true' do
-        expect(description).to be_ghost
-      end
-    end
-
-    context 'when the server is not a ghost' do
-
-      let(:description) do
-        described_class.new(address, replica)
-      end
-
-      it 'returns false' do
-        expect(description).to_not be_ghost
-      end
-    end
-  end
-
-  describe '#hidden?' do
-
-    context 'when the server is hidden' do
-
-      let(:description) do
-        described_class.new(address, { 'hidden' => true })
-      end
-
-      it 'returns true' do
-        expect(description).to be_hidden
-      end
-    end
-
-    context 'when the server is not hidden' do
-
-      let(:description) do
-        described_class.new(address, replica)
-      end
-
-      it 'returns false' do
-        expect(description).to_not be_hidden
       end
     end
   end
@@ -318,60 +239,6 @@ describe Mongo::Server::Description do
     end
   end
 
-  describe '#mongos?' do
-
-    context 'when the server is a mongos' do
-
-      let(:config) do
-        { 'msg' => 'isdbgrid', 'ismaster' => true }
-      end
-
-      let(:description) do
-        described_class.new(address, config)
-      end
-
-      it 'returns true' do
-        expect(description).to be_mongos
-      end
-    end
-
-    context 'when the server is not a mongos' do
-
-      let(:description) do
-        described_class.new(address, replica)
-      end
-
-      it 'returns false' do
-        expect(description).to_not be_mongos
-      end
-    end
-  end
-
-  describe '#passive?' do
-
-    context 'when the server is passive' do
-
-      let(:description) do
-        described_class.new(address, { 'passive' => true })
-      end
-
-      it 'returns true' do
-        expect(description).to be_passive
-      end
-    end
-
-    context 'when the server is not passive' do
-
-      let(:description) do
-        described_class.new(address, replica)
-      end
-
-      it 'returns false' do
-        expect(description).to_not be_passive
-      end
-    end
-  end
-
   describe '#passives' do
 
     context 'when passive servers exists' do
@@ -424,17 +291,6 @@ describe Mongo::Server::Description do
 
   describe '#primary?' do
 
-    context 'when the server is not a primary' do
-
-      let(:description) do
-        described_class.new(address, { 'ismaster' => false })
-      end
-
-      it 'returns false' do
-        expect(description).to_not be_primary
-      end
-    end
-
     context 'when the server is a primary' do
 
       context 'when the hostname contains no capital letters' do
@@ -452,7 +308,7 @@ describe Mongo::Server::Description do
 
         let(:description) do
           described_class.new('localhost:27017',
-                              { 'ismaster' => true,
+                              { 'ismaster' => true, 'ok' => 1,
                                 'primary' => 'LOCALHOST:27017',
                                 'setName' => 'itsASet!'})
         end
@@ -504,31 +360,6 @@ describe Mongo::Server::Description do
     end
   end
 
-  describe '#secondary?' do
-
-    context 'when the server is not a secondary' do
-
-      let(:description) do
-        described_class.new(address, { 'secondary' => false })
-      end
-
-      it 'returns true' do
-        expect(description).to_not be_secondary
-      end
-    end
-
-    context 'when the server is a secondary' do
-
-      let(:description) do
-        described_class.new(address, { 'secondary' => true, 'setName' => 'test' })
-      end
-
-      it 'returns false' do
-        expect(description).to be_secondary
-      end
-    end
-  end
-
   describe '#servers' do
 
     let(:config) do
@@ -546,37 +377,12 @@ describe Mongo::Server::Description do
     end
   end
 
-  describe '#standalone?' do
-
-    context 'when the server is standalone' do
-
-      let(:description) do
-        described_class.new(address, { 'ismaster' => true, 'ok' => 1 })
-      end
-
-      it 'returns true' do
-        expect(description).to be_standalone
-      end
-    end
-
-    context 'when the server is part of a replica set' do
-
-      let(:description) do
-        described_class.new(address, replica)
-      end
-
-      it 'returns false' do
-        expect(description).to_not be_standalone
-      end
-    end
-  end
-
   describe '#server_type' do
 
     context 'when the server is an arbiter' do
 
       let(:description) do
-        described_class.new(address, { 'arbiterOnly' => true, 'setName' => 'test' })
+        described_class.new(address, { 'arbiterOnly' => true, 'setName' => 'test', 'ok' => 1 })
       end
 
       it 'returns :arbiter' do
@@ -587,7 +393,7 @@ describe Mongo::Server::Description do
     context 'when the server is a ghost' do
 
       let(:description) do
-        described_class.new(address, { 'isreplicaset' => true })
+        described_class.new(address, { 'isreplicaset' => true, 'ok' => 1 })
       end
 
       it 'returns :ghost' do
@@ -598,7 +404,7 @@ describe Mongo::Server::Description do
     context 'when the server is a mongos' do
 
       let(:config) do
-        { 'msg' => 'isdbgrid', 'ismaster' => true }
+        { 'msg' => 'isdbgrid', 'ismaster' => true, 'ok' => 1 }
       end
 
       let(:description) do
@@ -624,7 +430,7 @@ describe Mongo::Server::Description do
     context 'when the server is a secondary' do
 
       let(:description) do
-        described_class.new(address, { 'secondary' => true, 'setName' => 'test' })
+        described_class.new(address, { 'secondary' => true, 'setName' => 'test', 'ok' => 1 })
       end
 
       it 'returns :secondary' do
@@ -651,46 +457,6 @@ describe Mongo::Server::Description do
 
       it 'returns :unknown' do
         expect(description.server_type).to eq(:unknown)
-      end
-    end
-  end
-
-  describe '#unknown?' do
-
-    context 'when the description has no configuration' do
-
-      let(:description) do
-        described_class.new(address)
-      end
-
-      it 'returns true' do
-        expect(description).to be_unknown
-      end
-    end
-
-    context 'when the command was not ok' do
-
-      let(:description) do
-        described_class.new(address, { 'ok' => 0 })
-      end
-
-      it 'returns true' do
-        expect(description).to be_unknown
-      end
-    end
-
-    context 'when the description has a configuration' do
-
-      let(:config) do
-        { 'hosts' => [ '127.0.0.1:27019', '127.0.0.1:27020' ], 'ok' => 1 }
-      end
-
-      let(:description) do
-        described_class.new(address, config)
-      end
-
-      it 'returns false' do
-        expect(description).to_not be_unknown
       end
     end
   end
