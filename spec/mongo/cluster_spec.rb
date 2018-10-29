@@ -10,6 +10,11 @@ describe Mongo::Cluster do
     described_class.new(SpecConfig.instance.addresses, monitoring, SpecConfig.instance.test_options)
   end
 
+  let(:cluster_without_io) do
+    described_class.new(SpecConfig.instance.addresses, monitoring,
+      SpecConfig.instance.test_options.merge(monitoring_io: false))
+  end
+
   describe '#==' do
 
     context 'when the other is a cluster' do
@@ -19,22 +24,24 @@ describe Mongo::Cluster do
         context 'when the options are the same' do
 
           let(:other) do
-            described_class.new(SpecConfig.instance.addresses, monitoring, SpecConfig.instance.test_options)
+            described_class.new(SpecConfig.instance.addresses, monitoring,
+              SpecConfig.instance.test_options.merge(monitoring_io: false))
           end
 
           it 'returns true' do
-            expect(cluster).to eq(other)
+            expect(cluster_without_io).to eq(other)
           end
         end
 
         context 'when the options are not the same' do
 
           let(:other) do
-            described_class.new([ '127.0.0.1:27017' ], monitoring, SpecConfig.instance.test_options.merge(:replica_set => 'test'))
+            described_class.new([ '127.0.0.1:27017' ], monitoring,
+              SpecConfig.instance.test_options.merge(replica_set: 'test', monitoring_io: false))
           end
 
           it 'returns false' do
-            expect(cluster).to_not eq(other)
+            expect(cluster_without_io).to_not eq(other)
           end
         end
       end
@@ -42,11 +49,12 @@ describe Mongo::Cluster do
       context 'when the addresses are not the same' do
 
         let(:other) do
-          described_class.new([ '127.0.0.1:27999' ], monitoring, SpecConfig.instance.test_options)
+          described_class.new([ '127.0.0.1:27999' ], monitoring,
+            SpecConfig.instance.test_options.merge(monitoring_io: false))
         end
 
         it 'returns false' do
-          expect(cluster).to_not eq(other)
+          expect(cluster_without_io).to_not eq(other)
         end
       end
     end
@@ -54,7 +62,7 @@ describe Mongo::Cluster do
     context 'when the other is not a cluster' do
 
       it 'returns false' do
-        expect(cluster).to_not eq('test')
+        expect(cluster_without_io).to_not eq('test')
       end
     end
   end
@@ -66,14 +74,14 @@ describe Mongo::Cluster do
     end
 
     it 'delegates to the topology' do
-      expect(cluster.has_readable_server?).to eq(cluster.topology.has_readable_server?(cluster))
+      expect(cluster_without_io.has_readable_server?).to eq(cluster_without_io.topology.has_readable_server?(cluster_without_io))
     end
   end
 
   describe '#has_writable_server?' do
 
     it 'delegates to the topology' do
-      expect(cluster.has_writable_server?).to eq(cluster.topology.has_writable_server?(cluster))
+      expect(cluster_without_io.has_writable_server?).to eq(cluster_without_io.topology.has_writable_server?(cluster_without_io))
     end
   end
 
@@ -84,8 +92,8 @@ describe Mongo::Cluster do
     end
 
     it 'displays the cluster seeds and topology' do
-      expect(cluster.inspect).to include('topology')
-      expect(cluster.inspect).to include('servers')
+      expect(cluster_without_io.inspect).to include('topology')
+      expect(cluster_without_io.inspect).to include('servers')
     end
   end
 
@@ -101,7 +109,7 @@ describe Mongo::Cluster do
         described_class.new(
           [ '127.0.0.1:27017' ],
           monitoring,
-          SpecConfig.instance.test_options.merge(:connect => :replica_set, :replica_set => 'testing')
+          {monitoring_io: false, connect: :replica_set, replica_set: 'testing'},
         )
       end
 
@@ -113,7 +121,11 @@ describe Mongo::Cluster do
     context 'when the option is not provided' do
 
       let(:cluster) do
-        described_class.new([ '127.0.0.1:27017' ], monitoring, SpecConfig.instance.test_options.merge(connect: :direct).delete_if { |k| k == :replica_set })
+        described_class.new(
+          [ '127.0.0.1:27017' ],
+          monitoring,
+          {monitoring_io: false, connect: :direct},
+        )
       end
 
       it 'returns nil' do
@@ -182,51 +194,51 @@ describe Mongo::Cluster do
       end
 
       before do
-        cluster.instance_variable_set(:@servers, servers)
-        cluster.instance_variable_set(:@topology, topology)
+        cluster_without_io.instance_variable_set(:@servers, servers)
+        cluster_without_io.instance_variable_set(:@topology, topology)
       end
 
       context 'when topology is Single' do
 
         let(:topology) do
-          Mongo::Cluster::Topology::Single.new({}, monitoring, cluster)
+          Mongo::Cluster::Topology::Single.new({}, monitoring, cluster_without_io)
         end
 
         it 'returns an empty array' do
-          expect(cluster.servers).to eq([])
+          expect(cluster_without_io.servers).to eq([])
         end
       end
 
       context 'when topology is ReplicaSetNoPrimary' do
 
         let(:topology) do
-          Mongo::Cluster::Topology::ReplicaSetNoPrimary.new({}, monitoring, cluster)
+          Mongo::Cluster::Topology::ReplicaSetNoPrimary.new({}, monitoring, cluster_without_io)
         end
 
         it 'returns an empty array' do
-          expect(cluster.servers).to eq([])
+          expect(cluster_without_io.servers).to eq([])
         end
       end
 
       context 'when topology is Sharded' do
 
         let(:topology) do
-          Mongo::Cluster::Topology::Sharded.new({}, monitoring, cluster)
+          Mongo::Cluster::Topology::Sharded.new({}, monitoring, cluster_without_io)
         end
 
         it 'returns an empty array' do
-          expect(cluster.servers).to eq([])
+          expect(cluster_without_io.servers).to eq([])
         end
       end
 
       context 'when topology is Unknown' do
 
         let(:topology) do
-          Mongo::Cluster::Topology::Unknown.new({}, monitoring, cluster)
+          Mongo::Cluster::Topology::Unknown.new({}, monitoring, cluster_without_io)
         end
 
         it 'returns an empty array' do
-          expect(cluster.servers).to eq([])
+          expect(cluster_without_io.servers).to eq([])
         end
       end
     end
@@ -381,13 +393,13 @@ describe Mongo::Cluster do
   describe '#app_metadata' do
 
     it 'returns an AppMetadata object' do
-      expect(cluster.app_metadata).to be_a(Mongo::Server::AppMetadata)
+      expect(cluster_without_io.app_metadata).to be_a(Mongo::Server::AppMetadata)
     end
 
     context 'when the client has an app_name set' do
 
       let(:cluster) do
-        authorized_client.with(app_name: 'cluster_test').cluster
+        authorized_client.with(app_name: 'cluster_test', monitoring_io: false).cluster
       end
 
       it 'constructs an AppMetadata object with the app_name' do
@@ -490,7 +502,8 @@ describe Mongo::Cluster do
   describe '#update_cluster_time' do
 
     let(:cluster) do
-      described_class.new(SpecConfig.instance.addresses, monitoring, SpecConfig.instance.test_options.merge(heartbeat_frequency: 1000))
+      described_class.new(SpecConfig.instance.addresses, monitoring,
+        SpecConfig.instance.test_options.merge(heartbeat_frequency: 1000, monitoring_io: false))
     end
 
     let(:result) do
