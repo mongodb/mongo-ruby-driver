@@ -216,7 +216,7 @@ module Mongo
       #
       # @since 2.0.0
       def arbiter?
-        !!config[ARBITER] && !replica_set_name.nil?
+        ok? && !!config[ARBITER] && !replica_set_name.nil?
       end
 
       # Get a list of all arbiters in the replica set.
@@ -240,7 +240,7 @@ module Mongo
       #
       # @since 2.0.0
       def ghost?
-        !!config[REPLICA_SET]
+        ok? && !!config[REPLICA_SET]
       end
 
       # Will return true if the server is hidden.
@@ -252,7 +252,7 @@ module Mongo
       #
       # @since 2.0.0
       def hidden?
-        !!config[HIDDEN]
+        ok? && !!config[HIDDEN]
       end
 
       # Get a list of all servers in the replica set.
@@ -420,7 +420,7 @@ module Mongo
       #
       # @since 2.0.0
       def mongos?
-        config[MESSAGE] == MONGOS_MESSAGE
+        ok? && config[MESSAGE] == MONGOS_MESSAGE
       end
 
       # Is the description of type other.
@@ -432,6 +432,12 @@ module Mongo
       #
       # @since 2.0.0
       def other?
+        # The SDAM spec is slightly confusing on what "other" means,
+        # but it's referred to it as "RSOther" which means a non-RS member
+        # cannot be "other".
+        if unknown? || replica_set_name.nil?
+          return false
+        end
         (!primary? && !secondary? && !passive? && !arbiter?) ||
           (hidden? && !replica_set_name.nil?)
       end
@@ -445,7 +451,7 @@ module Mongo
       #
       # @since 2.0.0
       def passive?
-        !!config[PASSIVE]
+        ok? && !!config[PASSIVE]
       end
 
       # Get a list of the passive servers in the cluster.
@@ -481,9 +487,10 @@ module Mongo
       #
       # @since 2.0.0
       def primary?
-        !!config[PRIMARY] &&
+        ok? &&
+          !!config[PRIMARY] &&
           (primary_host.nil? || primary_host == address.to_s) &&
-            !replica_set_name.nil?
+          !replica_set_name.nil?
       end
 
       # Get the name of the replica set the server belongs to, returns nil if
@@ -520,7 +527,7 @@ module Mongo
       #
       # @since 2.0.0
       def secondary?
-        !!config[SECONDARY] && !replica_set_name.nil?
+        ok? && !!config[SECONDARY] && !replica_set_name.nil?
       end
 
       # Returns the server type as a symbol.
@@ -562,8 +569,13 @@ module Mongo
       #
       # @since 2.0.0
       def unknown?
-        config.empty? || (config[Operation::Result::OK] &&
-                            config[Operation::Result::OK] != 1)
+        config.empty? || !ok?
+      end
+
+      # @api private
+      def ok?
+        config[Operation::Result::OK] &&
+          config[Operation::Result::OK] == 1 || false
       end
 
       # A result from another server's ismaster command before this server has
@@ -627,7 +639,7 @@ module Mongo
       #
       # @since 2.0.6
       def replica_set_member?
-        !(standalone? || mongos?)
+        ok? && !(standalone? || mongos?)
       end
 
       # Check if there is a mismatch between the address host and the me field.

@@ -41,19 +41,19 @@ describe Mongo::Cluster::Topology::ReplicaSetNoPrimary do
     end
 
     let(:mongos_description) do
-      Mongo::Server::Description.new(address, { 'msg' => 'isdbgrid' })
+      Mongo::Server::Description.new(address, { 'msg' => 'isdbgrid', 'ok' => 1 })
     end
 
     let(:standalone_description) do
-      Mongo::Server::Description.new(address, { 'ismaster' => true })
+      Mongo::Server::Description.new(address, { 'ismaster' => true, 'ok' => 1 })
     end
 
     let(:replica_set_description) do
-      Mongo::Server::Description.new(address, { 'ismaster' => true, 'setName' => 'testing' })
+      Mongo::Server::Description.new(address, { 'ismaster' => true, 'setName' => 'testing', 'ok' => 1 })
     end
 
     let(:replica_set_two_description) do
-      Mongo::Server::Description.new(address, { 'ismaster' => true, 'setName' => 'test' })
+      Mongo::Server::Description.new(address, { 'ismaster' => true, 'setName' => 'test', 'ok' => 1 })
     end
 
     before do
@@ -354,12 +354,12 @@ describe Mongo::Cluster::Topology::ReplicaSetNoPrimary do
     end
 
     let(:primary_description) do
-      Mongo::Server::Description.new(address, { 'ismaster' => true, 'setName' => 'testing' })
+      Mongo::Server::Description.new(address, { 'ismaster' => true, 'setName' => 'testing', 'ok' => 1 })
     end
 
     let(:secondary_description) do
       Mongo::Server::Description.new(address, { 'ismaster' => false, 'secondary' => true,
-                                                'setName' => 'testing' })
+                                                'setName' => 'testing', 'ok' => 1 })
     end
 
     let(:topology) do
@@ -367,8 +367,17 @@ describe Mongo::Cluster::Topology::ReplicaSetNoPrimary do
     end
 
     before do
+      primary.monitor.stop!
+      secondary.monitor.stop!
+
       primary.monitor.instance_variable_set(:@description, primary_description)
       secondary.monitor.instance_variable_set(:@description, secondary_description)
+
+      expect(primary_description.primary?).to be true
+      expect(secondary_description.secondary?).to be true
+
+      expect(primary.primary?).to be true
+      expect(secondary.secondary?).to be true
     end
 
     context 'when the list of servers does not include a primary' do

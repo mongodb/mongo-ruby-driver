@@ -39,11 +39,11 @@ describe Mongo::Cluster::Topology::Sharded do
   end
 
   let(:mongos_description) do
-    Mongo::Server::Description.new(address, { 'msg' => 'isdbgrid' })
+    Mongo::Server::Description.new(address, { 'msg' => 'isdbgrid', 'ok' => 1 })
   end
 
   let(:standalone_description) do
-    Mongo::Server::Description.new(address, { 'ismaster' => true })
+    Mongo::Server::Description.new(address, { 'ismaster' => true, 'ok' => 1 })
   end
 
   let(:replica_set_description) do
