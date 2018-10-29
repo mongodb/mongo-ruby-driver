@@ -38,12 +38,12 @@ module Mongo
       # This event publishes an event to add the cluster and logs the
       # configuration change.
       #
-      # @param [ Server::Description ] previous Previous server description.
-      # @param [ Server::Description ] updated The changed description.
+      # @param [ Server::Description ] previous_desc Previous server description.
+      # @param [ Server::Description ] updated_desc The changed description.
       #
       # @since 2.0.0
-      def handle(previous, updated)
-        cluster.server_description_changed(previous, updated)
+      def handle(previous_desc, updated_desc)
+        Mongo::Cluster::SdamFlow.new(cluster).server_description_changed(previous_desc, updated_desc)
       end
     end
   end
