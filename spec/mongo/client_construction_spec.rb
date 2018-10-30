@@ -12,7 +12,7 @@ describe Mongo::Client do
           :primary, :primary_preferred, :secondary, :secondary_preferred,  :nearest
         ].each do |sym|
           it "accepts #{sym} as symbol" do
-            client = new_local_client(['127.0.0.1:27017'],
+            client = new_local_client_nmio(['127.0.0.1:27017'],
               :read => {:mode => sym})
             # the key got converted to a string here
             expect(client.read_preference).to eq({'mode' => sym})
@@ -21,7 +21,7 @@ describe Mongo::Client do
           # string keys are not documented as being allowed
           # but the code accepts them
           it "accepts #{sym} as string" do
-            client = new_local_client(['127.0.0.1:27017'],
+            client = new_local_client_nmio(['127.0.0.1:27017'],
               :read => {:mode => sym.to_s})
             # the key got converted to a string here
             # the value remains a string
@@ -31,28 +31,28 @@ describe Mongo::Client do
 
         it 'rejects bogus read preference as symbol' do
           expect do
-            client = new_local_client(['127.0.0.1:27017'],
+            client = new_local_client_nmio(['127.0.0.1:27017'],
               :read => {:mode => :bogus})
           end.to raise_error(Mongo::Error::InvalidReadOption, 'Invalid read option: {"mode"=>:bogus}: mode bogus is not one of recognized modes')
         end
 
         it 'rejects bogus read preference as string' do
           expect do
-            client = new_local_client(['127.0.0.1:27017'],
+            client = new_local_client_nmio(['127.0.0.1:27017'],
               :read => {:mode => 'bogus'})
           end.to raise_error(Mongo::Error::InvalidReadOption, 'Invalid read option: {"mode"=>"bogus"}: mode bogus is not one of recognized modes')
         end
 
         it 'rejects read option specified as a string' do
           expect do
-            client = new_local_client(['127.0.0.1:27017'],
+            client = new_local_client_nmio(['127.0.0.1:27017'],
               :read => 'primary')
           end.to raise_error(Mongo::Error::InvalidReadOption, 'Invalid read option: primary: must be a hash')
         end
 
         it 'rejects read option specified as a symbol' do
           expect do
-            client = new_local_client(['127.0.0.1:27017'],
+            client = new_local_client_nmio(['127.0.0.1:27017'],
               :read => :primary)
           end.to raise_error(Mongo::Error::InvalidReadOption, 'Invalid read option: primary: must be a hash')
         end
@@ -112,7 +112,7 @@ describe Mongo::Client do
         end
 
         let(:client) do
-          new_local_client(SpecConfig.instance.addresses, authorized_client.options.merge(options))
+          new_local_client_nmio(SpecConfig.instance.addresses, authorized_client.options.merge(options))
         end
 
         it 'sets the option' do
@@ -702,7 +702,7 @@ describe Mongo::Client do
         end
 
         let(:client) do
-          new_local_client(uri)
+          new_local_client_nmio(uri)
         end
 
         it 'sets the correct cluster topology' do
@@ -713,7 +713,7 @@ describe Mongo::Client do
       context 'when an invalid option is provided' do
 
         let(:client) do
-          new_local_client(['127.0.0.1:27017'], :ssl => false, :invalid => :test)
+          new_local_client_nmio(['127.0.0.1:27017'], :ssl => false, :invalid => :test)
         end
 
         it 'does not set the option' do
@@ -818,7 +818,7 @@ describe Mongo::Client do
   describe '#use' do
 
     let(:client) do
-      new_local_client(['127.0.0.1:27017'], :database => SpecConfig.instance.test_db)
+      new_local_client_nmio(['127.0.0.1:27017'], :database => SpecConfig.instance.test_db)
     end
 
     shared_examples_for 'a database switching object' do
@@ -863,7 +863,7 @@ describe Mongo::Client do
   describe '#with' do
 
     let(:client) do
-      new_local_client(['127.0.0.1:27017'], :database => SpecConfig.instance.test_db)
+      new_local_client_nmio(['127.0.0.1:27017'], :database => SpecConfig.instance.test_db)
     end
 
     context 'when providing nil' do
@@ -911,7 +911,7 @@ describe Mongo::Client do
     context 'when the write concern is not changed' do
 
       let(:client) do
-        new_local_client(
+        new_local_client_nmio(
           ['127.0.0.1:27017'],
           :read => { :mode => :secondary }, :write => { :w => 1 }, :database => SpecConfig.instance.test_db
         )
@@ -924,12 +924,14 @@ describe Mongo::Client do
       let(:new_options) do
         Mongo::Options::Redacted.new(:read => { :mode => :primary },
                                              :write => { :w => 1 },
+                                             monitoring_io: false,
                                              :database => SpecConfig.instance.test_db)
       end
 
       let(:original_options) do
         Mongo::Options::Redacted.new(:read => { :mode => :secondary },
                                              :write => { :w => 1 },
+                                             monitoring_io: false,
                                              :database => SpecConfig.instance.test_db)
       end
 
@@ -1036,6 +1038,9 @@ describe Mongo::Client do
     end
 
     context 'when new client has a new cluster' do
+      let(:client) do
+        new_local_client(['127.0.0.1:27017'], :database => SpecConfig.instance.test_db)
+      end
       let(:new_client) do
         client.with(app_name: 'client_construction_spec').tap do |new_client|
           expect(new_client.cluster).not_to eql(client.cluster)

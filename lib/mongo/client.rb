@@ -300,7 +300,12 @@ module Mongo
     #   use in tests which manually invoke SDAM state transitions.
     #
     # @since 2.0.0
-    def initialize(addresses_or_uri, options = Options::Redacted.new)
+    def initialize(addresses_or_uri, options = nil)
+      if options
+        options = options.dup
+      else
+        options = {}
+      end
       Mongo::Lint.validate_underscore_read_preference(options[:read])
       if addresses_or_uri.is_a?(::String)
         uri = URI.get(addresses_or_uri, options)
@@ -309,7 +314,6 @@ module Mongo
       else
         addresses = addresses_or_uri
       end
-      options = options.dup
       # Special handling for sdam_proc as it is only used during client
       # construction
       sdam_proc = options.delete(:sdam_proc)
