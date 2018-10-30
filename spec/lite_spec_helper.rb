@@ -70,6 +70,8 @@ require 'support/gridfs'
 require 'support/transactions'
 require 'support/change_streams'
 require 'support/common_shortcuts'
+require 'support/client_registry'
+require 'support/client_registry_macros'
 
 if SpecConfig.instance.mri?
   require 'timeout_interrupt'
@@ -85,6 +87,7 @@ RSpec.configure do |config|
 
   config.extend(CommonShortcuts)
   config.extend(LiteConstraints)
+  config.include(ClientRegistryMacros)
 
   if SpecConfig.instance.ci?
     config.add_formatter(RSpec::Core::Formatters::JsonFormatter, File.join(File.dirname(__FILE__), '../tmp/rspec.json'))
