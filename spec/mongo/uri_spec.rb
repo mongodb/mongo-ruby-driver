@@ -412,7 +412,8 @@ describe Mongo::URI do
         end
 
         it 'sets the options on a client created with the uri' do
-          expect(new_local_client(string).options[:write]).to eq(concern)
+          client = Mongo::Client.new(string, monitoring_io: false)
+          expect(client.options[:write]).to eq(concern)
         end
       end
 
@@ -425,7 +426,8 @@ describe Mongo::URI do
         end
 
         it 'sets the options on a client created with the uri' do
-          expect(new_local_client(string).options[:write]).to eq(concern)
+          client = Mongo::Client.new(string, monitoring_io: false)
+          expect(client.options[:write]).to eq(concern)
         end
       end
 
@@ -438,7 +440,8 @@ describe Mongo::URI do
         end
 
         it 'sets the options on a client created with the uri' do
-          expect(new_local_client(string).options[:write]).to eq(concern)
+          client = Mongo::Client.new(string, monitoring_io: false)
+          expect(client.options[:write]).to eq(concern)
         end
       end
 
@@ -451,7 +454,8 @@ describe Mongo::URI do
         end
 
         it 'sets the options on a client created with the uri' do
-          expect(new_local_client(string).options[:write]).to eq(concern)
+          client = Mongo::Client.new(string, monitoring_io: false)
+          expect(client.options[:write]).to eq(concern)
         end
       end
 
@@ -465,7 +469,8 @@ describe Mongo::URI do
         end
 
         it 'sets the options on a client created with the uri' do
-          expect(new_local_client(string).options[:write]).to eq(concern)
+          client = Mongo::Client.new(string, monitoring_io: false)
+          expect(client.options[:write]).to eq(concern)
         end
       end
     end
@@ -482,7 +487,8 @@ describe Mongo::URI do
         end
 
         it 'sets the options on a client created with the uri' do
-          expect(new_local_client(string).options[:read]).to eq(read)
+          client = Mongo::Client.new(string, monitoring_io: false)
+          expect(client.options[:read]).to eq(read)
         end
       end
 
@@ -495,7 +501,8 @@ describe Mongo::URI do
         end
 
         it 'sets the options on a client created with the uri' do
-          expect(new_local_client(string).options[:read]).to eq(read)
+          client = Mongo::Client.new(string, monitoring_io: false)
+          expect(client.options[:read]).to eq(read)
         end
       end
 
@@ -508,7 +515,8 @@ describe Mongo::URI do
         end
 
         it 'sets the options on a client created with the uri' do
-          expect(new_local_client(string).options[:read]).to eq(read)
+          client = Mongo::Client.new(string, monitoring_io: false)
+          expect(client.options[:read]).to eq(read)
         end
       end
 
@@ -521,7 +529,8 @@ describe Mongo::URI do
         end
 
         it 'sets the options on a client created with the uri' do
-          expect(new_local_client(string).options[:read]).to eq(read)
+          client = Mongo::Client.new(string, monitoring_io: false)
+          expect(client.options[:read]).to eq(read)
         end
       end
 
@@ -534,7 +543,8 @@ describe Mongo::URI do
         end
 
         it 'sets the options on a client created with the uri' do
-          expect(new_local_client(string).options[:read]).to eq(read)
+          client = Mongo::Client.new(string, monitoring_io: false)
+          expect(client.options[:read]).to eq(read)
         end
       end
     end
@@ -555,7 +565,8 @@ describe Mongo::URI do
         end
 
         it 'sets the options on a client created with the uri' do
-          expect(new_local_client(string).options[:read]).to eq(read)
+          client = Mongo::Client.new(string, monitoring_io: false)
+          expect(client.options[:read]).to eq(read)
         end
       end
 
@@ -573,7 +584,8 @@ describe Mongo::URI do
         end
 
         it 'sets the options on a client created with the uri' do
-          expect(new_local_client(string).options[:read]).to eq(read)
+          client = Mongo::Client.new(string, monitoring_io: false)
+          expect(client.options[:read]).to eq(read)
         end
       end
     end
@@ -593,7 +605,8 @@ describe Mongo::URI do
       end
 
       it 'sets the options on a client created with the uri' do
-        expect(new_local_client(string).options[:read]).to eq(read)
+        client = Mongo::Client.new(string, monitoring_io: false)
+        expect(client.options[:read]).to eq(read)
       end
 
       context 'when the read preference and max staleness combination is invalid' do
@@ -605,8 +618,9 @@ describe Mongo::URI do
           end
 
           it 'raises an exception when read preference is accessed on the client' do
+            client = Mongo::Client.new(string, monitoring_io: false)
             expect {
-              new_local_client(string).server_selector
+              client.server_selector
             }.to raise_exception(Mongo::Error::InvalidServerPreference)
           end
         end
@@ -618,7 +632,8 @@ describe Mongo::URI do
           end
 
           it 'does not raise an exception until the read preference is used' do
-            expect(new_local_client(string).read_preference).to eq(BSON::Document.new(mode: :secondary, max_staleness: 89))
+            client = Mongo::Client.new(string, monitoring_io: false)
+            expect(client.read_preference).to eq(BSON::Document.new(mode: :secondary, max_staleness: 89))
           end
         end
       end
@@ -633,7 +648,8 @@ describe Mongo::URI do
       end
 
       it 'sets the options on a client created with the uri' do
-        expect(new_local_client(string).options[:replica_set]).to eq(rs_name)
+        client = Mongo::Client.new(string, monitoring_io: false)
+        expect(client.options[:replica_set]).to eq(rs_name)
       end
     end
 
@@ -649,11 +665,13 @@ describe Mongo::URI do
         end
 
         it 'sets the options on a client created with the uri' do
-          expect(new_local_client(string).options[:auth_mech]).to eq(expected)
+          client = Mongo::Client.new(string, monitoring_io: false)
+          expect(client.options[:auth_mech]).to eq(expected)
         end
 
         it 'is case-insensitive' do
-          expect(new_local_client(string.downcase).options[:auth_mech]).to eq(expected)
+          client = Mongo::Client.new(string.downcase, monitoring_io: false)
+          expect(client.options[:auth_mech]).to eq(expected)
         end
       end
 
@@ -666,11 +684,13 @@ describe Mongo::URI do
         end
 
         it 'sets the options on a client created with the uri' do
-          expect(new_local_client(string).options[:auth_mech]).to eq(expected)
+          client = Mongo::Client.new(string, monitoring_io: false)
+          expect(client.options[:auth_mech]).to eq(expected)
         end
 
         it 'is case-insensitive' do
-          expect(new_local_client(string.downcase).options[:auth_mech]).to eq(expected)
+          client = Mongo::Client.new(string.downcase, monitoring_io: false)
+          expect(client.options[:auth_mech]).to eq(expected)
         end
       end
 
@@ -683,11 +703,13 @@ describe Mongo::URI do
         end
 
         it 'sets the options on a client created with the uri' do
-          expect(new_local_client(string).options[:auth_mech]).to eq(expected)
+          client = Mongo::Client.new(string, monitoring_io: false)
+          expect(client.options[:auth_mech]).to eq(expected)
         end
 
         it 'is case-insensitive' do
-          expect(new_local_client(string.downcase).options[:auth_mech]).to eq(expected)
+          client = Mongo::Client.new(string.downcase, monitoring_io: false)
+          expect(client.options[:auth_mech]).to eq(expected)
         end
       end
 
@@ -700,11 +722,13 @@ describe Mongo::URI do
         end
 
         it 'sets the options on a client created with the uri' do
-          expect(new_local_client(string).options[:auth_mech]).to eq(expected)
+          client = Mongo::Client.new(string, monitoring_io: false)
+          expect(client.options[:auth_mech]).to eq(expected)
         end
 
         it 'is case-insensitive' do
-          expect(new_local_client(string.downcase).options[:auth_mech]).to eq(expected)
+          client = Mongo::Client.new(string.downcase, monitoring_io: false)
+          expect(client.options[:auth_mech]).to eq(expected)
         end
       end
 
@@ -717,18 +741,21 @@ describe Mongo::URI do
         end
 
         it 'sets the options on a client created with the uri' do
-          expect(new_local_client(string).options[:auth_mech]).to eq(expected)
+          client = Mongo::Client.new(string, monitoring_io: false)
+          expect(client.options[:auth_mech]).to eq(expected)
         end
 
         it 'is case-insensitive' do
-          expect(new_local_client(string.downcase).options[:auth_mech]).to eq(expected)
+          client = Mongo::Client.new(string.downcase, monitoring_io: false)
+          expect(client.options[:auth_mech]).to eq(expected)
         end
 
         context 'when a username is not provided' do
 
           it 'recognizes the mechanism with no username' do
-            expect(new_local_client(string.downcase).options[:auth_mech]).to eq(expected)
-            expect(new_local_client(string.downcase).options[:user]).to be_nil
+            client = Mongo::Client.new(string.downcase, monitoring_io: false)
+            expect(client.options[:auth_mech]).to eq(expected)
+            expect(client.options[:user]).to be_nil
           end
         end
       end
@@ -745,7 +772,8 @@ describe Mongo::URI do
         end
 
         it 'sets the options on a client created with the uri' do
-          expect(new_local_client(string).options[:auth_source]).to eq(source)
+          client = Mongo::Client.new(string, monitoring_io: false)
+          expect(client.options[:auth_source]).to eq(source)
         end
       end
 
@@ -758,7 +786,8 @@ describe Mongo::URI do
         end
 
         it 'sets the options on a client created with the uri' do
-          expect(new_local_client(string).options[:auth_source]).to eq(expected)
+          client = Mongo::Client.new(string, monitoring_io: false)
+          expect(client.options[:auth_source]).to eq(expected)
         end
       end
     end
@@ -778,7 +807,8 @@ describe Mongo::URI do
         end
 
         it 'sets the options on a client created with the uri' do
-          expect(new_local_client(string).options[:auth_mech_properties]).to eq(expected)
+          client = Mongo::Client.new(string, monitoring_io: false)
+          expect(client.options[:auth_mech_properties]).to eq(expected)
         end
       end
 
@@ -794,7 +824,8 @@ describe Mongo::URI do
         end
 
         it 'sets the options on a client created with the uri' do
-          expect(new_local_client(string).options[:auth_mech_properties]).to eq(expected)
+          client = Mongo::Client.new(string, monitoring_io: false)
+          expect(client.options[:auth_mech_properties]).to eq(expected)
         end
       end
 
@@ -812,7 +843,8 @@ describe Mongo::URI do
         end
 
         it 'sets the options on a client created with the uri' do
-          expect(new_local_client(string).options[:auth_mech_properties]).to eq(expected)
+          client = Mongo::Client.new(string, monitoring_io: false)
+          expect(client.options[:auth_mech_properties]).to eq(expected)
         end
       end
 
@@ -838,7 +870,8 @@ describe Mongo::URI do
         end
 
         it 'sets the options on a client created with the uri' do
-          expect(new_local_client(string).options[:auth_mech_properties]).to eq(expected)
+          client = Mongo::Client.new(string, monitoring_io: false)
+          expect(client.options[:auth_mech_properties]).to eq(expected)
         end
       end
     end
@@ -966,7 +999,8 @@ describe Mongo::URI do
       let(:options) { "appname=uri_test" }
 
       it 'sets the app name on the client' do
-        expect(new_local_client(string).options[:app_name]).to eq(:uri_test)
+        client = Mongo::Client.new(string, monitoring_io: false)
+        expect(client.options[:app_name]).to eq(:uri_test)
       end
     end
 
@@ -974,7 +1008,8 @@ describe Mongo::URI do
       let(:options) { "compressors=zlib" }
 
       it 'sets the compressors as an array on the client' do
-        expect(new_local_client(string).options[:compressors]).to eq(['zlib'])
+        client = Mongo::Client.new(string, monitoring_io: false)
+        expect(client.options[:compressors]).to eq(['zlib'])
       end
     end
 
@@ -982,7 +1017,7 @@ describe Mongo::URI do
       let(:options) { "compressors=snoopy" }
 
       let(:client) do
-        new_local_client(string)
+        Mongo::Client.new(string, monitoring_io: false)
       end
 
       it 'sets no compressors on the client and warns' do
@@ -995,7 +1030,8 @@ describe Mongo::URI do
       let(:options) { "zlibCompressionLevel=6" }
 
       it 'sets the zlib compression level on the client' do
-        expect(new_local_client(string).options[:zlib_compression_level]).to eq(6)
+        client = Mongo::Client.new(string, monitoring_io: false)
+        expect(client.options[:zlib_compression_level]).to eq(6)
       end
     end
   end
