@@ -97,7 +97,9 @@ RSpec.configure do |config|
 
   config.include(ClientRegistryMacros)
   config.after(:each) do
-    close_local_clients
+    if rand < 0.01
+      close_local_clients
+    end
   end
 end
 
