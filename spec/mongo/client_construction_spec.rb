@@ -221,7 +221,7 @@ describe Mongo::Client do
       context 'when a zlib_compression_level option is provided', if: testing_compression? do
 
         let(:client) do
-          new_local_client(SpecConfig.instance.addresses, SpecConfig.instance.test_options.merge(zlib_compression_level: 1))
+          new_local_client_nmio(SpecConfig.instance.addresses, SpecConfig.instance.test_options.merge(zlib_compression_level: 1))
         end
 
         it 'sets the option on the client' do
@@ -249,7 +249,7 @@ describe Mongo::Client do
         end
 
         let(:client) do
-          new_local_client(['127.0.0.1:27017'], SpecConfig.instance.test_options.merge(options))
+          new_local_client_nmio(['127.0.0.1:27017'], SpecConfig.instance.test_options.merge(options))
         end
 
         it 'sets the ssl option' do
@@ -304,7 +304,7 @@ describe Mongo::Client do
       context 'when no database is provided' do
 
         let(:client) do
-          new_local_client(['127.0.0.1:27017'], :read => { :mode => :secondary })
+          new_local_client_nmio(['127.0.0.1:27017'], :read => { :mode => :secondary })
         end
 
         it 'defaults the database to admin' do
@@ -315,7 +315,7 @@ describe Mongo::Client do
       context 'when a database is provided' do
 
         let(:client) do
-          new_local_client(['127.0.0.1:27017'], :database => :testdb)
+          new_local_client_nmio(['127.0.0.1:27017'], :database => :testdb)
         end
 
         it 'sets the current database' do
@@ -343,7 +343,7 @@ describe Mongo::Client do
       context 'when providing a heartbeat_frequency' do
 
         let(:client) do
-          new_local_client(['127.0.0.1:27017'], :heartbeat_frequency => 2)
+          new_local_client_nmio(['127.0.0.1:27017'], :heartbeat_frequency => 2)
         end
 
         it 'sets the heartbeat frequency' do
@@ -354,7 +354,7 @@ describe Mongo::Client do
       context 'when min_pool_size is provided' do
 
         let(:client) do
-          new_local_client(['127.0.0.1:27017'], options)
+          new_local_client_nmio(['127.0.0.1:27017'], options)
         end
 
         context 'when max_pool_size is provided' do
@@ -454,7 +454,7 @@ describe Mongo::Client do
       context 'when max_pool_size and min_pool_size are both nil' do
 
         let(:client) do
-          new_local_client(['127.0.0.1:27017'], options)
+          new_local_client_nmio(['127.0.0.1:27017'], options)
         end
 
         let(:options) do
@@ -477,7 +477,7 @@ describe Mongo::Client do
         end
 
         let(:client) do
-          new_local_client(['127.0.0.1:27017'], :platform => 'mongoid-6.0.2')
+          new_local_client_nmio(['127.0.0.1:27017'], :platform => 'mongoid-6.0.2')
         end
 
         it 'includes the platform info in the app metadata' do
@@ -492,7 +492,7 @@ describe Mongo::Client do
         end
 
         let(:client) do
-          new_local_client(['127.0.0.1:27017'])
+          new_local_client_nmio(['127.0.0.1:27017'])
         end
 
         let(:platform_string) do
@@ -519,7 +519,7 @@ describe Mongo::Client do
         end
 
         let(:client) do
-          new_local_client(uri)
+          new_local_client_nmio(uri)
         end
 
         it 'sets the database' do
@@ -534,7 +534,7 @@ describe Mongo::Client do
         end
 
         let(:client) do
-          new_local_client(uri)
+          new_local_client_nmio(uri)
         end
 
         it 'sets the database' do
@@ -549,7 +549,7 @@ describe Mongo::Client do
         end
 
         let(:client) do
-          new_local_client(uri)
+          new_local_client_nmio(uri)
         end
 
         it 'defaults the database to admin' do
@@ -564,11 +564,12 @@ describe Mongo::Client do
         end
 
         let(:client) do
-          new_local_client(uri)
+          new_local_client_nmio(uri)
         end
 
         let(:expected_options) do
-          Mongo::Options::Redacted.new(:write => { :w => 3 }, :database => 'testdb')
+          Mongo::Options::Redacted.new(:write => { :w => 3 },
+            monitoring_io: false, :database => 'testdb')
         end
 
         it 'sets the options' do
@@ -664,11 +665,12 @@ describe Mongo::Client do
         end
 
         let(:client) do
-          new_local_client(uri, :write => { :w => 3 })
+          new_local_client_nmio(uri, :write => { :w => 3 })
         end
 
         let(:expected_options) do
-          Mongo::Options::Redacted.new(:write => { :w => 3 }, :database => 'testdb')
+          Mongo::Options::Redacted.new(:write => { :w => 3 },
+            monitoring_io: false, :database => 'testdb')
         end
 
         it 'sets the options' do
@@ -683,11 +685,12 @@ describe Mongo::Client do
         end
 
         let(:client) do
-          new_local_client(uri, :write => { :w => 4 })
+          new_local_client_nmio(uri, :write => { :w => 4 })
         end
 
         let(:expected_options) do
-          Mongo::Options::Redacted.new(:write => { :w => 4 }, :database => 'testdb')
+          Mongo::Options::Redacted.new(:write => { :w => 4 },
+            monitoring_io: false, :database => 'testdb')
         end
 
         it 'allows explicit options to take preference' do
@@ -1012,7 +1015,7 @@ describe Mongo::Client do
 
     context 'when client is created with ipv6 address' do
       let(:client) do
-        new_local_client(['[::1]:27017'], :database => SpecConfig.instance.test_db)
+        new_local_client_nmio(['[::1]:27017'], :database => SpecConfig.instance.test_db)
       end
 
       context 'when providing nil' do
