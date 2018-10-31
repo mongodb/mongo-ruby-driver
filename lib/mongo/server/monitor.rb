@@ -161,6 +161,7 @@ module Mongo
         # monitor thread gets killed. As a result, any code after the publish
         # call may not run in a particular monitor instance, hence there
         # shouldn't be any code here.
+        @description = new_description
       end
 
       # Sets server description to unknown.
