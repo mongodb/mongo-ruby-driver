@@ -88,6 +88,52 @@ describe Mongo::Client do
         expect(c.cluster.servers).not_to be_empty
         c.close
       end
+
+      # This checks the case of all initial seeds being removed from
+      # cluster during SDAM
+      context 'me mismatch on the only initial seed' do
+        let(:address) do
+          address = SpecConfig.instance.addresses.first
+          port = address.sub(/^.*:/, '').to_i
+          address = address.sub(/:.*/, '')
+          case address
+          when '127.0.0.1'
+            'localhost'
+          when /^(\d+\.){3}\d+$/
+            skip 'This test requires a hostname or 127.0.0.1 as address'
+          else
+            # We don't know if mongod is listening on ipv4 or ipv6,
+            # in principle.
+            # Our tests use ipv4, so hardcode that for now.
+            # To support both we need to try both addresses
+            # which will make this test more complicated.
+            resolved_address = Addrinfo.getaddrinfo(address, port, Socket::PF_INET).first.ip_address
+            if resolved_address.include?(':')
+              "[#{resolved_address}]"
+            else
+              resolved_address
+            end + ":#{port}"
+          end
+        end
+
+        let(:client) do
+          ClientRegistry.instance.new_local_client(
+            [address],
+            # Specify server selection timeout here because test suite sets
+            # one by default and it's fairly low
+            SpecConfig.instance.test_options.merge(server_selection_timeout: 5))
+        end
+
+        it 'does not wait for server selection timeout' do
+          start_time = Time.now
+          client
+          time_taken = Time.now - start_time
+          expect(time_taken < 3).to be true
+
+          # run a command to ensure the client is a working one
+          client.database.command(ismaster: 1)
+        end
+      end
     end
 
     context 'with monitoring_io: false' do

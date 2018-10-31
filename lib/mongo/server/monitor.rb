@@ -153,10 +153,14 @@ module Mongo
         throttle_scan_frequency!
         # ismaster call updates @average_round_trip_time
         result = ismaster
+        @last_scan_completed_at = Time.now
         new_description = Description.new(description.address, result, @average_round_trip_time)
         publish(Event::DESCRIPTION_CHANGED, description, new_description)
-        @last_scan_completed_at = Time.now
-        @description = new_description
+        # If this server's response has a mismatched me, or for other reasons,
+        # this server may be removed from topology. When this happens the
+        # monitor thread gets killed. As a result, any code after the publish
+        # call may not run in a particular monitor instance, hence there
+        # shouldn't be any code here.
       end
 
       # Sets server description to unknown.
