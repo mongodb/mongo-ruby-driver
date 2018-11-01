@@ -106,25 +106,4 @@ describe Mongo::Cluster::Topology::Single do
       expect(topology).to have_writable_server(nil)
     end
   end
-
-  describe '#add_hosts?' do
-
-    it 'returns false' do
-      expect(topology.add_hosts?(double('description'), [])).to eq(false)
-    end
-  end
-
-  describe '#remove_hosts?' do
-
-    it 'returns false' do
-      expect(topology.remove_hosts?(double('description'))).to eq(false)
-    end
-  end
-
-  describe '#remove_server?' do
-
-    it 'returns false' do
-      expect(topology.remove_server?(double('description'), double('server'))).to eq(false)
-    end
-  end
 end

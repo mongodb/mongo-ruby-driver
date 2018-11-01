@@ -48,7 +48,6 @@ describe 'SDAM Monitoring' do
                 server.description.address, response.ismaster, 0.5)
               publisher = SdamSpecEventPublisher.new(@client.cluster.send(:event_listeners))
               publisher.publish(Mongo::Event::DESCRIPTION_CHANGED, server.description, new_description)
-              monitor.instance_variable_set(:@description, new_description)
             end
           end
 

@@ -11,7 +11,12 @@ describe 'Max Staleness Spec' do
     context(spec.description) do
 
       let(:topology) do
-        spec.type.new({}, monitoring, [])
+        options = if spec.type <= Mongo::Cluster::Topology::ReplicaSetNoPrimary
+          {replica_set: 'foo'}
+        else
+          {}
+        end
+        spec.type.new(options, monitoring, [])
       end
 
       let(:monitoring) do

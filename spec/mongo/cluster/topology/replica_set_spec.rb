@@ -63,21 +63,6 @@ describe Mongo::Cluster::Topology::ReplicaSetNoPrimary do
       replica_set_two.monitor.instance_variable_set(:@description, replica_set_two_description)
     end
 
-    context 'when no replica set name is provided' do
-
-      let(:topology) do
-        described_class.new({}, monitoring, [])
-      end
-
-      let(:servers) do
-        topology.servers([ mongos, standalone, replica_set, replica_set_two ])
-      end
-
-      it 'returns only replica set members' do
-        expect(servers).to eq([ replica_set, replica_set_two ])
-      end
-    end
-
     context 'when a replica set name is provided' do
 
       let(:topology) do
@@ -97,21 +82,21 @@ describe Mongo::Cluster::Topology::ReplicaSetNoPrimary do
   describe '.replica_set?' do
 
     it 'returns true' do
-      expect(described_class.new({}, monitoring, nil)).to be_replica_set
+      expect(described_class.new({replica_set: 'foo'}, monitoring, nil)).to be_replica_set
     end
   end
 
   describe '.sharded?' do
 
     it 'returns false' do
-      expect(described_class.new({}, monitoring, nil)).to_not be_sharded
+      expect(described_class.new({replica_set: 'foo'}, monitoring, nil)).to_not be_sharded
     end
   end
 
   describe '.single?' do
 
     it 'returns false' do
-      expect(described_class.new({}, monitoring, nil)).to_not be_single
+      expect(described_class.new({replica_set: 'foo'}, monitoring, nil)).to_not be_single
     end
   end
 
@@ -119,7 +104,7 @@ describe Mongo::Cluster::Topology::ReplicaSetNoPrimary do
     let(:election_id) { BSON::ObjectId.new }
 
     it 'returns value set in constructor' do
-      topology = described_class.new({}, monitoring, nil,
+      topology = described_class.new({replica_set: 'foo'}, monitoring, nil,
         election_id, nil)
 
       expect(topology.max_election_id).to eql(election_id)
@@ -128,7 +113,7 @@ describe Mongo::Cluster::Topology::ReplicaSetNoPrimary do
 
   describe '#max_set_version' do
     it 'returns value set in constructor' do
-      topology = described_class.new({}, monitoring, nil,
+      topology = described_class.new({replica_set: 'foo'}, monitoring, nil,
         nil, 5)
 
       expect(topology.max_set_version).to eq(5)
@@ -138,7 +123,7 @@ describe Mongo::Cluster::Topology::ReplicaSetNoPrimary do
   describe '#has_readable_servers?' do
 
     let(:topology) do
-      described_class.new({}, monitoring, [])
+      described_class.new({replica_set: 'foo'}, monitoring, [])
     end
 
     let(:cluster) do
@@ -305,7 +290,7 @@ describe Mongo::Cluster::Topology::ReplicaSetNoPrimary do
   describe '#has_writable_servers?' do
 
     let(:topology) do
-      described_class.new({}, monitoring, [])
+      described_class.new({replica_set: 'foo'}, monitoring, [])
     end
 
     context 'when a primary server exists' do
@@ -343,311 +328,10 @@ describe Mongo::Cluster::Topology::ReplicaSetNoPrimary do
     end
   end
 
-  describe '#add_hosts?' do
-
-    let(:primary) do
-      Mongo::Server.new(address, cluster, monitoring, listeners, SpecConfig.instance.test_options)
-    end
-
-    let(:secondary) do
-      Mongo::Server.new(address, cluster, monitoring, listeners, SpecConfig.instance.test_options)
-    end
-
-    let(:primary_description) do
-      Mongo::Server::Description.new(address, { 'ismaster' => true, 'setName' => 'testing', 'ok' => 1 })
-    end
-
-    let(:secondary_description) do
-      Mongo::Server::Description.new(address, { 'ismaster' => false, 'secondary' => true,
-                                                'setName' => 'testing', 'ok' => 1 })
-    end
-
-    let(:topology) do
-      described_class.new({ :replica_set => 'testing' }, monitoring, nil)
-    end
-
-    before do
-      primary.monitor.stop!
-      secondary.monitor.stop!
-
-      primary.monitor.instance_variable_set(:@description, primary_description)
-      secondary.monitor.instance_variable_set(:@description, secondary_description)
-
-      expect(primary_description.primary?).to be true
-      expect(secondary_description.secondary?).to be true
-
-      expect(primary.primary?).to be true
-      expect(secondary.secondary?).to be true
-    end
-
-    context 'when the list of servers does not include a primary' do
-
-      let(:servers) do
-        [ secondary ]
-      end
-
-      context 'when the description is a member of the replica set' do
-
-        let(:description) do
-          double('description').tap do |d|
-            allow(d).to receive(:replica_set_member?).and_return(true)
-            allow(d).to receive(:replica_set_name).and_return('testing')
-          end
-        end
-
-        it 'returns true' do
-          expect(topology.add_hosts?(description, servers)).to eq(true)
-        end
-      end
-
-      context 'when the description is not a member of the replica set' do
-
-        let(:description) do
-          double('description').tap do |d|
-            allow(d).to receive(:replica_set_member?).and_return(false)
-            allow(d).to receive(:primary?).and_return(false)
-          end
-        end
-
-        it 'returns false' do
-          expect(topology.add_hosts?(description, servers)).to eq(false)
-        end
-      end
-    end
-
-    context 'when the list of servers has a primary' do
-
-      let(:servers) do
-        [ primary, secondary ]
-      end
-
-      let(:description) do
-        double('description').tap do |d|
-          allow(d).to receive(:replica_set_member?).and_return(true)
-          allow(d).to receive(:replica_set_name).and_return('testing')
-          allow(d).to receive(:primary?).and_return(false)
-        end
-      end
-
-      it 'returns false' do
-        expect(topology.add_hosts?(description, servers)).to eq(false)
-      end
-    end
-  end
-
-  describe '#remove_hosts?' do
-
-    let(:primary) do
-      Mongo::Server.new(address, cluster, monitoring, listeners, SpecConfig.instance.test_options)
-    end
-
-    let(:primary_description) do
-      Mongo::Server::Description.new(address, { 'ismaster' => true, 'setName' => 'testing' })
-    end
-
-    let(:topology) do
-      described_class.new({ :replica_set => 'testing' }, monitoring, nil)
-    end
-
-    before do
-      primary.monitor.instance_variable_set(:@description, primary_description)
-    end
-
-    context 'when the description has an empty config' do
-
-      let(:description) do
-        double('description').tap do |d|
-          allow(d).to receive(:config).and_return({})
-        end
-      end
-
-      it 'returns false' do
-        expect(topology.remove_hosts?(description)).to eq(false)
-      end
-    end
-
-    context 'when the description is from a primary' do
-
-      let(:description) do
-        double('description').tap do |d|
-          allow(d).to receive(:config).and_return({ 'ismaster' => true })
-          allow(d).to receive(:primary?).and_return(true)
-        end
-      end
-
-      it 'returns true' do
-        expect(topology.remove_hosts?(description)).to eq(true)
-      end
-    end
-
-    context 'when the description has an empty hosts list' do
-
-      let(:description) do
-        double('description').tap do |d|
-          allow(d).to receive(:config).and_return({ 'ismaster' => true })
-          allow(d).to receive(:primary?).and_return(false)
-          allow(d).to receive(:me_mismatch?).and_return(false)
-          allow(d).to receive(:hosts).and_return([])
-        end
-      end
-
-      it 'returns true' do
-        expect(topology.remove_hosts?(description)).to eq(true)
-      end
-    end
-
-    context 'when the description is not from the replica set' do
-
-      let(:description) do
-        double('description').tap do |d|
-          allow(d).to receive(:config).and_return({ 'ismaster' => true })
-          allow(d).to receive(:primary?).and_return(false)
-          allow(d).to receive(:ghost?).and_return(false)
-          allow(d).to receive(:hosts).and_return([ primary ])
-          allow(d).to receive(:replica_set_name).and_return('test')
-          allow(d).to receive(:replica_set_member?).and_return(true)
-          allow(d).to receive(:me_mismatch?).and_return(false)
-        end
-      end
-
-      it 'returns true' do
-        expect(topology.remove_hosts?(description)).to eq(true)
-      end
-    end
-
-  end
-
-  describe '#remove_server?' do
-
-    let(:secondary) do
-      Mongo::Server.new(address, cluster, monitoring, listeners, SpecConfig.instance.test_options)
-    end
-
-    let(:secondary_description) do
-      Mongo::Server::Description.new(address, { 'ismaster' => false, 'secondary' => true,
-                                                'setName' => 'test' })
-    end
-
-    let(:topology) do
-      described_class.new({ :replica_set => 'testing' }, monitoring, nil)
-    end
-
-    before do
-      secondary.monitor.instance_variable_set(:@description, secondary_description)
-    end
-
-    context 'when the description is from a server that should itself be removed' do
-
-      let(:description) do
-        double('description').tap do |d|
-          allow(d).to receive(:config).and_return({ 'setName' => 'test' })
-          allow(d).to receive(:replica_set_member?).and_return(true)
-          allow(d).to receive(:replica_set_name).and_return('test')
-          allow(d).to receive(:is_server?).and_return(true)
-          allow(d).to receive(:ghost?).and_return(false)
-          allow(d).to receive(:address).and_return(address)
-          allow(d).to receive(:me_mismatch?).and_return(false)
-          allow(d).to receive(:unknown?).and_return(false)
-        end
-      end
-
-      it 'returns true' do
-        expect(topology.remove_server?(description, secondary)).to eq(true)
-      end
-    end
-
-    context 'when the description is a member of the replica set' do
-
-      context 'when the description includes the server in question' do
-
-        let(:description) do
-          double('description').tap do |d|
-            allow(d).to receive(:config).and_return({ 'setName' => 'testing' })
-            allow(d).to receive(:replica_set_member?).and_return(true)
-            allow(d).to receive(:replica_set_name).and_return('testing')
-            allow(d).to receive(:lists_server?).and_return(true)
-            allow(d).to receive(:servers).and_return([double('server')])
-            allow(d).to receive(:address).and_return(address)
-            allow(d).to receive(:me_mismatch?).and_return(false)
-            allow(d).to receive(:unknown?).and_return(false)
-            allow(d).to receive(:server_type).and_return(:secondary)
-          end
-        end
-
-        it 'returns false' do
-          expect(topology.remove_server?(description, secondary)).to eq(false)
-        end
-      end
-
-      context 'when the description does not include the server in question' do
-
-        context 'when the description is primary' do
-          let(:description) do
-            double('description').tap do |d|
-              allow(d).to receive(:config).and_return({ 'setName' => 'testing' })
-              allow(d).to receive(:replica_set_member?).and_return(true)
-              allow(d).to receive(:replica_set_name).and_return('testing')
-              allow(d).to receive(:is_server?).and_return(false)
-              allow(d).to receive(:lists_server?).and_return(false)
-              allow(d).to receive(:servers).and_return([double('server')])
-              allow(d).to receive(:address).and_return("127.0.0.1:27018")
-              allow(d).to receive(:me_mismatch?).and_return(false)
-              allow(d).to receive(:unknown?).and_return(false)
-              allow(d).to receive(:server_type).and_return(:primary)
-            end
-          end
-
-          it 'returns true' do
-            expect(topology.remove_server?(description, secondary)).to eq(true)
-          end
-        end
-
-        context 'when the description is not' do
-          let(:description) do
-            double('description').tap do |d|
-              allow(d).to receive(:config).and_return({ 'setName' => 'testing' })
-              allow(d).to receive(:replica_set_member?).and_return(true)
-              allow(d).to receive(:replica_set_name).and_return('testing')
-              allow(d).to receive(:is_server?).and_return(false)
-              allow(d).to receive(:lists_server?).and_return(false)
-              allow(d).to receive(:servers).and_return([double('server')])
-              allow(d).to receive(:address).and_return('127.0.0.1:27018')
-              allow(d).to receive(:me_mismatch?).and_return(false)
-              allow(d).to receive(:unknown?).and_return(false)
-              allow(d).to receive(:server_type).and_return(:secondary)
-            end
-          end
-
-          it 'returns false' do
-            expect(topology.remove_server?(description, secondary)).to eq(false)
-          end
-        end
-      end
-    end
-
-    context 'when the description is not a member of the replica set' do
-
-      let(:description) do
-        double('description').tap do |d|
-          allow(d).to receive(:config).and_return({ 'setName' => 'test' })
-          allow(d).to receive(:replica_set_member?).and_return(true)
-          allow(d).to receive(:replica_set_name).and_return('test')
-          allow(d).to receive(:is_server?).and_return(false)
-          allow(d).to receive(:address).and_return('127.0.0.1:27018')
-          allow(d).to receive(:unknown?).and_return(false)
-        end
-      end
-
-      it 'returns false' do
-        expect(topology.remove_server?(description, secondary)).to eq(false)
-      end
-    end
-  end
-
   describe '#new_max_set_version' do
     context 'initially nil' do
       let(:topology) do
-        described_class.new({}, monitoring, nil).tap do |topology|
+        described_class.new({replica_set: 'foo'}, monitoring, nil).tap do |topology|
           expect(topology.max_set_version).to be nil
         end
       end
@@ -679,7 +363,7 @@ describe Mongo::Cluster::Topology::ReplicaSetNoPrimary do
 
     context 'initially not nil' do
       let(:topology) do
-        described_class.new({}, monitoring, nil, nil, 4).tap do |topology|
+        described_class.new({replica_set: 'foo'}, monitoring, nil, nil, 4).tap do |topology|
           expect(topology.max_set_version).to eq(4)
         end
       end
@@ -725,7 +409,7 @@ describe Mongo::Cluster::Topology::ReplicaSetNoPrimary do
   describe '#new_max_election_id' do
     context 'initially nil' do
       let(:topology) do
-        described_class.new({}, monitoring, nil).tap do |topology|
+        described_class.new({replica_set: 'foo'}, monitoring, nil).tap do |topology|
           expect(topology.max_election_id).to be nil
         end
       end
@@ -761,7 +445,7 @@ describe Mongo::Cluster::Topology::ReplicaSetNoPrimary do
       let(:old_election_id) { BSON::ObjectId.from_string('7fffffff000000000000004c') }
 
       let(:topology) do
-        described_class.new({}, monitoring, nil, old_election_id, nil).tap do |topology|
+        described_class.new({replica_set: 'foo'}, monitoring, nil, old_election_id, nil).tap do |topology|
           expect(topology.max_election_id).to be old_election_id
         end
       end

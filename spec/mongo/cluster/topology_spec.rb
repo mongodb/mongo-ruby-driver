@@ -13,7 +13,7 @@ describe Mongo::Cluster::Topology do
     context 'when provided a replica set option' do
 
       let(:topology) do
-        described_class.initial(cluster, monitoring, connect: :replica_set)
+        described_class.initial(cluster, monitoring, connect: :replica_set, replica_set: 'foo')
       end
 
       it 'returns a replica set topology' do
@@ -23,7 +23,7 @@ describe Mongo::Cluster::Topology do
       context 'when the option is a String (due to YAML parsing)' do
 
         let(:topology) do
-          described_class.initial(cluster, monitoring, connect: 'replica_set')
+          described_class.initial(cluster, monitoring, connect: 'replica_set', replica_set: 'foo')
         end
 
         it 'returns a replica set topology' do

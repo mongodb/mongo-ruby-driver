@@ -15,7 +15,12 @@ describe 'Server Selection' do
       end
 
       let(:topology) do
-        spec.type.new({}, monitoring, nil)
+        options = if spec.type <= Mongo::Cluster::Topology::ReplicaSetNoPrimary
+          {replica_set: 'foo'}
+        else
+          {}
+        end
+        spec.type.new(options, monitoring, nil)
       end
 
       let(:listeners) do
