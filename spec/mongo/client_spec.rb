@@ -610,17 +610,13 @@ describe Mongo::Client do
   end
 
   describe '#close' do
-
     let(:client) do
-      new_local_client(['127.0.0.1:27017'])
-    end
-
-    before do
-      # note that disconnect! is called also in the after block
-      expect(client.cluster).to receive(:disconnect!).twice.and_call_original
+      Mongo::Client.new(['127.0.0.1:27017'], monitoring_io: false)
     end
 
     it 'disconnects the cluster and returns true' do
+      # note that disconnect! is called also in the after block
+      expect(client.cluster).to receive(:disconnect!).and_call_original
       expect(client.close).to be(true)
     end
   end
