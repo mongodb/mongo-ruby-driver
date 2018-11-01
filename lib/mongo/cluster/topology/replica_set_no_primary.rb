@@ -52,6 +52,11 @@ module Mongo
           max_election_id = nil, max_set_version = nil
         )
           super(options, monitoring, cluster)
+
+          unless replica_set_name
+            raise ArgumentError, 'Cannot instantiate a replica set topology without a replica set name'
+          end
+
           @max_election_id = max_election_id
           @max_set_version = max_set_version
         end
@@ -148,7 +153,13 @@ module Mongo
         #
         # @since 2.0.0
         def replica_set_name
-          @replica_set_name ||= options[REPLICA_SET_NAME]
+          @replica_set_name ||= begin
+            v = options[REPLICA_SET_NAME]
+            if v == ''
+              v = nil
+            end
+            v
+          end
         end
 
         # Select appropriate servers for this topology.
@@ -166,66 +177,6 @@ module Mongo
             (replica_set_name.nil? || server.replica_set_name == replica_set_name) &&
               server.primary? || server.secondary?
           end
-        end
-
-        # Whether a server description's hosts may be added to the cluster.
-        #
-        # @example Check if a description's hosts may be added to the cluster.
-        #   topology.add_hosts?(description, servers)
-        #
-        # @param [ Mongo::Server::Description ] description The description.
-        # @param [ Array<Mongo::Server> ] servers The cluster servers.
-        #
-        # @return [ true, false ] Whether a description's hosts may be added.
-        #
-        # @since 2.0.6
-        def add_hosts?(description, servers)
-          !!(member_of_this_set?(description) &&
-              (!has_primary?(servers) || description.primary?))
-        end
-
-        # Whether a description can be used to remove hosts from the cluster.
-        #
-        # @example Check if a description can be used to remove hosts from the cluster.
-        #   topology.remove_hosts?(description)
-        #
-        # @param [ Mongo::Server::Description ] description The description.
-        #
-        # @return [ true, false ] Whether hosts may be removed from the cluster.
-        #
-        # @since 2.0.6
-        def remove_hosts?(description)
-          !description.config.empty? &&
-            (description.primary? ||
-              description.me_mismatch? ||
-                description.hosts.empty? ||
-                  (!description.ghost? && !member_of_this_set?(description)))
-        end
-
-        # Whether a specific server in the cluster can be removed, given a description.
-        # As described in the SDAM spec, a server should be removed if the server's
-        # address does not match the "me" field of the isMaster response, if the server
-        # has a different replica set name, or if an isMaster response from the primary
-        # does not contain the server's address in the list of known hosts. Note that as
-        # described by the spec, a server determined to be of type Unknown from its
-        # isMaster response is NOT removed from the topology.
-        #
-        # @example Check if a specific server can be removed from the cluster.
-        #   topology.remove_server?(description, server)
-        #
-        # @param [ Mongo::Server::Description ] description The description.
-        # @param [ Mongo::Serve ] server The server in question.
-        #
-        # @return [ true, false ] Whether the server can be removed from the cluster.
-        #
-        # @since 2.0.6
-        def remove_server?(description, server)
-          ((server.address == description.address) && description.me_mismatch?) ||
-          remove_self?(description, server) ||
-            (member_of_this_set?(description) &&
-                description.server_type == :primary &&
-                !description.servers.empty? &&
-                  !description.lists_server?(server))
         end
 
         # A replica set topology is not sharded.

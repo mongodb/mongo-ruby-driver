@@ -156,50 +156,6 @@ module Mongo
         # @since 2.0.0
         def unknown?; true; end
 
-        # Whether a server description's hosts may be added to the cluster.
-        #
-        # @example Check if a description's hosts may be added to the cluster.
-        #   topology.add_hosts?(description, servers)
-        #
-        # @param [ Mongo::Server::Description ] description The description.
-        # @param [ Array<Mongo::Server> ] servers The cluster servers.
-        #
-        # @return [ true, false ] Whether a description's hosts may be added.
-        #
-        # @since 2.0.6
-        def add_hosts?(description, servers)
-          !(description.unknown? || description.ghost?)
-        end
-
-        # Whether a description can be used to remove hosts from the cluster.
-        #
-        # @example Check if a description can be used to remove hosts from the cluster.
-        #   topology.remove_hosts?(description)
-        #
-        # @param [ Mongo::Server::Description ] description The description.
-        #
-        # @return [ true, false ] Whether hosts may be removed from the cluster.
-        #
-        # @since 2.0.6
-        def remove_hosts?(description)
-          description.standalone?
-        end
-
-        # Whether a specific server in the cluster can be removed, given a description.
-        #
-        # @example Check if a specific server can be removed from the cluster.
-        #   topology.remove_server?(description, server)
-        #
-        # @param [ Mongo::Server::Description ] description The description.
-        # @param [ Mongo::Serve ] server The server in question.
-        #
-        # @return [ true, false ] Whether the server can be removed from the cluster.
-        #
-        # @since 2.0.6
-        def remove_server?(description, server)
-          description.standalone? && description.is_server?(server)
-        end
-
         # Notify the topology that a member was discovered.
         #
         # @example Notify the topology that a member was discovered.

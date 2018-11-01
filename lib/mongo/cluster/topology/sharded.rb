@@ -122,50 +122,6 @@ module Mongo
           servers.select{ |server| server.mongos? }
         end
 
-        # Whether a server description's hosts may be added to the cluster.
-        #
-        # @example Check if a description's hosts may be added to the cluster.
-        #   topology.add_hosts?(description, servers)
-        #
-        # @param [ Mongo::Server::Description ] description The description.
-        # @param [ Array<Mongo::Server> ] servers The cluster servers.
-        #
-        # @return [ false ] A description's hosts are never added to a
-        #   sharded cluster.
-        #
-        # @since 2.0.6
-        def add_hosts?(description, servers); false; end
-
-        # Whether a description can be used to remove hosts from the cluster.
-        #
-        # @example Check if a description can be used to remove hosts from
-        # the cluster.
-        #   topology.remove_hosts?(description)
-        #
-        # @param [ Mongo::Server::Description ] description The description.
-        #
-        # @return [ true ] A description can always be used to remove hosts
-        #   from a sharded cluster.
-        #
-        # @since 2.0.6
-        def remove_hosts?(description); true; end
-
-        # Whether a specific server in the cluster can be removed, given a description.
-        #
-        # @example Check if a specific server can be removed from the cluster.
-        #   topology.remove_server?(description, server)
-        #
-        # @param [ Mongo::Server::Description ] description The description.
-        # @param [ Mongo::Serve ] server The server in question.
-        #
-        # @return [ true, false ] Whether the server can be removed from the cluster.
-        #
-        # @since 2.0.6
-        def remove_server?(description, server)
-          remove_self?(description, server) ||
-            !(server.mongos? || server.unknown?)
-        end
-
         # A sharded topology is sharded.
         #
         # @example Is the topology sharded?

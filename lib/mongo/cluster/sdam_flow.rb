@@ -1,313 +1,416 @@
+# Copyright (C) 2018 MongoDB, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 class Mongo::Cluster
+  # Handles SDAM flow for a server description changed event.
+  #
+  # Updates server descriptions, topology descriptions and publishes
+  # SDAM events.
+  #
+  # SdamFlow is meant to be instantiated once for every server description
+  # changed event that needs to be processed.
+  #
   # @api private
   class SdamFlow
     extend Forwardable
 
-    def initialize(cluster)
+    def initialize(cluster, previous_desc, updated_desc)
       @cluster = cluster
+      @topology = cluster.topology
+      @previous_desc = previous_desc
+      @updated_desc = updated_desc
     end
 
     attr_reader :cluster
 
-    def_delegators :cluster, :servers_list, :topology, :seeds, :replica_set_name,
-      :publish_sdam_event, :update_topology,
-      :log_warn
+    def_delegators :cluster, :servers_list, :seeds,
+      :publish_sdam_event, :log_warn
 
-    # TODO see about removing this
-    def_delegators :cluster, :servers
+    # The topology stored in this attribute can change multiple times throughout
+    # a single sdam flow (e.g. unknown -> RS no primary -> RS with primary).
+    # Events for topology change get sent at the end of flow processing,
+    # such that the above example only publishes an unknown -> RS with primary
+    # event to the application.
+    #
+    # @return Mongo::Cluster::Topology The current topology.
+    attr_reader :topology
 
-    # Add hosts in a description to the cluster.
-    #
-    # @example Add hosts in a description to the cluster.
-    #   cluster.add_hosts(description)
-    #
-    # @param [ Mongo::Server::Description ] description The description.
-    #
-    # @since 2.0.6
-    def add_hosts(description)
-      if topology.add_hosts?(description, servers_list)
-        description.servers.each { |s| cluster.add(s) }
-      end
-    end
+    attr_reader :previous_desc
+    attr_reader :updated_desc
 
-    # Remove hosts in a description from the cluster.
-    #
-    # @example Remove hosts in a description from the cluster.
-    #   cluster.remove_hosts(description)
-    #
-    # @param [ Mongo::Server::Description ] description The description.
-    #
-    # @since 2.0.6
-    def remove_hosts(description)
-      if topology.remove_hosts?(description)
-        servers_list.each do |s|
-          cluster.remove(s.address.to_s) if topology.remove_server?(description, s)
-        end
-      end
-    end
+    def_delegators :topology, :replica_set_name
 
-    # Elect a primary server from the description that has just changed to a
-    # primary.
-    #
-    # @example Elect a primary server.
-    #   cluster.elect_primary!(description)
-    #
-    # @param [ Server::Description ] description The newly elected primary.
-    #
-    # @return [ Topology ] The cluster topology.
-    #
-    # @since 2.0.0
-    def elect_primary!(description)
-      # Update descriptions - temporary hack until
-      # https://jira.mongodb.org/browse/RUBY-1509 is implemented.
-      # There are multiple placet that can update descriptions, these should
-      # be DRYed to a single one.
-      servers = servers_list
-      servers.each do |server|
-        if server.address == description.address
-          server.update_description(description)
-        end
-      end
-
-      new_topology = nil
-      if topology.unknown?
-        new_topology = if description.mongos?
-          Topology::Sharded.new(topology.options, topology.monitoring, self)
-        else
-          initialize_replica_set(description, servers)
-        end
-      elsif topology.replica_set?
-        if description.replica_set_name == replica_set_name
-          if detect_stale_primary!(description)
-            # Since detect_stale_primary! can mutate description,
-            # we need another pass of updating descriptions on our servers.
-            # https://jira.mongodb.org/browse/RUBY-1509
-            servers.each do |server|
-              if server.address == description.address
-                server.update_description(description)
-              end
-            end
-          else
-            # If we had another server marked as primary, mark that one
-            # unknown.
-            servers.each do |server|
-              if server.primary? && server.address != description.address
-                server.description.unknown!
-              end
-            end
-
-            max_election_id = topology.new_max_election_id(description)
-            max_set_version = topology.new_max_set_version(description)
-
-            cls = if servers.any?(&:primary?)
-              Topology::ReplicaSetWithPrimary
-            else
-              Topology::ReplicaSetNoPrimary
-            end
-            new_topology = cls.new(topology.options,
-              topology.monitoring,
-              self,
-              max_election_id,
-              max_set_version)
-          end
-        else
-          log_warn(
-            "Server #{description.address.to_s} has incorrect replica set name: " +
-            "'#{description.replica_set_name}'. The current replica set name is '#{topology.replica_set_name}'."
-          )
-        end
-      end
-
-      if new_topology
-        update_topology(new_topology)
-        # Even though the topology class selection above already attempts
-        # to figure out if the topology has a primary, in some cases
-        # we already are in a replica set topology and an additional
-        # primary check must be performed here.
-        if topology.replica_set?
-          check_if_has_primary
-        end
-      end
-    end
-
-    # Handles a change in server description.
-    #
-    # @param [ Server::Description ] previous_desc Previous server description.
-    # @param [ Server::Description ] updated_desc The new description.
-    #
-    # @api private
-    def server_description_changed(previous_desc, updated_desc)
-      # When a server description change leads to a topology type change,
-      # the topology is changed first (i.e. as visible through SDAM events),
-      # with the server being present in the new topology as unknown,
-      # and the server is then changed in the new topology to its correct type.
-      if updated_desc.standalone? && !previous_desc.standalone?
-        # standalone discovered
-        if topology.unknown? && seeds.length == 1
-          update_topology(
-            Topology::Single.new(topology.options, topology.monitoring, self))
-        else
-          # TODO warn that the discovered standalone is dropped
-        end
-      end
-
-      if updated_desc != previous_desc && (!updated_desc.unknown? || !previous_desc.unknown?)
-        # server description changed
-        # transitioning from an unknown to another unknown does not
-        # generate sdam events, apparently
-        handle_server_description_changed(previous_desc, updated_desc)
-      end
-
-      if updated_desc.primary? && !previous_desc.primary? ||
-        updated_desc.mongos? && !previous_desc.mongos?
-      then
-        elect_primary!(updated_desc)
-      end
-
-      if !updated_desc.unknown? && previous_desc.unknown?
-        if topology.unknown? || topology.single?
-          publish_sdam_event(::Mongo::Monitoring::TOPOLOGY_CHANGED,
-            ::Mongo::Monitoring::Event::TopologyChanged.new(topology, topology))
-        end
-      end
-    end
-
-    # Handles a change in server description.
-    #
-    # @param [ Server::Description ] previous_desc Previous server description.
-    # @param [ Server::Description ] updated_desc The new description.
-    #
-    # @api private
-    def handle_server_description_changed(previous_desc, updated_desc)
-      # https://jira.mongodb.org/browse/RUBY-1509
+    # Updates descriptions on all servers whose address matches
+    # updated_desc's address.
+    def update_server_descriptions
       servers_list.each do |server|
         if server.address == updated_desc.address
           server.update_description(updated_desc)
+          # There should only be one match
+          return true
         end
       end
+      false
+    end
 
-      publish_sdam_event(
-        ::Mongo::Monitoring::SERVER_DESCRIPTION_CHANGED,
-        ::Mongo::Monitoring::Event::ServerDescriptionChanged.new(
-          updated_desc.address,
-          topology,
-          previous_desc,
-          updated_desc,
+    # Handles a change in server description.
+    #
+    # @param [ Server::Description ] previous_desc Previous server description.
+    # @param [ Server::Description ] updated_desc The new description.
+    def server_description_changed
+      unless update_server_descriptions
+        # All of the transitions require that server whose updated_desc we are
+        # processing is still in the cluster (i.e., was not removed as a result
+        # of processing another response, potentially concurrently).
+        # If update_server_descriptions returned false we have no servers
+        # in the topology for the description we are processing, stop.
+        return
+      end
+
+      case topology
+      when Topology::Single
+        # no changes ever
+      when Topology::Unknown
+        if updated_desc.standalone?
+          update_unknown_with_standalone
+        elsif updated_desc.mongos?
+          @topology = Topology::Sharded.new(topology.options, topology.monitoring, self)
+        elsif updated_desc.primary?
+          @topology = Topology::ReplicaSetWithPrimary.new(
+            topology.options.merge(replica_set: updated_desc.replica_set_name),
+            topology.monitoring, self)
+          update_rs_from_primary
+        elsif updated_desc.secondary? || updated_desc.arbiter? || updated_desc.other?
+          @topology = Topology::ReplicaSetNoPrimary.new(
+            topology.options.merge(replica_set: updated_desc.replica_set_name),
+            topology.monitoring, self)
+          update_rs_without_primary
+        end
+      when Topology::Sharded
+        unless updated_desc.unknown? || updated_desc.mongos?
+          remove
+        end
+      when Topology::ReplicaSetWithPrimary
+        if updated_desc.standalone? || updated_desc.mongos?
+          remove
+          check_if_has_primary
+        elsif updated_desc.primary?
+          update_rs_from_primary
+        elsif updated_desc.secondary? || updated_desc.arbiter? || updated_desc.other?
+          update_rs_with_primary_from_member
+        else
+          check_if_has_primary
+        end
+      when Topology::ReplicaSetNoPrimary
+        if updated_desc.standalone? || updated_desc.mongos?
+          remove
+        elsif updated_desc.primary?
+          # Here we change topology type to RS with primary, however
+          # while processing updated_desc we may find that its RS name
+          # does not match our existing RS name. For this reason
+          # is is imperative to NOT pass updated_desc's RS name to
+          # topology constructor here.
+          # During processing we may remove the server whose updated_desc
+          # we are be processing (e.g. the RS name mismatch case again),
+          # in which case topoogy type will go back to RS without primary
+          # in the check_if_has_primary step.
+          @topology = Topology::ReplicaSetWithPrimary.new(
+            # Do not pass updated_desc's RS name here
+            topology.options,
+            topology.monitoring, self,
+            topology.max_election_id, topology.max_set_version)
+          update_rs_from_primary
+        elsif updated_desc.secondary? || updated_desc.arbiter? || updated_desc.other?
+          update_rs_without_primary
+        end
+      else
+        raise ArgumentError, "Unknown topology #{topology.class}"
+      end
+
+      commit_changes
+    end
+
+    # Transitions from unknown to single topology type, when a standalone
+    # server is discovered.
+    def update_unknown_with_standalone
+      if seeds.length == 1
+        @topology = Topology::Single.new(
+          topology.options, topology.monitoring, self)
+      else
+        log_warn(
+          "Removing server #{updated_desc.address.to_s} because it is a standalone and we have multiple seeds (#{seeds.length})"
         )
-      )
+        remove
+      end
+    end
 
-      add_hosts(updated_desc)
-      remove_hosts(updated_desc)
+    # Updates topology which must be a ReplicaSetWithPrimary with information
+    # from the primary's server description.
+    #
+    # This method does not change topology type to ReplicaSetWithPrimary -
+    # this needs to have been done prior to calling this method.
+    #
+    # If the primary whose description is being processed is determined to be
+    # stale, this method will change the server description and topology
+    # type to unknown.
+    def update_rs_from_primary
+      if topology.replica_set_name.nil?
+        @topology = Topology::ReplicaSetWithPrimary.new(
+          topology.options.merge(replica_set_name: updated_desc.replica_set_name),
+          topology.monitoring, self,
+          topology.max_election_id, topology.max_set_version)
+      end
 
-      if updated_desc.ghost? && !topology.is_a?(Topology::Sharded)
-        # https://jira.mongodb.org/browse/RUBY-1509
-        servers.each do |server|
-          if server.address == updated_desc.address
-            server.update_description(updated_desc)
+      if topology.replica_set_name != updated_desc.replica_set_name
+        log_warn(
+          "Removing server #{updated_desc.address.to_s} because it has an " +
+          "incorrect replica set name (#{updated_desc.replica_set_name}); " +
+          "current set name is #{topology.replica_set_name}"
+        )
+        remove
+        check_if_has_primary
+        return
+      end
+
+      if stale_primary?
+        @updated_desc = ::Mongo::Server::Description.new(updated_desc.address,
+          {}, updated_desc.average_round_trip_time)
+        update_server_descriptions
+        check_if_has_primary
+        return
+      end
+
+      max_election_id = topology.new_max_election_id(updated_desc)
+      max_set_version = topology.new_max_set_version(updated_desc)
+
+      if max_election_id != topology.max_election_id ||
+        max_set_version != topology.max_set_version
+      then
+        @topology = Topology::ReplicaSetWithPrimary.new(
+          topology.options, topology.monitoring, self,
+          max_election_id, max_set_version)
+      end
+
+      servers_list.each do |server|
+        if server.address != updated_desc.address
+          if server.primary?
+            server.update_description(::Mongo::Server::Description.new(
+              server.address, {}, server.description.average_round_trip_time))
           end
         end
       end
 
-      if topology.is_a?(::Mongo::Cluster::Topology::Unknown) &&
-        updated_desc.replica_set_name &&
-        updated_desc.replica_set_name != ''
-      then
-        transition_to_replica_set(updated_desc)
-=begin pending further refactoring
-      elsif topology.is_a?(Cluster::Topology::ReplicaSetWithPrimary) &&
-        (updated_desc.unknown? ||
-          updated_desc.standalone? ||
-          updated_desc.mongos? ||
-          updated_desc.ghost?)
-      then
-        # here the unknown server is already removed from the topology
+      add_servers_from_desc(updated_desc)
+      remove_servers_not_in_desc(updated_desc)
+
+      check_if_has_primary
+    end
+
+    # Updates a ReplicaSetWithPrimary topology from a non-primary member.
+    def update_rs_with_primary_from_member
+      if topology.replica_set_name != updated_desc.replica_set_name
+        log_warn(
+          "Removing server #{updated_desc.address.to_s} because it has an " +
+          "incorrect replica set name (#{updated_desc.replica_set_name}); " +
+          "current set name is #{topology.replica_set_name}"
+        )
+        remove
         check_if_has_primary
-=end
+        return
       end
 
-      # This check may be invoked in more cases than is necessary per
-      # the spec, but currently it is hard to know exactly when it should
-      # be invoked and the commented out condition above does not catch
-      # all cases. In any event check_if_has_primary is harmless if
-      # the topology does not transition.
-      if topology.replica_set?
+      if updated_desc.me_mismatch?
+        log_warn(
+          "Removing server #{updated_desc.address.to_s} because it " +
+          "reported itself as #{updated_desc.me}"
+        )
+        remove
         check_if_has_primary
+        return
+      end
+
+      have_primary = false
+      servers_list.each do |server|
+        if server.primary?
+          have_primary = true
+          break
+        end
+      end
+
+      unless have_primary
+        @topology = Topology::ReplicaSetNoPrimary.new(
+          topology.options, topology.monitoring, self,
+          topology.max_election_id, topology.max_set_version)
+      end
+    end
+
+    # Updates a ReplicaSetNoPrimary topology from a non-primary member.
+    def update_rs_without_primary
+      if topology.replica_set_name.nil?
+        @topology = Topology::ReplicaSetNoPrimary.new(
+          topology.options.merge(replica_set_name: updated_desc.replica_set_name),
+          topology.monitoring, self,
+          topology.max_election_id, topology.max_set_version)
+      end
+
+      if topology.replica_set_name != updated_desc.replica_set_name
+        log_warn(
+          "Removing server #{updated_desc.address.to_s} because it has an " +
+          "incorrect replica set name (#{updated_desc.replica_set_name}); " +
+          "current set name is #{topology.replica_set_name}"
+        )
+        remove
+        return
+      end
+
+      add_servers_from_desc(updated_desc)
+
+      if updated_desc.me_mismatch?
+        log_warn(
+          "Removing server #{updated_desc.address.to_s} because it " +
+          "reported itself as #{updated_desc.me}"
+        )
+        remove
+        return
+      end
+    end
+
+    # Adds all servers referenced in the given description (which is
+    # supposed to have come from a good primary) which are not
+    # already in the topology, to the topology.
+    def add_servers_from_desc(updated_desc)
+      address_strs = servers_list.map(&:address).map(&:to_s)
+      %w(hosts passives arbiters).each do |m|
+        updated_desc.send(m).each do |address_str|
+          unless address_strs.include?(address_str)
+            cluster.add(address_str)
+          end
+        end
+      end
+    end
+
+    # Removes servers from the topology which are not present in the
+    # given server description (which is supposed to have come from a
+    # good primary).
+    def remove_servers_not_in_desc(updated_desc)
+      updated_desc_address_strs = %w(hosts passives arbiters).map do |m|
+        updated_desc.send(m)
+      end.flatten
+      servers_list.each do |server|
+        unless updated_desc_address_strs.include?(address_str = server.address.to_s)
+          log_warn(
+            "Removing server #{address_str} because it is not in hosts reported by primary " +
+            "#{updated_desc.address}"
+          )
+          cluster.remove(address_str)
+        end
+      end
+    end
+
+    # Removes the server whose description we are processing from the
+    # topology.
+    def remove
+      cluster.remove(updated_desc.address.to_s)
+    end
+
+    # Publishes server description changed events, updates topology on
+    # the cluster and publishes topology changed event, as needed
+    # based on operations performed during SDAM flow processing.
+    def commit_changes
+      # The application-visible sequence of events should be as follows:
+      #
+      # 1. Description change for the server which we are processing;
+      # 2. Topology change, if any;
+      # 3. Description changes for other servers, if any.
+      #
+      # The tricky part here is that the server description changes are
+      # not all processed together.
+
+      # updated_desc here may not be the description we received from
+      # the server - in case of a stale primary, the server reported itself
+      # as being a primary but updated_desc here will be unknown.
+      #
+      # Also, we do not notify on unknown -> unknown changes
+      # (which is important for spec tests because they have real i/o
+      # happening against bogus addresses which yield unknown responses
+      # before the responses are mocked).
+      unless updated_desc.unknown? && previous_desc.unknown?
+        publish_sdam_event(
+          ::Mongo::Monitoring::SERVER_DESCRIPTION_CHANGED,
+          ::Mongo::Monitoring::Event::ServerDescriptionChanged.new(
+            updated_desc.address,
+            topology,
+            previous_desc,
+            updated_desc,
+          )
+        )
+      end
+
+      topology_changed_event_published = false
+      if topology.object_id != cluster.topology.object_id
+        # This sends the SDAM event
+        cluster.update_topology(topology)
+        topology_changed_event_published = true
+      end
+
+      # If a server description changed, topology description change event
+      # must be published with the previous and next topologies being of
+      # the same type, unless we already published topology change event
+      unless topology_changed_event_published
+        unless updated_desc.unknown? && previous_desc.unknown?
+          # TODO previous and updated topologies should differ in
+          # their server descriptions but currently they are the same
+          # exact object - https://jira.mongodb.org/browse/RUBY-1442
+          # and https://jira.mongodb.org/browse/RUBY-1519
+          publish_sdam_event(
+            ::Mongo::Monitoring::TOPOLOGY_CHANGED,
+            ::Mongo::Monitoring::Event::TopologyChanged.new(topology, topology)
+          )
+        end
       end
     end
 
     # Checks if the cluster has a primary, and if not, transitions the topology
     # to ReplicaSetNoPrimary. Topology must be ReplicaSetWithPrimary when
     # invoking this method.
-    #
-    # @api private
     def check_if_has_primary
       unless topology.replica_set?
         raise ArgumentError, 'check_if_has_primary should only be called when topology is replica set'
       end
 
-      primary = servers.detect do |server|
+      primary = servers_list.detect do |server|
         # A primary with the wrong set name is not a primary
         server.primary? && server.description.replica_set_name == topology.replica_set_name
       end
       unless primary
-        update_topology(Topology::ReplicaSetNoPrimary.new(
+        @topology = Topology::ReplicaSetNoPrimary.new(
           topology.options, topology.monitoring, self,
-          topology.max_election_id, topology.max_set_version))
+          topology.max_election_id, topology.max_set_version)
       end
     end
 
-    # Transitions topology from unknown to one of the two replica set
-    # topologies, depending on whether the updated description came from
-    # a primary. Topology must be Unknown when invoking this method.
-    #
-    # @param [ Server::Description ] updated_description The changed description.
-    #
-    # @api private
-    def transition_to_replica_set(updated_description)
-      new_cls = if updated_description.primary?
-        ::Mongo::Cluster::Topology::ReplicaSetWithPrimary
-      else
-        ::Mongo::Cluster::Topology::ReplicaSetNoPrimary
-      end
-      update_topology(new_cls.new(
-        topology.options.merge(
-          replica_set: updated_description.replica_set_name,
-        ), topology.monitoring, self))
-    end
-
-    # Creates a replica set topology, either having the primary or
-    # not, based on description and servers provided.
-    # May mutate servers' descriptions.
-    #
-    # Description must be of a server in the replica set topology, and
-    # is used to obtain the replica set name among other things.
-    def initialize_replica_set(description, servers)
-      servers.each do |server|
-        if server.standalone? && server.address != description.address
-          server.description.unknown!
-        end
-      end
-      cls = if servers.any?(&:primary?)
-        Topology::ReplicaSetWithPrimary
-      else
-        Topology::ReplicaSetNoPrimary
-      end
-      cls.new(topology.options.merge(:replica_set => description.replica_set_name),
-        topology.monitoring, self)
-    end
-
-    # Checks whether description is for a stale primary, and if so,
-    # changes the description to be unknown.
-    def detect_stale_primary!(description)
-      if description.election_id && description.set_version
+    # Whether updated_desc is for a stale primary.
+    def stale_primary?
+      if updated_desc.election_id && updated_desc.set_version
         if topology.max_set_version && topology.max_election_id &&
-            (description.set_version < topology.max_set_version ||
-                (description.set_version == topology.max_set_version &&
-                    description.election_id < topology.max_election_id))
-          description.unknown!
+            (updated_desc.set_version < topology.max_set_version ||
+                (updated_desc.set_version == topology.max_set_version &&
+                    updated_desc.election_id < topology.max_election_id))
+          return true
         end
       end
+      false
     end
-
   end
 end
