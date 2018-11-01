@@ -82,20 +82,17 @@ require 'lite_spec_helper'
 # not using MONGODB_URI.
 TEST_SET = 'ruby-driver-rs'
 
-require 'support/client_registry'
 require 'support/authorization'
 require 'support/primary_socket'
 require 'support/constraints'
 require 'support/cluster_config'
 require 'rspec/retry'
-require 'support/client_registry_macros'
 require 'support/monitoring_ext'
 
 RSpec.configure do |config|
   config.include(Authorization)
   config.extend(Constraints)
 
-  config.include(ClientRegistryMacros)
   config.after(:each) do
     if rand < 0.01
       close_local_clients
