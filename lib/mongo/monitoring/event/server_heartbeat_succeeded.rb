@@ -44,6 +44,19 @@ module Mongo
           @address = address
           @round_trip_time = round_trip_time
         end
+
+        # Returns a concise yet useful summary of the event.
+        #
+        # @return [ String ] String summary of the event.
+        #
+        # @note This method is experimental and subject to change.
+        #
+        # @since 2.7.0
+        # @api experimental
+        def summary
+          "#<#{self.class.name.sub(/^Mongo::Monitoring::Event::/, '')}" +
+          " address=#{address}>"
+        end
       end
     end
   end

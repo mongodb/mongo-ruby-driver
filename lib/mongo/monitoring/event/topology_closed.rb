@@ -35,6 +35,19 @@ module Mongo
         def initialize(topology)
           @topology = topology
         end
+
+        # Returns a concise yet useful summary of the event.
+        #
+        # @return [ String ] String summary of the event.
+        #
+        # @note This method is experimental and subject to change.
+        #
+        # @since 2.7.0
+        # @api experimental
+        def summary
+          "#<#{self.class.name.sub(/^Mongo::Monitoring::Event::/, '')}" +
+          " topology=#{topology.summary}>"
+        end
       end
     end
   end
