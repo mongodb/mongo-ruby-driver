@@ -88,12 +88,12 @@ class Mongo::Cluster
           @topology = Topology::Sharded.new(topology.options, topology.monitoring, self)
         elsif updated_desc.primary?
           @topology = Topology::ReplicaSetWithPrimary.new(
-            topology.options.merge(replica_set: updated_desc.replica_set_name),
+            topology.options.merge(replica_set_name: updated_desc.replica_set_name),
             topology.monitoring, self)
           update_rs_from_primary
         elsif updated_desc.secondary? || updated_desc.arbiter? || updated_desc.other?
           @topology = Topology::ReplicaSetNoPrimary.new(
-            topology.options.merge(replica_set: updated_desc.replica_set_name),
+            topology.options.merge(replica_set_name: updated_desc.replica_set_name),
             topology.monitoring, self)
           update_rs_without_primary
         end

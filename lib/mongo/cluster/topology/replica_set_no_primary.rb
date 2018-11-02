@@ -25,11 +25,6 @@ module Mongo
         include Loggable
         include Monitoring::Publishable
 
-        # Constant for the replica set name configuration option.
-        #
-        # @since 2.0.0
-        REPLICA_SET_NAME = :replica_set.freeze
-
         # Initialize the topology with the options.
         #
         # @param [ Hash ] options The options.
@@ -84,7 +79,7 @@ module Mongo
         # @api experimental
         # @since 2.7.0
         def summary
-          "#{display_name.gsub(' ', '')}[v=#{@max_set_version},e=#{@max_election_id && @max_election_id.to_s.sub(/^0+/, '')}]"
+          "#{display_name.gsub(' ', '')}[name=#{replica_set_name},v=#{@max_set_version},e=#{@max_election_id && @max_election_id.to_s.sub(/^0+/, '')}]"
         end
 
         # Elect a primary server within this topology.
@@ -154,7 +149,7 @@ module Mongo
         # @since 2.0.0
         def replica_set_name
           @replica_set_name ||= begin
-            v = options[REPLICA_SET_NAME]
+            v = options[:replica_set_name]
             if v == ''
               v = nil
             end

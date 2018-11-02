@@ -212,7 +212,7 @@ describe Mongo::Cluster do
       context 'when topology is ReplicaSetNoPrimary' do
 
         let(:topology) do
-          Mongo::Cluster::Topology::ReplicaSetNoPrimary.new({replica_set: 'foo'}, monitoring, cluster_without_io)
+          Mongo::Cluster::Topology::ReplicaSetNoPrimary.new({replica_set_name: 'foo'}, monitoring, cluster_without_io)
         end
 
         it 'returns an empty array' do
