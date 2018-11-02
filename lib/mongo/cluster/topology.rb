@@ -80,7 +80,7 @@ module Mongo
         # use that key.
         # Otherwise (e.g. options passed down from client),
         # move replica_set to replica_set_name.
-        if [ReplicaSetNoPrimary, ReplicaSetWithPrimary].include?(cls) && !options[:replica_set_name]
+        if cls <= ReplicaSetNoPrimary && !options[:replica_set_name]
           options = options.dup
           options[:replica_set_name] = options.delete(:replica_set)
         end
