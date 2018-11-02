@@ -169,6 +169,10 @@ module Mongo
       # @return [ Integer, nil ] logical_session_timeout The expected logical session timeout.
       attr_reader :logical_session_timeout
 
+      attr_reader :max_election_id
+
+      attr_reader :max_set_version
+
       # Create the new outcome.
       #
       # @example Create the new outcome.
@@ -184,6 +188,10 @@ module Mongo
         @logical_session_timeout = outcome['logicalSessionTimeoutMinutes']
         @events = process_events(outcome['events']) if outcome['events']
         @compatible = outcome['compatible']
+        if outcome['maxElectionId']
+          @max_election_id = BSON::ObjectId.from_string(outcome['maxElectionId']['$oid'])
+        end
+        @max_set_version = outcome['maxSetVersion']
       end
 
       # Whether the server responses indicate that their versions are supported by the driver.

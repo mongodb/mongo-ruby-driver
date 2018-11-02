@@ -105,6 +105,16 @@ describe 'Server Discovery and Monitoring' do
               end
             end
 
+            if %w(ReplicaSetWithPrimary ReplicaSetNoPrimary).include?(phase.outcome.topology_type)
+              it 'has expected max election id' do
+                expect(@client.cluster.topology.max_election_id).to eq(phase.outcome.max_election_id)
+              end
+
+              it 'has expected max set version' do
+                expect(@client.cluster.topology.max_set_version).to eq(phase.outcome.max_set_version)
+              end
+            end
+
           else
 
             before do
