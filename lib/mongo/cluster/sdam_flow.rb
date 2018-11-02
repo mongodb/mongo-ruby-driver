@@ -313,7 +313,7 @@ class Mongo::Cluster
             "Removing server #{address_str} because it is not in hosts reported by primary " +
             "#{updated_desc.address}"
           )
-          cluster.remove(address_str)
+          do_remove(address_str)
         end
       end
     end
@@ -321,7 +321,18 @@ class Mongo::Cluster
     # Removes the server whose description we are processing from the
     # topology.
     def remove
-      cluster.remove(updated_desc.address.to_s)
+      do_remove(updated_desc.address.to_s)
+    end
+
+    # Removes specified server from topology and warns if the topology ends
+    # up with an empty server list as a result
+    def do_remove(address_str)
+      cluster.remove(address_str)
+      if servers_list.empty?
+        log_warn(
+          "Topology now has no servers - this is likely a misconfiguration of the cluster and/or the application"
+        )
+      end
     end
 
     # Publishes server description changed events, updates topology on
