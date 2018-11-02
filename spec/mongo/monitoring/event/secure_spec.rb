@@ -1,4 +1,4 @@
-require 'spec_helper'
+require 'lite_spec_helper'
 
 describe Mongo::Monitoring::Event::Secure do
 

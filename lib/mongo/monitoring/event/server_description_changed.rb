@@ -52,6 +52,21 @@ module Mongo
           @previous_description = previous_description
           @new_description = new_description
         end
+
+        # Returns a concise yet useful summary of the event.
+        #
+        # @return [ String ] String summary of the event.
+        #
+        # @note This method is experimental and subject to change.
+        #
+        # @since 2.7.0
+        # @api experimental
+        def summary
+          "#<#{self.class.name.sub(/^Mongo::Monitoring::Event::/, '')}" +
+          " address=#{address} topology=#{topology.summary}" +
+          # TODO Add summaries to descriptions and use them here
+          " prev=#{previous_description.inspect} new=#{new_description.inspect}>"
+        end
       end
     end
   end
