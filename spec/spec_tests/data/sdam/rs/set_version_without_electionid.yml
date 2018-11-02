@@ -32,6 +32,7 @@ phases: [
             },
             topologyType: "ReplicaSetWithPrimary",
             setName: "rs",
+            maxSetVersion: 2,
         }
     },
 
@@ -64,6 +65,7 @@ phases: [
             },
             topologyType: "ReplicaSetWithPrimary",
             setName: "rs",
+            maxSetVersion: 2,
         }
     }
 ]
