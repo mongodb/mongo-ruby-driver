@@ -12,7 +12,7 @@ describe 'Max Staleness Spec' do
 
       let(:topology) do
         options = if spec.type <= Mongo::Cluster::Topology::ReplicaSetNoPrimary
-          {replica_set: 'foo'}
+          {replica_set_name: 'foo'}
         else
           {}
         end

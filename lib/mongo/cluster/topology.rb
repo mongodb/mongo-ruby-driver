@@ -66,13 +66,25 @@ module Mongo
       # @since 2.0.0
       # @api private
       def initial(cluster, monitoring, options)
-        if options.has_key?(:connect)
-          OPTIONS.fetch(options[:connect].to_sym).new(options, monitoring, cluster)
-        elsif options.has_key?(:replica_set)
-          ReplicaSetNoPrimary.new(options, monitoring, cluster)
+        cls = if options.key?(:connect)
+          OPTIONS.fetch(options[:connect].to_sym)
+        elsif options.key?(:replica_set) || options.key?(:replica_set_name)
+          ReplicaSetNoPrimary
         else
-          Unknown.new(options, monitoring, cluster)
+          Unknown
         end
+        # Options here are client/cluster/server options.
+        # In particular the replica set name key is different for
+        # topology.
+        # If replica_set_name is given (as might be internally by driver),
+        # use that key.
+        # Otherwise (e.g. options passed down from client),
+        # move replica_set to replica_set_name.
+        if cls <= ReplicaSetNoPrimary && !options[:replica_set_name]
+          options = options.dup
+          options[:replica_set_name] = options.delete(:replica_set)
+        end
+        cls.new(options, monitoring, cluster)
       end
     end
   end
