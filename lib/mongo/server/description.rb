@@ -545,6 +545,7 @@ module Mongo
         return :primary if primary?
         return :secondary if secondary?
         return :standalone if standalone?
+        return :other if other?
         :unknown
       end
 

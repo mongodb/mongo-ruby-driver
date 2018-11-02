@@ -449,6 +449,30 @@ describe Mongo::Server::Description do
       end
     end
 
+    context 'when the server is hidden' do
+
+      let(:description) do
+        described_class.new(address, { 'ismaster' => false, 'setName' => 'test',
+          'hidden' => true, 'ok' => 1 })
+      end
+
+      it 'returns :other' do
+        expect(description.server_type).to eq(:other)
+      end
+    end
+
+    context 'when the server is other' do
+
+      let(:description) do
+        described_class.new(address, { 'ismaster' => false, 'setName' => 'test',
+          'ok' => 1 })
+      end
+
+      it 'returns :other' do
+        expect(description.server_type).to eq(:other)
+      end
+    end
+
     context 'when the description has no configuration' do
 
       let(:description) do
