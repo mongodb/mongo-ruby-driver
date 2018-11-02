@@ -579,20 +579,6 @@ module Mongo
           config[Operation::Result::OK] == 1 || false
       end
 
-      # A result from another server's ismaster command before this server has
-      # refreshed causes the need for this description to become unknown before
-      # the next refresh.
-      #
-      # @example Force an unknown state.
-      #   description.unknown!
-      #
-      # @return [ true ] Always true.
-      #
-      # @since 2.0.0
-      def unknown!
-        @config = {} and true
-      end
-
       # Get the range of supported wire versions for the server.
       #
       # @example Get the wire version range.
