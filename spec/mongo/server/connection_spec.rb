@@ -36,7 +36,7 @@ describe Mongo::Server::Connection do
 
   let(:server) do
     Mongo::Server.new(address, cluster, monitoring, listeners,
-      SpecConfig.instance.test_options.merge(monitor: false),
+      SpecConfig.instance.test_options.merge(monitoring_io: false),
     )
   end
 
@@ -53,20 +53,9 @@ describe Mongo::Server::Connection do
         server.scan!
       end
 
-      it 'keeps server type' do
-        old_type = server.description.server_type
-        expect(old_type).not_to eq(:unknown)
-        old_oid = server.description.object_id
+      it 'does not mark server unknown' do
+        expect(server).not_to receive(:unknown!)
         error
-        expect(server.description.server_type).to eq(old_type)
-        expect(server.description.object_id).to eq(old_oid)
-      end
-
-      it "keeps topology" do
-        old_topology = server.cluster.topology
-        expect(old_topology).not_to be(Mongo::Cluster::Topology::Unknown)
-        error
-        expect(server.cluster.topology).to eql(old_topology)
       end
     end
 
@@ -78,9 +67,8 @@ describe Mongo::Server::Connection do
       end
 
       it 'marks server unknown' do
-        expect(server).not_to be_unknown
+        expect(server).to receive(:unknown!)
         error
-        expect(server).to be_unknown
       end
     end
 

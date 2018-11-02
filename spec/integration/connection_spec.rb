@@ -51,6 +51,40 @@ describe 'Connections' do
           expect(event.address).to eq(server.address)
           expect(event.new_description).to be_unknown
         end
+
+        it 'marks server unknown' do
+          expect(server).not_to be_unknown
+
+          connection
+          error
+
+          expect(server).to be_unknown
+        end
+
+        context 'in replica set topology' do
+          require_topology :replica_set
+
+          # need to use the primary here, otherwise a secondary will be
+          # changed to unknown which wouldn't alter topology
+          let(:server) { client.cluster.servers.detect { |s| s.primary? } }
+
+          it 'changes topology type' do
+            # wait for topology to get discovered
+            client.database.command(ismaster: 1)
+
+            expect(client.cluster.topology.class).to eql(Mongo::Cluster::Topology::ReplicaSetWithPrimary)
+
+            # stop background monitoring to prevent it from racing with the test
+            client.cluster.servers.each do |server|
+              server.monitor.stop!(true)
+            end
+
+            connection
+            error
+
+            expect(client.cluster.topology.class).to eql(Mongo::Cluster::Topology::ReplicaSetNoPrimary)
+          end
+        end
       end
 
       context 'error during handshake to primary in a replica set' do
