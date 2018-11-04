@@ -1,4 +1,5 @@
-require 'spec_helper'
+require 'lite_spec_helper'
+require 'support/shared/protocol'
 
 describe Mongo::Protocol::Msg do
 
@@ -457,7 +458,7 @@ describe Mongo::Protocol::Msg do
 
       let(:global_args) do
         { '$db' => SpecConfig.instance.test_db,
-          'insert' => TEST_COLL,
+          'insert' => 'foo',
           'ordered' => true
         }
       end
@@ -468,7 +469,7 @@ describe Mongo::Protocol::Msg do
 
       let(:expected_command_doc) do
         {
-            'insert' => TEST_COLL,
+            'insert' => 'foo',
             'documents' => [{ 'a' => 1 }],
             'ordered' => true
         }
