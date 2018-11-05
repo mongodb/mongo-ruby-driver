@@ -20,8 +20,6 @@ module Mongo
       #
       # @since 2.0.0
       class Unknown < Base
-        include Loggable
-        include Monitoring::Publishable
 
         # The display name for the topology.
         #

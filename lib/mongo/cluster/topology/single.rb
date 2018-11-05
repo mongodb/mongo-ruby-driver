@@ -20,7 +20,6 @@ module Mongo
       #
       # @since 2.0.0
       class Single < Base
-        include Monitoring::Publishable
 
         # The display name for the topology.
         #
