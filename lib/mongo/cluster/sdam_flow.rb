@@ -55,7 +55,7 @@ class Mongo::Cluster
     # updated_desc's address.
     def update_server_descriptions
       servers_list.each do |server|
-        if server.address == updated_desc.address
+        if server.address == updated_desc.address && server.description != updated_desc
           server.update_description(updated_desc)
           # There should only be one match
           return true
