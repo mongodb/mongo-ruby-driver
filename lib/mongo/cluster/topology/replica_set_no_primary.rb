@@ -232,11 +232,6 @@ module Mongo
         def has_primary?(servers)
           servers.find { |s| s.primary? }
         end
-
-        def member_of_this_set?(description)
-          description.replica_set_member? &&
-            description.replica_set_name == replica_set_name
-        end
       end
     end
   end
