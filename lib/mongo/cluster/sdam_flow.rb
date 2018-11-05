@@ -202,6 +202,12 @@ class Mongo::Cluster
           max_election_id, max_set_version)
       end
 
+      # At this point we have accepted the updated server description
+      # and the topology (both are primary). Commit these changes so that
+      # their respective SDAM events are published before SDAM events for
+      # server additions/removals that follow
+      commit_description_change
+
       servers_list.each do |server|
         if server.address != updated_desc.address
           if server.primary?
@@ -211,10 +217,14 @@ class Mongo::Cluster
         end
       end
 
-      add_servers_from_desc(updated_desc)
+      servers = add_servers_from_desc(updated_desc)
       remove_servers_not_in_desc(updated_desc)
 
       check_if_has_primary
+
+      servers.each do |server|
+        server.start_monitoring
+      end
     end
 
     # Updates a ReplicaSetWithPrimary topology from a non-primary member.
@@ -274,7 +284,9 @@ class Mongo::Cluster
         return
       end
 
-      add_servers_from_desc(updated_desc)
+      commit_description_change
+
+      servers = add_servers_from_desc(updated_desc)
 
       if updated_desc.me_mismatch?
         log_warn(
@@ -284,20 +296,31 @@ class Mongo::Cluster
         remove
         return
       end
+
+      commit_changes
+
+      servers.each do |server|
+        server.start_monitoring
+      end
     end
 
     # Adds all servers referenced in the given description (which is
     # supposed to have come from a good primary) which are not
     # already in the topology, to the topology.
+    #
+    # @note Servers are added unmonitored. Monitoring must be started later
+    # separately.
     def add_servers_from_desc(updated_desc)
+      added_servers = []
       address_strs = servers_list.map(&:address).map(&:to_s)
       %w(hosts passives arbiters).each do |m|
         updated_desc.send(m).each do |address_str|
-          unless address_strs.include?(address_str)
-            cluster.add(address_str)
+          if server = cluster.add(address_str, monitor: false)
+            added_servers << server
           end
         end
       end
+      added_servers
     end
 
     # Removes servers from the topology which are not present in the
@@ -321,6 +344,7 @@ class Mongo::Cluster
     # Removes the server whose description we are processing from the
     # topology.
     def remove
+      commit_description_change
       do_remove(updated_desc.address.to_s)
     end
 
@@ -332,6 +356,30 @@ class Mongo::Cluster
         log_warn(
           "Topology now has no servers - this is likely a misconfiguration of the cluster and/or the application"
         )
+      end
+    end
+
+    def commit_description_change
+      # updated_desc here may not be the description we received from
+      # the server - in case of a stale primary, the server reported itself
+      # as being a primary but updated_desc here will be unknown.
+      #
+      # Also, we do not notify on unknown -> unknown changes
+      # (which is important for spec tests because they have real i/o
+      # happening against bogus addresses which yield unknown responses
+      # before the responses are mocked).
+      unless updated_desc.unknown? && previous_desc.unknown? || updated_desc.object_id == previous_desc.object_id
+        publish_sdam_event(
+          ::Mongo::Monitoring::SERVER_DESCRIPTION_CHANGED,
+          ::Mongo::Monitoring::Event::ServerDescriptionChanged.new(
+            updated_desc.address,
+            topology,
+            previous_desc,
+            updated_desc,
+          )
+        )
+        @previous_desc = updated_desc
+        @need_topology_changed_event = true
       end
     end
 
@@ -348,38 +396,21 @@ class Mongo::Cluster
       # The tricky part here is that the server description changes are
       # not all processed together.
 
-      # updated_desc here may not be the description we received from
-      # the server - in case of a stale primary, the server reported itself
-      # as being a primary but updated_desc here will be unknown.
-      #
-      # Also, we do not notify on unknown -> unknown changes
-      # (which is important for spec tests because they have real i/o
-      # happening against bogus addresses which yield unknown responses
-      # before the responses are mocked).
-      unless updated_desc.unknown? && previous_desc.unknown?
-        publish_sdam_event(
-          ::Mongo::Monitoring::SERVER_DESCRIPTION_CHANGED,
-          ::Mongo::Monitoring::Event::ServerDescriptionChanged.new(
-            updated_desc.address,
-            topology,
-            previous_desc,
-            updated_desc,
-          )
-        )
-      end
+      commit_description_change
 
       topology_changed_event_published = false
-      if topology.object_id != cluster.topology.object_id
+      if topology.object_id != cluster.topology.object_id || @need_topology_changed_event
         # This sends the SDAM event
         cluster.update_topology(topology)
         topology_changed_event_published = true
+        @need_topology_changed_event = false
       end
 
       # If a server description changed, topology description change event
       # must be published with the previous and next topologies being of
       # the same type, unless we already published topology change event
       unless topology_changed_event_published
-        unless updated_desc.unknown? && previous_desc.unknown?
+        unless updated_desc.unknown? && previous_desc.unknown? || updated_desc.object_id == previous_desc.object_id
           # TODO previous and updated topologies should differ in
           # their server descriptions but currently they are the same
           # exact object - https://jira.mongodb.org/browse/RUBY-1442
@@ -388,6 +419,7 @@ class Mongo::Cluster
             ::Mongo::Monitoring::TOPOLOGY_CHANGED,
             ::Mongo::Monitoring::Event::TopologyChanged.new(topology, topology)
           )
+          @previous_desc = updated_desc
         end
       end
     end
