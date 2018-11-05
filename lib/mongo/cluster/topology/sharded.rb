@@ -47,19 +47,6 @@ module Mongo
           display_name.gsub(' ', '')
         end
 
-        # Elect a primary server within this topology.
-        #
-        # @example Elect a primary server.
-        #   topology.elect_primary(description, servers)
-        #
-        # @param [ Server::Description ] description The description of the
-        #   elected primary.
-        # @param [ Array<Server> ] servers The list of known servers to the
-        #   cluster.
-        #
-        # @return [ Sharded ] The topology.
-        def elect_primary(description, servers); self; end
-
         # Determine if the topology would select a readable server for the
         # provided candidates and read preference.
         #

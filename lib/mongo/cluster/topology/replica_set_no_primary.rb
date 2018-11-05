@@ -82,21 +82,6 @@ module Mongo
           "#{display_name.gsub(' ', '')}[name=#{replica_set_name},v=#{@max_set_version},e=#{@max_election_id && @max_election_id.to_s.sub(/^0+/, '')}]"
         end
 
-        # Elect a primary server within this topology.
-        #
-        # @example Elect a primary server.
-        #   topology.elect_primary(description, servers)
-        #
-        # @param [ Server::Description ] description The description of the
-        #   elected primary.
-        # @param [ Array<Server> ] servers The list of known servers to the
-        #   cluster.
-        #
-        # @return [ ReplicaSetWithPrimary ] The topology.
-        def elect_primary(description, servers)
-          self
-        end
-
         # Determine if the topology would select a readable server for the
         # provided candidates and read preference.
         #
