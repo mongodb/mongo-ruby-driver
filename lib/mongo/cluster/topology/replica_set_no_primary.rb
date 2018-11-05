@@ -260,16 +260,6 @@ module Mongo
           description.replica_set_member? &&
             description.replica_set_name == replica_set_name
         end
-
-        # As described by the SDAM spec, a server should be removed from the
-        # topology upon receiving its isMaster response if no error occurred
-        # and replica set name does not match that of the topology.
-        def remove_self?(description, server)
-          !description.unknown? &&
-            !member_of_this_set?(description) &&
-              description.is_server?(server) &&
-                !description.ghost?
-        end
       end
     end
   end

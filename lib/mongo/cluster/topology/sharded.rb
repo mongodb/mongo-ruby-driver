@@ -159,12 +159,6 @@ module Mongo
         #
         # @since 2.4.0
         def member_discovered; end;
-
-        private
-
-        def remove_self?(description, server)
-          description.is_server?(server) && !(description.mongos? || description.unknown?)
-        end
       end
     end
   end
