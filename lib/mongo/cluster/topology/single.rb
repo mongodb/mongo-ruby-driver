@@ -151,16 +151,6 @@ module Mongo
         #
         # @since 2.0.0
         def unknown?; false; end
-
-        # Publish that a member of this topology was discovered.
-        #
-        # @example Publish that a member was discovered.
-        #   topology.member_discovered
-        #
-        # @since 2.4.0
-        # @deprecated Does nothing.
-        def member_discovered
-        end
       end
     end
   end

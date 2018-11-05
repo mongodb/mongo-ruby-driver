@@ -151,14 +151,6 @@ module Mongo
         #
         # @since 2.0.0
         def unknown?; false; end
-
-        # Notify the topology that a member was discovered.
-        #
-        # @example Notify the cluster that a member was discovered.
-        #   topology.member_discovered
-        #
-        # @since 2.4.0
-        def member_discovered; end;
       end
     end
   end
