@@ -226,12 +226,6 @@ module Mongo
             @max_set_version
           end
         end
-
-        private
-
-        def has_primary?(servers)
-          servers.find { |s| s.primary? }
-        end
       end
     end
   end
