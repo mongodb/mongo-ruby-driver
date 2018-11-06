@@ -55,7 +55,7 @@ module Mongo
             details << ",v=#{max_set_version}"
           end
           if max_election_id
-            details << "e=#{max_election_id && max_election_id.to_s.sub(/^0+/, '')}"
+            details << ",e=#{max_election_id && max_election_id.to_s.sub(/^0+/, '')}"
           end
           "#{display_name}[#{details}]"
         end
