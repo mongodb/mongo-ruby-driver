@@ -18,7 +18,7 @@ module Mongo
       module NoReplicaSetOptions
         private
 
-        def validate_options(options)
+        def validate_options(options, cluster)
           # These options can be set to nil for convenience, but not to
           # any value including an empty string.
           [:replica_set_name, :max_election_id, :max_set_version].each do |option|

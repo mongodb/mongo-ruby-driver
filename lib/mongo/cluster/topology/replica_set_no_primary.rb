@@ -151,7 +151,7 @@ module Mongo
 
         private
 
-        def validate_options(options)
+        def validate_options(options, cluster)
           if options[:replica_set_name] == ''
             options = options.merge(replica_set_name: nil)
           end

@@ -51,7 +51,7 @@ module Mongo
         # @since 2.7.0
         # @api private
         def initialize(options, monitoring, cluster)
-          options = validate_options(options)
+          options = validate_options(options, cluster)
 
           @options = options
           @monitoring = monitoring
