@@ -18,6 +18,7 @@ module Mongo
     # When a standalone is discovered.
     #
     # @since 2.0.6
+    # @deprecated Will be removed in 3.0
     STANDALONE_DISCOVERED = 'standalone_discovered'.freeze
 
     # When a server is elected primary.
@@ -30,6 +31,7 @@ module Mongo
     # When a server is discovered to be a member of a topology.
     #
     # @since 2.4.0
+    # @deprecated Will be removed in 3.0
     MEMBER_DISCOVERED = 'member_discovered'.freeze
 
     # When a server is to be removed from a cluster.
