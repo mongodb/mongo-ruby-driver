@@ -97,6 +97,7 @@ describe 'Connections' do
         let(:server) { client.cluster.servers.detect { |server| server.primary? } }
 
         before do
+          ClientRegistry.instance.close_all_clients
           # insert to perform server selection and get topology to primary
           client[:test].insert_one(foo: 'bar')
         end
