@@ -99,6 +99,8 @@ module Mongo
 
         # @return [ true|false ] compatible Whether topology is compatible
         #   with the driver.
+        #
+        # @since 2.7.0
         def compatible?
           @compatible
         end
@@ -106,6 +108,8 @@ module Mongo
         # @return [ Exception ] compatibility_error If topology is incompatible
         #   with the driver, an exception with information regarding the incompatibility.
         #   If topology is compatible with the driver, nil.
+        #
+        # @since 2.7.0
         attr_reader :compatibility_error
 
         # The largest electionId ever reported by a primary.
