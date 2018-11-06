@@ -413,6 +413,10 @@ class Mongo::Cluster
 
       topology_changed_event_published = false
       if topology.object_id != cluster.topology.object_id || @need_topology_changed_event
+        # We are about to publish topology changed event.
+        # Recreate the topology instance to get its server descriptions
+        # up to date.
+        @topology = topology.class.new(topology.options, topology.monitoring, cluster)
         # This sends the SDAM event
         cluster.update_topology(topology)
         topology_changed_event_published = true
@@ -433,15 +437,13 @@ class Mongo::Cluster
         return
       end
 
-      # TODO previous and updated topologies should differ in
-      # their server descriptions but currently they are the same
-      # exact object - https://jira.mongodb.org/browse/RUBY-1442
-      # and https://jira.mongodb.org/browse/RUBY-1519
-      publish_sdam_event(
-        ::Mongo::Monitoring::TOPOLOGY_CHANGED,
-        ::Mongo::Monitoring::Event::TopologyChanged.new(topology, topology)
-      )
-      @previous_desc = updated_desc
+      # If we are here, there has been a change in the server descriptions
+      # in our topology, but topology class has not changed.
+      # Publish the topology changed event and recreate the topology to
+      # get the new list of server descriptions into it.
+      @topology = topology.class.new(topology.options, topology.monitoring, cluster)
+      # This sends the SDAM event
+      cluster.update_topology(topology)
     end
 
     # Checks if the cluster has a primary, and if not, transitions the topology

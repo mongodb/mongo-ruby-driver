@@ -11,6 +11,7 @@ describe Mongo::Monitoring::Event::TopologyOpening do
   let(:cluster) do
     double('cluster').tap do |cluster|
       allow(cluster).to receive(:addresses).and_return([address])
+      allow(cluster).to receive(:servers_list).and_return([])
     end
   end
 
