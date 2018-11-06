@@ -85,6 +85,10 @@ module Mongo
         # @since 2.7.0
         attr_reader :server_descriptions
 
+        # @return [ true|false ] compatible Whether topology is compatible
+        #   with the driver.
+        attr_reader :compatible
+
         # The largest electionId ever reported by a primary.
         # May be nil.
         #
