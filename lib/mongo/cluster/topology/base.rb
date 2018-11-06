@@ -73,6 +73,11 @@ module Mongo
           else
             @compatible = true
           end
+
+          @logical_session_timeout = servers.inject(nil) do |min, server|
+            break unless timeout = server.logical_session_timeout
+            [timeout, (min || timeout)].min
+          end
         end
 
         # @return [ Hash ] options The options.
@@ -111,6 +116,16 @@ module Mongo
         #
         # @since 2.7.0
         attr_reader :compatibility_error
+
+        # The logical session timeout value in minutes.
+        #
+        # @note The value is in minutes, unlike most other times in the
+        #   driver which are returned in seconds.
+        #
+        # @return [ Integer, nil ] The logical session timeout.
+        #
+        # @since 2.7.0
+        attr_reader :logical_session_timeout
 
         # The largest electionId ever reported by a primary.
         # May be nil.
