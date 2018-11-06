@@ -153,12 +153,6 @@ phases:
                   primary: "a:27017"
                   setName: "rs"
                   type: "RSPrimary"
-                - 
-                  address: "b:27017"
-                  arbiters: []
-                  hosts: []
-                  passives: []
-                  type: "Unknown"
             newDescription: 
               topologyType: "ReplicaSetNoPrimary"
               setName: "rs"
