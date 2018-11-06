@@ -45,4 +45,20 @@ describe 'Direct connection with RS name' do
       end
     end
   end
+
+  context 'in standalone' do
+    require_topology :standalone
+
+    context 'with any RS name' do
+      let(:replica_set_name) { 'any' }
+
+      it_behaves_like 'passes RS name to topology'
+
+      it 'creates a client which raises on every operation' do
+        expect do
+          client.database.command(ismaster: 1)
+        end.to raise_error(Mongo::Error::NoServerAvailable, 'Cluster topology specifies replica set name wrong, but the server has replica set name ruby-driver-rs')
+      end
+    end
+  end
 end
