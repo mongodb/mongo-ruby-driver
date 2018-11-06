@@ -47,7 +47,7 @@ describe 'Direct connection with RS name' do
   end
 
   context 'in standalone' do
-    require_topology :standalone
+    require_topology :single
 
     context 'with any RS name' do
       let(:replica_set_name) { 'any' }
