@@ -306,10 +306,13 @@ class Mongo::Cluster
 
     # Adds all servers referenced in the given description (which is
     # supposed to have come from a good primary) which are not
-    # already in the topology, to the topology.
+    # already in the cluster, to the cluster.
     #
     # @note Servers are added unmonitored. Monitoring must be started later
     # separately.
+    #
+    # @return [ Array<Server> ] Servers actually added to the cluster.
+    #   This is the set of servers on which monitoring should be started.
     def add_servers_from_desc(updated_desc)
       added_servers = []
       address_strs = servers_list.map(&:address).map(&:to_s)
