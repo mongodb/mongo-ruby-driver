@@ -190,7 +190,7 @@ describe Mongo::Cluster do
     context 'when the cluster has no servers' do
 
       let(:servers) do
-        [nil]
+        []
       end
 
       before do

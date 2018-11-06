@@ -6,8 +6,16 @@ describe Mongo::Cluster::Topology::Sharded do
     Mongo::Address.new('127.0.0.1:27017')
   end
 
+  # Cluster needs a topology and topology needs a cluster...
+  # This temporary cluster is used for topology construction.
+  let(:temp_cluster) do
+    double('temp cluster').tap do |cluster|
+      allow(cluster).to receive(:servers_list).and_return([])
+    end
+  end
+
   let(:topology) do
-    described_class.new({}, monitoring, nil)
+    described_class.new({}, monitoring, temp_cluster)
   end
 
   let(:monitoring) do

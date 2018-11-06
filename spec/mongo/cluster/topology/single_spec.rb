@@ -10,8 +10,16 @@ describe Mongo::Cluster::Topology::Single do
     Mongo::Monitoring.new(monitoring: false)
   end
 
+  # Cluster needs a topology and topology needs a cluster...
+  # This temporary cluster is used for topology construction.
+  let(:temp_cluster) do
+    double('temp cluster').tap do |cluster|
+      allow(cluster).to receive(:servers_list).and_return([])
+    end
+  end
+
   let(:topology) do
-    described_class.new({}, monitoring, nil)
+    described_class.new({}, monitoring, temp_cluster)
   end
 
   let(:listeners) do

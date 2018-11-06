@@ -14,6 +14,14 @@ describe Mongo::Cluster::Topology::ReplicaSetNoPrimary do
     Mongo::Monitoring.new(monitoring: false)
   end
 
+  # Cluster needs a topology and topology needs a cluster...
+  # This temporary cluster is used for topology construction.
+  let(:temp_cluster) do
+    double('temp cluster').tap do |cluster|
+      allow(cluster).to receive(:servers_list).and_return([])
+    end
+  end
+
   let(:cluster) do
     double('cluster').tap do |cl|
       allow(cl).to receive(:topology).and_return(topology)
@@ -66,7 +74,7 @@ describe Mongo::Cluster::Topology::ReplicaSetNoPrimary do
     context 'when a replica set name is provided' do
 
       let(:topology) do
-        described_class.new({ :replica_set_name => 'testing' }, monitoring, nil)
+        described_class.new({ :replica_set_name => 'testing' }, monitoring, temp_cluster)
       end
 
       let(:servers) do
@@ -82,21 +90,21 @@ describe Mongo::Cluster::Topology::ReplicaSetNoPrimary do
   describe '.replica_set?' do
 
     it 'returns true' do
-      expect(described_class.new({replica_set_name: 'foo'}, monitoring, nil)).to be_replica_set
+      expect(described_class.new({replica_set_name: 'foo'}, monitoring, temp_cluster)).to be_replica_set
     end
   end
 
   describe '.sharded?' do
 
     it 'returns false' do
-      expect(described_class.new({replica_set_name: 'foo'}, monitoring, nil)).to_not be_sharded
+      expect(described_class.new({replica_set_name: 'foo'}, monitoring, temp_cluster)).to_not be_sharded
     end
   end
 
   describe '.single?' do
 
     it 'returns false' do
-      expect(described_class.new({replica_set_name: 'foo'}, monitoring, nil)).to_not be_single
+      expect(described_class.new({replica_set_name: 'foo'}, monitoring, temp_cluster)).to_not be_single
     end
   end
 
@@ -105,7 +113,7 @@ describe Mongo::Cluster::Topology::ReplicaSetNoPrimary do
 
     it 'returns value given in constructor options' do
       topology = described_class.new({replica_set_name: 'foo', max_election_id: election_id},
-        monitoring, nil)
+        monitoring, temp_cluster)
 
       expect(topology.max_election_id).to eql(election_id)
     end
@@ -114,7 +122,7 @@ describe Mongo::Cluster::Topology::ReplicaSetNoPrimary do
   describe '#max_set_version' do
     it 'returns value given in constructor options' do
       topology = described_class.new({replica_set_name: 'foo', max_set_version: 5},
-        monitoring, nil)
+        monitoring, temp_cluster)
 
       expect(topology.max_set_version).to eq(5)
     end
@@ -123,7 +131,7 @@ describe Mongo::Cluster::Topology::ReplicaSetNoPrimary do
   describe '#has_readable_servers?' do
 
     let(:topology) do
-      described_class.new({replica_set_name: 'foo'}, monitoring, [])
+      described_class.new({replica_set_name: 'foo'}, monitoring, temp_cluster)
     end
 
     let(:cluster) do
@@ -290,7 +298,7 @@ describe Mongo::Cluster::Topology::ReplicaSetNoPrimary do
   describe '#has_writable_servers?' do
 
     let(:topology) do
-      described_class.new({replica_set_name: 'foo'}, monitoring, [])
+      described_class.new({replica_set_name: 'foo'}, monitoring, temp_cluster)
     end
 
     context 'when a primary server exists' do
@@ -331,7 +339,7 @@ describe Mongo::Cluster::Topology::ReplicaSetNoPrimary do
   describe '#new_max_set_version' do
     context 'initially nil' do
       let(:topology) do
-        described_class.new({replica_set_name: 'foo'}, monitoring, nil).tap do |topology|
+        described_class.new({replica_set_name: 'foo'}, monitoring, temp_cluster).tap do |topology|
           expect(topology.max_set_version).to be nil
         end
       end
@@ -364,7 +372,7 @@ describe Mongo::Cluster::Topology::ReplicaSetNoPrimary do
     context 'initially not nil' do
       let(:topology) do
         described_class.new({replica_set_name: 'foo', max_set_version: 4},
-          monitoring, nil
+          monitoring, temp_cluster
         ).tap do |topology|
           expect(topology.max_set_version).to eq(4)
         end
@@ -411,7 +419,9 @@ describe Mongo::Cluster::Topology::ReplicaSetNoPrimary do
   describe '#new_max_election_id' do
     context 'initially nil' do
       let(:topology) do
-        described_class.new({replica_set_name: 'foo'}, monitoring, nil).tap do |topology|
+        described_class.new({replica_set_name: 'foo'},
+          monitoring, temp_cluster,
+        ).tap do |topology|
           expect(topology.max_election_id).to be nil
         end
       end
@@ -448,7 +458,7 @@ describe Mongo::Cluster::Topology::ReplicaSetNoPrimary do
 
       let(:topology) do
         described_class.new({replica_set_name: 'foo', max_election_id: old_election_id},
-          monitoring, nil
+          monitoring, temp_cluster,
         ).tap do |topology|
           expect(topology.max_election_id).to be old_election_id
         end

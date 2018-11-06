@@ -88,7 +88,7 @@ module Mongo
       end
 
       def description_matches?(actual, expected)
-        case expected['type']
+        type_ok = case expected['type']
           when 'Standalone' then actual.standalone?
           when 'RSPrimary' then actual.primary?
           when 'RSSecondary' then actual.secondary?
@@ -99,10 +99,29 @@ module Mongo
           when 'RSGhost' then actual.ghost?
           when 'RSOther' then actual.other?
         end
+        return false unless type_ok
+
+        return false if actual.address.to_s != expected['address']
+        return false if actual.arbiters != expected['arbiters']
+        return false if actual.hosts != expected['hosts']
+        return false if actual.passives != expected['passives']
+        return false if actual.primary_host != expected['primary']
+        return false if actual.replica_set_name != expected['setName']
+        true
       end
 
       def topology_matches?(actual, expected)
-        actual.is_a?(::Mongo::Cluster::Topology.const_get(expected['topologyType']))
+        expected_type = ::Mongo::Cluster::Topology.const_get(expected['topologyType'])
+        return false unless actual.is_a?(expected_type)
+
+        return false unless actual.replica_set_name == expected['setName']
+
+        expected['servers'].each do |server|
+          desc = actual.server_descriptions.for_address!(server['address'])
+          return false unless description_matches?(desc, server)
+        end
+
+        true
       end
     end
 
