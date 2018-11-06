@@ -114,12 +114,22 @@ module Mongo
       subscribe_to(Event::MEMBER_DISCOVERED, Event::MemberDiscovered.new(self))
 
       @seeds = seeds
-      seeds.each{ |seed| add(seed) }
+      servers = seeds.map do |seed|
+        # Server opening events must be sent after topology change events.
+        # Therefore separate server addition, done here before topoolgy change
+        # event is published, from starting to monitor the server which is
+        # done later.
+        add(seed, monitor: false)
+      end
 
       publish_sdam_event(
         Monitoring::TOPOLOGY_CHANGED,
         Monitoring::Event::TopologyChanged.new(opening_topology, @topology)
       ) if seeds.size >= 1
+
+      servers.each do |server|
+        server.start_monitoring
+      end
 
       if options[:monitoring_io] == false
         # Omit periodic executor construction, because without servers
@@ -528,16 +538,21 @@ module Mongo
     #
     # @param [ String ] host The address of the server to add.
     #
+    # @option options [ Boolean ] :monitor For internal driver use only:
+    #   whether to monitor the newly added server.
+    #
     # @return [ Server ] The newly added server, if not present already.
     #
     # @since 2.0.0
-    def add(host)
+    def add(host, add_options=nil)
       address = Address.new(host, options)
       if !addresses.include?(address)
         server = Server.new(address, self, @monitoring, event_listeners, options.merge(
           monitor: false))
         @update_lock.synchronize { @servers.push(server) }
-        server.start_monitoring
+        if add_options.nil? || add_options[:monitor] != false
+          server.start_monitoring
+        end
         server
       end
     end
