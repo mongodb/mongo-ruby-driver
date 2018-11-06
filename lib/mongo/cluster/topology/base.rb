@@ -59,8 +59,20 @@ module Mongo
           # The list of server descriptions is simply fixed at the time of
           # topology creation. If server description change later, a
           # new topology instance should be created.
+          servers = cluster.servers_list
           @server_descriptions = ServerDescriptionList.new(
-            cluster.servers_list.map(&:description))
+            servers.map(&:description))
+
+          begin
+            servers.each do |server|
+              server.check_driver_support!
+            end
+          rescue Error::UnsupportedFeatures => e
+            @compatible = false
+            @compatibility_error = e
+          else
+            @compatible = true
+          end
         end
 
         # @return [ Hash ] options The options.
@@ -87,7 +99,14 @@ module Mongo
 
         # @return [ true|false ] compatible Whether topology is compatible
         #   with the driver.
-        attr_reader :compatible
+        def compatible?
+          @compatible
+        end
+
+        # @return [ Exception ] compatibility_error If topology is incompatible
+        #   with the driver, an exception with information regarding the incompatibility.
+        #   If topology is compatible with the driver, nil.
+        attr_reader :compatibility_error
 
         # The largest electionId ever reported by a primary.
         # May be nil.

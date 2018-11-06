@@ -105,18 +105,15 @@ module Mongo
         while (deadline - Time.now) > 0
           servers = candidates(cluster)
           if servers && !servers.compact.empty?
+            unless cluster.topology.compatible?
+              raise Error::UnsupportedFeatures, cluster.topology.compatibility_error.to_s
+            end
+
             # This list of servers may be ordered in a specific way
             # by the selector (e.g. for secondary preferred, the first
             # server may be a secondary and the second server may be primary)
             # and we should take the first server here respecting the order
-            server = servers.first
-            # HACK: all servers in a topology must satisfy wire protocol
-            # constraints. There is probably a better implementation than
-            # checking all servers here
-            cluster.servers.each do |a_server|
-              a_server.check_driver_support!
-            end
-            return server
+            return servers.first
           end
           cluster.scan!
         end
