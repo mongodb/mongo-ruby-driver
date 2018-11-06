@@ -299,7 +299,39 @@ describe Mongo::ServerSelector do
       end
 
       it 'uses the local_threshold of the cluster' do
+        expect(topology).to receive(:compatible?).and_return(true)
         expect(read_pref.select_server(cluster)).to eq(near_server)
+      end
+    end
+
+    context 'when topology is incompatible' do
+      let(:server) { make_server(:primary) }
+
+      let(:cluster) do
+        double('cluster').tap do |c|
+          allow(c).to receive(:summary)
+          allow(c).to receive(:topology).and_return(topology)
+          allow(c).to receive(:servers).and_return([server])
+          allow(c).to receive(:single?).and_return(false)
+          allow(c).to receive(:sharded?).and_return(false)
+          allow(c).to receive(:unknown?).and_return(false)
+          allow(c).to receive(:scan!).and_return(true)
+          allow(c).to receive(:options).and_return(local_threshold: 0.050)
+        end
+      end
+
+      let(:compatibility_error) do
+        Mongo::Error::UnsupportedFeatures.new('Test UnsupportedFeatures')
+      end
+
+      let(:selector) { described_class.get(mode: :primary) }
+
+      it 'raises Error::UnsupportedFeatures' do
+        expect(topology).to receive(:compatible?).and_return(false)
+        expect(topology).to receive(:compatibility_error).and_return(compatibility_error)
+        expect do
+          selector.select_server(cluster)
+        end.to raise_error(Mongo::Error::UnsupportedFeatures, 'Test UnsupportedFeatures')
       end
     end
   end
