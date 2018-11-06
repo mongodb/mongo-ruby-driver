@@ -30,9 +30,29 @@ module Mongo
         # @param [ Monitoring ] monitoring The monitoring.
         # @param [ Cluster ] cluster The cluster.
         #
+        # @option options [ Symbol ] :replica_set Name of the replica set to
+        #   connect to. Can be left blank (either nil or the empty string are
+        #   accepted) to discover the name from the cluster. If the addresses
+        #   belong to different replica sets there is no guarantee which
+        #   replica set is selected - in particular, the driver may choose
+        #   the replica set name of a secondary if it returns its response
+        #   prior to a primary belonging to a different replica set.
+        #   This option can only be specified when instantiating a replica
+        #   set topology.
+        # @option options [ BSON::ObjectId ] :max_election_id Max election id
+        #   per the SDAM specification.
+        #   This option can only be specified when instantiating a replica
+        #   set topology.
+        # @option options [ Integer ] :max_set_version Max set version
+        #   per the SDAM specification.
+        #   This option can only be specified when instantiating a replica
+        #   set topology.
+        #
         # @since 2.7.0
         # @api private
         def initialize(options, monitoring, cluster)
+          options = validate_options(options)
+
           @options = options
           @monitoring = monitoring
           @cluster = cluster
@@ -53,6 +73,57 @@ module Mongo
 
         # @return [ monitoring ] monitoring the monitoring.
         attr_reader :monitoring
+
+        # The largest electionId ever reported by a primary.
+        # May be nil.
+        #
+        # @return [ BSON::ObjectId ] The election id.
+        #
+        # @since 2.7.0
+        def max_election_id
+          options[:max_election_id]
+        end
+
+        # The largest setVersion ever reported by a primary.
+        # May be nil.
+        #
+        # @return [ Integer ] The set version.
+        #
+        # @since 2.7.0
+        def max_set_version
+          options[:max_set_version]
+        end
+
+        # @api private
+        def new_max_election_id(description)
+          if description.election_id &&
+              (max_election_id.nil? ||
+                  description.election_id > max_election_id)
+            description.election_id
+          else
+            max_election_id
+          end
+        end
+
+        # @api private
+        def new_max_set_version(description)
+          if description.set_version &&
+              (max_set_version.nil? ||
+                  description.set_version > max_set_version)
+            description.set_version
+          else
+            max_set_version
+          end
+        end
+
+        private
+
+        # Validates and/or transforms options as necessary for the topology.
+        #
+        # @return [ Hash ] New options
+        def validate_options(options)
+          options
+        end
       end
     end
   end

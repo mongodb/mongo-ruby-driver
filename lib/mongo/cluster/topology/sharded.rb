@@ -20,6 +20,7 @@ module Mongo
       #
       # @since 2.0.0
       class Sharded < Base
+        include NoReplicaSetOptions
 
         # The display name for the topology.
         #

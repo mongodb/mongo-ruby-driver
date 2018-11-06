@@ -23,37 +23,6 @@ module Mongo
       # @since 2.0.0
       class ReplicaSetNoPrimary < Base
 
-        # Initialize the topology with the options.
-        #
-        # @param [ Hash ] options The options.
-        # @param [ Monitoring ] monitoring The monitoring.
-        # @param [ Cluster ] cluster The cluster.
-        # @param max_election_id For internal driver use only.
-        # @param max_set_version For internal driver use only.
-        #
-        # @option options [ Symbol ] :replica_set Name of the replica set to
-        #   connect to. Can be left blank (either nil or the empty string are
-        #   accepted) to discover the name from the cluster. If the addresses
-        #   belong to different replica sets there is no guarantee which
-        #   replica set is selected - in particular, the driver may choose
-        #   the replica set name of a secondary if it returns its response
-        #   prior to a primary belonging to a different replica set.
-        #
-        # @since 2.7.0
-        # @api private
-        def initialize(options, monitoring, cluster,
-          max_election_id = nil, max_set_version = nil
-        )
-          super(options, monitoring, cluster)
-
-          unless replica_set_name
-            raise ArgumentError, 'Cannot instantiate a replica set topology without a replica set name'
-          end
-
-          @max_election_id = max_election_id
-          @max_set_version = max_set_version
-        end
-
         # The display name for the topology.
         #
         # @since 2.0.0
@@ -187,42 +156,18 @@ module Mongo
         # @since 2.0.0
         def unknown?; false; end
 
-        # The largest electionId ever reported by a primary.
-        # May be nil.
-        #
-        # @return [ BSON::ObjectId ] The election id.
-        #
-        # @since 2.7.0
-        attr_reader :max_election_id
+        private
 
-        # The largest setVersion ever reported by a primary.
-        # May be nil.
-        #
-        # @return [ Integer ] The set version.
-        #
-        # @since 2.7.0
-        attr_reader :max_set_version
-
-        # @api private
-        def new_max_election_id(description)
-          if description.election_id &&
-              (@max_election_id.nil? ||
-                  description.election_id > @max_election_id)
-            description.election_id
-          else
-            @max_election_id
+        def validate_options(options)
+          if options[:replica_set_name] == ''
+            options = options.merge(replica_set_name: nil)
           end
-        end
 
-        # @api private
-        def new_max_set_version(description)
-          if description.set_version &&
-              (@max_set_version.nil? ||
-                  description.set_version > @max_set_version)
-            description.set_version
-          else
-            @max_set_version
+          unless options[:replica_set_name]
+            raise ArgumentError, 'Cannot instantiate a replica set topology without a replica set name'
           end
+
+          super(options)
         end
       end
     end
