@@ -26,7 +26,7 @@ module Mongo
               raise ArgumentError, "Topology #{self.class.name} cannot have the :#{option} option set"
             end
           end
-          super(options)
+          super(options, cluster)
         end
       end
     end

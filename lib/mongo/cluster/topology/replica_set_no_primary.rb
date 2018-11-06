@@ -160,7 +160,7 @@ module Mongo
             raise ArgumentError, 'Cannot instantiate a replica set topology without a replica set name'
           end
 
-          super(options)
+          super(options, cluster)
         end
       end
     end

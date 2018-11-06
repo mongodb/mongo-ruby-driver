@@ -136,7 +136,7 @@ module Mongo
             raise ArgumentError, 'Cannot instantiate a single topology with more than one server in the cluster'
           end
 
-          super(options)
+          super(options, cluster)
         end
       end
     end

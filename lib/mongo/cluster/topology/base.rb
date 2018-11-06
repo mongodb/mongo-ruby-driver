@@ -191,7 +191,7 @@ module Mongo
         # Validates and/or transforms options as necessary for the topology.
         #
         # @return [ Hash ] New options
-        def validate_options(options)
+        def validate_options(options, cluster)
           options
         end
       end
