@@ -21,6 +21,8 @@ module Mongo
       # @since 2.7.0
       class Base
         extend Forwardable
+        include Loggable
+        include Monitoring::Publishable
 
         # Initialize the topology with the options.
         #

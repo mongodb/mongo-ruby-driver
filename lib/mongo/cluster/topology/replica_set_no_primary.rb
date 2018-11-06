@@ -22,8 +22,6 @@ module Mongo
       #
       # @since 2.0.0
       class ReplicaSetNoPrimary < Base
-        include Loggable
-        include Monitoring::Publishable
 
         # Initialize the topology with the options.
         #
