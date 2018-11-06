@@ -109,9 +109,7 @@ module Mongo
         Monitoring::Event::TopologyOpening.new(opening_topology)
       )
 
-      subscribe_to(Event::STANDALONE_DISCOVERED, Event::StandaloneDiscovered.new(self))
       subscribe_to(Event::DESCRIPTION_CHANGED, Event::DescriptionChanged.new(self))
-      subscribe_to(Event::MEMBER_DISCOVERED, Event::MemberDiscovered.new(self))
 
       @seeds = seeds
       seeds.each{ |seed| add(seed) }
