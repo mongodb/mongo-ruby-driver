@@ -25,6 +25,8 @@ describe Mongo::Monitoring::Event::ServerClosed do
 
   describe '#summary' do
     it 'renders correctly' do
+      expect(topology).to receive(:server_descriptions).and_return([
+        Mongo::Server::Description.new(Mongo::Address.new('127.0.0.1:27017'))])
       expect(event.summary).to eq('#<ServerClosed address=127.0.0.1:27017 topology=Unknown[127.0.0.1:27017]>')
     end
   end
