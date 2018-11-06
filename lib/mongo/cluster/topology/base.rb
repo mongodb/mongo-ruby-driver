@@ -101,6 +101,18 @@ module Mongo
         # @return [ monitoring ] monitoring the monitoring.
         attr_reader :monitoring
 
+        # Get the replica set name configured for this topology.
+        #
+        # @example Get the replica set name.
+        #   topology.replica_set_name
+        #
+        # @return [ String ] The name of the configured replica set.
+        #
+        # @since 2.0.0
+        def replica_set_name
+          options[:replica_set_name]
+        end
+
         # @return [ ServerDescriptionList ] server_descriptions The list of
         #   server descriptions.
         #

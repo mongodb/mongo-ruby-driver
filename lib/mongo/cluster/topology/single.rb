@@ -20,7 +20,6 @@ module Mongo
       #
       # @since 2.0.0
       class Single < Base
-        include NoReplicaSetOptions
 
         # The display name for the topology.
         #
@@ -85,16 +84,6 @@ module Mongo
         #
         # @since 2.0.0
         def replica_set?; false; end
-
-        # Single topologies have no replica set name.
-        #
-        # @example Get the replica set name.
-        #   single.replica_set_name
-        #
-        # @return [ nil ] Always nil.
-        #
-        # @since 2.0.0
-        def replica_set_name; nil; end
 
         # Select appropriate servers for this topology.
         #

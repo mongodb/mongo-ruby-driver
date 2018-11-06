@@ -80,6 +80,18 @@ describe Mongo::Cluster::Topology::Single do
     end
   end
 
+  describe '#initialize' do
+    let(:topology) do
+      Mongo::Cluster::Topology::Single.new(
+        {replica_set_name: 'foo'},
+        monitoring, temp_cluster)
+    end
+
+    it 'accepts RS name' do
+      expect(topology.replica_set_name).to eq('foo')
+    end
+  end
+
   describe '.replica_set?' do
 
     it 'returns false' do

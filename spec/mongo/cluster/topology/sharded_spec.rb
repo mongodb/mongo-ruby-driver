@@ -58,6 +58,20 @@ describe Mongo::Cluster::Topology::Sharded do
     Mongo::Server::Description.new(address, { 'ismaster' => true, 'setName' => 'testing', 'ok' => 1 })
   end
 
+  describe '#initialize' do
+    let(:topology) do
+      Mongo::Cluster::Topology::Sharded.new(
+        {replica_set_name: 'foo'},
+        monitoring, temp_cluster)
+    end
+
+    it 'does not accept RS name' do
+      expect do
+        topology
+      end.to raise_error(ArgumentError, 'Topology Mongo::Cluster::Topology::Sharded cannot have the :replica_set_name option set')
+    end
+  end
+
   describe '.servers' do
 
     before do
