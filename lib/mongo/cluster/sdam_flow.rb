@@ -206,7 +206,7 @@ class Mongo::Cluster
       # and the topology (both are primary). Commit these changes so that
       # their respective SDAM events are published before SDAM events for
       # server additions/removals that follow
-      commit_description_change
+      publish_description_change_event
 
       servers_list.each do |server|
         if server.address != updated_desc.address
@@ -284,7 +284,7 @@ class Mongo::Cluster
         return
       end
 
-      commit_description_change
+      publish_description_change_event
 
       servers = add_servers_from_desc(updated_desc)
 
@@ -347,7 +347,7 @@ class Mongo::Cluster
     # Removes the server whose description we are processing from the
     # topology.
     def remove
-      commit_description_change
+      publish_description_change_event
       do_remove(updated_desc.address.to_s)
     end
 
@@ -362,28 +362,40 @@ class Mongo::Cluster
       end
     end
 
-    def commit_description_change
+    def publish_description_change_event
       # updated_desc here may not be the description we received from
       # the server - in case of a stale primary, the server reported itself
       # as being a primary but updated_desc here will be unknown.
-      #
-      # Also, we do not notify on unknown -> unknown changes
-      # (which is important for spec tests because they have real i/o
+
+      # We do not notify on unknown -> unknown changes.
+      # This can also be important for tests which have real i/o
       # happening against bogus addresses which yield unknown responses
-      # before the responses are mocked).
-      unless updated_desc.unknown? && previous_desc.unknown? || updated_desc.object_id == previous_desc.object_id
-        publish_sdam_event(
-          ::Mongo::Monitoring::SERVER_DESCRIPTION_CHANGED,
-          ::Mongo::Monitoring::Event::ServerDescriptionChanged.new(
-            updated_desc.address,
-            topology,
-            previous_desc,
-            updated_desc,
-          )
-        )
-        @previous_desc = updated_desc
-        @need_topology_changed_event = true
+      # and that also mock responses with the resulting race condition,
+      # though tests should avoid performing real i/o with monitoring_io: false
+      # option.
+      if updated_desc.unknown? && previous_desc.unknown?
+        return
       end
+
+      # Avoid dispatching events when updated description is the same as
+      # previous description. This allows this method to be called multiple
+      # times in the flow when the events should be published, without
+      # worrying about whether there are any unpublished changes.
+      if updated_desc.object_id == previous_desc.object_id
+        return
+      end
+
+      publish_sdam_event(
+        ::Mongo::Monitoring::SERVER_DESCRIPTION_CHANGED,
+        ::Mongo::Monitoring::Event::ServerDescriptionChanged.new(
+          updated_desc.address,
+          topology,
+          previous_desc,
+          updated_desc,
+        )
+      )
+      @previous_desc = updated_desc
+      @need_topology_changed_event = true
     end
 
     # Publishes server description changed events, updates topology on
@@ -399,7 +411,7 @@ class Mongo::Cluster
       # The tricky part here is that the server description changes are
       # not all processed together.
 
-      commit_description_change
+      publish_description_change_event
 
       topology_changed_event_published = false
       if topology.object_id != cluster.topology.object_id || @need_topology_changed_event
@@ -412,19 +424,26 @@ class Mongo::Cluster
       # If a server description changed, topology description change event
       # must be published with the previous and next topologies being of
       # the same type, unless we already published topology change event
-      unless topology_changed_event_published
-        unless updated_desc.unknown? && previous_desc.unknown? || updated_desc.object_id == previous_desc.object_id
-          # TODO previous and updated topologies should differ in
-          # their server descriptions but currently they are the same
-          # exact object - https://jira.mongodb.org/browse/RUBY-1442
-          # and https://jira.mongodb.org/browse/RUBY-1519
-          publish_sdam_event(
-            ::Mongo::Monitoring::TOPOLOGY_CHANGED,
-            ::Mongo::Monitoring::Event::TopologyChanged.new(topology, topology)
-          )
-          @previous_desc = updated_desc
-        end
+      if topology_changed_event_published
+        return
       end
+
+      if updated_desc.unknown? && previous_desc.unknown?
+        return
+      end
+      if updated_desc.object_id == previous_desc.object_id
+        return
+      end
+
+      # TODO previous and updated topologies should differ in
+      # their server descriptions but currently they are the same
+      # exact object - https://jira.mongodb.org/browse/RUBY-1442
+      # and https://jira.mongodb.org/browse/RUBY-1519
+      publish_sdam_event(
+        ::Mongo::Monitoring::TOPOLOGY_CHANGED,
+        ::Mongo::Monitoring::Event::TopologyChanged.new(topology, topology)
+      )
+      @previous_desc = updated_desc
     end
 
     # Checks if the cluster has a primary, and if not, transitions the topology
