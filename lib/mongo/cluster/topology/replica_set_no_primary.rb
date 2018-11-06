@@ -80,21 +80,6 @@ module Mongo
           "#{display_name.gsub(' ', '')}[name=#{replica_set_name},v=#{@max_set_version},e=#{@max_election_id && @max_election_id.to_s.sub(/^0+/, '')}]"
         end
 
-        # Elect a primary server within this topology.
-        #
-        # @example Elect a primary server.
-        #   topology.elect_primary(description, servers)
-        #
-        # @param [ Server::Description ] description The description of the
-        #   elected primary.
-        # @param [ Array<Server> ] servers The list of known servers to the
-        #   cluster.
-        #
-        # @return [ ReplicaSetWithPrimary ] The topology.
-        def elect_primary(description, servers)
-          self
-        end
-
         # Determine if the topology would select a readable server for the
         # provided candidates and read preference.
         #
@@ -202,14 +187,6 @@ module Mongo
         # @since 2.0.0
         def unknown?; false; end
 
-        # Notify the topology that a member was discovered.
-        #
-        # @example Notify the topology that a member was discovered.
-        #   topology.member_discovered
-        #
-        # @since 2.4.0
-        def member_discovered; end;
-
         # The largest electionId ever reported by a primary.
         # May be nil.
         #
@@ -246,27 +223,6 @@ module Mongo
           else
             @max_set_version
           end
-        end
-
-        private
-
-        def has_primary?(servers)
-          servers.find { |s| s.primary? }
-        end
-
-        def member_of_this_set?(description)
-          description.replica_set_member? &&
-            description.replica_set_name == replica_set_name
-        end
-
-        # As described by the SDAM spec, a server should be removed from the
-        # topology upon receiving its isMaster response if no error occurred
-        # and replica set name does not match that of the topology.
-        def remove_self?(description, server)
-          !description.unknown? &&
-            !member_of_this_set?(description) &&
-              description.is_server?(server) &&
-                !description.ghost?
         end
       end
     end

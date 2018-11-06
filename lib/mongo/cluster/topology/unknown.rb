@@ -46,21 +46,6 @@ module Mongo
           "#{display_name}[#{addresses.join(', ')}]"
         end
 
-        # Elect a primary server within this topology.
-        #
-        # @example Elect a primary server.
-        #   topology.elect_primary(description, servers)
-        #
-        # @param [ Server::Description ] description The description of the
-        #   elected primary.
-        # @param [ Array<Server> ] servers The list of known servers to the
-        #   cluster.
-        #
-        # @return [ Sharded, ReplicaSetNoPrimary, ReplicaSetWithPrimary ] The new topology.
-        # @deprecated Does nothing.
-        def elect_primary(description, servers)
-        end
-
         # Determine if the topology would select a readable server for the
         # provided candidates and read preference.
         #
@@ -153,16 +138,6 @@ module Mongo
         #
         # @since 2.0.0
         def unknown?; true; end
-
-        # Notify the topology that a member was discovered.
-        #
-        # @example Notify the topology that a member was discovered.
-        #   topology.member_discovered
-        #
-        # @since 2.4.0
-        # @deprecated Does nothing.
-        def member_discovered
-        end
       end
     end
   end
