@@ -75,8 +75,13 @@ module Mongo
           end
 
           @logical_session_timeout = servers.inject(nil) do |min, server|
-            break unless timeout = server.logical_session_timeout
-            [timeout, (min || timeout)].min
+            # LST is only read from data-bearing servers
+            if server.mongos? || server.primary? || server.secondary? || server.standalone?
+              break unless timeout = server.logical_session_timeout
+              [timeout, (min || timeout)].min
+            else
+              min
+            end
           end
         end
 
