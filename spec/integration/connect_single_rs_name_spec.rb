@@ -57,7 +57,7 @@ describe 'Direct connection with RS name' do
       it 'creates a client which raises on every operation' do
         expect do
           client.database.command(ismaster: 1)
-        end.to raise_error(Mongo::Error::NoServerAvailable, 'Cluster topology specifies replica set name wrong, but the server has replica set name ruby-driver-rs')
+        end.to raise_error(Mongo::Error::NoServerAvailable, 'Cluster topology specifies replica set name any, but the server has replica set name <nil>')
       end
     end
   end
