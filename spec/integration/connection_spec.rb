@@ -1,6 +1,10 @@
 require 'spec_helper'
 
 describe 'Connections' do
+  before(:all) do
+    ClientRegistry.instance.close_all_clients
+  end
+
   let(:client) { ClientRegistry.instance.global_client('authorized') }
   let(:server) { client.cluster.servers.first }
 
