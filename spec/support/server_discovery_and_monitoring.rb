@@ -206,6 +206,10 @@ module Mongo
         @compatible.nil? || !!@compatible
       end
 
+      def compatible_specified?
+        !@compatible.nil?
+      end
+
       private
 
       def process_events(events)

@@ -90,6 +90,15 @@ describe 'Server Discovery and Monitoring' do
               expect(cluster_addresses).to eq(phase_addresses)
             end
 
+            # If compatible is not expliticly specified in the fixture,
+            # wire protocol versions aren't either and the topology
+            # is actually incompatible
+            if phase.outcome.compatible_specified?
+              it 'is compatible' do
+                expect(@client.cluster.topology.compatible?).to be true
+              end
+            end
+
             phase.outcome.servers.each do |address_str, server_spec|
 
               it "sets #{address_str} server to #{server_spec['type']}" do
@@ -135,6 +144,10 @@ describe 'Server Discovery and Monitoring' do
               @client.cluster.servers.each do |server|
                 allow(server).to receive(:connectable?).and_return(true)
               end
+            end
+
+            it 'is incompatible' do
+              expect(@client.cluster.topology.compatible?).to be false
             end
 
             it 'raises an UnsupportedFeatures error' do
