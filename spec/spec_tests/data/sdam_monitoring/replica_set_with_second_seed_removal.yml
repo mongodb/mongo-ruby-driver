@@ -94,14 +94,7 @@ phases:
                   arbiters: []
                   hosts: 
                     - "a:27017"
-                    - "b:27017"
                   passives: []
                   primary: "a:27017"
                   setName: "rs"
                   type: "RSPrimary"
-                - 
-                  address: "b:27017"
-                  arbiters: []
-                  hosts: []
-                  passives: []
-                  type: "Unknown"
