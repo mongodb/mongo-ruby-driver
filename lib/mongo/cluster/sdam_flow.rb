@@ -128,8 +128,7 @@ class Mongo::Cluster
           @topology = Topology::ReplicaSetWithPrimary.new(
             # Do not pass updated_desc's RS name here
             topology.options,
-            topology.monitoring, self,
-            topology.max_election_id, topology.max_set_version)
+            topology.monitoring, self)
           update_rs_from_primary
         elsif updated_desc.secondary? || updated_desc.arbiter? || updated_desc.other?
           update_rs_without_primary
@@ -168,8 +167,7 @@ class Mongo::Cluster
       if topology.replica_set_name.nil?
         @topology = Topology::ReplicaSetWithPrimary.new(
           topology.options.merge(replica_set_name: updated_desc.replica_set_name),
-          topology.monitoring, self,
-          topology.max_election_id, topology.max_set_version)
+          topology.monitoring, self)
       end
 
       if topology.replica_set_name != updated_desc.replica_set_name
@@ -198,8 +196,10 @@ class Mongo::Cluster
         max_set_version != topology.max_set_version
       then
         @topology = Topology::ReplicaSetWithPrimary.new(
-          topology.options, topology.monitoring, self,
-          max_election_id, max_set_version)
+          topology.options.merge(
+            max_election_id: max_election_id,
+            max_set_version: max_set_version
+          ), topology.monitoring, self)
       end
 
       # At this point we have accepted the updated server description
@@ -260,8 +260,7 @@ class Mongo::Cluster
 
       unless have_primary
         @topology = Topology::ReplicaSetNoPrimary.new(
-          topology.options, topology.monitoring, self,
-          topology.max_election_id, topology.max_set_version)
+          topology.options, topology.monitoring, self)
       end
     end
 
@@ -270,8 +269,7 @@ class Mongo::Cluster
       if topology.replica_set_name.nil?
         @topology = Topology::ReplicaSetNoPrimary.new(
           topology.options.merge(replica_set_name: updated_desc.replica_set_name),
-          topology.monitoring, self,
-          topology.max_election_id, topology.max_set_version)
+          topology.monitoring, self)
       end
 
       if topology.replica_set_name != updated_desc.replica_set_name
@@ -460,8 +458,7 @@ class Mongo::Cluster
       end
       unless primary
         @topology = Topology::ReplicaSetNoPrimary.new(
-          topology.options, topology.monitoring, self,
-          topology.max_election_id, topology.max_set_version)
+          topology.options, topology.monitoring, self)
       end
     end
 

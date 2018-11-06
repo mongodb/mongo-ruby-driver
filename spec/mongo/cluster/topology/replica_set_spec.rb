@@ -103,18 +103,18 @@ describe Mongo::Cluster::Topology::ReplicaSetNoPrimary do
   describe '#max_election_id' do
     let(:election_id) { BSON::ObjectId.new }
 
-    it 'returns value set in constructor' do
-      topology = described_class.new({replica_set_name: 'foo'}, monitoring, nil,
-        election_id, nil)
+    it 'returns value given in constructor options' do
+      topology = described_class.new({replica_set_name: 'foo', max_election_id: election_id},
+        monitoring, nil)
 
       expect(topology.max_election_id).to eql(election_id)
     end
   end
 
   describe '#max_set_version' do
-    it 'returns value set in constructor' do
-      topology = described_class.new({replica_set_name: 'foo'}, monitoring, nil,
-        nil, 5)
+    it 'returns value given in constructor options' do
+      topology = described_class.new({replica_set_name: 'foo', max_set_version: 5},
+        monitoring, nil)
 
       expect(topology.max_set_version).to eq(5)
     end
@@ -363,7 +363,9 @@ describe Mongo::Cluster::Topology::ReplicaSetNoPrimary do
 
     context 'initially not nil' do
       let(:topology) do
-        described_class.new({replica_set_name: 'foo'}, monitoring, nil, nil, 4).tap do |topology|
+        described_class.new({replica_set_name: 'foo', max_set_version: 4},
+          monitoring, nil
+        ).tap do |topology|
           expect(topology.max_set_version).to eq(4)
         end
       end
@@ -445,7 +447,9 @@ describe Mongo::Cluster::Topology::ReplicaSetNoPrimary do
       let(:old_election_id) { BSON::ObjectId.from_string('7fffffff000000000000004c') }
 
       let(:topology) do
-        described_class.new({replica_set_name: 'foo'}, monitoring, nil, old_election_id, nil).tap do |topology|
+        described_class.new({replica_set_name: 'foo', max_election_id: old_election_id},
+          monitoring, nil
+        ).tap do |topology|
           expect(topology.max_election_id).to be old_election_id
         end
       end
