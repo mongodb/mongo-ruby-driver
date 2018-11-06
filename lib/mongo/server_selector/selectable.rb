@@ -111,7 +111,6 @@ module Mongo
 
             server = servers.first
 
-byebug
             if cluster.topology.single? &&
               cluster.topology.replica_set_name &&
               cluster.topology.replica_set_name != server.description.replica_set_name
