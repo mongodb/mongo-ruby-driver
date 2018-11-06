@@ -125,7 +125,7 @@ phases:
               setName: "rs"
               type: "RSPrimary"
             newDescription: 
-              address: "c:27017"
+              address: "a:27017"
               arbiters: []
               hosts: 
                 - "c:27017"
