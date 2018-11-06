@@ -109,11 +109,21 @@ module Mongo
               raise Error::UnsupportedFeatures, cluster.topology.compatibility_error.to_s
             end
 
+            server = servers.first
+
+byebug
+            if cluster.topology.single? &&
+              cluster.topology.replica_set_name &&
+              cluster.topology.replica_set_name != server.description.replica_set_name
+            then
+              raise Error::NoServerAvailable.new(self, cluster)
+            end
+
             # This list of servers may be ordered in a specific way
             # by the selector (e.g. for secondary preferred, the first
             # server may be a secondary and the second server may be primary)
             # and we should take the first server here respecting the order
-            return servers.first
+            return server
           end
           cluster.scan!
         end
