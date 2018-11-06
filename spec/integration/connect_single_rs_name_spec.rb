@@ -41,7 +41,7 @@ describe 'Direct connection with RS name' do
       it 'creates a client which raises on every operation' do
         expect do
           client.database.command(ismaster: 1)
-        end.to raise_error(Mongo::Error::NoServerAvailable, 'x')
+        end.to raise_error(Mongo::Error::NoServerAvailable)
       end
     end
   end
