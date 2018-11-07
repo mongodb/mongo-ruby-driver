@@ -187,7 +187,7 @@ describe 'Connections' do
         expect(client.cluster.topology.class).to eq(Mongo::Cluster::Topology::ReplicaSetNoPrimary)
 
         # this should dispatch the sdam event
-        connection.connect!
+        expect(connection.connect!).to be true
 
         # back to primary
         expect(server).to be_primary
