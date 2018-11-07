@@ -109,6 +109,10 @@ module Mongo
               raise Error::UnsupportedFeatures, cluster.topology.compatibility_error.to_s
             end
 
+            # This list of servers may be ordered in a specific way
+            # by the selector (e.g. for secondary preferred, the first
+            # server may be a secondary and the second server may be primary)
+            # and we should take the first server here respecting the order
             server = servers.first
 
             if cluster.topology.single? &&
@@ -119,10 +123,6 @@ module Mongo
               raise Error::NoServerAvailable.new(self, cluster, msg)
             end
 
-            # This list of servers may be ordered in a specific way
-            # by the selector (e.g. for secondary preferred, the first
-            # server may be a secondary and the second server may be primary)
-            # and we should take the first server here respecting the order
             return server
           end
           cluster.scan!
