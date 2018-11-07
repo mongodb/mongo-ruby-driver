@@ -19,7 +19,7 @@ describe 'Direct connection with RS name', retry: 3 do
     new_local_client(
       [SpecConfig.instance.addresses.first],
       replica_set: replica_set_name,
-      connect: :direct)
+      SpecConfig.instance.test_options.merge(connect: :direct))
   end
 
   context 'in replica set' do
