@@ -171,13 +171,12 @@ module Mongo
           # backwards compatibility.
           # If any servers are discovered during this SDAM round we do NOT
           # wait for newly discovered servers to be queried.
-          server_selection_semaphore.wait(time_remaining)
-          servers = servers_list.dup
-          while true
+          loop do
+            server_selection_semaphore.wait(time_remaining)
+            servers = servers_list.dup
             if servers.all? { |server| server.last_scan_completed_at }
               break
             end
-            sleep 0.5
           end
         end
       end
