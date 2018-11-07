@@ -98,6 +98,7 @@ module Mongo
       @pool_lock = Mutex.new
       @cluster_time = nil
       @cluster_time_lock = Mutex.new
+      @server_selection_semaphore = Semaphore.new
       @topology = Topology.initial(self, monitoring, options)
       Session::SessionPool.create(self)
 
@@ -164,21 +165,20 @@ module Mongo
         if server_selection_timeout < 3
           server_selection_timeout = 3
         end
-        begin
-          Timeout.timeout(server_selection_timeout) do
-            # Wait for the first scan of each server to complete, for
-            # backwards compatibility.
-            # If any servers are discovered during this SDAM round we do NOT
-            # wait for newly discovered servers to be queried.
-            servers = servers_list.dup
-            while true
-              if servers.all? { |server| server.last_scan_completed_at }
-                break
-              end
-              sleep 0.5
+        deadline = Time.now + server_selection_timeout
+        while (time_remaining = deadline - Time.now) > 0
+          # Wait for the first scan of each server to complete, for
+          # backwards compatibility.
+          # If any servers are discovered during this SDAM round we do NOT
+          # wait for newly discovered servers to be queried.
+          server_selection_semaphore.wait(time_remaining)
+          servers = servers_list.dup
+          while true
+            if servers.all? { |server| server.last_scan_completed_at }
+              break
             end
+            sleep 0.5
           end
-        rescue Timeout::Error
         end
       end
     end
@@ -334,6 +334,9 @@ module Mongo
       "topology=#{topology.summary} "+
       "servers=[#{servers.map(&:summary).join(',')}]>"
     end
+
+    # @api private
+    attr_reader :server_selection_semaphore
 
     # Finalize the cluster for garbage collection. Disconnects all the scoped
     # connection pools.
