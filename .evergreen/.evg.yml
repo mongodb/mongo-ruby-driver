@@ -334,7 +334,7 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
-          AUTH=${AUTH} SSL=${SSL} MONGODB_URI="${MONGODB_URI}" TOPOLOGY=${TOPOLOGY} RVM_RUBY="${RVM_RUBY}" MONGODB_VERSION=${VERSION} .evergreen/run-tests.sh
+          AUTH=${AUTH} SSL=${SSL} MONGODB_URI="${MONGODB_URI}" TOPOLOGY=${TOPOLOGY} RVM_RUBY="${RVM_RUBY}" MONGODB_VERSION=${VERSION} MONGO_RUBY_DRIVER_LINT=${LINT} .evergreen/run-tests.sh
 
   "run enterprise auth tests":
     - command: shell.exec
@@ -588,6 +588,13 @@ axes:
         display_name: Zlib
         variables:
            COMPRESSOR: "zlib"
+  - id: lint
+    display_name: Lint
+    values:
+      - id: on
+        display_name: On
+        variables:
+          LINT: '1'
 
 
 buildvariants:

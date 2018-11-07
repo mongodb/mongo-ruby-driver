@@ -83,6 +83,10 @@ module Mongo
               min
             end
           end
+
+          if Mongo::Lint.enabled?
+            freeze
+          end
         end
 
         # @return [ Hash ] options The options.
