@@ -69,7 +69,7 @@ class SpecConfig
   end
 
   def replica_set_name
-    ENV['RS_NAME']
+    ENV['RS_NAME'] || TEST_SET
   end
 
   # The write concern to use in the tests.
