@@ -98,7 +98,6 @@ module Mongo
       @pool_lock = Mutex.new
       @cluster_time = nil
       @cluster_time_lock = Mutex.new
-      @server_selection_semaphore = Semaphore.new
       @topology = Topology.initial(self, monitoring, options)
       Session::SessionPool.create(self)
 
@@ -172,7 +171,7 @@ module Mongo
           # If any servers are discovered during this SDAM round we do NOT
           # wait for newly discovered servers to be queried.
           loop do
-            server_selection_semaphore.wait(time_remaining)
+            options[:server_selection_semaphore].wait(time_remaining)
             servers = servers_list.dup
             if servers.all? { |server| server.last_scan_completed_at }
               break

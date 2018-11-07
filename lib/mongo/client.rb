@@ -331,7 +331,9 @@ module Mongo
       cluster_options = @options.reject do |key, value|
         CRUD_OPTIONS.include?(key.to_sym)
       end
-      @cluster = Cluster.new(addresses, @monitoring, @options)
+      @server_selection_semaphore = Semaphore.new
+      @cluster = Cluster.new(addresses, @monitoring, @options.merge(
+        server_selection_semaphore: @server_selection_semaphore))
       # Unset monitoring, it will be taken out of cluster from now on
       remove_instance_variable('@monitoring')
       yield(self) if block_given?
