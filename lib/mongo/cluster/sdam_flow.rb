@@ -65,12 +65,6 @@ class Mongo::Cluster
     end
 
     def server_description_changed
-      cluster.sdam_flow_lock.synchronize do
-        handle_server_description_changed
-      end
-    end
-
-    def handle_server_description_changed
       unless update_server_descriptions
         # All of the transitions require that server whose updated_desc we are
         # processing is still in the cluster (i.e., was not removed as a result
