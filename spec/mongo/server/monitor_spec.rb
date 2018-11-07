@@ -1,6 +1,9 @@
 require 'spec_helper'
 
 describe Mongo::Server::Monitor do
+  before(:all) do
+    ClientRegistry.instance.close_all_clients
+  end
 
   let(:address) do
     default_address
@@ -15,7 +18,8 @@ describe Mongo::Server::Monitor do
     context 'when calling multiple times in succession' do
 
       let(:monitor) do
-        described_class.new(address, listeners, Mongo::Monitoring.new, SpecConfig.instance.test_options)
+        described_class.new(address, listeners, Mongo::Monitoring.new,
+          SpecConfig.instance.test_options)
       end
 
       it 'throttles the scans to minimum 500ms' do
@@ -29,7 +33,8 @@ describe Mongo::Server::Monitor do
     context 'when the ismaster fails the first time' do
 
       let(:monitor) do
-        described_class.new(address, listeners, Mongo::Monitoring.new, SpecConfig.instance.test_options)
+        described_class.new(address, listeners, Mongo::Monitoring.new,
+          SpecConfig.instance.test_options.merge(monitoring_io: false))
       end
 
       let(:socket) do
@@ -202,10 +207,12 @@ describe Mongo::Server::Monitor do
     end
   end
 
-  describe '#stop' do
+  # fails intermittently on jruby in evergreen
+  describe '#stop', retry: 3 do
 
     let(:monitor) do
-      described_class.new(address, listeners, Mongo::Monitoring.new, SpecConfig.instance.test_options)
+      described_class.new(address, listeners, Mongo::Monitoring.new,
+        SpecConfig.instance.test_options)
     end
 
     let!(:thread) do
