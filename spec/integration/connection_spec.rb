@@ -121,7 +121,7 @@ describe 'Connections' do
 
       let(:client) { ClientRegistry.instance.global_client('authorized').with(app_name: 'wire_protocol_update') }
 
-      it 'does not update on ismaster response from non-monitoring connections' do
+      it 'updates on ismaster response from non-monitoring connections' do
         # connect server
         client['test'].insert_one(test: 1)
 
@@ -135,6 +135,15 @@ describe 'Connections' do
         expect(server.features.server_wire_versions.max >= 4).to be true
         max_version = server.features.server_wire_versions.max
 
+        # Depending on server version, ismaster here may return a
+        # description that compares equal to the one we got from a
+        # monitoring connection (pre-4.3) or not (4.2+).
+        # Since we do run SDAM flow on ismaster responses on
+        # non-monitoring connections, force descriptions to be different
+        # by setting the existing description here to unknown.
+        server.monitor.instance_variable_set('@description',
+          Mongo::Server::Description.new(server.address))
+
         # now pretend an ismaster returned a different range
         features = Mongo::Server::Description::Features.new(0..3)
         # the second Features instantiation is for SDAM event publication
@@ -143,9 +152,9 @@ describe 'Connections' do
         connection = Mongo::Server::Connection.new(server, server.options)
         expect(connection.connect!).to be true
 
-        # ismaster response should not update wire version range stored
-        # in description
-        expect(server.features.server_wire_versions.max).to eq(max_version)
+        # ismaster response should update server description via sdam flow,
+        # which includes wire version range
+        expect(server.features.server_wire_versions.max).to eq(3)
       end
     end
 
