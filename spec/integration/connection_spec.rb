@@ -148,5 +148,51 @@ describe 'Connections' do
         expect(server.features.server_wire_versions.max).to eq(max_version)
       end
     end
+
+    describe 'SDAM flow triggered by ismaster on non-monitoring thread' do
+      # replica sets can transition between having and not having a primary
+      require_topology :replica_set
+
+      let(:client) do
+        # create a new client because we make manual state changes
+        ClientRegistry.instance.global_client('authorized').with(app_name: 'non-monitoring thread sdam')
+      end
+
+      it 'performs SDAM flow' do
+        client['foo'].insert_one(bar: 1)
+        client.cluster.servers.each do |server|
+          server.monitor.stop!(true)
+        end
+        expect(client.cluster.topology.class).to eq(Mongo::Cluster::Topology::ReplicaSetWithPrimary)
+
+        # need to connect to the primary for topology to change
+        server = client.cluster.servers.detect do |server|
+          server.primary?
+        end
+
+        # overwrite server description
+        server.monitor.instance_variable_set('@description', Mongo::Server::Description.new(
+          server.address))
+
+        # overwrite topology
+        client.cluster.instance_variable_set('@topology',
+          Mongo::Cluster::Topology::ReplicaSetNoPrimary.new(
+            client.cluster.topology.options, client.cluster.topology.monitoring, client.cluster))
+
+        # now create a connection.
+        connection = Mongo::Server::Connection.new(server, server.options)
+
+        # verify everything once again
+        expect(server).to be_unknown
+        expect(client.cluster.topology.class).to eq(Mongo::Cluster::Topology::ReplicaSetNoPrimary)
+
+        # this should dispatch the sdam event
+        connection.connect!
+
+        # back to primary
+        expect(server).to be_primary
+        expect(client.cluster.topology.class).to eq(Mongo::Cluster::Topology::ReplicaSetWithPrimary)
+      end
+    end
   end
 end
