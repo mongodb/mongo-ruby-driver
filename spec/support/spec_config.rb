@@ -68,10 +68,6 @@ class SpecConfig
     connect_options[:connect] == :replica_set
   end
 
-  def replica_set_name
-    ENV['RS_NAME'] || TEST_SET
-  end
-
   # The write concern to use in the tests.
   def write_concern
     if connect_replica_set?

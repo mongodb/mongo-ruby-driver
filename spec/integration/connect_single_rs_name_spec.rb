@@ -22,7 +22,7 @@ describe 'Direct connection with RS name' do
     require_topology :replica_set
 
     context 'with correct RS name' do
-      let(:replica_set_name) { SpecConfig.instance.replica_set_name }
+      let(:replica_set_name) { ClusterConfig.instance.replica_set_name }
 
       it_behaves_like 'passes RS name to topology'
 
@@ -41,7 +41,7 @@ describe 'Direct connection with RS name' do
       it 'creates a client which raises on every operation' do
         expect do
           client.database.command(ismaster: 1)
-        end.to raise_error(Mongo::Error::NoServerAvailable, "Cluster topology specifies replica set name wrong, but the server has replica set name #{SpecConfig.instance.replica_set_name}")
+        end.to raise_error(Mongo::Error::NoServerAvailable, "Cluster topology specifies replica set name wrong, but the server has replica set name #{ClusterConfig.instance.replica_set_name}")
       end
     end
   end
