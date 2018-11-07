@@ -1,6 +1,9 @@
 require 'spec_helper'
 
 describe Mongo::Server::Monitor do
+  before(:all) do
+    ClientRegistry.instance.close_all_clients
+  end
 
   let(:address) do
     default_address
@@ -15,7 +18,8 @@ describe Mongo::Server::Monitor do
     context 'when calling multiple times in succession' do
 
       let(:monitor) do
-        described_class.new(address, listeners, Mongo::Monitoring.new, SpecConfig.instance.test_options)
+        described_class.new(address, listeners, Mongo::Monitoring.new,
+          SpecConfig.instance.test_options)
       end
 
       it 'throttles the scans to minimum 500ms' do
@@ -29,7 +33,8 @@ describe Mongo::Server::Monitor do
     context 'when the ismaster fails the first time' do
 
       let(:monitor) do
-        described_class.new(address, listeners, Mongo::Monitoring.new, SpecConfig.instance.test_options)
+        described_class.new(address, listeners, Mongo::Monitoring.new,
+          SpecConfig.instance.test_options.merge(monitoring_io: false))
       end
 
       let(:socket) do
@@ -43,39 +48,64 @@ describe Mongo::Server::Monitor do
         monitor.scan!
       end
 
-      it 'retries the ismaster', if: standalone? do
-        expect(monitor.description).to be_standalone
+      context 'in single topology' do
+        require_topology :single
+
+        it 'retries the ismaster' do
+          expect(monitor.description).to be_standalone
+        end
       end
 
-      it 'retries the ismaster', if: replica_set? do
-        expect(monitor.description).to be_primary
+      context 'in replica set topology' do
+        require_topology :replica_set
+
+        it 'retries the ismaster' do
+          expect(monitor.description).to be_primary
+        end
       end
 
-      it 'retries the ismaster', if: sharded? do
-        expect(monitor.description).to be_mongos
+      context 'in sharded topology' do
+        require_topology :sharded
+
+        it 'retries the ismaster' do
+          expect(monitor.description).to be_mongos
+        end
       end
     end
 
     context 'when the ismaster command succeeds' do
 
       let(:monitor) do
-        described_class.new(address, listeners, Mongo::Monitoring.new, SpecConfig.instance.test_options)
+        described_class.new(address, listeners, Mongo::Monitoring.new,
+          SpecConfig.instance.test_options)
       end
 
       before do
         monitor.scan!
       end
 
-      it 'updates the server description', if: standalone? do
-        expect(monitor.description).to be_standalone
+      context 'in single topology' do
+        require_topology :single
+
+        it 'updates the server description' do
+          expect(monitor.description).to be_standalone
+        end
       end
 
-      it 'updates the server description', if: replica_set? do
-        expect(monitor.description).to be_primary
+      context 'in replica set topology' do
+        require_topology :replica_set
+
+        it 'updates the server description' do
+          expect(monitor.description).to be_primary
+        end
       end
 
-      it 'updates the server description', if: sharded? do
-        expect(monitor.description).to be_mongos
+      context 'in sharded topology' do
+        require_topology :sharded
+
+        it 'updates the server description' do
+          expect(monitor.description).to be_mongos
+        end
       end
     end
 
@@ -202,10 +232,12 @@ describe Mongo::Server::Monitor do
     end
   end
 
-  describe '#stop' do
+  # fails intermittently on jruby in evergreen
+  describe '#stop', retry: 3 do
 
     let(:monitor) do
-      described_class.new(address, listeners, Mongo::Monitoring.new, SpecConfig.instance.test_options)
+      described_class.new(address, listeners, Mongo::Monitoring.new,
+        SpecConfig.instance.test_options)
     end
 
     let!(:thread) do
