@@ -38,13 +38,20 @@ module Mongo
         end
         @last_round_trip_time = Time.now - start
 
+        update_average_round_trip_time
+
+        [rv, exc, last_round_trip_time, average_round_trip_time]
+      end
+
+      private
+
+      # This method is separate for testing purposes.
+      def update_average_round_trip_time
         @average_round_trip_time = if average_round_trip_time
           RTT_WEIGHT_FACTOR * last_round_trip_time + (1 - RTT_WEIGHT_FACTOR) * average_round_trip_time
         else
           last_round_trip_time
         end
-
-        [rv, exc, last_round_trip_time, average_round_trip_time]
       end
     end
   end
