@@ -1,6 +1,7 @@
 require 'spec_helper'
 
-describe 'Direct connection with RS name' do
+# these tests fail intermittently on various topologies in evergreen
+describe 'Direct connection with RS name', retry: 3 do
   before(:all) do
     # preload
     ClientRegistry.instance.close_all_clients
