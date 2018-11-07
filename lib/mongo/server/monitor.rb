@@ -68,7 +68,6 @@ module Mongo
         @round_trip_time_averager = RoundTripTimeAverager.new
         # This is a Mongo::Server::Monitor::Connection
         @connection = Connection.new(address, options)
-        @average_round_trip_time = nil
         @last_scan = nil
         @mutex = Mutex.new
       end
@@ -153,10 +152,10 @@ module Mongo
       # @since 2.0.0
       def scan!
         throttle_scan_frequency!
-        # ismaster call updates @average_round_trip_time
         result = ismaster
         @last_scan_completed_at = Time.now
-        new_description = Description.new(description.address, result, @average_round_trip_time)
+        new_description = Description.new(description.address, result,
+          @round_trip_time_averager.average_round_trip_time)
         publish(Event::DESCRIPTION_CHANGED, description, new_description)
         # If this server's response has a mismatched me, or for other reasons,
         # this server may be removed from topology. When this happens the
