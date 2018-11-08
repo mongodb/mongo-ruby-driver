@@ -536,4 +536,50 @@ describe Mongo::Cluster do
       end
     end
   end
+
+  describe '#sessions_supported?' do
+    context 'in single topology' do
+      require_topology :single
+
+      let(:client) { ClientRegistry.instance.global_client('authorized') }
+
+      it 'is false' do
+        expect(client.cluster.send(:sessions_supported?)).to be false
+      end
+    end
+
+    context 'in single topology with replica set name set' do
+      require_topology :replica_set
+
+      let(:client) do
+        new_local_client(SpecConfig.instance.addresses,
+          SpecConfig.instance.test_options.merge(
+            connect: :direct, replica_set: ClusterConfig.instance.replica_set_name))
+      end
+
+      it 'is false' do
+        expect(client.cluster.send(:sessions_supported?)).to be false
+      end
+    end
+
+    context 'in replica set topology' do
+      require_topology :replica_set
+
+      let(:client) { ClientRegistry.instance.global_client('authorized') }
+
+      it 'is true' do
+        expect(client.cluster.send(:sessions_supported?)).to be true
+      end
+    end
+
+    context 'in sharded topology' do
+      require_topology :sharded
+
+      let(:client) { ClientRegistry.instance.global_client('authorized') }
+
+      it 'is true' do
+        expect(client.cluster.send(:sessions_supported?)).to be true
+      end
+    end
+  end
 end

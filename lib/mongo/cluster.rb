@@ -613,11 +613,20 @@ module Mongo
     end
 
     def sessions_supported?
-      if servers.empty? && !topology.single?
-        ServerSelector.get(mode: :primary_preferred).select_server(self)
+      if topology.single?
+        return false
       end
-      !!logical_session_timeout
-    rescue Error::NoServerAvailable
+
+      if topology.data_bearing_servers?
+        return !!topology.logical_session_timeout
+      end
+
+      begin
+        ServerSelector.get(mode: :primary_preferred).select_server(self)
+        !!topology.logical_session_timeout
+      rescue Error::NoServerAvailable
+        false
+      end
     end
 
     def pools
