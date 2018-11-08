@@ -6,14 +6,18 @@ describe Mongo::Cluster do
     Mongo::Monitoring.new(monitoring: false)
   end
 
-  let(:cluster) do
-    described_class.new(SpecConfig.instance.addresses, monitoring, SpecConfig.instance.test_options)
+  let(:cluster_with_semaphore) do
+    described_class.new(SpecConfig.instance.addresses, monitoring,
+      SpecConfig.instance.test_options.merge(
+        server_selection_semaphore: Mongo::Semaphore.new))
   end
 
   let(:cluster_without_io) do
     described_class.new(SpecConfig.instance.addresses, monitoring,
       SpecConfig.instance.test_options.merge(monitoring_io: false))
   end
+
+  let(:cluster) { cluster_without_io }
 
   describe '#==' do
 
@@ -248,6 +252,8 @@ describe Mongo::Cluster do
 
     context 'when topology is Single' do
 
+      let(:cluster) { cluster_with_semaphore }
+
       let(:topology) do
         Mongo::Cluster::Topology::Single.new({}, cluster)
       end
@@ -263,6 +269,7 @@ describe Mongo::Cluster do
   end
 
   describe '#disconnect!' do
+    let(:cluster) { cluster_with_semaphore }
 
     let(:known_servers) do
       cluster.instance_variable_get(:@servers)
@@ -308,6 +315,8 @@ describe Mongo::Cluster do
   end
 
   describe '#reconnect!' do
+
+    let(:cluster) { cluster_with_semaphore }
 
     let(:periodic_executor) do
       cluster.instance_variable_get(:@periodic_executor)
