@@ -158,6 +158,7 @@ describe Mongo::Cluster do
   end
 
   describe '#servers' do
+    let(:cluster) { cluster_with_semaphore }
 
     context 'when topology is single' do
       before do
@@ -167,11 +168,7 @@ describe Mongo::Cluster do
       end
 
       context 'when the server is a mongos' do
-        before do
-          unless ClusterConfig.instance.mongos?
-            skip 'Topology is not a sharded cluster'
-          end
-        end
+        require_topology :sharded
 
         it 'returns the mongos' do
           expect(cluster.servers.size).to eq(1)
@@ -179,11 +176,7 @@ describe Mongo::Cluster do
       end
 
       context 'when the server is a replica set member' do
-        before do
-          unless ClusterConfig.instance.replica_set_name
-            skip 'Topology is not a replica set'
-          end
-        end
+        require_topology :replica_set
 
         it 'returns the replica set member' do
           expect(cluster.servers.size).to eq(1)
