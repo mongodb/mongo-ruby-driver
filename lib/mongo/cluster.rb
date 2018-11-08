@@ -613,10 +613,6 @@ module Mongo
     end
 
     def sessions_supported?
-      if topology.single?
-        return false
-      end
-
       if topology.data_bearing_servers?
         return !!topology.logical_session_timeout
       end
