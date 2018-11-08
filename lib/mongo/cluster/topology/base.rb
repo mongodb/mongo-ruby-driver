@@ -65,7 +65,9 @@ module Mongo
 
           begin
             servers.each do |server|
-              server.check_driver_support!
+              unless server.unknown?
+                server.check_driver_support!
+              end
             end
           rescue Error::UnsupportedFeatures => e
             @compatible = false
