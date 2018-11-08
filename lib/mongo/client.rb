@@ -341,6 +341,8 @@ module Mongo
         CRUD_OPTIONS.include?(key.to_sym)
       end.merge(
         server_selection_semaphore: @server_selection_semaphore,
+        # but need to put the database back in for auth...
+        database: options[:database],
       )
     end
 
