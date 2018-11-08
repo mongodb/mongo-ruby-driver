@@ -164,7 +164,7 @@ describe 'Retryable writes integration tests' do
             end
 
             before do
-              expect(client.cluster).to receive(:scan!).twice.and_call_original
+              expect(client.cluster).to receive(:scan!).at_least(:twice).and_call_original
             end
 
             it 'does not retry writes and raises the second error' do
@@ -178,7 +178,7 @@ describe 'Retryable writes integration tests' do
           context 'when the second error is a SocketTimeoutError' do
 
             before do
-              expect(client.cluster).to receive(:scan!).twice.and_call_original
+              expect(client.cluster).to receive(:scan!).at_least(:twice).and_call_original
             end
 
             let(:second_error) do
@@ -196,7 +196,7 @@ describe 'Retryable writes integration tests' do
           context 'when the second error is a retryable OperationFailure' do
 
             before do
-              expect(client.cluster).to receive(:scan!).twice.and_call_original
+              expect(client.cluster).to receive(:scan!).at_least(:twice).and_call_original
             end
 
             let(:second_error) do
