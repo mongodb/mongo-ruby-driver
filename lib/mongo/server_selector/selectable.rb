@@ -107,7 +107,6 @@ module Mongo
           if Lint.enabled?
             servers.each do |server|
               if server.average_round_trip_time.nil?
-              byebug
                 raise Error::LintError, "Server #{server.address} has nil average rtt"
               end
             end
