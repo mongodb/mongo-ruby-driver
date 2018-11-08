@@ -74,9 +74,11 @@ module Mongo
             @compatible = true
           end
 
+          @have_data_bearing_servers = false
           @logical_session_timeout = servers.inject(nil) do |min, server|
             # LST is only read from data-bearing servers
             if server.mongos? || server.primary? || server.secondary? || server.standalone?
+              @have_data_bearing_servers = true
               break unless timeout = server.logical_session_timeout
               [timeout, (min || timeout)].min
             else
@@ -147,6 +149,15 @@ module Mongo
         #
         # @since 2.7.0
         attr_reader :logical_session_timeout
+
+        # @return [ true | false ] have_data_bearing_servers Whether the
+        #   topology has any data bearing servers, for the purposes of
+        #   logical session timeout calculation.
+        #
+        # @api private
+        def data_bearing_servers?
+          @have_data_bearing_servers
+        end
 
         # The largest electionId ever reported by a primary.
         # May be nil.
