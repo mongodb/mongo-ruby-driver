@@ -99,6 +99,10 @@ module Mongo
         def initialize(server_wire_versions, address = nil)
           @server_wire_versions = server_wire_versions
           @address = address
+
+          if Mongo::Lint.enabled?
+            freeze
+          end
         end
 
         # Check that there is an overlap between the driver supported wire
