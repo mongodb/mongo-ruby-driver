@@ -55,10 +55,15 @@ class Mongo::Cluster
     # updated_desc's address.
     def update_server_descriptions
       servers_list.each do |server|
-        if server.address == updated_desc.address && server.description != updated_desc
+        if server.address == updated_desc.address
+          changed = server.description != updated_desc
+          # Always update server description, so that fields like
+          # last_update_time reflect the last ismaster response
           server.update_description(updated_desc)
-          # There should only be one match
-          return true
+          # But return if there was a content difference between
+          # descriptions, and if there wasn't we'll skip the remainder of
+          # sdam flow
+          return changed
         end
       end
       false
