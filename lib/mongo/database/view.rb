@@ -101,12 +101,12 @@ module Mongo
         cursor.to_enum
       end
 
-      def collections_info_spec(session, options = {})
+      def collections_info_spec(session_maybe, options = {})
         { selector: {
             listCollections: 1,
             cursor: batch_size ? { batchSize: batch_size } : {} },
           db_name: @database.name,
-          session: session
+          session: session_maybe,
         }.tap { |spec| spec[:selector][:nameOnly] = true if options[:name_only] }
       end
 
@@ -114,8 +114,8 @@ module Mongo
         Operation::CollectionsInfo.new(collections_info_spec(session, options))
       end
 
-      def send_initial_query(server, session, options = {})
-        initial_query_op(session, options).execute(server)
+      def send_initial_query(server, session_maybe, options = {})
+        initial_query_op(session_maybe, options).execute(server)
       end
     end
   end
