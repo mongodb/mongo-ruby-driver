@@ -421,17 +421,38 @@ module Mongo
 
     # Force a scan of all known servers in the cluster.
     #
+    # If the sync parameter is true which is the default, the scan is
+    # performed synchronously in the thread which called this method.
+    # Each server in the cluster is checked sequentially. If there are
+    # many servers in the cluster or they are slow to respond, this
+    # can be a long running operation.
+    #
+    # If the sync parameter is false, this method instructs all server
+    # monitor threads to perform an immediate scan and returns without
+    # waiting for scan results.
+    #
+    # @note In both synchronous and asynchronous scans, each monitor
+    #   thread maintains a minimum interval between scans, meaning
+    #   calling this method may not initiate a scan on a particular server
+    #   the very next instant.
+    #
     # @example Force a full cluster scan.
     #   cluster.scan!
-    #
-    # @note This operation is done synchronously. If servers in the cluster are
-    #   down or slow to respond this can potentially be a slow operation.
     #
     # @return [ true ] Always true.
     #
     # @since 2.0.0
-    def scan!
-      servers_list.each{ |server| server.scan! } and true
+    def scan!(sync=true)
+      if sync
+        servers_list.each do |server|
+          server.scan!
+        end
+      else
+        servers_list.each do |server|
+          server.monitor.scan_semaphore.signal
+        end
+      end
+      true
     end
 
     # Determine if this cluster of servers is equal to another object. Checks the

@@ -132,7 +132,7 @@ module Mongo
 
             return server
           end
-          cluster.scan!
+          cluster.scan!(false)
         end
         raise Error::NoServerAvailable.new(self, cluster)
       end
