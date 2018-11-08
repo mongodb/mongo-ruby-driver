@@ -16,13 +16,17 @@ group :development, :testing do
     gem 'httparty'
   end
   gem 'yajl-ruby', require: 'yajl', platforms: :mri
-  gem 'celluloid', platforms: :mri
   gem 'fuubar'
   platforms :mri do
     if RUBY_VERSION >= '2.0.0'
       gem 'byebug'
     end
   end
+  
+  # for benchmark tests
+  gem 'celluloid', platforms: :mri
+  # timers 4.2 requires ruby >= 2.2
+  gem 'timers', '< 4.2'
 end
 
 group :testing do
