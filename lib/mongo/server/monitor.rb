@@ -169,6 +169,7 @@ module Mongo
         if options[:server_selection_semaphore]
           options[:server_selection_semaphore].broadcast
         end
+        @description
       end
 
       # Stops the server monitor. Kills the thread so it doesn't continue
