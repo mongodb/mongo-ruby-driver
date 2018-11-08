@@ -164,6 +164,8 @@ describe 'Retryable writes integration tests' do
             end
 
             before do
+              # server selector can call scan! until it finds a server,
+              # hence more than two scan! calls may be issued
               expect(client.cluster).to receive(:scan!).at_least(:twice).and_call_original
             end
 
@@ -178,6 +180,8 @@ describe 'Retryable writes integration tests' do
           context 'when the second error is a SocketTimeoutError' do
 
             before do
+              # server selector can call scan! until it finds a server,
+              # hence more than two scan! calls may be issued
               expect(client.cluster).to receive(:scan!).at_least(:twice).and_call_original
             end
 
@@ -196,6 +200,8 @@ describe 'Retryable writes integration tests' do
           context 'when the second error is a retryable OperationFailure' do
 
             before do
+              # server selector can call scan! until it finds a server,
+              # hence more than two scan! calls may be issued
               expect(client.cluster).to receive(:scan!).at_least(:twice).and_call_original
             end
 
