@@ -555,7 +555,7 @@ describe Mongo::Cluster do
         require_topology :replica_set
 
         let(:client) do
-          new_local_client(SpecConfig.instance.addresses,
+          new_local_client([SpecConfig.instance.addresses.first],
             SpecConfig.instance.test_options.merge(
               connect: :direct, replica_set: ClusterConfig.instance.replica_set_name))
         end
@@ -606,7 +606,7 @@ describe Mongo::Cluster do
         require_topology :replica_set
 
         let(:client) do
-          new_local_client(SpecConfig.instance.addresses,
+          new_local_client([SpecConfig.instance.addresses.first],
             SpecConfig.instance.test_options.merge(
               connect: :direct, replica_set: ClusterConfig.instance.replica_set_name))
         end
