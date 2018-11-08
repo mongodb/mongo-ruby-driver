@@ -594,8 +594,11 @@ describe Mongo::Cluster do
 
         let(:client) { ClientRegistry.instance.global_client('authorized') }
 
-        it 'is false' do
-          expect(client.cluster.send(:sessions_supported?)).to be false
+        # Contrary to the session spec, 3.6 and 4.0 standalone servers
+        # report a logical session timeout and thus are considered to
+        # support sessions
+        it 'is true' do
+          expect(client.cluster.send(:sessions_supported?)).to be true
         end
       end
 
