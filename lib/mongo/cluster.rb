@@ -447,7 +447,9 @@ module Mongo
     # @since 2.0.0
     def ==(other)
       return false unless other.is_a?(Cluster)
-      addresses == other.addresses && options == other.options
+      addresses == other.addresses &&
+        options.merge(server_selection_semaphore: nil) ==
+          other.options.merge(server_selection_semaphore: nil)
     end
 
     # Determine if the cluster would select a readable server for the
