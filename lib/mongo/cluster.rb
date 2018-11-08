@@ -598,6 +598,13 @@ module Mongo
 
     private
 
+    # If options[:session] is set, validates that session and returns it.
+    # If deployment supports sessions, creates a new session and returns it.
+    # The session is implicit unless options[:implicit] is given.
+    # If deployment does not support session, returns nil.
+    #
+    # @note This method will return nil if deployment has no data-bearing
+    #   servers at the time of the call.
     def get_session(client, options = {})
       return options[:session].validate!(self) if options[:session]
       if sessions_supported?
@@ -612,6 +619,12 @@ module Mongo
       session.end_session if (session && session.implicit?)
     end
 
+    # Returns whether the deployment (as this term is defined in the sessions
+    # spec) supports sessions.
+    #
+    # @note If the cluster has no data bearing servers, for example because
+    #   the deployment is in the middle of a failover, this method returns
+    #   false.
     def sessions_supported?
       if topology.data_bearing_servers?
         return !!topology.logical_session_timeout
