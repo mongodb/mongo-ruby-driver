@@ -88,6 +88,10 @@ module Mongo
     #
     # @since 2.0.0
     def initialize(seeds, monitoring, options = Options::Redacted.new)
+      if options[:monitoring_io] != false && !options[:server_selection_semaphore]
+        raise ArgumentError, 'Need server selection semaphore'
+      end
+
       @servers = []
       @monitoring = monitoring
       @event_listeners = Event::Listeners.new
@@ -165,18 +169,19 @@ module Mongo
           server_selection_timeout = 3
         end
         deadline = Time.now + server_selection_timeout
-        while (time_remaining = deadline - Time.now) > 0
-          # Wait for the first scan of each server to complete, for
-          # backwards compatibility.
-          # If any servers are discovered during this SDAM round we do NOT
-          # wait for newly discovered servers to be queried.
-          loop do
-            options[:server_selection_semaphore].wait(time_remaining)
-            servers = servers_list.dup
-            if servers.all? { |server| server.last_scan_completed_at }
-              break
-            end
+        # Wait for the first scan of each server to complete, for
+        # backwards compatibility.
+        # If any servers are discovered during this SDAM round we do NOT
+        # wait for newly discovered servers to be queried.
+        loop do
+          servers = servers_list.dup
+          if servers.all? { |server| server.last_scan_completed_at }
+            break
           end
+          if (time_remaining = deadline - Time.now) <= 0
+            break
+          end
+          options[:server_selection_semaphore].wait(time_remaining)
         end
       end
     end
@@ -198,7 +203,7 @@ module Mongo
       cluster = Cluster.new(
         client.cluster.addresses.map(&:to_s),
         Monitoring.new,
-        client.options
+        client.cluster_options,
       )
       client.instance_variable_set(:@cluster, cluster)
     end
