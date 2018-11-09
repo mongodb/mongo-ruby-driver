@@ -21,11 +21,8 @@ module Mongo
       # @api private
       #
       # @since 2.5.2
-      class OpMsg
-        include Specifiable
-        include Executable
+      class OpMsg < OpMsgBase
         include Idable
-        include SessionsSupported
         include BypassDocumentValidation
 
         # Execute the operation.

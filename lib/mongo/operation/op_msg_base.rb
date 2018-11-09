@@ -16,6 +16,10 @@ module Mongo
   module Operation
     # @api private
     class OpMsgBase
+      include Specifiable
+      include Executable
+      include SessionsSupported
+
       private
 
       def message(server)
