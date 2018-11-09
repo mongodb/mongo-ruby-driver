@@ -21,7 +21,7 @@ module Mongo
       # @api private
       #
       # @since 2.5.2
-      class OpMsg
+      class OpMsg < OpMsgBase
         include Specifiable
         include Executable
         include SessionsSupported
@@ -39,10 +39,6 @@ module Mongo
 
         def selector(server)
           { :updateUser => user.name }.merge(user.spec)
-        end
-
-        def message(server)
-          Protocol::Msg.new(flags, options, command(server))
         end
       end
     end

@@ -13,6 +13,7 @@ require 'mongo/operation/shared/idable'
 require 'mongo/operation/shared/specifiable'
 require 'mongo/operation/shared/object_id_generator'
 
+require 'mongo/operation/op_msg_base'
 require 'mongo/operation/command'
 require 'mongo/operation/aggregate'
 require 'mongo/operation/result'

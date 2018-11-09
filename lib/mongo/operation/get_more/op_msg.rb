@@ -28,7 +28,7 @@ module Mongo
       # @api private
       #
       # @since 2.5.2
-      class OpMsg
+      class OpMsg < OpMsgBase
         include Specifiable
         include Executable
         include SessionsSupported
@@ -50,12 +50,6 @@ module Mongo
         rescue Mongo::Error::SocketError => e
           e.send(:add_label, Mongo::Error::TRANSIENT_TRANSACTION_ERROR_LABEL) if session.in_transaction?
           raise e
-        end
-
-        private
-
-        def message(server)
-          Protocol::Msg.new(flags, options, command(server))
         end
       end
     end

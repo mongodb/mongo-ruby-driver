@@ -21,7 +21,7 @@ module Mongo
       # @api private
       #
       # @since 2.5.2
-      class OpMsg
+      class OpMsg < OpMsgBase
         include Specifiable
         include Executable
         include SessionsSupported
@@ -53,10 +53,6 @@ module Mongo
           sel[:maxTimeMS] = max_time_ms if max_time_ms
           sel[:readConcern] = read_concern if read_concern
           sel
-        end
-
-        def message(server)
-          Protocol::Msg.new(flags, options, command(server))
         end
       end
     end

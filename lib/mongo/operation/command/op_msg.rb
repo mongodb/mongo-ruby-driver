@@ -21,7 +21,7 @@ module Mongo
       # @api private
       #
       # @since 2.5.2
-      class OpMsg
+      class OpMsg < OpMsgBase
         include Specifiable
         include Executable
         include SessionsSupported
@@ -40,12 +40,6 @@ module Mongo
           result = Result.new(dispatch_message(server))
           process_result(result, server)
           result.validate!
-        end
-
-        private
-
-        def message(server)
-          Protocol::Msg.new(flags, options, command(server))
         end
       end
     end

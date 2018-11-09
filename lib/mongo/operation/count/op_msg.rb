@@ -21,17 +21,11 @@ module Mongo
       # @api private
       #
       # @since 2.5.2
-      class OpMsg
+      class OpMsg < OpMsgBase
         include Specifiable
         include Executable
         include SessionsSupported
         include CausalConsistencySupported
-
-        private
-
-        def message(server)
-          Protocol::Msg.new(flags, options, command(server))
-        end
       end
     end
   end
