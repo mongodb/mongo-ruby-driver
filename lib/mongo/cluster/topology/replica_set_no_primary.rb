@@ -46,7 +46,18 @@ module Mongo
         # @api experimental
         # @since 2.7.0
         def summary
-          "#{display_name.gsub(' ', '')}[name=#{replica_set_name},v=#{@max_set_version},e=#{@max_election_id && @max_election_id.to_s.sub(/^0+/, '')}]"
+          details = server_descriptions.keys.join(',')
+          if details != ''
+            details << ','
+          end
+          details << "name=#{replica_set_name}"
+          if max_set_version
+            details << ",v=#{max_set_version}"
+          end
+          if max_election_id
+            details << ",e=#{max_election_id && max_election_id.to_s.sub(/^0+/, '')}"
+          end
+          "#{display_name}[#{details}]"
         end
 
         # Determine if the topology would select a readable server for the

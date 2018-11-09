@@ -25,6 +25,8 @@ describe Mongo::Monitoring::Event::TopologyOpening do
 
   describe '#summary' do
     it 'renders correctly' do
+      expect(topology).to receive(:server_descriptions).and_return({
+        '127.0.0.1:27017' => Mongo::Server::Description.new(Mongo::Address.new('127.0.0.1:27017'))})
       expect(event.summary).to eq('#<TopologyOpening topology=Unknown[127.0.0.1:27017]>')
     end
   end

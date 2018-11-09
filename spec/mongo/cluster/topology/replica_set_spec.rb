@@ -505,4 +505,34 @@ describe Mongo::Cluster::Topology::ReplicaSetNoPrimary do
       end
     end
   end
+
+  describe '#summary' do
+    let(:desc) do
+      Mongo::Server::Description.new(Mongo::Address.new('127.0.0.2:27017'))
+    end
+
+    let(:topology) do
+      described_class.new({replica_set_name: 'foo'}, monitoring, temp_cluster)
+    end
+
+    it 'renders correctly' do
+      expect(topology).to receive(:server_descriptions).and_return({desc.address.to_s => desc})
+      expect(topology.summary).to eq('ReplicaSetNoPrimary[127.0.0.2:27017,name=foo]')
+    end
+
+    context 'with max set version and max election id' do
+      let(:topology) do
+        described_class.new({
+          replica_set_name: 'foo',
+          max_set_version: 5,
+          max_election_id: BSON::ObjectId.from_string('7fffffff0000000000000042'),
+        }, monitoring, temp_cluster)
+      end
+
+      it 'renders correctly' do
+        expect(topology).to receive(:server_descriptions).and_return({desc.address.to_s => desc})
+        expect(topology.summary).to eq('ReplicaSetNoPrimary[127.0.0.2:27017,name=foo,v=5,e=7fffffff0000000000000042]')
+      end
+    end
+  end
 end

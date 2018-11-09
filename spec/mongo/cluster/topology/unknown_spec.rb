@@ -70,4 +70,15 @@ describe Mongo::Cluster::Topology::Unknown do
       expect(topology).to_not have_writable_server(nil)
     end
   end
+
+  describe '#summary' do
+    let(:desc) do
+      Mongo::Server::Description.new(Mongo::Address.new('127.0.0.2:27017'))
+    end
+
+    it 'renders correctly' do
+      expect(topology).to receive(:server_descriptions).and_return({desc.address.to_s => desc})
+      expect(topology.summary).to eq('Unknown[127.0.0.2:27017]')
+    end
+  end
 end

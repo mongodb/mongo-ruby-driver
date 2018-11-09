@@ -44,7 +44,8 @@ module Mongo
         # @api experimental
         # @since 2.7.0
         def summary
-          display_name
+          details = server_descriptions.keys.join(',')
+          "#{display_name}[#{details}]"
         end
 
         # Determine if the topology would select a readable server for the
