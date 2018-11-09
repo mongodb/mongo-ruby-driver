@@ -1,4 +1,4 @@
-description: "Monitoring a topology that is a replica set with a me mismatch in seeds"
+description: "Monitoring a topology that is a replica set with RSOther seed"
 uri: "mongodb://a,b"
 phases: 
   # phase 1
