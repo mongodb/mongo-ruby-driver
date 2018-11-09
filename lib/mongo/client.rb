@@ -554,6 +554,11 @@ module Mongo
 
     # Start a session.
     #
+    # If the deployment does not support sessions, raises
+    # Mongo::Error::InvalidSession. This exception can also be raised when
+    # the driver is not connected to a data-bearing server, for example
+    # during failover.
+    #
     # @example Start a session.
     #   client.start_session(causal_consistency: true)
     #
@@ -615,6 +620,13 @@ module Mongo
 
     private
 
+    # If options[:session] is set, validates that session and returns it.
+    # If deployment supports sessions, creates a new session and returns it.
+    # The session is implicit unless options[:implicit] is given.
+    # If deployment does not support session, returns nil.
+    #
+    # @note This method will return nil if deployment has no data-bearing
+    #   servers at the time of the call.
     def get_session(options = {})
       cluster.send(:get_session, self, options)
     end
