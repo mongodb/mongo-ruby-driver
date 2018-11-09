@@ -1,6 +1,9 @@
 require 'spec_helper'
 
 describe 'aggregation examples in Ruby' do
+  before(:all) do
+    ClientRegistry.instance.close_all_clients
+  end
 
   let(:client) do
     authorized_client
