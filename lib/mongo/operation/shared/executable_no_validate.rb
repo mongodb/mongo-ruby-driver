@@ -1,4 +1,4 @@
-# Copyright (C) 2015-2018 MongoDB, Inc.
+# Copyright (C) 2018 MongoDB, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,38 +15,15 @@
 module Mongo
   module Operation
 
-    # Shared executable behavior of operations.
+    # Shared executable behavior of operations for operations
+    # whose result should not be validated.
     #
-    # @since 2.5.2
-    module Executable
+    # @api private
+    module ExecutableNoValidate
 
       def execute(server)
         result = get_result
         process_result(result, server)
-        result.validate!
-      end
-
-      private
-
-      def result_class
-        Result
-      end
-
-      def get_result(server)
-        result_class.new(dispatch_message(server))
-      end
-
-      # Returns a Protocol::Message or nil
-      def dispatch_message(server)
-        server.with_connection do |connection|
-          connection.dispatch([ message(server) ], operation_id)
-        end
-      end
-
-      def process_result(result, server)
-        server.update_cluster_time(result)
-        session.process(result) if session
-        result
       end
     end
   end
