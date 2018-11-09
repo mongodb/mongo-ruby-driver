@@ -120,10 +120,14 @@ module Mongo
         add(seed, monitor: false)
       end
 
-      publish_sdam_event(
-        Monitoring::TOPOLOGY_CHANGED,
-        Monitoring::Event::TopologyChanged.new(opening_topology, @topology)
-      ) if seeds.size >= 1
+      if seeds.size >= 1
+        # Recreate the topology to get the current server list into it
+        @topology = topology.class.new(topology.options, topology.monitoring, self)
+        publish_sdam_event(
+          Monitoring::TOPOLOGY_CHANGED,
+          Monitoring::Event::TopologyChanged.new(opening_topology, @topology)
+        )
+      end
 
       servers.each do |server|
         server.start_monitoring

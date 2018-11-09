@@ -14,13 +14,21 @@ describe 'Server Selection' do
         Mongo::Monitoring.new(monitoring: false)
       end
 
+      # Cluster needs a topology and topology needs a cluster...
+      # This temporary cluster is used for topology construction.
+      let(:temp_cluster) do
+        double('temp cluster').tap do |cluster|
+          allow(cluster).to receive(:servers_list).and_return([])
+        end
+      end
+
       let(:topology) do
         options = if spec.type <= Mongo::Cluster::Topology::ReplicaSetNoPrimary
           {replica_set_name: 'foo'}
         else
           {}
         end
-        spec.type.new(options, monitoring, nil)
+        spec.type.new(options, monitoring, temp_cluster)
       end
 
       let(:listeners) do

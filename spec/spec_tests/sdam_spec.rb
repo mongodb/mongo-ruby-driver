@@ -90,18 +90,32 @@ describe 'Server Discovery and Monitoring' do
               expect(cluster_addresses).to eq(phase_addresses)
             end
 
-            phase.outcome.servers.each do |uri, server_spec|
+            phase.outcome.servers.each do |address_str, server_spec|
 
-              it "sets #{uri} to #{server_spec['type']}" do
-                server = find_server(@client, uri)
+              it "sets #{address_str} server to #{server_spec['type']}" do
+                server = find_server(@client, address_str)
                 unless server_of_type?(server, server_spec['type'])
                   raise RSpec::Expectations::ExpectationNotMetError,
                     "Server #{server.summary} not of type #{server_spec['type']}"
                 end
               end
 
-              it "sets #{uri} replica set name to #{server_spec['setName'].inspect}" do
-                expect(find_server(@client, uri).replica_set_name).to eq(server_spec['setName'])
+              it "sets #{address_str} server replica set name to #{server_spec['setName'].inspect}" do
+                expect(find_server(@client, address_str).replica_set_name).to eq(server_spec['setName'])
+              end
+
+              it "sets #{address_str} server description in topology to match server description in cluster" do
+                desc = @client.cluster.topology.server_descriptions[address_str]
+                server = find_server(@client, address_str)
+                # eql doesn't work here because it's aliased to eq
+                # and two unknowns are not eql as a result,
+                # compare by object id
+                unless desc.object_id == server.description.object_id
+                  unless desc == server.description
+                    expect(desc).to be_unknown
+                    expect(server.description).to be_unknown
+                  end
+                end
               end
             end
 

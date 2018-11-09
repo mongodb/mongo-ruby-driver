@@ -60,7 +60,7 @@ phases:
                   arbiters: []
                   hosts: []
                   passives: []
-                  type: "Standalone"
+                  type: "Unknown"
             newDescription:
               topologyType: "Single"
               servers:

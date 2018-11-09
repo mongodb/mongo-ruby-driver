@@ -9,6 +9,13 @@ describe 'Max Staleness Spec' do
     spec = Mongo::ServerSelection::Read::Spec.new(file)
 
     context(spec.description) do
+      # Cluster needs a topology and topology needs a cluster...
+      # This temporary cluster is used for topology construction.
+      let(:temp_cluster) do
+        double('temp cluster').tap do |cluster|
+          allow(cluster).to receive(:servers_list).and_return([])
+        end
+      end
 
       let(:topology) do
         options = if spec.type <= Mongo::Cluster::Topology::ReplicaSetNoPrimary
@@ -16,7 +23,7 @@ describe 'Max Staleness Spec' do
         else
           {}
         end
-        spec.type.new(options, monitoring, [])
+        spec.type.new(options, monitoring, temp_cluster)
       end
 
       let(:monitoring) do

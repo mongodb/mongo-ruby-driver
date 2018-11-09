@@ -56,6 +56,13 @@ module Mongo
           @options = options
           @monitoring = monitoring
           @cluster = cluster
+          # The list of server descriptions is simply fixed at the time of
+          # topology creation. If server description change later, a
+          # new topology instance should be created.
+          @server_descriptions = {}
+          cluster.servers_list.each do |server|
+            @server_descriptions[server.address.to_s] = server.description
+          end
         end
 
         # @return [ Hash ] options The options.
@@ -73,6 +80,12 @@ module Mongo
 
         # @return [ monitoring ] monitoring the monitoring.
         attr_reader :monitoring
+
+        # @return [ Hash ] server_descriptions The map of address strings to
+        #   server descriptions, one for each server in the cluster.
+        #
+        # @since 2.7.0
+        attr_reader :server_descriptions
 
         # The largest electionId ever reported by a primary.
         # May be nil.
