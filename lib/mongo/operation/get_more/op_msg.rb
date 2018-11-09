@@ -25,6 +25,8 @@ module Mongo
       #
       # @return [ Mongo::Operation::GetMore::Result ] The operation result.
       #
+      # @api private
+      #
       # @since 2.5.2
       class OpMsg
         include Specifiable
