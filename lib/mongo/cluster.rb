@@ -310,12 +310,7 @@ module Mongo
     # @return [ Integer, nil ] The logical session timeout.
     #
     # @since 2.5.0
-    def logical_session_timeout
-      servers.inject(nil) do |min, server|
-        break unless timeout = server.logical_session_timeout
-        [timeout, (min || timeout)].min
-      end
-    end
+    def_delegators :topology, :logical_session_timeout
 
     # Get the nicer formatted string for use in inspection.
     #
