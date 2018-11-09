@@ -6,7 +6,7 @@ describe Mongo::Cluster::Topology do
     Mongo::Monitoring.new(monitoring: false)
   end
 
-  let(:cluster) { Mongo::Cluster.new(['a'], Mongo::Monitoring.new(monitoring: false)) }
+  let(:cluster) { Mongo::Cluster.new(['a'], Mongo::Monitoring.new, monitoring_io: false) }
 
   describe '.initial' do
 
@@ -105,6 +105,101 @@ describe Mongo::Cluster::Topology do
 
         it 'returns an unknown topology' do
           expect(topology).to be_a(Mongo::Cluster::Topology::Unknown)
+        end
+      end
+    end
+  end
+
+  describe '#logical_session_timeout' do
+
+    let(:listeners) do
+      Mongo::Event::Listeners.new
+    end
+
+    let(:monitoring) do
+      Mongo::Monitoring.new(monitoring: false)
+    end
+
+    let(:server_one) do
+      Mongo::Server.new(Mongo::Address.new('a:27017'),
+        cluster, monitoring, listeners, monitoring_io: false)
+    end
+
+    let(:server_two) do
+      Mongo::Server.new(Mongo::Address.new('b:27017'),
+        cluster, monitoring, listeners, monitoring_io: false)
+    end
+
+    let(:servers) do
+      [ server_one, server_two ]
+    end
+
+    let(:topology) do
+      Mongo::Cluster::Topology::Single.new({}, monitoring, cluster)
+    end
+
+    before do
+      expect(cluster).to receive(:servers_list).and_return(servers)
+    end
+
+    context 'when servers are data bearing' do
+      before do
+        expect(server_one).to receive(:primary?).and_return(true)
+        allow(server_two).to receive(:primary?).and_return(true)
+      end
+
+      context 'when one server has a nil logical session timeout value' do
+
+        before do
+          expect(server_one).to receive(:logical_session_timeout).and_return(7)
+          expect(server_two).to receive(:logical_session_timeout).and_return(nil)
+        end
+
+        it 'returns nil' do
+          expect(topology.logical_session_timeout).to be(nil)
+        end
+      end
+
+      context 'when all servers have a logical session timeout value' do
+
+        before do
+          expect(server_one).to receive(:logical_session_timeout).and_return(7)
+          expect(server_two).to receive(:logical_session_timeout).and_return(3)
+        end
+
+        it 'returns the minimum' do
+          expect(topology.logical_session_timeout).to be(3)
+        end
+      end
+
+      context 'when no servers have a logical session timeout value' do
+
+        before do
+          expect(server_one).to receive(:logical_session_timeout).and_return(nil)
+          allow(server_two).to receive(:logical_session_timeout).and_return(nil)
+        end
+
+        it 'returns nil' do
+          expect(topology.logical_session_timeout).to be(nil)
+        end
+      end
+    end
+
+    context 'when servers are not data bearing' do
+      before do
+        expect(server_one).to be_unknown
+        expect(server_two).to be_unknown
+      end
+
+      context 'when all servers have a logical session timeout value' do
+
+        before do
+          expect(server_one).not_to receive(:logical_session_timeout)
+          expect(server_two).not_to receive(:logical_session_timeout)
+        end
+
+        it 'returns nil' do
+          expect(topology.logical_session_timeout).to be nil
         end
       end
     end

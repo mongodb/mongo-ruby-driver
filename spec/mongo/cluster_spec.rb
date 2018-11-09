@@ -419,69 +419,6 @@ describe Mongo::Cluster do
     end
   end
 
-  describe '#logical_session_timeout' do
-
-    let(:listeners) do
-      Mongo::Event::Listeners.new
-    end
-
-    let(:monitoring) do
-      Mongo::Monitoring.new(monitoring: false)
-    end
-
-    let(:server_one) do
-      Mongo::Server.new(default_address, cluster, monitoring, listeners)
-    end
-
-    let(:server_two) do
-      Mongo::Server.new(default_address, cluster, monitoring, listeners)
-    end
-
-    let(:servers) do
-      [ server_one, server_two ]
-    end
-
-    before do
-      allow(cluster).to receive(:servers).and_return(servers)
-    end
-
-    context 'when one server has a nil logical session timeout value' do
-
-      before do
-        allow(server_one).to receive(:logical_session_timeout).and_return(7)
-        allow(server_two).to receive(:logical_session_timeout).and_return(nil)
-      end
-
-      it 'returns nil' do
-        expect(cluster.logical_session_timeout).to be(nil)
-      end
-    end
-
-    context 'when all servers have a logical session timeout value' do
-
-      before do
-        allow(server_one).to receive(:logical_session_timeout).and_return(7)
-        allow(server_two).to receive(:logical_session_timeout).and_return(3)
-      end
-
-      it 'returns the minimum' do
-        expect(cluster.logical_session_timeout).to be(3)
-      end
-    end
-
-    context 'when no servers have a logical session timeout value' do
-
-      before do
-        allow(server_one).to receive(:logical_session_timeout).and_return(nil)
-        allow(server_two).to receive(:logical_session_timeout).and_return(nil)
-      end
-
-      it 'returns nil' do
-        expect(cluster.logical_session_timeout).to be(nil)
-      end
-    end
-  end
-
   describe '#cluster_time' do
 
     let(:operation) do
