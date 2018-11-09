@@ -22,15 +22,8 @@ module Mongo
       #
       # @since 2.5.2
       class OpMsg < OpMsgBase
-
-        def execute(server)
-          result = Result.new(dispatch_message(server))
-          process_result(result, server)
-          result.validate!
-        rescue Mongo::Error::SocketError => e
-          e.send(:add_label, Mongo::Error::TRANSIENT_TRANSACTION_ERROR_LABEL) if session.in_transaction?
-          raise e
-        end
+        include PolymorphicResult
+        include ExecutableTransactionLabel
 
         private
 

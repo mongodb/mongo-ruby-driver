@@ -23,25 +23,8 @@ module Mongo
       # @since 2.5.2
       class OpMsg < OpMsgBase
         include Limited
-
-        # Execute the operation.
-        #
-        # @example
-        #   operation.execute(server)
-        #
-        # @param [ Mongo::Server ] server The server to send the operation to.
-        #
-        # @return [ Mongo::Operation::Indexes::Result ] The operation result.
-        #
-        # @since 2.5.2
-        def execute(server)
-          result = Result.new(dispatch_message(server))
-          process_result(result, server)
-          result.validate!
-        rescue Mongo::Error::SocketError => e
-          e.send(:add_label, Mongo::Error::TRANSIENT_TRANSACTION_ERROR_LABEL) if session.in_transaction?
-          raise e
-        end
+        include ExecutableTransactionLabel
+        include PolymorphicResult
       end
     end
   end
