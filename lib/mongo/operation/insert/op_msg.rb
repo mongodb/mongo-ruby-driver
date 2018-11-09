@@ -28,7 +28,7 @@ module Mongo
 
         private
 
-        def get_result
+        def get_result(server)
           # This is a Mongo::Operation::Insert::Result
           Result.new(dispatch_message(server), @ids)
         end

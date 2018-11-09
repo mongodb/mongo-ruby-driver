@@ -23,7 +23,7 @@ module Mongo
       private
 
       def result_class
-        bits = self.class.name.sub(/::.*$/, "::Result").split('::')
+        bits = self.class.name.sub(/::[^:]*$/, "::Result").split('::')
         cls = Object
         bits.each do |name|
           cls = cls.const_get(name)

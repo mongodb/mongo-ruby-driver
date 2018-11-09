@@ -21,7 +21,7 @@ module Mongo
     module Executable
 
       def execute(server)
-        result = get_result
+        result = get_result(server)
         process_result(result, server)
         result.validate!
       end
