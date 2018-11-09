@@ -117,7 +117,7 @@ module Mongo
         return false unless actual.replica_set_name == expected['setName']
 
         expected['servers'].each do |server|
-          desc = actual.server_descriptions.for_address!(server['address'])
+          desc = actual.server_descriptions[server['address'].to_s]
           return false unless description_matches?(desc, server)
         end
 

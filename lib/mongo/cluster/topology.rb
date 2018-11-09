@@ -90,5 +90,3 @@ module Mongo
     end
   end
 end
-
-require 'mongo/cluster/topology/server_description_list'

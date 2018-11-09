@@ -105,7 +105,7 @@ describe 'Server Discovery and Monitoring' do
               end
 
               it "sets #{address_str} server description in topology to match server description in cluster" do
-                desc = @client.cluster.topology.server_descriptions.for_address!(address_str)
+                desc = @client.cluster.topology.server_descriptions[address_str]
                 server = find_server(@client, address_str)
                 # eql doesn't work here because it's aliased to eq
                 # and two unknowns are not eql as a result,
