@@ -1,6 +1,7 @@
 require 'spec_helper'
 
-describe Mongo::Server::Connection do
+# these tests fail intermittently in evergreen
+describe Mongo::Server::Connection, retry: 3 do
   let(:address) do
     Mongo::Address.new(SpecConfig.instance.addresses.first)
   end
@@ -34,10 +35,10 @@ describe Mongo::Server::Connection do
 
   let(:server) do
     Mongo::Server.new(address, cluster, monitoring, listeners,
-      SpecConfig.instance.test_options.merge(monitor: false))
+      SpecConfig.instance.test_options.merge(monitoring_io: false))
   end
 
-  before do
+  before(:all) do
     ClientRegistry.instance.close_all_clients
   end
 
@@ -68,15 +69,12 @@ describe Mongo::Server::Connection do
         Mongo::Server::AppMetadata.new(server_options)
       end
 
-      let(:connection) do
-        described_class.new(server, server_options)
-      end
-
       before do
         client = authorized_client.with(database: SpecConfig.instance.test_db)
         info = client.database.users.info(SpecConfig.instance.test_user.name)
         expect(info.length).to eq(1)
-        client.close
+        # this before block may have made 2 or 3 clients
+        ClientRegistry.instance.close_all_clients
       end
 
       it 'uses scram256' do

@@ -1,7 +1,16 @@
 require 'spec_helper'
 
-describe Mongo::Server::Connection do
+# fails intermittently in evergreen
+describe Mongo::Server::Connection, retry: 3 do
   class ConnectionSpecTestException < Exception; end
+
+  before(:all) do
+    ClientRegistry.instance.close_all_clients
+  end
+
+  after(:all) do
+    ClientRegistry.instance.close_all_clients
+  end
 
   let(:address) do
     default_address
@@ -126,6 +135,7 @@ describe Mongo::Server::Connection do
       end
 
       context 'when #handshake! dependency raises a non-network exception' do
+
         let(:exception) do
           Mongo::Error::OperationFailure.new
         end
