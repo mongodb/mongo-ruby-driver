@@ -21,12 +21,16 @@ module Mongo
     module Executable
 
       def execute(server)
-        result = Result.new(dispatch_message(server))
+        result = get_result
         process_result(result, server)
         result.validate!
       end
 
       private
+
+      def get_result(server)
+        Result.new(dispatch_message(server))
+      end
 
       # Returns a Protocol::Message or nil
       def dispatch_message(server)
