@@ -14,6 +14,7 @@
 
 module Mongo
   module Operation
+    # @api private
     class OpMsgBase
       private
 
