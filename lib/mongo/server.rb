@@ -93,10 +93,6 @@ module Mongo
       :compressor
     alias :heartbeat_frequency_seconds :heartbeat_frequency
 
-    # @api private
-    def_delegators :monitor,
-      :last_scan_completed_at
-
     # Delegate convenience methods to the monitor description.
     def_delegators :description,
                    :arbiter?,

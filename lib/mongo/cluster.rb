@@ -168,14 +168,16 @@ module Mongo
         if server_selection_timeout < 3
           server_selection_timeout = 3
         end
-        deadline = Time.now + server_selection_timeout
+        start_time = Time.now
+        deadline = start_time + server_selection_timeout
         # Wait for the first scan of each server to complete, for
         # backwards compatibility.
-        # If any servers are discovered during this SDAM round we do NOT
-        # wait for newly discovered servers to be queried.
+        # If any servers are discovered during this SDAM round we are going to
+        # wait for these servers to also be queried, and so on, up to the
+        # server selection timeout or the 3 second minimum.
         loop do
           servers = servers_list.dup
-          if servers.all? { |server| server.last_scan_completed_at }
+          if servers.all? { |server| server.description.last_update_time > start_time }
             break
           end
           if (time_remaining = deadline - Time.now) <= 0
