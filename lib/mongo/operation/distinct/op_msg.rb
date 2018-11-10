@@ -24,7 +24,6 @@ module Mongo
       class OpMsg < OpMsgBase
         include CausalConsistencySupported
         include ExecutableTransactionLabel
-        include PolymorphicResult
       end
     end
   end

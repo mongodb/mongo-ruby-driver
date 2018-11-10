@@ -22,7 +22,6 @@ module Mongo
       #
       # @since 2.5.2
       class OpMsg < OpMsgBase
-        include PolymorphicResult
         include ExecutableTransactionLabel
       end
     end
