@@ -24,7 +24,9 @@ module Mongo
       class OpMsg < OpMsgBase
         include Idable
         include BypassDocumentValidation
+        include ExecutableNoValidate
         include ExecutableTransactionLabel
+        include PolymorphicResult
 
         private
 

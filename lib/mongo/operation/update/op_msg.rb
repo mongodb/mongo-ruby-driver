@@ -23,6 +23,7 @@ module Mongo
       # @since 2.5.2
       class OpMsg < OpMsgBase
         include BypassDocumentValidation
+        include ExecutableNoValidate
         include ExecutableTransactionLabel
         include PolymorphicResult
 
