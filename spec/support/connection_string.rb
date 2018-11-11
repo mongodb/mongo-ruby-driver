@@ -152,7 +152,7 @@ module Mongo
       end
 
       def client
-        @client ||= Mongo::Client.new(@spec['uri'])
+        @client ||= Mongo::Client.new(@spec['uri'], monitoring_io: false)
       end
 
       def uri
