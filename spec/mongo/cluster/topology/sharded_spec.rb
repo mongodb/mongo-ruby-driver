@@ -109,4 +109,21 @@ describe Mongo::Cluster::Topology::Sharded do
       expect(topology).to have_writable_server(nil)
     end
   end
+
+  describe '#summary' do
+    let(:desc1) do
+      Mongo::Server::Description.new(Mongo::Address.new('127.0.0.2:27017'))
+    end
+
+    let(:desc2) do
+      Mongo::Server::Description.new(Mongo::Address.new('127.0.0.2:27027'))
+    end
+
+    it 'renders correctly' do
+      expect(topology).to receive(:server_descriptions).and_return({
+        desc1.address.to_s => desc1, desc2.address.to_s => desc2,
+      })
+      expect(topology.summary).to eq('Sharded[127.0.0.2:27017,127.0.0.2:27027]')
+    end
+  end
 end
