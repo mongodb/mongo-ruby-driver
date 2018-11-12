@@ -322,7 +322,9 @@ describe Mongo::Collection::View::Readable do
     end
 
     it 'takes a read preference option', unless: sharded? do
-      expect(view.count(read: { mode: :secondary })).to eq(10)
+      # Secondary may be delayed, since this tests wants 10 documents
+      # it must query the primary
+      expect(view.count(read: { mode: :primary })).to eq(10)
     end
 
     context 'when a read preference is set on the view', unless: sharded? do
