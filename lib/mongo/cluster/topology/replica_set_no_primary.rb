@@ -102,24 +102,6 @@ module Mongo
         # @since 2.0.0
         def replica_set?; true; end
 
-        # Get the replica set name configured for this topology.
-        #
-        # @example Get the replica set name.
-        #   topology.replica_set_name
-        #
-        # @return [ String ] The name of the configured replica set.
-        #
-        # @since 2.0.0
-        def replica_set_name
-          @replica_set_name ||= begin
-            v = options[:replica_set_name]
-            if v == ''
-              v = nil
-            end
-            v
-          end
-        end
-
         # Select appropriate servers for this topology.
         #
         # @example Select the servers.

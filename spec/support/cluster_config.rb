@@ -24,7 +24,7 @@ class ClusterConfig
   end
 
   def replica_set_name
-    server!.replica_set_name
+    @replica_set_name ||= server!.replica_set_name
   end
 
   def server_version

@@ -113,7 +113,17 @@ module Mongo
             # by the selector (e.g. for secondary preferred, the first
             # server may be a secondary and the second server may be primary)
             # and we should take the first server here respecting the order
-            return servers.first
+            server = servers.first
+
+            if cluster.topology.single? &&
+              cluster.topology.replica_set_name &&
+              cluster.topology.replica_set_name != server.description.replica_set_name
+            then
+              msg = "Cluster topology specifies replica set name #{cluster.topology.replica_set_name}, but the server has replica set name #{server.description.replica_set_name || '<nil>'}"
+              raise Error::NoServerAvailable.new(self, cluster, msg)
+            end
+
+            return server
           end
           cluster.scan!
         end

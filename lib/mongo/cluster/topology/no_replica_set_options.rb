@@ -23,7 +23,7 @@ module Mongo
           # any value including an empty string.
           [:replica_set_name, :max_election_id, :max_set_version].each do |option|
             if options[option]
-              raise ArgumentError, "Topology #{self.class.name} cannot have the #{option} option set"
+              raise ArgumentError, "Topology #{self.class.name} cannot have the :#{option} option set"
             end
           end
           super(options)

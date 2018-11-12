@@ -18,6 +18,20 @@ describe Mongo::Cluster::Topology::Unknown do
     described_class.new({}, monitoring, temp_cluster)
   end
 
+  describe '#initialize' do
+    let(:topology) do
+      Mongo::Cluster::Topology::Unknown.new(
+        {replica_set_name: 'foo'},
+        monitoring, temp_cluster)
+    end
+
+    it 'does not accept RS name' do
+      expect do
+        topology
+      end.to raise_error(ArgumentError, 'Topology Mongo::Cluster::Topology::Unknown cannot have the :replica_set_name option set')
+    end
+  end
+
   describe '.servers' do
 
     let(:servers) do
