@@ -21,32 +21,19 @@ module Mongo
       # @api private
       #
       # @since 2.5.2
-      class OpMsg
-        include Specifiable
-        include Executable
+      class OpMsg < OpMsgBase
         include Idable
-        include SessionsSupported
         include BypassDocumentValidation
-
-        # Execute the operation.
-        #
-        # @example
-        #   operation.execute(server)
-        #
-        # @param [ Mongo::Server ] server The server to send the operation to.
-        #
-        # @return [ Mongo::Operation::Insert::Result ] The operation result.
-        #
-        # @since 2.5.2
-        def execute(server)
-          result = Result.new(dispatch_message(server), @ids)
-          process_result(result, server)
-        rescue Mongo::Error::SocketError => e
-          e.send(:add_label, Mongo::Error::TRANSIENT_TRANSACTION_ERROR_LABEL) if session.in_transaction?
-          raise e
-        end
+        include ExecutableNoValidate
+        include ExecutableTransactionLabel
+        include PolymorphicResult
 
         private
+
+        def get_result(server)
+          # This is a Mongo::Operation::Insert::Result
+          Result.new(dispatch_message(server), @ids)
+        end
 
         def selector(server)
           { insert: coll_name,

@@ -14,16 +14,20 @@
 
 module Mongo
   module Operation
-    class Distinct
 
-      # A MongoDB distinct operation sent as an op message.
-      #
-      # @api private
-      #
-      # @since 2.5.2
-      class OpMsg < OpMsgBase
-        include CausalConsistencySupported
-        include ExecutableTransactionLabel
+    # Shared behavior of applying transaction error label to execution result.
+    #
+    # @note This module should be included after ExecutableNoValidate,
+    #   if both are included in a class.
+    #
+    # @api private
+    module ExecutableTransactionLabel
+
+      def execute(server)
+        super
+      rescue Mongo::Error::SocketError => e
+        e.send(:add_label, Mongo::Error::TRANSIENT_TRANSACTION_ERROR_LABEL) if session.in_transaction?
+        raise e
       end
     end
   end

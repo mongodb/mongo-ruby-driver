@@ -14,16 +14,21 @@
 
 module Mongo
   module Operation
-    class Distinct
 
-      # A MongoDB distinct operation sent as an op message.
-      #
-      # @api private
-      #
-      # @since 2.5.2
-      class OpMsg < OpMsgBase
-        include CausalConsistencySupported
-        include ExecutableTransactionLabel
+    # Shared behavior of instantiating a result class matching the
+    # operation class.
+    #
+    # @api private
+    module PolymorphicResult
+      private
+
+      def result_class
+        bits = self.class.name.sub(/::[^:]*$/, "::Result").split('::')
+        cls = Object
+        bits.each do |name|
+          cls = cls.const_get(name)
+        end
+        cls
       end
     end
   end
