@@ -151,7 +151,7 @@ module Mongo
 
         private
 
-        def validate_options(options)
+        def validate_options(options, cluster)
           if options[:replica_set_name] == ''
             options = options.merge(replica_set_name: nil)
           end
@@ -160,7 +160,7 @@ module Mongo
             raise ArgumentError, 'Cannot instantiate a replica set topology without a replica set name'
           end
 
-          super(options)
+          super(options, cluster)
         end
       end
     end

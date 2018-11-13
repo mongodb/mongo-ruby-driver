@@ -81,14 +81,38 @@ describe Mongo::Cluster::Topology::Single do
   end
 
   describe '#initialize' do
-    let(:topology) do
-      Mongo::Cluster::Topology::Single.new(
-        {replica_set_name: 'foo'},
-        monitoring, temp_cluster)
+    context 'with RS name' do
+      let(:topology) do
+        Mongo::Cluster::Topology::Single.new(
+          {replica_set_name: 'foo'},
+          monitoring, temp_cluster)
+      end
+
+      it 'accepts RS name' do
+        expect(topology.replica_set_name).to eq('foo')
+      end
     end
 
-    it 'accepts RS name' do
-      expect(topology.replica_set_name).to eq('foo')
+    context 'with more than one server in topology' do
+      let(:topology) do
+        Mongo::Cluster::Topology::Single.new({},
+          monitoring, temp_cluster)
+      end
+
+      let(:temp_cluster) do
+        double('temp cluster').tap do |cluster|
+          allow(cluster).to receive(:servers_list).and_return([
+            double('server'),
+            double('server'),
+          ])
+        end
+      end
+
+      it 'fails' do
+        expect do
+          topology
+        end.to raise_error(ArgumentError, 'Cannot instantiate a single topology with more than one server in the cluster')
+      end
     end
   end
 
