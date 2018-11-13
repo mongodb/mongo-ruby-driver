@@ -31,11 +31,12 @@ module Mongo
       #   performed on. (added in 2.7.0)
       #
       # @since 2.0.0
-      def initialize(server_selector, cluster=nil)
-        super("No server is available in cluster: #{cluster.summary} " +
-                "matching preference: #{server_selector.inspect} " +
-                "using server_selection_timeout=#{server_selector.server_selection_timeout} " +
-                "and local_threshold=#{server_selector.local_threshold}")
+      def initialize(server_selector, cluster=nil, msg=nil)
+        msg ||= "No #{server_selector.name} server is available in cluster: #{cluster.summary} " +
+                "with timeout=#{server_selector.server_selection_timeout}, " +
+                "LT=#{server_selector.local_threshold}"
+
+        super(msg)
       end
     end
   end

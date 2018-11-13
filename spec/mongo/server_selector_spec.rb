@@ -300,6 +300,7 @@ describe Mongo::ServerSelector do
 
       it 'uses the local_threshold of the cluster' do
         expect(topology).to receive(:compatible?).and_return(true)
+        expect(topology).to receive(:single?).and_return(false)
         expect(read_pref.select_server(cluster)).to eq(near_server)
       end
     end
