@@ -430,17 +430,19 @@ module Mongo
     uri_option 'sockettimeoutms', :socket_timeout, :type => :ms_convert
     uri_option 'serverselectiontimeoutms', :server_selection_timeout, :type => :ms_convert
     uri_option 'localthresholdms', :local_threshold, :type => :ms_convert
+    uri_option 'heartbeatfrequencyms', :heartbeat_frequency, :type => :ms_convert
+    uri_option 'maxidletimems', :max_idle_time, :type => :ms_convert
 
     # Write Options
     uri_option 'w', :w, :group => :write
-    uri_option 'journal', :j, :group => :write
+    uri_option 'journal', :j, :group => :write, :type => :bool
     uri_option 'fsync', :fsync, :group => :write
-    uri_option 'wtimeoutms', :timeout, :group => :write
+    uri_option 'wtimeoutms', :timeout, :group => :write, :type => :unsigned_int
 
     # Read Options
     uri_option 'readpreference', :mode, :group => :read, :type => :read_mode
     uri_option 'readpreferencetags', :tag_sets, :group => :read, :type => :read_tags
-    uri_option 'maxstalenessseconds', :max_staleness, :group => :read
+    uri_option 'maxstalenessseconds', :max_staleness, :group => :read, :type => :max_staleness
 
     # Pool options
     uri_option 'minpoolsize', :min_pool_size
@@ -449,6 +451,13 @@ module Mongo
 
     # Security Options
     uri_option 'ssl', :ssl
+    uri_option 'tls', :ssl
+    uri_option 'tlsallowinvalidcertificates', :ssl_verify, :type => :inverse_bool
+    uri_option 'tlscafilepath', :ssl_ca_cert
+    uri_option 'tlsclientcertfilepath', :ssl_cert
+    uri_option 'tlsclientkeyfilepath', :ssl_key
+    uri_option 'tlsclientkeypassword', :ssl_key_pass_phrase
+
 
     # Topology options
     uri_option 'connect', :connect
@@ -461,7 +470,9 @@ module Mongo
     # Client Options
     uri_option 'appname', :app_name
     uri_option 'compressors', :compressors, :type => :array
-    uri_option 'zlibcompressionlevel', :zlib_compression_level
+    uri_option 'readconcernlevel', :read_concern
+    uri_option 'retrywrites', :retry_writes, :type => :bool
+    uri_option 'zlibcompressionlevel', :zlib_compression_level, :type => :zlib_compression_level
 
     # Casts option values that do not have a specifically provided
     # transformation to the appropriate type.
@@ -571,7 +582,7 @@ module Mongo
     #
     # @return [Symbol] The transformed authentication mechanism.
     def auth_mech(value)
-      AUTH_MECH_MAP[value.upcase]
+      AUTH_MECH_MAP[value.upcase] || log_warn("#{value} is not a valid auth mechanism")
     end
 
     # Read preference mode transformation.
@@ -615,6 +626,94 @@ module Mongo
       properties
     end
 
+    # Parses the zlib compression level.
+    #
+    # @param value [ String ] The zlib compression level string.
+    #
+    # @return [ Integer | nil ] The compression level value if it is between -1 and 9 (inclusive),
+    #   otherwise nil (and a warning will be raised).
+    def zlib_compression_level(value)
+      if /^-?\d+$/ =~ value
+        i = value.to_i
+
+        if i >= -1 && i <= 9
+          return i
+        end
+      end
+
+      log_warn("#{value} is not a valid zlibCompressionLevel")
+      nil
+    end
+
+
+    # Parses a boolean value.
+    #
+    # @param value [ String ] The URI option value.
+    #
+    # @return [ true | false | nil ] The boolean value parsed out, otherwise nil (and a warning
+    #   will be raised).
+    def bool(value)
+      case value
+      when "true"
+        true
+      when "false"
+        false
+      else
+        log_warn("invalid boolean: #{value}")
+        nil
+      end
+    end
+
+    # Parses a boolean value and returns its inverse. This is used for options where the spec
+    # defines the boolean value semantics of enabling/disabling something in the reverse way that
+    # the driver does. For instance, the client option `ssl_verify` will disable certificate
+    # checking when the value is false, but the spec defines the option
+    # `tlsAllowInvalidCertificates`, which disables certificate checking when the value is true.
+    #
+    # @param value [ String ] The URI option.
+    #
+    # @return [ true | false | nil ] The inverse of boolean value parsed out, otherwise nil (and a
+    #   warning will be raised).
+    def inverse_bool(value)
+      !bool(value)
+    end
+
+    # Parses the max staleness value, which must be either "0" or an integer greater or equal to 90.
+    #
+    # @param value [ String ] The max staleness string.
+    #
+    # @return [ Integer | nil ] The max staleness integer parsed out if it is valid, otherwise nil
+    #   (and a warning will be raised).
+    def max_staleness(value)
+      if /^\d+$/ =~ value
+        int = value.to_i
+
+        if int >= 0 && int < 90
+          log_warn("max staleness must be either 0 or greater than 90: #{value}")
+        end
+
+        return int
+      end
+
+      log_warn("Invalid max staleness value: #{value}")
+      nil
+    end
+
+    # Parses an unsigned integer value.
+    #
+    # @param value [ String ] The URI option value.
+    #
+    # @return [ Integer | nil ] The integer parsed out, otherwise nil (and a warning will be
+    #   raised).
+    def unsigned_int(value)
+     unless /^?\d+$/ =~ value
+        log_warn("Invalid unsigned integer value: #{value}")
+        return nil
+     end
+
+      value.to_i
+    end
+
     # Ruby's convention is to provide timeouts in seconds, not milliseconds and
     # to use fractions where more precision is necessary. The connection string
     # options are always in MS so we provide an easy conversion type.
@@ -625,6 +724,11 @@ module Mongo
     #
     # @since 2.0.0
     def ms_convert(value)
+      unless /^-?\d+(\.\d+)?$/ =~ value
+        log_warn("Invalid ms value: #{value}")
+        return nil
+      end
+
       value.to_f / 1000
     end
 
@@ -636,6 +740,11 @@ module Mongo
     def hash_extractor(value)
       value.split(',').reduce({}) do |set, tag|
         k, v = tag.split(':')
+        if v.nil?
+          log_warn("#{value} is not a valid URI hash")
+          return nil
+        end
+
         set.merge(decode(k).downcase.to_sym => decode(v))
       end
     end

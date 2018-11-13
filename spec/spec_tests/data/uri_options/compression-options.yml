@@ -1,0 +1,36 @@
+tests:
+    -
+        description: "Valid compression options are parsed correctly"
+        uri: "mongodb://example.com/?compressors=zlib&zlibCompressionLevel=9"
+        valid: true
+        warning: false
+        hosts: ~
+        auth:
+            username: ~
+            password: ~
+            db: ~
+        options:
+            compressors: "zlib"
+            zlibCompressionLevel: "9"
+    -
+        description: "Invalid compressors cause a warning"
+        uri: "mongodb://example.com/?compressors=jpeg"
+        valid: true
+        warning: true
+        hosts: ~
+        auth:
+            username: ~
+            password: ~
+            db: ~
+        options: {}
+    -
+        description: "Invalid zlibCompressionLevel causes a warning"
+        uri: "mongodb://example.com/?compressors=zlib&zlibCompressionLevel=invalid"
+        valid: true
+        warning: true
+        hosts: ~
+        auth:
+            username: ~
+            password: ~
+            db: ~
+        options: {}
