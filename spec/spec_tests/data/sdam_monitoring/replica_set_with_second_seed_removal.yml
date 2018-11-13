@@ -36,6 +36,12 @@ phases:
                   hosts: []
                   passives: []
                   type: "Unknown"
+                - 
+                  address: "b:27017"
+                  arbiters: []
+                  hosts: []
+                  passives: []
+                  type: "Unknown"
         - 
           server_opening_event: 
             topologyId: "42"

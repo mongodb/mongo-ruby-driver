@@ -121,6 +121,12 @@ module Mongo
           return false unless description_matches?(desc, server)
         end
 
+        actual.server_descriptions.keys.each do |address_str|
+          unless expected['servers'].any? { |server| server['address'] == address_str }
+            return false
+          end
+        end
+
         true
       end
     end
