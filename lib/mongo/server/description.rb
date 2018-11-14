@@ -189,6 +189,9 @@ module Mongo
       #
       # @since 2.0.0
       def initialize(address, config = {}, average_round_trip_time = 0)
+        if average_round_trip_time.nil?
+          raise ArgumentError, 'Average round trip time cannot be nil'
+        end
         @address = address
         @config = config
         @features = Features.new(wire_versions, me || @address.to_s)

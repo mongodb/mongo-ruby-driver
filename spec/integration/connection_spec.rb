@@ -121,7 +121,7 @@ describe 'Connections' do
 
       let(:client) { ClientRegistry.instance.global_client('authorized').with(app_name: 'wire_protocol_update') }
 
-      it 'does not update on ismaster response from non-monitoring connections' do
+      it 'updates on ismaster response from non-monitoring connections' do
         # connect server
         client['test'].insert_one(test: 1)
 
@@ -135,16 +135,72 @@ describe 'Connections' do
         expect(server.features.server_wire_versions.max >= 4).to be true
         max_version = server.features.server_wire_versions.max
 
+        # Depending on server version, ismaster here may return a
+        # description that compares equal to the one we got from a
+        # monitoring connection (pre-4.3) or not (4.2+).
+        # Since we do run SDAM flow on ismaster responses on
+        # non-monitoring connections, force descriptions to be different
+        # by setting the existing description here to unknown.
+        server.monitor.instance_variable_set('@description',
+          Mongo::Server::Description.new(server.address))
+
         # now pretend an ismaster returned a different range
         features = Mongo::Server::Description::Features.new(0..3)
-        expect(Mongo::Server::Description::Features).to receive(:new).and_return(features)
+        # the second Features instantiation is for SDAM event publication
+        expect(Mongo::Server::Description::Features).to receive(:new).twice.and_return(features)
 
         connection = Mongo::Server::Connection.new(server, server.options)
         expect(connection.connect!).to be true
 
-        # ismaster response should not update wire version range stored
-        # in description
-        expect(server.features.server_wire_versions.max).to eq(max_version)
+        # ismaster response should update server description via sdam flow,
+        # which includes wire version range
+        expect(server.features.server_wire_versions.max).to eq(3)
+      end
+    end
+
+    describe 'SDAM flow triggered by ismaster on non-monitoring thread' do
+      # replica sets can transition between having and not having a primary
+      require_topology :replica_set
+
+      let(:client) do
+        # create a new client because we make manual state changes
+        ClientRegistry.instance.global_client('authorized').with(app_name: 'non-monitoring thread sdam')
+      end
+
+      it 'performs SDAM flow' do
+        client['foo'].insert_one(bar: 1)
+        client.cluster.servers.each do |server|
+          server.monitor.stop!(true)
+        end
+        expect(client.cluster.topology.class).to eq(Mongo::Cluster::Topology::ReplicaSetWithPrimary)
+
+        # need to connect to the primary for topology to change
+        server = client.cluster.servers.detect do |server|
+          server.primary?
+        end
+
+        # overwrite server description
+        server.monitor.instance_variable_set('@description', Mongo::Server::Description.new(
+          server.address))
+
+        # overwrite topology
+        client.cluster.instance_variable_set('@topology',
+          Mongo::Cluster::Topology::ReplicaSetNoPrimary.new(
+            client.cluster.topology.options, client.cluster.topology.monitoring, client.cluster))
+
+        # now create a connection.
+        connection = Mongo::Server::Connection.new(server, server.options)
+
+        # verify everything once again
+        expect(server).to be_unknown
+        expect(client.cluster.topology.class).to eq(Mongo::Cluster::Topology::ReplicaSetNoPrimary)
+
+        # this should dispatch the sdam event
+        expect(connection.connect!).to be true
+
+        # back to primary
+        expect(server).to be_primary
+        expect(client.cluster.topology.class).to eq(Mongo::Cluster::Topology::ReplicaSetWithPrimary)
       end
     end
   end

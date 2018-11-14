@@ -255,8 +255,15 @@ module Mongo
         end
 
         @server.handle_handshake_failure! do
-          socket.write(app_metadata.ismaster_bytes)
-          response = Protocol::Message.deserialize(socket, max_message_size).documents[0]
+          response, exc, rtt, average_rtt =
+            @server.monitor.round_trip_time_averager.measure do
+              socket.write(app_metadata.ismaster_bytes)
+              Protocol::Message.deserialize(socket, max_message_size).documents[0]
+            end
+
+          if exc
+            raise exc
+          end
 
           if response["ok"] == 1
             # Auth mechanism is entirely dependent on the contents of
@@ -286,6 +293,9 @@ module Mongo
           else
             @auth_mechanism = nil
           end
+
+          new_description = Description.new(@server.description.address, response, average_rtt)
+          @server.monitor.publish(Event::DESCRIPTION_CHANGED, @server.description, new_description)
         end
       end
 

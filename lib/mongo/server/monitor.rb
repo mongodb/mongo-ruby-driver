@@ -38,6 +38,7 @@ module Mongo
       # The weighting factor (alpha) for calculating the average moving round trip time.
       #
       # @since 2.0.0
+      # @deprecated Will be removed in version 3.0.
       RTT_WEIGHT_FACTOR = 0.2.freeze
 
       # Create the new server monitor.
@@ -64,9 +65,9 @@ module Mongo
         @event_listeners = event_listeners
         @monitoring = monitoring
         @options = options.freeze
+        @round_trip_time_averager = RoundTripTimeAverager.new
         # This is a Mongo::Server::Monitor::Connection
         @connection = Connection.new(address, options)
-        @average_round_trip_time = nil
         @last_scan = nil
         @mutex = Mutex.new
       end
@@ -151,10 +152,10 @@ module Mongo
       # @since 2.0.0
       def scan!
         throttle_scan_frequency!
-        # ismaster call updates @average_round_trip_time
         result = ismaster
         @last_scan_completed_at = Time.now
-        new_description = Description.new(description.address, result, @average_round_trip_time)
+        new_description = Description.new(description.address, result,
+          @round_trip_time_averager.average_round_trip_time)
         publish(Event::DESCRIPTION_CHANGED, description, new_description)
         # If this server's response has a mismatched me, or for other reasons,
         # this server may be removed from topology. When this happens the
@@ -206,25 +207,13 @@ module Mongo
         @thread.alive? ? @thread : run!
       end
 
+      # @api private
+      attr_reader :round_trip_time_averager
+
       private
-
-      def round_trip_time(start)
-        Time.now - start
-      end
-
-      def round_trip_times(start)
-        new_rtt = round_trip_time(start)
-        average_rtt = if @average_round_trip_time
-          RTT_WEIGHT_FACTOR * new_rtt + (1 - RTT_WEIGHT_FACTOR) * @average_round_trip_time
-        else
-          new_rtt
-        end
-        [new_rtt, average_rtt]
-      end
 
       def ismaster
         @mutex.synchronize do
-          start = Time.now
           if monitoring.monitoring?
             monitoring.started(
               Monitoring::SERVER_HEARTBEAT,
@@ -232,20 +221,19 @@ module Mongo
             )
           end
 
-          begin
-            result = connection.ismaster
-          rescue Exception => e
-            rtt, @average_round_trip_time = round_trip_times(start)
-            log_debug("Error running ismaster on #{connection.address}: #{e.message}")
+          result, exc, rtt, average_rtt = round_trip_time_averager.measure do
+            connection.ismaster
+          end
+          if exc
+            log_debug("Error running ismaster on #{connection.address}: #{exc.message}")
             if monitoring.monitoring?
               monitoring.failed(
                 Monitoring::SERVER_HEARTBEAT,
-                Monitoring::Event::ServerHeartbeatFailed.new(connection.address, rtt, e)
+                Monitoring::Event::ServerHeartbeatFailed.new(connection.address, rtt, exc)
               )
             end
             result = {}
           else
-            rtt, @average_round_trip_time = round_trip_times(start)
             if monitoring.monitoring?
               monitoring.succeeded(
                 Monitoring::SERVER_HEARTBEAT,
