@@ -641,6 +641,17 @@ module Mongo
         !!(address.to_s.downcase != me.downcase if me)
       end
 
+      # opTime in lastWrite subdocument of the ismaster response.
+      #
+      # @return [ BSON::Timestamp ] The timestamp.
+      #
+      # @since 2.7.0
+      def op_time
+        if config['lastWrite'] && config['lastWrite']['opTime']
+          config['lastWrite']['opTime']['ts']
+        end
+      end
+
       # Check equality of two descriptions.
       #
       # @example Check description equality.
