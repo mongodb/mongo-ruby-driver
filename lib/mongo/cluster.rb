@@ -94,6 +94,7 @@ module Mongo
       @options = options.freeze
       @app_metadata = Server::AppMetadata.new(@options)
       @update_lock = Mutex.new
+      @sdam_flow_lock = Mutex.new
       @pool_lock = Mutex.new
       @cluster_time = nil
       @cluster_time_lock = Mutex.new
@@ -595,6 +596,9 @@ module Mongo
     def servers_list
       @update_lock.synchronize { @servers.dup }
     end
+
+    # @api private
+    attr_reader :sdam_flow_lock
 
     private
 
