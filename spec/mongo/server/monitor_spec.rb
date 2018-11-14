@@ -232,25 +232,22 @@ describe Mongo::Server::Monitor do
     end
   end
 
-  # fails intermittently on jruby in evergreen
-  describe '#stop', retry: 3 do
-
+  describe '#stop' do
     let(:monitor) do
       described_class.new(address, listeners, Mongo::Monitoring.new,
         SpecConfig.instance.test_options)
     end
 
-    let!(:thread) do
+    let(:thread) do
       monitor.run!
     end
 
-    before do
-      expect(monitor.connection).to receive(:disconnect!).and_call_original
-      monitor.stop!
-      sleep(1)
-    end
-
     it 'kills the monitor thread' do
+      ClientRegistry.instance.close_all_clients
+      thread
+      sleep 1
+      expect(monitor.connection).to receive(:disconnect!).and_call_original
+      monitor.stop!(true)
       expect(thread.alive?).to be(false)
     end
   end
