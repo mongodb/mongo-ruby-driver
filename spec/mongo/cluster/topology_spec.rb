@@ -135,7 +135,7 @@ describe Mongo::Cluster::Topology do
     end
 
     let(:topology) do
-      Mongo::Cluster::Topology::Single.new({}, monitoring, cluster)
+      Mongo::Cluster::Topology::Sharded.new({}, monitoring, cluster)
     end
 
     before do

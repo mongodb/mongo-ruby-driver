@@ -18,7 +18,7 @@ module Mongo
       module NoReplicaSetOptions
         private
 
-        def validate_options(options)
+        def validate_options(options, cluster)
           # These options can be set to nil for convenience, but not to
           # any value including an empty string.
           [:replica_set_name, :max_election_id, :max_set_version].each do |option|
@@ -26,7 +26,7 @@ module Mongo
               raise ArgumentError, "Topology #{self.class.name} cannot have the :#{option} option set"
             end
           end
-          super(options)
+          super(options, cluster)
         end
       end
     end

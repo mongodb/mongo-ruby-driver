@@ -51,7 +51,7 @@ module Mongo
         # @since 2.7.0
         # @api private
         def initialize(options, monitoring, cluster)
-          options = validate_options(options)
+          options = validate_options(options, cluster)
 
           @options = options
           @monitoring = monitoring
@@ -205,7 +205,7 @@ module Mongo
         # Validates and/or transforms options as necessary for the topology.
         #
         # @return [ Hash ] New options
-        def validate_options(options)
+        def validate_options(options, cluster)
           options
         end
       end

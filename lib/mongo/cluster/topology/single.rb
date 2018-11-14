@@ -128,6 +128,16 @@ module Mongo
         #
         # @since 2.0.0
         def unknown?; false; end
+
+        private
+
+        def validate_options(options, cluster)
+          if cluster.servers_list.length > 1
+            raise ArgumentError, 'Cannot instantiate a single topology with more than one server in the cluster'
+          end
+
+          super(options, cluster)
+        end
       end
     end
   end
