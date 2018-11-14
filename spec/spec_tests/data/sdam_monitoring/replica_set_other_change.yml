@@ -1,22 +1,8 @@
 description: "Multiple RSOther responses from the same server with different hosts"
 uri: "mongodb://a,x/"
 phases:
-  # Phase 1 - first response from hidden member that thinks b is the primary
-  -
-    responses:
-      -
-        - "a:27017"
-        - {
-            ok: 1,
-            ismaster: false,
-            hidden: true,
-            setName: "rs",
-            setVersion: 1.0,
-            primary: "b:27017",
-            hosts: [ "b:27017" ],
-            minWireVersion: 0,
-            maxWireVersion: 4
-          }
+  # Phase 1
+  - responses: []
     outcome:
       events:
         -
@@ -51,6 +37,25 @@ phases:
           server_opening_event:
             topologyId: "42"
             address: "x:27017"
+  
+  # Phase 2 - first response from hidden member that thinks b is the primary
+  -
+    responses:
+      -
+        - "a:27017"
+        - {
+            ok: 1,
+            ismaster: false,
+            hidden: true,
+            setName: "rs",
+            setVersion: 1.0,
+            primary: "b:27017",
+            hosts: [ "b:27017" ],
+            minWireVersion: 0,
+            maxWireVersion: 4
+          }
+    outcome:
+      events:
         -
           server_description_changed_event:
             topologyId: "42"
@@ -116,7 +121,7 @@ phases:
             topologyId: "42"
             address: "b:27017"
 
-  # Phase 2 - second response from a, now it thinks c is primary.
+  # Phase 3 - second response from a, now it thinks c is primary.
   # setVersion on a should have changed, but since we don't look at setVersion
   # on non-primaries it's not included in this test.
   # Servers prior to 2.6.10 do not have setVersion also.
