@@ -106,6 +106,7 @@ module Mongo
       # The legacy wire protocol version.
       #
       # @since 2.0.0
+      # @deprecated Will be removed in 3.0.
       LEGACY_WIRE_VERSION = 0.freeze
 
       # Constant for reading passive info from config.
