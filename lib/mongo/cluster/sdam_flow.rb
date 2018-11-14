@@ -64,10 +64,6 @@ class Mongo::Cluster
       false
     end
 
-    # Handles a change in server description.
-    #
-    # @param [ Server::Description ] previous_desc Previous server description.
-    # @param [ Server::Description ] updated_desc The new description.
     def server_description_changed
       unless update_server_descriptions
         # All of the transitions require that server whose updated_desc we are

@@ -43,7 +43,9 @@ module Mongo
       #
       # @since 2.0.0
       def handle(previous_desc, updated_desc)
-        Mongo::Cluster::SdamFlow.new(cluster, previous_desc, updated_desc).server_description_changed
+        cluster.sdam_flow_lock.synchronize do
+          Mongo::Cluster::SdamFlow.new(cluster, previous_desc, updated_desc).server_description_changed
+        end
       end
     end
   end
