@@ -274,8 +274,11 @@ module Mongo
                 :scram
               end
             else
-              min_wire_version = response[Description::MIN_WIRE_VERSION] || Description::LEGACY_WIRE_VERSION
-              max_wire_version = response[Description::MAX_WIRE_VERSION] || Description::LEGACY_WIRE_VERSION
+              # MongoDB servers < 2.6 are no longer suported.
+              # Wire versions should always be returned in ismaster.
+              # See also https://jira.mongodb.org/browse/RUBY-1584.
+              min_wire_version = response[Description::MIN_WIRE_VERSION]
+              max_wire_version = response[Description::MAX_WIRE_VERSION]
               features = Description::Features.new(min_wire_version..max_wire_version)
               if features.scram_sha_1_enabled?
                 :scram

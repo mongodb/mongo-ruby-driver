@@ -49,8 +49,14 @@ describe 'SDAM Monitoring' do
                 raise "Server should have been found"
               end
 
+              result = response.ismaster
+              # Spec tests do not always specify wire versions, but the
+              # driver requires them. Set them to zero which was
+              # the legacy default in the driver.
+              result['minWireVersion'] ||= 0
+              result['maxWireVersion'] ||= 0
               new_description = Mongo::Server::Description.new(
-                server.description.address, response.ismaster, 0.5)
+                server.description.address, result, 0.5)
               publisher = SdamSpecEventPublisher.new(@client.cluster.send(:event_listeners))
               publisher.publish(Mongo::Event::DESCRIPTION_CHANGED, server.description, new_description)
             end

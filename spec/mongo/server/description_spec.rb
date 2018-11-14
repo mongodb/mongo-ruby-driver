@@ -180,7 +180,7 @@ describe Mongo::Server::Description do
       end
 
       it 'returns the default' do
-        expect(description.max_wire_version).to eq(0)
+        expect(description.max_wire_version).to be nil
       end
     end
   end
@@ -205,7 +205,7 @@ describe Mongo::Server::Description do
       end
 
       it 'returns the default' do
-        expect(description.min_wire_version).to eq(0)
+        expect(description.min_wire_version).to be nil
       end
     end
   end
@@ -309,6 +309,7 @@ describe Mongo::Server::Description do
         let(:description) do
           described_class.new('localhost:27017',
                               { 'ismaster' => true, 'ok' => 1,
+                                'minWireVersion' => 2, 'maxWireVersion' => 3,
                                 'primary' => 'LOCALHOST:27017',
                                 'setName' => 'itsASet!'})
         end
@@ -382,7 +383,9 @@ describe Mongo::Server::Description do
     context 'when the server is an arbiter' do
 
       let(:description) do
-        described_class.new(address, { 'arbiterOnly' => true, 'setName' => 'test', 'ok' => 1 })
+        described_class.new(address, { 'arbiterOnly' => true,
+          'minWireVersion' => 2, 'maxWireVersion' => 3,
+          'setName' => 'test', 'ok' => 1 })
       end
 
       it 'returns :arbiter' do
@@ -393,7 +396,8 @@ describe Mongo::Server::Description do
     context 'when the server is a ghost' do
 
       let(:description) do
-        described_class.new(address, { 'isreplicaset' => true, 'ok' => 1 })
+        described_class.new(address, { 'isreplicaset' => true,
+          'minWireVersion' => 2, 'maxWireVersion' => 3, 'ok' => 1 })
       end
 
       it 'returns :ghost' do
@@ -404,7 +408,8 @@ describe Mongo::Server::Description do
     context 'when the server is a mongos' do
 
       let(:config) do
-        { 'msg' => 'isdbgrid', 'ismaster' => true, 'ok' => 1 }
+        { 'msg' => 'isdbgrid', 'ismaster' => true,
+          'minWireVersion' => 2, 'maxWireVersion' => 3, 'ok' => 1 }
       end
 
       let(:description) do
@@ -430,7 +435,9 @@ describe Mongo::Server::Description do
     context 'when the server is a secondary' do
 
       let(:description) do
-        described_class.new(address, { 'secondary' => true, 'setName' => 'test', 'ok' => 1 })
+        described_class.new(address, { 'secondary' => true,
+          'minWireVersion' => 2, 'maxWireVersion' => 3,
+          'setName' => 'test', 'ok' => 1 })
       end
 
       it 'returns :secondary' do
@@ -441,7 +448,8 @@ describe Mongo::Server::Description do
     context 'when the server is standalone' do
 
       let(:description) do
-        described_class.new(address, { 'ismaster' => true, 'ok' => 1 })
+        described_class.new(address, { 'ismaster' => true,
+          'minWireVersion' => 2, 'maxWireVersion' => 3, 'ok' => 1 })
       end
 
       it 'returns :standalone' do
@@ -452,7 +460,8 @@ describe Mongo::Server::Description do
     context 'when the server is hidden' do
 
       let(:description) do
-        described_class.new(address, { 'ismaster' => false, 'setName' => 'test',
+        described_class.new(address, { 'ismaster' => false,
+          'minWireVersion' => 2, 'maxWireVersion' => 3, 'setName' => 'test',
           'hidden' => true, 'ok' => 1 })
       end
 
@@ -464,7 +473,8 @@ describe Mongo::Server::Description do
     context 'when the server is other' do
 
       let(:description) do
-        described_class.new(address, { 'ismaster' => false, 'setName' => 'test',
+        described_class.new(address, { 'ismaster' => false,
+          'minWireVersion' => 2, 'maxWireVersion' => 3, 'setName' => 'test',
           'ok' => 1 })
       end
 
@@ -621,7 +631,8 @@ describe Mongo::Server::Description do
     context 'when the description is from a standalone' do
 
       let(:description) do
-        described_class.new(address, { 'ismaster' => true, 'ok' => 1 })
+        described_class.new(address, { 'ismaster' => true,
+          'minWireVersion' => 2, 'maxWireVersion' => 3, 'ok' => 1 })
       end
 
       it 'returns false' do
@@ -657,7 +668,8 @@ describe Mongo::Server::Description do
     context 'when a logical session timeout value is not in the config' do
 
       let(:description) do
-        described_class.new(address, { 'ismaster' => true, 'ok' => 1 })
+        described_class.new(address, { 'ismaster' => true,
+          'minWireVersion' => 2, 'maxWireVersion' => 3, 'ok' => 1 })
       end
 
       it 'returns nil' do
@@ -718,7 +730,8 @@ describe Mongo::Server::Description do
       end
 
       let(:other) do
-        described_class.new(address, { 'ismaster' => true, 'ok' => 1 })
+        described_class.new(address, { 'ismaster' => true,
+          'minWireVersion' => 2, 'maxWireVersion' => 3, 'ok' => 1 })
       end
 
       it 'returns false' do
@@ -728,11 +741,14 @@ describe Mongo::Server::Description do
 
     context 'when one config is a subset of the other' do
       let(:one) do
-        described_class.new(address, { 'ismaster' => true, 'ok' => 1 })
+        described_class.new(address, { 'ismaster' => true,
+          'minWireVersion' => 2, 'maxWireVersion' => 3, 'ok' => 1 })
       end
 
       let(:two) do
-        described_class.new(address, { 'ismaster' => true, 'ok' => 1, 'setName' => 'mongodb_set' })
+        described_class.new(address, { 'ismaster' => true,
+          'minWireVersion' => 2, 'maxWireVersion' => 3,
+          'ok' => 1, 'setName' => 'mongodb_set' })
       end
 
       it 'returns false when first config is the receiver' do

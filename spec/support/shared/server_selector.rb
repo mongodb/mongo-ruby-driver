@@ -7,7 +7,8 @@ def make_server(mode, options = {})
               'ismaster' => mode == :primary,
               'secondary' => mode != :primary,
               'tags' => tags,
-              'ok' => 1
+              'ok' => 1,
+              'minWireVersion' => 2, 'maxWireVersion' => 8,
               }
 
   listeners = Mongo::Event::Listeners.new

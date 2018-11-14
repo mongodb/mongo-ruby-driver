@@ -106,6 +106,7 @@ module Mongo
       # The legacy wire protocol version.
       #
       # @since 2.0.0
+      # @deprecated Will be removed in 3.0.
       LEGACY_WIRE_VERSION = 0.freeze
 
       # Constant for reading passive info from config.
@@ -191,7 +192,9 @@ module Mongo
       def initialize(address, config = {}, average_round_trip_time = 0)
         @address = address
         @config = config
-        @features = Features.new(wire_versions, me || @address.to_s)
+        unless unknown?
+          @features = Features.new(wire_versions, me || @address.to_s)
+        end
         @average_round_trip_time = average_round_trip_time
       end
 
@@ -202,7 +205,12 @@ module Mongo
       attr_reader :config
 
       # @return [ Features ] features The features for the server.
-      attr_reader :features
+      def features
+        if unknown?
+          raise ArgumentError, "An unknown server's features are not known"
+        end
+        @features
+      end
 
       # @return [ Float ] The moving average time the ismaster call took to complete.
       attr_reader :average_round_trip_time
@@ -324,7 +332,7 @@ module Mongo
       #
       # @since 2.0.0
       def max_wire_version
-        config[MAX_WIRE_VERSION] || LEGACY_WIRE_VERSION
+        config[MAX_WIRE_VERSION]
       end
 
       # Get the minimum wire version.
@@ -336,7 +344,7 @@ module Mongo
       #
       # @since 2.0.0
       def min_wire_version
-        config[MIN_WIRE_VERSION] || LEGACY_WIRE_VERSION
+        config[MIN_WIRE_VERSION]
       end
 
       # Get the me field value.

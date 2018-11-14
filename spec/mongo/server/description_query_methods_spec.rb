@@ -33,7 +33,8 @@ describe Mongo::Server::Description do
   end
 
   context 'ghost' do
-    let(:desc_options) { {'isreplicaset' => true, 'ok' => ok} }
+    let(:desc_options) { {'isreplicaset' => true,
+      'minWireVersion' => 2, 'maxWireVersion' => 8, 'ok' => ok} }
 
     it 'is ghost' do
       expect(description).to be_ghost
@@ -56,7 +57,8 @@ describe Mongo::Server::Description do
   end
 
   context 'mongos' do
-    let(:desc_options) { {'msg' => 'isdbgrid', 'ok' => ok} }
+    let(:desc_options) { {'msg' => 'isdbgrid',
+      'minWireVersion' => 2, 'maxWireVersion' => 8, 'ok' => ok} }
 
     it 'is mongos' do
       expect(description).to be_mongos
@@ -79,7 +81,9 @@ describe Mongo::Server::Description do
   end
 
   context 'primary' do
-    let(:desc_options) { {'ismaster' => true, 'setName' => 'foo', 'ok' => ok} }
+    let(:desc_options) { {'ismaster' => true,
+      'minWireVersion' => 2, 'maxWireVersion' => 8,
+      'setName' => 'foo', 'ok' => ok} }
 
     it 'is primary' do
       expect(description).to be_primary
@@ -102,7 +106,9 @@ describe Mongo::Server::Description do
   end
 
   context 'secondary' do
-    let(:desc_options) { {'secondary' => true, 'setName' => 'foo', 'ok' => ok} }
+    let(:desc_options) { {'secondary' => true,
+      'minWireVersion' => 2, 'maxWireVersion' => 8,
+      'setName' => 'foo', 'ok' => ok} }
 
     it 'is secondary' do
       expect(description).to be_secondary
@@ -128,7 +134,9 @@ describe Mongo::Server::Description do
     end
 
     context 'passive' do
-      let(:desc_options) { {'secondary' => true, 'setName' => 'foo', 'passive' => true, 'ok' => ok} }
+      let(:desc_options) { {'secondary' => true,
+        'minWireVersion' => 2, 'maxWireVersion' => 8,
+        'setName' => 'foo', 'passive' => true, 'ok' => ok} }
 
       it 'is passive' do
         expect(description).to be_passive
@@ -147,7 +155,9 @@ describe Mongo::Server::Description do
   end
 
   context 'arbiter' do
-    let(:desc_options) { {'arbiterOnly' => true, 'setName' => 'foo', 'ok' => ok} }
+    let(:desc_options) { {'arbiterOnly' => true,
+      'minWireVersion' => 2, 'maxWireVersion' => 8,
+      'setName' => 'foo', 'ok' => ok} }
 
     it 'is arbiter' do
       expect(description).to be_arbiter
@@ -170,7 +180,7 @@ describe Mongo::Server::Description do
   end
 
   context 'standalone' do
-    let(:desc_options) { {'ok' => ok} }
+    let(:desc_options) { {'minWireVersion' => 2, 'maxWireVersion' => 8, 'ok' => ok} }
 
     it 'is standalone' do
       expect(description).to be_standalone
@@ -217,7 +227,9 @@ describe Mongo::Server::Description do
     end
 
     context 'hidden: true' do
-      let(:desc_options) { {'setName' => 'foo', 'hidden' => true, 'ok' => ok} }
+      let(:desc_options) { {'setName' => 'foo',
+        'minWireVersion' => 2, 'maxWireVersion' => 8,
+        'hidden' => true, 'ok' => ok} }
 
       it_behaves_like 'is other'
 
@@ -227,7 +239,8 @@ describe Mongo::Server::Description do
     end
 
     context 'not hidden: true' do
-      let(:desc_options) { {'setName' => 'foo', 'ok' => ok} }
+      let(:desc_options) { {'setName' => 'foo',
+        'minWireVersion' => 2, 'maxWireVersion' => 8, 'ok' => ok} }
 
       it_behaves_like 'is other'
 

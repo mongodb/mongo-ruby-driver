@@ -97,6 +97,12 @@ module Mongo
         #
         # @since 2.0.0
         def initialize(server_wire_versions, address = nil)
+          if server_wire_versions.min.nil?
+            raise ArgumentError, "server_wire_versions's min is nil"
+          end
+          if server_wire_versions.max.nil?
+            raise ArgumentError, "server_wire_versions's max is nil"
+          end
           @server_wire_versions = server_wire_versions
           @address = address
         end
