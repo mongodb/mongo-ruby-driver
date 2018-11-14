@@ -49,6 +49,14 @@ describe Mongo::Server::Connection, retry: 3 do
     )
   end
 
+  let(:monitored_server) do
+    Mongo::Server.new(address, cluster, monitoring, listeners,
+      SpecConfig.instance.test_options
+    ).tap do |server|
+      server.scan!
+    end
+  end
+
   let(:pool) do
     double('pool')
   end
@@ -265,6 +273,8 @@ describe Mongo::Server::Connection, retry: 3 do
 
     context 'when user credentials exist' do
 
+      let(:server) { monitored_server }
+
       context 'when the user is not authorized' do
 
         let(:connection) do
@@ -424,6 +434,8 @@ describe Mongo::Server::Connection, retry: 3 do
   end
 
   describe '#dispatch' do
+
+    let(:server) { monitored_server }
 
     let!(:connection) do
       described_class.new(

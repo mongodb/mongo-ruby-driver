@@ -27,7 +27,11 @@ describe Mongo::Auth::SCRAM do
   declare_topology_double
 
   let(:server) do
-    Mongo::Server.new(address, cluster, monitoring, listeners, SpecConfig.instance.test_options)
+    Mongo::Server.new(address, cluster, monitoring, listeners,
+      SpecConfig.instance.test_options
+    ).tap do |server|
+      server.scan!
+    end
   end
 
   let(:connection) do

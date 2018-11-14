@@ -49,19 +49,25 @@ describe Mongo::Cluster::Topology::ReplicaSetNoPrimary do
     end
 
     let(:mongos_description) do
-      Mongo::Server::Description.new(address, { 'msg' => 'isdbgrid', 'ok' => 1 })
+      Mongo::Server::Description.new(address, { 'msg' => 'isdbgrid',
+        'minWireVersion' => 2, 'maxWireVersion' => 8, 'ok' => 1 })
     end
 
     let(:standalone_description) do
-      Mongo::Server::Description.new(address, { 'ismaster' => true, 'ok' => 1 })
+      Mongo::Server::Description.new(address, { 'ismaster' => true,
+        'minWireVersion' => 2, 'maxWireVersion' => 8, 'ok' => 1 })
     end
 
     let(:replica_set_description) do
-      Mongo::Server::Description.new(address, { 'ismaster' => true, 'setName' => 'testing', 'ok' => 1 })
+      Mongo::Server::Description.new(address, { 'ismaster' => true,
+        'minWireVersion' => 2, 'maxWireVersion' => 8,
+        'setName' => 'testing', 'ok' => 1 })
     end
 
     let(:replica_set_two_description) do
-      Mongo::Server::Description.new(address, { 'ismaster' => true, 'setName' => 'test', 'ok' => 1 })
+      Mongo::Server::Description.new(address, { 'ismaster' => true,
+        'minWireVersion' => 2, 'maxWireVersion' => 8,
+        'setName' => 'test', 'ok' => 1 })
     end
 
     before do
