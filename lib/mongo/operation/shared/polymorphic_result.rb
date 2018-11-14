@@ -24,11 +24,9 @@ module Mongo
 
       def result_class
         bits = self.class.name.sub(/::[^:]*$/, "::Result").split('::')
-        cls = Object
-        bits.each do |name|
-          cls = cls.const_get(name)
+        bits.reduce(Object) do |cls, name|
+          cls.const_get(name)
         end
-        cls
       end
     end
   end
