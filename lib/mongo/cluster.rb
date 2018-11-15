@@ -88,6 +88,10 @@ module Mongo
     #
     # @since 2.0.0
     def initialize(seeds, monitoring, options = Options::Redacted.new)
+      if options[:monitoring_io] != false && !options[:server_selection_semaphore]
+        raise ArgumentError, 'Need server selection semaphore'
+      end
+
       @servers = []
       @monitoring = monitoring
       @event_listeners = Event::Listeners.new
@@ -164,21 +168,20 @@ module Mongo
         if server_selection_timeout < 3
           server_selection_timeout = 3
         end
-        begin
-          Timeout.timeout(server_selection_timeout) do
-            # Wait for the first scan of each server to complete, for
-            # backwards compatibility.
-            # If any servers are discovered during this SDAM round we do NOT
-            # wait for newly discovered servers to be queried.
-            servers = servers_list.dup
-            while true
-              if servers.all? { |server| server.last_scan_completed_at }
-                break
-              end
-              sleep 0.5
-            end
+        deadline = Time.now + server_selection_timeout
+        # Wait for the first scan of each server to complete, for
+        # backwards compatibility.
+        # If any servers are discovered during this SDAM round we do NOT
+        # wait for newly discovered servers to be queried.
+        loop do
+          servers = servers_list.dup
+          if servers.all? { |server| server.last_scan_completed_at }
+            break
           end
-        rescue Timeout::Error
+          if (time_remaining = deadline - Time.now) <= 0
+            break
+          end
+          options[:server_selection_semaphore].wait(time_remaining)
         end
       end
     end
@@ -200,7 +203,7 @@ module Mongo
       cluster = Cluster.new(
         client.cluster.addresses.map(&:to_s),
         Monitoring.new,
-        client.options
+        client.cluster_options,
       )
       client.instance_variable_set(:@cluster, cluster)
     end
@@ -335,6 +338,9 @@ module Mongo
       "servers=[#{servers.map(&:summary).join(',')}]>"
     end
 
+    # @api private
+    attr_reader :server_selection_semaphore
+
     # Finalize the cluster for garbage collection. Disconnects all the scoped
     # connection pools.
     #
@@ -441,7 +447,9 @@ module Mongo
     # @since 2.0.0
     def ==(other)
       return false unless other.is_a?(Cluster)
-      addresses == other.addresses && options == other.options
+      addresses == other.addresses &&
+        options.merge(server_selection_semaphore: nil) ==
+          other.options.merge(server_selection_semaphore: nil)
     end
 
     # Determine if the cluster would select a readable server for the

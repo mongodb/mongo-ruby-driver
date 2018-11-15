@@ -6,14 +6,18 @@ describe Mongo::Cluster do
     Mongo::Monitoring.new(monitoring: false)
   end
 
-  let(:cluster) do
-    described_class.new(SpecConfig.instance.addresses, monitoring, SpecConfig.instance.test_options)
+  let(:cluster_with_semaphore) do
+    described_class.new(SpecConfig.instance.addresses, monitoring,
+      SpecConfig.instance.test_options.merge(
+        server_selection_semaphore: Mongo::Semaphore.new))
   end
 
   let(:cluster_without_io) do
     described_class.new(SpecConfig.instance.addresses, monitoring,
       SpecConfig.instance.test_options.merge(monitoring_io: false))
   end
+
+  let(:cluster) { cluster_without_io }
 
   describe '#==' do
 
@@ -154,6 +158,7 @@ describe Mongo::Cluster do
   end
 
   describe '#servers' do
+    let(:cluster) { cluster_with_semaphore }
 
     context 'when topology is single' do
       before do
@@ -163,11 +168,7 @@ describe Mongo::Cluster do
       end
 
       context 'when the server is a mongos' do
-        before do
-          unless ClusterConfig.instance.mongos?
-            skip 'Topology is not a sharded cluster'
-          end
-        end
+        require_topology :sharded
 
         it 'returns the mongos' do
           expect(cluster.servers.size).to eq(1)
@@ -175,11 +176,7 @@ describe Mongo::Cluster do
       end
 
       context 'when the server is a replica set member' do
-        before do
-          unless ClusterConfig.instance.replica_set_name
-            skip 'Topology is not a replica set'
-          end
-        end
+        require_topology :replica_set
 
         it 'returns the replica set member' do
           expect(cluster.servers.size).to eq(1)
@@ -248,6 +245,8 @@ describe Mongo::Cluster do
 
     context 'when topology is Single' do
 
+      let(:cluster) { cluster_with_semaphore }
+
       let(:topology) do
         Mongo::Cluster::Topology::Single.new({}, cluster)
       end
@@ -263,6 +262,7 @@ describe Mongo::Cluster do
   end
 
   describe '#disconnect!' do
+    let(:cluster) { cluster_with_semaphore }
 
     let(:known_servers) do
       cluster.instance_variable_get(:@servers)
@@ -308,6 +308,8 @@ describe Mongo::Cluster do
   end
 
   describe '#reconnect!' do
+
+    let(:cluster) { cluster_with_semaphore }
 
     let(:periodic_executor) do
       cluster.instance_variable_get(:@periodic_executor)

@@ -287,6 +287,12 @@ class Mongo::Cluster
 
       servers = add_servers_from_desc(updated_desc)
 
+      commit_changes
+
+      servers.each do |server|
+        server.start_monitoring
+      end
+
       if updated_desc.me_mismatch?
         log_warn(
           "Removing server #{updated_desc.address.to_s} because it " +
@@ -294,12 +300,6 @@ class Mongo::Cluster
         )
         remove
         return
-      end
-
-      commit_changes
-
-      servers.each do |server|
-        server.start_monitoring
       end
     end
 
