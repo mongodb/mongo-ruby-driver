@@ -23,25 +23,6 @@ describe 'ConnectionString' do
               FAMILY_MAP[info.first[4]].new(info[3], port, host)
             end
           end
-
-          class Server
-
-            # The constructor keeps the same API, but does not instantiate a
-            # monitor and run it.
-            alias :original_initialize :initialize
-            def initialize(address, cluster, monitoring, event_listeners, options = {})
-              @address = address
-              @cluster = cluster
-              @monitoring = monitoring
-              @options = options.freeze
-              @monitor = Monitor.new(address, event_listeners, Monitoring.new, options)
-            end
-
-            # Disconnect simply needs to return true since we have no monitor and
-            # no connection.
-            alias :original_disconnect! :disconnect!
-            def disconnect!; true; end
-          end
         end
       end
 
@@ -54,21 +35,12 @@ describe 'ConnectionString' do
             alias :create_resolver :original_create_resolver
             remove_method(:original_create_resolver)
           end
-
-          class Server
-            alias :initialize :original_initialize
-            remove_method(:original_initialize)
-
-            alias :disconnect! :original_disconnect!
-            remove_method(:original_disconnect!)
-          end
         end
       end
 
       spec.tests.each_with_index do |test, index|
 
         context "when a #{test.description} is provided" do
-
 
           context 'when the uri is invalid', unless: test.valid? do
 
