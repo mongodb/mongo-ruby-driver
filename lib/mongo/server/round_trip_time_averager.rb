@@ -17,10 +17,10 @@ module Mongo
     # @api private
     class RoundTripTimeAverager
 
-      # The weighting factor (alpha) for calculating the average moving round trip time.
-      #
-      # @api private
+      # The weighting factor (alpha) for calculating the average moving
+      # round trip time.
       RTT_WEIGHT_FACTOR = 0.2.freeze
+      private_constant :RTT_WEIGHT_FACTOR
 
       def initialize
         @last_round_trip_time = nil
