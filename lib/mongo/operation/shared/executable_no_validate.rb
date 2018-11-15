@@ -14,16 +14,16 @@
 
 module Mongo
   module Operation
-    class Distinct
 
-      # A MongoDB distinct operation sent as an op message.
-      #
-      # @api private
-      #
-      # @since 2.5.2
-      class OpMsg < OpMsgBase
-        include CausalConsistencySupported
-        include ExecutableTransactionLabel
+    # Shared executable behavior of operations for operations
+    # whose result should not be validated.
+    #
+    # @api private
+    module ExecutableNoValidate
+
+      def execute(server)
+        result = get_result(server)
+        process_result(result, server)
       end
     end
   end

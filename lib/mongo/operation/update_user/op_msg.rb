@@ -21,28 +21,13 @@ module Mongo
       # @api private
       #
       # @since 2.5.2
-      class OpMsg
-        include Specifiable
-        include Executable
-        include SessionsSupported
-
-        def execute(server)
-          result = Result.new(dispatch_message(server))
-          process_result(result, server)
-          result.validate!
-        rescue Mongo::Error::SocketError => e
-          e.send(:add_label, Mongo::Error::TRANSIENT_TRANSACTION_ERROR_LABEL) if session.in_transaction?
-          raise e
-        end
+      class OpMsg < OpMsgBase
+        include ExecutableTransactionLabel
 
         private
 
         def selector(server)
           { :updateUser => user.name }.merge(user.spec)
-        end
-
-        def message(server)
-          Protocol::Msg.new(flags, options, command(server))
         end
       end
     end

@@ -25,36 +25,12 @@ module Mongo
       #
       # @return [ Mongo::Operation::GetMore::Result ] The operation result.
       #
+      # @api private
+      #
       # @since 2.5.2
-      class OpMsg
-        include Specifiable
-        include Executable
-        include SessionsSupported
-
-        # Execute the operation.
-        #
-        # @example
-        #   operation.execute(server)
-        #
-        # @param [ Mongo::Server ] server The server to send the operation to.
-        #
-        # @return [ Mongo::Operation::GetMore::Result ] The operation result.
-        #
-        # @since 2.5.2
-        def execute(server)
-          result = Result.new(dispatch_message(server))
-          process_result(result, server)
-          result.validate!
-        rescue Mongo::Error::SocketError => e
-          e.send(:add_label, Mongo::Error::TRANSIENT_TRANSACTION_ERROR_LABEL) if session.in_transaction?
-          raise e
-        end
-
-        private
-
-        def message(server)
-          Protocol::Msg.new(flags, options, command(server))
-        end
+      class OpMsg < OpMsgBase
+        include ExecutableTransactionLabel
+        include PolymorphicResult
       end
     end
   end

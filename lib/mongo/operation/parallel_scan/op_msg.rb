@@ -21,30 +21,10 @@ module Mongo
       # @api private
       #
       # @since 2.5.2
-      class OpMsg
-        include Specifiable
-        include Executable
-        include SessionsSupported
+      class OpMsg < OpMsgBase
         include CausalConsistencySupported
-
-        # Execute the operation.
-        #
-        # @example
-        #   operation.execute(server)
-        #
-        # @param [ Mongo::Server ] server The server to send the operation to.
-        #
-        # @return [ Mongo::Operation::ParallelScan::Result ] The operation result.
-        #
-        # @since 2.5.2
-        def execute(server)
-          result = Result.new(dispatch_message(server))
-          process_result(result, server)
-          result.validate!
-        rescue Mongo::Error::SocketError => e
-          e.send(:add_label, Mongo::Error::TRANSIENT_TRANSACTION_ERROR_LABEL) if session.in_transaction?
-          raise e
-        end
+        include ExecutableTransactionLabel
+        include PolymorphicResult
 
         private
 
@@ -53,10 +33,6 @@ module Mongo
           sel[:maxTimeMS] = max_time_ms if max_time_ms
           sel[:readConcern] = read_concern if read_concern
           sel
-        end
-
-        def message(server)
-          Protocol::Msg.new(flags, options, command(server))
         end
       end
     end

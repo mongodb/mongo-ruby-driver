@@ -14,16 +14,16 @@
 
 module Mongo
   module Operation
-    class Distinct
+    # @api private
+    class OpMsgBase
+      include Specifiable
+      include Executable
+      include SessionsSupported
 
-      # A MongoDB distinct operation sent as an op message.
-      #
-      # @api private
-      #
-      # @since 2.5.2
-      class OpMsg < OpMsgBase
-        include CausalConsistencySupported
-        include ExecutableTransactionLabel
+      private
+
+      def message(server)
+        Protocol::Msg.new(flags, options, command(server))
       end
     end
   end
