@@ -163,6 +163,13 @@ module Mongo
         # call may not run in a particular monitor instance, hence there
         # shouldn't be any code here.
         @description = new_description
+        # This call can be after the publish event because if the
+        # monitoring thread gets killed the server is closed and no client
+        # should be waiting for it
+        if options[:server_selection_semaphore]
+          options[:server_selection_semaphore].broadcast
+        end
+        @description
       end
 
       # Stops the server monitor. Kills the thread so it doesn't continue

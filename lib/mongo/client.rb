@@ -325,16 +325,25 @@ module Mongo
       if sdam_proc
         sdam_proc.call(self)
       end
-      # We share clusters when a new client with different CRUD_OPTIONS
-      # is requested; therefore, cluster should not be getting any of these
-      # options upon instantiation
-      cluster_options = @options.reject do |key, value|
-        CRUD_OPTIONS.include?(key.to_sym)
-      end
-      @cluster = Cluster.new(addresses, @monitoring, @options)
+      @server_selection_semaphore = Semaphore.new
+      @cluster = Cluster.new(addresses, @monitoring, cluster_options)
       # Unset monitoring, it will be taken out of cluster from now on
       remove_instance_variable('@monitoring')
       yield(self) if block_given?
+    end
+
+    # @api private
+    def cluster_options
+      # We share clusters when a new client with different CRUD_OPTIONS
+      # is requested; therefore, cluster should not be getting any of these
+      # options upon instantiation
+      options.reject do |key, value|
+        CRUD_OPTIONS.include?(key.to_sym)
+      end.merge(
+        server_selection_semaphore: @server_selection_semaphore,
+        # but need to put the database back in for auth...
+        database: options[:database],
+      )
     end
 
     # Get an inspection of the client as a string.
@@ -497,7 +506,7 @@ module Mongo
 
       @cluster.disconnect! rescue nil
 
-      @cluster = Cluster.new(addresses, monitoring, options)
+      @cluster = Cluster.new(addresses, monitoring, cluster_options)
       true
     end
 
