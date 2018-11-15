@@ -277,29 +277,4 @@ describe Mongo::Server::Monitor do
       end
     end
   end
-
-  describe '#round_trip_times' do
-    context 'no existing average rtt' do
-      let(:monitor) do
-        described_class.new(address, listeners, Mongo::Monitoring.new, SpecConfig.instance.test_options)
-      end
-
-      it 'returns last rtt' do
-        expect(monitor).to receive(:round_trip_time).and_return(5)
-        expect(monitor.send(:round_trip_times, Time.now)).to eq([5, 5])
-      end
-    end
-
-    context 'with existing average rtt' do
-      let(:monitor) do
-        described_class.new(address, listeners, Mongo::Monitoring.new, SpecConfig.instance.test_options)
-      end
-
-      it 'averages with existing average rtt' do
-        monitor.send(:instance_variable_set, '@average_round_trip_time', 10)
-        expect(monitor).to receive(:round_trip_time).and_return(5)
-        expect(monitor.send(:round_trip_times, Time.now)).to eq([5, 9])
-      end
-    end
-  end
 end

@@ -10,24 +10,18 @@ describe 'Server Selection moving average round trip time calculation' do
 
     context(spec.description) do
 
-      let(:address) do
-        Mongo::Address.new('127.0.0.1:27017')
-      end
-
-      let(:monitor) do
-        Mongo::Server::Monitor.new(address, Mongo::Event::Listeners.new,
-          Mongo::Monitoring.new,
-          SpecConfig.instance.test_options)
+      let(:averager) do
+        Mongo::Server::RoundTripTimeAverager.new
       end
 
       before do
-        monitor.instance_variable_set(:@average_round_trip_time, spec.average_rtt)
-        expect(monitor).to receive(:round_trip_time).and_return(spec.new_rtt)
-        monitor.scan!
+        averager.instance_variable_set(:@average_round_trip_time, spec.average_rtt)
+        averager.instance_variable_set(:@last_round_trip_time, spec.new_rtt)
+        averager.send(:update_average_round_trip_time)
       end
 
       it 'correctly calculates the moving average round trip time' do
-        expect(monitor.description.average_round_trip_time).to eq(spec.new_average_rtt)
+        expect(averager.average_round_trip_time).to eq(spec.new_average_rtt)
       end
     end
   end

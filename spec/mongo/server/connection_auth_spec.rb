@@ -90,7 +90,8 @@ describe Mongo::Server::Connection, retry: 3 do
 
       it 'uses scram' do
         connection
-        expect(Mongo::Server::Description::Features).to receive(:new).and_return(features)
+        # the second Features instantiation is for SDAM event publication
+        expect(Mongo::Server::Description::Features).to receive(:new).twice.and_return(features)
         connection.connect!
         expect(connection.send(:default_mechanism)).to eq(:scram)
       end
@@ -103,7 +104,8 @@ describe Mongo::Server::Connection, retry: 3 do
 
       it 'uses mongodb_cr' do
         connection
-        expect(Mongo::Server::Description::Features).to receive(:new).and_return(features)
+        # the second Features instantiation is for SDAM event publication
+        expect(Mongo::Server::Description::Features).to receive(:new).twice.and_return(features)
         connection.connect!
         expect(connection.send(:default_mechanism)).to eq(:mongodb_cr)
       end

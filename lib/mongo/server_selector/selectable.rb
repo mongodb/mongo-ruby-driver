@@ -104,6 +104,13 @@ module Mongo
         deadline = Time.now + server_selection_timeout
         while (deadline - Time.now) > 0
           servers = candidates(cluster)
+          if Lint.enabled?
+            servers.each do |server|
+              if server.average_round_trip_time.nil?
+                raise Error::LintError, "Server #{server.address} has nil average rtt"
+              end
+            end
+          end
           if servers && !servers.compact.empty?
             unless cluster.topology.compatible?
               raise Error::UnsupportedFeatures, cluster.topology.compatibility_error.to_s
