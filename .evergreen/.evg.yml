@@ -733,13 +733,14 @@ buildvariants:
   tasks:
     - name: "enterprise-auth-tests"
 
--
-  matrix_name: "enterprise-auth-tests-debian"
-  matrix_spec:
-    auth-and-ssl: "auth-and-ssl"
-    ruby: ["ruby-2.5"]
-  display_name: "Enterprise Auth Debian ${ruby}"
-  run_on:
-    - debian81-test
-  tasks:
-    - name: "enterprise-auth-tests"
+# Skipped due to segfaults: https://jira.mongodb.org/browse/RUBY-1534
+#-
+#  matrix_name: "enterprise-auth-tests-debian"
+#  matrix_spec:
+#    auth-and-ssl: "auth-and-ssl"
+#    ruby: ["ruby-2.5"]
+#  display_name: "Enterprise Auth Debian ${ruby}"
+#  run_on:
+#    - debian81-test
+#  tasks:
+#    - name: "enterprise-auth-tests"
