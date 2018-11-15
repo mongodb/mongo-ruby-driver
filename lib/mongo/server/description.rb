@@ -199,6 +199,7 @@ module Mongo
           @features = Features.new(wire_versions, me || @address.to_s)
         end
         @average_round_trip_time = average_round_trip_time
+        @last_update_time = Time.now.freeze
       end
 
       # @return [ Address ] address The server's address.
@@ -662,6 +663,13 @@ module Mongo
           config['lastWrite']['opTime']['ts']
         end
       end
+
+      # Time when the server was last checked.
+      #
+      # @return [ Time ] Last check time.
+      #
+      # @since 2.7.0
+      attr_reader :last_update_time
 
       # Check equality of two descriptions.
       #
