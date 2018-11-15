@@ -486,11 +486,15 @@ module Mongo
     # @example Disconnect the client.
     #   client.close
     #
+    # @param [ Boolean ] wait Whether to wait for background threads to
+    #   finish running.
+    #
     # @return [ true ] Always true.
     #
     # @since 2.1.0
-    def close
-      @cluster.disconnect! and true
+    def close(wait=false)
+      @cluster.disconnect!(wait)
+      true
     end
 
     # Reconnect the client.

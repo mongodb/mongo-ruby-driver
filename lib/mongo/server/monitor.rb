@@ -192,8 +192,11 @@ module Mongo
             @thread.kill
             if wait
               @thread.join
+              @thread = nil
+              true
+            else
+              !@thread.alive?
             end
-            !@thread.alive?
           else
             true
           end
@@ -211,7 +214,11 @@ module Mongo
       #
       # @since 2.1.0
       def restart!
-        @thread.alive? ? @thread : run!
+        if @thread && @thread.alive?
+          @thread
+        else
+          run!
+        end
       end
 
       # @api private
