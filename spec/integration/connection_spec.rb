@@ -137,7 +137,7 @@ describe 'Connections' do
 
         # Depending on server version, ismaster here may return a
         # description that compares equal to the one we got from a
-        # monitoring connection (pre-4.3) or not (4.2+).
+        # monitoring connection (pre-4.2) or not (4.2+).
         # Since we do run SDAM flow on ismaster responses on
         # non-monitoring connections, force descriptions to be different
         # by setting the existing description here to unknown.
