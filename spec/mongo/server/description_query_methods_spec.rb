@@ -24,6 +24,10 @@ describe Mongo::Server::Description do
         expect(description.send("#{type}?")).to be false
       end
     end
+
+    it 'is not data-bearing' do
+      expect(description.data_bearing?).to be false
+    end
   end
 
   context 'unknown' do
@@ -49,6 +53,10 @@ describe Mongo::Server::Description do
       end
     end
 
+    it 'is not data-bearing' do
+      expect(description.data_bearing?).to be false
+    end
+
     context 'ok: 0' do
       let(:ok) { 0 }
 
@@ -71,6 +79,10 @@ describe Mongo::Server::Description do
       it "is not #{type}" do
         expect(description.send("#{type}?")).to be false
       end
+    end
+
+    it 'is data-bearing' do
+      expect(description.data_bearing?).to be true
     end
 
     context 'ok: 0' do
@@ -98,6 +110,10 @@ describe Mongo::Server::Description do
       end
     end
 
+    it 'is data-bearing' do
+      expect(description.data_bearing?).to be true
+    end
+
     context 'ok: 0' do
       let(:ok) { 0 }
 
@@ -123,6 +139,10 @@ describe Mongo::Server::Description do
       end
     end
 
+    it 'is data-bearing' do
+      expect(description.data_bearing?).to be true
+    end
+
     context 'ok: 0' do
       let(:ok) { 0 }
 
@@ -140,6 +160,10 @@ describe Mongo::Server::Description do
 
       it 'is passive' do
         expect(description).to be_passive
+      end
+
+      it 'is data-bearing' do
+        expect(description.data_bearing?).to be true
       end
 
       context 'ok: 0' do
@@ -172,6 +196,10 @@ describe Mongo::Server::Description do
       end
     end
 
+    it 'is not data-bearing' do
+      expect(description.data_bearing?).to be false
+    end
+
     context 'ok: 0' do
       let(:ok) { 0 }
 
@@ -193,6 +221,10 @@ describe Mongo::Server::Description do
       it "is not #{type}" do
         expect(description.send("#{type}?")).to be false
       end
+    end
+
+    it 'is data-bearing' do
+      expect(description.data_bearing?).to be true
     end
 
     context 'ok: 0' do
@@ -217,6 +249,10 @@ describe Mongo::Server::Description do
         it "is not #{type}" do
           expect(description.send("#{type}?")).to be false
         end
+      end
+
+      it 'is not data-bearing' do
+        expect(description.data_bearing?).to be false
       end
 
       context 'ok: 0' do

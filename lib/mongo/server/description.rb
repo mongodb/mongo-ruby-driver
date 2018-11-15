@@ -641,6 +641,17 @@ module Mongo
         ok? && !(standalone? || mongos?)
       end
 
+      # Whether this description is from a data-bearing server
+      # (standalone, mongos, primary or secondary).
+      #
+      # @return [ true, false ] Whether the description is from a data-bearing
+      #   server.
+      #
+      # @since 2.7.0
+      def data_bearing?
+        mongos? || primary? || secondary? || standalone?
+      end
+
       # Check if there is a mismatch between the address host and the me field.
       #
       # @example Check if there is a mismatch.

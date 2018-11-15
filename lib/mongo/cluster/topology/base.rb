@@ -65,9 +65,9 @@ module Mongo
           end
 
           begin
-            servers.each do |server|
-              unless server.unknown?
-                server.check_driver_support!
+            server_descriptions.each do |address_str, desc|
+              unless desc.unknown?
+                desc.features.check_driver_support!
               end
             end
           rescue Error::UnsupportedFeatures => e
@@ -78,11 +78,11 @@ module Mongo
           end
 
           @have_data_bearing_servers = false
-          @logical_session_timeout = servers.inject(nil) do |min, server|
+          @logical_session_timeout = server_descriptions.inject(nil) do |min, (address_str, desc)|
             # LST is only read from data-bearing servers
-            if server.mongos? || server.primary? || server.secondary? || server.standalone?
+            if desc.data_bearing?
               @have_data_bearing_servers = true
-              break unless timeout = server.logical_session_timeout
+              break unless timeout = desc.logical_session_timeout
               [timeout, (min || timeout)].min
             else
               min
