@@ -95,6 +95,7 @@ describe Mongo::Operation::Update::Command do
   describe '#message' do
 
     context 'when the server does not support OP_MSG' do
+      max_server_version '3.4'
 
       let(:expected_selector) do
         {
@@ -105,7 +106,7 @@ describe Mongo::Operation::Update::Command do
         }
       end
 
-      it 'creates the correct Command message', unless: op_msg_enabled? do
+      it 'creates the correct Command message' do
         expect(Mongo::Protocol::Query).to receive(:new).with(SpecConfig.instance.test_db, '$cmd', expected_selector, { limit: -1 })
         op.send(:message, authorized_primary)
       end

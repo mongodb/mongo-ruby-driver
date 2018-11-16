@@ -89,6 +89,7 @@ describe Mongo::Operation::Insert::Command do
   describe '#message' do
 
     context 'when the server does not support OP_MSG' do
+      max_server_version '3.4'
 
       let(:expected_selector) do
         { :documents     => documents,
@@ -98,7 +99,7 @@ describe Mongo::Operation::Insert::Command do
         }
       end
 
-      it 'creates a query wire protocol message with correct specs', unless: op_msg_enabled? do
+      it 'creates a query wire protocol message with correct specs' do
         expect(Mongo::Protocol::Query).to receive(:new).with(authorized_collection.database.name,
                                                              '$cmd',
                                                              expected_selector,
