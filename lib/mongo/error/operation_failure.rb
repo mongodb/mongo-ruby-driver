@@ -182,6 +182,16 @@ module Mongo
         @code = options[:code]
         @code_name = options[:code_name]
         super(message)
+
+        if result
+          err_doc = result.send(:first_document)
+
+          if err_doc && err_doc['errorLabels']
+            err_doc['errorLabels'].each do |label|
+              add_label(label)
+            end
+          end
+        end
       end
     end
   end
