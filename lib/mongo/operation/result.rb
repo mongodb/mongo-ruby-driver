@@ -312,6 +312,18 @@ module Mongo
         first_document && first_document[CLUSTER_TIME]
       end
 
+      # Gets the set of error labels associated with the result.
+      #
+      # @example Get the labels.
+      #   result.labels
+      #
+      # @return [ Array ] labels The set of labels.
+      #
+      # @since 2.7.0
+      def labels
+        @labels ||= parser.labels
+      end
+
       private
 
       def aggregate_returned_count

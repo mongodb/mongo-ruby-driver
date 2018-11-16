@@ -114,6 +114,18 @@ module Mongo
       @labels.include?(label)
     end
 
+    # Gets the set of labels associated with the error.
+    #
+    # @example
+    #   error.labels
+    #
+    # @return [ Array ] The set of labels.
+    #
+    # @since 2.7.0
+    def labels
+      @labels.dup
+    end
+
     private
 
     def add_label(label)

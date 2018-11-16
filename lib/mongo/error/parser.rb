@@ -62,6 +62,10 @@ module Mongo
       # @since 2.6.0
       attr_reader :code_name
 
+      # @return [ Array ] labels The set of labels associated with the error.
+      # @since 2.7.0
+      attr_reader :labels
+
       # Create the new parser with the returned document.
       #
       # @example Create the new parser.
@@ -88,6 +92,7 @@ module Mongo
                      document[WRITE_CONCERN_ERROR]) if document[WRITE_CONCERN_ERROR]
         parse_flag(@message)
         parse_code
+        parse_labels
       end
 
       def parse_single(message, key, doc = document)
@@ -146,6 +151,10 @@ module Mongo
             end
           end
         end
+      end
+
+      def parse_labels
+        @labels = document['errorLabels'] || []
       end
     end
   end

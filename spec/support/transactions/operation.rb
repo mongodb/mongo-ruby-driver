@@ -114,12 +114,12 @@ module Mongo
         {
           'errorCodeName' => err_doc['codeName'] || err_doc['writeConcernError']['codeName'],
           'errorContains' => e.message,
-          'errorLabels' => e.instance_variable_get(:@labels)
+          'errorLabels' => e.labels
         }
       rescue Mongo::Error => e
         {
           'errorContains' => e.message,
-          'errorLabels' => e.instance_variable_get(:@labels)
+          'errorLabels' => e.labels
         }
       end
 
