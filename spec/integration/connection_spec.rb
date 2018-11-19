@@ -6,9 +6,19 @@ describe 'Connections' do
   end
 
   let(:client) { ClientRegistry.instance.global_client('authorized') }
-  let(:support_client) { ClientRegistry.instance.global_client('authorized') }
+  let(:support_client) do
+    ClientRegistry.instance.global_client('authorized').tap do |client|
+      client.database.command(ismaster: 1)
+    end
+  end
   let(:address_str) { support_client.cluster.next_primary.address.to_s }
-  let(:server) { client.cluster.servers.detect { |server| server.address.to_s == address_str } }
+  let(:server) do
+    client.cluster.servers.detect { |server| server.address.to_s == address_str }.tap do |server|
+      if server.nil?
+        raise "No primary in the cluster, apparently"
+      end
+    end
+  end
 
   describe '#connect!' do
     context 'network error during handshake' do
