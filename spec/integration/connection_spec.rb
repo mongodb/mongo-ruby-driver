@@ -6,7 +6,9 @@ describe 'Connections' do
   end
 
   let(:client) { ClientRegistry.instance.global_client('authorized') }
-  let(:server) { client.cluster.servers.first }
+  let(:support_client) { ClientRegistry.instance.global_client('authorized') }
+  let(:address_str) { support_client.cluster.next_primary.address.to_s }
+  let(:server) { client.cluster.servers.detect { |server| server.address.to_s == address_str } }
 
   describe '#connect!' do
     context 'network error during handshake' do
@@ -34,7 +36,9 @@ describe 'Connections' do
       context 'with sdam event subscription' do
         let(:subscriber) { Mongo::SDAMMonitoring::TestSubscriber.new }
         let(:client) do
-          ClientRegistry.instance.global_client('authorized').with(app_name: 'connection_integration').tap do |client|
+          ClientRegistry.instance.new_local_client(
+            [address_str],
+          ).tap do |client|
             client.subscribe(Mongo::Monitoring::SERVER_OPENING, subscriber)
             client.subscribe(Mongo::Monitoring::SERVER_CLOSED, subscriber)
             client.subscribe(Mongo::Monitoring::SERVER_DESCRIPTION_CHANGED, subscriber)
