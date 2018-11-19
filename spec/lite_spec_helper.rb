@@ -81,10 +81,6 @@ else
 end
 
 RSpec.configure do |config|
-  if ENV['CI'] && SpecConfig.instance.jruby?
-    config.formatter = 'documentation'
-  end
-
   config.extend(CommonShortcuts)
   config.extend(LiteConstraints)
   config.include(ClientRegistryMacros)
