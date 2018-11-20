@@ -32,16 +32,14 @@ end
 group :testing do
   gem 'ice_nine'
   gem 'rspec-retry'
+  gem 'rfc'
+  platforms :mri do
+    gem 'timeout-interrupt'
+  end
 end
 
 group :development do
   gem 'ruby-prof', :platforms => :mri
   gem 'pry-rescue'
   gem 'pry-nav'
-end
-
-group :testing do
-  platforms :mri do
-    gem 'timeout-interrupt'
-  end
 end
