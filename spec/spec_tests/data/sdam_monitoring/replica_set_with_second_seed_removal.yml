@@ -1,5 +1,5 @@
 description: "Monitoring a topology that is a replica set with second seed removal"
-uri: "mongodb://a,b"
+uri: "mongodb://a,b/?replicaSet=rs"
 phases: 
   # phase 1 - discover topology
   - 
@@ -28,7 +28,8 @@ phases:
               topologyType: "Unknown"
               servers: []
             newDescription: 
-              topologyType: "Unknown"
+              topologyType: "ReplicaSetNoPrimary"
+              setName: "rs"
               servers: 
                 - 
                   address: "a:27017"
@@ -77,7 +78,8 @@ phases:
           topology_description_changed_event: 
             topologyId: "42"
             previousDescription: 
-              topologyType: "Unknown"
+              topologyType: "ReplicaSetNoPrimary"
+              setName: "rs"
               servers: 
                 - 
                   address: "a:27017"
