@@ -1,5 +1,6 @@
+# Like replica_set_other_change.yml except RS topology is discovered and not forced.
 description: "Multiple RSOther responses from the same server with different hosts"
-uri: "mongodb://a/?replicaSet=rs"
+uri: "mongodb://a/"
 phases:
   # Phase 1
   - responses: []
@@ -15,8 +16,7 @@ phases:
               topologyType: "Unknown"
               servers: []
             newDescription:
-              topologyType: "ReplicaSetNoPrimary"
-              setName: "rs"
+              topologyType: "Unknown"
               servers:
                 -
                   address: "a:27017"
@@ -69,8 +69,7 @@ phases:
           topology_description_changed_event:
             topologyId: "42"
             previousDescription:
-              topologyType: "ReplicaSetNoPrimary"
-              setName: "rs"
+              topologyType: "Unknown"
               servers:
                 -
                   address: "a:27017"

@@ -1,5 +1,6 @@
-description: "Multiple RSOther responses from the same server with different hosts"
-uri: "mongodb://a/?replicaSet=rs"
+# Like replica_set_other_chain.yml except RS topology is discovered and not forced.
+description: "Multiple RSOther responses with different servers in each"
+uri: "mongodb://a/"
 phases:
   # Phase 1
   - responses: []
@@ -15,8 +16,7 @@ phases:
               topologyType: "Unknown"
               servers: []
             newDescription:
-              topologyType: "ReplicaSetNoPrimary"
-              setName: "rs"
+              topologyType: "Unknown"
               servers:
                 -
                   address: "a:27017"
@@ -69,8 +69,7 @@ phases:
           topology_description_changed_event:
             topologyId: "42"
             previousDescription:
-              topologyType: "ReplicaSetNoPrimary"
-              setName: "rs"
+              topologyType: "Unknown"
               servers:
                 -
                   address: "a:27017"
@@ -101,14 +100,11 @@ phases:
             topologyId: "42"
             address: "b:27017"
 
-  # Phase 3 - second response from a, now it thinks c is primary.
-  # setVersion on a should have changed, but since we don't look at setVersion
-  # on non-primaries it's not included in this test.
-  # Servers prior to 2.6.10 do not have setVersion also.
+  # Phase 3 - second response from b which is also hidden, thinks c is primary
   -
     responses:
       -
-        - "a:27017"
+        - "b:27017"
         - {
             ok: 1,
             ismaster: false,
@@ -125,17 +121,15 @@ phases:
         -
           server_description_changed_event:
             topologyId: "42"
-            address: "a:27017"
+            address: "b:27017"
             previousDescription:
-              address: "a:27017"
+              address: "b:27017"
               arbiters: []
-              hosts: [ "b:27017" ]
+              hosts: []
               passives: []
-              primary: "b:27017"
-              setName: "rs"
-              type: "RSOther"
+              type: "Unknown"
             newDescription:
-              address: "a:27017"
+              address: "b:27017"
               arbiters: []
               hosts: [ "c:27017" ]
               passives: []
@@ -170,17 +164,19 @@ phases:
                 -
                   address: "a:27017"
                   arbiters: []
-                  hosts: [ "c:27017" ]
+                  hosts: [ "b:27017" ]
                   passives: []
-                  primary: "c:27017"
+                  primary: "b:27017"
                   setName: "rs"
                   type: "RSOther"
                 -
                   address: "b:27017"
                   arbiters: []
-                  hosts: []
+                  hosts: [ "c:27017" ]
                   passives: []
-                  type: "Unknown"
+                  primary: "c:27017"
+                  setName: "rs"
+                  type: "RSOther"
                 -
                   address: "c:27017"
                   arbiters: []
