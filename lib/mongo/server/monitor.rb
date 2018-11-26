@@ -66,6 +66,7 @@ module Mongo
         @monitoring = monitoring
         @options = options.freeze
         @round_trip_time_averager = RoundTripTimeAverager.new
+        @scan_semaphore = Semaphore.new
         # This is a Mongo::Server::Monitor::Connection
         @connection = Connection.new(address, options)
         @last_scan = nil
@@ -107,6 +108,9 @@ module Mongo
         @heartbeat_frequency ||= options[:heartbeat_frequency] || HEARTBEAT_FREQUENCY
       end
 
+      # @api private
+      attr_reader :scan_semaphore
+
       # Runs the server monitor. Refreshing happens on a separate thread per
       # server.
       #
@@ -120,7 +124,7 @@ module Mongo
         @thread = Thread.new(heartbeat_frequency) do |i|
           loop do
             scan!
-            sleep(i)
+            @scan_semaphore.wait(i)
           end
         end
       end

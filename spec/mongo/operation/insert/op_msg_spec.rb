@@ -152,17 +152,21 @@ describe Mongo::Operation::Insert::OpMsg do
         context 'when an implicit session is created and the topology is then updated and the server does not support sessions' do
 
           let(:expected_global_args) do
-            global_args.delete(:lsid)
-            global_args
+            global_args.dup.tap do |args|
+              args.delete(:lsid)
+            end
           end
 
           before do
             session.instance_variable_set(:@options, { implicit: true })
-            allow(authorized_primary.features).to receive(:sessions_enabled?).and_return(false)
+            # Topology is standalone, hence there is exactly one server
+            authorized_client.cluster.servers.first.monitor.stop!(true)
+            expect(authorized_primary.features).to receive(:sessions_enabled?).at_least(:once).and_return(false)
           end
 
           it 'creates the correct OP_MSG message' do
             authorized_client.command(ping:1)
+            expect(expected_global_args).not_to have_key(:lsid)
             expect(Mongo::Protocol::Msg).to receive(:new).with([:none],
                                                                { validating_keys: true },
                                                                expected_global_args,
@@ -188,8 +192,10 @@ describe Mongo::Operation::Insert::OpMsg do
           context 'when the topology is replica set or sharded', if: test_sessions? do
 
             let(:expected_global_args) do
-              global_args.delete(:lsid)
-              global_args.merge(Mongo::Operation::CLUSTER_TIME => authorized_client.cluster.cluster_time)
+              global_args.dup.tap do |args|
+                args.delete(:lsid)
+                args.merge!(Mongo::Operation::CLUSTER_TIME => authorized_client.cluster.cluster_time)
+              end
             end
 
             it 'does not send a session id in the command' do
@@ -205,8 +211,9 @@ describe Mongo::Operation::Insert::OpMsg do
           context 'when the topology is standalone', if: standalone? && sessions_enabled? do
 
             let(:expected_global_args) do
-              global_args.delete(:lsid)
-              global_args
+              global_args.dup.tap do |args|
+                args.delete(:lsid)
+              end
             end
 
             it 'creates the correct OP_MSG message' do
@@ -227,8 +234,10 @@ describe Mongo::Operation::Insert::OpMsg do
           end
 
           let(:expected_global_args) do
-            global_args.delete(:lsid)
-            global_args.merge(Mongo::Operation::CLUSTER_TIME => authorized_client.cluster.cluster_time)
+            global_args.dup.tap do |args|
+              args.delete(:lsid)
+              args.merge!(Mongo::Operation::CLUSTER_TIME => authorized_client.cluster.cluster_time)
+            end
           end
 
           it 'does not send a session id in the command' do
