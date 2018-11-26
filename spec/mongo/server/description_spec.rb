@@ -327,8 +327,8 @@ describe Mongo::Server::Description do
       described_class.new(address, { 'secondary' => false }, 4.5)
     end
 
-    it 'defaults to 0' do
-      expect(described_class.new(address).average_round_trip_time).to eq(0)
+    it 'defaults to nil' do
+      expect(described_class.new(address).average_round_trip_time).to be nil
     end
 
     it 'can be set via the constructor' do
