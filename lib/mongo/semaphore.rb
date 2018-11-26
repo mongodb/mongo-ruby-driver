@@ -36,5 +36,11 @@ module Mongo
         @cv.broadcast
       end
     end
+
+    def signal
+      @lock.synchronize do
+        @cv.signal
+      end
+    end
   end
 end

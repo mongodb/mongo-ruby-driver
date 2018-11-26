@@ -44,7 +44,7 @@ module Mongo
       rescue Error::SocketError, Error::SocketTimeoutError => e
         raise(e) if attempt > cluster.max_read_retries || (session && session.in_transaction?)
         log_retry(e)
-        cluster.scan!
+        cluster.scan!(false)
         retry
       rescue Error::OperationFailure => e
         if cluster.sharded? && e.retryable? && !(session && session.in_transaction?)
@@ -133,17 +133,17 @@ module Mongo
     end
 
     def retry_write(original_error, txn_num, &block)
-      cluster.scan!
+      cluster.scan!(false)
       server = cluster.next_primary
       raise original_error unless (server.retry_writes? && txn_num)
       log_retry(original_error)
       yield(server, txn_num)
     rescue Error::SocketError, Error::SocketTimeoutError => e
-      cluster.scan!
+      cluster.scan!(false)
       raise e
     rescue Error::OperationFailure => e
       raise original_error unless e.write_retryable?
-      cluster.scan!
+      cluster.scan!(false)
       raise e
     rescue
       raise original_error
@@ -162,7 +162,7 @@ module Mongo
         raise(e) if attempt > Cluster::MAX_WRITE_RETRIES
         if e.write_retryable? && !(session && session.in_transaction?)
           log_retry(e)
-          cluster.scan!
+          cluster.scan!(false)
           retry
         else
           raise(e)
