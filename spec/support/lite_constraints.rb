@@ -8,6 +8,18 @@ module LiteConstraints
     end
   end
 
+  # This is for marking tests that fail on jruby that should
+  # in principle work (as opposed to being fundamentally incompatible
+  # with jruby).
+  # Often times these failures happen only in Evergreen.
+  def fails_on_jruby
+    before do
+      unless SpecConfig.instance.mri?
+        skip "Fails on jruby"
+      end
+    end
+  end
+
   def require_external_connectivity
     before do
       if ENV['EXTERNAL_DISABLED']

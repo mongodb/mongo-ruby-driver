@@ -158,7 +158,7 @@ class ClientRegistry
   def close_all_clients
     close_local_clients
     @global_clients.each do |name, client|
-      client.close
+      client.close(true)
     end
   end
 end

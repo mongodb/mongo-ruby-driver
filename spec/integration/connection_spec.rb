@@ -9,6 +9,8 @@ describe 'Connections' do
   let(:server) { client.cluster.servers.first }
 
   describe '#connect!' do
+    fails_on_jruby
+
     context 'network error during handshake' do
       let(:connection) do
         Mongo::Server::Connection.new(server, server.options)

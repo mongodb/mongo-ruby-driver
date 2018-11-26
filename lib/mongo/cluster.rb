@@ -375,17 +375,20 @@ module Mongo
     # @example Disconnect the cluster's servers.
     #   cluster.disconnect!
     #
+    # @param [ Boolean ] wait Whether to wait for background threads to
+    #   finish running.
+    #
     # @return [ true ] Always true.
     #
     # @since 2.1.0
-    def disconnect!
+    def disconnect!(wait=false)
       unless @connecting || @connected
         return true
       end
       @periodic_executor.stop!
       @servers.each do |server|
         if server.connected?
-          server.disconnect!
+          server.disconnect!(wait)
           publish_sdam_event(
             Monitoring::SERVER_CLOSED,
             Monitoring::Event::ServerClosed.new(server.address, topology)

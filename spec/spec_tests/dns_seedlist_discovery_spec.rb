@@ -5,46 +5,6 @@ describe 'DNS Seedlist Discovery' do
 
   include Mongo::ConnectionString
 
-  before(:all) do
-
-    module Mongo
-      class Server
-        # The constructor keeps the same API, but does not instantiate a
-        # monitor and run it.
-        alias :original_initialize :initialize
-
-        def initialize(address, cluster, monitoring, event_listeners, options = {})
-          @address = address
-          @cluster = cluster
-          @monitoring = monitoring
-          @options = options.freeze
-          @monitor = Monitor.new(address, event_listeners, Monitoring.new, options)
-        end
-
-        # Disconnect simply needs to return true since we have no monitor and
-        # no connection.
-        alias :original_disconnect! :disconnect!
-
-        def disconnect!;
-          true;
-        end
-      end
-    end
-  end
-
-  after(:all) do
-
-    module Mongo
-      class Server
-        alias :initialize :original_initialize
-        remove_method(:original_initialize)
-
-        alias :disconnect! :original_disconnect!
-        remove_method(:original_disconnect!)
-      end
-    end
-  end
-
   DNS_SEEDLIST_DISCOVERY_TESTS.each do |file_name|
 
     file = File.new(file_name)

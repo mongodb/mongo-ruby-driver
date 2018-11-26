@@ -33,19 +33,23 @@ describe Mongo::Cluster::Topology::ReplicaSetNoPrimary do
   describe '#servers' do
 
     let(:mongos) do
-      Mongo::Server.new(address, cluster, monitoring, listeners, SpecConfig.instance.test_options)
+      Mongo::Server.new(address, cluster, monitoring, listeners,
+        SpecConfig.instance.test_options.merge(monitoring_io: false))
     end
 
     let(:standalone) do
-      Mongo::Server.new(address, cluster, monitoring, listeners, SpecConfig.instance.test_options)
+      Mongo::Server.new(address, cluster, monitoring, listeners,
+        SpecConfig.instance.test_options.merge(monitoring_io: false))
     end
 
     let(:replica_set) do
-      Mongo::Server.new(address, cluster, monitoring, listeners, SpecConfig.instance.test_options)
+      Mongo::Server.new(address, cluster, monitoring, listeners,
+        SpecConfig.instance.test_options.merge(monitoring_io: false))
     end
 
     let(:replica_set_two) do
-      Mongo::Server.new(address, cluster, monitoring, listeners, SpecConfig.instance.test_options)
+      Mongo::Server.new(address, cluster, monitoring, listeners,
+        SpecConfig.instance.test_options.merge(monitoring_io: false))
     end
 
     let(:mongos_description) do
