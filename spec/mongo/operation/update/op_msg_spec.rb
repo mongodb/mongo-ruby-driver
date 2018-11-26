@@ -94,7 +94,8 @@ describe Mongo::Operation::Update::OpMsg do
 
   describe '#message' do
 
-    context 'when the server supports OP_MSG', if: op_msg_enabled? do
+    context 'when the server supports OP_MSG' do
+      min_server_version '3.6'
 
       let(:global_args) do
         {

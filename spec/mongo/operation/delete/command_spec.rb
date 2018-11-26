@@ -89,6 +89,7 @@ describe Mongo::Operation::Delete::Command do
   describe '#message' do
 
     context 'when the server does not support OP_MSG' do
+      max_server_version '3.4'
 
       let(:expected_selector) do
         {
@@ -99,7 +100,7 @@ describe Mongo::Operation::Delete::Command do
         }
       end
 
-      it 'creates the correct query wire protocol message', unless: op_msg_enabled? do
+      it 'creates the correct query wire protocol message' do
         expect(Mongo::Protocol::Query).to receive(:new).with(authorized_collection.database.name,
                                                              '$cmd',
                                                              expected_selector,

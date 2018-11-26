@@ -90,7 +90,8 @@ describe 'aggregation examples in Ruby' do
     end
   end
 
-  context 'Aggregation Example 4 - $lookup, $filter, $match', if: op_msg_enabled? do
+  context 'Aggregation Example 4 - $lookup, $filter, $match' do
+    min_server_version '3.6'
 
     let(:example_code) do
 

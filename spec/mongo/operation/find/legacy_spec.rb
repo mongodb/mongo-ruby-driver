@@ -1,7 +1,8 @@
 require 'spec_helper'
 
-describe Mongo::Operation::Find::Legacy, unless: op_msg_enabled? do
-  
+describe Mongo::Operation::Find::Legacy do
+  max_server_version '3.4'
+
   let(:selector) { { foo: 1 } }
   let(:query_options) { {} }
   let(:spec) do

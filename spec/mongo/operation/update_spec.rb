@@ -226,7 +226,8 @@ describe Mongo::Operation::Update do
       end
     end
 
-    context 'when write concern { w: 0 } is used', unless: op_msg_enabled? do
+    context 'when write concern { w: 0 } is used' do
+      max_server_version '3.4'
 
       let(:update) do
         described_class.new({

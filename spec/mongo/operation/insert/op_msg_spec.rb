@@ -88,7 +88,8 @@ describe Mongo::Operation::Insert::OpMsg do
 
   describe '#message' do
 
-    context 'when the server supports OP_MSG', if: op_msg_enabled? do
+    context 'when the server supports OP_MSG' do
+      min_server_version '3.6'
 
       let(:documents) do
         [ { foo: 1 }, { bar: 2 }]

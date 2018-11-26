@@ -1204,7 +1204,8 @@ describe Mongo::Collection do
       end
     end
 
-    context 'when the documents are sent with OP_MSG', if: op_msg_enabled? do
+    context 'when the documents are sent with OP_MSG' do
+      min_server_version '3.6'
 
       let(:client) do
         subscribed_client
@@ -3578,7 +3579,8 @@ describe Mongo::Collection do
       end
     end
 
-    context 'when the documents are sent with OP_MSG', if: op_msg_enabled? do
+    context 'when the documents are sent with OP_MSG' do
+      min_server_version '3.6'
 
       let(:client) do
         subscribed_client
