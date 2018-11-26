@@ -87,13 +87,6 @@ module Mongo
       # @since 2.4.0
       attr_reader :last_scan
 
-      # @return [ Time ] last_scan_completed_at The time when the last server
-      #   scan completed.
-      #
-      # @since 2.7.0
-      # @api private
-      attr_reader :last_scan_completed_at
-
       # The compressor is determined during the handshake, so it must be an attribute
       # of the connection.
       def_delegators :connection, :compressor
@@ -153,7 +146,6 @@ module Mongo
       def scan!
         throttle_scan_frequency!
         result = ismaster
-        @last_scan_completed_at = Time.now
         new_description = Description.new(description.address, result,
           @round_trip_time_averager.average_round_trip_time)
         publish(Event::DESCRIPTION_CHANGED, description, new_description)
