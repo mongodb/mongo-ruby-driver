@@ -1,5 +1,8 @@
 require 'spec_helper'
 
+# This test is for checking connectivity of the test client to the
+# test cluster. In other words, it is a test that the test suite is
+# configured correctly.
 describe 'Client connectivity' do
   shared_examples_for 'is correctly configured' do
     it 'is configured with the correct database' do
