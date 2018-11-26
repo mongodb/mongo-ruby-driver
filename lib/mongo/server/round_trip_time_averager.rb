@@ -36,9 +36,15 @@ module Mongo
           rv = yield
         rescue Exception => exc
         end
-        @last_round_trip_time = Time.now - start
+        last_round_trip_time = Time.now - start
 
-        update_average_round_trip_time
+        # If ismaster fails, we need to return the last round trip time
+        # because it is used in the heartbeat failed SDAM event,
+        # but we must not update the round trip time recorded in the server.
+        unless exc
+          @last_round_trip_time = last_round_trip_time
+          update_average_round_trip_time
+        end
 
         [rv, exc, last_round_trip_time, average_round_trip_time]
       end

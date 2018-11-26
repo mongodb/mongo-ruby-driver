@@ -21,4 +21,23 @@ describe Mongo::Server::RoundTripTimeAverager do
       end
     end
   end
+
+  describe '#measure' do
+    context 'block does not raise' do
+      it 'updates average rtt' do
+        expect(averager).to receive(:update_average_round_trip_time)
+        averager.measure do
+        end
+      end
+    end
+
+    context 'block raises' do
+      it 'does not update average rtt' do
+        expect(averager).not_to receive(:update_average_round_trip_time)
+        averager.measure do
+          raise "Problem"
+        end
+      end
+    end
+  end
 end
