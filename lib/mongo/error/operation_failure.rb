@@ -181,9 +181,8 @@ module Mongo
         @result = result
         @code = options[:code]
         @code_name = options[:code_name]
+        @labels = options[:labels]
         super(message)
-
-        @labels = (result && result.labels) || []
       end
     end
   end

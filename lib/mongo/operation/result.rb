@@ -267,7 +267,7 @@ module Mongo
         raise Error::OperationFailure.new(
           parser.message,
           self,
-          :code => parser.code, :code_name => parser.code_name)
+          :code => parser.code, :code_name => parser.code_name, :labels => parser.labels)
       end
       private :raise_operation_failure
 
