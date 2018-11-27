@@ -37,8 +37,7 @@ phases:
       -
         - "a:27017"
         - ok: 1
-          ismaster: false,
-          hidden: true
+          ismaster: true,
           setName: "rs"
           setVersion: 1.0
           primary: "b:27017"
@@ -108,8 +107,7 @@ phases:
       -
         - "b:27017"
         - ok: 1
-          ismaster: false,
-          hidden: true
+          ismaster: true,
           setName: "rs"
           setVersion: 1.0
           primary: "b:27017"
