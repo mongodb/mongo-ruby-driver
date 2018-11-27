@@ -149,4 +149,74 @@ describe Mongo::Error::OperationFailure do
       end
     end
   end
+
+  describe '#labels' do
+
+    context 'when the result is nil' do
+
+      subject do
+        described_class.new('not master (10107)', nil,
+          :code => 10107, :code_name => 'NotMaster')
+      end
+
+      it 'has no labels' do
+        expect(subject.labels).to eq([])
+      end
+    end
+
+    context 'when the result is not nil' do
+
+      let(:reply_document) do
+        {
+            'code' => 251,
+            'codeName' => 'NoSuchTransaction',
+            'errorLabels' => labels,
+        }
+      end
+
+      let(:reply) do
+        Mongo::Protocol::Reply.new.tap do |r|
+          # Because this was not created by Mongo::Protocol::Reply::deserialize, we need to manually
+          # initialize the fields.
+          r.instance_variable_set(:@documents, [reply_document])
+          r.instance_variable_set(:@flags, [])
+        end
+      end
+
+      let(:result) do
+        Mongo::Operation::Result.new(reply)
+      end
+
+      subject do
+        begin
+          result.send(:raise_operation_failure)
+        rescue => e
+          e
+        end
+      end
+
+      context 'when the error has no labels' do
+
+        let(:labels) do
+          []
+        end
+
+        it 'has the correct labels' do
+          expect(subject.labels).to eq(labels)
+        end
+      end
+
+
+      context 'when the error has labels' do
+
+        let(:labels) do
+          [ Mongo::Error::TRANSIENT_TRANSACTION_ERROR_LABEL ]
+        end
+
+        it 'has the correct labels' do
+          expect(subject.labels).to eq(labels)
+        end
+      end
+    end
+  end
 end
