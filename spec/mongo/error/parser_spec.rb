@@ -95,7 +95,7 @@ describe Mongo::Error::Parser do
       end
     end
   end
-  
+
   describe '#code' do
     let(:parser) do
       described_class.new(document)
@@ -105,7 +105,7 @@ describe Mongo::Error::Parser do
       let(:document) do
         { 'ok' => 0, 'errmsg' => 'not master', 'code' => 10107, 'codeName' => 'NotMaster' }
       end
-      
+
       it 'returns the code' do
         expect(parser.code).to eq(10107)
       end
@@ -115,7 +115,7 @@ describe Mongo::Error::Parser do
       let(:document) do
         { 'ok' => 0, 'errmsg' => 'not master' }
       end
-      
+
       it 'returns nil' do
         expect(parser.code).to eq(nil)
       end
@@ -143,7 +143,7 @@ describe Mongo::Error::Parser do
       end
     end
   end
-  
+
   describe '#code_name' do
     let(:parser) do
       described_class.new(document)
@@ -153,7 +153,7 @@ describe Mongo::Error::Parser do
       let(:document) do
         { 'ok' => 0, 'errmsg' => 'not master', 'code' => 10107, 'codeName' => 'NotMaster' }
       end
-      
+
       it 'returns the code name' do
         expect(parser.code_name).to eq('NotMaster')
       end
@@ -163,7 +163,7 @@ describe Mongo::Error::Parser do
       let(:document) do
         { 'ok' => 0, 'errmsg' => 'not master' }
       end
-      
+
       it 'returns nil' do
         expect(parser.code_name).to eq(nil)
       end
@@ -192,7 +192,7 @@ describe Mongo::Error::Parser do
       end
     end
   end
-  
+
   describe '#document' do
     let(:parser) do
       described_class.new(document)
@@ -201,12 +201,12 @@ describe Mongo::Error::Parser do
     let(:document) do
       { 'ok' => 0, 'errmsg' => 'not master', 'code' => 10107, 'codeName' => 'NotMaster' }
     end
-    
+
     it 'returns the document' do
       expect(parser.document).to eq(document)
     end
   end
-  
+
   describe '#replies' do
     let(:parser) do
       described_class.new(document)
@@ -216,9 +216,43 @@ describe Mongo::Error::Parser do
       let(:document) do
         { 'ok' => 0, 'errmsg' => 'not master', 'code' => 10107, 'codeName' => 'NotMaster' }
       end
-      
+
       it 'returns nil' do
         expect(parser.replies).to eq(nil)
+      end
+    end
+  end
+
+  describe '#labels' do
+    let(:parser) do
+      described_class.new(document)
+    end
+
+    let(:document) do
+      {
+        'code' => 251,
+        'codeName' => 'NoSuchTransaction',
+        'errorLabels' => labels,
+      }
+    end
+
+    context 'when there are no labels' do
+      let(:labels) do
+        []
+      end
+
+      it 'has the correct labels' do
+        expect(parser.labels).to eq(labels)
+      end
+    end
+
+    context 'when there are labels' do
+      let(:labels) do
+        [ Mongo::Error::TRANSIENT_TRANSACTION_ERROR_LABEL ]
+      end
+
+      it 'has the correct labels' do
+        expect(parser.labels).to eq(labels)
       end
     end
   end
