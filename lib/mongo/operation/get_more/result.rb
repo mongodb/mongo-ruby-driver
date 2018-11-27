@@ -52,7 +52,7 @@ module Mongo
         end
 
         def first_document
-          @first_document ||= reply && reply.documents[0]
+          @first_document ||= reply.documents[0]
         end
       end
     end

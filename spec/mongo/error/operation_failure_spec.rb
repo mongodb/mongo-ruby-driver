@@ -166,9 +166,33 @@ describe Mongo::Error::OperationFailure do
 
     context 'when the result is not nil' do
 
+      let(:reply_document) do
+        {
+            'code' => 251,
+            'codeName' => 'NoSuchTransaction',
+            'errorLabels' => labels,
+        }
+      end
+
+      let(:reply) do
+        Mongo::Protocol::Reply.new.tap do |r|
+          # Because this was not created by Mongo::Protocol::Reply::deserialize, we need to manually
+          # initialize the fields.
+          r.instance_variable_set(:@documents, [reply_document])
+          r.instance_variable_set(:@flags, [])
+        end
+      end
+
+      let(:result) do
+        Mongo::Operation::Result.new(reply)
+      end
+
       subject do
-        described_class.new('Transaction has been aborted', nil,
-          :code => 251, :code_name => 'NoSuchTransaction', :labels => labels)
+        begin
+          result.send(:raise_operation_failure)
+        rescue => e
+          e
+        end
       end
 
       context 'when the error has no labels' do
