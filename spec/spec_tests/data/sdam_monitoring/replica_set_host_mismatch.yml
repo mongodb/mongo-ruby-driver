@@ -30,14 +30,13 @@ phases:
             address: "a:27017"
   
   # Phase 2 - first response from primary which is on a different host.
-  # a:27017 should be kept in the server list until we hear from the same
-  # server on b:27017.
+  # Remove a:27017, add b:27017 as unknown.
   -
     responses:
       -
         - "a:27017"
         - ok: 1
-          ismaster: true,
+          ismaster: true
           setName: "rs"
           setVersion: 1.0
           primary: "b:27017"
@@ -63,7 +62,15 @@ phases:
               passives: []
               primary: "b:27017"
               setName: "rs"
-              type: "RSOther"
+              type: "RSPrimary"
+        -
+          server_closed_event:
+            topologyId: "42"
+            address: "a:27017"
+        -
+          server_opening_event:
+            topologyId: "42"
+            address: "b:27017"
         -
           topology_description_changed_event:
             topologyId: "42"
@@ -82,23 +89,11 @@ phases:
               setName: "rs"
               servers:
                 -
-                  address: "a:27017"
-                  arbiters: []
-                  hosts: [ "b:27017" ]
-                  passives: []
-                  primary: "b:27017"
-                  setName: "rs"
-                  type: "RSOther"
-                -
                   address: "b:27017"
                   arbiters: []
                   hosts: []
                   passives: []
                   type: "PossiblePrimary"
-        -
-          server_opening_event:
-            topologyId: "42"
-            address: "b:27017"
 
   # Phase 3 - same response from the same server but now we contact it
   # on its correct address.
@@ -107,7 +102,7 @@ phases:
       -
         - "b:27017"
         - ok: 1
-          ismaster: true,
+          ismaster: true
           setName: "rs"
           setVersion: 1.0
           primary: "b:27017"
@@ -135,24 +130,12 @@ phases:
               setName: "rs"
               type: "RSPrimary"
         -
-          server_closed_event:
-            topologyId: "42"
-            address: "a:27017"
-        -
           topology_description_changed_event:
             topologyId: "42"
             previousDescription:
               topologyType: "ReplicaSetNoPrimary"
               setName: "rs"
               servers:
-                -
-                  address: "a:27017"
-                  arbiters: []
-                  hosts: [ "b:27017" ]
-                  passives: []
-                  primary: "b:27017"
-                  setName: "rs"
-                  type: "RSOther"
                 -
                   address: "b:27017"
                   arbiters: []
@@ -170,4 +153,4 @@ phases:
                   passives: []
                   primary: "b:27017"
                   setName: "rs"
-                  type: "RSOther"
+                  type: "RSPrimary"

@@ -146,7 +146,7 @@ phases:
               passives: []
               primary: "c:27017"
               setName: "wrong"
-              type: "RSOther"
+              type: "RSPrimary"
         - 
           server_closed_event: 
             topologyId: "42"
