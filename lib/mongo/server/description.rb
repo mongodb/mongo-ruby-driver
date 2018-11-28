@@ -26,6 +26,7 @@ module Mongo
       # Constant for reading arbiter info from config.
       #
       # @since 2.0.0
+      # @deprecated
       ARBITER = 'arbiterOnly'.freeze
 
       # Constant for reading arbiters info from config.
@@ -46,16 +47,19 @@ module Mongo
       # Constant for the key for the message value.
       #
       # @since 2.0.0
+      # @deprecated
       MESSAGE = 'msg'.freeze
 
       # Constant for the message that indicates a sharded cluster.
       #
       # @since 2.0.0
+      # @deprecated
       MONGOS_MESSAGE = 'isdbgrid'.freeze
 
       # Constant for determining ghost servers.
       #
       # @since 2.0.0
+      # @deprecated
       REPLICA_SET = 'isreplicaset'.freeze
 
       # Constant for reading max bson size info from config.
@@ -122,6 +126,7 @@ module Mongo
       # Constant for reading primary info from config.
       #
       # @since 2.0.0
+      # @deprecated
       PRIMARY = 'ismaster'.freeze
 
       # Constant for reading primary host field from config.
@@ -132,6 +137,7 @@ module Mongo
       # Constant for reading secondary info from config.
       #
       # @since 2.0.0
+      # @deprecated
       SECONDARY = 'secondary'.freeze
 
       # Constant for reading replica set name info from config.
@@ -228,7 +234,7 @@ module Mongo
       # @return [ Float ] The moving average time the ismaster call took to complete.
       attr_reader :average_round_trip_time
 
-      # Will return true if the server is an arbiter.
+      # Returns whether this server is an arbiter, per the SDAM spec.
       #
       # @example Is the server an arbiter?
       #   description.arbiter?
@@ -237,7 +243,9 @@ module Mongo
       #
       # @since 2.0.0
       def arbiter?
-        ok? && !!config[ARBITER] && !replica_set_name.nil?
+        ok? &&
+        config['arbiterOnly'] == true &&
+        !!config['setName']
       end
 
       # Get a list of all arbiters in the replica set.
@@ -252,7 +260,7 @@ module Mongo
         @arbiters ||= (config[ARBITERS] || []).map { |s| s.downcase }
       end
 
-      # Is the server a ghost in a replica set?
+      # Whether this server is a ghost, per the SDAM spec.
       #
       # @example Is the server a ghost?
       #   description.ghost?
@@ -261,7 +269,8 @@ module Mongo
       #
       # @since 2.0.0
       def ghost?
-        ok? && !!config[REPLICA_SET]
+        ok? &&
+        config['isreplicaset'] == true
       end
 
       # Will return true if the server is hidden.
@@ -432,7 +441,7 @@ module Mongo
         config[LOGICAL_SESSION_TIMEOUT_MINUTES] if config[LOGICAL_SESSION_TIMEOUT_MINUTES]
       end
 
-      # Is the server a mongos?
+      # Returns whether this server is a mongos, per the SDAM spec.
       #
       # @example Is the server a mongos?
       #   description.mongos?
@@ -441,10 +450,10 @@ module Mongo
       #
       # @since 2.0.0
       def mongos?
-        ok? && config[MESSAGE] == MONGOS_MESSAGE
+        ok? && config['msg'] == 'isdbgrid'
       end
 
-      # Is the description of type other.
+      # Returns whether the server is an other, per the SDAM spec.
       #
       # @example Is the description of type other.
       #   description.other?
@@ -456,11 +465,11 @@ module Mongo
         # The SDAM spec is slightly confusing on what "other" means,
         # but it's referred to it as "RSOther" which means a non-RS member
         # cannot be "other".
-        if unknown? || replica_set_name.nil?
-          return false
-        end
-        (!primary? && !secondary? && !passive? && !arbiter?) ||
-          (hidden? && !replica_set_name.nil?)
+        ok? &&
+        !!config['setName'] && (
+          config['hidden'] == true ||
+          !primary? && !secondary? && !arbiter?
+        )
       end
 
       # Will return true if the server is passive.
@@ -499,7 +508,7 @@ module Mongo
         config[PRIMARY_HOST] && config[PRIMARY_HOST].downcase
       end
 
-      # Will return true if the server is a primary.
+      # Returns whether this server is a primary, per the SDAM spec.
       #
       # @example Is the server a primary?
       #   description.primary?
@@ -509,9 +518,8 @@ module Mongo
       # @since 2.0.0
       def primary?
         ok? &&
-          !!config[PRIMARY] &&
-          (primary_host.nil? || primary_host == address.to_s) &&
-          !replica_set_name.nil?
+        config['ismaster'] == true &&
+        !!config['setName']
       end
 
       # Get the name of the replica set the server belongs to, returns nil if
@@ -539,7 +547,7 @@ module Mongo
         hosts + arbiters + passives
       end
 
-      # Will return true if the server is a secondary.
+      # Returns whether this server is a secondary, per the SDAM spec.
       #
       # @example Is the server a secondary?
       #   description.secondary?
@@ -548,7 +556,9 @@ module Mongo
       #
       # @since 2.0.0
       def secondary?
-        ok? && !!config[SECONDARY] && !replica_set_name.nil?
+        ok? &&
+        config['secondary'] == true &&
+        !!config['setName']
       end
 
       # Returns the server type as a symbol.
@@ -570,7 +580,7 @@ module Mongo
         :unknown
       end
 
-      # Is this server a standalone server?
+      # Returns whether this server is a standalone, per the SDAM spec.
       #
       # @example Is the server standalone?
       #   description.standalone?
@@ -579,10 +589,13 @@ module Mongo
       #
       # @since 2.0.0
       def standalone?
-        replica_set_name.nil? && !mongos? && !ghost? && !unknown?
+        ok? &&
+        config['msg'] != 'isdbgrid' &&
+        config['setName'].nil? &&
+        config['isreplicaset'] != true
       end
 
-      # Is the server description currently unknown?
+      # Returns whether this server is an unknown, per the SDAM spec.
       #
       # @example Is the server description unknown?
       #   description.unknown?
