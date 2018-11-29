@@ -23,25 +23,6 @@ describe 'Uri Options' do
               FAMILY_MAP[info.first[4]].new(info[3], port, host)
             end
           end
-
-          class Server
-
-            # The constructor keeps the same API, but does not instantiate a
-            # monitor and run it.
-            alias :original_initialize :initialize
-            def initialize(address, cluster, monitoring, event_listeners, options = {})
-              @address = address
-              @cluster = cluster
-              @monitoring = monitoring
-              @options = options.freeze
-              @monitor = Monitor.new(address, event_listeners, Monitoring.new, options)
-            end
-
-            # Disconnect simply needs to return true since we have no monitor and
-            # no connection.
-            alias :original_disconnect! :disconnect!
-            def disconnect!; true; end
-          end
         end
       end
 
@@ -53,14 +34,6 @@ describe 'Uri Options' do
           class Address
             alias :create_resolver :original_create_resolver
             remove_method(:original_create_resolver)
-          end
-
-          class Server
-            alias :initialize :original_initialize
-            remove_method(:original_initialize)
-
-            alias :disconnect! :original_disconnect!
-            remove_method(:original_disconnect!)
           end
         end
       end
@@ -83,26 +56,7 @@ describe 'Uri Options' do
             end
           end
 
-          context 'when the uri should warn', if: test.warn? do
-
-            before do
-              expect(Mongo::Logger.logger).to receive(:warn)
-            end
-
-            it 'warns' do
-              expect(test.client).to be_a(Mongo::Client)
-            end
-          end
-
-          context 'when the uri is valid', if: test.valid? && !test.warn? do
-
-            before do
-              expect(Mongo::Logger.logger).not_to receive(:warn)
-            end
-
-            it 'does not raise an exception or warning' do
-              expect(test.uri).to be_a(Mongo::URI)
-            end
+          context 'when the uri is valid', if: test.valid? do
 
             it 'creates a client with the correct hosts' do
               expect(test.client).to have_hosts(test)
@@ -114,6 +68,28 @@ describe 'Uri Options' do
 
             it 'creates a client with the correct options' do
               expect(test.client).to match_options(test)
+            end
+
+            context 'when the uri should not warn', if: !test.warn? do
+
+              before do
+                expect(Mongo::Logger.logger).not_to receive(:warn)
+              end
+
+              it 'does not raise an exception or warning' do
+                expect(test.uri).to be_a(Mongo::URI)
+              end
+            end
+
+            context 'when the uri should warn', if: test.warn? do
+
+              before do
+                expect(Mongo::Logger.logger).to receive(:warn)
+              end
+
+              it 'warns' do
+                expect(test.client).to be_a(Mongo::Client)
+              end
             end
           end
         end
