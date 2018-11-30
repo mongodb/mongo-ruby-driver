@@ -41,11 +41,20 @@ describe 'Uri Options' do
       spec.tests.each do |test|
 
         # Skip optional tests for options the driver doesn't support.
-        if test.description.start_with?('tlsAllowInvalidHostnames') || test.description.start_with?('tlsInsecure')
-          next
-        end
+        next if test.description.start_with?('tlsAllowInvalidHostnames', 'tlsInsecure')
 
         context "#{test.description}" do
+
+          context 'when the uri should warn', if: test.warn? do
+
+            before do
+              expect(Mongo::Logger.logger).to receive(:warn)
+            end
+
+            it 'warns' do
+              expect(test.client).to be_a(Mongo::Client)
+            end
+          end
 
           context 'when the uri is invalid', unless: test.valid? do
 
@@ -69,27 +78,16 @@ describe 'Uri Options' do
             it 'creates a client with the correct options' do
               expect(test.client).to match_options(test)
             end
+          end
 
-            context 'when the uri should not warn', if: !test.warn? do
+          context 'when the uri should not warn', if: !test.warn? do
 
-              before do
-                expect(Mongo::Logger.logger).not_to receive(:warn)
-              end
-
-              it 'does not raise an exception or warning' do
-                expect(test.uri).to be_a(Mongo::URI)
-              end
+            before do
+              expect(Mongo::Logger.logger).not_to receive(:warn)
             end
 
-            context 'when the uri should warn', if: test.warn? do
-
-              before do
-                expect(Mongo::Logger.logger).to receive(:warn)
-              end
-
-              it 'warns' do
-                expect(test.client).to be_a(Mongo::Client)
-              end
+            it 'does not raise an exception or warning' do
+              expect(test.client).to be_a(Mongo::Client)
             end
           end
         end

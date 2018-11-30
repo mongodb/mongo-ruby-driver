@@ -426,12 +426,12 @@ module Mongo
     uri_option 'replicaset', :replica_set, :type => :replica_set
 
     # Timeout Options
-    uri_option 'connecttimeoutms', :connect_timeout, :type => :ms_convert
-    uri_option 'sockettimeoutms', :socket_timeout, :type => :ms_convert
-    uri_option 'serverselectiontimeoutms', :server_selection_timeout, :type => :ms_convert
-    uri_option 'localthresholdms', :local_threshold, :type => :ms_convert
-    uri_option 'heartbeatfrequencyms', :heartbeat_frequency, :type => :ms_convert
-    uri_option 'maxidletimems', :max_idle_time, :type => :ms_convert
+    uri_option 'connecttimeoutms', :connect_timeout, :type => :connect_timeout
+    uri_option 'sockettimeoutms', :socket_timeout, :type => :socket_timeout
+    uri_option 'serverselectiontimeoutms', :server_selection_timeout, :type => :server_selection_timeout
+    uri_option 'localthresholdms', :local_threshold, :type => :local_threshold
+    uri_option 'heartbeatfrequencyms', :heartbeat_frequency, :type => :heartbeat_frequency
+    uri_option 'maxidletimems', :max_idle_time, :type => :max_idle_time
 
     # Write Options
     uri_option 'w', :w, :group => :write
@@ -447,7 +447,7 @@ module Mongo
     # Pool options
     uri_option 'minpoolsize', :min_pool_size
     uri_option 'maxpoolsize', :max_pool_size
-    uri_option 'waitqueuetimeoutms', :wait_queue_timeout, :type => :ms_convert
+    uri_option 'waitqueuetimeoutms', :wait_queue_timeout, :type => :wait_queue_timeout
 
     # Security Options
     uri_option 'ssl', :ssl
@@ -611,7 +611,7 @@ module Mongo
     #
     # @return [Hash] The tag set hash.
     def read_set(value)
-      hash_extractor(value)
+      hash_extractor('readPreferenceTags', value)
     end
 
     # Auth mechanism properties extractor.
@@ -620,7 +620,7 @@ module Mongo
     #
     # @return [ Hash ] The auth mechanism properties hash.
     def auth_mech_props(value)
-      properties = hash_extractor(value)
+      properties = hash_extractor('authMechanismProperties', value)
       if properties[:canonicalize_host_name]
         properties.merge!(canonicalize_host_name:
                             properties[:canonicalize_host_name] == 'true')
@@ -652,7 +652,7 @@ module Mongo
     # @param value [ String ] The journal value.
     #
     # @return [ true | false | nil ] The journal value parsed out, otherwise nil (and a warning
-    #   will be raised).
+    #   will be logged).
     def journal(value)
       bool('journal', value)
     end
@@ -663,7 +663,7 @@ module Mongo
     # @param value [ String ] The tlsAllowInvalidCertificates value.
     #
     # @return [ true | false | nil ] The ssl_verify value parsed out, otherwise nil (and a warning
-    #   will be raised).
+    #   will be logged).
     def ssl_verify(value)
       b = bool('tlsAllowInvalidCertificates', value)
 
@@ -679,7 +679,7 @@ module Mongo
     # @param value [ String ] The retryWrites value.
     #
     # @return [ true | false | nil ] The boolean value parsed out, otherwise nil (and a warning
-    #   will be raised).
+    #   will be logged).
     def retry_writes(value)
       bool('retryWrites', value)
     end
@@ -689,7 +689,7 @@ module Mongo
     # @param value [ String ] The URI option value.
     #
     # @return [ true | false | nil ] The boolean value parsed out, otherwise nil (and a warning
-    #   will be raised).
+    #   will be logged).
     def bool(name, value)
       case value
       when "true"
@@ -723,17 +723,87 @@ module Mongo
       nil
     end
 
-    # Parses an unsigned integer value.
+    # Parses the connectTimeoutMS value.
     #
-    # @param value [ String ] The URI option value.
+    # @param value [ String ] The connectTimeoutMS value.
     #
     # @return [ Integer | nil ] The integer parsed out, otherwise nil (and a warning will be
-    #   raised).
+    #   logged).
+    def connect_timeout(value)
+      ms_convert('connectTimeoutMS', value)
+    end
+
+    # Parses the localThresholdMS value.
+    #
+    # @param value [ String ] The localThresholdMS value.
+    #
+    # @return [ Integer | nil ] The integer parsed out, otherwise nil (and a warning will be
+    #   logged).
+    def local_threshold(value)
+      ms_convert('localThresholdMS', value)
+    end
+
+    # Parses the heartbeatFrequencyMS value.
+    #
+    # @param value [ String ] The heartbeatFrequencyMS value.
+    #
+    # @return [ Integer | nil ] The integer parsed out, otherwise nil (and a warning will be
+    #   logged).
+    def heartbeat_frequency(value)
+      ms_convert('heartbeatFrequencyMS', value)
+    end
+
+    # Parses the maxIdleTimeMS value.
+    #
+    # @param value [ String ] The maxIdleTimeMS value.
+    #
+    # @return [ Integer | nil ] The integer parsed out, otherwise nil (and a warning will be
+    #   logged).
+    def max_idle_time(value)
+      ms_convert('maxIdleTimeMS', value)
+    end
+
+    # Parses the serverSelectionMS value.
+    #
+    # @param value [ String ] The serverSelectionMS value.
+    #
+    # @return [ Integer | nil ] The integer parsed out, otherwise nil (and a warning will be
+    #   logged).
+    def server_selection_timeout(value)
+      ms_convert('serverSelectionTimeoutMS', value)
+    end
+
+    # Parses the socketTimeoutMS value.
+    #
+    # @param value [ String ] The socketTimeoutMS value.
+    #
+    # @return [ Integer | nil ] The integer parsed out, otherwise nil (and a warning will be
+    #   logged).
+    def socket_timeout(value)
+      ms_convert('socketTimeoutMS', value)
+    end
+
+    # Parses the waitQueueTimeoutMS value.
+    #
+    # @param value [ String ] The waitQueueTimeoutMS value.
+    #
+    # @return [ Integer | nil ] The integer parsed out, otherwise nil (and a warning will be
+    #   logged).
+    def wait_queue_timeout(value)
+      ms_convert('MS', value)
+    end
+
+    # Parses the wtimeoutMS value.
+    #
+    # @param value [ String ] The wtimeoutMS value.
+    #
+    # @return [ Integer | nil ] The integer parsed out, otherwise nil (and a warning will be
+    #   logged).
     def wtimeout(value)
-     unless /\A\d+\z/ =~ value
+      unless /\A\d+\z/ =~ value
         log_warn("Invalid wtimeoutMS value: #{value}")
         return nil
-     end
+      end
 
       value.to_i
     end
@@ -747,9 +817,9 @@ module Mongo
     # @return [ Float ] The seconds value.
     #
     # @since 2.0.0
-    def ms_convert(value)
+    def ms_convert(name, value)
       unless /\A-?\d+(\.\d+)?\z/ =~ value
-        log_warn("Invalid ms value: #{value}")
+        log_warn("Invalid ms value for #{name}: #{value}")
         return nil
       end
 
@@ -761,11 +831,11 @@ module Mongo
     # @param value [ String ] The string to build a hash from.
     #
     # @return [ Hash ] The hash built from the string.
-    def hash_extractor(value)
+    def hash_extractor(name, value)
       value.split(',').reduce({}) do |set, tag|
         k, v = tag.split(':')
         if v.nil?
-          log_warn("#{value} is not a valid URI hash")
+          log_warn("Invalid hash value for #{name}: #{value}")
           return nil
         end
 
