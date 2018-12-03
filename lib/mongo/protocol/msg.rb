@@ -154,10 +154,11 @@ module Mongo
       OP_CODE = 2013
 
       # Available flags for a OP_MSG message.
-      FLAGS = Array.new(16).tap { |arr|
+      FLAGS = Array.new(16).tap do |arr|
         arr[0] = :checksum_present
         arr[1] = :more_to_come
-      }
+        arr[16] = :exhaust_allowed
+      end
 
       # @!attribute
       # @return [Array<Symbol>] The flags for this message.
