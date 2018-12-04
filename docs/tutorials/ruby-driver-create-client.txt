@@ -124,11 +124,17 @@ URI Options Conversions
    * - fsync=Boolean
      - ``{ :write => { :fsync => true|false }}``
 
+   * - heartbeatFrequencyMS=Integer
+     - ``:heartbeat_frequency => Float``
+
    * - journal=Boolean
      - ``{ :write => { :j => true|false }}``
 
    * - localThresholdMS=Integer
      - ``:local_threshold => Float``
+
+   * - maxIdleTimeMS=Integer
+     - ``:max_idle_time => Float``
 
    * - maxPoolSize=Integer
      - ``:max_pool_size => Integer``
@@ -150,6 +156,27 @@ URI Options Conversions
 
    * - socketTimeoutMS=Integer
      - ``:socket_timeout => Float``
+
+   * - tls=Boolean
+     - ``:ssl => boolean``
+
+   * - tlsAllowInvalidCertificates=Boolean
+     - ``:ssl_verify => boolean``
+
+   * - tlsCAFile=String
+     - ``:ssl_ca_cert => String``
+
+   * - tlsClientCertFile=String
+     - ``:ssl_cert => String``
+
+   * - tlsClientKeyFile=String
+     - ``:ssl_key => String``
+
+   * - tlsClientKeyPassword=String
+     - ``:ssl_key_pass_phrase => String``
+
+   * - tlsInsecure=Boolean
+     - ``:ssl_verify => boolean``
 
    * - w=Integer|String
      - ``{ :write => { :w => Integer|String }}``
