@@ -163,6 +163,10 @@ URI Options Conversions
    * - tlsAllowInvalidCertificates=Boolean
      - ``:ssl_verify => boolean``
 
+       NOTE: Because ``tlsAllowInvalidCertificates`` uses ``true`` to sigify that verification
+       should be disabled and ``ssl_verify`` uses ``false`` to signify that verification should be
+       disabled, the boolean is inverted before being used to set ``ssl_verify``
+
    * - tlsCAFile=String
      - ``:ssl_ca_cert => String``
 
@@ -177,6 +181,10 @@ URI Options Conversions
 
    * - tlsInsecure=Boolean
      - ``:ssl_verify => boolean``
+
+       NOTE: Because tlsInsecure uses ``true`` to sigify that verification should be disabled and
+       ``ssl_verify`` uses ``false`` to signify that verification should be disabled, the boolean
+       is inverted before being used to set ``ssl_verify``
 
    * - w=Integer|String
      - ``{ :write => { :w => Integer|String }}``
