@@ -5,10 +5,7 @@ tests:
         valid: true
         warning: false
         hosts: ~
-        auth:
-            username: ~
-            password: ~
-            db: ~
+        auth: ~
         options:
             compressors: "zlib"
             zlibCompressionLevel: "9"
@@ -18,10 +15,7 @@ tests:
         valid: true
         warning: true
         hosts: ~
-        auth:
-            username: ~
-            password: ~
-            db: ~
+        auth: ~
         options: {}
     -
         description: "Invalid zlibCompressionLevel causes a warning"
@@ -29,8 +23,5 @@ tests:
         valid: true
         warning: true
         hosts: ~
-        auth:
-            username: ~
-            password: ~
-            db: ~
+        auth: ~
         options: {}

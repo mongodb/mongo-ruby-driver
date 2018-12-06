@@ -5,10 +5,7 @@ tests:
         valid: true
         warning: false
         hosts: ~
-        auth:
-            username: ~
-            password: ~
-            db: ~
+        auth: ~
         options:
             readConcernLevel: "majority"
             w: "5"
@@ -20,10 +17,7 @@ tests:
         valid: true
         warning: false
         hosts: ~
-        auth:
-            username: ~
-            password: ~
-            db: ~
+        auth: ~
         options:
             readConcernLevel: "arbitraryButStillValid"
     -
@@ -32,10 +26,7 @@ tests:
         valid: true
         warning: false
         hosts: ~
-        auth:
-            username: ~
-            password: ~
-            db: ~
+        auth: ~
         options:
             w: "arbitraryButStillValid"
     -
@@ -44,10 +35,7 @@ tests:
         valid: true
         warning: true
         hosts: ~
-        auth:
-            username: ~
-            password: ~
-            db: ~
+        auth: ~
         options: {}
     -
         description: "Invalid journal causes a warning"
@@ -55,8 +43,5 @@ tests:
         valid: true
         warning: true
         hosts: ~
-        auth:
-            username: ~
-            password: ~
-            db: ~
+        auth: ~
         options: {}

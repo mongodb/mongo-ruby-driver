@@ -41,7 +41,7 @@ describe 'Uri Options' do
       spec.tests.each do |test|
 
         # Skip optional tests for options the driver doesn't support.
-        next if test.description.start_with?('tlsAllowInvalidHostnames', 'tlsInsecure')
+        next if test.description.start_with?('tlsAllowInvalidHostnames')
 
         context "#{test.description}" do
 

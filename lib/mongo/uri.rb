@@ -454,9 +454,9 @@ module Mongo
     uri_option 'tls', :ssl
     uri_option 'tlsallowinvalidcertificates', :ssl_verify, :type => :ssl_verify
     uri_option 'tlscafile', :ssl_ca_cert
-    uri_option 'tlsclientcertfile', :ssl_cert
+    uri_option 'tlscertificatekeyfile', :ssl_cert
     uri_option 'tlsclientkeyfile', :ssl_key
-    uri_option 'tlsclientkeypassword', :ssl_key_pass_phrase
+    uri_option 'tlscertificatekeypassword', :ssl_key_pass_phrase
     uri_option 'tlsinsecure', :ssl_verify, :type => :ssl_verify
 
     # Topology options

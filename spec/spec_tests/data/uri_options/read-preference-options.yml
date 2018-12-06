@@ -1,14 +1,11 @@
 tests:
     -
-        description: "Valid connection and timeout options are parsed correctly"
+        description: "Valid read preference options are parsed correctly"
         uri: "mongodb://example.com/?readPreference=primaryPreferred&readPreferenceTags=dc:ny,rack:1&maxStalenessSeconds=120&readPreferenceTags=dc:ny"
         valid: true
         warning: false
         hosts: ~
-        auth:
-            username: ~
-            password: ~
-            db: ~
+        auth: ~
         options:
             readPreference: "primaryPreferred"
             readPreferenceTags:
@@ -21,10 +18,7 @@ tests:
         valid: true
         warning: true
         hosts: ~
-        auth:
-            username: ~
-            password: ~
-            db: ~
+        auth: ~
         options: {}
     -
         description: "Invalid maxStalenessSeconds causes a warning"
@@ -32,9 +26,6 @@ tests:
         valid: true
         warning: true
         hosts: ~
-        auth:
-            username: ~
-            password: ~
-            db: ~
+        auth: ~
         options: {}
 

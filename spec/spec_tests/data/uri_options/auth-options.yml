@@ -5,10 +5,7 @@ tests:
         valid: true
         warning: false
         hosts: ~
-        auth:
-            username: ~
-            password: ~
-            db: ~
+        auth: ~
         options:
             authmechanism: "GSSAPI"
             authMechanismProperties:

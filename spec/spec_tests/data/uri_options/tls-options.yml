@@ -1,29 +1,23 @@
 tests:
     -
         description: "Valid required tls options are parsed correctly"
-        uri: "mongodb://example.com/?tls=true&tlsCAFilePath=ca.pem&tlsClientCertFilePath=cert.pem&tlsClientKeyPassword=hunter2"
+        uri: "mongodb://example.com/?tls=true&tlsCAFile=ca.pem&tlsCertificateKeyFile=cert.pem&tlsCertificateKeyPassword=hunter2"
         valid: true
         warning: false
         hosts: ~
-        auth:
-            username: ~
-            password: ~
-            db: ~
+        auth: ~
         options:
             tls: "true"
-            tlsCAFilePath: "ca.pem"
-            tlsClientCertFilePath: "cert.pem"
-            tlsClientKeyPassword: "hunter2"
+            tlsCAFile: "ca.pem"
+            tlsCertificateKeyFile: "cert.pem"
+            tlsCertificateKeyPassword: "hunter2"
     -
         description: "tlsAllowInvalidCertificates is parsed correctly"
         uri: "mongodb://example.com/?tlsAllowInvalidCertificates=true"
         valid: true
         warning: false
         hosts: ~
-        auth:
-            username: ~
-            password: ~
-            db: ~
+        auth: ~
         options:
             tlsAllowInvalidCertificates: "true"
     -
@@ -32,10 +26,7 @@ tests:
         valid: true
         warning: false
         hosts: ~
-        auth:
-            username: ~
-            password: ~
-            db: ~
+        auth: ~
         options:
             tlsAllowInvalidHostnames: "true"
     -
@@ -44,21 +35,23 @@ tests:
         valid: true
         warning: false
         hosts: ~
-        auth:
-            username: ~
-            password: ~
-            db: ~
+        auth: ~
         options:
             tlsInsecure: "true"
     -
-        description: "tlsClientKeyFilePath is parsed correctly"
-        uri: "mongodb://example.com/?tlsClientKeyFilePath=client.pem"
+        description: "tlsInsecure=true and tlsAllowInvalidCertificates=false warns"
+        uri: "mongodb://example.com/?tlsInsecure=true&tlsAllowInvalidCertificates=false"
         valid: true
-        warning: false
+        warning: true
         hosts: ~
-        auth:
-            username: ~
-            password: ~
-            db: ~
-        options:
-            tlsClientKeyFilePath: "client.pem"
+        auth: ~
+        options: ~
+    -
+        description: "tlsInsecure=true and tlsAllowInvalidHostnames=false warns"
+        uri: "mongodb://example.com/?tlsInsecure=true&tlsAllowInvalidHostnames=false"
+        valid: true
+        warning: true
+        hosts: ~
+        auth: ~
+        options: ~
+  
