@@ -106,11 +106,14 @@ URI Options Conversions
    * - authMechanismProperties=Strings
      - ``{ :auth_mech_properties => { :service_realm => String, :canonicalize_host_name => true|false, :service_name => String } }``
 
+       Specified as comma-separated key:value pairs, e.g. ``"SERVICE_REALM:foo,CANONICALIZE_HOSTNAME:TRUE"``
+
    * - authSource=String
      - ``:auth_source => String``
 
    * - compressors=Strings
      - ``:compressors => Array<String>``
+       Specified as a comma-separated list, e.g. "zlib,snappy"
 
    * - connect=String
      - ``:connect => Symbol``
@@ -146,7 +149,9 @@ URI Options Conversions
      - ``{ :read => { :mode => Symbol }}``
 
    * - readPreferenceTags=Strings
-     - ``{ :read => { :tag_sets => Array<String> }}``
+     - ``{ :read => { :tag_sets => Array<Hash> }}``
+
+       Each instance of the readPreferenceTags field is a comma-separated key:value pair which will appear in the :tag_sets array in the order they are specified. For instance, ``"readPreferenceTags=dc:ny,rack:1&readPreferenceTags=dc:ny"`` will be converted to ``[ { 'dc' => 'ny', 'rack' => '1' }, { 'dc' => 'ny' }]``.
 
    * - replicaSet=String
      - ``:replica_set => String``
@@ -163,7 +168,7 @@ URI Options Conversions
    * - tlsAllowInvalidCertificates=Boolean
      - ``:ssl_verify => boolean``
 
-       NOTE: Because ``tlsAllowInvalidCertificates`` uses ``true`` to sigify that verification
+       Because ``tlsAllowInvalidCertificates`` uses ``true`` to signify that verification
        should be disabled and ``ssl_verify`` uses ``false`` to signify that verification should be
        disabled, the boolean is inverted before being used to set ``ssl_verify``
 
@@ -182,7 +187,7 @@ URI Options Conversions
    * - tlsInsecure=Boolean
      - ``:ssl_verify => boolean``
 
-       NOTE: Because tlsInsecure uses ``true`` to sigify that verification should be disabled and
+       Because tlsInsecure uses ``true`` to signify that verification should be disabled and
        ``ssl_verify`` uses ``false`` to signify that verification should be disabled, the boolean
        is inverted before being used to set ``ssl_verify``
 
