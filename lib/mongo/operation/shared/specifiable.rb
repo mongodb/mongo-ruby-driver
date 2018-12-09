@@ -313,8 +313,9 @@ module Mongo
       #   specs.
       #
       # @since 2.0.0
-      def initialize(spec)
+      def initialize(spec, options=nil)
         @spec = spec
+        @options = (options || {}).dup
       end
 
       # Get the operation id for the operation. Used for linking operations in

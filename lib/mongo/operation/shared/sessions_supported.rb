@@ -68,7 +68,14 @@ module Mongo
       end
 
       def flags
-        acknowledged_write? ? [] : [:more_to_come]
+        [].tap do |flags|
+          unless acknowledged_write?
+            flags << :more_to_come
+          end
+          if @options[:exhaust]
+            flags << :exhaust_allowed
+          end
+        end
       end
 
       def apply_cluster_time!(selector, server)

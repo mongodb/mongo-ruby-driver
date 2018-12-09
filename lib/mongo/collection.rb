@@ -53,7 +53,7 @@ module Mongo
     # Options that can be updated on a new Collection instance via the #with method.
     #
     # @since 2.1.0
-    CHANGEABLE_OPTIONS = [ :read, :read_concern, :write ].freeze
+    CHANGEABLE_OPTIONS = [ :read, :read_concern, :write, :exhaust_allowed ].freeze
 
     # Check if a collection is equal to another object. Will check the name and
     # the database for equality.
@@ -152,7 +152,9 @@ module Mongo
     # @since 2.1.0
     def with(new_options)
       new_options.keys.each do |k|
-        raise Error::UnchangeableCollectionOption.new(k) unless CHANGEABLE_OPTIONS.include?(k)
+        unless CHANGEABLE_OPTIONS.include?(k)
+          raise Error::UnchangeableCollectionOption.new(k)
+        end
       end
       Collection.new(database, name, options.merge(new_options))
     end
@@ -261,6 +263,7 @@ module Mongo
     #   will be sorted.
     # @option options [ Hash ] :collation The collation to use.
     # @option options [ Session ] :session The session to use.
+    # @option options [ true|false ] :exhaust Enable exhaust mode.
     #
     # @return [ CollectionView ] The collection view.
     #
