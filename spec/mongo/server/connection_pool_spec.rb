@@ -193,11 +193,15 @@ describe Mongo::Server::ConnectionPool do
       described_class.get(server)
     end
 
-    context 'when a connection cannot be checked out' do
+    context 'when a connection cannot be checked out and connected' do
 
       before do
-        allow(pool).to receive(:checkout).and_return(nil)
-        pool.with_connection { |c| c }
+        allow(pool).to receive(:checkout).and_raise(Exception)
+
+        begin
+          pool.with_connection { |c| c }
+        rescue Exception
+        end
       end
 
       let(:queue) do
@@ -224,17 +228,21 @@ describe Mongo::Server::ConnectionPool do
       { user: SpecConfig.instance.root_user.name, password: SpecConfig.instance.root_user.password }.merge(SpecConfig.instance.test_options).merge(max_pool_size: 1)
     end
 
+    let(:connection) do
+      pool.checkout
+    end
+
     before do
      t = Thread.new {
         # Kill the thread when it's authenticating
         allow(Mongo::Auth).to receive(:get) { t.kill && !t.alive? }
-        pool.with_connection { |c| c.send(:ensure_connected) { |socket| socket } }
+        connection.send(:ensure_connected) { |socket| socket }
       }
       t.join
     end
 
     it 'disconnects the socket' do
-      expect(pool.checkout.send(:socket)).to be_nil
+      expect(connection.send(:socket)).to be_nil
     end
   end
 

@@ -15,6 +15,7 @@ GRIDFS_TESTS = Dir.glob("#{CURRENT_PATH}/spec_tests/data/gridfs/*.yml")
 TRANSACTIONS_TESTS = Dir.glob("#{CURRENT_PATH}/spec_tests/data/transactions/*.yml")
 TRANSACTIONS_API_TESTS = Dir.glob("#{CURRENT_PATH}/spec_tests/data/transactions_api/*.yml")
 CHANGE_STREAMS_TESTS = Dir.glob("#{CURRENT_PATH}/spec_tests/data/change_streams/*.yml")
+CMAP_TESTS = Dir.glob("#{CURRENT_PATH}/spec_tests/data/cmap/*.yml")
 
 if ENV['DRIVERS_TOOLS']
   CLIENT_CERT_PEM = ENV['DRIVER_TOOLS_CLIENT_CERT_PEM']
@@ -69,6 +70,7 @@ require 'support/server_selection'
 require 'support/sdam_monitoring'
 require 'support/crud'
 require 'support/command_monitoring'
+require 'support/connection_monitoring_and_pooling'
 require 'support/connection_string'
 require 'support/gridfs'
 require 'support/transactions'
@@ -122,4 +124,25 @@ EventSubscriber.initialize
 if SpecConfig.instance.active_support?
   require "active_support/time"
   require 'mongo/active_support'
+end
+
+# Converts a 'camelCase' string or symbol to a :snake_case symbol.
+def camel_to_snake(ident)
+  ident = ident.is_a?(String) ? ident.dup : ident.to_s
+  ident[0] = ident[0].downcase
+  ident.chars.reduce('') { |s, c| s + (/[A-Z]/ =~ c ? "_#{c.downcase}" : c) }.to_sym
+end
+
+# Creates a copy of a hash where all keys and string values are converted to snake-case symbols.
+# For example, `{ 'fooBar' => { 'baz' => 'bingBing', :x => 1 } }` converts to
+# `{ :foo_bar => { :baz => :bing_bing, :x => 1 } }`.
+def snakeize_hash(value)
+  return camel_to_snake(value) if value.is_a?(String)
+  return value unless value.is_a?(Hash)
+
+  value.reduce({}) do |hash, kv|
+    hash.tap do |h|
+      h[camel_to_snake(kv.first)] = snakeize_hash(kv.last)
+    end
+  end
 end

@@ -25,6 +25,11 @@ module Mongo
     # @since 2.1.0
     COMMAND = 'Command'.freeze
 
+    # The connection pool topic.
+    #
+    # @since 2.7.0
+    CONNECTION_POOL = 'ConnectionPool'.freeze
+
     # Server closed topic.
     #
     # @since 2.4.0
@@ -218,6 +223,7 @@ module Mongo
           end
         end
         subscribe(COMMAND, CommandLogSubscriber.new(options))
+        subscribe(CONNECTION_POOL, CMAPLogSubscriber.new(options))
         subscribe(SERVER_OPENING, ServerOpeningLogSubscriber.new(options))
         subscribe(SERVER_CLOSED, ServerClosedLogSubscriber.new(options))
         subscribe(SERVER_DESCRIPTION_CHANGED, ServerDescriptionChangedLogSubscriber.new(options))
@@ -288,6 +294,7 @@ end
 require 'mongo/monitoring/event'
 require 'mongo/monitoring/publishable'
 require 'mongo/monitoring/command_log_subscriber'
+require 'mongo/monitoring/cmap_log_subscriber'
 require 'mongo/monitoring/sdam_log_subscriber'
 require 'mongo/monitoring/server_description_changed_log_subscriber'
 require 'mongo/monitoring/server_closed_log_subscriber'

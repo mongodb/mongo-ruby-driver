@@ -35,6 +35,7 @@ module Mongo
       # @since 2.0.0
       class Queue
         include Loggable
+        include Monitoring::Publishable
         extend Forwardable
 
         # The default max size for the connection pool.
@@ -50,9 +51,9 @@ module Mongo
         # equal to the initial connection pool size.
         #
         # @example Create the queue.
-        #   Mongo::Server::ConnectionPool::Queue.new(max_pool_size: 5) { Connection.new }
-        #
-        # @param [ Hash ] options The options.
+        #   Mongo::Server::ConnectionPool::Queue.new(address, monitoring, max_pool_size: 5) do
+        #     Connection.new
+        #   end
         #
         # @option options [ Integer ] :max_pool_size The maximum pool size.
         # @option options [ Integer ] :min_pool_size The minimum pool size.
@@ -60,7 +61,10 @@ module Mongo
         #   seconds, for a free connection.
         #
         # @since 2.0.0
-        def initialize(options = {}, &block)
+        def initialize(address, monitoring, options = {}, &block)
+          @address = address
+          @monitoring = monitoring
+
           if options[:min_pool_size] && options[:max_pool_size] &&
             options[:min_pool_size] > options[:max_pool_size]
           then
@@ -79,6 +83,10 @@ module Mongo
           @queue = Array.new(min_size) { create_connection }
           @mutex = Mutex.new
           @resource = ConditionVariable.new
+
+          @wait_queue = []
+          @wait_queue_mutex = Mutex.new
+
           check_count_invariants
         end
 
@@ -132,12 +140,21 @@ module Mongo
         #
         # @since 2.0.0
         def dequeue
-          check_count_invariants
-          mutex.synchronize do
-            dequeue_connection
-          end
+          check_count_invariants(false)
+          dequeue_connection
         ensure
-          check_count_invariants
+          check_count_invariants(false)
+          @wait_queue_mutex.synchronize do
+            @wait_queue.shift
+          end
+        end
+
+        # Updates the generation number. The connections will be disconnected and removed lazily
+        # when the queue attempts to dequeue them.
+        #
+        # @since 2.7.0
+        def clear!
+          @generation += 1
         end
 
         # Disconnect all connections in the queue.
@@ -149,10 +166,19 @@ module Mongo
         #
         # @since 2.1.0
         def disconnect!
-          check_count_invariants
+          check_count_invariants(false)
           mutex.synchronize do
-            queue.each{ |connection| connection.disconnect! }
-            @pool_size -= queue.length
+            @pool_size -= queue.size
+            queue.each do |connection|
+              connection.disconnect!
+              publish_cmap_event(
+                  Monitoring::Event::ConnectionClosed.new(
+                      Monitoring::Event::ConnectionClosed::POOL_CLOSED,
+                      @address,
+                      connection.id,
+                  ),
+              )
+            end
             if @pool_size < 0
               # This should never happen
               log_warn("ConnectionPool::Queue: connection accounting problem")
@@ -190,31 +216,21 @@ module Mongo
         #
         # @since 2.0.0
         def enqueue(connection)
-          check_count_invariants
+          check_count_invariants(false)
           mutex.synchronize do
             if connection.generation == @generation
               queue.unshift(connection.record_checkin!)
               resource.broadcast
+              @wait_queue_mutex.synchronize do
+                @wait_queue.first.broadcast unless @wait_queue.empty?
+              end
             else
-              connection.disconnect!
-
-              @pool_size = if @pool_size > 0
-                @pool_size - 1
-              else
-                # This should never happen
-                log_warn("ConnectionPool::Queue: unexpected enqueue")
-                0
-              end
-
-              while @pool_size < min_size
-                @pool_size += 1
-                queue.unshift(@block.call(@generation))
-              end
+              close_connection!(connection, Monitoring::Event::ConnectionClosed::STALE)
             end
           end
           nil
         ensure
-          check_count_invariants
+          check_count_invariants(false)
         end
 
         # Get a pretty printed string inspection for the queue.
@@ -287,7 +303,7 @@ module Mongo
         #
         # @since 2.5.0
         def close_stale_sockets!
-          check_count_invariants
+          check_count_invariants(false)
           return unless max_idle_time
 
           to_refresh = []
@@ -313,19 +329,86 @@ module Mongo
             end
           end
         ensure
-          check_count_invariants
+          check_count_invariants(false)
         end
 
         private
 
-        def dequeue_connection
-          deadline = Time.now + wait_timeout
-          loop do
-            return queue.shift unless queue.empty?
-            connection = create_connection
-            return connection if connection
-            wait_for_next!(deadline)
+        def close_connection!(connection, reason)
+          connection.disconnect!
+          publish_cmap_event(
+            Monitoring::Event::ConnectionClosed.new(
+              reason,
+              @address,
+              connection.id,
+            )
+          )
+
+          @pool_size = if @pool_size > 0
+            @pool_size - 1
+          else
+            # This should never happen
+            log_warn("ConnectionPool::Queue: unexpected enqueue")
+            0
           end
+        end
+
+        def is_stale?(connection)
+          if connection.generation != @generation
+            close_connection!(connection, Monitoring::Event::ConnectionClosed::STALE)
+            true
+          end
+        end
+
+        def is_idle?(connection)
+          if connection && connection.last_checkin && max_idle_time
+            if Time.now - connection.last_checkin > max_idle_time
+              close_connection!(connection, Monitoring::Event::ConnectionClosed::IDLE)
+              true
+            end
+          end
+        end
+
+        def dequeue_connection
+          semaphore = check_wait_queue
+          deadline = Time.now + wait_timeout
+          semaphore.wait(wait_timeout) if semaphore
+          raise Error::WaitQueueTimeout.new(@address) if deadline <= Time.now
+
+          mutex.synchronize do
+            loop do
+              until queue.empty?
+                connection = queue.shift
+
+                unless is_stale?(connection) || is_idle?(connection)
+                  return connection
+                end
+              end
+
+              connection = create_connection
+              return connection if connection
+
+              wait = deadline - Time.now
+              resource.wait(mutex, wait)
+              raise Error::WaitQueueTimeout.new(@address) if deadline <= Time.now
+            end
+          end
+        end
+
+        def check_wait_queue
+          semaphore = Semaphore.new
+
+          @wait_queue_mutex.synchronize do
+            @wait_queue << semaphore
+
+            # No need to wait for semaphore if nothing else is in the wait queue.
+            if @wait_queue.size == 1
+              return
+            end
+          end
+
+
+          semaphore
         end
 
         def create_connection
@@ -335,17 +418,12 @@ module Mongo
           end
         end
 
-        def wait_for_next!(deadline)
-          wait = deadline - Time.now
-          if wait <= 0
-            raise Timeout::Error.new("Timed out attempting to dequeue connection after #{wait_timeout} sec.")
-          end
-          resource.wait(mutex, wait)
-        end
-
-        def check_count_invariants
+        # We only create new connections when we're below the minPoolSize on creation, when we're
+        # disconnecting and starting a new generation, and when we're checking out connections (per
+        # the CMAP spec), so `check_min` should be false in all other cases.
+        def check_count_invariants(check_min = true)
           if Mongo::Lint.enabled?
-            if pool_size < min_size
+            if pool_size < min_size && check_min
               raise Error::LintError, 'connection pool queue: underflow'
             end
             if pool_size > max_size

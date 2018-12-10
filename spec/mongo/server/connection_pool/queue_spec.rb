@@ -2,10 +2,12 @@ require 'spec_helper'
 
 describe Mongo::Server::ConnectionPool::Queue do
 
-  def create_connection(generation=-1)
+  def create_connection(generation=1)
     double('connection').tap do |connection|
       allow(connection).to receive(:generation).and_return(generation)
       allow(connection).to receive(:disconnect!)
+      allow(connection).to receive(:id).and_return(1)
+      allow(connection).to receive(:last_checkin).and_return(nil)
     end
   end
 
@@ -13,10 +15,18 @@ describe Mongo::Server::ConnectionPool::Queue do
     create_connection
   end
 
+  let(:address) do
+    'localhost:99999'
+  end
+
+  let(:monitoring) do
+    Mongo::Monitoring.new
+  end
+
   describe '#dequeue' do
 
     let(:queue) do
-      described_class.new(:max_pool_size => 1) { connection }
+      described_class.new(address, monitoring, :max_pool_size => 1) { connection }
     end
 
     context 'when the queue is empty' do
@@ -27,7 +37,7 @@ describe Mongo::Server::ConnectionPool::Queue do
           expect {
             queue.dequeue
             queue.dequeue
-          }.to raise_error(Timeout::Error)
+          }.to raise_error(Mongo::Error::WaitQueueTimeout)
         end
       end
 
@@ -58,7 +68,7 @@ describe Mongo::Server::ConnectionPool::Queue do
   describe '#disconnect!' do
 
     def create_queue(min_pool_size)
-      described_class.new(max_pool_size: 3, min_pool_size: min_pool_size) do |generation|
+      described_class.new(address, monitoring, max_pool_size: 3, min_pool_size: min_pool_size) do |generation|
         create_connection(generation)
       end.tap do |queue|
         # make queue be of size 2 so that it has enqueued connections
@@ -124,7 +134,7 @@ describe Mongo::Server::ConnectionPool::Queue do
     let(:queue) do
       # max pool size set to 2 to allow enqueueing a connection
       # without lint violations
-      described_class.new(:max_pool_size => 2) { create_connection }
+      described_class.new(address, monitoring, :max_pool_size => 2) { create_connection }
     end
 
     context 'connection of the same generation as queue' do
@@ -155,8 +165,8 @@ describe Mongo::Server::ConnectionPool::Queue do
         expect(queue.pool_size).to eq(1)
         expect(connection).to receive(:disconnect!)
         queue.enqueue(connection)
-        expect(queue.queue_size).to eq(1)
-        expect(queue.pool_size).to eq(1)
+        expect(queue.queue_size).to eq(0)
+        expect(queue.pool_size).to eq(0)
         expect(queue.dequeue).not_to eq(connection)
       end
     end
@@ -189,7 +199,7 @@ describe Mongo::Server::ConnectionPool::Queue do
     context 'when a min size is provided' do
 
       let(:queue) do
-        described_class.new(:min_pool_size => 2) { create_connection }
+        described_class.new(address, monitoring, :min_pool_size => 2) { create_connection }
       end
 
       it 'creates the queue with the minimum connections' do
@@ -205,7 +215,7 @@ describe Mongo::Server::ConnectionPool::Queue do
     context 'when min size exceeds default max size' do
 
       let(:queue) do
-        described_class.new(:min_pool_size => 10) { create_connection }
+        described_class.new(address, monitoring, :min_pool_size => 10) { create_connection }
       end
 
       it 'sets max size to equal provided min size' do
@@ -216,7 +226,7 @@ describe Mongo::Server::ConnectionPool::Queue do
     context 'when no min size is provided' do
 
       let(:queue) do
-        described_class.new { create_connection }
+        described_class.new(address, monitoring) { create_connection }
       end
 
       it 'creates the queue with the number of default connections' do
@@ -229,7 +239,7 @@ describe Mongo::Server::ConnectionPool::Queue do
   describe '#inspect' do
 
     let(:queue) do
-      described_class.new(:min_pool_size => 2) { create_connection }
+      described_class.new(address, monitoring, :min_pool_size => 2) { create_connection }
     end
 
     it 'includes the object id' do
@@ -258,7 +268,7 @@ describe Mongo::Server::ConnectionPool::Queue do
     context 'when a max pool size option is provided' do
 
       let(:queue) do
-        described_class.new(:max_pool_size => 3) { create_connection }
+        described_class.new(address, monitoring, :max_pool_size => 3) { create_connection }
       end
 
       it 'returns the max size' do
@@ -269,7 +279,7 @@ describe Mongo::Server::ConnectionPool::Queue do
     context 'when no pool size option is provided' do
 
       let(:queue) do
-        described_class.new { create_connection }
+        described_class.new(address, monitoring) { create_connection }
       end
 
       it 'returns the default size' do
@@ -283,7 +293,7 @@ describe Mongo::Server::ConnectionPool::Queue do
     context 'when the wait timeout option is provided' do
 
       let(:queue) do
-        described_class.new(:wait_queue_timeout => 3) { create_connection }
+        described_class.new(address, monitoring, :wait_queue_timeout => 3) { create_connection }
       end
 
       it 'returns the wait timeout' do
@@ -294,7 +304,7 @@ describe Mongo::Server::ConnectionPool::Queue do
     context 'when the wait timeout option is not provided' do
 
       let(:queue) do
-        described_class.new { create_connection }
+        described_class.new(address, monitoring) { create_connection }
       end
 
       it 'returns the default wait timeout' do
@@ -303,13 +313,14 @@ describe Mongo::Server::ConnectionPool::Queue do
     end
   end
 
-  describe 'close_stale_sockets!!' do
+  describe 'close_stale_sockets!' do
 
     let(:queue) do
-      described_class.new(max_pool_size: 2, max_idle_time: 0.5) do
+      described_class.new(address, monitoring, max_pool_size: 2, max_idle_time: 0.5) do
         double('connection').tap do |con|
-          expect(con).to receive(:generation).and_return(1)
+          expect(con).to receive(:generation).and_return(2)
           expect(con).to receive(:disconnect!).and_return(true)
+          allow(con).to receive(:id).and_return(1)
           allow(con).to receive(:record_checkin!) do
             allow(con).to receive(:last_checkin).and_return(Time.now)
             con
@@ -326,14 +337,14 @@ describe Mongo::Server::ConnectionPool::Queue do
 
     before do
       queue.enqueue(connection)
-      expect(connection).to receive(:connect!).and_return(true)
+      expect(connection).not_to receive(:connect!)
       sleep(0.5)
       queue.close_stale_sockets!
     end
 
-    it 'disconnects and reconnects up to min_size the expired connections' do
-      expect(queue.queue_size).to eq(1)
-      expect(queue.pool_size).to eq(1)
+    it 'disconnects and does not reconnect the sockets' do
+      expect(queue.queue_size).to eq(0)
+      expect(queue.pool_size).to eq(0)
     end
   end
 end

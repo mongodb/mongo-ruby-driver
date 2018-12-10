@@ -35,6 +35,12 @@ module Mongo
         monitoring.succeeded(topic, event)
       end
 
+      def publish_cmap_event(event)
+        return unless monitoring?
+
+        publish_event(Monitoring::CONNECTION_POOL, event)
+      end
+
       private
 
       def command_started(address, operation_id, payload)

@@ -42,6 +42,7 @@ module Mongo
     class Message
       include Id
       include Serializers
+      include Id
 
       # The batch size constant.
       #

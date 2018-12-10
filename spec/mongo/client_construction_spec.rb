@@ -844,8 +844,8 @@ describe Mongo::Client do
       expect(monitoring.subscribers[Mongo::Monitoring::SERVER_HEARTBEAT].length).to eq(1)
 
       # this duplicates the client
-      # 7 is how many subscribers driver sets up by default
-      expect(new_monitoring.present_subscribers.length).to eq(7)
+      # 8 is how many subscribers driver sets up by default
+      expect(new_monitoring.present_subscribers.length).to eq(8)
       # ... none of which are for heartbeats
       expect(new_monitoring.subscribers[Mongo::Monitoring::SERVER_HEARTBEAT].length).to eq(0)
     end
@@ -858,8 +858,8 @@ describe Mongo::Client do
 
       new_client.subscribe(Mongo::Monitoring::SERVER_HEARTBEAT, EventSubscriber.new)
       new_client.subscribe(Mongo::Monitoring::SERVER_HEARTBEAT, EventSubscriber.new)
-      # 7 default subscribers + heartbeat
-      expect(new_monitoring.present_subscribers.length).to eq(8)
+      # 8 default subscribers + heartbeat
+      expect(new_monitoring.present_subscribers.length).to eq(9)
       # the heartbeat subscriber on the original client is not inherited
       expect(new_monitoring.subscribers[Mongo::Monitoring::SERVER_HEARTBEAT].length).to eq(2)
       # original client should not have gotten any of the new subscribers
