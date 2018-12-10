@@ -106,14 +106,15 @@ URI Options Conversions
    * - authMechanismProperties=Strings
      - ``{ :auth_mech_properties => { :service_realm => String, :canonicalize_host_name => true|false, :service_name => String } }``
 
-       Specified as comma-separated key:value pairs, e.g. ``"SERVICE_REALM:foo,CANONICALIZE_HOSTNAME:TRUE"``
+       Specified as comma-separated key:value pairs, e.g. ``"SERVICE_REALM:foo,CANONICALIZE_HOSTNAME:TRUE"``.
 
    * - authSource=String
      - ``:auth_source => String``
 
    * - compressors=Strings
      - ``:compressors => Array<String>``
-       Specified as a comma-separated list, e.g. "zlib,snappy"
+
+       Specified as a comma-separated list, e.g. "zlib,snappy".
 
    * - connect=String
      - ``:connect => Symbol``
@@ -170,7 +171,7 @@ URI Options Conversions
 
        Because ``tlsAllowInvalidCertificates`` uses ``true`` to signify that verification
        should be disabled and ``ssl_verify`` uses ``false`` to signify that verification should be
-       disabled, the boolean is inverted before being used to set ``ssl_verify``
+       disabled, the boolean is inverted before being used to set ``ssl_verify``.
 
    * - tlsCAFile=String
      - ``:ssl_ca_cert => String``
@@ -189,7 +190,7 @@ URI Options Conversions
 
        Because tlsInsecure uses ``true`` to signify that verification should be disabled and
        ``ssl_verify`` uses ``false`` to signify that verification should be disabled, the boolean
-       is inverted before being used to set ``ssl_verify``
+       is inverted before being used to set ``ssl_verify``.
 
    * - w=Integer|String
      - ``{ :write => { :w => Integer|String }}``
