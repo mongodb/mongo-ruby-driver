@@ -114,7 +114,12 @@ URI Options Conversions
    * - compressors=Strings
      - ``:compressors => Array<String>``
 
-       Specified as a comma-separated list, e.g. "zlib,snappy".
+       Specified as a comma-separated list. Note that the Ruby driver only supports zlib
+       compression; however, other drivers may support snappy. For maximum compatibility with
+       drivers, specify ``"snappy,zlib"``; if compatibility with other drivers is not a concern,
+       specify ``"zlib".`` Compression is not enabled by default and when using MongoDB 4.0 and
+       earlier, so zlib compression must be manually enabled on the server in order for the Ruby
+       driver to compress wire protocol data.
 
    * - connect=String
      - ``:connect => Symbol``
