@@ -7,10 +7,18 @@ tests:
         hosts: ~
         auth: ~
         options:
-            maxIdleTimeMS: "50000"
+            maxIdleTimeMS: 50000
     -
-        description: "Invalid maxIdleTimeMS causes a warning"
+        description: "Non-numeric maxIdleTimeMS causes a warning"
         uri: "mongodb://example.com/?maxIdleTimeMS=invalid"
+        valid: true
+        warning: true
+        hosts: ~
+        auth: ~
+        options: {}
+    -
+        description: "Too low maxIdleTimeMS causes a warning"
+        uri: "mongodb://example.com/?maxIdleTimeMS=-2"
         valid: true
         warning: true
         hosts: ~

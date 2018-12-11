@@ -65,6 +65,17 @@ describe 'Uri Options' do
             end
           end
 
+          context 'when the uri should not warn', if: !test.warn? do
+
+            before do
+              expect(Mongo::Logger.logger).not_to receive(:warn)
+            end
+
+            it 'does not raise an exception or warning' do
+              expect(test.client).to be_a(Mongo::Client)
+            end
+          end
+
           context 'when the uri is valid', if: test.valid? do
 
             it 'creates a client with the correct hosts' do
@@ -77,17 +88,6 @@ describe 'Uri Options' do
 
             it 'creates a client with the correct options' do
               expect(test.client).to match_options(test)
-            end
-          end
-
-          context 'when the uri should not warn', if: !test.warn? do
-
-            before do
-              expect(Mongo::Logger.logger).not_to receive(:warn)
-            end
-
-            it 'does not raise an exception or warning' do
-              expect(test.client).to be_a(Mongo::Client)
             end
           end
         end

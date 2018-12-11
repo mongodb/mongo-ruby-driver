@@ -11,7 +11,7 @@ tests:
             readPreferenceTags:
                 - "dc:ny,rack"
                 - "dc:ny"
-            maxStalenessSeconds: "120"
+            maxStalenessSeconds: 120
     -
         description: "Invalid readPreferenceTags causes a warning"
         uri: "mongodb://example.com/?readPreferenceTags=invalid"
@@ -21,8 +21,16 @@ tests:
         auth: ~
         options: {}
     -
-        description: "Invalid maxStalenessSeconds causes a warning"
+        description: "Non-numeric maxStalenessSeconds causes a warning"
         uri: "mongodb://example.com/?maxStalenessSeconds=invalid"
+        valid: true
+        warning: true
+        hosts: ~
+        auth: ~
+        options: {}
+    -
+        description: "Too low maxStalenessSeconds causes a warning"
+        uri: "mongodb://example.com/?maxStalenessSeconds=-2"
         valid: true
         warning: true
         hosts: ~

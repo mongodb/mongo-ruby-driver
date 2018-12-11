@@ -823,6 +823,11 @@ module Mongo
         return nil
       end
 
+      if value[0] == '-'
+        log_warn("#{name} cannot be a negative number")
+        return nil
+      end
+
       value.to_f / 1000
     end
 
