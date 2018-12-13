@@ -69,7 +69,7 @@ module Mongo
             selector[Protocol::Msg::DATABASE_IDENTIFIER] = user.auth_source
             cluster_time = connection.mongos? && connection.cluster_time
             selector[Operation::CLUSTER_TIME] = cluster_time if cluster_time
-            Protocol::Msg.new([:none], {}, selector)
+            Protocol::Msg.new([], {}, selector)
           else
             Protocol::Query.new(
               Auth::EXTERNAL,

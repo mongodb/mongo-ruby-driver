@@ -50,7 +50,7 @@ module Mongo
       # @since 2.5.0
       #
       # @deprecated No longer necessary with Server Selection specification.
-      PING_OP_MSG_MESSAGE = Protocol::Msg.new([:none], {}, PING_OP_MSG)
+      PING_OP_MSG_MESSAGE = Protocol::Msg.new([], {}, PING_OP_MSG)
 
       # The ping message as raw bytes.
       #

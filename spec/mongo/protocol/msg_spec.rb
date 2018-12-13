@@ -4,7 +4,7 @@ require 'support/shared/protocol'
 describe Mongo::Protocol::Msg do
 
   let(:opcode) { 2013 }
-  let(:flags)     { [:none] }
+  let(:flags)     { [] }
   let(:options)   { {} }
   let(:global_args)     { { '$db' => SpecConfig.instance.test_db, ping: 1 } }
   let(:sections)   { [ ] }
@@ -38,19 +38,19 @@ describe Mongo::Protocol::Msg do
 
         let(:flags) { nil }
 
-        it 'sets the flags to [:none]' do
-          expect(message.flags).to eq([:none])
+        it 'sets the flags to []' do
+          expect(message.flags).to eq([])
         end
       end
 
       context 'when an invalid flag is provided' do
 
-        let(:flags) { [:checksum_present, :none] }
+        let(:flags) { [:checksum_present] }
 
         let(:flag_bytes) { message.serialize.to_s[16..19] }
 
         it 'sets the flags' do
-          expect(message.flags).to eq([:checksum_present, :none])
+          expect(message.flags).to eq([:checksum_present])
         end
 
         it 'only serializes the valid flags' do

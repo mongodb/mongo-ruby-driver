@@ -53,7 +53,7 @@ module Mongo
       #
       # @since 2.5.0
       def initialize(flags, options, global_args, *sections)
-        @flags = flags || [ :none ]
+        @flags = flags || []
         @options = options
         @global_args = global_args
         @sections = [ { type: 0, payload: global_args } ] + sections

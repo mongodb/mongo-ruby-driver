@@ -42,7 +42,7 @@ module Mongo
         # The constant for the ismaster command as an OP_MSG (server versions >= 3.6).
         #
         # @since 2.5.0
-        ISMASTER_OP_MSG_MESSAGE = Protocol::Msg.new([:none], {}, ISMASTER_OP_MSG)
+        ISMASTER_OP_MSG_MESSAGE = Protocol::Msg.new([], {}, ISMASTER_OP_MSG)
 
         # The raw bytes for the ismaster message.
         #

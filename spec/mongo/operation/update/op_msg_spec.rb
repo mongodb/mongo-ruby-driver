@@ -128,7 +128,7 @@ describe Mongo::Operation::Update::OpMsg do
 
         it 'creates the correct OP_MSG message' do
           authorized_client.command(ping:1)
-          expect(Mongo::Protocol::Msg).to receive(:new).with([:none], {}, expected_global_args, expected_payload_1)
+          expect(Mongo::Protocol::Msg).to receive(:new).with([], {}, expected_global_args, expected_payload_1)
           op.send(:message, authorized_primary)
         end
       end
@@ -141,7 +141,7 @@ describe Mongo::Operation::Update::OpMsg do
 
         it 'creates the correct OP_MSG message' do
           authorized_client.command(ping:1)
-          expect(Mongo::Protocol::Msg).to receive(:new).with([:none], {}, expected_global_args, expected_payload_1)
+          expect(Mongo::Protocol::Msg).to receive(:new).with([], {}, expected_global_args, expected_payload_1)
           op.send(:message, authorized_primary)
         end
 
@@ -162,7 +162,7 @@ describe Mongo::Operation::Update::OpMsg do
 
           it 'creates the correct OP_MSG message' do
             authorized_client.command(ping:1)
-            expect(Mongo::Protocol::Msg).to receive(:new).with([:none], {}, expected_global_args, expected_payload_1)
+            expect(Mongo::Protocol::Msg).to receive(:new).with([], {}, expected_global_args, expected_payload_1)
             op.send(:message, authorized_primary)
           end
         end
