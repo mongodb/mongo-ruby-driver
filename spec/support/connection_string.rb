@@ -142,7 +142,7 @@ module Mongo
       end
 
       def hosts
-        @hosts ||= @spec['hosts'].collect do |host|
+        @hosts ||= (@spec['hosts'] || []).collect do |host|
           Host.new(host)
         end
       end

@@ -426,29 +426,38 @@ module Mongo
     uri_option 'replicaset', :replica_set, :type => :replica_set
 
     # Timeout Options
-    uri_option 'connecttimeoutms', :connect_timeout, :type => :ms_convert
-    uri_option 'sockettimeoutms', :socket_timeout, :type => :ms_convert
-    uri_option 'serverselectiontimeoutms', :server_selection_timeout, :type => :ms_convert
-    uri_option 'localthresholdms', :local_threshold, :type => :ms_convert
+    uri_option 'connecttimeoutms', :connect_timeout, :type => :connect_timeout
+    uri_option 'sockettimeoutms', :socket_timeout, :type => :socket_timeout
+    uri_option 'serverselectiontimeoutms', :server_selection_timeout, :type => :server_selection_timeout
+    uri_option 'localthresholdms', :local_threshold, :type => :local_threshold
+    uri_option 'heartbeatfrequencyms', :heartbeat_frequency, :type => :heartbeat_frequency
+    uri_option 'maxidletimems', :max_idle_time, :type => :max_idle_time
 
     # Write Options
     uri_option 'w', :w, :group => :write
-    uri_option 'journal', :j, :group => :write
+    uri_option 'journal', :j, :group => :write, :type => :journal
     uri_option 'fsync', :fsync, :group => :write
-    uri_option 'wtimeoutms', :timeout, :group => :write
+    uri_option 'wtimeoutms', :timeout, :group => :write, :type => :wtimeout
 
     # Read Options
     uri_option 'readpreference', :mode, :group => :read, :type => :read_mode
     uri_option 'readpreferencetags', :tag_sets, :group => :read, :type => :read_tags
-    uri_option 'maxstalenessseconds', :max_staleness, :group => :read
+    uri_option 'maxstalenessseconds', :max_staleness, :group => :read, :type => :max_staleness
 
     # Pool options
     uri_option 'minpoolsize', :min_pool_size
     uri_option 'maxpoolsize', :max_pool_size
-    uri_option 'waitqueuetimeoutms', :wait_queue_timeout, :type => :ms_convert
+    uri_option 'waitqueuetimeoutms', :wait_queue_timeout, :type => :wait_queue_timeout
 
     # Security Options
     uri_option 'ssl', :ssl
+    uri_option 'tls', :ssl
+    uri_option 'tlsallowinvalidcertificates', :ssl_verify, :type => :ssl_verify
+    uri_option 'tlscafile', :ssl_ca_cert
+    uri_option 'tlscertificatekeyfile', :ssl_cert
+    uri_option 'tlsclientkeyfile', :ssl_key
+    uri_option 'tlscertificatekeypassword', :ssl_key_pass_phrase
+    uri_option 'tlsinsecure', :ssl_verify, :type => :ssl_verify
 
     # Topology options
     uri_option 'connect', :connect
@@ -461,7 +470,9 @@ module Mongo
     # Client Options
     uri_option 'appname', :app_name
     uri_option 'compressors', :compressors, :type => :array
-    uri_option 'zlibcompressionlevel', :zlib_compression_level
+    uri_option 'readconcernlevel', :read_concern
+    uri_option 'retrywrites', :retry_writes, :type => :retry_writes
+    uri_option 'zlibcompressionlevel', :zlib_compression_level, :type => :zlib_compression_level
 
     # Casts option values that do not have a specifically provided
     # transformation to the appropriate type.
@@ -571,7 +582,9 @@ module Mongo
     #
     # @return [Symbol] The transformed authentication mechanism.
     def auth_mech(value)
-      AUTH_MECH_MAP[value.upcase]
+      AUTH_MECH_MAP[value.upcase].tap do |mech|
+        log_warn("#{value} is not a valid auth mechanism") unless mech
+      end
     end
 
     # Read preference mode transformation.
@@ -598,7 +611,7 @@ module Mongo
     #
     # @return [Hash] The tag set hash.
     def read_set(value)
-      hash_extractor(value)
+      hash_extractor('readPreferenceTags', value)
     end
 
     # Auth mechanism properties extractor.
@@ -607,12 +620,192 @@ module Mongo
     #
     # @return [ Hash ] The auth mechanism properties hash.
     def auth_mech_props(value)
-      properties = hash_extractor(value)
+      properties = hash_extractor('authMechanismProperties', value)
       if properties[:canonicalize_host_name]
         properties.merge!(canonicalize_host_name:
                             properties[:canonicalize_host_name] == 'true')
       end
       properties
+    end
+
+    # Parses the zlib compression level.
+    #
+    # @param value [ String ] The zlib compression level string.
+    #
+    # @return [ Integer | nil ] The compression level value if it is between -1 and 9 (inclusive),
+    #   otherwise nil (and a warning will be logged).
+    def zlib_compression_level(value)
+      if /\A-?\d+\z/ =~ value
+        i = value.to_i
+
+        if i >= -1 && i <= 9
+          return i
+        end
+      end
+
+      log_warn("#{value} is not a valid zlibCompressionLevel")
+      nil
+    end
+
+    # Parses the journal value.
+    #
+    # @param value [ String ] The journal value.
+    #
+    # @return [ true | false | nil ] The journal value parsed out, otherwise nil (and a warning
+    #   will be logged).
+    def journal(value)
+      bool('journal', value)
+    end
+
+    # Parses the ssl_verify value. Note that this will be the inverse of the value of
+    # tlsAllowInvalidCertificates (if present).
+    #
+    # @param value [ String ] The tlsAllowInvalidCertificates value.
+    #
+    # @return [ true | false | nil ] The ssl_verify value parsed out, otherwise nil (and a warning
+    #   will be logged).
+    def ssl_verify(value)
+      b = bool('tlsAllowInvalidCertificates', value)
+
+      if b.nil?
+        nil
+      else
+        !b
+      end
+    end
+
+    # Parses the retryWrites value.
+    #
+    # @param value [ String ] The retryWrites value.
+    #
+    # @return [ true | false | nil ] The boolean value parsed out, otherwise nil (and a warning
+    #   will be logged).
+    def retry_writes(value)
+      bool('retryWrites', value)
+    end
+
+    # Parses a boolean value.
+    #
+    # @param value [ String ] The URI option value.
+    #
+    # @return [ true | false | nil ] The boolean value parsed out, otherwise nil (and a warning
+    #   will be logged).
+    def bool(name, value)
+      case value
+      when "true"
+        true
+      when "false"
+        false
+      else
+        log_warn("invalid boolean option for #{name}: #{value}")
+        nil
+      end
+    end
+
+    # Parses the max staleness value, which must be either "0" or an integer greater or equal to 90.
+    #
+    # @param value [ String ] The max staleness string.
+    #
+    # @return [ Integer | nil ] The max staleness integer parsed out if it is valid, otherwise nil
+    #   (and a warning will be logged).
+    def max_staleness(value)
+      if /\A\d+\z/ =~ value
+        int = value.to_i
+
+        if int >= 0 && int < 90
+          log_warn("max staleness must be either 0 or greater than 90: #{value}")
+        end
+
+        return int
+      end
+
+      log_warn("Invalid max staleness value: #{value}")
+      nil
+    end
+
+    # Parses the connectTimeoutMS value.
+    #
+    # @param value [ String ] The connectTimeoutMS value.
+    #
+    # @return [ Integer | nil ] The integer parsed out, otherwise nil (and a warning will be
+    #   logged).
+    def connect_timeout(value)
+      ms_convert('connectTimeoutMS', value)
+    end
+
+    # Parses the localThresholdMS value.
+    #
+    # @param value [ String ] The localThresholdMS value.
+    #
+    # @return [ Integer | nil ] The integer parsed out, otherwise nil (and a warning will be
+    #   logged).
+    def local_threshold(value)
+      ms_convert('localThresholdMS', value)
+    end
+
+    # Parses the heartbeatFrequencyMS value.
+    #
+    # @param value [ String ] The heartbeatFrequencyMS value.
+    #
+    # @return [ Integer | nil ] The integer parsed out, otherwise nil (and a warning will be
+    #   logged).
+    def heartbeat_frequency(value)
+      ms_convert('heartbeatFrequencyMS', value)
+    end
+
+    # Parses the maxIdleTimeMS value.
+    #
+    # @param value [ String ] The maxIdleTimeMS value.
+    #
+    # @return [ Integer | nil ] The integer parsed out, otherwise nil (and a warning will be
+    #   logged).
+    def max_idle_time(value)
+      ms_convert('maxIdleTimeMS', value)
+    end
+
+    # Parses the serverSelectionMS value.
+    #
+    # @param value [ String ] The serverSelectionMS value.
+    #
+    # @return [ Integer | nil ] The integer parsed out, otherwise nil (and a warning will be
+    #   logged).
+    def server_selection_timeout(value)
+      ms_convert('serverSelectionTimeoutMS', value)
+    end
+
+    # Parses the socketTimeoutMS value.
+    #
+    # @param value [ String ] The socketTimeoutMS value.
+    #
+    # @return [ Integer | nil ] The integer parsed out, otherwise nil (and a warning will be
+    #   logged).
+    def socket_timeout(value)
+      ms_convert('socketTimeoutMS', value)
+    end
+
+    # Parses the waitQueueTimeoutMS value.
+    #
+    # @param value [ String ] The waitQueueTimeoutMS value.
+    #
+    # @return [ Integer | nil ] The integer parsed out, otherwise nil (and a warning will be
+    #   logged).
+    def wait_queue_timeout(value)
+      ms_convert('MS', value)
+    end
+
+    # Parses the wtimeoutMS value.
+    #
+    # @param value [ String ] The wtimeoutMS value.
+    #
+    # @return [ Integer | nil ] The integer parsed out, otherwise nil (and a warning will be
+    #   logged).
+    def wtimeout(value)
+      unless /\A\d+\z/ =~ value
+        log_warn("Invalid wtimeoutMS value: #{value}")
+        return nil
+      end
+
+      value.to_i
     end
 
     # Ruby's convention is to provide timeouts in seconds, not milliseconds and
@@ -624,7 +817,17 @@ module Mongo
     # @return [ Float ] The seconds value.
     #
     # @since 2.0.0
-    def ms_convert(value)
+    def ms_convert(name, value)
+      unless /\A-?\d+(\.\d+)?\z/ =~ value
+        log_warn("Invalid ms value for #{name}: #{value}")
+        return nil
+      end
+
+      if value[0] == '-'
+        log_warn("#{name} cannot be a negative number")
+        return nil
+      end
+
       value.to_f / 1000
     end
 
@@ -633,9 +836,14 @@ module Mongo
     # @param value [ String ] The string to build a hash from.
     #
     # @return [ Hash ] The hash built from the string.
-    def hash_extractor(value)
+    def hash_extractor(name, value)
       value.split(',').reduce({}) do |set, tag|
         k, v = tag.split(':')
+        if v.nil?
+          log_warn("Invalid hash value for #{name}: #{value}")
+          return nil
+        end
+
         set.merge(decode(k).downcase.to_sym => decode(v))
       end
     end
