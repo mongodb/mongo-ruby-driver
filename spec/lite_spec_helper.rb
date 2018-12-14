@@ -73,6 +73,8 @@ require 'support/change_streams'
 require 'support/common_shortcuts'
 require 'support/client_registry'
 require 'support/client_registry_macros'
+require 'support/json_ext_formatter'
+require 'support/sdam_formatter_integration'
 
 if SpecConfig.instance.mri?
   require 'timeout_interrupt'
@@ -87,7 +89,17 @@ RSpec.configure do |config|
   config.include(ClientRegistryMacros)
 
   if SpecConfig.instance.ci?
-    config.add_formatter(RSpec::Core::Formatters::JsonFormatter, File.join(File.dirname(__FILE__), '../tmp/rspec.json'))
+    SdamFormatterIntegration.subscribe
+    config.add_formatter(JsonExtFormatter, File.join(File.dirname(__FILE__), '../tmp/rspec.json'))
+
+    config.around(:each) do |example|
+      SdamFormatterIntegration.assign_log_entries(nil)
+      begin
+        example.run
+      ensure
+        SdamFormatterIntegration.assign_log_entries(example.id)
+      end
+    end
   end
 
   if SpecConfig.instance.ci?
