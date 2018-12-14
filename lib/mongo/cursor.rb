@@ -238,12 +238,19 @@ module Mongo
 
     def get_more
       if @options[:disable_retry]
-        process(get_more_operation.execute(@server))
+        process(execute_get_more)
       else
         read_with_retry(@session) do
-          process(get_more_operation.execute(@server))
+          process(execute_get_more)
         end
       end
+    end
+
+    def execute_get_more
+      operation = get_more_operation
+      result = operation.execute(@server)
+      byebug
+      result
     end
 
     def get_more_operation

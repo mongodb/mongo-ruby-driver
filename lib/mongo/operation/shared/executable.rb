@@ -26,6 +26,12 @@ module Mongo
         result.validate!
       end
 
+      def self.included(base)
+        base.class_eval do
+          attr_reader :connection
+        end
+      end
+
       private
 
       def result_class
@@ -38,8 +44,21 @@ module Mongo
 
       # Returns a Protocol::Message or nil
       def dispatch_message(server)
-        server.with_connection do |connection|
-          connection.dispatch([ message(server) ], operation_id)
+        if @options[:exhaust]
+          connection = server.pool.checkout
+          result = connection.dispatch([ message(server) ], operation_id)
+          byebug
+          if result.flags.include?(:more_to_come)
+            @connection = connection
+          else
+            server.pool.checkin(connection)
+            @connection = nil
+          end
+          result
+        else
+          server.with_connection do |connection|
+            connection.dispatch([ message(server) ], operation_id)
+          end
         end
       end
 
