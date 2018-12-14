@@ -126,7 +126,7 @@ describe Mongo::Operation::Insert::OpMsg do
 
         it 'creates the correct OP_MSG message' do
           authorized_client.command(ping:1)
-          expect(Mongo::Protocol::Msg).to receive(:new).with([:none],
+          expect(Mongo::Protocol::Msg).to receive(:new).with([],
                                                              { validating_keys: true },
                                                              expected_global_args,
                                                              expected_payload_1)
@@ -142,7 +142,7 @@ describe Mongo::Operation::Insert::OpMsg do
 
         it 'creates the correct OP_MSG message' do
           authorized_client.command(ping:1)
-          expect(Mongo::Protocol::Msg).to receive(:new).with([:none],
+          expect(Mongo::Protocol::Msg).to receive(:new).with([],
                                                              { validating_keys: true },
                                                              expected_global_args,
                                                              expected_payload_1)
@@ -167,7 +167,7 @@ describe Mongo::Operation::Insert::OpMsg do
           it 'creates the correct OP_MSG message' do
             authorized_client.command(ping:1)
             expect(expected_global_args).not_to have_key(:lsid)
-            expect(Mongo::Protocol::Msg).to receive(:new).with([:none],
+            expect(Mongo::Protocol::Msg).to receive(:new).with([],
                                                                { validating_keys: true },
                                                                expected_global_args,
                                                                expected_payload_1)

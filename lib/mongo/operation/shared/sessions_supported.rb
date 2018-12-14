@@ -48,7 +48,7 @@ module Mongo
       end
 
       def flags
-        acknowledged_write? ? [:none] : [:more_to_come]
+        acknowledged_write? ? [] : [:more_to_come]
       end
 
       def apply_cluster_time!(selector, server)
