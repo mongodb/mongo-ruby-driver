@@ -10,7 +10,7 @@ describe 'Exhaust' do
       arr = [{a: 1}]*1000
       #collection.insert_many(arr)
       puts 'finding'
-      p collection.find({}, exhaust: true).to_a.count
+      p collection.find({}, exhaust: true, batch_size: 10).to_a.count
       byebug
       1
     end

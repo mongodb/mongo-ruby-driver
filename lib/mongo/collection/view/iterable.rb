@@ -40,7 +40,9 @@ module Mongo
           read_with_retry(session) do
             server = server_selector.select_server(cluster)
             result = send_initial_query(server, session)
-            @cursor = Cursor.new(view, result, server, session: session)
+            p :starting
+            @cursor = Cursor.new(view, result, server,
+              session: session, exhaust: options[:exhaust])
           end
           @cursor.each do |doc|
             yield doc

@@ -252,7 +252,7 @@ module Mongo
       else
         spec = Builder::OpGetMore.new(self).specification
       end
-      Operation::GetMore.new(spec)
+      Operation::GetMore.new(spec, exhaust: @options[:exhaust])
     end
 
     def kill_cursors
