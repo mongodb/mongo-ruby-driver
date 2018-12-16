@@ -27,8 +27,6 @@ module Mongo
         operation.execute(server)
       end
 
-      private
-
       def final_operation(server)
         if server.features.op_msg_enabled?
           cls = polymorphic_class(self.class.name, :OpMsg)
@@ -39,6 +37,8 @@ module Mongo
           polymorphic_class(self.class.name, :Legacy).new(spec)
         end
       end
+
+      private
     end
   end
 end

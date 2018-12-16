@@ -248,8 +248,12 @@ module Mongo
 
     def execute_get_more
       operation = get_more_operation
+      operation = operation.final_operation(@server)
       result = operation.execute(@server)
-      byebug
+      if @connection = operation.connection
+        byebug
+        @last_reply_id = result
+      end
       result
     end
 

@@ -27,7 +27,7 @@ module Mongo
     # @since 2.5.0
     class GetMore
       include Specifiable
-      include OpMsgOrFindCommand
+      include ExhaustingCommand
     end
   end
 end
