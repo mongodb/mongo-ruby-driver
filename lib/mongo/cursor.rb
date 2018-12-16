@@ -247,12 +247,23 @@ module Mongo
     end
 
     def execute_get_more
-      operation = get_more_operation
-      operation = operation.final_operation(@server)
-      result = operation.execute(@server)
-      if @connection = operation.connection
-        byebug
-        @last_reply_id = result
+      if @connection
+        # exhausting
+        reply = @connection.send(:read, @last_reply_id)
+        if reply.flags.include?(:more_to_come)
+          @last_reply_id = reply.reply_id
+        else
+          @server.pool.checkin(@connection)
+          @connection = @last_reply_id = nil
+        end
+        result = ::Mongo::Operation::GetMore::Result.new([reply])
+      else
+        operation = get_more_operation
+        operation = operation.final_operation(@server)
+        result = operation.execute(@server)
+        if @connection = operation.connection
+          @last_reply_id = result.replies.last.reply_id
+        end
       end
       result
     end

@@ -87,6 +87,8 @@ module Mongo
 
       public
 
+      attr_reader :reply_id
+
       # @!attribute
       # @return [Array<Symbol>] The flags for this reply.
       #
