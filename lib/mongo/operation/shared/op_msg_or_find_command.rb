@@ -19,13 +19,25 @@ module Mongo
     # operation class.
     #
     # @api private
-    module PolymorphicResult
+    module OpMsgOrFindCommand
       include PolymorphicLookup
+
+      def execute(server)
+        operation = final_operation(server)
+        operation.execute(server)
+      end
 
       private
 
-      def result_class
-        polymorphic_class(self.class.name.sub(/::[^:]*$/, ''), :Result)
+      def final_operation(server)
+        cls = if server.features.op_msg_enabled?
+          polymorphic_class(self.class.name, :OpMsg)
+        elsif server.features.find_command_enabled?
+          polymorphic_class(self.class.name, :Command)
+        else
+          polymorphic_class(self.class.name, :Legacy)
+        end
+        cls.new(spec)
       end
     end
   end

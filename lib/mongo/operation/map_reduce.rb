@@ -26,24 +26,7 @@ module Mongo
     # @since 2.5.0
     class MapReduce
       include Specifiable
-
-      # Execute the operation.
-      #
-      # @example
-      #   operation.execute(server)
-      #
-      # @param [ Mongo::Server ] server The server to send the operation to.
-      #
-      # @return [ Mongo::Operation::MapReduce::Result ] The operation result.
-      #
-      # @since 2.5.0
-      def execute(server)
-        if server.features.op_msg_enabled?
-          OpMsg.new(spec).execute(server)
-        else
-          Command.new(spec).execute(server)
-        end
-      end
+      include OpMsgOrCommand
     end
   end
 end

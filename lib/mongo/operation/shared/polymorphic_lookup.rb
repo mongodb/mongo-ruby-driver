@@ -1,4 +1,4 @@
-# Copyright (C) 2015-2018 MongoDB, Inc.
+# Copyright (C) 2018 MongoDB, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,21 +12,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/operation/parallel_scan/command'
-require 'mongo/operation/parallel_scan/op_msg'
-require 'mongo/operation/parallel_scan/result'
-
 module Mongo
   module Operation
 
-    # A MongoDB parallelscan operation.
+    # Shared behavior of instantiating a result class matching the
+    # operation class.
     #
     # @api private
-    #
-    # @since 2.0.0
-    class ParallelScan
-      include Specifiable
-      include OpMsgOrCommand
+    module PolymorphicLookup
+      private
+
+      def polymorphic_class(base, name)
+        bits = (base + "::#{name}").split('::')
+        bits.reduce(Object) do |cls, name|
+          cls.const_get(name)
+        end
+      end
     end
   end
 end

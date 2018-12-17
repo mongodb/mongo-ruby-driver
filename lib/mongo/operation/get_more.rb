@@ -27,16 +27,7 @@ module Mongo
     # @since 2.5.0
     class GetMore
       include Specifiable
-
-      def execute(server)
-        if server.features.op_msg_enabled?
-          OpMsg.new(spec).execute(server)
-        elsif server.features.find_command_enabled?
-          Command.new(spec).execute(server)
-        else
-          Legacy.new(spec).execute(server)
-        end
-      end
+      include OpMsgOrFindCommand
     end
   end
 end

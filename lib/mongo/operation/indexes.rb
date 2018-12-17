@@ -27,26 +27,7 @@ module Mongo
     # @since 2.0.0
     class Indexes
       include Specifiable
-
-      # Execute the operation.
-      #
-      # @example
-      #   operation.execute(server)
-      #
-      # @param [ Mongo::Server ] server The server to send the operation to.
-      #
-      # @return [ Mongo::Operation::Indexes::Result ] The operation result.
-      #
-      # @since 2.0.0
-      def execute(server)
-        if server.features.op_msg_enabled?
-          OpMsg.new(spec).execute(server)
-        elsif server.features.list_indexes_enabled?
-          Command.new(spec).execute(server)
-        else
-          Legacy.new(spec).execute(server)
-        end
-      end
+      include OpMsgOrListIndexesCommand
     end
   end
 end
