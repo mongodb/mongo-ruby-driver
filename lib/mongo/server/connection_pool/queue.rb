@@ -338,7 +338,7 @@ module Mongo
         def wait_for_next!(deadline)
           wait = deadline - Time.now
           if wait <= 0
-            raise Timeout::Error.new("Timed out attempting to dequeue connection after #{wait_timeout} sec.")
+            raise Timeout::Error.new("Timed out attempting to dequeue connection after #{wait_timeout} sec (pool size=#{pool_size}).")
           end
           resource.wait(mutex, wait)
         end
