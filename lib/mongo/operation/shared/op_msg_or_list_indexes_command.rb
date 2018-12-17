@@ -15,8 +15,9 @@
 module Mongo
   module Operation
 
-    # Shared behavior of instantiating a result class matching the
-    # operation class.
+    # Shared behavior of executing the operation as an OpMsg when supported,
+    # as a Command when list indxes command is supported by the server, and as
+    # Legacy otherwise.
     #
     # @api private
     module OpMsgOrListIndexesCommand

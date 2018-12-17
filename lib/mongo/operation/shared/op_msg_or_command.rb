@@ -15,8 +15,8 @@
 module Mongo
   module Operation
 
-    # Shared behavior of instantiating a result class matching the
-    # operation class.
+    # Shared behavior of executing the operation as an OpMsg when supported
+    # or as a Command otherwise.
     #
     # @api private
     module OpMsgOrCommand
