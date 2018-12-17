@@ -43,7 +43,11 @@ describe 'Exhaust' do
       expect(queue.queue_size).to eq(0)
 
       # complete iteration
-      view.to_a
+      expect do
+        while true
+          view.next
+        end
+      end.to raise_error(StopIteration)
 
       # connection should have been returned to the queue
       expect(queue.pool_size).to eq(1)
