@@ -156,21 +156,16 @@ module Mongo
       end
 
       def with_transaction(session, collection)
-      byebug
         unless callback = @spec['callback']
           raise ArgumentError, 'with_transaction requires a callback to be present'
         end
 
-        callback['operations'].each do |op_spec|
-          op = Operation.new(op_spec, @session0, @session1)
-          rv = op.execute(collection)
-          byebug
-          1
-          #op_method = OPERATIONS[op_spec['name']]
+        session.with_transaction do
+          callback['operations'].each do |op_spec|
+            op = Operation.new(op_spec, @session0, @session1)
+            rv = op.execute(collection)
+          end
         end
-
-      byebug
-        session.with_transaction
       end
 
       def run_command(database)
@@ -231,7 +226,6 @@ module Mongo
       end
 
       def insert_one(collection)
-      byebug
         result = collection.insert_one(document, options)
         { 'insertedId' => result.inserted_id }
       end

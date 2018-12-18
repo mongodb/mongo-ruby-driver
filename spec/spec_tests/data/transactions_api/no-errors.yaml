@@ -1,5 +1,5 @@
-database_name: &database_name "withTransaction-tests"
-collection_name: &collection_name "test"
+database_name: &database_name "ruby-driver"
+collection_name: &collection_name "transactions-tests"
 
 data: []
 

@@ -620,6 +620,14 @@ module Mongo
       within_states?(STARTING_TRANSACTION_STATE, TRANSACTION_IN_PROGRESS_STATE)
     end
 
+    def with_transaction
+      start_transaction
+      begin
+        yield
+        commit_transaction
+      end
+    end
+
     # Get the read preference the session will use in the currently
     # active transaction.
     #
