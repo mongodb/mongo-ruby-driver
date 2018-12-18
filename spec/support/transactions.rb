@@ -167,7 +167,7 @@ module Mongo
       def run
         test_client.subscribe(Mongo::Monitoring::COMMAND, event_subscriber)
 
-        results = @ops.map { |o| o.execute(@collection, @session0, @session1) }
+        results = @ops.map { |o| o.execute(@collection) }
 
         session0_id = @session0.session_id
         session1_id = @session1.session_id
@@ -265,17 +265,8 @@ module Mongo
         @session0 = test_client.start_session(@session_options[:session0] || {})
         @session1 = test_client.start_session(@session_options[:session1] || {})
 
-        @ops = @operations.reduce([]) do |ops, op|
-          arguments = case op['arguments'] && op['arguments']['session']
-                      when 'session0'
-                        op['arguments'].merge('session' => @session0)
-                      when 'session1'
-                        op['arguments'].merge('session' => @session1)
-                      else
-                        op['arguments']
-                      end
-
-          ops << Operation.new(op.merge('arguments' => arguments))
+        @ops = @operations.map do |op|
+          Operation.new(op, @session0, @session1)
         end
       end
 
