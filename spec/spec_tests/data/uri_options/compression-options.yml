@@ -7,16 +7,20 @@ tests:
         hosts: ~
         auth: ~
         options:
-            compressors: "zlib"
+            compressors: 
+              - "zlib"
             zlibCompressionLevel: 9
     -
-        description: "Invalid compressors cause a warning"
-        uri: "mongodb://example.com/?compressors=jpeg"
+        description: "Multiple compressors are parsed correctly"
+        uri: "mongodb://example.com/?compressors=snappy,zlib"
         valid: true
         warning: true
         hosts: ~
         auth: ~
-        options: {}
+        options:
+            compressors:
+              - "snappy"
+              - "zlib"
     -
         description: "Non-numeric zlibCompressionLevel causes a warning"
         uri: "mongodb://example.com/?compressors=zlib&zlibCompressionLevel=invalid"

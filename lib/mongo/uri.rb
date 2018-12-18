@@ -455,8 +455,7 @@ module Mongo
     uri_option 'tlsallowinvalidcertificates', :ssl_verify, :type => :ssl_verify
     uri_option 'tlscafile', :ssl_ca_cert
     uri_option 'tlscertificatekeyfile', :ssl_cert
-    uri_option 'tlsclientkeyfile', :ssl_key
-    uri_option 'tlscertificatekeypassword', :ssl_key_pass_phrase
+    uri_option 'tlscertificatekeyfilepassword', :ssl_key_pass_phrase
     uri_option 'tlsinsecure', :ssl_verify, :type => :ssl_verify
 
     # Topology options
@@ -485,7 +484,7 @@ module Mongo
         true
       elsif value == 'false'
         false
-      elsif value =~ /[\d]/
+      elsif value =~ /\A[\d]\z/
         value.to_i
       else
         decode(value).to_sym
