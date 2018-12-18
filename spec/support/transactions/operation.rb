@@ -75,10 +75,22 @@ module Mongo
       # @return [ Hash ] spec The operation spec.
       #
       # @since 2.6.0
-      def initialize(spec)
+      def initialize(spec, session0, session1)
         @spec = spec
         @name = spec['name']
+        @session0 = session0
+        @session1 = session1
+        @arguments = case spec['arguments'] && spec['arguments']['session']
+                    when 'session0'
+                      spec['arguments'].merge('session' => @session0)
+                    when 'session1'
+                      spec['arguments'].merge('session' => @session1)
+                    else
+                      spec['arguments'] || {}
+                    end
       end
+
+      attr_reader :arguments
 
       # Execute the operation.
       #
@@ -91,13 +103,13 @@ module Mongo
       # @return [ Result ] The result of executing the operation.
       #
       # @since 2.6.0
-      def execute(collection, session0, session1)
+      def execute(collection)
         # Determine which object the operation method should be called on.
         obj = case object
               when 'session0'
-                session0
+                @session0
               when 'session1'
-                session1
+                @session1
               when 'database'
                 collection.database
               else
@@ -343,10 +355,6 @@ module Mongo
 
       def update
         arguments['update']
-      end
-
-      def arguments
-        @spec['arguments'] || {}
       end
 
       def modifiers
