@@ -121,7 +121,7 @@ module Mongo
               end
 
         if (op_name = OPERATIONS[name]) == :with_transaction
-          args = [collection, session0, session1]
+          args = [collection]
         else
           args = []
         end
@@ -155,15 +155,15 @@ module Mongo
         session.abort_transaction ; nil
       end
 
-      def with_transaction(session, collection, session0, session1)
+      def with_transaction(session, collection)
       byebug
         unless callback = @spec['callback']
           raise ArgumentError, 'with_transaction requires a callback to be present'
         end
 
         callback['operations'].each do |op_spec|
-          op = Operation.new(op_spec)
-          rv = op.execute(collection, session0, session1)
+          op = Operation.new(op_spec, @session0, @session1)
+          rv = op.execute(collection)
           byebug
           1
           #op_method = OPERATIONS[op_spec['name']]
