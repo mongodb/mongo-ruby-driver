@@ -23,6 +23,7 @@ module Mongo
         'startTransaction' => :start_transaction,
         'abortTransaction' => :abort_transaction,
         'commitTransaction' => :commit_transaction,
+        'withTransaction' => :with_transaction,
         'aggregate' => :aggregate,
         'deleteMany' => :delete_many,
         'deleteOne' => :delete_one,
@@ -38,7 +39,7 @@ module Mongo
         'count' => :count,
         'distinct' => :distinct,
         'find' => :find,
-        'runCommand' => :run_command
+        'runCommand' => :run_command,
       }.freeze
 
       # Map of operation options to method names.
@@ -119,7 +120,12 @@ module Mongo
                 collection
               end
 
-        send(OPERATIONS[name], obj)
+        if (op_name = OPERATIONS[name]) == :with_transaction
+          args = [collection, session0, session1]
+        else
+          args = []
+        end
+        send(op_name, obj, *args)
       rescue Mongo::Error::OperationFailure => e
         err_doc = e.instance_variable_get(:@result).send(:first_document)
 
@@ -147,6 +153,24 @@ module Mongo
 
       def abort_transaction(session)
         session.abort_transaction ; nil
+      end
+
+      def with_transaction(session, collection, session0, session1)
+      byebug
+        unless callback = @spec['callback']
+          raise ArgumentError, 'with_transaction requires a callback to be present'
+        end
+
+        callback['operations'].each do |op_spec|
+          op = Operation.new(op_spec)
+          rv = op.execute(collection, session0, session1)
+          byebug
+          1
+          #op_method = OPERATIONS[op_spec['name']]
+        end
+
+      byebug
+        session.with_transaction
       end
 
       def run_command(database)
@@ -207,6 +231,7 @@ module Mongo
       end
 
       def insert_one(collection)
+      byebug
         result = collection.insert_one(document, options)
         { 'insertedId' => result.inserted_id }
       end
