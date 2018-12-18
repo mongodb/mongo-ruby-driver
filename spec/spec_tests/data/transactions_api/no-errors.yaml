@@ -1,0 +1,159 @@
+database_name: &database_name "withTransaction-tests"
+collection_name: &collection_name "test"
+
+data: []
+
+tests:
+  -
+    description: withTransaction and successful commit
+    operations:
+      -
+        name: withTransaction
+        object: session0
+        callback:
+          operations:
+            -
+              name: insertOne
+              object: collection
+              arguments:
+                session: session0
+                document: { _id: 1 }
+              result:
+                insertedId: 1
+            -
+              name: insertOne
+              object: collection
+              arguments:
+                session: session0
+                document: { _id: 2 }
+              result:
+                insertedId: 2
+    expectations:
+      -
+        command_started_event:
+          command:
+            insert: *collection_name
+            documents:
+              - { _id: 1 }
+            ordered: true
+            lsid: session0
+            txnNumber: { $numberLong: "1" }
+            startTransaction: true
+            autocommit: false
+            # omitted fields
+            readConcern: ~
+            writeConcern: ~
+          command_name: insert
+          database_name: *database_name
+      -
+        command_started_event:
+          command:
+            insert: *collection_name
+            documents:
+              - { _id: 2 }
+            ordered: true
+            lsid: session0
+            txnNumber: { $numberLong: "1" }
+            autocommit: false
+            # omitted fields
+            readConcern: ~
+            writeConcern: ~
+            startTransaction: ~
+          command_name: insert
+          database_name: *database_name
+      -
+        command_started_event:
+          command:
+            commitTransaction: 1
+            lsid: session0
+            readConcern: { afterClusterTime: 42 }
+            txnNumber: { $numberLong: "1" }
+            autocommit: false
+            # omitted fields
+            writeConcern: ~
+            startTransaction: ~
+          command_name: commitTransaction
+          database_name: admin
+    outcome:
+      collection:
+        data:
+          - { _id: 1 }
+          - { _id: 2 }
+  -
+    description: withTransaction and successful commit within callback
+    operations:
+      -
+        name: withTransaction
+        object: session0
+        callback:
+          operations:
+            -
+              name: insertOne
+              object: collection
+              arguments:
+                session: session0
+                document: { _id: 1 }
+              result:
+                insertedId: 1
+            -
+              name: insertOne
+              object: collection
+              arguments:
+                session: session0
+                document: { _id: 2 }
+              result:
+                insertedId: 2
+            -
+              name: commitTransaction
+              object: session0
+    expectations:
+      -
+        command_started_event:
+          command:
+            insert: *collection_name
+            documents:
+              - { _id: 1 }
+            ordered: true
+            lsid: session0
+            txnNumber: { $numberLong: "1" }
+            startTransaction: true
+            autocommit: false
+            # omitted fields
+            readConcern: ~
+            writeConcern: ~
+          command_name: insert
+          database_name: *database_name
+      -
+        command_started_event:
+          command:
+            insert: *collection_name
+            documents:
+              - { _id: 2 }
+            ordered: true
+            lsid: session0
+            txnNumber: { $numberLong: "1" }
+            autocommit: false
+            # omitted fields
+            readConcern: ~
+            writeConcern: ~
+            startTransaction: ~
+          command_name: insert
+          database_name: *database_name
+      -
+        command_started_event:
+          command:
+            commitTransaction: 1
+            lsid: session0
+            readConcern: { afterClusterTime: 42 }
+            txnNumber: { $numberLong: "1" }
+            autocommit: false
+            # omitted fields
+            writeConcern: ~
+            startTransaction: ~
+          command_name: commitTransaction
+          database_name: admin
+    outcome:
+      collection:
+        data:
+          - { _id: 1 }
+          - { _id: 2 }
