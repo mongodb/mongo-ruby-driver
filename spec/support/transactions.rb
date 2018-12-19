@@ -19,7 +19,9 @@
 RSpec::Matchers.define :match_operation_result do |test|
 
   match do |actual|
-    test.compare_operation_result(actual)
+    rv = test.compare_operation_result(actual)
+    puts rv
+    rv.nil?
   end
 end
 
@@ -282,11 +284,22 @@ module Mongo
       #
       # @since 2.6.0
       def compare_operation_result(actual_results)
-        return false if @expected_results.length != actual_results.length
-
-        @expected_results.zip(actual_results).all? do |expected, actual|
-          compare_result(expected, actual)
+        if @expected_results.length != actual_results.length
+          return "Numbers of results differ: expected #{@expected_results.length}, got #{actual_results.length}"
         end
+
+        index = 0
+        @expected_results.zip(actual_results).all? do |expected, actual|
+          if expected
+            rv = compare_result(expected, actual)
+            if rv
+              return "Results differ at index #{index}: #{rv}"
+            end
+          end
+          index += 1
+        end
+
+        nil
       end
 
       # The expected data in the collection as an outcome after running this test.
@@ -332,23 +345,48 @@ module Mongo
       def compare_result(expected, actual)
         case expected
         when nil
-          actual.nil?
+          if actual.nil?
+            nil
+          else
+            "Expected nil, got #{actual}"
+          end
         when Hash
           expected.all? do |k, v|
             case k
             when 'errorContains'
-              actual && actual['errorContains'].include?(v)
+              if actual && actual['errorContains'].include?(v)
+                nil
+              else
+                "Expected #{actual['errorContains']} to include #{v}"
+              end
             when 'errorLabelsContain'
-              actual && v.all? { |label| actual['errorLabels'].include?(label) }
+              if actual && v.all? { |label| actual['errorLabels'].include?(label) }
+                nil
+              else
+                "Expected #{actual} to include error label #{label}"
+              end
             when 'errorLabelsOmit'
-              !actual || v.all? { |label| !actual['errorLabels'].include?(label) }
+              if !actual || v.all? { |label| !actual['errorLabels'].include?(label) }
+                nil
+              else
+                "Expected #{actual} to not include error label #{label}"
+              end
             else
-              actual && (actual[k] == v || handle_upserted_id(k, v, actual[v]) ||
+              if actual && (actual[k] == v || handle_upserted_id(k, v, actual[v]) ||
                 handle_inserted_ids(k, v, actual[v]))
+              then
+                nil
+              else
+                "Expected #{actual} to match inserted ids in #{v}}"
+              end
             end
           end
         else
-          expected == actual
+          if expected == actual
+            nil
+          else
+            "Expected #{actual} to equal #{expected}"
+          end
         end
       end
 
