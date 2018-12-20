@@ -73,8 +73,16 @@ module Mongo
       # @since 2.6.0
       def tests
         @transaction_tests.map do |test|
-          Proc.new { Mongo::Transactions::TransactionsTest.new(@data, test) }
+          Proc.new { Mongo::Transactions::TransactionsTest.new(@data, test, self) }
         end
+      end
+
+      def database_name
+        @spec['database_name']
+      end
+
+      def collection_name
+        @spec['collection_name']
       end
     end
 
@@ -103,10 +111,12 @@ module Mongo
       # @param [ Array<Hash> ] data The documents the collection
       # must have before the test runs.
       # @param [ Hash ] test The test specification.
+      # @param [ Hash ] spec The top level YAML specification.
       #
       # @since 2.6.0
-      def initialize(data, test)
+      def initialize(data, test, spec)
         test = IceNine.deep_freeze(test)
+        @spec = spec
         @data = data
         @description = test['description']
         @client_options = convert_client_options(test['clientOptions'] || {})
@@ -130,7 +140,7 @@ module Mongo
       end
 
       def support_client
-        ClientRegistry.instance.global_client('root_authorized')
+        @support_client ||= ClientRegistry.instance.global_client('root_authorized').use(@spec.database_name)
       end
 
       def admin_support_client
@@ -139,7 +149,9 @@ module Mongo
 
       def test_client
         @test_client ||= ClientRegistry.instance.global_client('authorized_without_retry_writes').with(
-          @client_options.merge(app_name: 'this is used solely to force the new client to create its own cluster'))
+          @client_options.merge(
+            database: @spec.database_name,
+            app_name: 'this is used solely to force the new client to create its own cluster'))
       end
 
       def event_subscriber
@@ -244,17 +256,17 @@ module Mongo
         rescue Mongo::Error
         end
 
-        coll = support_client[Mongo::Transactions::Spec::COLLECTION_NAME]
+        coll = support_client[@spec.collection_name]
         coll.database.drop
         coll.with(write: { w: :majority }).drop
         support_client.command(
-          { create: Mongo::Transactions::Spec::COLLECTION_NAME },
+          { create: @spec.collection_name },
           { write_concern: { w: :majority } })
 
         coll.with(write: { w: :majority }).insert_many(@data) unless @data.empty?
         admin_support_client.command(@failpoint) if @failpoint
 
-        @collection = test_client[Mongo::Transactions::Spec::COLLECTION_NAME]
+        @collection = test_client[@spec.collection_name]
 
         @session0 = test_client.start_session(@session_options[:session0] || {})
         @session1 = test_client.start_session(@session_options[:session1] || {})

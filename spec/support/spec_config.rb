@@ -212,10 +212,16 @@ class SpecConfig
         { role: Mongo::Auth::Roles::DATABASE_ADMIN, db: test_db },
         { role: Mongo::Auth::Roles::READ_WRITE, db: 'invalid_database' },
         { role: Mongo::Auth::Roles::DATABASE_ADMIN, db: 'invalid_database' },
-                    { role: Mongo::Auth::Roles::READ_WRITE, db: 'hr' },           # For transactions examples
-                    { role: Mongo::Auth::Roles::DATABASE_ADMIN, db: 'hr' },       # For transactions examples
-                    { role: Mongo::Auth::Roles::READ_WRITE, db: 'reporting' },    # For transactions examples
-                    { role: Mongo::Auth::Roles::DATABASE_ADMIN, db: 'reporting' } # For transactions examples
+
+        # For transactions examples
+        { role: Mongo::Auth::Roles::READ_WRITE, db: 'hr' },
+        { role: Mongo::Auth::Roles::DATABASE_ADMIN, db: 'hr' },
+        { role: Mongo::Auth::Roles::READ_WRITE, db: 'reporting' },
+        { role: Mongo::Auth::Roles::DATABASE_ADMIN, db: 'reporting' },
+
+        # For transaction api spec tests
+        #{ role: Mongo::Auth::Roles::READ_WRITE, db: 'withTransaction-tests' },
+        #{ role: Mongo::Auth::Roles::DATABASE_ADMIN, db: 'withTransaction-tests' },
 
       ]
     )

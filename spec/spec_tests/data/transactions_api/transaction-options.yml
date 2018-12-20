@@ -1,4 +1,4 @@
-database_name: &database_name "withTransaction-tests"
+database_name: &database_name "ruby-driver"
 collection_name: &collection_name "test"
 
 data: []
