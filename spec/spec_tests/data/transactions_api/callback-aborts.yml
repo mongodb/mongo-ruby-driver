@@ -1,0 +1,76 @@
+database_name: &database_name "withTransaction-tests"
+collection_name: &collection_name "test"
+
+data: []
+
+tests:
+  -
+    # Session state will be ABORTED when callback returns to withTransaction
+    description: withTransaction reports error if callback aborts
+    operations:
+      -
+        name: withTransaction
+        object: session0
+        callback:
+          operations:
+            -
+              name: insertOne
+              object: collection
+              arguments:
+                session: session0
+                document: { _id: 1 }
+              result:
+                insertedId: 1
+            -
+              name: abortTransaction
+              object: session0
+        error: true
+    expectations:
+      -
+        command_started_event:
+          command:
+            insert: *collection_name
+            documents:
+              - { _id: 1 }
+            ordered: true
+            lsid: session0
+            txnNumber: { $numberLong: "1" }
+            startTransaction: true
+            autocommit: false
+            # omitted fields
+            readConcern: ~
+            writeConcern: ~
+          command_name: insert
+          database_name: *database_name
+      -
+        command_started_event:
+          command:
+            abortTransaction: 1
+            lsid: session0
+            txnNumber: { $numberLong: "1" }
+            autocommit: false
+            # omitted fields
+            startTransaction: ~
+            writeConcern: ~
+          command_name: abortTransaction
+          database_name: admin
+    outcome:
+      collection:
+        data: []
+  -
+    # Session state will be ABORTED when callback returns to withTransaction
+    description: withTransaction reports error if callback aborts with no ops
+    operations:
+      -
+        name: withTransaction
+        object: session0
+        callback:
+          operations:
+            -
+              name: abortTransaction
+              object: session0
+        error: true
+    expectations: []
+    outcome:
+      collection:
+        data: []

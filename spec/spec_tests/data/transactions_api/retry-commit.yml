@@ -1,0 +1,204 @@
+database_name: &database_name "withTransaction-tests"
+collection_name: &collection_name "test"
+
+data: []
+
+tests:
+  -
+    description: commitTransaction succeeds after multiple connection errors
+    failPoint:
+      configureFailPoint: failCommand
+      mode: { times: 2 }
+      data:
+          failCommands: ["commitTransaction"]
+          closeConnection: true
+    operations:
+      -
+        name: withTransaction
+        object: session0
+        callback:
+          operations:
+            -
+              name: insertOne
+              object: collection
+              arguments:
+                session: session0
+                document: { _id: 1 }
+              result:
+                insertedId: 1
+    expectations:
+      -
+        command_started_event:
+          command:
+            insert: *collection_name
+            documents:
+              - { _id: 1 }
+            ordered: true
+            lsid: session0
+            txnNumber: { $numberLong: "1" }
+            startTransaction: true
+            autocommit: false
+            # omitted fields
+            readConcern: ~
+            writeConcern: ~
+          command_name: insert
+          database_name: *database_name
+      -
+        command_started_event:
+          command:
+            commitTransaction: 1
+            lsid: session0
+            readConcern: { afterClusterTime: 42 }
+            txnNumber: { $numberLong: "1" }
+            autocommit: false
+            # omitted fields
+            startTransaction: ~
+            writeConcern: ~
+          command_name: commitTransaction
+          database_name: admin
+      -
+        command_started_event:
+          command:
+            commitTransaction: 1
+            lsid: session0
+            readConcern: { afterClusterTime: 42 }
+            txnNumber: { $numberLong: "1" }
+            autocommit: false
+            # commitTransaction applies w:majority on retries (SPEC-1185)
+            writeConcern: { w: majority }
+            # omitted fields
+            startTransaction: ~
+          command_name: commitTransaction
+          database_name: admin
+      -
+        command_started_event:
+          command:
+            commitTransaction: 1
+            lsid: session0
+            readConcern: { afterClusterTime: 42 }
+            txnNumber: { $numberLong: "1" }
+            autocommit: false
+            # commitTransaction applies w:majority on retries (SPEC-1185)
+            writeConcern: { w: majority }
+            # omitted fields
+            startTransaction: ~
+          command_name: commitTransaction
+          database_name: admin
+    outcome:
+      collection:
+        data:
+          - { _id: 1 }
+  -
+    description: commitTransaction is not retried after write concern error (UnknownReplWriteConcern)
+    failPoint:
+      configureFailPoint: failCommand
+      mode: { times: 1 }
+      data:
+          failCommands: ["commitTransaction"]
+          errorCode: 79 # UnknownReplWriteConcern
+          closeConnection: false
+    operations:
+      -
+        name: withTransaction
+        object: session0
+        callback:
+          operations:
+            -
+              name: insertOne
+              object: collection
+              arguments:
+                session: session0
+                document: { _id: 1 }
+              result:
+                insertedId: 1
+        error: true
+    expectations:
+      -
+        command_started_event:
+          command:
+            insert: *collection_name
+            documents:
+              - { _id: 1 }
+            ordered: true
+            lsid: session0
+            txnNumber: { $numberLong: "1" }
+            startTransaction: true
+            autocommit: false
+            # omitted fields
+            readConcern: ~
+            writeConcern: ~
+          command_name: insert
+          database_name: *database_name
+      -
+        command_started_event:
+          command:
+            commitTransaction: 1
+            lsid: session0
+            readConcern: { afterClusterTime: 42 }
+            txnNumber: { $numberLong: "1" }
+            autocommit: false
+            # omitted fields
+            startTransaction: ~
+            writeConcern: ~
+          command_name: commitTransaction
+          database_name: admin
+    outcome:
+      collection:
+        data: []
+  -
+    description: commitTransaction is not retried after write concern error (UnsatisfiableWriteConcern)
+    failPoint:
+      configureFailPoint: failCommand
+      mode: { times: 1 }
+      data:
+          failCommands: ["commitTransaction"]
+          errorCode: 100 # UnsatisfiableWriteConcern
+          closeConnection: false
+    operations:
+      -
+        name: withTransaction
+        object: session0
+        callback:
+          operations:
+            -
+              name: insertOne
+              object: collection
+              arguments:
+                session: session0
+                document: { _id: 1 }
+              result:
+                insertedId: 1
+        error: true
+    expectations:
+      -
+        command_started_event:
+          command:
+            insert: *collection_name
+            documents:
+              - { _id: 1 }
+            ordered: true
+            lsid: session0
+            txnNumber: { $numberLong: "1" }
+            startTransaction: true
+            autocommit: false
+            # omitted fields
+            readConcern: ~
+            writeConcern: ~
+          command_name: insert
+          database_name: *database_name
+      -
+        command_started_event:
+          command:
+            commitTransaction: 1
+            lsid: session0
+            readConcern: { afterClusterTime: 42 }
+            txnNumber: { $numberLong: "1" }
+            autocommit: false
+            # omitted fields
+            startTransaction: ~
+            writeConcern: ~
+          command_name: commitTransaction
+          database_name: admin
+    outcome:
+      collection:
+        data: []

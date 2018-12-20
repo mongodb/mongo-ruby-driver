@@ -1,11 +1,11 @@
-database_name: &database_name "ruby-driver"
-collection_name: &collection_name "transactions-tests"
+database_name: &database_name "withTransaction-tests"
+collection_name: &collection_name "test"
 
 data: []
 
 tests:
   -
-    description: withTransaction and successful commit
+    description: withTransaction commits after callback returns
     operations:
       -
         name: withTransaction
@@ -57,8 +57,8 @@ tests:
             autocommit: false
             # omitted fields
             readConcern: ~
-            writeConcern: ~
             startTransaction: ~
+            writeConcern: ~
           command_name: insert
           database_name: *database_name
       -
@@ -70,8 +70,8 @@ tests:
             txnNumber: { $numberLong: "1" }
             autocommit: false
             # omitted fields
-            writeConcern: ~
             startTransaction: ~
+            writeConcern: ~
           command_name: commitTransaction
           database_name: admin
     outcome:
@@ -80,7 +80,11 @@ tests:
           - { _id: 1 }
           - { _id: 2 }
   -
-    description: withTransaction and successful commit within callback
+    # In this scenario, the callback commits the transaction originally started
+    # by withTransaction and starts a second transaction before returning. Since
+    # withTransaction only examples the session's state, it should commit that
+    # second transaction after the callback returns.
+    description: withTransaction commits after callback returns (second transaction)
     operations:
       -
         name: withTransaction
@@ -96,6 +100,12 @@ tests:
               result:
                 insertedId: 1
             -
+              name: commitTransaction
+              object: session0
+            -
+              name: startTransaction
+              object: session0
+            -
               name: insertOne
               object: collection
               arguments:
@@ -103,9 +113,6 @@ tests:
                 document: { _id: 2 }
               result:
                 insertedId: 2
-            -
-              name: commitTransaction
-              object: session0
     expectations:
       -
         command_started_event:
@@ -126,17 +133,31 @@ tests:
       -
         command_started_event:
           command:
+            commitTransaction: 1
+            lsid: session0
+            readConcern: { afterClusterTime: 42 }
+            txnNumber: { $numberLong: "1" }
+            autocommit: false
+            # omitted fields
+            startTransaction: ~
+            writeConcern: ~
+          command_name: commitTransaction
+          database_name: admin
+      -
+        command_started_event:
+          command:
             insert: *collection_name
             documents:
-              - { _id: 2 }
+              - { _id: 1 }
             ordered: true
             lsid: session0
-            txnNumber: { $numberLong: "1" }
+            # txnNumber is incremented for the second transaction
+            txnNumber: { $numberLong: "2" }
+            startTransaction: true
             autocommit: false
             # omitted fields
             readConcern: ~
             writeConcern: ~
-            startTransaction: ~
           command_name: insert
           database_name: *database_name
       -
@@ -145,11 +166,11 @@ tests:
             commitTransaction: 1
             lsid: session0
             readConcern: { afterClusterTime: 42 }
-            txnNumber: { $numberLong: "1" }
+            txnNumber: { $numberLong: "2" }
             autocommit: false
             # omitted fields
-            writeConcern: ~
             startTransaction: ~
+            writeConcern: ~
           command_name: commitTransaction
           database_name: admin
     outcome:
