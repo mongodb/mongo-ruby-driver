@@ -18,7 +18,7 @@ require 'mongo/operation/aggregate/result'
 
 module Mongo
   module Operation
-    
+
     # A MongoDB aggregate operation.
     #
     # @note An aggregate operation can behave like a read and return a
@@ -30,24 +30,7 @@ module Mongo
     # @since 2.0.0
     class Aggregate
       include Specifiable
-
-      # Execute the operation.
-      # 
-      # @example
-      #   operation.execute(server)
-      # 
-      # @param [ Mongo::Server ] server The server to send the operation to.
-      # 
-      # @return [ Mongo::Operation::Aggregate::Result ] The operation result.
-      # 
-      # @since 2.0.0
-      def execute(server)
-        if server.features.op_msg_enabled?
-          OpMsg.new(spec).execute(server)
-        else
-          Command.new(spec).execute(server)
-        end
-      end
+      include OpMsgOrCommand
     end
   end
 end
