@@ -19,9 +19,7 @@ module Mongo
     # network and connection exceptions.
     #
     # @since 2.0.0
-    class Unacknowledged
-      include Normalizable
-
+    class Unacknowledged < Base
       # The noop constant for the gle.
       #
       # @since 2.0.0
