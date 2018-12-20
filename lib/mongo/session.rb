@@ -514,10 +514,13 @@ module Mongo
     # @example Commits the transaction.
     #   session.commit_transaction
     #
+    # @option options :write_concern [ nil | WriteConcern::Base ] The write
+    #   concern to use for this operation.
+    #
     # @raise [ Error::InvalidTransactionOperation ] If there is no active transaction.
     #
     # @since 2.6.0
-    def commit_transaction
+    def commit_transaction(options={})
       check_if_ended!
       check_if_no_transaction!
 
@@ -539,7 +542,7 @@ module Mongo
         else
           @last_commit_skipped = false
 
-          write_with_retry(self, txn_options[:write_concern], true) do |server, txn_num|
+          write_with_retry(self, options[:write_concern] || txn_options[:write_concern], true) do |server, txn_num|
             Operation::Command.new(
               selector: { commitTransaction: 1 },
               db_name: 'admin',
@@ -620,11 +623,24 @@ module Mongo
       within_states?(STARTING_TRANSACTION_STATE, TRANSACTION_IN_PROGRESS_STATE)
     end
 
-    def with_transaction
+    def with_transaction(options={})
       start_transaction
+      commit_options = {}
       begin
         yield
-        commit_transaction
+
+        begin
+          commit_transaction(commit_options)
+        rescue Mongo::Error => e
+          if e.label?(Mongo::Error::UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL)
+            # TODO the lack of merging of write concern options
+            # should fail a test somewhere
+            commit_options[:write_concern] = WriteConcern::Acknowledged.new(w: :majority)
+            retry
+          else
+            raise
+          end
+        end
       end
     end
 
