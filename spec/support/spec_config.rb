@@ -143,8 +143,12 @@ class SpecConfig
     end
   end
 
+  def retry_writes?
+    %w(yes true on 1).include?((ENV['RETRY_WRITES'] || '').downcase)
+  end
+
   def retry_writes_options
-    if retry_writes = %w(yes true on 1).include?((ENV['RETRY_WRITES'] || '').downcase)
+    if retry_writes?
       {retry_writes: true}
     else
       {}
