@@ -588,6 +588,13 @@ axes:
         display_name: Zlib
         variables:
            COMPRESSOR: "zlib"
+  - id: retry-writes
+    display_name: Retry Writes
+    values:
+      - id: retry-writes
+        display_name: Retry Writes
+        variables:
+          RETRY_WRITES: 'true'
   - id: lint
     display_name: Lint
     values:
@@ -650,6 +657,19 @@ buildvariants:
     mongodb-version: ["4.0"]
     topology: "*"
   display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
+  run_on:
+    - ubuntu1404-test
+  tasks:
+     - name: "test"
+
+-
+  matrix_name: "retry-writes"
+  matrix_spec:
+    retry-writes: retry-writes
+    ruby: "ruby-2.5"
+    mongodb-version: ["4.0"]
+    topology: [replica-set, sharded-cluster]
+  display_name: "${mongodb-version} ${topology} ${retry-writes} ${ruby}"
   run_on:
     - ubuntu1404-test
   tasks:
