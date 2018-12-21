@@ -623,24 +623,52 @@ module Mongo
       within_states?(STARTING_TRANSACTION_STATE, TRANSACTION_IN_PROGRESS_STATE)
     end
 
-    def with_transaction(options={})
-      start_transaction
+    def with_transaction(options=nil)
       commit_options = {}
-      begin
-        yield
-
+      while true
+      #byebug
+        start_transaction(options)
         begin
-          commit_transaction(commit_options)
-        rescue Mongo::Error => e
-          if e.label?(Mongo::Error::UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL)
-            # TODO the lack of merging of write concern options
-            # should fail a test somewhere
-            commit_options[:write_concern] = WriteConcern::Acknowledged.new(w: :majority)
-            retry
-          else
-            raise
+          yield self
+        rescue Exception => e
+      #byebug
+          if within_states?(STARTING_TRANSACTION_STATE, TRANSACTION_IN_PROGRESS_STATE)
+            abort_transaction
+          end
+
+          if e.is_a?(Mongo::Error) && e.label?(Mongo::Error::TRANSIENT_TRANSACTION_ERROR_LABEL)
+            next
+          end
+
+          raise
+        else
+        #byebug
+          if within_states?(TRANSACTION_ABORTED_STATE)
+            raise Error::TransactionAborted, "Transaction was aborted"
+          end
+
+          if within_states?(NO_TRANSACTION_STATE, TRANSACTION_COMMITTED_STATE)
+            break
+          end
+
+          begin
+            commit_transaction(commit_options)
+            break
+          rescue Mongo::Error => e
+            if e.label?(Mongo::Error::UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL)
+              retry
+            elsif e.label?(Mongo::Error::TRANSIENT_TRANSACTION_ERROR_LABEL)
+              # TODO the lack of merging of write concern options
+              # should fail a test somewhere
+              commit_options[:write_concern] = WriteConcern::Acknowledged.new(w: :majority)
+              byebug
+              next
+            else
+              raise
+            end
           end
         end
+        p :here
       end
     end
 

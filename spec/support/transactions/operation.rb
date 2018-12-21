@@ -132,12 +132,14 @@ module Mongo
         {
           'errorCodeName' => err_doc['codeName'] || err_doc['writeConcernError']['codeName'],
           'errorContains' => e.message,
-          'errorLabels' => e.labels
+          'errorLabels' => e.labels,
+          'exception' => e,
         }
       rescue Mongo::Error => e
         {
           'errorContains' => e.message,
-          'errorLabels' => e.labels
+          'errorLabels' => e.labels,
+          'exception' => e,
         }
       end
 
@@ -164,6 +166,16 @@ module Mongo
           callback['operations'].each do |op_spec|
             op = Operation.new(op_spec, @session0, @session1)
             rv = op.execute(collection)
+            if op_spec['error']
+              unless rv['exception']
+                raise "Expected an exception for #{op_spec}"
+              end
+              raise rv['exception']
+            else
+              if rv['exception']
+                raise "Did not expect an exception for #{op_spec}: #{rv['exception']}"
+              end
+            end
           end
         end
       end
