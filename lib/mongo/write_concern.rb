@@ -54,9 +54,9 @@ module Mongo
     # @since 2.0.0
     DEFAULT = { }.freeze
 
-    # Get a write concern mode for the provided options.
+    # Create a write concern object for the provided options.
     #
-    # @example Get a write concern mode.
+    # @example Get a write concern.
     #   Mongo::WriteConcern.get(:w => 1)
     #
     # @param [ Hash ] options The options to instantiate with.
@@ -72,7 +72,7 @@ module Mongo
     #
     # @return [ Unacknowledged, Acknowledged ] The appropriate concern.
     #
-    # @raise [ Error::InvalidWriteConcern ] If the write concern is invalid.
+    # @raise [ Error::InvalidWriteConcern ] If the options are invalid.
     #
     # @since 2.0.0
     def get(options)
