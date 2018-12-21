@@ -79,15 +79,22 @@ module Mongo
       end
 
       def ensure_connected
-        ensure_same_process!
-        begin
-          connect!
-          result = yield socket
-          success = true
-          result
-        ensure
-          unless success
-            disconnect!
+        if @setting_up
+          if socket.nil?
+            raise "Uh oh"
+          end
+          yield socket
+        else
+          ensure_same_process!
+          begin
+            connect!
+            result = yield socket
+            success = true
+            result
+          ensure
+            unless success
+              disconnect!
+            end
           end
         end
       end

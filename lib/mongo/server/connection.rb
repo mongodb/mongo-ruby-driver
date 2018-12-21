@@ -93,6 +93,7 @@ module Mongo
         @last_checkin = nil
         @auth_mechanism = nil
         @pid = Process.pid
+        @setup_lock = Mutex.new
       end
 
       # The last time the connection was checked back into a pool.
@@ -131,17 +132,22 @@ module Mongo
       #
       # @since 2.0.0
       def connect!
-        unless socket && socket.connectable?
-          begin
-            # Need to assign to the instance variable here because
-            # I/O done by #handshake! and #connect! reference the socket
-            @socket = address.socket(socket_timeout, ssl_options)
-            address.connect_socket!(socket)
-            handshake!
-            authenticate!
-          rescue Exception
-            @socket = nil
-            raise
+        @setup_lock.synchronize do
+          unless socket && socket.connectable?
+            begin
+              # Need to assign to the instance variable here because
+              # I/O done by #handshake! and #connect! reference the socket
+              @socket = address.socket(socket_timeout, ssl_options)
+              address.connect_socket!(socket)
+              @setting_up = true
+              handshake!
+              authenticate!
+            rescue Exception
+              @socket = nil
+              raise
+            ensure
+              @setting_up = false
+            end
           end
         end
         true
