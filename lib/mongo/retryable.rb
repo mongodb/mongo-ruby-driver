@@ -92,7 +92,7 @@ module Mongo
     # @note This only retries operations on not master failures, since it is
     #   the only case we can be sure a partial write did not already occur.
     #
-    # @param [ nil | WriteConcern::Base ] write_concern The write concern.
+    # @param [ nil | Hash | WriteConcern::Base ] write_concern The write concern.
     # @param [ true | false ] ending_transaction True if the write operation is abortTransaction or
     #   commitTransaction, false otherwise.
     # @param [ Proc ] block The block to execute.
@@ -104,10 +104,6 @@ module Mongo
     #
     # @since 2.1.0
     def write_with_retry(session, write_concern, ending_transaction = false, &block)
-      if write_concern && !write_concern.is_a?(WriteConcern::Base)
-        raise ArgumentError, "Write concern should be a WriteConcern object, but is a #{write_concern}"
-      end
-
       unless retry_write_allowed?(session, write_concern) || ending_transaction
         return legacy_write_with_retry(nil, session, &block)
       end
@@ -133,8 +129,18 @@ module Mongo
     private
 
     def retry_write_allowed?(session, write_concern)
-      session && session.retry_writes? &&
-          (write_concern.nil? || write_concern.acknowledged?) or false
+      unless session && session.retry_writes?
+        return false
+      end
+
+      if write_concern.nil?
+        true
+      else
+        unless write_concern.is_a?(WriteConcern::Base)
+          write_concern = WriteConcern.get(write_concern)
+        end
+        write_concern.acknowledged?
+      end
     end
 
     def retry_write(original_error, txn_num, &block)
