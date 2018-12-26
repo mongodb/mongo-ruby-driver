@@ -4,13 +4,15 @@ describe 'Change stream integration', retry: 4 do
   only_mri
   max_example_run_time 7
 
-  FAIL_POINT_BASE_COMMAND = { 'configureFailPoint' => "failCommand" }
+  let(:fail_point_base_command) do
+    { 'configureFailPoint' => "failCommand" }
+  end
 
   # There is value in not clearing fail points between tests because
   # their triggering will distinguish fail points not being set vs
   # them not being triggered
   def clear_fail_point(collection)
-    collection.client.use(:admin).command(FAIL_POINT_BASE_COMMAND.merge(mode: "off"))
+    collection.client.use(:admin).command(fail_point_base_command.merge(mode: "off"))
   end
 
   class << self
@@ -68,7 +70,7 @@ describe 'Change stream integration', retry: 4 do
       clear_fail_point_before
 
       before do
-        authorized_collection.client.use(:admin).command(FAIL_POINT_BASE_COMMAND.merge(
+        authorized_collection.client.use(:admin).command(fail_point_base_command.merge(
           :mode => {:times => 1},
           :data => {:failCommands => ['aggregate'], errorCode: 100}))
       end
@@ -86,7 +88,7 @@ describe 'Change stream integration', retry: 4 do
 
       context 'error on first getMore' do
         before do
-          authorized_collection.client.use(:admin).command(FAIL_POINT_BASE_COMMAND.merge(
+          authorized_collection.client.use(:admin).command(fail_point_base_command.merge(
             :mode => {:times => 1},
             :data => {:failCommands => ['getMore'], errorCode: 100}))
         end
@@ -105,7 +107,7 @@ describe 'Change stream integration', retry: 4 do
           change_stream.to_enum.next
           authorized_collection.insert_one(:a => 1)
 
-          authorized_collection.client.use(:admin).command(FAIL_POINT_BASE_COMMAND.merge(
+          authorized_collection.client.use(:admin).command(fail_point_base_command.merge(
             :mode => {:times => 1},
             :data => {:failCommands => ['getMore'], errorCode: 100}))
         end
@@ -120,7 +122,7 @@ describe 'Change stream integration', retry: 4 do
 
       context 'error of first getMores' do
         before do
-          authorized_collection.client.use(:admin).command(FAIL_POINT_BASE_COMMAND.merge(
+          authorized_collection.client.use(:admin).command(fail_point_base_command.merge(
             :mode => {:times => 2},
             :data => {:failCommands => ['getMore'], errorCode: 100}))
         end
@@ -141,7 +143,7 @@ describe 'Change stream integration', retry: 4 do
           change_stream.to_enum.next
           authorized_collection.insert_one(:a => 1)
 
-          authorized_collection.client.use(:admin).command(FAIL_POINT_BASE_COMMAND.merge(
+          authorized_collection.client.use(:admin).command(fail_point_base_command.merge(
             :mode => {:times => 2},
             :data => {:failCommands => ['getMore'], errorCode: 100}))
         end
@@ -165,7 +167,7 @@ describe 'Change stream integration', retry: 4 do
 
         enum = change_stream.to_enum
 
-        authorized_collection.client.use(:admin).command(FAIL_POINT_BASE_COMMAND.merge(
+        authorized_collection.client.use(:admin).command(fail_point_base_command.merge(
           :mode => {:times => 2},
           :data => {:failCommands => ['getMore', 'aggregate'], errorCode: 101}))
 
@@ -218,7 +220,7 @@ describe 'Change stream integration', retry: 4 do
 
       context 'error on first getMore' do
         before do
-          authorized_collection.client.use(:admin).command(FAIL_POINT_BASE_COMMAND.merge(
+          authorized_collection.client.use(:admin).command(fail_point_base_command.merge(
             :mode => {:times => 1},
             :data => {:failCommands => ['getMore'], errorCode: 100}))
         end
@@ -233,7 +235,7 @@ describe 'Change stream integration', retry: 4 do
           change_stream.to_enum.next
           authorized_collection.insert_one(:a => 1)
 
-          authorized_collection.client.use(:admin).command(FAIL_POINT_BASE_COMMAND.merge(
+          authorized_collection.client.use(:admin).command(fail_point_base_command.merge(
             :mode => {:times => 1},
             :data => {:failCommands => ['getMore'], errorCode: 100}))
         end
@@ -247,7 +249,7 @@ describe 'Change stream integration', retry: 4 do
       clear_fail_point_before
 
       before do
-        authorized_collection.client.use(:admin).command(FAIL_POINT_BASE_COMMAND.merge(
+        authorized_collection.client.use(:admin).command(fail_point_base_command.merge(
           :mode => {:times => 2},
           :data => {:failCommands => ['getMore'], errorCode: 100}))
       end
@@ -271,7 +273,7 @@ describe 'Change stream integration', retry: 4 do
 
           enum = change_stream.to_enum
 
-          authorized_collection.client.use(:admin).command(FAIL_POINT_BASE_COMMAND.merge(
+          authorized_collection.client.use(:admin).command(fail_point_base_command.merge(
             :mode => {:times => 3},
             :data => {:failCommands => ['getMore', 'aggregate'], errorCode: 101}))
 
@@ -294,7 +296,7 @@ describe 'Change stream integration', retry: 4 do
 
           enum = change_stream.to_enum
 
-          authorized_collection.client.use(:admin).command(FAIL_POINT_BASE_COMMAND.merge(
+          authorized_collection.client.use(:admin).command(fail_point_base_command.merge(
             :mode => {:times => 3},
             :data => {:failCommands => ['getMore', 'aggregate'], errorCode: 101}))
 
