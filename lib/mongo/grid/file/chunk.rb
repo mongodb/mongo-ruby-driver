@@ -18,7 +18,7 @@ module Mongo
   module Grid
     class File
 
-      # Encapsulates behaviour around GridFS chunks of file data.
+      # Encapsulates behavior around GridFS chunks of file data.
       #
       # @since 2.0.0
       class Chunk

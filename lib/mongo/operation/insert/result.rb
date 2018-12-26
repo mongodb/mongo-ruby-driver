@@ -16,7 +16,7 @@ module Mongo
   module Operation
     class Insert
 
-      # Defines custom behaviour of results for an insert.
+      # Defines custom behavior of results for an insert.
       #
       # According to the CRUD spec, reporting the inserted ids
       # is optional. It can be added to this class later, if needed.

@@ -16,7 +16,7 @@ module Mongo
   class Collection
     class View
 
-      # Defines write related behaviour for collection view.
+      # Defines write related behavior for collection view.
       #
       # @since 2.0.0
       module Writable

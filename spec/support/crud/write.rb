@@ -16,7 +16,7 @@ module Mongo
   module CRUD
     module Operation
 
-      # Defines common behaviour for running CRUD write operation tests on a
+      # Defines common behavior for running CRUD write operation tests on a
       # collection.
       #
       # @since 2.0.0

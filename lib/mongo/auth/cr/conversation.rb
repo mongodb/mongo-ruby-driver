@@ -16,7 +16,7 @@ module Mongo
   module Auth
     class CR
 
-      # Defines behaviour around a single MONGODB-CR conversation between the
+      # Defines behavior around a single MONGODB-CR conversation between the
       # client and server.
       #
       # @since 2.0.0

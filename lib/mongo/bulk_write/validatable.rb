@@ -15,7 +15,7 @@
 module Mongo
   class BulkWrite
 
-    # Defines behaviour around validations.
+    # Defines behavior around validations.
     #
     # @api private
     #

@@ -16,7 +16,7 @@ module Mongo
   class Cursor
     module Builder
 
-      # Encapsulates behaviour around generating an OP_KILL_CURSORS specification.
+      # Encapsulates behavior around generating an OP_KILL_CURSORS specification.
       #
       # @since 2.2.0
       class OpKillCursors

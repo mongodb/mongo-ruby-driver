@@ -16,7 +16,7 @@ module Mongo
   class Cursor
     module Builder
 
-      # Encapsulates behaviour around generating an OP_GET_MORE specification.
+      # Encapsulates behavior around generating an OP_GET_MORE specification.
       #
       # @since 2.2.0
       class OpGetMore

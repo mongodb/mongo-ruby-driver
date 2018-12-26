@@ -16,7 +16,7 @@ module Mongo
   class Collection
     class View
 
-      # Provides behaviour around a map/reduce operation on the collection
+      # Provides behavior around a map/reduce operation on the collection
       # view.
       #
       # @since 2.0.0

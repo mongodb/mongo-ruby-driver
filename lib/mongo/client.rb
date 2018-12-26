@@ -22,7 +22,7 @@ module Mongo
     extend Forwardable
     include Loggable
 
-    # The options that do not affect the behaviour of a cluster and its
+    # The options that do not affect the behavior of a cluster and its
     # subcomponents.
     #
     # @since 2.1.0

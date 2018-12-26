@@ -18,7 +18,7 @@ require 'mongo/write_concern/unacknowledged'
 
 module Mongo
 
-  # Base module for all write concern specific behaviour.
+  # Base module for all write concern specific behavior.
   #
   # @since 2.0.0
   module WriteConcern

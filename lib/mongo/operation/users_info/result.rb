@@ -16,7 +16,7 @@ module Mongo
   module Operation
     class UsersInfo
 
-      # Defines custom behaviour of results when using the
+      # Defines custom behavior of results when using the
       # usersInfo command.
       #
       # @since 2.1.0
