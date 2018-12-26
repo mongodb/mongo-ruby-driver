@@ -3,7 +3,9 @@ require 'spec_helper'
 describe 'Bulk insert' do
   include PrimarySocket
 
-  FAIL_POINT_BASE_COMMAND = { 'configureFailPoint' => "failCommand" }
+  let(:fail_point_base_command) do
+    { 'configureFailPoint' => "failCommand" }
+  end
 
   let(:collection_name) { 'bulk_insert_spec' }
   let(:collection) { authorized_client[collection_name] }
@@ -57,7 +59,7 @@ describe 'Bulk insert' do
       require_topology :single, :replica_set
 
       it 'is an empty array' do
-        collection.client.use(:admin).command(FAIL_POINT_BASE_COMMAND.merge(
+        collection.client.use(:admin).command(fail_point_base_command.merge(
           :mode => {:times => 1},
           :data => {:failCommands => ['insert'], errorCode: 100}))
         begin
