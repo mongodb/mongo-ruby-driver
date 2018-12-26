@@ -120,7 +120,9 @@ describe Mongo::Operation::Update::OpMsg do
         authorized_client.start_session
       end
 
-      context 'when the topology is replica set or sharded', if: test_sessions? do
+      context 'when the topology is replica set or sharded' do
+        min_server_version '3.6'
+        require_topology :replica_set, :sharded
 
         let(:expected_global_args) do
           global_args.merge(Mongo::Operation::CLUSTER_TIME => authorized_client.cluster.cluster_time)
@@ -181,7 +183,9 @@ describe Mongo::Operation::Update::OpMsg do
             authorized_client.send(:get_session)
           end
 
-          context 'when the topology is replica set or sharded', if: test_sessions? do
+          context 'when the topology is replica set or sharded' do
+            min_server_version '3.6'
+            require_topology :replica_set, :sharded
 
             let(:expected_global_args) do
               global_args.dup.tap do |args|
@@ -213,7 +217,9 @@ describe Mongo::Operation::Update::OpMsg do
           end
         end
 
-        context 'when the session is explicit', if: test_sessions? do
+        context 'when the session is explicit' do
+          min_server_version '3.6'
+          require_topology :replica_set, :sharded
 
           let(:session) do
             authorized_client.start_session

@@ -1,6 +1,8 @@
 require 'spec_helper'
 
-describe Mongo::Session, if: test_sessions? do
+describe Mongo::Session do
+  min_server_version '3.6'
+  require_topology :replica_set, :sharded
 
   let(:session) do
     authorized_client.start_session(options)
@@ -210,7 +212,7 @@ describe Mongo::Session, if: test_sessions? do
     end
   end
 
-  describe '#retry_writes?', if: test_sessions? do
+  describe '#retry_writes?' do
 
     context 'when the option is set to true' do
 

@@ -1908,7 +1908,9 @@ describe Mongo::BulkWrite do
             it_behaves_like 'an operation using a session'
           end
 
-          context 'when retryable writes are supported', if: test_sessions? do
+          context 'when retryable writes are supported' do
+            min_server_version '3.6'
+            require_topology :replica_set, :sharded
 
             let(:subscriber) { EventSubscriber.new }
 

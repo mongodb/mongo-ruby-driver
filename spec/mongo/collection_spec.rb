@@ -885,7 +885,9 @@ describe Mongo::Collection do
         it_behaves_like 'a failed operation using a session'
       end
 
-      context 'session id', if: test_sessions? do
+      context 'session id' do
+        min_server_version '3.6'
+        require_topology :replica_set, :sharded
 
         let(:options) do
           { session: session }
