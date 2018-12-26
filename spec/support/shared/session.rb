@@ -612,6 +612,14 @@ shared_examples 'an operation updating cluster time' do
     subscribed_client
   end
 
+  shared_examples_for 'does not update the cluster time of the cluster' do
+    it 'does not update the cluster time of the cluster' do
+      bct = before_cluster_time
+      reply_cluster_time
+      expect(client.cluster.cluster_time).to eq(before_cluster_time)
+    end
+  end
+
   context 'when the command is run once' do
 
     context 'when the server is version 3.6' do
@@ -648,11 +656,10 @@ shared_examples 'an operation updating cluster time' do
           EventSubscriber.succeeded_events[-1].reply['$clusterTime']
         end
 
-        it 'does not update the cluster time of the cluster' do
-          expect(before_cluster_time).to eq(before_cluster_time)
-        end
+        it_behaves_like 'does not update the cluster time of the cluster'
 
         it 'does not update the cluster time of the session' do
+          reply_cluster_time
           expect(session.cluster_time).to be_nil
         end
       end
@@ -670,9 +677,7 @@ shared_examples 'an operation updating cluster time' do
         EventSubscriber.succeeded_events[-1].reply['$clusterTime']
       end
 
-      it 'does not update the cluster time of the cluster' do
-        expect(before_cluster_time).to eq(before_cluster_time)
-      end
+      it_behaves_like 'does not update the cluster time of the cluster'
     end
   end
 
@@ -752,8 +757,9 @@ shared_examples 'an operation updating cluster time' do
       end
 
       it 'does not update the cluster time of the cluster' do
+        bct = before_cluster_time
         second_command_cluster_time
-        expect(before_cluster_time).to eq(before_cluster_time)
+        expect(client.cluster.cluster_time).to eq(bct)
       end
     end
   end
@@ -765,8 +771,9 @@ shared_examples 'an operation updating cluster time' do
     end
 
     it 'does not update the cluster time of the cluster' do
+      bct = before_cluster_time
       operation
-      expect(before_cluster_time).to eq(before_cluster_time)
+      expect(client.cluster.cluster_time).to eq(bct)
     end
   end
 end
