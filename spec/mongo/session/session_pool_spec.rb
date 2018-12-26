@@ -1,6 +1,8 @@
 require 'spec_helper'
 
-describe Mongo::Session::SessionPool, if: test_sessions? do
+describe Mongo::Session::SessionPool do
+  min_server_version '3.6'
+  require_topology :replica_set, :sharded
 
   let(:cluster) do
     authorized_client.cluster

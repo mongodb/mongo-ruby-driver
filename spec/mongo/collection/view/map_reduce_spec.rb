@@ -223,6 +223,8 @@ describe Mongo::Collection::View::MapReduce do
         end
 
         context 'when the output collection is iterated' do
+          min_server_version '3.6'
+          require_topology :replica_set, :sharded
 
           let(:options) do
             { session: session }
@@ -249,7 +251,7 @@ describe Mongo::Collection::View::MapReduce do
             begin; client.use('another-db')[TEST_COLL].create; rescue; end
           end
 
-          it 'uses the session when iterating over the output collection', if: test_sessions? do
+          it 'uses the session when iterating over the output collection' do
             new_map_reduce.to_a
             expect(find_command["lsid"]).to eq(BSON::Document.new(session.session_id))
           end

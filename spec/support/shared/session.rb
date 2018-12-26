@@ -1,6 +1,8 @@
 shared_examples 'an operation using a session' do
 
-  describe 'operation execution', if: test_sessions? do
+  describe 'operation execution' do
+    min_server_version '3.6'
+    require_topology :replica_set, :sharded
 
     context 'when the session is created from the same client used for the operation' do
 
@@ -83,7 +85,9 @@ end
 
 shared_examples 'a failed operation using a session' do
 
-  context 'when the operation fails', if: test_sessions? do
+  context 'when the operation fails' do
+    min_server_version '3.6'
+    require_topology :replica_set, :sharded
 
     let!(:before_last_use) do
       session.instance_variable_get(:@server_session).last_use
@@ -262,7 +266,9 @@ shared_examples 'an operation supporting causally consistent reads' do
     end
   end
 
-  context 'when connected to replica set or sharded cluster', if: test_sessions? do
+  context 'when connected to replica set or sharded cluster' do
+    min_server_version '3.6'
+    require_topology :replica_set, :sharded
 
     context 'when the collection specifies a read concern' do
 
@@ -610,7 +616,9 @@ shared_examples 'an operation updating cluster time' do
 
     context 'when the server is version 3.6' do
 
-      context 'when the cluster is sharded or a replica set', if: test_sessions? do
+      context 'when the cluster is sharded or a replica set' do
+        min_server_version '3.6'
+        require_topology :replica_set, :sharded
 
         let!(:reply_cluster_time) do
           operation_with_session
@@ -671,7 +679,9 @@ shared_examples 'an operation updating cluster time' do
       EventSubscriber.succeeded_events[-1].reply['$clusterTime']
     end
 
-    context 'when the cluster is sharded or a replica set', if: test_sessions? do
+    context 'when the cluster is sharded or a replica set' do
+      min_server_version '3.6'
+      require_topology :replica_set, :sharded
 
       context 'when the session cluster time is advanced' do
 

@@ -662,7 +662,9 @@ describe Mongo::Client do
       authorized_client.start_session
     end
 
-    context 'when sessions are supported', if: test_sessions? do
+    context 'when sessions are supported' do
+      min_server_version '3.6'
+      require_topology :replica_set, :sharded
 
       it 'creates a session' do
         expect(session).to be_a(Mongo::Session)
@@ -753,7 +755,9 @@ describe Mongo::Client do
       end
     end
 
-    context 'when two clients have the same cluster', if: test_sessions? do
+    context 'when two clients have the same cluster' do
+      min_server_version '3.6'
+      require_topology :replica_set, :sharded
 
       let(:client) do
         authorized_client.with(read: { mode: :secondary })
@@ -768,7 +772,9 @@ describe Mongo::Client do
       end
     end
 
-    context 'when two clients have different clusters', if: test_sessions? do
+    context 'when two clients have different clusters' do
+      min_server_version '3.6'
+      require_topology :replica_set, :sharded
 
       let(:client) do
         another_authorized_client
