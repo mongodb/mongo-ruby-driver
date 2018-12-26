@@ -255,6 +255,10 @@ describe 'Retryable writes integration tests' do
 
   shared_examples_for 'an operation that is not retried' do
 
+    let!(:client) do
+      authorized_client_without_retry_writes
+    end
+
     before do
       # Note that for writes, server.connectable? is called, refreshing the socket
       allow(primary_server).to receive(:connectable?).and_return(true)

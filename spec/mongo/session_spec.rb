@@ -239,6 +239,7 @@ describe Mongo::Session, if: test_sessions? do
     end
 
     context 'when the option is not defined' do
+      require_no_retry_writes
 
       let(:client) do
         authorized_client
