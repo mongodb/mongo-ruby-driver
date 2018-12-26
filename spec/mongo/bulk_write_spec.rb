@@ -1945,7 +1945,7 @@ describe Mongo::BulkWrite do
             end
 
             it 'increments the transaction number' do
-              expect(first_txn_number + 1). to eq(second_txn_number)
+              expect(second_txn_number). to eq(first_txn_number + 1)
             end
           end
         end
