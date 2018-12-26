@@ -612,29 +612,40 @@ shared_examples 'an operation updating cluster time' do
     subscribed_client
   end
 
+  shared_examples_for 'does not update the cluster time of the cluster' do
+    it 'does not update the cluster time of the cluster' do
+      bct = before_cluster_time
+      reply_cluster_time
+      expect(client.cluster.cluster_time).to eq(before_cluster_time)
+    end
+  end
+
   context 'when the command is run once' do
 
     context 'when the server is version 3.6' do
+      min_server_version '3.6'
 
       context 'when the cluster is sharded or a replica set' do
-        min_server_version '3.6'
         require_topology :replica_set, :sharded
 
-        let!(:reply_cluster_time) do
+        let(:reply_cluster_time) do
           operation_with_session
           EventSubscriber.succeeded_events[-1].reply['$clusterTime']
         end
 
         it 'updates the cluster time of the cluster' do
-          expect(cluster.cluster_time).to eq(reply_cluster_time)
+          rct = reply_cluster_time
+          expect(cluster.cluster_time).to eq(rct)
         end
 
         it 'updates the cluster time of the session' do
-          expect(session.cluster_time).to eq(reply_cluster_time)
+          rct = reply_cluster_time
+          expect(session.cluster_time).to eq(rct)
         end
       end
 
-      context 'when the server is a standalone', if: (standalone? && sessions_enabled?) do
+      context 'when the server is a standalone' do
+        require_topology :single
 
         let(:before_cluster_time) do
           client.cluster.cluster_time
@@ -645,36 +656,34 @@ shared_examples 'an operation updating cluster time' do
           EventSubscriber.succeeded_events[-1].reply['$clusterTime']
         end
 
-        it 'does not update the cluster time of the cluster' do
-          expect(before_cluster_time).to eq(before_cluster_time)
-        end
+        it_behaves_like 'does not update the cluster time of the cluster'
 
         it 'does not update the cluster time of the session' do
+          reply_cluster_time
           expect(session.cluster_time).to be_nil
         end
       end
     end
 
-    context 'when the server is less than version 3.6', if: !sessions_enabled? do
+    context 'when the server is less than version 3.6' do
+      max_server_version '3.4'
 
       let(:before_cluster_time) do
         client.cluster.cluster_time
       end
 
-      let!(:reply_cluster_time) do
+      let(:reply_cluster_time) do
         operation
         EventSubscriber.succeeded_events[-1].reply['$clusterTime']
       end
 
-      it 'does not update the cluster time of the cluster' do
-        expect(before_cluster_time).to eq(before_cluster_time)
-      end
+      it_behaves_like 'does not update the cluster time of the cluster'
     end
   end
 
   context 'when the command is run twice' do
 
-    let!(:reply_cluster_time) do
+    let(:reply_cluster_time) do
       operation_with_session
       EventSubscriber.succeeded_events[-1].reply['$clusterTime']
     end
@@ -748,8 +757,9 @@ shared_examples 'an operation updating cluster time' do
       end
 
       it 'does not update the cluster time of the cluster' do
+        bct = before_cluster_time
         second_command_cluster_time
-        expect(before_cluster_time).to eq(before_cluster_time)
+        expect(client.cluster.cluster_time).to eq(bct)
       end
     end
   end
@@ -761,8 +771,9 @@ shared_examples 'an operation updating cluster time' do
     end
 
     it 'does not update the cluster time of the cluster' do
+      bct = before_cluster_time
       operation
-      expect(before_cluster_time).to eq(before_cluster_time)
+      expect(client.cluster.cluster_time).to eq(bct)
     end
   end
 end
