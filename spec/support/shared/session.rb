@@ -740,6 +740,7 @@ shared_examples 'an operation updating cluster time' do
         end
 
         it 'includes the received cluster time in the second command' do
+          reply_cluster_time
           expect(second_command_cluster_time).to eq(reply_cluster_time)
         end
       end
@@ -842,7 +843,7 @@ shared_examples 'an operation not using a session' do
       it 'does not raise an exception' do
         expect {
           operation_result
-        }.not_to raise_exception(Mongo::Error::InvalidSession)
+        }.not_to raise_exception
       end
     end
   end
