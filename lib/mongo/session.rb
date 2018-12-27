@@ -658,9 +658,16 @@ module Mongo
             if e.label?(Mongo::Error::UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL)
               retry
             elsif e.label?(Mongo::Error::TRANSIENT_TRANSACTION_ERROR_LABEL)
-              # TODO the lack of merging of write concern options
-              # should fail a test somewhere
-              commit_options[:write_concern] = WriteConcern::Acknowledged.new(w: :majority)
+              wc_options = case v = commit_options[:write_concern]
+                when WriteConcern::Base
+                  v.options
+                when nil
+                  {}
+                else
+                  v
+                end
+              p wc_options
+              commit_options[:write_concern] = wc_options.merge(w: :majority)
               next
             else
               raise

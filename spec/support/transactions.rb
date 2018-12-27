@@ -375,13 +375,13 @@ module Mongo
               if actual && v.all? { |label| actual['errorLabels'].include?(label) }
                 nil
               else
-                "Expected #{actual} to include error label #{label}"
+                "Expected #{actual} to include error labels #{v.inspect}"
               end
             when 'errorLabelsOmit'
               if !actual || v.all? { |label| !actual['errorLabels'].include?(label) }
                 nil
               else
-                "Expected #{actual} to not include error label #{label}"
+                "Expected #{actual} to not include error label #{v.inspect}"
               end
             else
               if actual && (actual[k] == v || handle_upserted_id(k, v, actual[v]) ||
