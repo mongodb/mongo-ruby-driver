@@ -121,7 +121,7 @@ module Mongo
         @description = test['description']
         @client_options = convert_client_options(test['clientOptions'] || {})
         @session_options = snakeize_hash(test['sessionOptions'] || {})
-        @failpoint = test['failPoint']
+        @fail_point = test['failPoint']
         @operations = test['operations']
         @expectations = test['expectations']
         @outcome = test['outcome']
@@ -235,7 +235,7 @@ module Mongo
         # Remove any events from authentication commands.
         events.reject! { |c| c['command_started_event']['command_name'].start_with?('sasl') }
 
-        if @failpoint
+        if @fail_point
           admin_support_client.command(configureFailPoint: 'failCommand', mode: 'off')
         end
 
@@ -264,7 +264,7 @@ module Mongo
           { write_concern: { w: :majority } })
 
         coll.with(write: { w: :majority }).insert_many(@data) unless @data.empty?
-        admin_support_client.command(@failpoint) if @failpoint
+        admin_support_client.command(@fail_point) if @fail_point
 
         @collection = test_client[@spec.collection_name]
 
