@@ -695,12 +695,15 @@ describe Mongo::Server::Connection, retry: 3 do
         end
 
         before do
-          connection.send(:write, message)
+          expect(message).to receive(:replyable?) { false }
+          connection.send(:deliver, message)
+
           connection.send(:socket).instance_variable_set(:@timeout, -(Time.now.to_i))
         end
 
         let(:reply) do
-          connection.send(:read, message.request_id)
+          Mongo::Protocol::Message.deserialize(connection.send(:socket),
+            16*1024*1024, message.request_id)
         end
 
         it 'raises a timeout error' do
