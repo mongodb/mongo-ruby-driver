@@ -219,7 +219,6 @@ tests:
           command_name: commitTransaction
           database_name: admin
     outcome: *outcome
-
   -
     description: withTransaction explicit transaction options override defaultTransactionOptions
     clientOptions:

@@ -6,7 +6,7 @@ data: []
 tests:
   -
     # Session state will be ABORTED when callback returns to withTransaction
-    description: withTransaction reports error if callback aborts
+    description: withTransaction succeeds if callback aborts
     operations:
       -
         name: withTransaction
@@ -24,7 +24,6 @@ tests:
             -
               name: abortTransaction
               object: session0
-        error: true
     expectations:
       -
         command_started_event:
@@ -59,7 +58,7 @@ tests:
         data: []
   -
     # Session state will be ABORTED when callback returns to withTransaction
-    description: withTransaction reports error if callback aborts with no ops
+    description: withTransaction succeeds if callback aborts with no ops
     operations:
       -
         name: withTransaction
@@ -69,8 +68,83 @@ tests:
             -
               name: abortTransaction
               object: session0
-        error: true
     expectations: []
     outcome:
       collection:
         data: []
+  -
+    # Session state will be NO_TXN when callback returns to withTransaction
+    description: withTransaction still succeeds if callback aborts and runs extra op
+    operations:
+      -
+        name: withTransaction
+        object: session0
+        callback:
+          operations:
+            -
+              name: insertOne
+              object: collection
+              arguments:
+                session: session0
+                document: { _id: 1 }
+              result:
+                insertedId: 1
+            -
+              name: abortTransaction
+              object: session0
+            -
+              name: insertOne
+              object: collection
+              arguments:
+                session: session0
+                document: { _id: 2 }
+              result:
+                insertedId: 2
+    expectations:
+      -
+        command_started_event:
+          command:
+            insert: *collection_name
+            documents:
+              - { _id: 1 }
+            ordered: true
+            lsid: session0
+            txnNumber: { $numberLong: "1" }
+            startTransaction: true
+            autocommit: false
+            # omitted fields
+            readConcern: ~
+            writeConcern: ~
+          command_name: insert
+          database_name: *database_name
+      -
+        command_started_event:
+          command:
+            abortTransaction: 1
+            lsid: session0
+            txnNumber: { $numberLong: "1" }
+            autocommit: false
+            # omitted fields
+            startTransaction: ~
+            writeConcern: ~
+          command_name: abortTransaction
+          database_name: admin
+      -
+        command_started_event:
+          command:
+            insert: *collection_name
+            documents:
+              - { _id: 2 }
+            ordered: true
+            lsid: session0
+            # txnNumber is incremented for subsequent write
+            txnNumber: { $numberLong: "2" }
+            # omitted fields
+            startTransaction: ~
+            writeConcern: ~
+          command_name: insert
+          database_name: *database_name
+    outcome:
+      collection:
+        data:
+          - { _id: 2 }
