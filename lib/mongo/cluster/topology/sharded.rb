@@ -16,7 +16,7 @@ module Mongo
   class Cluster
     module Topology
 
-      # Defines behaviour for when a cluster is in sharded topology.
+      # Defines behavior for when a cluster is in sharded topology.
       #
       # @since 2.0.0
       class Sharded < Base

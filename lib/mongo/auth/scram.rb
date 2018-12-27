@@ -17,7 +17,7 @@ require 'mongo/auth/scram/conversation'
 module Mongo
   module Auth
 
-    # Defines behaviour for SCRAM authentication.
+    # Defines behavior for SCRAM authentication.
     #
     # @since 2.0.0
     class SCRAM

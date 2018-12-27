@@ -15,7 +15,7 @@
 module Mongo
   class BulkWrite
 
-    # Defines behaviour around transformations.
+    # Defines behavior around transformations.
     #
     # @api private
     #

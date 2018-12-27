@@ -16,7 +16,7 @@ module Mongo
   module Operation
     class Delete
 
-      # Defines custom behaviour of results for a delete when part of a bulk write.
+      # Defines custom behavior of results for a delete when part of a bulk write.
       #
       # @since 2.0.0
       class BulkResult < Operation::Result

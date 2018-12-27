@@ -145,7 +145,7 @@ def single_mongos?
   ClusterConfig.instance.single_server? && ClusterConfig.instance.mongos?
 end
 
-# For instances where behaviour is different on different versions, we need to
+# For instances where behavior is different on different versions, we need to
 # determine in the specs if we are 3.6 or higher.
 #
 # @since 2.5.0
@@ -163,7 +163,7 @@ def test_change_streams?
   !BSON::Environment.jruby? && change_stream_enabled? & replica_set?
 end
 
-# For instances where behaviour is different on different versions, we need to
+# For instances where behavior is different on different versions, we need to
 # determine in the specs if we are 3.6 or higher.
 #
 # @since 2.5.0
@@ -172,7 +172,7 @@ def array_filters_enabled?
 end
 
 
-# For instances where behaviour is different on different versions, we need to
+# For instances where behavior is different on different versions, we need to
 # determine in the specs if we are 3.4 or higher.
 #
 # @since 2.4.0
@@ -180,7 +180,7 @@ def collation_enabled?
   $collation_enabled ||= scanned_client_server!.features.collation_enabled?
 end
 
-# For instances where behaviour is different on different versions, we need to
+# For instances where behavior is different on different versions, we need to
 # determine in the specs if we are 3.2 or higher.
 #
 # @since 2.0.0
@@ -188,7 +188,7 @@ def find_command_enabled?
   $find_command_enabled ||= scanned_client_server!.features.find_command_enabled?
 end
 
-# For instances where behaviour is different on different versions, we need to
+# For instances where behavior is different on different versions, we need to
 # determine in the specs if we are 2.7 or higher.
 #
 # @since 2.0.0

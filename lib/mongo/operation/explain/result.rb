@@ -16,7 +16,7 @@ module Mongo
   module Operation
     class Explain
 
-      # Defines custom behaviour of results in find command with explain.
+      # Defines custom behavior of results in find command with explain.
       #
       # @since 2.5.0
       class Result < Operation::Result

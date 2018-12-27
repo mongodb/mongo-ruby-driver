@@ -16,7 +16,7 @@ module Mongo
   module Operation
     class Delete
 
-      # Defines custom behaviour of results for a delete.
+      # Defines custom behavior of results for a delete.
       #
       # @since 2.0.0
       class Result < Operation::Result

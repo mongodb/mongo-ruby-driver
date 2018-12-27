@@ -16,7 +16,7 @@ module Mongo
   class Collection
     class View
 
-      # Defines iteration related behaviour for collection views, including
+      # Defines iteration related behavior for collection views, including
       # cursor instantiation.
       #
       # @since 2.0.0

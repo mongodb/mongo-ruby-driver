@@ -16,7 +16,7 @@ module Mongo
   module Operation
     class MapReduce
 
-      # Defines custom behaviour of results for a map reduce operation.
+      # Defines custom behavior of results for a map reduce operation.
       #
       # @since 2.0.0
       class Result < Operation::Result

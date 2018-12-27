@@ -16,7 +16,7 @@ module Mongo
   module Operation
     class GetMore
 
-      # Defines custom behaviour of results for the get more command.
+      # Defines custom behavior of results for the get more command.
       #
       # @since 2.2.0
       class Result < Operation::Result

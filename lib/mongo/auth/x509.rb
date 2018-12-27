@@ -17,7 +17,7 @@ require 'mongo/auth/x509/conversation'
 module Mongo
   module Auth
 
-    # Defines behaviour for x.509 authentication.
+    # Defines behavior for x.509 authentication.
     #
     # @since 2.0.0
     class X509

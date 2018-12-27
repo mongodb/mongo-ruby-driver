@@ -16,7 +16,7 @@ module Mongo
   class Collection
     class View
 
-      # Provides behaviour around an aggregation pipeline on a collection view.
+      # Provides behavior around an aggregation pipeline on a collection view.
       #
       # @since 2.0.0
       class Aggregation

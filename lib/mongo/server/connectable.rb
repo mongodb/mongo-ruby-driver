@@ -15,7 +15,7 @@
 module Mongo
   class Server
 
-    # This provides common behaviour for connection objects.
+    # This provides common behavior for connection objects.
     #
     # @since 2.0.0
     module Connectable

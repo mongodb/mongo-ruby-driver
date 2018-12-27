@@ -16,7 +16,7 @@ module Mongo
   class Monitoring
     module Event
 
-      # Provides behaviour to redact sensitive information from commands and
+      # Provides behavior to redact sensitive information from commands and
       # replies.
       #
       # @since 2.1.0

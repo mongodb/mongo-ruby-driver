@@ -16,7 +16,7 @@ module Mongo
   module CRUD
     module Operation
 
-      # Defines common behaviour for running CRUD read operation tests
+      # Defines common behavior for running CRUD read operation tests
       # on a collection.
       #
       # @since 2.0.0

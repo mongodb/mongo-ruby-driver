@@ -22,7 +22,7 @@ require 'mongo/auth/stringprep'
 
 module Mongo
 
-  # This namespace contains all authentication related behaviour.
+  # This namespace contains all authentication related behavior.
   #
   # @since 2.0.0
   module Auth

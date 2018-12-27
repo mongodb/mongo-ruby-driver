@@ -16,7 +16,7 @@ module Mongo
   module Operation
     class Find
 
-      # Defines custom behaviour of results in find command.
+      # Defines custom behavior of results in find command.
       #
       # @since 2.2.0
       class Result < Operation::Result

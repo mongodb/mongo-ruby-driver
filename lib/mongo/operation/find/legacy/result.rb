@@ -17,7 +17,7 @@ module Mongo
     class Find
       class Legacy
 
-        # Defines custom behaviour of results for a query.
+        # Defines custom behavior of results for a query.
         #
         # @since 2.1.0
         class Result < Operation::Result

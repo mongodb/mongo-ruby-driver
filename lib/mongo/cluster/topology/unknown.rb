@@ -16,7 +16,7 @@ module Mongo
   class Cluster
     module Topology
 
-      # Defines behaviour for when a cluster is in an unknown state.
+      # Defines behavior for when a cluster is in an unknown state.
       #
       # @since 2.0.0
       class Unknown < Base

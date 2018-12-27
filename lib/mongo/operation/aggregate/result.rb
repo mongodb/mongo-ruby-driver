@@ -20,7 +20,7 @@ module Mongo
     # @since 2.0.0
     class Aggregate
 
-      # Defines custom behaviour of results in an aggregation context.
+      # Defines custom behavior of results in an aggregation context.
       #
       # @since 2.0.0
       class Result < Operation::Result

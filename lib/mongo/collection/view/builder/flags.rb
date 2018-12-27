@@ -17,7 +17,7 @@ module Mongo
     class View
       module Builder
 
-        # Provides behaviour for mapping flags.
+        # Provides behavior for mapping flags.
         #
         # @since 2.2.0
         module Flags

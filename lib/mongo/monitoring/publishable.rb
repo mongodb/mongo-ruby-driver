@@ -15,7 +15,7 @@
 module Mongo
   class Monitoring
 
-    # Defines behaviour for an object that can publish monitoring events.
+    # Defines behavior for an object that can publish monitoring events.
     #
     # @since 2.1.0
     module Publishable

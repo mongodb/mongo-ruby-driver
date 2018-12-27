@@ -15,7 +15,7 @@
 module Mongo
   module Options
 
-    # Utility class for various options mapping behaviour.
+    # Utility class for various options mapping behavior.
     #
     # @since 2.0.0
     module Mapper
