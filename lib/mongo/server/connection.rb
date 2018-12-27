@@ -256,11 +256,14 @@ module Mongo
       private
 
       def deliver(message)
-        write(message)
-        if message.replyable?
-          read(message.request_id)
-        else
-          nil
+        buffer = serialize(message)
+        ensure_connected do |socket|
+          socket.write(buffer.to_s)
+          if message.replyable?
+            Protocol::Message.deserialize(socket, max_message_size, message.request_id)
+          else
+            nil
+          end
         end
       end
 
@@ -332,7 +335,7 @@ module Mongo
         @auth_mechanism || (@server.features.scram_sha_1_enabled? ? :scram : :mongodb_cr)
       end
 
-      def write(message, buffer = BSON::ByteBuffer.new)
+      def serialize(message, buffer = BSON::ByteBuffer.new)
         start_size = 0
         message.compress!(compressor, options[:zlib_compression_level]).serialize(buffer, max_bson_object_size)
         if max_message_size &&
@@ -340,9 +343,7 @@ module Mongo
         then
           raise Error::MaxMessageSize.new(max_message_size)
         end
-        ensure_connected do |socket|
-          socket.write(buffer.to_s)
-        end
+        buffer
       end
     end
   end
