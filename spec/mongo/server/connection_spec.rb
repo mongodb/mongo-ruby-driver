@@ -462,14 +462,15 @@ describe Mongo::Server::Connection, retry: 3 do
     context 'when providing a single message' do
 
       let(:reply) do
-        connection.dispatch([ insert, query ])
+        connection.dispatch([ query ])
       end
 
       before do
         authorized_collection.delete_many
+        connection.dispatch([ insert ])
       end
 
-      it 'it dispatchs the message to the socket' do
+      it 'it dispatches the message to the socket' do
         expect(reply.documents.first['name']).to eq('testing')
       end
     end
@@ -492,8 +493,10 @@ describe Mongo::Server::Connection, retry: 3 do
         authorized_collection.delete_many
       end
 
-      it 'it dispatchs the message to the socket' do
-        expect(reply.documents.first['ok']).to eq(1.0)
+      it 'raises ArgumentError' do
+        expect do
+          reply
+        end.to raise_error(ArgumentError, 'Can only dispatch one message at a time')
       end
     end
 
@@ -520,9 +523,10 @@ describe Mongo::Server::Connection, retry: 3 do
       end
 
       before do
+        connection.dispatch([ insert ])
         # Fake a query for which we did not read the response. See RUBY-1117
         allow(query_bob).to receive(:replyable?) { false }
-        connection.dispatch([ insert, query_bob ])
+        connection.dispatch([ query_bob ])
       end
 
       it 'raises an UnexpectedResponse error' do
@@ -686,17 +690,20 @@ describe Mongo::Server::Connection, retry: 3 do
           described_class.new(server, server.options)
         end
 
-        let(:messages) do
-          [ insert ]
+        let(:message) do
+          insert
         end
 
         before do
-          connection.send(:write, messages)
+          expect(message).to receive(:replyable?) { false }
+          connection.send(:deliver, message)
+
           connection.send(:socket).instance_variable_set(:@timeout, -(Time.now.to_i))
         end
 
         let(:reply) do
-          connection.send(:read, messages.last.request_id)
+          Mongo::Protocol::Message.deserialize(connection.send(:socket),
+            16*1024*1024, message.request_id)
         end
 
         it 'raises a timeout error' do
