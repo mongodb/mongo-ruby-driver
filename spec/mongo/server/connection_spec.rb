@@ -690,17 +690,17 @@ describe Mongo::Server::Connection, retry: 3 do
           described_class.new(server, server.options)
         end
 
-        let(:messages) do
-          [ insert ]
+        let(:message) do
+          insert
         end
 
         before do
-          connection.send(:write, messages)
+          connection.send(:write, message)
           connection.send(:socket).instance_variable_set(:@timeout, -(Time.now.to_i))
         end
 
         let(:reply) do
-          connection.send(:read, messages.last.request_id)
+          connection.send(:read, message.request_id)
         end
 
         it 'raises a timeout error' do

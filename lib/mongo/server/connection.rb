@@ -337,8 +337,8 @@ module Mongo
         message.compress!(compressor, options[:zlib_compression_level]).serialize(buffer, max_bson_object_size)
         if max_message_size &&
           (buffer.length - start_size) > max_message_size
+        then
           raise Error::MaxMessageSize.new(max_message_size)
-          start_size = buffer.length
         end
         ensure_connected do |socket|
           socket.write(buffer.to_s)
