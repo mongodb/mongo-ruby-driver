@@ -16,7 +16,7 @@ module Mongo
   module Auth
     class LDAP
 
-      # Defines behaviour around a single PLAIN conversation between the
+      # Defines behavior around a single PLAIN conversation between the
       # client and server.
       #
       # @since 2.0.0

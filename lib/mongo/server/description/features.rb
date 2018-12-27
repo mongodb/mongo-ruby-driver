@@ -16,7 +16,7 @@ module Mongo
   class Server
     class Description
 
-      # Defines behaviour around what features a specific server supports.
+      # Defines behavior around what features a specific server supports.
       #
       # @since 2.0.0
       class Features

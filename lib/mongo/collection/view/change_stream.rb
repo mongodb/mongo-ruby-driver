@@ -18,7 +18,7 @@ module Mongo
   class Collection
     class View
 
-      # Provides behaviour around a `$changeStream` pipeline stage in the
+      # Provides behavior around a `$changeStream` pipeline stage in the
       # aggregation framework. Specifying this stage allows users to request
       # that notifications are sent for all changes to a particular collection
       # or database.

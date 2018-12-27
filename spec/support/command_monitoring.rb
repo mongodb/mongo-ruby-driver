@@ -90,7 +90,7 @@ end
 module Mongo
   module CommandMonitoring
 
-    # Matchers common behaviour.
+    # Matchers common behavior.
     #
     # @since 2.1.0
     module Matchable
@@ -268,7 +268,7 @@ module Mongo
       end
     end
 
-    # Encapsulates expectation behaviour.
+    # Encapsulates expectation behavior.
     #
     # @since 2.1.0
     class Expectation

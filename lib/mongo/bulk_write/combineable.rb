@@ -15,7 +15,7 @@
 module Mongo
   class BulkWrite
 
-    # Defines behaviour around combiners
+    # Defines behavior around combiners
     #
     # @api private
     #

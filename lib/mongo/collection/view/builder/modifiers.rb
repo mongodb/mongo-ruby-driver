@@ -17,7 +17,7 @@ module Mongo
     class View
       module Builder
 
-        # Provides behaviour for mapping modifiers.
+        # Provides behavior for mapping modifiers.
         #
         # @since 2.2.0
         module Modifiers

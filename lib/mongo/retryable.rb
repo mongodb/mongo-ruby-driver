@@ -14,7 +14,7 @@
 
 module Mongo
 
-  # Defines basic behaviour around retrying operations.
+  # Defines basic behavior around retrying operations.
   #
   # @since 2.1.0
   module Retryable

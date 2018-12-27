@@ -16,7 +16,7 @@ module Mongo
   module Auth
     class X509
 
-      # Defines behaviour around a single x.509 conversation between the
+      # Defines behavior around a single x.509 conversation between the
       # client and server.
       #
       # @since 2.0.0

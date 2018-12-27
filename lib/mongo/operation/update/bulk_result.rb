@@ -16,7 +16,7 @@ module Mongo
   module Operation
     class Update
 
-      # Defines custom behaviour of results for an udpate when sent as part of a bulk write.
+      # Defines custom behavior of results for an udpate when sent as part of a bulk write.
       #
       # @since 2.0.0
       class BulkResult < Operation::Result

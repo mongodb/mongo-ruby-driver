@@ -19,7 +19,7 @@ module Mongo
   module Auth
     class SCRAM
 
-      # Defines behaviour around a single SCRAM-SHA-1 conversation between the
+      # Defines behavior around a single SCRAM-SHA-1 conversation between the
       # client and server.
       #
       # @since 2.0.0

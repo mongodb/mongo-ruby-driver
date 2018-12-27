@@ -16,7 +16,7 @@ module Mongo
   module Grid
     class File
 
-      # Encapsulates behaviour around GridFS files collection file document.
+      # Encapsulates behavior around GridFS files collection file document.
       #
       # @since 2.0.0
       #

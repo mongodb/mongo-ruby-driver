@@ -17,7 +17,7 @@ module Mongo
     class Update
       class Legacy
 
-        # Defines custom behaviour of results for an update on server
+        # Defines custom behavior of results for an update on server
         # version <= 2.4.
         #
         # @since 2.0.0

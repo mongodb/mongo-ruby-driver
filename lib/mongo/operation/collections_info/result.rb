@@ -16,7 +16,7 @@ module Mongo
   module Operation
     class CollectionsInfo
 
-      # Defines custom behaviour of results when query the system.namespaces
+      # Defines custom behavior of results when query the system.namespaces
       # collection.
       #
       # @since 2.1.0

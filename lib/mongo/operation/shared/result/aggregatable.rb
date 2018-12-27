@@ -16,7 +16,7 @@ module Mongo
   module Operation
     class Result
 
-      # Defines custom behaviour of bulk write results
+      # Defines custom behavior of bulk write results
       #
       # @since 2.0.0
       module Aggregatable

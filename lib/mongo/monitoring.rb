@@ -14,7 +14,7 @@
 
 module Mongo
 
-  # The class defines behaviour for the performance monitoring API.
+  # The class defines behavior for the performance monitoring API.
   #
   # @since 2.1.0
   class Monitoring

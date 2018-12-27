@@ -16,7 +16,7 @@ module Mongo
   class Collection
     class View
 
-      # Defines behaviour around views being configurable and immutable.
+      # Defines behavior around views being configurable and immutable.
       #
       # @since 2.0.0
       module Immutable

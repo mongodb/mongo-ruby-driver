@@ -16,7 +16,7 @@ module Mongo
   module Operation
     class Indexes
 
-      # Defines custom behaviour of results when using the
+      # Defines custom behavior of results when using the
       # listIndexes command.
       #
       # @since 2.0.0

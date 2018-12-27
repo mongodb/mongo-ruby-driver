@@ -16,7 +16,7 @@ module Mongo
   module Operation
     class ParallelScan
 
-      # Defines custom behaviour of results in a parallel scan.
+      # Defines custom behavior of results in a parallel scan.
       #
       # @since 2.0.0
       class Result < Operation::Result

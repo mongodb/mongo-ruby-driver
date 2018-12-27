@@ -16,7 +16,7 @@ module Mongo
   module Auth
     class User
 
-      # Defines behaviour for user related operation on databases.
+      # Defines behavior for user related operation on databases.
       #
       # @since 2.0.0
       class View

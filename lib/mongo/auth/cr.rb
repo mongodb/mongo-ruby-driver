@@ -17,7 +17,7 @@ require 'mongo/auth/cr/conversation'
 module Mongo
   module Auth
 
-    # Defines behaviour for MongoDB-CR authentication.
+    # Defines behavior for MongoDB-CR authentication.
     #
     # @since 2.0.0
     # @deprecated MONGODB-CR authentication mechanism is deprecated

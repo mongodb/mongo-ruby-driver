@@ -17,7 +17,7 @@ require 'mongo/auth/ldap/conversation'
 module Mongo
   module Auth
 
-    # Defines behaviour for LDAP Proxy authentication.
+    # Defines behavior for LDAP Proxy authentication.
     #
     # @since 2.0.0
     class LDAP

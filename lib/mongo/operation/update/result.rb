@@ -16,7 +16,7 @@ module Mongo
   module Operation
     class Update
 
-      # Defines custom behaviour of results for an update.
+      # Defines custom behavior of results for an update.
       #
       # @since 2.0.0
       class Result < Operation::Result
