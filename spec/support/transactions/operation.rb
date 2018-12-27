@@ -166,7 +166,10 @@ module Mongo
           raise ArgumentError, 'with_transaction requires a callback to be present'
         end
 
-        session.with_transaction do
+        if @spec['transactionOptions']
+          options = snakeize_hash(@spec['transactionOptions'])
+        end
+        session.with_transaction(options) do
           callback['operations'].each do |op_spec|
             op = Operation.new(op_spec, @session0, @session1, session)
             rv = op.execute(collection)

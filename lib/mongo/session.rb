@@ -625,13 +625,14 @@ module Mongo
 
     def with_transaction(options=nil)
       commit_options = {}
+      if options
+        commit_options[:write_concern] = options[:write_concern]
+      end
       while true
-      #byebug
         start_transaction(options)
         begin
           yield self
         rescue Exception => e
-      #byebug
           if within_states?(STARTING_TRANSACTION_STATE, TRANSACTION_IN_PROGRESS_STATE)
             abort_transaction
           end
@@ -642,7 +643,6 @@ module Mongo
 
           raise
         else
-        #byebug
           if within_states?(TRANSACTION_ABORTED_STATE)
             raise Error::TransactionAborted, "Transaction was aborted"
           end
