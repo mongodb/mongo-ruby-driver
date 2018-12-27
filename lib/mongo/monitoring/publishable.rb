@@ -40,7 +40,7 @@ module Mongo
       def publish_command(messages, operation_id = nil)
         # This method does not handle more than one message in messages.
         if messages.length != 1
-          raise ArgumentError, 'Can only dispatch one message at a time'
+          raise ArgumentError, 'Can only monitor one message at a time'
         end
         operation_id ||= Monitoring.next_operation_id
         start = Time.now
