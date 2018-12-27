@@ -195,7 +195,7 @@ module Mongo
           raise ArgumentError, 'Can only dispatch one message at a time'
         end
         if monitoring.subscribers?(Monitoring::COMMAND)
-          publish_command(messages, operation_id || Monitoring.next_operation_id) do |msgs|
+          publish_command(messages, operation_id) do |msgs|
             deliver(msgs)
           end
         else

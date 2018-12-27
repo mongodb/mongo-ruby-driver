@@ -27,16 +27,22 @@ module Mongo
       # Publish a command event to the global monitoring.
       #
       # @example Publish a command event.
-      #   publish_command do |messages|
+      #   publish_command(messages) do |messages|
       #     # ...
       #   end
       #
       # @param [ Array<Message> ] messages The messages.
+      # @param [ Integer ] operation_id The operation id to link messages.
       #
       # @return [ Object ] The result of the yield.
       #
       # @since 2.1.0
-      def publish_command(messages, operation_id = Monitoring.next_operation_id)
+      def publish_command(messages, operation_id = nil)
+        # This method does not handle more than one message in messages.
+        if messages.length != 1
+          raise ArgumentError, 'Can only dispatch one message at a time'
+        end
+        operation_id ||= Monitoring.next_operation_id
         start = Time.now
         message = messages.first
         payload = message.payload
