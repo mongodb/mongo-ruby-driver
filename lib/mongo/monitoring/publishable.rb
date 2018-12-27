@@ -38,7 +38,6 @@ module Mongo
       # @since 2.1.0
       def publish_command(messages, operation_id = Monitoring.next_operation_id)
         start = Time.now
-        byebug if messages.length > 1
         message = messages.first
         payload = message.payload
         send_duration = duration(start)
