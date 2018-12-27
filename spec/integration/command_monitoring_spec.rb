@@ -71,6 +71,7 @@ describe 'Command monitoring' do
     min_server_version '3.6'
 
     it 'does not nest auth and find' do
+      expect(subscriber.started_events.length).to eq 0
       client['test-collection'].find(a: 1).first
       command_names = subscriber.started_events.map(&:command_name)
       expect(command_names).to eq %w(saslStart saslContinue saslContinue find)
