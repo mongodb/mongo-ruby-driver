@@ -76,7 +76,7 @@ module Mongo
       # @return [ Hash ] spec The operation spec.
       #
       # @since 2.6.0
-      def initialize(spec, session0, session1)
+      def initialize(spec, session0, session1, transaction_session=nil)
         @spec = spec
         @name = spec['name']
         @session0 = session0
@@ -87,7 +87,11 @@ module Mongo
                     when 'session1'
                       spec['arguments'].merge('session' => @session1)
                     else
-                      spec['arguments'] || {}
+                      args = spec['arguments'] || {}
+                      if transaction_session
+                        args = args.merge('session' => transaction_session)
+                      end
+                      args
                     end
       end
 
@@ -164,7 +168,7 @@ module Mongo
 
         session.with_transaction do
           callback['operations'].each do |op_spec|
-            op = Operation.new(op_spec, @session0, @session1)
+            op = Operation.new(op_spec, @session0, @session1, session)
             rv = op.execute(collection)
             if rv && rv['exception']
               raise rv['exception']
