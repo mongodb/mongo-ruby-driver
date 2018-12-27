@@ -661,7 +661,6 @@ module Mongo
               # TODO the lack of merging of write concern options
               # should fail a test somewhere
               commit_options[:write_concern] = WriteConcern::Acknowledged.new(w: :majority)
-              byebug
               next
             else
               raise
