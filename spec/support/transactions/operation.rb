@@ -166,6 +166,9 @@ module Mongo
           callback['operations'].each do |op_spec|
             op = Operation.new(op_spec, @session0, @session1)
             rv = op.execute(collection)
+            if rv['exception']
+              raise rv['exception']
+            end
           end
         end
       end
