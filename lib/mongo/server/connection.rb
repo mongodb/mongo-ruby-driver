@@ -340,7 +340,9 @@ module Mongo
           raise Error::MaxMessageSize.new(max_message_size)
           start_size = buffer.length
         end
-        ensure_connected{ |socket| socket.write(buffer.to_s) }
+        ensure_connected do |socket|
+          socket.write(buffer.to_s)
+        end
       end
     end
   end
