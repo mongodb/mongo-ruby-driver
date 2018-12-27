@@ -194,12 +194,13 @@ module Mongo
         if messages.length != 1
           raise ArgumentError, 'Can only dispatch one message at a time'
         end
+        message = messages.first
         if monitoring.subscribers?(Monitoring::COMMAND)
-          publish_command(messages, operation_id) do |msgs|
-            deliver(msgs)
+          publish_command(messages, operation_id) do
+            deliver(message)
           end
         else
-          deliver(messages)
+          deliver(message)
         end
       end
 
@@ -254,9 +255,13 @@ module Mongo
 
       private
 
-      def deliver(messages)
-        write(messages)
-        messages.last.replyable? ? read(messages.last.request_id) : nil
+      def deliver(message)
+        write([message])
+        if message.replyable?
+          read(message.request_id)
+        else
+          nil
+        end
       end
 
       def handshake!
