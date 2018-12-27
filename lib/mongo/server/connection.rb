@@ -195,13 +195,7 @@ module Mongo
           raise ArgumentError, 'Can only dispatch one message at a time'
         end
         message = messages.first
-        if monitoring.subscribers?(Monitoring::COMMAND)
-          publish_command(messages, operation_id) do
-            deliver(message)
-          end
-        else
-          deliver(message)
-        end
+        deliver(message)
       end
 
       # Ping the connection to see if the server is responding to commands.
@@ -258,12 +252,26 @@ module Mongo
       def deliver(message)
         buffer = serialize(message)
         ensure_connected do |socket|
-          socket.write(buffer.to_s)
-          if message.replyable?
-            Protocol::Message.deserialize(socket, max_message_size, message.request_id)
+          operation_id = Monitoring.next_operation_id
+          command_started(address, operation_id, message.payload)
+          start = Time.now
+          result = nil
+          begin
+            socket.write(buffer.to_s)
+            result = if message.replyable?
+              Protocol::Message.deserialize(socket, max_message_size, message.request_id)
+            else
+              nil
+            end
+          rescue Exception => e
+            total_duration = Time.now - start
+            command_failed(nil, address, operation_id, message.payload, e.message, total_duration)
+            raise
           else
-            nil
+            total_duration = Time.now - start
+            command_completed(result, address, operation_id, message.payload, total_duration)
           end
+          result
         end
       end
 

@@ -24,43 +24,6 @@ module Mongo
       # @return [ Monitoring ] monitoring The monitoring.
       attr_reader :monitoring
 
-      # Publish a command event to the global monitoring.
-      #
-      # @example Publish a command event.
-      #   publish_command(messages) do |messages|
-      #     # ...
-      #   end
-      #
-      # @param [ Array<Message> ] messages The messages.
-      # @param [ Integer ] operation_id The operation id to link messages.
-      #
-      # @return [ Object ] The result of the yield.
-      #
-      # @since 2.1.0
-      def publish_command(messages, operation_id = nil)
-        # This method does not handle more than one message in messages.
-        if messages.length != 1
-          raise ArgumentError, 'Can only monitor one message at a time'
-        end
-        operation_id ||= Monitoring.next_operation_id
-        start = Time.now
-        message = messages.first
-        payload = message.payload
-        send_duration = duration(start)
-        command_started(address, operation_id, payload)
-        receive_start = Time.now
-        begin
-          result = yield(messages)
-          total_duration = duration(receive_start) + send_duration
-          command_completed(result, address, operation_id, payload, total_duration)
-          result
-        rescue Exception => e
-          total_duration = duration(receive_start) + send_duration
-          command_failed(nil, address, operation_id, payload, e.message, total_duration)
-          raise e
-        end
-      end
-
       def publish_event(topic, event)
         monitoring.succeeded(topic, event)
       end
