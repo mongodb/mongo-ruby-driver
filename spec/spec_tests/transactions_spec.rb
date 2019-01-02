@@ -36,19 +36,7 @@ describe 'Transactions' do
           end
 
           it 'has the correct command_started events', if: test_instance.expectations do
-            expectations = test_instance.expectations.map do |expectation|
-              # We convert the hashes to sorted arrays to ensure that
-              # asserting equality between the expected and actual event
-              # descriptions don't fail due to the same entries being
-              # in a different order.
-              command_event = expectation['command_started_event']['command'].to_a.sort
-              command_event.delete_if { |_, v| v == nil }
-              event = {'command' => command_event}
-              event_expectation = expectation['command_started_event'].merge(event)
-              expectation.merge('command_started_event' => event_expectation)
-            end
-
-            expect(results[:events]).to eq(expectations)
+            test_instance.verifier.verify_command_started_events(results)
           end
         end
       end
