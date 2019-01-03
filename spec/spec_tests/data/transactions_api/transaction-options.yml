@@ -42,10 +42,10 @@ tests:
           command:
             commitTransaction: 1
             lsid: session0
-            readConcern: { afterClusterTime: 42 }
             txnNumber: { $numberLong: "1" }
             autocommit: false
             # omitted fields
+            readConcern: ~
             startTransaction: ~
             writeConcern: ~
           command_name: commitTransaction
@@ -82,11 +82,11 @@ tests:
           command:
             commitTransaction: 1
             lsid: session0
-            readConcern: { level: local, afterClusterTime: 42 }
             txnNumber: { $numberLong: "1" }
             autocommit: false
             writeConcern: { w: 1 }
             # omitted fields
+            readConcern: ~
             startTransaction: ~
           command_name: commitTransaction
           database_name: admin
@@ -121,11 +121,11 @@ tests:
           command:
             commitTransaction: 1
             lsid: session0
-            readConcern: { level: snapshot, afterClusterTime: 42 }
             txnNumber: { $numberLong: "1" }
             autocommit: false
             writeConcern: { w: 1 }
             # omitted fields
+            readConcern: ~
             startTransaction: ~
           command_name: commitTransaction
           database_name: admin
@@ -171,11 +171,11 @@ tests:
           command:
             commitTransaction: 1
             lsid: session0
-            readConcern: { level: snapshot, afterClusterTime: 42 }
             txnNumber: { $numberLong: "1" }
             autocommit: false
             writeConcern: { w: 1 }
             # omitted fields
+            readConcern: ~
             startTransaction: ~
           command_name: commitTransaction
           database_name: admin
@@ -210,11 +210,11 @@ tests:
           command:
             commitTransaction: 1
             lsid: session0
-            readConcern: { level: snapshot, afterClusterTime: 42 }
             txnNumber: { $numberLong: "1" }
             autocommit: false
             writeConcern: { w: 1 }
             # omitted fields
+            readConcern: ~
             startTransaction: ~
           command_name: commitTransaction
           database_name: admin
@@ -247,11 +247,11 @@ tests:
           command:
             commitTransaction: 1
             lsid: session0
-            readConcern: { level: snapshot, afterClusterTime: 42 }
             txnNumber: { $numberLong: "1" }
             autocommit: false
             writeConcern: { w: 1 }
             # omitted fields
+            readConcern: ~
             startTransaction: ~
           command_name: commitTransaction
           database_name: admin

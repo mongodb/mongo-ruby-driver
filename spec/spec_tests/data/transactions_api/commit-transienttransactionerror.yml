@@ -4,12 +4,13 @@ collection_name: &collection_name "test"
 data: []
 
 # These tests use error codes where the TransientTransactionError label will be
-# applied to the error response for commitTransaction.
+# applied to the error response for commitTransaction. This will cause the
+# entire transaction to be retried instead of commitTransaction.
 #
 # See: https://github.com/mongodb/mongo/blob/r4.1.6/src/mongo/db/handle_request_response.cpp
 tests:
   -
-    description: commitTransaction is not retried after TransientTransactionError (NotMaster)
+    description: transaction is retried commitTransaction TransientTransactionError (NotMaster)
     failPoint:
       configureFailPoint: failCommand
       mode: { times: 1 }
@@ -57,19 +58,50 @@ tests:
           command:
             commitTransaction: 1
             lsid: session0
-            readConcern: { afterClusterTime: 42 }
             txnNumber: { $numberLong: "1" }
             autocommit: false
             # omitted fields
+            readConcern: ~
+            startTransaction: ~
+            writeConcern: ~
+          command_name: commitTransaction
+          database_name: admin
+      -
+        command_started_event:
+          command:
+            insert: *collection_name
+            documents:
+              - { _id: 1 }
+            ordered: true
+            lsid: session0
+            # txnNumber is incremented when retrying the transaction
+            txnNumber: { $numberLong: "2" }
+            startTransaction: true
+            autocommit: false
+            # omitted fields
+            readConcern: ~
+            writeConcern: ~
+          command_name: insert
+          database_name: *database_name
+      -
+        command_started_event:
+          command:
+            commitTransaction: 1
+            lsid: session0
+            txnNumber: { $numberLong: "2" }
+            autocommit: false
+            # omitted fields
+            readConcern: ~
             startTransaction: ~
             writeConcern: ~
           command_name: commitTransaction
           database_name: admin
     outcome: &outcome
       collection:
-        data: []
+        data:
+          - { _id: 1 }
   -
-    description: commitTransaction is not retried after TransientTransactionError (LockTimeout)
+    description: transaction is retried commitTransaction TransientTransactionError (LockTimeout)
     failPoint:
       configureFailPoint: failCommand
       mode: { times: 1 }
@@ -89,7 +121,7 @@ tests:
     expectations: *expectations
     outcome: *outcome
   -
-    description: commitTransaction is not retried after TransientTransactionError (WriteConflict)
+    description: transaction is retried commitTransaction TransientTransactionError (WriteConflict)
     failPoint:
       configureFailPoint: failCommand
       mode: { times: 1 }
@@ -109,7 +141,7 @@ tests:
     expectations: *expectations
     outcome: *outcome
   -
-    description: commitTransaction is not retried after TransientTransactionError (SnapshotUnavailable)
+    description: transaction is retried commitTransaction TransientTransactionError (SnapshotUnavailable)
     failPoint:
       configureFailPoint: failCommand
       mode: { times: 1 }
@@ -129,7 +161,7 @@ tests:
     expectations: *expectations
     outcome: *outcome
   -
-    description: commitTransaction is not retried after TransientTransactionError (NoSuchTransaction)
+    description: transaction is retried commitTransaction TransientTransactionError (NoSuchTransaction)
     failPoint:
       configureFailPoint: failCommand
       mode: { times: 1 }
@@ -149,7 +181,7 @@ tests:
     expectations: *expectations
     outcome: *outcome
   -
-    description: commitTransaction is not retried after TransientTransactionError (PreparedTransactionInProgress)
+    description: transaction is retried commitTransaction TransientTransactionError (PreparedTransactionInProgress)
     failPoint:
       configureFailPoint: failCommand
       mode: { times: 1 }

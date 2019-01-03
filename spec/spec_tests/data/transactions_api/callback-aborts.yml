@@ -49,6 +49,7 @@ tests:
             txnNumber: { $numberLong: "1" }
             autocommit: false
             # omitted fields
+            readConcern: ~
             startTransaction: ~
             writeConcern: ~
           command_name: abortTransaction
@@ -125,6 +126,7 @@ tests:
             txnNumber: { $numberLong: "1" }
             autocommit: false
             # omitted fields
+            readConcern: ~
             startTransaction: ~
             writeConcern: ~
           command_name: abortTransaction
@@ -140,6 +142,7 @@ tests:
             # txnNumber is incremented for subsequent write
             txnNumber: { $numberLong: "2" }
             # omitted fields
+            readConcern: ~
             startTransaction: ~
             writeConcern: ~
           command_name: insert

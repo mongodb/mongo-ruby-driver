@@ -48,10 +48,10 @@ tests:
           command:
             commitTransaction: 1
             lsid: session0
-            readConcern: { afterClusterTime: 42 }
             txnNumber: { $numberLong: "1" }
             autocommit: false
             # omitted fields
+            readConcern: ~
             startTransaction: ~
             writeConcern: ~
           command_name: commitTransaction
@@ -61,12 +61,12 @@ tests:
           command:
             commitTransaction: 1
             lsid: session0
-            readConcern: { afterClusterTime: 42 }
             txnNumber: { $numberLong: "1" }
             autocommit: false
             # commitTransaction applies w:majority on retries (SPEC-1185)
             writeConcern: { w: majority }
             # omitted fields
+            readConcern: ~
             startTransaction: ~
           command_name: commitTransaction
           database_name: admin
@@ -75,12 +75,12 @@ tests:
           command:
             commitTransaction: 1
             lsid: session0
-            readConcern: { afterClusterTime: 42 }
             txnNumber: { $numberLong: "1" }
             autocommit: false
             # commitTransaction applies w:majority on retries (SPEC-1185)
             writeConcern: { w: majority }
             # omitted fields
+            readConcern: ~
             startTransaction: ~
           command_name: commitTransaction
           database_name: admin
@@ -134,11 +134,11 @@ tests:
           command:
             commitTransaction: 1
             lsid: session0
-            readConcern: { afterClusterTime: 42 }
             txnNumber: { $numberLong: "1" }
             autocommit: false
             writeConcern: { w: 2, j: true, wtimeout: 5000 }
             # omitted fields
+            readConcern: ~
             startTransaction: ~
           command_name: commitTransaction
           database_name: admin
@@ -147,12 +147,12 @@ tests:
           command:
             commitTransaction: 1
             lsid: session0
-            readConcern: { afterClusterTime: 42 }
             txnNumber: { $numberLong: "1" }
             autocommit: false
             # commitTransaction applies w:majority on retries (SPEC-1185)
             writeConcern: { w: majority, j: true, wtimeout: 5000 }
             # omitted fields
+            readConcern: ~
             startTransaction: ~
           command_name: commitTransaction
           database_name: admin
@@ -161,12 +161,12 @@ tests:
           command:
             commitTransaction: 1
             lsid: session0
-            readConcern: { afterClusterTime: 42 }
             txnNumber: { $numberLong: "1" }
             autocommit: false
             # commitTransaction applies w:majority on retries (SPEC-1185)
             writeConcern: { w: majority, j: true, wtimeout: 5000 }
             # omitted fields
+            readConcern: ~
             startTransaction: ~
           command_name: commitTransaction
           database_name: admin

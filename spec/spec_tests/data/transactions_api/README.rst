@@ -42,6 +42,9 @@ Each YAML file has the following keys:
   - ``failPoint`` (optional): The ``configureFailPoint`` command document to run
     to configure a fail point on the primary server.
 
+  - ``clientOptions`` (optional): Names and values of options to pass to
+    ``MongoClient()``.
+
   - ``sessionOptions`` (optional): Names and values of options to pass to
     ``MongoClient.startSession()``.
 
@@ -62,7 +65,20 @@ Each YAML file has the following keys:
 
     - ``result`` (optional): The return value from the operation. This will
       correspond to an operation's result object as defined in the CRUD
-      specification. This field may be omitted if ``error`` is ``true``.
+      specification. If the operation is expected to return an error, the
+      ``result`` is a single document that has one or more of the following
+      fields:
+
+      - ``errorContains``: A substring of the expected error message.
+
+      - ``errorCodeName``: The expected "codeName" field in the server
+        error response.
+
+      - ``errorLabelsContain``: A list of error label strings that the
+        error is expected to have.
+
+      - ``errorLabelsOmit``: A list of error label strings that the
+        error is expected not to have.
 
   - ``expectations`` (optional): List of command-started events.
 
@@ -105,3 +121,22 @@ Command-Started Events
 See: `Command-Started Events <../../transactions/tests#command-started-events>`_
 in the Transactions spec test suite for instructions on asserting
 command-started events.
+
+Prose Tests
+===========
+
+Callback Raises a Custom Error
+``````````````````````````````
+
+Write a callback that raises a custom exception or error that does not include
+either UnknownTransactionCommitResult or TransientTransactionError error labels.
+Execute this callback using ``withTransaction`` and assert that the callback's
+error bypasses any retry logic within ``withTransaction`` and is propagated to
+the caller of ``withTransaction``.
+
+Callback Returns a Value
+````````````````````````
+
+Write a callback that returns a custom value (e.g. boolean, string, object).
+Execute this callback using ``withTransaction`` and assert that the callback's
+return value is propagated to the caller of ``withTransaction``.

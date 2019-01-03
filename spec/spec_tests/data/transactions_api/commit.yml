@@ -66,10 +66,10 @@ tests:
           command:
             commitTransaction: 1
             lsid: session0
-            readConcern: { afterClusterTime: 42 }
             txnNumber: { $numberLong: "1" }
             autocommit: false
             # omitted fields
+            readConcern: ~
             startTransaction: ~
             writeConcern: ~
           command_name: commitTransaction
@@ -82,7 +82,7 @@ tests:
   -
     # In this scenario, the callback commits the transaction originally started
     # by withTransaction and starts a second transaction before returning. Since
-    # withTransaction only examples the session's state, it should commit that
+    # withTransaction only examines the session's state, it should commit that
     # second transaction after the callback returns.
     description: withTransaction commits after callback returns (second transaction)
     operations:
@@ -135,10 +135,10 @@ tests:
           command:
             commitTransaction: 1
             lsid: session0
-            readConcern: { afterClusterTime: 42 }
             txnNumber: { $numberLong: "1" }
             autocommit: false
             # omitted fields
+            readConcern: ~
             startTransaction: ~
             writeConcern: ~
           command_name: commitTransaction
@@ -151,12 +151,13 @@ tests:
               - { _id: 1 }
             ordered: true
             lsid: session0
+            # second transaction will be causally consistent with the first
+            readConcern: { afterClusterTime: 42 }
             # txnNumber is incremented for the second transaction
             txnNumber: { $numberLong: "2" }
             startTransaction: true
             autocommit: false
             # omitted fields
-            readConcern: ~
             writeConcern: ~
           command_name: insert
           database_name: *database_name
@@ -165,10 +166,10 @@ tests:
           command:
             commitTransaction: 1
             lsid: session0
-            readConcern: { afterClusterTime: 42 }
             txnNumber: { $numberLong: "2" }
             autocommit: false
             # omitted fields
+            readConcern: ~
             startTransaction: ~
             writeConcern: ~
           command_name: commitTransaction
