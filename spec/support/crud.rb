@@ -126,7 +126,9 @@ module Mongo
       attr_reader :description
 
       # Spec tests have configureFailPoint as a string, make it a string here too
-      FAIL_POINT_BASE_COMMAND = { 'configureFailPoint' => "onPrimaryTransactionalWrite" }
+      FAIL_POINT_BASE_COMMAND = {
+        'configureFailPoint' => "onPrimaryTransactionalWrite",
+      }.freeze
 
       # Instantiate the new CRUDTest.
       #
