@@ -134,13 +134,15 @@ tests:
       -
         command_started_event:
           command:
+            # This test is agnostic about retryWrites, so we do not assert the
+            # txnNumber. If retryWrites=true, the txnNumber will be incremented
+            # from the value used in the previous transaction; otherwise, the
+            # field will not be present at all.
             insert: *collection_name
             documents:
               - { _id: 2 }
             ordered: true
             lsid: session0
-            # txnNumber is incremented for subsequent write
-            txnNumber: { $numberLong: "2" }
             # omitted fields
             readConcern: ~
             startTransaction: ~
