@@ -148,7 +148,7 @@ tests:
           command:
             insert: *collection_name
             documents:
-              - { _id: 1 }
+              - { _id: 2 }
             ordered: true
             lsid: session0
             # second transaction will be causally consistent with the first
