@@ -67,6 +67,12 @@ class ModernRetryableTestConsumer < LegacyRetryableTestConsumer
   end
 end
 
+class RetryableHost
+  include Mongo::Retryable
+
+  public :retry_write_allowed?
+end
+
 describe Mongo::Retryable do
 
   let(:operation) do
@@ -201,6 +207,74 @@ describe Mongo::Retryable do
               expect(retryable.read).to be true
             end
           end
+        end
+      end
+    end
+  end
+
+  describe '#retry_write_allowed?' do
+    let(:retryable) { RetryableHost.new }
+
+    context 'nil session' do
+      it 'returns false' do
+        expect(retryable.retry_write_allowed?(nil, nil)).to be false
+      end
+    end
+
+    context 'with session' do
+      let(:session) { double('session') }
+
+      context 'retry writes enabled' do
+        context 'nil write concern' do
+          let(:write_concern) { nil }
+
+          it 'returns true' do
+            expect(session).to receive(:retry_writes?).and_return(true)
+            expect(retryable.retry_write_allowed?(session, write_concern)).to be true
+          end
+        end
+
+        context 'hash write concern with w: 0' do
+          let(:write_concern) { {w: 0} }
+
+          it 'returns false' do
+            expect(session).to receive(:retry_writes?).and_return(true)
+            expect(retryable.retry_write_allowed?(session, write_concern)).to be false
+          end
+        end
+
+        context 'hash write concern with w: :majority' do
+          let(:write_concern) { {w: :majority} }
+
+          it 'returns true' do
+            expect(session).to receive(:retry_writes?).and_return(true)
+            expect(retryable.retry_write_allowed?(session, write_concern)).to be true
+          end
+        end
+
+        context 'write concern object with w: 0' do
+          let(:write_concern) { Mongo::WriteConcern.get(w: 0) }
+
+          it 'returns false' do
+            expect(session).to receive(:retry_writes?).and_return(true)
+            expect(retryable.retry_write_allowed?(session, write_concern)).to be false
+          end
+        end
+
+        context 'write concern object with w: :majority' do
+          let(:write_concern) { Mongo::WriteConcern.get(w: :majority) }
+
+          it 'returns true' do
+            expect(session).to receive(:retry_writes?).and_return(true)
+            expect(retryable.retry_write_allowed?(session, write_concern)).to be true
+          end
+        end
+      end
+
+      context 'retry writes not enabled' do
+        it 'returns false' do
+          expect(session).to receive(:retry_writes?).and_return(false)
+          expect(retryable.retry_write_allowed?(session, nil)).to be false
         end
       end
     end

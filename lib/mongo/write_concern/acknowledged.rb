@@ -19,9 +19,7 @@ module Mongo
     # appropriate options on each write operation.
     #
     # @since 2.0.0
-    class Acknowledged
-      include Normalizable
-
+    class Acknowledged < Base
       # Get the get last error command for the concern.
       #
       # @example Get the gle command.

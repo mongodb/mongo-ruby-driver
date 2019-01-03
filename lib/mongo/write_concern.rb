@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/write_concern/normalizable'
+require 'mongo/write_concern/base'
 require 'mongo/write_concern/acknowledged'
 require 'mongo/write_concern/unacknowledged'
 
