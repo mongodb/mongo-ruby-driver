@@ -117,13 +117,13 @@ module Mongo
         raise ArgumentError, 'Cannot end a transaction without a session'
       end
 
-      unless retry_write_allowed?(session, write_concern) || ending_transaction
+      unless ending_transaction || retry_write_allowed?(session, write_concern)
         return legacy_write_with_retry(nil, session, &block)
       end
 
       server = cluster.next_primary
 
-      unless server.retry_writes? || ending_transaction
+      unless ending_transaction || server.retry_writes?
         return legacy_write_with_retry(server, session, &block)
       end
 
