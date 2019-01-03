@@ -433,31 +433,33 @@ module Mongo
 
         attr_reader :test_instance
 
-        def verify_command_started_events(results)
+        def verify_command_started_event_count(results)
           expectations = test_instance.expectations
           expect(results[:events].length).to eq(expectations.length)
+        end
 
-          expectations.each_with_index do |expectation, i|
-            expect(expectation.keys).to eq(%w(command_started_event))
-            expected_event = expectation['command_started_event'].dup
-            actual_event = results[:events][i].dup
-            expect(expected_event.keys).to eq(actual_event.keys)
+        def verify_command_started_event(results, i)
+          expectation = test_instance.expectations[i]
 
-            expected_command = expected_event.delete('command')
-            actual_command = actual_event.delete('command')
+          expect(expectation.keys).to eq(%w(command_started_event))
+          expected_event = expectation['command_started_event'].dup
+          actual_event = results[:events][i].dup
+          expect(expected_event.keys).to eq(actual_event.keys)
 
-            # Hash#compact is ruby 2.4+
-            expected_presence = expected_command.select { |k, v| !v.nil? }
-            expected_absence = expected_command.select { |k, v| v.nil? }
+          expected_command = expected_event.delete('command')
+          actual_command = actual_event.delete('command')
 
-            expect(actual_command).to eq(expected_presence)
-            expected_absence.each do |k, v|
-              expect(actual_command).not_to have_key(k)
-            end
+          # Hash#compact is ruby 2.4+
+          expected_presence = expected_command.select { |k, v| !v.nil? }
+          expected_absence = expected_command.select { |k, v| v.nil? }
 
-            # this compares remaining fields in events after command is removed
-            expect(expected_event).to eq(actual_event)
+          expect(actual_command).to eq(expected_presence)
+          expected_absence.each do |k, v|
+            expect(actual_command).not_to have_key(k)
           end
+
+          # this compares remaining fields in events after command is removed
+          expect(expected_event).to eq(actual_event)
         end
       end
     end
