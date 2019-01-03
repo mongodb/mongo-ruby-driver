@@ -148,7 +148,7 @@ module Mongo
       end
 
       def test_client
-        @test_client ||= ClientRegistry.instance.global_client('authorized').with(
+        @test_client ||= ClientRegistry.instance.global_client('authorized_without_retry_writes').with(
           @client_options.merge(app_name: 'this is used solely to force the new client to create its own cluster'))
       end
 

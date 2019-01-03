@@ -69,6 +69,11 @@ module Authorization
       ClientRegistry.instance.global_client('authorized_with_retry_writes')
     end
 
+    context.let(:authorized_client_without_retry_writes) do
+      EventSubscriber.clear_events!
+      ClientRegistry.instance.global_client('authorized_without_retry_writes')
+    end
+
     # Provides an authorized mongo client that has a Command subscriber.
     #
     # @since 2.5.1

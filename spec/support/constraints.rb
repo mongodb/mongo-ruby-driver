@@ -80,4 +80,12 @@ module Constraints
       end
     end
   end
+
+  def require_no_retry_writes
+    before do
+      if SpecConfig.instance.retry_writes?
+        skip "Retry writes is enabled"
+      end
+    end
+  end
 end

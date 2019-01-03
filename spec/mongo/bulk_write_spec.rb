@@ -1910,8 +1910,14 @@ describe Mongo::BulkWrite do
 
           context 'when retryable writes are supported', if: test_sessions? do
 
+            let(:subscriber) { EventSubscriber.new }
+
             let(:client) do
-              authorized_client_with_retry_writes
+              authorized_client_with_retry_writes.tap do |client|
+                # We do not unsubscribe any of these subscribers.
+                # This is harmless since they simply store the events in themselves.
+                client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
+              end
             end
 
             let(:collection) do
@@ -1923,7 +1929,7 @@ describe Mongo::BulkWrite do
             end
 
             let(:started_events) do
-              EventSubscriber.started_events.select do |event|
+              subscriber.started_events.select do |event|
                 event.command['insert']
               end
             end
@@ -1944,8 +1950,12 @@ describe Mongo::BulkWrite do
               expect(result.inserted_ids.size).to eq(batch_size)
             end
 
+            it 'publishes the expected number of events' do
+              expect(started_events.length).to eq 2
+            end
+
             it 'increments the transaction number' do
-              expect(first_txn_number + 1). to eq(second_txn_number)
+              expect(second_txn_number). to eq(first_txn_number + 1)
             end
           end
         end

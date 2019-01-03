@@ -143,6 +143,18 @@ class SpecConfig
     end
   end
 
+  def retry_writes?
+    %w(yes true on 1).include?((ENV['RETRY_WRITES'] || '').downcase)
+  end
+
+  def retry_writes_options
+    if retry_writes?
+      {retry_writes: true}
+    else
+      {}
+    end
+  end
+
   # Base test options.
   def base_test_options
     {
@@ -166,7 +178,7 @@ class SpecConfig
   # Options for test suite clients.
   def test_options
     base_test_options.merge(connect_options).
-      merge(ssl_options).merge(compressor_options)
+      merge(ssl_options).merge(compressor_options).merge(retry_writes_options)
   end
 
   # The default test database for all specs.

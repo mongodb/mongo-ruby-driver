@@ -92,7 +92,7 @@ module Mongo
         #
         # @since 2.6.0
         def inspect
-          "#<{#{self.class} command=#{command_name}>"
+          "#<{#{self.class} #{database_name}.#{command_name} command=#{command}>"
         end
       end
     end
