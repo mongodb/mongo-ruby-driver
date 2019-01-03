@@ -1,39 +1,14 @@
 require 'spec_helper'
 
-class TestCommandMonitoringSubscriber
-  def initialize
-    @started_events = []
-    @succeeded_events = []
-    @failed_events = []
-  end
-
-  attr_reader :started_events, :succeeded_events, :failed_events
-
-  def started(event)
-    @started_events << event
-  end
-
-  def succeeded(event)
-    @succeeded_events << event
-  end
-
-  def failed(event)
-    @failed_events << event
-  end
-end
-
 describe 'Command monitoring' do
-  let(:subscriber) { TestCommandMonitoringSubscriber.new }
 
-  before do
-    Mongo::Monitoring::Global.subscribe(Mongo::Monitoring::COMMAND, subscriber)
+  let(:subscriber) { EventSubscriber.new }
+
+  let(:client) do
+    authorized_client.with(app_name: 'command monitoring spec').tap do |client|
+      client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
+    end
   end
-
-  after do
-    Mongo::Monitoring::Global.unsubscribe(Mongo::Monitoring::COMMAND, subscriber)
-  end
-
-  let(:client) { new_local_client(authorized_client.cluster.addresses.map(&:to_s), authorized_client.options) }
 
   it 'notifies on successful commands' do
     result = client.database.command(:ismaster => 1)
