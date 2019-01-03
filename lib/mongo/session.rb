@@ -210,7 +210,9 @@ module Mongo
     # @since 2.6.0
     def add_start_transaction!(command)
       command.tap do |c|
-        c[:startTransaction] = true if starting_transaction?
+        if starting_transaction?
+          c[:startTransaction] = true
+        end
       end
     end
 
