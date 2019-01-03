@@ -98,6 +98,16 @@ describe Mongo::Retryable do
       end
     end
 
+    context 'when ending_transaction is true' do
+      let(:retryable) { RetryableTestConsumer.new(operation, cluster) }
+
+      it 'raises ArgumentError' do
+        expect do
+          retryable.write_with_retry(nil, nil, true)
+        end.to raise_error(ArgumentError, 'Cannot end a transaction without a session')
+      end
+    end
+
     context 'when a socket error occurs' do
 
       before do

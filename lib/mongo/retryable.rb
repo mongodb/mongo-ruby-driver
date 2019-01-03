@@ -80,7 +80,17 @@ module Mongo
       yield
     end
 
-    # Execute a write operation with a retry.
+    # Implements write retrying functionality by yielding to the passed
+    # block one or more times.
+    #
+    # If the session is provided (hence, the deployment supports sessions),
+    # and modern retry writes are enabled on the client, the modern retry
+    # logic is invoked. Otherwise the legacy retry logic is invoked.
+    #
+    # If ending_transaction parameter is true, indicating that a transaction
+    # is being committed or aborted, the operation is executed exactly once.
+    # Note that, since transactions require sessions, this method will raise
+    # ArgumentError if ending_transaction is true and session is nil.
     #
     # @api private
     #
@@ -103,6 +113,10 @@ module Mongo
     #
     # @since 2.1.0
     def write_with_retry(session, write_concern, ending_transaction = false, &block)
+      if ending_transaction && !session
+        raise ArgumentError, 'Cannot end a transaction without a session'
+      end
+
       unless retry_write_allowed?(session, write_concern) || ending_transaction
         return legacy_write_with_retry(nil, session, &block)
       end
