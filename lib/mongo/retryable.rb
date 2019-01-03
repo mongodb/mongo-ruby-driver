@@ -92,8 +92,8 @@ module Mongo
     # @note This only retries operations on not master failures, since it is
     #   the only case we can be sure a partial write did not already occur.
     #
-    # @param [ true | false ] ending_transaction True if the write operation is abortTransaction or
-    #   commitTransaction, false otherwise.
+    # @param [ true | false ] ending_transaction True if the write operation is
+    #   abortTransaction or commitTransaction, false otherwise.
     # @param [ Proc ] block The block to execute.
     #
     # @yieldparam [ Server ] server The server to which the write should be sent.
