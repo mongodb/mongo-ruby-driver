@@ -73,7 +73,7 @@ module Mongo
       MAX_MESSAGE_SIZE = 50331648.freeze
 
       def initialize(*args) # :nodoc:
-        @request_id = nil
+        set_request_id
       end
 
       # Returns the request id for the message
@@ -258,7 +258,6 @@ module Mongo
       # @param buffer [String] Buffer to receive the header
       # @return [String] Serialized header
       def serialize_header(buffer)
-        set_request_id unless @request_id
         Header.serialize(buffer, [0, request_id, 0, op_code])
       end
 

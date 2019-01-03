@@ -59,7 +59,7 @@ module Mongo
         @compressor_id = COMPRESSOR_ID_MAP[compressor]
         @compressed_message = ''
         @zlib_compression_level = zlib_compression_level if zlib_compression_level && zlib_compression_level != -1
-        @request_id = message.set_request_id
+        @request_id = message.request_id
       end
 
       # Inflate an OP_COMRESSED message and return the original message.
