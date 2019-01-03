@@ -544,12 +544,19 @@ module Mongo
         else
           @last_commit_skipped = false
 
-          write_with_retry(self, options[:write_concern] || txn_options[:write_concern], true) do |server, txn_num|
+p 'xwc', options[:write_concern]
+byebug
+          write_concern = options[:write_concern] || txn_options[:write_concern]
+          if write_concern && !write_concern.is_a?(WriteConcern::Base)
+            write_concern = WriteConcern.get(write_concern)
+          end
+          write_with_retry(self, write_concern, true) do |server, txn_num|
             Operation::Command.new(
               selector: { commitTransaction: 1 },
               db_name: 'admin',
               session: self,
-              txn_num: txn_num
+              txn_num: txn_num,
+              write_concern: write_concern,
             ).execute(server)
           end
         end
@@ -626,11 +633,11 @@ module Mongo
     end
 
     def with_transaction(options=nil)
-      commit_options = {}
-      if options
-        commit_options[:write_concern] = options[:write_concern]
-      end
       while true
+        commit_options = {}
+        if options
+          commit_options[:write_concern] = options[:write_concern]
+        end
         start_transaction(options)
         begin
           yield self
@@ -658,8 +665,6 @@ module Mongo
             break
           rescue Mongo::Error => e
             if e.label?(Mongo::Error::UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL)
-              retry
-            elsif e.label?(Mongo::Error::TRANSIENT_TRANSACTION_ERROR_LABEL)
               wc_options = case v = commit_options[:write_concern]
                 when WriteConcern::Base
                   v.options
@@ -670,6 +675,8 @@ module Mongo
                 end
               p wc_options
               commit_options[:write_concern] = wc_options.merge(w: :majority)
+              retry
+            elsif e.label?(Mongo::Error::TRANSIENT_TRANSACTION_ERROR_LABEL)
               next
             else
               raise
