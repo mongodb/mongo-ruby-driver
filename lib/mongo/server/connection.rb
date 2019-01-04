@@ -168,22 +168,32 @@ module Mongo
         true
       end
 
-      # Dispatch the provided messages to the connection. If the last message
-      # requires a response a reply will be returned.
+      # Dispatch a single message to the connection. If the message
+      # requires a response, a reply will be returned.
       #
-      # @example Dispatch the messages.
-      #   connection.dispatch([ insert, command ])
+      # @example Dispatch the message.
+      #   connection.dispatch([ insert ])
       #
       # @note This method is named dispatch since 'send' is a core Ruby method on
       #   all objects.
       #
-      # @param [ Array<Message> ] messages The messages to dispatch.
+      # @note For backwards compatibility, this method accepts the messages
+      #   as an array. However, exactly one message must be given per invocation.
+      #
+      # @param [ Array<Message> ] messages A one-element array containing
+      #   the message to dispatch.
       # @param [ Integer ] operation_id The operation id to link messages.
       #
       # @return [ Protocol::Message | nil ] The reply if needed.
       #
       # @since 2.0.0
       def dispatch(messages, operation_id = nil)
+        # The monitoring code does not correctly handle multiple messages,
+        # and the driver internally does not send more than one message at
+        # a time ever. Thus prohibit multiple message use for now.
+        if messages.length != 1
+          raise ArgumentError, 'Can only dispatch one message at a time'
+        end
         if monitoring.subscribers?(Monitoring::COMMAND)
           publish_command(messages, operation_id || Monitoring.next_operation_id) do |msgs|
             deliver(msgs)
