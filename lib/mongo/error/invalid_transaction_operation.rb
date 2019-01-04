@@ -45,7 +45,7 @@ module Mongo
       # Instantiate the new exception.
       #
       # @example Instantiate the exception.
-      #   Mongo::Error::InvalidUpdateDocument.new(msg)
+      #   Mongo::Error::InvalidTransactionOperation.new(msg)
       #
       # @since 2.6.0
       def initialize(msg)
