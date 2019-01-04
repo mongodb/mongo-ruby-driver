@@ -15,11 +15,10 @@
 module Mongo
   module WriteConcern
 
-    # Defines default behavior for write concerns and provides a factory
-    # interface to get a proper object from options.
+    # Defines common behavior for write concerns.
     #
-    # @since 2.0.0
-    module Normalizable
+    # @since 2.7.0
+    class Base
 
       # @return [ Hash ] The write concern options.
       attr_reader :options
@@ -29,7 +28,7 @@ module Mongo
       # @api private
       #
       # @example Instantiate a new write concern mode.
-      #   Mongo::WriteConcern.new(:w => 1)
+      #   Mongo::WriteConcern::Acknowledged.new(:w => 1)
       #
       # @param [ Hash ] options The options to instantiate with.
       #
