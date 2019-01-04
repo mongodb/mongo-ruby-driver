@@ -448,6 +448,7 @@ module Mongo
           expect(expectation.keys).to eq(%w(command_started_event))
           expected_event = expectation['command_started_event'].dup
           actual_event = results[:events][i].dup
+          expect(actual_event).not_to be nil
           expect(expected_event.keys).to eq(actual_event.keys)
 
           expected_command = expected_event.delete('command')
