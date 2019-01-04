@@ -675,17 +675,19 @@ module Mongo
       mode && mode != 'primary'
     end
 
-    def causal_consistency_doc(read_concern)
+    # Returns causal consistency document if the last operation time is
+    # known and causal consistency is enabled, otherwise returns nil.
+    def causal_consistency_doc
       if operation_time && causal_consistency?
-        (read_concern || {}).merge(:afterClusterTime => operation_time)
+        {:afterClusterTime => operation_time}
       else
-        read_concern
+        nil
       end
     end
 
     def causal_consistency?
       @causal_consistency ||= (if @options.key?(:causal_consistency)
-                                 @options[:causal_consistency] == true
+                                 !!@options[:causal_consistency]
                                else
                                  true
                                end)
