@@ -517,6 +517,8 @@ describe Mongo::Cluster::Topology::ReplicaSetNoPrimary do
   end
 
   describe '#summary' do
+    skip_if_linting
+
     let(:desc) do
       Mongo::Server::Description.new(Mongo::Address.new('127.0.0.2:27017'))
     end

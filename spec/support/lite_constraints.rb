@@ -27,4 +27,18 @@ module LiteConstraints
       end
     end
   end
+
+  # Some tests will fail if linting is enabled:
+  # 1. Tests that pass invalid options to client, etc. which the linter
+  #    rejects.
+  # 2. Tests that set expectations on topologies, server descriptions, etc.
+  #    (since setting expectations requires mutating said objects, and when
+  #    linting is on those objects are frozen).
+  def skip_if_linting
+    before do
+      if Mongo::Lint.enabled?
+        skip "Linting is enabled"
+      end
+    end
+  end
 end
