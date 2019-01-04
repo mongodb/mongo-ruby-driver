@@ -27,6 +27,8 @@ describe Mongo::Monitoring::Event::ServerDescriptionChanged do
   end
 
   describe '#summary' do
+    skip_if_linting
+
     it 'renders correctly' do
       expect(topology).to receive(:server_descriptions).and_return({
         '127.0.0.1:27017' => Mongo::Server::Description.new(Mongo::Address.new('127.0.0.1:27017'))})

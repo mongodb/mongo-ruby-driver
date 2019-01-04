@@ -3,9 +3,11 @@ module Mongo
   module Lint
     def validate_underscore_read_preference(read_pref)
       return unless enabled?
-      if read_pref
-        validate_underscore_read_preference_mode(read_pref[:mode] || read_pref['mode'])
+      return if read_pref.nil?
+      unless read_pref.is_a?(Hash)
+        raise Error::LintError, "Read preference is not a hash: #{read_pref}"
       end
+      validate_underscore_read_preference_mode(read_pref[:mode] || read_pref['mode'])
     end
     module_function :validate_underscore_read_preference
 
@@ -21,9 +23,11 @@ module Mongo
 
     def validate_camel_case_read_preference(read_pref)
       return unless enabled?
-      if read_pref
-        validate_camel_case_read_preference_mode(read_pref[:mode] || read_pref['mode'])
+      return if read_pref.nil?
+      unless read_pref.is_a?(Hash)
+        raise Error::LintError, "Read preference is not a hash: #{read_pref}"
       end
+      validate_camel_case_read_preference_mode(read_pref[:mode] || read_pref['mode'])
     end
     module_function :validate_camel_case_read_preference
 
@@ -38,7 +42,7 @@ module Mongo
     module_function :validate_camel_case_read_preference_mode
 
     def enabled?
-      ENV['MONGO_RUBY_DRIVER_LINT'] && %w(1 yes true).include?(ENV['MONGO_RUBY_DRIVER_LINT'].downcase)
+      ENV['MONGO_RUBY_DRIVER_LINT'] && %w(1 yes true on).include?(ENV['MONGO_RUBY_DRIVER_LINT'].downcase)
     end
     module_function :enabled?
   end

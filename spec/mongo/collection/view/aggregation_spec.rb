@@ -324,7 +324,7 @@ describe Mongo::Collection::View::Aggregation do
     context 'when the collection has a read preference' do
 
       let(:read_preference) do
-        Mongo::ServerSelector.get(mode: :secondary)
+        {mode: :secondary}
       end
 
       it 'includes the read preference in the spec' do

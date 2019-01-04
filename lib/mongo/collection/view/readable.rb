@@ -545,7 +545,7 @@ module Mongo
           else
             @read_preference ||= (options[:read] || collection.read_preference)
           end
-          Mongo::Lint.validate_underscore_read_preference(rp)
+          Lint.validate_underscore_read_preference(rp)
           rp
         end
 

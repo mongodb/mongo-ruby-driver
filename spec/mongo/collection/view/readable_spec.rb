@@ -1175,11 +1175,11 @@ describe Mongo::Collection::View::Readable do
     context 'when a read pref is not specified' do
 
       let(:options) do
-        { :read =>  Mongo::ServerSelector.get(:mode => :secondary) }
+        { :read =>  {:mode => :secondary} }
       end
 
       it 'returns the read preference' do
-        expect(view.read).to eq(options[:read])
+        expect(view.read).to eq(BSON::Document.new(options[:read]))
       end
 
       context 'when no read pref is set on initialization' do

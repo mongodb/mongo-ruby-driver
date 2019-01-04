@@ -153,9 +153,14 @@ module Mongo
     #
     # @return [ Hash ] The result of the command execution.
     def command(operation, opts = {})
-      txn_read_pref = opts[:session] && opts[:session].in_transaction? && opts[:session].txn_read_preference
-      Mongo::Lint.validate_underscore_read_preference(txn_read_pref)
-      preference = ServerSelector.get(txn_read_pref || opts[:read] || ServerSelector::PRIMARY)
+      txn_read_pref = if opts[:session] && opts[:session].in_transaction?
+        opts[:session].txn_read_preference
+      else
+        nil
+      end
+      txn_read_pref ||= opts[:read] || ServerSelector::PRIMARY
+      Lint.validate_underscore_read_preference(txn_read_pref)
+      preference = ServerSelector.get(txn_read_pref)
       server = preference.select_server(cluster)
 
       client.send(:with_session, opts) do |session|
