@@ -15,18 +15,26 @@
 module Mongo
   module Operation
 
-    # Custom behavior for operations that support the causally consistency.
+    # Custom behavior for operations that support causal consistency.
     #
     # @since 2.5.2
     module CausalConsistencySupported
 
       private
 
+      # Adds causal consistency document to the selector, if one can be
+      # constructed.
+      #
+      # This method overrides the causal consistency addition logic of
+      # SessionsSupported and is meant to be used with operations classified
+      # as "read operations accepting a read concern", as these are defined
+      # in the causal consistency spec.
+      #
+      # In order for the override to work correctly the
+      # CausalConsistencySupported module must be included after
+      # SessionsSupported module in target classes.
       def apply_causal_consistency!(selector, server)
-        if !server.standalone?
-          full_read_concern_doc = session.send(:causal_consistency_doc, selector[:readConcern] || read_concern)
-          selector[:readConcern] = full_read_concern_doc if full_read_concern_doc
-        end
+        apply_causal_consistency_if_possible(selector, server)
       end
     end
   end

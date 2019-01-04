@@ -38,12 +38,32 @@ module Mongo
         :parallelCollectionScan
       ].freeze
 
+      # Adds causal consistency document to the selector, if one can be
+      # constructed and the selector is for a startTransaction command.
+      #
+      # When operations are performed in a transaction, only the first
+      # operation (the one which starts the transaction via startTransaction)
+      # is allowed to have a read concern, and with it the causal consistency
+      # document, specified.
       def apply_causal_consistency!(selector, server)
         return unless selector[:startTransaction]
 
+        apply_causal_consistency_if_possible(selector, server)
+      end
+
+      # Adds causal consistency document to the selector, if one can be
+      # constructed.
+      #
+      # In order for the causal consistency document to be constructed,
+      # causal consistency must be enabled for the session and the session
+      # must have the current operation time. Also, topology must be
+      # replica set or sharded cluster.
+      def apply_causal_consistency_if_possible(selector, server)
         if !server.standalone?
-          full_read_concern_doc = session.send(:causal_consistency_doc, selector[:readConcern] || read_concern)
-          selector[:readConcern] = full_read_concern_doc if full_read_concern_doc
+          cc_doc = session.send(:causal_consistency_doc)
+          if cc_doc
+            selector[:readConcern] = (selector[:readConcern] || read_concern || {}).merge(cc_doc)
+          end
         end
       end
 
