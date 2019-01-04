@@ -39,6 +39,9 @@ Each YAML file has the following keys:
 
   - ``description``: The name of the test.
 
+  - ``skipReason`` (optional): If present, the test should be skipped and the
+    string value will specify a reason.
+
   - ``failPoint`` (optional): The ``configureFailPoint`` command document to run
     to configure a fail point on the primary server.
 

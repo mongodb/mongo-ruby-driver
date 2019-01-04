@@ -10,10 +10,10 @@ data: []
 # See: https://github.com/mongodb/mongo/blob/r4.1.6/src/mongo/db/handle_request_response.cpp
 tests:
   -
-    description: transaction is retried commitTransaction TransientTransactionError (NotMaster)
+    description: transaction is retried after commitTransaction TransientTransactionError (NotMaster)
     failPoint:
       configureFailPoint: failCommand
-      mode: { times: 1 }
+      mode: { times: 2 }
       data:
           failCommands: ["commitTransaction"]
           errorCode: 10107 # NotMaster
@@ -32,10 +32,6 @@ tests:
                 document: { _id: 1 }
               result:
                 insertedId: 1
-        result:
-          errorCodeName: NotMaster
-          errorLabelsContain: ["TransientTransactionError"]
-          errorLabelsOmit: ["UnknownTransactionCommitResult"]
     expectations: &expectations
       -
         command_started_event:
@@ -53,6 +49,19 @@ tests:
             writeConcern: ~
           command_name: insert
           database_name: *database_name
+      -
+        command_started_event:
+          command:
+            commitTransaction: 1
+            lsid: session0
+            txnNumber: { $numberLong: "1" }
+            autocommit: false
+            # omitted fields
+            readConcern: ~
+            startTransaction: ~
+            writeConcern: ~
+          command_name: commitTransaction
+          database_name: admin
       -
         command_started_event:
           command:
@@ -101,10 +110,10 @@ tests:
         data:
           - { _id: 1 }
   -
-    description: transaction is retried commitTransaction TransientTransactionError (LockTimeout)
+    description: transaction is retried after commitTransaction TransientTransactionError (LockTimeout)
     failPoint:
       configureFailPoint: failCommand
-      mode: { times: 1 }
+      mode: { times: 2 }
       data:
           failCommands: ["commitTransaction"]
           errorCode: 24 # SnapshotUnavailable
@@ -114,17 +123,13 @@ tests:
         name: withTransaction
         object: session0
         callback: *callback
-        result:
-          errorCodeName: LockTimeout
-          errorLabelsContain: ["TransientTransactionError"]
-          errorLabelsOmit: ["UnknownTransactionCommitResult"]
     expectations: *expectations
     outcome: *outcome
   -
-    description: transaction is retried commitTransaction TransientTransactionError (WriteConflict)
+    description: transaction is retried after commitTransaction TransientTransactionError (WriteConflict)
     failPoint:
       configureFailPoint: failCommand
-      mode: { times: 1 }
+      mode: { times: 2 }
       data:
           failCommands: ["commitTransaction"]
           errorCode: 112 # WriteConflict
@@ -134,17 +139,13 @@ tests:
         name: withTransaction
         object: session0
         callback: *callback
-        result:
-          errorCodeName: WriteConflict
-          errorLabelsContain: ["TransientTransactionError"]
-          errorLabelsOmit: ["UnknownTransactionCommitResult"]
     expectations: *expectations
     outcome: *outcome
   -
-    description: transaction is retried commitTransaction TransientTransactionError (SnapshotUnavailable)
+    description: transaction is retried after commitTransaction TransientTransactionError (SnapshotUnavailable)
     failPoint:
       configureFailPoint: failCommand
-      mode: { times: 1 }
+      mode: { times: 2 }
       data:
           failCommands: ["commitTransaction"]
           errorCode: 246 # SnapshotUnavailable
@@ -154,17 +155,13 @@ tests:
         name: withTransaction
         object: session0
         callback: *callback
-        result:
-          errorCodeName: SnapshotUnavailable
-          errorLabelsContain: ["TransientTransactionError"]
-          errorLabelsOmit: ["UnknownTransactionCommitResult"]
     expectations: *expectations
     outcome: *outcome
   -
-    description: transaction is retried commitTransaction TransientTransactionError (NoSuchTransaction)
+    description: transaction is retried after commitTransaction TransientTransactionError (NoSuchTransaction)
     failPoint:
       configureFailPoint: failCommand
-      mode: { times: 1 }
+      mode: { times: 2 }
       data:
           failCommands: ["commitTransaction"]
           errorCode: 251 # NoSuchTransaction
@@ -174,17 +171,13 @@ tests:
         name: withTransaction
         object: session0
         callback: *callback
-        result:
-          errorCodeName: NoSuchTransaction
-          errorLabelsContain: ["TransientTransactionError"]
-          errorLabelsOmit: ["UnknownTransactionCommitResult"]
     expectations: *expectations
     outcome: *outcome
   -
-    description: transaction is retried commitTransaction TransientTransactionError (PreparedTransactionInProgress)
+    description: transaction is retried after commitTransaction TransientTransactionError (PreparedTransactionInProgress)
     failPoint:
       configureFailPoint: failCommand
-      mode: { times: 1 }
+      mode: { times: 2 }
       data:
           failCommands: ["commitTransaction"]
           errorCode: 267 # PreparedTransactionInProgress
@@ -194,9 +187,5 @@ tests:
         name: withTransaction
         object: session0
         callback: *callback
-        result:
-          errorCodeName: PreparedTransactionInProgress
-          errorLabelsContain: ["TransientTransactionError"]
-          errorLabelsOmit: ["UnknownTransactionCommitResult"]
     expectations: *expectations
     outcome: *outcome

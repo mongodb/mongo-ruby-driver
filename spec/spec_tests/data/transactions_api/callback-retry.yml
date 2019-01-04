@@ -181,6 +181,19 @@ tests:
             writeConcern: ~
           command_name: insert
           database_name: *database_name
+      -
+        command_started_event:
+          command:
+            abortTransaction: 1
+            lsid: session0
+            txnNumber: { $numberLong: "1" }
+            autocommit: false
+            # omitted fields
+            readConcern: ~
+            startTransaction: ~
+            writeConcern: ~
+          command_name: abortTransaction
+          database_name: admin
     outcome:
       collection:
         data: []

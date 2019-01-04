@@ -6,6 +6,7 @@ data: []
 tests:
   -
     description: commitTransaction succeeds after multiple connection errors
+    skipReason: SPEC-1185 Drivers should use majority write concern when retrying commitTransaction
     failPoint:
       configureFailPoint: failCommand
       mode: { times: 2 }
@@ -90,6 +91,7 @@ tests:
           - { _id: 1 }
   -
     description: commitTransaction retry only overwrites write concern w option
+    skipReason: SPEC-1185 Drivers should use majority write concern when retrying commitTransaction
     failPoint:
       configureFailPoint: failCommand
       mode: { times: 2 }
