@@ -73,8 +73,12 @@ module Mongo
       # @since 2.6.0
       def tests
         @transaction_tests.map do |test|
-          Proc.new { Mongo::Transactions::TransactionsTest.new(@data, test, self) }
-        end
+          if test['skipReason']
+            nil
+          else
+            Proc.new { Mongo::Transactions::TransactionsTest.new(@data, test, self) }
+          end
+        end.compact
       end
 
       def database_name
