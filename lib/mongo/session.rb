@@ -473,12 +473,10 @@ module Mongo
     #
     # @param [ Hash ] options The options for the transaction being started.
     #
-    # @option options [ Hash ] read_concern The read concern options hash, with the following
-    #   optional keys:
-    #   - *:level* -- the read preference level as a symbol; valid values are *:local*, *:majority*,
-    #     and *:snapshot*
-    #   - *:after_cluster_time* -- the cluster time BSON::Document or hash specifying which cluster
-    #     time reads should occur after
+    # @option options [ Hash ] read_concern The read concern options hash,
+    #   with the following optional keys:
+    #   - *:level* -- the read preference level as a symbol; valid values
+    #      are *:local*, *:majority*, and *:snapshot*
     # @option options [ Hash ] :write_concern The write concern options. Can be :w =>
     #   Integer|String, :fsync => Boolean, :j => Boolean.
     # @option options [ Hash ] :read The read preference options. The hash may have the following
@@ -491,6 +489,10 @@ module Mongo
     #
     # @since 2.6.0
     def start_transaction(options = nil)
+      if options
+        Lint.validate_read_concern_option(options[:read_concern])
+      end
+
       check_if_ended!
 
       if within_states?(STARTING_TRANSACTION_STATE, TRANSACTION_IN_PROGRESS_STATE)
