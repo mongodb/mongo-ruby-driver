@@ -194,13 +194,8 @@ module Mongo
         if messages.length != 1
           raise ArgumentError, 'Can only dispatch one message at a time'
         end
-        if monitoring.subscribers?(Monitoring::COMMAND)
-          publish_command(messages, operation_id || Monitoring.next_operation_id) do |msgs|
-            deliver(msgs)
-          end
-        else
-          deliver(messages)
-        end
+        message = messages.first
+        deliver(message)
       end
 
       # Ping the connection to see if the server is responding to commands.
@@ -254,9 +249,30 @@ module Mongo
 
       private
 
-      def deliver(messages)
-        write(messages)
-        messages.last.replyable? ? read(messages.last.request_id) : nil
+      def deliver(message)
+        buffer = serialize(message)
+        ensure_connected do |socket|
+          operation_id = Monitoring.next_operation_id
+          command_started(address, operation_id, message.payload)
+          start = Time.now
+          result = nil
+          begin
+            socket.write(buffer.to_s)
+            result = if message.replyable?
+              Protocol::Message.deserialize(socket, max_message_size, message.request_id)
+            else
+              nil
+            end
+          rescue Exception => e
+            total_duration = Time.now - start
+            command_failed(nil, address, operation_id, message.payload, e.message, total_duration)
+            raise
+          else
+            total_duration = Time.now - start
+            command_completed(result, address, operation_id, message.payload, total_duration)
+          end
+          result
+        end
       end
 
       def handshake!
@@ -327,17 +343,15 @@ module Mongo
         @auth_mechanism || (@server.features.scram_sha_1_enabled? ? :scram : :mongodb_cr)
       end
 
-      def write(messages, buffer = BSON::ByteBuffer.new)
+      def serialize(message, buffer = BSON::ByteBuffer.new)
         start_size = 0
-        messages.each do |message|
-          message.compress!(compressor, options[:zlib_compression_level]).serialize(buffer, max_bson_object_size)
-          if max_message_size &&
-            (buffer.length - start_size) > max_message_size
-            raise Error::MaxMessageSize.new(max_message_size)
-            start_size = buffer.length
-          end
+        message.compress!(compressor, options[:zlib_compression_level]).serialize(buffer, max_bson_object_size)
+        if max_message_size &&
+          (buffer.length - start_size) > max_message_size
+        then
+          raise Error::MaxMessageSize.new(max_message_size)
         end
-        ensure_connected{ |socket| socket.write(buffer.to_s) }
+        buffer
       end
     end
   end
