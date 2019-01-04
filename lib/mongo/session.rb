@@ -544,8 +544,8 @@ module Mongo
         else
           @last_commit_skipped = false
 
-p 'xwc', options[:write_concern]
-byebug
+#p 'xwc', options[:write_concern]
+#byebug
           write_concern = options[:write_concern] || txn_options[:write_concern]
           if write_concern && !write_concern.is_a?(WriteConcern::Base)
             write_concern = WriteConcern.get(write_concern)
