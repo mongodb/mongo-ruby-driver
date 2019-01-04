@@ -88,6 +88,10 @@ module Mongo
       def collection_name
         @spec['collection_name']
       end
+
+      def min_server_version
+        @spec['minServerVersion']
+      end
     end
 
     # Represents a single transaction test.
