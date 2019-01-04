@@ -66,7 +66,7 @@ Full release notes and release history are available [here](https://github.com/m
 License
 -----
 
- Copyright (C) 2009-2018 MongoDB, Inc.
+ Copyright (C) 2009-2019 MongoDB, Inc.
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
