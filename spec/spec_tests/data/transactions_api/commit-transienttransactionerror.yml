@@ -10,13 +10,13 @@ data: []
 # See: https://github.com/mongodb/mongo/blob/r4.1.6/src/mongo/db/handle_request_response.cpp
 tests:
   -
-    description: transaction is retried after commitTransaction TransientTransactionError (NotMaster)
+    description: transaction is retried after commitTransaction TransientTransactionError (LockTimeout)
     failPoint:
       configureFailPoint: failCommand
       mode: { times: 2 }
       data:
           failCommands: ["commitTransaction"]
-          errorCode: 10107 # NotMaster
+          errorCode: 24 # LockTimeout
           closeConnection: false
     operations:
       -
@@ -83,12 +83,13 @@ tests:
               - { _id: 1 }
             ordered: true
             lsid: session0
+            # second transaction will be causally consistent with the first
+            readConcern: { afterClusterTime: 42 }
             # txnNumber is incremented when retrying the transaction
             txnNumber: { $numberLong: "2" }
             startTransaction: true
             autocommit: false
             # omitted fields
-            readConcern: ~
             writeConcern: ~
           command_name: insert
           database_name: *database_name
@@ -109,22 +110,6 @@ tests:
       collection:
         data:
           - { _id: 1 }
-  -
-    description: transaction is retried after commitTransaction TransientTransactionError (LockTimeout)
-    failPoint:
-      configureFailPoint: failCommand
-      mode: { times: 2 }
-      data:
-          failCommands: ["commitTransaction"]
-          errorCode: 24 # SnapshotUnavailable
-          closeConnection: false
-    operations:
-      -
-        name: withTransaction
-        object: session0
-        callback: *callback
-    expectations: *expectations
-    outcome: *outcome
   -
     description: transaction is retried after commitTransaction TransientTransactionError (WriteConflict)
     failPoint:

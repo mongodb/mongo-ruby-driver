@@ -176,3 +176,86 @@ tests:
       collection:
         data:
           - { _id: 1 }
+  -
+    description: commit is retried after commitTransaction UnknownTransactionCommitResult (NotMaster)
+    failPoint:
+      configureFailPoint: failCommand
+      mode: { times: 2 }
+      data:
+          failCommands: ["commitTransaction"]
+          errorCode: 10107 # NotMaster
+          closeConnection: false
+    operations:
+      -
+        name: withTransaction
+        object: session0
+        callback:
+          operations:
+            -
+              name: insertOne
+              object: collection
+              arguments:
+                session: session0
+                document: { _id: 1 }
+              result:
+                insertedId: 1
+    expectations:
+      -
+        command_started_event:
+          command:
+            insert: *collection_name
+            documents:
+              - { _id: 1 }
+            ordered: true
+            lsid: session0
+            txnNumber: { $numberLong: "1" }
+            startTransaction: true
+            autocommit: false
+            # omitted fields
+            readConcern: ~
+            writeConcern: ~
+          command_name: insert
+          database_name: *database_name
+      -
+        command_started_event:
+          command:
+            commitTransaction: 1
+            lsid: session0
+            txnNumber: { $numberLong: "1" }
+            autocommit: false
+            # omitted fields
+            readConcern: ~
+            startTransaction: ~
+            writeConcern: ~
+          command_name: commitTransaction
+          database_name: admin
+      -
+        command_started_event:
+          command:
+            commitTransaction: 1
+            lsid: session0
+            txnNumber: { $numberLong: "1" }
+            autocommit: false
+            # omitted fields
+            readConcern: ~
+            startTransaction: ~
+            writeConcern: ~
+          command_name: commitTransaction
+          database_name: admin
+      -
+        command_started_event:
+          command:
+            commitTransaction: 1
+            lsid: session0
+            txnNumber: { $numberLong: "1" }
+            autocommit: false
+            # omitted fields
+            readConcern: ~
+            startTransaction: ~
+            writeConcern: ~
+          command_name: commitTransaction
+          database_name: admin
+    outcome: &outcome
+      collection:
+        data:
+          - { _id: 1 }
