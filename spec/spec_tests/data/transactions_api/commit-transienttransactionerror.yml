@@ -65,19 +65,6 @@ tests:
       -
         command_started_event:
           command:
-            commitTransaction: 1
-            lsid: session0
-            txnNumber: { $numberLong: "1" }
-            autocommit: false
-            # omitted fields
-            readConcern: ~
-            startTransaction: ~
-            writeConcern: ~
-          command_name: commitTransaction
-          database_name: admin
-      -
-        command_started_event:
-          command:
             insert: *collection_name
             documents:
               - { _id: 1 }
@@ -99,6 +86,37 @@ tests:
             commitTransaction: 1
             lsid: session0
             txnNumber: { $numberLong: "2" }
+            autocommit: false
+            # omitted fields
+            readConcern: ~
+            startTransaction: ~
+            writeConcern: ~
+          command_name: commitTransaction
+          database_name: admin
+      -
+        command_started_event:
+          command:
+            insert: *collection_name
+            documents:
+              - { _id: 1 }
+            ordered: true
+            lsid: session0
+            # third transaction will be causally consistent with the second
+            readConcern: { afterClusterTime: 42 }
+            # txnNumber is incremented when retrying the transaction
+            txnNumber: { $numberLong: "3" }
+            startTransaction: true
+            autocommit: false
+            # omitted fields
+            writeConcern: ~
+          command_name: insert
+          database_name: *database_name
+      -
+        command_started_event:
+          command:
+            commitTransaction: 1
+            lsid: session0
+            txnNumber: { $numberLong: "3" }
             autocommit: false
             # omitted fields
             readConcern: ~

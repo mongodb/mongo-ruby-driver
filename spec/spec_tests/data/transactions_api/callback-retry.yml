@@ -95,12 +95,13 @@ tests:
               - { _id: 1 }
             ordered: true
             lsid: session0
+            # third transaction will be causally consistent with the second
+            readConcern: { afterClusterTime: 42 }
             # txnNumber is incremented when retrying the transaction
             txnNumber: { $numberLong: "3" }
             startTransaction: true
             autocommit: false
             # omitted fields
-            readConcern: ~
             writeConcern: ~
           command_name: insert
           database_name: *database_name
