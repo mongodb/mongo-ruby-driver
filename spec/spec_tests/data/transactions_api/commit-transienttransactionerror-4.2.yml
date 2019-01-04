@@ -1,6 +1,8 @@
 database_name: &database_name "ruby-driver"
 collection_name: &collection_name "test"
 
+minServerVersion: '4.1.6'
+
 data: []
 
 # These tests use error codes where the TransientTransactionError label will be
@@ -10,13 +12,13 @@ data: []
 # See: https://github.com/mongodb/mongo/blob/r4.1.6/src/mongo/db/handle_request_response.cpp
 tests:
   -
-    description: transaction is retried after commitTransaction TransientTransactionError (LockTimeout)
+    description: transaction is retried after commitTransaction TransientTransactionError (PreparedTransactionInProgress)
     failPoint:
       configureFailPoint: failCommand
       mode: { times: 2 }
       data:
           failCommands: ["commitTransaction"]
-          errorCode: 24 # LockTimeout
+          errorCode: 267 # PreparedTransactionInProgress
           closeConnection: false
     operations:
       -
@@ -128,51 +130,3 @@ tests:
       collection:
         data:
           - { _id: 1 }
-  -
-    description: transaction is retried after commitTransaction TransientTransactionError (WriteConflict)
-    failPoint:
-      configureFailPoint: failCommand
-      mode: { times: 2 }
-      data:
-          failCommands: ["commitTransaction"]
-          errorCode: 112 # WriteConflict
-          closeConnection: false
-    operations:
-      -
-        name: withTransaction
-        object: session0
-        callback: *callback
-    expectations: *expectations
-    outcome: *outcome
-  -
-    description: transaction is retried after commitTransaction TransientTransactionError (SnapshotUnavailable)
-    failPoint:
-      configureFailPoint: failCommand
-      mode: { times: 2 }
-      data:
-          failCommands: ["commitTransaction"]
-          errorCode: 246 # SnapshotUnavailable
-          closeConnection: false
-    operations:
-      -
-        name: withTransaction
-        object: session0
-        callback: *callback
-    expectations: *expectations
-    outcome: *outcome
-  -
-    description: transaction is retried after commitTransaction TransientTransactionError (NoSuchTransaction)
-    failPoint:
-      configureFailPoint: failCommand
-      mode: { times: 2 }
-      data:
-          failCommands: ["commitTransaction"]
-          errorCode: 251 # NoSuchTransaction
-          closeConnection: false
-    operations:
-      -
-        name: withTransaction
-        object: session0
-        callback: *callback
-    expectations: *expectations
-    outcome: *outcome

@@ -34,6 +34,10 @@ Each YAML file has the following keys:
 - ``data``: The data that should exist in the collection under test before each
   test run.
 
+- ``minServerVersion`` (optional): The minimum server version (inclusive)
+  required to successfully run the test. If this field is not present, it should
+  be assumed that there is no lower bound on the required server version.
+
 - ``tests``: An array of tests that are to be run independently of each other.
   Each test will have some or all of the following fields:
 
