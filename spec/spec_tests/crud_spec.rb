@@ -38,7 +38,6 @@ describe 'CRUD' do
             end
           end
 
-
           it 'returns the correct result' do
             verifier.verify_operation_result(results)
           end
