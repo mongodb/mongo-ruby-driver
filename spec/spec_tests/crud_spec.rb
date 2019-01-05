@@ -28,13 +28,24 @@ describe 'CRUD' do
             test.run(authorized_collection)
           end
 
+          let(:verifier) { Mongo::CRUD::Verifier.new(test) }
+
+          let(:actual_collection) do
+            if test.outcome['collection'] && test.outcome['collection']['name']
+              authorized_client[test.outcome['collection']['name']]
+            else
+              authorized_collection
+            end
+          end
+
+
           it 'returns the correct result' do
-            expect(results).to match_operation_result(test)
+            verifier.verify_operation_result(results)
           end
 
           it 'has the correct data in the collection', if: test.outcome_collection_data do
             results
-            expect(authorized_collection.find.to_a).to match_collection_data(test)
+            verifier.verify_collection_data(actual_collection.find.to_a)
           end
         end
       end

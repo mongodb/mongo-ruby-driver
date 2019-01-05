@@ -12,29 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Matcher for determining if the results of the opeartion match the
-# test's expected results.
-#
-# @since 2.0.0
-
-# Matcher for determining if the collection's data matches the
-# test's expected collection data.
-#
-# @since 2.0.0
-RSpec::Matchers.define :match_collection_data do |test|
-
-  match do
-    test.compare_collection_data
-  end
-end
-
-RSpec::Matchers.define :match_operation_result do |test|
-
-  match do |actual|
-    test.compare_operation_result(actual)
-  end
-end
-
 require 'support/crud/read'
 require 'support/crud/write'
 
@@ -150,6 +127,8 @@ module Mongo
         @outcome = test['outcome']
       end
 
+      attr_reader :outcome
+
       # Run the test.
       #
       # @example Run the test.
@@ -197,45 +176,8 @@ module Mongo
         @operation.has_results? ? @outcome['result'] : []
       end
 
-      # Compare the existing collection data and the expected collection data.
-      #
-      # @example Compare the existing and expected collection data.
-      #   test.compare_collection_data
-      #
-      # @return [ true, false ] The result of comparing the existing and expected
-      #  collection data.
-      #
-      # @since 2.0.0
-      def compare_collection_data
-        if actual_collection_data.nil?
-          outcome_collection_data.nil?
-        elsif actual_collection_data.empty?
-          outcome_collection_data.empty?
-        else
-          actual_collection_data.all? do |doc|
-            outcome_collection_data.include?(doc)
-          end
-        end
-      end
-
-      # Compare the actual operation result to the expected operation result.
-      #
-      # @example Compare the existing and expected operation results.
-      #   test.compare_operation_result(actual_results)
-      #
-      # @params [ Object ] actual The actual test results.
-      #
-      # @return [ true, false ] The result of comparing the expected and actual operation result.
-      #
-      # @since 2.4.0
-      def compare_operation_result(actual)
-        if actual.is_a?(Array)
-          actual.empty? || @outcome['result'].each_with_index do |expected, i|
-            compare_result(expected, actual[i])
-          end
-        else
-          compare_result(@outcome['result'], actual)
-        end
+      def error?
+        !!@outcome['error']
       end
 
       # The expected data in the collection as an outcome after running this test.
@@ -251,8 +193,70 @@ module Mongo
         @outcome['collection']['data'] if @outcome['collection']
       end
 
-      def error?
-        !!@outcome['error']
+      private
+
+      def actual_collection_data
+        if @outcome['collection']
+          collection_name = @outcome['collection']['name'] || @collection.name
+          @collection.database[collection_name].find.to_a
+        end
+      end
+    end
+
+    class Verifier
+      include RSpec::Matchers
+
+      def initialize(test_instance)
+        @test_instance = test_instance
+      end
+
+      attr_reader :test_instance
+
+      # Compare the existing collection data and the expected collection data.
+      #
+      # @example Compare the existing and expected collection data.
+      #   test.compare_collection_data
+      #
+      # @return [ true, false ] The result of comparing the existing and expected
+      #  collection data.
+      #
+      # @since 2.0.0
+      def verify_collection_data(actual_collection_data)
+        outcome_collection_data = test_instance.outcome_collection_data
+        if outcome_collection_data.nil?
+          expect(actual_collection_data).to be nil
+        elsif outcome_collection_data.empty?
+          expect(actual_collection_data).to be_empty
+        else
+          expect(actual_collection_data).not_to be nil
+          outcome_collection_data.each do |doc|
+            expect(actual_collection_data).to include(doc)
+          end
+          actual_collection_data.each do |doc|
+            expect(outcome_collection_data).to include(doc)
+          end
+        end
+      end
+
+      # Compare the actual operation result to the expected operation result.
+      #
+      # @example Compare the existing and expected operation results.
+      #   test.compare_operation_result(actual_results)
+      #
+      # @params [ Object ] actual The actual test results.
+      #
+      # @return [ true, false ] The result of comparing the expected and actual operation result.
+      #
+      # @since 2.4.0
+      def verify_operation_result(actual)
+        rv = if actual.is_a?(Array)
+          actual.empty? || test_instance.outcome['result'].each_with_index do |expected, i|
+            compare_result(expected, actual[i])
+          end
+        else
+          compare_result(test_instance.outcome['result'], actual)
+        end
+        expect(rv).to be_truthy
       end
 
       private
@@ -283,13 +287,6 @@ module Mongo
       def handle_inserted_ids(field, expected, actual)
         if field == 'insertedIds'
           expected.values == actual
-        end
-      end
-
-      def actual_collection_data
-        if @outcome['collection']
-          collection_name = @outcome['collection']['name'] || @collection.name
-          @collection.database[collection_name].find.to_a
         end
       end
     end
