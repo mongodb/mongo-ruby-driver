@@ -57,17 +57,9 @@ describe 'Retryable writes spec tests' do
 
           let(:verifier) { Mongo::CRUD::Verifier.new(test) }
 
-          let(:actual_collection) do
-            if test.outcome['collection'] && test.outcome['collection']['name']
-              authorized_client[test.outcome['collection']['name']]
-            else
-              authorized_collection
-            end
-          end
-
           it 'has the correct data in the collection', if: test.outcome_collection_data do
             results
-            verifier.verify_collection_data(actual_collection.find.to_a)
+            verifier.verify_collection_data(authorized_collection.find.to_a)
           end
 
           if test.error?
