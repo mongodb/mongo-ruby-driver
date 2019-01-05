@@ -38,8 +38,16 @@ describe 'Transactions' do
             verifier.verify_collection_data(results[:contents])
           end
 
-          it 'has the correct command_started events', if: test_instance.expectations do
-            test_instance.verifier.verify_command_started_events(results)
+          if test_instance.expectations
+            it 'has the correct number of command_started events' do
+              test_instance.verifier.verify_command_started_event_count(results)
+            end
+
+            test_instance.expectations.each_with_index do |expectation, i|
+              it "has the correct command_started event #{i}" do
+                test_instance.verifier.verify_command_started_event(results, i)
+              end
+            end
           end
         end
       end
