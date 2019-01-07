@@ -200,5 +200,29 @@ describe Mongo::Lint do
         described_class.validate_read_concern_option({'level' => :snapshot})
       end.to raise_error(Mongo::Error::LintError)
     end
+
+    it "rejects a bogus key as symbol" do
+      expect do
+        described_class.validate_read_concern_option({foo: 'bar'})
+      end.to raise_error(Mongo::Error::LintError)
+    end
+
+    it "rejects a bogus key as string" do
+      expect do
+        described_class.validate_read_concern_option({'foo' => 'bar'})
+      end.to raise_error(Mongo::Error::LintError)
+    end
+
+    %w(afterClusterTime after_cluster_time).each do |key|
+      [:to_s, :to_sym].each do |conv|
+        key = key.send(conv)
+
+        it "rejects #{key.inspect}" do
+          expect do
+            described_class.validate_read_concern_option({key => 123})
+          end.to raise_error(Mongo::Error::LintError)
+        end
+      end
+    end
   end
 end
