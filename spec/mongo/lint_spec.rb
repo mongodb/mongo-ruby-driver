@@ -155,4 +155,74 @@ describe Mongo::Lint do
       end
     end
   end
+
+  describe '.validate_read_concern_option' do
+    it 'accepts nil' do
+      expect do
+        described_class.validate_read_concern_option(nil)
+      end.to_not raise_error
+    end
+
+    it 'accepts empty hash' do
+      expect do
+        described_class.validate_read_concern_option({})
+      end.to_not raise_error
+    end
+
+    it "rejects an object which is not a hash" do
+      expect do
+        described_class.validate_read_concern_option(:local)
+      end.to raise_error(Mongo::Error::LintError)
+    end
+
+    [:local, :majority, :snapshot].each do |level|
+      it "accepts :#{level}" do
+        expect do
+          described_class.validate_read_concern_option({level: level})
+        end.to_not raise_error
+      end
+
+      it "rejects #{level} as string" do
+        expect do
+          described_class.validate_read_concern_option({level: level.to_s})
+        end.to raise_error(Mongo::Error::LintError)
+      end
+    end
+
+    it "rejects a bogus level" do
+      expect do
+        described_class.validate_read_concern_option({level: :bogus})
+      end.to raise_error(Mongo::Error::LintError)
+    end
+
+    it "rejects level given as a string key" do
+      expect do
+        described_class.validate_read_concern_option({'level' => :snapshot})
+      end.to raise_error(Mongo::Error::LintError)
+    end
+
+    it "rejects a bogus key as symbol" do
+      expect do
+        described_class.validate_read_concern_option({foo: 'bar'})
+      end.to raise_error(Mongo::Error::LintError)
+    end
+
+    it "rejects a bogus key as string" do
+      expect do
+        described_class.validate_read_concern_option({'foo' => 'bar'})
+      end.to raise_error(Mongo::Error::LintError)
+    end
+
+    %w(afterClusterTime after_cluster_time).each do |key|
+      [:to_s, :to_sym].each do |conv|
+        key = key.send(conv)
+
+        it "rejects #{key.inspect}" do
+          expect do
+            described_class.validate_read_concern_option({key => 123})
+          end.to raise_error(Mongo::Error::LintError)
+        end
+      end
+    end
+  end
 end

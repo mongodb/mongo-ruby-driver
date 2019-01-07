@@ -342,12 +342,14 @@ module Mongo
         spec[OPTIONS] || {}
       end
 
-      # Get the read concern from the spec.
+      # Get the read concern document from the spec.
+      #
+      # @note The document may include afterClusterTime.
       #
       # @example Get the read concern.
       #   specifiable.read_concern
       #
-      # @return [ Hash ] The read concern.
+      # @return [ Hash ] The read concern document.
       #
       # @since 2.2.0
       def read_concern

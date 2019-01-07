@@ -306,7 +306,8 @@ module Mongo
       else
         options = {}
       end
-      Mongo::Lint.validate_underscore_read_preference(options[:read])
+      Lint.validate_underscore_read_preference(options[:read])
+      Lint.validate_read_concern_option(options[:read_concern])
       if addresses_or_uri.is_a?(::String)
         uri = URI.get(addresses_or_uri, options)
         addresses = uri.servers
@@ -464,7 +465,7 @@ module Mongo
     #
     # @since 2.6.0
     def read_concern
-      @read_concern ||= options[:read_concern]
+      options[:read_concern]
     end
 
 
