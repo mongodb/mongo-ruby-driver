@@ -37,8 +37,7 @@ describe 'Transactions' do
 
           it 'has the correct data in the collection', if: test_instance.outcome_collection_data do
             results
-            verifier.verify_collection_data(actual_collection.find.to_a)
-            #expect(results[:contents]).to match_collection_data(test)
+            verifier.verify_collection_data(results[:contents])
           end
 
           it 'has the correct command_started events', if: test_instance.expectations do
