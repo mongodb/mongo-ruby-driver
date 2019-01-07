@@ -191,7 +191,7 @@ module Mongo
       #   server. The server will put this id in the response_to field of
       #   a reply.
       def set_request_id
-        @request_id = Message.next_id
+        @request_id = self.class.next_id
       end
 
       # Default number returned value for protocol messages.

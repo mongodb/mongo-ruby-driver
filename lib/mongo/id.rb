@@ -19,7 +19,7 @@ module Mongo
   #
   # @example Include the Id module.
   #   class Foo
-  #     include Id
+  #     include Mongo::Id
   #   end
   #
   #   f = Foo.new
@@ -31,12 +31,12 @@ module Mongo
   #
   # @example Save the ID in the instance of the including class.
   #   class Bar
-  #     include Id
+  #     include Mongo::Id
   #
   #     attr_reader :id
   #
   #     def initialize
-  #       @id = next_id
+  #       @id = self.class.next_id
   #     end
   #   end
   #
@@ -54,6 +54,7 @@ module Mongo
 
       klass.define_singleton_method(:next_id) do
         klass.class_variable_get(:@@id_lock).synchronize do
+          id = klass_variable_get(:@@id)
           klass.class_variable_set(:@@id, id + 1)
           klass.class_variable_get(:@@id)
         end
