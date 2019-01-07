@@ -40,6 +40,7 @@ module Mongo
     # @abstract
     # @api semiprivate
     class Message
+      include Id
       include Serializers
 
       # The batch size constant.
@@ -190,9 +191,7 @@ module Mongo
       #   server. The server will put this id in the response_to field of
       #   a reply.
       def set_request_id
-        @@id_lock.synchronize do
-          @request_id = @@request_id += 1
-        end
+        @request_id = Message.next_id
       end
 
       # Default number returned value for protocol messages.
@@ -203,9 +202,6 @@ module Mongo
       def number_returned; 0; end
 
       private
-
-      @@request_id = 0
-      @@id_lock = Mutex.new
 
       # A method for getting the fields for a message class
       #
