@@ -279,27 +279,6 @@ module Mongo
         end
       end
 
-      # Compare the existing collection data and the expected collection data.
-      #
-      # @example Compare the existing and expected collection data.
-      #   test.compare_collection_data
-      #
-      # @return [ true, false ] The result of comparing the existing and expected
-      #  collection data.
-      #
-      # @since 2.6.0
-      def compare_collection_data
-        if actual_collection_data.nil?
-          outcome_collection_data.nil?
-        elsif actual_collection_data.empty?
-          outcome_collection_data.empty?
-        else
-          actual_collection_data.all? do |doc|
-            outcome_collection_data.include?(doc)
-          end
-        end
-      end
-
       # Compare the actual operation result to the expected operation result.
       #
       # @example Compare the existing and expected operation results.

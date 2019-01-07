@@ -217,18 +217,18 @@ module Mongo
       # Uses RSpec matchers and raises expectation failures if there is a
       # mismatch.
       def verify_collection_data(actual_collection_data)
-        outcome_collection_data = test_instance.outcome_collection_data
-        if outcome_collection_data.nil?
+        expected_collection_data = test_instance.outcome_collection_data
+        if expected_collection_data.nil?
           expect(actual_collection_data).to be nil
-        elsif outcome_collection_data.empty?
+        elsif expected_collection_data.empty?
           expect(actual_collection_data).to be_empty
         else
           expect(actual_collection_data).not_to be nil
-          outcome_collection_data.each do |doc|
+          expected_collection_data.each do |doc|
             expect(actual_collection_data).to include(doc)
           end
           actual_collection_data.each do |doc|
-            expect(outcome_collection_data).to include(doc)
+            expect(expected_collection_data).to include(doc)
           end
         end
       end
