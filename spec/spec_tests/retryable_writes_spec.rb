@@ -55,11 +55,11 @@ describe 'Retryable writes spec tests' do
             end
           end
 
-          if test.outcome_collection_data
-            it 'has the correct data in the collection' do
-              results
-              expect(collection.find.to_a).to match_collection_data(test)
-            end
+          let(:verifier) { Mongo::CRUD::Verifier.new(test) }
+
+          it 'has the correct data in the collection', if: test.outcome_collection_data do
+            results
+            verifier.verify_collection_data(authorized_collection.find.to_a)
           end
 
           if test.error?
@@ -68,7 +68,7 @@ describe 'Retryable writes spec tests' do
             end
           else
             it 'returns the correct result' do
-              expect(results).to match_operation_result(test)
+              verifier.verify_operation_result(results)
             end
           end
         end

@@ -27,12 +27,17 @@ describe 'Transactions' do
             test.run
           end
 
+          let(:verifier) { Mongo::CRUD::Verifier.new(test) }
+
+          let(:actual_collection) { authorized_client['transactions-tests'] }
+
           it 'returns the correct result' do
             expect(results[:results]).to match_operation_result(test)
           end
 
           it 'has the correct data in the collection', if: test_instance.outcome_collection_data do
-            expect(results[:contents]).to match_collection_data(test)
+            results
+            verifier.verify_collection_data(results[:contents])
           end
 
           it 'has the correct command_started events', if: test_instance.expectations do

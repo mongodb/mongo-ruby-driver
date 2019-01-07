@@ -16,18 +16,6 @@
 # test's expected results.
 #
 # @since 2.6.0
-
-# Matcher for determining if the collection's data matches the
-# test's expected collection data.
-#
-# @since 2.6.0
-RSpec::Matchers.define :match_collection_data do |test|
-
-  match do
-    test.compare_collection_data
-  end
-end
-
 RSpec::Matchers.define :match_operation_result do |test|
 
   match do |actual|
@@ -276,27 +264,6 @@ module Mongo
         end
         if @test_client
           @test_client.close
-        end
-      end
-
-      # Compare the existing collection data and the expected collection data.
-      #
-      # @example Compare the existing and expected collection data.
-      #   test.compare_collection_data
-      #
-      # @return [ true, false ] The result of comparing the existing and expected
-      #  collection data.
-      #
-      # @since 2.6.0
-      def compare_collection_data
-        if actual_collection_data.nil?
-          outcome_collection_data.nil?
-        elsif actual_collection_data.empty?
-          outcome_collection_data.empty?
-        else
-          actual_collection_data.all? do |doc|
-            outcome_collection_data.include?(doc)
-          end
         end
       end
 

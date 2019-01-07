@@ -18,9 +18,9 @@ tests:
                 batchSize: 2
 
         outcome:
-            result:
-                - {_id: 2, x: 22}
-                - {_id: 3, x: 33}
+            # Some drivers apparently return a cursor to the output collection.
+            # Ruby driver does not, hence result is empty.
+            result: []
             collection:
                 name: "other_test_collection"
                 data:
@@ -39,9 +39,9 @@ tests:
                 batchSize: 0
 
         outcome:
-            result:
-                - {_id: 2, x: 22}
-                - {_id: 3, x: 33}
+            # Some drivers apparently return a cursor to the output collection.
+            # Ruby driver does not, hence result is empty.
+            result: []
             collection:
                 name: "other_test_collection"
                 data:
