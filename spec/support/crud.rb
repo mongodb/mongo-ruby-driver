@@ -238,14 +238,18 @@ module Mongo
       # Uses RSpec matchers and raises expectation failures if there is a
       # mismatch.
       def verify_operation_result(actual)
-        rv = if actual.is_a?(Array)
-          actual.empty? || test_instance.outcome['result'].each_with_index do |expected, i|
-            verify_result(expected, actual[i])
+        expected = test_instance.outcome['result']
+        if expected.is_a?(Array)
+          if expected.empty?
+            expect(actual).to be_empty
+          else
+            expected.each_with_index do |expected_elt, i|
+              verify_result(expected_elt, actual[i])
+            end
           end
         else
-          verify_result(test_instance.outcome['result'], actual)
+          verify_result(expected, actual)
         end
-        expect(rv).to be_truthy
       end
 
       private
