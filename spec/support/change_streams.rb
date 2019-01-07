@@ -180,7 +180,7 @@ module Mongo
 
         def events
           EventSubscriber.started_events.reduce([]) do |evs, e|
-            next evs if [:saslStart, :saslContinue, :killCursors].include?(e.command_name)
+            next evs if %w(saslStart saslContinue killCursors).include?(e.command_name)
 
             evs << {
               'command_started_event' => {

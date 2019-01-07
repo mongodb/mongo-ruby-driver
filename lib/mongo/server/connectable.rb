@@ -98,12 +98,6 @@ module Mongo
           @pid = Process.pid
         end
       end
-
-      def read(request_id = nil)
-        ensure_connected do |socket|
-          Protocol::Message.deserialize(socket, max_message_size, request_id)
-        end
-      end
     end
   end
 end

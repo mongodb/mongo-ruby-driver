@@ -64,4 +64,17 @@ describe 'Command monitoring' do
     expect(failed_event.address).to be_a(Mongo::Address)
     expect(failed_event.duration).to be_a(Float)
   end
+
+  context 'client with no established connections' do
+    # for simplicity use 3.6+ servers only, then we can assert
+    # scram auth commands
+    min_server_version '3.6'
+
+    it 'does not nest auth and find' do
+      expect(subscriber.started_events.length).to eq 0
+      client['test-collection'].find(a: 1).first
+      command_names = subscriber.started_events.map(&:command_name)
+      expect(command_names).to eq %w(saslStart saslContinue saslContinue find)
+    end
+  end
 end
