@@ -240,27 +240,28 @@ module Mongo
       def verify_operation_result(actual)
         rv = if actual.is_a?(Array)
           actual.empty? || test_instance.outcome['result'].each_with_index do |expected, i|
-            compare_result(expected, actual[i])
+            verify_result(expected, actual[i])
           end
         else
-          compare_result(test_instance.outcome['result'], actual)
+          verify_result(test_instance.outcome['result'], actual)
         end
         expect(rv).to be_truthy
       end
 
       private
 
-      def compare_result(expected, actual)
+      def verify_result(expected, actual)
         case expected
-          when nil
-            actual.nil?
-          when Hash
-            results = actual.instance_variable_get(:@results)
-            (results || actual).all? do |k, v|
-              expected[k] == v || handle_upserted_id(k, expected[k], v) || handle_inserted_ids(k, expected[k], v)
-            end
-          when Integer
-            expected == actual
+        when nil
+          expect(actual).to be nil
+        when Hash
+          results = actual.instance_variable_get(:@results)
+          (results || actual).each do |k, v|
+            ok = expected[k] == v || handle_upserted_id(k, expected[k], v) || handle_inserted_ids(k, expected[k], v)
+            expect(ok).to be true
+          end
+        when Integer
+          expect(actual).to eq(expected)
         end
       end
 
