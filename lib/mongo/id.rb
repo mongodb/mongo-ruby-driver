@@ -17,7 +17,7 @@ module Mongo
   # instances of the class. It defines the method #next_id on the class that includes it. The
   # implementation ensures that the IDs will be unique even when called from multiple threads.
   #
-  # @example Define and use the Id module.
+  # @example Include the Id module.
   #   class Foo
   #     include Id
   #   end
@@ -26,7 +26,27 @@ module Mongo
   #   foo.next_id # => 1
   #   foo.next_id # => 2
   #
+  # Classes which include Id should _not_ access `@@id` or `@@id_lock` directly; instead, they
+  # should call `#next_id` in `#initialize` and save the result in the instance being created.
+  #
+  # @example Save the ID in the instance of the including class.
+  #   class Bar
+  #     include Id
+  #
+  #     attr_reader :id
+  #
+  #     def initialize
+  #       @id = next_id
+  #     end
+  #   end
+  #
+  #   a = Bar.new
+  #   a.id # => 1
+  #   b = Bar.new
+  #   b.id # => 2
+  #
   # @since 2.7.0
+  # @api private
   module Id
     def self.included(klass)
       klass.class_variable_set(:@@id, 1)
