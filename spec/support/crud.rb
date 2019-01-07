@@ -214,13 +214,8 @@ module Mongo
 
       # Compare the existing collection data and the expected collection data.
       #
-      # @example Compare the existing and expected collection data.
-      #   test.compare_collection_data
-      #
-      # @return [ true, false ] The result of comparing the existing and expected
-      #  collection data.
-      #
-      # @since 2.0.0
+      # Uses RSpec matchers and raises expectation failures if there is a
+      # mismatch.
       def verify_collection_data(actual_collection_data)
         outcome_collection_data = test_instance.outcome_collection_data
         if outcome_collection_data.nil?
@@ -240,14 +235,8 @@ module Mongo
 
       # Compare the actual operation result to the expected operation result.
       #
-      # @example Compare the existing and expected operation results.
-      #   test.compare_operation_result(actual_results)
-      #
-      # @params [ Object ] actual The actual test results.
-      #
-      # @return [ true, false ] The result of comparing the expected and actual operation result.
-      #
-      # @since 2.4.0
+      # Uses RSpec matchers and raises expectation failures if there is a
+      # mismatch.
       def verify_operation_result(actual)
         rv = if actual.is_a?(Array)
           actual.empty? || test_instance.outcome['result'].each_with_index do |expected, i|
