@@ -15,6 +15,7 @@
 require 'forwardable'
 require 'bson'
 require 'openssl'
+require 'mongo/id'
 require 'mongo/bson'
 require 'mongo/semaphore'
 require 'mongo/options'

@@ -18,6 +18,7 @@ module Mongo
   #
   # @since 2.1.0
   class Monitoring
+    include Id
 
     # The command topic.
     #
@@ -59,9 +60,6 @@ module Mongo
     # @since 2.7.0
     SERVER_HEARTBEAT = 'ServerHeartbeat'.freeze
 
-    @@operation_id = 0
-    @@operation_id_lock = Mutex.new
-
     # Used for generating unique operation ids to link events together.
     #
     # @example Get the next operation id.
@@ -71,9 +69,7 @@ module Mongo
     #
     # @since 2.1.0
     def self.next_operation_id
-      @@operation_id_lock.synchronize do
-        @@operation_id += 1
-      end
+      self.next_id
     end
 
     # Contains subscription methods common between monitoring and
