@@ -54,7 +54,7 @@ module Mongo
 
       klass.define_singleton_method(:next_id) do
         klass.class_variable_get(:@@id_lock).synchronize do
-          id = klass_variable_get(:@@id)
+          id = class_variable_get(:@@id)
           klass.class_variable_set(:@@id, id + 1)
           klass.class_variable_get(:@@id)
         end
