@@ -211,7 +211,7 @@ module Mongo
 
           {
             'command_started_event' => {
-              'command' => e.command.to_a.sort,
+              'command' => order_hash(e.command),
               'command_name' => e.command_name.to_s,
               'database_name' => e.database_name
             }
@@ -225,10 +225,14 @@ module Mongo
           admin_support_client.command(configureFailPoint: 'failCommand', mode: 'off')
         end
 
+        events.map! do |event|
+          event['command_started_event'] = order_hash(event['command_started_event'])
+        end
+
         {
           results: results,
           contents: @collection.find.to_a,
-          events: events
+          events: events,
         }
       end
 
@@ -298,6 +302,14 @@ module Mongo
         @outcome['collection']['data'] if @outcome && @outcome['collection']
       end
 
+      def order_hash(hash)
+        Hash[hash.to_a.sort]
+      end
+
+      def verifier
+        Verifier.new(self)
+      end
+
       private
 
       def convert_client_options(client_options)
@@ -359,6 +371,43 @@ module Mongo
         if @outcome['collection']
           collection_name = @outcome['collection']['name'] || @collection.name
           @collection.database[collection_name].find.to_a
+        end
+      end
+
+      class Verifier
+        include RSpec::Matchers
+
+        def initialize(test_instance)
+          @test_instance = test_instance
+        end
+
+        attr_reader :test_instance
+
+        def verify_command_started_events(results)
+          expectations = test_instance.expectations
+          expect(results[:events].length).to eq(expectations.length)
+
+          expectations.each_with_index do |expectation, i|
+            expect(expectation.keys).to eq(%w(command_started_event))
+            expected_event = expectation['command_started_event'].dup
+            actual_event = results[:events][i].dup
+            expect(expected_event.keys).to eq(actual_event.keys)
+
+            expected_command = expected_event.delete('command')
+            actual_command = actual_event.delete('command')
+
+            # Hash#compact is ruby 2.4+
+            expected_presence = expected_command.select { |k, v| !v.nil? }
+            expected_absence = expected_command.select { |k, v| v.nil? }
+
+            expect(actual_command).to eq(expected_presence)
+            expected_absence.each do |k, v|
+              expect(actual_command).not_to have_key(k)
+            end
+
+            # this compares remaining fields in events after command is removed
+            expect(expected_event).to eq(actual_event)
+          end
         end
       end
     end
