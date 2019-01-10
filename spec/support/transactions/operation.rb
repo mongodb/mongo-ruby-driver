@@ -23,6 +23,7 @@ module Mongo
         'startTransaction' => :start_transaction,
         'abortTransaction' => :abort_transaction,
         'commitTransaction' => :commit_transaction,
+        'withTransaction' => :with_transaction,
         'aggregate' => :aggregate,
         'deleteMany' => :delete_many,
         'deleteOne' => :delete_one,
@@ -38,7 +39,7 @@ module Mongo
         'count' => :count,
         'distinct' => :distinct,
         'find' => :find,
-        'runCommand' => :run_command
+        'runCommand' => :run_command,
       }.freeze
 
       # Map of operation options to method names.
@@ -75,7 +76,7 @@ module Mongo
       # @return [ Hash ] spec The operation spec.
       #
       # @since 2.6.0
-      def initialize(spec, session0, session1)
+      def initialize(spec, session0, session1, transaction_session=nil)
         @spec = spec
         @name = spec['name']
         @session0 = session0
@@ -86,7 +87,11 @@ module Mongo
                     when 'session1'
                       spec['arguments'].merge('session' => @session1)
                     else
-                      spec['arguments'] || {}
+                      args = spec['arguments'] || {}
+                      if transaction_session
+                        args = args.merge('session' => transaction_session)
+                      end
+                      args
                     end
       end
 
@@ -119,19 +124,26 @@ module Mongo
                 collection
               end
 
-        send(OPERATIONS[name], obj)
+        if (op_name = OPERATIONS[name]) == :with_transaction
+          args = [collection]
+        else
+          args = []
+        end
+        send(op_name, obj, *args)
       rescue Mongo::Error::OperationFailure => e
         err_doc = e.instance_variable_get(:@result).send(:first_document)
 
         {
           'errorCodeName' => err_doc['codeName'] || err_doc['writeConcernError']['codeName'],
           'errorContains' => e.message,
-          'errorLabels' => e.labels
+          'errorLabels' => e.labels,
+          'exception' => e,
         }
       rescue Mongo::Error => e
         {
           'errorContains' => e.message,
-          'errorLabels' => e.labels
+          'errorLabels' => e.labels,
+          'exception' => e,
         }
       end
 
@@ -147,6 +159,25 @@ module Mongo
 
       def abort_transaction(session)
         session.abort_transaction ; nil
+      end
+
+      def with_transaction(session, collection)
+        unless callback = @spec['callback']
+          raise ArgumentError, 'with_transaction requires a callback to be present'
+        end
+
+        if @spec['transactionOptions']
+          options = snakeize_hash(@spec['transactionOptions'])
+        end
+        session.with_transaction(options) do
+          callback['operations'].each do |op_spec|
+            op = Operation.new(op_spec, @session0, @session1, session)
+            rv = op.execute(collection)
+            if rv && rv['exception']
+              raise rv['exception']
+            end
+          end
+        end
       end
 
       def run_command(database)

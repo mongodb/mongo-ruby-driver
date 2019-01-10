@@ -210,7 +210,9 @@ module Mongo
     # @since 2.6.0
     def add_start_transaction!(command)
       command.tap do |c|
-        c[:startTransaction] = true if starting_transaction?
+        if starting_transaction?
+          c[:startTransaction] = true
+        end
       end
     end
 
@@ -516,10 +518,13 @@ module Mongo
     # @example Commits the transaction.
     #   session.commit_transaction
     #
+    # @option options :write_concern [ nil | WriteConcern::Base ] The write
+    #   concern to use for this operation.
+    #
     # @raise [ Error::InvalidTransactionOperation ] If there is no active transaction.
     #
     # @since 2.6.0
-    def commit_transaction
+    def commit_transaction(options=nil)
       check_if_ended!
       check_if_no_transaction!
 
@@ -528,6 +533,8 @@ module Mongo
           Mongo::Error::InvalidTransactionOperation.cannot_call_after_msg(
             :abortTransaction, :commitTransaction))
       end
+
+      options ||= {}
 
       begin
         # If commitTransaction is called twice, we need to run the same commit operation again, so
@@ -541,12 +548,17 @@ module Mongo
         else
           @last_commit_skipped = false
 
-          write_with_retry(self, txn_options[:write_concern], true) do |server, txn_num|
+          write_concern = options[:write_concern] || txn_options[:write_concern]
+          if write_concern && !write_concern.is_a?(WriteConcern::Base)
+            write_concern = WriteConcern.get(write_concern)
+          end
+          write_with_retry(self, write_concern, true) do |server, txn_num|
             Operation::Command.new(
               selector: { commitTransaction: 1 },
               db_name: 'admin',
               session: self,
-              txn_num: txn_num
+              txn_num: txn_num,
+              write_concern: write_concern,
             ).execute(server)
           end
         end
@@ -620,6 +632,82 @@ module Mongo
     # @since 2.6.0
     def in_transaction?
       within_states?(STARTING_TRANSACTION_STATE, TRANSACTION_IN_PROGRESS_STATE)
+    end
+
+    # Executes the provided block in a transaction, retrying as necessary.
+    #
+    # Exact number of retries and when they are performed are implementation
+    # details of the driver; the provided block should be idempotent, and
+    # should be prepared to be called more than once. The driver will retry
+    # both the commit command itself and the entire provided block for as long
+    # as any part of the entire proess fails with a transient error such as
+    # a replica set election or a write conflict. Note also that the retries
+    # may be executed against different servers.
+    #
+    # Transactions cannot be nested - InvalidTransactionOperation will be raised
+    # if this method is called when the session already has an active transaction.
+    #
+    # @example Start a new transaction
+    #   session.with_transaction(write_concern: {w: :majority}) do
+    #     collection.update_one({ id: 3 }, { '$set' => { status: 'Inactive'} },
+    #                           session: session)
+    #
+    #   end
+    #
+    # @param [ Hash ] options The options for the transaction being started.
+    #   These are the same options that start_transaction accepts.
+    #
+    # @raise [ Error::InvalidTransactionOperation ] If a transaction is already in
+    #   progress or if the write concern is unacknowledged.
+    #
+    # @since 2.7.0
+    def with_transaction(options=nil)
+      while true
+        commit_options = {}
+        if options
+          commit_options[:write_concern] = options[:write_concern]
+        end
+        start_transaction(options)
+        begin
+          rv = yield self
+        rescue Exception => e
+          if within_states?(STARTING_TRANSACTION_STATE, TRANSACTION_IN_PROGRESS_STATE)
+            abort_transaction
+          end
+
+          if e.is_a?(Mongo::Error) && e.label?(Mongo::Error::TRANSIENT_TRANSACTION_ERROR_LABEL)
+            next
+          end
+
+          raise
+        else
+          if within_states?(TRANSACTION_ABORTED_STATE, NO_TRANSACTION_STATE, TRANSACTION_COMMITTED_STATE)
+            return rv
+          end
+
+          begin
+            commit_transaction(commit_options)
+            return rv
+          rescue Mongo::Error => e
+            if e.label?(Mongo::Error::UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL)
+              wc_options = case v = commit_options[:write_concern]
+                when WriteConcern::Base
+                  v.options
+                when nil
+                  {}
+                else
+                  v
+                end
+              commit_options[:write_concern] = wc_options.merge(w: :majority)
+              retry
+            elsif e.label?(Mongo::Error::TRANSIENT_TRANSACTION_ERROR_LABEL)
+              next
+            else
+              raise
+            end
+          end
+        end
+      end
     end
 
     # Get the read preference the session will use in the currently

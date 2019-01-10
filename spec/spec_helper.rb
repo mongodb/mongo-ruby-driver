@@ -30,7 +30,7 @@
 # MONGODB_URI and `rs.isMaster()` output, either by adjusting MONGODB_URI
 # or by reconfiguring the replica set.
 #
-# In order to run spec tests, the mongo cluster needs to have failpoints
+# In order to run spec tests, the mongo cluster needs to have fail points
 # enabled. This is accomplished by starting mongod with the following option:
 #   --setParameter enableTestCommands=1
 #

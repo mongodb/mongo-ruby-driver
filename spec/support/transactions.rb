@@ -19,7 +19,9 @@
 RSpec::Matchers.define :match_operation_result do |test|
 
   match do |actual|
-    test.compare_operation_result(actual)
+    rv = test.compare_operation_result(actual)
+    puts rv
+    rv.nil?
   end
 end
 
@@ -71,8 +73,24 @@ module Mongo
       # @since 2.6.0
       def tests
         @transaction_tests.map do |test|
-          Proc.new { Mongo::Transactions::TransactionsTest.new(@data, test) }
-        end
+          if test['skipReason']
+            nil
+          else
+            Proc.new { Mongo::Transactions::TransactionsTest.new(@data, test, self) }
+          end
+        end.compact
+      end
+
+      def database_name
+        @spec['database_name']
+      end
+
+      def collection_name
+        @spec['collection_name']
+      end
+
+      def min_server_version
+        @spec['minServerVersion']
       end
     end
 
@@ -101,15 +119,17 @@ module Mongo
       # @param [ Array<Hash> ] data The documents the collection
       # must have before the test runs.
       # @param [ Hash ] test The test specification.
+      # @param [ Hash ] spec The top level YAML specification.
       #
       # @since 2.6.0
-      def initialize(data, test)
+      def initialize(data, test, spec)
         test = IceNine.deep_freeze(test)
+        @spec = spec
         @data = data
         @description = test['description']
         @client_options = convert_client_options(test['clientOptions'] || {})
         @session_options = snakeize_hash(test['sessionOptions'] || {})
-        @failpoint = test['failPoint']
+        @fail_point = test['failPoint']
         @operations = test['operations']
         @expectations = test['expectations']
         @outcome = test['outcome']
@@ -128,7 +148,7 @@ module Mongo
       end
 
       def support_client
-        ClientRegistry.instance.global_client('root_authorized')
+        @support_client ||= ClientRegistry.instance.global_client('root_authorized').use(@spec.database_name)
       end
 
       def admin_support_client
@@ -137,7 +157,9 @@ module Mongo
 
       def test_client
         @test_client ||= ClientRegistry.instance.global_client('authorized_without_retry_writes').with(
-          @client_options.merge(app_name: 'this is used solely to force the new client to create its own cluster'))
+          @client_options.merge(
+            database: @spec.database_name,
+            app_name: 'this is used solely to force the new client to create its own cluster'))
       end
 
       def event_subscriber
@@ -221,7 +243,7 @@ module Mongo
         # Remove any events from authentication commands.
         events.reject! { |c| c['command_started_event']['command_name'].start_with?('sasl') }
 
-        if @failpoint
+        if @fail_point
           admin_support_client.command(configureFailPoint: 'failCommand', mode: 'off')
         end
 
@@ -242,17 +264,17 @@ module Mongo
         rescue Mongo::Error
         end
 
-        coll = support_client[Mongo::Transactions::Spec::COLLECTION_NAME]
+        coll = support_client[@spec.collection_name]
         coll.database.drop
         coll.with(write: { w: :majority }).drop
         support_client.command(
-          { create: Mongo::Transactions::Spec::COLLECTION_NAME },
+          { create: @spec.collection_name },
           { write_concern: { w: :majority } })
 
         coll.with(write: { w: :majority }).insert_many(@data) unless @data.empty?
-        admin_support_client.command(@failpoint) if @failpoint
+        admin_support_client.command(@fail_point) if @fail_point
 
-        @collection = test_client[Mongo::Transactions::Spec::COLLECTION_NAME]
+        @collection = test_client[@spec.collection_name]
 
         @session0 = test_client.start_session(@session_options[:session0] || {})
         @session1 = test_client.start_session(@session_options[:session1] || {})
@@ -282,11 +304,22 @@ module Mongo
       #
       # @since 2.6.0
       def compare_operation_result(actual_results)
-        return false if @expected_results.length != actual_results.length
-
-        @expected_results.zip(actual_results).all? do |expected, actual|
-          compare_result(expected, actual)
+        if @expected_results.length != actual_results.length
+          return "Numbers of results differ: expected #{@expected_results.length}, got #{actual_results.length}"
         end
+
+        index = 0
+        @expected_results.zip(actual_results).all? do |expected, actual|
+          if expected
+            rv = compare_result(expected, actual)
+            if rv
+              return "Results differ at index #{index}: #{rv}"
+            end
+          end
+          index += 1
+        end
+
+        nil
       end
 
       # The expected data in the collection as an outcome after running this test.
@@ -332,23 +365,48 @@ module Mongo
       def compare_result(expected, actual)
         case expected
         when nil
-          actual.nil?
+          if actual.nil?
+            nil
+          else
+            "Expected nil, got #{actual}"
+          end
         when Hash
           expected.all? do |k, v|
             case k
             when 'errorContains'
-              actual && actual['errorContains'].include?(v)
+              if actual && actual['errorContains'].include?(v)
+                nil
+              else
+                "Expected #{actual['errorContains']} to include #{v}"
+              end
             when 'errorLabelsContain'
-              actual && v.all? { |label| actual['errorLabels'].include?(label) }
+              if actual && v.all? { |label| actual['errorLabels'].include?(label) }
+                nil
+              else
+                "Expected #{actual} to include error labels #{v.inspect}"
+              end
             when 'errorLabelsOmit'
-              !actual || v.all? { |label| !actual['errorLabels'].include?(label) }
+              if !actual || v.all? { |label| !actual['errorLabels'].include?(label) }
+                nil
+              else
+                "Expected #{actual} to not include error label #{v.inspect}"
+              end
             else
-              actual && (actual[k] == v || handle_upserted_id(k, v, actual[v]) ||
+              if actual && (actual[k] == v || handle_upserted_id(k, v, actual[v]) ||
                 handle_inserted_ids(k, v, actual[v]))
+              then
+                nil
+              else
+                "Expected #{actual} to match inserted ids in #{v}}"
+              end
             end
           end
         else
-          expected == actual
+          if expected == actual
+            nil
+          else
+            "Expected #{actual} to equal #{expected}"
+          end
         end
       end
 
@@ -383,31 +441,34 @@ module Mongo
 
         attr_reader :test_instance
 
-        def verify_command_started_events(results)
+        def verify_command_started_event_count(results)
           expectations = test_instance.expectations
           expect(results[:events].length).to eq(expectations.length)
+        end
 
-          expectations.each_with_index do |expectation, i|
-            expect(expectation.keys).to eq(%w(command_started_event))
-            expected_event = expectation['command_started_event'].dup
-            actual_event = results[:events][i].dup
-            expect(expected_event.keys).to eq(actual_event.keys)
+        def verify_command_started_event(results, i)
+          expectation = test_instance.expectations[i]
 
-            expected_command = expected_event.delete('command')
-            actual_command = actual_event.delete('command')
+          expect(expectation.keys).to eq(%w(command_started_event))
+          expected_event = expectation['command_started_event'].dup
+          actual_event = results[:events][i].dup
+          expect(actual_event).not_to be nil
+          expect(expected_event.keys).to eq(actual_event.keys)
 
-            # Hash#compact is ruby 2.4+
-            expected_presence = expected_command.select { |k, v| !v.nil? }
-            expected_absence = expected_command.select { |k, v| v.nil? }
+          expected_command = expected_event.delete('command')
+          actual_command = actual_event.delete('command')
 
-            expect(actual_command).to eq(expected_presence)
-            expected_absence.each do |k, v|
-              expect(actual_command).not_to have_key(k)
-            end
+          # Hash#compact is ruby 2.4+
+          expected_presence = expected_command.select { |k, v| !v.nil? }
+          expected_absence = expected_command.select { |k, v| v.nil? }
 
-            # this compares remaining fields in events after command is removed
-            expect(expected_event).to eq(actual_event)
+          expect(actual_command).to eq(expected_presence)
+          expected_absence.each do |k, v|
+            expect(actual_command).not_to have_key(k)
           end
+
+          # this compares remaining fields in events after command is removed
+          expect(expected_event).to eq(actual_event)
         end
       end
     end
