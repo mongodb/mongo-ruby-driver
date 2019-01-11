@@ -403,16 +403,21 @@ module Mongo
       !!client.options[:retry_writes] && (cluster.replica_set? || cluster.sharded?)
     end
 
-    # Get the session id.
+    # Get the server session id of this session, if the session was not ended.
+    # If the session was ended, returns nil.
     #
     # @example Get the session id.
     #   session.session_id
     #
-    # @return [ BSON::Document ] The session id.
+    # @return [ BSON::Document ] The server session id.
     #
     # @since 2.5.0
     def session_id
-      @server_session.session_id if @server_session
+      if ended?
+        raise Error::SessionEnded
+      end
+
+      @server_session.session_id
     end
 
     # Increment and return the next transaction number.
@@ -424,7 +429,11 @@ module Mongo
     #
     # @since 2.5.0
     def next_txn_num
-      @server_session.next_txn_num if @server_session
+      if ended?
+        raise Error::SessionEnded
+      end
+
+      @server_session.next_txn_num
     end
 
     # Get the current transaction number.
@@ -436,7 +445,11 @@ module Mongo
     #
     # @since 2.6.0
     def txn_num
-      @server_session && @server_session.txn_num
+      if ended?
+        raise Error::SessionEnded
+      end
+
+      @server_session.txn_num
     end
 
     # Is this session an implicit one (not user-created).

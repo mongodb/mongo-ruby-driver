@@ -252,4 +252,63 @@ describe Mongo::Session do
       end
     end
   end
+
+  describe '#session_id' do
+    it 'returns a BSON::Document' do
+      expect(session.session_id).to be_a(BSON::Document)
+    end
+
+    context 'ended session' do
+      before do
+        session.end_session
+      end
+
+      it 'raises SessionEnded' do
+        expect do
+          session.session_id
+        end.to raise_error(Mongo::Error::SessionEnded)
+      end
+    end
+  end
+
+  describe '#txn_num' do
+    it 'returns an integer' do
+      expect(session.txn_num).to be_a(Integer)
+    end
+
+    context 'ended session' do
+      before do
+        session.end_session
+      end
+
+      it 'raises SessionEnded' do
+        expect do
+          session.txn_num
+        end.to raise_error(Mongo::Error::SessionEnded)
+      end
+    end
+  end
+
+  describe '#next_txn_num' do
+    it 'returns an integer' do
+      expect(session.next_txn_num).to be_a(Integer)
+    end
+
+    it 'increments transaction number on each call' do
+      expect(session.next_txn_num).to eq(1)
+      expect(session.next_txn_num).to eq(2)
+    end
+
+    context 'ended session' do
+      before do
+        session.end_session
+      end
+
+      it 'raises SessionEnded' do
+        expect do
+          session.next_txn_num
+        end.to raise_error(Mongo::Error::SessionEnded)
+      end
+    end
+  end
 end
