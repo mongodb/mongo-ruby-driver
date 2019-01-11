@@ -256,6 +256,19 @@ module Mongo
       parsed_scheme, _, remaining = string.partition(SCHEME_DELIM)
       raise_invalid_error!(INVALID_SCHEME) unless parsed_scheme == scheme
       parse!(remaining)
+
+      # Warn if conflicting insecure TLS options are provided.
+      if @uri_options[:ssl_verify] == false
+        if @uri_options[:tls_allow_invalid_certificates] == false
+          log_warn("tlsInsecure/ssl_verify is set to disable verification, but " +
+                     "tls_allow_invalid_certificates is set to enable it")
+        end
+
+       if @uri_options[:tls_allow_invalid_hostnames] == false
+          log_warn("tlsInsecure/ssl_verify is set to disable verification, but " +
+                     "tls_allow_invalid_hostnames is set to enable it")
+        end
+      end
     end
 
     # Get the credentials provided in the URI.
@@ -452,7 +465,10 @@ module Mongo
     # Security Options
     uri_option 'ssl', :ssl
     uri_option 'tls', :ssl
-    uri_option 'tlsallowinvalidcertificates', :ssl_verify, :type => :ssl_verify
+    uri_option 'tlsallowinvalidcertificates', :tls_allow_invalid_certificates,
+               :type => :tls_allow_invalid_certificates
+    uri_option 'tlsallowinvalidhostnames', :tls_allow_invalid_hostnames,
+               :type => :tls_allow_invalid_hostnames
     uri_option 'tlscafile', :ssl_ca_cert
     uri_option 'tlscertificatekeyfile', :ssl_cert
     uri_option 'tlsclientkeyfile', :ssl_key
@@ -658,20 +674,40 @@ module Mongo
     end
 
     # Parses the ssl_verify value. Note that this will be the inverse of the value of
-    # tlsAllowInvalidCertificates (if present).
+    # tlsInsecure (if present).
     #
-    # @param value [ String ] The tlsAllowInvalidCertificates value.
+    # @param value [ String ] The tlsInsecure value.
     #
     # @return [ true | false | nil ] The ssl_verify value parsed out, otherwise nil (and a warning
     #   will be logged).
     def ssl_verify(value)
-      b = bool('tlsAllowInvalidCertificates', value)
+      b = bool('tlsInsecure', value)
 
       if b.nil?
         nil
       else
         !b
       end
+    end
+
+    # Parses the tlsAllowInvalidCertificates value.
+    #
+    # @param value [ String ] The tlsAllowInvalidCertificates value.
+    #
+    # @return [ true | false | nil ] The tlsAllowInvalidCertificates value parsed out, otherwise nil
+    #   (and a warning will be logged).
+    def tls_allow_invalid_certificates(value)
+      bool('tls_allow_invalid_invalid_certificates', value)
+    end
+
+    # Parses the tlsAllowInvalidHostnames value.
+    #
+    # @param value [ String ] The tlsAllowInvalidHostnames value.
+    #
+    # @return [ true | false | nil ] The tlsAllowInvalidHostnames value parsed out, otherwise nil
+    #   (and a warning will be logged).
+    def tls_allow_invalid_hostnames(value)
+      bool('tls_allow_invalid_hostnames', value)
     end
 
     # Parses the retryWrites value.
