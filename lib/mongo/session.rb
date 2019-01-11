@@ -103,6 +103,8 @@ module Mongo
 
     # Initialize a Session.
     #
+    # @note Applications should use Client#start_session to begin a session.
+    #
     # @example
     #   Session.new(server_session, client, options)
     #
@@ -117,6 +119,7 @@ module Mongo
     #     and *:nearest*.
     #
     # @since 2.5.0
+    # @api private
     def initialize(server_session, client, options = {})
       @server_session = server_session
       options = options.dup
@@ -182,6 +185,7 @@ module Mongo
     # @return [ Hash, BSON::Document ] The command document.
     #
     # @since 2.6.0
+    # @api private
     def add_autocommit!(command)
       command.tap do |c|
         c[:autocommit] = false if in_transaction?
@@ -196,6 +200,7 @@ module Mongo
     # @return [ Hash, BSON::Document ] The command document.
     #
     # @since 2.5.0
+    # @api private
     def add_id!(command)
       command.merge!(lsid: session_id)
     end
@@ -208,6 +213,7 @@ module Mongo
     # @return [ Hash, BSON::Document ] The command document.
     #
     # @since 2.6.0
+    # @api private
     def add_start_transaction!(command)
       command.tap do |c|
         c[:startTransaction] = true if starting_transaction?
@@ -222,6 +228,7 @@ module Mongo
     # @return [ Hash, BSON::Document ] The command document.
     #
     # @since 2.6.0
+    # @api private
     def add_txn_num!(command)
       command.tap do |c|
         c[:txnNumber] = BSON::Int64.new(@server_session.txn_num) if in_transaction?
@@ -236,6 +243,7 @@ module Mongo
     # @return [ Hash, BSON::Document ] The command document.
     #
     # @since 2.6.0
+    # @api private
     def add_txn_opts!(command, read)
       command.tap do |c|
         # The read preference should be added for all read operations.
@@ -278,6 +286,7 @@ module Mongo
     # @return [ Hash, BSON::Document ] The command document.
     #
     # @since 2.6.0
+    # @api private
     def suppress_read_write_concern!(command)
       command.tap do |c|
         next unless in_transaction?
@@ -296,6 +305,7 @@ module Mongo
     #   not primary.
     #
     # @since 2.6.0
+    # @api private
     def validate_read_preference!(command)
       return unless in_transaction? && non_primary_read_preference_mode?(command)
 
@@ -306,6 +316,7 @@ module Mongo
     # Update the state of the session due to a (non-commit and non-abort) operation being run.
     #
     # @since 2.6.0
+    # @api private
     def update_state!
       case @state
       when STARTING_TRANSACTION_STATE
@@ -327,6 +338,7 @@ module Mongo
     # @raise [ Mongo::Error::InvalidSession ] Raise error if the session is not valid.
     #
     # @since 2.5.0
+    # @api private
     def validate!(cluster)
       check_matching_cluster!(cluster)
       check_if_ended!
@@ -343,6 +355,7 @@ module Mongo
     # @return [ Operation::Result ] The result.
     #
     # @since 2.5.0
+    # @api private
     def process(result)
       unless implicit?
         set_operation_time(result)
@@ -423,6 +436,7 @@ module Mongo
     # @return [ Integer ] The next transaction number.
     #
     # @since 2.5.0
+    # @api private
     def next_txn_num
       @server_session.next_txn_num if @server_session
     end
