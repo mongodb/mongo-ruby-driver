@@ -15,8 +15,8 @@
 module Mongo
   module Operation
 
-    # Shared behavior of instantiating a result class matching the
-    # operation class.
+    # Shared behavior of looking up a class based on the name of
+    # the receiver's class.
     #
     # @api private
     module PolymorphicLookup
