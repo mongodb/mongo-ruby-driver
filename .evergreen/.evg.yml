@@ -334,7 +334,7 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
-          AUTH=${AUTH} SSL=${SSL} MONGODB_URI="${MONGODB_URI}" TOPOLOGY=${TOPOLOGY} RVM_RUBY="${RVM_RUBY}" MONGODB_VERSION=${VERSION} MONGO_RUBY_DRIVER_LINT=${LINT} RETRY_WRITES=${RETRY_WRITES} .evergreen/run-tests.sh
+          AUTH=${AUTH} SSL=${SSL} MONGODB_URI="${MONGODB_URI}" TOPOLOGY=${TOPOLOGY} RVM_RUBY="${RVM_RUBY}" MONGODB_VERSION=${VERSION} MONGO_RUBY_DRIVER_LINT=${LINT} FCV=$(FCV) RETRY_WRITES=${RETRY_WRITES} .evergreen/run-tests.sh
 
   "run enterprise auth tests":
     - command: shell.exec
@@ -602,6 +602,13 @@ axes:
         display_name: On
         variables:
           LINT: '1'
+  - id: fcv
+    display_name: FCV
+    values:
+      - id: 3.4
+        display_name: 3.4
+        variables:
+          FCV: '3.4'
 
 
 buildvariants:
@@ -750,6 +757,19 @@ buildvariants:
     - ubuntu1604-test
   tasks:
      - name: "test"
+
+-
+  matrix_name: "3.6-with-3.4-fcv"
+  matrix_spec:
+    fcv: '3.4'
+    ruby: ["ruby-2.5"]
+    mongodb-version: '3.6'
+    topology: replica-set
+  display_name: "3.6 Replica Set with 3.4 FCV"
+  run_on:
+    - ubuntu1404-test
+  tasks:
+    - name: "test"
 
 -
   matrix_name: "enterprise-auth-tests-ubuntu"
