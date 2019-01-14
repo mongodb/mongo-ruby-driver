@@ -334,7 +334,7 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
-          AUTH=${AUTH} SSL=${SSL} MONGODB_URI="${MONGODB_URI}" TOPOLOGY=${TOPOLOGY} RVM_RUBY="${RVM_RUBY}" MONGODB_VERSION=${VERSION} MONGO_RUBY_DRIVER_LINT=${LINT} FCV=$(FCV) RETRY_WRITES=${RETRY_WRITES} .evergreen/run-tests.sh
+          AUTH=${AUTH} SSL=${SSL} MONGODB_URI="${MONGODB_URI}" TOPOLOGY=${TOPOLOGY} RVM_RUBY="${RVM_RUBY}" MONGODB_VERSION=${VERSION} MONGO_RUBY_DRIVER_LINT=${LINT} FCV=${FCV} RETRY_WRITES=${RETRY_WRITES} .evergreen/run-tests.sh
 
   "run enterprise auth tests":
     - command: shell.exec
@@ -605,8 +605,8 @@ axes:
   - id: fcv
     display_name: FCV
     values:
-      - id: 3.4
-        display_name: 3.4
+      - id: '3.4'
+        display_name: '3.4'
         variables:
           FCV: '3.4'
 
