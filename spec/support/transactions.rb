@@ -12,20 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Matcher for determining if the results of the operation match the
-# test's expected results.
-#
-# @since 2.6.0
-RSpec::Matchers.define :match_operation_result do |test|
-
-  match do |actual|
-    rv = test.compare_operation_result(actual)
-    puts rv
-    rv.nil?
-  end
-end
-
 require 'support/transactions/operation'
+require 'support/transactions/verifier'
 
 module Mongo
   module Transactions
@@ -111,6 +99,8 @@ module Mongo
       # @since 2.6.0
       attr_reader :expectations
 
+      attr_reader :expected_results
+
       # Instantiate the new CRUDTest.
       #
       # @example Create the test.
@@ -177,7 +167,9 @@ module Mongo
       def run
         test_client.subscribe(Mongo::Monitoring::COMMAND, event_subscriber)
 
-        results = @ops.map { |o| o.execute(@collection) }
+        results = @ops.map do |op|
+          op.execute(@collection)
+        end
 
         session0_id = @session0.session_id
         session1_id = @session1.session_id
@@ -293,35 +285,6 @@ module Mongo
         end
       end
 
-      # Compare the actual operation result to the expected operation result.
-      #
-      # @example Compare the existing and expected operation results.
-      #   test.compare_operation_result(actual_results)
-      #
-      # @params [ Object ] actual The actual test results.
-      #
-      # @return [ true, false ] The result of comparing the expected and actual operation result.
-      #
-      # @since 2.6.0
-      def compare_operation_result(actual_results)
-        if @expected_results.length != actual_results.length
-          return "Numbers of results differ: expected #{@expected_results.length}, got #{actual_results.length}"
-        end
-
-        index = 0
-        @expected_results.zip(actual_results).all? do |expected, actual|
-          if expected
-            rv = compare_result(expected, actual)
-            if rv
-              return "Results differ at index #{index}: #{rv}"
-            end
-          end
-          index += 1
-        end
-
-        nil
-      end
-
       # The expected data in the collection as an outcome after running this test.
       #
       # @example Get the outcome collection data
@@ -337,10 +300,6 @@ module Mongo
 
       def order_hash(hash)
         Hash[hash.to_a.sort]
-      end
-
-      def verifier
-        Verifier.new(self)
       end
 
       private
@@ -359,116 +318,6 @@ module Mongo
           end
 
           opts.tap { |o| o[kv.first] = kv.last }
-        end
-      end
-
-      def compare_result(expected, actual)
-        case expected
-        when nil
-          if actual.nil?
-            nil
-          else
-            "Expected nil, got #{actual}"
-          end
-        when Hash
-          expected.all? do |k, v|
-            case k
-            when 'errorContains'
-              if actual && actual['errorContains'].include?(v)
-                nil
-              else
-                "Expected #{actual['errorContains']} to include #{v}"
-              end
-            when 'errorLabelsContain'
-              if actual && v.all? { |label| actual['errorLabels'].include?(label) }
-                nil
-              else
-                "Expected #{actual} to include error labels #{v.inspect}"
-              end
-            when 'errorLabelsOmit'
-              if !actual || v.all? { |label| !actual['errorLabels'].include?(label) }
-                nil
-              else
-                "Expected #{actual} to not include error label #{v.inspect}"
-              end
-            else
-              if actual && (actual[k] == v || handle_upserted_id(k, v, actual[v]) ||
-                handle_inserted_ids(k, v, actual[v]))
-              then
-                nil
-              else
-                "Expected #{actual} to match inserted ids in #{v}}"
-              end
-            end
-          end
-        else
-          if expected == actual
-            nil
-          else
-            "Expected #{actual} to equal #{expected}"
-          end
-        end
-      end
-
-      def handle_upserted_id(field, expected_id, actual_id)
-        return true if expected_id.nil?
-        if field == 'upsertedId'
-          if expected_id.is_a?(Integer)
-            actual_id.is_a?(BSON::ObjectId) || actual_id.nil?
-          end
-        end
-      end
-
-      def handle_inserted_ids(field, expected, actual)
-        if field == 'insertedIds'
-          expected.values == actual
-        end
-      end
-
-      def actual_collection_data
-        if @outcome['collection']
-          collection_name = @outcome['collection']['name'] || @collection.name
-          @collection.database[collection_name].find.to_a
-        end
-      end
-
-      class Verifier
-        include RSpec::Matchers
-
-        def initialize(test_instance)
-          @test_instance = test_instance
-        end
-
-        attr_reader :test_instance
-
-        def verify_command_started_event_count(results)
-          expectations = test_instance.expectations
-          expect(results[:events].length).to eq(expectations.length)
-        end
-
-        def verify_command_started_event(results, i)
-          expectation = test_instance.expectations[i]
-
-          expect(expectation.keys).to eq(%w(command_started_event))
-          expected_event = expectation['command_started_event'].dup
-          actual_event = results[:events][i].dup
-          expect(actual_event).not_to be nil
-          expect(expected_event.keys).to eq(actual_event.keys)
-
-          expected_command = expected_event.delete('command')
-          actual_command = actual_event.delete('command')
-
-          # Hash#compact is ruby 2.4+
-          expected_presence = expected_command.select { |k, v| !v.nil? }
-          expected_absence = expected_command.select { |k, v| v.nil? }
-
-          expect(actual_command).to eq(expected_presence)
-          expected_absence.each do |k, v|
-            expect(actual_command).not_to have_key(k)
-          end
-
-          # this compares remaining fields in events after command is removed
-          expect(expected_event).to eq(actual_event)
         end
       end
     end

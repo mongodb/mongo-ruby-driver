@@ -27,10 +27,10 @@ describe 'Transactions' do
             test.run
           end
 
-          let(:verifier) { Mongo::CRUD::Verifier.new(test) }
+          let(:verifier) { Mongo::Transactions::Verifier.new(test) }
 
           it 'returns the correct result' do
-            expect(results[:results]).to match_operation_result(test)
+            verifier.verify_operation_result(results[:results])
           end
 
           it 'has the correct data in the collection', if: test_instance.outcome_collection_data do
@@ -40,12 +40,12 @@ describe 'Transactions' do
 
           if test_instance.expectations
             it 'has the correct number of command_started events' do
-              test_instance.verifier.verify_command_started_event_count(results)
+              verifier.verify_command_started_event_count(results)
             end
 
             test_instance.expectations.each_with_index do |expectation, i|
               it "has the correct command_started event #{i}" do
-                test_instance.verifier.verify_command_started_event(results, i)
+                verifier.verify_command_started_event(results, i)
               end
             end
           end
