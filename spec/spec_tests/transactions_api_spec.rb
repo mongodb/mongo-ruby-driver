@@ -1,8 +1,8 @@
 require 'spec_helper'
 
-describe 'Transactions' do
+describe 'Transactions API' do
 
-  TRANSACTIONS_TESTS.sort.each do |file|
+  TRANSACTIONS_API_TESTS.sort.each do |file|
 
     spec = Mongo::Transactions::Spec.new(file)
 
@@ -12,6 +12,10 @@ describe 'Transactions' do
 
         context(test_instance.description) do
           require_transaction_support
+
+          if spec.min_server_version
+            min_server_version spec.min_server_version.split('.')[0..1].join('.')
+          end
 
           let(:test) { test_factory.call }
 

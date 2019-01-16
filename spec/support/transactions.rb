@@ -12,18 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Matcher for determining if the results of the operation match the
-# test's expected results.
-#
-# @since 2.6.0
-RSpec::Matchers.define :match_operation_result do |test|
-
-  match do |actual|
-    test.compare_operation_result(actual)
-  end
-end
-
 require 'support/transactions/operation'
+require 'support/transactions/verifier'
 
 module Mongo
   module Transactions
@@ -71,8 +61,24 @@ module Mongo
       # @since 2.6.0
       def tests
         @transaction_tests.map do |test|
-          Proc.new { Mongo::Transactions::TransactionsTest.new(@data, test) }
-        end
+          if test['skipReason']
+            nil
+          else
+            Proc.new { Mongo::Transactions::TransactionsTest.new(@data, test, self) }
+          end
+        end.compact
+      end
+
+      def database_name
+        @spec['database_name']
+      end
+
+      def collection_name
+        @spec['collection_name']
+      end
+
+      def min_server_version
+        @spec['minServerVersion']
       end
     end
 
@@ -93,6 +99,8 @@ module Mongo
       # @since 2.6.0
       attr_reader :expectations
 
+      attr_reader :expected_results
+
       # Instantiate the new CRUDTest.
       #
       # @example Create the test.
@@ -101,15 +109,17 @@ module Mongo
       # @param [ Array<Hash> ] data The documents the collection
       # must have before the test runs.
       # @param [ Hash ] test The test specification.
+      # @param [ Hash ] spec The top level YAML specification.
       #
       # @since 2.6.0
-      def initialize(data, test)
+      def initialize(data, test, spec)
         test = IceNine.deep_freeze(test)
+        @spec = spec
         @data = data
         @description = test['description']
         @client_options = convert_client_options(test['clientOptions'] || {})
         @session_options = snakeize_hash(test['sessionOptions'] || {})
-        @failpoint = test['failPoint']
+        @fail_point = test['failPoint']
         @operations = test['operations']
         @expectations = test['expectations']
         @outcome = test['outcome']
@@ -128,7 +138,7 @@ module Mongo
       end
 
       def support_client
-        ClientRegistry.instance.global_client('root_authorized')
+        @support_client ||= ClientRegistry.instance.global_client('root_authorized').use(@spec.database_name)
       end
 
       def admin_support_client
@@ -137,7 +147,9 @@ module Mongo
 
       def test_client
         @test_client ||= ClientRegistry.instance.global_client('authorized_without_retry_writes').with(
-          @client_options.merge(app_name: 'this is used solely to force the new client to create its own cluster'))
+          @client_options.merge(
+            database: @spec.database_name,
+            app_name: 'this is used solely to force the new client to create its own cluster'))
       end
 
       def event_subscriber
@@ -155,7 +167,9 @@ module Mongo
       def run
         test_client.subscribe(Mongo::Monitoring::COMMAND, event_subscriber)
 
-        results = @ops.map { |o| o.execute(@collection) }
+        results = @ops.map do |op|
+          op.execute(@collection)
+        end
 
         session0_id = @session0.session_id
         session1_id = @session1.session_id
@@ -221,7 +235,7 @@ module Mongo
         # Remove any events from authentication commands.
         events.reject! { |c| c['command_started_event']['command_name'].start_with?('sasl') }
 
-        if @failpoint
+        if @fail_point
           admin_support_client.command(configureFailPoint: 'failCommand', mode: 'off')
         end
 
@@ -242,17 +256,17 @@ module Mongo
         rescue Mongo::Error
         end
 
-        coll = support_client[Mongo::Transactions::Spec::COLLECTION_NAME]
+        coll = support_client[@spec.collection_name]
         coll.database.drop
         coll.with(write: { w: :majority }).drop
         support_client.command(
-          { create: Mongo::Transactions::Spec::COLLECTION_NAME },
+          { create: @spec.collection_name },
           { write_concern: { w: :majority } })
 
         coll.with(write: { w: :majority }).insert_many(@data) unless @data.empty?
-        admin_support_client.command(@failpoint) if @failpoint
+        admin_support_client.command(@fail_point) if @fail_point
 
-        @collection = test_client[Mongo::Transactions::Spec::COLLECTION_NAME]
+        @collection = test_client[@spec.collection_name]
 
         @session0 = test_client.start_session(@session_options[:session0] || {})
         @session1 = test_client.start_session(@session_options[:session1] || {})
@@ -268,24 +282,6 @@ module Mongo
         end
         if @test_client
           @test_client.close
-        end
-      end
-
-      # Compare the actual operation result to the expected operation result.
-      #
-      # @example Compare the existing and expected operation results.
-      #   test.compare_operation_result(actual_results)
-      #
-      # @params [ Object ] actual The actual test results.
-      #
-      # @return [ true, false ] The result of comparing the expected and actual operation result.
-      #
-      # @since 2.6.0
-      def compare_operation_result(actual_results)
-        return false if @expected_results.length != actual_results.length
-
-        @expected_results.zip(actual_results).all? do |expected, actual|
-          compare_result(expected, actual)
         end
       end
 
@@ -306,10 +302,6 @@ module Mongo
         Hash[hash.to_a.sort]
       end
 
-      def verifier
-        Verifier.new(self)
-      end
-
       private
 
       def convert_client_options(client_options)
@@ -326,88 +318,6 @@ module Mongo
           end
 
           opts.tap { |o| o[kv.first] = kv.last }
-        end
-      end
-
-      def compare_result(expected, actual)
-        case expected
-        when nil
-          actual.nil?
-        when Hash
-          expected.all? do |k, v|
-            case k
-            when 'errorContains'
-              actual && actual['errorContains'].include?(v)
-            when 'errorLabelsContain'
-              actual && v.all? { |label| actual['errorLabels'].include?(label) }
-            when 'errorLabelsOmit'
-              !actual || v.all? { |label| !actual['errorLabels'].include?(label) }
-            else
-              actual && (actual[k] == v || handle_upserted_id(k, v, actual[v]) ||
-                handle_inserted_ids(k, v, actual[v]))
-            end
-          end
-        else
-          expected == actual
-        end
-      end
-
-      def handle_upserted_id(field, expected_id, actual_id)
-        return true if expected_id.nil?
-        if field == 'upsertedId'
-          if expected_id.is_a?(Integer)
-            actual_id.is_a?(BSON::ObjectId) || actual_id.nil?
-          end
-        end
-      end
-
-      def handle_inserted_ids(field, expected, actual)
-        if field == 'insertedIds'
-          expected.values == actual
-        end
-      end
-
-      def actual_collection_data
-        if @outcome['collection']
-          collection_name = @outcome['collection']['name'] || @collection.name
-          @collection.database[collection_name].find.to_a
-        end
-      end
-
-      class Verifier
-        include RSpec::Matchers
-
-        def initialize(test_instance)
-          @test_instance = test_instance
-        end
-
-        attr_reader :test_instance
-
-        def verify_command_started_events(results)
-          expectations = test_instance.expectations
-          expect(results[:events].length).to eq(expectations.length)
-
-          expectations.each_with_index do |expectation, i|
-            expect(expectation.keys).to eq(%w(command_started_event))
-            expected_event = expectation['command_started_event'].dup
-            actual_event = results[:events][i].dup
-            expect(expected_event.keys).to eq(actual_event.keys)
-
-            expected_command = expected_event.delete('command')
-            actual_command = actual_event.delete('command')
-
-            # Hash#compact is ruby 2.4+
-            expected_presence = expected_command.select { |k, v| !v.nil? }
-            expected_absence = expected_command.select { |k, v| v.nil? }
-
-            expect(actual_command).to eq(expected_presence)
-            expected_absence.each do |k, v|
-              expect(actual_command).not_to have_key(k)
-            end
-
-            # this compares remaining fields in events after command is removed
-            expect(expected_event).to eq(actual_event)
-          end
         end
       end
     end
