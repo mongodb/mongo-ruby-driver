@@ -636,22 +636,48 @@ module Mongo
 
     # Executes the provided block in a transaction, retrying as necessary.
     #
+    # Returns the return value of the block.
+    #
     # Exact number of retries and when they are performed are implementation
     # details of the driver; the provided block should be idempotent, and
-    # should be prepared to be called more than once. The driver will retry
-    # both the commit command itself and the entire provided block for as long
-    # as any part of the entire proess fails with a transient error such as
-    # a replica set election or a write conflict. Note also that the retries
-    # may be executed against different servers.
+    # should be prepared to be called more than once. The driver may retry
+    # the commit command within an active transaction or it may repeat the
+    # transaction and invoke the block again, depending on the error
+    # encountered if any. Note also that the retries may be executed against
+    # different servers.
     #
     # Transactions cannot be nested - InvalidTransactionOperation will be raised
     # if this method is called when the session already has an active transaction.
     #
-    # @example Start a new transaction
+    # Exceptions raised by the block which are not derived from Mongo::Error
+    # stop processing, abort the transaction and are propagated out of
+    # with_transaction. Exceptions derived from Mongo::Error may be
+    # handled by with_transaction, resulting in retries of the process.
+    #
+    # The number of retries and the total time taken by with_transaction is
+    # not specified by the driver. The driver only guarantees that the number
+    # of retries attempted will be finite, i.e., that it will stop retrying
+    # at some point. The number of retries and the time allowed for the retries
+    # is subject to change in future versions of the driver. Applications that
+    # require known performance characteristics (for example, when servicing
+    # web requests in an application with a fixed number of servers/workers/threads)
+    # are encouraged to explicitly limit the time they allow for with_transaction
+    # calls.
+    #
+    # @example Execute a statement in a transaction
     #   session.with_transaction(write_concern: {w: :majority}) do
     #     collection.update_one({ id: 3 }, { '$set' => { status: 'Inactive'} },
     #                           session: session)
     #
+    #   end
+    #
+    # @example Execute a statement in a transaction, limiting total time consumed
+    #   Timeout.timeout(5) do
+    #     session.with_transaction(write_concern: {w: :majority}) do
+    #       collection.update_one({ id: 3 }, { '$set' => { status: 'Inactive'} },
+    #                             session: session)
+    #
+    #     end
     #   end
     #
     # @param [ Hash ] options The options for the transaction being started.
@@ -662,7 +688,7 @@ module Mongo
     #
     # @since 2.7.0
     def with_transaction(options=nil)
-      while true
+      loop do
         commit_options = {}
         if options
           commit_options[:write_concern] = options[:write_concern]
