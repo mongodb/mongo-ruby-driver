@@ -172,11 +172,20 @@ URI Options Conversions
      - ``:ssl => boolean``
 
    * - tlsAllowInvalidCertificates=Boolean
-     - ``:ssl_verify => boolean``
+     - ``:ssl_verify_certificate => boolean``
 
        Because ``tlsAllowInvalidCertificates`` uses ``true`` to signify that verification
-       should be disabled and ``ssl_verify`` uses ``false`` to signify that verification should be
-       disabled, the boolean is inverted before being used to set ``ssl_verify``.
+       should be disabled and ``ssl_verify_certificate`` uses ``false`` to signify that
+       verification should be disabled, the boolean is inverted before being used to set
+       ``ssl_verify_certificate``.
+
+   * - tlsAllowInvalidHostnames=Boolean
+     - ``:ssl_verify_hostname => boolean``
+
+       Because ``tlsAllowInvalidHostnames`` uses ``true`` to signify that verification
+       should be disabled and ``ssl_verify_hostname`` uses ``false`` to signify that
+       verification should be disabled, the boolean is inverted before being used to set
+       ``ssl_verify_hostname``.
 
    * - tlsCAFile=String
      - ``:ssl_ca_cert => String``
@@ -295,7 +304,22 @@ Ruby Options
      - none
 
    * - ``:ssl_verify``
-     - Whether to perform peer certificate validation.
+     - Whether to perform peer certificate validation and hostname verification. Note that
+       the decision of whether to validate certificates will be overriden if :ssl_verify_certificate
+       is set, and the decision of whether to validate hostnames will be overridden if
+       :ssl_verify_hostname is set.
+     - ``Boolean``
+     - true
+
+   * - ``:ssl_verify_certificate``
+     - Whether to perform peer certificate validation. This setting overrides :ssl_verify with
+       respect to whether certificate validition is performed.
+     - ``Boolean``
+     - true
+
+   * - ``:ssl_verify_hostname``
+     - Whether to perform peer hostname validation. This setting overrides :ssl_verify with
+       respect to whether hostname validition is performed.
      - ``Boolean``
      - true
 
