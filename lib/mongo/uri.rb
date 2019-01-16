@@ -259,14 +259,14 @@ module Mongo
 
       # Warn if conflicting insecure TLS options are provided.
       if @uri_options[:ssl_verify] == false
-        if @uri_options[:tls_allow_invalid_certificates] == false
-          log_warn("tlsInsecure/ssl_verify is set to disable verification, but " +
-                     "tls_allow_invalid_certificates is set to enable it")
+        if @uri_options[:ssl_verify_certificate]
+          log_warn("tlsInsecure is set to disable verification, but tlsAllowInvalidCertificates " +
+                     "is set to enable it")
         end
 
-       if @uri_options[:tls_allow_invalid_hostnames] == false
-          log_warn("tlsInsecure/ssl_verify is set to disable verification, but " +
-                     "tls_allow_invalid_hostnames is set to enable it")
+       if @uri_options[:ssl_verify_hostname]
+          log_warn("tlsInsecure is set to disable verification, but tlsAllowInvalidHostnames is " +
+                     "set to enable it")
         end
       end
     end
@@ -465,10 +465,10 @@ module Mongo
     # Security Options
     uri_option 'ssl', :ssl
     uri_option 'tls', :ssl
-    uri_option 'tlsallowinvalidcertificates', :tls_allow_invalid_certificates,
-               :type => :tls_allow_invalid_certificates
-    uri_option 'tlsallowinvalidhostnames', :tls_allow_invalid_hostnames,
-               :type => :tls_allow_invalid_hostnames
+    uri_option 'tlsallowinvalidcertificates', :ssl_verify_certificate,
+               :type => :ssl_verify_certificate
+    uri_option 'tlsallowinvalidhostnames', :ssl_verify_hostname,
+               :type => :ssl_verify_hostname
     uri_option 'tlscafile', :ssl_ca_cert
     uri_option 'tlscertificatekeyfile', :ssl_cert
     uri_option 'tlsclientkeyfile', :ssl_key
@@ -673,41 +673,37 @@ module Mongo
       bool('journal', value)
     end
 
-    # Parses the ssl_verify value. Note that this will be the inverse of the value of
-    # tlsInsecure (if present).
+    # Parses the ssl_verify value from the tlsInsecure URI value. Note that this will be the inverse
+    # of the value of tlsInsecure (if present).
     #
     # @param value [ String ] The tlsInsecure value.
     #
     # @return [ true | false | nil ] The ssl_verify value parsed out, otherwise nil (and a warning
     #   will be logged).
     def ssl_verify(value)
-      b = bool('tlsInsecure', value)
-
-      if b.nil?
-        nil
-      else
-        !b
-      end
+      inverse_bool('tlsAllowInvalidCertificates', value)
     end
 
-    # Parses the tlsAllowInvalidCertificates value.
+    # Parses the ssl_verify_certificate value from the tlsAllowInvalidCertificates URI value. Note
+    # that this will be the inverse of the value of tlsInsecure (if present).
     #
     # @param value [ String ] The tlsAllowInvalidCertificates value.
     #
-    # @return [ true | false | nil ] The tlsAllowInvalidCertificates value parsed out, otherwise nil
+    # @return [ true | false | nil ] The ssl_verify_certificate value parsed out, otherwise nil
     #   (and a warning will be logged).
-    def tls_allow_invalid_certificates(value)
-      bool('tls_allow_invalid_invalid_certificates', value)
+    def ssl_verify_certificate(value)
+      inverse_bool('tlsAllowInvalidCertificates', value)
     end
 
-    # Parses the tlsAllowInvalidHostnames value.
+    # Parses the ssl_verify_hostname value from the tlsAllowInvalidHostnames URI value. Note that
+    # this will be the inverse of the value of tlsAllowInvalidHostnames (if present).
     #
     # @param value [ String ] The tlsAllowInvalidHostnames value.
     #
-    # @return [ true | false | nil ] The tlsAllowInvalidHostnames value parsed out, otherwise nil
+    # @return [ true | false | nil ] The ssl_verify_hostname value parsed out, otherwise nil
     #   (and a warning will be logged).
-    def tls_allow_invalid_hostnames(value)
-      bool('tls_allow_invalid_hostnames', value)
+    def ssl_verify_hostname(value)
+      inverse_bool('tlsAllowInvalidHostnames', value)
     end
 
     # Parses the retryWrites value.
@@ -735,6 +731,22 @@ module Mongo
       else
         log_warn("invalid boolean option for #{name}: #{value}")
         nil
+      end
+    end
+
+    # Parses a boolean value and returns its inverse.
+    #
+    # @param value [ String ] The URI option value.
+    #
+    # @return [ true | false | nil ] The inverse of the  boolean value parsed out, otherwise nil
+    #   (and a warning will be logged).
+     def inverse_bool(name, value)
+      b = bool(name, value)
+
+      if b.nil?
+        nil
+      else
+        !b
       end
     end
 

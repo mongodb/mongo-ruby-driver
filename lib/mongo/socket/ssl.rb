@@ -116,25 +116,25 @@ module Mongo
 
       def verify_certificate?
         @verify_certificate ||=
-          # If tls_allow_invalid_certificates is not present, disable only if ssl_verify is
+          # If ssl_verify_certificate is not present, disable only if ssl_verify is
           # explicitly set to false.
-          if options[:tls_allow_invalid_certificates].nil?
+          if options[:ssl_verify_certificate].nil?
             options[:ssl_verify] != false
-          # If tls_allow_invalid_certificates is present, disable only if it's true.
+          # If ssl_verify_certificate is present, enable or disable based on its value.
           else
-            !options[:tls_allow_invalid_certificates]
+            options[:ssl_verify_certificate]
           end
       end
 
       def verify_hostname?
         @verify_hostname ||=
-          # If tls_allow_invalid_hostnames is not present, disable only if ssl_verify is explicitly
-          # set to false.
-          if options[:tls_allow_invalid_hostnames].nil?
+         # If ssl_verify_hostname is not present, disable only if ssl_verify is
+          # explicitly set to false.
+          if options[:ssl_verify_hostname].nil?
             options[:ssl_verify] != false
-          # If tls_allow_invalid_hostnames is present, disable only if it's true.
+          # If ssl_verify_hostname is present, enable or disable based on its value.
           else
-            !options[:tls_allow_invalid_hostnames]
+            options[:ssl_verify_hostname]
           end
       end
 

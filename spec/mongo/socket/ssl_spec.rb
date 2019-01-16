@@ -293,7 +293,7 @@ describe Mongo::Socket::SSL do
               host_name,
               30,
               ::Socket::PF_INET,
-              options.merge(tls_allow_invalid_hostnames: false)
+              options.merge(ssl_verify_hostname: true)
             ).connect!
           }.to raise_error(Mongo::Error::SocketError)
         end
@@ -308,7 +308,7 @@ describe Mongo::Socket::SSL do
               host_name,
               30,
               ::Socket::PF_INET,
-              options.merge(tls_allow_invalid_hostnames: true, ssl_verify: false)
+              options.merge(ssl_verify_hostname: false)
             ).connect!
           }.not_to raise_error
         end
