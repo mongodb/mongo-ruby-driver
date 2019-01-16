@@ -68,20 +68,21 @@ module Mongo
     # @since 2.5.0
     SESSIONS_NOT_SUPPORTED = 'Sessions are not supported by the connected servers.'.freeze
 
-    # The state of a session in which the last operation was not related to any transaction or no
-    # operations have yet occurred.
+    # The state of a session in which the last operation was not related to
+    # any transaction or no operations have yet occurred.
     #
     # @since 2.6.0
     NO_TRANSACTION_STATE = :no_transaction
 
-    # The state of a session in which a user has initiated a transaction but no operations within
-    # the transactions have occurred yet.
+    # The state of a session in which a user has initiated a transaction but
+    # no operations within the transactions have occurred yet.
     #
     # @since 2.6.0
     STARTING_TRANSACTION_STATE = :starting_transaction
 
-    # The state of a session in which a transaction has been started and at least one operation has
-    # occurred, but the transaction has not yet been committed or aborted.
+    # The state of a session in which a transaction has been started and at
+    # least one operation has occurred, but the transaction has not yet been
+    # committed or aborted.
     #
     # @since 2.6.0
     TRANSACTION_IN_PROGRESS_STATE = :transaction_in_progress
@@ -158,7 +159,12 @@ module Mongo
     # @since 2.5.0
     def end_session
       if !ended? && @client
-        abort_transaction if within_states?(TRANSACTION_IN_PROGRESS_STATE) rescue Mongo::Error
+        if within_states?(TRANSACTION_IN_PROGRESS_STATE)
+          begin
+            abort_transaction
+          rescue Mongo::Error
+          end
+        end
         @client.cluster.session_pool.checkin(@server_session)
       end
     ensure
@@ -564,8 +570,8 @@ module Mongo
       options ||= {}
 
       begin
-        # If commitTransaction is called twice, we need to run the same commit operation again, so
-        # we revert the session to the previous state.
+        # If commitTransaction is called twice, we need to run the same commit
+        # operation again, so we revert the session to the previous state.
         if within_states?(TRANSACTION_COMMITTED_STATE)
           @state = @last_commit_skipped ? STARTING_TRANSACTION_STATE : TRANSACTION_IN_PROGRESS_STATE
         end
