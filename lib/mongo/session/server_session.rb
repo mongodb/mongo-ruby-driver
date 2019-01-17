@@ -38,7 +38,21 @@ module Mongo
       # @since 2.5.0
       attr_reader :last_use
 
-      # The current transactions number.
+      # The current transaction number.
+      #
+      # When a transaction is active, all operations in that transaction
+      # use the same transaction number. If the entire transaction is restarted
+      # (for example, by Session#with_transaction, in which case it would
+      # also invoke the block provided to it again), each transaction attempt
+      # has its own transaction number.
+      #
+      # Transaction number is also used outside of transactions for
+      # retryable writes. In this case, each write operation has its own
+      # transaction number, but retries of a write operation use the same
+      # transaction number as the first write (which is how the server
+      # knows that subsequent writes are retries and should be ignored if
+      # the first write succeeded on the server but was not read by the
+      # client, for example).
       #
       # @since 2.5.0
       attr_reader :txn_num
@@ -80,12 +94,9 @@ module Mongo
                           BSON::Document.new(id: BSON::Binary.new(bytes, :uuid)))
       end
 
-      # Increment and return the next transaction number.
+      # Increment the current transaction number and return the new value.
       #
-      # @example Get the next transaction number.
-      #   server_session.next_txn_num
-      #
-      # @return [ Integer ] The next transaction number.
+      # @return [ Integer ] The updated transaction number.
       #
       # @since 2.5.0
       def next_txn_num
