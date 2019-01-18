@@ -130,8 +130,8 @@ MongoDB Compatibility
 
 .. _reference-compatibility-language-ruby:
 
-Language Compatibility
-~~~~~~~~~~~~~~~~~~~~~~
+Ruby Compatibility
+~~~~~~~~~~~~~~~~~~
 
 .. include:: /includes/ruby-driver-compatibility-matrix-language.rst
 
@@ -282,6 +282,23 @@ Language Compatibility
      -
      -
      - |checkmark|
+
+Rails/ActiveSupport Compatibility
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The Ruby driver does not depend on ActiveSupport. However, when an
+application uses ActiveSupport or Ruby on Rails,
+it must load the driver's ActiveSupport
+compatibility code for behavior like time serialization to be correct:
+
+.. code-block:: ruby
+
+   require 'mongo'
+   require 'mongo/active_support'
+
+Applications using Mongoid 7.0.3 or newer
+do not need to explicitly load the driver's ActiveSupport code, since Mongoid
+automatically does so.
 
 Atlas Compatibility
 ~~~~~~~~~~~~~~~~~~~

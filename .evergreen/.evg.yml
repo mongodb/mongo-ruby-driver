@@ -334,7 +334,7 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
-          AUTH=${AUTH} SSL=${SSL} MONGODB_URI="${MONGODB_URI}" TOPOLOGY=${TOPOLOGY} RVM_RUBY="${RVM_RUBY}" MONGODB_VERSION=${VERSION} MONGO_RUBY_DRIVER_LINT=${LINT} RETRY_WRITES=${RETRY_WRITES} .evergreen/run-tests.sh
+          AUTH=${AUTH} SSL=${SSL} MONGODB_URI="${MONGODB_URI}" TOPOLOGY=${TOPOLOGY} RVM_RUBY="${RVM_RUBY}" MONGODB_VERSION=${VERSION} MONGO_RUBY_DRIVER_LINT=${LINT} RETRY_WRITES=${RETRY_WRITES} WITH_ACTIVE_SUPPORT="${WITH_ACTIVE_SUPPORT}" .evergreen/run-tests.sh
 
   "run enterprise auth tests":
     - command: shell.exec
@@ -602,6 +602,13 @@ axes:
         display_name: On
         variables:
           LINT: '1'
+  - id: "as"
+    display_name: ActiveSupport
+    values:
+      - id: "as"
+        display_name: AS
+        variables:
+          WITH_ACTIVE_SUPPORT: true
 
 
 buildvariants:
@@ -748,6 +755,17 @@ buildvariants:
   display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
   run_on:
     - ubuntu1604-test
+  tasks:
+     - name: "test"
+
+- matrix_name: "activesupport"
+  matrix_spec:
+    ruby: ruby-2.5
+    mongodb-version: '4.0'
+    topology: replica-set
+  display_name: "AS ${mongodb-version} ${topology} ${ruby}"
+  run_on:
+    - ubuntu1404-test
   tasks:
      - name: "test"
 

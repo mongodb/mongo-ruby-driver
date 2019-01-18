@@ -230,4 +230,8 @@ class SpecConfig
   def ci?
     !!ENV['CI']
   end
+
+  def active_support?
+    %w(1 true yes).include?(ENV['WITH_ACTIVE_SUPPORT'])
+  end
 end

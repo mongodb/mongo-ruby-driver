@@ -4,10 +4,13 @@ gemspec
 gem 'yard'
 
 group :development, :testing do
-  gem 'jruby-openssl', :platforms => [ :jruby ]
-  gem 'json', :platforms => [ :jruby ]
+  gem 'jruby-openssl', :platforms => :jruby
+  gem 'json', :platforms => :jruby
   gem 'rspec', '~> 3.0'
   gem 'mime-types', '~> 1.25'
+  if RUBY_VERSION >= '2.3'
+    gem 'activesupport'
+  end
   if RUBY_VERSION < '2.0.0'
     gem 'rake', '~> 12.2.0'
     gem 'httparty', '0.14.0'
@@ -15,27 +18,27 @@ group :development, :testing do
     gem 'rake'
     gem 'httparty'
   end
-  gem 'yajl-ruby', require: 'yajl', platforms: :mri
-  gem 'fuubar'
-  platforms :mri do
-    if RUBY_VERSION >= '2.0.0'
-      gem 'byebug'
-    end
+  
+  if RUBY_VERSION >= '2.0.0'
+    gem 'byebug', platforms: :mri
   end
   
   # for benchmark tests
+  gem 'yajl-ruby', require: 'yajl', platforms: :mri
   gem 'celluloid', platforms: :mri
-  # timers 4.2 requires ruby >= 2.2
-  gem 'timers', '< 4.2'
+  if RUBY_VERSION < '2.2'
+    gem 'timers', '< 4.2'
+  else
+    gem 'timers'
+  end
 end
 
 group :testing do
   gem 'ice_nine'
   gem 'rspec-retry'
   gem 'rfc'
-  platforms :mri do
-    gem 'timeout-interrupt'
-  end
+  gem 'fuubar'
+  gem 'timeout-interrupt', platforms: :mri
 end
 
 group :development do
