@@ -214,6 +214,9 @@ module Mongo
         # Replica Set Options
         'replicaset' => :replica_set,
 
+        # Auth Source
+        'authsource' => :auth_source,
+
         # Timeout Options
         'connecttimeoutms' => :connect_timeout,
         'sockettimeoutms' => :socket_timeout,
@@ -271,7 +274,7 @@ module Mongo
             when 'authmechanism'
               Mongo::URI::AUTH_MECH_MAP[v].downcase.to_s
             when 'authsource'
-              v == '$external' ? 'external' : v
+              v == '$external' ? 'external' : v.downcase
             when 'authmechanismproperties'
               v.reduce({}) do |new_v, prop|
                 prop_key = prop.first.downcase
@@ -311,6 +314,7 @@ module Mongo
 
           actual = actual.to_s if actual.is_a?(Symbol)
           actual.downcase! if actual.is_a?(String)
+
 
           expected == actual
         end
