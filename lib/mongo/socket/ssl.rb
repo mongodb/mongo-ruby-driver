@@ -122,7 +122,7 @@ module Mongo
             options[:ssl_verify] != false
           # If ssl_verify_certificate is present, enable or disable based on its value.
           else
-            options[:ssl_verify_certificate]
+            !!options[:ssl_verify_certificate]
           end
       end
 
@@ -134,7 +134,7 @@ module Mongo
             options[:ssl_verify] != false
           # If ssl_verify_hostname is present, enable or disable based on its value.
           else
-            options[:ssl_verify_hostname]
+            !!options[:ssl_verify_hostname]
           end
       end
 

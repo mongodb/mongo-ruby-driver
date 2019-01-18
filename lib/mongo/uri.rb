@@ -261,12 +261,12 @@ module Mongo
       if @uri_options[:ssl_verify] == false
         if @uri_options[:ssl_verify_certificate]
           log_warn("tlsInsecure is set to disable verification, but tlsAllowInvalidCertificates " +
-                     "is set to enable it")
+                     "is set to enable it; tlsAllowInvalidCertificates takes precedence")
         end
 
        if @uri_options[:ssl_verify_hostname]
           log_warn("tlsInsecure is set to disable verification, but tlsAllowInvalidHostnames is " +
-                     "set to enable it")
+                     "set to enable it; tlsAllowInvalidHostnames takes precedence")
         end
       end
     end

@@ -286,7 +286,8 @@ describe Mongo::Socket::SSL do
 
       context 'when the hostname is verified' do
         it 'raises an error' do
-          expect {
+          error = nil
+          begin
             described_class.new(
               address.host,
               address.port,
@@ -295,7 +296,12 @@ describe Mongo::Socket::SSL do
               ::Socket::PF_INET,
               options.merge(ssl_verify_hostname: true)
             ).connect!
-          }.to raise_error(Mongo::Error::SocketError)
+          rescue => e
+            error = e
+          end
+
+          expect(error).to be_a(Mongo::Error::SocketError)
+          expect(error.message).to eq('SSL handshake failed due to a hostname mismatch.')
         end
       end
 
