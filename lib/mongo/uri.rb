@@ -666,8 +666,8 @@ module Mongo
     #
     # @param value [ String ] The min pool size string.
     #
-    # @return [ Integer | nil ] The min pool size if it is valid, otherwise nil (and a warning will)
-    #   be logged.
+    # @return [ Integer | nil ] The min pool size if it is valid, otherwise nil (and a warning will
+    #   be logged).
     def min_pool_size(value)
       if /\A\d+\z/ =~ value
         return value.to_i
