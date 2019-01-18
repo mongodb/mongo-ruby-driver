@@ -256,6 +256,19 @@ module Mongo
       parsed_scheme, _, remaining = string.partition(SCHEME_DELIM)
       raise_invalid_error!(INVALID_SCHEME) unless parsed_scheme == scheme
       parse!(remaining)
+
+      # Warn if conflicting insecure TLS options are provided.
+      if @uri_options[:ssl_verify] == false
+        if @uri_options[:ssl_verify_certificate]
+          log_warn("tlsInsecure is set to disable verification, but tlsAllowInvalidCertificates " +
+                     "is set to enable it; tlsAllowInvalidCertificates takes precedence")
+        end
+
+       if @uri_options[:ssl_verify_hostname]
+          log_warn("tlsInsecure is set to disable verification, but tlsAllowInvalidHostnames is " +
+                     "set to enable it; tlsAllowInvalidHostnames takes precedence")
+        end
+      end
     end
 
     # Get the credentials provided in the URI.
@@ -452,7 +465,10 @@ module Mongo
     # Security Options
     uri_option 'ssl', :ssl
     uri_option 'tls', :ssl
-    uri_option 'tlsallowinvalidcertificates', :ssl_verify, :type => :ssl_verify
+    uri_option 'tlsallowinvalidcertificates', :ssl_verify_certificate,
+               :type => :ssl_verify_certificate
+    uri_option 'tlsallowinvalidhostnames', :ssl_verify_hostname,
+               :type => :ssl_verify_hostname
     uri_option 'tlscafile', :ssl_ca_cert
     uri_option 'tlscertificatekeyfile', :ssl_cert
     uri_option 'tlsclientkeyfile', :ssl_key
@@ -657,21 +673,37 @@ module Mongo
       bool('journal', value)
     end
 
-    # Parses the ssl_verify value. Note that this will be the inverse of the value of
-    # tlsAllowInvalidCertificates (if present).
+    # Parses the ssl_verify value from the tlsInsecure URI value. Note that this will be the inverse
+    # of the value of tlsInsecure (if present).
     #
-    # @param value [ String ] The tlsAllowInvalidCertificates value.
+    # @param value [ String ] The tlsInsecure value.
     #
     # @return [ true | false | nil ] The ssl_verify value parsed out, otherwise nil (and a warning
     #   will be logged).
     def ssl_verify(value)
-      b = bool('tlsAllowInvalidCertificates', value)
+      inverse_bool('tlsAllowInvalidCertificates', value)
+    end
 
-      if b.nil?
-        nil
-      else
-        !b
-      end
+    # Parses the ssl_verify_certificate value from the tlsAllowInvalidCertificates URI value. Note
+    # that this will be the inverse of the value of tlsInsecure (if present).
+    #
+    # @param value [ String ] The tlsAllowInvalidCertificates value.
+    #
+    # @return [ true | false | nil ] The ssl_verify_certificate value parsed out, otherwise nil
+    #   (and a warning will be logged).
+    def ssl_verify_certificate(value)
+      inverse_bool('tlsAllowInvalidCertificates', value)
+    end
+
+    # Parses the ssl_verify_hostname value from the tlsAllowInvalidHostnames URI value. Note that
+    # this will be the inverse of the value of tlsAllowInvalidHostnames (if present).
+    #
+    # @param value [ String ] The tlsAllowInvalidHostnames value.
+    #
+    # @return [ true | false | nil ] The ssl_verify_hostname value parsed out, otherwise nil
+    #   (and a warning will be logged).
+    def ssl_verify_hostname(value)
+      inverse_bool('tlsAllowInvalidHostnames', value)
     end
 
     # Parses the retryWrites value.
@@ -699,6 +731,22 @@ module Mongo
       else
         log_warn("invalid boolean option for #{name}: #{value}")
         nil
+      end
+    end
+
+    # Parses a boolean value and returns its inverse.
+    #
+    # @param value [ String ] The URI option value.
+    #
+    # @return [ true | false | nil ] The inverse of the  boolean value parsed out, otherwise nil
+    #   (and a warning will be logged).
+     def inverse_bool(name, value)
+      b = bool(name, value)
+
+      if b.nil?
+        nil
+      else
+        !b
       end
     end
 

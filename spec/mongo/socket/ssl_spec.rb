@@ -279,6 +279,48 @@ describe Mongo::Socket::SSL do
       end
     end
 
+    context 'when the hostname is incorrect' do
+      let(:host_name) do
+        'incorrect_hostname'
+      end
+
+      context 'when the hostname is verified' do
+        it 'raises an error' do
+          error = nil
+          begin
+            described_class.new(
+              address.host,
+              address.port,
+              host_name,
+              30,
+              ::Socket::PF_INET,
+              options.merge(ssl_verify_hostname: true)
+            ).connect!
+          rescue => e
+            error = e
+          end
+
+          expect(error).to be_a(Mongo::Error::SocketError)
+          expect(error.message).to eq('SSL handshake failed due to a hostname mismatch.')
+        end
+      end
+
+      context 'when the hostname is not verified' do
+        it 'raises an error' do
+          expect {
+            described_class.new(
+              address.host,
+              address.port,
+              host_name,
+              30,
+              ::Socket::PF_INET,
+              options.merge(ssl_verify_hostname: false)
+            ).connect!
+          }.not_to raise_error
+        end
+      end
+    end
+
     context 'when ruby version is < 2.4.1', if: (RUBY_VERSION < '2.4.1') do
 
       context 'when a key is passed, but it is not of the right type' do

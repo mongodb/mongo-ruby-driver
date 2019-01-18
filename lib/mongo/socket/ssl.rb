@@ -114,16 +114,51 @@ module Mongo
 
       private
 
+      def verify_certificate?
+        @verify_certificate ||=
+          # If ssl_verify_certificate is not present, disable only if ssl_verify is
+          # explicitly set to false.
+          if options[:ssl_verify_certificate].nil?
+            options[:ssl_verify] != false
+          # If ssl_verify_certificate is present, enable or disable based on its value.
+          else
+            !!options[:ssl_verify_certificate]
+          end
+      end
+
+      def verify_hostname?
+        @verify_hostname ||=
+         # If ssl_verify_hostname is not present, disable only if ssl_verify is
+          # explicitly set to false.
+          if options[:ssl_verify_hostname].nil?
+            options[:ssl_verify] != false
+          # If ssl_verify_hostname is present, enable or disable based on its value.
+          else
+            !!options[:ssl_verify_hostname]
+          end
+      end
+
+
       def create_context(options)
-        context = OpenSSL::SSL::SSLContext.new
-        set_cert(context, options)
-        set_key(context, options)
-        if options[:ssl_verify] == false
-          context.verify_mode = OpenSSL::SSL::VERIFY_NONE
-        else
-          set_cert_verification(context, options)
+        OpenSSL::SSL::SSLContext.new.tap do |context|
+          set_cert(context, options)
+          set_key(context, options)
+
+
+          if verify_certificate?
+            context.verify_mode = OpenSSL::SSL::VERIFY_PEER
+            set_cert_verification(context, options)
+          else
+            context.verify_mode = OpenSSL::SSL::VERIFY_NONE
+          end
+
+          if context.respond_to?(:verify_hostname=)
+            # We manually check the hostname after the connection is established if necessary, so
+            # we disable it here in order to give consistent errors across Ruby versions which
+            # don't support hostname verification at the time of the handshake.
+            context.verify_hostname = OpenSSL::SSL::VERIFY_NONE
+          end
         end
-        context
       end
 
       def set_cert(context, options)
@@ -166,7 +201,7 @@ module Mongo
       end
 
       def verify_certificate!(socket)
-        if context.verify_mode == OpenSSL::SSL::VERIFY_PEER
+        if verify_hostname?
           unless OpenSSL::SSL.verify_certificate_identity(socket.peer_cert, host_name)
             raise Error::SocketError, 'SSL handshake failed due to a hostname mismatch.'
           end

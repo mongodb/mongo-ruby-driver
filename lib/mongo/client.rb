@@ -71,6 +71,8 @@ module Mongo
       :ssl_key_object,
       :ssl_key_pass_phrase,
       :ssl_verify,
+      :ssl_verify_certificate,
+      :ssl_verify_hostname,
       :truncate_logs,
       :user,
       :wait_queue_timeout,
