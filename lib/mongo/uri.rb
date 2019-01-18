@@ -458,8 +458,8 @@ module Mongo
     uri_option 'maxstalenessseconds', :max_staleness, :group => :read, :type => :max_staleness
 
     # Pool options
-    uri_option 'minpoolsize', :min_pool_size
-    uri_option 'maxpoolsize', :max_pool_size
+    uri_option 'minpoolsize', :min_pool_size, :type => :min_pool_size
+    uri_option 'maxpoolsize', :max_pool_size, :type => :max_pool_size
     uri_option 'waitqueuetimeoutms', :wait_queue_timeout, :type => :wait_queue_timeout
 
     # Security Options
@@ -471,8 +471,7 @@ module Mongo
                :type => :ssl_verify_hostname
     uri_option 'tlscafile', :ssl_ca_cert
     uri_option 'tlscertificatekeyfile', :ssl_cert
-    uri_option 'tlsclientkeyfile', :ssl_key
-    uri_option 'tlscertificatekeypassword', :ssl_key_pass_phrase
+    uri_option 'tlscertificatekeyfilepassword', :ssl_key_pass_phrase
     uri_option 'tlsinsecure', :ssl_verify, :type => :ssl_verify
 
     # Topology options
@@ -501,7 +500,7 @@ module Mongo
         true
       elsif value == 'false'
         false
-      elsif value =~ /[\d]/
+      elsif value =~ /\A[\d]\z/
         value.to_i
       else
         decode(value).to_sym
@@ -660,6 +659,37 @@ module Mongo
       end
 
       log_warn("#{value} is not a valid zlibCompressionLevel")
+      nil
+    end
+
+    # Parses the max pool size.
+    #
+    # @param value [ String ] The max pool size string.
+    #
+    # @return [ Integer | nil ] The min pool size if it is valid, otherwise nil (and a warning will)
+    #   be logged.
+    def max_pool_size(value)
+      if /\A\d+\z/ =~ value
+        return value.to_i
+      end
+
+      log_warn("#{value} is not a valid maxPoolSize")
+      nil
+    end
+
+
+    # Parses the min pool size.
+    #
+    # @param value [ String ] The min pool size string.
+    #
+    # @return [ Integer | nil ] The min pool size if it is valid, otherwise nil (and a warning will
+    #   be logged).
+    def min_pool_size(value)
+      if /\A\d+\z/ =~ value
+        return value.to_i
+      end
+
+      log_warn("#{value} is not a valid minPoolSize")
       nil
     end
 

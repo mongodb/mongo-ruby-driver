@@ -332,6 +332,7 @@ module Mongo
       @cluster = Cluster.new(addresses, @monitoring, cluster_options)
       # Unset monitoring, it will be taken out of cluster from now on
       remove_instance_variable('@monitoring')
+
       yield(self) if block_given?
     end
 

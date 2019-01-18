@@ -190,13 +190,13 @@ URI Options Conversions
    * - tlsCAFile=String
      - ``:ssl_ca_cert => String``
 
-   * - tlsClientCertFile=String
+   * - tlsCertificateKeyFile=String
      - ``:ssl_cert => String``
 
    * - tlsClientKeyFile=String
      - ``:ssl_key => String``
 
-   * - tlsClientKeyPassword=String
+   * - tlsCertificateKeyFilePassword=String
      - ``:ssl_key_pass_phrase => String``
 
    * - tlsInsecure=Boolean
