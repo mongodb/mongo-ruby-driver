@@ -75,6 +75,15 @@ functions:
               export TMPDIR="$MONGO_ORCHESTRATION_HOME/db"
               export PATH="$MONGODB_BINARIES:$PATH"
               export PROJECT="${project}"
+              
+              export AUTH=${AUTH}
+              export SSL=${SSL}
+              export TOPOLOGY=${TOPOLOGY}
+              export RVM_RUBY="${RVM_RUBY}"
+              export MONGODB_VERSION=${VERSION}
+              export MONGO_RUBY_DRIVER_LINT=${LINT}
+              export RETRY_WRITES=${RETRY_WRITES}
+              export WITH_ACTIVE_SUPPORT="${WITH_ACTIVE_SUPPORT}"
            EOT
            # See what we've done
            cat expansion.yml
@@ -334,7 +343,7 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
-          AUTH=${AUTH} SSL=${SSL} MONGODB_URI="${MONGODB_URI}" TOPOLOGY=${TOPOLOGY} RVM_RUBY="${RVM_RUBY}" MONGODB_VERSION=${VERSION} MONGO_RUBY_DRIVER_LINT=${LINT} RETRY_WRITES=${RETRY_WRITES} WITH_ACTIVE_SUPPORT="${WITH_ACTIVE_SUPPORT}" .evergreen/run-tests.sh
+          MONGODB_URI="${MONGODB_URI}" .evergreen/run-tests.sh
 
   "run enterprise auth tests":
     - command: shell.exec
@@ -763,6 +772,7 @@ buildvariants:
     ruby: ruby-2.5
     mongodb-version: '4.0'
     topology: replica-set
+    as: as
   display_name: "AS ${mongodb-version} ${topology} ${ruby}"
   run_on:
     - ubuntu1404-test
