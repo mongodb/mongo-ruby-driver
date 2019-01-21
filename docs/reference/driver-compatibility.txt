@@ -141,6 +141,7 @@ Ruby Compatibility
    :class: compatibility
 
    * - Ruby Driver
+     - Ruby 2.6
      - Ruby 2.5
      - Ruby 2.4
      - Ruby 2.3
@@ -161,12 +162,14 @@ Ruby Compatibility
      - |checkmark|
      - |checkmark|
      - |checkmark|
+     - |checkmark|
      -
      - |checkmark|
      - |checkmark|
      -
 
    * - 2.5
+     -
      -
      - |checkmark|
      - |checkmark|
@@ -182,6 +185,7 @@ Ruby Compatibility
    * - 2.4
      -
      -
+     -
      - |checkmark|
      - |checkmark|
      - |checkmark|
@@ -193,6 +197,7 @@ Ruby Compatibility
      - |checkmark|
 
    * - 2.3
+     -
      -
      -
      - |checkmark|
@@ -208,6 +213,7 @@ Ruby Compatibility
    * - 2.2
      -
      -
+     -
      - |checkmark|
      - |checkmark|
      - |checkmark|
@@ -219,6 +225,7 @@ Ruby Compatibility
      - |checkmark|
 
    * - 2.1
+     -
      -
      -
      - |checkmark|
@@ -234,6 +241,7 @@ Ruby Compatibility
    * - 2.0
      -
      -
+     -
      - |checkmark|
      - |checkmark|
      - |checkmark|
@@ -245,6 +253,7 @@ Ruby Compatibility
      - |checkmark|
 
    * - 1.12 - 1.9
+     -
      -
      -
      -
@@ -263,6 +272,7 @@ Ruby Compatibility
      -
      -
      -
+     -
      - |checkmark|
      - |checkmark|
      - |checkmark|
@@ -271,6 +281,7 @@ Ruby Compatibility
      - |checkmark|
 
    * - 1.7 - 1.6
+     -
      -
      -
      -

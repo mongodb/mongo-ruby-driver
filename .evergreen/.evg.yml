@@ -560,6 +560,10 @@ axes:
         display_name: ruby-2.5
         variables:
            RVM_RUBY: "ruby-2.5"
+      - id: "ruby-2.6"
+        display_name: ruby-2.6
+        variables:
+           RVM_RUBY: "ruby-2.6"
       - id: "ruby-head"
         display_name: ruby-head
         variables:
@@ -643,7 +647,7 @@ buildvariants:
   matrix_name: "ruby-mid"
   matrix_spec:
     auth-and-ssl: "auth-and-ssl"
-    ruby: ["ruby-2.2","ruby-2.3","ruby-2.4"]
+    ruby: [ruby-2.2, ruby-2.3, ruby-2.4, ruby-2.5]
     mongodb-version: "4.0"
     topology: "*"
   display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
@@ -656,7 +660,7 @@ buildvariants:
   matrix_name: "mongo"
   matrix_spec:
     auth-and-ssl: ["auth-and-ssl", "noauth-and-nossl"]
-    ruby: "ruby-2.5"
+    ruby: "ruby-2.6"
     mongodb-version: "*"
     topology: "*"
   display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
@@ -669,7 +673,7 @@ buildvariants:
   matrix_name: "partial-auth-ssl"
   matrix_spec:
     auth-and-ssl: ["auth-and-nossl", "noauth-and-ssl"]
-    ruby: "ruby-2.5"
+    ruby: "ruby-2.6"
     mongodb-version: ["4.0"]
     topology: "*"
   display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
@@ -682,7 +686,7 @@ buildvariants:
   matrix_name: "retry-writes"
   matrix_spec:
     retry-writes: retry-writes
-    ruby: "ruby-2.5"
+    ruby: "ruby-2.6"
     mongodb-version: ["4.0"]
     topology: [replica-set, sharded-cluster]
   display_name: "${mongodb-version} ${topology} ${retry-writes} ${ruby}"
@@ -695,7 +699,7 @@ buildvariants:
   matrix_name: "lint"
   matrix_spec:
     lint: on
-    ruby: "ruby-2.5"
+    ruby: "ruby-2.6"
     mongodb-version: ["4.0"]
     topology: [replica-set, sharded-cluster]
   display_name: "${mongodb-version} ${topology} ${lint} ${ruby}"
@@ -734,7 +738,7 @@ buildvariants:
   matrix_name: "zlib-auth"
   matrix_spec:
     auth-and-ssl: "auth-and-ssl"
-    ruby: "ruby-2.5"
+    ruby: "ruby-2.6"
     mongodb-version: "4.0"
     topology: "*"
     compressor: 'zlib'
@@ -783,7 +787,7 @@ buildvariants:
   matrix_name: "enterprise-auth-tests-ubuntu"
   matrix_spec:
     auth-and-ssl: "auth-and-ssl"
-    ruby: ["ruby-2.5", "jruby-9.1", "jruby-9.2"]
+    ruby: ["ruby-2.6", "ruby-2.5", "jruby-9.1", "jruby-9.2"]
   display_name: "Enterprise Auth Ubuntu ${ruby}"
   run_on:
     - ubuntu1404-test
