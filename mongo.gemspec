@@ -15,7 +15,7 @@ Gem::Specification.new do |s|
   s.homepage          = 'http://www.mongodb.org'
   s.summary           = 'Ruby driver for MongoDB'
   s.description       = 'A Ruby driver for MongoDB'
-  s.license           = 'Apache License Version 2.0'
+  s.license           = 'Apache-2.0'
 
   if File.exists?('gem-private_key.pem')
     s.signing_key     = 'gem-private_key.pem'
