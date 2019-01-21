@@ -343,9 +343,17 @@ module Mongo
     #
     # @since 2.0.0
     def remove(host)
+      log_warn("Removing server #{host}")
       address = Address.new(host)
       removed_servers = @servers.select { |s| s.address == address }
-      @update_lock.synchronize { @servers = @servers - removed_servers }
+      @update_lock.synchronize do
+        @servers = @servers - removed_servers
+        if @servers.empty?
+          log_warn(
+            "Topology now has no servers - this is likely a misconfiguration of the cluster and/or the application"
+          )
+        end
+      end
       removed_servers.each{ |server| server.disconnect! } if removed_servers
       publish_sdam_event(
         Monitoring::SERVER_CLOSED,
