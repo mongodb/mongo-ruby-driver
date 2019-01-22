@@ -15,6 +15,9 @@ Bundler.require(*default_groups)
 
 require 'rspec/core/rake_task'
 
+tasks = Rake.application.instance_variable_get('@tasks')
+tasks['release:do'] = tasks.delete('release')
+
 RSpec::Core::RakeTask.new(:spec) do |t|
   #t.rspec_opts = "--profile 5" if ENV['CI']
 end
@@ -25,7 +28,17 @@ namespace :spec do
   task :ci => [:spec]
 end
 
-task :release => :spec do
+namespace :release do
+  task :check_private_key do
+    unless File.exists?('gem-private_key.pem')
+      raise "No private key present, cannot release"
+    end
+  end
+end
+
+task :release => ['release:check_private_key', 'release:do'] do
+  puts "Releasing #{Mongo::VERSION}"
+
   system "git tag -a #{Mongo::VERSION} -m 'Tagging release: #{Mongo::VERSION}'"
   system "git push --tags"
   system "gem build mongo.gemspec"
