@@ -124,9 +124,6 @@ URI Options Conversions
    * - connect=String
      - ``:connect => Symbol``
 
-   * - ssl=Boolean
-     - ``:ssl => true|false``
-
    * - connectTimeoutMS=Integer
      - ``:connect_timeout => Float``
 
@@ -145,11 +142,17 @@ URI Options Conversions
    * - maxIdleTimeMS=Integer
      - ``:max_idle_time => Float``
 
+   * - maxStalenessSeconds=Integer
+     - ``:max_staleness => Float``
+
    * - maxPoolSize=Integer
      - ``:max_pool_size => Integer``
 
    * - minPoolSize=Integer
      - ``:min_pool_size => Integer``
+
+   * - readConcernLevel=String
+     - ``:read_concern => Hash``
 
    * - readPreference=String
      - ``{ :read => { :mode => Symbol }}``
@@ -162,11 +165,17 @@ URI Options Conversions
    * - replicaSet=String
      - ``:replica_set => String``
 
+   * - retryWrites=Boolean
+     - ``:retry_writes => boolean``
+
    * - serverSelectionTimeoutMS=Integer
      - ``:server_selection_timeout => Float``
 
    * - socketTimeoutMS=Integer
      - ``:socket_timeout => Float``
+
+   * - ssl=Boolean
+     - ``:ssl => true|false``
 
    * - tls=Boolean
      - ``:ssl => boolean``
@@ -193,7 +202,7 @@ URI Options Conversions
    * - tlsCertificateKeyFile=String
      - ``:ssl_cert => String``
 
-   * - tlsClientKeyFile=String
+   * - tlsCertificateKeyFile=String
      - ``:ssl_key => String``
 
    * - tlsCertificateKeyFilePassword=String
@@ -231,97 +240,43 @@ Ruby Options
      - Type
      - Default
 
-   * - ``:replica_set``
-     - When connecting to a replica set, this is the name of the set to
-       filter servers by.
+   * - ``:app_name``
+     - Application name that is printed to the mongod logs upon establishing a connection
+       in server versions >= 3.4.
      - ``String``
      - none
 
-   * - ``:ssl``
-     - Tell the client to connect to the servers via SSL.
-     - ``Boolean``
-     - false
+   * - ``:auth_mech``
+     - Specifies the authenticaion mechanism to use. Can be one of:
+       ``:mongodb_cr``, ``:mongodb_x509``, ``:plain``, ``:scram``.
+     - ``Symbol``
+     - MongoDB 3.0 and later: ``:scram`` if user credentials
+       are supplied but an ``:auth_mech`` is not. 2.6 and earlier:
+       ``:mongodb_cr``
 
-   * - ``:ssl_cert``
-     - The certificate file path used to identify the connection against MongoDB. This option, if present,
-       takes precedence over the values of :ssl_cert_string and :ssl_cert_object.
+   * - ``:auth_mech_properties``
+     - Provides additional authentication mechanism properties.
+     - ``Hash``
+     - none
+
+   * - ``:auth_source``
+     - Specifies the authentication source.
      - ``String``
+     - For MongoDB 2.6 and later: **admin** if credentials are
+       supplied, otherwise the current database
+
+   * - ``:compressors``
+     - A list of potential compressors to use, in order of preference. The driver chooses the first
+       compressor that is also supported by the server. Currently the driver only supports 'zlib'.
+     - ``Array<String>``
      - none
 
-   * - ``:ssl_cert_string``
-     - A string containing the PEM-encoded certificate used to identify the connection against MongoDB.
-       This option, if present, takes precedence over the value of :ssl_cert_object.
-     - ``String``
+   * - ``:connect``
+     - Overrides the auto-discovery feature of the driver and forces the cluster
+       topology to a specific type. Choices: ``:direct``,
+       ``:replica_set`` or ``:sharded``.
+     - ``Symbol``
      - none
-
-   * - ``:ssl_cert_object``
-     - The OpenSSL::X509::Certificate used to identify the connection against MongoDB.
-     - ``OpenSSL::X509::Certificate``
-     - none
-
-   * - ``:ssl_key``
-     - The private keyfile used to identify the connection against MongoDB. Note that even if the key is stored in
-       the same file as the certificate, both need to be explicitly specified. This option, if present, takes
-       precedence over the values of :ssl_key_string and :ssl_key_object.
-     - ``String``
-     - none
-
-   * - ``:ssl_key_string``
-     - A string containing the PEM-encoded private key used to identify the connection against MongoDB.
-       This parameter, if present, takes precedence over the value of option :ssl_key_object.
-     - ``String``
-     - none
-
-   * - ``:ssl_key_object``
-     - The private key used to identify the connection against MongoDB.
-     - ``OpenSSL::PKey``
-     - none
-
-   * - ``:ssl_key_pass_phrase``
-     - A passphrase for the private key.
-     - ``String``
-     - none
-
-   * - ``:ssl_ca_cert``
-     - The file path containing concatenated certificate authority certificates used to validate certs
-       passed from the other end of the connection. One of :ssl_ca_cert, :ssl_ca_cert_string or :ssl_ca_cert_object
-       (in order of priority) is required for :ssl_verify.
-     - ``String``
-     - none
-
-   * - ``:ssl_ca_cert_string``
-     - A string containing concatenated certificate authority certificates used to validate certs
-       passed from the other end of the connection. One of :ssl_ca_cert, :ssl_ca_cert_string or :ssl_ca_cert_object
-       (in order of priority) is required for :ssl_verify.
-     - ``String``
-     - none
-
-   * - ``:ssl_ca_cert_object``
-     - An array of OpenSSL::X509::Certificate representing the certificate authority certificates used to
-       validate certs passed from the other end of the connection. One of :ssl_ca_cert, :ssl_ca_cert_string or
-       :ssl_ca_cert_object (in order of priority) is required for :ssl_verify.
-     - ``Array<OpenSSL::X509::Certificate>``
-     - none
-
-   * - ``:ssl_verify``
-     - Whether to perform peer certificate validation and hostname verification. Note that
-       the decision of whether to validate certificates will be overriden if :ssl_verify_certificate
-       is set, and the decision of whether to validate hostnames will be overridden if
-       :ssl_verify_hostname is set.
-     - ``Boolean``
-     - true
-
-   * - ``:ssl_verify_certificate``
-     - Whether to perform peer certificate validation. This setting overrides :ssl_verify with
-       respect to whether certificate validition is performed.
-     - ``Boolean``
-     - true
-
-   * - ``:ssl_verify_hostname``
-     - Whether to perform peer hostname validation. This setting overrides :ssl_verify with
-       respect to whether hostname validition is performed.
-     - ``Boolean``
-     - true
 
    * - ``:connect_timeout``
      - The number of seconds to wait to establish a socket connection
@@ -329,16 +284,47 @@ Ruby Options
      - ``Float``
      - 10 seconds
 
-   * - ``:socket_timeout``
-     - The number of seconds to wait for an operation to execute on a
-       socket before raising an exception.
+   * - ``:database``
+     - The name of the database to connect to.
+     - ``String``
+     - admin
+
+   * - ``:heartbeat_frequency``
+     - The number of seconds for the server monitors to refresh
+       server states asynchronously.
      - ``Float``
-     - 5 seconds
+     - 10
+
+   * - ``:id_generator``
+     - A custom object to generate ids for documents. Must respond to #generate.
+     - ``Object``
+     - none
+
+   * - ``:local_threshold``
+     - Specifies the maximum latency in seconds between the nearest
+       server and the servers that can be available for selection to operate on.
+     - ``Float``
+     - 0.015
+
+   * - ``:logger``
+     - A custom logger.
+     - ``Object``
+     - ``Logger``
+
+   * - ``:max_idle_time``
+     - The maximum seconds a socket can remain idle since it has been checked in to the pool.
+     - ``Integer``
+     - none
 
    * - ``:max_pool_size``
      - The maximum size of the connection pool for each server.
      - ``Integer``
      - 5
+
+   * - ``:max_read_retries``
+     - The maximum number of read retries on mongos query failures.
+     - ``Integer``
+     - 1
 
    * - ``:min_pool_size``
      - The minimum number of connections in the connection pool for each
@@ -346,21 +332,21 @@ Ruby Options
      - ``Integer``
      - 1
 
-   * - ``:wait_queue_timeout``
-     - The number of seconds to wait for a connection in the connection
-       pool to become available.
-     - ``Float``
-     - 1
+   * - ``:monitoring``
+     - The monitoring object.
+     - ``Object``
+     - none
 
-   * - ``:write``
-     - Specifies write concern options as a ``Hash``.
-       Keys in the hash can be ``:w``, ``:wtimeout``, ``:j``, ``:fsync``.
+   * - ``:password``
+     - The password of the user to authenticate with.
+     - ``String``
+     - none
 
-       .. code-block:: ruby
-
-         { :write => { :w => 2 } }
-     - ``Hash``
-     - ``{ :w => 1 }``
+   * - ``:platform``
+     - Platform information to include in the metadata printed to the mongod logs upon establishing a
+       connection in server versions >= 3.4.
+     - ``String``
+     - none
 
    * - ``:read``
      - Specifies the read preference mode and tag sets for selecting servers as a ``Hash``.
@@ -377,107 +363,10 @@ Ruby Options
      - ``Hash``
      -  ``{ :mode => :primary }``
 
-   * - ``:auth_source``
-     - Specifies the authentication source.
-     - ``String``
-     - For MongoDB 2.6 and later: **admin** if credentials are
-       supplied, otherwise the current database
-
-
-   * - ``:auth_mech``
-     - Specifies the authenticaion mechanism to use. Can be one of:
-       ``:mongodb_cr``, ``:mongodb_x509``, ``:plain``, ``:scram``.
-     - ``Symbol``
-     - MongoDB 3.0 and later: ``:scram`` if user credentials
-       are supplied but an ``:auth_mech`` is not. 2.6 and earlier:
-       ``:mongodb_cr``
-
-   * - ``:auth_mech_properties``
-     - Provides additional authentication mechanism properties.
+   * - ``:read_concern``
+     - Specifies the read concern options. The only valid key is ``level``, for which the valid
+       values are ``:local``, ``:majority``, and ``:snapshot``.
      - ``Hash``
-     - none
-
-   * - ``:user``
-     - The name of the user to authenticate with.
-     - ``String``
-     - none
-
-   * - ``:password``
-     - The password of the user to authenticate with.
-     - ``String``
-     - none
-
-   * - ``:connect``
-     - Overrides the auto-discovery feature of the driver and forces the cluster
-       topology to a specific type. Choices: ``:direct``,
-       ``:replica_set`` or ``:sharded``.
-     - ``Symbol``
-     - none
-
-   * - ``:heartbeat_frequency``
-     - The number of seconds for the server monitors to refresh
-       server states asynchronously.
-     - ``Float``
-     - 10
-
-   * - ``:database``
-     - The name of the database to connect to.
-     - ``String``
-     - admin
-
-   * - ``:server_selection_timeout``
-     - The number of seconds to wait for an appropriate server to
-       be selected for an operation to be executed before raising an exception.
-     - ``Float``
-     - 30
-
-   * - ``:local_threshold``
-     - Specifies the maximum latency in seconds between the nearest
-       server and the servers that can be available for selection to operate on.
-     - ``Float``
-     - 0.015
-
-   * - ``:app_name``
-     - Application name that is printed to the mongod logs upon establishing a connection
-       in server versions >= 3.4.
-     - ``String``
-     - none
-
-   * - ``:compressors``
-     - A list of potential compressors to use, in order of preference. The driver chooses the first
-       compressor that is also supported by the server. Currently the driver only supports 'zlib'.
-     - ``Array<String>``
-     - none
-
-   * - ``:id_generator``
-     - A custom object to generate ids for documents. Must respond to #generate.
-     - ``Object``
-     - none
-
-   * - ``:logger``
-     - A custom logger.
-     - ``Object``
-     - ``Logger``
-
-   * - ``:max_idle_time``
-     - The maximum seconds a socket can remain idle since it has been checked in to the pool.
-     - ``Integer``
-     - none
-
-   * - ``:max_read_retries``
-     - The maximum number of read retries on mongos query failures.
-     - ``Integer``
-     - 1
-
-   * - ``:monitoring``
-     - The monitoring object.
-     - ``Object``
-     - none
-
-   * - ``:platform``
-     - Platform information to include in the metadata printed to the mongod logs upon establishing a
-       connection in server versions >= 3.4.
-     - ``String``
      - none
 
    * - ``:read_retry_interval``
@@ -485,14 +374,10 @@ Ruby Options
      - ``Integer``
      - 5
 
-   * - ``:truncate_logs``
-     - Whether to truncate the logs at the default 250 characters.
-     - ``Boolean``
-     - true
-
-   * - ``:zlib_compression_level``
-     - The Zlib compression level to use, if using compression. See Ruby's Zlib module for valid levels.
-     - ``Integer``
+   * - ``:replica_set``
+     - When connecting to a replica set, this is the name of the set to
+       filter servers by.
+     - ``String``
      - none
 
    * - ``:retry_writes``
@@ -501,6 +386,135 @@ Ruby Options
      - ``Boolean``
      - false
 
+   * - ``:server_selection_timeout``
+     - The number of seconds to wait for an appropriate server to
+       be selected for an operation to be executed before raising an exception.
+     - ``Float``
+     - 30
+
+   * - ``:socket_timeout``
+     - The number of seconds to wait for an operation to execute on a
+       socket before raising an exception.
+     - ``Float``
+     - 5 seconds
+
+   * - ``:ssl``
+     - Tell the client to connect to the servers via SSL.
+     - ``Boolean``
+     - false
+
+   * - ``:ssl_ca_cert``
+     - The file path containing concatenated certificate authority certificates used to validate certs
+       passed from the other end of the connection. One of :ssl_ca_cert, :ssl_ca_cert_string or :ssl_ca_cert_object
+       (in order of priority) is required for :ssl_verify.
+     - ``String``
+     - none
+
+   * - ``:ssl_ca_cert_object``
+     - An array of OpenSSL::X509::Certificate representing the certificate authority certificates used to
+       validate certs passed from the other end of the connection. One of :ssl_ca_cert, :ssl_ca_cert_string or
+       :ssl_ca_cert_object (in order of priority) is required for :ssl_verify.
+     - ``Array<OpenSSL::X509::Certificate>``
+     - none
+
+   * - ``:ssl_ca_cert_string``
+     - A string containing concatenated certificate authority certificates used to validate certs
+       passed from the other end of the connection. One of :ssl_ca_cert, :ssl_ca_cert_string or :ssl_ca_cert_object
+       (in order of priority) is required for :ssl_verify.
+     - ``String``
+     - none
+
+   * - ``:ssl_cert``
+     - The certificate file path used to identify the connection against MongoDB. This option, if present,
+       takes precedence over the values of :ssl_cert_string and :ssl_cert_object.
+     - ``String``
+     - none
+
+   * - ``:ssl_cert_object``
+     - The OpenSSL::X509::Certificate used to identify the connection against MongoDB.
+     - ``OpenSSL::X509::Certificate``
+     - none
+
+   * - ``:ssl_cert_string``
+     - A string containing the PEM-encoded certificate used to identify the connection against MongoDB.
+       This option, if present, takes precedence over the value of :ssl_cert_object.
+     - ``String``
+     - none
+
+   * - ``:ssl_key``
+     - The private keyfile used to identify the connection against MongoDB. Note that even if the key is stored in
+       the same file as the certificate, both need to be explicitly specified. This option, if present, takes
+       precedence over the values of :ssl_key_string and :ssl_key_object.
+     - ``String``
+     - none
+
+   * - ``:ssl_key_object``
+     - The private key used to identify the connection against MongoDB.
+     - ``OpenSSL::PKey``
+     - none
+
+   * - ``:ssl_key_pass_phrase``
+     - A passphrase for the private key.
+     - ``String``
+     - none
+
+   * - ``:ssl_key_string``
+     - A string containing the PEM-encoded private key used to identify the connection against MongoDB.
+       This parameter, if present, takes precedence over the value of option :ssl_key_object.
+     - ``String``
+     - none
+
+   * - ``:ssl_verify``
+     - Whether to perform peer certificate validation and hostname verification. Note that
+       the decision of whether to validate certificates will be overridden if
+       :ssl_verify_certificate is set, and the decision of whether to validate hostnames will be
+       overridden if :ssl_verify_hostname is set.
+     - ``Boolean``
+     - true
+
+   * - ``:ssl_verify_certificate``
+     - Whether to perform peer certificate validation. This setting overrides :ssl_verify with
+       respect to whether certificate validation is performed.
+     - ``Boolean``
+     - true
+
+   * - ``:ssl_verify_hostname``
+     - Whether to perform peer hostname validation. This setting overrides :ssl_verify with
+       respect to whether hostname validation is performed.
+     - ``Boolean``
+     - true
+
+   * - ``:truncate_logs``
+     - Whether to truncate the logs at the default 250 characters.
+     - ``Boolean``
+     - true
+
+   * - ``:user``
+     - The name of the user to authenticate with.
+     - ``String``
+     - none
+
+   * - ``:wait_queue_timeout``
+     - The number of seconds to wait for a connection in the connection
+       pool to become available.
+     - ``Float``
+     - 1
+
+   * - ``:write``
+     - Specifies write concern options as a ``Hash``.
+       Keys in the hash can be ``:w``, ``:wtimeout``, ``:j``, ``:fsync``.
+
+       .. code-block:: ruby
+
+         { :write => { :w => 2 } }
+
+     - ``Hash``
+     - ``{ :w => 1 }``
+
+   * - ``:zlib_compression_level``
+     - The Zlib compression level to use, if using compression. See Ruby's Zlib module for valid levels.
+     - ``Integer``
+     - none
 
 Details on Timeout Options
 --------------------------
