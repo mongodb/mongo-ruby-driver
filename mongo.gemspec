@@ -32,5 +32,5 @@ Gem::Specification.new do |s|
   s.require_paths     = ['lib']
   s.bindir            = 'bin'
 
-  s.add_dependency 'bson', '>=4.4.1', '<5.0.0'
+  s.add_dependency 'bson', '>=4.4.2', '<5.0.0'
 end
