@@ -241,7 +241,8 @@ module Mongo
 
         # Security Options
         'tls' => :ssl,
-        'tlsallowinvalidcertificates' => :ssl_verify,
+        'tlsallowinvalidcertificates' => :ssl_verify_certificate,
+        'tlsallowinvalidhostnames' => :ssl_verify_hostname,
         'tlscafile' => :ssl_ca_cert,
         'tlscertificatekeyfile' => :ssl_cert,
         'tlscertificatekeyfilepassword' => :ssl_key_pass_phrase,
@@ -290,7 +291,7 @@ module Mongo
               end
             when 'readpreference'
               Mongo::URI::READ_MODE_MAP[v.downcase].to_s
-            when 'tlsallowinvalidcertificates', 'tlsinsecure'
+            when 'tlsallowinvalidcertificates', 'tlsallowinvalidhostnames', 'tlsinsecure'
               !v
             else
               if k.end_with?('ms') && k != 'wtimeoutms'
@@ -314,7 +315,6 @@ module Mongo
 
           actual = actual.to_s if actual.is_a?(Symbol)
           actual.downcase! if actual.is_a?(String)
-
 
           expected == actual
         end
