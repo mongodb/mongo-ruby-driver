@@ -34,6 +34,14 @@ class SpecConfig
     end
   end
 
+  attr_reader :uri_options, :addresses, :connect_options
+
+  # Environment
+
+  def ci?
+    !!ENV['CI']
+  end
+
   def mri?
     !jruby?
   end
@@ -46,12 +54,38 @@ class SpecConfig
     RUBY_PLATFORM
   end
 
+  # Test suite configuration
+
   def client_debug?
     %w(1 true yes).include?((ENV['CLIENT_DEBUG'] || '').downcase)
   end
 
-  attr_reader :uri_options, :addresses, :connect_options
+  def drivers_tools?
+    !!ENV['DRIVERS_TOOLS']
+  end
 
+  def active_support?
+    %w(1 true yes).include?(ENV['WITH_ACTIVE_SUPPORT'])
+  end
+
+  # What compressor to use, if any.
+  def compressors
+    if ENV['COMPRESSORS']
+      ENV['COMPRESSORS'].split(',')
+    else
+      nil
+    end
+  end
+
+  def retry_writes?
+    %w(yes true on 1).include?((ENV['RETRY_WRITES'] || '').downcase)
+  end
+
+  def ssl?
+    @ssl
+  end
+
+  # Username, not user object
   def user
     @mongodb_uri && @mongodb_uri.credentials[:user]
   end
@@ -68,6 +102,8 @@ class SpecConfig
     connect_options[:connect] == :replica_set
   end
 
+  # Derived data
+
   # The write concern to use in the tests.
   def write_concern
     if connect_replica_set?
@@ -79,14 +115,6 @@ class SpecConfig
 
   def any_port
     addresses.first.split(':')[1] || '27017'
-  end
-
-  def drivers_tools?
-    !!ENV['DRIVERS_TOOLS']
-  end
-
-  def ssl?
-    @ssl
   end
 
   def spec_root
@@ -113,6 +141,13 @@ class SpecConfig
     end
   end
 
+  # The default test database for all specs.
+  def test_db
+    'ruby-driver'.freeze
+  end
+
+  # Option hashes
+
   def ssl_options
     if ssl?
       {
@@ -126,25 +161,12 @@ class SpecConfig
     end
   end
 
-  # What compressor to use, if any.
-  def compressors
-    if ENV['COMPRESSORS']
-      ENV['COMPRESSORS'].split(',')
-    else
-      nil
-    end
-  end
-
   def compressor_options
     if compressors
       {compressors: compressors}
     else
       {}
     end
-  end
-
-  def retry_writes?
-    %w(yes true on 1).include?((ENV['RETRY_WRITES'] || '').downcase)
   end
 
   def retry_writes_options
@@ -181,10 +203,7 @@ class SpecConfig
       merge(ssl_options).merge(compressor_options).merge(retry_writes_options)
   end
 
-  # The default test database for all specs.
-  def test_db
-    'ruby-driver'.freeze
-  end
+  # User objects
 
   # Gets the root system administrator user.
   def root_user
@@ -225,13 +244,5 @@ class SpecConfig
 
       ]
     )
-  end
-
-  def ci?
-    !!ENV['CI']
-  end
-
-  def active_support?
-    %w(1 true yes).include?(ENV['WITH_ACTIVE_SUPPORT'])
   end
 end
