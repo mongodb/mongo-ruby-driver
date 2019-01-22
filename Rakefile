@@ -36,15 +36,7 @@ namespace :release do
   end
 end
 
-task :release => ['release:check_private_key', 'release:do'] do
-  puts "Releasing #{Mongo::VERSION}"
-
-  system "git tag -a #{Mongo::VERSION} -m 'Tagging release: #{Mongo::VERSION}'"
-  system "git push --tags"
-  system "gem build mongo.gemspec"
-  system "gem push mongo-#{Mongo::VERSION}.gem"
-  system "rm mongo-#{Mongo::VERSION}.gem"
-end
+task :release => ['release:check_private_key', 'release:do']
 
 desc "Generate all documentation"
 task :docs => 'docs:yard'
