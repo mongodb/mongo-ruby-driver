@@ -28,12 +28,34 @@ class ClusterConfig
   end
 
   def server_version
-    client = ClientRegistry.instance.global_client('authorized')
-    @server_version ||= client.database.command(buildInfo: 1).first['version']
+    @server_version ||= begin
+      client = ClientRegistry.instance.global_client('authorized')
+      client.database.command(buildInfo: 1).first['version']
+    end
   end
 
   def short_server_version
     server_version.split('.')[0..1].join('.')
+  end
+
+  def fcv
+    @fcv ||= begin
+      client = ClientRegistry.instance.global_client('root_authorized')
+      rv = client.use(:admin).command(getParameter: 1, featureCompatibilityVersion: 1).first['featureCompatibilityVersion']
+      rv['version'] || rv
+    end
+  end
+
+  # Per https://jira.mongodb.org/browse/SERVER-39052, working with FCV
+  # in sharded topologies is annoying. Also, FCV doesn't exist in servers
+  # less than 3.4. This method returns FCV on 3.4+ servers when in single
+  # or RS topologies, and otherwise returns the major.minor server version.
+  def fcv_ish
+    if server_version >= '3.4' && !mongos?
+      fcv
+    else
+      short_server_version
+    end
   end
 
   def primary_address

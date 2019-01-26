@@ -1,6 +1,8 @@
 require 'spec_helper'
 
-describe 'change streams examples in Ruby', if: test_change_streams? do
+describe 'change streams examples in Ruby' do
+  min_server_fcv '3.6'
+  require_topology :replica_set
 
   let!(:inventory) do
     client[:inventory]

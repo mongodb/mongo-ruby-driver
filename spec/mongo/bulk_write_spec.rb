@@ -365,7 +365,8 @@ describe Mongo::BulkWrite do
                  }]
               end
 
-              context 'when the server selected supports arrayFilters', if: array_filters_enabled? do
+              context 'when the server selected supports arrayFilters' do
+                min_server_fcv '3.6'
 
                 let!(:result) do
                   bulk_write.execute
@@ -378,7 +379,8 @@ describe Mongo::BulkWrite do
                 end
               end
 
-              context 'when the server selected does not support arrayFilters', unless: array_filters_enabled? do
+              context 'when the server selected does not support arrayFilters' do
+                max_server_version '3.4'
 
                 it 'raises an exception' do
                   expect {
@@ -425,7 +427,8 @@ describe Mongo::BulkWrite do
                  }]
               end
 
-              context 'when the server selected supports arrayFilters', if: array_filters_enabled? do
+              context 'when the server selected supports arrayFilters' do
+                min_server_fcv '3.6'
 
                 let!(:result) do
                   bulk_write.execute
@@ -441,7 +444,8 @@ describe Mongo::BulkWrite do
                 end
               end
 
-              context 'when the server selected does not support arrayFilters', unless: array_filters_enabled? do
+              context 'when the server selected does not support arrayFilters' do
+                max_server_version '3.4'
 
                 it 'raises an exception' do
                   expect {
@@ -1909,7 +1913,7 @@ describe Mongo::BulkWrite do
           end
 
           context 'when retryable writes are supported' do
-            min_server_version '3.6'
+            min_server_fcv '3.6'
             require_topology :replica_set, :sharded
 
             let(:subscriber) { EventSubscriber.new }
@@ -2142,7 +2146,7 @@ describe Mongo::BulkWrite do
   end
 
   describe 'when the collection has a validator' do
-    min_server_version '3.2'
+    min_server_fcv '3.2'
 
     let(:collection_with_validator) do
       authorized_client[:validating,

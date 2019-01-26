@@ -615,7 +615,7 @@ describe Mongo::Index::View do
     end
 
     context 'when providing an invalid partial index filter' do
-      min_server_version '3.2'
+      min_server_fcv '3.2'
 
       it 'raises an exception' do
         expect {
@@ -625,7 +625,7 @@ describe Mongo::Index::View do
     end
 
     context 'when providing a valid partial index filter' do
-      min_server_version '3.2'
+      min_server_fcv '3.2'
 
       let(:expression) do
         {'a' => {'$lte' => 1.5}}

@@ -23,10 +23,26 @@ module Constraints
     end
   end
 
-  def require_sessions
+  def min_server_fcv(version)
+    unless version =~ /^\d+\.\d+$/
+      raise ArgumentError, "FCV can only be major.minor: #{version}"
+    end
+
     before do
-      unless sessions_enabled?
-        skip 'Sessions are not enabled'
+      unless ClusterConfig.instance.fcv_ish >= version
+        skip "FCV #{version} or higher required, we have #{ClusterConfig.instance.fcv_ish} (server #{ClusterConfig.instance.server_version})"
+      end
+    end
+  end
+
+  def max_server_fcv(version)
+    unless version =~ /^\d+\.\d+$/
+      raise ArgumentError, "Version can only be major.minor: #{version}"
+    end
+
+    before do
+      if version < ClusterConfig.instance.fcv_ish
+        skip "FCV #{version} or lower required, we have #{ClusterConfig.instance.fcv_ish} (server #{ClusterConfig.instance.server_version})"
       end
     end
   end
@@ -58,7 +74,7 @@ module Constraints
   end
 
   def require_transaction_support
-    min_server_version '4.0'
+    min_server_fcv '4.0'
     require_topology :replica_set
   end
 

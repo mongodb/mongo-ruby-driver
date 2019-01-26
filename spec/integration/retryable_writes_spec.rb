@@ -319,9 +319,9 @@ describe 'Retryable writes integration tests' do
             allow(primary_server).to receive(:retry_writes?).and_return(true)
           end
 
-          if standalone? && sessions_enabled?
+          if standalone? && ClusterConfig.instance.fcv_ish >= '3.6'
             it_behaves_like 'an operation that is not retried'
-          elsif sessions_enabled?
+          elsif ClusterConfig.instance.fcv_ish >= '3.6'
             it_behaves_like 'an operation that is retried'
           end
         end
@@ -357,9 +357,9 @@ describe 'Retryable writes integration tests' do
             allow(primary_server).to receive(:retry_writes?).and_return(true)
           end
 
-          if standalone? && sessions_enabled?
+          if standalone? && ClusterConfig.instance.fcv_ish >= '3.6'
             it_behaves_like 'an operation that is not retried'
-          elsif sessions_enabled?
+          elsif ClusterConfig.instance.fcv_ish >= '3.6'
             it_behaves_like 'an operation that is retried'
           end
         end

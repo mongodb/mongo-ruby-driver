@@ -233,7 +233,8 @@ describe Mongo::Database do
       expect(database.command({:ismaster => 1}.freeze).written_count).to eq(0)
     end
 
-    context 'when provided a session', if: sessions_enabled? do
+    context 'when provided a session' do
+      min_server_fcv '3.6'
 
       let(:operation) do
         client.database.command({ :ismaster => 1 }, session: session)
@@ -268,7 +269,7 @@ describe Mongo::Database do
     end
 
     context 'when a read concern is provided' do
-      min_server_version '3.2'
+      min_server_fcv '3.2'
 
       context 'when the read concern is valid' do
 

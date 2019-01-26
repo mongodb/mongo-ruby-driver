@@ -145,7 +145,7 @@ describe Mongo::Collection::View::Aggregation do
     end
 
     context 'when the initial response has no results but an active cursor' do
-      min_server_version '3.2'
+      min_server_fcv '3.2'
 
       let(:documents) do
         [
@@ -223,7 +223,7 @@ describe Mongo::Collection::View::Aggregation do
     end
 
     context 'session id' do
-      min_server_version '3.6'
+      min_server_fcv '3.6'
       require_topology :replica_set, :sharded
 
       let(:options) do

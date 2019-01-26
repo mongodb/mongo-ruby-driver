@@ -13,8 +13,12 @@ describe 'ChangeStreams' do
         context(test.description) do
 
           before(:each) do
-            unless test.configuration_satisfied?(authorized_client)
-              skip 'Version or topology requirements not satisfied'
+            unless test.server_version_satisfied?(authorized_client)
+              skip 'Version requirements not satisfied'
+            end
+
+            unless test.topology_satisfied?
+              skip 'Topology requirements not satisfied'
             end
 
             test.setup_test

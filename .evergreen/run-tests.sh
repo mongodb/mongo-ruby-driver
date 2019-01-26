@@ -15,6 +15,7 @@ set -o errexit  # Exit the script with error if any of the commands fail
 
 . `dirname "$0"`/functions.sh
 
+set_fcv
 set_env_vars
 
 export DRIVER_TOOLS_CLIENT_CERT_PEM="${DRIVERS_TOOLS}/.evergreen/x509gen/client-public.pem"

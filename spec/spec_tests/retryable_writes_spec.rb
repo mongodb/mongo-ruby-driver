@@ -11,6 +11,7 @@ describe 'Retryable writes spec tests' do
       spec.tests.each do |test|
 
         context(test.description) do
+          min_server_fcv '3.6'
 
           let(:collection) do
             client[TEST_COLL]
@@ -21,9 +22,6 @@ describe 'Retryable writes spec tests' do
           end
 
           before do
-            unless sessions_enabled?
-              skip 'Sessions not enabled'
-            end
             unless replica_set?
               skip 'Not in replica set'
             end

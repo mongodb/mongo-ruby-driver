@@ -68,7 +68,7 @@ describe 'Command monitoring' do
   context 'client with no established connections' do
     # for simplicity use 3.6+ servers only, then we can assert
     # scram auth commands
-    min_server_version '3.6'
+    min_server_fcv '3.6'
 
     it 'does not nest auth and find' do
       expect(subscriber.started_events.length).to eq 0

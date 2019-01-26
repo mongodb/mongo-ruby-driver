@@ -55,7 +55,7 @@ describe 'Bulk insert' do
     end
 
     context 'entire operation fails' do
-      min_server_version '4.0'
+      min_server_fcv '4.0'
       require_topology :single, :replica_set
 
       it 'is an empty array' do

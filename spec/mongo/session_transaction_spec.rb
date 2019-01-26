@@ -3,7 +3,7 @@ require 'spec_helper'
 class SessionTransactionSpecError < StandardError; end
 
 describe Mongo::Session do
-  min_server_version '4.0'
+  min_server_fcv '4.0'
   require_topology :replica_set, :sharded
 
   let(:session) do

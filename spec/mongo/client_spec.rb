@@ -502,7 +502,8 @@ describe Mongo::Client do
       )
     end
 
-    context 'when filter criteria is present', if: sessions_enabled? do
+    context 'when filter criteria is present' do
+      min_server_fcv '3.6'
 
       let(:result) do
         root_authorized_client.database_names(filter)
@@ -528,7 +529,8 @@ describe Mongo::Client do
         end).to include('admin')
     end
 
-    context 'when filter criteria is present', if: sessions_enabled? do
+    context 'when filter criteria is present' do
+      min_server_fcv '3.6'
 
       let(:result) do
         root_authorized_client.list_databases(filter)
@@ -592,7 +594,8 @@ describe Mongo::Client do
       expect(result.first.options[:read]).to eq(BSON::Document.new(options)[:read])
     end
 
-    context 'when filter criteria is present', if: sessions_enabled? do
+    context 'when filter criteria is present' do
+      min_server_fcv '3.6'
 
       let(:result) do
         client.list_mongo_databases(filter)
@@ -663,7 +666,7 @@ describe Mongo::Client do
     end
 
     context 'when sessions are supported' do
-      min_server_version '3.6'
+      min_server_fcv '3.6'
       require_topology :replica_set, :sharded
 
       it 'creates a session' do
@@ -756,7 +759,7 @@ describe Mongo::Client do
     end
 
     context 'when two clients have the same cluster' do
-      min_server_version '3.6'
+      min_server_fcv '3.6'
       require_topology :replica_set, :sharded
 
       let(:client) do
@@ -773,7 +776,7 @@ describe Mongo::Client do
     end
 
     context 'when two clients have different clusters' do
-      min_server_version '3.6'
+      min_server_fcv '3.6'
       require_topology :replica_set, :sharded
 
       let(:client) do
@@ -791,7 +794,8 @@ describe Mongo::Client do
       end
     end
 
-    context 'when sessions are not supported', unless: sessions_enabled? do
+    context 'when sessions are not supported' do
+      max_server_version '3.4'
 
       it 'raises an exception' do
         expect {

@@ -119,7 +119,7 @@ describe 'Connections' do
       # which is not supported by modern mongos.
       # Instead of mucking with this we just limit this test to 3.2+
       # so that we can downgrade protocol range to 0..3 instead of 0..1.
-      min_server_version '3.2'
+      min_server_fcv '3.2'
 
       let(:client) { ClientRegistry.instance.global_client('authorized').with(app_name: 'wire_protocol_update') }
 
