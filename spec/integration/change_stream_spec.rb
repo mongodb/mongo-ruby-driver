@@ -249,6 +249,11 @@ describe 'Change stream integration', retry: 4 do
       clear_fail_point_before
 
       before do
+        # Note: this fail point seems to be broken in 4.0 < 4.0.5
+        # (command to set it returns success but the fail point is not set).
+        # The test succeeds in this case but doesn't test two errors on
+        # getMore as no errors actually happen.
+        # 4.0.5-dev server appears to correctly set the fail point.
         authorized_collection.client.use(:admin).command(fail_point_base_command.merge(
           :mode => {:times => 2},
           :data => {:failCommands => ['getMore'], errorCode: 100}))

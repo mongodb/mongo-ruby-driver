@@ -169,6 +169,7 @@ module Mongo
               close
               create_cursor!
               retried = false
+              doc = @cursor.try_next
             else
               # Attempt to retry a getMore once
               retried = true
