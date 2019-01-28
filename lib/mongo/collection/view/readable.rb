@@ -122,6 +122,7 @@ module Mongo
         #   command to run.
         # @option opts [ Hash ] :read The read preference options.
         # @option opts [ Hash ] :collation The collation to use.
+        # @options opts [ Mongo::Session ] :session The session to use for the operation.
         #
         # @return [ Integer ] The document count.
         #
@@ -182,7 +183,7 @@ module Mongo
           pipeline << { :'$limit' => opts[:limit] } if opts[:limit]
           pipeline << { :'$group' => { _id: nil, n: { :'$sum' => 1 } } }
 
-          opts.select! { |k, _| [:hint, :max_time_ms, :read, :collation].include?(k) }
+          opts.select! { |k, _| [:hint, :max_time_ms, :read, :collation, :session].include?(k) }
           aggregate(pipeline, opts).first['n'].to_i
         end
 
