@@ -91,4 +91,17 @@ describe 'Client construction' do
       expect(client.options[:connect]).to eq :direct
     end
   end
+
+  context 'when time is frozen' do
+    let(:now) { Time.now }
+    before do
+      allow(Time).to receive(:now).and_return(now)
+    end
+
+    it 'connects' do
+      client = ClientRegistry.instance.new_local_client([SpecConfig.instance.addresses.first],
+        SpecConfig.instance.test_options)
+      expect(client.cluster.topology).not_to be_a(Mongo::Cluster::Topology::Unknown)
+    end
+  end
 end
