@@ -21,7 +21,8 @@ module Mongo
       # @since 2.7.0
       class ConnectionCreated < Mongo::Event::Base
 
-        # @return [ String ] address The address of the server the connection will connect to.
+        # @return [ Mongo::Address ] address The address of the server the connection will connect
+        #   to.
         #
         # @since 2.7.0
         attr_reader :address

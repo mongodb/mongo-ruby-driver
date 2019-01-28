@@ -17,10 +17,20 @@ describe 'CMAP' do
 
     context("#{spec.description} (#{file.sub(%r'.*/data/cmap/', '')})") do
 
-      it 'successfully runs the test' do
-        result = spec.run(cluster)
+      let!(:result) do
+        spec.run(cluster)
+      end
+
+      let(:verifier) do
+        Mongo::CMAP::Verifier.new(spec)
+      end
+
+      it 'raises the correct error' do
         expect(result['error']).to eq(spec.error)
-        expect(spec.events).to match_events(result['events'])
+      end
+
+      it 'emits the correct events' do
+        verifier.verify_events(result['events'])
       end
     end
   end

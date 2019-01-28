@@ -20,21 +20,29 @@ module Mongo
     # @since 2.7.0
     class WaitQueueTimeout < Error
 
-      # @return [ String ] address The address of the server the pool's connections connect to.
+      # @return [ Mongo::Address ] address The address of the server the pool's connections connect
+      #   to.
       #
       # @since 2.7.0
       attr_reader :address
 
+      # @return [ Integer ] pool_size The size of connection pool.
+      #
+      # @since 2.7.0
+      attr_reader :pool_size
+
       # Instantiate the new exception.
       #
       # @example Instantiate the exception.
-      #   Mongo::Error::WaitQueueTimeout.new(address)
+      #   Mongo::Error::WaitQueueTimeout.new(address, pool_size)
       #
       # @since 2.7.0
-      def initialize(address)
+      def initialize(address, pool_size)
         @address = address
+        @pool_size
 
-        super("timeout when attempting to check out a connection from pool with address #{address}")
+        super("Timeout when attempting to check out a connection from pool with address "+
+                "#{address} and size #{pool_size}")
       end
     end
   end

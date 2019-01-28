@@ -20,22 +20,29 @@ module Mongo
     # @since 2.7.0
     class PoolClosed < Error
 
-      # @return [ String ] address The address of the server the pool's connections connect to.
+      # @return [ Mongo::Address ] address The address of the server the pool's connections connect
+      #   to.
       #
       # @since 2.7.0
       attr_reader :address
 
+      # @return [ Integer ] pool_size The size of connection pool.
+      #
+      # @since 2.7.0
+      attr_reader :pool_size
+
       # Instantiate the new exception.
       #
       # @example Instantiate the exception.
-      #   Mongo::Error::PoolClosed.new(address)
+      #   Mongo::Error::PoolClosed.new(address, pool_size)
       #
       # @since 2.7.0
-      def initialize(address)
+      def initialize(address, pool_size)
         @address = address
+        @pool_size = pool_size
 
         super("attempted to check out a connection from closed connection pool with address " +
-                  "#{address}")
+                  "#{address} and size #{pool_size}")
       end
     end
   end

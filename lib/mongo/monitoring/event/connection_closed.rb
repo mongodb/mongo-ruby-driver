@@ -64,6 +64,12 @@ module Mongo
         # @since 2.7.0
         attr_reader :reason
 
+        # @return [ Mongo::Address ] address The address of the server the pool's connections will
+        #   connect to.
+        #
+        # @since 2.7.0
+        attr_reader :address
+
         # Create the event.
         #
         # @example Create the event.

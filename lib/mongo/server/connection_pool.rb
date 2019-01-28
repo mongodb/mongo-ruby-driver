@@ -44,15 +44,16 @@ module Mongo
       # @api private
       def initialize(server, &block)
         @id = ConnectionPool.next_id
-        @address = server.address.to_s
+        @address = server.address
         @monitoring = server.monitoring
         @options = server.options.dup.freeze
 
         publish_cmap_event(
-          Monitoring::Event::PoolCreated.new(@address, options)
+          Monitoring::Event::PoolCreated.new(address, options)
         )
 
         @queue = Queue.new(address, monitoring, options, &block)
+        @pool_size = queue.pool_size
       end
 
       # @return [ String ] address The address the pool's connections will connect to.
@@ -81,7 +82,7 @@ module Mongo
           publish_cmap_event(
               Monitoring::Event::ConnectionClosed.new(
                   Monitoring::Event::ConnectionClosed::POOL_CLOSED,
-                  @address,
+                  address,
                   connection.id,
               ),
           )
@@ -226,7 +227,7 @@ module Mongo
       #
       # @since 2.7.0
       def raise_if_closed!
-        raise Error::PoolClosed.new(address) if closed?
+        raise Error::PoolClosed.new(address, @pool_size) if closed?
       end
 
       class << self

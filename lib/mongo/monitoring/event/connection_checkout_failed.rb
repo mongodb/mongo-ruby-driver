@@ -33,8 +33,8 @@ module Mongo
         # @since 2.7.0
         TIMEOUT = 'timeout'.freeze
 
-        # @return [ String ] address The address of the server the connection would have connected
-        #   to.
+        # @return [ Mongo::Address ] address The address of the server the connection would have
+        #   connected to.
         #
         # @since 2.7.0
         attr_reader :address

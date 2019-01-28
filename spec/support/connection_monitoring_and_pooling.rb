@@ -1,29 +1,4 @@
-RSpec::Matchers.define :match_events do |actual|
-
-  match do |expected|
-    next false unless actual.size == expected.size
-
-    actual.each_index.all? do |i|
-      match_hashes(expected[i], actual[i])
-    end
-  end
-end
-
-def match_hashes(expected, actual)
-  return false unless actual.size == expected.size
-
-  expected.all? do |key, val|
-    return false unless actual[key]
-
-    if val == 42
-      true
-    elsif val.is_a?(Hash)
-      match_hashes(val, actual[key])
-    else
-      val == actual[key]
-    end
-  end
-end
+require 'support/connection_monitoring_and_pooling/verifier'
 
 module Mongo
   module CMAP

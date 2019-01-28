@@ -168,9 +168,16 @@ module Mongo
         def disconnect!
           check_count_invariants(false)
           mutex.synchronize do
-            @pool_size -= queue.size
             queue.each do |connection|
+              @pool_size -= 1
+              if @pool_size < 0
+                # This should never happen
+                log_warn("ConnectionPool::Queue: connection accounting problem")
+                @pool_size = 0
+              end
+
               connection.disconnect!
+
               publish_cmap_event(
                   Monitoring::Event::ConnectionClosed.new(
                       Monitoring::Event::ConnectionClosed::POOL_CLOSED,
@@ -179,11 +186,7 @@ module Mongo
                   ),
               )
             end
-            if @pool_size < 0
-              # This should never happen
-              log_warn("ConnectionPool::Queue: connection accounting problem")
-              @pool_size = 0
-            end
+
             queue.clear
             @generation += 1
             while @pool_size < min_size
@@ -335,7 +338,15 @@ module Mongo
         private
 
         def close_connection!(connection, reason)
+          @pool_size -= 1
+          if @pool_size < 0
+            # This should never happen
+            log_warn("ConnectionPool::Queue: unexpected enqueue")
+            @pool_size = 0
+          end
+
           connection.disconnect!
+
           publish_cmap_event(
             Monitoring::Event::ConnectionClosed.new(
               reason,
@@ -343,14 +354,6 @@ module Mongo
               connection.id,
             )
           )
-
-          @pool_size = if @pool_size > 0
-            @pool_size - 1
-          else
-            # This should never happen
-            log_warn("ConnectionPool::Queue: unexpected enqueue")
-            0
-          end
         end
 
         def is_stale?(connection)
@@ -373,7 +376,7 @@ module Mongo
           semaphore = check_wait_queue
           deadline = Time.now + wait_timeout
           semaphore.wait(wait_timeout) if semaphore
-          raise Error::WaitQueueTimeout.new(@address) if deadline <= Time.now
+          raise Error::WaitQueueTimeout.new(@address, pool_size) if deadline <= Time.now
 
           mutex.synchronize do
             loop do
@@ -390,7 +393,7 @@ module Mongo
 
               wait = deadline - Time.now
               resource.wait(mutex, wait)
-              raise Error::WaitQueueTimeout.new(@address) if deadline <= Time.now
+              raise Error::WaitQueueTimeout.new(@address, pool_size) if deadline <= Time.now
             end
           end
         end
