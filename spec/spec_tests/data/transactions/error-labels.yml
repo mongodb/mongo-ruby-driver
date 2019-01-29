@@ -487,7 +487,7 @@ tests:
       mode: { times: 2 }
       data:
           failCommands: ["commitTransaction"]
-          errorCode: 11602  # InterruptedDueToReplStateChange
+          errorCode: 11602  # InterruptedDueToStepDown 
 
     operations:
       - name: startTransaction
@@ -825,7 +825,7 @@ tests:
       data:
           failCommands: ["commitTransaction"]
           writeConcernError:
-            code: 100  # UnsatisfiableWriteConcern/CannotSatisfyWriteConcern
+            code: 100  # UnsatisfiableWriteConcern
             errmsg: Not enough data-bearing nodes
 
     operations:
