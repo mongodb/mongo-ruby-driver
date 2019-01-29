@@ -61,11 +61,7 @@ module Mongo
       # @since 2.6.0
       def tests
         @transaction_tests.map do |test|
-          if test['skipReason']
-            nil
-          else
-            Proc.new { Mongo::Transactions::TransactionsTest.new(@data, test, self) }
-          end
+          Proc.new { Mongo::Transactions::TransactionsTest.new(@data, test, self) }
         end.compact
       end
 
@@ -100,6 +96,7 @@ module Mongo
       attr_reader :expectations
 
       attr_reader :expected_results
+      attr_reader :skip_reason
 
       # Instantiate the new CRUDTest.
       #
@@ -122,6 +119,7 @@ module Mongo
         @fail_point = test['failPoint']
         @operations = test['operations']
         @expectations = test['expectations']
+        @skip_reason = test['skipReason']
         @outcome = test['outcome']
         @expected_results = @operations.map do |o|
           result = o['result']

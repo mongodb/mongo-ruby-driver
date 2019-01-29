@@ -15,6 +15,12 @@ describe 'Transactions' do
 
           let(:test) { test_factory.call }
 
+          if test_instance.skip_reason
+            before do
+              skip test_instance.skip_reason
+            end
+          end
+
           before(:each) do
             test.setup_test
           end
