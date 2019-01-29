@@ -184,7 +184,9 @@ module Mongo
           pipeline << { :'$group' => { _id: nil, n: { :'$sum' => 1 } } }
 
           opts.select! { |k, _| [:hint, :max_time_ms, :read, :collation, :session].include?(k) }
-          aggregate(pipeline, opts).first['n'].to_i
+          first = aggregate(pipeline, opts).first
+          return 0 unless first
+          first['n'].to_i
         end
 
         # Gets an estimate of the count of documents in a collection using collection metadata.
