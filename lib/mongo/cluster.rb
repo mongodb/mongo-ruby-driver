@@ -177,7 +177,7 @@ module Mongo
         # server selection timeout or the 3 second minimum.
         loop do
           servers = servers_list.dup
-          if servers.all? { |server| server.description.last_update_time > start_time }
+          if servers.all? { |server| server.description.last_update_time >= start_time }
             break
           end
           if (time_remaining = deadline - Time.now) <= 0
