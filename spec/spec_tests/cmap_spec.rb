@@ -12,11 +12,9 @@ describe 'CMAP' do
   end
 
   CMAP_TESTS.sort.each do |file|
-
     spec = Mongo::CMAP::Spec.new(file)
 
     context("#{spec.description} (#{file.sub(%r'.*/data/cmap/', '')})") do
-
       let!(:result) do
         spec.run(cluster)
       end

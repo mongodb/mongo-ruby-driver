@@ -12,7 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/server/connection_pool/queue'
+require 'mongo/server/connection_pool/wait_queue'
+require 'mongo/server/connection_pool/available_queue'
 
 module Mongo
   class Server
@@ -52,7 +53,7 @@ module Mongo
           Monitoring::Event::PoolCreated.new(address, options)
         )
 
-        @queue = Queue.new(address, monitoring, options, &block)
+        @queue = AvailableQueue.new(address, monitoring, options, &block)
         @pool_size = queue.pool_size
       end
 
@@ -200,7 +201,6 @@ module Mongo
         raise_if_closed!
 
         connection = checkout
-        connection.connect!
         yield(connection)
       ensure
         checkin(connection) if connection

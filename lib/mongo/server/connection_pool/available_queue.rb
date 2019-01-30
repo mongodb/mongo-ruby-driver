@@ -33,7 +33,7 @@ module Mongo
       #   currently checked out.
       #
       # @since 2.0.0
-      class Queue
+      class AvailableQueue
         include Loggable
         include Monitoring::Publishable
         extend Forwardable
@@ -51,7 +51,7 @@ module Mongo
         # equal to the initial connection pool size.
         #
         # @example Create the queue.
-        #   Mongo::Server::ConnectionPool::Queue.new(address, monitoring, max_pool_size: 5) do
+        #   Mongo::Server::ConnectionPool::AvailableQueue.new(address, monitoring, max_pool_size: 5) do
         #     Connection.new
         #   end
         #
@@ -83,9 +83,7 @@ module Mongo
           @queue = Array.new(min_size) { create_connection }
           @mutex = Mutex.new
           @resource = ConditionVariable.new
-
-          @wait_queue = []
-          @wait_queue_mutex = Mutex.new
+          @wait_queue = WaitQueue.new(self)
 
           check_count_invariants
         end
@@ -144,9 +142,6 @@ module Mongo
           dequeue_connection
         ensure
           check_count_invariants(false)
-          @wait_queue_mutex.synchronize do
-            @wait_queue.shift
-          end
         end
 
         # Updates the generation number. The connections will be disconnected and removed lazily
@@ -167,14 +162,10 @@ module Mongo
         # @since 2.1.0
         def disconnect!
           check_count_invariants(false)
+          @wait_queue.clear!
           mutex.synchronize do
             queue.each do |connection|
-              @pool_size -= 1
-              if @pool_size < 0
-                # This should never happen
-                log_warn("ConnectionPool::Queue: connection accounting problem")
-                @pool_size = 0
-              end
+              connection_removed
 
               connection.disconnect!
 
@@ -224,9 +215,6 @@ module Mongo
             if connection.generation == @generation
               queue.unshift(connection.record_checkin!)
               resource.broadcast
-              @wait_queue_mutex.synchronize do
-                @wait_queue.first.broadcast unless @wait_queue.empty?
-              end
             else
               close_connection!(connection, Monitoring::Event::ConnectionClosed::STALE)
             end
@@ -245,7 +233,7 @@ module Mongo
         #
         # @since 2.0.0
         def inspect
-          "#<Mongo::Server::ConnectionPool::Queue:0x#{object_id} min_size=#{min_size} max_size=#{max_size} " +
+          "#<Mongo::Server::ConnectionPool::AvailableQueue:0x#{object_id} min_size=#{min_size} max_size=#{max_size} " +
             "wait_timeout=#{wait_timeout} current_size=#{queue_size}>"
         end
 
@@ -335,16 +323,19 @@ module Mongo
           check_count_invariants(false)
         end
 
-        private
-
-        def close_connection!(connection, reason)
+        def connection_removed
           @pool_size -= 1
           if @pool_size < 0
             # This should never happen
-            log_warn("ConnectionPool::Queue: unexpected enqueue")
+            log_warn("ConnectionPool::AvailableQueue: unexpected enqueue")
             @pool_size = 0
           end
+        end
 
+        private
+
+        def close_connection!(connection, reason)
+          connection_removed
           connection.disconnect!
 
           publish_cmap_event(
@@ -373,45 +364,33 @@ module Mongo
         end
 
         def dequeue_connection
-          semaphore = check_wait_queue
           deadline = Time.now + wait_timeout
-          semaphore.wait(wait_timeout) if semaphore
-          raise Error::WaitQueueTimeout.new(@address, pool_size) if deadline <= Time.now
+          @wait_queue.wait_until_front_of_queue(wait_timeout, deadline)
 
-          mutex.synchronize do
-            loop do
-              until queue.empty?
-                connection = queue.shift
-
-                unless is_stale?(connection) || is_idle?(connection)
-                  return connection
-                end
-              end
-
-              connection = create_connection
-              return connection if connection
-
-              wait = deadline - Time.now
-              resource.wait(mutex, wait)
-              raise Error::WaitQueueTimeout.new(@address, pool_size) if deadline <= Time.now
-            end
+          connection = mutex.synchronize do
+            get_connection(deadline)
           end
+
+          @wait_queue.ready_for_next_thread
+          connection
         end
 
-        def check_wait_queue
-          semaphore = Semaphore.new
+        def get_connection(deadline)
+          loop do
+            until queue.empty?
+              connection = queue.shift
+              return connection unless is_stale?(connection) || is_idle?(connection)
+            end
 
-          @wait_queue_mutex.synchronize do
-            @wait_queue << semaphore
+            connection = create_connection
+            return connection if connection
 
-            # No need to wait for semaphore if nothing else is in the wait queue.
-            if @wait_queue.size == 1
-              return
+            wait = deadline - Time.now
+            resource.wait(mutex, wait)
+            if deadline <= Time.now
+              raise Error::WaitQueueTimeout.new(@address, pool_size)
             end
           end
-
-
-          semaphore
         end
 
         def create_connection

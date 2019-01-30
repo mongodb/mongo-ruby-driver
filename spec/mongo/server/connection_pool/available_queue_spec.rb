@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe Mongo::Server::ConnectionPool::Queue do
+describe Mongo::Server::ConnectionPool::AvailableQueue do
 
   def create_connection(generation=1)
     double('connection').tap do |connection|

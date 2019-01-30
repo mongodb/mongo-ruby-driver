@@ -305,6 +305,7 @@ module Mongo
 
       def run_start_op(state)
         state[target] = Thread.start do
+          Thread.current[:name] = @target
           thread_ops.each { |op| op.run(state, false) }
         end
 
