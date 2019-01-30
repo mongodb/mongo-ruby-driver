@@ -26,23 +26,17 @@ module Mongo
       # @since 2.7.0
       attr_reader :address
 
-      # @return [ Integer ] pool_size The size of connection pool.
-      #
-      # @since 2.7.0
-      attr_reader :pool_size
-
       # Instantiate the new exception.
       #
       # @example Instantiate the exception.
       #   Mongo::Error::WaitQueueTimeout.new(address, pool_size)
       #
       # @since 2.7.0
-      def initialize(address, pool_size)
+      def initialize(address)
         @address = address
-        @pool_size
 
-        super("Timeout when attempting to check out a connection from pool with address "+
-                "#{address} and size #{pool_size}")
+        super("Timeout when attempting to check out a connection from pool with address " +
+                "#{address}")
       end
     end
   end

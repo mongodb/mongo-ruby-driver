@@ -28,11 +28,11 @@ describe Mongo::Server::ConnectionPool do
     end
   end
 
-  describe '#checkin' do
+  let(:server) do
+    Mongo::Server.new(address, cluster, monitoring, listeners, options)
+  end
 
-    let(:server) do
-      Mongo::Server.new(address, cluster, monitoring, listeners, options)
-    end
+  describe '#checkin' do
 
     let!(:pool) do
       described_class.get(server)
@@ -53,12 +53,12 @@ describe Mongo::Server::ConnectionPool do
         pool.checkin(connection)
       end
 
-      let(:queue) do
-        pool.send(:queue).queue
+      let(:stack) do
+        pool.send(:connections).connections
       end
 
-      it 'returns the connection to the queue' do
-        expect(queue.size).to eq(1)
+      it 'returns the connection to the stack' do
+        expect(stack.size).to eq(1)
       end
     end
   end
@@ -112,7 +112,7 @@ describe Mongo::Server::ConnectionPool do
 
     context 'when connections are checked out and checked back in' do
 
-      it 'pulls the connection from the front of the queue' do
+      it 'pulls the connection from the front of the stack' do
         first = pool.checkout
         second = pool.checkout
         pool.checkin(second)
@@ -132,9 +132,9 @@ describe Mongo::Server::ConnectionPool do
       described_class.get(server)
     end
 
-    it 'disconnects the queue' do
+    it 'disconnects the stack' do
       expect(cluster).to receive(:pool).with(server).and_return(pool)
-      expect(pool.send(:queue)).to receive(:disconnect!).once.and_call_original
+      expect(pool.send(:connections)).to receive(:disconnect!).once.and_call_original
       server.disconnect!
     end
   end
@@ -178,8 +178,12 @@ describe Mongo::Server::ConnectionPool do
       expect(pool.inspect).to include(pool.object_id.to_s)
     end
 
-    it 'includes the queue inspection' do
-      expect(pool.inspect).to include(pool.__send__(:queue).inspect)
+    it 'includes the wait timeout' do
+      expect(pool.inspect).to include('wait_timeout=2')
+    end
+
+    it 'includes the stack inspection' do
+      expect(pool.inspect).to include(pool.__send__(:connections).inspect)
     end
   end
 
@@ -204,12 +208,12 @@ describe Mongo::Server::ConnectionPool do
         end
       end
 
-      let(:queue) do
-        pool.send(:queue).queue
+      let(:stack) do
+        pool.send(:connections).connections
       end
 
       it 'does not add the connection to the pool' do
-        expect(queue.size).to eq(1)
+        expect(stack.size).to eq(1)
       end
     end
   end
@@ -256,8 +260,8 @@ describe Mongo::Server::ConnectionPool do
       described_class.get(server)
     end
 
-    let(:queue) do
-      pool.instance_variable_get(:@queue).queue
+    let(:stack) do
+      pool.instance_variable_get(:@connections).connections
     end
 
     context 'when there is a max_idle_time specified' do
@@ -269,7 +273,7 @@ describe Mongo::Server::ConnectionPool do
       context 'when the connections have not been checked out' do
 
         before do
-          queue.each do |conn|
+          stack.each do |conn|
             expect(conn).not_to receive(:disconnect!)
           end
           sleep(0.5)
@@ -277,7 +281,7 @@ describe Mongo::Server::ConnectionPool do
         end
 
         it 'does not close any sockets' do
-          expect(queue.none? { |c| c.connected? }).to be(true)
+          expect(stack.none? { |c| c.connected? }).to be(true)
         end
       end
 
@@ -290,7 +294,7 @@ describe Mongo::Server::ConnectionPool do
           end
 
           before do
-            queue.each do |conn|
+            stack.each do |conn|
               expect(conn).to receive(:disconnect!).and_call_original
             end
             pool.checkin(pool.checkout)
@@ -300,7 +304,7 @@ describe Mongo::Server::ConnectionPool do
           end
 
           it 'closes all stale sockets' do
-            expect(queue.all? { |c| !c.connected? }).to be(true)
+            expect(stack.all? { |c| !c.connected? }).to be(true)
           end
         end
 
@@ -329,8 +333,8 @@ describe Mongo::Server::ConnectionPool do
             end
 
             it 'closes all stale sockets and does not connect new ones' do
-              expect(queue.size).to be(1)
-              expect(queue[0].connected?).to be(false)
+              expect(stack.size).to be(1)
+              expect(stack[0].connected?).to be(false)
             end
           end
 
@@ -366,10 +370,10 @@ describe Mongo::Server::ConnectionPool do
             end
 
             it 'closes all stale sockets and does not connect new ones' do
-              expect(queue.size).to be(3)
-              expect(queue[0].connected?).to be(true)
-              expect(queue[1].connected?).to be(false)
-              expect(queue[2].connected?).to be(false)
+              expect(stack.size).to be(3)
+              expect(stack[0].connected?).to be(true)
+              expect(stack[1].connected?).to be(false)
+              expect(stack[2].connected?).to be(false)
             end
           end
 
@@ -405,10 +409,10 @@ describe Mongo::Server::ConnectionPool do
             end
 
             it 'is kept in the pool' do
-              expect(queue.size).to be(3)
-              expect(queue[0].connected?).to be(false)
-              expect(queue[1].connected?).to be(false)
-              expect(queue[2].connected?).to be(false)
+              expect(stack.size).to be(3)
+              expect(stack[0].connected?).to be(false)
+              expect(stack[1].connected?).to be(false)
+              expect(stack[2].connected?).to be(false)
             end
           end
 
@@ -439,9 +443,9 @@ describe Mongo::Server::ConnectionPool do
             end
 
             it 'closes all stale sockets and does not connect new ones' do
-              expect(queue.size).to be(2)
-              expect(queue[0].connected?).to be(false)
-              expect(queue[1].connected?).to be(false)
+              expect(stack.size).to be(2)
+              expect(stack[0].connected?).to be(false)
+              expect(stack[1].connected?).to be(false)
             end
           end
         end
@@ -464,6 +468,39 @@ describe Mongo::Server::ConnectionPool do
 
       it 'does not close any sockets' do
         expect(connection.connected?).to be(true)
+      end
+    end
+  end
+
+  describe '#wait_timeout' do
+
+    context 'when the wait timeout option is provided' do
+
+      let(:options) do
+        { wait_queue_timeout: 3 }
+      end
+
+      let(:pool) do
+        described_class.new(server) { Mongo::Server::Connection.new(server) }
+      end
+
+      it 'returns the wait timeout' do
+        expect(pool.wait_timeout).to eq(3)
+      end
+    end
+
+    context 'when the wait timeout option is not provided' do
+
+      let(:options) do
+        {}
+      end
+
+      let(:pool) do
+        described_class.new(server) { Mongo::Server::Connection.new(server) }
+      end
+
+      it 'returns the default wait timeout' do
+        expect(pool.wait_timeout).to eq(1)
       end
     end
   end

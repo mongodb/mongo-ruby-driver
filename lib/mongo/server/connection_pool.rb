@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require 'mongo/server/connection_pool/available_stack'
 require 'mongo/server/connection_pool/wait_queue'
-require 'mongo/server/connection_pool/available_queue'
 
 module Mongo
   class Server
@@ -27,6 +27,9 @@ module Mongo
       include Monitoring::Publishable
       extend Forwardable
 
+      # The default timeout, in seconds, to wait for a connection.
+      WAIT_TIMEOUT = 1.freeze
+
       # Create the new connection pool.
       #
       # @example Create the new connection pool.
@@ -34,12 +37,10 @@ module Mongo
       #     Connection.new
       #   end
       #
-      # @note A block must be passed to set up the connections on initialization.
+      # @param [ Mongo::Server ] server The server that the connections should connect to. The
+      #   ConnectionPool will use the server's options where applicable.
       #
-      # @option options [ Integer ] :max_pool_size The maximum pool size.
-      # @option options [ Integer ] :min_pool_size The minimum pool size.
-      # @option options [ Float ] :wait_queue_timeout The time to wait, in
-      #   seconds, for a free connection.
+      # @note A block must be passed to set up the connections on initialization. #
       #
       # @since 2.0.0
       # @api private
@@ -53,8 +54,9 @@ module Mongo
           Monitoring::Event::PoolCreated.new(address, options)
         )
 
-        @queue = AvailableQueue.new(address, monitoring, options, &block)
-        @pool_size = queue.pool_size
+        @connections = AvailableStack.new(address, monitoring, options, &block)
+        @wait_queue = WaitQueue.new(address)
+        @pool_size = connections.pool_size
       end
 
       # @return [ String ] address The address the pool's connections will connect to.
@@ -65,7 +67,19 @@ module Mongo
       # @return [ Hash ] options The pool options.
       attr_reader :options
 
-      def_delegators :queue, :close_stale_sockets!
+      def_delegators :connections, :close_stale_sockets!
+
+      # The time to wait, in seconds, for a connection to become available.
+      #
+      # @example Get the wait timeout.
+      #   queue.wait_timeout
+      #
+      # @return [ Float ] The queue wait timeout.
+      #
+      # @since 2.0.0
+      def wait_timeout
+        @wait_timeout ||= options[:wait_queue_timeout] || WAIT_TIMEOUT
+      end
 
       # Check a connection back into the pool. Will pull the connection from a
       # thread local stack that should contain it after it was checked out.
@@ -90,7 +104,7 @@ module Mongo
 
           connection.disconnect!
         else
-          queue.enqueue(connection)
+          connections.push(connection)
         end
       end
 
@@ -110,10 +124,14 @@ module Mongo
         publish_cmap_event(
           Monitoring::Event::ConnectionCheckoutStarted.new(address)
         )
-        queue.dequeue.tap do |c|
-          publish_cmap_event(
-            Monitoring::Event::ConnectionCheckedOut.new(address, c.id),
-          )
+
+        deadline = Time.now + wait_timeout
+        @wait_queue.enter_wait_queue(wait_timeout, deadline) do
+          connections.pop(deadline).tap do |c|
+            publish_cmap_event(
+              Monitoring::Event::ConnectionCheckedOut.new(address, c.id),
+            )
+          end
         end
       rescue Error::WaitQueueTimeout
         publish_cmap_event(
@@ -135,7 +153,7 @@ module Mongo
       # @since 2.1.0
       def disconnect!
         unless closed?
-          queue.disconnect!
+          connections.disconnect!
 
           publish_cmap_event(
             Monitoring::Event::PoolClosed.new(address)
@@ -153,7 +171,7 @@ module Mongo
       # @since 2.7.0
       def clear!
         unless closed?
-          queue.clear!
+          connections.clear!
 
           publish_cmap_event(
             Monitoring::Event::PoolCleared.new(address)
@@ -170,8 +188,9 @@ module Mongo
       #
       # @since 2.7.0
       def close!
+        @wait_queue.clear!
         disconnect!
-        @queue = nil
+        @connections = nil
         true
       end
 
@@ -184,7 +203,8 @@ module Mongo
       #
       # @since 2.0.0
       def inspect
-        "#<Mongo::Server::ConnectionPool:0x#{object_id} queue=#{queue.inspect}>"
+        "#<Mongo::Server::ConnectionPool:0x#{object_id} " +
+          "queue=#{connections.inspect} wait_timeout=#{wait_timeout}>"
       end
 
       # Yield the block to a connection, while handling checkin/checkout logic.
@@ -208,7 +228,7 @@ module Mongo
 
       protected
 
-      attr_reader :queue
+      attr_reader :connections
 
       private
 
@@ -218,7 +238,7 @@ module Mongo
       #
       # @since 2.7.0
       def closed?
-        queue.nil?
+        connections.nil?
       end
 
       # Asserts that the pool has not been closed.

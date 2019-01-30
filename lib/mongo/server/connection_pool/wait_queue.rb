@@ -18,46 +18,40 @@ module Mongo
       class WaitQueue
         extend Forwardable
 
-        def initialize(available_queue)
-          @available_queue = available_queue
+        def initialize(address)
+          @address = address
           @wait_queue = []
           @mutex = Mutex.new
         end
 
         def clear!
-          @mutex.synchronize do
-            @wait_queue.each(&:broadcast)
-            @wait_queue.clear
+          until @wait_queue.empty?
+            semaphore = @mutex.synchronize { @wait_queue.shift }
+            semaphore.broadcast
           end
         end
 
-        def ready_for_next_thread
+        def enter_wait_queue(wait_timeout, deadline)
+          semaphore = (Thread::current[:_mongo_wait_queue_semaphore] ||= Semaphore.new)
+
+          wait = @mutex.synchronize do
+            @wait_queue << semaphore
+            @wait_queue.size > 1
+          end
+
+          semaphore.wait(wait_timeout) if wait
+
+          if deadline <= Time.now || @mutex.synchronize { !@wait_queue.include?(semaphore) }
+            raise Error::WaitQueueTimeout.new(@address)
+          end
+
+          yield
+        ensure
           @mutex.synchronize do
-            @wait_queue.shift
+            @wait_queue.delete(semaphore)
             @wait_queue.first.broadcast unless @wait_queue.empty?
           end
         end
-
-        def wait_until_front_of_queue(wait_timeout, deadline)
-          semaphore = Semaphore.new
-
-          @mutex.synchronize do
-            @wait_queue << semaphore
-
-            if @wait_queue.size == 1
-              return
-            end
-          end
-
-          semaphore.wait(wait_timeout)
-
-          if deadline <= Time.now
-            @mutex.synchronize { @wait_queue.delete(semaphore) }
-            raise Error::WaitQueueTimeout.new(address, pool_size)
-          end
-        end
-
-        def_delegators :available_queue, :address, :pool_size
       end
     end
   end
