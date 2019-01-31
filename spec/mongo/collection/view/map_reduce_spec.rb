@@ -223,7 +223,7 @@ describe Mongo::Collection::View::MapReduce do
         end
 
         context 'when the output collection is iterated' do
-          min_server_version '3.6'
+          min_server_fcv '3.6'
           require_topology :replica_set, :sharded
 
           let(:options) do
@@ -257,19 +257,20 @@ describe Mongo::Collection::View::MapReduce do
           end
         end
 
-        context 'when another db is specified', if: (sessions_enabled? && !sharded? && !auth_enabled?) do
+        context 'when another db is specified', if: (!sharded? && !auth_enabled?) do
+          min_server_fcv '3.6'
 
           let(:new_map_reduce) do
             map_reduce.out(db: 'another-db', replace: 'output_collection')
           end
 
-          it 'iterates over the documents in the result', if: (sessions_enabled? && !sharded? && !auth_enabled?) do
+          it 'iterates over the documents in the result' do
             new_map_reduce.each do |document|
               expect(document[:value]).to_not be_nil
             end
           end
 
-          it 'fetches the results from the collection', if: (sessions_enabled? && !sharded? && !auth_enabled?)  do
+          it 'fetches the results from the collection'  do
             expect(new_map_reduce.count).to eq(2)
           end
         end

@@ -589,7 +589,7 @@ describe Mongo::Cluster do
     end
 
     context 'in server 3.6+' do
-      min_server_version '3.6'
+      min_server_fcv '3.6'
 
       context 'in single topology' do
         require_topology :single

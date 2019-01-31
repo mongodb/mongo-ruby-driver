@@ -1,6 +1,8 @@
 require 'spec_helper'
 
-describe Mongo::Collection::View::ChangeStream, if: test_change_streams? do
+describe Mongo::Collection::View::ChangeStream do
+  min_server_fcv '3.6'
+  require_topology :replica_set
 
   let(:pipeline) do
     []
@@ -214,7 +216,7 @@ describe Mongo::Collection::View::ChangeStream, if: test_change_streams? do
           }.to raise_exception(Mongo::Error::OperationFailure)
         end
 
-        context 'when the operation fails', if: test_change_streams? do
+        context 'when the operation fails' do
 
           let!(:before_last_use) do
             session.instance_variable_get(:@server_session).last_use
@@ -270,7 +272,8 @@ describe Mongo::Collection::View::ChangeStream, if: test_change_streams? do
       end
     end
 
-    context 'when provided a session', if: sessions_enabled? && test_change_streams? do
+    context 'when provided a session' do
+      min_server_fcv '3.6'
 
       let(:options) do
         { session: session }
@@ -383,6 +386,7 @@ describe Mongo::Collection::View::ChangeStream, if: test_change_streams? do
     end
 
     context 'when some documents have been retrieved and the stream is closed before sending getMore' do
+      fails_on_jruby
 
       before do
         change_stream
@@ -574,6 +578,7 @@ describe Mongo::Collection::View::ChangeStream, if: test_change_streams? do
   end
 
   context 'when a server error is encountered during a getMore' do
+    fails_on_jruby
 
     context 'when the error is a resumable error' do
 

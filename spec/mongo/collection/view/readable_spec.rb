@@ -21,7 +21,7 @@ describe Mongo::Collection::View::Readable do
   shared_examples_for 'a read concern aware operation' do
 
     context 'when a read concern is provided' do
-      min_server_version '3.2'
+      min_server_fcv '3.2'
 
       let(:new_view) do
         Mongo::Collection::View.new(new_collection, selector, options)

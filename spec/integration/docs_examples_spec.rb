@@ -91,7 +91,7 @@ describe 'aggregation examples in Ruby' do
   end
 
   context 'Aggregation Example 4 - $lookup, $filter, $match' do
-    min_server_version '3.6'
+    min_server_fcv '3.6'
 
     let(:example_code) do
 

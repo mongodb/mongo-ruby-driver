@@ -55,7 +55,7 @@ describe Mongo::Server::Connection, retry: 3 do
     end
 
     context 'when the ismaster response includes saslSupportedMechs' do
-      min_server_version '4.0'
+      min_server_fcv '4.0'
 
       let(:server_options) do
         SpecConfig.instance.test_options.merge(

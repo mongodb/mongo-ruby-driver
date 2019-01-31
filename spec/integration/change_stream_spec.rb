@@ -3,6 +3,8 @@ require 'spec_helper'
 describe 'Change stream integration', retry: 4 do
   only_mri
   max_example_run_time 7
+  min_server_fcv '3.6'
+  require_topology :replica_set
 
   let(:fail_point_base_command) do
     { 'configureFailPoint' => "failCommand" }
@@ -20,12 +22,6 @@ describe 'Change stream integration', retry: 4 do
       before do
         clear_fail_point(authorized_collection)
       end
-    end
-  end
-
-  before do
-    unless test_change_streams?
-      skip 'Not testing change streams'
     end
   end
 
@@ -66,7 +62,7 @@ describe 'Change stream integration', retry: 4 do
     end
 
     context 'error on initial aggregation' do
-      min_server_version '4.0'
+      min_server_fcv '4.0'
       clear_fail_point_before
 
       before do
@@ -83,7 +79,7 @@ describe 'Change stream integration', retry: 4 do
     end
 
     context 'one error on getMore' do
-      min_server_version '4.0'
+      min_server_fcv '4.0'
       clear_fail_point_before
 
       context 'error on first getMore' do
@@ -117,7 +113,7 @@ describe 'Change stream integration', retry: 4 do
     end
 
     context 'two errors on getMore' do
-      min_server_version '4.0'
+      min_server_fcv '4.0'
       clear_fail_point_before
 
       context 'error of first getMores' do
@@ -155,7 +151,7 @@ describe 'Change stream integration', retry: 4 do
     end
 
     context 'two errors on getMore followed by an error on aggregation' do
-      min_server_version '4.0'
+      min_server_fcv '4.0'
       clear_fail_point_before
 
       it 'next raises error' do
@@ -215,7 +211,7 @@ describe 'Change stream integration', retry: 4 do
     end
 
     context 'one error on getMore' do
-      min_server_version '4.0'
+      min_server_fcv '4.0'
       clear_fail_point_before
 
       context 'error on first getMore' do
@@ -245,7 +241,7 @@ describe 'Change stream integration', retry: 4 do
     end
 
     context 'two errors on getMore' do
-      min_server_version '4.0'
+      min_server_fcv '4.0'
       clear_fail_point_before
 
       before do
@@ -265,7 +261,7 @@ describe 'Change stream integration', retry: 4 do
     end
 
     context 'two errors on getMore followed by an error on aggregation' do
-      min_server_version '4.0'
+      min_server_fcv '4.0'
       clear_fail_point_before
 
       context 'error on first getMore' do
@@ -316,7 +312,7 @@ describe 'Change stream integration', retry: 4 do
   end
 
   describe ':start_at_operation_time option' do
-    min_server_version '4.0'
+    min_server_fcv '4.0'
 
     before do
       authorized_collection.delete_many

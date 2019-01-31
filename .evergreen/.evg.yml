@@ -81,6 +81,7 @@ functions:
               export TOPOLOGY=${TOPOLOGY}
               export RVM_RUBY="${RVM_RUBY}"
               export MONGODB_VERSION=${VERSION}
+              export FCV=${FCV}
               export MONGO_RUBY_DRIVER_LINT=${LINT}
               export RETRY_WRITES=${RETRY_WRITES}
               export WITH_ACTIVE_SUPPORT="${WITH_ACTIVE_SUPPORT}"
@@ -498,6 +499,13 @@ axes:
         display_name: "2.6"
         variables:
            VERSION: "2.6"
+  - id: fcv
+    display_name: FCV
+    values:
+      - id: '3.4'
+        display_name: '3.4'
+        variables:
+          FCV: '3.4'
 
   - id: "topology"
     display_name: Topology
@@ -782,6 +790,19 @@ buildvariants:
     - ubuntu1404-test
   tasks:
      - name: "test"
+
+-
+  matrix_name: "3.6-with-3.4-fcv"
+  matrix_spec:
+    fcv: '3.4'
+    ruby: ["ruby-2.5"]
+    mongodb-version: '3.6'
+    topology: replica-set
+  display_name: "3.6 Replica Set with 3.4 FCV"
+  run_on:
+    - ubuntu1404-test
+  tasks:
+    - name: "test"
 
 -
   matrix_name: "enterprise-auth-tests-ubuntu"

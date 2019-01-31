@@ -53,7 +53,7 @@ describe Mongo::Protocol::Compressed do
     end
 
     context 'when the original message is not replyable' do
-      min_server_version '3.6'
+      min_server_fcv '3.6'
 
       let(:original_message) do
         Mongo::Protocol::Msg.new([:more_to_come], {}, { ping: 1 })

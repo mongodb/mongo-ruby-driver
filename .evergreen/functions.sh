@@ -1,3 +1,10 @@
+set_fcv() {
+  if test -n "$FCV"; then
+    mongo --eval 'assert.commandWorked(db.adminCommand( { setFeatureCompatibilityVersion: "'"$FCV"'" } ));' "$MONGODB_URI"
+    mongo --quiet --eval 'db.adminCommand( { getParameter: 1, featureCompatibilityVersion: 1 } )' |grep  "version.*$FCV"
+  fi
+}
+
 set_env_vars() {
   AUTH=${AUTH:-noauth}
   SSL=${SSL:-nossl}

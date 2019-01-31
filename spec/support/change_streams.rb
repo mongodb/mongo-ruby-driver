@@ -176,6 +176,25 @@ module Mongo
           end
         end
 
+        def server_version_satisfied?(client)
+          lower_bound_satisfied?(client) && upper_bound_satisfied?(client)
+        end
+
+        def topology_satisfied?
+          @topologies.any? do |topology|
+            case topology
+            when 'single'
+              standalone?
+            when 'replicaset'
+              replica_set?
+            when 'sharded'
+              sharded?
+            else
+              false
+            end
+          end
+        end
+
         private
 
         def events
@@ -227,37 +246,19 @@ module Mongo
           end
         end
 
-        def topology_satisfied?
-          @topologies.any? do |topology|
-            case topology
-            when 'single'
-              standalone?
-            when 'replicaset'
-              replica_set?
-            when 'sharded'
-              sharded?
-            else
-              false
-            end
-          end
-        end
-
-        def server_version_satisfied?(client)
-          lower_bound_satisfied?(client) && upper_bound_satisfied?(client)
-        end
-
         def server_version(client)
           @server_version ||= client.database.command(buildInfo: 1).first['version']
         end
 
         def upper_bound_satisfied?(client)
           return true unless @max_server_version
-          server_version(client) <= @max_server_version
+          ClusterConfig.instance.server_version <= @max_server_version
         end
 
         def lower_bound_satisfied?(client)
           return true unless @min_server_version
-          @min_server_version <= server_version(client)
+          #@min_server_version <= server_version(client)
+          @min_server_version <= ClusterConfig.instance.fcv_ish
         end
       end
     end

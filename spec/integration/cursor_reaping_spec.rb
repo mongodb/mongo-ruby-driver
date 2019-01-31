@@ -80,7 +80,7 @@ describe 'Cursor reaping' do
     end
 
     context 'newer servers' do
-      min_server_version '3.2'
+      min_server_fcv '3.2'
 
       it 'is really killed' do
         cursor_id, event = cursor_id_and_kill_event

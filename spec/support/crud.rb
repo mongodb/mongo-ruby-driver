@@ -87,7 +87,8 @@ module Mongo
 
       def lower_bound_satisfied?(client)
         return true unless @min_server_version
-        @min_server_version <= client.database.command(buildInfo: 1).first['version']
+        #@min_server_version <= client.database.command(buildInfo: 1).first['version']
+        @min_server_version <= ClusterConfig.instance.fcv_ish
       end
     end
 

@@ -475,7 +475,7 @@ describe Mongo::Collection do
           it_behaves_like 'a capped collection command'
 
           context 'when validators can be set' do
-            min_server_version '3.2'
+            min_server_fcv '3.2'
             it_behaves_like 'a validated collection command'
           end
         end
@@ -489,7 +489,7 @@ describe Mongo::Collection do
           it_behaves_like 'a capped collection command'
 
           context 'when validators can be set' do
-            min_server_version '3.2'
+            min_server_fcv '3.2'
             it_behaves_like 'a validated collection command'
           end
         end
@@ -886,7 +886,7 @@ describe Mongo::Collection do
       end
 
       context 'session id' do
-        min_server_version '3.6'
+        min_server_fcv '3.6'
         require_topology :replica_set, :sharded
 
         let(:options) do
@@ -1207,7 +1207,7 @@ describe Mongo::Collection do
     end
 
     context 'when the documents are sent with OP_MSG' do
-      min_server_version '3.6'
+      min_server_fcv '3.6'
 
       let(:client) do
         subscribed_client
@@ -1236,7 +1236,7 @@ describe Mongo::Collection do
     end
 
     context 'when collection has a validator' do
-      min_server_version '3.2'
+      min_server_fcv '3.2'
 
       around(:each) do |spec|
         authorized_client[:validating].drop
@@ -1444,7 +1444,7 @@ describe Mongo::Collection do
     end
 
     context 'when collection has a validator' do
-      min_server_version '3.2'
+      min_server_fcv '3.2'
 
       around(:each) do |spec|
         authorized_client[:validating,
@@ -2419,7 +2419,7 @@ describe Mongo::Collection do
     end
 
     context 'when a read concern is provided' do
-      min_server_version '3.2'
+      min_server_fcv '3.2'
 
       let(:result) do
         authorized_collection.with(options).parallel_scan(2)
@@ -2612,7 +2612,7 @@ describe Mongo::Collection do
     end
 
     context 'when collection has a validator' do
-      min_server_version '3.2'
+      min_server_fcv '3.2'
 
       around(:each) do |spec|
         authorized_client[:validating,
@@ -2917,7 +2917,8 @@ describe Mongo::Collection do
         { '$or' => [{ _id: 0 }, { _id: 1 }]}
       end
 
-      context 'when the server supports arrayFilters', if: array_filters_enabled? do
+      context 'when the server supports arrayFilters' do
+        min_server_fcv '3.6'
 
         before do
           authorized_collection.insert_many([{
@@ -2975,7 +2976,8 @@ describe Mongo::Collection do
         end
       end
 
-      context 'when the server does not support arrayFilters', unless: array_filters_enabled? do
+      context 'when the server does not support arrayFilters' do
+        max_server_version '3.4'
 
         let(:result) do
           authorized_collection.update_many(selector,
@@ -3025,7 +3027,7 @@ describe Mongo::Collection do
     end
 
     context 'when collection has a validator' do
-      min_server_version '3.2'
+      min_server_fcv '3.2'
 
       around(:each) do |spec|
         authorized_client[:validating,
@@ -3343,7 +3345,7 @@ describe Mongo::Collection do
     end
 
     context 'when collection has a validator' do
-      min_server_version '3.2'
+      min_server_fcv '3.2'
 
       around(:each) do |spec|
         authorized_client[:validating,
@@ -3506,7 +3508,8 @@ describe Mongo::Collection do
         { _id: 0}
       end
 
-      context 'when the server supports arrayFilters', if: array_filters_enabled? do
+      context 'when the server supports arrayFilters' do
+        min_server_fcv '3.6'
 
         before do
           authorized_collection.insert_one(_id: 0, x: [{ y: 1 }, { y: 2 }, {y: 3 }])
@@ -3545,7 +3548,8 @@ describe Mongo::Collection do
         end
       end
 
-      context 'when the server does not support arrayFilters', unless: array_filters_enabled? do
+      context 'when the server does not support arrayFilters' do
+        max_server_version '3.4'
 
         let(:result) do
           authorized_collection.update_one(selector,
@@ -3582,7 +3586,7 @@ describe Mongo::Collection do
     end
 
     context 'when the documents are sent with OP_MSG' do
-      min_server_version '3.6'
+      min_server_fcv '3.6'
 
       let(:client) do
         subscribed_client
@@ -3782,7 +3786,7 @@ describe Mongo::Collection do
     end
 
     context 'when write_concern is provided', if: standalone? do
-      min_server_version '3.2'
+      min_server_fcv '3.2'
 
       it 'uses the write concern' do
         expect {
@@ -3793,7 +3797,7 @@ describe Mongo::Collection do
     end
 
     context 'when the collection has a write concern', if: standalone? do
-      min_server_version '3.2'
+      min_server_fcv '3.2'
 
       let(:collection) do
         authorized_collection.with(write: { w: 2 })
@@ -4052,7 +4056,7 @@ describe Mongo::Collection do
     end
 
     context 'when collection has a validator' do
-      min_server_version '3.2'
+      min_server_fcv '3.2'
 
       around(:each) do |spec|
         authorized_client[:validating].drop
@@ -4113,7 +4117,7 @@ describe Mongo::Collection do
     end
 
     context 'when write_concern is provided', if: standalone? do
-      min_server_version '3.2'
+      min_server_fcv '3.2'
 
       it 'uses the write concern' do
         expect {
@@ -4125,7 +4129,7 @@ describe Mongo::Collection do
     end
 
     context 'when the collection has a write concern', if: standalone? do
-      min_server_version '3.2'
+      min_server_fcv '3.2'
 
       let(:collection) do
         authorized_collection.with(write: { w: 2 })
@@ -4216,7 +4220,8 @@ describe Mongo::Collection do
         { _id: 0 }
       end
 
-      context 'when the server supports arrayFilters', if: array_filters_enabled? do
+      context 'when the server supports arrayFilters' do
+        min_server_fcv '3.6'
 
         before do
           authorized_collection.insert_one(_id: 0, x: [{ y: 1 }, { y: 2 }, { y: 3 }])
@@ -4254,7 +4259,8 @@ describe Mongo::Collection do
         end
       end
 
-      context 'when the server selected does not support arrayFilters', unless: array_filters_enabled? do
+      context 'when the server selected does not support arrayFilters' do
+        max_server_version '3.4'
 
         let(:result) do
           authorized_collection.find_one_and_update(selector,
@@ -4441,7 +4447,7 @@ describe Mongo::Collection do
     end
 
     context 'when collection has a validator' do
-      min_server_version '3.2'
+      min_server_fcv '3.2'
 
       around(:each) do |spec|
         authorized_client[:validating].drop
@@ -4502,7 +4508,7 @@ describe Mongo::Collection do
     end
 
     context 'when write_concern is provided', if: standalone? do
-      min_server_version '3.2'
+      min_server_fcv '3.2'
 
       it 'uses the write concern' do
         expect {
@@ -4514,7 +4520,7 @@ describe Mongo::Collection do
     end
 
     context 'when the collection has a write concern', if: standalone? do
-      min_server_version '3.2'
+      min_server_fcv '3.2'
 
       let(:collection) do
         authorized_collection.with(write: { w: 2 })
@@ -4602,7 +4608,9 @@ describe Mongo::Collection do
 
   describe '#watch' do
 
-    context 'when change streams can be tested', if: test_change_streams? do
+    context 'when change streams can be tested' do
+      min_server_fcv '3.6'
+      require_topology :replica_set
 
       let(:change_stream) do
         authorized_collection.watch

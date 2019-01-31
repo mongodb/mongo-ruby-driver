@@ -1,7 +1,7 @@
 shared_examples 'an operation using a session' do
 
   describe 'operation execution' do
-    min_server_version '3.6'
+    min_server_fcv '3.6'
     require_topology :replica_set, :sharded
 
     context 'when the session is created from the same client used for the operation' do
@@ -86,7 +86,7 @@ end
 shared_examples 'a failed operation using a session' do
 
   context 'when the operation fails' do
-    min_server_version '3.6'
+    min_server_fcv '3.6'
     require_topology :replica_set, :sharded
 
     let!(:before_last_use) do
@@ -127,7 +127,8 @@ shared_examples 'an explicit session with an unacknowledged write' do
     EventSubscriber.clear_events!
   end
 
-  context 'when sessions are supported', if: sessions_enabled? do
+  context 'when sessions are supported' do
+    min_server_fcv '3.6'
 
     let(:session) do
       client.start_session
@@ -139,7 +140,8 @@ shared_examples 'an explicit session with an unacknowledged write' do
     end
   end
 
-  context 'when sessions are not supported', if: !sessions_enabled? do
+  context 'when sessions are not supported' do
+    min_server_fcv '3.6'
 
     let(:session) do
       double('session').tap do |s|
@@ -160,7 +162,8 @@ shared_examples 'an implicit session with an unacknowledged write' do
     EventSubscriber.clear_events!
   end
 
-  context 'when sessions are supported', if: sessions_enabled? do
+  context 'when sessions are supported' do
+    min_server_fcv '3.6'
 
     it 'does not add a session id to the operation' do
       operation
@@ -168,7 +171,8 @@ shared_examples 'an implicit session with an unacknowledged write' do
     end
   end
 
-  context 'when sessions are not supported', if: !sessions_enabled? do
+  context 'when sessions are not supported' do
+    min_server_fcv '3.6'
 
     it 'does not add a session id to the operation' do
       operation
@@ -183,7 +187,8 @@ shared_examples 'an operation supporting causally consistent reads' do
     subscribed_client
   end
 
-  context 'when connected to a standalone', if: sessions_enabled? && standalone? do
+  context 'when connected to a standalone', if: standalone? do
+    min_server_fcv '3.6'
 
     context 'when the collection specifies a read concern' do
 
@@ -267,7 +272,7 @@ shared_examples 'an operation supporting causally consistent reads' do
   end
 
   context 'when connected to replica set or sharded cluster' do
-    min_server_version '3.6'
+    min_server_fcv '3.6'
     require_topology :replica_set, :sharded
 
     context 'when the collection specifies a read concern' do
@@ -623,7 +628,7 @@ shared_examples 'an operation updating cluster time' do
   context 'when the command is run once' do
 
     context 'when the server is version 3.6' do
-      min_server_version '3.6'
+      min_server_fcv '3.6'
 
       context 'when the cluster is sharded or a replica set' do
         require_topology :replica_set, :sharded
@@ -689,7 +694,7 @@ shared_examples 'an operation updating cluster time' do
     end
 
     context 'when the cluster is sharded or a replica set' do
-      min_server_version '3.6'
+      min_server_fcv '3.6'
       require_topology :replica_set, :sharded
 
       context 'when the session cluster time is advanced' do
@@ -746,7 +751,8 @@ shared_examples 'an operation updating cluster time' do
       end
     end
 
-    context 'when the server is a standalone', if: (standalone? && sessions_enabled?) do
+    context 'when the server is a standalone', if: standalone? do
+      min_server_fcv '3.6'
 
       let(:before_cluster_time) do
         client.cluster.cluster_time
@@ -765,7 +771,8 @@ shared_examples 'an operation updating cluster time' do
     end
   end
 
-  context 'when the server is less than version 3.6', if: !sessions_enabled? do
+  context 'when the server is less than version 3.6' do
+    max_server_version '3.4'
 
     let(:before_cluster_time) do
       client.cluster.cluster_time
@@ -780,7 +787,7 @@ shared_examples 'an operation updating cluster time' do
 end
 
 shared_examples 'an operation not using a session' do
-  require_sessions
+  min_server_fcv '3.6'
 
   describe 'operation execution' do
 
@@ -850,7 +857,7 @@ shared_examples 'an operation not using a session' do
 end
 
 shared_examples 'a failed operation not using a session' do
-  require_sessions
+  min_server_fcv '3.6'
 
   context 'when the operation fails' do
 

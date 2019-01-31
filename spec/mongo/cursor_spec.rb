@@ -356,7 +356,8 @@ describe Mongo::Cursor do
     end
   end
 
-  context 'when an implicit session is used', if: sessions_enabled? do
+  context 'when an implicit session is used' do
+    min_server_fcv '3.6'
 
     let(:collection) do
       subscribed_client[TEST_COLL]
@@ -400,7 +401,8 @@ describe Mongo::Cursor do
       end
     end
 
-    context 'when a getMore is needed to retrieve all results', if: sessions_enabled? && !sharded? do
+    context 'when a getMore is needed to retrieve all results', if: !sharded? do
+      min_server_fcv '3.6'
 
       let(:documents) do
         (1..4).map{ |i| { field: "test#{i}" }}

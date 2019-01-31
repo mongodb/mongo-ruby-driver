@@ -14,7 +14,7 @@ describe 'Transactions API' do
           require_transaction_support
 
           if spec.min_server_version
-            min_server_version spec.min_server_version.split('.')[0..1].join('.')
+            min_server_fcv spec.min_server_version.split('.')[0..1].join('.')
           end
 
           let(:test) { test_factory.call }
