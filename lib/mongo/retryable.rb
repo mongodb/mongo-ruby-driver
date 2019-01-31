@@ -102,6 +102,7 @@ module Mongo
     # @note This only retries operations on not master failures, since it is
     #   the only case we can be sure a partial write did not already occur.
     #
+    # @param [ nil | Session ] session Optional session to use with the operation.
     # @param [ nil | Hash | WriteConcern::Base ] write_concern The write concern.
     # @param [ true | false ] ending_transaction True if the write operation is abortTransaction or
     #   commitTransaction, false otherwise.
@@ -121,6 +122,9 @@ module Mongo
       unless ending_transaction || retry_write_allowed?(session, write_concern)
         return legacy_write_with_retry(nil, session, &block)
       end
+
+      # If we are here, session is not nil. A session being nil would have
+      # failed retry_write_allowed? check.
 
       server = cluster.next_primary
 
