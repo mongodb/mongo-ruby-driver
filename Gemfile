@@ -25,7 +25,7 @@ group :development, :testing do
   
   # for benchmark tests
   gem 'yajl-ruby', require: 'yajl', platforms: :mri
-  gem 'celluloid', platforms: :mri
+  gem 'celluloid', platforms: :mri, require: false
   if RUBY_VERSION < '2.2'
     gem 'timers', '< 4.2'
   else
