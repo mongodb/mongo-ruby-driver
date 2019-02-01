@@ -781,3 +781,15 @@ option to the client instance.
 .. code-block:: ruby
 
   Mongo::Client.new([ '127.0.0.1:27017' ], :database => 'test', :truncate_logs => false )
+
+Development Configuration
+-------------------------
+
+Driver's default configuration is suitable for production deployment.
+In development, some settings can be adjusted to provide a better developer
+experience.
+
+- ``:server_selection_timeout``: set this to a low value (e.g., ``1``)
+if your MongoDB server is running locally and you start it manually. A low
+server selection timeout will cause the driver to fail quickly when there is
+no server running.
