@@ -264,9 +264,28 @@ module Mongo
         end
 
         # The read concern should be added to any command that starts a transaction.
-        if starting_transaction? && txn_read_concern
-          c[:readConcern] ||= {}
-          c[:readConcern].merge!(txn_read_concern)
+        if starting_transaction?
+          # https://jira.mongodb.org/browse/SPEC-1161: transaction's
+          # read concern overrides collection/database/client read concerns,
+          # even if transaction's read concern is not set.
+          # Read concern here is the one sent to the server and may
+          # include afterClusterTime.
+          if rc = c[:readConcern]
+            rc = rc.dup
+            rc.delete(:level)
+          end
+          if txn_read_concern
+            if rc
+              rc.update(txn_read_concern)
+            else
+              rc = txn_read_concern.dup
+            end
+          end
+          if rc.nil? || rc.empty?
+            c.delete(:readConcern)
+          else
+            c[:readConcern ] = rc
+          end
         end
 
         # We need to send the read concern level as a string rather than a symbol.
@@ -809,6 +828,7 @@ module Mongo
     end
 
     def txn_read_concern
+      # Read concern is inherited from client but not db or collection.
       txn_options && txn_options[:read_concern] || @client.read_concern
     end
 

@@ -17,6 +17,12 @@ describe 'Transactions API' do
             min_server_fcv spec.min_server_version.split('.')[0..1].join('.')
           end
 
+          if test_instance.skip_reason
+            before do
+              skip test_instance.skip_reason
+            end
+          end
+
           let(:test) { test_factory.call }
 
           before(:each) do
