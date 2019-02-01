@@ -83,7 +83,7 @@ module Mongo
       # @since 2.5.0
       def payload
         BSON::Document.new(
-          command_name: command.keys.first,
+          command_name: command.keys.first.to_s,
           database_name: global_args[DATABASE_IDENTIFIER],
           command: command,
           request_id: request_id,

@@ -269,11 +269,11 @@ module Mongo
         # @example Get the command name.
         #   upconverter.command_name
         #
-        # @return [ String, Symbol ] The command name.
+        # @return [ String ] The command name.
         #
         # @since 2.1.0
         def command_name
-          (filter[:$query] || !command?) ? FIND : filter.keys.first
+          ((filter[:$query] || !command?) ? FIND : filter.keys.first).to_s
         end
 
         private

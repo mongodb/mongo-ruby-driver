@@ -134,7 +134,7 @@ module Mongo
 
       begin
         txn_num = session.in_transaction? ? session.txn_num : session.next_txn_num
-        yield(server, txn_num)
+        yield(server, txn_num, false)
       rescue Error::SocketError, Error::SocketTimeoutError => e
         raise e if session.in_transaction? && !ending_transaction
         retry_write(e, txn_num, &block)
@@ -166,7 +166,7 @@ module Mongo
       server = cluster.next_primary
       raise original_error unless (server.retry_writes? && txn_num)
       log_retry(original_error)
-      yield(server, txn_num)
+      yield(server, txn_num, true)
     rescue Error::SocketError, Error::SocketTimeoutError => e
       cluster.scan!(false)
       raise e

@@ -77,4 +77,40 @@ describe 'Command monitoring' do
       expect(command_names).to eq %w(saslStart saslContinue saslContinue find)
     end
   end
+
+  context 'when write concern is specified outside of command document' do
+    require_topology :replica_set
+    min_server_fcv '4.0'
+
+    let(:collection) do
+      client['command-monitoring-test']
+    end
+    let(:write_concern) { Mongo::WriteConcern.get({w: 42}) }
+    let(:session) { client.start_session }
+    let(:command) do
+      Mongo::Operation::Command.new(
+        selector: { commitTransaction: 1 },
+        db_name: 'admin',
+        session: session,
+        txn_num: 123,
+        write_concern: write_concern,
+      )
+    end
+
+    it 'includes write concern in notified command document' do
+      server = client.cluster.next_primary
+      collection.insert_one(a: 1)
+      session.start_transaction
+      collection.insert_one({a: 1}, session: session)
+
+      subscriber.clear_events!
+      expect do
+        command.execute(server)
+      end.to raise_error(Mongo::Error::OperationFailure, 'Not enough data-bearing nodes (100)')
+
+      expect(subscriber.started_events.length).to eq(1)
+      event = subscriber.started_events.first
+      expect(event.command['writeConcern']['w']).to eq(42)
+    end
+  end
 end

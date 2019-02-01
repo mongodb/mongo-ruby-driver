@@ -80,7 +80,7 @@ tests:
     # as a wtimeout error. This tests that drivers do not assume that all
     # WriteConcernFailed errors are due to a replication timeout.
     description: commitTransaction is retried after WriteConcernFailed non-timeout error
-    skipReason: SPEC-1185 Drivers should use majority write concern when retrying commitTransaction
+    skipReason: RUBY-1690
     failPoint:
       configureFailPoint: failCommand
       mode: { times: 2 }
@@ -143,7 +143,7 @@ tests:
             txnNumber: { $numberLong: "1" }
             autocommit: false
             # commitTransaction applies w:majority on retries (SPEC-1185)
-            writeConcern: { w: majority }
+            writeConcern: { w: majority, wtimeout: 10000 }
             # omitted fields
             readConcern: ~
             startTransaction: ~
@@ -157,7 +157,7 @@ tests:
             txnNumber: { $numberLong: "1" }
             autocommit: false
             # commitTransaction applies w:majority on retries (SPEC-1185)
-            writeConcern: { w: majority }
+            writeConcern: { w: majority, wtimeout: 10000 }
             # omitted fields
             readConcern: ~
             startTransaction: ~

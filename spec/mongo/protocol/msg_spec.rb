@@ -441,7 +441,7 @@ describe Mongo::Protocol::Msg do
     context 'when the msg only contains a payload type 0' do
 
       it 'creates a payload with the command' do
-        expect(message.payload[:command_name]).to eq(:ping)
+        expect(message.payload[:command_name]).to eq('ping')
         expect(message.payload[:database_name]).to eq(SpecConfig.instance.test_db)
         expect(message.payload[:command]).to eq('ping' => 1)
         expect(message.payload[:request_id]).to eq(message.request_id)
