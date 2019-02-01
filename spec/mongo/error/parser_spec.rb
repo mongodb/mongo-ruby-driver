@@ -256,4 +256,33 @@ describe Mongo::Error::Parser do
       end
     end
   end
+
+  describe '#wtimeout' do
+    let(:parser) do
+      described_class.new(document)
+    end
+
+    context 'when document contains wtimeout' do
+      let(:document) do
+        { 'ok' => 1, 'writeConcernError' => {
+          'errmsg' => 'replication timed out', 'code' => 64,
+          'errInfo' => {'wtimeout' => true}} }
+      end
+
+      it 'returns true' do
+        expect(parser.wtimeout).to be true
+      end
+    end
+
+    context 'when document does not contain wtimeout' do
+      let(:document) do
+        { 'ok' => 1, 'writeConcernError' => {
+          'errmsg' => 'replication did not time out', 'code' => 55 }}
+      end
+
+      it 'returns nil' do
+        expect(parser.wtimeout).to be nil
+      end
+    end
+  end
 end

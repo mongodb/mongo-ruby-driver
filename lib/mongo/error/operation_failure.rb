@@ -182,7 +182,17 @@ module Mongo
         @code = options[:code]
         @code_name = options[:code_name]
         @labels = options[:labels]
+        @wtimeout = !!options[:wtimeout]
         super(message)
+      end
+
+      # Whether the error was a write concern timeout.
+      #
+      # @return [ true | false ] Whether the error was a write concern timeout.
+      #
+      # @since 2.7.0
+      def wtimeout?
+        @wtimeout
       end
     end
   end
