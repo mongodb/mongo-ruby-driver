@@ -6,7 +6,6 @@ data: []
 tests:
   -
     description: commitTransaction succeeds after multiple connection errors
-    skipReason: SPEC-1185 Drivers should use majority write concern when retrying commitTransaction
     failPoint:
       configureFailPoint: failCommand
       mode: { times: 2 }
@@ -65,7 +64,7 @@ tests:
             txnNumber: { $numberLong: "1" }
             autocommit: false
             # commitTransaction applies w:majority on retries (SPEC-1185)
-            writeConcern: { w: majority }
+            writeConcern: { w: majority, wtimeout: 10000 }
             # omitted fields
             readConcern: ~
             startTransaction: ~
@@ -79,7 +78,7 @@ tests:
             txnNumber: { $numberLong: "1" }
             autocommit: false
             # commitTransaction applies w:majority on retries (SPEC-1185)
-            writeConcern: { w: majority }
+            writeConcern: { w: majority, wtimeout: 10000 }
             # omitted fields
             readConcern: ~
             startTransaction: ~
@@ -91,7 +90,6 @@ tests:
           - { _id: 1 }
   -
     description: commitTransaction retry only overwrites write concern w option
-    skipReason: SPEC-1185 Drivers should use majority write concern when retrying commitTransaction
     failPoint:
       configureFailPoint: failCommand
       mode: { times: 2 }
@@ -236,10 +234,11 @@ tests:
             lsid: session0
             txnNumber: { $numberLong: "1" }
             autocommit: false
+            # commitTransaction applies w:majority on retries (SPEC-1185)
+            writeConcern: { w: majority, wtimeout: 10000 }
             # omitted fields
             readConcern: ~
             startTransaction: ~
-            writeConcern: ~
           command_name: commitTransaction
           database_name: admin
       -
@@ -249,10 +248,11 @@ tests:
             lsid: session0
             txnNumber: { $numberLong: "1" }
             autocommit: false
+            # commitTransaction applies w:majority on retries (SPEC-1185)
+            writeConcern: { w: majority, wtimeout: 10000 }
             # omitted fields
             readConcern: ~
             startTransaction: ~
-            writeConcern: ~
           command_name: commitTransaction
           database_name: admin
     outcome: &outcome

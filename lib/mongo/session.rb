@@ -294,8 +294,15 @@ module Mongo
         end
 
         # The write concern should be added to any abortTransaction or commitTransaction command.
-        if (c[:abortTransaction] || c[:commitTransaction]) && txn_write_concern
-          c[:writeConcern] = txn_write_concern
+        if (c[:abortTransaction] || c[:commitTransaction])
+          if @already_committed
+            wc = BSON::Document.new(c[:writeConcern] || txn_write_concern || {})
+            wc.merge!(w: :majority)
+            wc[:wtimeout] ||= 10000
+            c[:writeConcern] = wc
+          elsif txn_write_concern
+            c[:writeConcern] ||= txn_write_concern
+          end
         end
 
         # A non-numeric write concern w value needs to be sent as a string rather than a symbol.
@@ -563,6 +570,7 @@ module Mongo
       end
 
       @state = STARTING_TRANSACTION_STATE
+      @already_committed = false
     end
 
     # Commit the currently active transaction on the session.
@@ -593,6 +601,7 @@ module Mongo
         # operation again, so we revert the session to the previous state.
         if within_states?(TRANSACTION_COMMITTED_STATE)
           @state = @last_commit_skipped ? STARTING_TRANSACTION_STATE : TRANSACTION_IN_PROGRESS_STATE
+          @already_committed = true
         end
 
         if starting_transaction?
@@ -604,7 +613,16 @@ module Mongo
           if write_concern && !write_concern.is_a?(WriteConcern::Base)
             write_concern = WriteConcern.get(write_concern)
           end
-          write_with_retry(self, write_concern, true) do |server, txn_num|
+          write_with_retry(self, write_concern, true) do |server, txn_num, is_retry|
+            if is_retry
+              if write_concern
+                wco = write_concern.options.merge(w: :majority)
+                wco[:wtimeout] ||= 10000
+                write_concern = WriteConcern.get(wco)
+              else
+                write_concern = WriteConcern.get(w: :majority, wtimeout: 10000)
+              end
+            end
             Operation::Command.new(
               selector: { commitTransaction: 1 },
               db_name: 'admin',

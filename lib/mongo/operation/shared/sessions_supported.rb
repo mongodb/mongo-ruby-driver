@@ -128,7 +128,7 @@ module Mongo
       end
 
       def command(server)
-        sel = selector(server)
+        sel = selector(server).dup
         add_write_concern!(sel)
         sel[Protocol::Msg::DATABASE_IDENTIFIER] = db_name
         sel['$readPreference'] = read.to_doc if read
