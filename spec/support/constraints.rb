@@ -67,7 +67,7 @@ module Constraints
 
   def max_example_run_time(timeout)
     around do |example|
-      TimeoutInterrupt.timeout(timeout) do
+      TimeoutInterrupt.timeout(timeout, TimeoutInterrupt::Error.new("Test execution terminated after #{timeout} seconds")) do
         example.run
       end
     end

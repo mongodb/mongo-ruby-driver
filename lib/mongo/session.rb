@@ -758,6 +758,8 @@ module Mongo
     #
     # @since 2.7.0
     def with_transaction(options=nil)
+      # Non-configurable 120 second timeout for the entire operation
+      deadline = Time.now + 120
       loop do
         commit_options = {}
         if options
@@ -769,6 +771,10 @@ module Mongo
         rescue Exception => e
           if within_states?(STARTING_TRANSACTION_STATE, TRANSACTION_IN_PROGRESS_STATE)
             abort_transaction
+          end
+
+          if Time.now >= deadline
+            raise
           end
 
           if e.is_a?(Mongo::Error) && e.label?(Mongo::Error::TRANSIENT_TRANSACTION_ERROR_LABEL)
@@ -790,6 +796,9 @@ module Mongo
               if e.is_a?(Mongo::Error::OperationFailure) && e.code == 64 && e.wtimeout?
                 raise
               end
+              if Time.now >= deadline
+                raise
+              end
               wc_options = case v = commit_options[:write_concern]
                 when WriteConcern::Base
                   v.options
@@ -801,6 +810,9 @@ module Mongo
               commit_options[:write_concern] = wc_options.merge(w: :majority)
               retry
             elsif e.label?(Mongo::Error::TRANSIENT_TRANSACTION_ERROR_LABEL)
+              if Time.now >= deadline
+                raise
+              end
               next
             else
               raise
