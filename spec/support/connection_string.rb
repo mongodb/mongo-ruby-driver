@@ -214,9 +214,6 @@ module Mongo
         # Replica Set Options
         'replicaset' => :replica_set,
 
-        # Auth Source
-        'authsource' => :auth_source,
-
         # Timeout Options
         'connecttimeoutms' => :connect_timeout,
         'sockettimeoutms' => :socket_timeout,
