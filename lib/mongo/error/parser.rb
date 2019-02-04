@@ -66,6 +66,9 @@ module Mongo
       # @since 2.7.0
       attr_reader :labels
 
+      # @api private
+      attr_reader :wtimeout
+
       # Create the new parser with the returned document.
       #
       # @example Create the new parser.
@@ -93,6 +96,7 @@ module Mongo
         parse_flag(@message)
         parse_code
         parse_labels
+        parse_wtimeout
       end
 
       def parse_single(message, key, doc = document)
@@ -155,6 +159,12 @@ module Mongo
 
       def parse_labels
         @labels = document['errorLabels'] || []
+      end
+
+      def parse_wtimeout
+        @wtimeout = document[WRITE_CONCERN_ERROR] &&
+          document[WRITE_CONCERN_ERROR]['errInfo'] &&
+          document[WRITE_CONCERN_ERROR]['errInfo']['wtimeout']
       end
     end
   end

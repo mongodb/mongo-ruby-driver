@@ -267,7 +267,10 @@ module Mongo
         raise Error::OperationFailure.new(
           parser.message,
           self,
-          :code => parser.code, :code_name => parser.code_name, :labels => parser.labels)
+          code: parser.code,
+          code_name: parser.code_name,
+          labels: parser.labels,
+          wtimeout: parser.wtimeout)
       end
       private :raise_operation_failure
 

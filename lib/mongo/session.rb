@@ -786,6 +786,10 @@ module Mongo
             return rv
           rescue Mongo::Error => e
             if e.label?(Mongo::Error::UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL)
+              # WriteConcernFailed
+              if e.is_a?(Mongo::Error::OperationFailure) && e.code == 64 && e.wtimeout?
+                raise
+              end
               wc_options = case v = commit_options[:write_concern]
                 when WriteConcern::Base
                   v.options
