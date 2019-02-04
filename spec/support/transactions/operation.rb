@@ -37,6 +37,7 @@ module Mongo
         'findOneAndUpdate' => :find_one_and_update,
         'bulkWrite' => :bulk_write,
         'count' => :count,
+        'countDocuments' => :count_documents,
         'distinct' => :distinct,
         'find' => :find,
         'runCommand' => :run_command,
@@ -129,6 +130,9 @@ module Mongo
         else
           args = []
         end
+        if op_name.nil?
+          raise "Unknown operation #{name}"
+        end
         send(op_name, obj, *args)
       rescue Mongo::Error::OperationFailure => e
         err_doc = e.instance_variable_get(:@result).send(:first_document)
@@ -211,6 +215,10 @@ module Mongo
 
       def count(collection)
         collection.count(filter, options).to_s
+      end
+
+      def count_documents(collection)
+        collection.count_documents(filter, options)
       end
 
       def delete_many(collection)

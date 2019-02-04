@@ -9,7 +9,6 @@ data: &data
 
 tests:
   - description: only first countDocuments includes readConcern
-    skipReason: RUBY-1665 count_documents does not start transaction
 
     operations:
       - &startTransaction
@@ -41,7 +40,6 @@ tests:
             pipeline:
               - $match: {_id: {$gte: 2}}
               - $group: {_id: null, n: {$sum: 1}}
-            cursor: {}
             lsid: session0
             readConcern:
               level: snapshot
@@ -57,7 +55,6 @@ tests:
             pipeline:
               - $match: {_id: {$gte: 2}}
               - $group: {_id: null, n: {$sum: 1}}
-            cursor: {}
             lsid: session0
             readConcern:  # No readConcern
             txnNumber:
@@ -86,7 +83,6 @@ tests:
           *data
 
   - description: only first find includes readConcern
-    skipReason: RUBY-1665 count_documents does not start transaction
 
     operations:
       - *startTransaction
@@ -347,7 +343,6 @@ tests:
     outcome: *outcome
 
   - description: countDocuments ignores collection readConcern
-    skipReason: RUBY-1665 count_documents does not start transaction
 
     operations:
       - &startTransactionNoReadConcern
@@ -364,7 +359,6 @@ tests:
             pipeline:
               - $match: {_id: {$gte: 2}}
               - $group: {_id: null, n: {$sum: 1}}
-            cursor: {}
             lsid: session0
             readConcern:  # No readConcern
             txnNumber:
@@ -379,7 +373,6 @@ tests:
             pipeline:
               - $match: {_id: {$gte: 2}}
               - $group: {_id: null, n: {$sum: 1}}
-            cursor: {}
             lsid: session0
             readConcern:  # No readConcern
             txnNumber:
