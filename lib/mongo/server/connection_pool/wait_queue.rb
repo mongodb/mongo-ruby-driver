@@ -25,8 +25,11 @@ module Mongo
         end
 
         def clear!
-          until @mutex.synchronize { @wait_queue.empty? }
-            semaphore = @mutex.synchronize { @wait_queue.shift }
+          loop do
+            semaphore = @mutex.synchronize do
+              return if @wait_queue.empty?
+              @wait_queue.shift
+            end
             semaphore.broadcast
           end
         end
