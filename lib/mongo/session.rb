@@ -24,6 +24,7 @@ module Mongo
   class Session
     extend Forwardable
     include Retryable
+    include Loggable
 
     # Get the options for this session.
     #
@@ -760,20 +761,24 @@ module Mongo
     def with_transaction(options=nil)
       # Non-configurable 120 second timeout for the entire operation
       deadline = Time.now + 120
+      transaction_in_progress = false
       loop do
         commit_options = {}
         if options
           commit_options[:write_concern] = options[:write_concern]
         end
         start_transaction(options)
+        transaction_in_progress = true
         begin
           rv = yield self
         rescue Exception => e
           if within_states?(STARTING_TRANSACTION_STATE, TRANSACTION_IN_PROGRESS_STATE)
             abort_transaction
+            transaction_in_progress = false
           end
 
           if Time.now >= deadline
+            transaction_in_progress = false
             raise
           end
 
@@ -784,11 +789,13 @@ module Mongo
           raise
         else
           if within_states?(TRANSACTION_ABORTED_STATE, NO_TRANSACTION_STATE, TRANSACTION_COMMITTED_STATE)
+            transaction_in_progress = false
             return rv
           end
 
           begin
             commit_transaction(commit_options)
+            transaction_in_progress = false
             return rv
           rescue Mongo::Error => e
             if e.label?(Mongo::Error::UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL)
@@ -797,6 +804,7 @@ module Mongo
                 raise
               end
               if Time.now >= deadline
+                transaction_in_progress = false
                 raise
               end
               wc_options = case v = commit_options[:write_concern]
@@ -811,6 +819,7 @@ module Mongo
               retry
             elsif e.label?(Mongo::Error::TRANSIENT_TRANSACTION_ERROR_LABEL)
               if Time.now >= deadline
+                transaction_in_progress = false
                 raise
               end
               next
@@ -818,6 +827,14 @@ module Mongo
               raise
             end
           end
+        end
+      end
+    ensure
+      if transaction_in_progress
+        log_warn('with_transaction callback altered with_transaction loop, aborting transaction')
+        begin
+          abort_transaction
+        rescue Error::OperationFailure, Error::InvalidTransactionOperation
         end
       end
     end
