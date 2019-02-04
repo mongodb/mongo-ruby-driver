@@ -2,24 +2,27 @@ MongoDB Ruby Driver [![Build Status][travis-img]][travis-url] [![Code Climate][c
 -----
 The officially supported Ruby driver for [MongoDB](http://www.mongodb.org).
 
+
 Documentation
------
+-------------
 
 High level documentation and usage examples are located
 [here](http://docs.mongodb.org/ecosystem/drivers/ruby/).
 
 API docs can be found [here](http://api.mongodb.org/ruby/).
 
+
 Support & Feedback
------
+------------------
 
 For issues, questions or feedback related to the Ruby driver, please look into
 our [support channels](http://www.mongodb.org/about/support). Please
 do not email any of the Ruby developers directly with issues or
 questions - you're more likely to get an answer quickly on the [mongodb-user list](http://groups.google.com/group/mongodb-user) on Google Groups.
 
+
 Bugs & Feature Requests
------
+-----------------------
 
 Do you have a bug to report or a feature request to make?
 
@@ -41,30 +44,52 @@ When reporting an issue, please keep in mind that all information in JIRA for al
 * Provide any sensitive data or server logs.
 * Report potential security issues publicly (see 'Security Issues').
 
-Running Tests
------
-
-The driver uses RSpec as it's primary testing tool. To run all tests simple run `rspec`.
-
-If you need to run the tests without making any external connections, set the ENV variable EXTERNAL_DISABLED to 'true'.
-
-To run a test at a specific location (where `42` is the line number), use:
-
-    rspec path/to/spec.rb:42
 
 Security Issues
------
+---------------
 
 If you’ve identified a potential security related issue in a driver or any other
 MongoDB project, please report it by following the [instructions here](http://docs.mongodb.org/manual/tutorial/create-a-vulnerability-report).
 
+
+Running Tests
+-------------
+
+The driver uses RSpec as its primary testing tool. Most tests require a
+running MongoDB server. To test the driver against a single-node (standalone)
+deployment, first launch a server:
+
+    mkdir /tmp/mrb
+    mongod --dbpath /tmp/mrb --bind_ip 127.0.0.1 --setParameter enableTestCommands=1
+
+... then run the tests:
+
+    bundle exec rake
+
+It is possible to run tests in a specific file, as well as use other
+test invocations supported by RSpec:
+
+    bundle exec rspec path/to/spec.rb:42
+
+Note that certain user accounts have to be created for individual tests to
+succeed, and they are not created when the individual tests are run. The
+user accounts are created if you run `rake` as mentioned above, and you can
+also create them by running:
+
+    bundle exec rake spec:prepare
+
+For further information about supported cluster configurations and how to
+configure the test suite, please see the README in the spec directory.
+
+
 Release History
------
+---------------
 
 Full release notes and release history are available [here](https://github.com/mongodb/mongo-ruby-driver/releases).
 
+
 License
------
+-------
 
  Copyright (C) 2009-2019 MongoDB, Inc.
 

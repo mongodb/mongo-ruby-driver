@@ -25,6 +25,7 @@ end
 task :default => ['spec:prepare', :spec]
 
 namespace :spec do
+  desc 'Creates necessary user accounts in the cluster'
   task :prepare do
     $: << File.join(File.dirname(__FILE__), 'spec')
 
