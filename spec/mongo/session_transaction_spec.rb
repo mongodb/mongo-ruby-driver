@@ -152,5 +152,26 @@ describe Mongo::Session do
         end
       end
     end
+
+    context 'application timeout around with_tx' do
+      it 'keeps session in a working state' do
+        session
+        collection.insert_one(a: 1)
+
+        expect do
+          Timeout.timeout(1, SessionTransactionSpecError) do
+            session.with_transaction do
+              sleep 2
+            end
+          end
+        end.to raise_error(SessionTransactionSpecError)
+
+        session.with_transaction do
+          collection.insert_one(timeout_around_with_tx: 2)
+        end
+
+        expect(collection.find(timeout_around_with_tx: 2).first).not_to be nil
+      end
+    end
   end
 end
