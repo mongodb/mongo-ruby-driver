@@ -3,8 +3,8 @@ language: ruby
 sudo: false
 
 before_install:
-  - gem update --system -q
-  - gem update bundler -q
+  - if [[ (-z "$NO_BUNDLER_UPGRADE") ]]; then gem update --system -q; fi
+  - if [[ (-z "$NO_BUNDLER_UPGRADE") ]]; then gem update bundler -q; fi
 
 install: ruby -S bundle install --without release development
 
@@ -27,16 +27,16 @@ branches:
 matrix:
   exclude:
     - rvm: 1.9.3
-      env: MONGODB_VERSION=4.0.1
-    - rvm: 2.5
-      env: MONGODB_VERSION=2.6.12
+      env: MONGODB_VERSION=4.0.5
+    - rvm: 2.6
+      env: MONGODB_VERSION=2.6.12 NO_BUNDLER_UPGRADE=true
 
 env:
   global:
     - CI="travis"
   matrix:
-    - MONGODB_VERSION=2.6.12
-    - MONGODB_VERSION=4.0.1
+    - MONGODB_VERSION=2.6.12 NO_BUNDLER_UPGRADE=true
+    - MONGODB_VERSION=4.0.5
 
 script: bundle exec rake spec:ci
 
