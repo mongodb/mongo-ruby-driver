@@ -60,5 +60,85 @@ describe Mongo::Session do
         expect(rv).to eq(42)
       end
     end
+
+    context 'timeout with callback raising TransientTransactionError' do
+      max_example_run_time 7
+
+      after do
+        Timecop.return
+      end
+
+      it 'times out' do
+        warp = Time.now + 200
+        entered = false
+
+        Thread.new do
+          until entered
+            sleep 0.1
+          end
+          Timecop.travel warp
+        end
+
+        expect do
+          session.with_transaction do
+            entered = true
+
+            # This sleep is to give the interrupting thread a chance to run,
+            # it significantly affects how much time is burned in this
+            # looping thread
+            sleep 0.1
+
+            exc = Mongo::Error::OperationFailure.new('timeout test')
+            exc.send(:add_label, Mongo::Error::TRANSIENT_TRANSACTION_ERROR_LABEL)
+            raise exc
+          end
+        end.to raise_error(Mongo::Error::OperationFailure, 'timeout test')
+      end
+    end
+
+    %w(UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL TRANSIENT_TRANSACTION_ERROR_LABEL).each do |label|
+      context "timeout with commit raising with #{label}" do
+        max_example_run_time 7
+
+        after do
+          Timecop.return
+        end
+
+        before do
+          # create collection if it does not exist
+          collection.insert_one(a: 1)
+        end
+
+        it 'times out' do
+          warp = Time.now + 200
+          entered = false
+
+          Thread.new do
+            until entered
+              sleep 0.1
+            end
+            Timecop.travel warp
+          end
+
+          exc = Mongo::Error::OperationFailure.new('timeout test')
+          exc.send(:add_label, Mongo::Error.const_get(label))
+
+          expect(session).to receive(:commit_transaction).and_raise(exc).at_least(:once)
+
+          expect do
+            session.with_transaction do
+              entered = true
+
+              # This sleep is to give the interrupting thread a chance to run,
+              # it significantly affects how much time is burned in this
+              # looping thread
+              sleep 0.1
+
+              collection.insert_one(a: 2)
+            end
+          end.to raise_error(Mongo::Error::OperationFailure, 'timeout test')
+        end
+      end
+    end
   end
 end
