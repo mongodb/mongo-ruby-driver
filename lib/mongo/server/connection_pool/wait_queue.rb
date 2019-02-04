@@ -25,7 +25,7 @@ module Mongo
         end
 
         def clear!
-          until @wait_queue.empty?
+          until @mutex.synchronize { @wait_queue.empty? }
             semaphore = @mutex.synchronize { @wait_queue.shift }
             semaphore.broadcast
           end

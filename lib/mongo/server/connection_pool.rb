@@ -54,6 +54,7 @@ module Mongo
           Monitoring::Event::PoolCreated.new(address, options)
         )
 
+        @closed = false
         @connections = AvailableStack.new(address, monitoring, options, &block)
         @wait_queue = WaitQueue.new(address)
         @pool_size = connections.pool_size
@@ -126,12 +127,10 @@ module Mongo
         )
 
         deadline = Time.now + wait_timeout
-        @wait_queue.enter_wait_queue(wait_timeout, deadline) do
-          connections.pop(deadline).tap do |c|
+        @wait_queue.enter_wait_queue(wait_timeout, deadline) { connections.pop(deadline) }.tap do |c|
             publish_cmap_event(
               Monitoring::Event::ConnectionCheckedOut.new(address, c.id),
             )
-          end
         end
       rescue Error::WaitQueueTimeout
         publish_cmap_event(
@@ -152,7 +151,7 @@ module Mongo
       #
       # @since 2.1.0
       def disconnect!
-        unless closed?
+        if connections
           connections.disconnect!
 
           publish_cmap_event(
@@ -170,13 +169,13 @@ module Mongo
       #
       # @since 2.7.0
       def clear!
-        unless closed?
-          connections.clear!
+        raise_if_closed!
 
-          publish_cmap_event(
-            Monitoring::Event::PoolCleared.new(address)
-          )
-        end
+        connections.clear!
+
+        publish_cmap_event(
+          Monitoring::Event::PoolCleared.new(address)
+        )
 
         true
       end
@@ -188,6 +187,9 @@ module Mongo
       #
       # @since 2.7.0
       def close!
+        return if closed?
+
+        @closed = true
         @wait_queue.clear!
         disconnect!
         @connections = nil
@@ -238,7 +240,7 @@ module Mongo
       #
       # @since 2.7.0
       def closed?
-        connections.nil?
+        @closed
       end
 
       # Asserts that the pool has not been closed.
