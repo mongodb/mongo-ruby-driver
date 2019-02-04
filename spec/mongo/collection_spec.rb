@@ -1700,6 +1700,42 @@ describe Mongo::Collection do
     end
   end
 
+  describe '#count_documents' do
+    context 'when transactions are enabled' do
+      require_transaction_support
+
+      before do
+        # Ensure that the collection is created
+        authorized_collection.insert_one(x: 1)
+        authorized_collection.delete_many({})
+      end
+
+      let(:session) do
+        authorized_client.start_session
+      end
+
+      it 'successfully starts a transaction and executes a transaction' do
+        session.start_transaction
+        expect(
+          session.instance_variable_get(:@state)
+        ).to eq(Mongo::Session::STARTING_TRANSACTION_STATE)
+
+        expect(authorized_collection.count_documents({}, { session: session })).to eq(0)
+        expect(
+          session.instance_variable_get(:@state)
+        ).to eq(Mongo::Session::TRANSACTION_IN_PROGRESS_STATE)
+
+        authorized_collection.insert_one({ x: 1 }, { session: session })
+        expect(authorized_collection.count_documents({}, { session: session })).to eq(1)
+
+        session.commit_transaction
+        expect(
+          session.instance_variable_get(:@state)
+        ).to eq(Mongo::Session::TRANSACTION_COMMITTED_STATE)
+      end
+    end
+  end
+
   describe '#count' do
 
     let(:documents) do
