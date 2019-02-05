@@ -725,15 +725,16 @@ module Mongo
     # with_transaction. Exceptions derived from Mongo::Error may be
     # handled by with_transaction, resulting in retries of the process.
     #
-    # The number of retries and the total time taken by with_transaction is
-    # not specified by the driver. The driver only guarantees that the number
-    # of retries attempted will be finite, i.e., that it will stop retrying
-    # at some point. The number of retries and the time allowed for the retries
-    # is subject to change in future versions of the driver. Applications that
-    # require known performance characteristics (for example, when servicing
-    # web requests in an application with a fixed number of servers/workers/threads)
-    # are encouraged to explicitly limit the time they allow for with_transaction
-    # calls.
+    # Currently, with_transaction will retry commits and block invocations
+    # until at least 120 seconds have passed since with_transaction started
+    # executing. This timeout is not configurable and may change in a future
+    # driver version.
+    #
+    # @note with_transaction contains a loop, therefore the if with_transaction
+    #   itself is placed in a loop, its block should not call next or break to
+    #   control the outer loop because this will instead affect the loop in
+    #   with_transaction. The driver will warn and abort the transaction
+    #   if it detects this situation.
     #
     # @example Execute a statement in a transaction
     #   session.with_transaction(write_concern: {w: :majority}) do

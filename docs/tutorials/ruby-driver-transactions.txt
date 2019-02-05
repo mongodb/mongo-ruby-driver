@@ -21,6 +21,63 @@ Using Transactions
 
 In order to start a transaction, the application must have a :ref:`session <sessions>`.
 
+The recommended way to use transactions is to utilize the ``with_transaction``
+helper method:
+
+.. code-block:: ruby
+
+  session = client.start_session
+  session.with_transaction do
+    collection.insert_one(hello: 'world')
+  end
+
+The ``with_transaction`` helper does the following:
+
+- It starts a transaction prior to calling the supplied block, and commits
+the transaction when the block finishes.
+- If any of the operations in the block, or the commit operation, result in
+a transient transaction error, the block and/or the commit will be executed
+again.
+
+The block should be idempotent, because it may be called multiple times.
+
+The block may explicitly commit or abort the transaction, by calling
+``commit_transaction`` or ``abort_transaction``; in this case ``with_transaction``
+will not attempt to commit or abort (but may still retry the block on
+transient transaction errors propagated out of the block).
+
+The block will also be retried if the transaction's commit result is unknown.
+This may happen, for example, if the cluster undergoes an election during the
+commit. In this case when the block is retried, the primary server of the
+topology would likely have changed.
+
+Currently ``with_transaction`` will stop retrying the block and the commit once
+120 seconds pass since the beginning of its execution. This time is not
+configurable and may change in a future driver version. Note that this
+does not guarantee the overall runtime of ``with_transactions`` will be 120
+seconds or less - just that once 120 seconds of wall clock time have elapsed,
+further retry attempts will not be initiated.
+
+A low level API is also available if more control over transactions is desired.
+
+``with_transaction`` takes the same options as ``start_transaction`` does,
+which are read concern, write concern and read preference:
+
+.. code-block:: ruby
+
+  session = client.start_session
+  session.with_transaction(
+    read_concern: {level: :majority},
+    write_concern: {w: 3},
+    read: {mode: :primary}
+  ) do
+    collection.insert_one(hello: 'world')
+  end
+
+
+Low Level API
+-------------
+
 A transaction can be started by calling the ``start_transaction`` method on a session:
 
 .. code-block:: ruby
@@ -72,3 +129,11 @@ if it fails. Here is the Ruby code to do so:
       raise
     end
   end
+
+
+Transaction Nesting
+-------------------
+
+MongoDB does not support nesting transactions. Attempting to call
+``start_transaction`` or ``with_transaction`` when a transaction is already
+in progress will result in an error.
