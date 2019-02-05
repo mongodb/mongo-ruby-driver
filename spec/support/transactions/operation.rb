@@ -166,12 +166,14 @@ module Mongo
       end
 
       def with_transaction(session, collection)
-        unless callback = @spec['callback']
+        unless callback = @spec['arguments']['callback']
           raise ArgumentError, 'with_transaction requires a callback to be present'
         end
 
-        if @spec['transactionOptions']
-          options = snakeize_hash(@spec['transactionOptions'])
+        if @spec['arguments']['options']
+          options = snakeize_hash(@spec['arguments']['options'])
+        else
+          options = nil
         end
         session.with_transaction(options) do
           callback['operations'].each do |op_spec|

@@ -16,16 +16,17 @@ tests:
       -
         name: withTransaction
         object: session0
-        callback:
-          operations:
-            -
-              name: insertOne
-              object: collection
-              arguments:
-                session: session0
-                document: { _id: 1 }
-              result:
-                insertedId: 1
+        arguments:
+          callback:
+            operations:
+              -
+                name: insertOne
+                object: collection
+                arguments:
+                  session: session0
+                  document: { _id: 1 }
+                result:
+                  insertedId: 1
     expectations:
       -
         command_started_event:
@@ -100,18 +101,19 @@ tests:
       -
         name: withTransaction
         object: session0
-        callback:
-          operations:
-            -
-              name: insertOne
-              object: collection
-              arguments:
-                session: session0
-                document: { _id: 1 }
-              result:
-                insertedId: 1
-        transactionOptions:
-          writeConcern: { w: 2, j: true, wtimeout: 5000 }
+        arguments:
+          callback:
+            operations:
+              -
+                name: insertOne
+                object: collection
+                arguments:
+                  session: session0
+                  document: { _id: 1 }
+                result:
+                  insertedId: 1
+          options:
+            writeConcern: { w: 2, j: true, wtimeout: 5000 }
     expectations:
       -
         command_started_event:
@@ -187,16 +189,17 @@ tests:
       -
         name: withTransaction
         object: session0
-        callback:
-          operations:
-            -
-              name: insertOne
-              object: collection
-              arguments:
-                session: session0
-                document: { _id: 1 }
-              result:
-                insertedId: 1
+        arguments:
+          callback:
+            operations:
+              -
+                name: insertOne
+                object: collection
+                arguments:
+                  session: session0
+                  document: { _id: 1 }
+                result:
+                  insertedId: 1
     expectations:
       -
         command_started_event:
