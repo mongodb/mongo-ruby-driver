@@ -140,5 +140,17 @@ describe Mongo::Session do
         end
       end
     end
+
+    context 'callback breaks out of with_tx loop' do
+      it 'aborts transaction' do
+        expect(session).to receive(:start_transaction).and_call_original
+        expect(session).to receive(:abort_transaction).and_call_original
+        expect(session).to receive(:log_warn).and_call_original
+
+        session.with_transaction do
+          break
+        end
+      end
+    end
   end
 end
