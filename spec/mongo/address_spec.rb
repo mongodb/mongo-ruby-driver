@@ -320,4 +320,12 @@ describe Mongo::Address do
       end
     end
   end
+
+  describe '#connect_timeout' do
+    let(:address) { Mongo::Address.new('127.0.0.1') }
+
+    it 'defaults to 10' do
+      expect(address.send(:connect_timeout)).to eq(10)
+    end
+  end
 end
