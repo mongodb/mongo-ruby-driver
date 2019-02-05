@@ -114,6 +114,13 @@ module Mongo
     # @param [ Client ] client The client through which this session is created.
     # @param [ Hash ] options The options for this session.
     #
+    # @option options [ true|false ] :causal_consistency Whether to enable
+    #   causal consistency for this session.
+    # @option options [ Hash ] :default_transaction_options Options to pass
+    #   to start_transaction by default, can contain any of the options that
+    #   start_transaction accepts.
+    # @option options [ true|false ] :implicit For internal driver use only -
+    #   specifies whether the session is implicit.
     # @option options [ Hash ] :read_preference The read preference options hash,
     #   with the following optional keys:
     #   - *:mode* -- the read preference as a string or symbol; valid values are

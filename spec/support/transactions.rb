@@ -257,9 +257,7 @@ module Mongo
         coll = support_client[@spec.collection_name]
         coll.database.drop
         coll.with(write: { w: :majority }).drop
-        support_client.command(
-          { create: @spec.collection_name },
-          { write_concern: { w: :majority } })
+        support_client.command(create: @spec.collection_name)
 
         coll.with(write: { w: :majority }).insert_many(@data) unless @data.empty?
         admin_support_client.command(@fail_point) if @fail_point

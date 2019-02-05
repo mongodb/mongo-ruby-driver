@@ -150,6 +150,7 @@ module Mongo
     # @param [ Hash ] opts The command options.
     #
     # @option opts :read [ Hash ] The read preference for this command.
+    # @option opts :session [ Session ] The session to use for this command.
     #
     # @return [ Hash ] The result of the command execution.
     def command(operation, opts = {})
