@@ -86,11 +86,6 @@ module Mongo
               result['error'] = err
               break
             end
-
-            # Because we can't determine what order threads will return their connections into the
-            # pool, we add a slight delay between each operation in order to make the scheduling
-            # more consistent.
-            sleep(0.01)
           end
 
           result['events'] = subscriber.succeeded_events.reduce([]) do |events, event|

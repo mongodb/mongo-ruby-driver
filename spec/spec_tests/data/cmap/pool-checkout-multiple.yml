@@ -3,11 +3,16 @@ style: unit
 description: must be able to check out multiple connections at the same time
 operations:
   # Note: this test can be somewhat non-deterministic depending on how you
-  # implement your test runner.
+  # implement your test runner. The sleep operations should make this more
+  # consistent.
   - name: start
     target: thread1
+  - name: wait
+    ms: 10
   - name: start
     target: thread2
+  - name: wait
+    ms: 20
   - name: start
     target: thread3
   - name: checkOut
