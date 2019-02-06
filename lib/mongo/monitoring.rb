@@ -223,7 +223,7 @@ module Mongo
           end
         end
         subscribe(COMMAND, CommandLogSubscriber.new(options))
-        subscribe(CONNECTION_POOL, CMAPLogSubscriber.new(options))
+        subscribe(CONNECTION_POOL, CmapLogSubscriber.new(options))
         subscribe(SERVER_OPENING, ServerOpeningLogSubscriber.new(options))
         subscribe(SERVER_CLOSED, ServerClosedLogSubscriber.new(options))
         subscribe(SERVER_DESCRIPTION_CHANGED, ServerDescriptionChangedLogSubscriber.new(options))

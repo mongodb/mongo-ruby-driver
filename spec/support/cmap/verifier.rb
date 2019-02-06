@@ -13,7 +13,7 @@
 # limitations under the License.
 
 module Mongo
-  module CMAP
+  module Cmap
     class Verifier
       include RSpec::Matchers
 

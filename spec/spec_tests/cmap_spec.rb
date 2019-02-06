@@ -1,6 +1,6 @@
 require 'lite_spec_helper'
 
-describe 'CMAP' do
+describe 'Cmap' do
 
   declare_topology_double
 
@@ -12,15 +12,19 @@ describe 'CMAP' do
   end
 
   CMAP_TESTS.sort.each do |file|
-    spec = Mongo::CMAP::Spec.new(file)
+    spec = Mongo::Cmap::Spec.new(file)
 
     context("#{spec.description} (#{file.sub(%r'.*/data/cmap/', '')})") do
+      before do
+        spec.setup(cluster)
+      end
+
       let!(:result) do
-        spec.run(cluster)
+        spec.run
       end
 
       let(:verifier) do
-        Mongo::CMAP::Verifier.new(spec)
+        Mongo::Cmap::Verifier.new(spec)
       end
 
       it 'raises the correct error' do

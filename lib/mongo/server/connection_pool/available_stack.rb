@@ -76,9 +76,12 @@ module Mongo
           if min_size > max_size
             raise ArgumentError, "min_size (#{min_size}) cannot exceed max_size (#{max_size})"
           end
-          @connections = Array.new(min_size) { create_connection }
+          @connections = Array.new(min_size) do
+            create_connection.record_checkin!
+          end
+
           @mutex = Mutex.new
-          @resource = ConditionVariable.new
+          @connection_available_condvar = ConditionVariable.new
 
           check_count_invariants(true)
         end
@@ -100,7 +103,7 @@ module Mongo
         attr_reader :options
 
         # @return [ ConditionVariable ] resource The resource.
-        attr_reader :resource
+        attr_reader :connection_available_condvar
 
         # Number of connections that the pool has which are ready to be
         # checked out. This is NOT the size of the connection pool (total
@@ -203,7 +206,7 @@ module Mongo
           mutex.synchronize do
             if connection.generation == @generation
               connections.unshift(connection.record_checkin!)
-              resource.broadcast
+              connection_available_condvar.broadcast
             else
               close_connection!(connection, Monitoring::Event::ConnectionClosed::STALE)
             end
@@ -324,14 +327,14 @@ module Mongo
           )
         end
 
-        def is_stale?(connection)
+        def close_if_stale!(connection)
           if connection.generation != @generation
             close_connection!(connection, Monitoring::Event::ConnectionClosed::STALE)
             true
           end
         end
 
-        def is_idle?(connection)
+        def close_if_idle!(connection)
           if connection && connection.last_checkin && max_idle_time
             if Time.now - connection.last_checkin > max_idle_time
               close_connection!(connection, Monitoring::Event::ConnectionClosed::IDLE)
@@ -350,14 +353,14 @@ module Mongo
           loop do
             until connections.empty?
               connection = connections.shift
-              return connection unless is_stale?(connection) || is_idle?(connection)
+              return connection unless close_if_stale!(connection) || close_if_idle!(connection)
             end
 
             connection = create_connection
             return connection if connection
 
             wait = deadline - Time.now
-            resource.wait(mutex, wait)
+            connection_available_condvar.wait(mutex, wait)
 
             # TODO: Raise different error
             raise Error::WaitQueueTimeout.new(@address) if deadline <= Time.now

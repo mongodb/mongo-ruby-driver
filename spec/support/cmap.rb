@@ -1,7 +1,7 @@
-require 'support/connection_monitoring_and_pooling/verifier'
+require 'support/cmap/verifier'
 
 module Mongo
-  module CMAP
+  module Cmap
 
     # Represents a specification.
     #
@@ -13,9 +13,6 @@ module Mongo
 
       # @return [ Hash ] pool_options The options for the created pools.
       attr_reader :pool_options
-
-      # @return [ Integer ] num_pools The number of pools to create.
-      attr_reader :num_pools
 
       # @return [ Array<Operation> ] spec_ops The spec operations.
       attr_reader :spec_ops
@@ -32,6 +29,12 @@ module Mongo
       # @return [ Array<String> ] events The names of events to ignore.
       attr_reader :ignore
 
+      # @return [ Mongo::ConnectionPool ] pool The connection pool to use for operations.
+      attr_reader :pool
+
+      # @return [ EventSubscriber ] subscriber The subscriber receiving the CMAP events.
+      attr_reader :subscriber
+
       # Instantiate the new spec.
       #
       # @example Create the spec.
@@ -45,7 +48,6 @@ module Mongo
 
         @description = @test['description']
         @pool_options = snakeize_hash(process_options(@test['poolOptions']))
-        @num_pools = @test['numberOfPools'] || 1
         @spec_ops = @test['operations'].map { |o| Operation.new(o) }
         @processed_ops = []
         @error = @test['error']
@@ -53,8 +55,8 @@ module Mongo
         @ignore = @test['ignore'] || []
       end
 
-      def run(cluster)
-        subscriber = EventSubscriber.new
+      def setup(cluster)
+        @subscriber = EventSubscriber.new
 
         monitoring = Mongo::Monitoring.new(monitoring: false)
         monitoring.subscribe(Mongo::Monitoring::CONNECTION_POOL, subscriber)
@@ -66,17 +68,19 @@ module Mongo
             Mongo::Event::Listeners.new,
             pool_options)
 
-        state = {
-          'pool' => Mongo::Server::ConnectionPool.get(server) do
-            Mongo::Server::Connection.new(server)
-          end
-        }
+        @pool = Mongo::Server::ConnectionPool.get(server) do
+          Mongo::Server::Connection.new(server)
+        end
 
         preprocess
+      end
+
+      def run
+        state = {}
 
         { 'error' => nil }.tap do |result|
           processed_ops.each do |op|
-            err = op.run(state)
+            err = op.run(pool, state)
 
             if err
               result['error'] = err
@@ -223,7 +227,7 @@ module Mongo
       #   signifying the default thread.)
       attr_reader :thread
 
-      # @return [ String | nil ] target The binding for the started thread.
+      # @return [ String | nil ] target The name of the started thread.
       attr_reader :target
 
       # @return [ Array<Operation> ] thread_ops The operations to run on the thread.
@@ -232,11 +236,14 @@ module Mongo
       # @return [ Integer | nil ] ms The number of milliseconds to sleep.
       attr_reader :ms
 
-      # @return [ String | nil ] label The binding for a returned connection.
+      # @return [ String | nil ] label The label for the returned connection.
       attr_reader :label
 
       # @return [ String | nil ] The binding for the connection which should run the operation.
       attr_reader :connection
+
+      # @return [ Mongo::ConnectionPool ] pool The connection pool to use for the operation.
+      attr_reader :pool
 
       # Create the new Operation.
       #
@@ -256,7 +263,9 @@ module Mongo
         @connection = operation['connection']
       end
 
-      def run(state, main_thread = true)
+      def run(pool, state, main_thread = true)
+        @pool = pool
+
         case name
         when 'start'
           run_start_op(state)
@@ -301,7 +310,7 @@ module Mongo
       def run_start_op(state)
         state[target] = Thread.start do
           Thread.current[:name] = @target
-          thread_ops.each { |op| op.run(state, false) }
+          thread_ops.each { |op| op.run(pool, state, false) }
         end
 
         # Since we expect exceptions to occur in some cases, we disable the printing of error
@@ -320,21 +329,21 @@ module Mongo
       end
 
       def run_checkout_op(state)
-        conn = state['pool'].checkout
+        conn = pool.checkout
         state[label] = conn if label
       end
 
       def run_checkin_op(state)
         until state[connection]; end
-        state['pool'].checkin(state[connection])
+        pool.checkin(state[connection])
       end
 
       def run_clear_op(state)
-        state['pool'].clear!
+        pool.clear!
       end
 
       def run_close_op(state)
-        state['pool'].close!
+        pool.close!
       end
     end
   end

@@ -18,7 +18,7 @@ module Mongo
     # Subscribes to CMAP events and logs them.
     #
     # @since 2.7.0
-    class CMAPLogSubscriber
+    class CmapLogSubscriber
       include Loggable
 
       # @return [ Hash ] options The options.
@@ -29,7 +29,7 @@ module Mongo
       # Create the new log subscriber.
       #
       # @example Create the log subscriber.
-      #   CMAPLogSubscriber.new
+      #   CmapLogSubscriber.new
       #
       # @param [ Hash ] options The options.
       #
