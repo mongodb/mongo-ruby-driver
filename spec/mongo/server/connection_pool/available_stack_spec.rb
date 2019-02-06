@@ -8,6 +8,7 @@ describe Mongo::Server::ConnectionPool::AvailableStack do
       allow(connection).to receive(:disconnect!)
       allow(connection).to receive(:id).and_return(1)
       allow(connection).to receive(:last_checkin).and_return(nil)
+      allow(connection).to receive(:record_checkin!).and_return(connection)
     end
   end
 
