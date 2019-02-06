@@ -42,7 +42,7 @@ module Mongo
         MAX_SIZE = 5.freeze
 
         # The default min size for the connection pool.
-        MIN_SIZE = 1.freeze
+        MIN_SIZE = 0.freeze
 
         # Initialize the new stack. Will yield the block the number of times
         # equal to the initial connection pool size.
@@ -80,7 +80,7 @@ module Mongo
           @mutex = Mutex.new
           @resource = ConditionVariable.new
 
-          check_count_invariants
+          check_count_invariants(true)
         end
 
         # @return [ Integer ] generation Generation of connections currently
@@ -133,10 +133,10 @@ module Mongo
         #
         # @since 2.0.0
         def pop(deadline)
-          check_count_invariants(false)
+          check_count_invariants
           pop_connection(deadline)
         ensure
-          check_count_invariants(false)
+          check_count_invariants
         end
 
         # Updates the generation number. The connections will be disconnected and removed lazily
@@ -150,15 +150,16 @@ module Mongo
         # Disconnect all connections in the stack.
         #
         # @example Disconnect all connections.
-        #   stack.disconnect!
+        #   stack.close!
         #
         # @return [ true ] Always true.
         #
         # @since 2.1.0
-        def disconnect!
-          check_count_invariants(false)
+        def close!
+          check_count_invariants
           mutex.synchronize do
-            connections.each do |connection|
+            until connections.empty?
+              connection = connections.shift
               connection_removed
               connection.disconnect!
 
@@ -171,12 +172,7 @@ module Mongo
               )
             end
 
-            connections.clear
             @generation += 1
-            while @pool_size < min_size
-              @pool_size += 1
-              connections.unshift(@block.call(@generation))
-            end
             true
           end
         ensure
@@ -203,7 +199,7 @@ module Mongo
         #
         # @since 2.0.0
         def push(connection)
-          check_count_invariants(false)
+          check_count_invariants
           mutex.synchronize do
             if connection.generation == @generation
               connections.unshift(connection.record_checkin!)
@@ -214,7 +210,7 @@ module Mongo
           end
           nil
         ensure
-          check_count_invariants(false)
+          check_count_invariants
         end
 
         # Get a pretty printed string inspection for the stack.
@@ -275,7 +271,7 @@ module Mongo
         #
         # @since 2.5.0
         def close_stale_sockets!
-          check_count_invariants(false)
+          check_count_invariants
           return unless max_idle_time
 
           to_refresh = []
@@ -301,7 +297,7 @@ module Mongo
             end
           end
         ensure
-          check_count_invariants(false)
+          check_count_invariants
         end
 
         def connection_removed
@@ -378,7 +374,7 @@ module Mongo
         # We only create new connections when we're below the minPoolSize on creation, when we're
         # disconnecting and starting a new generation, and when we're checking out connections (per
         # the CMAP spec), so `check_min` should be false in all other cases.
-        def check_count_invariants(check_min = true)
+        def check_count_invariants(check_min = false)
           if Mongo::Lint.enabled?
             if pool_size < min_size && check_min
               raise Error::LintError, 'connection pool stack: underflow'

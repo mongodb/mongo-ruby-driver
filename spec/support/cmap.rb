@@ -44,12 +44,7 @@ module Mongo
         @test = YAML.load(ERB.new(File::read(file)).result)
 
         @description = @test['description']
-        @pool_options = snakeize_hash(process_options(@test['poolOptions'])).tap do |opts|
-          # The CMAP spec defines the default minPoolSize as 0, but the existing driver default is
-          # 1. Until we can change it, we need to manually specify their default when the YAML
-          # doesn't specify any.
-          opts[:min_pool_size] ||= 0
-        end
+        @pool_options = snakeize_hash(process_options(@test['poolOptions']))
         @num_pools = @test['numberOfPools'] || 1
         @spec_ops = @test['operations'].map { |o| Operation.new(o) }
         @processed_ops = []

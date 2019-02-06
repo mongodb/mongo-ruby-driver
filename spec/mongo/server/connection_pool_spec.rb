@@ -134,7 +134,7 @@ describe Mongo::Server::ConnectionPool do
 
     it 'disconnects the stack' do
       expect(cluster).to receive(:pool).with(server).and_return(pool)
-      expect(pool.send(:connections)).to receive(:disconnect!).once.and_call_original
+      expect(pool.send(:connections)).to receive(:close!).once.and_call_original
       server.disconnect!
     end
   end
@@ -198,6 +198,10 @@ describe Mongo::Server::ConnectionPool do
     end
 
     context 'when a connection cannot be checked out and connected' do
+
+      let(:options) do
+        SpecConfig.instance.test_options.merge(max_pool_size: 2, min_pool_size: 1)
+      end
 
       before do
         allow(pool).to receive(:checkout).and_raise(Exception)

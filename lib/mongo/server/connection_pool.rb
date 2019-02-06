@@ -142,26 +142,6 @@ module Mongo
         raise
       end
 
-      # Disconnect the connection pool.
-      #
-      # @example Disconnect connection pool.
-      #   pool.disconnect!
-      #
-      # @return [ true ] true.
-      #
-      # @since 2.1.0
-      def disconnect!
-        if connections
-          connections.disconnect!
-
-          publish_cmap_event(
-            Monitoring::Event::PoolClosed.new(address)
-          )
-        end
-
-        true
-      end
-
       # Updates the generation number. The connections will be disconnected and removed lazily
       # when the queue attempts to dequeue them.
       #
@@ -191,10 +171,19 @@ module Mongo
 
         @closed = true
         @wait_queue.clear!
-        disconnect!
+        if connections
+          connections.close!
+
+          publish_cmap_event(
+            Monitoring::Event::PoolClosed.new(address)
+          )
+        end
+
         @connections = nil
         true
       end
+
+      alias :disconnect! :close!
 
       # Get a pretty printed string inspection for the pool.
       #

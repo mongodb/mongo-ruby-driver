@@ -97,7 +97,7 @@ describe Mongo::Server::ConnectionPool::AvailableStack do
         end
         expect(stack.stack_size).to eq(2)
         expect(stack.pool_size).to eq(2)
-        stack.disconnect!
+        stack.close!
         expect(stack.stack_size).to eq(0)
         expect(stack.pool_size).to eq(0)
       end
@@ -108,14 +108,14 @@ describe Mongo::Server::ConnectionPool::AvailableStack do
         create_stack(1)
       end
 
-      it 'disconnects all connections in the stack and recreates up to min size with new generation' do
+      it 'disconnects all connections in the stack and increments the generation but does not create new connections' do
         expect(stack.stack_size).to eq(2)
         expect(stack.pool_size).to eq(2)
 
-        stack.disconnect!
+        stack.close!
 
-        expect(stack.stack_size).to eq(1)
-        expect(stack.pool_size).to eq(1)
+        expect(stack.stack_size).to eq(0)
+        expect(stack.pool_size).to eq(0)
 
         new_connection = stack.pop(Time.now + Mongo::Server::ConnectionPool::WAIT_TIMEOUT)
         expect(new_connection).not_to eq(connection)
@@ -236,8 +236,8 @@ describe Mongo::Server::ConnectionPool::AvailableStack do
       end
 
       it 'creates the stack with the number of default connections' do
-        expect(stack.pool_size).to eq(1)
-        expect(stack.stack_size).to eq(1)
+        expect(stack.pool_size).to eq(0)
+        expect(stack.stack_size).to eq(0)
       end
     end
   end
