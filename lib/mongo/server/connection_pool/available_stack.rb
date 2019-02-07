@@ -287,15 +287,9 @@ module Mongo
           end
 
           mutex.synchronize do
-            num_checked_out = pool_size - stack_size
-            min_size_delta = [(min_size - num_checked_out), 0].max
-
             to_refresh.each do |connection|
               if connections.include?(connection)
                 connection.disconnect!
-                if connections.index(connection) < min_size_delta
-                  begin; connection.connect!; rescue; end
-                end
               end
             end
           end
