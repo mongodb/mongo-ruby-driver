@@ -589,10 +589,11 @@ module Mongo
     # @example Start a session.
     #   client.start_session(causal_consistency: true)
     #
-    # @param [ Hash ] options The session options.
+    # @param [ Hash ] options The session options. Accepts the options
+    #   that Session#initialize accepts.
     #
-    # @note A Session cannot be used by multiple threads at once; session objects are not
-    #   thread-safe.
+    # @note A Session cannot be used by multiple threads at once; session
+    #   objects are not thread-safe.
     #
     # @return [ Session ] The session.
     #
