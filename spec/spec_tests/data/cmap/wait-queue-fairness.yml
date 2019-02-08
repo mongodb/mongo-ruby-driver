@@ -26,14 +26,14 @@ operations:
     thread: thread2
     label: conn2
   - name: wait
-    ms: 20
+    ms: 10
   - name: start
     target: thread3
   - name: checkOut
     thread: thread3
     label: conn3
   - name: wait
-    ms: 30
+    ms: 10
   - name: start
     target: thread4
   - name: checkOut
