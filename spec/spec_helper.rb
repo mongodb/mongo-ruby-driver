@@ -16,8 +16,8 @@ RSpec.configure do |config|
   config.include(Authorization)
   config.extend(Constraints)
 
-  config.after(:each) do
-    if rand < 0.01
+  config.around(:each) do
+    if rand < 1
       close_local_clients(true)
     end
   end

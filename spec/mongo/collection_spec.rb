@@ -3386,6 +3386,7 @@ describe Mongo::Collection do
       around(:each) do |spec|
         authorized_client[:validating,
                           :validator => { :a => { '$exists' => true } }].tap do |c|
+          c.drop
           c.create
         end
         spec.run

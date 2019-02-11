@@ -149,7 +149,7 @@ describe Mongo::Server::Connection, retry: 3 do
         end
 
         let(:error) do
-          expect_any_instance_of(Mongo::Socket).to receive(:write).and_raise(exception)
+          expect_any_instance_of(Mongo::Socket).to receive(:write).at_least(:once).and_raise(exception)
           begin
             connection.connect!
           rescue Exception => e
