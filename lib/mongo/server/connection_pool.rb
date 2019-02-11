@@ -180,6 +180,10 @@ module Mongo
         end
 
         @connections = nil
+
+        # For debugging purposes; will remove before merge.
+        @caller = caller
+
         true
       end
 
@@ -238,6 +242,8 @@ module Mongo
       #
       # @since 2.7.0
       def raise_if_closed!
+        puts @caller if closed?
+
         raise Error::PoolClosed.new(address, @pool_size) if closed?
       end
 
