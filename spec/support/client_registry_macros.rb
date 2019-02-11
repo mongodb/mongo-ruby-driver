@@ -8,7 +8,7 @@ module ClientRegistryMacros
       monitoring_io: false).merge(options || {}))
   end
 
-  def close_local_clients
-    ClientRegistry.instance.close_local_clients
+  def close_local_clients(reconnect=false)
+    ClientRegistry.instance.close_local_clients(reconnect)
   end
 end

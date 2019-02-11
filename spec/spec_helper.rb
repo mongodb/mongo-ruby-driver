@@ -18,7 +18,7 @@ RSpec.configure do |config|
 
   config.after(:each) do
     if rand < 0.01
-      close_local_clients
+      close_local_clients(true)
     end
   end
 end
