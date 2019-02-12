@@ -16,6 +16,8 @@ operations:
     target: thread1
   - name: checkOut
     thread: thread1
+  - name: wait
+    ms: 10
   - name: checkIn
     connection: conn1
   - name: waitFor

@@ -34,36 +34,24 @@ module Mongo
         elsif expected_events.empty?
           expect(actual_events).to be_empty
         else
-          expect(actual_events).not_to be nil
-          expected_events.each do |event|
-            verify_event(event, actual_events)
-          end
-          actual_events.each do |event|
-            verify_event(event, expected_events)
+          expect(actual_events.length).to eq(expected_events.length)
+
+          expected_events.each_index do |i|
+            verify_hashes(actual_events[i], expected_events[i])
           end
         end
       end
 
       private
 
-      def verify_event(event, events)
-        expect(
-          events.any? { |other| verify_hashes(event, other) }
-        ).to eq(true)
-      end
+      def verify_hashes(actual, expected)
+        expect(actual.length).to eq(expected.length)
 
-      def verify_hashes(expected, actual)
-        return false unless expected.size == actual.size
+        actual.keys.each do |key|
+          expect(expected.key?(key)).to eq(true)
 
-        expected.all? do |key, val|
-          return false unless actual.key?(key)
-
-          if val == 42 || actual[key] == 42
-            true
-          elsif val.is_a?(Hash)
-            verify_hashes(val, actual[key])
-          else
-            val == actual[key]
+          if expected[key] != 42
+            expect(actual[key]).to eq(actual[key])
           end
         end
       end

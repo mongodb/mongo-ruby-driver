@@ -165,17 +165,7 @@ module Mongo
 
           mutex.synchronize do
             until connections.empty?
-              connection = connections.shift
-              connection_removed
-              connection.disconnect!
-
-              publish_cmap_event(
-                  Monitoring::Event::Cmap::ConnectionClosed.new(
-                      Monitoring::Event::Cmap::ConnectionClosed::POOL_CLOSED,
-                      @address,
-                      connection.id,
-                  ),
-              )
+              close_connection(connections.shift, Monitoring::Event::Cmap::ConnectionClosed::POOL_CLOSED)
             end
 
             true

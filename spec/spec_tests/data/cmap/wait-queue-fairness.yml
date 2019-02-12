@@ -41,6 +41,8 @@ operations:
     label: conn4
     # From main thread, keep checking in connection and then wait for appropriate thread
     # Test will timeout if threads are not enqueued in proper order
+  - name: wait
+    ms: 10
   - name: checkIn
     connection: conn0
   - name: waitFor
