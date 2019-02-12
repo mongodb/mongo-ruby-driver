@@ -17,6 +17,7 @@ These events are organized into the following categories:
 - Topology lifecycle;
 - Server lifecycle;
 - Server heartbeats.
+- Connection pooling
 
 Topology and server events are part of Server Discovery and Monitoring (SDAM).
 
@@ -330,6 +331,61 @@ Sample output:
 
   D, [2018-09-23T13:44:10.707018 #1739] DEBUG -- : HEARTBEAT | 127.0.0.1:27027 | STARTED
   D, [2018-09-23T13:44:10.707778 #1739] DEBUG -- : HEARTBEAT | 127.0.0.1:27027 | SUCCEEDED | 0.000772381s
+
+Connection Pooling
+------------------
+
+Under the hood, each client maintains a connection pool for each server in the cluster that it's
+connected to. Events relating to connections and the connection pools themselves can be subscribed
+to for fine-grained information. The monitoring API publishes a succeedd event for these events. A
+subscriber must implement one method, ``succeeded``, which takes a single parameter for the event.
+The following is an example logging subscriber based on a logging subscriber used internally by the
+driver:
+
+.. code-block:: ruby
+
+  class ConnectionPoolLogSubscriber
+    include Mongo::Loggable
+
+    def succeeded(event)
+      info =
+        case event
+        when Mongo::Monitoring::Event::Cmap::PoolCreated
+          "#{event.address} | #{event.options}"
+        when Mongo::Monitoring::Event::Cmap::ConnectionCheckoutStarted
+          "#{event.address}"
+        else
+          ""
+        end
+
+      log_debug("#{event.class)} | #{info}")
+    end
+
+    private
+
+    def logger
+      Mongo::Logger.logger
+    end
+  end
+
+To register a custom subscriber, you can do so globally for
+all clients or on a per-client basis:
+
+.. code-block:: ruby
+
+  subscriber = ConnectionPoolLogSubscriber.new
+
+  Mongo::Monitoring::Global.subscribe(Mongo::Monitoring::CONNECTION_POOL, subscriber)
+
+  client = Mongo::Client.new([ '127.0.0.1:27017' ], :database => 'test' )
+  client.subscribe( Mongo::Monitoring::CONNECTION_POOL, subscriber )
+
+Sample output:
+
+.. code-block:: none
+
+  D, [2018-09-23T13:47:31.258020 #4692] DEBUG -- : CONNECTION_POOL | PoolCreated | 127.0.0.1:27017 | {:maxPoolSize=>100}
+  D, [2018-09-23T13:47:31.258020 #4692] DEBUG -- : CONNECTION_POOL | ConnectionCheckoutStarted | 127.0.0.1:27017
 
 
 Disabling Monitoring
