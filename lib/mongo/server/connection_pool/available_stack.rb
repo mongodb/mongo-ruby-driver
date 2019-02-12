@@ -160,6 +160,9 @@ module Mongo
         # @since 2.1.0
         def close!
           check_count_invariants
+
+          @generation += 1
+
           mutex.synchronize do
             until connections.empty?
               connection = connections.shift
@@ -175,7 +178,6 @@ module Mongo
               )
             end
 
-            @generation += 1
             true
           end
         ensure
@@ -277,20 +279,18 @@ module Mongo
           check_count_invariants
           return unless max_idle_time
 
-          to_refresh = []
-          connections.each do |connection|
-            if last_checkin = connection.last_checkin
-              if (Time.now - last_checkin) > max_idle_time
-                to_refresh << connection
+          mutex.synchronize do
+            to_refresh = []
+            connections.reject! do |connection|
+              if last_checkin = connection.last_checkin
+                if (Time.now - last_checkin) > max_idle_time
+                  to_refresh << connection
+                end
               end
             end
-          end
 
-          mutex.synchronize do
             to_refresh.each do |connection|
-              if connections.include?(connection)
-                connection.disconnect!
-              end
+              close_connection!(connection, Monitoring::Event::ConnectionClosed::STALE)
             end
           end
         ensure
