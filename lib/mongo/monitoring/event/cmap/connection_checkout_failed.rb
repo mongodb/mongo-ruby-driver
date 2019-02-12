@@ -22,17 +22,17 @@ module Mongo
         # @since 2.8.0
         class ConnectionCheckoutFailed < Base
 
-          # @return [ String ] POOL_CLOSED Indicates that the connection checkout failed due to the
+          # @return [ Symbol ] POOL_CLOSED Indicates that the connection checkout failed due to the
           #   pool already being closed.
           #
           # @since 2.8.0
-          POOL_CLOSED = 'poolClosed'.freeze
+          POOL_CLOSED = :pool_closed
 
-          # @return [ String ] TIMEOUT Indicates that the connection checkout failed due to the
+          # @return [ Symbol ] TIMEOUT Indicates that the connection checkout failed due to the
           #   timeout being reached before a connection became available.
           #
           # @since 2.8.0
-          TIMEOUT = 'timeout'.freeze
+          TIMEOUT = :timeout
 
           # @return [ Mongo::Address ] address The address of the server the connection would have
           #   connected to.
@@ -40,7 +40,7 @@ module Mongo
           # @since 2.8.0
           attr_reader :address
 
-          # @return [ String ] reason The reason a connection was unable to be acquired.
+          # @return [ Symbol ] reason The reason a connection was unable to be acquired.
           #
           # @since 2.8.0
           attr_reader :reason

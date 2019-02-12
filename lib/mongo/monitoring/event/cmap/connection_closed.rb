@@ -22,45 +22,45 @@ module Mongo
         # @since 2.8.0
         class ConnectionClosed < Base
 
-          # @return [ String ] STALE Indicates that the connection was closed due to it being stale.
+          # @return [ Symbol ] STALE Indicates that the connection was closed due to it being stale.
           #
           # @since 2.8.0
-          STALE = 'stale'.freeze
+          STALE = :stale
 
-          # @return [ String ] IDLE Indicates that the connection was closed due to it being idle.
+          # @return [ Symbol ] IDLE Indicates that the connection was closed due to it being idle.
           #
           # @since 2.8.0
-          IDLE = 'idle'.freeze
+          IDLE = :idle
 
-          # @return [ String ] ERROR Indicates that the connection was closed due to it experiencing
+          # @return [ Symbol ] ERROR Indicates that the connection was closed due to it experiencing
           #   an error.
           #
           # @since 2.8.0
-          ERROR = 'error'.freeze
+          ERROR = :error
 
-          # @return [ String ] POOL_CLOSED Indicates that the connection was closed due to the pool
+          # @return [ Symbol ] POOL_CLOSED Indicates that the connection was closed due to the pool
           #   already being closed.
           #
           # @since 2.8.0
-          POOL_CLOSED = 'poolClosed'.freeze
+          POOL_CLOSED = :poolClosed
 
-         # @return [ String ] HANDSHAKE_FAILED Indicates that the connection was closed due to the
+         # @return [ Symbol ] HANDSHAKE_FAILED Indicates that the connection was closed due to the
           #   connection handshake failing.
           #
           # @since 2.8.0
-          HANDSHAKE_FAILED = 'handshakeFailed'.freeze
+          HANDSHAKE_FAILED = :handshakeFailed
 
-          # @return [ String ] UNKNOWN Indicates that the connection was closed for an unknown reason.
+          # @return [ Symbol ] UNKNOWN Indicates that the connection was closed for an unknown reason.
           #
           # @since 2.8.0
-          UNKNOWN = 'unknown'.freeze
+          UNKNOWN = :unknown
 
           # @return [ Integer ] connection_id The ID of the connection.
           #
           # @since 2.8.0
           attr_reader :connection_id
 
-          # @return [ String ] reason The reason why the connection was closed.
+          # @return [ Symbol ] reason The reason why the connection was closed.
           #
           # @since 2.8.0
           attr_reader :reason
