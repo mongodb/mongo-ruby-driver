@@ -90,7 +90,7 @@ module Mongo
 
           result['error'] ||= nil
           result['events'] = subscriber.succeeded_events.reduce([]) do |events, event|
-            next unless event.is_a?(Mongo::Monitoring::Event::Cmap)
+            next events unless event.is_a?(Mongo::Monitoring::Event::Cmap::Base)
 
             event = case event
                     when Mongo::Monitoring::Event::Cmap::PoolCreated
