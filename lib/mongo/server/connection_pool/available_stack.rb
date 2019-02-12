@@ -146,7 +146,7 @@ module Mongo
         # when the stack attempts to pop them.
         #
         # @since 2.7.0
-        def clear!
+        def clear
           @generation += 1
         end
 
@@ -208,10 +208,11 @@ module Mongo
           mutex.synchronize do
             if connection.generation == @generation
               connections.unshift(connection.record_checkin!)
-              connection_available_condvar.broadcast
             else
-              close_connection!(connection, Monitoring::Event::ConnectionClosed::STALE)
+              close_connection(connection, Monitoring::Event::ConnectionClosed::STALE)
             end
+
+            connection_available_condvar.broadcast
           end
           nil
         ensure
@@ -290,7 +291,7 @@ module Mongo
             end
 
             to_refresh.each do |connection|
-              close_connection!(connection, Monitoring::Event::ConnectionClosed::STALE)
+              close_connection(connection, Monitoring::Event::ConnectionClosed::STALE)
             end
           end
         ensure
@@ -301,14 +302,14 @@ module Mongo
           @pool_size -= 1
           if @pool_size < 0
             # This should never happen
-            log_warn("ConnectionPool::AvailableStack: unexpected push")
+            log_warn("ConnectionPool::AvailableStack: unexpected connection removal")
             @pool_size = 0
           end
         end
 
         private
 
-        def close_connection!(connection, reason)
+        def close_connection(connection, reason)
           connection_removed
           connection.disconnect!
 
@@ -323,7 +324,7 @@ module Mongo
 
         def close_if_stale!(connection)
           if connection.generation != @generation
-            close_connection!(connection, Monitoring::Event::ConnectionClosed::STALE)
+            close_connection(connection, Monitoring::Event::ConnectionClosed::STALE)
             true
           end
         end
@@ -331,7 +332,7 @@ module Mongo
         def close_if_idle!(connection)
           if connection && connection.last_checkin && max_idle_time
             if Time.now - connection.last_checkin > max_idle_time
-              close_connection!(connection, Monitoring::Event::ConnectionClosed::IDLE)
+              close_connection(connection, Monitoring::Event::ConnectionClosed::IDLE)
               true
             end
           end

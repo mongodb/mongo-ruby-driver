@@ -24,7 +24,7 @@ module Mongo
           @mutex = Mutex.new
         end
 
-        def clear!
+        def clear
           loop do
             semaphore = @mutex.synchronize do
               return if @wait_queue.empty?

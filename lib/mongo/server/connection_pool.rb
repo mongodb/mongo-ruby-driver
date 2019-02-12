@@ -148,10 +148,10 @@ module Mongo
       # @return [ true ] true.
       #
       # @since 2.7.0
-      def clear!
+      def clear
         raise_if_closed!
 
-        connections.clear!
+        connections.clear
 
         publish_cmap_event(
           Monitoring::Event::PoolCleared.new(address)
@@ -170,7 +170,7 @@ module Mongo
         return if closed?
 
         @closed = true
-        @wait_queue.clear!
+        @wait_queue.clear
         if connections
           connections.close!
 
