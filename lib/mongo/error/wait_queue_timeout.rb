@@ -17,13 +17,13 @@ module Mongo
 
     # Exception raised if a timeout occurs when attempting to acquire a connection from a pool.
     #
-    # @since 2.7.0
+    # @since 2.8.0
     class WaitQueueTimeout < Error
 
       # @return [ Mongo::Address ] address The address of the server the pool's connections connect
       #   to.
       #
-      # @since 2.7.0
+      # @since 2.8.0
       attr_reader :address
 
       # Instantiate the new exception.
@@ -31,7 +31,7 @@ module Mongo
       # @example Instantiate the exception.
       #   Mongo::Error::WaitQueueTimeout.new(address, pool_size)
       #
-      # @since 2.7.0
+      # @since 2.8.0
       def initialize(address)
         @address = address
 

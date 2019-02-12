@@ -19,18 +19,18 @@ module Mongo
 
         # Event fired when a connection is successfully checked out out of a pool.
         #
-        # @since 2.7.0
+        # @since 2.8.0
         class ConnectionCheckedOut < Base
 
           # @return [ Mongo::Address ] address The address of the server that the connection will
           #   connect to.
           #
-          # @since 2.7.0
+          # @since 2.8.0
           attr_reader :address
 
           # @return [ Integer ] connection_id The ID of the connection.
           #
-          # @since 2.7.0
+          # @since 2.8.0
           attr_reader :connection_id
 
           # Create the event.
@@ -38,7 +38,7 @@ module Mongo
           # @example Create the event.
           #   ConnectionCheckedOut.new(address, id)
           #
-          # @since 2.7.0
+          # @since 2.8.0
           def initialize(address, id)
             @address = address
             @connection_id = id
@@ -50,7 +50,7 @@ module Mongo
           #
           # @note This method is experimental and subject to change.
           #
-          # @since 2.7.0
+          # @since 2.8.0
           # @api experimental
           def summary
             "#<#{self.class.name.sub(/^Mongo::Monitoring::Event::/, '')} " +

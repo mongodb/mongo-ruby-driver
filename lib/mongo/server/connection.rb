@@ -103,12 +103,12 @@ module Mongo
 
       # The ID for the connection. This will be unique across all connections for the same server.
       #
-      # @since 2.7.0
+      # @since 2.8.0
       attr_reader :id
 
       # The address the connection is connected to.
       #
-      # @since 2.7.0
+      # @since 2.8.0
       attr_reader :address
 
       # Connection pool generation from which this connection was created.

@@ -19,18 +19,18 @@ module Mongo
 
         # Event fired when a connection is ready to be used for operations.
         #
-        # @since 2.7.0
+        # @since 2.8.0
         class ConnectionReady < Base
 
           # @return [ Mongo::Address ] address The address of the server the connection is connected
           #   to.
           #
-          # @since 2.7.0
+          # @since 2.8.0
           attr_reader :address
 
           # @return [ Integer ] connection_id The ID of the connection.
           #
-          # @since 2.7.0
+          # @since 2.8.0
           attr_reader :connection_id
 
           # Create the event.
@@ -38,7 +38,7 @@ module Mongo
           # @example Create the event.
           #   ConnectionReady.new(address, id)
           #
-          # @since 2.7.0
+          # @since 2.8.0
           def initialize(address, id)
             @address = address
             @connection_id = id
@@ -50,7 +50,7 @@ module Mongo
           #
           # @note This method is experimental and subject to change.
           #
-          # @since 2.7.0
+          # @since 2.8.0
           # @api experimental
           def summary
             "#<#{self.class.name.sub(/^Mongo::Monitoring::Event::/, '')} " +

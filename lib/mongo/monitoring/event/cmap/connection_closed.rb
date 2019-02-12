@@ -19,56 +19,56 @@ module Mongo
 
         # Event fired when a connection is closed.
         #
-        # @since 2.7.0
+        # @since 2.8.0
         class ConnectionClosed < Base
 
           # @return [ String ] STALE Indicates that the connection was closed due to it being stale.
           #
-          # @since 2.7.0
+          # @since 2.8.0
           STALE = 'stale'.freeze
 
           # @return [ String ] IDLE Indicates that the connection was closed due to it being idle.
           #
-          # @since 2.7.0
+          # @since 2.8.0
           IDLE = 'idle'.freeze
 
           # @return [ String ] ERROR Indicates that the connection was closed due to it experiencing
           #   an error.
           #
-          # @since 2.7.0
+          # @since 2.8.0
           ERROR = 'error'.freeze
 
           # @return [ String ] POOL_CLOSED Indicates that the connection was closed due to the pool
           #   already being closed.
           #
-          # @since 2.7.0
+          # @since 2.8.0
           POOL_CLOSED = 'poolClosed'.freeze
 
          # @return [ String ] HANDSHAKE_FAILED Indicates that the connection was closed due to the
           #   connection handshake failing.
           #
-          # @since 2.7.0
+          # @since 2.8.0
           HANDSHAKE_FAILED = 'handshakeFailed'.freeze
 
           # @return [ String ] UNKNOWN Indicates that the connection was closed for an unknown reason.
           #
-          # @since 2.7.0
+          # @since 2.8.0
           UNKNOWN = 'unknown'.freeze
 
           # @return [ Integer ] connection_id The ID of the connection.
           #
-          # @since 2.7.0
+          # @since 2.8.0
           attr_reader :connection_id
 
           # @return [ String ] reason The reason why the connection was closed.
           #
-          # @since 2.7.0
+          # @since 2.8.0
           attr_reader :reason
 
           # @return [ Mongo::Address ] address The address of the server the pool's connections will
           #   connect to.
           #
-          # @since 2.7.0
+          # @since 2.8.0
           attr_reader :address
 
           # Create the event.
@@ -76,7 +76,7 @@ module Mongo
           # @example Create the event.
           #   ConnectionClosed.new(reason, address, id)
           #
-          # @since 2.7.0
+          # @since 2.8.0
           def initialize(reason, address, id)
             @reason = reason
             @address = address
@@ -89,7 +89,7 @@ module Mongo
           #
           # @note This method is experimental and subject to change.
           #
-          # @since 2.7.0
+          # @since 2.8.0
           # @api experimental
           def summary
             "#<#{self.class.name.sub(/^Mongo::Monitoring::Event::/, '')} " +

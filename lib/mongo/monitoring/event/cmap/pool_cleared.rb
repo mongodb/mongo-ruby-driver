@@ -19,13 +19,13 @@ module Mongo
 
         # Event fired when a connection pool is cleared.
         #
-        # @since 2.7.0
+        # @since 2.8.0
         class PoolCleared < Base
 
           # @return [ Mongo::Address ] address The address of the server the pool's connections will
           #   connect to.
           #
-          # @since 2.7.0
+          # @since 2.8.0
           attr_reader :address
 
           # Create the event.
@@ -33,7 +33,7 @@ module Mongo
           # @example Create the event.
           #   PoolCleared.new(address)
           #
-          # @since 2.7.0
+          # @since 2.8.0
           def initialize(address)
             @address = address
           end
@@ -44,7 +44,7 @@ module Mongo
           #
           # @note This method is experimental and subject to change.
           #
-          # @since 2.7.0
+          # @since 2.8.0
           # @api experimental
           def summary
             "#<#{self.class.name.sub(/^Mongo::Monitoring::Event::/, '')} address=#{address}>"

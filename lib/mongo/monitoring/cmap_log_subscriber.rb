@@ -17,13 +17,13 @@ module Mongo
 
     # Subscribes to CMAP events and logs them.
     #
-    # @since 2.7.0
+    # @since 2.8.0
     class CmapLogSubscriber
       include Loggable
 
       # @return [ Hash ] options The options.
       #
-      # @since 2.7.0
+      # @since 2.8.0
       attr_reader :options
 
       # Create the new log subscriber.
@@ -35,7 +35,7 @@ module Mongo
       #
       # @option options [ Logger ] :logger An optional custom logger.
       #
-      # @since 2.7.0
+      # @since 2.8.0
       def initialize(options = {})
         @options = options
       end
@@ -47,7 +47,7 @@ module Mongo
       #
       # @param [ Event ] event The event.
       #
-      # @since 2.7.0
+      # @since 2.8.0
       def succeeded(event)
         log_debug(event) if logger.debug?
       end

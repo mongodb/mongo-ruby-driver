@@ -145,7 +145,7 @@ module Mongo
         # Updates the generation number. The connections will be disconnected and removed lazily
         # when the stack attempts to pop them.
         #
-        # @since 2.7.0
+        # @since 2.8.0
         def clear
           @generation += 1
         end
@@ -157,7 +157,7 @@ module Mongo
         #
         # @return [ true ] Always true.
         #
-        # @since 2.1.0
+        # @since 2.8.0
         def close!
           check_count_invariants
 

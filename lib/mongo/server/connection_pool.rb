@@ -62,7 +62,7 @@ module Mongo
 
       # @return [ String ] address The address the pool's connections will connect to.
       #
-      # @since 2.7.0
+      # @since 2.8.0
       attr_reader :address
 
       # @return [ Hash ] options The pool options.
@@ -147,7 +147,7 @@ module Mongo
       #
       # @return [ true ] true.
       #
-      # @since 2.7.0
+      # @since 2.8.0
       def clear
         raise_if_closed!
 
@@ -165,7 +165,7 @@ module Mongo
       #
       # @return [ true ] true.
       #
-      # @since 2.7.0
+      # @since 2.8.0
       def close!
         return if closed?
 
@@ -227,7 +227,7 @@ module Mongo
       #
       # @return [ true | false ] Whether the pool is closed.
       #
-      # @since 2.7.0
+      # @since 2.8.0
       def closed?
         @closed
       end
@@ -236,7 +236,7 @@ module Mongo
       #
       # @raise [ Error::PoolClosed ] If the pool has been closed.
       #
-      # @since 2.7.0
+      # @since 2.8.0
       def raise_if_closed!
         raise Error::PoolClosed.new(address, @pool_size) if closed?
       end

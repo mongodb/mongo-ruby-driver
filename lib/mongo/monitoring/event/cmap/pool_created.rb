@@ -19,18 +19,18 @@ module Mongo
 
         # Event fired when a connection pool is created.
         #
-        # @since 2.7.0
+        # @since 2.8.0
         class PoolCreated < Base
 
           # @return [ Mongo::Address ] address The address of the server the pool's connections will
           #   connect to.
           #
-          # @since 2.7.0
+          # @since 2.8.0
           attr_reader :address
 
           # @return [ Hash ] options Options specified for pool creation.
           #
-          # @since 2.7.0
+          # @since 2.8.0
           attr_reader :options
 
           # Create the event.
@@ -38,7 +38,7 @@ module Mongo
           # @example Create the event.
           #   PoolCreated.new(address, options)
           #
-          # @since 2.7.0
+          # @since 2.8.0
           def initialize(address, options)
             @address = address
             @options = options.dup
@@ -50,7 +50,7 @@ module Mongo
           #
           # @note This method is experimental and subject to change.
           #
-          # @since 2.7.0
+          # @since 2.8.0
           # @api experimental
           def summary
             "#<#{self.class.name.sub(/^Mongo::Monitoring::Event::/, '')} address=#{address}>"
