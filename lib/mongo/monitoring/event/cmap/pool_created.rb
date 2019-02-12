@@ -53,7 +53,7 @@ module Mongo
           # @since 2.8.0
           # @api experimental
           def summary
-            "#<#{self.class.name.sub(/^Mongo::Monitoring::Event::/, '')} address=#{address}>"
+            "#<#{self.class.name.sub(/^Mongo::Monitoring::Event::Cmap::/, '')} address=#{address} options=#{options}>"
           end
         end
       end

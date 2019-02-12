@@ -52,7 +52,7 @@ module Mongo
           # @since 2.8.0
           # @api experimental
           def summary
-            "#<#{self.class.name.sub(/^Mongo::Monitoring::Event::/, '')} " +
+            "#<#{self.class.name.sub(/^Mongo::Monitoring::Event::Cmap::/, '')} " +
                 "address=#{address} connection_id=#{connection_id}>"
           end
         end
