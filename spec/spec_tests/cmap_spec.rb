@@ -28,7 +28,7 @@ describe 'Cmap' do
       end
 
       it 'raises the correct error' do
-        expect(result['error']).to eq(spec.error)
+        expect(result['error']).to eq(spec.expected_error)
       end
 
       it 'emits the correct events' do

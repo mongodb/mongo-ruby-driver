@@ -21,13 +21,13 @@ module Mongo
       attr_reader :processed_ops
 
       # @return [ Error | nil ] error The expected error.
-      attr_reader :error
+      attr_reader :expected_error
 
       # @return [ Array<Event::Base> ] events The events expected to occur.
-      attr_reader :events
+      attr_reader :expected_events
 
       # @return [ Array<String> ] events The names of events to ignore.
-      attr_reader :ignore
+      attr_reader :ignore_events
 
       # @return [ Mongo::ConnectionPool ] pool The connection pool to use for operations.
       attr_reader :pool
@@ -50,9 +50,9 @@ module Mongo
         @pool_options = snakeize_hash(process_options(@test['poolOptions']))
         @spec_ops = @test['operations'].map { |o| Operation.new(o) }
         @processed_ops = []
-        @error = @test['error']
-        @events = @test['events']
-        @ignore = @test['ignore'] || []
+        @expected_error = @test['error']
+        @expected_events = @test['events']
+        @ignore_events = @test['ignore'] || []
       end
 
       def setup(cluster)
@@ -66,7 +66,7 @@ module Mongo
             cluster,
             monitoring,
             Mongo::Event::Listeners.new,
-            pool_options)
+            pool_options.merge(monitoring_io: false))
 
         @pool = Mongo::Server::ConnectionPool.get(server) do
           Mongo::Server::Connection.new(server)
@@ -78,7 +78,7 @@ module Mongo
       def run
         state = {}
 
-        { 'error' => nil }.tap do |result|
+        {}.tap do |result|
           processed_ops.each do |op|
             err = op.run(pool, state)
 
@@ -88,6 +88,7 @@ module Mongo
             end
           end
 
+          result['error'] ||= nil
           result['events'] = subscriber.succeeded_events.reduce([]) do |events, event|
             event = case event
                     when Mongo::Monitoring::Event::PoolCreated
@@ -145,7 +146,7 @@ module Mongo
                       next
                     end
 
-            events << event unless @ignore.include?(event['type'])
+            events << event unless @ignore_events.include?(event['type'])
             events
           end
         end
@@ -329,7 +330,10 @@ module Mongo
       end
 
       def run_checkin_op(state)
-        until state[connection]; end
+        until state[connection]
+          sleep(0.2)
+        end
+
         pool.checkin(state[connection])
       end
 

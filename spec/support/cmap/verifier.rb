@@ -28,7 +28,7 @@ module Mongo
       # Uses RSpec matchers and raises expectation failures if there is a
       # mismatch.
       def verify_events(actual_events)
-        expected_events = test_instance.events
+        expected_events = test_instance.expected_events
         if expected_events.nil?
           expect(actual_events).to be nil
         elsif expected_events.empty?

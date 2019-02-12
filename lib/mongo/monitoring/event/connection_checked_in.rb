@@ -52,7 +52,7 @@ module Mongo
         # @api experimental
         def summary
           "#<#{self.class.name.sub(/^Mongo::Monitoring::Event::/, '')} " +
-              "connection_id=#{connection_id} address=#{address}>"
+              "address=#{address} connection_id=#{connection_id}>"
         end
       end
     end
