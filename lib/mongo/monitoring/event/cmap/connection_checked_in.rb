@@ -17,7 +17,7 @@ module Mongo
     module Event
       module Cmap
 
-        # Event fired when a connection is returned to a connection pool.
+        # Event published when a connection is returned to a connection pool.
         #
         # @since 2.8.0
         class ConnectionCheckedIn < Base

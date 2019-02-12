@@ -17,7 +17,7 @@ module Mongo
     module Event
       module Cmap
 
-        # Event fired when a connection pool is cleared.
+        # Event published when a connection pool is cleared.
         #
         # @since 2.8.0
         class PoolCleared < Base

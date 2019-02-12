@@ -17,7 +17,7 @@ module Mongo
     module Event
       module Cmap
 
-        # Event fired when a connection is closed.
+        # Event published when a connection is closed.
         #
         # @since 2.8.0
         class ConnectionClosed < Base

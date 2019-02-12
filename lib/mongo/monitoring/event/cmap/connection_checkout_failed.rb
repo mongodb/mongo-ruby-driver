@@ -17,7 +17,7 @@ module Mongo
     module Event
       module Cmap
 
-        # Event fired when a connection is unable to be checked out of a pool.
+        # Event published when a connection is unable to be checked out of a pool.
         #
         # @since 2.8.0
         class ConnectionCheckoutFailed < Base

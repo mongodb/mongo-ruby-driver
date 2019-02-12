@@ -17,7 +17,7 @@ module Mongo
     module Event
       module Cmap
 
-        # Event fired when a thread begins attempting to check a connection out of a pool.
+        # Event published when a thread begins attempting to check a connection out of a pool.
         #
         # @since 2.8.0
         class ConnectionCheckoutStarted < Base

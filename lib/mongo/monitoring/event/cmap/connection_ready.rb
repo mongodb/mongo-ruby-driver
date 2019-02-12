@@ -17,7 +17,7 @@ module Mongo
     module Event
       module Cmap
 
-        # Event fired when a connection is ready to be used for operations.
+        # Event published when a connection is ready to be used for operations.
         #
         # @since 2.8.0
         class ConnectionReady < Base
