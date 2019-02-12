@@ -152,7 +152,7 @@ module Mongo
             authenticate!
 
             publish_cmap_event(
-              Monitoring::Event::ConnectionReady.new(address, id)
+              Monitoring::Event::Cmap::ConnectionReady.new(address, id)
             )
           rescue Exception
             @socket = nil

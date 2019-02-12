@@ -51,7 +51,7 @@ module Mongo
         @options = server.options.dup.freeze
 
         publish_cmap_event(
-          Monitoring::Event::PoolCreated.new(address, options)
+          Monitoring::Event::Cmap::PoolCreated.new(address, options)
         )
 
         @closed = false
@@ -91,13 +91,13 @@ module Mongo
       # @since 2.0.0
       def checkin(connection)
         publish_cmap_event(
-          Monitoring::Event::ConnectionCheckedIn.new(address, connection.id)
+          Monitoring::Event::Cmap::ConnectionCheckedIn.new(address, connection.id)
         )
 
         if closed?
           publish_cmap_event(
-              Monitoring::Event::ConnectionClosed.new(
-                  Monitoring::Event::ConnectionClosed::POOL_CLOSED,
+              Monitoring::Event::Cmap::ConnectionClosed.new(
+                  Monitoring::Event::Cmap::ConnectionClosed::POOL_CLOSED,
                   address,
                   connection.id,
               ),
@@ -123,19 +123,19 @@ module Mongo
         raise_if_closed!
 
         publish_cmap_event(
-          Monitoring::Event::ConnectionCheckoutStarted.new(address)
+          Monitoring::Event::Cmap::ConnectionCheckoutStarted.new(address)
         )
 
         deadline = Time.now + wait_timeout
         @wait_queue.enter_wait_queue(wait_timeout, deadline) { connections.pop(deadline) }.tap do |c|
             publish_cmap_event(
-              Monitoring::Event::ConnectionCheckedOut.new(address, c.id),
+              Monitoring::Event::Cmap::ConnectionCheckedOut.new(address, c.id),
             )
         end
       rescue Error::WaitQueueTimeout
         publish_cmap_event(
-            Monitoring::Event::ConnectionCheckoutFailed.new(
-              Monitoring::Event::ConnectionCheckoutFailed::TIMEOUT,
+            Monitoring::Event::Cmap::ConnectionCheckoutFailed.new(
+              Monitoring::Event::Cmap::ConnectionCheckoutFailed::TIMEOUT,
               address,
             ),
         )
@@ -154,7 +154,7 @@ module Mongo
         connections.clear
 
         publish_cmap_event(
-          Monitoring::Event::PoolCleared.new(address)
+          Monitoring::Event::Cmap::PoolCleared.new(address)
         )
 
         true
@@ -175,7 +175,7 @@ module Mongo
           connections.close!
 
           publish_cmap_event(
-            Monitoring::Event::PoolClosed.new(address)
+            Monitoring::Event::Cmap::PoolClosed.new(address)
           )
         end
 
@@ -257,7 +257,7 @@ module Mongo
           ConnectionPool.new(server) do |generation|
             Connection.new(server, server.options.merge(generation: generation)).tap do |c|
               c.publish_cmap_event(
-                Monitoring::Event::ConnectionCreated.new(server.address, c.id)
+                Monitoring::Event::Cmap::ConnectionCreated.new(server.address, c.id)
               )
             end
           end

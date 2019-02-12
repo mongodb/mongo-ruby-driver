@@ -90,60 +90,60 @@ module Mongo
 
           result['error'] ||= nil
           result['events'] = subscriber.succeeded_events.reduce([]) do |events, event|
+            next unless event.is_a?(Mongo::Monitoring::Event::Cmap)
+
             event = case event
-                    when Mongo::Monitoring::Event::PoolCreated
+                    when Mongo::Monitoring::Event::Cmap::PoolCreated
                       {
                         'type' => 'ConnectionPoolCreated',
                         'address' => event.address,
                         'options' => normalize_options(event.options),
                       }
-                    when Mongo::Monitoring::Event::PoolClosed
+                    when Mongo::Monitoring::Event::Cmap::PoolClosed
                       {
                         'type' => 'ConnectionPoolClosed',
                         'address' => event.address,
                       }
-                    when Mongo::Monitoring::Event::ConnectionCreated
+                    when Mongo::Monitoring::Event::Cmap::ConnectionCreated
                       {
                         'type' => 'ConnectionCreated',
                         'connectionId' => event.connection_id,
                       }
-                    when Mongo::Monitoring::Event::ConnectionReady
+                    when Mongo::Monitoring::Event::Cmap::ConnectionReady
                       {
                         'type' => 'ConnectionReady',
                         'connectionId' => event.connection_id,
                       }
-                    when Mongo::Monitoring::Event::ConnectionClosed
+                    when Mongo::Monitoring::Event::Cmap::ConnectionClosed
                       {
                         'type' => 'ConnectionClosed',
                         'connectionId' => event.connection_id,
                         'reason' => event.reason,
                       }
-                    when Mongo::Monitoring::Event::ConnectionCheckoutStarted
+                    when Mongo::Monitoring::Event::Cmap::ConnectionCheckoutStarted
                       {
                         'type' => 'ConnectionCheckOutStarted',
                     }
-                    when Mongo::Monitoring::Event::ConnectionCheckoutFailed
+                    when Mongo::Monitoring::Event::Cmap::ConnectionCheckoutFailed
                       {
                         'type' => 'ConnectionCheckOutFailed',
                         'reason' => event.reason,
                       }
-                   when Mongo::Monitoring::Event::ConnectionCheckedOut
+                   when Mongo::Monitoring::Event::Cmap::ConnectionCheckedOut
                       {
                         'type' => 'ConnectionCheckedOut',
                         'connectionId' => event.connection_id,
                       }
-                    when Mongo::Monitoring::Event::ConnectionCheckedIn
+                    when Mongo::Monitoring::Event::Cmap::ConnectionCheckedIn
                       {
                         'type' => 'ConnectionCheckedIn',
                         'connectionId' => event.connection_id,
                       }
-                    when Mongo::Monitoring::Event::PoolCleared
+                    when Mongo::Monitoring::Event::Cmap::PoolCleared
                       {
                         'type' => 'ConnectionPoolCleared',
                         'address' => event.address,
                       }
-                    else
-                      next
                     end
 
             events << event unless @ignore_events.include?(event['type'])

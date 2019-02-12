@@ -170,8 +170,8 @@ module Mongo
               connection.disconnect!
 
               publish_cmap_event(
-                  Monitoring::Event::ConnectionClosed.new(
-                      Monitoring::Event::ConnectionClosed::POOL_CLOSED,
+                  Monitoring::Event::Cmap::ConnectionClosed.new(
+                      Monitoring::Event::Cmap::ConnectionClosed::POOL_CLOSED,
                       @address,
                       connection.id,
                   ),
@@ -209,7 +209,7 @@ module Mongo
             if connection.generation == @generation
               connections.unshift(connection.record_checkin!)
             else
-              close_connection(connection, Monitoring::Event::ConnectionClosed::STALE)
+              close_connection(connection, Monitoring::Event::Cmap::ConnectionClosed::STALE)
             end
 
             connection_available_condvar.broadcast
@@ -291,7 +291,7 @@ module Mongo
             end
 
             to_refresh.each do |connection|
-              close_connection(connection, Monitoring::Event::ConnectionClosed::STALE)
+              close_connection(connection, Monitoring::Event::Cmap::ConnectionClosed::STALE)
             end
           end
         ensure
@@ -314,7 +314,7 @@ module Mongo
           connection.disconnect!
 
           publish_cmap_event(
-            Monitoring::Event::ConnectionClosed.new(
+            Monitoring::Event::Cmap::ConnectionClosed.new(
               reason,
               @address,
               connection.id,
@@ -324,7 +324,7 @@ module Mongo
 
         def close_if_stale!(connection)
           if connection.generation != @generation
-            close_connection(connection, Monitoring::Event::ConnectionClosed::STALE)
+            close_connection(connection, Monitoring::Event::Cmap::ConnectionClosed::STALE)
             true
           end
         end
@@ -332,7 +332,7 @@ module Mongo
         def close_if_idle!(connection)
           if connection && connection.last_checkin && max_idle_time
             if Time.now - connection.last_checkin > max_idle_time
-              close_connection(connection, Monitoring::Event::ConnectionClosed::IDLE)
+              close_connection(connection, Monitoring::Event::Cmap::ConnectionClosed::IDLE)
               true
             end
           end
