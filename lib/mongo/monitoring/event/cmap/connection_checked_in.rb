@@ -15,14 +15,14 @@
 module Mongo
   class Monitoring
     module Event
-      class Cmap
+      module Cmap
 
         # Event fired when a connection is returned to a connection pool.
         #
         # @since 2.7.0
-        class ConnectionCheckedIn < Mongo::Monitoring::Event::Cmap
+        class ConnectionCheckedIn < Base
 
-          # @return [ String ] address The address of the server the connection was connected to.
+          # @return [ Address ] address The address of the server the connection was connected to.
           #
           # @since 2.7.0
           attr_reader :address

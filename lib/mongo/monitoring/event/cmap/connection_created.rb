@@ -15,12 +15,12 @@
 module Mongo
   class Monitoring
     module Event
-      class Cmap
+      module Cmap
 
         # Event fired when a connection is created.
         #
         # @since 2.7.0
-        class ConnectionCreated < Mongo::Monitoring::Event::Cmap
+        class ConnectionCreated < Base
 
           # @return [ Mongo::Address ] address The address of the server the connection will connect
           #   to.

@@ -15,12 +15,12 @@
 module Mongo
   class Monitoring
     module Event
-      class Cmap
+      module Cmap
 
         # Event fired when a thread begins attempting to check a connection out of a pool.
         #
         # @since 2.7.0
-        class ConnectionCheckoutStarted < Mongo::Monitoring::Event::Cmap
+        class ConnectionCheckoutStarted < Base
 
           # @return [ Mongo::Address ] address The address of the server that the connection will
           #   connect to.

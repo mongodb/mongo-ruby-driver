@@ -15,12 +15,12 @@
 module Mongo
   class Monitoring
     module Event
-      class Cmap
+      module Cmap
 
         # Event fired when a connection is unable to be checked out of a pool.
         #
         # @since 2.7.0
-        class ConnectionCheckoutFailed < Mongo::Monitoring::Event::Cmap
+        class ConnectionCheckoutFailed < Base
 
           # @return [ String ] POOL_CLOSED Indicates that the connection checkout failed due to the
           #   pool already being closed.

@@ -15,12 +15,12 @@
 module Mongo
   class Monitoring
     module Event
-      class Cmap
+      module Cmap
 
         # Event fired when a connection is closed.
         #
         # @since 2.7.0
-        class ConnectionClosed < Mongo::Monitoring::Event::Cmap
+        class ConnectionClosed < Base
 
           # @return [ String ] STALE Indicates that the connection was closed due to it being stale.
           #

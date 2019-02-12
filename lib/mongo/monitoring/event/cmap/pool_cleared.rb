@@ -15,12 +15,12 @@
 module Mongo
   class Monitoring
     module Event
-      class Cmap
+      module Cmap
 
         # Event fired when a connection pool is cleared.
         #
         # @since 2.7.0
-        class PoolCleared < Mongo::Monitoring::Event::Cmap
+        class PoolCleared < Base
 
           # @return [ Mongo::Address ] address The address of the server the pool's connections will
           #   connect to.
