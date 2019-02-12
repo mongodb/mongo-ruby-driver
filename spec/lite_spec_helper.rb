@@ -115,6 +115,12 @@ RSpec.configure do |config|
       TimeoutInterrupt.timeout(45) do
         example.run
       end
+
+      # To avoid a buildup of connections, we periodically close and reconnect each client if the
+      # tests are running against a server.
+      if defined?(NON_LITE_SPEC_TESTS) && NON_LITE_SPEC_TESTS && rand < 0.01
+        close_local_clients(true)
+      end
     end
   end
 end

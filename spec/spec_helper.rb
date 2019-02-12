@@ -1,3 +1,9 @@
+# We use an RSpec `around` hook to close and reconnect the clients around every 100 tests. However,
+# `lite_spec_helper` also uses an `around` hook to enforce a timeout on each test. In order not to
+# have the client reconnection count towards the timeout (and cause false failures), we define a
+# constant that `lite_spec_helper` can check to see if the client reconnect logic should be defined.
+NON_LITE_SPEC_TESTS = true
+
 require 'lite_spec_helper'
 
 # Replica set name can be overridden via replicaSet parameter in MONGODB_URI
@@ -15,14 +21,6 @@ require 'support/monitoring_ext'
 RSpec.configure do |config|
   config.include(Authorization)
   config.extend(Constraints)
-
-  config.around(:each) do |example|
-    example.run
-
-    if rand < 0.01
-      close_local_clients(true)
-    end
-  end
 end
 
 # Determine whether the test clients are connecting to a standalone.
