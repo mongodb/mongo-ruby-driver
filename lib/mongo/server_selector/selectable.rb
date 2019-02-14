@@ -20,6 +20,38 @@ module Mongo
     # @since 2.0.0
     module Selectable
 
+      # Initialize the server selector.
+      #
+      # @example Initialize the selector.
+      #   Mongo::ServerSelector::Secondary.new(:tag_sets => [{'dc' => 'nyc'}])
+      #
+      # @example Initialize the preference with no options.
+      #   Mongo::ServerSelector::Secondary.new
+      #
+      # @param [ Hash ] options The server preference options.
+      #
+      # @option options [ Integer ] :local_threshold The local threshold boundary for
+      #  nearest selection in seconds.
+      # @option options [ Integer ] max_staleness The maximum replication lag,
+      #   in seconds, that a secondary can suffer and still be eligible for a read.
+      #   A value of -1 is treated identically to nil, which is to not
+      #   have a maximum staleness.
+      #
+      # @raise [ Error::InvalidServerPreference ] If tag sets are specified
+      #   but not allowed.
+      #
+      # @since 2.0.0
+      def initialize(options = nil)
+        options = options ? options.dup : {}
+        if options[:max_staleness] == -1
+          options.delete(:max_staleness)
+        end
+        @options = options.freeze
+        @tag_sets = (options[:tag_sets] || []).freeze
+        @max_staleness = options[:max_staleness]
+        validate!
+      end
+
       # @return [ Hash ] options The options.
       attr_reader :options
 
@@ -48,34 +80,6 @@ module Mongo
             max_staleness == other.max_staleness
       end
 
-      # Initialize the server selector.
-      #
-      # @example Initialize the selector.
-      #   Mongo::ServerSelector::Secondary.new(:tag_sets => [{'dc' => 'nyc'}])
-      #
-      # @example Initialize the preference with no options.
-      #   Mongo::ServerSelector::Secondary.new
-      #
-      # @param [ Hash ] options The server preference options.
-      #
-      # @option options [ Integer ] :local_threshold The local threshold boundary for
-      #  nearest selection in seconds.
-      # @option options [ Integer ] max_staleness The maximum replication lag,
-      #   in seconds, that a secondary can suffer and still be eligible for a read.
-      #   A value of -1 is treated identically to nil, which is to not
-      #   have a maximum staleness.
-      #
-      # @raise [ Error::InvalidServerPreference ] If tag sets are specified
-      #   but not allowed.
-      #
-      # @since 2.0.0
-      def initialize(options = {})
-        @options = (options || {}).freeze
-        @tag_sets = (options[:tag_sets] || []).freeze
-        @max_staleness = options[:max_staleness] unless options[:max_staleness] == -1
-        validate!
-      end
-
       # Inspect the server selector.
       #
       # @example Inspect the server selector.
@@ -99,6 +103,18 @@ module Mongo
       #
       # @since 2.0.0
       def select_server(cluster, ping = nil)
+        if cluster.replica_set?
+          validate_max_staleness_value_early!
+        end
+        if cluster.addresses.empty?
+          if Lint.enabled?
+            unless cluster.servers.empty?
+              raise Error::LintError, "Cluster has no addresses but has servers: #{cluster.servers.map(&:inspect).join(', ')}"
+            end
+          end
+          msg = "Cluster has no addresses, and therefore will never have a server"
+          raise Error::NoServerAvailable.new(self, cluster, msg)
+        end
         @local_threshold = cluster.options[:local_threshold] || LOCAL_THRESHOLD
         @server_selection_timeout = cluster.options[:server_selection_timeout] || SERVER_SELECTION_TIMEOUT
         deadline = Time.now + server_selection_timeout
@@ -292,12 +308,27 @@ module Mongo
         end
       end
 
+      def validate_max_staleness_value_early!
+        if @max_staleness
+          unless @max_staleness >= SMALLEST_MAX_STALENESS_SECONDS
+            msg = "`max_staleness` value (#{@max_staleness}) is too small - it must be at least " +
+              "`Mongo::ServerSelector::SMALLEST_MAX_STALENESS_SECONDS` (#{ServerSelector::SMALLEST_MAX_STALENESS_SECONDS})"
+            raise Error::InvalidServerPreference.new(msg)
+          end
+        end
+      end
+
       def validate_max_staleness_value!(cluster)
         if @max_staleness
           heartbeat_frequency_seconds = cluster.options[:heartbeat_frequency] || Server::Monitor::HEARTBEAT_FREQUENCY
-          unless @max_staleness >= [ SMALLEST_MAX_STALENESS_SECONDS,
-                                     (heartbeat_frequency_seconds  + Cluster::IDLE_WRITE_PERIOD_SECONDS) ].max
-            raise Error::InvalidServerPreference.new(Error::InvalidServerPreference::INVALID_MAX_STALENESS)
+          unless @max_staleness >= [
+            SMALLEST_MAX_STALENESS_SECONDS,
+            min_cluster_staleness = heartbeat_frequency_seconds + Cluster::IDLE_WRITE_PERIOD_SECONDS,
+          ].max
+            msg = "`max_staleness` value (#{@max_staleness}) is too small - it must be at least " +
+              "`Mongo::ServerSelector::SMALLEST_MAX_STALENESS_SECONDS` (#{ServerSelector::SMALLEST_MAX_STALENESS_SECONDS}) and (the cluster's heartbeat_frequency " +
+              "setting + `Mongo::Cluster::IDLE_WRITE_PERIOD_SECONDS`) (#{min_cluster_staleness})"
+            raise Error::InvalidServerPreference.new(msg)
           end
         end
       end
