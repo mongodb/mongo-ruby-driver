@@ -34,10 +34,10 @@ helper method:
 The ``with_transaction`` helper does the following:
 
 - It starts a transaction prior to calling the supplied block, and commits
-the transaction when the block finishes.
+  the transaction when the block finishes.
 - If any of the operations in the block, or the commit operation, result in
-a transient transaction error, the block and/or the commit will be executed
-again.
+  a transient transaction error, the block and/or the commit will be executed
+  again.
 
 The block should be idempotent, because it may be called multiple times.
 

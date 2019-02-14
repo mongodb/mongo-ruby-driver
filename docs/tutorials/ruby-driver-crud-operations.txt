@@ -445,7 +445,7 @@ the modification occurs.
   doc # Return the document after the update.
 
 Write Concern
-`````````````
+~~~~~~~~~~~~~
 
 Write concern can be given for specific operations on a collection
 using the ``with`` method, similarly to read preference:
