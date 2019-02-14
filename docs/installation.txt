@@ -18,7 +18,7 @@ To install the mongo gem manually:
 
 .. code-block:: sh
 
-   gem install mongo -v 2.5.1
+  gem install mongo -v 2.7.0
 
 TLS/SSL and the Ruby driver
 ---------------------------
@@ -34,7 +34,7 @@ Users of Linux or other non-macOS Unix can check their OpenSSL version like this
 
 .. code-block:: sh
 
-   $ openssl version
+  $ openssl version
 
 If the version number is less than 1.0.1 support for TLS 1.1 or newer is not available. Contact your operating system
 vendor for a solution or upgrade to a newer distribution.
@@ -43,7 +43,7 @@ You can check your Ruby interpreter by executing the following command:
 
 .. code-block:: sh
 
-   ruby -e "require 'net/http'; require 'json'; puts JSON.parse(Net::HTTP.get(URI('https://www.howsmyssl.com/a/check')))['tls_version']"
+  ruby -e "require 'net/http'; require 'json'; puts JSON.parse(Net::HTTP.get(URI('https://www.howsmyssl.com/a/check')))['tls_version']"
 
 You should see "TLS 1.X" where X is >= 1.
 
