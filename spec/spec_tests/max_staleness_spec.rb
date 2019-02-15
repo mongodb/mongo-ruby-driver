@@ -99,6 +99,7 @@ describe 'Max Staleness Spec' do
 
       before do
         allow(cluster).to receive(:servers).and_return(candidate_servers)
+        allow(cluster).to receive(:addresses).and_return(candidate_servers.map(&:address))
       end
 
       context 'when the max staleness is invalid' do
