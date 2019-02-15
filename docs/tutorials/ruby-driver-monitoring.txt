@@ -13,11 +13,11 @@ Monitoring
 The driver allows the application to be notified when certain events happen.
 These events are organized into the following categories:
 
-- Command monitoring;
-- Topology lifecycle;
-- Server lifecycle;
-- Server heartbeats;
-- Connection pooling.
+- Command monitoring
+- Topology lifecycle
+- Server lifecycle
+- Server heartbeats
+- Connection pooling
 
 Topology and server events are part of Server Discovery and Monitoring (SDAM).
 
