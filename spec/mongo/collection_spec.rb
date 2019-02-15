@@ -1245,7 +1245,14 @@ describe Mongo::Collection do
           c.create
         end
         spec.run
-        collection_with_validator.drop
+
+        if authorized_client.cluster.connected?
+          collection_with_validator.drop
+        else
+          authorized_client.reconnect
+          authorized_client[:validating].drop
+          authorized_client.close
+        end
       end
 
       context 'when the document is valid' do
@@ -1452,7 +1459,14 @@ describe Mongo::Collection do
           c.create
         end
         spec.run
-        collection_with_validator.drop
+
+        if authorized_client.cluster.connected?
+          collection_with_validator.drop
+        else
+          authorized_client.reconnect
+          authorized_client[:validating].drop
+          authorized_client.close
+        end
       end
 
       context 'when the document is valid' do
@@ -2656,7 +2670,14 @@ describe Mongo::Collection do
           c.create
         end
         spec.run
-        collection_with_validator.drop
+
+        if authorized_client.cluster.connected?
+          collection_with_validator.drop
+        else
+          authorized_client.reconnect
+          authorized_client[:validating].drop
+          authorized_client.close
+        end
       end
 
       before do
@@ -3071,7 +3092,14 @@ describe Mongo::Collection do
           c.create
         end
         spec.run
-        collection_with_validator.drop
+
+        if authorized_client.cluster.connected?
+          collection_with_validator.drop
+        else
+          authorized_client.reconnect
+          authorized_client[:validating].drop
+          authorized_client.close
+        end
       end
 
       before do
@@ -3389,7 +3417,14 @@ describe Mongo::Collection do
           c.create
         end
         spec.run
-        collection_with_validator.drop
+
+        if authorized_client.cluster.connected?
+          collection_with_validator.drop
+        else
+          authorized_client.reconnect
+          authorized_client[:validating].drop
+          authorized_client.close
+        end
       end
 
       before do
@@ -4101,7 +4136,14 @@ describe Mongo::Collection do
           c.create
         end
         spec.run
-        collection_with_validator.drop
+
+        if authorized_client.cluster.connected?
+          collection_with_validator.drop
+        else
+          authorized_client.reconnect
+          authorized_client[:validating].drop
+          authorized_client.close
+        end
       end
 
       before do
@@ -4492,7 +4534,14 @@ describe Mongo::Collection do
           c.create
         end
         spec.run
-        collection_with_validator.drop
+
+        if authorized_client.cluster.connected?
+          collection_with_validator.drop
+        else
+          authorized_client.reconnect
+          authorized_client[:validating].drop
+          authorized_client.close
+        end
       end
 
       before do
