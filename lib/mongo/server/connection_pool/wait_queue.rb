@@ -45,7 +45,7 @@ module Mongo
           semaphore.wait(wait_timeout) if wait
 
           if deadline <= Time.now || @mutex.synchronize { !@wait_queue.include?(semaphore) }
-            raise Error::WaitQueueTimeout.new(@address)
+            raise Error::ConnectionCheckoutTimeout.new(@address)
           end
 
           yield

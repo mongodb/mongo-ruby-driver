@@ -186,5 +186,5 @@ require 'mongo/error/unknown_payload_type'
 require 'mongo/error/unsupported_collation'
 require 'mongo/error/unsupported_features'
 require 'mongo/error/unsupported_message_type'
-require 'mongo/error/wait_queue_timeout'
+require 'mongo/error/connection_checkout_timeout'
 

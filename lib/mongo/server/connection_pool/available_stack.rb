@@ -355,8 +355,7 @@ module Mongo
             wait = deadline - Time.now
             connection_available_condvar.wait(mutex, wait)
 
-            # TODO: Raise different error
-            raise Error::WaitQueueTimeout.new(@address) if deadline <= Time.now
+            raise Error::ConnectionCheckoutTimeout.new(@address) if deadline <= Time.now
           end
         end
 

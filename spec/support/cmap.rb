@@ -292,7 +292,7 @@ module Mongo
           'type' => 'PoolClosedError',
           'message' => 'Attempted to check out a connection from closed connection pool',
         }
-      rescue Error::WaitQueueTimeout
+      rescue Error::ConnectionCheckoutTimeout
         raise unless main_thread
 
         {

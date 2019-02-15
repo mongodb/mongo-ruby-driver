@@ -38,7 +38,7 @@ describe Mongo::Server::ConnectionPool::AvailableStack do
           expect {
             stack.pop(Time.now + Mongo::Server::ConnectionPool::WAIT_TIMEOUT)
             stack.pop(Time.now + Mongo::Server::ConnectionPool::WAIT_TIMEOUT)
-          }.to raise_error(Mongo::Error::WaitQueueTimeout)
+          }.to raise_error(Mongo::Error::ConnectionCheckoutTimeout)
         end
       end
 

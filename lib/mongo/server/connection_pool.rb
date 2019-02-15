@@ -132,7 +132,7 @@ module Mongo
               Monitoring::Event::Cmap::ConnectionCheckedOut.new(address, c.id),
             )
         end
-      rescue Error::WaitQueueTimeout
+      rescue Error::ConnectionCheckoutTimeout
         publish_cmap_event(
             Monitoring::Event::Cmap::ConnectionCheckoutFailed.new(
               Monitoring::Event::Cmap::ConnectionCheckoutFailed::TIMEOUT,
