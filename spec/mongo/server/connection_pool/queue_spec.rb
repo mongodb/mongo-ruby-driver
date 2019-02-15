@@ -96,14 +96,14 @@ describe Mongo::Server::ConnectionPool::Queue do
         create_queue(1)
       end
 
-      it 'disconnects all connections in the queue and recreates up to min size with new generation' do
+      it 'disconnects all connections in the queue and bumps generation' do
         expect(queue.queue_size).to eq(2)
         expect(queue.pool_size).to eq(2)
 
         queue.disconnect!
 
-        expect(queue.queue_size).to eq(1)
-        expect(queue.pool_size).to eq(1)
+        expect(queue.queue_size).to eq(0)
+        expect(queue.pool_size).to eq(0)
 
         new_connection = queue.dequeue
         expect(new_connection).not_to eq(connection)
