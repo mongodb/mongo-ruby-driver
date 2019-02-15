@@ -16,8 +16,8 @@ These events are organized into the following categories:
 - Command monitoring;
 - Topology lifecycle;
 - Server lifecycle;
-- Server heartbeats.
-- Connection pooling
+- Server heartbeats;
+- Connection pooling.
 
 Topology and server events are part of Server Discovery and Monitoring (SDAM).
 

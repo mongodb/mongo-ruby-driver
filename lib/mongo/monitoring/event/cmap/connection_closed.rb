@@ -42,7 +42,7 @@ module Mongo
           #   already being closed.
           #
           # @since 2.8.0
-          POOL_CLOSED = :poolClosed
+          POOL_CLOSED = :pool_closed
 
          # @return [ Symbol ] HANDSHAKE_FAILED Indicates that the connection was closed due to the
           #   connection handshake failing.
