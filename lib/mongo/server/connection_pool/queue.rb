@@ -341,6 +341,9 @@ module Mongo
 
         def check_count_invariants
           if Mongo::Lint.enabled?
+            if pool_size < 0
+              raise Error::LintError, 'connection pool queue: underflow'
+            end
             if pool_size > max_size
               raise Error::LintError, 'connection pool queue: overflow'
             end
