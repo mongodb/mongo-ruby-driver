@@ -108,12 +108,6 @@ RSpec.configure do |config|
   end
 
   if SpecConfig.instance.ci?
-    # To avoid a buildup of connections, we periodically close and reconnect each client if the
-    # tests are running against a server.
-    if defined?(NON_LITE_SPEC_TESTS) && NON_LITE_SPEC_TESTS && rand < 0.01
-      close_local_clients(true)
-    end
-
     # Allow a max of 30 seconds per test.
     # Tests should take under 10 seconds ideally but it seems
     # we have some that run for more than 10 seconds in CI.
