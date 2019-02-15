@@ -156,9 +156,9 @@ module Mongo
         end
 
         def teardown_test
+          @db1 && with_reconnect_if_closed(@db1.client) { @db1.drop }
+          @db2 && with_reconnect_if_closed(@db2.client) { @db2.drop }
           @global_client && @global_client.close
-          @db1 && @db1.drop
-          @db2 && @db2.drop
         end
 
         def match_result?(result)
@@ -196,6 +196,20 @@ module Mongo
         end
 
         private
+
+        def with_reconnect_if_closed(client)
+          was_connected = client.cluster.connected?
+
+          unless was_connected
+            client.reconnect
+          end
+
+          yield
+
+          unless was_connected
+            client.close
+          end
+        end
 
         def events
           EventSubscriber.started_events.reduce([]) do |evs, e|
