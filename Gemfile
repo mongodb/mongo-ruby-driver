@@ -28,6 +28,7 @@ group :development, :testing do
   gem 'celluloid', platforms: :mri, require: false
   if RUBY_VERSION < '2.2'
     gem 'timers', '< 4.2'
+    gem 'hitimes', '1.3.0'
   else
     gem 'timers'
   end
