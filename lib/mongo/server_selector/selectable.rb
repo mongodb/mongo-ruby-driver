@@ -115,6 +115,10 @@ module Mongo
           msg = "Cluster has no addresses, and therefore will never have a server"
           raise Error::NoServerAvailable.new(self, cluster, msg)
         end
+        unless cluster.connected?
+          msg = 'Cluster is disconnected'
+          raise Error::NoServerAvailable.new(self, cluster, msg)
+        end
         @local_threshold = cluster.options[:local_threshold] || LOCAL_THRESHOLD
         @server_selection_timeout = cluster.options[:server_selection_timeout] || SERVER_SELECTION_TIMEOUT
         deadline = Time.now + server_selection_timeout
@@ -150,7 +154,21 @@ module Mongo
           end
           cluster.scan!(false)
         end
-        raise Error::NoServerAvailable.new(self, cluster)
+
+        msg = "No #{name} server is available in cluster: #{cluster.summary} " +
+                "with timeout=#{server_selection_timeout}, " +
+                "LT=#{local_threshold}"
+        dead_monitors = []
+        cluster.servers_list.each do |server|
+          thread = server.monitor.instance_variable_get('@thread')
+          if thread.nil? || !thread.alive?
+            dead_monitors << server
+          end
+        end
+        if dead_monitors.any?
+          msg += ". The following servers have dead monitor threads: #{dead_monitors.map(&:summary).join(', ')}"
+        end
+        raise Error::NoServerAvailable.new(self, cluster, msg)
       end
 
       # Get the timeout for server selection.
