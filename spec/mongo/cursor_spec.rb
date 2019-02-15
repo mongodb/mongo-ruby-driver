@@ -33,7 +33,7 @@ describe Mongo::Cursor do
       end
 
       it 'does not schedule the finalizer' do
-        expect(ObjectSpace).not_to receive(:define_finalizer).with(Mongo::Cursor, anything)
+        expect(ObjectSpace).not_to receive(:define_finalizer)
         cursor
       end
     end
@@ -44,7 +44,7 @@ describe Mongo::Cursor do
       end
 
       it 'schedules the finalizer' do
-        expect(ObjectSpace).to receive(:define_finalizer).with(Mongo::Cursor, anything)
+        expect(ObjectSpace).to receive(:define_finalizer)
         cursor
       end
     end

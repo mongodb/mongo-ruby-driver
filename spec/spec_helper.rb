@@ -1,9 +1,3 @@
-# We use an RSpec `around` hook to close and reconnect the clients around every 100 tests. However,
-# `lite_spec_helper` also uses an `around` hook to enforce a timeout on each test. In order not to
-# have the client reconnection count towards the timeout (and cause false failures), we define a
-# constant that `lite_spec_helper` can check to see if the client reconnect logic should be defined.
-NON_LITE_SPEC_TESTS = true
-
 require 'lite_spec_helper'
 
 # Replica set name can be overridden via replicaSet parameter in MONGODB_URI
@@ -21,6 +15,12 @@ require 'support/monitoring_ext'
 RSpec.configure do |config|
   config.include(Authorization)
   config.extend(Constraints)
+
+  config.after(:each) do
+    if rand < 0.01
+      close_local_clients
+    end
+  end
 end
 
 # Determine whether the test clients are connecting to a standalone.
@@ -177,6 +177,27 @@ def scanned_client_server!
     raise ScannedClientHasNoServers
   end
   server
+end
+
+# Converts a 'camelCase' string or symbol to a :snake_case symbol.
+def camel_to_snake(ident)
+  ident = ident.is_a?(String) ? ident.dup : ident.to_s
+  ident[0] = ident[0].downcase
+  ident.chars.reduce('') { |s, c| s + (/[A-Z]/ =~ c ? "_#{c.downcase}" : c) }.to_sym
+end
+
+# Creates a copy of a hash where all keys and string values are converted to snake-case symbols.
+# For example, `{ 'fooBar' => { 'baz' => 'bingBing', :x => 1 } }` converts to
+# `{ :foo_bar => { :baz => :bing_bing, :x => 1 } }`.
+def snakeize_hash(value)
+  return camel_to_snake(value) if value.is_a?(String)
+  return value unless value.is_a?(Hash)
+
+  value.reduce({}) do |hash, kv|
+    hash.tap do |h|
+      h[camel_to_snake(kv.first)] = snakeize_hash(kv.last)
+    end
+  end
 end
 
 # require all shared examples

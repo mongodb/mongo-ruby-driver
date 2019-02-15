@@ -17,12 +17,12 @@ tests:
             result:
                 - {_id: 1, x: 11}
 
-    -
+    - 
         description: "Find with filter, sort, skip, and limit"
-        operation:
+        operation: 
             name: "find"
             arguments:
-                filter:
+                filter: 
                     _id: {$gt: 2}
                 sort: {_id: 1}
                 skip: 2
@@ -33,7 +33,7 @@ tests:
                 - {_id: 5, x: 55}
     -
         description: "Find with limit, sort, and batchsize"
-        operation:
+        operation: 
             name: "find"
             arguments:
                 filter: {}

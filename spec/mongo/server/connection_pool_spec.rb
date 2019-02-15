@@ -337,7 +337,8 @@ describe Mongo::Server::ConnectionPool do
             end
 
             it 'closes all stale sockets and does not connect new ones' do
-              expect(stack.size).to eq(0)
+              expect(stack.size).to eq(1)
+              expect(stack[0].connected?).to be(false)
             end
           end
 
@@ -366,14 +367,17 @@ describe Mongo::Server::ConnectionPool do
               expect(fourth).not_to receive(:connect!)
 
               expect(fifth).to receive(:disconnect!).and_call_original
-              expect(fifth).not_to receive(:connect!)
+              expect(fifth).to receive(:connect!).and_call_original
 
               sleep(0.5)
               pool.close_stale_sockets!
             end
 
             it 'closes all stale sockets and does not connect new ones' do
-              expect(stack.size).to be(0)
+              expect(stack.size).to be(3)
+              expect(stack[0].connected?).to be(true)
+              expect(stack[1].connected?).to be(false)
+              expect(stack[2].connected?).to be(false)
             end
           end
 
@@ -409,7 +413,10 @@ describe Mongo::Server::ConnectionPool do
             end
 
             it 'is kept in the pool' do
-              expect(stack.size).to be(0)
+              expect(stack.size).to be(3)
+              expect(stack[0].connected?).to be(false)
+              expect(stack[1].connected?).to be(false)
+              expect(stack[2].connected?).to be(false)
             end
           end
 
@@ -440,7 +447,9 @@ describe Mongo::Server::ConnectionPool do
             end
 
             it 'closes all stale sockets and does not connect new ones' do
-              expect(stack.size).to be(0)
+              expect(stack.size).to be(2)
+              expect(stack[0].connected?).to be(false)
+              expect(stack[1].connected?).to be(false)
             end
           end
         end

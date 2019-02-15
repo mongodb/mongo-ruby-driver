@@ -156,13 +156,8 @@ class ClientRegistry
     client
   end
 
-  def close_local_clients(reconnect=false)
-    if reconnect
-      @local_clients.map(&:reconnect)
-    else
-      @local_clients.map(&:close)
-    end
-
+  def close_local_clients
+    @local_clients.map(&:close)
     @local_clients = []
   end
 

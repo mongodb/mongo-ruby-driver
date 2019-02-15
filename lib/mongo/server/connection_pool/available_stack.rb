@@ -270,18 +270,26 @@ module Mongo
           check_count_invariants
           return unless max_idle_time
 
-          mutex.synchronize do
-            to_refresh = []
-            connections.reject! do |connection|
-              if last_checkin = connection.last_checkin
-                if (Time.now - last_checkin) > max_idle_time
-                  to_refresh << connection
-                end
+          to_refresh = []
+          connections.each do |connection|
+            if last_checkin = connection.last_checkin
+              if (Time.now - last_checkin) > max_idle_time
+                to_refresh << connection
               end
             end
+          end
+
+          mutex.synchronize do
+            num_checked_out = pool_size - connections.size
+            min_size_delta = [(min_size - num_checked_out), 0].max
 
             to_refresh.each do |connection|
-              close_connection(connection, Monitoring::Event::Cmap::ConnectionClosed::STALE)
+              if connections.include?(connection)
+                connection.disconnect!
+                if connections.index(connection) < min_size_delta
+                  begin; connection.connect!; rescue; end
+                end
+              end
             end
           end
         ensure
