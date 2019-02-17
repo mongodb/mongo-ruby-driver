@@ -36,7 +36,8 @@ module CommonShortcuts
       ismaster = {
                   'setName' => 'mongodb_set',
                   'ismaster' => mode == :primary,
-                  'secondary' => mode != :primary,
+                  'secondary' => mode == :secondary,
+                  'arbiterOnly' => mode == :arbiter,
                   'tags' => tags,
                   'ok' => 1,
                   'minWireVersion' => 2, 'maxWireVersion' => 8,
