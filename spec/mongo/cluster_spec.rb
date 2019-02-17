@@ -656,19 +656,7 @@ describe Mongo::Cluster do
       let(:cluster) { client.cluster }
 
       before do
-        # Cluster waits for initial round of sdam until the primary
-        # is discovered, which means by the time a connection is obtained
-        # here some of the servers in the topology may still be unknown.
-        # This messes with event expectations below. Therefore, wait for
-        # all servers in the topology to be checked.
-        #
-        # This wait here assumes all addresses specified for the test
-        # suite are for working servers of the cluster; if this is not
-        # the case, this test will fail due to exceeding the general
-        # test timeout eventually.
-        until cluster.addresses.length == cluster.servers.length
-          sleep 0.25
-        end
+        wait_for_all_servers(cluster)
       end
 
       it 'includes known servers' do
