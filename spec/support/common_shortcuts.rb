@@ -34,14 +34,18 @@ module CommonShortcuts
       average_round_trip_time = options[:average_round_trip_time] || 0
 
       ismaster = {
-                  'setName' => 'mongodb_set',
-                  'ismaster' => mode == :primary,
-                  'secondary' => mode == :secondary,
-                  'arbiterOnly' => mode == :arbiter,
-                  'tags' => tags,
-                  'ok' => 1,
-                  'minWireVersion' => 2, 'maxWireVersion' => 8,
-                  }
+        'ismaster' => mode == :primary,
+        'secondary' => mode == :secondary,
+        'arbiterOnly' => mode == :arbiter,
+        'isreplicaset' => mode == :ghost,
+        'hidden' => mode == :other,
+        'tags' => tags,
+        'ok' => 1,
+        'minWireVersion' => 2, 'maxWireVersion' => 8,
+      }
+      if [:primary, :secondary, :arbiter, :other].include?(mode)
+        ismaster['setName'] = 'mongodb_set'
+      end
 
       listeners = Mongo::Event::Listeners.new
       monitoring = Mongo::Monitoring.new

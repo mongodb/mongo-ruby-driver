@@ -321,6 +321,42 @@ describe Mongo::Server do
       end
     end
 
+    context 'server is ghost' do
+      let(:server) do
+        make_server(:ghost)
+      end
+
+      before do
+        expect(server).to be_ghost
+      end
+
+      it 'includes its status' do
+        expect(server.summary).to match(/GHOST/)
+      end
+
+      it 'does not include replica set name' do
+        expect(server.summary).not_to include('replica_set')
+      end
+    end
+
+    context 'server is other' do
+      let(:server) do
+        make_server(:other)
+      end
+
+      before do
+        expect(server).to be_other
+      end
+
+      it 'includes its status' do
+        expect(server.summary).to match(/OTHER/)
+      end
+
+      it 'includes replica set name' do
+        expect(server.summary).to match(/replica_set=mongodb_set/)
+      end
+    end
+
     context 'server is unknown' do
       let(:server) do
         described_class.new(address, cluster, monitoring, listeners, SpecConfig.instance.test_options)
