@@ -58,7 +58,7 @@ describe 'Connections' do
           # suite are for working servers of the cluster; if this is not
           # the case, this test will fail due to exceeding the general
           # test timeout eventually.
-          until client.cluster.addresses.length == client.cluster.servers_list.length
+          until client.cluster.addresses.length == client.cluster.servers.length
             sleep 0.25
           end
 
