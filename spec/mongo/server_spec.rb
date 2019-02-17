@@ -265,4 +265,17 @@ describe Mongo::Server do
       end
     end
   end
+
+  describe '#summary' do
+    context 'server is unknown' do
+      let(:server) do
+        described_class.new(address, cluster, monitoring, listeners, SpecConfig.instance.test_options)
+      end
+
+      it 'includes unknown status' do
+        expect(server).to be_unknown
+        expect(server.summary).to match(/UNKNOWN/)
+      end
+    end
+  end
 end
