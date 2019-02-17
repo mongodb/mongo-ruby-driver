@@ -639,4 +639,33 @@ describe Mongo::Cluster do
       end
     end
   end
+
+  describe '#summary' do
+    context 'cluster has unknown servers' do
+      it 'includes unknown servers' do
+        cluster.servers_list.each do |server|
+          expect(server).to be_unknown
+        end
+
+        expect(cluster.summary).to match(/Server address=localhost/)
+      end
+    end
+
+    context 'cluster has known servers' do
+      let(:client) { ClientRegistry.instance.global_client('authorized') }
+      let(:cluster) { client.cluster }
+
+      before do
+        wait_for_all_servers(cluster)
+      end
+
+      it 'includes known servers' do
+        cluster.servers_list.each do |server|
+          expect(server).not_to be_unknown
+        end
+
+        expect(cluster.summary).to match(/Server address=localhost/)
+      end
+    end
+  end
 end
