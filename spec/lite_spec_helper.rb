@@ -87,7 +87,8 @@ else
 end
 
 RSpec.configure do |config|
-  config.extend(CommonShortcuts)
+  config.extend(CommonShortcuts::ClassMethods)
+  config.include(CommonShortcuts::InstanceMethods)
   config.extend(LiteConstraints)
   config.include(ClientRegistryMacros)
 

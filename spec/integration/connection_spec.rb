@@ -48,20 +48,7 @@ describe 'Connections' do
         it 'publishes server description changed event' do
           expect(subscriber.events).to be_empty
 
-          # Cluster waits for initial round of sdam until the primary
-          # is discovered, which means by the time a connection is obtained
-          # here some of the servers in the topology may still be unknown.
-          # This messes with event expectations below. Therefore, wait for
-          # all servers in the topology to be checked.
-          #
-          # This wait here assumes all addresses specified for the test
-          # suite are for working servers of the cluster; if this is not
-          # the case, this test will fail due to exceeding the general
-          # test timeout eventually.
-          until client.cluster.addresses.length == client.cluster.servers.length
-            warn "Waiting for addresses #{client.cluster.addresses} to equal servers #{client.cluster.servers}"
-            sleep 0.25
-          end
+          wait_for_all_servers(client.cluster)
 
           connection
           subscriber.events.clear
