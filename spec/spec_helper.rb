@@ -15,12 +15,6 @@ require 'support/monitoring_ext'
 RSpec.configure do |config|
   config.include(Authorization)
   config.extend(Constraints)
-
-  config.after(:each) do
-    if rand < 0.01
-      close_local_clients
-    end
-  end
 end
 
 # Determine whether the test clients are connecting to a standalone.
