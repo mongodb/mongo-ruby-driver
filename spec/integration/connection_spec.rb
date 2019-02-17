@@ -59,6 +59,7 @@ describe 'Connections' do
           # the case, this test will fail due to exceeding the general
           # test timeout eventually.
           until client.cluster.addresses.length == client.cluster.servers.length
+            warn "Waiting for addresses #{client.cluster.addresses} to equal servers #{client.cluster.servers}"
             sleep 0.25
           end
 
