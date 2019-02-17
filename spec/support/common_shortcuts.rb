@@ -28,5 +28,33 @@ module CommonShortcuts
         sleep 0.25
       end
     end
+
+    def make_server(mode, options = {})
+      tags = options[:tags] || {}
+      average_round_trip_time = options[:average_round_trip_time] || 0
+
+      ismaster = {
+                  'setName' => 'mongodb_set',
+                  'ismaster' => mode == :primary,
+                  'secondary' => mode != :primary,
+                  'tags' => tags,
+                  'ok' => 1,
+                  'minWireVersion' => 2, 'maxWireVersion' => 8,
+                  }
+
+      listeners = Mongo::Event::Listeners.new
+      monitoring = Mongo::Monitoring.new
+      address = options[:address]
+
+      cluster = double('cluster')
+      allow(cluster).to receive(:topology).and_return(topology)
+      allow(cluster).to receive(:app_metadata)
+      allow(cluster).to receive(:options).and_return({})
+      server = Mongo::Server.new(address, cluster, monitoring, listeners, SpecConfig.instance.test_options)
+      description = Mongo::Server::Description.new(address, ismaster, average_round_trip_time)
+      server.tap do |s|
+        allow(s).to receive(:description).and_return(description)
+      end
+    end
   end
 end
