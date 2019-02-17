@@ -23,8 +23,8 @@ module CommonShortcuts
       # suite are for working servers of the cluster; if this is not
       # the case, this test will fail due to exceeding the general
       # test timeout eventually.
-      until cluster.addresses.length == cluster.servers.length
-        warn "Waiting for addresses #{cluster.addresses} to equal servers #{cluster.servers}"
+      while cluster.servers_list.any? { |server| server.unknown? }
+        warn "Waiting for unknown servers in #{cluster.servers}"
         sleep 0.25
       end
     end
