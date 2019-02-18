@@ -19,8 +19,10 @@ group :development, :testing do
     gem 'httparty'
   end
   
-  if RUBY_VERSION >= '2.0.0'
+  if RUBY_VERSION >= '2.3'
     gem 'byebug', platforms: :mri
+  elsif RUBY_VERSION >= '2.0'
+    gem 'byebug', '< 11', platforms: :mri
   end
   
   # for benchmark tests
