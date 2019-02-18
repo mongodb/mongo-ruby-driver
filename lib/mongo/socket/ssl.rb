@@ -52,6 +52,7 @@ module Mongo
       def connect!
         Timeout.timeout(options[:connect_timeout], Error::SocketTimeoutError) do
           handle_errors { @tcp_socket.connect(::Socket.pack_sockaddr_in(port, host)) }
+          #byebug
           @socket = OpenSSL::SSL::SSLSocket.new(@tcp_socket, context)
           @socket.hostname = @host_name
           @socket.sync_close = true
@@ -142,8 +143,8 @@ module Mongo
 
       def create_context(options)
         OpenSSL::SSL::SSLContext.new.tap do |context|
-          set_cert(context, options)
-          set_key(context, options)
+          #set_cert(context, options)
+          #set_key(context, options)
 
 
           if verify_certificate?

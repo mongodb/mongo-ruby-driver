@@ -53,10 +53,6 @@ describe Mongo::Socket::SSL do
 
       context 'when connecting the tcp socket is successful' do
 
-        before do
-          socket.connect!
-        end
-
         it 'connects to the server' do
           expect(socket).to be_alive
         end
