@@ -159,12 +159,20 @@ describe Mongo::Database do
       database[:users].create
     end
 
-    it 'returns a list of the collections info', if: list_command_enabled?  do
-      expect(result).to include('users')
+    context 'server 3.0+' do
+      min_server_fcv '3.0'
+
+      it 'returns a list of the collections info' do
+        expect(result).to include('users')
+      end
     end
 
-    it 'returns a list of the collections info', unless: list_command_enabled?  do
-      expect(result).to include("#{SpecConfig.instance.test_db}.users")
+    context 'server 2.6' do
+      max_server_fcv '2.6'
+
+      it 'returns a list of the collections info' do
+        expect(result).to include("#{SpecConfig.instance.test_db}.users")
+      end
     end
   end
 

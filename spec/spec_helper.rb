@@ -77,14 +77,6 @@ def find_command_enabled?
 end
 
 # For instances where behavior is different on different versions, we need to
-# determine in the specs if we are 2.7 or higher.
-#
-# @since 2.0.0
-def list_command_enabled?
-  $list_command_enabled ||= scanned_client_server!.features.list_indexes_enabled?
-end
-
-# For instances where behavior is different on different versions, we need to
 # determine in the specs if we are 4.0 or higher.
 #
 # @since 2.6.0
