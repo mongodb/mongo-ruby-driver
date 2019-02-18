@@ -242,8 +242,8 @@ describe Mongo::Socket::SSL do
           error = nil
           begin
             described_class.new(
-              address.host,
-              address.port,
+              resolver.host,
+              resolver.port,
               host_name,
               30,
               ::Socket::PF_INET,
@@ -262,8 +262,8 @@ describe Mongo::Socket::SSL do
         it 'raises an error' do
           expect {
             described_class.new(
-              address.host,
-              address.port,
+              resolver.host,
+              resolver.port,
               host_name,
               30,
               ::Socket::PF_INET,
