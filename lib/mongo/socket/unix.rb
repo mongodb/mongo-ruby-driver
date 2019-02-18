@@ -48,10 +48,13 @@ module Mongo
       #
       # @param [ String ] path The path.
       # @param [ Float ] timeout The socket timeout value.
+      # @param [ Hash ] options The options.
+      #
+      # @option options [ Float ] :connect_timeout Connect timeout.
       #
       # @since 2.0.0
-      def initialize(path, timeout)
-        @path, @timeout = path, timeout
+      def initialize(path, timeout, options = {})
+        @path, @timeout, @options = path, timeout, options
         @socket = ::UNIXSocket.new(path)
         set_socket_options(@socket)
       end

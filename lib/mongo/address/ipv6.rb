@@ -95,15 +95,18 @@ module Mongo
       #
       # @param [ Float ] socket_timeout The socket timeout.
       # @param [ Hash ] ssl_options SSL options.
+      # @param [ Hash ] options The options.
+      #
+      # @option options [ Float ] :connect_timeout Connect timeout.
       #
       # @return [ Mongo::Socket::SSL, Mongo::Socket::TCP ] The socket.
       #
       # @since 2.0.0
-      def socket(socket_timeout, ssl_options = {})
+      def socket(socket_timeout, ssl_options = {}, options = {})
         unless ssl_options.empty?
-          Socket::SSL.new(host, port, host_name, socket_timeout, Socket::PF_INET6, ssl_options)
+          Socket::SSL.new(host, port, host_name, socket_timeout, Socket::PF_INET6, ssl_options.merge(options))
         else
-          Socket::TCP.new(host, port, socket_timeout, Socket::PF_INET6)
+          Socket::TCP.new(host, port, socket_timeout, Socket::PF_INET6, options)
         end
       end
     end

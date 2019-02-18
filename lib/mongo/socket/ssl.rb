@@ -32,9 +32,6 @@ module Mongo
       # @return [ String ] host_name The original host name.
       attr_reader :host_name
 
-      # @return [ Hash ] The ssl options.
-      attr_reader :options
-
       # @return [ Integer ] port The port to connect to.
       attr_reader :port
 
@@ -73,7 +70,9 @@ module Mongo
       # @param [ Integer ] port The port number.
       # @param [ Float ] timeout The socket timeout value.
       # @param [ Integer ] family The socket family.
-      # @param [ Hash ] options The ssl options.
+      # @param [ Hash ] options The options.
+      #
+      # @option options [ Float ] :connect_timeout Connect timeout.
       #
       # @since 2.0.0
       def initialize(host, port, host_name, timeout, family, options = {})

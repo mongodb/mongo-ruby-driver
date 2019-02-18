@@ -47,6 +47,9 @@ module Mongo
     # @return [ Socket ] socket The wrapped socket.
     attr_reader :socket
 
+    # @return [ Hash ] The options.
+    attr_reader :options
+
     # Is the socket connection alive?
     #
     # @example Is the socket alive?

@@ -58,10 +58,13 @@ module Mongo
       # @param [ Integer ] port The port number.
       # @param [ Float ] timeout The socket timeout value.
       # @param [ Integer ] family The socket family.
+      # @param [ Hash ] options The options.
+      #
+      # @option options [ Float ] :connect_timeout Connect timeout.
       #
       # @since 2.0.0
-      def initialize(host, port, timeout, family)
-        @host, @port, @timeout = host, port, timeout
+      def initialize(host, port, timeout, family, options = {})
+        @host, @port, @timeout, @options = host, port, timeout, options
         super(family)
       end
 
