@@ -89,7 +89,6 @@ module Mongo
       #
       # @since 2.0.0
       def initialize(server, options = {})
-        @address = server.address
         @monitoring = server.monitoring
         @options = options.freeze
         @server = server
@@ -261,7 +260,7 @@ module Mongo
             @auth_mechanism = nil
           end
 
-          new_description = Description.new(@server.description.address, response, average_rtt)
+          new_description = Description.new(address, response, average_rtt)
           @server.monitor.publish(Event::DESCRIPTION_CHANGED, @server.description, new_description)
         end
       end

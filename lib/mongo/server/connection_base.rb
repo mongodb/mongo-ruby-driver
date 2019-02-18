@@ -26,7 +26,9 @@ module Mongo
       attr_reader :options
 
       # @return [ Mongo::Address ] address The address to connect to.
-      attr_reader :address
+      def address
+        @server.address
+      end
 
       def_delegators :@server,
                      :features,
