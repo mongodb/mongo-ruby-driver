@@ -75,7 +75,6 @@ end
 def op_msg_enabled?
   $op_msg_enabled ||= scanned_client_server!.features.op_msg_enabled?
 end
-alias :change_stream_enabled? :op_msg_enabled?
 
 # For instances where behavior is different on different versions, we need to
 # determine in the specs if we are 3.2 or higher.
