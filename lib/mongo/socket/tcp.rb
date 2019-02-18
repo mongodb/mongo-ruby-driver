@@ -40,13 +40,14 @@ module Mongo
       # @return [ TCP ] The connected socket instance.
       #
       # @since 2.0.0
-      def connect!(connect_timeout = nil)
-        Timeout.timeout(connect_timeout, Error::SocketTimeoutError) do
+      def connect!
+        Timeout.timeout(options[:connect_timeout], Error::SocketTimeoutError) do
           socket.setsockopt(IPPROTO_TCP, TCP_NODELAY, 1)
           handle_errors { socket.connect(::Socket.pack_sockaddr_in(port, host)) }
           self
         end
       end
+      private :connect!
 
       # Initializes a new TCP socket.
       #
@@ -66,6 +67,7 @@ module Mongo
       def initialize(host, port, timeout, family, options = {})
         @host, @port, @timeout, @options = host, port, timeout, options
         super(family)
+        connect!
       end
 
       # This object does not wrap another socket so it's always connectable.

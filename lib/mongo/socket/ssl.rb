@@ -49,8 +49,8 @@ module Mongo
       # @return [ SSL ] The connected socket instance.
       #
       # @since 2.0.0
-      def connect!(connect_timeout = nil)
-        Timeout.timeout(connect_timeout, Error::SocketTimeoutError) do
+      def connect!
+        Timeout.timeout(options[:connect_timeout], Error::SocketTimeoutError) do
           handle_errors { @tcp_socket.connect(::Socket.pack_sockaddr_in(port, host)) }
           @socket = OpenSSL::SSL::SSLSocket.new(@tcp_socket, context)
           @socket.hostname = @host_name
@@ -60,6 +60,7 @@ module Mongo
           self
         end
       end
+      private :connect!
 
       # Initializes a new SSL socket.
       #
@@ -82,6 +83,7 @@ module Mongo
         @tcp_socket = ::Socket.new(family, SOCK_STREAM, 0)
         @tcp_socket.setsockopt(IPPROTO_TCP, TCP_NODELAY, 1)
         set_socket_options(@tcp_socket)
+        connect!
       end
 
       # Read a single byte from the socket.

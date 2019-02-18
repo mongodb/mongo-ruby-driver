@@ -147,12 +147,15 @@ module Mongo
     #
     # @param [ Float ] socket_timeout The socket timeout.
     # @param [ Hash ] ssl_options SSL options.
+    # @param [ Hash ] options The options.
+    #
+    # @option options [ Float ] :connect_timeout Connect timeout.
     #
     # @return [ Mongo::Socket::SSL, Mongo::Socket::TCP, Mongo::Socket::Unix ] The socket.
     #
     # @since 2.0.0
-    def socket(socket_timeout, ssl_options = {})
-      create_resolver(ssl_options).socket(socket_timeout, ssl_options)
+    def socket(socket_timeout, ssl_options = {}, options = {})
+      create_resolver(ssl_options).socket(socket_timeout, ssl_options, options)
     end
 
     # Get the address as a string.
@@ -195,8 +198,9 @@ module Mongo
       ::Socket.getaddrinfo(host, nil, family, ::Socket::SOCK_STREAM).each do |info|
         begin
           specific_address = FAMILY_MAP[info[4]].new(info[3], port, host)
-          socket = specific_address.socket(connect_timeout, ssl_options, connect_timeout: connect_timeout)
-          socket.connect!(connect_timeout).close
+          socket = specific_address.socket(
+            connect_timeout, ssl_options, connect_timeout: connect_timeout)
+          socket.close
           return specific_address
         rescue IOError, SystemCallError, Error::SocketTimeoutError, Error::SocketError => e
           error = e

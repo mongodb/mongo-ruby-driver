@@ -135,8 +135,8 @@ module Mongo
           begin
             # Need to assign to the instance variable here because
             # I/O done by #handshake! and #connect! reference the socket
-            @socket = address.socket(socket_timeout, ssl_options)
-            socket.connect!(address.connect_timeout)
+            @socket = address.socket(socket_timeout, ssl_options,
+              connect_timeout: address.connect_timeout)
             handshake!
             authenticate!
           rescue Exception
