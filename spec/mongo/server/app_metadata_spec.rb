@@ -106,12 +106,13 @@ describe Mongo::Server::AppMetadata do
       end
 
       context 'when the driver info is too long' do
+        require_no_compression
 
         before do
           allow(app_metadata).to receive(:driver_doc).and_return('x'*500)
         end
 
-        it 'truncates the document to be just an ismaster command and the compressors', unless: compression_enabled? do
+        it 'truncates the document to be just an ismaster command and the compressors' do
           # Because we sometimes request that the server provide a list of valid auth mechanisms for
           # the user, we need to conditionally add the length of that metadata to the expected
           # length of the isMaster document.
