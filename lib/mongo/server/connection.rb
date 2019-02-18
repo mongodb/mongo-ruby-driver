@@ -131,7 +131,7 @@ module Mongo
       #
       # @since 2.0.0
       def connect!
-        unless socket && socket.connectable?
+        unless socket
           begin
             # Need to assign to the instance variable here because
             # I/O done by #handshake! and #connect! reference the socket
@@ -276,7 +276,7 @@ module Mongo
       end
 
       def handshake!
-        unless socket && socket.connectable?
+        unless socket
           raise Error::HandshakeError, "Cannot handshake because there is no usable socket"
         end
 

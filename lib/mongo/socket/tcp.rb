@@ -69,18 +69,6 @@ module Mongo
         super(family)
         connect!
       end
-
-      # This object does not wrap another socket so it's always connectable.
-      #
-      # @example Is the socket connectable?
-      #   socket.connectable?
-      #
-      # @return [ true, false ] If the socket is connectable.
-      #
-      # @since 2.2.5
-      def connectable?
-        true
-      end
     end
   end
 end
