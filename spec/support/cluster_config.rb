@@ -68,4 +68,17 @@ class ClusterConfig
       end.seed
     end
   end
+
+  # Try running a command on the admin database to see if the mongod was
+  # started with auth.
+  def auth_enabled?
+    if @auth_enabled.nil?
+      @auth_enabled = begin
+        scanned_client.use(:admin).command(getCmdLineOpts: 1).first["argv"].include?("--auth")
+      rescue => e
+        e.message =~ /(not authorized)|(unauthorized)|(no users authenticated)|(requires authentication)/
+      end
+    end
+    @auth_enabled
+  end
 end

@@ -213,7 +213,8 @@ describe Mongo::Database do
       end
     end
 
-    context 'when the user is not authorized', if: auth_enabled? do
+    context 'when the user is not authorized' do
+      require_auth
 
       let(:database) do
         described_class.new(unauthorized_client, SpecConfig.instance.test_db)

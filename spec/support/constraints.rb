@@ -144,4 +144,20 @@ module Constraints
       end
     end
   end
+
+  def require_auth
+    before do
+      unless ENV['AUTH'] == 'auth' || ClusterConfig.instance.auth_enabled?
+        skip "Auth required"
+      end
+    end
+  end
+
+  def require_no_auth
+    before do
+      if ENV['AUTH'] == 'auth' || ClusterConfig.instance.auth_enabled?
+        skip "Auth not allowed"
+      end
+    end
+  end
 end
