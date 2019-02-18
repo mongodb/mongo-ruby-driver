@@ -725,6 +725,8 @@ shared_examples 'an operation updating cluster time' do
         context 'when the advanced cluster time is not greater than the existing cluster time' do
 
           let(:advanced_cluster_time) do
+            expect(reply_cluster_time[Mongo::Cluster::CLUSTER_TIME].increment > 0).to be true
+
             new_timestamp = BSON::Timestamp.new(reply_cluster_time[Mongo::Cluster::CLUSTER_TIME].seconds,
                                                 reply_cluster_time[Mongo::Cluster::CLUSTER_TIME].increment - 1)
             new_cluster_time = reply_cluster_time.dup
