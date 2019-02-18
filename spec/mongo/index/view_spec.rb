@@ -733,17 +733,17 @@ describe Mongo::Index::View do
 
     context 'when the collection does not exist' do
 
-      let(:nonexistant_collection) do
+      let(:nonexistent_collection) do
         authorized_client[:not_a_collection]
       end
 
-      let(:nonexistant_view) do
-        described_class.new(nonexistant_collection)
+      let(:nonexistent_view) do
+        described_class.new(nonexistent_collection)
       end
 
-      it 'raises a nonexistant collection error', if: list_command_enabled? do
+      it 'raises a nonexistent collection error', if: list_command_enabled? do
         expect {
-          nonexistant_view.each.to_a
+          nonexistent_view.each.to_a
         }.to raise_error(Mongo::Error::OperationFailure)
       end
     end
