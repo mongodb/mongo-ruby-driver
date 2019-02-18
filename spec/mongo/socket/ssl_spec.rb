@@ -470,6 +470,16 @@ describe Mongo::Socket::SSL do
         )
       end
 
+      around do |example|
+        saved = ENV['SSL_CERT_FILE']
+        ENV['SSL_CERT_FILE'] = CA_PEM
+        begin
+          example.run
+        ensure
+          ENV['SSL_CERT_FILE'] = saved
+        end
+      end
+
       it 'uses the default cert store' do
         expect(socket).to be_alive
       end
