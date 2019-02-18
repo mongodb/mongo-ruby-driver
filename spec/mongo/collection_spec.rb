@@ -1562,7 +1562,7 @@ describe Mongo::Collection do
       it_behaves_like 'a failed operation using a session'
     end
 
-    context 'when batch size is specified', unless: need_to_skip_on_sharded_auth_40? do
+    context 'when batch size is specified' do
 
       let(:batch_size) { 1 }
 

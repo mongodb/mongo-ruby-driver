@@ -68,26 +68,6 @@ def scram_sha_256_enabled?
   $scram_sha_256_enabled ||= scanned_client_server!.features.scram_sha_256_enabled?
 end
 
-# Try running a command on the admin database to see if the mongod was started with auth.
-#
-# @since 2.2.0
-def auth_enabled?
-  if auth = ENV['AUTH']
-    auth == 'auth'
-  else
-    $mongo_client ||= initialize_scanned_client!
-    begin
-      $mongo_client.use(:admin).command(getCmdLineOpts: 1).first["argv"].include?("--auth")
-    rescue => e
-      e.message =~ /(not authorized)|(unauthorized)|(no users authenticated)|(requires authentication)/
-    end
-  end
-end
-
-def need_to_skip_on_sharded_auth_40?
-  sharded? && auth_enabled? && scram_sha_256_enabled?
-end
-
 # Initializes a basic scanned client to do an ismaster check.
 #
 # @since 2.0.0
