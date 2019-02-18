@@ -26,6 +26,16 @@ describe Mongo::BulkWrite do
     authorized_client
   end
 
+  shared_examples_for 'bulk write with write concern yielding operation failure' do
+    require_topology :single
+
+    it 'raises an OperationFailure' do
+      expect {
+        bulk_write_invalid_write_concern.execute
+      }.to raise_error(Mongo::Error::OperationFailure)
+    end
+  end
+
   describe '#execute' do
     shared_examples_for 'an executable bulk write' do
 
@@ -130,11 +140,7 @@ describe Mongo::BulkWrite do
 
           context 'when there is a write concern error' do
 
-            it 'raises an OperationFailure', if: standalone? do
-              expect {
-                bulk_write_invalid_write_concern.execute
-              }.to raise_error(Mongo::Error::OperationFailure)
-            end
+            it_behaves_like 'bulk write with write concern yielding operation failure'
 
             context 'when a session is provided' do
 
@@ -189,11 +195,7 @@ describe Mongo::BulkWrite do
 
           context 'when there is a write concern error' do
 
-            it 'raises an OperationFailure', if: standalone? do
-              expect {
-                bulk_write_invalid_write_concern.execute
-              }.to raise_error(Mongo::Error::OperationFailure)
-            end
+            it_behaves_like 'bulk write with write concern yielding operation failure'
 
             context 'when a session is provided' do
 
@@ -252,11 +254,7 @@ describe Mongo::BulkWrite do
 
           context 'when there is a write concern error' do
 
-            it 'raises an OperationFailure', if: standalone? do
-              expect {
-                bulk_write_invalid_write_concern.execute
-              }.to raise_error(Mongo::Error::OperationFailure)
-            end
+            it_behaves_like 'bulk write with write concern yielding operation failure'
 
             context 'when a session is provided' do
 
@@ -523,12 +521,7 @@ describe Mongo::BulkWrite do
 
           context 'when there is a write concern error' do
 
-
-            it 'raises an OperationFailure', if: standalone? do
-              expect {
-                bulk_write_invalid_write_concern.execute
-              }.to raise_error(Mongo::Error::OperationFailure)
-            end
+            it_behaves_like 'bulk write with write concern yielding operation failure'
 
             context 'when a session is provided' do
 
@@ -665,11 +658,7 @@ describe Mongo::BulkWrite do
 
           context 'when there is a write concern error' do
 
-            it 'raises an OperationFailure', if: standalone? do
-              expect {
-                bulk_write_invalid_write_concern.execute
-              }.to raise_error(Mongo::Error::OperationFailure)
-            end
+            it_behaves_like 'bulk write with write concern yielding operation failure'
 
             context 'when a session is provided' do
 
@@ -809,11 +798,7 @@ describe Mongo::BulkWrite do
 
           context 'when there is a write concern error' do
 
-            it 'raises an OperationFailure', if: standalone? do
-              expect {
-                bulk_write_invalid_write_concern.execute
-              }.to raise_error(Mongo::Error::OperationFailure)
-            end
+            it_behaves_like 'bulk write with write concern yielding operation failure'
 
             context 'when a session is provided' do
 
@@ -952,11 +937,7 @@ describe Mongo::BulkWrite do
 
           context 'when there is a write concern error' do
 
-            it 'raises an OperationFailure', if: standalone? do
-              expect {
-                bulk_write_invalid_write_concern.execute
-              }.to raise_error(Mongo::Error::OperationFailure)
-            end
+            it_behaves_like 'bulk write with write concern yielding operation failure'
 
             context 'when a session is provided' do
 
@@ -1183,11 +1164,7 @@ describe Mongo::BulkWrite do
 
             context 'when there is a write concern error' do
 
-              it 'raises an OperationFailure', if: standalone? do
-                expect {
-                  bulk_write_invalid_write_concern.execute
-                }.to raise_error(Mongo::Error::OperationFailure)
-              end
+              it_behaves_like 'bulk write with write concern yielding operation failure'
 
               context 'when a session is provided' do
 
@@ -1241,11 +1218,7 @@ describe Mongo::BulkWrite do
 
             context 'when there is a write concern error' do
 
-              it 'raises an OperationFailure', if: standalone? do
-                expect {
-                  bulk_write_invalid_write_concern.execute
-                }.to raise_error(Mongo::Error::OperationFailure)
-              end
+              it_behaves_like 'bulk write with write concern yielding operation failure'
             end
 
             context 'when write_concern is specified as an option' do
@@ -1570,11 +1543,7 @@ describe Mongo::BulkWrite do
 
             context 'when there is a write concern error' do
 
-              it 'raises an OperationFailure', if: standalone? do
-                expect {
-                  bulk_write_invalid_write_concern.execute
-                }.to raise_error(Mongo::Error::OperationFailure)
-              end
+              it_behaves_like 'bulk write with write concern yielding operation failure'
             end
           end
 
@@ -1651,11 +1620,7 @@ describe Mongo::BulkWrite do
 
             context 'when there is a write concern error' do
 
-              it 'raises an OperationFailure', if: standalone? do
-                expect {
-                  bulk_write_invalid_write_concern.execute
-                }.to raise_error(Mongo::Error::OperationFailure)
-              end
+              it_behaves_like 'bulk write with write concern yielding operation failure'
             end
           end
         end
@@ -1801,11 +1766,7 @@ describe Mongo::BulkWrite do
 
             context 'when there is a write concern error' do
 
-              it 'raises an OperationFailure', if: standalone? do
-                expect {
-                  bulk_write_invalid_write_concern.execute
-                }.to raise_error(Mongo::Error::OperationFailure)
-              end
+              it_behaves_like 'bulk write with write concern yielding operation failure'
             end
           end
 
@@ -1842,11 +1803,7 @@ describe Mongo::BulkWrite do
 
             context 'when there is a write concern error' do
 
-              it 'raises an OperationFailure', if: standalone? do
-                expect {
-                  bulk_write_invalid_write_concern.execute
-                }.to raise_error(Mongo::Error::OperationFailure)
-              end
+              it_behaves_like 'bulk write with write concern yielding operation failure'
             end
           end
         end

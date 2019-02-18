@@ -299,6 +299,37 @@ describe 'Retryable writes integration tests' do
     end
   end
 
+  shared_examples_for 'operation that is retried when server supports retryable writes' do
+    context 'when the server supports retryable writes' do
+      min_server_fcv '3.6'
+
+      before do
+        allow(primary_server).to receive(:retry_writes?).and_return(true)
+      end
+
+      context 'standalone' do
+        require_topology :single
+
+        it_behaves_like 'an operation that is not retried'
+      end
+
+      context 'replica set or sharded cluster' do
+        require_topology :replica_set, :sharded
+
+        it_behaves_like 'an operation that is retried'
+      end
+    end
+
+    context 'when the server does not support retryable writes' do
+
+      before do
+        allow(primary_server).to receive(:retry_writes?).and_return(false)
+      end
+
+      it_behaves_like 'an operation that is not retried'
+    end
+  end
+
   shared_examples_for 'supported retryable writes' do
 
     context 'when the client has retry_writes set to true' do
@@ -313,27 +344,7 @@ describe 'Retryable writes integration tests' do
           client[TEST_COLL, write: SpecConfig.instance.write_concern]
         end
 
-        context 'when the server supports retryable writes' do
-
-          before do
-            allow(primary_server).to receive(:retry_writes?).and_return(true)
-          end
-
-          if standalone? && ClusterConfig.instance.fcv_ish >= '3.6'
-            it_behaves_like 'an operation that is not retried'
-          elsif ClusterConfig.instance.fcv_ish >= '3.6'
-            it_behaves_like 'an operation that is retried'
-          end
-        end
-
-        context 'when the server does not support retryable writes' do
-
-          before do
-            allow(primary_server).to receive(:retry_writes?).and_return(false)
-          end
-
-          it_behaves_like 'an operation that is not retried'
-        end
+        it_behaves_like 'operation that is retried when server supports retryable writes'
       end
 
       context 'when the collection has write concern unacknowledged' do
@@ -351,27 +362,7 @@ describe 'Retryable writes integration tests' do
           client[TEST_COLL]
         end
 
-        context 'when the server supports retryable writes' do
-
-          before do
-            allow(primary_server).to receive(:retry_writes?).and_return(true)
-          end
-
-          if standalone? && ClusterConfig.instance.fcv_ish >= '3.6'
-            it_behaves_like 'an operation that is not retried'
-          elsif ClusterConfig.instance.fcv_ish >= '3.6'
-            it_behaves_like 'an operation that is retried'
-          end
-        end
-
-        context 'when the server does not support retryable writes' do
-
-          before do
-            allow(primary_server).to receive(:retry_writes?).and_return(false)
-          end
-
-          it_behaves_like 'an operation that is not retried'
-        end
+        it_behaves_like 'operation that is retried when server supports retryable writes'
       end
     end
 

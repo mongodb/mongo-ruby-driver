@@ -23,14 +23,6 @@ RSpec.configure do |config|
   end
 end
 
-# Determine whether the test clients are connecting to a standalone.
-#
-# @since 2.0.0
-def standalone?
-  $mongo_client ||= initialize_scanned_client!
-  $standalone ||= $mongo_client.cluster.servers.first.standalone?
-end
-
 # Determine whether the test clients are connecting to a replica set.
 #
 # @since 2.0.0

@@ -96,7 +96,8 @@ describe Mongo::Grid::FSBucket::Stream::Write do
       end
     end
 
-    context 'when the fs has a write concern', if: standalone? do
+    context 'when the fs has a write concern' do
+      require_topology :single
 
       let(:fs_options) do
         { write: INVALID_WRITE_CONCERN }

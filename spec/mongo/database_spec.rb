@@ -383,7 +383,8 @@ describe Mongo::Database do
 
     context 'when a write concern is not defined on the client/database object' do
 
-      context 'when a write concern is provided in the selector', if: standalone? do
+      context 'when a write concern is provided in the selector' do
+        require_topology :single
 
         let(:cmd) do
           {
@@ -427,7 +428,8 @@ describe Mongo::Database do
         end
       end
 
-      context 'when a write concern is provided in the command selector', if: standalone? do
+      context 'when a write concern is provided in the command selector' do
+        require_topology :single
 
         let(:cmd) do
           {
@@ -486,8 +488,9 @@ describe Mongo::Database do
         client.database
       end
 
-      context 'when the server supports write concern on the dropDatabase command', if: standalone? do
+      context 'when the server supports write concern on the dropDatabase command' do
         min_server_fcv '3.4'
+        require_topology :single
 
         it 'applies the write concern' do
           expect{

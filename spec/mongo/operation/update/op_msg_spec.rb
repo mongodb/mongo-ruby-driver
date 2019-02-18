@@ -135,8 +135,9 @@ describe Mongo::Operation::Update::OpMsg do
         end
       end
 
-      context 'when the topology is standalone', if: standalone? do
+      context 'when the topology is standalone' do
         min_server_fcv '3.6'
+        require_topology :single
 
         let(:expected_global_args) do
           global_args
@@ -202,8 +203,9 @@ describe Mongo::Operation::Update::OpMsg do
             end
           end
 
-          context 'when the topology is standalone', if: standalone? do
+          context 'when the topology is standalone' do
             min_server_fcv '3.6'
+            require_topology :single
 
             let(:expected_global_args) do
               global_args.dup.tap do |args|

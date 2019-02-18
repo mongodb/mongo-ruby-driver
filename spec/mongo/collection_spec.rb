@@ -2020,7 +2020,8 @@ describe Mongo::Collection do
       end
     end
 
-    context 'when the delete fails', if: standalone? do
+    context 'when the delete fails' do
+      require_topology :single
 
       let(:result) do
         collection_invalid_write_concern.delete_one
@@ -2207,7 +2208,8 @@ describe Mongo::Collection do
       end
     end
 
-    context 'when the deletes fail', if: standalone?  do
+    context 'when the deletes fail' do
+      require_topology :single
 
       let(:result) do
         collection_invalid_write_concern.delete_many
@@ -3843,8 +3845,9 @@ describe Mongo::Collection do
       end
     end
 
-    context 'when write_concern is provided', if: standalone? do
+    context 'when write_concern is provided' do
       min_server_fcv '3.2'
+      require_topology :single
 
       it 'uses the write concern' do
         expect {
@@ -3854,8 +3857,9 @@ describe Mongo::Collection do
       end
     end
 
-    context 'when the collection has a write concern', if: standalone? do
+    context 'when the collection has a write concern' do
       min_server_fcv '3.2'
+      require_topology :single
 
       let(:collection) do
         authorized_collection.with(write: { w: 2 })
@@ -4176,8 +4180,9 @@ describe Mongo::Collection do
       end
     end
 
-    context 'when write_concern is provided', if: standalone? do
+    context 'when write_concern is provided' do
       min_server_fcv '3.2'
+      require_topology :single
 
       it 'uses the write concern' do
         expect {
@@ -4188,8 +4193,9 @@ describe Mongo::Collection do
       end
     end
 
-    context 'when the collection has a write concern', if: standalone? do
+    context 'when the collection has a write concern' do
       min_server_fcv '3.2'
+      require_topology :single
 
       let(:collection) do
         authorized_collection.with(write: { w: 2 })
@@ -4569,8 +4575,9 @@ describe Mongo::Collection do
       end
     end
 
-    context 'when write_concern is provided', if: standalone? do
+    context 'when write_concern is provided' do
       min_server_fcv '3.2'
+      require_topology :single
 
       it 'uses the write concern' do
         expect {
@@ -4581,8 +4588,9 @@ describe Mongo::Collection do
       end
     end
 
-    context 'when the collection has a write concern', if: standalone? do
+    context 'when the collection has a write concern' do
       min_server_fcv '3.2'
+      require_topology :single
 
       let(:collection) do
         authorized_collection.with(write: { w: 2 })

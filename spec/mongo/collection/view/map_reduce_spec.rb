@@ -588,8 +588,9 @@ describe Mongo::Collection::View::MapReduce do
 
           shared_examples_for 'map reduce that writes accepting write concern' do
 
-            context 'when the server supports write concern on the mapReduce command', if: (standalone?) do
+            context 'when the server supports write concern on the mapReduce command' do
               min_server_fcv '3.4'
+              require_topology :single
 
               it 'uses the write concern' do
                 expect {
