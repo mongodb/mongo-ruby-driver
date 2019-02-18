@@ -120,6 +120,12 @@ module Mongo
           @compressor = nil
         end
 
+        # @return [ Hash ] options The passed in options.
+        attr_reader :options
+
+        # @return [ Mongo::Address ] address The address to connect to.
+        attr_reader :address
+
         # The compressor, which is determined during the handshake.
         #
         # @since 2.5.0

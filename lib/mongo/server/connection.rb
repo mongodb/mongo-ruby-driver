@@ -18,7 +18,7 @@ module Mongo
     # This class models the socket connections for servers and their behavior.
     #
     # @since 2.0.0
-    class Connection
+    class Connection < ConnectionBase
       include Connectable
       include Monitoring::Publishable
       include Retryable
@@ -93,7 +93,7 @@ module Mongo
         @monitoring = server.monitoring
         @options = options.freeze
         @server = server
-        @ssl_options = options.reject { |k, v| !k.to_s.start_with?(SSL) }
+        @ssl_options = options.reject { |k, v| !k.to_s.start_with?(SSL) }.freeze
         @socket = nil
         @last_checkin = nil
         @auth_mechanism = nil
@@ -113,16 +113,6 @@ module Mongo
       def generation
         options[:generation]
       end
-
-      def_delegators :@server,
-                     :features,
-                     :max_bson_object_size,
-                     :max_message_size,
-                     :mongos?,
-                     :app_metadata,
-                     :compressor,
-                     :cluster_time,
-                     :update_cluster_time
 
       # Establishes a network connection to the target address.
       #
@@ -144,7 +134,8 @@ module Mongo
           socket = address.socket(socket_timeout, ssl_options,
             connect_timeout: address.connect_timeout)
           handshake!(socket)
-          authenticate!(socket)
+          pending_connection = PendingConnection.new(socket, @server, monitoring, options)
+          authenticate!(pending_connection)
           @socket = socket
         end
         true
@@ -169,36 +160,6 @@ module Mongo
           @socket = nil
         end
         true
-      end
-
-      # Dispatch a single message to the connection. If the message
-      # requires a response, a reply will be returned.
-      #
-      # @example Dispatch the message.
-      #   connection.dispatch([ insert ])
-      #
-      # @note This method is named dispatch since 'send' is a core Ruby method on
-      #   all objects.
-      #
-      # @note For backwards compatibility, this method accepts the messages
-      #   as an array. However, exactly one message must be given per invocation.
-      #
-      # @param [ Array<Message> ] messages A one-element array containing
-      #   the message to dispatch.
-      # @param [ Integer ] operation_id The operation id to link messages.
-      #
-      # @return [ Protocol::Message | nil ] The reply if needed.
-      #
-      # @since 2.0.0
-      def dispatch(messages, operation_id = nil)
-        # The monitoring code does not correctly handle multiple messages,
-        # and the driver internally does not send more than one message at
-        # a time ever. Thus prohibit multiple message use for now.
-        if messages.length != 1
-          raise ArgumentError, 'Can only dispatch one message at a time'
-        end
-        message = messages.first
-        deliver(message)
       end
 
       # Ping the connection to see if the server is responding to commands.
@@ -251,32 +212,6 @@ module Mongo
       end
 
       private
-
-      def deliver(message)
-        buffer = serialize(message)
-        ensure_connected do |socket|
-          operation_id = Monitoring.next_operation_id
-          command_started(address, operation_id, message.payload)
-          start = Time.now
-          result = nil
-          begin
-            socket.write(buffer.to_s)
-            result = if message.replyable?
-              Protocol::Message.deserialize(socket, max_message_size, message.request_id)
-            else
-              nil
-            end
-          rescue Exception => e
-            total_duration = Time.now - start
-            command_failed(nil, address, operation_id, message.payload, e.message, total_duration)
-            raise
-          else
-            total_duration = Time.now - start
-            command_completed(result, address, operation_id, message.payload, total_duration)
-          end
-          result
-        end
-      end
 
       def handshake!(socket)
         unless socket
@@ -331,11 +266,11 @@ module Mongo
         end
       end
 
-      def authenticate!(socket)
+      def authenticate!(pending_connection)
         if options[:user] || options[:auth_mech]
           user = Auth::User.new(Options::Redacted.new(:auth_mech => default_mechanism, :client_key => @client_key).merge(options))
           @server.handle_auth_failure! do
-            reply = Auth.get(user).login(self)
+            reply = Auth.get(user).login(pending_connection)
             @client_key ||= user.send(:client_key) if user.mechanism == :scram
             reply
           end
@@ -344,17 +279,6 @@ module Mongo
 
       def default_mechanism
         @auth_mechanism || (@server.features.scram_sha_1_enabled? ? :scram : :mongodb_cr)
-      end
-
-      def serialize(message, buffer = BSON::ByteBuffer.new)
-        start_size = 0
-        message.compress!(compressor, options[:zlib_compression_level]).serialize(buffer, max_bson_object_size)
-        if max_message_size &&
-          (buffer.length - start_size) > max_message_size
-        then
-          raise Error::MaxMessageSize.new(max_message_size)
-        end
-        buffer
       end
     end
   end
