@@ -226,9 +226,9 @@ describe Mongo::Socket::SSL do
       end
 
       it 'raises a TypeError' do
-        expect{
-          socket.connect!
-        }.to raise_exception(TypeError)
+        expect do
+          socket
+        end.to raise_exception(TypeError)
       end
     end
 
@@ -248,7 +248,7 @@ describe Mongo::Socket::SSL do
               30,
               ::Socket::PF_INET,
               options.merge(ssl_verify_hostname: true)
-            ).connect!
+            )
           rescue => e
             error = e
           end
@@ -268,7 +268,7 @@ describe Mongo::Socket::SSL do
               30,
               ::Socket::PF_INET,
               options.merge(ssl_verify_hostname: false)
-            ).connect!
+            )
           }.not_to raise_error
         end
       end
@@ -289,9 +289,9 @@ describe Mongo::Socket::SSL do
         end
 
         it 'raises a TypeError' do
-          expect{
-            socket.connect!
-          }.to raise_exception(TypeError)
+          expect do
+            socket
+          end.to raise_exception(TypeError)
         end
       end
     end
@@ -329,9 +329,9 @@ describe Mongo::Socket::SSL do
         end
 
         it 'raises a NoMethodError' do
-          expect{
-            socket.connect!
-          }.to raise_exception(expected_exception)
+          expect do
+            socket
+          end.to raise_exception(expected_exception)
         end
       end
     end
@@ -378,10 +378,6 @@ describe Mongo::Socket::SSL do
             :ssl_ca_cert => CA_PEM,
             :ssl_verify => true
           )
-        end
-
-        before do
-          socket.connect!
         end
 
         it 'connects to the server' do
@@ -472,11 +468,6 @@ describe Mongo::Socket::SSL do
         super().merge(
           :ssl_verify => true
         )
-      end
-
-      before do
-        ENV['SSL_CERT_FILE'] = CA_PEM
-        socket.connect!
       end
 
       it 'uses the default cert store' do
