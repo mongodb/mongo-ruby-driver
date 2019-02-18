@@ -143,8 +143,8 @@ module Mongo
 
       def create_context(options)
         OpenSSL::SSL::SSLContext.new.tap do |context|
-          #set_cert(context, options)
-          #set_key(context, options)
+          set_cert(context, options)
+          set_key(context, options)
 
 
           if verify_certificate?
