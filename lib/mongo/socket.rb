@@ -162,7 +162,7 @@ module Mongo
     # @since 2.0.5
     def eof?
       @socket.eof?
-    rescue IOError, SystemCallError => _
+    rescue IOError, SystemCallError
       true
     end
 
@@ -189,7 +189,7 @@ module Mongo
         buf_size = length
       end
 
-      # The binary encoding is important, otherwise ruby performs encoding
+      # The binary encoding is important, otherwise Ruby performs encoding
       # conversions of some sort during the write into the buffer which
       # kills performance
       buf = allocate_string(buf_size)
