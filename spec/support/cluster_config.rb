@@ -81,4 +81,15 @@ class ClusterConfig
     end
     @auth_enabled
   end
+
+  def topology
+    @topology ||= begin
+      topology = scanned_client.cluster.topology.class.name.sub(/.*::/, '')
+      topology = topology.gsub(/([A-Z])/) { |match| '_' + match.downcase }.sub(/^_/, '')
+      if topology =~ /^replica_set/
+        topology = 'replica_set'
+      end
+      topology.to_sym
+    end
+  end
 end

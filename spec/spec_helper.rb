@@ -88,14 +88,6 @@ def need_to_skip_on_sharded_auth_40?
   sharded? && auth_enabled? && scram_sha_256_enabled?
 end
 
-# Can the driver specify a write concern that won't be overridden? (mongos 4.0+ overrides the write
-# concern)
-#
-# @since 2.6.0
-def can_set_write_concern?
-  !sharded? || !scram_sha_256_enabled?
-end
-
 # Initializes a basic scanned client to do an ismaster check.
 #
 # @since 2.0.0

@@ -48,18 +48,12 @@ module Constraints
   end
 
   def require_topology(*topologies)
-    topologies = topologies.map { |t| t.to_s }
-    invalid_topologies = topologies - %w(single replica_set sharded)
+    invalid_topologies = topologies - [:single, :replica_set, :sharded]
     unless invalid_topologies.empty?
       raise ArgumentError, "Invalid topologies requested: #{invalid_topologies.join(', ')}"
     end
     before do
-      topology = authorized_client.cluster.topology.class.name.sub(/.*::/, '')
-      topology = topology.gsub(/([A-Z])/) { |match| '_' + match.downcase }.sub(/^_/, '')
-      if topology =~ /^replica_set/
-        topology = 'replica_set'
-      end
-      unless topologies.include?(topology)
+      unless topologies.include?(topology = ClusterConfig.instance.topology)
         skip "Topology #{topologies.join(' or ')} required, we have #{topology}"
       end
     end
@@ -157,6 +151,16 @@ module Constraints
     before do
       if ENV['AUTH'] == 'auth' || ClusterConfig.instance.auth_enabled?
         skip "Auth not allowed"
+      end
+    end
+  end
+
+  # Can the driver specify a write concern that won't be overridden?
+  # (mongos 4.0+ overrides the write concern)
+  def require_set_write_concern
+    before do
+      if ClusterConfig.instance.topology == :sharded && ClusterConfig.instance.short_server_version >= '4.0'
+        skip "mongos 4.0+ overrides write concern"
       end
     end
   end

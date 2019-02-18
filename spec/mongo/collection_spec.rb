@@ -683,10 +683,11 @@ describe Mongo::Collection do
 
         it_behaves_like 'an operation using a session'
 
-        # Due to how rspec interprets nested `if: condition` guards, we can't use one to skip this
-        # test in the case that the server will override the write concern (preventing the expected
-        # failure), so we're forced to use a traditional conditional to avoid defining the test.
-        it_behaves_like 'a failed operation using a session' if can_set_write_concern?
+        context 'can set write concern' do
+          require_set_write_concern
+
+          it_behaves_like 'a failed operation using a session'
+        end
       end
 
       context 'when the collection does not have a write concern set' do
@@ -703,7 +704,8 @@ describe Mongo::Collection do
           expect(database.collection_names).to_not include('specs')
         end
 
-        context 'when the collection does not exist', if: can_set_write_concern? do
+        context 'when the collection does not exist' do
+          require_set_write_concern
 
           it 'does not raise an error' do
             expect(database['non-existent-coll'].drop).to be(false)
@@ -723,8 +725,9 @@ describe Mongo::Collection do
           collection.with(write_options)
         end
 
-        context 'when the server supports write concern on the drop command', if: can_set_write_concern? do
+        context 'when the server supports write concern on the drop command' do
           min_server_fcv '3.4'
+          require_set_write_concern
 
           it 'applies the write concern' do
             expect{
@@ -743,7 +746,9 @@ describe Mongo::Collection do
       end
     end
 
-    context 'when the collection does not exist', if: can_set_write_concern? do
+    context 'when the collection does not exist' do
+      require_set_write_concern
+
       before do
         begin
           collection.drop
