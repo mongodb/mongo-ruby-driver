@@ -321,13 +321,18 @@ describe Mongo::Collection::View::Readable do
       end
     end
 
-    it 'takes a read preference option', unless: sharded? do
-      # Secondary may be delayed, since this tests wants 10 documents
-      # it must query the primary
-      expect(view.count(read: { mode: :primary })).to eq(10)
+    context 'not sharded' do
+      require_topology :single, :replica_set
+
+      it 'takes a read preference option' do
+        # Secondary may be delayed, since this tests wants 10 documents
+        # it must query the primary
+        expect(view.count(read: { mode: :primary })).to eq(10)
+      end
     end
 
-    context 'when a read preference is set on the view', unless: sharded? do
+    context 'when a read preference is set on the view' do
+      require_topology :single, :replica_set
 
       let(:client) do
         # Set a timeout otherwise, the test will hang for 30 seconds.
@@ -411,7 +416,8 @@ describe Mongo::Collection::View::Readable do
         end
       end
 
-      context 'when no read preference argument is provided', unless: sharded? do
+      context 'when no read preference argument is provided' do
+        require_topology :single, :replica_set
 
         before do
           allow(view.collection.client.cluster).to receive(:single?).and_return(false)
@@ -428,7 +434,8 @@ describe Mongo::Collection::View::Readable do
         end
       end
 
-      context 'when the collection does not have a read preference set', unless: sharded? do
+      context 'when the collection does not have a read preference set' do
+        require_topology :single, :replica_set
 
         after do
           client.close
@@ -703,7 +710,8 @@ describe Mongo::Collection::View::Readable do
       end
     end
 
-    context 'when a read preference is set on the view', unless: sharded? do
+    context 'when a read preference is set on the view' do
+      require_topology :single, :replica_set
 
       let(:client) do
         # Set a timeout otherwise, the test will hang for 30 seconds.
@@ -780,7 +788,8 @@ describe Mongo::Collection::View::Readable do
         end
       end
 
-      context 'when no read preference argument is provided', unless: sharded? do
+      context 'when no read preference argument is provided' do
+        require_topology :single, :replica_set
 
         before do
           allow(view.collection.client.cluster).to receive(:single?).and_return(false)
@@ -797,7 +806,8 @@ describe Mongo::Collection::View::Readable do
         end
       end
 
-      context 'when the collection does not have a read preference set', unless: sharded? do
+      context 'when the collection does not have a read preference set' do
+        require_topology :single, :replica_set
 
         let(:documents) do
           (1..3).map{ |i| { field: "test#{i}" }}

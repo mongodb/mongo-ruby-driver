@@ -2374,8 +2374,9 @@ describe Mongo::Collection do
     end
   end
 
-  describe '#parallel_scan', unless: sharded? do
+  describe '#parallel_scan' do
     max_server_version '4.0'
+    require_topology :single, :replica_set
 
     let(:documents) do
       (1..200).map do |i|
@@ -2504,7 +2505,8 @@ describe Mongo::Collection do
       end
     end
 
-    context 'when the collection has a read preference', unless: sharded? do
+    context 'when the collection has a read preference' do
+      require_topology :single, :replica_set
 
       before do
         allow(collection.client.cluster).to receive(:single?).and_return(false)
@@ -2534,7 +2536,8 @@ describe Mongo::Collection do
       end
     end
 
-    context 'when a max time ms value is provided', if: !sharded? do
+    context 'when a max time ms value is provided' do
+      require_topology :single, :replica_set
 
       let(:result) do
         authorized_collection.parallel_scan(2, options)

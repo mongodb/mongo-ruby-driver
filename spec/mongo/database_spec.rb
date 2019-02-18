@@ -289,7 +289,9 @@ describe Mongo::Database do
       end
 
       context 'when the read concern is not valid' do
-        it 'raises an exception', if: !sharded? do
+        require_topology :single, :replica_set
+
+        it 'raises an exception' do
           expect {
             database.command(:ismaster => 1, readConcern: { level: 'yay' })
           }.to raise_error(Mongo::Error::OperationFailure)
@@ -297,7 +299,8 @@ describe Mongo::Database do
       end
     end
 
-    context 'when no read preference is provided', unless: sharded? do
+    context 'when no read preference is provided' do
+      require_topology :single, :replica_set
 
       let!(:primary_server) do
         database.cluster.next_primary
@@ -312,7 +315,8 @@ describe Mongo::Database do
       end
     end
 
-    context 'when the client has a read preference set', unless: sharded? do
+    context 'when the client has a read preference set' do
+      require_topology :single, :replica_set
 
       let!(:primary_server) do
         database.cluster.next_primary
@@ -339,7 +343,8 @@ describe Mongo::Database do
       end
     end
 
-    context 'when there is a read preference argument provided', unless: sharded? do
+    context 'when there is a read preference argument provided' do
+      require_topology :single, :replica_set
 
       let(:read_preference) do
         { :mode => :secondary, :tag_sets => [{ 'non' => 'existent' }] }
@@ -364,7 +369,8 @@ describe Mongo::Database do
       end
     end
 
-    context 'when the client has a server_selection_timeout set', unless: sharded? do
+    context 'when the client has a server_selection_timeout set' do
+      require_topology :single, :replica_set
 
       let(:client) do
         authorized_client.with(server_selection_timeout: 0)
@@ -551,7 +557,8 @@ describe Mongo::Database do
     end
   end
 
-  describe '#fs', unless: sharded? do
+  describe '#fs' do
+    require_topology :single, :replica_set
 
     let(:database) do
       described_class.new(authorized_client, SpecConfig.instance.test_db)

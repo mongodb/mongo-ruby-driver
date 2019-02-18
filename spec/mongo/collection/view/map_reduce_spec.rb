@@ -257,8 +257,9 @@ describe Mongo::Collection::View::MapReduce do
           end
         end
 
-        context 'when another db is specified', if: (!sharded? && !auth_enabled?) do
+        context 'when another db is specified', if: (!auth_enabled?) do
           min_server_fcv '3.6'
+          require_topology :single, :replica_set
 
           let(:new_map_reduce) do
             map_reduce.out(db: 'another-db', replace: 'output_collection')
@@ -292,8 +293,9 @@ describe Mongo::Collection::View::MapReduce do
           expect(new_map_reduce.count).to eq(2)
         end
 
-        context 'when another db is specified', if: (!auth_enabled? && !sharded?) do
+        context 'when another db is specified', if: (!auth_enabled?) do
           min_server_fcv '3.0'
+          require_topology :single, :replica_set
 
           let(:new_map_reduce) do
             map_reduce.out(db: 'another-db', merge: 'output_collection')
@@ -327,8 +329,9 @@ describe Mongo::Collection::View::MapReduce do
           expect(new_map_reduce.count).to eq(2)
         end
 
-        context 'when another db is specified', if: (!auth_enabled? && !sharded?) do
+        context 'when another db is specified', if: (!auth_enabled?) do
           min_server_fcv '3.0'
+          require_topology :single, :replica_set
 
           let(:new_map_reduce) do
             map_reduce.out(db: 'another-db', reduce: 'output_collection')
