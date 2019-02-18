@@ -144,6 +144,8 @@ module Mongo
 
         # Establishes a network connection to the target address.
         #
+        # If the connection is already established, this method does nothing.
+        #
         # @example Connect to the host.
         #   connection.connect!
         #

@@ -126,6 +126,8 @@ module Mongo
 
       # Establishes a network connection to the target address.
       #
+      # If the connection is already established, this method does nothing.
+      #
       # @example Connect to the host.
       #   connection.connect!
       #
@@ -136,18 +138,14 @@ module Mongo
       #
       # @since 2.0.0
       def connect!
-        unless socket
-          begin
-            # Need to assign to the instance variable here because
-            # I/O done by #handshake! and #connect! reference the socket
-            @socket = address.socket(socket_timeout, ssl_options,
-              connect_timeout: address.connect_timeout)
-            handshake!
-            authenticate!
-          rescue Exception
-            @socket = nil
-            raise
-          end
+        unless @socket
+          # Need to assign to the instance variable here because
+          # I/O done by #handshake! and #connect! reference the socket
+          socket = address.socket(socket_timeout, ssl_options,
+            connect_timeout: address.connect_timeout)
+          handshake!(socket)
+          authenticate!(socket)
+          @socket = socket
         end
         true
       end
@@ -280,7 +278,7 @@ module Mongo
         end
       end
 
-      def handshake!
+      def handshake!(socket)
         unless socket
           raise Error::HandshakeError, "Cannot handshake because there is no usable socket"
         end
@@ -333,7 +331,7 @@ module Mongo
         end
       end
 
-      def authenticate!
+      def authenticate!(socket)
         if options[:user] || options[:auth_mech]
           user = Auth::User.new(Options::Redacted.new(:auth_mech => default_mechanism, :client_key => @client_key).merge(options))
           @server.handle_auth_failure! do
