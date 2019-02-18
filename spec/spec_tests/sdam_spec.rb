@@ -44,6 +44,8 @@ describe 'Server Discovery and Monitoring' do
         context("Phase: #{index + 1}") do
 
           before do
+            allow(@client.cluster).to receive(:connected?).and_return(true)
+
             phase.responses.each do |response|
               server = find_server(@client, response.address)
               unless server
