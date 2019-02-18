@@ -242,7 +242,8 @@ describe Mongo::Client do
           end
         end
 
-        context 'when the compressor is not supported by the server', unless: collation_enabled? do
+        context 'when the compressor is not supported by the server' do
+          max_server_version '3.4'
 
           let(:options) do
             { compressors: ['zlib'] }

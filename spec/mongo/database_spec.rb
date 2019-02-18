@@ -478,7 +478,8 @@ describe Mongo::Database do
         client.database
       end
 
-      context 'when the server supports write concern on the dropDatabase command', if: (collation_enabled? && standalone?) do
+      context 'when the server supports write concern on the dropDatabase command', if: standalone? do
+        min_server_fcv '3.4'
 
         it 'applies the write concern' do
           expect{
@@ -487,7 +488,8 @@ describe Mongo::Database do
         end
       end
 
-      context 'when the server does not support write concern on the dropDatabase command', unless: collation_enabled? do
+      context 'when the server does not support write concern on the dropDatabase command' do
+        max_server_version '3.2'
 
         it 'does not apply the write concern' do
           expect(database_with_write_options.drop).to be_successful

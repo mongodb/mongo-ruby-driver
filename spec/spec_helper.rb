@@ -78,14 +78,6 @@ end
 alias :change_stream_enabled? :op_msg_enabled?
 
 # For instances where behavior is different on different versions, we need to
-# determine in the specs if we are 3.4 or higher.
-#
-# @since 2.4.0
-def collation_enabled?
-  $collation_enabled ||= scanned_client_server!.features.collation_enabled?
-end
-
-# For instances where behavior is different on different versions, we need to
 # determine in the specs if we are 3.2 or higher.
 #
 # @since 2.0.0

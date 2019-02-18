@@ -506,14 +506,16 @@ describe Mongo::Collection::View::Readable do
         { collation: { locale: 'en_US', strength: 2 } }
       end
 
-      context 'when the server selected supports collations', if: collation_enabled? do
+      context 'when the server selected supports collations' do
+        min_server_fcv '3.4'
 
         it 'applies the collation to the count' do
           expect(result).to eq(1)
         end
       end
 
-      context 'when the server selected does not support collations', unless: collation_enabled? do
+      context 'when the server selected does not support collations' do
+        max_server_version '3.2'
 
         it 'raises an exception' do
           expect {
@@ -554,14 +556,16 @@ describe Mongo::Collection::View::Readable do
         { collation: { locale: 'en_US', strength: 2 } }
       end
 
-      context 'when the server selected supports collations', if: collation_enabled? do
+      context 'when the server selected supports collations' do
+        min_server_fcv '3.4'
 
         it 'applies the collation to the count' do
           expect(result).to eq(1)
         end
       end
 
-      context 'when the server selected does not support collations', unless: collation_enabled? do
+      context 'when the server selected does not support collations' do
+        max_server_version '3.2'
 
         it 'raises an exception' do
           expect {
@@ -891,14 +895,16 @@ describe Mongo::Collection::View::Readable do
         { collation: { locale: 'en_US', strength: 2 } }
       end
 
-      context 'when the server selected supports collations', if: collation_enabled? do
+      context 'when the server selected supports collations' do
+        min_server_fcv '3.4'
 
         it 'applies the collation to the distinct' do
           expect(result).to eq(['bang'])
         end
       end
 
-      context 'when the server selected does not support collations', unless: collation_enabled? do
+      context 'when the server selected does not support collations' do
+        max_server_version '3.2'
 
         it 'raises an exception' do
           expect {
@@ -936,14 +942,16 @@ describe Mongo::Collection::View::Readable do
         { collation: { locale: 'en_US', strength: 2 } }
       end
 
-      context 'when the server selected supports collations', if: collation_enabled? do
+      context 'when the server selected supports collations' do
+        min_server_fcv '3.4'
 
         it 'applies the collation to the distinct' do
           expect(result).to eq(['bang'])
         end
       end
 
-      context 'when the server selected does not support collations', unless: collation_enabled? do
+      context 'when the server selected does not support collations' do
+        max_server_version '3.2'
 
         it 'raises an exception' do
           expect {

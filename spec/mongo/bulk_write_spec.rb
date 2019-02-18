@@ -285,7 +285,8 @@ describe Mongo::BulkWrite do
                 [{ delete_one: { filter: { name: 'BANG' }, collation: collation } }]
               end
 
-              context 'when the server selected supports collations', if: collation_enabled? do
+              context 'when the server selected supports collations' do
+                min_server_fcv '3.4'
 
                 let!(:result) do
                   bulk_write.execute
@@ -300,7 +301,8 @@ describe Mongo::BulkWrite do
                 end
               end
 
-              context 'when the server selected does not support collations', unless: collation_enabled? do
+              context 'when the server selected does not support collations' do
+                max_server_version '3.2'
 
                 it 'raises an exception' do
                   expect {
@@ -558,7 +560,8 @@ describe Mongo::BulkWrite do
                { delete_one: { filter: { name: 'DOINK' }, collation: collation }}]
             end
 
-            context 'when the server selected supports collations', if: collation_enabled? do
+            context 'when the server selected supports collations' do
+              min_server_fcv '3.4'
 
               let!(:result) do
                 bulk_write.execute
@@ -573,7 +576,8 @@ describe Mongo::BulkWrite do
               end
             end
 
-            context 'when the server selected does not support collations', unless: collation_enabled? do
+            context 'when the server selected does not support collations' do
+              max_server_version '3.2'
 
               it 'raises an exception' do
                 expect {
@@ -696,7 +700,8 @@ describe Mongo::BulkWrite do
               [{ delete_many: { filter: { name: 'BANG' }, collation: collation }}]
             end
 
-            context 'when the server selected supports collations', if: collation_enabled? do
+            context 'when the server selected supports collations' do
+              min_server_fcv '3.4'
 
               let!(:result) do
                 bulk_write.execute
@@ -711,7 +716,8 @@ describe Mongo::BulkWrite do
               end
             end
 
-            context 'when the server selected does not support collations', unless: collation_enabled? do
+            context 'when the server selected does not support collations' do
+              max_server_version '3.2'
 
               it 'raises an exception' do
                 expect {
@@ -840,7 +846,8 @@ describe Mongo::BulkWrite do
                { delete_many: { filter: { name: 'DOINK' },  collation: collation }}]
             end
 
-            context 'when the server selected supports collations', if: collation_enabled? do
+            context 'when the server selected supports collations' do
+              min_server_fcv '3.4'
 
               let!(:result) do
                 bulk_write.execute
@@ -855,7 +862,8 @@ describe Mongo::BulkWrite do
               end
             end
 
-            context 'when the server selected does not support collations', unless: collation_enabled? do
+            context 'when the server selected does not support collations' do
+              max_server_version '3.2'
 
               it 'raises an exception' do
                 expect {
@@ -981,33 +989,35 @@ describe Mongo::BulkWrite do
             end
 
             context 'when the server selected supports collations' do
+              min_server_fcv '3.4'
 
               let!(:result) do
                 bulk_write.execute
               end
 
-              it 'applies the collation', if: collation_enabled? do
+              it 'applies the collation' do
                 expect(authorized_collection.find(other: 'pong').count).to eq(1)
               end
 
-              it 'reports the upserted id', if: collation_enabled? do
+              it 'reports the upserted id' do
                 expect(result.upserted_ids).to eq([])
               end
 
-              it 'reports the upserted count', if: collation_enabled? do
+              it 'reports the upserted count' do
                 expect(result.upserted_count).to eq(0)
               end
 
-              it 'reports the modified count', if: collation_enabled? do
+              it 'reports the modified count' do
                 expect(result.modified_count).to eq(1)
               end
 
-              it 'reports the matched count', if: collation_enabled? do
+              it 'reports the matched count' do
                 expect(result.matched_count).to eq(1)
               end
             end
 
-            context 'when the server selected does not support collations', unless: collation_enabled? do
+            context 'when the server selected does not support collations' do
+              max_server_version '3.2'
 
               it 'raises an exception' do
                 expect {
@@ -1284,33 +1294,35 @@ describe Mongo::BulkWrite do
             end
 
             context 'when the server selected supports collations' do
+              min_server_fcv '3.4'
 
               let!(:result) do
                 bulk_write.execute
               end
 
-              it 'applies the collation', if: collation_enabled? do
+              it 'applies the collation' do
                 expect(authorized_collection.find(name: 'pong').count).to eq(1)
               end
 
-              it 'reports the upserted id', if: collation_enabled? do
+              it 'reports the upserted id' do
                 expect(result.upserted_ids).to eq([])
               end
 
-              it 'reports the upserted count', if: collation_enabled? do
+              it 'reports the upserted count' do
                 expect(result.upserted_count).to eq(0)
               end
 
-              it 'reports the modified count', if: collation_enabled? do
+              it 'reports the modified count' do
                 expect(result.modified_count).to eq(1)
               end
 
-              it 'reports the matched count', if: collation_enabled? do
+              it 'reports the matched count' do
                 expect(result.matched_count).to eq(1)
               end
             end
 
-            context 'when the server selected does not support collations', unless: collation_enabled? do
+            context 'when the server selected does not support collations' do
+              max_server_version '3.2'
 
               it 'raises an exception' do
                 expect {
@@ -1390,33 +1402,35 @@ describe Mongo::BulkWrite do
             end
 
             context 'when the server selected supports collations' do
+              min_server_fcv '3.4'
 
               let!(:result) do
                 bulk_write.execute
               end
 
-              it 'applies the collation', if: collation_enabled? do
+              it 'applies the collation' do
                 expect(authorized_collection.find(name: 'pong').count).to eq(2)
               end
 
-              it 'reports the upserted id', if: collation_enabled? do
+              it 'reports the upserted id' do
                 expect(result.upserted_ids).to eq([])
               end
 
-              it 'reports the upserted count', if: collation_enabled? do
+              it 'reports the upserted count' do
                 expect(result.upserted_count).to eq(0)
               end
 
-              it 'reports the modified count', if: collation_enabled? do
+              it 'reports the modified count' do
                 expect(result.modified_count).to eq(2)
               end
 
-              it 'reports the matched count', if: collation_enabled? do
+              it 'reports the matched count' do
                 expect(result.matched_count).to eq(2)
               end
             end
 
-            context 'when the server selected does not support collations', unless: collation_enabled? do
+            context 'when the server selected does not support collations' do
+              max_server_version '3.2'
 
               it 'raises an exception' do
                 expect {
@@ -1662,33 +1676,35 @@ describe Mongo::BulkWrite do
             end
 
             context 'when the server selected supports collations' do
+              min_server_fcv '3.4'
 
               let!(:result) do
                 bulk_write.execute
               end
 
-              it 'applies the collation', if: collation_enabled? do
+              it 'applies the collation' do
                 expect(authorized_collection.find(name: 'pong').count).to eq(2)
               end
 
-              it 'reports the upserted id', if: collation_enabled? do
+              it 'reports the upserted id' do
                 expect(result.upserted_ids).to eq([])
               end
 
-              it 'reports the upserted count', if: collation_enabled? do
+              it 'reports the upserted count' do
                 expect(result.upserted_count).to eq(0)
               end
 
-              it 'reports the modified count', if: collation_enabled? do
+              it 'reports the modified count' do
                 expect(result.modified_count).to eq(2)
               end
 
-              it 'reports the matched count', if: collation_enabled? do
+              it 'reports the matched count' do
                 expect(result.matched_count).to eq(2)
               end
             end
 
-            context 'when the server selected does not support collations', unless: collation_enabled? do
+            context 'when the server selected does not support collations' do
+              max_server_version '3.2'
 
               it 'raises an exception' do
                 expect {

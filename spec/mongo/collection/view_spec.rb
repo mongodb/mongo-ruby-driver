@@ -170,14 +170,16 @@ describe Mongo::Collection::View do
           view.limit(-1).first
         end
 
-        context 'when the server selected supports collations', if: collation_enabled? do
+        context 'when the server selected supports collations' do
+          min_server_fcv '3.4'
 
           it 'applies the collation' do
             expect(result['name']).to eq('bang')
           end
         end
 
-        context 'when the server selected does not support collations', unless: collation_enabled? do
+        context 'when the server selected does not support collations' do
+          max_server_version '3.2'
 
           it 'raises an exception' do
             expect {
