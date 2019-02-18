@@ -511,8 +511,9 @@ describe Mongo::Collection do
           described_class.new(database, :specs, options)
         end
 
-        context 'when the server supports write concern on the create command', if: replica_set? do
+        context 'when the server supports write concern on the create command' do
           min_server_fcv '3.4'
+          require_topology :replica_set
 
           it 'applies the write concern' do
             expect{

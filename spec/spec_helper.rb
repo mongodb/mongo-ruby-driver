@@ -23,14 +23,6 @@ RSpec.configure do |config|
   end
 end
 
-# Determine whether the test clients are connecting to a replica set.
-#
-# @since 2.0.0
-def replica_set?
-  $mongo_client ||= initialize_scanned_client!
-  $replica_set ||= $mongo_client.cluster.replica_set?
-end
-
 # Determine whether the test clients are connecting to a sharded cluster
 # or a single mongos.
 #
