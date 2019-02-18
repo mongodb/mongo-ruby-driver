@@ -69,14 +69,6 @@ def single_mongos?
 end
 
 # For instances where behavior is different on different versions, we need to
-# determine in the specs if we are 3.6 or higher.
-#
-# @since 2.5.0
-def op_msg_enabled?
-  $op_msg_enabled ||= scanned_client_server!.features.op_msg_enabled?
-end
-
-# For instances where behavior is different on different versions, we need to
 # determine in the specs if we are 3.2 or higher.
 #
 # @since 2.0.0
