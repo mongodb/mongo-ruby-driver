@@ -103,7 +103,8 @@ describe Mongo::Socket::SSL do
       end
     end
 
-    context 'when certificate and an encrypted key are provided as strings', if: testing_ssl_locally? do
+    context 'when certificate and an encrypted key are provided as strings' do
+      require_local_tls
 
       let(:options) do
         {
@@ -415,7 +416,8 @@ describe Mongo::Socket::SSL do
       end
     end
 
-    context 'when a CA certificate is provided', if: testing_ssl_locally? do
+    context 'when a CA certificate is provided' do
+      require_local_tls
 
       context 'as a path to a file' do
 
@@ -531,7 +533,8 @@ describe Mongo::Socket::SSL do
       end
     end
 
-    context 'when a CA certificate is not provided', if: testing_ssl_locally? do
+    context 'when a CA certificate is not provided' do
+      require_local_tls
 
       let(:options) do
         super().merge(
@@ -549,7 +552,8 @@ describe Mongo::Socket::SSL do
       end
     end
 
-    context 'when ssl_verify is not specified', if: testing_ssl_locally? do
+    context 'when ssl_verify is not specified' do
+      require_local_tls
 
       let(:options) do
         super().merge(
@@ -566,7 +570,8 @@ describe Mongo::Socket::SSL do
       end
     end
 
-    context 'when ssl_verify is true', if: testing_ssl_locally? do
+    context 'when ssl_verify is true' do
+      require_local_tls
 
       let(:options) do
         super().merge(

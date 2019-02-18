@@ -109,13 +109,6 @@ def scram_sha_256_enabled?
   $scram_sha_256_enabled ||= scanned_client_server!.features.scram_sha_256_enabled?
 end
 
-# Is the test suite running locally (not on Travis).
-#
-# @since 2.1.0
-def testing_ssl_locally?
-  SpecConfig.instance.ssl? && !(ENV['CI'])
-end
-
 # Is the test suite using compression.
 #
 # @since 2.5.0
