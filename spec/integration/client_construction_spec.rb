@@ -5,6 +5,7 @@ require 'spec_helper'
 describe 'Client construction' do
   let(:base_options) do
     SpecConfig.instance.test_options.merge(
+      server_selection_timeout: 5,
       database: SpecConfig.instance.test_db,
       user: SpecConfig.instance.test_user.name,
       password: SpecConfig.instance.test_user.password)
