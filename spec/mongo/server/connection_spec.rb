@@ -607,10 +607,6 @@ describe Mongo::Server::Connection, retry: 3 do
 
       context 'when the message is a command' do
 
-        before do
-          allow(connection).to receive(:max_bson_object_size).and_return(100)
-        end
-
         let(:selector) do
           { :getlasterror => '1' }
         end
@@ -624,9 +620,10 @@ describe Mongo::Server::Connection, retry: 3 do
         end
 
         it 'checks the size against the max bson size' do
-          expect {
+          expect_any_instance_of(Mongo::Server).to receive(:max_bson_object_size).at_least(:once).and_return(100)
+          expect do
             reply
-          }.to raise_exception(Mongo::Error::MaxBSONSize)
+          end.to raise_exception(Mongo::Error::MaxBSONSize)
         end
       end
     end
