@@ -128,4 +128,20 @@ module Constraints
       end
     end
   end
+
+  def min_ruby_version(version)
+    before do
+      if RUBY_VERSION < version
+        skip "Ruby version #{version} or higher required"
+      end
+    end
+  end
+
+  def ruby_version_lt(version)
+    before do
+      if RUBY_VERSION >= version
+        skip "Ruby version less than #{version} required"
+      end
+    end
+  end
 end

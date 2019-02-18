@@ -322,7 +322,8 @@ describe Mongo::Socket::SSL do
       end
     end
 
-    context 'when ruby version is < 2.4.1', if: (RUBY_VERSION < '2.4.1') do
+    context 'when ruby version is < 2.4.1' do
+      ruby_version_lt '2.4.1'
 
       context 'when a key is passed, but it is not of the right type' do
 
@@ -348,7 +349,8 @@ describe Mongo::Socket::SSL do
     # a NoMethodError because #private? is attempted to be called on the key.
     # In jruby 9.2 a TypeError is raised.
     # In jruby 9.1 a OpenSSL::PKey::PKeyError is raised.
-    context 'when ruby version is >= 2.4.1', if: (RUBY_VERSION >= '2.4.1') do
+    context 'when ruby version is >= 2.4.1' do
+      min_ruby_version '2.4.1'
 
       context 'when a key is passed, but it is not of the right type' do
 
