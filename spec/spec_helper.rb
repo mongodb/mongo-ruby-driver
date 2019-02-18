@@ -92,8 +92,6 @@ def scram_sha_256_enabled?
   $scram_sha_256_enabled ||= scanned_client_server!.features.scram_sha_256_enabled?
 end
 
-alias :scram_sha_1_enabled? :list_command_enabled?
-
 # Try running a command on the admin database to see if the mongod was started with auth.
 #
 # @since 2.2.0

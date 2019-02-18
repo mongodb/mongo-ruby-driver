@@ -39,6 +39,7 @@ describe Mongo::Auth::SCRAM do
   end
 
   context 'when SCRAM-SHA-1 is used' do
+    min_server_fcv '3.0'
 
     describe '#login' do
 
@@ -57,7 +58,7 @@ describe Mongo::Auth::SCRAM do
           described_class.new(user)
         end
 
-        it 'raises an exception', if: scram_sha_1_enabled? do
+        it 'raises an exception' do
           expect {
             cr.login(connection)
           }.to raise_error(Mongo::Auth::Unauthorized)
@@ -90,12 +91,12 @@ describe Mongo::Auth::SCRAM do
           root_user.instance_variable_set(:@client_key, nil)
         end
 
-        it 'logs the user into the connection and caches the client key', if: scram_sha_1_enabled? do
+        it 'logs the user into the connection and caches the client key' do
           expect(login['ok']).to eq(1)
           expect(root_user.send(:client_key)).not_to be_nil
         end
 
-        it 'raises an exception when an incorrect client key is set', if: scram_sha_1_enabled? do
+        it 'raises an exception when an incorrect client key is set' do
           root_user.instance_variable_set(:@client_key, "incorrect client key")
           expect {
             cr.login(connection)

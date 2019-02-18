@@ -79,6 +79,7 @@ describe Mongo::Auth::CR do
   end
 
   context 'when the user is authorized for the database' do
+    max_server_fcv '2.6'
 
     let(:cr) do
       described_class.new(root_user)
@@ -88,7 +89,7 @@ describe Mongo::Auth::CR do
       cr.login(connection).documents[0]
     end
 
-    it 'logs the user into the connection', unless: scram_sha_1_enabled? do
+    it 'logs the user into the connection' do
       expect(cr.login(connection).documents[0]['ok']).to eq(1)
     end
   end
