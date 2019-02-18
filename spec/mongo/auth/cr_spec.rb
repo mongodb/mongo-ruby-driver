@@ -64,7 +64,9 @@ describe Mongo::Auth::CR do
         }.to raise_error(Mongo::Auth::Unauthorized)
       end
 
-      context 'when compression is used', if: testing_compression? do
+      context 'when compression is used' do
+        require_compression
+        min_server_fcv '3.6'
 
         it 'does not compress the message' do
           expect(Mongo::Protocol::Compressed).not_to receive(:new)

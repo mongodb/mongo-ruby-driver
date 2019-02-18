@@ -116,14 +116,6 @@ def compression_enabled?
   !SpecConfig.instance.compressors.nil?
 end
 
-# Is the test suite testing compression.
-# Requires that the server supports compression and compression is used by the test client.
-#
-# @since 2.5.0
-def testing_compression?
-  compression_enabled? && op_msg_enabled?
-end
-
 alias :scram_sha_1_enabled? :list_command_enabled?
 
 # Try running a command on the admin database to see if the mongod was started with auth.

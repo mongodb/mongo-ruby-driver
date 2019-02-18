@@ -30,7 +30,9 @@ describe Mongo::Auth::User::View do
           expect(response).to be_successful
         end
 
-        context 'when compression is used', if: testing_compression? do
+        context 'when compression is used' do
+          require_compression
+          min_server_fcv '3.6'
 
           it 'does not compress the message' do
             # The dropUser command message will be compressed, so expect instantiation once.
@@ -97,7 +99,9 @@ describe Mongo::Auth::User::View do
           expect(response).to be_successful
         end
 
-        context 'when compression is used', if: testing_compression? do
+        context 'when compression is used' do
+          require_compression
+          min_server_fcv '3.6'
 
           it 'does not compress the message' do
             # The dropUser command message will be compressed, so expect instantiation once.
@@ -145,7 +149,9 @@ describe Mongo::Auth::User::View do
           expect(response).to be_successful
         end
 
-        context 'when compression is used', if: testing_compression? do
+        context 'when compression is used' do
+          require_compression
+          min_server_fcv '3.6'
 
           it 'does not compress the message' do
             # The dropUser command message will be compressed, so expect instantiation once.

@@ -112,4 +112,20 @@ module Constraints
       end
     end
   end
+
+  def require_compression
+    before do
+      if SpecConfig.instance.compressors.nil?
+        skip "Compression is not enabled"
+      end
+    end
+  end
+
+  def require_no_compression
+    before do
+      if SpecConfig.instance.compressors
+        skip "Compression is enabled"
+      end
+    end
+  end
 end
