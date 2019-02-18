@@ -66,7 +66,12 @@ module Mongo
       # @deprecated No longer necessary with Server Selection specification.
       PING_OP_MSG_BYTES = PING_OP_MSG_MESSAGE.serialize.to_s.freeze
 
-      # Initialize a new socket connection from the client to the server.
+      # Creates a new connection object to the specified target address
+      # with the specified options.
+      #
+      # The constructor does not perform any I/O (and thus does not create
+      # sockets, handshakes nor authenticates); call connect! method on the
+      # connection object to create the network connection.
       #
       # @api private
       #
@@ -119,7 +124,7 @@ module Mongo
                      :cluster_time,
                      :update_cluster_time
 
-      # Tell the underlying socket to establish a connection to the host.
+      # Establishes a network connection to the target address.
       #
       # @example Connect to the host.
       #   connection.connect!

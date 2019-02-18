@@ -73,7 +73,14 @@ module Mongo
         COMPRESSION_WARNING = 'The server has no compression algorithms in common with those requested. ' +
                                 'Compression will not be used.'.freeze
 
-        # Initialize a new socket connection from the client to the server.
+        # Creates a new connection object to the specified target address
+        # with the specified options.
+        #
+        # The constructor does not perform any I/O (and thus does not create
+        # sockets nor handshakes); call connect! method on the connection
+        # object to create the network connection.
+        #
+        # @note Monitoring connections do not authenticate.
         #
         # @api private
         #
@@ -135,7 +142,7 @@ module Mongo
           end
         end
 
-        # Tell the underlying socket to establish a connection to the host.
+        # Establishes a network connection to the target address.
         #
         # @example Connect to the host.
         #   connection.connect!
@@ -147,10 +154,11 @@ module Mongo
         #
         # @since 2.0.0
         def connect!
-          unless socket
-            @socket = address.socket(socket_timeout, ssl_options,
+          unless @socket
+            socket = address.socket(socket_timeout, ssl_options,
               connect_timeout: address.connect_timeout)
-            handshake!
+            handshake!(socket)
+            @socket = socket
           end
           true
         end
@@ -204,7 +212,7 @@ module Mongo
           end
         end
 
-        def handshake!
+        def handshake!(socket)
           if @app_metadata
             socket.write(@app_metadata.ismaster_bytes)
             reply = Protocol::Message.deserialize(socket, Mongo::Protocol::Message::MAX_MESSAGE_SIZE).documents[0]
