@@ -77,16 +77,14 @@ module Mongo
         # @since 2.0.0
         attr_reader :description
 
-        def configuration_satisfied?(client)
-          server_version_satisfied?(client) && topology_satisfied?
-        end
-
         def initialize(test, coll1, coll2, db1, db2)
           @description = test['description']
           @min_server_version = test['minServerVersion']
           @max_server_version = test['maxServerVersion']
           @target_type = test['target']
-          @topologies = test['topology']
+          @topologies = test['topology'].map do |topology|
+            {'single' => :single, 'replicaset' => :replica_set, 'sharded' => :sharded}[topology]
+          end
           @pipeline = test['changeStreamPipeline'] || []
           @options = test['changeStreamOptions'] || {}
           @operations = test['operations'].map { |op| Operation.new(op) }
@@ -97,6 +95,8 @@ module Mongo
           @db1_name = db1
           @db2_name = db2
         end
+
+        attr_reader :topologies
 
         def setup_test
           @global_client = ClientRegistry.instance.global_client('root_authorized').use('admin')
@@ -178,21 +178,6 @@ module Mongo
 
         def server_version_satisfied?(client)
           lower_bound_satisfied?(client) && upper_bound_satisfied?(client)
-        end
-
-        def topology_satisfied?
-          @topologies.any? do |topology|
-            case topology
-            when 'single'
-              standalone?
-            when 'replicaset'
-              replica_set?
-            when 'sharded'
-              sharded?
-            else
-              false
-            end
-          end
         end
 
         private
