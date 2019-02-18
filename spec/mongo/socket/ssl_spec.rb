@@ -4,10 +4,12 @@ describe Mongo::Socket::SSL do
   require_ssl
 
   let(:address) do
-    default_address
+    default_address.tap do
+      ClientRegistry.instance.close_all_clients
+    end
   end
 
-  let(:resolver) do
+  let!(:resolver) do
     address.send(:create_resolver, {})
   end
 
@@ -53,10 +55,6 @@ describe Mongo::Socket::SSL do
 
       context 'when connecting the tcp socket is successful' do
 
-        before do
-          socket.connect!
-        end
-
         it 'connects to the server' do
           expect(socket).to be_alive
         end
@@ -64,21 +62,11 @@ describe Mongo::Socket::SSL do
 
       context 'when connecting the tcp socket raises an exception' do
 
-        before do
-          tcp_socket = socket.instance_variable_get(:@tcp_socket)
-          allow(tcp_socket).to receive(:connect).and_raise(Mongo::Error::SocketTimeoutError)
-        end
-
-        let!(:result) do
-          begin
-            socket.connect!
-          rescue => e
-            e
-          end
-        end
-
         it 'raises an exception' do
-          expect(result).to be_a(Mongo::Error::SocketTimeoutError)
+          expect_any_instance_of(::Socket).to receive(:connect).and_raise(Mongo::Error::SocketTimeoutError)
+          expect do
+            socket
+          end.to raise_error(Mongo::Error::SocketTimeoutError)
         end
       end
     end
@@ -92,10 +80,6 @@ describe Mongo::Socket::SSL do
           :ssl_key_string => key_string,
           :ssl_verify => false
         }
-      end
-
-      before do
-        socket.connect!
       end
 
       it 'connects to the server' do
@@ -116,10 +100,6 @@ describe Mongo::Socket::SSL do
         }
       end
 
-      before do
-        socket.connect!
-      end
-
       it 'connects to the server' do
         expect(socket).to be_alive
       end
@@ -136,10 +116,6 @@ describe Mongo::Socket::SSL do
         }
       end
 
-      before do
-        socket.connect!
-      end
-
       it 'connects to the server' do
         expect(socket).to be_alive
       end
@@ -151,10 +127,6 @@ describe Mongo::Socket::SSL do
         super().merge(
           :ssl_cert_string => 'This is a random string, not a PEM-encoded certificate'
         )
-      end
-
-      before do
-        socket.connect!
       end
 
       # since the lower priority option is clearly invalid we verify priority by checking that it connects
@@ -169,10 +141,6 @@ describe Mongo::Socket::SSL do
         super().merge(
           :ssl_cert_object => 'This is a string, not a certificate'
         )
-      end
-
-      before do
-        socket.connect!
       end
 
       # since the lower priority option is clearly invalid we verify priority by checking that it connects
@@ -193,10 +161,6 @@ describe Mongo::Socket::SSL do
         }
       end
 
-      before do
-        socket.connect!
-      end
-
       # since the lower priority option is clearly invalid we verify priority by checking that it connects
       it 'discards the value of :ssl_cert_object' do
         expect(socket).to be_alive
@@ -211,10 +175,6 @@ describe Mongo::Socket::SSL do
         )
       end
 
-      before do
-        socket.connect!
-      end
-
       # since the lower priority option is clearly invalid we verify priority by checking that it connects
       it 'discards the value of :ssl_key_string' do
         expect(socket).to be_alive
@@ -227,10 +187,6 @@ describe Mongo::Socket::SSL do
         super().merge(
           :ssl_cert_object => 'This is a string, not a key'
         )
-      end
-
-      before do
-        socket.connect!
       end
 
       # since the lower priority option is clearly invalid we verify priority by checking that it connects
@@ -249,10 +205,6 @@ describe Mongo::Socket::SSL do
           :ssl_key_object => 'This is a string, not a PKey',
           :ssl_verify => false
         }
-      end
-
-      before do
-        socket.connect!
       end
 
       # since the lower priority option is clearly invalid we verify priority by checking that it connects
@@ -274,9 +226,9 @@ describe Mongo::Socket::SSL do
       end
 
       it 'raises a TypeError' do
-        expect{
-          socket.connect!
-        }.to raise_exception(TypeError)
+        expect do
+          socket
+        end.to raise_exception(TypeError)
       end
     end
 
@@ -290,13 +242,13 @@ describe Mongo::Socket::SSL do
           error = nil
           begin
             described_class.new(
-              address.host,
-              address.port,
+              resolver.host,
+              resolver.port,
               host_name,
               30,
               ::Socket::PF_INET,
               options.merge(ssl_verify_hostname: true)
-            ).connect!
+            )
           rescue => e
             error = e
           end
@@ -310,13 +262,13 @@ describe Mongo::Socket::SSL do
         it 'raises an error' do
           expect {
             described_class.new(
-              address.host,
-              address.port,
+              resolver.host,
+              resolver.port,
               host_name,
               30,
               ::Socket::PF_INET,
               options.merge(ssl_verify_hostname: false)
-            ).connect!
+            )
           }.not_to raise_error
         end
       end
@@ -338,9 +290,9 @@ describe Mongo::Socket::SSL do
         end
 
         it 'raises a TypeError' do
-          expect{
-            socket.connect!
-          }.to raise_exception(TypeError)
+          expect do
+            socket
+          end.to raise_exception(TypeError)
         end
       end
     end
@@ -379,9 +331,9 @@ describe Mongo::Socket::SSL do
         end
 
         it 'raises a NoMethodError' do
-          expect{
-            socket.connect!
-          }.to raise_exception(expected_exception)
+          expect do
+            socket
+          end.to raise_exception(expected_exception)
         end
       end
     end
@@ -412,9 +364,9 @@ describe Mongo::Socket::SSL do
       end
 
       it 'raises an exception' do
-        expect {
-          socket.connect!
-        }.to raise_exception(expected_exception)
+        expect do
+          socket
+        end.to raise_exception(expected_exception)
       end
     end
 
@@ -430,10 +382,6 @@ describe Mongo::Socket::SSL do
           )
         end
 
-        before do
-          socket.connect!
-        end
-
         it 'connects to the server' do
           expect(socket).to be_alive
         end
@@ -441,15 +389,11 @@ describe Mongo::Socket::SSL do
 
       context 'as a string containing the PEM-encoded certificate' do
 
-        let (:options) do
+        let(:options) do
           super().merge(
             :ssl_ca_cert_string => ca_cert_string,
             :ssl_verify => true
           )
-        end
-
-        before do
-          socket.connect!
         end
 
         it 'connects to the server' do
@@ -458,16 +402,12 @@ describe Mongo::Socket::SSL do
       end
 
       context 'as an array of Certificate objects' do
-        let (:options) do
+        let(:options) do
           cert = [OpenSSL::X509::Certificate.new(ca_cert_string)]
           super().merge(
             :ssl_ca_cert_object => cert,
             :ssl_verify => true
           )
-        end
-
-        before do
-          socket.connect!
         end
 
         it 'connects to the server' do
@@ -483,10 +423,6 @@ describe Mongo::Socket::SSL do
             :ssl_ca_cert_string => 'This is a string, not a certificate',
             :ssl_verify => true
           )
-        end
-
-        before do
-          socket.connect!
         end
 
         # since the lower priority option is clearly invalid we verify priority by checking that it connects
@@ -505,10 +441,6 @@ describe Mongo::Socket::SSL do
           )
         end
 
-        before do
-          socket.connect!
-        end
-
         it 'discards the value of :ssl_ca_cert_object' do
           expect(socket).to be_alive
         end
@@ -523,10 +455,6 @@ describe Mongo::Socket::SSL do
             :ssl_ca_cert_object => 'This is a string, not an array of certificates',
             :ssl_verify => true
           )
-        end
-
-        before do
-          socket.connect!
         end
 
         it 'discards the value of :ssl_ca_cert_object' do
@@ -544,9 +472,14 @@ describe Mongo::Socket::SSL do
         )
       end
 
-      before do
+      around do |example|
+        saved = ENV['SSL_CERT_FILE']
         ENV['SSL_CERT_FILE'] = CA_PEM
-        socket.connect!
+        begin
+          example.run
+        ensure
+          ENV['SSL_CERT_FILE'] = saved
+        end
       end
 
       it 'uses the default cert store' do
@@ -561,10 +494,6 @@ describe Mongo::Socket::SSL do
         super().merge(
           :ssl_ca_cert => CA_PEM
         ).tap { |options| options.delete(:ssl_verify) }
-      end
-
-      before do
-        socket.connect!
       end
 
       it 'verifies the server certificate' do
@@ -582,10 +511,6 @@ describe Mongo::Socket::SSL do
         )
       end
 
-      before do
-        socket.connect!
-      end
-
       it 'verifies the server certificate' do
         expect(socket).to be_alive
       end
@@ -598,10 +523,6 @@ describe Mongo::Socket::SSL do
           :ssl_ca_cert => 'invalid',
           :ssl_verify => false
         )
-      end
-
-      before do
-        socket.connect!
       end
 
       it 'does not verify the server certificate' do
