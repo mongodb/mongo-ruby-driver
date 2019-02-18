@@ -175,25 +175,17 @@ module Mongo
       end
     end
 
-    # Connect a socket.
-    #
-    # @example Connect a socket.
-    #   address.connect_socket!(socket)
-    #
-    # @since 2.4.3
-    def connect_socket!(socket)
-      socket.connect!(connect_timeout)
-    end
-
-    private
-
+    # @api private
     def connect_timeout
       @connect_timeout ||= @options[:connect_timeout] || Server::CONNECT_TIMEOUT
     end
 
-    # To determine which address the socket will connect to, the driver will attempt to connect to
-    # each IP address returned by Socket::getaddrinfo in sequence. Once a successful connection is
-    # made, a resolver with that IP address specified is returned. If no successful connection is
+    private
+
+    # To determine which address the socket will connect to, the driver will
+    # attempt to connect to each IP address returned by Socket::getaddrinfo in
+    # sequence. Once a successful connection is made, a resolver with that
+    # IP address specified is returned. If no successful connection is
     # made, the error made by the last connection attempt is raised.
     def create_resolver(ssl_options)
       return Unix.new(seed.downcase) if seed.downcase =~ Unix::MATCH
