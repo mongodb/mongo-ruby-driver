@@ -116,4 +116,46 @@ describe Mongo::Server::Monitor::Connection do
       end
     end
   end
+
+  describe '#ismaster' do
+    let(:options) do
+      SpecConfig.instance.test_options
+    end
+
+    let(:result) { connection.ismaster }
+
+    it 'returns a hash' do
+      expect(result).to be_a(Hash)
+    end
+
+    it 'is successful' do
+      expect(result['ok']).to eq(1.0)
+    end
+
+    context 'network error during ismaster' do
+      let(:result) do
+        connection
+
+        socket = connection.send(:socket).send(:socket)
+        expect([Socket, OpenSSL::SSL::SSLSocket]).to include(socket.class)
+
+        expect(socket).to receive(:write).and_raise(IOError)
+        expect(socket).to receive(:write).and_call_original
+
+        connection.ismaster
+      end
+
+      it 'retries ismaster and is successful' do
+        expect(result).to be_a(Hash)
+        expect(result['ok']).to eq(1.0)
+      end
+
+      it 'logs the retry' do
+        expect(Mongo::Logger.logger).to receive(:warn) do |msg|
+          expect(msg).to match(/Retrying ismaster on #{connection.address}/)
+        end
+        expect(result).to be_a(Hash)
+      end
+    end
+  end
 end

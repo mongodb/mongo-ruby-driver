@@ -69,14 +69,19 @@ module Mongo
     #
     # @note This only retries read operations on socket errors.
     #
+    # @param [ Hash ] options Options.
     # @param [ Proc ] block The block to execute.
+    #
+    # @option options [ String ] :retry_message Message to log when retrying.
     #
     # @return [ Result ] The result of the operation.
     #
     # @since 2.2.6
-    def read_with_one_retry
+    def read_with_one_retry(options = nil)
       yield
-    rescue Error::SocketError, Error::SocketTimeoutError
+    rescue Error::SocketError, Error::SocketTimeoutError => e
+      retry_message = options && options[:retry_message]
+      log_retry(e, message: retry_message)
       yield
     end
 
@@ -200,8 +205,13 @@ module Mongo
     end
 
     # Log a warning so that any application slow down is immediately obvious.
-    def log_retry(e)
-      Logger.logger.warn "Retry due to: #{e.class.name} #{e.message}"
+    def log_retry(e, options = nil)
+      message = if options && options[:message]
+        options[:message]
+      else
+        "Retry"
+      end
+      Logger.logger.warn "#{message} due to: #{e.class.name} #{e.message}"
     end
   end
 end
