@@ -153,8 +153,8 @@ class SpecConfig
       {
         ssl: true,
         ssl_verify: false,
-        #ssl_cert:  client_cert_pem,
-        #ssl_key:  client_key_pem,
+        ssl_cert:  client_cert_pem,
+        ssl_key:  client_key_pem,
       }
     else
       {}
