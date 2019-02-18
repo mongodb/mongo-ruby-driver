@@ -60,21 +60,11 @@ describe Mongo::Socket::SSL do
 
       context 'when connecting the tcp socket raises an exception' do
 
-        before do
-          tcp_socket = socket.instance_variable_get(:@tcp_socket)
-          allow(tcp_socket).to receive(:connect).and_raise(Mongo::Error::SocketTimeoutError)
-        end
-
-        let!(:result) do
-          begin
-            socket.connect!
-          rescue => e
-            e
-          end
-        end
-
         it 'raises an exception' do
-          expect(result).to be_a(Mongo::Error::SocketTimeoutError)
+          expect_any_instance_of(::Socket).to receive(:connect).and_raise(Mongo::Error::SocketTimeoutError)
+          expect do
+            socket
+          end.to raise_error(Mongo::Error::SocketTimeoutError)
         end
       end
     end
