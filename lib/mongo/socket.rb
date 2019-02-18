@@ -169,6 +169,15 @@ module Mongo
       true
     end
 
+    # For backwards compatibilty only, do not use.
+    #
+    # @return [ true ] Always true.
+    #
+    # @deprecated
+    def connectable?
+      true
+    end
+
     private
 
     def read_from_socket(length)
