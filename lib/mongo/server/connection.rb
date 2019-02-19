@@ -279,6 +279,17 @@ module Mongo
       def default_mechanism
         @auth_mechanism || (@server.features.scram_sha_1_enabled? ? :scram : :mongodb_cr)
       end
+
+      def deliver(message)
+        begin
+          super
+        # Important: timeout errors are not handled here
+        rescue Error::SocketError
+          @server.unknown!
+          @server.pool.disconnect!
+          raise
+        end
+      end
     end
   end
 end
