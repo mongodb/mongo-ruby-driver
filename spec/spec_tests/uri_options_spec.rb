@@ -10,6 +10,10 @@ describe 'Uri Options' do
     context(spec.description) do
 
       before(:all) do
+        # Since the tests issue global assertions on Mongo::Logger,
+        # we need to close all clients/stop monitoring to avoid monitoring
+        # threads warning and interfering with these assertions
+        ClientRegistry.instance.close_all_clients
 
         module Mongo
           class Address
