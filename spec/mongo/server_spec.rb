@@ -35,7 +35,7 @@ describe Mongo::Server do
     end
 
     after do
-      expect(cluster).to receive(:pool).with(server).and_return(pool)
+      expect(server).to receive(:pool).and_return(pool)
       server.disconnect!
     end
 
@@ -88,7 +88,7 @@ describe Mongo::Server do
 
     it 'stops the monitor instance' do
       expect(server.instance_variable_get(:@monitor)).to receive(:stop!).and_return(true)
-      expect(cluster).to receive(:pool).with(server).and_return(pool)
+      expect(server).to receive(:pool).and_return(pool)
       server.disconnect!
     end
   end
@@ -106,7 +106,7 @@ describe Mongo::Server do
     end
 
     after do
-      expect(cluster).to receive(:pool).with(server).and_return(pool)
+      expect(server).to receive(:pool).and_return(pool)
       server.disconnect!
     end
 
@@ -150,7 +150,7 @@ describe Mongo::Server do
     end
 
     after do
-      expect(cluster).to receive(:pool).with(server).and_return(pool)
+      expect(server).to receive(:pool).and_return(pool)
       server.disconnect!
     end
 
@@ -170,7 +170,7 @@ describe Mongo::Server do
     end
 
     after do
-      expect(cluster).to receive(:pool).with(server).and_return(pool)
+      expect(server).to receive(:pool).and_return(pool)
       server.disconnect!
     end
 
