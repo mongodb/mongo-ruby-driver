@@ -33,6 +33,8 @@ module Mongo
     # @since 2.5.0
     class SRVProtocol < URI
 
+      attr_reader :srv_records
+
       # Gets the options hash that needs to be passed to a Mongo::Client on instantiation, so we
       # don't have to merge the txt record options, credentials, and database in at that point -
       # we only have a single point here.

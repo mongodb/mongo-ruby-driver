@@ -368,8 +368,10 @@ module Mongo
           uri_options.delete(:write_concern)
         end
         options = uri_options.merge(options)
+        @srv_records = uri.srv_records
       else
         addresses = addresses_or_uri
+        @srv_records = nil
       end
 
       unless options[:retry_reads] == false
