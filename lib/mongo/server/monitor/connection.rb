@@ -141,7 +141,7 @@ module Mongo
         # @since 2.2.0
         def ismaster
           ensure_connected do |socket|
-            read_with_one_retry do
+            read_with_one_retry(retry_message: retry_message) do
               socket.write(ISMASTER_BYTES)
               Protocol::Message.deserialize(socket).documents[0]
             end
@@ -227,6 +227,10 @@ module Mongo
             set_compressor!(reply)
             reply
           end
+        end
+
+        def retry_message
+          "Retrying ismaster on #{address}"
         end
       end
     end
