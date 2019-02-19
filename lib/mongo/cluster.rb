@@ -342,13 +342,12 @@ module Mongo
     # @api private
     attr_reader :server_selection_semaphore
 
-    # Finalize the cluster for garbage collection. Disconnects all the scoped
-    # connection pools.
+    # Finalize the cluster for garbage collection.
     #
     # @example Finalize the cluster.
     #   Cluster.finalize(pools)
     #
-    # @param [ Hash<Address, Server::ConnectionPool> ] pools The connection pools.
+    # @param [ Hash<Address, Server::ConnectionPool> ] pools Ignored.
     # @param [ PeriodicExecutor ] periodic_executor The periodic executor.
     # @param [ SessionPool ] session_pool The session pool.
     #
