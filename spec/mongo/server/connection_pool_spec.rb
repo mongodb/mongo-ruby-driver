@@ -297,14 +297,16 @@ describe Mongo::Server::ConnectionPool do
         end
 
         context 'when min size is > 0' do
+          after do
+            Timecop.return
+          end
 
           context 'when more than the number of min_size are checked out' do
-
             let(:options) do
               SpecConfig.instance.test_options.merge(max_pool_size: 5, min_pool_size: 3, max_idle_time: 0.5)
             end
 
-            before do
+            it 'closes and removes connections with stale sockets and does not connect new ones' do
               first = pool.checkout
               second = pool.checkout
               third = pool.checkout
@@ -316,13 +318,14 @@ describe Mongo::Server::ConnectionPool do
               expect(fifth).to receive(:disconnect!).and_call_original
               expect(fifth).not_to receive(:connect!)
 
-              sleep(0.5)
+              Timecop.travel(Time.now + 1)
+              expect(queue.length).to be(1)
               pool.close_stale_sockets!
-            end
 
-            it 'closes all stale sockets and does not connect new ones' do
-              expect(queue.size).to be(1)
-              expect(queue[0].connected?).to be(false)
+              expect(pool.send(:queue).pool_size).to be(4)
+              expect(pool.send(:queue).queue_size).to be(0)
+              expect(queue.length).to be(0)
+              expect(fifth.connected?).to be(false)
             end
           end
 
@@ -332,7 +335,7 @@ describe Mongo::Server::ConnectionPool do
               SpecConfig.instance.test_options.merge(max_pool_size: 5, min_pool_size: 3, max_idle_time: 0.5)
             end
 
-            before do
+            it 'closes and removes connections with stale sockets and does not connect new ones' do
               first = pool.checkout
               second = pool.checkout
               third = pool.checkout
@@ -351,89 +354,19 @@ describe Mongo::Server::ConnectionPool do
               expect(fourth).not_to receive(:connect!)
 
               expect(fifth).to receive(:disconnect!).and_call_original
-              expect(fifth).to receive(:connect!).and_call_original
+              expect(fifth).not_to receive(:connect!).and_call_original
 
-              sleep(0.5)
+              Timecop.travel(Time.now + 1)
+              expect(queue.length).to be(3)
               pool.close_stale_sockets!
-            end
 
-            it 'closes all stale sockets and does not connect new ones' do
-              expect(queue.size).to be(3)
-              expect(queue[0].connected?).to be(true)
-              expect(queue[1].connected?).to be(false)
-              expect(queue[2].connected?).to be(false)
-            end
-          end
+              expect(pool.send(:queue).pool_size).to be(2)
+              expect(pool.send(:queue).queue_size).to be(0)
+              expect(queue.length).to be(0)
 
-          context 'when a stale connection is unsuccessfully reconnected' do
-
-            let(:options) do
-              SpecConfig.instance.test_options.merge(max_pool_size: 5, min_pool_size: 3, max_idle_time: 0.5)
-            end
-
-            before do
-              first = pool.checkout
-              second = pool.checkout
-              third = pool.checkout
-              fourth = pool.checkout
-              fifth = pool.checkout
-
-              pool.checkin(third)
-              pool.checkin(fourth)
-              pool.checkin(fifth)
-
-
-              expect(third).to receive(:disconnect!).and_call_original
-              expect(third).not_to receive(:connect!)
-
-              expect(fourth).to receive(:disconnect!).and_call_original
-              expect(fourth).not_to receive(:connect!)
-
-              expect(fifth).to receive(:disconnect!).and_call_original
-              allow(fifth).to receive(:connect!).and_raise(Mongo::Error::SocketError)
-
-              sleep(0.5)
-              pool.close_stale_sockets!
-            end
-
-            it 'is kept in the pool' do
-              expect(queue.size).to be(3)
-              expect(queue[0].connected?).to be(false)
-              expect(queue[1].connected?).to be(false)
-              expect(queue[2].connected?).to be(false)
-            end
-          end
-
-          context 'when exactly the min_size number of connections is checked out' do
-
-            let(:options) do
-              SpecConfig.instance.test_options.merge(max_pool_size: 5, min_pool_size: 3, max_idle_time: 0.5)
-            end
-
-            before do
-              first = pool.checkout
-              second = pool.checkout
-              third = pool.checkout
-              fourth = pool.checkout
-              fifth = pool.checkout
-
-              pool.checkin(fourth)
-              pool.checkin(fifth)
-
-              expect(fourth).to receive(:disconnect!).and_call_original
-              expect(fourth).not_to receive(:connect!)
-
-              expect(fifth).to receive(:disconnect!).and_call_original
-              expect(fifth).not_to receive(:connect!)
-
-              sleep(0.5)
-              pool.close_stale_sockets!
-            end
-
-            it 'closes all stale sockets and does not connect new ones' do
-              expect(queue.size).to be(2)
-              expect(queue[0].connected?).to be(false)
-              expect(queue[1].connected?).to be(false)
+              expect(third.connected?).to be(false)
+              expect(fourth.connected?).to be(false)
+              expect(fifth.connected?).to be(false)
             end
           end
         end
