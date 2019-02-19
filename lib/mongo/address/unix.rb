@@ -64,12 +64,15 @@ module Mongo
       #
       # @param [ Float ] socket_timeout The socket timeout.
       # @param [ Hash ] ssl_options SSL options - ignored.
+      # @param [ Hash ] options The options.
+      #
+      # @option options [ Float ] :connect_timeout Connect timeout.
       #
       # @return [ Mongo::Socket::Unix ] The socket.
       #
       # @since 2.0.0
-      def socket(socket_timeout, ssl_options = {})
-        Socket::Unix.new(host, socket_timeout)
+      def socket(socket_timeout, ssl_options = {}, options = {})
+        Socket::Unix.new(host, socket_timeout, options)
       end
     end
   end
