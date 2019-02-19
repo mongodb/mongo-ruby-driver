@@ -187,8 +187,9 @@ shared_examples 'an operation supporting causally consistent reads' do
     subscribed_client
   end
 
-  context 'when connected to a standalone', if: standalone? do
+  context 'when connected to a standalone' do
     min_server_fcv '3.6'
+    require_topology :single
 
     context 'when the collection specifies a read concern' do
 
@@ -753,8 +754,9 @@ shared_examples 'an operation updating cluster time' do
       end
     end
 
-    context 'when the server is a standalone', if: standalone? do
+    context 'when the server is a standalone' do
       min_server_fcv '3.6'
+      require_topology :single
 
       let(:before_cluster_time) do
         client.cluster.cluster_time

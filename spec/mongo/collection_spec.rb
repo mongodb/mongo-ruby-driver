@@ -511,7 +511,9 @@ describe Mongo::Collection do
           described_class.new(database, :specs, options)
         end
 
-        context 'when the server supports write concern on the create command', if: replica_set? && collation_enabled? do
+        context 'when the server supports write concern on the create command' do
+          min_server_fcv '3.4'
+          require_topology :replica_set
 
           it 'applies the write concern' do
             expect{
@@ -520,7 +522,8 @@ describe Mongo::Collection do
           end
         end
 
-        context 'when the server does not support write concern on the create command', unless: collation_enabled? do
+        context 'when the server does not support write concern on the create command' do
+          max_server_version '3.2'
 
           it 'does not apply the write concern' do
             expect(collection.create).to be_successful
@@ -548,7 +551,8 @@ describe Mongo::Collection do
             collection.drop
           end
 
-          context 'when the server supports collations', if: collation_enabled? do
+          context 'when the server supports collations' do
+            min_server_fcv '3.4'
 
             it 'executes the command' do
               expect(response).to be_successful
@@ -565,7 +569,8 @@ describe Mongo::Collection do
             end
           end
 
-          context 'when the server does not support collations', unless: collation_enabled? do
+          context 'when the server does not support collations' do
+            max_server_version '3.2'
 
             it 'raises an error' do
               expect {
@@ -678,10 +683,11 @@ describe Mongo::Collection do
 
         it_behaves_like 'an operation using a session'
 
-        # Due to how rspec interprets nested `if: condition` guards, we can't use one to skip this
-        # test in the case that the server will override the write concern (preventing the expected
-        # failure), so we're forced to use a traditional conditional to avoid defining the test.
-        it_behaves_like 'a failed operation using a session' if can_set_write_concern?
+        context 'can set write concern' do
+          require_set_write_concern
+
+          it_behaves_like 'a failed operation using a session'
+        end
       end
 
       context 'when the collection does not have a write concern set' do
@@ -698,7 +704,8 @@ describe Mongo::Collection do
           expect(database.collection_names).to_not include('specs')
         end
 
-        context 'when the collection does not exist', if: can_set_write_concern? do
+        context 'when the collection does not exist' do
+          require_set_write_concern
 
           it 'does not raise an error' do
             expect(database['non-existent-coll'].drop).to be(false)
@@ -718,7 +725,9 @@ describe Mongo::Collection do
           collection.with(write_options)
         end
 
-        context 'when the server supports write concern on the drop command', if: collation_enabled? && can_set_write_concern? do
+        context 'when the server supports write concern on the drop command' do
+          min_server_fcv '3.4'
+          require_set_write_concern
 
           it 'applies the write concern' do
             expect{
@@ -727,7 +736,8 @@ describe Mongo::Collection do
           end
         end
 
-        context 'when the server does not support write concern on the drop command', unless: collation_enabled? do
+        context 'when the server does not support write concern on the drop command' do
+          max_server_version '3.2'
 
           it 'does not apply the write concern' do
             expect(collection_with_write_options.drop).to be_successful
@@ -736,7 +746,9 @@ describe Mongo::Collection do
       end
     end
 
-    context 'when the collection does not exist', if: can_set_write_concern? do
+    context 'when the collection does not exist' do
+      require_set_write_concern
+
       before do
         begin
           collection.drop
@@ -821,7 +833,8 @@ describe Mongo::Collection do
       end
     end
 
-    context 'when the user is not authorized', if: auth_enabled? do
+    context 'when the user is not authorized' do
+      require_auth
 
       let(:view) do
         unauthorized_collection.find
@@ -1549,7 +1562,7 @@ describe Mongo::Collection do
       it_behaves_like 'a failed operation using a session'
     end
 
-    context 'when batch size is specified', unless: need_to_skip_on_sharded_auth_40? do
+    context 'when batch size is specified' do
 
       let(:batch_size) { 1 }
 
@@ -1668,14 +1681,16 @@ describe Mongo::Collection do
           authorized_collection.aggregate(pipeline, options).collect { |doc| doc['name']}
         end
 
-        context 'when the server selected supports collations', if: collation_enabled? do
+        context 'when the server selected supports collations' do
+          min_server_fcv '3.4'
 
           it 'applies the collation' do
             expect(result).to eq(['bang', 'bang'])
           end
         end
 
-        context 'when the server selected does not support collations', unless: collation_enabled? do
+        context 'when the server selected does not support collations' do
+          max_server_version '3.2'
 
           it 'raises an exception' do
             expect {
@@ -1810,14 +1825,16 @@ describe Mongo::Collection do
           { collation: { locale: 'en_US', strength: 2 } }
         end
 
-        context 'when the server selected supports collations', if: collation_enabled? do
+        context 'when the server selected supports collations' do
+          min_server_fcv '3.4'
 
           it 'applies the collation to the count' do
             expect(result).to eq(1)
           end
         end
 
-        context 'when the server selected does not support collations', unless: collation_enabled? do
+        context 'when the server selected does not support collations' do
+          max_server_version '3.2'
 
           it 'raises an exception' do
             expect {
@@ -1921,14 +1938,16 @@ describe Mongo::Collection do
         { collation: { locale: 'en_US', strength: 2 } }
       end
 
-      context 'when the server selected supports collations', if: collation_enabled? do
+      context 'when the server selected supports collations' do
+        min_server_fcv '3.4'
 
         it 'applies the collation to the distinct' do
           expect(result).to eq(['bang'])
         end
       end
 
-      context 'when the server selected does not support collations', unless: collation_enabled? do
+      context 'when the server selected does not support collations' do
+        max_server_version '3.2'
 
         it 'raises an exception' do
           expect {
@@ -2008,7 +2027,8 @@ describe Mongo::Collection do
       end
     end
 
-    context 'when the delete fails', if: standalone? do
+    context 'when the delete fails' do
+      require_topology :single
 
       let(:result) do
         collection_invalid_write_concern.delete_one
@@ -2087,7 +2107,8 @@ describe Mongo::Collection do
         { collation: { locale: 'en_US', strength: 2 } }
       end
 
-      context 'when the server selected supports collations', if: collation_enabled? do
+      context 'when the server selected supports collations' do
+        min_server_fcv '3.4'
 
         it 'applies the collation' do
           expect(result.written_count).to eq(1)
@@ -2125,7 +2146,8 @@ describe Mongo::Collection do
         end
       end
 
-      context 'when the server selected does not support collations', unless: collation_enabled? do
+      context 'when the server selected does not support collations' do
+        max_server_version '3.2'
 
         it 'raises an exception' do
           expect {
@@ -2193,7 +2215,8 @@ describe Mongo::Collection do
       end
     end
 
-    context 'when the deletes fail', if: standalone?  do
+    context 'when the deletes fail' do
+      require_topology :single
 
       let(:result) do
         collection_invalid_write_concern.delete_many
@@ -2273,7 +2296,8 @@ describe Mongo::Collection do
         { collation: { locale: 'en_US', strength: 2 } }
       end
 
-      context 'when the server selected supports collations', if: collation_enabled? do
+      context 'when the server selected supports collations' do
+        min_server_fcv '3.4'
 
         it 'applies the collation' do
           expect(result.written_count).to eq(2)
@@ -2311,7 +2335,8 @@ describe Mongo::Collection do
         end
       end
 
-      context 'when the server selected does not support collations', unless: collation_enabled? do
+      context 'when the server selected does not support collations' do
+        max_server_version '3.2'
 
         it 'raises an exception' do
           expect {
@@ -2356,8 +2381,9 @@ describe Mongo::Collection do
     end
   end
 
-  describe '#parallel_scan', unless: sharded? do
+  describe '#parallel_scan' do
     max_server_version '4.0'
+    require_topology :single, :replica_set
 
     let(:documents) do
       (1..200).map do |i|
@@ -2486,7 +2512,8 @@ describe Mongo::Collection do
       end
     end
 
-    context 'when the collection has a read preference', unless: sharded? do
+    context 'when the collection has a read preference' do
+      require_topology :single, :replica_set
 
       before do
         allow(collection.client.cluster).to receive(:single?).and_return(false)
@@ -2516,7 +2543,8 @@ describe Mongo::Collection do
       end
     end
 
-    context 'when a max time ms value is provided', if: !sharded? do
+    context 'when a max time ms value is provided' do
+      require_topology :single, :replica_set
 
       let(:result) do
         authorized_collection.parallel_scan(2, options)
@@ -2721,7 +2749,8 @@ describe Mongo::Collection do
         { collation: { locale: 'en_US', strength: 2 } }
       end
 
-      context 'when the server selected supports collations', if: collation_enabled? do
+      context 'when the server selected supports collations' do
+        min_server_fcv '3.4'
 
         it 'applies the collation' do
           expect(result.written_count).to eq(1)
@@ -2759,7 +2788,8 @@ describe Mongo::Collection do
         end
       end
 
-      context 'when the server selected does not support collations', unless: collation_enabled? do
+      context 'when the server selected does not support collations' do
+        max_server_version '3.2'
 
         it 'raises an exception' do
           expect {
@@ -3140,7 +3170,8 @@ describe Mongo::Collection do
         { collation: { locale: 'en_US', strength: 2 } }
       end
 
-      context 'when the server selected supports collations', if: collation_enabled? do
+      context 'when the server selected supports collations' do
+        min_server_fcv '3.4'
 
         it 'applies the collation' do
           expect(result.written_count).to eq(2)
@@ -3178,7 +3209,8 @@ describe Mongo::Collection do
         end
       end
 
-      context 'when the server selected does not support collations', unless: collation_enabled? do
+      context 'when the server selected does not support collations' do
+        max_server_version '3.2'
 
         it 'raises an exception' do
           expect {
@@ -3457,7 +3489,8 @@ describe Mongo::Collection do
         { collation: { locale: 'en_US', strength: 2 } }
       end
 
-      context 'when the server selected supports collations', if: collation_enabled? do
+      context 'when the server selected supports collations' do
+        min_server_fcv '3.4'
 
         it 'applies the collation' do
           expect(result.written_count).to eq(1)
@@ -3495,7 +3528,8 @@ describe Mongo::Collection do
         end
       end
 
-      context 'when the server selected does not support collations', unless: collation_enabled? do
+      context 'when the server selected does not support collations' do
+        max_server_version '3.2'
 
         it 'raises an exception' do
           expect {
@@ -3821,8 +3855,9 @@ describe Mongo::Collection do
       end
     end
 
-    context 'when write_concern is provided', if: standalone? do
+    context 'when write_concern is provided' do
       min_server_fcv '3.2'
+      require_topology :single
 
       it 'uses the write concern' do
         expect {
@@ -3832,8 +3867,9 @@ describe Mongo::Collection do
       end
     end
 
-    context 'when the collection has a write concern', if: standalone? do
+    context 'when the collection has a write concern' do
       min_server_fcv '3.2'
+      require_topology :single
 
       let(:collection) do
         authorized_collection.with(write: { w: 2 })
@@ -3865,7 +3901,8 @@ describe Mongo::Collection do
         { collation: { locale: 'en_US', strength: 2 } }
       end
 
-      context 'when the server selected supports collations', if: collation_enabled? do
+      context 'when the server selected supports collations' do
+        min_server_fcv '3.4'
 
         it 'applies the collation' do
           expect(result['name']).to eq('bang')
@@ -3873,7 +3910,8 @@ describe Mongo::Collection do
         end
       end
 
-      context 'when the server selected does not support collations', unless: collation_enabled? do
+      context 'when the server selected does not support collations' do
+        max_server_version '3.2'
 
         it 'raises an exception' do
           expect {
@@ -4152,8 +4190,9 @@ describe Mongo::Collection do
       end
     end
 
-    context 'when write_concern is provided', if: standalone? do
+    context 'when write_concern is provided' do
       min_server_fcv '3.2'
+      require_topology :single
 
       it 'uses the write concern' do
         expect {
@@ -4164,8 +4203,9 @@ describe Mongo::Collection do
       end
     end
 
-    context 'when the collection has a write concern', if: standalone? do
+    context 'when the collection has a write concern' do
       min_server_fcv '3.2'
+      require_topology :single
 
       let(:collection) do
         authorized_collection.with(write: { w: 2 })
@@ -4200,7 +4240,8 @@ describe Mongo::Collection do
         { collation: { locale: 'en_US', strength: 2 } }
       end
 
-      context 'when the server selected supports collations', if: collation_enabled? do
+      context 'when the server selected supports collations' do
+        min_server_fcv '3.4'
 
         it 'applies the collation' do
           expect(result['name']).to eq('bang')
@@ -4208,7 +4249,8 @@ describe Mongo::Collection do
         end
       end
 
-      context 'when the server selected does not support collations', unless: collation_enabled? do
+      context 'when the server selected does not support collations' do
+        max_server_version '3.2'
 
         it 'raises an exception' do
           expect {
@@ -4543,8 +4585,9 @@ describe Mongo::Collection do
       end
     end
 
-    context 'when write_concern is provided', if: standalone? do
+    context 'when write_concern is provided' do
       min_server_fcv '3.2'
+      require_topology :single
 
       it 'uses the write concern' do
         expect {
@@ -4555,8 +4598,9 @@ describe Mongo::Collection do
       end
     end
 
-    context 'when the collection has a write concern', if: standalone? do
+    context 'when the collection has a write concern' do
       min_server_fcv '3.2'
+      require_topology :single
 
       let(:collection) do
         authorized_collection.with(write: { w: 2 })
@@ -4591,7 +4635,8 @@ describe Mongo::Collection do
         { collation: { locale: 'en_US', strength: 2 } }
       end
 
-      context 'when the server selected supports collations', if: collation_enabled? do
+      context 'when the server selected supports collations' do
+        min_server_fcv '3.4'
 
         it 'applies the collation' do
           expect(result['name']).to eq('bang')
@@ -4599,7 +4644,8 @@ describe Mongo::Collection do
         end
       end
 
-      context 'when the server selected does not support collations', unless: collation_enabled? do
+      context 'when the server selected does not support collations' do
+        max_server_version '3.2'
 
         it 'raises an exception' do
           expect {

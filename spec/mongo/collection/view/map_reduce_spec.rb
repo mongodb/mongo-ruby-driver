@@ -257,8 +257,10 @@ describe Mongo::Collection::View::MapReduce do
           end
         end
 
-        context 'when another db is specified', if: (!sharded? && !auth_enabled?) do
+        context 'when another db is specified' do
           min_server_fcv '3.6'
+          require_topology :single, :replica_set
+          require_no_auth
 
           let(:new_map_reduce) do
             map_reduce.out(db: 'another-db', replace: 'output_collection')
@@ -292,7 +294,10 @@ describe Mongo::Collection::View::MapReduce do
           expect(new_map_reduce.count).to eq(2)
         end
 
-        context 'when another db is specified', if: (!auth_enabled? && !sharded? && list_command_enabled?) do
+        context 'when another db is specified' do
+          min_server_fcv '3.0'
+          require_topology :single, :replica_set
+          require_no_auth
 
           let(:new_map_reduce) do
             map_reduce.out(db: 'another-db', merge: 'output_collection')
@@ -326,7 +331,10 @@ describe Mongo::Collection::View::MapReduce do
           expect(new_map_reduce.count).to eq(2)
         end
 
-        context 'when another db is specified', if: (!auth_enabled? && list_command_enabled? && !sharded?) do
+        context 'when another db is specified' do
+          min_server_fcv '3.0'
+          require_topology :single, :replica_set
+          require_no_auth
 
           let(:new_map_reduce) do
             map_reduce.out(db: 'another-db', reduce: 'output_collection')
@@ -586,7 +594,9 @@ describe Mongo::Collection::View::MapReduce do
 
           shared_examples_for 'map reduce that writes accepting write concern' do
 
-            context 'when the server supports write concern on the mapReduce command', if: (collation_enabled? && standalone?) do
+            context 'when the server supports write concern on the mapReduce command' do
+              min_server_fcv '3.4'
+              require_topology :single
 
               it 'uses the write concern' do
                 expect {
@@ -595,7 +605,8 @@ describe Mongo::Collection::View::MapReduce do
               end
             end
 
-            context 'when the server does not support write concern on the mapReduce command', unless: collation_enabled? do
+            context 'when the server does not support write concern on the mapReduce command' do
+              max_server_version '3.2'
 
               it 'does not apply the write concern' do
                 expect(map_reduce.to_a.size).to eq(2)
@@ -748,7 +759,8 @@ describe Mongo::Collection::View::MapReduce do
       { name: 'BANG' }
     end
 
-    context 'when the server selected supports collations', if: collation_enabled? do
+    context 'when the server selected supports collations' do
+      min_server_fcv '3.4'
 
       context 'when the collation key is a String' do
 
@@ -773,7 +785,8 @@ describe Mongo::Collection::View::MapReduce do
       end
     end
 
-    context 'when the server selected does not support collations', unless: collation_enabled? do
+    context 'when the server selected does not support collations' do
+      max_server_version '3.2'
 
       context 'when the map reduce has collation specified in its options' do
 

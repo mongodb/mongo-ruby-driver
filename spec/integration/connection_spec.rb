@@ -96,7 +96,7 @@ describe 'Connections' do
       end
 
       context 'error during handshake to primary in a replica set' do
-        require_topology 'replica_set'
+        require_topology :replica_set
 
         let(:server) { client.cluster.servers.detect { |server| server.primary? } }
 

@@ -87,7 +87,8 @@ describe Mongo::Index::View do
         view_with_write_concern.drop_one('another_-1')
       end
 
-      context 'when the server accepts writeConcern for the dropIndexes operation', if: collation_enabled? do
+      context 'when the server accepts writeConcern for the dropIndexes operation' do
+        min_server_fcv '3.4'
 
         it 'applies the write concern' do
           expect {
@@ -96,7 +97,8 @@ describe Mongo::Index::View do
         end
       end
 
-      context 'when the server does not accept writeConcern for the dropIndexes operation', unless: collation_enabled? do
+      context 'when the server does not accept writeConcern for the dropIndexes operation' do
+        max_server_version '3.2'
 
         it 'does not apply the write concern' do
           expect(result).to be_successful
@@ -104,7 +106,8 @@ describe Mongo::Index::View do
       end
     end
 
-    context 'when there are multiple indexes with the same key pattern', if: collation_enabled? do
+    context 'when there are multiple indexes with the same key pattern' do
+      min_server_fcv '3.4'
 
       before do
         view.create_one({ random: 1 }, unique: true)
@@ -187,7 +190,8 @@ describe Mongo::Index::View do
           view_with_write_concern.drop_all
         end
 
-        context 'when the server accepts writeConcern for the dropIndexes operation', if: collation_enabled? do
+        context 'when the server accepts writeConcern for the dropIndexes operation' do
+          min_server_fcv '3.4'
 
           it 'applies the write concern' do
             expect {
@@ -196,7 +200,8 @@ describe Mongo::Index::View do
           end
         end
 
-        context 'when the server does not accept writeConcern for the dropIndexes operation', unless: collation_enabled? do
+        context 'when the server does not accept writeConcern for the dropIndexes operation' do
+          max_server_version '3.2'
 
           it 'does not apply the write concern' do
             expect(result).to be_successful
@@ -253,7 +258,8 @@ describe Mongo::Index::View do
           end
         end
 
-        context 'when collation is specified', if: collation_enabled? do
+        context 'when collation is specified' do
+          min_server_fcv '3.4'
 
           let(:result) do
             view.create_many(
@@ -267,7 +273,8 @@ describe Mongo::Index::View do
             view.get('random_1')
           end
 
-          context 'when the server supports collations', if: collation_enabled? do
+          context 'when the server supports collations' do
+            min_server_fcv '3.4'
 
             it 'returns ok' do
               expect(result).to be_successful
@@ -281,7 +288,8 @@ describe Mongo::Index::View do
             end
           end
 
-          context 'when the server does not support collations', unless: collation_enabled? do
+          context 'when the server does not support collations' do
+            max_server_version '3.2'
 
             it 'raises an exception' do
               expect {
@@ -325,7 +333,8 @@ describe Mongo::Index::View do
             )
           end
 
-          context 'when the server accepts writeConcern for the createIndexes operation', if: collation_enabled? do
+          context 'when the server accepts writeConcern for the createIndexes operation' do
+            min_server_fcv '3.4'
 
             it 'applies the write concern' do
               expect {
@@ -334,7 +343,8 @@ describe Mongo::Index::View do
             end
           end
 
-          context 'when the server does not accept writeConcern for the createIndexes operation', unless: collation_enabled? do
+          context 'when the server does not accept writeConcern for the createIndexes operation' do
+            max_server_version '3.2'
 
             it 'does not apply the write concern' do
               expect(result).to be_successful
@@ -398,7 +408,8 @@ describe Mongo::Index::View do
             view.get('random_1')
           end
 
-          context 'when the server supports collations', if: collation_enabled? do
+          context 'when the server supports collations' do
+            min_server_fcv '3.4'
 
             it 'returns ok' do
               expect(result).to be_successful
@@ -412,7 +423,8 @@ describe Mongo::Index::View do
             end
           end
 
-          context 'when the server does not support collations', unless: collation_enabled? do
+          context 'when the server does not support collations' do
+            max_server_version '3.2'
 
             it 'raises an exception' do
               expect {
@@ -456,7 +468,8 @@ describe Mongo::Index::View do
                              ])
           end
 
-          context 'when the server accepts writeConcern for the createIndexes operation', if: collation_enabled? do
+          context 'when the server accepts writeConcern for the createIndexes operation' do
+            min_server_fcv '3.4'
 
             it 'applies the write concern' do
               expect {
@@ -465,7 +478,8 @@ describe Mongo::Index::View do
             end
           end
 
-          context 'when the server does not accept writeConcern for the createIndexes operation', unless: collation_enabled? do
+          context 'when the server does not accept writeConcern for the createIndexes operation' do
+            max_server_version '3.2'
 
             it 'does not apply the write concern' do
               expect(result).to be_successful
@@ -545,7 +559,8 @@ describe Mongo::Index::View do
           view_with_write_concern.create_one(spec, unique: true)
         end
 
-        context 'when the server accepts writeConcern for the createIndexes operation', if: collation_enabled? do
+        context 'when the server accepts writeConcern for the createIndexes operation' do
+          min_server_fcv '3.4'
 
           it 'applies the write concern' do
             expect {
@@ -554,7 +569,8 @@ describe Mongo::Index::View do
           end
         end
 
-        context 'when the server does not accept writeConcern for the createIndexes operation', unless: collation_enabled? do
+        context 'when the server does not accept writeConcern for the createIndexes operation' do
+          max_server_version '3.2'
 
           it 'does not apply the write concern' do
             expect(result).to be_successful
@@ -732,6 +748,7 @@ describe Mongo::Index::View do
     end
 
     context 'when the collection does not exist' do
+      min_server_fcv '3.0'
 
       let(:nonexistent_collection) do
         authorized_client[:not_a_collection]
@@ -741,7 +758,7 @@ describe Mongo::Index::View do
         described_class.new(nonexistent_collection)
       end
 
-      it 'raises a nonexistent collection error', if: list_command_enabled? do
+      it 'raises a nonexistent collection error' do
         expect {
           nonexistent_view.each.to_a
         }.to raise_error(Mongo::Error::OperationFailure)
@@ -809,7 +826,8 @@ describe Mongo::Index::View do
         end
       end
 
-      context 'when the server supports collations', if: collation_enabled? do
+      context 'when the server supports collations' do
+        min_server_fcv '3.4'
 
         let(:extended_options) do
           options.merge(:collation => { locale: 'en_US' } )

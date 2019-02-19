@@ -26,6 +26,16 @@ describe Mongo::BulkWrite do
     authorized_client
   end
 
+  shared_examples_for 'bulk write with write concern yielding operation failure' do
+    require_topology :single
+
+    it 'raises an OperationFailure' do
+      expect {
+        bulk_write_invalid_write_concern.execute
+      }.to raise_error(Mongo::Error::OperationFailure)
+    end
+  end
+
   describe '#execute' do
     shared_examples_for 'an executable bulk write' do
 
@@ -130,11 +140,7 @@ describe Mongo::BulkWrite do
 
           context 'when there is a write concern error' do
 
-            it 'raises an OperationFailure', if: standalone? do
-              expect {
-                bulk_write_invalid_write_concern.execute
-              }.to raise_error(Mongo::Error::OperationFailure)
-            end
+            it_behaves_like 'bulk write with write concern yielding operation failure'
 
             context 'when a session is provided' do
 
@@ -189,11 +195,7 @@ describe Mongo::BulkWrite do
 
           context 'when there is a write concern error' do
 
-            it 'raises an OperationFailure', if: standalone? do
-              expect {
-                bulk_write_invalid_write_concern.execute
-              }.to raise_error(Mongo::Error::OperationFailure)
-            end
+            it_behaves_like 'bulk write with write concern yielding operation failure'
 
             context 'when a session is provided' do
 
@@ -252,11 +254,7 @@ describe Mongo::BulkWrite do
 
           context 'when there is a write concern error' do
 
-            it 'raises an OperationFailure', if: standalone? do
-              expect {
-                bulk_write_invalid_write_concern.execute
-              }.to raise_error(Mongo::Error::OperationFailure)
-            end
+            it_behaves_like 'bulk write with write concern yielding operation failure'
 
             context 'when a session is provided' do
 
@@ -285,7 +283,8 @@ describe Mongo::BulkWrite do
                 [{ delete_one: { filter: { name: 'BANG' }, collation: collation } }]
               end
 
-              context 'when the server selected supports collations', if: collation_enabled? do
+              context 'when the server selected supports collations' do
+                min_server_fcv '3.4'
 
                 let!(:result) do
                   bulk_write.execute
@@ -300,7 +299,8 @@ describe Mongo::BulkWrite do
                 end
               end
 
-              context 'when the server selected does not support collations', unless: collation_enabled? do
+              context 'when the server selected does not support collations' do
+                max_server_version '3.2'
 
                 it 'raises an exception' do
                   expect {
@@ -521,12 +521,7 @@ describe Mongo::BulkWrite do
 
           context 'when there is a write concern error' do
 
-
-            it 'raises an OperationFailure', if: standalone? do
-              expect {
-                bulk_write_invalid_write_concern.execute
-              }.to raise_error(Mongo::Error::OperationFailure)
-            end
+            it_behaves_like 'bulk write with write concern yielding operation failure'
 
             context 'when a session is provided' do
 
@@ -558,7 +553,8 @@ describe Mongo::BulkWrite do
                { delete_one: { filter: { name: 'DOINK' }, collation: collation }}]
             end
 
-            context 'when the server selected supports collations', if: collation_enabled? do
+            context 'when the server selected supports collations' do
+              min_server_fcv '3.4'
 
               let!(:result) do
                 bulk_write.execute
@@ -573,7 +569,8 @@ describe Mongo::BulkWrite do
               end
             end
 
-            context 'when the server selected does not support collations', unless: collation_enabled? do
+            context 'when the server selected does not support collations' do
+              max_server_version '3.2'
 
               it 'raises an exception' do
                 expect {
@@ -661,11 +658,7 @@ describe Mongo::BulkWrite do
 
           context 'when there is a write concern error' do
 
-            it 'raises an OperationFailure', if: standalone? do
-              expect {
-                bulk_write_invalid_write_concern.execute
-              }.to raise_error(Mongo::Error::OperationFailure)
-            end
+            it_behaves_like 'bulk write with write concern yielding operation failure'
 
             context 'when a session is provided' do
 
@@ -696,7 +689,8 @@ describe Mongo::BulkWrite do
               [{ delete_many: { filter: { name: 'BANG' }, collation: collation }}]
             end
 
-            context 'when the server selected supports collations', if: collation_enabled? do
+            context 'when the server selected supports collations' do
+              min_server_fcv '3.4'
 
               let!(:result) do
                 bulk_write.execute
@@ -711,7 +705,8 @@ describe Mongo::BulkWrite do
               end
             end
 
-            context 'when the server selected does not support collations', unless: collation_enabled? do
+            context 'when the server selected does not support collations' do
+              max_server_version '3.2'
 
               it 'raises an exception' do
                 expect {
@@ -803,11 +798,7 @@ describe Mongo::BulkWrite do
 
           context 'when there is a write concern error' do
 
-            it 'raises an OperationFailure', if: standalone? do
-              expect {
-                bulk_write_invalid_write_concern.execute
-              }.to raise_error(Mongo::Error::OperationFailure)
-            end
+            it_behaves_like 'bulk write with write concern yielding operation failure'
 
             context 'when a session is provided' do
 
@@ -840,7 +831,8 @@ describe Mongo::BulkWrite do
                { delete_many: { filter: { name: 'DOINK' },  collation: collation }}]
             end
 
-            context 'when the server selected supports collations', if: collation_enabled? do
+            context 'when the server selected supports collations' do
+              min_server_fcv '3.4'
 
               let!(:result) do
                 bulk_write.execute
@@ -855,7 +847,8 @@ describe Mongo::BulkWrite do
               end
             end
 
-            context 'when the server selected does not support collations', unless: collation_enabled? do
+            context 'when the server selected does not support collations' do
+              max_server_version '3.2'
 
               it 'raises an exception' do
                 expect {
@@ -944,11 +937,7 @@ describe Mongo::BulkWrite do
 
           context 'when there is a write concern error' do
 
-            it 'raises an OperationFailure', if: standalone? do
-              expect {
-                bulk_write_invalid_write_concern.execute
-              }.to raise_error(Mongo::Error::OperationFailure)
-            end
+            it_behaves_like 'bulk write with write concern yielding operation failure'
 
             context 'when a session is provided' do
 
@@ -981,33 +970,35 @@ describe Mongo::BulkWrite do
             end
 
             context 'when the server selected supports collations' do
+              min_server_fcv '3.4'
 
               let!(:result) do
                 bulk_write.execute
               end
 
-              it 'applies the collation', if: collation_enabled? do
+              it 'applies the collation' do
                 expect(authorized_collection.find(other: 'pong').count).to eq(1)
               end
 
-              it 'reports the upserted id', if: collation_enabled? do
+              it 'reports the upserted id' do
                 expect(result.upserted_ids).to eq([])
               end
 
-              it 'reports the upserted count', if: collation_enabled? do
+              it 'reports the upserted count' do
                 expect(result.upserted_count).to eq(0)
               end
 
-              it 'reports the modified count', if: collation_enabled? do
+              it 'reports the modified count' do
                 expect(result.modified_count).to eq(1)
               end
 
-              it 'reports the matched count', if: collation_enabled? do
+              it 'reports the matched count' do
                 expect(result.matched_count).to eq(1)
               end
             end
 
-            context 'when the server selected does not support collations', unless: collation_enabled? do
+            context 'when the server selected does not support collations' do
+              max_server_version '3.2'
 
               it 'raises an exception' do
                 expect {
@@ -1173,11 +1164,7 @@ describe Mongo::BulkWrite do
 
             context 'when there is a write concern error' do
 
-              it 'raises an OperationFailure', if: standalone? do
-                expect {
-                  bulk_write_invalid_write_concern.execute
-                }.to raise_error(Mongo::Error::OperationFailure)
-              end
+              it_behaves_like 'bulk write with write concern yielding operation failure'
 
               context 'when a session is provided' do
 
@@ -1231,11 +1218,7 @@ describe Mongo::BulkWrite do
 
             context 'when there is a write concern error' do
 
-              it 'raises an OperationFailure', if: standalone? do
-                expect {
-                  bulk_write_invalid_write_concern.execute
-                }.to raise_error(Mongo::Error::OperationFailure)
-              end
+              it_behaves_like 'bulk write with write concern yielding operation failure'
             end
 
             context 'when write_concern is specified as an option' do
@@ -1284,33 +1267,35 @@ describe Mongo::BulkWrite do
             end
 
             context 'when the server selected supports collations' do
+              min_server_fcv '3.4'
 
               let!(:result) do
                 bulk_write.execute
               end
 
-              it 'applies the collation', if: collation_enabled? do
+              it 'applies the collation' do
                 expect(authorized_collection.find(name: 'pong').count).to eq(1)
               end
 
-              it 'reports the upserted id', if: collation_enabled? do
+              it 'reports the upserted id' do
                 expect(result.upserted_ids).to eq([])
               end
 
-              it 'reports the upserted count', if: collation_enabled? do
+              it 'reports the upserted count' do
                 expect(result.upserted_count).to eq(0)
               end
 
-              it 'reports the modified count', if: collation_enabled? do
+              it 'reports the modified count' do
                 expect(result.modified_count).to eq(1)
               end
 
-              it 'reports the matched count', if: collation_enabled? do
+              it 'reports the matched count' do
                 expect(result.matched_count).to eq(1)
               end
             end
 
-            context 'when the server selected does not support collations', unless: collation_enabled? do
+            context 'when the server selected does not support collations' do
+              max_server_version '3.2'
 
               it 'raises an exception' do
                 expect {
@@ -1390,33 +1375,35 @@ describe Mongo::BulkWrite do
             end
 
             context 'when the server selected supports collations' do
+              min_server_fcv '3.4'
 
               let!(:result) do
                 bulk_write.execute
               end
 
-              it 'applies the collation', if: collation_enabled? do
+              it 'applies the collation' do
                 expect(authorized_collection.find(name: 'pong').count).to eq(2)
               end
 
-              it 'reports the upserted id', if: collation_enabled? do
+              it 'reports the upserted id' do
                 expect(result.upserted_ids).to eq([])
               end
 
-              it 'reports the upserted count', if: collation_enabled? do
+              it 'reports the upserted count' do
                 expect(result.upserted_count).to eq(0)
               end
 
-              it 'reports the modified count', if: collation_enabled? do
+              it 'reports the modified count' do
                 expect(result.modified_count).to eq(2)
               end
 
-              it 'reports the matched count', if: collation_enabled? do
+              it 'reports the matched count' do
                 expect(result.matched_count).to eq(2)
               end
             end
 
-            context 'when the server selected does not support collations', unless: collation_enabled? do
+            context 'when the server selected does not support collations' do
+              max_server_version '3.2'
 
               it 'raises an exception' do
                 expect {
@@ -1556,11 +1543,7 @@ describe Mongo::BulkWrite do
 
             context 'when there is a write concern error' do
 
-              it 'raises an OperationFailure', if: standalone? do
-                expect {
-                  bulk_write_invalid_write_concern.execute
-                }.to raise_error(Mongo::Error::OperationFailure)
-              end
+              it_behaves_like 'bulk write with write concern yielding operation failure'
             end
           end
 
@@ -1637,11 +1620,7 @@ describe Mongo::BulkWrite do
 
             context 'when there is a write concern error' do
 
-              it 'raises an OperationFailure', if: standalone? do
-                expect {
-                  bulk_write_invalid_write_concern.execute
-                }.to raise_error(Mongo::Error::OperationFailure)
-              end
+              it_behaves_like 'bulk write with write concern yielding operation failure'
             end
           end
         end
@@ -1662,33 +1641,35 @@ describe Mongo::BulkWrite do
             end
 
             context 'when the server selected supports collations' do
+              min_server_fcv '3.4'
 
               let!(:result) do
                 bulk_write.execute
               end
 
-              it 'applies the collation', if: collation_enabled? do
+              it 'applies the collation' do
                 expect(authorized_collection.find(name: 'pong').count).to eq(2)
               end
 
-              it 'reports the upserted id', if: collation_enabled? do
+              it 'reports the upserted id' do
                 expect(result.upserted_ids).to eq([])
               end
 
-              it 'reports the upserted count', if: collation_enabled? do
+              it 'reports the upserted count' do
                 expect(result.upserted_count).to eq(0)
               end
 
-              it 'reports the modified count', if: collation_enabled? do
+              it 'reports the modified count' do
                 expect(result.modified_count).to eq(2)
               end
 
-              it 'reports the matched count', if: collation_enabled? do
+              it 'reports the matched count' do
                 expect(result.matched_count).to eq(2)
               end
             end
 
-            context 'when the server selected does not support collations', unless: collation_enabled? do
+            context 'when the server selected does not support collations' do
+              max_server_version '3.2'
 
               it 'raises an exception' do
                 expect {
@@ -1785,11 +1766,7 @@ describe Mongo::BulkWrite do
 
             context 'when there is a write concern error' do
 
-              it 'raises an OperationFailure', if: standalone? do
-                expect {
-                  bulk_write_invalid_write_concern.execute
-                }.to raise_error(Mongo::Error::OperationFailure)
-              end
+              it_behaves_like 'bulk write with write concern yielding operation failure'
             end
           end
 
@@ -1826,11 +1803,7 @@ describe Mongo::BulkWrite do
 
             context 'when there is a write concern error' do
 
-              it 'raises an OperationFailure', if: standalone? do
-                expect {
-                  bulk_write_invalid_write_concern.execute
-                }.to raise_error(Mongo::Error::OperationFailure)
-              end
+              it_behaves_like 'bulk write with write concern yielding operation failure'
             end
           end
         end

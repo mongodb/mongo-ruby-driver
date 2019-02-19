@@ -48,18 +48,12 @@ module Constraints
   end
 
   def require_topology(*topologies)
-    topologies = topologies.map { |t| t.to_s }
-    invalid_topologies = topologies - %w(single replica_set sharded)
+    invalid_topologies = topologies - [:single, :replica_set, :sharded]
     unless invalid_topologies.empty?
       raise ArgumentError, "Invalid topologies requested: #{invalid_topologies.join(', ')}"
     end
     before do
-      topology = authorized_client.cluster.topology.class.name.sub(/.*::/, '')
-      topology = topology.gsub(/([A-Z])/) { |match| '_' + match.downcase }.sub(/^_/, '')
-      if topology =~ /^replica_set/
-        topology = 'replica_set'
-      end
-      unless topologies.include?(topology)
+      unless topologies.include?(topology = ClusterConfig.instance.topology)
         skip "Topology #{topologies.join(' or ')} required, we have #{topology}"
       end
     end
@@ -97,10 +91,76 @@ module Constraints
     end
   end
 
+  def require_local_tls
+    before do
+      unless SpecConfig.instance.ssl? && !SpecConfig.instance.ci?
+        skip 'Not running locally with TLS enabled'
+      end
+    end
+  end
+
   def require_no_retry_writes
     before do
       if SpecConfig.instance.retry_writes?
         skip "Retry writes is enabled"
+      end
+    end
+  end
+
+  def require_compression
+    before do
+      if SpecConfig.instance.compressors.nil?
+        skip "Compression is not enabled"
+      end
+    end
+  end
+
+  def require_no_compression
+    before do
+      if SpecConfig.instance.compressors
+        skip "Compression is enabled"
+      end
+    end
+  end
+
+  def ruby_version_gte(version)
+    before do
+      if RUBY_VERSION < version
+        skip "Ruby version #{version} or higher required"
+      end
+    end
+  end
+
+  def ruby_version_lt(version)
+    before do
+      if RUBY_VERSION >= version
+        skip "Ruby version less than #{version} required"
+      end
+    end
+  end
+
+  def require_auth
+    before do
+      unless ENV['AUTH'] == 'auth' || ClusterConfig.instance.auth_enabled?
+        skip "Auth required"
+      end
+    end
+  end
+
+  def require_no_auth
+    before do
+      if ENV['AUTH'] == 'auth' || ClusterConfig.instance.auth_enabled?
+        skip "Auth not allowed"
+      end
+    end
+  end
+
+  # Can the driver specify a write concern that won't be overridden?
+  # (mongos 4.0+ overrides the write concern)
+  def require_set_write_concern
+    before do
+      if ClusterConfig.instance.topology == :sharded && ClusterConfig.instance.short_server_version >= '4.0'
+        skip "mongos 4.0+ overrides write concern"
       end
     end
   end

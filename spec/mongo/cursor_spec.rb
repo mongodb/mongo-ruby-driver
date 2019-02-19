@@ -401,8 +401,9 @@ describe Mongo::Cursor do
       end
     end
 
-    context 'when a getMore is needed to retrieve all results', if: !sharded? do
+    context 'when a getMore is needed to retrieve all results' do
       min_server_fcv '3.6'
+      require_topology :single, :replica_set
 
       let(:documents) do
         (1..4).map{ |i| { field: "test#{i}" }}

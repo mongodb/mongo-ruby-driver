@@ -23,22 +23,6 @@ RSpec.configure do |config|
   end
 end
 
-# Determine whether the test clients are connecting to a standalone.
-#
-# @since 2.0.0
-def standalone?
-  $mongo_client ||= initialize_scanned_client!
-  $standalone ||= $mongo_client.cluster.servers.first.standalone?
-end
-
-# Determine whether the test clients are connecting to a replica set.
-#
-# @since 2.0.0
-def replica_set?
-  $mongo_client ||= initialize_scanned_client!
-  $replica_set ||= $mongo_client.cluster.replica_set?
-end
-
 # Determine whether the test clients are connecting to a sharded cluster
 # or a single mongos.
 #
@@ -69,23 +53,6 @@ def single_mongos?
 end
 
 # For instances where behavior is different on different versions, we need to
-# determine in the specs if we are 3.6 or higher.
-#
-# @since 2.5.0
-def op_msg_enabled?
-  $op_msg_enabled ||= scanned_client_server!.features.op_msg_enabled?
-end
-alias :change_stream_enabled? :op_msg_enabled?
-
-# For instances where behavior is different on different versions, we need to
-# determine in the specs if we are 3.4 or higher.
-#
-# @since 2.4.0
-def collation_enabled?
-  $collation_enabled ||= scanned_client_server!.features.collation_enabled?
-end
-
-# For instances where behavior is different on different versions, we need to
 # determine in the specs if we are 3.2 or higher.
 #
 # @since 2.0.0
@@ -94,71 +61,11 @@ def find_command_enabled?
 end
 
 # For instances where behavior is different on different versions, we need to
-# determine in the specs if we are 2.7 or higher.
-#
-# @since 2.0.0
-def list_command_enabled?
-  $list_command_enabled ||= scanned_client_server!.features.list_indexes_enabled?
-end
-
-# For instances where behavior is different on different versions, we need to
 # determine in the specs if we are 4.0 or higher.
 #
 # @since 2.6.0
 def scram_sha_256_enabled?
   $scram_sha_256_enabled ||= scanned_client_server!.features.scram_sha_256_enabled?
-end
-
-# Is the test suite running locally (not on Travis).
-#
-# @since 2.1.0
-def testing_ssl_locally?
-  SpecConfig.instance.ssl? && !(ENV['CI'])
-end
-
-# Is the test suite using compression.
-#
-# @since 2.5.0
-def compression_enabled?
-  !SpecConfig.instance.compressors.nil?
-end
-
-# Is the test suite testing compression.
-# Requires that the server supports compression and compression is used by the test client.
-#
-# @since 2.5.0
-def testing_compression?
-  compression_enabled? && op_msg_enabled?
-end
-
-alias :scram_sha_1_enabled? :list_command_enabled?
-
-# Try running a command on the admin database to see if the mongod was started with auth.
-#
-# @since 2.2.0
-def auth_enabled?
-  if auth = ENV['AUTH']
-    auth == 'auth'
-  else
-    $mongo_client ||= initialize_scanned_client!
-    begin
-      $mongo_client.use(:admin).command(getCmdLineOpts: 1).first["argv"].include?("--auth")
-    rescue => e
-      e.message =~ /(not authorized)|(unauthorized)|(no users authenticated)|(requires authentication)/
-    end
-  end
-end
-
-def need_to_skip_on_sharded_auth_40?
-  sharded? && auth_enabled? && scram_sha_256_enabled?
-end
-
-# Can the driver specify a write concern that won't be overridden? (mongos 4.0+ overrides the write
-# concern)
-#
-# @since 2.6.0
-def can_set_write_concern?
-  !sharded? || !scram_sha_256_enabled?
 end
 
 # Initializes a basic scanned client to do an ismaster check.
