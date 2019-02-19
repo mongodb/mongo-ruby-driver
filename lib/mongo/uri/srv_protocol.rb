@@ -33,6 +33,8 @@ module Mongo
     # @since 2.5.0
     class SRVProtocol < URI
 
+      attr_reader :srv_records
+
       # Gets the options hash that needs to be passed to a Mongo::Client on instantiation, so we
       # don't have to merge the txt record options, credentials, and database in at that point -
       # we only have a single point here.
@@ -50,8 +52,6 @@ module Mongo
       end
 
       private
-
-      RECORD_PREFIX = '_mongodb._tcp.'.freeze
 
       DOT_PARTITION = '.'.freeze
 
@@ -89,7 +89,7 @@ module Mongo
       end
 
       def resolver
-        @resolver ||= Resolv::DNS.new
+        @resolver ||= SRV::Resolver.new(true)
       end
 
       def parse!(remaining)
@@ -101,8 +101,9 @@ module Mongo
         hostname = @servers.first
         validate_hostname(hostname)
 
-        records = get_records(hostname)
+        @srv_records = resolver.get_records(hostname)
         @txt_options = get_txt_opts(hostname) || {}
+        records = srv_records.hosts
         records.each do |record|
           validate_host!(record)
         end
@@ -136,28 +137,8 @@ module Mongo
         end
       end
 
-      def get_records(hostname)
-        query_name = RECORD_PREFIX + hostname
-        records = resolver.getresources(query_name, Resolv::DNS::Resource::IN::SRV).collect do |record|
-          record_host = record.target.to_s
-          port = record.port
-          validate_record!(record_host, hostname)
-          "#{record_host}#{HOST_PORT_DELIM}#{port}"
-        end
-        raise Error::NoSRVRecords.new(NO_SRV_RECORDS % hostname) if records.empty?
-        records
-      end
-
-      def validate_record!(record_host, hostname)
-        domainname = hostname.split(DOT_PARTITION)[1..-1]
-        host_parts = record_host.split(DOT_PARTITION)
-        unless (host_parts.size > domainname.size) && (domainname == host_parts[-domainname.length..-1])
-          raise Error::MismatchedDomain.new(MISMATCHED_DOMAINNAME % [record_host, domainname])
-        end
-      end
-
       def get_txt_opts(host)
-        records = resolver.getresources(host, Resolv::DNS::Resource::IN::TXT)
+        records = resolver.get_txt_opts(host)
         unless records.empty?
           if records.size > 1
             raise Error::InvalidTXTRecord.new(MORE_THAN_ONE_TXT_RECORD_FOUND % host)
