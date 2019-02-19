@@ -160,10 +160,6 @@ module Mongo
             end
             queue.clear
             @generation += 1
-            while @pool_size < min_size
-              @pool_size += 1
-              queue.unshift(@block.call(@generation))
-            end
             true
           end
         ensure
@@ -345,7 +341,7 @@ module Mongo
 
         def check_count_invariants
           if Mongo::Lint.enabled?
-            if pool_size < min_size
+            if pool_size < 0
               raise Error::LintError, 'connection pool queue: underflow'
             end
             if pool_size > max_size
