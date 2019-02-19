@@ -282,7 +282,14 @@ module Mongo
     # @since 2.0.0
     def pool
       @pool_lock.synchronize do
-        @pool ||= ConnectionPool.get(self)
+        @pool ||= begin
+          ConnectionPool.get(self).tap do |pool|
+            finalizer = proc do
+              pool.disconnect
+            end
+            ObjectSpace.define_finalizer(self, finalizer)
+          end
+        end
       end
     end
 

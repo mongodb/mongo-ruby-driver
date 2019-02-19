@@ -152,8 +152,7 @@ module Mongo
       @periodic_executor = PeriodicExecutor.new(@cursor_reaper, @socket_reaper)
       @periodic_executor.run!
 
-      # todo fix
-      ObjectSpace.define_finalizer(self, self.class.finalize(pools, @periodic_executor, @session_pool))
+      ObjectSpace.define_finalizer(self, self.class.finalize({}, @periodic_executor, @session_pool))
 
       @connecting = false
       @connected = true
@@ -360,10 +359,6 @@ module Mongo
       proc do
         session_pool.end_sessions
         periodic_executor.stop!
-        # todo fix
-        pools.values.each do |pool|
-          pool.disconnect!
-        end
       end
     end
 
