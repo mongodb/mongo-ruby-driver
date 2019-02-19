@@ -639,14 +639,14 @@ describe Mongo::Server::Connection, retry: 3 do
           # the monitor thread
           server.monitor.instance_variable_get('@thread').kill
         end
-      end
-
-      context 'when a non-timeout socket error occurs' do
 
         let(:socket) do
           connection.connect!
           connection.instance_variable_get(:@socket)
         end
+      end
+
+      context 'when a non-timeout socket error occurs' do
 
         before do
           expect(socket).to receive(:write).and_raise(Mongo::Error::SocketError)
@@ -676,11 +676,6 @@ describe Mongo::Server::Connection, retry: 3 do
       end
 
       context 'when a socket timeout occurs' do
-
-        let(:socket) do
-          connection.connect!
-          connection.instance_variable_get(:@socket)
-        end
 
         before do
           expect(socket).to receive(:write).and_raise(Mongo::Error::SocketTimeoutError)
