@@ -54,6 +54,7 @@ describe Mongo::Server::Connection, retry: 3 do
       SpecConfig.instance.test_options
     ).tap do |server|
       server.scan!
+      expect(server).not_to be_unknown
     end
   end
 
@@ -249,7 +250,7 @@ describe Mongo::Server::Connection, retry: 3 do
 
     shared_examples_for 'does not disconnect connection pool' do
       it 'does not disconnect non-monitoring sockets' do
-        allow(cluster).to receive(:pool).with(server).and_return(pool)
+        allow(server).to receive(:pool).and_return(pool)
         expect(pool).not_to receive(:disconnect!)
         error
       end
@@ -257,7 +258,7 @@ describe Mongo::Server::Connection, retry: 3 do
 
     shared_examples_for 'disconnects connection pool' do
       it 'disconnects non-monitoring sockets' do
-        expect(cluster).to receive(:pool).with(server).and_return(pool)
+        expect(server).to receive(:pool).and_return(pool)
         expect(pool).to receive(:disconnect!).and_return(true)
         error
       end
@@ -628,22 +629,79 @@ describe Mongo::Server::Connection, retry: 3 do
       end
     end
 
-    context 'when a network or socket error occurs' do
+    context 'when a network error occurs' do
+      let(:server) do
+        authorized_client.cluster.next_primary.tap do |server|
+          # to ensure the server stays in unknown state for the duration
+          # of the test, i.e. to avoid racing with the monitor thread
+          # which may put the server back into non-unknown state before
+          # we can verify that the server was marked unknown, kill off
+          # the monitor thread
+          server.monitor.instance_variable_get('@thread').kill
+        end
 
-      let(:socket) do
-        connection.connect!
-        connection.instance_variable_get(:@socket)
+        let(:socket) do
+          connection.connect!
+          connection.instance_variable_get(:@socket)
+        end
       end
 
-      before do
-        expect(socket).to receive(:write).and_raise(Mongo::Error::SocketError)
+      context 'when a non-timeout socket error occurs' do
+
+        before do
+          expect(socket).to receive(:write).and_raise(Mongo::Error::SocketError)
+        end
+
+        let(:result) do
+          expect do
+            connection.dispatch([ insert ])
+          end.to raise_error(Mongo::Error::SocketError)
+        end
+
+        it 'disconnects and raises the exception' do
+          result
+          expect(connection).to_not be_connected
+        end
+
+        it 'disconnects connection pool' do
+          expect(server.pool).to receive(:disconnect!)
+          result
+        end
+
+        it 'marks server unknown' do
+          expect(server).not_to be_unknown
+          result
+          expect(server).to be_unknown
+        end
       end
 
-      it 'disconnects and raises the exception' do
-        expect {
-          connection.dispatch([ insert ])
-        }.to raise_error(Mongo::Error::SocketError)
-        expect(connection).to_not be_connected
+      context 'when a socket timeout occurs' do
+
+        before do
+          expect(socket).to receive(:write).and_raise(Mongo::Error::SocketTimeoutError)
+        end
+
+        let(:result) do
+          expect do
+            connection.dispatch([ insert ])
+          end.to raise_error(Mongo::Error::SocketTimeoutError)
+        end
+
+        it 'disconnects the used connection' do
+          result
+          expect(connection).to_not be_connected
+        end
+
+        it 'does not disconnect connection pool' do
+          expect(server.pool).not_to receive(:disconnect!)
+          result
+        end
+
+        it 'does not mark server unknown' do
+          expect(server).not_to be_unknown
+          result
+          expect(server).not_to be_unknown
+        end
       end
     end
 

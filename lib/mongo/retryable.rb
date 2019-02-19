@@ -42,18 +42,22 @@ module Mongo
         attempt += 1
         yield
       rescue Error::SocketError, Error::SocketTimeoutError => e
-        raise(e) if attempt > cluster.max_read_retries || (session && session.in_transaction?)
+        if attempt > cluster.max_read_retries || (session && session.in_transaction?)
+          raise
+        end
         log_retry(e)
         cluster.scan!(false)
         retry
       rescue Error::OperationFailure => e
         if cluster.sharded? && e.retryable? && !(session && session.in_transaction?)
-          raise(e) if attempt > cluster.max_read_retries
+          if attempt > cluster.max_read_retries
+            raise
+          end
           log_retry(e)
           sleep(cluster.read_retry_interval)
           retry
         else
-          raise e
+          raise
         end
       end
     end

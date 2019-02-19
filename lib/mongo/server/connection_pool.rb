@@ -76,7 +76,10 @@ module Mongo
         queue.dequeue
       end
 
-      # Disconnect the connection pool.
+      # Closes all idle connections in the pool and schedules currently checked
+      # out connections to be closed when they are checked back into the pool.
+      # The pool remains operational and can create new connections when
+      # requested.
       #
       # @example Disconnect the connection pool.
       #   pool.disconnect!
