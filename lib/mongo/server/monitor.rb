@@ -227,7 +227,7 @@ module Mongo
           if monitoring.monitoring?
             monitoring.started(
               Monitoring::SERVER_HEARTBEAT,
-              Monitoring::Event::ServerHeartbeatStarted.new(connection.address)
+              Monitoring::Event::ServerHeartbeatStarted.new(description.address)
             )
           end
 
@@ -235,11 +235,11 @@ module Mongo
             connection.ismaster
           end
           if exc
-            log_debug("Error running ismaster on #{connection.address}: #{exc.message}")
+            log_debug("Error running ismaster on #{description.address}: #{exc.message}")
             if monitoring.monitoring?
               monitoring.failed(
                 Monitoring::SERVER_HEARTBEAT,
-                Monitoring::Event::ServerHeartbeatFailed.new(connection.address, rtt, exc)
+                Monitoring::Event::ServerHeartbeatFailed.new(description.address, rtt, exc)
               )
             end
             result = {}
@@ -247,7 +247,7 @@ module Mongo
             if monitoring.monitoring?
               monitoring.succeeded(
                 Monitoring::SERVER_HEARTBEAT,
-                Monitoring::Event::ServerHeartbeatSucceeded.new(connection.address, rtt)
+                Monitoring::Event::ServerHeartbeatSucceeded.new(description.address, rtt)
               )
             end
           end

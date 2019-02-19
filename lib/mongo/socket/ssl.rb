@@ -32,9 +32,6 @@ module Mongo
       # @return [ String ] host_name The original host name.
       attr_reader :host_name
 
-      # @return [ Hash ] The ssl options.
-      attr_reader :options
-
       # @return [ Integer ] port The port to connect to.
       attr_reader :port
 
@@ -52,8 +49,8 @@ module Mongo
       # @return [ SSL ] The connected socket instance.
       #
       # @since 2.0.0
-      def connect!(connect_timeout = nil)
-        Timeout.timeout(connect_timeout, Error::SocketTimeoutError) do
+      def connect!
+        Timeout.timeout(options[:connect_timeout], Error::SocketTimeoutError) do
           handle_errors { @tcp_socket.connect(::Socket.pack_sockaddr_in(port, host)) }
           @socket = OpenSSL::SSL::SSLSocket.new(@tcp_socket, context)
           @socket.hostname = @host_name
@@ -63,6 +60,7 @@ module Mongo
           self
         end
       end
+      private :connect!
 
       # Initializes a new SSL socket.
       #
@@ -73,7 +71,9 @@ module Mongo
       # @param [ Integer ] port The port number.
       # @param [ Float ] timeout The socket timeout value.
       # @param [ Integer ] family The socket family.
-      # @param [ Hash ] options The ssl options.
+      # @param [ Hash ] options The options.
+      #
+      # @option options [ Float ] :connect_timeout Connect timeout.
       #
       # @since 2.0.0
       def initialize(host, port, host_name, timeout, family, options = {})
@@ -83,6 +83,7 @@ module Mongo
         @tcp_socket = ::Socket.new(family, SOCK_STREAM, 0)
         @tcp_socket.setsockopt(IPPROTO_TCP, TCP_NODELAY, 1)
         set_socket_options(@tcp_socket)
+        connect!
       end
 
       # Read a single byte from the socket.
@@ -98,18 +99,6 @@ module Mongo
           byte = socket.read(1).bytes.to_a[0]
           byte.nil? ? raise(EOFError) : byte
         end
-      end
-
-      # This socket can only be used if the ssl socket (@socket) has been created.
-      #
-      # @example Is the socket connectable?
-      #   socket.connectable?
-      #
-      # @return [ true, false ] If the socket is connectable.
-      #
-      # @since 2.2.5
-      def connectable?
-        !!@socket
       end
 
       private

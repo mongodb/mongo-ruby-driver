@@ -147,12 +147,15 @@ module Mongo
     #
     # @param [ Float ] socket_timeout The socket timeout.
     # @param [ Hash ] ssl_options SSL options.
+    # @param [ Hash ] options The options.
+    #
+    # @option options [ Float ] :connect_timeout Connect timeout.
     #
     # @return [ Mongo::Socket::SSL, Mongo::Socket::TCP, Mongo::Socket::Unix ] The socket.
     #
     # @since 2.0.0
-    def socket(socket_timeout, ssl_options = {})
-      create_resolver(ssl_options).socket(socket_timeout, ssl_options)
+    def socket(socket_timeout, ssl_options = {}, options = {})
+      create_resolver(ssl_options).socket(socket_timeout, ssl_options, options)
     end
 
     # Get the address as a string.
@@ -175,25 +178,17 @@ module Mongo
       end
     end
 
-    # Connect a socket.
-    #
-    # @example Connect a socket.
-    #   address.connect_socket!(socket)
-    #
-    # @since 2.4.3
-    def connect_socket!(socket)
-      socket.connect!(connect_timeout)
-    end
-
-    private
-
+    # @api private
     def connect_timeout
       @connect_timeout ||= @options[:connect_timeout] || Server::CONNECT_TIMEOUT
     end
 
-    # To determine which address the socket will connect to, the driver will attempt to connect to
-    # each IP address returned by Socket::getaddrinfo in sequence. Once a successful connection is
-    # made, a resolver with that IP address specified is returned. If no successful connection is
+    private
+
+    # To determine which address the socket will connect to, the driver will
+    # attempt to connect to each IP address returned by Socket::getaddrinfo in
+    # sequence. Once a successful connection is made, a resolver with that
+    # IP address specified is returned. If no successful connection is
     # made, the error made by the last connection attempt is raised.
     def create_resolver(ssl_options)
       return Unix.new(seed.downcase) if seed.downcase =~ Unix::MATCH
@@ -202,9 +197,11 @@ module Mongo
       error = nil
       ::Socket.getaddrinfo(host, nil, family, ::Socket::SOCK_STREAM).each do |info|
         begin
-          res = FAMILY_MAP[info[4]].new(info[3], port, host)
-          res.socket(connect_timeout, ssl_options).connect!(connect_timeout).close
-          return res
+          specific_address = FAMILY_MAP[info[4]].new(info[3], port, host)
+          socket = specific_address.socket(
+            connect_timeout, ssl_options, connect_timeout: connect_timeout)
+          socket.close
+          return specific_address
         rescue IOError, SystemCallError, Error::SocketTimeoutError, Error::SocketError => e
           error = e
         end

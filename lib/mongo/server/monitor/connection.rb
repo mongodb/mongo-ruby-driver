@@ -73,7 +73,14 @@ module Mongo
         COMPRESSION_WARNING = 'The server has no compression algorithms in common with those requested. ' +
                                 'Compression will not be used.'.freeze
 
-        # Initialize a new socket connection from the client to the server.
+        # Creates a new connection object to the specified target address
+        # with the specified options.
+        #
+        # The constructor does not perform any I/O (and thus does not create
+        # sockets nor handshakes); call connect! method on the connection
+        # object to create the network connection.
+        #
+        # @note Monitoring connections do not authenticate.
         #
         # @api private
         #
@@ -113,6 +120,12 @@ module Mongo
           @compressor = nil
         end
 
+        # @return [ Hash ] options The passed in options.
+        attr_reader :options
+
+        # @return [ Mongo::Address ] address The address to connect to.
+        attr_reader :address
+
         # The compressor, which is determined during the handshake.
         #
         # @since 2.5.0
@@ -128,14 +141,16 @@ module Mongo
         # @since 2.2.0
         def ismaster
           ensure_connected do |socket|
-            read_with_one_retry do
+            read_with_one_retry(retry_message: retry_message) do
               socket.write(ISMASTER_BYTES)
               Protocol::Message.deserialize(socket).documents[0]
             end
           end
         end
 
-        # Tell the underlying socket to establish a connection to the host.
+        # Establishes a network connection to the target address.
+        #
+        # If the connection is already established, this method does nothing.
         #
         # @example Connect to the host.
         #   connection.connect!
@@ -147,10 +162,11 @@ module Mongo
         #
         # @since 2.0.0
         def connect!
-          unless socket && socket.connectable?
-            @socket = address.socket(socket_timeout, ssl_options)
-            address.connect_socket!(socket)
-            handshake!
+          unless @socket
+            socket = address.socket(socket_timeout, ssl_options,
+              connect_timeout: address.connect_timeout)
+            handshake!(socket)
+            @socket = socket
           end
           true
         end
@@ -204,13 +220,17 @@ module Mongo
           end
         end
 
-        def handshake!
+        def handshake!(socket)
           if @app_metadata
             socket.write(@app_metadata.ismaster_bytes)
             reply = Protocol::Message.deserialize(socket, Mongo::Protocol::Message::MAX_MESSAGE_SIZE).documents[0]
             set_compressor!(reply)
             reply
           end
+        end
+
+        def retry_message
+          "Retrying ismaster on #{address}"
         end
       end
     end

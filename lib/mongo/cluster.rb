@@ -337,7 +337,7 @@ module Mongo
     def summary
       "#<Cluster " +
       "topology=#{topology.summary} "+
-      "servers=[#{servers.map(&:summary).join(',')}]>"
+      "servers=[#{servers_list.map(&:summary).join(',')}]>"
     end
 
     # @api private

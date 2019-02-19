@@ -203,7 +203,7 @@ describe Mongo::Client do
           it 'does not use compression for authentication messages' do
             expect(Mongo::Protocol::Compressed).not_to receive(:new)
             client.cluster.next_primary.send(:with_connection) do |conn|
-              conn.send(:authenticate!)
+              conn.send(:authenticate!, conn)
             end
           end
         end

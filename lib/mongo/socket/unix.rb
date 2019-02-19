@@ -26,21 +26,6 @@ module Mongo
       # @return [ Float ] timeout The socket timeout.
       attr_reader :timeout
 
-      # Establishes a socket connection.
-      #
-      # @example Connect the socket.
-      #   sock.connect!
-      #
-      # @note This method mutates the object by setting the socket
-      #   internally.
-      #
-      # @return [ Unix ] The connected socket instance.
-      #
-      # @since 2.0.0
-      def connect!(connect_timeout = nil)
-        self
-      end
-
       # Initializes a new Unix socket.
       #
       # @example Create the Unix socket.
@@ -48,24 +33,15 @@ module Mongo
       #
       # @param [ String ] path The path.
       # @param [ Float ] timeout The socket timeout value.
+      # @param [ Hash ] options The options.
+      #
+      # @option options [ Float ] :connect_timeout Connect timeout (unused).
       #
       # @since 2.0.0
-      def initialize(path, timeout)
-        @path, @timeout = path, timeout
+      def initialize(path, timeout, options = {})
+        @path, @timeout, @options = path, timeout, options
         @socket = ::UNIXSocket.new(path)
         set_socket_options(@socket)
-      end
-
-      # This socket can only be used if the unix socket (@socket) has been created.
-      #
-      # @example Is the socket connectable?
-      #   socket.connectable?
-      #
-      # @return [ true, false ] If the socket is connectable.
-      #
-      # @since 2.2.5
-      def connectable?
-        !!@socket
       end
     end
   end

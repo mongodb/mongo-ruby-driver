@@ -8,10 +8,6 @@ describe Mongo::Socket::Unix do
 
   describe '#connect!' do
 
-    before do
-      socket.connect!
-    end
-
     after do
       socket.close
     end
@@ -24,10 +20,6 @@ describe Mongo::Socket::Unix do
   describe '#alive?' do
 
     context 'when the socket is connected' do
-
-      before do
-        socket.connect!
-      end
 
       after do
         socket.close

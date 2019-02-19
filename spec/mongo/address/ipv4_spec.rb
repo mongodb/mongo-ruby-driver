@@ -69,10 +69,12 @@ describe Mongo::Address::IPv4 do
       end
 
       it 'returns an ssl socket' do
+        allow_any_instance_of(Mongo::Socket::SSL).to receive(:connect!)
         expect(socket).to be_a(Mongo::Socket::SSL)
       end
 
       it 'sets the family as ipv4' do
+        allow_any_instance_of(Mongo::Socket::SSL).to receive(:connect!)
         expect(socket.family).to eq(Socket::PF_INET)
       end
     end
@@ -84,10 +86,12 @@ describe Mongo::Address::IPv4 do
       end
 
       it 'returns a tcp socket' do
+        allow_any_instance_of(Mongo::Socket::TCP).to receive(:connect!)
         expect(socket).to be_a(Mongo::Socket::TCP)
       end
 
       it 'sets the family a ipv4' do
+        allow_any_instance_of(Mongo::Socket::TCP).to receive(:connect!)
         expect(socket.family).to eq(Socket::PF_INET)
       end
     end

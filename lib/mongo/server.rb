@@ -253,6 +253,12 @@ module Mongo
         'GHOST'
       when other?
         'OTHER'
+      when unknown?
+        'UNKNOWN'
+      else
+        # Since the summary method is often used for debugging, do not raise
+        # an exception in case none of the expected types matched
+        ''
       end
       if replica_set_name
         status += " replica_set=#{replica_set_name}"
@@ -395,6 +401,8 @@ end
 
 require 'mongo/server/app_metadata'
 require 'mongo/server/connectable'
+require 'mongo/server/connection_base'
+require 'mongo/server/pending_connection'
 require 'mongo/server/connection'
 require 'mongo/server/connection_pool'
 require 'mongo/server/context'

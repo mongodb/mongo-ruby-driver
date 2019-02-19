@@ -47,6 +47,9 @@ module Mongo
     # @return [ Socket ] socket The wrapped socket.
     attr_reader :socket
 
+    # @return [ Hash ] The options.
+    attr_reader :options
+
     # Is the socket connection alive?
     #
     # @example Is the socket alive?
@@ -162,7 +165,16 @@ module Mongo
     # @since 2.0.5
     def eof?
       @socket.eof?
-    rescue IOError, SystemCallError => _
+    rescue IOError, SystemCallError
+      true
+    end
+
+    # For backwards compatibilty only, do not use.
+    #
+    # @return [ true ] Always true.
+    #
+    # @deprecated
+    def connectable?
       true
     end
 
@@ -189,7 +201,7 @@ module Mongo
         buf_size = length
       end
 
-      # The binary encoding is important, otherwise ruby performs encoding
+      # The binary encoding is important, otherwise Ruby performs encoding
       # conversions of some sort during the write into the buffer which
       # kills performance
       buf = allocate_string(buf_size)
