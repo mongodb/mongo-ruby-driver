@@ -350,7 +350,7 @@ describe Mongo::Socket::SSL do
     # In jruby 9.2 a TypeError is raised.
     # In jruby 9.1 a OpenSSL::PKey::PKeyError is raised.
     context 'when ruby version is >= 2.4.1' do
-      min_ruby_version '2.4.1'
+      ruby_version_gte '2.4.1'
 
       context 'when a key is passed, but it is not of the right type' do
 

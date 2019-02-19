@@ -123,7 +123,7 @@ module Constraints
     end
   end
 
-  def min_ruby_version(version)
+  def ruby_version_gte(version)
     before do
       if RUBY_VERSION < version
         skip "Ruby version #{version} or higher required"
