@@ -54,6 +54,7 @@ describe Mongo::Server::Connection, retry: 3 do
       SpecConfig.instance.test_options
     ).tap do |server|
       server.scan!
+      expect(server).not_to be_unknown
     end
   end
 
@@ -628,7 +629,7 @@ describe Mongo::Server::Connection, retry: 3 do
       end
     end
 
-    context 'when a network or socket error occurs' do
+    context 'when a non-timeout socket error occurs' do
 
       let(:socket) do
         connection.connect!
@@ -639,11 +640,60 @@ describe Mongo::Server::Connection, retry: 3 do
         expect(socket).to receive(:write).and_raise(Mongo::Error::SocketError)
       end
 
-      it 'disconnects and raises the exception' do
-        expect {
+      let(:result) do
+        expect do
           connection.dispatch([ insert ])
-        }.to raise_error(Mongo::Error::SocketError)
+        end.to raise_error(Mongo::Error::SocketError)
+      end
+
+      it 'disconnects and raises the exception' do
+        result
         expect(connection).to_not be_connected
+      end
+
+      it 'disconnects connection pool' do
+        expect(server.pool).to receive(:disconnect!)
+        result
+      end
+
+      it 'marks server unknown' do
+        expect(server).not_to be_unknown
+        result
+        expect(server).to be_unknown
+      end
+    end
+
+    context 'when a socket timeout occurs' do
+
+      let(:socket) do
+        connection.connect!
+        connection.instance_variable_get(:@socket)
+      end
+
+      before do
+        expect(socket).to receive(:write).and_raise(Mongo::Error::SocketTimeoutError)
+      end
+
+      let(:result) do
+        expect do
+          connection.dispatch([ insert ])
+        end.to raise_error(Mongo::Error::SocketTimeoutError)
+      end
+
+      it 'disconnects the used connection' do
+        result
+        expect(connection).to_not be_connected
+      end
+
+      it 'does not disconnect connection pool' do
+        expect(server.pool).not_to receive(:disconnect!)
+        result
+      end
+
+      it 'does not mark server unknown' do
+        expect(server).not_to be_unknown
+        result
+        expect(server).not_to be_unknown
       end
     end
 
