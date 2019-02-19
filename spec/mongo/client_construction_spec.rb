@@ -190,9 +190,14 @@ describe Mongo::Client do
             expect(client.cluster.app_metadata.send(:document)[:compression]).to eq(options[:compressors])
           end
 
-          it 'uses compression for messages', if: testing_compression? do
-            expect(Mongo::Protocol::Compressed).to receive(:new).and_call_original
-            client[TEST_COLL].find({}, limit: 1).first
+          context 'when server supports compression' do
+            require_compression
+            min_server_fcv '3.6'
+
+            it 'uses compression for messages' do
+              expect(Mongo::Protocol::Compressed).to receive(:new).and_call_original
+              client[TEST_COLL].find({}, limit: 1).first
+            end
           end
 
           it 'does not use compression for authentication messages' do
@@ -218,7 +223,9 @@ describe Mongo::Client do
             expect(client.cluster.app_metadata.send(:document)[:compression]).to eq([])
           end
 
-          context 'when one supported compressor and one unsupported compressor are provided', if: compression_enabled? do
+          context 'when one supported compressor and one unsupported compressor are provided' do
+            require_compression
+            min_server_fcv '3.6'
 
             let(:options) do
               { compressors: ['zlib', 'snoopy'] }
@@ -235,7 +242,8 @@ describe Mongo::Client do
           end
         end
 
-        context 'when the compressor is not supported by the server', unless: collation_enabled? do
+        context 'when the compressor is not supported by the server' do
+          max_server_version '3.4'
 
           let(:options) do
             { compressors: ['zlib'] }
@@ -248,7 +256,8 @@ describe Mongo::Client do
         end
       end
 
-      context 'when compressors are not provided', unless: compression_enabled? do
+      context 'when compressors are not provided' do
+        require_no_compression
 
         let(:client) do
           authorized_client
@@ -268,7 +277,9 @@ describe Mongo::Client do
         end
       end
 
-      context 'when a zlib_compression_level option is provided', if: testing_compression? do
+      context 'when a zlib_compression_level option is provided' do
+        require_compression
+        min_server_fcv '3.6'
 
         let(:client) do
           new_local_client_nmio(SpecConfig.instance.addresses, SpecConfig.instance.test_options.merge(zlib_compression_level: 1))

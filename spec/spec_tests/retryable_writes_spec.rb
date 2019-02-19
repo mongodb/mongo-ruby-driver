@@ -12,6 +12,7 @@ describe 'Retryable writes spec tests' do
 
         context(test.description) do
           min_server_fcv '3.6'
+          require_topology :replica_set
 
           let(:collection) do
             client[TEST_COLL]
@@ -22,9 +23,6 @@ describe 'Retryable writes spec tests' do
           end
 
           before do
-            unless replica_set?
-              skip 'Not in replica set'
-            end
             unless spec.server_version_satisfied?(client)
               skip 'Test cannot be run on this server version'
             end

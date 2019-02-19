@@ -7,7 +7,8 @@ describe Mongo::Auth::SCRAM::Conversation, retry: 3 do
     described_class.new(user, mechanism)
   end
 
-  context 'when SCRAM-SHA-1 is used', if: scram_sha_1_enabled? do
+  context 'when SCRAM-SHA-1 is used' do
+    min_server_fcv '3.0'
 
     let(:user) do
       Mongo::Auth::User.new(

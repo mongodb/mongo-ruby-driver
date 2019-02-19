@@ -113,8 +113,9 @@ describe Mongo::Operation::Delete::OpMsg do
         authorized_client.start_session
       end
 
-      context 'when the topology is replica set or sharded', if: (replica_set? || sharded?) do
+      context 'when the topology is replica set or sharded' do
         min_server_fcv '3.6'
+        require_topology :replica_set, :sharded
 
         let(:expected_global_args) do
           global_args.merge(Mongo::Operation::CLUSTER_TIME => authorized_client.cluster.cluster_time)
@@ -127,8 +128,9 @@ describe Mongo::Operation::Delete::OpMsg do
         end
       end
 
-      context 'when the topology is standalone', if: standalone? do
+      context 'when the topology is standalone' do
         min_server_fcv '3.6'
+        require_topology :single
 
         let(:expected_global_args) do
           global_args
@@ -195,8 +197,9 @@ describe Mongo::Operation::Delete::OpMsg do
             end
           end
 
-          context 'when the topology is standalone', if: standalone? do
+          context 'when the topology is standalone' do
             min_server_fcv '3.6'
+            require_topology :single
 
             let(:expected_global_args) do
               global_args.dup.tap do |args|

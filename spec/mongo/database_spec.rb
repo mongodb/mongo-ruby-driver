@@ -119,7 +119,7 @@ describe Mongo::Database do
 
     context 'when specifying a batch size' do
 
-      it 'returns the stripped names of the collections', unless: need_to_skip_on_sharded_auth_40? do
+      it 'returns the stripped names of the collections' do
         expect(database.collection_names(batch_size: 1).to_a).to include('users')
       end
     end
@@ -135,7 +135,7 @@ describe Mongo::Database do
         end
       end
 
-      it 'returns all collections', unless: need_to_skip_on_sharded_auth_40? do
+      it 'returns all collections' do
         expect(database.collection_names(batch_size: 1).select { |c| c =~ /dalmatians/}.size).to eq(2)
       end
 
@@ -159,12 +159,20 @@ describe Mongo::Database do
       database[:users].create
     end
 
-    it 'returns a list of the collections info', if: list_command_enabled?  do
-      expect(result).to include('users')
+    context 'server 3.0+' do
+      min_server_fcv '3.0'
+
+      it 'returns a list of the collections info' do
+        expect(result).to include('users')
+      end
     end
 
-    it 'returns a list of the collections info', unless: list_command_enabled?  do
-      expect(result).to include("#{SpecConfig.instance.test_db}.users")
+    context 'server 2.6' do
+      max_server_fcv '2.6'
+
+      it 'returns a list of the collections info' do
+        expect(result).to include("#{SpecConfig.instance.test_db}.users")
+      end
     end
   end
 
@@ -205,7 +213,8 @@ describe Mongo::Database do
       end
     end
 
-    context 'when the user is not authorized', if: auth_enabled? do
+    context 'when the user is not authorized' do
+      require_auth
 
       let(:database) do
         described_class.new(unauthorized_client, SpecConfig.instance.test_db)
@@ -281,7 +290,9 @@ describe Mongo::Database do
       end
 
       context 'when the read concern is not valid' do
-        it 'raises an exception', if: !sharded? do
+        require_topology :single, :replica_set
+
+        it 'raises an exception' do
           expect {
             database.command(:ismaster => 1, readConcern: { level: 'yay' })
           }.to raise_error(Mongo::Error::OperationFailure)
@@ -289,7 +300,8 @@ describe Mongo::Database do
       end
     end
 
-    context 'when no read preference is provided', unless: sharded? do
+    context 'when no read preference is provided' do
+      require_topology :single, :replica_set
 
       let!(:primary_server) do
         database.cluster.next_primary
@@ -304,7 +316,8 @@ describe Mongo::Database do
       end
     end
 
-    context 'when the client has a read preference set', unless: sharded? do
+    context 'when the client has a read preference set' do
+      require_topology :single, :replica_set
 
       let!(:primary_server) do
         database.cluster.next_primary
@@ -331,7 +344,8 @@ describe Mongo::Database do
       end
     end
 
-    context 'when there is a read preference argument provided', unless: sharded? do
+    context 'when there is a read preference argument provided' do
+      require_topology :single, :replica_set
 
       let(:read_preference) do
         { :mode => :secondary, :tag_sets => [{ 'non' => 'existent' }] }
@@ -356,7 +370,8 @@ describe Mongo::Database do
       end
     end
 
-    context 'when the client has a server_selection_timeout set', unless: sharded? do
+    context 'when the client has a server_selection_timeout set' do
+      require_topology :single, :replica_set
 
       let(:client) do
         authorized_client.with(server_selection_timeout: 0)
@@ -375,7 +390,8 @@ describe Mongo::Database do
 
     context 'when a write concern is not defined on the client/database object' do
 
-      context 'when a write concern is provided in the selector', if: standalone? do
+      context 'when a write concern is provided in the selector' do
+        require_topology :single
 
         let(:cmd) do
           {
@@ -419,7 +435,8 @@ describe Mongo::Database do
         end
       end
 
-      context 'when a write concern is provided in the command selector', if: standalone? do
+      context 'when a write concern is provided in the command selector' do
+        require_topology :single
 
         let(:cmd) do
           {
@@ -478,7 +495,9 @@ describe Mongo::Database do
         client.database
       end
 
-      context 'when the server supports write concern on the dropDatabase command', if: (collation_enabled? && standalone?) do
+      context 'when the server supports write concern on the dropDatabase command' do
+        min_server_fcv '3.4'
+        require_topology :single
 
         it 'applies the write concern' do
           expect{
@@ -487,7 +506,8 @@ describe Mongo::Database do
         end
       end
 
-      context 'when the server does not support write concern on the dropDatabase command', unless: collation_enabled? do
+      context 'when the server does not support write concern on the dropDatabase command' do
+        max_server_version '3.2'
 
         it 'does not apply the write concern' do
           expect(database_with_write_options.drop).to be_successful
@@ -538,7 +558,8 @@ describe Mongo::Database do
     end
   end
 
-  describe '#fs', unless: sharded? do
+  describe '#fs' do
+    require_topology :single, :replica_set
 
     let(:database) do
       described_class.new(authorized_client, SpecConfig.instance.test_db)

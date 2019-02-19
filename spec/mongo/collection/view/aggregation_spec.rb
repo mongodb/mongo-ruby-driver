@@ -177,14 +177,16 @@ describe Mongo::Collection::View::Aggregation do
         Mongo::Collection::View.new(collection, selector, view_options)
       end
 
-      context 'when the server supports write concern on the aggregate command', if: collation_enabled? do
+      context 'when the server supports write concern on the aggregate command' do
+        min_server_fcv '3.4'
 
         it 'does not apply the write concern' do
           expect(aggregation.to_a.size).to eq(2)
         end
       end
 
-      context 'when the server does not support write concern on the aggregation command', unless: collation_enabled? do
+      context 'when the server does not support write concern on the aggregation command' do
+        max_server_version '3.2'
 
         it 'does not apply the write concern' do
           expect(aggregation.to_a.size).to eq(2)
@@ -266,7 +268,8 @@ describe Mongo::Collection::View::Aggregation do
         aggregation.explain['$cursor']['queryPlanner']['collation']['locale']
       end
 
-      context 'when the server selected supports collations', if: collation_enabled? do
+      context 'when the server selected supports collations' do
+        min_server_fcv '3.4'
 
         context 'when the collation key is a String' do
 
@@ -291,7 +294,8 @@ describe Mongo::Collection::View::Aggregation do
         end
       end
 
-      context 'when the server selected does not support collations', unless: collation_enabled? do
+      context 'when the server selected does not support collations' do
+        max_server_version '3.2'
 
         let(:options) do
           { collation: { locale: 'en_US', strength: 2 } }
@@ -507,14 +511,16 @@ describe Mongo::Collection::View::Aggregation do
       aggregation.collect { |doc| doc['name']}
     end
 
-    context 'when the server selected supports collations', if: collation_enabled? do
+    context 'when the server selected supports collations' do
+      min_server_fcv '3.4'
 
       it 'applies the collation' do
         expect(result).to eq(['bang', 'bang'])
       end
     end
 
-    context 'when the server selected does not support collations', unless: collation_enabled? do
+    context 'when the server selected does not support collations' do
+      max_server_version '3.2'
 
       it 'raises an exception' do
         expect {
@@ -610,7 +616,8 @@ describe Mongo::Collection::View::Aggregation do
          Mongo::Collection::View.new(collection, selector, view_options)
        end
 
-       context 'when the server supports write concern on the aggregate command', if: collation_enabled? do
+       context 'when the server supports write concern on the aggregate command' do
+        min_server_fcv '3.4'
 
          it 'uses the write concern' do
            expect {
@@ -619,7 +626,8 @@ describe Mongo::Collection::View::Aggregation do
          end
        end
 
-       context 'when the server does not support write concern on the aggregation command', unless: collation_enabled? do
+       context 'when the server does not support write concern on the aggregation command' do
+        max_server_version '3.2'
 
          let(:documents) do
            [

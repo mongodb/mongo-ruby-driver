@@ -103,7 +103,8 @@ describe Mongo::Socket::SSL do
       end
     end
 
-    context 'when certificate and an encrypted key are provided as strings', if: testing_ssl_locally? do
+    context 'when certificate and an encrypted key are provided as strings' do
+      require_local_tls
 
       let(:options) do
         {
@@ -321,7 +322,8 @@ describe Mongo::Socket::SSL do
       end
     end
 
-    context 'when ruby version is < 2.4.1', if: (RUBY_VERSION < '2.4.1') do
+    context 'when ruby version is < 2.4.1' do
+      ruby_version_lt '2.4.1'
 
       context 'when a key is passed, but it is not of the right type' do
 
@@ -347,7 +349,8 @@ describe Mongo::Socket::SSL do
     # a NoMethodError because #private? is attempted to be called on the key.
     # In jruby 9.2 a TypeError is raised.
     # In jruby 9.1 a OpenSSL::PKey::PKeyError is raised.
-    context 'when ruby version is >= 2.4.1', if: (RUBY_VERSION >= '2.4.1') do
+    context 'when ruby version is >= 2.4.1' do
+      ruby_version_gte '2.4.1'
 
       context 'when a key is passed, but it is not of the right type' do
 
@@ -415,7 +418,8 @@ describe Mongo::Socket::SSL do
       end
     end
 
-    context 'when a CA certificate is provided', if: testing_ssl_locally? do
+    context 'when a CA certificate is provided' do
+      require_local_tls
 
       context 'as a path to a file' do
 
@@ -531,7 +535,8 @@ describe Mongo::Socket::SSL do
       end
     end
 
-    context 'when a CA certificate is not provided', if: testing_ssl_locally? do
+    context 'when a CA certificate is not provided' do
+      require_local_tls
 
       let(:options) do
         super().merge(
@@ -549,7 +554,8 @@ describe Mongo::Socket::SSL do
       end
     end
 
-    context 'when ssl_verify is not specified', if: testing_ssl_locally? do
+    context 'when ssl_verify is not specified' do
+      require_local_tls
 
       let(:options) do
         super().merge(
@@ -566,7 +572,8 @@ describe Mongo::Socket::SSL do
       end
     end
 
-    context 'when ssl_verify is true', if: testing_ssl_locally? do
+    context 'when ssl_verify is true' do
+      require_local_tls
 
       let(:options) do
         super().merge(
