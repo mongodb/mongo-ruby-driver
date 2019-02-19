@@ -48,6 +48,8 @@ describe 'Connections' do
         it 'publishes server description changed event' do
           expect(subscriber.events).to be_empty
 
+          wait_for_all_servers(client.cluster)
+
           connection
           subscriber.events.clear
           error
