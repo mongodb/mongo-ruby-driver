@@ -39,7 +39,7 @@ describe Mongo::Server::ConnectionPool do
     end
 
     after do
-      expect(cluster).to receive(:pool).with(server).and_return(pool)
+      expect(server).to receive(:pool).and_return(pool)
       server.disconnect!
     end
 
@@ -133,7 +133,7 @@ describe Mongo::Server::ConnectionPool do
     end
 
     it 'disconnects the queue' do
-      expect(cluster).to receive(:pool).with(server).and_return(pool)
+      expect(server).to receive(:pool).and_return(pool)
       expect(pool.send(:queue)).to receive(:disconnect!).once.and_call_original
       server.disconnect!
     end
@@ -150,7 +150,7 @@ describe Mongo::Server::ConnectionPool do
     end
 
     after do
-      expect(cluster).to receive(:pool).with(server).and_return(pool)
+      expect(server).to receive(:pool).and_return(pool)
       server.disconnect!
     end
 
@@ -170,7 +170,7 @@ describe Mongo::Server::ConnectionPool do
     end
 
     after do
-      expect(cluster).to receive(:pool).with(server).and_return(pool)
+      expect(server).to receive(:pool).and_return(pool)
       server.disconnect!
     end
 

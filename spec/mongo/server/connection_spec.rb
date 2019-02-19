@@ -249,7 +249,7 @@ describe Mongo::Server::Connection, retry: 3 do
 
     shared_examples_for 'does not disconnect connection pool' do
       it 'does not disconnect non-monitoring sockets' do
-        allow(cluster).to receive(:pool).with(server).and_return(pool)
+        allow(server).to receive(:pool).and_return(pool)
         expect(pool).not_to receive(:disconnect!)
         error
       end
@@ -257,7 +257,7 @@ describe Mongo::Server::Connection, retry: 3 do
 
     shared_examples_for 'disconnects connection pool' do
       it 'disconnects non-monitoring sockets' do
-        expect(cluster).to receive(:pool).with(server).and_return(pool)
+        expect(server).to receive(:pool).and_return(pool)
         expect(pool).to receive(:disconnect!).and_return(true)
         error
       end
