@@ -239,6 +239,10 @@ module Mongo
       @user ? opts.merge(credentials) : opts
     end
 
+    def srv_records
+      nil
+    end
+
     # Create the new uri from the provided string.
     #
     # @example Create the new URI.

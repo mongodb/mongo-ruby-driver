@@ -324,8 +324,10 @@ module Mongo
         uri = URI.get(addresses_or_uri, options)
         addresses = uri.servers
         options = uri.client_options.merge(options)
+        @srv_records = uri.srv_records
       else
         addresses = addresses_or_uri
+        @srv_records = nil
       end
       # Special handling for sdam_proc as it is only used during client
       # construction
@@ -354,6 +356,7 @@ module Mongo
       options.reject do |key, value|
         CRUD_OPTIONS.include?(key.to_sym)
       end.merge(
+        srv_records: @srv_records,
         server_selection_semaphore: @server_selection_semaphore,
         # but need to put the database back in for auth...
         database: options[:database],
