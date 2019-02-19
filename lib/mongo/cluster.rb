@@ -99,7 +99,6 @@ module Mongo
       @app_metadata = Server::AppMetadata.new(@options)
       @update_lock = Mutex.new
       @sdam_flow_lock = Mutex.new
-      @pool_lock = Mutex.new
       @cluster_time = nil
       @cluster_time_lock = Mutex.new
       @topology = Topology.initial(self, monitoring, options)
@@ -153,6 +152,7 @@ module Mongo
       @periodic_executor = PeriodicExecutor.new(@cursor_reaper, @socket_reaper)
       @periodic_executor.run!
 
+      # todo fix
       ObjectSpace.define_finalizer(self, self.class.finalize(pools, @periodic_executor, @session_pool))
 
       @connecting = false
@@ -360,6 +360,7 @@ module Mongo
       proc do
         session_pool.end_sessions
         periodic_executor.stop!
+        # todo fix
         pools.values.each do |pool|
           pool.disconnect!
         end
@@ -523,7 +524,7 @@ module Mongo
       @primary_selector.select_server(self)
     end
 
-    # Get the scoped connection pool for the server.
+    # Get the connection pool for the server.
     #
     # @example Get the connection pool.
     #   cluster.pool(server)
@@ -533,10 +534,9 @@ module Mongo
     # @return [ Server::ConnectionPool ] The connection pool.
     #
     # @since 2.2.0
+    # @deprecated
     def pool(server)
-      @pool_lock.synchronize do
-        pools[server.address] ||= Server::ConnectionPool.get(server)
-      end
+      server.pool
     end
 
     # Update the max cluster time seen in a response.
@@ -674,10 +674,6 @@ module Mongo
       rescue Error::NoServerAvailable
         false
       end
-    end
-
-    def pools
-      @pools ||= {}
     end
   end
 end
