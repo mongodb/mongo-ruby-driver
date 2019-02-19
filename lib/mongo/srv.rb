@@ -14,3 +14,4 @@
 
 require 'mongo/srv/result'
 require 'mongo/srv/resolver'
+require 'mongo/srv/monitor'

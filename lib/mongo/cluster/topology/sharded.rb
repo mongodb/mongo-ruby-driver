@@ -27,6 +27,15 @@ module Mongo
         # @since 2.0.0
         NAME = 'Sharded'.freeze
 
+        def initialize(options, monitoring, cluster)
+          super(options, monitoring, cluster)
+
+          unless options[:srv_records].nil?
+            @srv_monitor = SRV::Monitor.new(cluster, SRV::Resolver.new, options[:srv_records], options)
+            @srv_monitor.start_monitor!
+          end
+        end
+
         # Get the display name.
         #
         # @example Get the display name.
