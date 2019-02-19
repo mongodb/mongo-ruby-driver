@@ -21,6 +21,7 @@ module Mongo
     #
     # @since 2.0.0
     class User
+      include Loggable
 
       # @return [ String ] The authorization source, either a database or
       #   external name.
@@ -43,6 +44,14 @@ module Mongo
 
       # @return [ Array<String> ] roles The user roles.
       attr_reader :roles
+
+      # Loggable requires an options attribute. We don't have any options
+      # hence provide this as a stub.
+      #
+      # @api private
+      def options
+        {}
+      end
 
       # Determine if this user is equal to another.
       #
@@ -140,6 +149,21 @@ module Mongo
         @name = options[:user]
         @password = options[:password] || options[:pwd]
         @mechanism = options[:auth_mech]
+        if @mechanism
+          # Since the driver must select an authentication class for
+          # the specified mechanism, mechanisms that the driver does not
+          # know about, and cannot translate to an authentication class,
+          # need to be rejected.
+          unless @mechanism.is_a?(Symbol)
+            # Although we documented auth_mech option as being a symbol, we
+            # have not enforced this; warn, reject in lint mode
+            if Lint.enabled?
+              raise Error::LintError, "Auth mechanism #{@mechanism} must be specified as a symbol"
+            else
+              log_warn("Auth mechanism #{@mechanism} should be specified as a symbol")
+            end
+          end
+        end
         @auth_mech_properties = options[:auth_mech_properties] || {}
         @roles = options[:roles] || []
         @client_key = options[:client_key]

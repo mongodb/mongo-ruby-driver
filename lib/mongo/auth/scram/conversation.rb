@@ -19,8 +19,8 @@ module Mongo
   module Auth
     class SCRAM
 
-      # Defines behavior around a single SCRAM-SHA-1 conversation between the
-      # client and server.
+      # Defines behavior around a single SCRAM-SHA-1/256 conversation between
+      # the client and server.
       #
       # @since 2.0.0
       class Conversation
@@ -213,6 +213,7 @@ module Mongo
         #   Conversation.new(user, mechanism)
         #
         # @param [ Auth::User ] user The user to converse about.
+        # @param [ String ] mechanism Authentication mechanism.
         #
         # @since 2.0.0
         def initialize(user, mechanism)

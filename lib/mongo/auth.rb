@@ -102,10 +102,25 @@ module Mongo
       #   Mongo::Auth::Unauthorized.new(user)
       #
       # @param [ Mongo::Auth::User ] user The unauthorized user.
+      # @param [ String ] used_mechanism Auth mechanism actually used for
+      #   authentication.
       #
       # @since 2.0.0
-      def initialize(user)
-        super("User #{user.name} is not authorized to access #{user.database}.")
+      def initialize(user, used_mechanism = nil)
+        specified_mechanism = if user.mechanism
+          " (#{user.mechanism})"
+        else
+          ''
+        end
+        used_mechanism = if used_mechanism
+          " (via #{used_mechanism})"
+        else
+          ''
+        end
+        byebug if user.mechanism && user.mechanism =~ /SCRAM/
+        msg = "User #{user.name}#{specified_mechanism} is not authorized to access #{user.database}#{used_mechanism}"
+        puts msg
+        super(msg)
       end
     end
   end
