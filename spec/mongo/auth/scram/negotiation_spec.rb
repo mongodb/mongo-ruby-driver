@@ -1,5 +1,4 @@
 require 'spec_helper'
-require 'cgi'
 
 describe 'SCRAM-SHA auth mechanism negotiation' do
   min_server_fcv '4.0'
