@@ -95,7 +95,9 @@ module Mongo
         private
 
         def validate!(reply)
-          raise Unauthorized.new(user) if reply.documents[0][Operation::Result::OK] != 1
+          if reply.documents[0][Operation::Result::OK] != 1
+            raise Unauthorized.new(user, MECHANISM)
+          end
           @reply = reply
         end
       end

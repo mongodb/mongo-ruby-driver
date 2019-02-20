@@ -213,13 +213,18 @@ module Mongo
         #   Conversation.new(user, mechanism)
         #
         # @param [ Auth::User ] user The user to converse about.
-        # @param [ String ] mechanism Authentication mechanism.
+        # @param [ Symbol ] mechanism Authentication mechanism.
         #
         # @since 2.0.0
         def initialize(user, mechanism)
+          unless [:scram, :scram256].include?(mechanism)
+            raise InvalidMechanism.new(mechanism)
+          end
+
           @user = user
           @nonce = SecureRandom.base64
           @client_key = user.send(:client_key)
+          #byebug
           @mechanism = mechanism
         end
 
@@ -344,7 +349,7 @@ module Mongo
         # @since 2.0.0
         def hi(data)
           case @mechanism
-          when SCRAM::SCRAM_SHA_256_MECHANISM
+          when :scram256
             OpenSSL::PKCS5.pbkdf2_hmac(
               data,
               Base64.strict_decode64(salt),
@@ -506,7 +511,9 @@ module Mongo
         end
 
         def validate!(reply)
-          raise Unauthorized.new(user) unless reply.documents[0][Operation::Result::OK] == 1
+          if reply.documents[0][Operation::Result::OK] != 1
+            raise Unauthorized.new(user, @mechanism)
+          end
           @reply = reply
         end
 
@@ -514,7 +521,7 @@ module Mongo
 
         def hashed_password
           case @mechanism
-          when SCRAM::SCRAM_SHA_256_MECHANISM
+          when :scram256
             user.sasl_prepped_hashed_password
           else
             user.hashed_password
@@ -523,7 +530,7 @@ module Mongo
 
         def digest
           @digest ||= case @mechanism
-                      when SCRAM::SCRAM_SHA_256_MECHANISM
+                      when :scram256
                         OpenSSL::Digest::SHA256.new.freeze
                       else
                         OpenSSL::Digest::SHA1.new.freeze

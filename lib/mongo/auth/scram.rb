@@ -32,10 +32,10 @@ module Mongo
       # @since 2.6.0
       SCRAM_SHA_256_MECHANISM = 'SCRAM-SHA-256'.freeze
 
-
       # Map the user-specified authentication mechanism to the proper names of the mechanisms.
       #
       # @since 2.6.0
+      # @deprecated
       MECHANISMS = {
         scram: SCRAM_SHA_1_MECHANISM,
         scram256: SCRAM_SHA_256_MECHANISM
@@ -62,16 +62,13 @@ module Mongo
       #   user.login(connection)
       #
       # @param [ Mongo::Connection ] connection The connection to log into.
-      #   on.
-      # @param [ String ] mechanism The auth mechanism to use (either 'SCRAM-SHA-1' or
-      #   'SCRAM-SHA-256');
       #
       # @return [ Protocol::Message ] The authentication response.
       #
       # @since 2.0.0
-      def login(connection, mechanism = nil)
-        mechanism ||= user.mechanism || :scram
-        conversation = Conversation.new(user, MECHANISMS[mechanism])
+      def login(connection)
+        mechanism = user.mechanism || :scram
+        conversation = Conversation.new(user, mechanism)
         reply = connection.dispatch([ conversation.start(connection) ])
         connection.update_cluster_time(Operation::Result.new(reply))
         reply = connection.dispatch([ conversation.continue(reply, connection) ])

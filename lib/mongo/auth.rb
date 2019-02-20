@@ -117,7 +117,6 @@ module Mongo
         else
           ''
         end
-        byebug if user.mechanism && user.mechanism =~ /SCRAM/
         msg = "User #{user.name}#{specified_mechanism} is not authorized to access #{user.database}#{used_mechanism}"
         puts msg
         super(msg)
