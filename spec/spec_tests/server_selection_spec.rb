@@ -37,6 +37,7 @@ describe 'Server Selection' do
 
       let(:cluster) do
         double('cluster').tap do |c|
+          allow(c).to receive(:connected?).and_return(true)
           allow(c).to receive(:summary)
           allow(c).to receive(:topology).and_return(topology)
           allow(c).to receive(:single?).and_return(topology.single?)
@@ -81,6 +82,7 @@ describe 'Server Selection' do
 
       before do
         allow(cluster).to receive(:servers).and_return(candidate_servers)
+        allow(cluster).to receive(:servers_list).and_return(candidate_servers)
         allow(cluster).to receive(:addresses).and_return(candidate_servers.map(&:address))
         allow(cluster).to receive(:options).and_return(server_selection_timeout: 0.2)
         allow(cluster).to receive(:scan!).and_return(true)

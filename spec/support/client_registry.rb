@@ -49,7 +49,18 @@ class ClientRegistry
 
   def global_client(name)
     if client = @global_clients[name]
-      unless client.cluster.connected?
+      if !client.cluster.connected?
+        reconnect = true
+      else
+        reconnect = false
+        client.cluster.servers_list.each do |server|
+          thread = server.monitor.instance_variable_get('@thread')
+          if thread.nil? || !thread.alive?
+            reconnect = true
+          end
+        end
+      end
+      if reconnect
         client.reconnect
       end
       return client
