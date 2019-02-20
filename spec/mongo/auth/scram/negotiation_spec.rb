@@ -485,6 +485,7 @@ describe 'SCRAM-SHA auth mechanism negotiation' do
 
           it 'authenticates successfully' do
             create_user!
+            expect(user.mechanism).to eq(:scram)
 
             mechanism = nil
             # Negotiation currently happens on monitoring sockets,
