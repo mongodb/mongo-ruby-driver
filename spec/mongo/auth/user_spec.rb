@@ -27,7 +27,7 @@ describe Mongo::Auth::User do
       it 'raises ArgumentError' do
         expect do
           user
-        end.to raise_error(ArgumentError, "Invalid auth mechanism :invalid")
+        end.to raise_error(Mongo::Auth::InvalidMechanism, ":invalid is invalid, please use one of the following mechanisms: :mongodb_cr, :mongodb_x509, :plain, :scram, :scram256")
       end
     end
 
@@ -37,8 +37,8 @@ describe Mongo::Auth::User do
       context 'not linting' do
         skip_if_linting
 
-        it 'does not warn' do
-          expect(Mongo::Logger.logger).not_to receive(:warn)
+        it 'warns' do
+          expect(Mongo::Logger.logger).to receive(:warn)
           user
         end
 
@@ -50,7 +50,7 @@ describe Mongo::Auth::User do
       context 'linting' do
         require_linting
 
-        it 'raises ArgumentError' do
+        it 'raises LintError' do
           expect do
             user
           end.to raise_error(Mongo::Error::LintError, "Auth mechanism \"scram\" must be specified as a symbol")
