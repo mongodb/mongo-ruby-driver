@@ -51,7 +51,7 @@ module Mongo
         end
 
         # Start the x.509 conversation. This returns the first message that
-        # needs to be send to the server.
+        # needs to be sent to the server.
         #
         # @example Start the conversation.
         #   conversation.start
