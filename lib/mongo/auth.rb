@@ -108,12 +108,12 @@ module Mongo
       # @since 2.0.0
       def initialize(user, used_mechanism = nil)
         specified_mechanism = if user.mechanism
-          " (#{user.mechanism})"
+          " (mechanism: #{user.mechanism})"
         else
           ''
         end
         used_mechanism = if used_mechanism
-          " (via #{used_mechanism})"
+          " (used mechanism: #{used_mechanism})"
         else
           ''
         end
