@@ -35,7 +35,6 @@ module Mongo
       # Map the user-specified authentication mechanism to the proper names of the mechanisms.
       #
       # @since 2.6.0
-      # @deprecated
       MECHANISMS = {
         scram: SCRAM_SHA_1_MECHANISM,
         scram256: SCRAM_SHA_256_MECHANISM

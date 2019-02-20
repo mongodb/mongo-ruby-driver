@@ -22,7 +22,7 @@ describe Mongo::Auth::SCRAM::Conversation, retry: 3 do
     end
 
     let(:mechanism) do
-      'SCRAM-SHA-1'
+      :scram
     end
 
     describe '#start' do
@@ -222,7 +222,7 @@ describe Mongo::Auth::SCRAM::Conversation, retry: 3 do
     end
 
     let(:mechanism) do
-      'SCRAM-SHA-256'
+      :scram256
     end
 
     describe '#start' do

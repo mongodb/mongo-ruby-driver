@@ -180,7 +180,8 @@ module Mongo
         # @since 2.0.0
         def start(connection = nil)
           if connection && connection.features.op_msg_enabled?
-            selector = CLIENT_FIRST_MESSAGE.merge(payload: client_first_message, mechanism: @mechanism)
+            selector = CLIENT_FIRST_MESSAGE.merge(
+              payload: client_first_message, mechanism: full_mechanism)
             selector[Protocol::Msg::DATABASE_IDENTIFIER] = user.auth_source
             cluster_time = connection.mongos? && connection.cluster_time
             selector[Operation::CLUSTER_TIME] = cluster_time if cluster_time
@@ -189,10 +190,15 @@ module Mongo
             Protocol::Query.new(
               user.auth_source,
               Database::COMMAND,
-              CLIENT_FIRST_MESSAGE.merge(payload: client_first_message, mechanism: @mechanism),
+              CLIENT_FIRST_MESSAGE.merge(
+                payload: client_first_message, mechanism: full_mechanism),
               limit: -1
             )
           end
+        end
+
+        def full_mechanism
+          MECHANISMS[@mechanism]
         end
 
         # Get the id of the conversation.
@@ -224,7 +230,6 @@ module Mongo
           @user = user
           @nonce = SecureRandom.base64
           @client_key = user.send(:client_key)
-          #byebug
           @mechanism = mechanism
         end
 
