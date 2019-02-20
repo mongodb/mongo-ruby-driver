@@ -72,17 +72,6 @@ module Constraints
     require_topology :replica_set
   end
 
-  def require_scram_sha_256_support
-    before do
-      $mongo_server_features ||= begin
-        scanned_client_server!.features
-      end
-      unless $mongo_server_features.scram_sha_256_enabled?
-        skip "SCRAM SHA 256 is not enabled on the server"
-      end
-    end
-  end
-
   def require_ssl
     before do
       unless SpecConfig.instance.ssl?
