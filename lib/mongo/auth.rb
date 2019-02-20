@@ -103,7 +103,7 @@ module Mongo
       #
       # @param [ Mongo::Auth::User ] user The unauthorized user.
       # @param [ String ] used_mechanism Auth mechanism actually used for
-      #   authentication.
+      #   authentication. This is a full string like SCRAM-SHA-256.
       #
       # @since 2.0.0
       def initialize(user, used_mechanism = nil)
