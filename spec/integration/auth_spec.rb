@@ -28,7 +28,7 @@ describe 'Auth' do
         end
 
         context 'scram-sha-1 requested' do
-          let(:options) { {user: 'foo', auth_mech: :scram256} }
+          let(:options) { {user: 'foo', auth_mech: :scram} }
 
           it 'indicates scram-sha-1 was requested and used' do
             expect do
@@ -44,7 +44,7 @@ describe 'Auth' do
         it 'indicates scram-sha-256 was used' do
           expect do
             connection.connect!
-          end.to raise_error(Mongo::Auth::Unauthorized, 'User foo (mechanism: scram) is not authorized to access admin (used mechanism: SCRAM-SHA-1)')
+          end.to raise_error(Mongo::Auth::Unauthorized, 'User foo (mechanism: scram256) is not authorized to access admin (used mechanism: SCRAM-SHA-256)')
         end
 
         context 'scram-sha-256 requested' do
