@@ -84,7 +84,10 @@ module Mongo
       #
       # @since 2.0.0
       def initialize(mechanism)
-        super("#{mechanism.inspect} is invalid, please use mongodb_cr, mongodb_x509, gssapi or plain.")
+        known_mechanisms = SOURCES.keys.sort.map do |key|
+          key.inspect
+        end.join(', ')
+        super("#{mechanism.inspect} is invalid, please use one of the following mechanisms: #{known_mechanisms}")
       end
     end
 
