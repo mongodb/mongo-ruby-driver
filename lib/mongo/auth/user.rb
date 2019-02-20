@@ -161,7 +161,11 @@ module Mongo
               raise Error::LintError, "Auth mechanism #{@mechanism} must be specified as a symbol"
             else
               log_warn("Auth mechanism #{@mechanism} should be specified as a symbol")
+              @mechanism = @mechanism.to_sym
             end
+          end
+          unless Auth::SOURCES.key?(@mechanism)
+            raise ArgumentError, "Invalid auth mechanism #{options[:auth_mech].inspect}"
           end
         end
         @auth_mech_properties = options[:auth_mech_properties] || {}
