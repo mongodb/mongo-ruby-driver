@@ -2,7 +2,7 @@ require 'spec_helper'
 require 'cgi'
 
 describe 'SCRAM-SHA auth mechanism negotiation' do
-  require_scram_sha_256_support
+  min_server_fcv '4.0'
 
   before(:all) do
     ClientRegistry.instance.close_all_clients

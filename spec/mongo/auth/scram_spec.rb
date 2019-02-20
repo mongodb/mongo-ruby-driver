@@ -107,7 +107,7 @@ describe Mongo::Auth::SCRAM do
   end
 
   context 'when SCRAM-SHA-256 is used' do
-    require_scram_sha_256_support
+    min_server_fcv '4.0'
 
     describe '#login' do
 
