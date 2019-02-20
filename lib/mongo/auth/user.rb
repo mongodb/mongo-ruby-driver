@@ -166,7 +166,7 @@ module Mongo
           end
           unless Auth::SOURCES.key?(@mechanism)
             # TODO raise InvalidMechanism here
-            raise ArgumentError, "Invalid auth mechanism #{options[:auth_mech].inspect}"
+            raise InvalidMechanism.new(options[:auth_mech])
           end
         end
         @auth_mech_properties = options[:auth_mech_properties] || {}
