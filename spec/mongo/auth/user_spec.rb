@@ -34,13 +34,27 @@ describe Mongo::Auth::User do
     context 'mechanism given as string' do
       let(:options) { {auth_mech: 'scram'} }
 
-      it 'warns' do
-        expect(Mongo::Logger.logger).to receive(:warn)
-        user
+      context 'not linting' do
+        skip_if_linting
+
+        it 'does not warn' do
+          expect(Mongo::Logger.logger).not_to receive(:warn)
+          user
+        end
+
+        it 'converts mechanism to symbol' do
+          expect(user.mechanism).to eq(:scram)
+        end
       end
 
-      it 'converts mechanism to symbol' do
-        expect(user.mechanism).to eq(:scram)
+      context 'linting' do
+        require_linting
+
+        it 'raises ArgumentError' do
+          expect do
+            user
+          end.to raise_error(Mongo::Error::LintError, "Auth mechanism \"scram\" must be specified as a symbol")
+        end
       end
     end
 

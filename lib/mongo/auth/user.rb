@@ -158,9 +158,9 @@ module Mongo
             # Although we documented auth_mech option as being a symbol, we
             # have not enforced this; warn, reject in lint mode
             if Lint.enabled?
-              raise Error::LintError, "Auth mechanism #{@mechanism} must be specified as a symbol"
+              raise Error::LintError, "Auth mechanism #{@mechanism.inspect} must be specified as a symbol"
             else
-              log_warn("Auth mechanism #{@mechanism} should be specified as a symbol")
+              log_warn("Auth mechanism #{@mechanism.inspect} should be specified as a symbol")
               @mechanism = @mechanism.to_sym
             end
           end
