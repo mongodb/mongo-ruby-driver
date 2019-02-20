@@ -200,11 +200,11 @@ describe 'SCRAM-SHA auth mechanism negotiation' do
             create_user!
 
             mechanism = nil
-            expect(Mongo::Auth).to receive(:get).and_wrap_original do |m, *args|
+            expect(Mongo::Auth).to receive(:get).and_wrap_original do |m, user|
               # copy mechanism here rather than whole user
               # in case something mutates mechanism later
-              mechanism = args.first.mechanism
-              m.call(*args)
+              mechanism = user.mechanism
+              m.call(user)
             end
 
             expect { result }.not_to raise_error
@@ -222,13 +222,11 @@ describe 'SCRAM-SHA auth mechanism negotiation' do
             create_user!
 
             mechanism = nil
-            expect(Mongo::Auth).to receive(:get).and_wrap_original do |m, *args|
-              if args.first.name == 'both'
-                # copy mechanism here rather than whole user
-                # in case something mutates mechanism later
-                mechanism = args.first.mechanism
-                m.call(*args)
-              end
+            expect(Mongo::Auth).to receive(:get).and_wrap_original do |m, user|
+              # copy mechanism here rather than whole user
+              # in case something mutates mechanism later
+              mechanism = user.mechanism
+              m.call(user)
             end
 
             expect { result }.not_to raise_error
@@ -484,11 +482,11 @@ describe 'SCRAM-SHA auth mechanism negotiation' do
             expect(user.mechanism).to eq(:scram)
 
             mechanism = nil
-            expect(Mongo::Auth).to receive(:get).and_wrap_original do |m, *args|
+            expect(Mongo::Auth).to receive(:get).and_wrap_original do |m, user|
               # copy mechanism here rather than whole user
               # in case something mutates mechanism later
-              mechanism = args.first.mechanism
-              m.call(*args)
+              mechanism = user.mechanism
+              m.call(user)
             end
 
             expect { result }.not_to raise_error
@@ -506,13 +504,11 @@ describe 'SCRAM-SHA auth mechanism negotiation' do
             create_user!
 
             mechanism = nil
-            expect(Mongo::Auth).to receive(:get).and_wrap_original do |m, *args|
-              if args.first.name == 'both'
-                # copy mechanism here rather than whole user
-                # in case something mutates mechanism later
-                mechanism = args.first.mechanism
-                m.call(*args)
-              end
+            expect(Mongo::Auth).to receive(:get).and_wrap_original do |m, user|
+              # copy mechanism here rather than whole user
+              # in case something mutates mechanism later
+              mechanism = user.mechanism
+              m.call(user)
             end
 
             expect { result }.not_to raise_error
