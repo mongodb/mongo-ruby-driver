@@ -25,7 +25,7 @@ describe Mongo::Server do
   end
 
   let(:pool) do
-    Mongo::Server::ConnectionPool.get(server)
+    server.pool
   end
 
   describe '#==' do
