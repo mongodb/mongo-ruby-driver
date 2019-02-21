@@ -92,7 +92,10 @@ module Mongo
         # @return [ Array ] queue The underlying array of connections.
         attr_reader :queue
 
-        # @return [ Mutex ] mutex The mutex used for synchronization.
+        # @return [ Mutex ] mutex The mutex used for synchronization of
+        #   access to #queue.
+        #
+        # @api private
         attr_reader :mutex
 
         # @return [ Hash ] options The options.
@@ -104,7 +107,11 @@ module Mongo
         # Number of connections that the pool has which are ready to be
         # checked out. This is NOT the size of the connection pool (total
         # number of active connections created by the pool).
-        def_delegators :queue, :size
+        def size
+          mutex.synchronize do
+            queue.size
+          end
+        end
 
         # Number of connections that the pool has which are ready to be
         # checked out.
@@ -133,9 +140,7 @@ module Mongo
         # @since 2.0.0
         def dequeue
           check_count_invariants
-          mutex.synchronize do
-            dequeue_connection
-          end
+          dequeue_connection
         ensure
           check_count_invariants
         end
@@ -151,14 +156,15 @@ module Mongo
         def disconnect!
           check_count_invariants
           mutex.synchronize do
-            queue.each{ |connection| connection.disconnect! }
-            @pool_size -= queue.length
-            if @pool_size < 0
-              # This should never happen
-              log_warn("ConnectionPool::Queue: connection accounting problem")
-              @pool_size = 0
+            while connection = queue.pop
+              connection.disconnect!
+              @pool_size -= 1
+              if @pool_size < 0
+                # This should never happen
+                log_warn("ConnectionPool::Queue: connection accounting problem")
+                @pool_size = 0
+              end
             end
-            queue.clear
             @generation += 1
             true
           end
@@ -286,26 +292,19 @@ module Mongo
           check_count_invariants
           return unless max_idle_time
 
-          to_refresh = []
-          queue.each do |connection|
-            if last_checkin = connection.last_checkin
-              if (Time.now - last_checkin) > max_idle_time
-                to_refresh << connection
-              end
-            end
-          end
-
           mutex.synchronize do
-            num_checked_out = pool_size - queue_size
-            min_size_delta = [(min_size - num_checked_out), 0].max
-
-            to_refresh.each do |connection|
-              if queue.include?(connection)
-                connection.disconnect!
-                if queue.index(connection) < min_size_delta
-                  begin; connection.connect!; rescue; end
+            i = 0
+            while i < queue.length
+              connection = queue[i]
+              if last_checkin = connection.last_checkin
+                if (Time.now - last_checkin) > max_idle_time
+                  connection.disconnect!
+                  queue.delete_at(i)
+                  @pool_size -= 1
+                  next
                 end
               end
+              i += 1
             end
           end
         ensure
@@ -315,12 +314,14 @@ module Mongo
         private
 
         def dequeue_connection
-          deadline = Time.now + wait_timeout
-          loop do
-            return queue.shift unless queue.empty?
-            connection = create_connection
-            return connection if connection
-            wait_for_next!(deadline)
+          mutex.synchronize do
+            deadline = Time.now + wait_timeout
+            loop do
+              return queue.shift unless queue.empty?
+              connection = create_connection
+              return connection if connection
+              wait_for_next!(deadline)
+            end
           end
         end
 

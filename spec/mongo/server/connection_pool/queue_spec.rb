@@ -304,12 +304,14 @@ describe Mongo::Server::ConnectionPool::Queue do
   end
 
   describe 'close_stale_sockets!!' do
+    after do
+      Timecop.return
+    end
 
     let(:queue) do
       described_class.new(max_pool_size: 2, max_idle_time: 0.5) do
         double('connection').tap do |con|
           expect(con).to receive(:generation).and_return(1)
-          expect(con).to receive(:disconnect!).and_return(true)
           allow(con).to receive(:record_checkin!) do
             allow(con).to receive(:last_checkin).and_return(Time.now)
             con
@@ -324,16 +326,28 @@ describe Mongo::Server::ConnectionPool::Queue do
       end
     end
 
-    before do
-      queue.enqueue(connection)
-      expect(connection).to receive(:connect!).and_return(true)
-      sleep(0.5)
-      queue.close_stale_sockets!
-    end
+    it 'disconnects all expired and only expired connections' do
+      c1 = queue.dequeue
+      expect(c1).to receive(:disconnect!)
+      c2 = queue.dequeue
+      expect(c2).not_to receive(:disconnect!)
 
-    it 'disconnects and reconnects up to min_size the expired connections' do
+      queue.enqueue(c1)
+      Timecop.travel(Time.now + 1)
+      queue.enqueue(c2)
+
+      expect(queue.queue_size).to eq(2)
+      expect(queue.pool_size).to eq(2)
+      expect(queue.queue.length).to eq(2)
+
+      expect(c1).not_to receive(:connect!)
+      expect(c2).not_to receive(:connect!)
+
+      queue.close_stale_sockets!
+
       expect(queue.queue_size).to eq(1)
       expect(queue.pool_size).to eq(1)
+      expect(queue.queue.length).to eq(1)
     end
   end
 end
