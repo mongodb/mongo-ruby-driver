@@ -5,6 +5,13 @@ describe Mongo::URI::SRVProtocol do
   let(:scheme) { 'mongodb+srv://' }
   let(:uri) { described_class.new(string) }
 
+  before(:all) do
+    # Since these tests assert on warnings being produced,
+    # close clients to ensure background threads do not interfere with
+    # their warnings.
+    ClientRegistry.instance.close_all_clients
+  end
+
   describe 'invalid uris' do
 
     context 'when there is more than one hostname' do
