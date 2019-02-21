@@ -209,7 +209,7 @@ describe Mongo::Auth::SCRAM::Conversation, retry: 3 do
   end
 
   context 'when SCRAM-SHA-256 is used' do
-    require_scram_sha_256_support
+    min_server_fcv '4.0'
 
     let(:user) do
       Mongo::Auth::User.new(
