@@ -1,5 +1,4 @@
 require 'spec_helper'
-require 'cgi'
 
 describe 'SCRAM-SHA auth mechanism negotiation' do
   require_scram_sha_256_support
