@@ -155,12 +155,6 @@ module Mongo
           }
         end
 
-        def teardown_test
-          @global_client && @global_client.close
-          @db1 && @db1.drop
-          @db2 && @db2.drop
-        end
-
         def match_result?(result)
           case @result.first.first
           when 'success'
