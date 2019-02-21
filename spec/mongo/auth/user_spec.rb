@@ -93,6 +93,41 @@ describe Mongo::Auth::User do
     it 'returns the hashed password' do
       expect(user.hashed_password).to eq(expected)
     end
+
+    context 'password not given' do
+      let(:options) { {user: 'foo'} }
+
+      it 'raises MissingPassword' do
+        expect do
+          user.hashed_password
+        end.to raise_error(Mongo::Error::MissingPassword)
+      end
+    end
+  end
+
+  describe '#sasl_prepped_password' do
+
+    let(:expected) do
+      'pass'
+    end
+
+    it 'returns the clear text password' do
+      expect(user.send(:sasl_prepped_password)).to eq(expected)
+    end
+
+    it 'returns the password encoded in utf-8' do
+      expect(user.sasl_prepped_password.encoding.name).to eq('UTF-8')
+    end
+
+    context 'password not given' do
+      let(:options) { {user: 'foo'} }
+
+      it 'raises MissingPassword' do
+        expect do
+          user.sasl_prepped_password
+        end.to raise_error(Mongo::Error::MissingPassword)
+      end
+    end
   end
 
   describe '#mechanism' do

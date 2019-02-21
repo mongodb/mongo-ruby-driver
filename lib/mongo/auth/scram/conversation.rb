@@ -381,7 +381,7 @@ module Mongo
           @iterations ||= payload_data.match(ITERATIONS)[1].to_i.tap do |i|
             if i < MIN_ITER_COUNT
               raise Error::InsufficientIterationCount.new(
-                Error::InsufficientIterationCount.message(MIN_ITER_COUNT, 1))
+                Error::InsufficientIterationCount.message(MIN_ITER_COUNT, i))
             end
           end
         end
@@ -421,7 +421,12 @@ module Mongo
         #
         # @since 2.0.0
         def salted_password
-          @salted_password ||= hi(hashed_password)
+          @salted_password ||= case @mechanism
+          when SCRAM::SCRAM_SHA_256_MECHANISM
+            hi(user.sasl_prepped_password)
+          else
+            hi(user.hashed_password)
+          end
         end
 
         # Server key algorithm implementation.
@@ -510,15 +515,6 @@ module Mongo
         end
 
         private
-
-        def hashed_password
-          case @mechanism
-          when SCRAM::SCRAM_SHA_256_MECHANISM
-            user.sasl_prepped_hashed_password
-          else
-            user.hashed_password
-          end
-        end
 
         def digest
           @digest ||= case @mechanism
