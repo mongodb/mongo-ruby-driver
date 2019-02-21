@@ -15,13 +15,14 @@ describe Mongo::Auth::SCRAM::Conversation, retry: 3 do
         database: Mongo::Database::ADMIN,
         user: 'user',
         password: 'pencil',
-        # We specify SCRAM-SHA-1 so that we don't accidentally use SCRAM-SHA-256 on newer server versions.
-        auth_mech: 'SCRAM-SHA-1'
+        # We specify SCRAM-SHA-1 so that we don't accidentally use
+        # SCRAM-SHA-256 on newer server versions.
+        auth_mech: :scram,
       )
     end
 
     let(:mechanism) do
-      'SCRAM-SHA-1'
+      :scram
     end
 
     describe '#start' do
@@ -216,12 +217,12 @@ describe Mongo::Auth::SCRAM::Conversation, retry: 3 do
         database: Mongo::Database::ADMIN,
         user: 'user',
         password: 'pencil',
-        auth_mech: 'SCRAM-SHA-256'
+        auth_mech: :scram256,
       )
     end
 
     let(:mechanism) do
-      'SCRAM-SHA-256'
+      :scram256
     end
 
     describe '#start' do

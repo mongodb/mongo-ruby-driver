@@ -50,7 +50,7 @@ describe Mongo::Auth::SCRAM do
             database: 'driver',
             user: 'notauser',
             password: 'password',
-            auth_mech: 'SCRAM-SHA-1'
+            auth_mech: :scram,
           )
         end
 
@@ -118,7 +118,7 @@ describe Mongo::Auth::SCRAM do
             database: 'driver',
             user: 'notauser',
             password: 'password',
-            auth_mech: 'SCRAM-SHA-256'
+            auth_mech: :scram256,
           )
         end
 

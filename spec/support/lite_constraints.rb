@@ -28,6 +28,14 @@ module LiteConstraints
     end
   end
 
+  def require_linting
+    before do
+      unless Mongo::Lint.enabled?
+        skip "Linting is not enabled"
+      end
+    end
+  end
+
   # Some tests will fail if linting is enabled:
   # 1. Tests that pass invalid options to client, etc. which the linter
   #    rejects.

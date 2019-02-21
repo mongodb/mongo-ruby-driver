@@ -22,7 +22,7 @@ describe 'SCRAM-SHA auth mechanism negotiation' do
         createUser: user.name,
         pwd: password,
         roles: ['root'],
-        mechanisms: auth_mechanisms
+        mechanisms: server_user_auth_mechanisms,
       )
       client.close
     end
@@ -57,7 +57,7 @@ describe 'SCRAM-SHA auth mechanism negotiation' do
 
       context 'when the user only can use SCRAM-SHA-1 to authenticate' do
 
-        let(:auth_mechanisms) do
+        let(:server_user_auth_mechanisms) do
           ['SCRAM-SHA-1']
         end
 
@@ -111,7 +111,7 @@ describe 'SCRAM-SHA auth mechanism negotiation' do
 
       context 'when the user only can use SCRAM-SHA-256 to authenticate' do
 
-        let(:auth_mechanisms) do
+        let(:server_user_auth_mechanisms) do
           ['SCRAM-SHA-256']
         end
 
@@ -165,7 +165,7 @@ describe 'SCRAM-SHA auth mechanism negotiation' do
 
       context 'when the user only can use either SCRAM-SHA-1 or SCRAM-SHA-256 to authenticate' do
 
-        let(:auth_mechanisms) do
+        let(:server_user_auth_mechanisms) do
           ['SCRAM-SHA-1', 'SCRAM-SHA-256']
         end
 
@@ -200,13 +200,11 @@ describe 'SCRAM-SHA auth mechanism negotiation' do
             create_user!
 
             mechanism = nil
-            # Negotiation currently happens on monitoring sockets,
-            # hence may be invoked more than once here
-            expect(Mongo::Auth).to receive(:get).at_least(:once).and_wrap_original do |m, *args|
+            expect(Mongo::Auth).to receive(:get).and_wrap_original do |m, user|
               # copy mechanism here rather than whole user
               # in case something mutates mechanism later
-              mechanism = args.first.mechanism
-              m.call(*args)
+              mechanism = user.mechanism
+              m.call(user)
             end
 
             expect { result }.not_to raise_error
@@ -224,15 +222,11 @@ describe 'SCRAM-SHA auth mechanism negotiation' do
             create_user!
 
             mechanism = nil
-            # Negotiation currently happens on monitoring sockets,
-            # hence may be invoked more than once here
-            expect(Mongo::Auth).to receive(:get).at_least(:once).and_wrap_original do |m, *args|
-              if args.first.name == 'both'
-                # copy mechanism here rather than whole user
-                # in case something mutates mechanism later
-                mechanism = args.first.mechanism
-                m.call(*args)
-              end
+            expect(Mongo::Auth).to receive(:get).and_wrap_original do |m, user|
+              # copy mechanism here rather than whole user
+              # in case something mutates mechanism later
+              mechanism = user.mechanism
+              m.call(user)
             end
 
             expect { result }.not_to raise_error
@@ -266,7 +260,7 @@ describe 'SCRAM-SHA auth mechanism negotiation' do
         nil
       end
 
-      let(:auth_mechanisms) do
+      let(:server_user_auth_mechanisms) do
         ['SCRAM-SHA-256']
       end
 
@@ -345,7 +339,7 @@ describe 'SCRAM-SHA auth mechanism negotiation' do
 
       context 'when the user only can use SCRAM-SHA-1 to authenticate' do
 
-        let(:auth_mechanisms) do
+        let(:server_user_auth_mechanisms) do
           ['SCRAM-SHA-1']
         end
 
@@ -398,7 +392,7 @@ describe 'SCRAM-SHA auth mechanism negotiation' do
 
       context 'when the user only can use SCRAM-SHA-256 to authenticate' do
 
-        let(:auth_mechanisms) do
+        let(:server_user_auth_mechanisms) do
           ['SCRAM-SHA-256']
         end
 
@@ -452,7 +446,7 @@ describe 'SCRAM-SHA auth mechanism negotiation' do
 
       context 'when the user only can use either SCRAM-SHA-1 or SCRAM-SHA-256 to authenticate' do
 
-        let(:auth_mechanisms) do
+        let(:server_user_auth_mechanisms) do
           ['SCRAM-SHA-1', 'SCRAM-SHA-256']
         end
 
@@ -485,15 +479,14 @@ describe 'SCRAM-SHA auth mechanism negotiation' do
 
           it 'authenticates successfully' do
             create_user!
+            expect(user.mechanism).to eq(:scram)
 
             mechanism = nil
-            # Negotiation currently happens on monitoring sockets,
-            # hence may be invoked more than once here
-            expect(Mongo::Auth).to receive(:get).at_least(:once).and_wrap_original do |m, *args|
+            expect(Mongo::Auth).to receive(:get).and_wrap_original do |m, user|
               # copy mechanism here rather than whole user
               # in case something mutates mechanism later
-              mechanism = args.first.mechanism
-              m.call(*args)
+              mechanism = user.mechanism
+              m.call(user)
             end
 
             expect { result }.not_to raise_error
@@ -511,15 +504,11 @@ describe 'SCRAM-SHA auth mechanism negotiation' do
             create_user!
 
             mechanism = nil
-            # Negotiation currently happens on monitoring sockets,
-            # hence may be invoked more than once here
-            expect(Mongo::Auth).to receive(:get).at_least(:once).and_wrap_original do |m, *args|
-              if args.first.name == 'both'
-                # copy mechanism here rather than whole user
-                # in case something mutates mechanism later
-                mechanism = args.first.mechanism
-                m.call(*args)
-              end
+            expect(Mongo::Auth).to receive(:get).and_wrap_original do |m, user|
+              # copy mechanism here rather than whole user
+              # in case something mutates mechanism later
+              mechanism = user.mechanism
+              m.call(user)
             end
 
             expect { result }.not_to raise_error
