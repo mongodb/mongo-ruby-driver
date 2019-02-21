@@ -35,7 +35,7 @@ describe 'Server description' do
     end
 
     let(:client) { ClientRegistry.instance.global_client('authorized') }
-    let(:desc) { client.cluster.servers.first.description }
+    let(:desc) { client.cluster.next_primary.description }
 
     it 'is set' do
       client.database.command(ismaster: 1)
