@@ -136,9 +136,21 @@ module Mongo
         send(op_name, obj, *args)
       rescue Mongo::Error::OperationFailure => e
         err_doc = e.instance_variable_get(:@result).send(:first_document)
+        error_code_name = err_doc['codeName'] || err_doc['writeConcernError'] && err_doc['writeConcernError']['codeName']
+        if error_code_name.nil?
+          # Sometimes the server does not return the error code name,
+          # but does return the error code (or we can parse the error code
+          # out of the message).
+          # https://jira.mongodb.org/browse/SERVER-39706
+          if e.code == 11000
+            error_code_name = 'DuplicateKey'
+          else
+            warn "Error without error code name: #{e.code}"
+          end
+        end
 
         {
-          'errorCodeName' => err_doc['codeName'] || err_doc['writeConcernError']['codeName'],
+          'errorCodeName' => error_code_name,
           'errorContains' => e.message,
           'errorLabels' => e.labels,
           'exception' => e,
