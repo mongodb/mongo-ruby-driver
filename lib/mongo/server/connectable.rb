@@ -34,12 +34,6 @@ module Mongo
       #   Will be removed in driver version 3.0.
       TIMEOUT = 5.freeze
 
-      # @return [ Mongo::Address ] address The address to connect to.
-      attr_reader :address
-
-      # @return [ Hash ] options The passed in options.
-      attr_reader :options
-
       # @return [ Integer ] pid The process id when the connection was created.
       attr_reader :pid
 
