@@ -99,7 +99,7 @@ module Mongo
         [ name, database, password ].hash
       end
 
-      # Get the user's hashed password.
+      # Get the user's hashed password for SCRAM-SHA-1.
       #
       # @example Get the user's hashed password.
       #   user.hashed_password
@@ -108,11 +108,25 @@ module Mongo
       #
       # @since 2.0.0
       def hashed_password
+        unless password
+          raise Error::MissingPassword
+        end
+
         @hashed_password ||= Digest::MD5.hexdigest("#{name}:mongo:#{password}").encode(BSON::UTF8)
       end
 
-      def sasl_prepped_hashed_password
-        @sasl_prepped_hashed_password ||= sasl_prepped_password.encode(BSON::UTF8)
+      # Get the user's stringprepped password for SCRAM-SHA-256.
+      #
+      # @api private
+      def sasl_prepped_password
+        unless password
+          raise Error::MissingPassword
+        end
+
+        @sasl_prepped_password ||= StringPrep.prepare(password,
+          StringPrep::Profiles::SASL::MAPPINGS,
+          StringPrep::Profiles::SASL::PROHIBITED,
+          normalize: true, bidi: true).encode(BSON::UTF8)
       end
 
       # Create the new user.
@@ -158,13 +172,6 @@ module Mongo
       end
 
       private
-
-      def sasl_prepped_password
-        StringPrep.prepare(password,
-                           StringPrep::Profiles::SASL::MAPPINGS,
-                           StringPrep::Profiles::SASL::PROHIBITED,
-                           normalize: true, bidi: true)
-      end
 
       # The client key for the user.
       #
