@@ -42,8 +42,13 @@ module Mongo
       #
       # @since 2.0.0
       def initialize(options = {}, &block)
-        @options = options.freeze
-        @queue = Queue.new(options, &block)
+        @options = options.dup.freeze
+        @queue = queue = Queue.new(@options, &block)
+
+        finalizer = proc do
+          queue.disconnect!
+        end
+        ObjectSpace.define_finalizer(self, finalizer)
       end
 
       # @return [ Hash ] options The pool options.
@@ -120,27 +125,6 @@ module Mongo
       protected
 
       attr_reader :queue
-
-      private
-
-      class << self
-
-        # Creates a new connection pool for the provided server.
-        #
-        # @example Create a new connection pool.
-        #   Mongo::Server::ConnectionPool.get(server)
-        #
-        # @param [ Mongo::Server ] server The server.
-        #
-        # @return [ Mongo::Server::ConnectionPool ] The connection pool.
-        #
-        # @since 2.0.0
-        def get(server)
-          ConnectionPool.new(server.options) do |generation|
-            Connection.new(server, server.options.merge(generation: generation))
-          end
-        end
-      end
     end
   end
 end

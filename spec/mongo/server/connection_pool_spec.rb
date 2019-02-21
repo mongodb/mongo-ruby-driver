@@ -35,11 +35,11 @@ describe Mongo::Server::ConnectionPool do
     end
 
     let!(:pool) do
-      described_class.get(server)
+      server.pool
     end
 
     after do
-      expect(cluster).to receive(:pool).with(server).and_return(pool)
+      expect(server).to receive(:pool).and_return(pool)
       server.disconnect!
     end
 
@@ -70,7 +70,7 @@ describe Mongo::Server::ConnectionPool do
     end
 
     let!(:pool) do
-      described_class.get(server)
+      server.pool
     end
 
     context 'when no connection is checked out on the same thread' do
@@ -129,33 +129,13 @@ describe Mongo::Server::ConnectionPool do
     end
 
     let!(:pool) do
-      described_class.get(server)
+      server.pool
     end
 
     it 'disconnects the queue' do
-      expect(cluster).to receive(:pool).with(server).and_return(pool)
+      expect(server).to receive(:pool).and_return(pool)
       expect(pool.send(:queue)).to receive(:disconnect!).once.and_call_original
       server.disconnect!
-    end
-  end
-
-  describe '.get' do
-
-    let(:server) do
-      Mongo::Server.new(address, cluster, monitoring, listeners, options)
-    end
-
-    let!(:pool) do
-      described_class.get(server)
-    end
-
-    after do
-      expect(cluster).to receive(:pool).with(server).and_return(pool)
-      server.disconnect!
-    end
-
-    it 'returns the pool for the server' do
-      expect(pool).to_not be_nil
     end
   end
 
@@ -166,11 +146,11 @@ describe Mongo::Server::ConnectionPool do
     end
 
     let!(:pool) do
-      described_class.get(server)
+      server.pool
     end
 
     after do
-      expect(cluster).to receive(:pool).with(server).and_return(pool)
+      expect(server).to receive(:pool).and_return(pool)
       server.disconnect!
     end
 
@@ -190,7 +170,7 @@ describe Mongo::Server::ConnectionPool do
     end
 
     let!(:pool) do
-      described_class.get(server)
+      server.pool
     end
 
     context 'when a connection cannot be checked out' do
@@ -217,7 +197,7 @@ describe Mongo::Server::ConnectionPool do
     end
 
     let!(:pool) do
-      described_class.get(server)
+      server.pool
     end
 
     let(:options) do
@@ -245,7 +225,7 @@ describe Mongo::Server::ConnectionPool do
     end
 
     let!(:pool) do
-      described_class.get(server)
+      server.pool
     end
 
     let(:queue) do
