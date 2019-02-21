@@ -21,10 +21,6 @@ describe 'ChangeStreams' do
             test.setup_test
           end
 
-          after(:each) do
-            test.teardown_test if test.server_version_satisfied?(authorized_client)
-          end
-
           let(:result) do
             test.run
           end
