@@ -32,13 +32,18 @@ module Mongo
 
       # The max application name byte size.
       #
-      # @ since 2.4.0
+      # @since 2.4.0
       MAX_APP_NAME_SIZE = 128.freeze
 
       # The driver name.
       #
-      # @ since 2.4.0
+      # @since 2.4.0
       DRIVER_NAME = 'mongo-ruby-driver'
+
+      # Option keys that affect auth mechanism negotiation.
+      #
+      # @api private
+      AUTH_OPTION_KEYS = [:user, :auth_source, :auth_mech].freeze
 
       # Instantiate the new AppMetadata object.
       #

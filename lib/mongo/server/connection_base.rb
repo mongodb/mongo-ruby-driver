@@ -33,10 +33,26 @@ module Mongo
                      :max_bson_object_size,
                      :max_message_size,
                      :mongos?,
-                     :app_metadata,
                      :compressor,
                      :cluster_time,
                      :update_cluster_time
+
+      def app_metadata
+        @app_metadata ||= begin
+          same = true
+          AppMetadata::AUTH_OPTION_KEYS.each do |key|
+            if @server.options[key] != options[key]
+              same = false
+              break
+            end
+          end
+          if same
+            @server.app_metadata
+          else
+            AppMetadata.new(options)
+          end
+        end
+      end
 
       # Dispatch a single message to the connection. If the message
       # requires a response, a reply will be returned.

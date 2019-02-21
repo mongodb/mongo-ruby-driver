@@ -944,4 +944,44 @@ describe Mongo::Server::Connection, retry: 3 do
       end
     end
   end
+
+  describe '#app_metadata' do
+    context 'when all options are identical to server' do
+      let(:connection) do
+        described_class.new(server, server.options)
+      end
+
+      it 'is the same object as server app_metadata' do
+        expect(connection.app_metadata).not_to be nil
+        expect(connection.app_metadata).to be server.app_metadata
+      end
+    end
+
+    context 'when auth options are identical to server' do
+      let(:connection) do
+        described_class.new(server, server.options.merge(socket_timeout: 2))
+      end
+
+      it 'is the same object as server app_metadata' do
+        expect(connection.app_metadata).not_to be nil
+        expect(connection.app_metadata).to be server.app_metadata
+      end
+    end
+
+    context 'when auth options differ from server' do
+      let(:connection) do
+        described_class.new(server, server.options.merge(user: 'foo'))
+      end
+
+      it 'is different object from server app_metadata' do
+        expect(connection.app_metadata).not_to be nil
+        expect(connection.app_metadata).not_to be server.app_metadata
+      end
+
+      it 'includes request auth mechanism' do
+        document = connection.app_metadata.send(:document)
+        expect(document[:saslSupportedMechs]).to eq('admin.foo')
+      end
+    end
+  end
 end
