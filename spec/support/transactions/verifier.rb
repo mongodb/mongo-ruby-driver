@@ -76,7 +76,9 @@ module Mongo
               end
             when 'errorLabelsOmit'
               v.each do |label|
-                expect(actual['errorLabels']).not_to include(label)
+                if actual['errorLabels']
+                  expect(actual['errorLabels']).not_to include(label)
+                end
               end
             else
               expect(actual).to be_a(Hash)
