@@ -12,6 +12,10 @@ describe Mongo::URI::SRVProtocol do
     ClientRegistry.instance.close_all_clients
   end
 
+  let(:client) do
+    new_local_client(string, monitoring_io: false)
+  end
+
   describe 'invalid uris' do
 
     context 'when there is more than one hostname' do
@@ -353,7 +357,7 @@ describe Mongo::URI::SRVProtocol do
           end
 
           it 'sets the options on a client created with the uri' do
-            expect(new_local_client(string).options[:write]).to eq(concern)
+            expect(client.options[:write]).to eq(concern)
           end
         end
 
@@ -366,7 +370,7 @@ describe Mongo::URI::SRVProtocol do
           end
 
           it 'sets the options on a client created with the uri' do
-            expect(new_local_client(string).options[:write]).to eq(concern)
+            expect(client.options[:write]).to eq(concern)
           end
         end
 
@@ -379,7 +383,7 @@ describe Mongo::URI::SRVProtocol do
           end
 
           it 'sets the options on a client created with the uri' do
-            expect(new_local_client(string).options[:write]).to eq(concern)
+            expect(client.options[:write]).to eq(concern)
           end
         end
 
@@ -392,7 +396,7 @@ describe Mongo::URI::SRVProtocol do
           end
 
           it 'sets the options on a client created with the uri' do
-            expect(new_local_client(string).options[:write]).to eq(concern)
+            expect(client.options[:write]).to eq(concern)
           end
         end
 
@@ -406,7 +410,7 @@ describe Mongo::URI::SRVProtocol do
           end
 
           it 'sets the options on a client created with the uri' do
-            expect(new_local_client(string).options[:write]).to eq(concern)
+            expect(client.options[:write]).to eq(concern)
           end
         end
       end
@@ -423,7 +427,7 @@ describe Mongo::URI::SRVProtocol do
           end
 
           it 'sets the options on a client created with the uri' do
-            expect(new_local_client(string).options[:read]).to eq(read)
+            expect(client.options[:read]).to eq(read)
           end
         end
 
@@ -436,7 +440,7 @@ describe Mongo::URI::SRVProtocol do
           end
 
           it 'sets the options on a client created with the uri' do
-            expect(new_local_client(string).options[:read]).to eq(read)
+            expect(client.options[:read]).to eq(read)
           end
         end
 
@@ -449,7 +453,7 @@ describe Mongo::URI::SRVProtocol do
           end
 
           it 'sets the options on a client created with the uri' do
-            expect(new_local_client(string).options[:read]).to eq(read)
+            expect(client.options[:read]).to eq(read)
           end
         end
 
@@ -462,7 +466,7 @@ describe Mongo::URI::SRVProtocol do
           end
 
           it 'sets the options on a client created with the uri' do
-            expect(new_local_client(string).options[:read]).to eq(read)
+            expect(client.options[:read]).to eq(read)
           end
         end
 
@@ -475,7 +479,7 @@ describe Mongo::URI::SRVProtocol do
           end
 
           it 'sets the options on a client created with the uri' do
-            expect(new_local_client(string).options[:read]).to eq(read)
+            expect(client.options[:read]).to eq(read)
           end
         end
       end
@@ -496,7 +500,7 @@ describe Mongo::URI::SRVProtocol do
           end
 
           it 'sets the options on a client created with the uri' do
-            expect(new_local_client(string).options[:read]).to eq(read)
+            expect(client.options[:read]).to eq(read)
           end
         end
 
@@ -514,7 +518,7 @@ describe Mongo::URI::SRVProtocol do
           end
 
           it 'sets the options on a client created with the uri' do
-            expect(new_local_client(string).options[:read]).to eq(read)
+            expect(client.options[:read]).to eq(read)
           end
         end
       end
@@ -534,7 +538,7 @@ describe Mongo::URI::SRVProtocol do
         end
 
         it 'sets the options on a client created with the uri' do
-          expect(new_local_client(string).options[:read]).to eq(read)
+          expect(client.options[:read]).to eq(read)
         end
 
         context 'when the read preference and max staleness combination is invalid' do
@@ -547,7 +551,7 @@ describe Mongo::URI::SRVProtocol do
 
             it 'raises an exception when read preference is accessed on the client' do
               expect {
-                new_local_client(string).server_selector
+                client.server_selector
               }.to raise_exception(Mongo::Error::InvalidServerPreference)
             end
           end
@@ -559,7 +563,7 @@ describe Mongo::URI::SRVProtocol do
             end
 
             it 'does not raise an exception until the read preference is used' do
-              expect(new_local_client(string).read_preference).to eq(BSON::Document.new(mode: :secondary, max_staleness: 89))
+              expect(client.read_preference).to eq(BSON::Document.new(mode: :secondary, max_staleness: 89))
             end
           end
         end
@@ -574,7 +578,7 @@ describe Mongo::URI::SRVProtocol do
         end
 
         it 'sets the options on a client created with the uri' do
-          expect(new_local_client(string).options[:replica_set]).to eq(rs_name)
+          expect(client.options[:replica_set]).to eq(rs_name)
         end
       end
 
@@ -590,7 +594,7 @@ describe Mongo::URI::SRVProtocol do
           end
 
           it 'sets the options on a client created with the uri' do
-            expect(new_local_client(string).options[:auth_mech]).to eq(expected)
+            expect(client.options[:auth_mech]).to eq(expected)
           end
 
           it 'is case-insensitive' do
@@ -607,7 +611,7 @@ describe Mongo::URI::SRVProtocol do
           end
 
           it 'sets the options on a client created with the uri' do
-            expect(new_local_client(string).options[:auth_mech]).to eq(expected)
+            expect(client.options[:auth_mech]).to eq(expected)
           end
 
           it 'is case-insensitive' do
@@ -624,7 +628,7 @@ describe Mongo::URI::SRVProtocol do
           end
 
           it 'sets the options on a client created with the uri' do
-            expect(new_local_client(string).options[:auth_mech]).to eq(expected)
+            expect(client.options[:auth_mech]).to eq(expected)
           end
 
           it 'is case-insensitive' do
@@ -641,7 +645,7 @@ describe Mongo::URI::SRVProtocol do
           end
 
           it 'sets the options on a client created with the uri' do
-            expect(new_local_client(string).options[:auth_mech]).to eq(expected)
+            expect(client.options[:auth_mech]).to eq(expected)
           end
 
           it 'is case-insensitive' do
@@ -658,7 +662,7 @@ describe Mongo::URI::SRVProtocol do
           end
 
           it 'sets the options on a client created with the uri' do
-            expect(new_local_client(string).options[:auth_mech]).to eq(expected)
+            expect(client.options[:auth_mech]).to eq(expected)
           end
 
           it 'is case-insensitive' do
@@ -686,7 +690,7 @@ describe Mongo::URI::SRVProtocol do
           end
 
           it 'sets the options on a client created with the uri' do
-            expect(new_local_client(string).options[:auth_source]).to eq(source)
+            expect(client.options[:auth_source]).to eq(source)
           end
         end
 
@@ -699,7 +703,7 @@ describe Mongo::URI::SRVProtocol do
           end
 
           it 'sets the options on a client created with the uri' do
-            expect(new_local_client(string).options[:auth_source]).to eq(expected)
+            expect(client.options[:auth_source]).to eq(expected)
           end
         end
       end
@@ -719,7 +723,7 @@ describe Mongo::URI::SRVProtocol do
           end
 
           it 'sets the options on a client created with the uri' do
-            expect(new_local_client(string).options[:auth_mech_properties]).to eq(expected)
+            expect(client.options[:auth_mech_properties]).to eq(expected)
           end
         end
 
@@ -735,7 +739,7 @@ describe Mongo::URI::SRVProtocol do
           end
 
           it 'sets the options on a client created with the uri' do
-            expect(new_local_client(string).options[:auth_mech_properties]).to eq(expected)
+            expect(client.options[:auth_mech_properties]).to eq(expected)
           end
         end
 
@@ -753,7 +757,7 @@ describe Mongo::URI::SRVProtocol do
           end
 
           it 'sets the options on a client created with the uri' do
-            expect(new_local_client(string).options[:auth_mech_properties]).to eq(expected)
+            expect(client.options[:auth_mech_properties]).to eq(expected)
           end
         end
 
@@ -779,7 +783,7 @@ describe Mongo::URI::SRVProtocol do
           end
 
           it 'sets the options on a client created with the uri' do
-            expect(new_local_client(string).options[:auth_mech_properties]).to eq(expected)
+            expect(client.options[:auth_mech_properties]).to eq(expected)
           end
         end
       end
@@ -907,7 +911,7 @@ describe Mongo::URI::SRVProtocol do
         let(:options) { "appname=srv_test" }
 
         it 'sets the app name on the client' do
-          expect(new_local_client(string).options[:app_name]).to eq(:srv_test)
+          expect(client.options[:app_name]).to eq(:srv_test)
         end
       end
 
@@ -915,16 +919,12 @@ describe Mongo::URI::SRVProtocol do
         let(:options) { "compressors=zlib" }
 
         it 'sets the compressors as an array on the client' do
-          expect(new_local_client(string).options[:compressors]).to eq(['zlib'])
+          expect(client.options[:compressors]).to eq(['zlib'])
         end
       end
 
       context 'when a non-supported compressors option is provided' do
         let(:options) { "compressors=snoopy" }
-
-        let(:client) do
-          new_local_client(string)
-        end
 
         it 'sets no compressors on the client and warns' do
           expect(Mongo::Logger.logger).to receive(:warn)
@@ -936,7 +936,7 @@ describe Mongo::URI::SRVProtocol do
         let(:options) { "zlibCompressionLevel=6" }
 
         it 'sets the zlib compression level on the client' do
-          expect(new_local_client(string).options[:zlib_compression_level]).to eq(6)
+          expect(client.options[:zlib_compression_level]).to eq(6)
         end
       end
     end
