@@ -23,8 +23,8 @@ module Mongo
       # @since 2.5.2
       class OpMsg < OpMsgBase
         include CausalConsistencySupported
-        include PolymorphicResult
         include ExecutableTransactionLabel
+        include PolymorphicResult
       end
     end
   end

@@ -26,6 +26,7 @@ module Mongo
       include Specifiable
       include Executable
       include ReadPreferenceSupported
+      include PolymorphicResult
 
       # Execute the operation.
       #
@@ -43,9 +44,7 @@ module Mongo
           return Operation::ListCollections.new(spec).execute(server)
         end
 
-        result = Result.new(dispatch_message(server))
-        process_result(result, server)
-        result.validate!
+        super
       end
 
       private
