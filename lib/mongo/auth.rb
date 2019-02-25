@@ -118,7 +118,6 @@ module Mongo
           ''
         end
         msg = "User #{user.name}#{specified_mechanism} is not authorized to access #{user.database}#{used_mechanism}"
-        puts msg
         super(msg)
       end
     end
