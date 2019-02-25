@@ -697,6 +697,9 @@ module Mongo
         raise
       rescue Mongo::Error
         @state = TRANSACTION_ABORTED_STATE
+      rescue Exception
+        @state = TRANSACTION_ABORTED_STATE
+        raise
       end
     end
 

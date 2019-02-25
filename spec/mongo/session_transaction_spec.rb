@@ -22,6 +22,54 @@ describe Mongo::Session do
     collection.delete_many
   end
 
+  describe '#abort_transaction' do
+    require_topology :replica_set
+
+    context 'when a non-Mongo error is raised' do
+      before do
+        collection.insert_one({foo: 1})
+      end
+
+      it 'propagates the exception and sets state to transaction aborted' do
+        session.start_transaction
+        collection.insert_one({foo: 1}, session: session)
+        expect(session).to receive(:write_with_retry).and_raise(SessionTransactionSpecError)
+        expect do
+          session.abort_transaction
+        end.to raise_error(SessionTransactionSpecError)
+        expect(session.send(:within_states?, Mongo::Session::TRANSACTION_ABORTED_STATE)).to be true
+
+        # Since we failed abort_transaction call, the transaction is still
+        # outstanding. It will cause subsequent tests to stall until it times
+        # out on the server side. End the session to force the server
+        # to close the transaction.
+        kill_all_server_sessions
+      end
+    end
+
+    context 'when a Mongo error is raised' do
+      before do
+        collection.insert_one({foo: 1})
+      end
+
+      it 'swallows the exception and sets state to transaction aborted' do
+        session.start_transaction
+        collection.insert_one({foo: 1}, session: session)
+        expect(session).to receive(:write_with_retry).and_raise(Mongo::Error::SocketError)
+        expect do
+          session.abort_transaction
+        end.not_to raise_error
+        expect(session.send(:within_states?, Mongo::Session::TRANSACTION_ABORTED_STATE)).to be true
+
+        # Since we failed abort_transaction call, the transaction is still
+        # outstanding. It will cause subsequent tests to stall until it times
+        # out on the server side. End the session to force the server
+        # to close the transaction.
+        kill_all_server_sessions
+      end
+    end
+  end
+
   describe '#with_transaction' do
     context 'callback successful' do
       it 'commits' do
