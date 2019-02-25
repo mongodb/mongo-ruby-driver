@@ -18,6 +18,9 @@ module Mongo
     # Shared behavior of instantiating a result class matching the
     # operation class.
     #
+    # This module must be included after Executable module because result_class
+    # is defined in both.
+    #
     # @api private
     module PolymorphicResult
       include PolymorphicLookup
@@ -25,7 +28,11 @@ module Mongo
       private
 
       def result_class
-        polymorphic_class(self.class.name.sub(/::[^:]*$/, ''), :Result)
+        begin
+          polymorphic_class(self.class.name, :Result)
+        rescue NameError
+          polymorphic_class(self.class.name.sub(/::[^:]*$/, ''), :Result)
+        end
       end
     end
   end

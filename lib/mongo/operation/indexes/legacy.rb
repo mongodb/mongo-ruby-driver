@@ -26,22 +26,6 @@ module Mongo
         include Executable
         include ReadPreferenceSupported
 
-        # Execute the operation.
-        #
-        # @example
-        #   operation.execute(server)
-        #
-        # @param [ Mongo::Server ] server The server to send the operation to.
-        #
-        # @return [ Mongo::Operation::Indexes::Result ] The operation result.
-        #
-        # @since 2.5.2
-        def execute(server)
-          result = Operation::Result.new(dispatch_message(server))
-          process_result(result, server)
-          result.validate!
-        end
-
         private
 
         def selector(server)
@@ -50,6 +34,10 @@ module Mongo
 
         def message(server)
           Protocol::Query.new(db_name, Index::COLLECTION, command(server), options(server))
+        end
+
+        def result_class
+          Operation::Result
         end
       end
     end

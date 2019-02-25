@@ -25,7 +25,7 @@ module Mongo
       def polymorphic_class(base, name)
         bits = (base + "::#{name}").split('::')
         bits.reduce(Object) do |cls, name|
-          cls.const_get(name)
+          cls.const_get(name, false)
         end
       end
     end
