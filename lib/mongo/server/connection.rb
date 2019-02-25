@@ -217,59 +217,75 @@ module Mongo
           raise Error::HandshakeError, "Cannot handshake because there is no usable socket"
         end
 
+        response = average_rtt = nil
         @server.handle_handshake_failure! do
-          response, exc, rtt, average_rtt =
-            @server.monitor.round_trip_time_averager.measure do
-              socket.write(app_metadata.ismaster_bytes)
-              Protocol::Message.deserialize(socket, max_message_size).documents[0]
+          begin
+            response, exc, rtt, average_rtt =
+              @server.monitor.round_trip_time_averager.measure do
+                socket.write(app_metadata.ismaster_bytes)
+                Protocol::Message.deserialize(socket, max_message_size).documents[0]
+              end
+
+            if exc
+              raise exc
             end
-
-          if exc
-            raise exc
+          rescue => e
+            log_warn("Failed to handshake with #{address}: #{e.class}: #{e}")
+            raise
           end
+        end
 
-          if response["ok"] == 1
-            # Auth mechanism is entirely dependent on the contents of
-            # ismaster response *for this connection*.
-            # Ismaster received by the monitoring connection should advertise
-            # the same wire protocol, but if it doesn't, we use whatever
-            # the monitoring connection advertised for filling out the
-            # server description and whatever the non-monitoring connection
-            # (that's this one) advertised for performing auth on that
-            # connection.
-            @auth_mechanism = if response['saslSupportedMechs']
-              if response['saslSupportedMechs'].include?(Mongo::Auth::SCRAM::SCRAM_SHA_256_MECHANISM)
-                :scram256
-              else
-                :scram
-              end
+        post_handshake(response, average_rtt)
+      end
+
+      # This is a separate method to keep the nesting level down.
+      def post_handshake(response, average_rtt)
+        if response["ok"] == 1
+          # Auth mechanism is entirely dependent on the contents of
+          # ismaster response *for this connection*.
+          # Ismaster received by the monitoring connection should advertise
+          # the same wire protocol, but if it doesn't, we use whatever
+          # the monitoring connection advertised for filling out the
+          # server description and whatever the non-monitoring connection
+          # (that's this one) advertised for performing auth on that
+          # connection.
+          @auth_mechanism = if response['saslSupportedMechs']
+            if response['saslSupportedMechs'].include?(Mongo::Auth::SCRAM::SCRAM_SHA_256_MECHANISM)
+              :scram256
             else
-              # MongoDB servers < 2.6 are no longer suported.
-              # Wire versions should always be returned in ismaster.
-              # See also https://jira.mongodb.org/browse/RUBY-1584.
-              min_wire_version = response[Description::MIN_WIRE_VERSION]
-              max_wire_version = response[Description::MAX_WIRE_VERSION]
-              features = Description::Features.new(min_wire_version..max_wire_version)
-              if features.scram_sha_1_enabled?
-                :scram
-              else
-                :mongodb_cr
-              end
+              :scram
             end
           else
-            @auth_mechanism = nil
+            # MongoDB servers < 2.6 are no longer suported.
+            # Wire versions should always be returned in ismaster.
+            # See also https://jira.mongodb.org/browse/RUBY-1584.
+            min_wire_version = response[Description::MIN_WIRE_VERSION]
+            max_wire_version = response[Description::MAX_WIRE_VERSION]
+            features = Description::Features.new(min_wire_version..max_wire_version)
+            if features.scram_sha_1_enabled?
+              :scram
+            else
+              :mongodb_cr
+            end
           end
-
-          new_description = Description.new(address, response, average_rtt)
-          @server.monitor.publish(Event::DESCRIPTION_CHANGED, @server.description, new_description)
+        else
+          @auth_mechanism = nil
         end
+
+        new_description = Description.new(address, response, average_rtt)
+        @server.monitor.publish(Event::DESCRIPTION_CHANGED, @server.description, new_description)
       end
 
       def authenticate!(pending_connection)
         if options[:user] || options[:auth_mech]
           user = Auth::User.new(Options::Redacted.new(:auth_mech => default_mechanism).merge(options))
           @server.handle_auth_failure! do
-            Auth.get(user).login(pending_connection)
+            begin
+              Auth.get(user).login(pending_connection)
+            rescue => e
+              log_warn("Failed to handshake with #{address}: #{e.class}: #{e}")
+              raise
+            end
           end
         end
       end

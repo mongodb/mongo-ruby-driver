@@ -8,11 +8,7 @@ describe Mongo::Server::Connection, retry: 3 do
     ClientRegistry.instance.close_all_clients
   end
 
-  after(:all) do
-    ClientRegistry.instance.close_all_clients
-  end
-
-  let(:address) do
+  let!(:address) do
     default_address
   end
 
@@ -43,10 +39,9 @@ describe Mongo::Server::Connection, retry: 3 do
 
   declare_topology_double
 
+  let(:server_options) { SpecConfig.instance.test_options.merge(monitoring_io: false) }
   let(:server) do
-    Mongo::Server.new(address, cluster, monitoring, listeners,
-      SpecConfig.instance.test_options.merge(monitoring_io: false),
-    )
+    Mongo::Server.new(address, cluster, monitoring, listeners, server_options)
   end
 
   let(:monitored_server) do
@@ -142,6 +137,23 @@ describe Mongo::Server::Connection, retry: 3 do
         end
       end
 
+      shared_examples_for 'logs a warning' do
+        let(:expected_message) do
+          "MONGODB | Failed to handshake with #{address}: #{error.class}: #{error}"
+        end
+
+        it 'logs a warning' do
+          messages = []
+          # Straightforward expectations are not working here for some reason
+          expect(Mongo::Logger.logger).to receive(:warn) do |msg|
+            messages << msg
+          end
+          expect(error).not_to be nil
+          expect(messages).to include(expected_message)
+        end
+
+      end
+
       context 'when #handshake! dependency raises a non-network exception' do
 
         let(:exception) do
@@ -181,15 +193,24 @@ describe Mongo::Server::Connection, retry: 3 do
 
         it_behaves_like 'failing connection'
         it_behaves_like 'marks server unknown'
+        it_behaves_like 'logs a warning'
       end
 
       context 'when #authenticate! raises an exception' do
+        require_auth
+
+        let(:server_options) do
+          SpecConfig.instance.test_options.merge(monitoring_io: false).
+            merge(SpecConfig.instance.auth_options)
+        end
+
         let(:exception) do
           Mongo::Error::OperationFailure.new
         end
 
         let(:error) do
-          expect(connection).to receive(:authenticate!).and_raise(exception)
+          expect(Mongo::Auth).to receive(:get).and_raise(exception)
+          expect(connection.send(:socket)).to be nil
           begin
             connection.connect!
           rescue Exception => e
@@ -200,6 +221,7 @@ describe Mongo::Server::Connection, retry: 3 do
         end
 
         it_behaves_like 'failing connection'
+        it_behaves_like 'logs a warning'
       end
 
       context 'when a non-Mongo exception is raised' do

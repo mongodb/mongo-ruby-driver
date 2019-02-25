@@ -158,4 +158,26 @@ describe Mongo::Server::Monitor::Connection do
       end
     end
   end
+
+  describe '#connect!' do
+    context 'network error' do
+      before do
+        address
+        server.monitor.instance_variable_get('@thread').kill
+        server.monitor.connection.disconnect!
+        expect_any_instance_of(Mongo::Socket).to receive(:write).and_raise(Mongo::Error::SocketError, 'test error')
+      end
+
+      let(:options) { SpecConfig.instance.test_options }
+
+      let(:expected_message) { "MONGODB | Failed to handshake with #{address}: Mongo::Error::SocketError: test error" }
+
+      it 'logs a warning' do
+        expect(Mongo::Logger.logger).to receive(:warn).with(expected_message).and_call_original
+        expect do
+          server.monitor.connection.connect!
+        end.to raise_error(Mongo::Error::SocketError, 'test error')
+      end
+    end
+  end
 end
