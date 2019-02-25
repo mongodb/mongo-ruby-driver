@@ -190,7 +190,7 @@ module Mongo
       #
       # @return [ true | false ] Whether the error was a write concern timeout.
       #
-      # @since 2.7.0
+      # @since 2.7.1
       def wtimeout?
         @wtimeout
       end
