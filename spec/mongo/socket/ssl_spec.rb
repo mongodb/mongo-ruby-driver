@@ -49,6 +49,13 @@ describe Mongo::Socket::SSL do
     OpenSSL::PKey.read(key_string)
   end
 
+  describe '#address' do
+    it 'returns the address and tls indicator' do
+      addr = socket.instance_variable_get(:@tcp_socket).remote_address
+      expect(socket.send(:address)).to eq("#{addr.ip_address}:#{addr.ip_port} (#{default_address}, TLS)")
+    end
+  end
+
   describe '#connect!' do
 
     context 'when a certificate is provided' do
@@ -563,9 +570,13 @@ describe Mongo::Socket::SSL do
 
       let(:socket_content) { "" }
 
+      let(:remote_address) { socket.instance_variable_get(:@tcp_socket).remote_address }
+      let(:address_str) { "#{remote_address.ip_address}:#{remote_address.ip_port} (#{default_address}, TLS)" }
+
       it 'should raise EOFError' do
-        expect { socket.readbyte }
-          .to raise_error(Mongo::Error::SocketError).with_message("EOFError: EOFError")
+        expect do
+          socket.readbyte
+        end.to raise_error(Mongo::Error::SocketError).with_message("EOFError: EOFError (for #{address_str})")
       end
     end
   end

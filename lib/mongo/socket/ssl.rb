@@ -202,6 +202,10 @@ module Mongo
         # Capped at 16k due to https://linux.die.net/man/3/ssl_read
         16384
       end
+
+      def address
+        "#{host}:#{port} (#{host_name}:#{port}, TLS)"
+      end
     end
   end
 end

@@ -34,6 +34,7 @@ module Mongo
     # Error message for timeouts on socket calls.
     #
     # @since 2.0.0
+    # @deprecated
     TIMEOUT_ERROR = 'Socket request timed out'.freeze
 
     # The pack directive for timeouts.
@@ -293,13 +294,17 @@ module Mongo
     def handle_errors
       begin
         yield
-      rescue Errno::ETIMEDOUT
-        raise Error::SocketTimeoutError, TIMEOUT_ERROR
+      rescue Errno::ETIMEDOUT => e
+        raise Error::SocketTimeoutError, "#{e.class}: #{e} (for #{address})"
       rescue IOError, SystemCallError => e
-        raise Error::SocketError, "#{e.class}: #{e}"
+        raise Error::SocketError, "#{e.class}: #{e} (for #{address})"
       rescue OpenSSL::SSL::SSLError => e
-        raise Error::SocketError, "#{e.class}: #{e} (#{SSL_ERROR})"
+        raise Error::SocketError, "#{e.class}: #{e} (for #{address}) (#{SSL_ERROR})"
       end
+    end
+
+    def address
+      raise NotImplementedError
     end
   end
 end

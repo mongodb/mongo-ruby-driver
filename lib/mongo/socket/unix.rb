@@ -43,6 +43,12 @@ module Mongo
         @socket = ::UNIXSocket.new(path)
         set_socket_options(@socket)
       end
+
+      private
+
+      def address
+        path
+      end
     end
   end
 end
