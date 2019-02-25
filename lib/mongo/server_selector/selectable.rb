@@ -115,10 +115,12 @@ module Mongo
           msg = "Cluster has no addresses, and therefore will never have a server"
           raise Error::NoServerAvailable.new(self, cluster, msg)
         end
+=begin Add this check in version 3.0.0
         unless cluster.connected?
           msg = 'Cluster is disconnected'
           raise Error::NoServerAvailable.new(self, cluster, msg)
         end
+=end
         @local_threshold = cluster.options[:local_threshold] || LOCAL_THRESHOLD
         @server_selection_timeout = cluster.options[:server_selection_timeout] || SERVER_SELECTION_TIMEOUT
         deadline = Time.now + server_selection_timeout
@@ -167,6 +169,9 @@ module Mongo
         end
         if dead_monitors.any?
           msg += ". The following servers have dead monitor threads: #{dead_monitors.map(&:summary).join(', ')}"
+        end
+        unless cluster.connected?
+          msg += ". The cluster is disconnected (client may have been closed)"
         end
         raise Error::NoServerAvailable.new(self, cluster, msg)
       end
