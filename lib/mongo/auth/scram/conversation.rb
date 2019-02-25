@@ -19,8 +19,8 @@ module Mongo
   module Auth
     class SCRAM
 
-      # Defines behavior around a single SCRAM-SHA-1 conversation between the
-      # client and server.
+      # Defines behavior around a single SCRAM-SHA-1/256 conversation between
+      # the client and server.
       #
       # @since 2.0.0
       class Conversation
@@ -168,7 +168,7 @@ module Mongo
         end
 
         # Start the SCRAM conversation. This returns the first message that
-        # needs to be send to the server.
+        # needs to be sent to the server.
         #
         # @example Start the conversation.
         #   conversation.start
@@ -180,7 +180,8 @@ module Mongo
         # @since 2.0.0
         def start(connection = nil)
           if connection && connection.features.op_msg_enabled?
-            selector = CLIENT_FIRST_MESSAGE.merge(payload: client_first_message, mechanism: @mechanism)
+            selector = CLIENT_FIRST_MESSAGE.merge(
+              payload: client_first_message, mechanism: full_mechanism)
             selector[Protocol::Msg::DATABASE_IDENTIFIER] = user.auth_source
             cluster_time = connection.mongos? && connection.cluster_time
             selector[Operation::CLUSTER_TIME] = cluster_time if cluster_time
@@ -189,10 +190,15 @@ module Mongo
             Protocol::Query.new(
               user.auth_source,
               Database::COMMAND,
-              CLIENT_FIRST_MESSAGE.merge(payload: client_first_message, mechanism: @mechanism),
+              CLIENT_FIRST_MESSAGE.merge(
+                payload: client_first_message, mechanism: full_mechanism),
               limit: -1
             )
           end
+        end
+
+        def full_mechanism
+          MECHANISMS[@mechanism]
         end
 
         # Get the id of the conversation.
@@ -213,9 +219,14 @@ module Mongo
         #   Conversation.new(user, mechanism)
         #
         # @param [ Auth::User ] user The user to converse about.
+        # @param [ Symbol ] mechanism Authentication mechanism.
         #
         # @since 2.0.0
         def initialize(user, mechanism)
+          unless [:scram, :scram256].include?(mechanism)
+            raise InvalidMechanism.new(mechanism)
+          end
+
           @user = user
           @nonce = SecureRandom.base64
           @client_key = user.send(:client_key)
@@ -343,7 +354,7 @@ module Mongo
         # @since 2.0.0
         def hi(data)
           case @mechanism
-          when SCRAM::SCRAM_SHA_256_MECHANISM
+          when :scram256
             OpenSSL::PKCS5.pbkdf2_hmac(
               data,
               Base64.strict_decode64(salt),
@@ -422,7 +433,7 @@ module Mongo
         # @since 2.0.0
         def salted_password
           @salted_password ||= case @mechanism
-          when SCRAM::SCRAM_SHA_256_MECHANISM
+          when :scram256
             hi(user.sasl_prepped_password)
           else
             hi(user.hashed_password)
@@ -510,7 +521,9 @@ module Mongo
         end
 
         def validate!(reply)
-          raise Unauthorized.new(user) unless reply.documents[0][Operation::Result::OK] == 1
+          if reply.documents[0][Operation::Result::OK] != 1
+            raise Unauthorized.new(user, full_mechanism)
+          end
           @reply = reply
         end
 
@@ -518,7 +531,7 @@ module Mongo
 
         def digest
           @digest ||= case @mechanism
-                      when SCRAM::SCRAM_SHA_256_MECHANISM
+                      when :scram256
                         OpenSSL::Digest::SHA256.new.freeze
                       else
                         OpenSSL::Digest::SHA1.new.freeze

@@ -10,6 +10,68 @@ describe Mongo::Auth::User do
     described_class.new(options)
   end
 
+  describe '#initialize' do
+    let(:user) { Mongo::Auth::User.new(options) }
+
+    context 'no options' do
+      let(:options) { {} }
+
+      it 'succeeds' do
+        expect(user).to be_a(Mongo::Auth::User)
+      end
+    end
+
+    context 'invalid mechanism' do
+      let(:options) { {auth_mech: :invalid} }
+
+      it 'raises ArgumentError' do
+        expect do
+          user
+        end.to raise_error(Mongo::Auth::InvalidMechanism, ":invalid is invalid, please use one of the following mechanisms: :mongodb_cr, :mongodb_x509, :plain, :scram, :scram256")
+      end
+    end
+
+    context 'mechanism given as string' do
+      let(:options) { {auth_mech: 'scram'} }
+
+      context 'not linting' do
+        skip_if_linting
+
+        it 'warns' do
+          expect(Mongo::Logger.logger).to receive(:warn)
+          user
+        end
+
+        it 'converts mechanism to symbol' do
+          expect(user.mechanism).to eq(:scram)
+        end
+      end
+
+      context 'linting' do
+        require_linting
+
+        it 'raises LintError' do
+          expect do
+            user
+          end.to raise_error(Mongo::Error::LintError, "Auth mechanism \"scram\" must be specified as a symbol")
+        end
+      end
+    end
+
+    context 'mechanism given as symbol' do
+      let(:options) { {auth_mech: :scram} }
+
+      it 'does not warn' do
+        expect(Mongo::Logger.logger).not_to receive(:warn)
+        user
+      end
+
+      it 'stores mechanism' do
+        expect(user.mechanism).to eq(:scram)
+      end
+    end
+  end
+
   describe '#auth_key' do
 
     let(:nonce) do
