@@ -248,11 +248,17 @@ Ruby Options
 
    * - ``:auth_mech``
      - Specifies the authenticaion mechanism to use. Can be one of:
-       ``:mongodb_cr``, ``:mongodb_x509``, ``:plain``, ``:scram``.
+       ``:gssapi``, ``:mongodb_cr``, ``:mongodb_x509``, ``:plain``,
+       ``:scram``, ``:scram256``. GSSAPI (Kerberos) authentication
+       :ref:`requires additional dependencies <kerberos>`.
      - ``Symbol``
-     - MongoDB 3.0 and later: ``:scram`` if user credentials
-       are supplied but an ``:auth_mech`` is not. 2.6 and earlier:
-       ``:mongodb_cr``
+     - If user credentials are not supplied, ``nil``. If user credentials
+       are supplied, the default depends on server version.
+       MongoDB 4.0 and later: ``:scram256`` if user credentials correspond
+       to a user which supports SCRAM-SHA-256 authentication, otherwise
+       ``:scram``.
+       MongoDB 3.0-3.6: ``:scram``.
+       MongoDB 2.6: ``:mongodb_cr``
 
    * - ``:auth_mech_properties``
      - Provides additional authentication mechanism properties.
@@ -414,7 +420,7 @@ Ruby Options
      - An array of OpenSSL::X509::Certificate representing the certificate authority certificates used to
        validate certs passed from the other end of the connection. One of :ssl_ca_cert, :ssl_ca_cert_string or
        :ssl_ca_cert_object (in order of priority) is required for :ssl_verify.
-     - ``Array<OpenSSL::X509::Certificate>``
+     - ``Array< OpenSSL::X509::Certificate >``
      - none
 
    * - ``:ssl_ca_cert_string``
