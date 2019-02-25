@@ -79,12 +79,14 @@ describe Mongo::Retryable do
     double('operation')
   end
 
+  let(:server) { double('server') }
+
   let(:cluster) do
-    double('cluster', next_primary: server_selector)
+    double('cluster', next_primary: server)
   end
 
   let(:server_selector) do
-    double('server_selector', select_server: double('server'))
+    double('server_selector', select_server: server)
   end
 
   let(:retryable) do
@@ -418,7 +420,7 @@ describe Mongo::Retryable do
       # Quick sanity check that the expected code path is being exercised
       expect(retryable.retry_write_allowed_as_configured?).to be true
 
-      allow(server_selector).to receive(:retry_writes?).and_return(true)
+      allow(server).to receive(:retry_writes?).and_return(true)
       allow(cluster).to receive(:scan!)
     end
 
@@ -442,9 +444,9 @@ describe Mongo::Retryable do
     context 'when a not master error occurs' do
 
       before do
+        server = cluster.next_primary
         expect(operation).to receive(:execute).and_raise(
           Mongo::Error::OperationFailure.new('not master')).ordered
-        expect(cluster).to receive(:scan!).and_return(true).ordered
         expect(operation).to receive(:execute).and_return(true).ordered
       end
 
@@ -454,9 +456,9 @@ describe Mongo::Retryable do
     context 'when a node is recovering error occurs' do
 
       before do
+        server = cluster.next_primary
         expect(operation).to receive(:execute).and_raise(
           Mongo::Error::OperationFailure.new('node is recovering')).ordered
-        expect(cluster).to receive(:scan!).and_return(true).ordered
         expect(operation).to receive(:execute).and_return(true).ordered
       end
 
@@ -466,10 +468,10 @@ describe Mongo::Retryable do
     context 'when a retryable error occurs with a code' do
 
       before do
+        server = cluster.next_primary
         expect(operation).to receive(:execute).and_raise(
           Mongo::Error::OperationFailure.new('message missing', nil,
             :code => 91, :code_name => 'ShutdownInProgress')).ordered
-        expect(cluster).to receive(:scan!).and_return(true).ordered
         expect(operation).to receive(:execute).and_return(true).ordered
       end
 
@@ -494,7 +496,10 @@ describe Mongo::Retryable do
       before do
         expect(operation).to receive(:execute).and_raise(
           Mongo::Error::SocketError.new('socket error')).ordered
-        expect(cluster).to receive(:scan!).and_return(true).ordered
+        # This is where the server would be marked unknown, but since
+        # we are not tracking which server the operation was sent to,
+        # we are not able to assert this.
+        # There is no explicit cluster scan requested.
         expect(operation).to receive(:execute).and_return(true).ordered
       end
 
@@ -506,7 +511,11 @@ describe Mongo::Retryable do
       before do
         expect(operation).to receive(:execute).and_raise(
           Mongo::Error::SocketTimeoutError.new('socket timeout')).ordered
-        expect(cluster).to receive(:scan!).and_return(true).ordered
+        # This is where the server would be marked unknown, but since
+        # we are not tracking which server the operation was sent to,
+        # we are not able to assert this.
+        # There is no explicit cluster scan requested (and the operation may
+        # end up being sent to the same server it was sent to originally).
         expect(operation).to receive(:execute).and_return(true).ordered
       end
 

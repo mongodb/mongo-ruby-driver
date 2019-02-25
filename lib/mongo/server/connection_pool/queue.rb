@@ -145,7 +145,10 @@ module Mongo
           check_count_invariants
         end
 
-        # Disconnect all connections in the queue.
+        # Closes all idle connections in the queue and schedules currently
+        # dequeued connections to be closed when they are enqueued back into
+        # the queue. The queue remains operational and can create new
+        # connections when requested.
         #
         # @example Disconnect all connections.
         #   queue.disconnect!

@@ -122,7 +122,7 @@ module Mongo
         @local_threshold = cluster.options[:local_threshold] || LOCAL_THRESHOLD
         @server_selection_timeout = cluster.options[:server_selection_timeout] || SERVER_SELECTION_TIMEOUT
         deadline = Time.now + server_selection_timeout
-        while (deadline - Time.now) > 0
+        while (time_remaining = deadline - Time.now) > 0
           servers = candidates(cluster)
           if Lint.enabled?
             servers.each do |server|
@@ -153,6 +153,14 @@ module Mongo
             return server
           end
           cluster.scan!(false)
+          if cluster.server_selection_semaphore
+            cluster.server_selection_semaphore.wait(time_remaining)
+          else
+            if Lint.enabled?
+              raise Error::LintError, 'Waiting for server selection without having a server selection semaphore'
+            end
+            sleep 0.25
+          end
         end
 
         msg = "No #{name} server is available in cluster: #{cluster.summary} " +

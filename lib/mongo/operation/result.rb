@@ -79,6 +79,9 @@ module Mongo
       # @return [ Array<Protocol::Reply> ] replies The wrapped wire protocol replies.
       attr_reader :replies
 
+      def_delegators :parser,
+        :not_master?, :node_recovering?
+
       # Is the result acknowledged?
       #
       # @note On MongoDB 2.6 and higher all writes are acknowledged since the

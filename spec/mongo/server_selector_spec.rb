@@ -218,6 +218,7 @@ describe Mongo::ServerSelector do
           allow(c).to receive(:unknown?).and_return(false)
           allow(c).to receive(:scan!).and_return(true)
           allow(c).to receive(:options).and_return(server_selection_timeout: 0.1)
+          allow(c).to receive(:server_selection_semaphore).and_return(nil)
         end
       end
 

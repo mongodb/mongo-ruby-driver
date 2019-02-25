@@ -44,6 +44,7 @@ module Mongo
     #
     # @since 2.0.0
     class Parser
+      include SdamErrorDetection
 
       # @return [ BSON::Document ] document The returned document.
       attr_reader :document
@@ -62,7 +63,7 @@ module Mongo
       # @since 2.6.0
       attr_reader :code_name
 
-      # @return [ Array ] labels The set of labels associated with the error.
+      # @return [ Array<String> ] labels The set of labels associated with the error.
       # @since 2.7.0
       attr_reader :labels
 

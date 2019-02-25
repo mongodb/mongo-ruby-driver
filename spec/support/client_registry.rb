@@ -95,13 +95,19 @@ class ClientRegistry
       )
     # Provides an authorized mongo client that retries writes.
     when 'authorized_with_retry_writes'
-      global_client('authorized').with(retry_writes: true).tap do |client|
+      global_client('authorized').with(
+        retry_writes: true,
+        server_selection_timeout: 4.97,
+      ).tap do |client|
         client.subscribe(Mongo::Monitoring::COMMAND, EventSubscriber)
       end
     # Provides an authorized mongo client that does not retry writes,
     # overriding global test suite option to retry writes if necessary.
     when 'authorized_without_retry_writes'
-      global_client('authorized').with(retry_writes: false).tap do |client|
+      global_client('authorized').with(
+        retry_writes: false,
+        server_selection_timeout: 4.99,
+      ).tap do |client|
         client.subscribe(Mongo::Monitoring::COMMAND, EventSubscriber)
       end
     # Provides an unauthorized mongo client on the admin database, for use in

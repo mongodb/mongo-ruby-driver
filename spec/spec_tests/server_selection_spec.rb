@@ -46,6 +46,7 @@ describe 'Server Selection' do
           allow(c).to receive(:unknown?).and_return(topology.unknown?)
           allow(c).to receive(:app_metadata).and_return(app_metadata)
           allow(c).to receive(:options).and_return({})
+          allow(c).to receive(:server_selection_semaphore).and_return(nil)
         end
       end
 
@@ -101,6 +102,7 @@ describe 'Server Selection' do
       end
 
       context 'No matching server available', if: !spec.server_available? do
+        skip_if_linting
 
         it 'Raises exception' do
           expect do
