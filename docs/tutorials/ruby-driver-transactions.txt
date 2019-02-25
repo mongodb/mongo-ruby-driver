@@ -110,6 +110,39 @@ To commit or abort a transaction, call ``commit_transaction`` or
   
   session.abort_transaction
 
+Note: an outstanding transaction can hold locks to various objects in the
+server, such as the database. For example, the drop call in the following
+snippet will hang for `transactionLifetimeLimitSeconds
+<https://docs.mongodb.com/manual/reference/parameters/#param.transactionLifetimeLimitSeconds>`_
+seconds (default 60) until the server expires and aborts the transaction:
+
+.. code-block:: ruby
+
+  c1 = Mongo::Client.new(['127.0.0.1:27017']).use(:test_db)
+  session = c1.start_session
+  c1['foo'].insert_one(test: 1)
+  session.start_transaction
+  c1['foo'].insert_one({test: 2}, session: session)
+  
+  c2 = Mongo::Client.new(['127.0.0.1:27017']).use(:test_db)
+  # hangs
+  c2.database.drop
+
+Since transactions are associated with server-side sessions, closing the client
+does not abort a transaction that this client initiated - the application must
+either call ``abort_transaction`` or wait for the transaction to time out on
+the server side. In addition to committing or aborting the transaction, an
+application can also end the session which will abort a transaction on this
+session if one is in progress:
+
+.. code-block:: ruby
+
+  session.end_session
+
+  c2 = Mongo::Client.new(['127.0.0.1:27017']).use(:test_db)
+  # ok
+  c2.database.drop
+
 
 Retrying Commits
 ----------------

@@ -15,6 +15,12 @@ require 'support/monitoring_ext'
 RSpec.configure do |config|
   config.include(Authorization)
   config.extend(Constraints)
+
+  config.before(:all) do
+    if ClusterConfig.instance.fcv_ish >= '3.6'
+      kill_all_server_sessions
+    end
+  end
 end
 
 # Determine whether the test clients are connecting to a sharded cluster
