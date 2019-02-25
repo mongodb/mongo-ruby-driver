@@ -69,6 +69,12 @@ module Mongo
         super(family)
         connect!
       end
+
+      private
+
+      def address
+        "#{host}:#{port} (no TLS)"
+      end
     end
   end
 end

@@ -2,8 +2,16 @@ require 'spec_helper'
 
 describe Mongo::Socket::Unix do
 
+  let(:path) { "/tmp/mongodb-#{SpecConfig.instance.any_port}.sock" }
+
   let(:socket) do
-    described_class.new("/tmp/mongodb-#{SpecConfig.instance.any_port}.sock", 5)
+    described_class.new(path, 5)
+  end
+
+  describe '#address' do
+    it 'returns the path' do
+      expect(socket.send(:address)).to eq(path)
+    end
   end
 
   describe '#connect!' do

@@ -80,6 +80,14 @@ module Constraints
     end
   end
 
+  def require_no_ssl
+    before do
+      if SpecConfig.instance.ssl?
+        skip "SSL enabled"
+      end
+    end
+  end
+
   def require_local_tls
     before do
       unless SpecConfig.instance.ssl? && !SpecConfig.instance.ci?

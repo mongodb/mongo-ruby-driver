@@ -118,5 +118,43 @@ describe 'Auth' do
         end
       end
     end
+
+    context 'attempting to connect to a non-tls server with tls' do
+      require_no_ssl
+
+      let(:options) { {ssl: true} }
+
+      it 'reports host, port and tls status' do
+        begin
+          connection.connect!
+        rescue Mongo::Error::SocketError => exc
+        end
+        expect(exc).not_to be nil
+        expect(exc.message).to include('OpenSSL::SSL::SSLError')
+        expect(exc.message).to include(server.address.to_s)
+        expect(exc.message).to include('TLS')
+        expect(exc.message).not_to include('no TLS')
+      end
+    end
+
+    context 'attempting to connect to a tls server without tls' do
+      require_ssl
+
+      let(:options) { {} }
+
+      it 'reports host, port and tls status' do
+        begin
+          connection.connect!
+        rescue Mongo::Error::SocketError => exc
+        end
+        expect(exc).not_to be nil
+        expect(exc.message).not_to include('OpenSSL::SSL::SSLError')
+        addresses = Socket.getaddrinfo(server.address.host, nil)
+        expect(addresses.any? do |address|
+          exc.message.include?("#{address[2]}:#{server.address.port}")
+        end).to be true
+        expect(exc.message).to include('no TLS')
+      end
+    end
   end
 end
