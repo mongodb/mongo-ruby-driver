@@ -832,6 +832,7 @@ module Mongo
               end
               next
             else
+              transaction_in_progress = false
               raise
             end
           end
