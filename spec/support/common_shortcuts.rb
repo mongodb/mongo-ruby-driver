@@ -12,6 +12,19 @@ module CommonShortcuts
   end
 
   module InstanceMethods
+    def kill_all_server_sessions
+      begin
+        ClientRegistry.instance.global_client('root_authorized').command(killAllSessions: [])
+      # killAllSessions also kills the implicit session which the driver uses
+      # to send this command, as a result it always fails
+      rescue Mongo::Error::OperationFailure => e
+        # "operation was interrupted"
+        unless e.code == 11601
+          raise
+        end
+      end
+    end
+
     def wait_for_all_servers(cluster)
       # Cluster waits for initial round of sdam until the primary
       # is discovered, which means by the time a connection is obtained
