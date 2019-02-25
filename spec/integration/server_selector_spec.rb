@@ -32,14 +32,31 @@ describe 'Server selector' do
     end
 
     context 'client is closed' do
-      before do
-        client.close
+      context 'there is a known primary' do
+        before do
+          client.cluster.next_primary
+          client.close
+          expect(client.cluster.connected?).to be false
+        end
+
+        it 'returns the primary for BC reasons' do
+          expect(result).to be_a(Mongo::Server)
+        end
       end
 
-      it 'raises NoServerAvailable with a message explaining the situation' do
-        expect do
-          result
-        end.to raise_error(Mongo::Error::NoServerAvailable, "Cluster is disconnected")
+      context 'there is no known primary' do
+        before do
+          primary_server = client.cluster.next_primary
+          client.close
+          expect(client.cluster.connected?).to be false
+          primary_server.unknown!
+        end
+
+        it 'raises NoServerAvailable with a message explaining the situation' do
+          expect do
+            result
+          end.to raise_error(Mongo::Error::NoServerAvailable, /The cluster is disconnected \(client may have been closed\)/)
+        end
       end
     end
 
