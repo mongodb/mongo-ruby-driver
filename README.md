@@ -1,3 +1,4 @@
+test
 MongoDB Ruby Driver [![Build Status][travis-img]][travis-url] [![Code Climate][codeclimate-img]][codeclimate-url] [![Gem Version][rubygems-img]][rubygems-url]
 -----
 The officially supported Ruby driver for [MongoDB](http://www.mongodb.org).
