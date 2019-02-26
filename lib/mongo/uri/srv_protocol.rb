@@ -109,6 +109,7 @@ module Mongo
         raise_invalid_error!(INVALID_PORT) if hostname.include?(HOST_PORT_DELIM)
         _, _, domain = hostname.partition(DOT_PARTITION)
         raise_invalid_error!(INVALID_DOMAIN) unless domain.include?(DOT_PARTITION)
+        raise_invalid_error!(INVALID_DOMAIN) if domain.count(DOT_PARTITION) == 1 && domain.end_with?(DOT_PARTITION)
       end
 
       def get_records(hostname)

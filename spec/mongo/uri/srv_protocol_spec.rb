@@ -48,6 +48,17 @@ describe Mongo::URI::SRVProtocol do
       end
     end
 
+    context 'when the {tld} is empty' do
+
+      let(:string) { "#{scheme}#{hosts}" }
+      let(:hosts) { '10gen.cc./' }
+
+      it 'raises an error' do
+        expect { uri }.to raise_error(Mongo::Error::InvalidURI)
+      end
+    end
+
+
     context 'string is not uri' do
 
       let(:string) { 'tyler' }
