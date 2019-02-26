@@ -40,7 +40,7 @@ describe 'Uri Options' do
             end
           end
 
-          context 'when the uri should not warn', if: !test.warn? do
+          context 'when the uri should not warn', if: !test.warn? && test.valid? do
 
             before do
               expect(Mongo::Logger.logger).not_to receive(:warn)
