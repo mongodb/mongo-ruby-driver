@@ -227,6 +227,9 @@ module Mongo
             set_compressor!(reply)
             reply
           end
+        rescue => e
+          log_warn("Failed to handshake with #{address}: #{e.class}: #{e}")
+          raise
         end
 
         def retry_message

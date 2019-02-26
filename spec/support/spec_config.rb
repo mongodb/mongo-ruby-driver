@@ -148,6 +148,14 @@ class SpecConfig
 
   # Option hashes
 
+  def auth_options
+    {
+      user: user,
+      password: password,
+      auth_source: auth_source,
+    }
+  end
+
   def ssl_options
     if ssl?
       {

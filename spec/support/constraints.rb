@@ -138,7 +138,7 @@ module Constraints
 
   def require_auth
     before do
-      unless ENV['AUTH'] == 'auth' || ClusterConfig.instance.auth_enabled?
+      unless ENV['AUTH'] == 'auth' || SpecConfig.instance.user || ClusterConfig.instance.auth_enabled?
         skip "Auth required"
       end
     end
@@ -146,7 +146,7 @@ module Constraints
 
   def require_no_auth
     before do
-      if ENV['AUTH'] == 'auth' || ClusterConfig.instance.auth_enabled?
+      if ENV['AUTH'] == 'auth' || SpecConfig.instance.user || ClusterConfig.instance.auth_enabled?
         skip "Auth not allowed"
       end
     end
