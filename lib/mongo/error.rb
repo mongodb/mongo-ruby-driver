@@ -134,6 +134,7 @@ module Mongo
   end
 end
 
+require 'mongo/error/sdam_error_detection'
 require 'mongo/error/parser'
 require 'mongo/error/write_retryable'
 require 'mongo/error/change_stream_resumable'

@@ -1,5 +1,15 @@
 require 'spec_helper'
 
+# The tests raise OperationFailure in socket reads. This is done for
+# convenience to make the tests uniform between socket errors and operation
+# failures; in reality a socket read will never raise OperationFailure as
+# wire protocol parsing code raises this exception. For the purposes of
+# testing retryable writes, it is acceptable to raise OperationFailure in
+# socket reads because both exceptions end up getting handled in the same
+# place by retryable writes code. The SDAM error handling test specifically
+# checks server state (i.e. being marked unknown) and scanning behavior
+# that is performed by the wire protocol code; this test omits scan assertions
+# as otherwise it quickly becomes unwieldy.
 describe 'Retryable writes integration tests' do
   include PrimarySocket
 
@@ -7,21 +17,33 @@ describe 'Retryable writes integration tests' do
     authorized_collection.delete_many
   end
 
+  let(:check_collection) do
+    # Verify data in the collection using another client instance to avoid
+    # having the verification read trigger cluster scans on the writing client
+    subscribed_client[TEST_COLL]
+  end
+
+  let(:primary_connection) do
+    client.database.command(ping: 1)
+    expect(primary_server.pool.send(:queue).pool_size).to eq(1)
+    expect(primary_server.pool.send(:queue).queue_size).to eq(1)
+    primary_server.pool.send(:queue).queue.first
+  end
+
   shared_examples_for 'an operation that is retried' do
 
-    context 'when the operation fails on the first attempt' do
+    context 'when the operation fails on the first attempt and succeeds on the second attempt' do
 
       before do
-        # Note that for writes, server.connectable? is called, refreshing the socket
-        allow(primary_server).to receive(:connectable?).and_return(true)
-        expect(primary_socket).to receive(:write).and_raise(error)
+        wait_for_all_servers(client.cluster)
+
+        allow(primary_socket).to receive(:write).and_raise(error)
       end
 
       context 'when the error is retryable' do
 
         before do
           expect(Mongo::Logger.logger).to receive(:warn).once.and_call_original
-          expect(client.cluster).to receive(:scan!)
         end
 
         context 'when the error is a SocketError' do
@@ -54,6 +76,10 @@ describe 'Retryable writes integration tests' do
             Mongo::Error::OperationFailure.new('not master')
           end
 
+          let(:reply) do
+            make_not_master_reply
+          end
+
           it 'retries writes' do
             operation
             expect(expectation).to eq(successful_retry_value)
@@ -66,13 +92,13 @@ describe 'Retryable writes integration tests' do
         context 'when the error is a non-retryable OperationFailure' do
 
           let(:error) do
-            Mongo::Error::OperationFailure.new('other error')
+            Mongo::Error::OperationFailure.new('other error', code: 123)
           end
 
           it 'does not retry writes' do
             expect {
               operation
-            }.to raise_error(error)
+            }.to raise_error(Mongo::Error::OperationFailure, /other error/)
             expect(expectation).to eq(unsuccessful_retry_value)
           end
         end
@@ -82,8 +108,6 @@ describe 'Retryable writes integration tests' do
     context 'when the operation fails on the first attempt and again on the second attempt' do
 
       before do
-        # Note that for writes, server.connectable? is called, refreshing the socket
-        allow(primary_server).to receive(:connectable?).and_return(true)
         allow(primary_socket).to receive(:write).and_raise(error)
       end
 
@@ -138,9 +162,12 @@ describe 'Retryable writes integration tests' do
         end
       end
 
-      [Mongo::Error::SocketError,
-       Mongo::Error::SocketTimeoutError,
-       Mongo::Error::OperationFailure.new('not master')].each do |retryable_error|
+      [
+        Mongo::Error::SocketError,
+        Mongo::Error::SocketTimeoutError,
+        Mongo::Error::OperationFailure.new('not master'),
+        Mongo::Error::OperationFailure.new('node is recovering'),
+      ].each do |retryable_error|
 
         context "when the first error is a #{retryable_error}" do
 
@@ -149,6 +176,7 @@ describe 'Retryable writes integration tests' do
           end
 
           before do
+            wait_for_all_servers(client.cluster)
             bad_socket = primary_connection.address.socket(primary_connection.socket_timeout,
                                                            primary_connection.send(:ssl_options))
             good_socket = primary_connection.address.socket(primary_connection.socket_timeout,
@@ -163,12 +191,6 @@ describe 'Retryable writes integration tests' do
               Mongo::Error::SocketError
             end
 
-            before do
-              # server selector can call scan! until it finds a server,
-              # hence more than two scan! calls may be issued
-              expect(client.cluster).to receive(:scan!).at_least(:twice).and_call_original
-            end
-
             it 'does not retry writes and raises the second error' do
               expect {
                 operation
@@ -178,12 +200,6 @@ describe 'Retryable writes integration tests' do
           end
 
           context 'when the second error is a SocketTimeoutError' do
-
-            before do
-              # server selector can call scan! until it finds a server,
-              # hence more than two scan! calls may be issued
-              expect(client.cluster).to receive(:scan!).at_least(:twice).and_call_original
-            end
 
             let(:second_error) do
               Mongo::Error::SocketTimeoutError
@@ -199,12 +215,6 @@ describe 'Retryable writes integration tests' do
 
           context 'when the second error is a retryable OperationFailure' do
 
-            before do
-              # server selector can call scan! until it finds a server,
-              # hence more than two scan! calls may be issued
-              expect(client.cluster).to receive(:scan!).at_least(:twice).and_call_original
-            end
-
             let(:second_error) do
               Mongo::Error::OperationFailure.new('not master')
             end
@@ -218,10 +228,6 @@ describe 'Retryable writes integration tests' do
           end
 
           context 'when the second error is a non-retryable OperationFailure' do
-
-            before do
-              expect(client.cluster).to receive(:scan!).once
-            end
 
             let(:second_error) do
               Mongo::Error::OperationFailure.new('other error')
@@ -260,10 +266,7 @@ describe 'Retryable writes integration tests' do
     end
 
     before do
-      # Note that for writes, server.connectable? is called, refreshing the socket
-      allow(primary_server).to receive(:connectable?).and_return(true)
-      expect(primary_socket).to receive(:write).and_raise(Mongo::Error::SocketError)
-      expect(client.cluster).not_to receive(:scan!)
+      expect(primary_socket).to receive(:write).exactly(:once).and_raise(Mongo::Error::SocketError)
     end
 
     it 'does not retry writes' do
@@ -285,10 +288,7 @@ describe 'Retryable writes integration tests' do
     end
 
     before do
-      # Note that for writes, server.connectable? is called, refreshing the socket
-      allow(primary_server).to receive(:connectable?).and_return(true)
       expect(primary_socket).to receive(:write).and_raise(Mongo::Error::SocketError)
-      expect(client.cluster).not_to receive(:scan!)
     end
 
     it 'does not retry writes' do
@@ -369,11 +369,7 @@ describe 'Retryable writes integration tests' do
     context 'when the client has retry_writes set to false' do
 
       let!(:client) do
-        authorized_client.with(retry_writes: false)
-      end
-
-      after do
-        client.close
+        authorized_client_without_retry_writes
       end
 
       context 'when the collection has write concern acknowledged' do
@@ -405,6 +401,7 @@ describe 'Retryable writes integration tests' do
     end
 
     context 'when the client has retry_writes not set' do
+      require_no_retry_writes
 
       let!(:client) do
         authorized_client
@@ -446,7 +443,7 @@ describe 'Retryable writes integration tests' do
     end
 
     let(:expectation) do
-      collection.find(a: 1).count
+      check_collection.find(a: 1).count
     end
 
     let(:successful_retry_value) do
@@ -472,7 +469,7 @@ describe 'Retryable writes integration tests' do
     end
 
     let(:expectation) do
-      collection.find(a: 1).count
+      check_collection.find(a: 1).count
     end
 
     let(:successful_retry_value) do
@@ -498,7 +495,7 @@ describe 'Retryable writes integration tests' do
     end
 
     let(:expectation) do
-      collection.find(a: 1).count
+      check_collection.find(a: 1).count
     end
 
     let(:successful_retry_value) do
@@ -524,7 +521,7 @@ describe 'Retryable writes integration tests' do
     end
 
     let(:expectation) do
-      collection.find(a: 1).count
+      check_collection.find(a: 1).count
     end
 
     let(:successful_retry_value) do
@@ -550,7 +547,7 @@ describe 'Retryable writes integration tests' do
     end
 
     let(:expectation) do
-      collection.find(a: 1).count
+      check_collection.find(a: 1).count
     end
 
     let(:successful_retry_value) do
@@ -576,7 +573,7 @@ describe 'Retryable writes integration tests' do
     end
 
     let(:expectation) do
-      collection.find(a: 3).count
+      check_collection.find(a: 3).count
     end
 
     let(:successful_retry_value) do
@@ -602,7 +599,7 @@ describe 'Retryable writes integration tests' do
     end
 
     let(:expectation) do
-      collection.find(a: 1).count
+      check_collection.find(a: 1).count
     end
 
     let(:successful_retry_value) do
@@ -629,7 +626,7 @@ describe 'Retryable writes integration tests' do
     end
 
     let(:expectation) do
-      collection.find(a: 1).count
+      check_collection.find(a: 1).count
     end
 
     let(:unsuccessful_retry_value) do
@@ -652,7 +649,7 @@ describe 'Retryable writes integration tests' do
     end
 
     let(:expectation) do
-      collection.find(a: 1).count
+      check_collection.find(a: 1).count
     end
 
     let(:unsuccessful_retry_value) do
@@ -676,7 +673,7 @@ describe 'Retryable writes integration tests' do
     end
 
     let(:expectation) do
-      collection.find(a: 1).count
+      check_collection.find(a: 1).count
     end
 
     let(:successful_retry_value) do
@@ -703,7 +700,7 @@ describe 'Retryable writes integration tests' do
     end
 
     let(:expectation) do
-      collection.find(a: 1).count
+      check_collection.find(a: 1).count
     end
 
     let(:unsuccessful_retry_value) do
@@ -726,7 +723,7 @@ describe 'Retryable writes integration tests' do
     end
 
     let(:expectation) do
-      collection.find(a: 1).count
+      check_collection.find(a: 1).count
     end
 
     let(:unsuccessful_retry_value) do

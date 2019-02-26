@@ -1,4 +1,4 @@
-require 'spec_helper'
+require 'lite_spec_helper'
 
 describe Mongo::Error::OperationFailure do
 
@@ -216,6 +216,130 @@ describe Mongo::Error::OperationFailure do
         it 'has the correct labels' do
           expect(subject.labels).to eq(labels)
         end
+      end
+    end
+  end
+
+  describe '#not_master?' do
+    [10107, 13435].each do |code|
+      context "error code #{code}" do
+        subject do
+          described_class.new("thingy (#{code})", nil,
+            :code => code, :code_name => 'thingy')
+        end
+
+        it 'is true' do
+          expect(subject.not_master?).to be true
+        end
+      end
+    end
+
+    # node is recovering error codes
+    [11600, 11602, 13436, 189, 91].each do |code|
+      context "error code #{code}" do
+        subject do
+          described_class.new("thingy (#{code})", nil,
+            :code => code, :code_name => 'thingy')
+        end
+
+        it 'is false' do
+          expect(subject.not_master?).to be false
+        end
+      end
+    end
+
+    context 'another error code' do
+      subject do
+        described_class.new('some error (123)', nil,
+          :code => 123, :code_name => 'SomeError')
+      end
+
+      it 'is false' do
+        expect(subject.not_master?).to be false
+      end
+    end
+
+    context 'not master in message with different code' do
+      subject do
+        described_class.new('not master (999)', nil,
+          :code => 999, :code_name => nil)
+      end
+
+      it 'is true' do
+        expect(subject.not_master?).to be true
+      end
+    end
+
+    context 'not master or secondary text' do
+      subject do
+        described_class.new('not master or secondary (999)', nil,
+          :code => 999, :code_name => nil)
+      end
+
+      it 'is false' do
+        expect(subject.not_master?).to be false
+      end
+    end
+  end
+
+  describe '#node_recovering?' do
+    [11600, 11602, 13436, 189, 91].each do |code|
+      context "error code #{code}" do
+        subject do
+          described_class.new("thingy (#{code})", nil,
+            :code => code, :code_name => 'thingy')
+        end
+
+        it 'is true' do
+          expect(subject.node_recovering?).to be true
+        end
+      end
+    end
+
+    # not master error codes
+    [10107, 13435].each do |code|
+      context "error code #{code}" do
+        subject do
+          described_class.new("thingy (#{code})", nil,
+            :code => code, :code_name => 'thingy')
+        end
+
+        it 'is false' do
+          expect(subject.node_recovering?).to be false
+        end
+      end
+    end
+
+    context 'another error code' do
+      subject do
+        described_class.new('some error (123)', nil,
+          :code => 123, :code_name => 'SomeError')
+      end
+
+      it 'is false' do
+        expect(subject.node_recovering?).to be false
+      end
+    end
+
+    context 'node is recovering in message with different code' do
+      subject do
+        described_class.new('node is recovering (999)', nil,
+          :code => 999, :code_name => nil)
+      end
+
+      it 'is true' do
+        expect(subject.node_recovering?).to be true
+      end
+    end
+
+    context 'not master or secondary text' do
+      subject do
+        described_class.new('not master or secondary (999)', nil,
+          :code => 999, :code_name => nil)
+      end
+
+      it 'is true' do
+        expect(subject.node_recovering?).to be true
       end
     end
   end

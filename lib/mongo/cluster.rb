@@ -340,7 +340,9 @@ module Mongo
     end
 
     # @api private
-    attr_reader :server_selection_semaphore
+    def server_selection_semaphore
+      options[:server_selection_semaphore]
+    end
 
     # Finalize the cluster for garbage collection.
     #

@@ -45,6 +45,10 @@ module Mongo
 
       def process_result(result, server)
         server.update_cluster_time(result)
+        if result.not_master? || result.node_recovering?
+          server.unknown!
+          server.monitor.scan_semaphore.signal
+        end
         session.process(result) if session
         result
       end

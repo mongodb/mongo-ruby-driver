@@ -20,6 +20,7 @@ module Mongo
     # @since 2.0.0
     class OperationFailure < Error
       extend Forwardable
+      include SdamErrorDetection
 
       # Error codes and code names that should result in a failing write
       # being retried.
@@ -28,7 +29,7 @@ module Mongo
       # @api private
       WRITE_RETRY_ERRORS = [
         {:code_name => 'InterruptedAtShutdown', :code => 11600},
-        {:code_name => 'InterruptedDueToReplStateChange', :code => 11602},
+        {:code_name => 'InterruptedDueToStepDown', :code => 11602},
         {:code_name => 'NotMaster', :code => 10107},
         {:code_name => 'NotMasterNoSlaveOk', :code => 13435},
         {:code_name => 'NotMasterOrSecondary', :code => 13436},
@@ -175,6 +176,9 @@ module Mongo
       #
       # @option options [ Integer ] :code Error code
       # @option options [ String ] :code_name Error code name
+      # @option options [ Array<String> ] :labels The set of labels associated
+      #   with the error
+      # @option options [ true | false ] :wtimeout Whether the error is a wtimeout
       #
       # @since 2.5.0, options added in 2.6.0
       def initialize(message = nil, result = nil, options = {})
@@ -186,9 +190,9 @@ module Mongo
         super(message)
       end
 
-      # Whether the error was a write concern timeout.
+      # Whether the error is a write concern timeout.
       #
-      # @return [ true | false ] Whether the error was a write concern timeout.
+      # @return [ true | false ] Whether the error is a write concern timeout.
       #
       # @since 2.7.1
       def wtimeout?

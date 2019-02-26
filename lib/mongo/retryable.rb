@@ -42,18 +42,22 @@ module Mongo
         attempt += 1
         yield
       rescue Error::SocketError, Error::SocketTimeoutError => e
-        raise(e) if attempt > cluster.max_read_retries || (session && session.in_transaction?)
+        if attempt > cluster.max_read_retries || (session && session.in_transaction?)
+          raise
+        end
         log_retry(e)
         cluster.scan!(false)
         retry
       rescue Error::OperationFailure => e
         if cluster.sharded? && e.retryable? && !(session && session.in_transaction?)
-          raise(e) if attempt > cluster.max_read_retries
+          if attempt > cluster.max_read_retries
+            raise
+          end
           log_retry(e)
           sleep(cluster.read_retry_interval)
           retry
         else
-          raise e
+          raise
         end
       end
     end
@@ -141,10 +145,14 @@ module Mongo
         txn_num = session.in_transaction? ? session.txn_num : session.next_txn_num
         yield(server, txn_num, false)
       rescue Error::SocketError, Error::SocketTimeoutError => e
-        raise e if session.in_transaction? && !ending_transaction
+        if session.in_transaction? && !ending_transaction
+          raise
+        end
         retry_write(e, txn_num, &block)
       rescue Error::OperationFailure => e
-        raise e if (session.in_transaction? && !ending_transaction) || !e.write_retryable?
+        if (session.in_transaction? && !ending_transaction) || !e.write_retryable?
+          raise
+        end
         retry_write(e, txn_num, &block)
       end
     end
@@ -167,17 +175,19 @@ module Mongo
     end
 
     def retry_write(original_error, txn_num, &block)
-      cluster.scan!(false)
+      # We do not request a scan of the cluster here, because error handling
+      # for the error which triggered the retry should have updated the
+      # server description and/or topology as necessary (specifically,
+      # a socket error or a not master error should have marked the respective
+      # server unknown). Here we just need to wait for server selection.
       server = cluster.next_primary
       raise original_error unless (server.retry_writes? && txn_num)
       log_retry(original_error)
       yield(server, txn_num, true)
     rescue Error::SocketError, Error::SocketTimeoutError => e
-      cluster.scan!(false)
       raise e
     rescue Error::OperationFailure => e
       raise original_error unless e.write_retryable?
-      cluster.scan!(false)
       raise e
     rescue
       raise original_error
@@ -193,13 +203,15 @@ module Mongo
         yield(server || cluster.next_primary)
       rescue Error::OperationFailure => e
         server = nil
-        raise(e) if attempt > Cluster::MAX_WRITE_RETRIES
+        if attempt > Cluster::MAX_WRITE_RETRIES
+          raise
+        end
         if e.write_retryable? && !(session && session.in_transaction?)
           log_retry(e)
           cluster.scan!(false)
           retry
         else
-          raise(e)
+          raise
         end
       end
     end

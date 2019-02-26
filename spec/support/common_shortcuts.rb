@@ -37,7 +37,7 @@ module CommonShortcuts
       # the case, this test will fail due to exceeding the general
       # test timeout eventually.
       while cluster.servers_list.any? { |server| server.unknown? }
-        warn "Waiting for unknown servers in #{cluster.servers}"
+        warn "Waiting for unknown servers in #{cluster.summary}"
         sleep 0.25
       end
     end
@@ -73,6 +73,25 @@ module CommonShortcuts
       server.tap do |s|
         allow(s).to receive(:description).and_return(description)
       end
+    end
+
+    def make_protocol_reply(payload)
+      Mongo::Protocol::Reply.new.tap do |reply|
+        reply.instance_variable_set('@flags', [])
+        reply.instance_variable_set('@documents', [payload])
+      end
+    end
+
+    def make_not_master_reply
+      make_protocol_reply(
+        'ok' => 0, 'code' => 10107, 'errmsg' => 'not master'
+      )
+    end
+
+    def make_node_recovering_reply
+      make_protocol_reply(
+        'ok' => 0, 'code' => 91, 'errmsg' => 'shutdown in progress'
+      )
     end
   end
 end
