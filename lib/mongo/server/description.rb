@@ -196,7 +196,7 @@ module Mongo
           @features = Features.new(wire_versions, me || @address.to_s)
         end
         @average_round_trip_time = average_round_trip_time
-        @last_update_time = Time.now.freeze
+        @last_update_time = Time.now.dup.freeze
 
         if Mongo::Lint.enabled?
           # prepopulate cache instance variables
