@@ -413,7 +413,7 @@ describe 'Retryable writes integration tests' do
           client[TEST_COLL, write: SpecConfig.instance.write_concern]
         end
 
-        it_behaves_like 'an operation that is not retried'
+        it_behaves_like 'an operation that is retried'
       end
 
       context 'when the collection has write concern unacknowledged' do
@@ -431,7 +431,7 @@ describe 'Retryable writes integration tests' do
           client[TEST_COLL]
         end
 
-        it_behaves_like 'an operation that is not retried'
+        it_behaves_like 'an operation that is retried'
       end
     end
   end

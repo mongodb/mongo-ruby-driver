@@ -396,7 +396,7 @@ Ruby Options
      - If a single-statement write operation fails from a network error, the driver automatically retries it once
        when connected to server versions 3.6+.
      - ``Boolean``
-     - false
+     - true
 
    * - ``:server_selection_timeout``
      - The number of seconds to wait for an appropriate server to
@@ -724,7 +724,7 @@ Details on Retryable Writes
 The driver implements two mechanisms for retrying writes: modern and legacy.
 The modern mechanism is used when the driver connects to a MongoDB 3.6+
 replica set or a sharded cluster, and the ``retry_writes`` client option is
-set to true. This mechanism retries writes once on network errors
+not set to false. This mechanism retries writes once on network errors
 (timeout, connection reset, etc.) as well as transient errors resulting
 from servers being unavailable due to initialization, shutdown, replica
 set elections and similar events (the corresponding errors are not master,
@@ -734,7 +734,7 @@ likely to no longer be usable.
 
 The legacy mechanism is used when the driver connects to MongoDB 3.4 or
 earlier clusters, or to MongoDB 3.6 or later standalone servers, or when
-``retry_writes`` client option is not given. In this mode the driver will
+``retry_writes`` client option is set to false. In this mode the driver will
 retry write operations once due to transient errors resulting from
 servers being unavailable due to initialization, shutdown, replica set
 elections and similar events, but will not retry writes on network errors
