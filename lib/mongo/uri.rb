@@ -201,8 +201,13 @@ module Mongo
 
     # Options that are allowed to appear more than once in the uri.
     #
+    # In order to follow the URI options spec requirement that all instances of 'tls' and 'ssl' have
+    # the same value, we need to keep track of all of the values passed in for those options.
+    # Assuming they don't conflict, they will be condensed to a single value immediately after
+    # parsing the URI.
+    #
     # @since 2.1.0
-    REPEATABLE_OPTIONS = [ :tag_sets ]
+    REPEATABLE_OPTIONS = [ :tag_sets, :ssl ]
 
     # Get either a URI object or a SRVProtocol URI object.
     #
@@ -257,16 +262,25 @@ module Mongo
       raise_invalid_error!(INVALID_SCHEME) unless parsed_scheme == scheme
       parse!(remaining)
 
-      # Warn if conflicting insecure TLS options are provided.
-      if @uri_options[:ssl_verify] == false
-        if @uri_options[:ssl_verify_certificate]
-          log_warn("tlsInsecure is set to disable verification, but tlsAllowInvalidCertificates " +
-                     "is set to enable it; tlsAllowInvalidCertificates takes precedence")
+      # The URI options spec requires that we raise an error if there are conflicting values of
+      # 'tls' and 'ssl'. In order to fulfill this, we parse the values of each instance into an
+      # array; assuming all values in the array are the same, we replace the array with that value.
+      unless @uri_options[:ssl].nil? || @uri_options[:ssl].empty?
+        unless @uri_options[:ssl].uniq.length == 1
+          raise_invalid_error_no_fmt!("all instances of 'tls' and 'ssl' must have the same value")
         end
 
-       if @uri_options[:ssl_verify_hostname]
-          log_warn("tlsInsecure is set to disable verification, but tlsAllowInvalidHostnames is " +
-                     "set to enable it; tlsAllowInvalidHostnames takes precedence")
+        @uri_options[:ssl] = @uri_options[:ssl].first
+      end
+
+      # Check for conflicting TLS insecure options.
+      unless @uri_options[:ssl_verify].nil?
+        unless @uri_options[:ssl_verify_certificate].nil?
+          raise_invalid_error_no_fmt!("'tlsInsecure' and 'tlsAllowInvalidCertificates' cannot both be specified")
+        end
+
+        unless @uri_options[:ssl_verify_hostname].nil?
+          raise_invalid_error_no_fmt!("tlsInsecure' and 'tlsAllowInvalidHostnames' cannot both be specified")
         end
       end
     end
@@ -413,6 +427,10 @@ module Mongo
       raise Error::InvalidURI.new(@string, details, FORMAT)
     end
 
+    def raise_invalid_error_no_fmt!(details)
+      raise Error::InvalidURI.new(@string, details)
+    end
+
     def decode(value)
       ::URI.decode(value)
     end
@@ -463,8 +481,8 @@ module Mongo
     uri_option 'waitqueuetimeoutms', :wait_queue_timeout, :type => :wait_queue_timeout
 
     # Security Options
-    uri_option 'ssl', :ssl
-    uri_option 'tls', :ssl
+    uri_option 'ssl', :ssl, :type => :ssl
+    uri_option 'tls', :ssl, :type => :tls
     uri_option 'tlsallowinvalidcertificates', :ssl_verify_certificate,
                :type => :ssl_verify_certificate
     uri_option 'tlsallowinvalidhostnames', :ssl_verify_hostname,
@@ -701,6 +719,26 @@ module Mongo
     #   will be logged).
     def journal(value)
       bool('journal', value)
+    end
+
+    # Parses the ssl value from the URI.
+    #
+    # @param value [ String ] The ssl value.
+    #
+    # @return [ Array<true | false> ] The ssl value parsed out (stored in an array to facilitate
+    #   keeping track of all values).
+    def ssl(value)
+      [bool('ssl', value)]
+    end
+
+    # Parses the tls value from the URI.
+    #
+    # @param value [ String ] The tls value.
+    #
+    # @return [ Array<true | false> ] The tls value parsed out (stored in an array to facilitate
+    #   keeping track of all values).
+    def tls(value)
+      [bool('tls', value)]
     end
 
     # Parses the ssl_verify value from the tlsInsecure URI value. Note that this will be the inverse
