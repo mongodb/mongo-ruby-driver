@@ -1055,25 +1055,25 @@ describe Mongo::URI::SRVProtocol do
         expect { validate }.to raise_error(Mongo::Error::InvalidURI)
       end
     end
-  end
 
-  context 'when the hostname ends with consecutive dots' do
-    let(:hostname) do
-      'a.b.c..'
+    context 'when the hostname ends with consecutive dots' do
+      let(:hostname) do
+        'a.b.c..'
+      end
+
+      it 'raises an error' do
+        expect { validate }.to raise_error(Mongo::Error::InvalidURI)
+      end
     end
 
-    it 'raises an error' do
-      expect { validate }.to raise_error(Mongo::Error::InvalidURI)
-    end
-  end
+    context 'when the hostname contains consecutive dots in the middle' do
+      let(:hostname) do
+        'a..b.c'
+      end
 
-  context 'when the hostname contains consecutive dots in the middle' do
-    let(:hostname) do
-      'a..b.c'
-    end
-
-    it 'raises an error' do
-      expect { validate }.to raise_error(Mongo::Error::InvalidURI)
+      it 'raises an error' do
+        expect { validate }.to raise_error(Mongo::Error::InvalidURI)
+      end
     end
   end
 end
