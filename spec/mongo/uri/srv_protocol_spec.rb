@@ -955,11 +955,10 @@ describe Mongo::URI::SRVProtocol do
 
   describe '#validate_hostname' do
     let(:valid_hostname) do
-      'test1.test.build.10gen.cc'
     end
 
     let(:dummy_uri) do
-      Mongo::URI::SRVProtocol.new("#{scheme}#{valid_hostname}/")
+      Mongo::URI::SRVProtocol.new("mongodb+srv://test1.test.build.10gen.cc/")
     end
 
     let(:validate) do
@@ -968,17 +967,7 @@ describe Mongo::URI::SRVProtocol do
 
     context 'when the hostname is valid' do
       let(:hostname) do
-        valid_hostname
-      end
-
-      it 'does not raise an error' do
-        expect { validate }.not_to raise_error
-      end
-    end
-
-    context 'when the hostname contains no dots' do
-      let(:hostname) do
-        'localhost'
+        'a.b.c'
       end
 
       it 'does not raise an error' do
@@ -988,7 +977,7 @@ describe Mongo::URI::SRVProtocol do
 
     context 'when the hostname has a trailing dot' do
       let(:hostname) do
-        "#{valid_hostname}."
+        "a.b.c."
       end
 
       it 'does not raise an error' do
@@ -1006,9 +995,40 @@ describe Mongo::URI::SRVProtocol do
       end
     end
 
+    context 'when the hostname has only one part' do
+      let(:hostname) do
+        'a'
+      end
+
+      it 'raises an error' do
+        expect { validate }.to raise_error(Mongo::Error::InvalidURI)
+      end
+    end
+
+
+    context 'when the hostname has only two parts' do
+      let(:hostname) do
+        'a.b'
+      end
+
+      it 'raises an error' do
+        expect { validate }.to raise_error(Mongo::Error::InvalidURI)
+      end
+    end
+
+    context 'when the hostname has an empty last part' do
+      let(:hostname) do
+        'a.b.'
+      end
+
+      it 'it raises an error' do
+        expect { validate }.to raise_error(Mongo::Error::InvalidURI)
+      end
+    end
+
     context 'when the hostname contains a comma' do
       let(:hostname) do
-        'host1,host2'
+        'a.b.c,d.e.f'
       end
 
       it 'raises an error' do
@@ -1018,7 +1038,7 @@ describe Mongo::URI::SRVProtocol do
 
     context 'when the hostname contains a colon' do
       let(:hostname) do
-        'localhost:27017'
+        'a.b.c:27017'
       end
 
       it 'raises an error' do
@@ -1028,7 +1048,7 @@ describe Mongo::URI::SRVProtocol do
 
     context 'when the hostname starts with a dot' do
       let(:hostname) do
-        '.somehost'
+        '.a.b.c'
       end
 
       it 'raises an error' do
@@ -1039,7 +1059,7 @@ describe Mongo::URI::SRVProtocol do
 
   context 'when the hostname ends with consecutive dots' do
     let(:hostname) do
-      'somehost..'
+      'a.b.c..'
     end
 
     it 'raises an error' do
@@ -1049,7 +1069,7 @@ describe Mongo::URI::SRVProtocol do
 
   context 'when the hostname contains consecutive dots in the middle' do
     let(:hostname) do
-      'prefix..suffix'
+      'a..b.c'
     end
 
     it 'raises an error' do

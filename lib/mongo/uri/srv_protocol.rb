@@ -120,6 +120,7 @@ module Mongo
 
         parts = hostname.split(DOT_PARTITION)
         raise_invalid_error!(INVALID_HOST) if parts.any?(&:empty?)
+        raise_invalid_error!(INVALID_HOST) if parts.count < 3
       end
 
       def get_records(hostname)
