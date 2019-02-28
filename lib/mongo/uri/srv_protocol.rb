@@ -101,8 +101,20 @@ module Mongo
         end
         hostname = @servers.first
         raise_invalid_error!(INVALID_PORT) if hostname.include?(HOST_PORT_DELIM)
-        _, _, domain = hostname.partition(DOT_PARTITION)
-        raise_invalid_error!(INVALID_DOMAIN) unless domain.include?(DOT_PARTITION)
+
+        if hostname.start_with?('.')
+          raise_invalid_error!("Hostname cannot start with a dot: #{hostname}")
+        end
+        if hostname.end_with?('.')
+          raise_invalid_error!("Hostname cannot end with a dot: #{hostname}")
+        end
+        parts = hostname.split('.')
+        if parts.any?(&:empty)
+          raise_invalid_error!("Hostname have consecutive dots: #{hostname}")
+        end
+        if parts.length < 3
+          raise_invalid_error!("Hostname must have a minimum of 3 components (foo.bar.tld): #{hostname}")
+        end
 
         records = get_records(hostname)
         @txt_options = get_txt_opts(hostname) || {}
