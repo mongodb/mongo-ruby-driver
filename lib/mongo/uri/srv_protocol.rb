@@ -117,6 +117,7 @@ module Mongo
         raise_invalid_error!(INVALID_HOST) if hostname.include?(HOST_DELIM)
         raise_invalid_error!(INVALID_PORT) if hostname.include?(HOST_PORT_DELIM)
         raise_invalid_error!(INVALID_HOST) if hostname.start_with?(DOT_PARTITION)
+        raise_invalid_error!(INVALID_HOST) if hostname.end_with?('..')
 
         parts = hostname.split(DOT_PARTITION)
         raise_invalid_error!(INVALID_HOST) if parts.any?(&:empty?)
