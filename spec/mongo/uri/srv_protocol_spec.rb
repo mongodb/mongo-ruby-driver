@@ -951,84 +951,54 @@ describe Mongo::URI::SRVProtocol do
         end
       end
     end
+  end
 
-    describe '#validate_hostname' do
-      let(:valid_hostname) do
-        'test1.test.build.10gen.cc'
+  describe '#validate_hostname' do
+    let(:valid_hostname) do
+      'test1.test.build.10gen.cc'
+    end
+
+    let(:dummy_uri) do
+      Mongo::URI::SRVProtocol.new("#{scheme}#{valid_hostname}/")
+    end
+
+    let(:validate) do
+      dummy_uri.send(:validate_hostname!, hostname)
+    end
+
+    context 'when the hostname is valid' do
+      let(:hostname) do
+        valid_hostname
       end
 
-      let(:dummy_uri) do
-        Mongo::URI::SRVProtocol.new("#{scheme}#{valid_hostname}/")
-      end
-
-      let(:validate) do
-        dummy_uri.send(:validate_hostname!, hostname)
-      end
-
-      context 'when the hostname is valid' do
-        let(:hostname) do
-          valid_hostname
-        end
-
-        it 'does not raise an error' do
-          expect { validate }.not_to raise_error
-        end
-      end
-
-      context 'when the hostname has a trailing dot' do
-        let(:hostname) do
-          "#{valid_hostname}."
-        end
-
-        it 'does not raise an error' do
-          expect { validate }.not_to raise_error
-        end
-      end
-
-      context 'when the hostname is empty' do
-        let(:hostname) do
-          ''
-        end
-
-        it 'raises an error' do
-          expect { validate }.to raise_error(Mongo::Error::InvalidURI)
-        end
-      end
-
-      context 'when the hostname contains a comma' do
-        let(:hostname) do
-          'host1,host2'
-        end
-
-        it 'raises an error' do
-          expect { validate }.to raise_error(Mongo::Error::InvalidURI)
-        end
-      end
-
-      context 'when the hostname contains a colon' do
-        let(:hostname) do
-          'localhost:27017'
-        end
-
-        it 'raises an error' do
-          expect { validate }.to raise_error(Mongo::Error::InvalidURI)
-        end
-      end
-
-      context 'when the hostname starts with a dot' do
-        let(:hostname) do
-          '.somehost'
-        end
-
-        it 'raises an error' do
-          expect { validate }.to raise_error(Mongo::Error::InvalidURI)
-        end
+      it 'does not raise an error' do
+        expect { validate }.not_to raise_error
       end
     end
 
-    context 'when the hostname ends with consecutive dots' do
+    context 'when the hostname contains no dots' do
       let(:hostname) do
-        'somehost..'
+        'localhost'
+      end
+
+      it 'does not raise an error' do
+        expect { validate }.not_to raise_error
+      end
+    end
+
+    context 'when the hostname has a trailing dot' do
+      let(:hostname) do
+        "#{valid_hostname}."
+      end
+
+      it 'does not raise an error' do
+        expect { validate }.not_to raise_error
+      end
+    end
+
+    context 'when the hostname is empty' do
+      let(:hostname) do
+        ''
       end
 
       it 'raises an error' do
@@ -1036,14 +1006,54 @@ describe Mongo::URI::SRVProtocol do
       end
     end
 
-    context 'when the hostname contains consecutive dots in the middle' do
+    context 'when the hostname contains a comma' do
       let(:hostname) do
-        'prefix..suffix'
+        'host1,host2'
       end
 
       it 'raises an error' do
         expect { validate }.to raise_error(Mongo::Error::InvalidURI)
       end
+    end
+
+    context 'when the hostname contains a colon' do
+      let(:hostname) do
+        'localhost:27017'
+      end
+
+      it 'raises an error' do
+        expect { validate }.to raise_error(Mongo::Error::InvalidURI)
+      end
+    end
+
+    context 'when the hostname starts with a dot' do
+      let(:hostname) do
+        '.somehost'
+      end
+
+      it 'raises an error' do
+        expect { validate }.to raise_error(Mongo::Error::InvalidURI)
+      end
+    end
+  end
+
+  context 'when the hostname ends with consecutive dots' do
+    let(:hostname) do
+      'somehost..'
+    end
+
+    it 'raises an error' do
+      expect { validate }.to raise_error(Mongo::Error::InvalidURI)
+    end
+  end
+
+  context 'when the hostname contains consecutive dots in the middle' do
+    let(:hostname) do
+      'prefix..suffix'
+    end
+
+    it 'raises an error' do
+      expect { validate }.to raise_error(Mongo::Error::InvalidURI)
     end
   end
 end
