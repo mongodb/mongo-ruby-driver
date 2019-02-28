@@ -53,44 +53,73 @@ module Mongo
 
       private
 
+      # @return [ String ] DOT_PARTITION The '.' character used to delineate the parts of a
+      #   hostname.
       DOT_PARTITION = '.'.freeze
 
+      # @return [ Array<String> ] VALID_TXT_OPTIONS The valid options for a TXT record to specify.
       VALID_TXT_OPTIONS = ['replicaset', 'authsource'].freeze
 
+      # @return [ String ] INVALID_HOST Error message format string indicating that the hostname in
+      #   in the URI does not fit the expected form.
       INVALID_HOST = "One and only one host is required in a connection string with the " +
                        "'#{MONGODB_SRV_SCHEME}' protocol.".freeze
 
+      # @return [ String ] INVALID_PORT Error message format string indicating that a port was
+      #   included with an SRV hostname.
       INVALID_PORT = "It is not allowed to specify a port in a connection string with the " +
                        "'#{MONGODB_SRV_SCHEME}' protocol.".freeze
 
+      # @return [ String ] INVALID_DOMAIN Error message format string indicating that the domain name
+      #   of the hostname does not fit the expected form.
       INVALID_DOMAIN = "The domain name must consist of at least two parts: the domain name, " +
                          "and a TLD.".freeze
 
+      # @return [ String ] NO_SRV_RECORDS Error message format string indicating that no SRV records
+      #   were found.
       NO_SRV_RECORDS = "The DNS query returned no SRV records at hostname (%s)".freeze
 
+      # @return [ String ] MORE_THAN_ONE_TXT_RECORD_FOUND Error message format string indicating
+      #   that multiple TXT records were found.
       MORE_THAN_ONE_TXT_RECORD_FOUND = "Only one TXT record is allowed. Querying hostname (%s) " +
                                          "returned more than one result.".freeze
 
+      # @return [ String ] INVALID_TXT_RECORD_OPTION Error message format string indicating that an
+      #   unexpected TXT record option was found.
       INVALID_TXT_RECORD_OPTION = "TXT records can only specify the options " +
                                     "[#{VALID_TXT_OPTIONS.join(', ')}].".freeze
 
-      MISMATCHED_DOMAINNAME = "Parent domain name in SRV record result (%s) does not match " +
-                                 "that of the hostname (%s)".freeze
-
+      # @return [ String ] FORMAT The expected SRV URI format.
       FORMAT = 'mongodb+srv://[username:password@]host[/[database][?options]]'.freeze
 
+      # Gets the MongoDB SRV URI scheme.
+      #
+      # @return [ String ] The MongoDB SRV URI scheme.
       def scheme
         MONGODB_SRV_SCHEME
       end
 
+      # Raises an InvalidURI error.
+      #
+      # @param [ String ] details A detailed error message.
+      #
+      # @raise [ Mongo::Error::InvalidURI ]
       def raise_invalid_error!(details)
         raise Error::InvalidURI.new(@string, details, FORMAT)
       end
 
+      # Gets the SRV resolver.
+      #
+      # @return [ Mongo::SRV::Resolver ]
       def resolver
         @resolver ||= SRV::Resolver.new(true)
       end
 
+      # Parses the credentials from the URI and performs DNS queries to obtain the hosts and TXT
+      # options.
+      #
+      # @param [ String ] string The portion of the URI pertaining to the authentication credentials
+      #   and the hosts.
       def parse_creds_hosts!(string)
         hostname, creds = split_creds_hosts(string)
         validate_hostname!(hostname)
@@ -101,6 +130,7 @@ module Mongo
         @password = parse_password!(creds)
       end
 
+      # XXX: Replace with documentation after rebase of RUBY-1749.
       def validate_hostname!(hostname)
         raise_invalid_error!(INVALID_HOST) if hostname.empty?
         raise_invalid_error!(INVALID_HOST) if hostname.include?(HOST_DELIM)
@@ -109,6 +139,13 @@ module Mongo
         raise_invalid_error!(INVALID_DOMAIN) unless domain.include?(DOT_PARTITION)
       end
 
+      # Obtains the TXT options of a host.
+      #
+      # @param [ String ] host The hostname whose records should be obtained.
+      #
+      # @return [ Hash | nil ] The TXT record options (or nil if no TXT records are found).
+      #
+      # @raise [ Mongo::Error::InvalidTXTRecord ] If more than one TXT record is found.
       def get_txt_opts(host)
         records = resolver.get_txt_opts(host)
         unless records.empty?
@@ -120,6 +157,15 @@ module Mongo
         end
       end
 
+      # Parses the TXT record options into a hash and adds the options to set of all URI options
+      # parsed.
+      #
+      # @param [ String ] string The concatenated TXT options.
+      #
+      # @return [ Hash ] The parsed TXT options.
+      #
+      # @raise [ Mongo::Error::InvalidTXTRecord ] If the TXT record does not fit the expected form
+      #   or the option specified is not a valid TXT option.
       def parse_txt_options!(string)
         return {} unless string
         string.split(INDIV_URI_OPTS_DELIM).reduce({}) do |txt_options, opt|
