@@ -103,13 +103,23 @@ module Mongo
         @password = parse_password!(creds)
       end
 
+      # Validates that a hostname fits the expected format.
+      #
+      # @param [ String ] hostname The hostname to validate.
+      #
+      # @raise [ Mongo::Error::InvalidURI ] If any of the following conditions are true:
+      #   * the hostname is empty
+      #   * the hostname contains either ',' or ':'
+      #   * the hostname begins with '.'
+      #   * the hostname contains consecutive '.' characters
       def validate_hostname!(hostname)
         raise_invalid_error!(INVALID_HOST) if hostname.empty?
         raise_invalid_error!(INVALID_HOST) if hostname.include?(HOST_DELIM)
         raise_invalid_error!(INVALID_PORT) if hostname.include?(HOST_PORT_DELIM)
-        _, _, domain = hostname.partition(DOT_PARTITION)
-        raise_invalid_error!(INVALID_DOMAIN) unless domain.include?(DOT_PARTITION)
-        raise_invalid_error!(INVALID_DOMAIN) if domain.count(DOT_PARTITION) == 1 && domain.end_with?(DOT_PARTITION)
+        raise_invalid_error!(INVALID_HOST) if hostname.start_with?(DOT_PARTITION)
+
+        parts = hostname.split(DOT_PARTITION)
+        raise_invalid_error!(INVALID_HOST) if parts.any?(&:empty?)
       end
 
       def get_records(hostname)
