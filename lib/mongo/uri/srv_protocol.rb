@@ -103,7 +103,22 @@ module Mongo
         @password = parse_password!(creds)
       end
 
-      # Validates that a hostname fits the expected format.
+      # Validates that a hostname fits the expected format. A hostname is expected to have at least
+      # three non-empty '.'-delineated parts, and must not begin with a '.', have consecutive '.'
+      # characters, or contain either ',' or ':'. The following are examples of valid hostnames:
+      #   * a.b.c
+      #   * a.b.c.
+      #   * a.b.c.aa.bb.cc
+      #
+      # The following are examples of invalid hostnames:
+      #   * a
+      #   * a.
+      #   * a.b
+      #   * a.b.
+      #   * .a.b.c
+      #   * a..b.c
+      #   * a.b.c:27017
+      #   * a.b.c,aa.bb.cc
       #
       # @param [ String ] hostname The hostname to validate.
       #
