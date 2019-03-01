@@ -155,7 +155,7 @@ module Mongo
     # @since 2.1.0
     UNESCAPED_UNIX_SOCKET = "UNIX domain sockets must be urlencoded.".freeze
 
-    # Error details for a non-urlencoded auth databsae name.
+    # Error details for a non-urlencoded auth database name.
     #
     # @since 2.1.0
     UNESCAPED_DATABASE = "Auth database must be urlencoded.".freeze
