@@ -141,7 +141,9 @@ describe Mongo::Collection::View do
 
       before do
         view.to_enum.next
-        cursor.instance_variable_set(:@cursor_id, 1) unless find_command_enabled?
+        if ClusterConfig.instance.fcv_ish < '3.2'
+          cursor.instance_variable_set(:@cursor_id, 1)
+        end
       end
 
       it 'sends a kill cursors command for the cursor' do
