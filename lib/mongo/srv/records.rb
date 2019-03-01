@@ -90,7 +90,7 @@ module Mongo
         host_parts = record_host.split(URI::SRVProtocol::DOT_PARTITION)
 
         unless (host_parts.size > @domainname.size) && (@domainname == host_parts[-@domainname.length..-1])
-          raise Error::MismatchedDomain.new(URI::SRVProtocol::MISMATCHED_DOMAINNAME % [record_host, @domainname])
+          raise Error::MismatchedDomain.new(MISMATCHED_DOMAINNAME % [record_host, @domainname])
         end
       end
     end

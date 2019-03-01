@@ -101,7 +101,7 @@ module Mongo
       #
       # @return [ Boolean ] Whether an error should be raised.
       def raise_on_invalid?
-        @raise_on_invalid ||= options[:raise_on_invalid] || true
+        @raise_on_invalid ||= @options[:raise_on_invalid] || true
       end
     end
   end
