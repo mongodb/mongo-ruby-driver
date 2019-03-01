@@ -3,16 +3,18 @@ require 'singleton'
 class ClusterConfig
   include Singleton
 
-  def scanned_client
-    $mongo_client ||= initialize_scanned_client!
+  def basic_client
+    # Do not cache the result here so that if the client gets closed,
+    # client registry reconnects it in subsequent tests
+    ClientRegistry.instance.global_client('basic')
   end
 
   def single_server?
-    scanned_client.cluster.servers.length == 1
+    basic_client.cluster.servers.length == 1
   end
 
   def server!
-    server = scanned_client.cluster.servers.first
+    server = basic_client.cluster.servers.first
     if server.nil?
       raise ScannedClientHasNoServers
     end
@@ -74,7 +76,7 @@ class ClusterConfig
   def auth_enabled?
     if @auth_enabled.nil?
       @auth_enabled = begin
-        scanned_client.use(:admin).command(getCmdLineOpts: 1).first["argv"].include?("--auth")
+        basic_client.use(:admin).command(getCmdLineOpts: 1).first["argv"].include?("--auth")
       rescue => e
         e.message =~ /(not authorized)|(unauthorized)|(no users authenticated)|(requires authentication)/
       end
@@ -84,7 +86,7 @@ class ClusterConfig
 
   def topology
     @topology ||= begin
-      topology = scanned_client.cluster.topology.class.name.sub(/.*::/, '')
+      topology = basic_client.cluster.topology.class.name.sub(/.*::/, '')
       topology = topology.gsub(/([A-Z])/) { |match| '_' + match.downcase }.sub(/^_/, '')
       if topology =~ /^replica_set/
         topology = 'replica_set'

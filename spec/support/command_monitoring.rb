@@ -230,11 +230,9 @@ module Mongo
       # @return [ Array<Expectation> ] The expectations.
       attr_reader :expectations
 
-      # @return [ String ] The server version to ignore if greater.
-      attr_reader :ignore_if_server_version_greater_than
+      attr_reader :min_server_fcv
 
-      # @return [ String ] The server version to ignore if lower.
-      attr_reader :ignore_if_server_version_less_than
+      attr_reader :max_server_version
 
       # Create the new test.
       #
@@ -248,8 +246,8 @@ module Mongo
       def initialize(data, test)
         @data = data
         @description = test['description']
-        @ignore_if_server_version_greater_than = test['ignore_if_server_version_greater_than']
-        @ignore_if_server_version_less_than = test['ignore_if_server_version_less_than']
+        @max_server_version = test['ignore_if_server_version_greater_than']
+        @min_server_fcv = test['ignore_if_server_version_less_than']
         @operation = Mongo::CRUD::Operation.get(test['operation'])
         @expectations = test['expectations'].map{ |e| Expectation.new(e) }
       end

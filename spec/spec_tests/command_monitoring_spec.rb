@@ -1,25 +1,20 @@
 require 'spec_helper'
 
-def ignore?(test)
-  if version = test.ignore_if_server_version_greater_than
-    return true if version == "3.0" && find_command_enabled?
-  end
-  if version = test.ignore_if_server_version_less_than
-    return true if version == "3.1" && !find_command_enabled?
-  end
-  false
-end
-
 describe 'Command Monitoring Events' do
 
   COMMAND_MONITORING_TESTS.each do |file|
 
-
     spec = Mongo::CommandMonitoring::Spec.new(file)
 
     spec.tests.each do |test|
-
       context(test.description) do
+
+        if test.min_server_fcv
+          min_server_fcv test.min_server_fcv
+        end
+        if test.max_server_version
+          max_server_version test.max_server_version
+        end
 
         let(:subscriber) do
           Mongo::CommandMonitoring::TestSubscriber.new
@@ -40,12 +35,6 @@ describe 'Command Monitoring Events' do
         end
 
         test.expectations.each do |expectation|
-
-          before do
-            if ignore?(test)
-              skip 'Preconditions not met'
-            end
-          end
 
           it "generates a #{expectation.event_name} for #{expectation.command_name}" do
             begin
