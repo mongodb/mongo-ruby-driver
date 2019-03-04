@@ -403,7 +403,7 @@ describe Mongo::URI::SRVProtocol do
         context 'wtimeoutMS' do
           let(:timeout) { 1234 }
           let(:options) { "w=2&wtimeoutMS=#{timeout}" }
-          let(:concern) { Mongo::Options::Redacted.new(:w => 2, :timeout => timeout) }
+          let(:concern) { Mongo::Options::Redacted.new(:w => 2, :wtimeout => timeout) }
 
           it 'sets the write concern options' do
             expect(uri.uri_options[:write]).to eq(concern)
@@ -911,7 +911,7 @@ describe Mongo::URI::SRVProtocol do
         let(:options) { "appname=srv_test" }
 
         it 'sets the app name on the client' do
-          expect(client.options[:app_name]).to eq(:srv_test)
+          expect(client.options[:app_name]).to eq('srv_test')
         end
       end
 
