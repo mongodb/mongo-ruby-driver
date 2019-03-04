@@ -93,22 +93,20 @@ module Mongo
         @resolver ||= Resolv::DNS.new
       end
 
-      def parse_creds_hosts!(string)
-        hostname, creds = split_creds_hosts(string)
-        validate_hostname!(hostname)
-        records = get_records(hostname)
-        @txt_options = get_txt_opts(hostname) || {}
-        @servers = parse_servers!(records.join(','))
-        @user = parse_user!(creds)
-        @password = parse_password!(creds)
-      end
+      def parse!(remaining)
+        super
 
-      def validate_hostname!(hostname)
-        raise_invalid_error!(INVALID_HOST) if hostname.empty?
-        raise_invalid_error!(INVALID_HOST) if hostname.include?(HOST_DELIM)
+        if @servers.length != 1
+          raise_invalid_error!(INVALID_HOST)
+        end
+        hostname = @servers.first
         raise_invalid_error!(INVALID_PORT) if hostname.include?(HOST_PORT_DELIM)
         _, _, domain = hostname.partition(DOT_PARTITION)
         raise_invalid_error!(INVALID_DOMAIN) unless domain.include?(DOT_PARTITION)
+
+        records = get_records(hostname)
+        @txt_options = get_txt_opts(hostname) || {}
+        @servers = parse_servers!(records.join(','))
       end
 
       def get_records(hostname)
