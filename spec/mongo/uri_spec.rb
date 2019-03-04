@@ -208,12 +208,12 @@ describe Mongo::URI do
       end
     end
 
-    context 'mongodb://example.com?w=1' do
+    context 'no slash after hosts, and options' do
 
-      let(:string) { 'mongodb://example.com?w=1' }
+      let(:string) { 'mongodb://example.com?tls=true' }
 
       it 'raises an error' do
-        expect { uri }.to raise_error(Mongo::Error::InvalidURI)
+        expect { uri }.to raise_error(Mongo::Error::InvalidURI, %r,MongoDB URI must have a slash \(/\) after the hosts if options are given,)
       end
     end
 
@@ -222,7 +222,31 @@ describe Mongo::URI do
       let(:string) { 'mongodb://example.com/?w' }
 
       it 'raises an error' do
-        expect { uri }.to raise_error(Mongo::Error::InvalidURI)
+        expect { uri }.to raise_error(Mongo::Error::InvalidURI, /Option w has no value/)
+      end
+    end
+
+    context 'equal sign in option value' do
+
+      let(:string) { 'mongodb://example.com/?w=a=b' }
+
+      it 'raises an error' do
+        expect { uri }.to raise_error(Mongo::Error::InvalidURI, %r,Value for option w contains the key/value delimiter \(=\): a=b,)
+      end
+    end
+
+    context 'slash in option value' do
+
+      let(:string) { 'mongodb://example.com/?tlsCAFile=a/b' }
+
+      it 'returns a Mongo::URI object' do
+        expect(uri).to be_a(Mongo::URI)
+      end
+
+      it 'parses correctly' do
+        expect(uri.servers).to eq(['example.com'])
+        # https://jira.mongodb.org/browse/RUBY-1755
+        expect(uri.uri_options[:ssl_ca_cert]).to eq(:'a/b')
       end
     end
 

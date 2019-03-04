@@ -260,6 +260,9 @@ module Mongo
       @options = options
       parsed_scheme, _, remaining = string.partition(SCHEME_DELIM)
       raise_invalid_error!(INVALID_SCHEME) unless parsed_scheme == scheme
+      if remaining.empty?
+        raise_invalid_error!('No hosts in the URI')
+      end
       parse!(remaining)
 
       # The URI options spec requires that we raise an error if there are conflicting values of
@@ -317,17 +320,38 @@ module Mongo
       MONGODB_SCHEME
     end
 
-    def parse_creds_hosts!(string)
-      hosts, creds = split_creds_hosts(string)
+    def parse!(remaining)
+      hosts_and_db, options = remaining.split('?', 2)
+      if options && options.index('?')
+        raise_invalid_error!("Options contain an unescaped question mark (?), or the database name contains a question mark and was not escaped")
+      end
+
+      if options && !hosts_and_db.index('/')
+        raise_invalid_error!("MongoDB URI must have a slash (/) after the hosts if options are given")
+      end
+
+      hosts, db = hosts_and_db.split('/', 2)
+      if db && db.index('/')
+        raise_invalid_error!("Database name contains an unescaped slash (/): #{db}")
+      end
+
+      if hosts.index('@')
+        creds, hosts = hosts.split('@', 2)
+        if hosts.empty?
+          raise_invalid_error!("Empty hosts list")
+        end
+        if hosts.index('@')
+          raise_invalid_error!("Unescaped @ in auth info")
+        end
+      end
+
       @servers = parse_servers!(hosts)
       @user = parse_user!(creds)
       @password = parse_password!(creds)
-    end
-
-    def parse!(remaining)
-      creds_hosts, db_opts = extract_db_opts!(remaining)
-      parse_creds_hosts!(creds_hosts)
-      parse_db_opts!(db_opts)
+      @uri_options = Options::Redacted.new(parse_uri_options!(options))
+      if db
+        @database = parse_database!(db)
+      end
     end
 
     def extract_db_opts!(string)
@@ -339,23 +363,16 @@ module Mongo
       [ creds_hosts, db_opts ].map { |s| s.reverse }
     end
 
-    def split_creds_hosts(string)
-      hosts, _, creds = string.reverse.partition(AUTH_DELIM)
-      hosts, creds = creds, hosts if hosts.empty?
-      [ hosts, creds ].map { |s| s.reverse }
-    end
-
-    def parse_db_opts!(string)
-      auth_db, _, uri_opts = string.partition(URI_OPTS_DELIM)
-      @uri_options = Options::Redacted.new(parse_uri_options!(uri_opts))
-      @database = parse_database!(auth_db)
-    end
-
     def parse_uri_options!(string)
       return {} unless string
       string.split(INDIV_URI_OPTS_DELIM).reduce({}) do |uri_options, opt|
-        raise_invalid_error!(INVALID_OPTS_VALUE_DELIM) unless opt.index(URI_OPTS_VALUE_DELIM)
-        key, value = opt.split(URI_OPTS_VALUE_DELIM)
+        key, value = opt.split('=', 2)
+        if value.nil?
+          raise_invalid_error!("Option #{key} has no value")
+        end
+        if value.index('=')
+          raise_invalid_error!("Value for option #{key} contains the key/value delimiter (=): #{value}")
+        end
         strategy = URI_OPTION_MAP[key.downcase]
         if strategy.nil?
           log_warn("Unsupported URI option '#{key}' on URI '#{@string}'. It will be ignored.")
