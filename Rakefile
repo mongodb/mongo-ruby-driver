@@ -33,6 +33,18 @@ namespace :spec do
     SpecSetup.new.run
   end
 
+  desc 'Prints configuration used by the test suite'
+  task :config do
+    $: << File.join(File.dirname(__FILE__), 'spec')
+
+    # Since this task is usually used for troubleshooting of test suite
+    # configuration, leave driver log level at the default of debug to
+    # have connection diagnostics printed during handshakes and such.
+    require 'support/spec_config'
+    require 'support/client_registry'
+    SpecConfig.instance.print_summary
+  end
+
   task :ci => ['spec:prepare', :spec]
 end
 
