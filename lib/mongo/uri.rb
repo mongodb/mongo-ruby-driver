@@ -373,11 +373,13 @@ module Mongo
         if value.index('=')
           raise_invalid_error!("Value for option #{key} contains the key/value delimiter (=): #{value}")
         end
+        key = ::URI.decode(key)
         strategy = URI_OPTION_MAP[key.downcase]
         if strategy.nil?
           log_warn("Unsupported URI option '#{key}' on URI '#{@string}'. It will be ignored.")
         else
-          add_uri_option(strategy, value, uri_options)
+          value = ::URI.decode(value)
+          add_uri_option(key, strategy, value, uri_options)
         end
         uri_options
       end
@@ -482,10 +484,10 @@ module Mongo
     uri_option 'maxidletimems', :max_idle_time, :type => :max_idle_time
 
     # Write Options
-    uri_option 'w', :w, :group => :write
+    uri_option 'w', :w, :group => :write, type: :w
     uri_option 'journal', :j, :group => :write, :type => :journal
-    uri_option 'fsync', :fsync, :group => :write
-    uri_option 'wtimeoutms', :timeout, :group => :write, :type => :wtimeout
+    uri_option 'fsync', :fsync, :group => :write, type: :bool
+    uri_option 'wtimeoutms', :wtimeout, :group => :write, :type => :wtimeout
 
     # Read Options
     uri_option 'readpreference', :mode, :group => :read, :type => :read_mode
@@ -510,7 +512,7 @@ module Mongo
     uri_option 'tlsinsecure', :ssl_verify, :type => :ssl_verify
 
     # Topology options
-    uri_option 'connect', :connect
+    uri_option 'connect', :connect, type: :symbol
 
     # Auth Options
     uri_option 'authsource', :auth_source, :type => :auth_source
@@ -520,38 +522,25 @@ module Mongo
     # Client Options
     uri_option 'appname', :app_name
     uri_option 'compressors', :compressors, :type => :array
-    uri_option 'readconcernlevel', :read_concern
+    uri_option 'readconcernlevel', :level, group: :read_concern
     uri_option 'retrywrites', :retry_writes, :type => :retry_writes
     uri_option 'zlibcompressionlevel', :zlib_compression_level, :type => :zlib_compression_level
-
-    # Casts option values that do not have a specifically provided
-    # transformation to the appropriate type.
-    #
-    # @param value [String] The value to be cast.
-    #
-    # @return [true, false, Fixnum, Symbol] The cast value.
-    def cast(value)
-      if value == 'true'
-        true
-      elsif value == 'false'
-        false
-      elsif value =~ /\A[\d]\z/
-        value.to_i
-      else
-        decode(value).to_sym
-      end
-    end
 
     # Applies URI value transformation by either using the default cast
     # or a transformation appropriate for the given type.
     #
+    # @param key [String] URI option name.
     # @param value [String] The value to be transformed.
     # @param type [Symbol] The transform method.
-    def apply_transform(value, type = nil)
+    def apply_transform(key, value, type)
       if type
-        send(type, value)
+        if respond_to?("convert_#{type}", true)
+          send("convert_#{type}", key, value)
+        else
+          send(type, value)
+        end
       else
-        cast(value)
+        value
       end
     end
 
@@ -598,12 +587,13 @@ module Mongo
     #   Transforms the value.
     #   Merges the option into the target.
     #
+    # @param key [String] URI option name.
     # @param strategy [Symbol] The strategy for this option.
     # @param value [String] The value of the option.
     # @param uri_options [Hash] The base option target.
-    def add_uri_option(strategy, value, uri_options)
+    def add_uri_option(key, strategy, value, uri_options)
       target = select_target(uri_options, strategy[:group])
-      value = apply_transform(value, strategy[:type])
+      value = apply_transform(key, value, strategy[:type])
       merge_uri_option(target, value, strategy[:name])
     end
 
@@ -673,7 +663,7 @@ module Mongo
       properties = hash_extractor('authMechanismProperties', value)
       if properties[:canonicalize_host_name]
         properties.merge!(canonicalize_host_name:
-                            properties[:canonicalize_host_name] == 'true')
+          %w(true TRUE).include?(properties[:canonicalize_host_name]))
       end
       properties
     end
@@ -735,7 +725,7 @@ module Mongo
     # @return [ true | false | nil ] The journal value parsed out, otherwise nil (and a warning
     #   will be logged).
     def journal(value)
-      bool('journal', value)
+      convert_bool('journal', value)
     end
 
     # Parses the ssl value from the URI.
@@ -745,7 +735,7 @@ module Mongo
     # @return [ Array<true | false> ] The ssl value parsed out (stored in an array to facilitate
     #   keeping track of all values).
     def ssl(value)
-      [bool('ssl', value)]
+      [convert_bool('ssl', value)]
     end
 
     # Parses the tls value from the URI.
@@ -755,7 +745,7 @@ module Mongo
     # @return [ Array<true | false> ] The tls value parsed out (stored in an array to facilitate
     #   keeping track of all values).
     def tls(value)
-      [bool('tls', value)]
+      [convert_bool('tls', value)]
     end
 
     # Parses the ssl_verify value from the tlsInsecure URI value. Note that this will be the inverse
@@ -798,20 +788,70 @@ module Mongo
     # @return [ true | false | nil ] The boolean value parsed out, otherwise nil (and a warning
     #   will be logged).
     def retry_writes(value)
-      bool('retryWrites', value)
+      convert_bool('retryWrites', value)
     end
 
-    # Parses a boolean value.
+    # Converts +value+ into an integer.
     #
-    # @param value [ String ] The URI option value.
+    # If the value is not a valid integer, warns and returns nil.
     #
-    # @return [ true | false | nil ] The boolean value parsed out, otherwise nil (and a warning
-    #   will be logged).
-    def bool(name, value)
+    # @param name [ String ] Name of the URI option being processed.
+    # @param value [ String ] URI option value.
+    #
+    # @return [ nil | Integer ] Converted value.
+    def convert_integer(name, value)
+      unless /\A\d+\z/ =~ value
+        log_warn("#{value} is not a valid integer for #{name}")
+        return nil
+      end
+
+      value.to_i
+    end
+
+    # Converts +value+ into a symbol.
+    #
+    # @param name [ String ] Name of the URI option being processed.
+    # @param value [ String ] URI option value.
+    #
+    # @return [ Symbol ] Converted value.
+    def convert_symbol(name, value)
+      value.to_sym
+    end
+
+    # Converts +value+ as a write concern.
+    #
+    # If +value+ is the word "majority", returns the symbol :majority.
+    # If +value+ is a number, returns the number as an integer.
+    # Otherwise returns the string +value+ unchanged.
+    #
+    # @param name [ String ] Name of the URI option being processed.
+    # @param value [ String ] URI option value.
+    #
+    # @return [ Integer | Symbol | String ] Converted value.
+    def convert_w(name, value)
       case value
-      when "true"
+      when 'majority'
+        :majority
+      when /\A[0-9]+\z/
+        value.to_i
+      else
+        value
+      end
+    end
+
+    # Converts +value+ to a boolean.
+    #
+    # Returns true for 'true', false for 'false', otherwise nil.
+    #
+    # @param name [ String ] Name of the URI option being processed.
+    # @param value [ String ] URI option value.
+    #
+    # @return [ true | false | nil ] Converted value.
+    def convert_bool(name, value)
+      case value
+      when "true", 'TRUE'
         true
-      when "false"
+      when "false", 'FALSE'
         false
       else
         log_warn("invalid boolean option for #{name}: #{value}")
@@ -826,7 +866,7 @@ module Mongo
     # @return [ true | false | nil ] The inverse of the  boolean value parsed out, otherwise nil
     #   (and a warning will be logged).
      def inverse_bool(name, value)
-      b = bool(name, value)
+      b = convert_bool(name, value)
 
       if b.nil?
         nil

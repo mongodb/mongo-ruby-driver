@@ -225,7 +225,7 @@ module Mongo
          # Write  Options
         'journal' => [:write, 'j'],
         'w' => [:write, 'w'],
-        'wtimeoutms' => [:write, 'timeout'],
+        'wtimeoutms' => [:write, 'wtimeout'],
 
         # Read Options
         'readpreference' => ['read', 'mode'],
@@ -252,7 +252,7 @@ module Mongo
 
         # Client Options
         'appname' => :app_name,
-        'readconcernlevel' => :read_concern,
+        'readconcernlevel' => [:read_concern, 'level'],
         'retrywrites' => :retry_writes,
         'zlibcompressionlevel' => :zlib_compression_level,
       }

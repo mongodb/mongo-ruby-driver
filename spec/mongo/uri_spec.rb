@@ -245,8 +245,20 @@ describe Mongo::URI do
 
       it 'parses correctly' do
         expect(uri.servers).to eq(['example.com'])
-        # https://jira.mongodb.org/browse/RUBY-1755
-        expect(uri.uri_options[:ssl_ca_cert]).to eq(:'a/b')
+        expect(uri.uri_options[:ssl_ca_cert]).to eq('a/b')
+      end
+    end
+
+    context 'numeric value in a string option' do
+
+      let(:string) { 'mongodb://example.com/?appName=1' }
+
+      it 'returns a Mongo::URI object' do
+        expect(uri).to be_a(Mongo::URI)
+      end
+
+      it 'sets option to the string value' do
+        expect(uri.uri_options[:app_name]).to eq('1')
       end
     end
 
@@ -486,7 +498,7 @@ describe Mongo::URI do
       context 'wtimeoutMS' do
         let(:timeout) { 1234 }
         let(:options) { "w=2&wtimeoutMS=#{timeout}" }
-        let(:concern) { Mongo::Options::Redacted.new(:w => 2, :timeout => timeout) }
+        let(:concern) { Mongo::Options::Redacted.new(:w => 2, :wtimeout => timeout) }
 
         it 'sets the write concern options' do
           expect(uri.uri_options[:write]).to eq(concern)
@@ -1024,7 +1036,7 @@ describe Mongo::URI do
 
       it 'sets the app name on the client' do
         client = new_local_client_nmio(string)
-        expect(client.options[:app_name]).to eq(:uri_test)
+        expect(client.options[:app_name]).to eq('uri_test')
       end
     end
 
