@@ -60,7 +60,23 @@ For tutorials on Mongoid, see the `Mongoid Manual <https://docs.mongodb.com/mong
       whats-new
       installation
       quick-start
-      ruby-driver-tutorials
+      /tutorials/ruby-driver-create-client
+      /tutorials/ruby-driver-authentication
+      /tutorials/ruby-driver-crud-operations
+      /tutorials/ruby-driver-collection-tasks
+      /tutorials/ruby-driver-projections
+      /tutorials/ruby-driver-sessions
+      /tutorials/ruby-driver-transactions
+      /tutorials/ruby-driver-change-streams
+      /tutorials/ruby-driver-database-tasks
+      /tutorials/ruby-driver-monitoring
+      /tutorials/ruby-driver-indexing
+      /tutorials/ruby-driver-collations
+      /tutorials/ruby-driver-aggregation
+      /tutorials/ruby-driver-bulk-operations
+      /tutorials/ruby-driver-text-search
+      /tutorials/ruby-driver-geospatial-search
+      /tutorials/ruby-driver-gridfs
       bson-tutorials
       API <http://api.mongodb.com/ruby/current/>
       /reference/driver-compatibility
