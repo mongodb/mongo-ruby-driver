@@ -10,10 +10,14 @@ class SpecConfig
       if @uri_options[:replica_set]
         @addresses = @mongodb_uri.servers
         @connect_options = { connect: :replica_set, replica_set: @uri_options[:replica_set] }
-      elsif ENV['TOPOLOGY'] == 'sharded_cluster'
-        @addresses = [ @mongodb_uri.servers.first ] # See SERVER-16836 for why we can only use one host:port
+      elsif @uri_options[:connect] == :sharded || ENV['TOPOLOGY'] == 'sharded_cluster'
+        # See SERVER-16836 for why we can only use one host:port
+        if @mongodb_uri.servers.length > 1
+          warn "Using only the first mongos (#{@mongodb_uri.servers.first})"
+        end
+        @addresses = [ @mongodb_uri.servers.first ]
         @connect_options = { connect: :sharded }
-      else
+      elsif @uri_options[:connect] == :direct
         @addresses = @mongodb_uri.servers
         @connect_options = { connect: :direct }
       end
@@ -22,7 +26,7 @@ class SpecConfig
       else
         @ssl = @uri_options[:ssl]
       end
-    else
+    elsif ENV['MONGODB_ADDRESSES']
       @addresses = ENV['MONGODB_ADDRESSES'] ? ENV['MONGODB_ADDRESSES'].split(',').freeze : [ '127.0.0.1:27017' ].freeze
       if ENV['RS_ENABLED']
         @connect_options = { connect: :replica_set, replica_set: ENV['RS_NAME'] }
@@ -30,6 +34,36 @@ class SpecConfig
         @connect_options = { connect: :sharded }
       else
         @connect_options = { connect: :direct }
+      end
+    end
+
+    if @addresses.nil?
+      # Discover deployment topology
+      if @mongodb_uri
+        # TLS options need to be merged for evergreen due to
+        # https://github.com/10gen/mongo-orchestration/issues/268
+        client = Mongo::Client.new(@mongodb_uri.servers, Mongo::Options::Redacted.new(
+          server_selection_timeout: 5,
+        ).merge(@mongodb_uri.uri_options).merge(ssl_options))
+        @addresses = @mongodb_uri.servers
+      else
+        client = Mongo::Client.new(['localhost:27017'], server_selection_timeout: 5)
+        @addresses = client.cluster.servers_list.map do |server|
+          server.address.to_s
+        end
+      end
+      client.cluster.next_primary
+      case client.cluster.topology.class.name
+      when /Replica/
+        @connect_options = { connect: :replica_set, replica_set: client.cluster.topology.replica_set_name }
+      when /Sharded/
+        @connect_options = { connect: :sharded }
+      when /Single/
+        @connect_options = { connect: :direct }
+      when /Unknown/
+        raise "Could not detect topology because the test client failed to connect to MongoDB deployment"
+      else
+        raise "Weird topology #{client.cluster.topology}"
       end
     end
   end
@@ -100,6 +134,16 @@ class SpecConfig
 
   def connect_replica_set?
     connect_options[:connect] == :replica_set
+  end
+
+  def print_summary
+    puts "Connection options: #{test_options}"
+    client = ClientRegistry.instance.global_client('basic')
+    client.cluster.next_primary
+    puts <<-EOT
+Topology: #{client.cluster.topology.class}
+connect: #{connect_options[:connect]}
+EOT
   end
 
   # Derived data

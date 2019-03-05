@@ -641,13 +641,15 @@ describe Mongo::Cluster do
   end
 
   describe '#summary' do
+    let(:default_address) { SpecConfig.instance.addresses.first }
+
     context 'cluster has unknown servers' do
       it 'includes unknown servers' do
         cluster.servers_list.each do |server|
           expect(server).to be_unknown
         end
 
-        expect(cluster.summary).to match(/Server address=localhost/)
+        expect(cluster.summary).to match(/Server address=#{default_address}/)
       end
     end
 
@@ -664,7 +666,7 @@ describe Mongo::Cluster do
           expect(server).not_to be_unknown
         end
 
-        expect(cluster.summary).to match(/Server address=localhost/)
+        expect(cluster.summary).to match(/Server address=#{default_address}/)
       end
     end
   end
