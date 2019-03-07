@@ -788,6 +788,7 @@ option to the client instance.
 
   Mongo::Client.new([ '127.0.0.1:27017' ], :database => 'test', :truncate_logs => false )
 
+
 Development Configuration
 -------------------------
 
@@ -799,3 +800,18 @@ experience.
   if your MongoDB server is running locally and you start it manually. A low
   server selection timeout will cause the driver to fail quickly when there is
   no server running.
+
+
+Production Configuration
+------------------------
+
+Please consider the following when deploying an application using the Ruby
+driver in production:
+
+- The driver has a setting for minimum connection pool size.
+  This setting results in the driver creating the specified number of
+  connection objects but each connection object creates sockets and
+  actually connects to the server on demand. Setting a minimum connection
+  pool size will keep up to that many network connections to a server
+  alive once they are established. This behavior may change in a future
+  version of the driver (`RUBY-1605 <https://jira.mongodb.org/browse/RUBY-1605>`_).
