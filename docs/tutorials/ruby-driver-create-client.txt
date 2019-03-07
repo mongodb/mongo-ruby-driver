@@ -106,7 +106,7 @@ URI Options Conversions
    * - authMechanismProperties=Strings
      - ``{ :auth_mech_properties => { :service_realm => String, :canonicalize_host_name => true|false, :service_name => String } }``
 
-       Specified as comma-separated key:value pairs, e.g. ``"SERVICE_REALM:foo,CANONICALIZE_HOSTNAME:TRUE"``.
+       Specified as comma-separated key:value pairs, e.g. ``"SERVICE_REALM:foo,CANONICALIZE_HOST_NAME:TRUE"``.
 
    * - authSource=String
      - ``:auth_source => String``
