@@ -65,6 +65,7 @@ module Mongo
       INVALID_PORT = "It is not allowed to specify a port in a connection string with the " +
                        "'#{MONGODB_SRV_SCHEME}' protocol.".freeze
 
+      # @deprecated
       INVALID_DOMAIN = "The domain name must consist of at least two parts: the domain name, " +
                          "and a TLD.".freeze
 
