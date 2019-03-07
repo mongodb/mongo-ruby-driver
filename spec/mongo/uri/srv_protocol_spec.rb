@@ -962,7 +962,7 @@ describe Mongo::URI::SRVProtocol do
     end
 
     let(:validate) do
-      dummy_uri.send(:validate_hostname!, hostname)
+      dummy_uri.send(:validate_hostname, hostname)
     end
 
     context 'when the hostname is valid' do
@@ -980,8 +980,8 @@ describe Mongo::URI::SRVProtocol do
         "a.b.c."
       end
 
-      it 'does not raise an error' do
-        expect { validate }.not_to raise_error
+      it 'raises an error' do
+        expect { validate }.to raise_error(Mongo::Error::InvalidURI, /Hostname cannot end with a dot: a\.b\.c\./)
       end
     end
 
@@ -1026,13 +1026,11 @@ describe Mongo::URI::SRVProtocol do
       end
     end
 
-    context 'when the hostname contains a comma' do
-      let(:hostname) do
-        'a.b.c,d.e.f'
-      end
-
+    context 'when multiple hostnames are specified' do
       it 'raises an error' do
-        expect { validate }.to raise_error(Mongo::Error::InvalidURI)
+        expect do
+          Mongo::URI::SRVProtocol.new("mongodb+srv://a.b.c,d.e.f/")
+        end.to raise_error(Mongo::Error::InvalidURI, /One and only one host is required/)
       end
     end
 
