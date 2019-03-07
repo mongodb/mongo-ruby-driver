@@ -185,7 +185,7 @@ URI Options Conversions
 
        Because ``tlsAllowInvalidCertificates`` uses ``true`` to signify that verification
        should be disabled and ``ssl_verify_certificate`` uses ``false`` to signify that
-       verification should be disabled, the boolean is inverted before being used to set
+       verification should be enabled, the boolean is inverted before being used to set
        ``ssl_verify_certificate``.
 
    * - tlsAllowInvalidHostnames=Boolean
@@ -193,7 +193,7 @@ URI Options Conversions
 
        Because ``tlsAllowInvalidHostnames`` uses ``true`` to signify that verification
        should be disabled and ``ssl_verify_hostname`` uses ``false`` to signify that
-       verification should be disabled, the boolean is inverted before being used to set
+       verification should be enabled, the boolean is inverted before being used to set
        ``ssl_verify_hostname``.
 
    * - tlsCAFile=String
