@@ -48,6 +48,17 @@ describe Mongo::URI::SRVProtocol do
       end
     end
 
+    context 'when the {tld} is empty' do
+
+      let(:string) { "#{scheme}#{hosts}" }
+      let(:hosts) { '10gen.cc./' }
+
+      it 'raises an error' do
+        expect { uri }.to raise_error(Mongo::Error::InvalidURI)
+      end
+    end
+
+
     context 'string is not uri' do
 
       let(:string) { 'tyler' }
@@ -938,6 +949,128 @@ describe Mongo::URI::SRVProtocol do
         it 'sets the zlib compression level on the client' do
           expect(client.options[:zlib_compression_level]).to eq(6)
         end
+      end
+    end
+  end
+
+  describe '#validate_hostname' do
+    let(:valid_hostname) do
+    end
+
+    let(:dummy_uri) do
+      Mongo::URI::SRVProtocol.new("mongodb+srv://test1.test.build.10gen.cc/")
+    end
+
+    let(:validate) do
+      dummy_uri.send(:validate_hostname, hostname)
+    end
+
+    context 'when the hostname is valid' do
+      let(:hostname) do
+        'a.b.c'
+      end
+
+      it 'does not raise an error' do
+        expect { validate }.not_to raise_error
+      end
+    end
+
+    context 'when the hostname has a trailing dot' do
+      let(:hostname) do
+        "a.b.c."
+      end
+
+      it 'raises an error' do
+        expect { validate }.to raise_error(Mongo::Error::InvalidURI, /Hostname cannot end with a dot: a\.b\.c\./)
+      end
+    end
+
+    context 'when the hostname is empty' do
+      let(:hostname) do
+        ''
+      end
+
+      it 'raises an error' do
+        expect { validate }.to raise_error(Mongo::Error::InvalidURI)
+      end
+    end
+
+    context 'when the hostname has only one part' do
+      let(:hostname) do
+        'a'
+      end
+
+      it 'raises an error' do
+        expect { validate }.to raise_error(Mongo::Error::InvalidURI)
+      end
+    end
+
+
+    context 'when the hostname has only two parts' do
+      let(:hostname) do
+        'a.b'
+      end
+
+      it 'raises an error' do
+        expect { validate }.to raise_error(Mongo::Error::InvalidURI)
+      end
+    end
+
+    context 'when the hostname has an empty last part' do
+      let(:hostname) do
+        'a.b.'
+      end
+
+      it 'it raises an error' do
+        expect { validate }.to raise_error(Mongo::Error::InvalidURI)
+      end
+    end
+
+    context 'when multiple hostnames are specified' do
+      it 'raises an error' do
+        expect do
+          Mongo::URI::SRVProtocol.new("mongodb+srv://a.b.c,d.e.f/")
+        end.to raise_error(Mongo::Error::InvalidURI, /One and only one host is required/)
+      end
+    end
+
+    context 'when the hostname contains a colon' do
+      let(:hostname) do
+        'a.b.c:27017'
+      end
+
+      it 'raises an error' do
+        expect { validate }.to raise_error(Mongo::Error::InvalidURI)
+      end
+    end
+
+    context 'when the hostname starts with a dot' do
+      let(:hostname) do
+        '.a.b.c'
+      end
+
+      it 'raises an error' do
+        expect { validate }.to raise_error(Mongo::Error::InvalidURI)
+      end
+    end
+
+    context 'when the hostname ends with consecutive dots' do
+      let(:hostname) do
+        'a.b.c..'
+      end
+
+      it 'raises an error' do
+        expect { validate }.to raise_error(Mongo::Error::InvalidURI)
+      end
+    end
+
+    context 'when the hostname contains consecutive dots in the middle' do
+      let(:hostname) do
+        'a..b.c'
+      end
+
+      it 'raises an error' do
+        expect { validate }.to raise_error(Mongo::Error::InvalidURI)
       end
     end
   end
