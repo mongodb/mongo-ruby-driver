@@ -15,6 +15,8 @@
 require 'forwardable'
 require 'bson'
 require 'openssl'
+require 'timeout'
+
 require 'mongo/id'
 require 'mongo/bson'
 require 'mongo/semaphore'
