@@ -25,6 +25,11 @@ module Mongo
     # @since 2.1.0
     COMMAND = 'Command'.freeze
 
+    # The connection pool topic.
+    #
+    # @since 2.8.0
+    CONNECTION_POOL = 'ConnectionPool'.freeze
+
     # Server closed topic.
     #
     # @since 2.4.0
