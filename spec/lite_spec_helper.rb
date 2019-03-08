@@ -77,6 +77,7 @@ require 'support/client_registry'
 require 'support/client_registry_macros'
 require 'support/json_ext_formatter'
 require 'support/sdam_formatter_integration'
+require 'support/utils'
 
 if SpecConfig.instance.mri?
   require 'timeout_interrupt'

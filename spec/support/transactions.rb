@@ -115,7 +115,7 @@ module Mongo
         @data = data
         @description = test['description']
         @client_options = convert_client_options(test['clientOptions'] || {})
-        @session_options = snakeize_hash(test['sessionOptions'] || {})
+        @session_options = Utils.snakeize_hash(test['sessionOptions'] || {})
         @fail_point = test['failPoint']
         @operations = test['operations']
         @expectations = test['expectations']
@@ -310,7 +310,7 @@ module Mongo
           when 'w'
             kv = [:write, { w: kv.last }]
           else
-            kv[0] = camel_to_snake(kv[0])
+            kv[0] = Utils.camel_to_snake(kv[0])
           end
 
           opts.tap { |o| o[kv.first] = kv.last }

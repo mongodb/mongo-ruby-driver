@@ -41,7 +41,7 @@ module Mongo
                db2
              end
 
-        send(camel_to_snake(@spec['name']) ,db[@spec['collection']])
+        send(Utils.camel_to_snake(@spec['name']) ,db[@spec['collection']])
       end
 
       private
