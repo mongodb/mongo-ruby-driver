@@ -81,7 +81,7 @@ module Mongo
           result
         ensure
           unless success
-            disconnect!
+            disconnect!(reason: :error)
           end
         end
       end
@@ -92,7 +92,7 @@ module Mongo
           # since the CMAP spec does not permit a connection to be disconnected
           # and then reconnected
           log_warn("Detected PID change - Mongo client should have been reconnected (old pid #{pid}, new pid #{Process.pid}")
-          disconnect!
+          disconnect!(reason: :stale)
           @closed = false
           @pid = Process.pid
           connect!

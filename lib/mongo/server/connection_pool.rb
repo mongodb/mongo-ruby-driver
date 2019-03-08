@@ -20,6 +20,7 @@ module Mongo
     # @since 2.0.0, largely rewritten in 2.9.0
     class ConnectionPool
       include Loggable
+      include Monitoring::Publishable
       extend Forwardable
 
       # The default max size for the connection pool.
@@ -110,7 +111,7 @@ module Mongo
 
         finalizer = proc do
           available_connections.each do |connection|
-            connection.disconnect!
+            connection.disconnect!(reason: :pool_closed)
           end
           available_connections.clear
           # Finalizer does not close checked out connections.
@@ -118,6 +119,10 @@ module Mongo
           # and that should close them.
         end
         ObjectSpace.define_finalizer(self, finalizer)
+
+        publish_cmap_event(
+          Monitoring::Event::Cmap::PoolCreated.new(@server.address, options)
+        )
       end
 
       # @return [ Hash ] options The pool options.
@@ -213,6 +218,9 @@ module Mongo
         !!@closed
       end
 
+      # @since 2.9.0
+      def_delegators :@server, :monitoring
+
       # Checks a connection out of the pool.
       #
       # If there are active connections in the pool, the most recently used
@@ -233,6 +241,10 @@ module Mongo
       def check_out
         raise_if_closed!
 
+        publish_cmap_event(
+          Monitoring::Event::Cmap::ConnectionCheckoutStarted.new(@server.address)
+        )
+
         deadline = Time.now + wait_timeout
         connection = nil
         # It seems that synchronize sets up its own loop, thus a simple break
@@ -245,12 +257,21 @@ module Mongo
             @lock.synchronize do
               unless @available_connections.empty?
                 connection = @available_connections.pop
+
+                if connection.generation != generation
+                  # Stale connections should be disconnected in the clear
+                  # method, but if any don't, check again here
+                  connection.disconnect!(reason: :stale)
+                  next
+                end
+
                 if max_idle_time && connection.last_checkin &&
                   Time.now - connection.last_checkin > max_idle_time
                 then
-                  connection.disconnect!
+                  connection.disconnect!(reason: :idle)
                   next
                 end
+
                 throw(:done)
               end
 
@@ -267,6 +288,12 @@ module Mongo
 
             wait = deadline - Time.now
             if wait <= 0
+              publish_cmap_event(
+                Monitoring::Event::Cmap::ConnectionCheckoutFailed.new(
+                  @server.address,
+                  Monitoring::Event::Cmap::ConnectionCheckoutFailed::TIMEOUT,
+                ),
+              )
               raise Error::ConnectionCheckoutTimeout.new(@server.address, wait_timeout)
             end
             @available_semaphore.wait(wait)
@@ -274,6 +301,9 @@ module Mongo
         end
 
         @checked_out_connections << connection
+        publish_cmap_event(
+          Monitoring::Event::Cmap::ConnectionCheckedOut.new(@server.address, connection.id),
+        )
         connection
       end
 
@@ -292,8 +322,17 @@ module Mongo
 
           @checked_out_connections.delete(connection)
 
+          # Note: if an event handler raises, resource will not be signaled.
+          # This means threads waiting for a connection to free up when
+          # the pool is at max size may time out.
+          # Threads that begin waiting after this method completes (with
+          # the exception) should be fine.
+          publish_cmap_event(
+            Monitoring::Event::Cmap::ConnectionCheckedIn.new(@server.address, connection.id)
+          )
+
           if closed?
-            connection.disconnect!
+            connection.disconnect!(reason: :pool_closed)
             return
           end
 
@@ -301,10 +340,11 @@ module Mongo
             # Connection was closed - for example, because it experienced
             # a network error. Nothing else needs to be done here.
           elsif connection.generation != @generation
-            connection.disconnect!
+            connection.disconnect!(reason: :stale)
           else
             connection.record_checkin!
             @available_connections << connection
+
             # Wake up only one thread waiting for an available connection,
             # since only one connection was checked in.
             @available_semaphore.signal
@@ -324,12 +364,18 @@ module Mongo
         raise_if_closed!
 
         @lock.synchronize do
+          @generation += 1
+
+          publish_cmap_event(
+            Monitoring::Event::Cmap::PoolCleared.new(@server.address)
+          )
+
           until @available_connections.empty?
             connection = @available_connections.pop
-            connection.disconnect!
+            connection.disconnect!(reason: :stale)
           end
-          @generation += 1
         end
+
         true
       end
 
@@ -355,19 +401,25 @@ module Mongo
         @lock.synchronize do
           until @available_connections.empty?
             connection = @available_connections.pop
-            connection.disconnect!
+            connection.disconnect!(reason: :pool_closed)
           end
 
           if options && options[:force]
             until @checked_out_connections.empty?
               connection = @checked_out_connections.take(1).first
-              connection.disconnect!
+              connection.disconnect!(reason: :pool_closed)
               @checked_out_connections.delete(connection)
             end
           end
         end
 
         @closed = true
+
+        publish_cmap_event(
+          Monitoring::Event::Cmap::PoolClosed.new(@server.address)
+        )
+
+        true
       end
 
       # Get a pretty printed string inspection for the pool.
@@ -423,7 +475,7 @@ module Mongo
             connection = @available_connections[i]
             if last_checkin = connection.last_checkin
               if (Time.now - last_checkin) > max_idle_time
-                connection.disconnect!
+                connection.disconnect!(reason: :idle)
                 @available_connections.delete_at(i)
                 next
               end

@@ -179,10 +179,13 @@ module Mongo
         # @note This method mutates the connection by setting the socket to nil
         #   if the closing succeeded.
         #
+        # @note This method accepts an options argument for compatibility with
+        #   Server::Connections. However, all options are ignored.
+        #
         # @return [ true ] If the disconnect succeeded.
         #
         # @since 2.0.0
-        def disconnect!
+        def disconnect!(options = nil)
           if socket
             socket.close
             @socket = nil

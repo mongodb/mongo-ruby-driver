@@ -98,6 +98,10 @@ module Mongo
         @last_checkin = nil
         @auth_mechanism = nil
         @pid = Process.pid
+
+        publish_cmap_event(
+          Monitoring::Event::Cmap::ConnectionCreated.new(address, id)
+        )
       end
 
       # @return [ Time ] The last time the connection was checked back into a pool.
@@ -163,6 +167,12 @@ module Mongo
           # When @socket is assigned, the socket should have handshaken and
           # authenticated and be usable.
           @socket = socket
+
+          publish_cmap_event(
+            Monitoring::Event::Cmap::ConnectionReady.new(address, id)
+          )
+
+          @close_event_published = false
         end
         true
       end
@@ -178,10 +188,13 @@ module Mongo
       # @note This method mutates the connection object by setting the socket
       #   to nil if the closing succeeded.
       #
+      # @option options [ Symbol ] :reason The reason why the connection is
+      #   being closed.
+      #
       # @return [ true ] If the disconnect succeeded.
       #
       # @since 2.0.0
-      def disconnect!
+      def disconnect!(options = nil)
         # Note: @closed may be true here but we also may have a socket.
         # Check the socket and not @closed flag.
         @auth_mechanism = nil
@@ -191,6 +204,25 @@ module Mongo
           @socket = nil
         end
         @closed = true
+
+        # To satisfy CMAP spec tests, publish close events even if the
+        # socket was never connected (and thus the ready event was never
+        # published). But track whether we published close event and do not
+        # publish it multiple times, unless the socket was reconnected -
+        # in that case publish the close event once per socket close.
+        unless @close_event_published
+          reason = options && options[:reason]
+          publish_cmap_event(
+            Monitoring::Event::Cmap::ConnectionClosed.new(
+              address,
+              id,
+              reason,
+            ),
+          )
+          @close_event_published = true
+        end
+
+        true
       end
 
       # Ping the connection to see if the server is responding to commands.
