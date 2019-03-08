@@ -1,0 +1,36 @@
+version: 1
+style: unit
+description: must destroy and must not check out an idle connection if found while iterating available connections
+poolOptions:
+  minPoolSize: 1
+  maxIdleTimeMS: 10
+operations:
+  - name: checkOut
+    label: conn
+  - name: checkIn
+    connection: conn
+  - name: wait
+    ms: 50
+  - name: checkOut
+events:
+  - type: ConnectionPoolCreated
+    address: 42
+    options: 42
+  - type: ConnectionCreated
+    connectionId: 1
+  - type: ConnectionCheckOutStarted
+  - type: ConnectionCheckedOut
+    connectionId: 1
+  - type: ConnectionCheckedIn
+    connectionId: 1
+  # In between these, wait so connection becomes idle
+  - type: ConnectionCheckOutStarted
+  - type: ConnectionClosed
+    connectionId: 1
+    reason: idle
+  - type: ConnectionCreated
+    connectionId: 2
+  - type: ConnectionCheckedOut
+    connectionId: 2
+ignore:
+  - ConnectionReady

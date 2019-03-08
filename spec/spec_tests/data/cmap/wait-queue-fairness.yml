@@ -1,0 +1,90 @@
+version: 1
+style: unit
+description: must issue Connections to threads in the order that the threads entered the queue
+poolOptions:
+  maxPoolSize: 1
+  waitQueueTimeoutMS: 1000
+operations:
+    # Check out sole connection in pool
+  - name: checkOut
+    label: conn0
+    # Create 4 threads, have them all queue up for connections
+    # Note: this might become non-deterministic depending on how you
+    # implement your test runner. The goal is for each thread to
+    # have started and begun checkOut before the next thread starts.
+    # The sleep operations should make this more consistent.
+  - name: start
+    target: thread1
+  - name: checkOut
+    thread: thread1
+    label: conn1
+  - name: wait
+    ms: 10
+  - name: start
+    target: thread2
+  - name: checkOut
+    thread: thread2
+    label: conn2
+  - name: wait
+    ms: 10
+  - name: start
+    target: thread3
+  - name: checkOut
+    thread: thread3
+    label: conn3
+  - name: wait
+    ms: 10
+  - name: start
+    target: thread4
+  - name: checkOut
+    thread: thread4
+    label: conn4
+    # From main thread, keep checking in connection and then wait for appropriate thread
+    # Test will timeout if threads are not enqueued in proper order
+  - name: wait
+    ms: 10
+  - name: checkIn
+    connection: conn0
+  - name: waitFor
+    target: thread1
+  - name: checkIn
+    connection: conn1
+  - name: waitFor
+    target: thread2
+  - name: checkIn
+    connection: conn2
+  - name: waitFor
+    target: thread3
+  - name: checkIn
+    connection: conn3
+  - name: waitFor
+    target: thread4
+events:
+  - type: ConnectionCheckOutStarted
+  - type: ConnectionCheckedOut
+    connectionId: 42
+  - type: ConnectionCheckOutStarted
+  - type: ConnectionCheckOutStarted
+  - type: ConnectionCheckOutStarted
+  - type: ConnectionCheckOutStarted
+  - type: ConnectionCheckedIn
+    connectionId: 42
+  - type: ConnectionCheckedOut
+    connectionId: 42
+  - type: ConnectionCheckedIn
+    connectionId: 42
+  - type: ConnectionCheckedOut
+    connectionId: 42
+  - type: ConnectionCheckedIn
+    connectionId: 42
+  - type: ConnectionCheckedOut
+    connectionId: 42
+  - type: ConnectionCheckedIn
+    connectionId: 42
+  - type: ConnectionCheckedOut
+    connectionId: 42
+ignore:
+  - ConnectionCreated
+  - ConnectionReady
+  - ConnectionClosed
+  - ConnectionPoolCreated
