@@ -159,14 +159,9 @@ module Mongo
         end
 
         unless @socket
-          socket = address.socket(socket_timeout, ssl_options,
-            connect_timeout: address.connect_timeout)
-          handshake!(socket)
-          pending_connection = PendingConnection.new(socket, @server, monitoring, options)
-          authenticate!(pending_connection)
           # When @socket is assigned, the socket should have handshaken and
           # authenticated and be usable.
-          @socket = socket
+          @socket = do_connect
 
           publish_cmap_event(
             Monitoring::Event::Cmap::ConnectionReady.new(address, id)
@@ -176,6 +171,17 @@ module Mongo
         end
         true
       end
+
+      # Separate method to permit easier mocking in the test suite.
+      def do_connect
+        socket = address.socket(socket_timeout, ssl_options,
+          connect_timeout: address.connect_timeout)
+        handshake!(socket)
+        pending_connection = PendingConnection.new(socket, @server, monitoring, options)
+        authenticate!(pending_connection)
+        socket
+      end
+      private :do_connect
 
       # Disconnect the connection.
       #
