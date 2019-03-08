@@ -73,9 +73,6 @@ module Mongo
           @pool_size = 0
           @options = options
           @generation = 1
-          if min_size > max_size
-            raise ArgumentError, "min_size (#{min_size}) cannot exceed max_size (#{max_size})"
-          end
           @queue = Array.new(min_size) { create_connection }
           @mutex = Mutex.new
           @resource = ConditionVariable.new
