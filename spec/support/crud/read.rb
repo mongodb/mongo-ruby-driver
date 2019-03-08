@@ -70,7 +70,7 @@ module Mongo
         #
         # @since 2.0.0
         def execute(collection)
-          send(camel_to_snake(name), collection)
+          send(Utils.camel_to_snake(name), collection)
         end
 
         # Whether the operation is expected to have restuls.

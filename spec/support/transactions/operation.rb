@@ -166,7 +166,7 @@ module Mongo
       private
 
       def start_transaction(session)
-        session.start_transaction(snakeize_hash(arguments['options'])) ; nil
+        session.start_transaction(Utils.snakeize_hash(arguments['options'])) ; nil
       end
 
       def commit_transaction(session)
@@ -183,7 +183,7 @@ module Mongo
         end
 
         if @spec['arguments']['options']
-          options = snakeize_hash(@spec['arguments']['options'])
+          options = Utils.snakeize_hash(@spec['arguments']['options'])
         else
           options = nil
         end
@@ -205,7 +205,7 @@ module Mongo
         command_value = cmd.delete(command_name)
         cmd = { command_name.to_sym => command_value }.merge(cmd)
 
-        opts = snakeize_hash(options)
+        opts = Utils.snakeize_hash(options)
         opts[:read] = opts.delete(:read_preference)
         database.command(cmd, opts).documents.first
       end
@@ -415,19 +415,19 @@ module Mongo
       end
 
       def read_concern
-        snakeize_hash(@spec['collectionOptions'] && @spec['collectionOptions']['readConcern'])
+        Utils.snakeize_hash(@spec['collectionOptions'] && @spec['collectionOptions']['readConcern'])
       end
 
       def write_concern
-        snakeize_hash(@spec['collectionOptions'] && @spec['collectionOptions']['writeConcern'])
+        Utils.snakeize_hash(@spec['collectionOptions'] && @spec['collectionOptions']['writeConcern'])
       end
 
       def read_preference
-        snakeize_hash(arguments['readPreference'])
+        Utils.snakeize_hash(arguments['readPreference'])
       end
 
       def collection_read_preference
-        snakeize_hash(@spec['collectionOptions'] && @spec['collectionOptions']['readPreference'])
+        Utils.snakeize_hash(@spec['collectionOptions'] && @spec['collectionOptions']['readPreference'])
       end
     end
   end
