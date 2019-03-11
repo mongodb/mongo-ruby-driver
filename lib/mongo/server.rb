@@ -282,11 +282,7 @@ module Mongo
     # @since 2.0.0
     def pool
       @pool_lock.synchronize do
-        @pool ||= begin
-          ConnectionPool.new(options) do |generation|
-            Connection.new(self, options.merge(generation: generation))
-          end
-        end
+        @pool ||= ConnectionPool.new(self, options)
       end
     end
 
