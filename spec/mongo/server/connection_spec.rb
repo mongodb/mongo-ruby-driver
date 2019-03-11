@@ -851,6 +851,34 @@ describe Mongo::Server::Connection, retry: 3 do
         expect(connection.address).to eq(server.address)
       end
 
+      it 'sets id' do
+        expect(connection.id).to eq(1)
+      end
+
+      context 'multiple connections' do
+        it 'use incrementing ids' do
+          expect(connection.id).to eq(1)
+
+          second_connection = described_class.new(server, server.options)
+          expect(second_connection.id).to eq(2)
+        end
+      end
+
+      context 'two pools for different servers' do
+        let(:server2) do
+          Mongo::Server.new(address, cluster, monitoring, listeners, server_options)
+        end
+
+        it 'ids do not share namespace' do
+          server.pool.with_connection do |conn|
+            expect(conn.id).to eq(1)
+          end
+          server2.pool.with_connection do |conn|
+            expect(conn.id).to eq(1)
+          end
+        end
+      end
+
       it 'sets the socket to nil' do
         expect(connection.send(:socket)).to be_nil
       end

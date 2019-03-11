@@ -89,6 +89,7 @@ module Mongo
       #
       # @since 2.0.0
       def initialize(server, options = {})
+        @id = server.next_connection_id
         @monitoring = server.monitoring
         @options = options.freeze
         @server = server
@@ -99,10 +100,16 @@ module Mongo
         @pid = Process.pid
       end
 
-      # The last time the connection was checked back into a pool.
+      # @return [ Time ] The last time the connection was checked back into a pool.
       #
       # @since 2.5.0
       attr_reader :last_checkin
+
+      # @return [ Integer ] The ID for the connection. This will be unique
+      # across connections to the same server object.
+      #
+      # @since 2.9.0
+      attr_reader :id
 
       # Connection pool generation from which this connection was created.
       # May be nil.

@@ -61,6 +61,9 @@ module Mongo
       monitor = options.delete(:monitor)
       @options = options.freeze
       @event_listeners = event_listeners
+      @connection_id_gen = Class.new do
+        include Id
+      end
       @monitor = Monitor.new(address, event_listeners, monitoring,
         options.merge(app_metadata: Monitor::AppMetadata.new(cluster.options)))
       unless monitor == false
@@ -400,6 +403,11 @@ module Mongo
     # @api private
     def update_description(description)
       monitor.instance_variable_set('@description', description)
+    end
+
+    # @api private
+    def next_connection_id
+      @connection_id_gen.next_id
     end
   end
 end
