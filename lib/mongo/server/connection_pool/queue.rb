@@ -46,8 +46,9 @@ module Mongo
         # The default timeout, in seconds, to wait for a connection.
         WAIT_TIMEOUT = 1.freeze
 
-        # Initialize the new queue. Will yield the block the number of times
-        # equal to the initial connection pool size.
+        # Initialize the new queue.
+        #
+        # @note The minimum pool size parameter is currently ignored.
         #
         # @example Create the queue.
         #   Mongo::Server::ConnectionPool::Queue.new(max_pool_size: 5) { Connection.new }
@@ -73,7 +74,7 @@ module Mongo
           @pool_size = 0
           @options = options
           @generation = 1
-          @queue = Array.new(min_size) { create_connection }
+          @queue = []
           @mutex = Mutex.new
           @resource = ConditionVariable.new
           check_count_invariants
@@ -207,11 +208,6 @@ module Mongo
               connection.disconnect!
 
               decrement_pool_size
-
-              while @pool_size < min_size
-                @pool_size += 1
-                queue.unshift(@block.call(@generation))
-              end
             end
           end
           nil
