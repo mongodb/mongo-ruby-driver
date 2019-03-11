@@ -26,13 +26,7 @@ module Mongo
 
       # Create the new connection pool.
       #
-      # @example Create the new connection pool.
-      #   Pool.new(wait_queue_timeout: 0.5) do
-      #     Connection.new
-      #   end
-      #
-      # @note A block must be passed to set up the connections on initialization.
-      #
+      # @param [ Server ] server The server which this connection pool is for.
       # @param [ Hash ] options The connection pool options.
       #
       # @option options [ Integer ] :max_pool_size The maximum pool size.
@@ -40,10 +34,16 @@ module Mongo
       # @option options [ Float ] :wait_queue_timeout The time to wait, in
       #   seconds, for a free connection.
       #
-      # @since 2.0.0
-      def initialize(options = {}, &block)
+      # @since 2.0.0, API changed in 2.9.0
+      def initialize(server, options = {})
+        unless server.is_a?(Server)
+          raise ArgumentError, 'First argument must be a Server instance'
+        end
+        @server = server
         @options = options.dup.freeze
-        @queue = queue = Queue.new(@options, &block)
+        @queue = queue = Queue.new(@options) do |generation|
+          Connection.new(server, options.merge(generation: generation))
+        end
 
         finalizer = proc do
           queue.disconnect!
