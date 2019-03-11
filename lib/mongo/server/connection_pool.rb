@@ -17,7 +17,7 @@ module Mongo
 
     # Represents a connection pool for server connections.
     #
-    # @since 2.0.0
+    # @since 2.0.0, largely rewritten in 2.9.0
     class ConnectionPool
       include Loggable
       extend Forwardable
@@ -87,6 +87,7 @@ module Mongo
         @options = options.freeze
 
         @generation = 1
+        @closed = false
 
         # A connection owned by this pool should be either in the
         # available connections array (which is used as a stack)
@@ -172,6 +173,8 @@ module Mongo
       #
       # @since 2.9.0
       def size
+        raise_if_closed!
+
         @lock.synchronize do
           unsynchronized_size
         end
@@ -192,9 +195,20 @@ module Mongo
       #
       # @since 2.9.0
       def available_count
+        raise_if_closed!
+
         @lock.synchronize do
           @available_connections.length
         end
+      end
+
+      # Whether the pool has been closed.
+      #
+      # @return [ true | false ] Whether the pool is closed.
+      #
+      # @since 2.9.0
+      def closed?
+        !!@closed
       end
 
       # Checks a connection out of the pool.
@@ -215,6 +229,8 @@ module Mongo
       #
       # @since 2.9.0
       def check_out
+        raise_if_closed!
+
         deadline = Time.now + wait_timeout
         loop do
           # Lock must be taken on each iteration, rather for the method
@@ -260,6 +276,11 @@ module Mongo
 
           @checked_out_connections.delete(connection)
 
+          if closed?
+            connection.disconnect!
+            return
+          end
+
           if connection.closed?
             # Connection was closed - for example, because it experienced
             # a network error. Nothing else needs to be done here.
@@ -280,13 +301,12 @@ module Mongo
       # The pool remains operational and can create new connections when
       # requested.
       #
-      # @example Disconnect the connection pool.
-      #   pool.disconnect!
-      #
       # @return [ true ] true.
       #
       # @since 2.1.0
-      def disconnect!
+      def clear
+        raise_if_closed!
+
         @lock.synchronize do
           until @available_connections.empty?
             connection = @available_connections.pop
@@ -295,6 +315,31 @@ module Mongo
           @generation += 1
         end
         true
+      end
+
+      # @since 2.1.0
+      # @deprecated
+      alias :disconnect! :clear
+
+      # Marks the pool closed, closes all idle connections in the pool and
+      # schedules currently checked out connections to be closed when they are
+      # checked back into the pool. Attempts to use the pool after it is closed
+      # will raise Error::PoolClosedError.
+      #
+      # @return [ true ] true.
+      #
+      # @since 2.9.0
+      def close
+        return if closed?
+
+        @lock.synchronize do
+          until @available_connections.empty?
+            connection = @available_connections.pop
+            connection.disconnect!
+          end
+        end
+
+        @closed = true
       end
 
       # Get a pretty printed string inspection for the pool.
@@ -306,8 +351,13 @@ module Mongo
       #
       # @since 2.0.0
       def inspect
-        "#<Mongo::Server::ConnectionPool:0x#{object_id} min_size=#{min_size} max_size=#{max_size} " +
-          "wait_timeout=#{wait_timeout} current_size=#{size} available=#{available_count}>"
+        if closed?
+          "#<Mongo::Server::ConnectionPool:0x#{object_id} min_size=#{min_size} max_size=#{max_size} " +
+            "wait_timeout=#{wait_timeout} closed>"
+        else
+          "#<Mongo::Server::ConnectionPool:0x#{object_id} min_size=#{min_size} max_size=#{max_size} " +
+            "wait_timeout=#{wait_timeout} current_size=#{size} available=#{available_count}>"
+        end
       end
 
       # Yield the block to a connection, while handling checkin/checkout logic.
@@ -321,6 +371,8 @@ module Mongo
       #
       # @since 2.0.0
       def with_connection
+        raise_if_closed!
+
         connection = check_out
         yield(connection)
       ensure
@@ -334,6 +386,7 @@ module Mongo
       #
       # @since 2.5.0
       def close_stale_sockets!
+        return if closed?
         return unless max_idle_time
 
         @lock.synchronize do
@@ -360,6 +413,17 @@ module Mongo
         # fully established.
         #connection.connect!
         connection
+      end
+
+      # Asserts that the pool has not been closed.
+      #
+      # @raise [ Error::PoolClosedError ] If the pool has been closed.
+      #
+      # @since 2.8.0
+      def raise_if_closed!
+        if closed?
+          raise Error::PoolClosedError.new(@server.address)
+        end
       end
     end
   end
