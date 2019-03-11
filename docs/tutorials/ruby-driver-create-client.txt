@@ -334,9 +334,15 @@ Ruby Options
 
    * - ``:min_pool_size``
      - The minimum number of connections in the connection pool for each
-       server.
+       server. The driver does not create connections eagerly - a connection
+       is only created when a MongoDB operation is to be executed and there
+       are no available connections, and the total number of established
+       connections to the target server is below ``:max_pool_size``.
+       However, once connections to a particular server are created, up to
+       ``:min_pool_size`` connections will be kept in the connection pool
+       by the driver.
      - ``Integer``
-     - 1
+     - 0
 
    * - ``:monitoring``
      - The monitoring object.
@@ -568,15 +574,6 @@ Details on Timeout Options
   number if you are seeing many ``Timeout`` errors while using many threads
   or when operations are long-running. Defaults to 1 second.
 
-``max_pool_size``
-  Maximum size of the connection pool for each server. Defaults to 5 connections.
-
-``min_pool_size``
-  Minimum number of connections in the connection pool for each server.
-  Increase this number to create connections when the pool is
-  initialized and to reduce the overhead of creating new connections
-  later on. Defaults to 1.
-
 ``max_time_ms``
   Specified as an option on a particular operation. It defines a cumulative time limit in milliseconds for processing
   operations on a cursor. Consider using this option instead of a ``socket_timeout``, if the operation should be
@@ -611,28 +608,35 @@ for connections.
 The client instance opens one additional connection per known server
 for monitoring the server's state.
 
-The size of each connection pool is capped at ``max_pool_size``, which defaults to 5. When a thread in your application
-begins an operation on MongoDB, it tries to retrieve a connection from the pool to send that operation on. If there
-are some connections available in the pool, it checks out a connection from the pool and uses it for the operation.
-If there are no connections available and the size of the pool is less than the ``max_pool_size``, a new connection
-will be created. If all connections are in use and the pool has reached its maximum size, the thread waits for a
-connection to be returned to the pool by another thread.
+The size of each connection pool is capped at ``max_pool_size``, which defaults
+to 5. When a thread in the application begins an operation on MongoDB, it tries
+to retrieve a connection from the pool to send that operation on. If there
+are some connections available in the pool, it checks out a connection from
+the pool and uses it for the operation. If there are no connections available
+and the size of the pool is less than the ``max_pool_size``, a new connection
+will be created. If all connections are in use and the pool has reached its
+maximum size, the thread waits for a connection to be returned to the pool by
+another thread.
 
-The number of seconds the thread will wait is configurable. This setting, called ``wait_queue_timeout``, is defined in
-seconds. It determines how long a thread will wait for a connection to be returned to the pool, when there are no
-connections available. If this timeout is reached, a ``Timeout::Error`` is raised. The default is 1 second.
+The number of seconds the thread will wait for a connection to become available
+is configurable. This setting, called ``wait_queue_timeout``, is defined in
+seconds. If this timeout is reached, a ``Timeout::Error`` is raised. The
+default is 1 second.
 
-You can also set the number of connections initialized when the pool is created with the ``min_pool_size``
-setting. This is helpful if your application experiences load spikes and you want to avoid the latency of creating new
-connections at the beginning of a spike. The default ``min_pool_size`` is 1.
+The driver currently does not eagerly create connections, regardless of
+``min_pool_size`` setting. However, once a connection is established, it will
+be kept in the pool by the driver as long as the pool size does not exceed
+``min_pool_size``.
 
-Here is an example of estimating the number of connections a multi-threaded application will open:
-A client connected to a 3-node replica set opens 3 monitoring sockets. It also opens as many sockets as
-needed to support a multi-threaded application's concurrent operations on each server, up to ``max_pool_size``. If the
-application only uses the primary (the default), then only the primary connection pool grows and the total connections
-is at most 8 (5 connections for the primary pool + 3 monitoring connections). If the application uses a read
-preference to query the secondaries, their pools also grow and the total connections can reach 18 (5 + 5 + 5 + 3).
-
+Here is an example of estimating the number of connections a multi-threaded
+application will open: A client connected to a 3-node replica set opens 3
+monitoring sockets. It also opens as many sockets as needed to support a
+multi-threaded application's concurrent operations on each server, up to
+``max_pool_size``. If the application only uses the primary (the default),
+then only the primary connection pool grows and the total connections is at
+most 8 (5 connections for the primary pool + 3 monitoring connections).
+If the application uses a read preference to query the secondaries, their
+pools also grow and the total connections can reach 18 (5 + 5 + 5 + 3).
 
 The default configuration for a ``Mongo::Client`` works for most applications:
 
@@ -640,17 +644,19 @@ The default configuration for a ``Mongo::Client`` works for most applications:
 
     client = Mongo::Client.new(["localhost:27017"])
 
-Create this client **once** for each process, and reuse it for all operations. It is a common mistake to create a new
-client for each request, which is very inefficient and not what the client was designed for.
+Create this client **once** for each process, and reuse it for all operations.
+It is a common mistake to create a new client for each request, which is very
+inefficient and not what the client was designed for.
 
-To support extremely high numbers of concurrent MongoDB operations within one process, increase ``max_pool_size``:
+To support extremely high numbers of concurrent MongoDB operations within one
+process, increase ``max_pool_size``:
 
 .. code-block:: ruby
 
     client = Mongo::Client.new(["localhost:27017"], max_pool_size: 200)
 
-Any number of threads are allowed to wait for connections to become available, and they can wait the default (1 second)
-or the ``wait_queue_timeout`` setting:
+Any number of threads are allowed to wait for connections to become available,
+and they can wait the default (1 second) or the ``wait_queue_timeout`` setting:
 
 .. code-block:: ruby
 
