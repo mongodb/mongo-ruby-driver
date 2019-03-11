@@ -113,6 +113,18 @@ module Mongo
         options[:generation]
       end
 
+      # Whether the connection was closed.
+      #
+      # Closed connections should no longer be used. Instead obtain a new
+      # connection from the connection pool.
+      #
+      # @return [ true | false ] Whether connection was closed.
+      #
+      # @since 2.9.0
+      def closed?
+        !!@closed
+      end
+
       # Establishes a network connection to the target address.
       #
       # If the connection is already established, this method does nothing.
@@ -120,13 +132,21 @@ module Mongo
       # @example Connect to the host.
       #   connection.connect!
       #
-      # @note This method mutates the connection class by setting a socket if
+      # @note This method mutates the connection object by setting a socket if
       #   one previously did not exist.
       #
       # @return [ true ] If the connection succeeded.
       #
       # @since 2.0.0
       def connect!
+        if closed?
+          if Lint.enabled?
+            raise Error::LintError, "Reconnecting closed connections is no longer supported"
+          else
+            log_warn("Reconnecting closed connections is deprecated (for #{address})")
+          end
+        end
+
         unless @socket
           socket = address.socket(socket_timeout, ssl_options,
             connect_timeout: address.connect_timeout)
@@ -142,23 +162,28 @@ module Mongo
 
       # Disconnect the connection.
       #
-      # @example Disconnect from the host.
-      #   connection.disconnect!
+      # @note Once a connection is disconnected, it should no longer be used.
+      #   A new connection should be obtained from the connection pool which
+      #   will either return a ready connection or create a new connection.
+      #   If linting is enabled, reusing a disconnected connection will raise
+      #   Error::LintError. If linting is not enabled, a warning will be logged.
       #
-      # @note This method mutates the connection by setting the socket to nil
-      #   if the closing succeeded.
+      # @note This method mutates the connection object by setting the socket
+      #   to nil if the closing succeeded.
       #
       # @return [ true ] If the disconnect succeeded.
       #
       # @since 2.0.0
       def disconnect!
+        # Note: @closed may be true here but we also may have a socket.
+        # Check the socket and not @closed flag.
         @auth_mechanism = nil
         @last_checkin = nil
         if socket
           socket.close
           @socket = nil
         end
-        true
+        @closed = true
       end
 
       # Ping the connection to see if the server is responding to commands.

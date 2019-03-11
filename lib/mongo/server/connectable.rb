@@ -88,8 +88,14 @@ module Mongo
 
       def ensure_same_process!
         if pid != Process.pid
+          # When we reconnect here, CMAP events won't be correctly sent
+          # since the CMAP spec does not permit a connection to be disconnected
+          # and then reconnected
+          log_warn("Detected PID change - Mongo client should have been reconnected (old pid #{pid}, new pid #{Process.pid}")
           disconnect!
+          @closed = false
           @pid = Process.pid
+          connect!
         end
       end
     end
