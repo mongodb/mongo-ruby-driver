@@ -5,6 +5,7 @@ describe Mongo::Server::ConnectionPool::Queue do
   def create_connection(generation=-1)
     double('connection').tap do |connection|
       allow(connection).to receive(:generation).and_return(generation)
+      allow(connection).to receive(:closed?).and_return(false)
       allow(connection).to receive(:disconnect!)
     end
   end
@@ -312,6 +313,7 @@ describe Mongo::Server::ConnectionPool::Queue do
       described_class.new(max_pool_size: 2, max_idle_time: 0.5) do
         double('connection').tap do |con|
           expect(con).to receive(:generation).and_return(1)
+          allow(con).to receive(:closed?).and_return(false)
           allow(con).to receive(:record_checkin!) do
             allow(con).to receive(:last_checkin).and_return(Time.now)
             con

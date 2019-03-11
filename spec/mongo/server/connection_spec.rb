@@ -559,14 +559,34 @@ describe Mongo::Server::Connection, retry: 3 do
           /Got response for request ID \d+ but expected response for request ID \d+/)
       end
 
-      it 'does not affect subsequent requests' do
-        expect {
-          connection.dispatch([ query_alice ])
-        }.to raise_error(Mongo::Error::UnexpectedResponse)
+      context 'linting' do
+        require_linting
 
-        docs = connection.dispatch([ query_alice ]).documents
-        expect(docs).to_not be_empty
-        expect(docs.first['name']).to eq('alice')
+        it 'marks the connection no longer usable' do
+          expect {
+            connection.dispatch([ query_alice ])
+          }.to raise_error(Mongo::Error::UnexpectedResponse)
+
+          expect do
+            connection.dispatch([ query_alice ]).documents
+          end.to raise_error(Mongo::Error::LintError, 'Reconnecting closed connections is no longer supported')
+        end
+      end
+
+      context 'not linting' do
+        skip_if_linting
+
+        it 'does not affect subsequent requests but warns' do
+          expect(Mongo::Logger.logger).to receive(:warn).once.and_call_original
+
+          expect {
+            connection.dispatch([ query_alice ])
+          }.to raise_error(Mongo::Error::UnexpectedResponse)
+
+          docs = connection.dispatch([ query_alice ]).documents
+          expect(docs).to_not be_empty
+          expect(docs.first['name']).to eq('alice')
+        end
       end
     end
 
