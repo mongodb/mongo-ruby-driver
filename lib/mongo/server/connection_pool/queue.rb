@@ -194,19 +194,19 @@ module Mongo
         def enqueue(connection)
           check_count_invariants
           mutex.synchronize do
-            if connection.generation == @generation
+            if connection.closed?
+              # Connection was closed - for example, because it experienced
+              # a network error.
+              # Since the connection is already closed, we do not need to
+              # close it here. Just update our accounting.
+              decrement_pool_size
+            elsif connection.generation == @generation
               queue.unshift(connection.record_checkin!)
               resource.broadcast
             else
               connection.disconnect!
 
-              @pool_size = if @pool_size > 0
-                @pool_size - 1
-              else
-                # This should never happen
-                log_warn("ConnectionPool::Queue: unexpected enqueue")
-                0
-              end
+              decrement_pool_size
 
               while @pool_size < min_size
                 @pool_size += 1
@@ -218,6 +218,17 @@ module Mongo
         ensure
           check_count_invariants
         end
+
+        def decrement_pool_size
+          @pool_size = if @pool_size > 0
+            @pool_size - 1
+          else
+            # This should never happen
+            log_warn("ConnectionPool::Queue: unexpected enqueue")
+            0
+          end
+        end
+        private :decrement_pool_size
 
         # Get a pretty printed string inspection for the queue.
         #

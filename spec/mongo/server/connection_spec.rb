@@ -559,14 +559,14 @@ describe Mongo::Server::Connection, retry: 3 do
           /Got response for request ID \d+ but expected response for request ID \d+/)
       end
 
-      it 'does not affect subsequent requests' do
+      it 'marks the connection no longer usable' do
         expect {
           connection.dispatch([ query_alice ])
         }.to raise_error(Mongo::Error::UnexpectedResponse)
 
-        docs = connection.dispatch([ query_alice ]).documents
-        expect(docs).to_not be_empty
-        expect(docs.first['name']).to eq('alice')
+        expect do
+          connection.dispatch([ query_alice ]).documents
+        end.to raise_error(ArgumentError, 'Reconnecting closed connections is no longer supported')
       end
     end
 

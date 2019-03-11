@@ -113,6 +113,18 @@ module Mongo
         options[:generation]
       end
 
+      # Whether the connection was closed.
+      #
+      # Closed connections should no longer be used. Instead obtain a new
+      # connection from the connection pool.
+      #
+      # @return [ true | false ] Whether connection was closed.
+      #
+      # @since 2.9.0
+      def closed?
+        !!@closed
+      end
+
       # Establishes a network connection to the target address.
       #
       # If the connection is already established, this method does nothing.
@@ -127,6 +139,10 @@ module Mongo
       #
       # @since 2.0.0
       def connect!
+        if @closed
+          raise ArgumentError, "Reconnecting closed connections is no longer supported"
+        end
+
         unless @socket
           socket = address.socket(socket_timeout, ssl_options,
             connect_timeout: address.connect_timeout)
@@ -142,8 +158,9 @@ module Mongo
 
       # Disconnect the connection.
       #
-      # @example Disconnect from the host.
-      #   connection.disconnect!
+      # @note Once a connection is disconnected, it can no longer be used.
+      #   A new connection must be obtained from the connection pool which will
+      #   either return a ready connection or create a new connection.
       #
       # @note This method mutates the connection by setting the socket to nil
       #   if the closing succeeded.
@@ -158,7 +175,7 @@ module Mongo
           socket.close
           @socket = nil
         end
-        true
+        @closed = true
       end
 
       # Ping the connection to see if the server is responding to commands.
