@@ -156,8 +156,10 @@ describe Mongo::Server::ConnectionPool::Queue do
         expect(queue.pool_size).to eq(1)
         expect(connection).to receive(:disconnect!)
         queue.enqueue(connection)
-        expect(queue.queue_size).to eq(1)
-        expect(queue.pool_size).to eq(1)
+        # connection is not added to the queue, and no replacement
+        # connection has been created at this point
+        expect(queue.queue_size).to eq(0)
+        expect(queue.pool_size).to eq(0)
         expect(queue.dequeue).not_to eq(connection)
       end
     end
@@ -193,9 +195,9 @@ describe Mongo::Server::ConnectionPool::Queue do
         described_class.new(:min_pool_size => 2) { create_connection }
       end
 
-      it 'creates the queue with the minimum connections' do
-        expect(queue.pool_size).to eq(2)
-        expect(queue.queue_size).to eq(2)
+      it 'creates the queue with no connections' do
+        expect(queue.pool_size).to eq(0)
+        expect(queue.queue_size).to eq(0)
       end
 
       it 'does not use the same objects in the queue' do
@@ -220,9 +222,9 @@ describe Mongo::Server::ConnectionPool::Queue do
         described_class.new { create_connection }
       end
 
-      it 'creates the queue with the number of default connections' do
-        expect(queue.pool_size).to eq(1)
-        expect(queue.queue_size).to eq(1)
+      it 'creates the queue with no connections' do
+        expect(queue.pool_size).to eq(0)
+        expect(queue.queue_size).to eq(0)
       end
     end
   end
@@ -250,7 +252,7 @@ describe Mongo::Server::ConnectionPool::Queue do
     end
 
     it 'includes the current size' do
-      expect(queue.inspect).to include('current_size=2')
+      expect(queue.inspect).to include('current_size=0')
     end
   end
 

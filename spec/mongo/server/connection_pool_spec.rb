@@ -185,7 +185,7 @@ describe Mongo::Server::ConnectionPool do
       end
 
       it 'does not add the connection to the pool' do
-        expect(queue.size).to eq(1)
+        expect(queue.size).to eq(0)
       end
     end
   end
