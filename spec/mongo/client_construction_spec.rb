@@ -501,7 +501,7 @@ describe Mongo::Client do
 
             let(:options) do
               {
-                :min_pool_size => Mongo::Server::ConnectionPool::Queue::MAX_SIZE
+                :min_pool_size => Mongo::Server::ConnectionPool::DEFAULT_MAX_SIZE
               }
             end
 

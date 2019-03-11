@@ -2,8 +2,10 @@ require 'spec_helper'
 
 describe Mongo::Server::ConnectionPool do
 
-  let(:options) do
-    SpecConfig.instance.test_options.merge(max_pool_size: 2)
+  let(:options) { {max_pool_size: 2} }
+
+  let(:server_options) do
+    SpecConfig.instance.test_options.merge(options)
   end
 
   let(:address) do
@@ -25,14 +27,153 @@ describe Mongo::Server::ConnectionPool do
       allow(cl).to receive(:topology).and_return(topology)
       allow(cl).to receive(:app_metadata).and_return(app_metadata)
       allow(cl).to receive(:options).and_return({})
+      allow(cl).to receive(:update_cluster_time)
     end
   end
 
-  describe '#checkin' do
+  let(:server) do
+    Mongo::Server.new(address, cluster, monitoring, listeners, server_options)
+  end
 
-    let(:server) do
-      Mongo::Server.new(address, cluster, monitoring, listeners, options)
+  describe '#initialize' do
+
+    context 'when a min size is provided' do
+
+      let(:pool) do
+        described_class.new(server, :min_pool_size => 2)
+      end
+
+      it 'creates the pool with no connections' do
+        expect(pool.size).to eq(0)
+        expect(pool.available_count).to eq(0)
+      end
+
+      it 'does not use the same objects in the pool' do
+        expect(pool.check_out).to_not equal(pool.check_out)
+      end
     end
+
+    context 'when min size exceeds default max size' do
+
+      let(:pool) do
+        described_class.new(server, :min_pool_size => 10)
+      end
+
+      it 'sets max size to equal provided min size' do
+        expect(pool.max_size).to eq(10)
+      end
+    end
+
+    context 'when no min size is provided' do
+
+      let(:pool) do
+        described_class.new(server)
+      end
+
+      it 'creates the pool with no connections' do
+        expect(pool.size).to eq(0)
+        expect(pool.available_count).to eq(0)
+      end
+    end
+
+    context 'sizes given as min_size and max_size' do
+
+      let(:pool) do
+        described_class.new(server, min_size: 3, max_size: 7)
+      end
+
+      it 'sets sizes correctly' do
+        expect(pool.min_size).to eq(3)
+        expect(pool.max_size).to eq(7)
+      end
+    end
+
+    context 'sizes given as min_pool_size and max_pool_size' do
+
+      let(:pool) do
+        described_class.new(server, min_pool_size: 3, max_pool_size: 7)
+      end
+
+      it 'sets sizes correctly' do
+        expect(pool.min_size).to eq(3)
+        expect(pool.max_size).to eq(7)
+      end
+    end
+
+    context 'timeout given as wait_timeout' do
+
+      let(:pool) do
+        described_class.new(server, wait_timeout: 4)
+      end
+
+      it 'sets wait timeout correctly' do
+        expect(pool.wait_timeout).to eq(4)
+      end
+    end
+
+    context 'timeout given as wait_queue_timeout' do
+
+      let(:pool) do
+        described_class.new(server, wait_queue_timeout: 4)
+      end
+
+      it 'sets wait timeout correctly' do
+        expect(pool.wait_timeout).to eq(4)
+      end
+    end
+  end
+
+  describe '#max_size' do
+
+    context 'when a max pool size option is provided' do
+
+      let(:pool) do
+        described_class.new(server, :max_pool_size => 3)
+      end
+
+      it 'returns the max size' do
+        expect(pool.max_size).to eq(3)
+      end
+    end
+
+    context 'when no pool size option is provided' do
+
+      let(:pool) do
+        described_class.new(server)
+      end
+
+      it 'returns the default size' do
+        expect(pool.max_size).to eq(5)
+      end
+    end
+  end
+
+  describe '#wait_timeout' do
+
+    context 'when the wait timeout option is provided' do
+
+      let(:pool) do
+        described_class.new(server, :wait_queue_timeout => 3)
+      end
+
+      it 'returns the wait timeout' do
+        expect(pool.wait_timeout).to eq(3)
+      end
+    end
+
+    context 'when the wait timeout option is not provided' do
+
+      let(:pool) do
+        described_class.new(server)
+      end
+
+      it 'returns the default wait timeout' do
+        expect(pool.wait_timeout).to eq(1)
+      end
+    end
+  end
+
+  describe '#check_in' do
 
     let!(:pool) do
       server.pool
@@ -43,107 +184,218 @@ describe Mongo::Server::ConnectionPool do
       server.disconnect!
     end
 
+    let(:options) { {max_pool_size: 2} }
+
+    let(:connection) do
+      pool.check_out
+    end
+
     context 'when a connection is checked out on the thread' do
 
-      let!(:connection) do
-        pool.checkout
-      end
-
       before do
-        pool.checkin(connection)
+        pool.check_in(connection)
       end
 
-      let(:queue) do
-        pool.send(:queue).queue
+      it 'returns the connection to the pool' do
+        expect(pool.size).to eq(1)
+      end
+    end
+
+    context 'connection of the same generation as pool' do
+      before do
+        expect(pool.generation).to eq(connection.generation)
       end
 
-      it 'returns the connection to the queue' do
-        expect(queue.size).to eq(1)
+      it 'adds the connection to the pool' do
+        # connection is checked out
+        expect(pool.available_count).to eq(0)
+        expect(pool.size).to eq(1)
+        pool.check_in(connection)
+        # now connection is in the queue
+        expect(pool.available_count).to eq(1)
+        expect(pool.size).to eq(1)
+        expect(pool.check_out).to eq(connection)
       end
+    end
+
+    shared_examples 'does not add connection to pool' do
+      before do
+        expect(pool.generation).not_to eq(connection.generation)
+      end
+
+      it 'disconnects connection and does not add connection to pool' do
+        # connection was checked out
+        expect(pool.available_count).to eq(0)
+        expect(pool.size).to eq(1)
+        expect(connection).to receive(:disconnect!)
+        pool.check_in(connection)
+        # connection is not added to the pool, and no replacement
+        # connection has been created at this point
+        expect(pool.available_count).to eq(0)
+        expect(pool.size).to eq(0)
+        expect(pool.check_out).not_to eq(connection)
+      end
+    end
+
+    context 'connection of earlier generation than pool' do
+      let(:connection) do
+        pool.check_out.tap do |connection|
+          allow(connection).to receive(:generation).and_return(0)
+          allow(connection).to receive(:record_checkin!).and_return(connection)
+        end
+      end
+
+      it_behaves_like 'does not add connection to pool'
+    end
+
+    context 'connection of later generation than pool' do
+      let(:connection) do
+        pool.check_out.tap do |connection|
+          allow(connection).to receive(:generation).and_return(7)
+          allow(connection).to receive(:record_checkin!).and_return(connection)
+        end
+      end
+
+      it_behaves_like 'does not add connection to pool'
     end
   end
 
-  describe '#checkout' do
-
-    let(:server) do
-      Mongo::Server.new(address, cluster, monitoring, listeners, options)
-    end
+  describe '#check_out' do
 
     let!(:pool) do
       server.pool
     end
 
-    context 'when no connection is checked out on the same thread' do
-
-      let!(:connection) do
-        pool.checkout
-      end
-
-      it 'returns a new connection' do
-        expect(connection.address).to eq(server.address)
-      end
-    end
-
-    context 'when a connection is checked out on the same thread' do
-
-      before do
-        pool.checkout
-      end
-
-      it 'returns the threads connection' do
-        expect(pool.checkout.address).to eq(server.address)
-      end
-    end
-
     context 'when a connection is checked out on a different thread' do
 
       let!(:connection) do
-        Thread.new { pool.checkout }.join
+        Thread.new { pool.check_out }.join
       end
 
       it 'returns a new connection' do
-        expect(pool.checkout.address).to eq(server.address)
+        expect(pool.check_out.address).to eq(server.address)
       end
 
       it 'does not return the same connection instance' do
-        expect(pool.checkout).to_not eql(connection)
+        expect(pool.check_out).to_not eql(connection)
       end
     end
 
     context 'when connections are checked out and checked back in' do
 
       it 'pulls the connection from the front of the queue' do
-        first = pool.checkout
-        second = pool.checkout
-        pool.checkin(second)
-        pool.checkin(first)
-        expect(pool.checkout).to be(first)
+        first = pool.check_out
+        second = pool.check_out
+        pool.check_in(second)
+        pool.check_in(first)
+        expect(pool.check_out).to be(first)
+      end
+    end
+
+    context 'when there are no available connections' do
+
+      let(:options) do
+        {max_pool_size: 1}
+      end
+
+      context 'when the max size is not reached' do
+
+        it 'creates a new connection' do
+          expect(Mongo::Server::Connection).to receive(:new).once.and_call_original
+          expect(pool.check_out).to be_a(Mongo::Server::Connection)
+          expect(pool.size).to eq(1)
+        end
+      end
+
+      context 'when the max size is reached' do
+
+        it 'raises a timeout error' do
+          expect(Mongo::Server::Connection).to receive(:new).once.and_call_original
+          expect {
+            pool.check_out
+            pool.check_out
+          }.to raise_error(Timeout::Error)
+          expect(pool.size).to eq(1)
+        end
+      end
+    end
+
+    context 'when waiting for a connection to be checked in' do
+
+      let!(:connection) { pool.check_out }
+
+      before do
+        allow(connection).to receive(:record_checkin!).and_return(connection)
+        Thread.new do
+          sleep(0.5)
+          pool.check_in(connection)
+        end.join
+      end
+
+      it 'returns the checked in connection' do
+        expect(pool.check_out).to eq(connection)
       end
     end
   end
 
   describe '#disconnect!' do
 
-    let(:server) do
-      Mongo::Server.new(address, cluster, monitoring, listeners, options)
+    def create_pool(min_pool_size)
+      described_class.new(server, max_pool_size: 3, min_pool_size: min_pool_size).tap do |pool|
+        # make pool be of size 2 so that it has enqueued connections
+        # when told to disconnect
+        c1 = pool.check_out
+        c2 = pool.check_out
+        allow(c1).to receive(:record_checkin!).and_return(c1)
+        allow(c2).to receive(:record_checkin!).and_return(c2)
+        pool.check_in(c1)
+        pool.check_in(c2)
+        expect(pool.size).to eq(2)
+        expect(pool.available_count).to eq(2)
+      end
     end
 
-    let!(:pool) do
-      server.pool
+    shared_examples_for 'disconnects and removes all connections in the pool and bumps generation' do
+      it 'disconnects and removes and bumps' do
+        old_connections = []
+        pool.instance_variable_get('@available_connections').each do |connection|
+          expect(connection).to receive(:disconnect!)
+          old_connections << connection
+        end
+
+        expect(pool.size).to eq(2)
+        expect(pool.available_count).to eq(2)
+
+        pool.disconnect!
+
+        expect(pool.size).to eq(0)
+        expect(pool.available_count).to eq(0)
+
+        new_connection = pool.check_out
+        expect(old_connections).not_to include(new_connection)
+        expect(new_connection.generation).to eq(2)
+      end
     end
 
-    it 'disconnects the queue' do
-      expect(server).to receive(:pool).and_return(pool)
-      expect(pool.send(:queue)).to receive(:disconnect!).once.and_call_original
-      server.disconnect!
+    context 'min size is 0' do
+      let(:pool) do
+        create_pool(0)
+      end
+
+      it_behaves_like 'disconnects and removes all connections in the pool and bumps generation'
+    end
+
+    context 'min size is not 0' do
+      let(:pool) do
+        create_pool(1)
+      end
+
+      it_behaves_like 'disconnects and removes all connections in the pool and bumps generation'
     end
   end
 
   describe '#inspect' do
-
-    let(:server) do
-      Mongo::Server.new(address, cluster, monitoring, listeners, options)
-    end
+    let(:options) { {min_pool_size: 3, max_pool_size: 7, wait_timeout: 9, wait_queue_timeout: 9} }
 
     let!(:pool) do
       server.pool
@@ -158,16 +410,30 @@ describe Mongo::Server::ConnectionPool do
       expect(pool.inspect).to include(pool.object_id.to_s)
     end
 
+    it 'includes the min size' do
+      expect(pool.inspect).to include('min_size=3')
+    end
+
+    it 'includes the max size' do
+      expect(pool.inspect).to include('max_size=7')
+    end
+
+    it 'includes the wait timeout' do
+      expect(pool.inspect).to include('wait_timeout=9')
+    end
+
+    it 'includes the current size' do
+      expect(pool.inspect).to include('current_size=0')
+    end
+
+=begin obsolete
     it 'includes the queue inspection' do
       expect(pool.inspect).to include(pool.__send__(:queue).inspect)
     end
+=end
   end
 
   describe '#with_connection' do
-
-    let(:server) do
-      Mongo::Server.new(address, cluster, monitoring, listeners, options)
-    end
 
     let!(:pool) do
       server.pool
@@ -175,69 +441,74 @@ describe Mongo::Server::ConnectionPool do
 
     context 'when a connection cannot be checked out' do
 
-      before do
-        allow(pool).to receive(:checkout).and_return(nil)
-        pool.with_connection { |c| c }
-      end
-
-      let(:queue) do
-        pool.send(:queue).queue
-      end
-
       it 'does not add the connection to the pool' do
-        expect(queue.size).to eq(0)
+        pending 'Re-enable when connections are connected prior to being returned from check_out method'
+
+        allow(pool).to receive(:check_out).and_raise(Mongo::Error::SocketError)
+        pool.with_connection { |c| c }
+
+        expect(pool.size).to eq(0)
       end
     end
   end
 
   context 'when the connection does not finish authenticating before the thread is killed' do
 
-    let(:server) do
-      Mongo::Server.new(address, cluster, monitoring, listeners, options)
-    end
-
     let!(:pool) do
       server.pool
     end
 
-    let(:options) do
+    let(:server_options) do
       { user: SpecConfig.instance.root_user.name, password: SpecConfig.instance.root_user.password }.merge(SpecConfig.instance.test_options).merge(max_pool_size: 1)
     end
 
     before do
-     t = Thread.new {
-        # Kill the thread when it's authenticating
-        allow(Mongo::Auth).to receive(:get) { t.kill && !t.alive? }
-        pool.with_connection { |c| c.send(:ensure_connected) { |socket| socket } }
-      }
-      t.join
+      pool
+      ClientRegistry.instance.close_all_clients
     end
 
-    it 'disconnects the socket' do
-      expect(pool.checkout.send(:socket)).to be_nil
+    it 'creates a new connection' do
+      invoked = nil
+
+      t = Thread.new do
+        # Kill the thread when it's authenticating
+        expect(Mongo::Auth).to receive(:get) do
+          if Thread.current != t
+            raise 'Auth invoked on unexpected thread'
+          end
+          invoked = true
+          t.kill
+          raise 'Should not get here'
+        end
+        pool.with_connection do |c|
+          c.send(:ensure_connected) { |socket| socket }
+        end
+      end
+      t.join
+
+      #expect(Mongo::Auth).to receive(:get).and_call_original
+      expect(pool.check_out).to be_a(Mongo::Server::Connection)
+      expect(invoked).to be true
     end
   end
 
   describe '#close_stale_sockets!' do
 
-    let(:server) do
-      Mongo::Server.new(address, authorized_client.cluster, monitoring, listeners, options)
-    end
-
     let!(:pool) do
       server.pool
-    end
-
-    let(:queue) do
-      pool.instance_variable_get(:@queue).queue
     end
 
     context 'when there is a max_idle_time specified' do
 
       let(:options) do
-        SpecConfig.instance.test_options.merge(max_pool_size: 2, max_idle_time: 0.5)
+        {max_pool_size: 2, max_idle_time: 0.5}
       end
 
+      after do
+        Timecop.return
+      end
+
+=begin obsolete
       context 'when the connections have not been checked out' do
 
         before do
@@ -252,59 +523,57 @@ describe Mongo::Server::ConnectionPool do
           expect(queue.none? { |c| c.connected? }).to be(true)
         end
       end
+=end
 
-      context 'when the sockets have already been checked out and returned to the pool' do
+      context 'when connections have been checked out and returned to the pool' do
 
         context 'when min size is 0' do
 
           let(:options) do
-            SpecConfig.instance.test_options.merge(max_pool_size: 2, min_pool_size: 0, max_idle_time: 0.5)
+            {max_pool_size: 2, min_pool_size: 0, max_idle_time: 0.5}
           end
 
           before do
-            queue.each do |conn|
-              expect(conn).to receive(:disconnect!).and_call_original
-            end
-            pool.checkin(pool.checkout)
-            pool.checkin(pool.checkout)
+            c1 = pool.check_out
+            c2 = pool.check_out
+            pool.check_in(c1)
+            pool.check_in(c2)
             sleep(0.5)
+            expect(c1).to receive(:disconnect!).and_call_original
+            expect(c2).to receive(:disconnect!).and_call_original
             pool.close_stale_sockets!
           end
 
           it 'closes all stale sockets' do
-            expect(queue.all? { |c| !c.connected? }).to be(true)
+            expect(pool.size).to be(0)
           end
         end
 
         context 'when min size is > 0' do
-          after do
-            Timecop.return
-          end
-
           context 'when more than the number of min_size are checked out' do
             let(:options) do
-              SpecConfig.instance.test_options.merge(max_pool_size: 5, min_pool_size: 3, max_idle_time: 0.5)
+              {max_pool_size: 5, min_pool_size: 3, max_idle_time: 0.5}
             end
 
             it 'closes and removes connections with stale sockets and does not connect new ones' do
-              first = pool.checkout
-              second = pool.checkout
-              third = pool.checkout
-              fourth = pool.checkout
-              fifth = pool.checkout
+              first = pool.check_out
+              second = pool.check_out
+              third = pool.check_out
+              fourth = pool.check_out
+              fifth = pool.check_out
 
-              pool.checkin(fifth)
+              pool.check_in(fifth)
 
               expect(fifth).to receive(:disconnect!).and_call_original
               expect(fifth).not_to receive(:connect!)
 
               Timecop.travel(Time.now + 1)
-              expect(queue.length).to be(1)
+              expect(pool.size).to be(5)
+              expect(pool.available_count).to be(1)
               pool.close_stale_sockets!
 
-              expect(pool.send(:queue).pool_size).to be(4)
-              expect(pool.send(:queue).queue_size).to be(0)
-              expect(queue.length).to be(0)
+              expect(pool.size).to be(4)
+              expect(pool.available_count).to be(0)
               expect(fifth.connected?).to be(false)
             end
           end
@@ -312,19 +581,19 @@ describe Mongo::Server::ConnectionPool do
           context 'when between 0 and min_size number of connections are checked out' do
 
             let(:options) do
-              SpecConfig.instance.test_options.merge(max_pool_size: 5, min_pool_size: 3, max_idle_time: 0.5)
+              {max_pool_size: 5, min_pool_size: 3, max_idle_time: 0.5}
             end
 
             it 'closes and removes connections with stale sockets and does not connect new ones' do
-              first = pool.checkout
-              second = pool.checkout
-              third = pool.checkout
-              fourth = pool.checkout
-              fifth = pool.checkout
+              first = pool.check_out
+              second = pool.check_out
+              third = pool.check_out
+              fourth = pool.check_out
+              fifth = pool.check_out
 
-              pool.checkin(third)
-              pool.checkin(fourth)
-              pool.checkin(fifth)
+              pool.check_in(third)
+              pool.check_in(fourth)
+              pool.check_in(fifth)
 
 
               expect(third).to receive(:disconnect!).and_call_original
@@ -337,12 +606,12 @@ describe Mongo::Server::ConnectionPool do
               expect(fifth).not_to receive(:connect!).and_call_original
 
               Timecop.travel(Time.now + 1)
-              expect(queue.length).to be(3)
+              expect(pool.size).to be(5)
+              expect(pool.available_count).to be(3)
               pool.close_stale_sockets!
 
-              expect(pool.send(:queue).pool_size).to be(2)
-              expect(pool.send(:queue).queue_size).to be(0)
-              expect(queue.length).to be(0)
+              expect(pool.size).to be(2)
+              expect(pool.available_count).to be(0)
 
               expect(third.connected?).to be(false)
               expect(fourth.connected?).to be(false)
@@ -353,12 +622,46 @@ describe Mongo::Server::ConnectionPool do
       end
     end
 
+    context 'when available connections include stale and non-stale ones' do
+      let(:pool) do
+        described_class.new(server, max_pool_size: 2, max_idle_time: 0.5)
+      end
+
+      let(:connection) do
+        pool.check_out.tap do |con|
+          allow(con).to receive(:disconnect!)
+        end
+      end
+
+      it 'disconnects all expired and only expired connections' do
+        c1 = pool.check_out
+        expect(c1).to receive(:disconnect!)
+        c2 = pool.check_out
+        expect(c2).not_to receive(:disconnect!)
+
+        pool.check_in(c1)
+        Timecop.travel(Time.now + 1)
+        pool.check_in(c2)
+
+        expect(pool.size).to eq(2)
+        expect(pool.available_count).to eq(2)
+
+        expect(c1).not_to receive(:connect!)
+        expect(c2).not_to receive(:connect!)
+
+        pool.close_stale_sockets!
+
+        expect(pool.size).to eq(1)
+        expect(pool.available_count).to eq(1)
+      end
+    end
+
     context 'when there is no max_idle_time specified' do
 
       let(:connection) do
-        conn = pool.checkout
+        conn = pool.check_out
         conn.connect!
-        pool.checkin(conn)
+        pool.check_in(conn)
         conn
       end
 

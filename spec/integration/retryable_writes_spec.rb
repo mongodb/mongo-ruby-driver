@@ -25,9 +25,9 @@ describe 'Retryable writes integration tests' do
 
   let(:primary_connection) do
     client.database.command(ping: 1)
-    expect(primary_server.pool.send(:queue).pool_size).to eq(1)
-    expect(primary_server.pool.send(:queue).queue_size).to eq(1)
-    primary_server.pool.send(:queue).queue.first
+    expect(primary_server.pool.size).to eq(1)
+    expect(primary_server.pool.available_count).to eq(1)
+    primary_server.pool.instance_variable_get('@available_connections').last
   end
 
   shared_examples_for 'an operation that is retried' do

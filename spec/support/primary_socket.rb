@@ -7,9 +7,9 @@ module PrimarySocket
       end
 
       let(:primary_connection) do
-        connection = primary_server.pool.checkout
+        connection = primary_server.pool.check_out
         connection.connect!
-        primary_server.pool.checkin(connection)
+        primary_server.pool.check_in(connection)
         connection
       end
 
