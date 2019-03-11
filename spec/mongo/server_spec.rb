@@ -91,6 +91,11 @@ describe Mongo::Server do
       expect(server).to receive(:pool).and_return(pool)
       server.disconnect!
     end
+
+    it 'disconnects the connection pool' do
+      expect(server.pool).to receive(:disconnect!).once.and_call_original
+      server.disconnect!
+    end
   end
 
   describe '#initialize' do
