@@ -16,7 +16,7 @@ module Mongo
 
   class Cluster
 
-    # A manager that calls a method on each of a cluster's pools to close stale
+    # A manager that calls a method on each of a cluster's pools to close idle
     #  sockets.
     #
     # @api private
@@ -29,7 +29,7 @@ module Mongo
       # @example Initialize the socket reaper.
       #   SocketReaper.new(cluster)
       #
-      # @param [ Mongo::Cluster ] cluster The cluster whose pools' stale sockets
+      # @param [ Mongo::Cluster ] cluster The cluster whose pools' idle sockets
       #  need to be reaped at regular intervals.
       #
       # @since 2.5.0
@@ -37,23 +37,26 @@ module Mongo
         @cluster = cluster
       end
 
-      # Execute the operation to close the pool's stale sockets.
+      # Execute the operation to close the pool's idle sockets.
       #
-      # @example Close the stale sockets in each of the cluster's pools.
+      # @example Close the idle sockets in each of the cluster's pools.
       #   socket_reaper.execute
       #
       # @since 2.5.0
       def execute
         @cluster.servers.each do |server|
-          server.pool.close_stale_sockets!
-        end and true
+          server.pool.close_idle_sockets
+        end
+        true
       end
 
-      # When the socket reaper is garbage-collected, there's no need to close stale sockets;
-      #   sockets will be closed anyway when the pools are garbage-collected.
+      # When the socket reaper is garbage-collected, there's no need to close
+      #   idle sockets; sockets will be closed anyway when the pools are
+      #   garbage collected.
       #
       # @since 2.5.0
-      def flush; end
+      def flush
+      end
     end
   end
 end

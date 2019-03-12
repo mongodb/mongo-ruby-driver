@@ -21,11 +21,11 @@ describe Mongo::Cluster::SocketReaper do
 
     before do
       cluster.servers.each do |s|
-        expect(s.pool).to receive(:close_stale_sockets!).and_call_original
+        expect(s.pool).to receive(:close_idle_sockets).and_call_original
       end
     end
 
-    it 'calls close_stale_sockets on each connection pool in the cluster' do
+    it 'calls close_idle_sockets on each connection pool in the cluster' do
       reaper.execute
     end
   end
