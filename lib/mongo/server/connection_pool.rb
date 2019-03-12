@@ -487,6 +487,17 @@ module Mongo
         end
       end
 
+      # Creates up to the min size connections.
+      #
+      # Used by the spec test runner.
+      #
+      # @api private
+      def populate
+        while size < min_size
+          @available_connections << create_connection
+        end
+      end
+
       private
 
       def create_connection
