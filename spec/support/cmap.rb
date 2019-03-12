@@ -187,6 +187,8 @@ module Mongo
             opts[:wait_queue_size] = kv.last
           when 'waitQueueTimeoutMS'
             opts[:wait_queue_timeout] = kv.last / 1000.0
+          else
+            raise "Unknown option #{kv.first}"
           end
 
           opts
@@ -337,7 +339,7 @@ module Mongo
       end
 
       def run_clear_op(state)
-        pool.clear
+        pool.clear(lazy: true)
       end
 
       def run_close_op(state)

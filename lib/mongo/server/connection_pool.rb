@@ -257,7 +257,7 @@ module Mongo
             # overall, otherwise other threads will not be able to check in
             # a connection while this thread is waiting for one.
             @lock.synchronize do
-              unless @available_connections.empty?
+              until @available_connections.empty?
                 connection = @available_connections.pop
 
                 if connection.generation != generation
@@ -359,10 +359,14 @@ module Mongo
       # The pool remains operational and can create new connections when
       # requested.
       #
+      # @option options [ true | false ] :lazy If true, do not close any of
+      #   the idle connections and instead let them be closed during a
+      #   subsequent check out operation.
+      #
       # @return [ true ] true.
       #
       # @since 2.1.0
-      def clear
+      def clear(options = nil)
         raise_if_closed!
 
         @lock.synchronize do
@@ -372,9 +376,11 @@ module Mongo
             Monitoring::Event::Cmap::PoolCleared.new(@server.address)
           )
 
-          until @available_connections.empty?
-            connection = @available_connections.pop
-            connection.disconnect!(reason: :stale)
+          unless options && options[:lazy]
+            until @available_connections.empty?
+              connection = @available_connections.pop
+              connection.disconnect!(reason: :stale)
+            end
           end
         end
 
