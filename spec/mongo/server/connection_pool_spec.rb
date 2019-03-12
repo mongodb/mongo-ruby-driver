@@ -325,10 +325,6 @@ describe Mongo::Server::ConnectionPool do
     end
 
     shared_examples 'does not add connection to pool' do
-      before do
-        expect(pool.generation).not_to eq(connection.generation)
-      end
-
       it 'disconnects connection and does not add connection to pool' do
         # connection was checked out
         expect(pool.available_count).to eq(0)
@@ -346,9 +342,13 @@ describe Mongo::Server::ConnectionPool do
     context 'connection of earlier generation than pool' do
       let(:connection) do
         pool.check_out.tap do |connection|
-          allow(connection).to receive(:generation).and_return(0)
-          allow(connection).to receive(:record_checkin!).and_return(connection)
+          expect(connection).to receive(:generation).at_least(:once).and_return(0)
+          expect(connection).not_to receive(:record_checkin!)
         end
+      end
+
+      before do
+        expect(connection.generation < pool.generation).to be true
       end
 
       it_behaves_like 'does not add connection to pool'
@@ -357,9 +357,13 @@ describe Mongo::Server::ConnectionPool do
     context 'connection of later generation than pool' do
       let(:connection) do
         pool.check_out.tap do |connection|
-          allow(connection).to receive(:generation).and_return(7)
-          allow(connection).to receive(:record_checkin!).and_return(connection)
+          expect(connection).to receive(:generation).at_least(:once).and_return(7)
+          expect(connection).not_to receive(:record_checkin!)
         end
+      end
+
+      before do
+        expect(connection.generation > pool.generation).to be true
       end
 
       it_behaves_like 'does not add connection to pool'
@@ -412,6 +416,34 @@ describe Mongo::Server::ConnectionPool do
         pool.check_in(second)
         pool.check_in(first)
         expect(pool.check_out).to be(first)
+      end
+    end
+
+    context 'when there is an available connection which is stale' do
+      let(:options) do
+        {max_pool_size: 2, max_idle_time: 0.1}
+      end
+
+      let(:connection) do
+        pool.check_out.tap do |connection|
+          allow(connection).to receive(:generation).and_return(pool.generation)
+          allow(connection).to receive(:record_checkin!).and_return(connection)
+          expect(connection).to receive(:last_checkin).at_least(:once).and_return(Time.now - 10)
+        end
+      end
+
+      before do
+        pool.check_in(connection)
+      end
+
+      after do
+        pool.close(force: true)
+      end
+
+      it 'closes stale connection and creates a new one' do
+        expect(connection).to receive(:disconnect!)
+        expect(Mongo::Server::Connection).to receive(:new).and_call_original
+        pool.check_out
       end
     end
 

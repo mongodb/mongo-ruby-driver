@@ -55,6 +55,8 @@ module Mongo
       # @option options [ Float ] :wait_queue_timeout Deprecated.
       #   Alias for :wait_timeout. If both wait_timeout and wait_queue_timeout
       #   are given, their values must be identical.
+      # @option options [ Float ] :max_idle_time The time, in seconds,
+      #   after which idle connections should be closed by the pool.
       #
       # @since 2.0.0, API changed in 2.9.0
       def initialize(server, options = {})
@@ -232,33 +234,47 @@ module Mongo
         raise_if_closed!
 
         deadline = Time.now + wait_timeout
-        loop do
-          # Lock must be taken on each iteration, rather for the method
-          # overall, otherwise other threads will not be able to check in
-          # a connection while this thread is waiting for one.
-          @lock.synchronize do
-            unless @available_connections.empty?
-              connection = @available_connections.pop
-              @checked_out_connections << connection
-              return connection
+        connection = nil
+        # It seems that synchronize sets up its own loop, thus a simple break
+        # is insufficient to break the outer loop
+        catch(:done) do
+          loop do
+            # Lock must be taken on each iteration, rather for the method
+            # overall, otherwise other threads will not be able to check in
+            # a connection while this thread is waiting for one.
+            @lock.synchronize do
+              unless @available_connections.empty?
+                connection = @available_connections.pop
+                if max_idle_time && connection.last_checkin &&
+                  Time.now - connection.last_checkin > max_idle_time
+                then
+                  connection.disconnect!
+                  next
+                end
+                throw(:done)
+              end
+
+              # Ruby does not allow a thread to lock a mutex which it already
+              # holds.
+              if unsynchronized_size < max_size
+                # This does not currently connect the socket and handshake,
+                # but if it did, it would be performing i/o under our lock,
+                # which is bad. Fix in the future.
+                connection = create_connection
+                throw(:done)
+              end
             end
 
-            # Ruby does not allow a thread
-            if unsynchronized_size < max_size
-              # This performs i/o under our lock, which is bad.
-              # Fix in the future.
-              connection = create_connection
-              @checked_out_connections << connection
-              return connection
+            wait = deadline - Time.now
+            if wait <= 0
+              raise Error::ConnectionCheckoutTimeout.new(@server.address, wait_timeout)
             end
+            @available_semaphore.wait(wait)
           end
-
-          wait = deadline - Time.now
-          if wait <= 0
-            raise Error::ConnectionCheckoutTimeout.new(@server.address, wait_timeout)
-          end
-          @available_semaphore.wait(wait)
         end
+
+        @checked_out_connections << connection
+        connection
       end
 
       # Check a connection back into the pool.
@@ -323,19 +339,31 @@ module Mongo
 
       # Marks the pool closed, closes all idle connections in the pool and
       # schedules currently checked out connections to be closed when they are
-      # checked back into the pool. Attempts to use the pool after it is closed
+      # checked back into the pool. If force option is true, checked out
+      # connections are also closed. Attempts to use the pool after it is closed
       # will raise Error::PoolClosedError.
+      #
+      # @option options [ true | false ] :force Also close all checked out
+      #   connections.
       #
       # @return [ true ] true.
       #
       # @since 2.9.0
-      def close
+      def close(options = nil)
         return if closed?
 
         @lock.synchronize do
           until @available_connections.empty?
             connection = @available_connections.pop
             connection.disconnect!
+          end
+
+          if options && options[:force]
+            until @checked_out_connections.empty?
+              connection = @checked_out_connections.take(1).first
+              connection.disconnect!
+              @checked_out_connections.delete(connection)
+            end
           end
         end
 
