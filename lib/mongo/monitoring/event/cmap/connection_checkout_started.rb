@@ -19,13 +19,13 @@ module Mongo
 
         # Event published when a thread begins attempting to check a connection out of a pool.
         #
-        # @since 2.8.0
+        # @since 2.9.0
         class ConnectionCheckoutStarted < Base
 
           # @return [ Mongo::Address ] address The address of the server that the connection will
           #   connect to.
           #
-          # @since 2.8.0
+          # @since 2.9.0
           attr_reader :address
 
           # Create the event.
@@ -33,7 +33,7 @@ module Mongo
           # @example Create the event.
           #   ConnectionCheckoutStarted.new(address)
           #
-          # @since 2.8.0
+          # @since 2.9.0
           # @api private
           def initialize(address)
             @address = address
@@ -45,7 +45,7 @@ module Mongo
           #
           # @note This method is experimental and subject to change.
           #
-          # @since 2.8.0
+          # @since 2.9.0
           # @api experimental
           def summary
             "#<#{self.class.name.sub(/^Mongo::Monitoring::Event::Cmap::/, '')} address=#{address}>"

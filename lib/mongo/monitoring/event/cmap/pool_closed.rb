@@ -19,13 +19,13 @@ module Mongo
 
         # Event published when a connection pool is closed.
         #
-        # @since 2.8.0
+        # @since 2.9.0
         class PoolClosed < Base
 
           # @return [ Mongo::Address ] address The address of the server the pool's connections will
           #   connect to.
           #
-          # @since 2.8.0
+          # @since 2.9.0
           attr_reader :address
 
           # Create the event.
@@ -33,7 +33,7 @@ module Mongo
           # @example Create the event.
           #   PoolClosed.new(address)
           #
-          # @since 2.8.0
+          # @since 2.9.0
           # @api private
           def initialize(address)
             @address = address
@@ -45,7 +45,7 @@ module Mongo
           #
           # @note This method is experimental and subject to change.
           #
-          # @since 2.8.0
+          # @since 2.9.0
           # @api experimental
           def summary
             "#<#{self.class.name.sub(/^Mongo::Monitoring::Event::Cmap::/, '')} address=#{address}>"

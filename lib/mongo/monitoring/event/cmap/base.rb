@@ -19,7 +19,7 @@ module Mongo
 
         # Base class for CMAP events.
         #
-        # @since 2.8.0
+        # @since 2.9.0
         class Base < Mongo::Event::Base
         end
       end

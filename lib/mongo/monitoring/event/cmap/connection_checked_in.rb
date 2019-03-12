@@ -19,17 +19,17 @@ module Mongo
 
         # Event published when a connection is returned to a connection pool.
         #
-        # @since 2.8.0
+        # @since 2.9.0
         class ConnectionCheckedIn < Base
 
           # @return [ Address ] address The address of the server the connection was connected to.
           #
-          # @since 2.8.0
+          # @since 2.9.0
           attr_reader :address
 
           # @return [ Integer ] connection_id The ID of the connection.
           #
-          # @since 2.8.0
+          # @since 2.9.0
           attr_reader :connection_id
 
           # Create the event.
@@ -37,7 +37,7 @@ module Mongo
           # @example Create the event.
           #   ConnectionCheckedIn.new(address, id)
           #
-          # @since 2.8.0
+          # @since 2.9.0
           # @api private
           def initialize(address, id)
             @address = address
@@ -50,7 +50,7 @@ module Mongo
           #
           # @note This method is experimental and subject to change.
           #
-          # @since 2.8.0
+          # @since 2.9.0
           # @api experimental
           def summary
             "#<#{self.class.name.sub(/^Mongo::Monitoring::Event::Cmap::/, '')} " +

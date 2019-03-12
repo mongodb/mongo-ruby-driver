@@ -27,7 +27,7 @@ module Mongo
 
     # The connection pool topic.
     #
-    # @since 2.8.0
+    # @since 2.9.0
     CONNECTION_POOL = 'ConnectionPool'.freeze
 
     # Server closed topic.

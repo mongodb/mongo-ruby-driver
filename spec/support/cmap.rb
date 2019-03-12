@@ -4,8 +4,6 @@ module Mongo
   module Cmap
 
     # Represents a specification.
-    #
-    # @since 2.8.0
     class Spec
 
       # @return [ String ] description The spec description.
@@ -41,8 +39,6 @@ module Mongo
       #   Spec.new(file)
       #
       # @param [ String ] file The name of the file.
-      #
-      # @since 2.8.0
       def initialize(file)
         @test = YAML.load(ERB.new(File::read(file)).result)
 
@@ -213,8 +209,6 @@ module Mongo
     end
 
     # Represents an operation in the spec. Operations are sequential.
-    #
-    # @since 2.8.0
     class Operation
 
       # @return [ String ] command The name of the operation to run.
@@ -248,8 +242,6 @@ module Mongo
       #   Operation.new(operation)
       #
       # @param [ Hash ] operation The operation hash.
-      #
-      # @since 2.8.0
       def initialize(operation)
         @name = operation['name']
         @thread = operation['thread']
