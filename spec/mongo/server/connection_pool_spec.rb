@@ -35,6 +35,10 @@ describe Mongo::Server::ConnectionPool do
     Mongo::Server.new(address, cluster, monitoring, listeners, server_options)
   end
 
+  let(:pool) do
+    described_class.new(server)
+  end
+
   describe '#initialize' do
 
     context 'when a min size is provided' do
@@ -138,11 +142,17 @@ describe Mongo::Server::ConnectionPool do
 
     context 'when no pool size option is provided' do
 
-      let(:pool) do
-        described_class.new(server)
+      it 'returns the default size' do
+        expect(pool.max_size).to eq(5)
+      end
+    end
+
+    context 'when pool is closed' do
+      before do
+        pool.close
       end
 
-      it 'returns the default size' do
+      it 'returns max size' do
         expect(pool.max_size).to eq(5)
       end
     end
@@ -163,12 +173,108 @@ describe Mongo::Server::ConnectionPool do
 
     context 'when the wait timeout option is not provided' do
 
-      let(:pool) do
-        described_class.new(server)
-      end
-
       it 'returns the default wait timeout' do
         expect(pool.wait_timeout).to eq(1)
+      end
+    end
+  end
+
+  describe '#size' do
+    context 'pool without connections' do
+      it 'is 0' do
+        expect(pool.size).to eq(0)
+      end
+    end
+
+    context 'pool with a checked out connection' do
+      before do
+        pool.check_out
+      end
+
+      it 'is 1' do
+        expect(pool.size).to eq(1)
+      end
+    end
+
+    context 'pool with an available connection' do
+      before do
+        connection = pool.check_out
+        pool.check_in(connection)
+      end
+
+      it 'is 1' do
+        expect(pool.size).to eq(1)
+      end
+    end
+
+    context 'when pool is closed' do
+      before do
+        pool.close
+      end
+
+      it 'raises PoolClosedError' do
+        expect do
+          pool.size
+        end.to raise_error(Mongo::Error::PoolClosedError)
+      end
+    end
+  end
+
+  describe '#available_count' do
+    context 'pool without connections' do
+      it 'is 0' do
+        expect(pool.available_count).to eq(0)
+      end
+    end
+
+    context 'pool with a checked out connection' do
+      before do
+        pool.check_out
+      end
+
+      it 'is 0' do
+        expect(pool.available_count).to eq(0)
+      end
+    end
+
+    context 'pool with an available connection' do
+      before do
+        connection = pool.check_out
+        pool.check_in(connection)
+      end
+
+      it 'is 1' do
+        expect(pool.available_count).to eq(1)
+      end
+    end
+
+    context 'when pool is closed' do
+      before do
+        pool.close
+      end
+
+      it 'raises PoolClosedError' do
+        expect do
+          pool.available_count
+        end.to raise_error(Mongo::Error::PoolClosedError)
+      end
+    end
+  end
+
+  describe '#closed?' do
+    context 'pool is not closed' do
+      it 'is false' do
+        expect(pool.closed?).to be false
+      end
+    end
+
+    context 'pool is closed' do
+      before do
+        pool.close
+      end
+
+      it 'is true' do
+        expect(pool.closed?).to be true
       end
     end
   end
@@ -258,6 +364,23 @@ describe Mongo::Server::ConnectionPool do
 
       it_behaves_like 'does not add connection to pool'
     end
+
+    context 'when pool is closed' do
+      let(:connection) { pool.check_out }
+
+      before do
+        connection
+        pool.close
+      end
+
+      it 'closes connection' do
+        expect(connection.closed?).to be false
+        expect(pool.instance_variable_get('@available_connections').length).to eq(0)
+        pool.check_in(connection)
+        expect(connection.closed?).to be true
+        expect(pool.instance_variable_get('@available_connections').length).to eq(0)
+      end
+    end
   end
 
   describe '#check_out' do
@@ -336,6 +459,18 @@ describe Mongo::Server::ConnectionPool do
         expect(pool.check_out).to eq(connection)
       end
     end
+
+    context 'when pool is closed' do
+      before do
+        pool.close
+      end
+
+      it 'raises PoolClosedError' do
+        expect do
+          pool.check_out
+        end.to raise_error(Mongo::Error::PoolClosedError)
+      end
+    end
   end
 
   describe '#disconnect!' do
@@ -392,6 +527,41 @@ describe Mongo::Server::ConnectionPool do
 
       it_behaves_like 'disconnects and removes all connections in the pool and bumps generation'
     end
+
+    context 'when pool is closed' do
+      before do
+        pool.close
+      end
+
+      it 'raises PoolClosedError' do
+        expect do
+          pool.disconnect!
+        end.to raise_error(Mongo::Error::PoolClosedError)
+      end
+    end
+  end
+
+  describe '#close' do
+    context 'when pool is not closed' do
+      it 'closes the pool' do
+        expect(pool).not_to be_closed
+
+        pool.close
+
+        expect(pool).to be_closed
+      end
+    end
+
+    context 'when pool is closed' do
+      before do
+        pool.close
+      end
+
+      it 'is a no-op' do
+        pool.close
+        expect(pool).to be_closed
+      end
+    end
   end
 
   describe '#inspect' do
@@ -431,6 +601,24 @@ describe Mongo::Server::ConnectionPool do
       expect(pool.inspect).to include(pool.__send__(:queue).inspect)
     end
 =end
+
+    it 'indicates the pool is not closed' do
+      expect(pool.inspect).not_to include('closed')
+    end
+
+    context 'when pool is closed' do
+      before do
+        pool.close
+      end
+
+      it 'returns inspection string' do
+        expect(pool.inspect).to include('min_size=')
+      end
+
+      it 'indicates the pool is closed' do
+        expect(pool.inspect).to include('closed')
+      end
+    end
   end
 
   describe '#with_connection' do
@@ -448,6 +636,18 @@ describe Mongo::Server::ConnectionPool do
         pool.with_connection { |c| c }
 
         expect(pool.size).to eq(0)
+      end
+    end
+
+    context 'when pool is closed' do
+      before do
+        pool.close
+      end
+
+      it 'raises PoolClosedError' do
+        expect do
+          pool.with_connection { |c| c }
+        end.to raise_error(Mongo::Error::PoolClosedError)
       end
     end
   end
