@@ -255,7 +255,7 @@ module Mongo
 
           wait = deadline - Time.now
           if wait <= 0
-            raise Timeout::Error.new("Timed out attempting to dequeue connection after #{wait_timeout} sec.")
+            raise Error::ConnectionCheckoutTimeout.new(@server.address, wait_timeout)
           end
           @available_semaphore.wait(wait)
         end
