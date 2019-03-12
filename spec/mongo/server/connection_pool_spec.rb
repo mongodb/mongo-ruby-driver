@@ -724,7 +724,7 @@ describe Mongo::Server::ConnectionPool do
     end
   end
 
-  describe '#close_stale_sockets!' do
+  describe '#close_idle_sockets' do
 
     let!(:pool) do
       server.pool
@@ -748,7 +748,7 @@ describe Mongo::Server::ConnectionPool do
             expect(conn).not_to receive(:disconnect!)
           end
           sleep(0.5)
-          pool.close_stale_sockets!
+          pool.close_idle_sockets
         end
 
         it 'does not close any sockets' do
@@ -773,10 +773,10 @@ describe Mongo::Server::ConnectionPool do
             sleep(0.5)
             expect(c1).to receive(:disconnect!).and_call_original
             expect(c2).to receive(:disconnect!).and_call_original
-            pool.close_stale_sockets!
+            pool.close_idle_sockets
           end
 
-          it 'closes all stale sockets' do
+          it 'closes all idle sockets' do
             expect(pool.size).to be(0)
           end
         end
@@ -787,7 +787,7 @@ describe Mongo::Server::ConnectionPool do
               {max_pool_size: 5, min_pool_size: 3, max_idle_time: 0.5}
             end
 
-            it 'closes and removes connections with stale sockets and does not connect new ones' do
+            it 'closes and removes connections with idle sockets and does not connect new ones' do
               first = pool.check_out
               second = pool.check_out
               third = pool.check_out
@@ -802,7 +802,7 @@ describe Mongo::Server::ConnectionPool do
               Timecop.travel(Time.now + 1)
               expect(pool.size).to be(5)
               expect(pool.available_count).to be(1)
-              pool.close_stale_sockets!
+              pool.close_idle_sockets
 
               expect(pool.size).to be(4)
               expect(pool.available_count).to be(0)
@@ -816,7 +816,7 @@ describe Mongo::Server::ConnectionPool do
               {max_pool_size: 5, min_pool_size: 3, max_idle_time: 0.5}
             end
 
-            it 'closes and removes connections with stale sockets and does not connect new ones' do
+            it 'closes and removes connections with idle sockets and does not connect new ones' do
               first = pool.check_out
               second = pool.check_out
               third = pool.check_out
@@ -840,7 +840,7 @@ describe Mongo::Server::ConnectionPool do
               Timecop.travel(Time.now + 1)
               expect(pool.size).to be(5)
               expect(pool.available_count).to be(3)
-              pool.close_stale_sockets!
+              pool.close_idle_sockets
 
               expect(pool.size).to be(2)
               expect(pool.available_count).to be(0)
@@ -854,7 +854,7 @@ describe Mongo::Server::ConnectionPool do
       end
     end
 
-    context 'when available connections include stale and non-stale ones' do
+    context 'when available connections include idle and non-idle ones' do
       let(:pool) do
         described_class.new(server, max_pool_size: 2, max_idle_time: 0.5)
       end
@@ -881,7 +881,7 @@ describe Mongo::Server::ConnectionPool do
         expect(c1).not_to receive(:connect!)
         expect(c2).not_to receive(:connect!)
 
-        pool.close_stale_sockets!
+        pool.close_idle_sockets
 
         expect(pool.size).to eq(1)
         expect(pool.available_count).to eq(1)
@@ -899,7 +899,7 @@ describe Mongo::Server::ConnectionPool do
 
       before do
         expect(connection).not_to receive(:disconnect!)
-        pool.close_stale_sockets!
+        pool.close_idle_sockets
       end
 
       it 'does not close any sockets' do

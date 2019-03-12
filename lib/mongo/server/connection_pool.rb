@@ -413,7 +413,7 @@ module Mongo
       #   if the option is set.
       #
       # @since 2.5.0
-      def close_stale_sockets!
+      def close_idle_sockets
         return if closed?
         return unless max_idle_time
 
