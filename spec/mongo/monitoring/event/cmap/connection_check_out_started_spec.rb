@@ -1,6 +1,6 @@
 require 'lite_spec_helper'
 
-describe Mongo::Monitoring::Event::Cmap::ConnectionCheckoutStarted do
+describe Mongo::Monitoring::Event::Cmap::ConnectionCheckOutStarted do
 
   describe '#summary' do
 
@@ -13,7 +13,7 @@ describe Mongo::Monitoring::Event::Cmap::ConnectionCheckoutStarted do
     end
 
     it 'renders correctly' do
-      expect(event.summary).to eq('#<ConnectionCheckoutStarted address=127.0.0.1:27017>')
+      expect(event.summary).to eq('#<ConnectionCheckOutStarted address=127.0.0.1:27017>')
     end
   end
 end

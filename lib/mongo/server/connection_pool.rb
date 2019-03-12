@@ -176,7 +176,7 @@ module Mongo
 
       # Size of the connection pool.
       #
-      # Includes available and checkout connections.
+      # Includes available and checked out connections.
       #
       # @return [ Integer ] Size of the connection pool.
       #
@@ -244,7 +244,7 @@ module Mongo
         raise_if_closed!
 
         publish_cmap_event(
-          Monitoring::Event::Cmap::ConnectionCheckoutStarted.new(@server.address)
+          Monitoring::Event::Cmap::ConnectionCheckOutStarted.new(@server.address)
         )
 
         deadline = Time.now + wait_timeout
@@ -291,12 +291,12 @@ module Mongo
             wait = deadline - Time.now
             if wait <= 0
               publish_cmap_event(
-                Monitoring::Event::Cmap::ConnectionCheckoutFailed.new(
+                Monitoring::Event::Cmap::ConnectionCheckOutFailed.new(
                   @server.address,
-                  Monitoring::Event::Cmap::ConnectionCheckoutFailed::TIMEOUT,
+                  Monitoring::Event::Cmap::ConnectionCheckOutFailed::TIMEOUT,
                 ),
               )
-              raise Error::ConnectionCheckoutTimeout.new(@server.address, wait_timeout)
+              raise Error::ConnectionCheckOutTimeout.new(@server.address, wait_timeout)
             end
             @available_semaphore.wait(wait)
           end
@@ -448,7 +448,7 @@ module Mongo
         end
       end
 
-      # Yield the block to a connection, while handling checkin/checkout logic.
+      # Yield the block to a connection, while handling check in/check out logic.
       #
       # @example Execute with a connection.
       #   pool.with_connection do |connection|

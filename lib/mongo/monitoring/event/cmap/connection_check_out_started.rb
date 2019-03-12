@@ -20,7 +20,7 @@ module Mongo
         # Event published when a thread begins attempting to check a connection out of a pool.
         #
         # @since 2.9.0
-        class ConnectionCheckoutStarted < Base
+        class ConnectionCheckOutStarted < Base
 
           # @return [ Mongo::Address ] address The address of the server that the connection will
           #   connect to.
@@ -30,8 +30,7 @@ module Mongo
 
           # Create the event.
           #
-          # @example Create the event.
-          #   ConnectionCheckoutStarted.new(address)
+          # @param [ Address ] address
           #
           # @since 2.9.0
           # @api private

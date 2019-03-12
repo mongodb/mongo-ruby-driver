@@ -17,5 +17,5 @@ events:
     connectionId: 42
 ignore:
   - ConnectionPoolCreated
-  - ConnectionPoolDestroyed
+  - ConnectionPoolClosed
   - ConnectionReady

@@ -44,7 +44,7 @@ module Mongo
 
         @description = @test['description']
         @pool_options = Utils.snakeize_hash(process_options(@test['poolOptions']))
-        @spec_ops = @test['operations'].map { |o| Operation.new(o) }
+        @spec_ops = @test['operations'].map { |o| Operation.new(self, o) }
         @processed_ops = []
         @expected_error = @test['error']
         @expected_events = @test['events']
@@ -115,11 +115,11 @@ module Mongo
                         'connectionId' => event.connection_id,
                         'reason' => event.reason,
                       }
-                    when Mongo::Monitoring::Event::Cmap::ConnectionCheckoutStarted
+                    when Mongo::Monitoring::Event::Cmap::ConnectionCheckOutStarted
                       {
                         'type' => 'ConnectionCheckOutStarted',
                     }
-                    when Mongo::Monitoring::Event::Cmap::ConnectionCheckoutFailed
+                    when Mongo::Monitoring::Event::Cmap::ConnectionCheckOutFailed
                       {
                         'type' => 'ConnectionCheckOutFailed',
                         'reason' => event.reason,
@@ -238,11 +238,10 @@ module Mongo
 
       # Create the new Operation.
       #
-      # @example Create the new Operation.
-      #   Operation.new(operation)
-      #
+      # @param [ Spec ] spec The Spec object.
       # @param [ Hash ] operation The operation hash.
-      def initialize(operation)
+      def initialize(spec, operation)
+        @spec = spec
         @name = operation['name']
         @thread = operation['thread']
         @thread_ops = []
@@ -250,6 +249,8 @@ module Mongo
         @ms = operation['ms']
         @label = operation['label']
         @connection = operation['connection']
+        @event = operation['event']
+        @count = operation['count']
       end
 
       def run(pool, state, main_thread = true)
@@ -260,8 +261,10 @@ module Mongo
           run_start_op(state)
         when 'wait'
           run_wait_op(state)
-        when 'waitFor'
-          run_wait_for_op(state)
+        when 'waitForThread'
+          run_wait_for_thread_op(state)
+        when 'waitForEvent'
+          run_wait_for_event_op(state)
         when 'checkOut'
           run_checkout_op(state)
         when 'checkIn'
@@ -285,7 +288,7 @@ module Mongo
           'type' => 'PoolClosedError',
           'message' => 'Attempted to check out a connection from closed connection pool',
         }
-      rescue Error::ConnectionCheckoutTimeout
+      rescue Error::ConnectionCheckOutTimeout
         raise unless main_thread
 
         {
@@ -313,8 +316,26 @@ module Mongo
         sleep(ms / 1000.0)
       end
 
-      def run_wait_for_op(state)
+      def run_wait_for_thread_op(state)
         state[target].join
+      end
+
+      def run_wait_for_event_op(state)
+        subscriber = @spec.subscriber
+        looped = false
+        loop do
+          actual_events = @spec.subscriber.succeeded_events.select do |e|
+            e.class.name.sub(/.*::/, '').sub(/^ConnectionPool/, 'Pool') == @event.sub(/^ConnectionPool/, 'Pool')
+          end
+          if actual_events.length >= @count
+            break
+          end
+          if looped
+            puts("Waiting for #{@count} #{@event} events (have #{actual_events.length}): #{@spec.description}")
+          end
+          looped = true
+          sleep 0.1
+        end
       end
 
       def run_checkout_op(state)

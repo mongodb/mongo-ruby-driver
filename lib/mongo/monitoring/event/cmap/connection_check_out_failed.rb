@@ -20,35 +20,37 @@ module Mongo
         # Event published when a connection is unable to be checked out of a pool.
         #
         # @since 2.9.0
-        class ConnectionCheckoutFailed < Base
+        class ConnectionCheckOutFailed < Base
 
-          # @return [ Symbol ] POOL_CLOSED Indicates that the connection checkout failed due to the
-          #   pool already being closed.
+          # @return [ Symbol ] POOL_CLOSED Indicates that the connection check
+          #   out failed due to the pool already being closed.
           #
           # @since 2.9.0
           POOL_CLOSED = :pool_closed
 
-          # @return [ Symbol ] TIMEOUT Indicates that the connection checkout failed due to the
-          #   timeout being reached before a connection became available.
+          # @return [ Symbol ] TIMEOUT Indicates that the connection check out
+          #   failed due to the timeout being reached before a connection
+          #   became available.
           #
           # @since 2.9.0
           TIMEOUT = :timeout
 
-          # @return [ Mongo::Address ] address The address of the server the connection would have
-          #   connected to.
+          # @return [ Mongo::Address ] address The address of the server the
+          #   connection would have connected to.
           #
           # @since 2.9.0
           attr_reader :address
 
-          # @return [ Symbol ] reason The reason a connection was unable to be acquired.
+          # @return [ Symbol ] reason The reason a connection was unable to be
+          #   acquired.
           #
           # @since 2.9.0
           attr_reader :reason
 
           # Create the event.
           #
-          # @example Create the event.
-          #   ConnectionCheckoutFailed.new(address, reason)
+          # @param [ Address ] address
+          # @param [ Symbol ] symbol
           #
           # @since 2.9.0
           # @api private
