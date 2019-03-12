@@ -96,7 +96,7 @@ module Mongo
         buffer = serialize(message)
         ensure_connected do |socket|
           operation_id = Monitoring.next_operation_id
-          command_started(address, operation_id, message.payload)
+          command_started(address, operation_id, message.payload, socket.object_id)
           start = Time.now
           result = nil
           begin

@@ -37,10 +37,11 @@ module Mongo
 
       private
 
-      def command_started(address, operation_id, payload)
+      def command_started(address, operation_id, payload, socket_object_id = nil)
         monitoring.started(
           Monitoring::COMMAND,
-          Event::CommandStarted.generate(address, operation_id, payload)
+          Event::CommandStarted.generate(address, operation_id, payload,
+            socket_object_id)
         )
       end
 

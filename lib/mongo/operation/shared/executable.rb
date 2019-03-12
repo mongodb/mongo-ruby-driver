@@ -45,10 +45,21 @@ module Mongo
 
       def process_result(result, server)
         server.update_cluster_time(result)
+
         if result.not_master? || result.node_recovering?
+          # Max wire version needs to be checked prior to marking the
+          # server unknown
+          disconnect_pool = server.description.max_wire_version < 8
+
           server.unknown!
+
+          if disconnect_pool
+            server.pool.disconnect!
+          end
+
           server.monitor.scan_semaphore.signal
         end
+
         session.process(result) if session
         result
       end

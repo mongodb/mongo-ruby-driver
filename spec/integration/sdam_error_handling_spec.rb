@@ -58,6 +58,41 @@ describe 'SDAM error handling' do
       end
     end
 
+    shared_examples_for 'clears connection pool' do
+      it 'clears connection pool' do
+        generation = server.pool.generation
+        operation
+        new_generation = server.pool.generation
+        expect(new_generation).to eq(generation + 1)
+      end
+    end
+
+    shared_examples_for 'does not clear connection pool' do
+      it 'does not clear connection pool' do
+        generation = server.pool.generation
+        operation
+        new_generation = server.pool.generation
+        expect(new_generation).to eq(generation)
+      end
+    end
+
+    shared_examples_for 'not master or node recovering' do
+      it_behaves_like 'marks server unknown'
+      it_behaves_like 'requests server scan'
+
+      context 'server 4.2 or higher' do
+        min_server_fcv '4.2'
+
+        it_behaves_like 'does not clear connection pool'
+      end
+
+      context 'server 4.0 or lower' do
+        max_server_version '4.0'
+
+        it_behaves_like 'clears connection pool'
+      end
+    end
+
     context 'not master error' do
       let(:exception_message) do
         /not master/
@@ -67,8 +102,7 @@ describe 'SDAM error handling' do
         make_not_master_reply
       end
 
-      it_behaves_like 'marks server unknown'
-      it_behaves_like 'requests server scan'
+      it_behaves_like 'not master or node recovering'
     end
 
     context 'node is recovering error' do
@@ -80,8 +114,7 @@ describe 'SDAM error handling' do
         make_node_recovering_reply
       end
 
-      it_behaves_like 'marks server unknown'
-      it_behaves_like 'requests server scan'
+      it_behaves_like 'not master or node recovering'
     end
 
     context 'network error' do
@@ -100,6 +133,7 @@ describe 'SDAM error handling' do
 
         it_behaves_like 'marks server unknown'
         it_behaves_like 'does not request server scan'
+        it_behaves_like 'clears connection pool'
       end
 
       context 'network timeout error' do
@@ -109,6 +143,7 @@ describe 'SDAM error handling' do
 
         it_behaves_like 'does not mark server unknown'
         it_behaves_like 'does not request server scan'
+        it_behaves_like 'does not clear connection pool'
       end
     end
   end
