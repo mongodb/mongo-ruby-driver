@@ -64,9 +64,9 @@ module Mongo
         "#<Mongo::Session::SessionPool:0x#{object_id} current_size=#{@queue.size}>"
       end
 
-      # Checkout a server session from the pool.
+      # Check out a server session from the pool.
       #
-      # @example Checkout a session.
+      # @example Check out a session.
       #   pool.checkout
       #
       # @return [ ServerSession ] The server session.

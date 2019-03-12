@@ -23,7 +23,7 @@ module Mongo
     #   Timeout::Error rather than Mongo::Error.
     #
     # @since 2.9.0
-    class ConnectionCheckoutTimeout < ::Timeout::Error
+    class ConnectionCheckOutTimeout < ::Timeout::Error
 
       # @return [ Mongo::Address ] address The address of the server the
       #   pool's connections connect to.
@@ -33,8 +33,8 @@ module Mongo
 
       # Instantiate the new exception.
       #
-      # @example Instantiate the exception.
-      #   Mongo::Error::ConnectionCheckoutTimeout.new(address)
+      # @param [ Address ] address
+      # @param [ Float ] wait_timeout
       #
       # @since 2.9.0
       # @api private

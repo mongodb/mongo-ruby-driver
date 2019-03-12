@@ -6,8 +6,9 @@ poolOptions:
   minPoolSize: 5
   maxIdleTimeMS: 100
 operations:
-  - name: wait
-    ms: 20
+  - name: waitForEvent
+    event: ConnectionPoolCreated
+    count: 1
 events:
   - type: ConnectionPoolCreated
     address: 42

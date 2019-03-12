@@ -1,6 +1,6 @@
 require 'lite_spec_helper'
 
-describe Mongo::Monitoring::Event::Cmap::ConnectionCheckoutFailed do
+describe Mongo::Monitoring::Event::Cmap::ConnectionCheckOutFailed do
 
   describe '#summary' do
 
@@ -17,7 +17,7 @@ describe Mongo::Monitoring::Event::Cmap::ConnectionCheckoutFailed do
     end
 
     it 'renders correctly' do
-      expect(event.summary).to eq('#<ConnectionCheckoutFailed address=127.0.0.1:27017 reason=timeout>')
+      expect(event.summary).to eq('#<ConnectionCheckOutFailed address=127.0.0.1:27017 reason=timeout>')
     end
   end
 end
