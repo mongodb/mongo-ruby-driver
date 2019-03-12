@@ -116,7 +116,6 @@ class ClusterTools
           # Possible reason is the node we are trying to elect has blacklisted
           # itself. This is where {replSetFreeze: 0} should make it eligible
           # for election again but this seems to not always work.
-          raise
         else
           raise
         end
