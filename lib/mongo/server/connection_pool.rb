@@ -83,7 +83,9 @@ module Mongo
         then
           raise ArgumentError, "Cannot have min size #{options[:min_size]} exceed max size #{options[:max_size]}"
         end
-        options[:wait_timeout] ||= options[:wait_queue_timeout]
+        if options[:wait_queue_timeout]
+          options[:wait_timeout] ||= options[:wait_queue_timeout]
+        end
         options.delete(:wait_queue_timeout)
 
         @server = server
