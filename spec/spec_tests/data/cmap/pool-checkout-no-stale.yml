@@ -1,0 +1,34 @@
+version: 1
+style: unit
+description: must destroy and must not check out a stale connection if found while iterating available connections
+poolOptions:
+  minPoolSize: 3
+operations:
+  - name: wait
+    ms: 20
+  - name: clear
+  - name: checkOut
+events:
+  - type: ConnectionPoolCreated
+    address: 42
+    options: 42
+  - type: ConnectionPoolCleared
+    address: 42
+  - type: ConnectionCheckOutStarted
+
+  # Note: we cannot deterministically assert which connections get destroyed in which order,
+  # just that they will all be destroyed before connection check out.
+  - type: ConnectionClosed
+    connectionId: 42
+    reason: stale
+  - type: ConnectionClosed
+    connectionId: 42
+    reason: stale
+  - type: ConnectionClosed
+    connectionId: 42
+    reason: stale
+  - type: ConnectionCheckedOut
+    connectionId: 4
+ignore:
+  - ConnectionCreated
+  - ConnectionReady

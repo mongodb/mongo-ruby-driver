@@ -15,6 +15,7 @@ GRIDFS_TESTS = Dir.glob("#{CURRENT_PATH}/spec_tests/data/gridfs/*.yml")
 TRANSACTIONS_TESTS = Dir.glob("#{CURRENT_PATH}/spec_tests/data/transactions/*.yml")
 TRANSACTIONS_API_TESTS = Dir.glob("#{CURRENT_PATH}/spec_tests/data/transactions_api/*.yml")
 CHANGE_STREAMS_TESTS = Dir.glob("#{CURRENT_PATH}/spec_tests/data/change_streams/*.yml")
+CMAP_TESTS = Dir.glob("#{CURRENT_PATH}/spec_tests/data/cmap/*.yml")
 
 if ENV['DRIVERS_TOOLS']
   CLIENT_CERT_PEM = ENV['DRIVER_TOOLS_CLIENT_CERT_PEM']
@@ -68,6 +69,7 @@ require 'support/server_selection'
 require 'support/sdam_monitoring'
 require 'support/crud'
 require 'support/command_monitoring'
+require 'support/cmap'
 require 'support/connection_string'
 require 'support/gridfs'
 require 'support/transactions'
