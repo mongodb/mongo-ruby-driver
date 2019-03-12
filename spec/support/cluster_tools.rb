@@ -158,23 +158,9 @@ class ClusterTools
     end
     set_rs_config(cfg)
 
-    begin
-      direct_client(target.address).use('admin').database.command(replSetFreeze: 0)
-    rescue Mongo::Error::OperationFailure => e
-      # Mongo::Error::OperationFailure: cannot freeze node when primary or running for election. state: Primary (95)
-      if e.code == 95
-        # The server we want to become primary may have already become the
-        # primary by holding a spontaneous election and winning due to the
-        # priorities we have set. Check if this is the case and if so, stop.
-        admin_client.cluster.servers_list.each do |server|
-          server.unknown!
-        end
-        if admin_client.cluster.next_primary.address == target.address
-          puts "#{Time.now} [CT] Primary self-elected to #{target.address}"
-          return
-        end
-      end
-      raise
+    if unfreeze_server(target.address)
+      # Target server self-elected as primary, no further action is needed.
+      return
     end
 
     step_down
@@ -214,7 +200,12 @@ class ClusterTools
       raise "Attempting to set primary to #{address} but it is already the primary"
     end
     encourage_primary(address)
-    direct_client(address).use('admin').database.command(replSetFreeze: 0)
+
+    if unfreeze_server(address)
+      # Target server self-elected as primary, no further action is needed.
+      return
+    end
+
     step_down
     persistently_step_up(address)
     admin_client.cluster.next_primary.unknown!
@@ -251,6 +242,34 @@ class ClusterTools
     end
 
     set_rs_config(cfg)
+  end
+
+  # Allows the server at the specified address to run for elections and
+  # potentially become a primary. Use after issuing a step down command
+  # to clear the prohibtion on the stepped down server to be a primary.
+  #
+  # Returns true if the server at address became a primary, such that
+  # a step up command is not necessary.
+  def unfreeze_server(address)
+    begin
+      direct_client(address).use('admin').database.command(replSetFreeze: 0)
+    rescue Mongo::Error::OperationFailure => e
+      # Mongo::Error::OperationFailure: cannot freeze node when primary or running for election. state: Primary (95)
+      if e.code == 95
+        # The server we want to become primary may have already become the
+        # primary by holding a spontaneous election and winning due to the
+        # priorities we have set.
+        admin_client.cluster.servers_list.each do |server|
+          server.unknown!
+        end
+        if admin_client.cluster.next_primary.address == address
+          puts "#{Time.now} [CT] Primary self-elected to #{address}"
+          return true
+        end
+      end
+      raise
+    end
+    false
   end
 
   def unfreeze_all
