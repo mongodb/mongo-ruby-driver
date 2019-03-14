@@ -612,10 +612,10 @@ axes:
   - id: retry-writes
     display_name: Retry Writes
     values:
-      - id: retry-writes
-        display_name: Retry Writes
+      - id: no-retry-writes
+        display_name: No Retry Writes
         variables:
-          RETRY_WRITES: 'true'
+          RETRY_WRITES: 'false'
   - id: lint
     display_name: Lint
     values:
@@ -691,9 +691,9 @@ buildvariants:
      - name: "test"
 
 -
-  matrix_name: "retry-writes"
+  matrix_name: "no-retry-writes"
   matrix_spec:
-    retry-writes: retry-writes
+    retry-writes: no-retry-writes
     ruby: "ruby-2.6"
     mongodb-version: ["4.0"]
     topology: [replica-set, sharded-cluster]

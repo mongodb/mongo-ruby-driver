@@ -111,8 +111,31 @@ class SpecConfig
     end
   end
 
+  def retry_writes
+    case uri_options[:retry_writes]
+    when true
+      true
+    when false
+      false
+    else
+      case (ENV['RETRY_WRITES'] || '').downcase
+      when 'yes', 'true', 'on', '1'
+        true
+      when 'no', 'false', 'off', '0'
+        false
+      else
+        nil
+      end
+    end
+  end
+
   def retry_writes?
-    %w(yes true on 1).include?((ENV['RETRY_WRITES'] || '').downcase)
+    if retry_writes == false
+      false
+    else
+      # Current default is to retry writes
+      true
+    end
   end
 
   def ssl?
@@ -222,11 +245,7 @@ EOT
   end
 
   def retry_writes_options
-    if retry_writes?
-      {retry_writes: true}
-    else
-      {}
-    end
+    {retry_writes: retry_writes}
   end
 
   # Base test options.

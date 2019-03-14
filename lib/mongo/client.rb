@@ -240,6 +240,7 @@ module Mongo
     #   connect to. Servers not in this replica set will be ignored.
     # @option options [ true, false ] :retry_writes Retry writes once when
     #   connected to a replica set or sharded cluster versions 3.6 and up.
+    #   (Default is true.)
     # @option options [ true, false ] :scan Whether to scan all seeds
     #   in constructor. The default in driver version 2.x is to do so;
     #   driver version 3.x will not scan seeds in constructor. Opt in to the
@@ -317,6 +318,9 @@ module Mongo
         options = options.dup
       else
         options = {}
+      end
+      unless options[:retry_writes] == false
+        options[:retry_writes] = true
       end
       Lint.validate_underscore_read_preference(options[:read])
       Lint.validate_read_concern_option(options[:read_concern])
