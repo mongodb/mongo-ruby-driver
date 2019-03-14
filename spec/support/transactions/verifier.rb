@@ -81,10 +81,7 @@ module Mongo
                 end
               end
             else
-              expect(actual).to be_a(Hash)
-              ok = (actual[k] == v || handle_upserted_id(k, v, actual[v]) ||
-                handle_inserted_ids(k, v, actual[v]))
-              expect(ok).to be true
+              verify_hash_items_equal(expected, actual, k)
             end
           end
         else
