@@ -40,7 +40,8 @@ tests:
             aggregate: *collection_name
             pipeline:
               - $match: {_id: {$gte: 2}}
-              - $group: {_id: null, n: {$sum: 1}}
+              - $group: {_id: 1, n: {$sum: 1}}
+            cursor: {}
             lsid: session0
             readConcern:
               level: snapshot
@@ -55,7 +56,8 @@ tests:
             aggregate: *collection_name
             pipeline:
               - $match: {_id: {$gte: 2}}
-              - $group: {_id: null, n: {$sum: 1}}
+              - $group: {_id: 1, n: {$sum: 1}}
+            cursor: {}
             lsid: session0
             readConcern:  # No readConcern
             txnNumber:
@@ -359,7 +361,8 @@ tests:
             aggregate: *collection_name
             pipeline:
               - $match: {_id: {$gte: 2}}
-              - $group: {_id: null, n: {$sum: 1}}
+              - $group: {_id: 1, n: {$sum: 1}}
+            cursor: {}
             lsid: session0
             readConcern:  # No readConcern
             txnNumber:
@@ -373,7 +376,8 @@ tests:
             aggregate: *collection_name
             pipeline:
               - $match: {_id: {$gte: 2}}
-              - $group: {_id: null, n: {$sum: 1}}
+              - $group: {_id: 1, n: {$sum: 1}}
+            cursor: {}
             lsid: session0
             readConcern:  # No readConcern
             txnNumber:
