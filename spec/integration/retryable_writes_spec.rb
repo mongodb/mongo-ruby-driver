@@ -355,15 +355,6 @@ describe 'Retryable writes integration tests' do
 
         it_behaves_like 'an operation that is not retried'
       end
-
-      context 'when the collection has write concern not set' do
-
-        let!(:collection) do
-          client[TEST_COLL]
-        end
-
-        it_behaves_like 'operation that is retried when server supports retryable writes'
-      end
     end
 
     context 'when the client has retry_writes set to false' do
@@ -397,41 +388,6 @@ describe 'Retryable writes integration tests' do
         end
 
         it_behaves_like 'an operation that is not retried'
-      end
-    end
-
-    context 'when the client has retry_writes not set' do
-      require_no_retry_writes
-
-      let!(:client) do
-        authorized_client
-      end
-
-      context 'when the collection has write concern acknowledged' do
-
-        let!(:collection) do
-          client[TEST_COLL, write: SpecConfig.instance.write_concern]
-        end
-
-        it_behaves_like 'an operation that is retried'
-      end
-
-      context 'when the collection has write concern unacknowledged' do
-
-        let!(:collection) do
-          client[TEST_COLL, write: { w: 0 }]
-        end
-
-        it_behaves_like 'an operation that is not retried'
-      end
-
-      context 'when the collection has write concern not set' do
-
-        let!(:collection) do
-          client[TEST_COLL]
-        end
-
-        it_behaves_like 'an operation that is retried'
       end
     end
   end

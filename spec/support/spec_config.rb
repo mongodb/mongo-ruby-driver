@@ -112,13 +112,20 @@ class SpecConfig
   end
 
   def retry_writes
-    case (ENV['RETRY_WRITES'] || '').downcase
-    when 'yes', 'true', 'on', '1'
+    case uri_options[:retry_writes]
+    when true
       true
-    when 'no', 'false', 'off', '0'
+    when false
       false
     else
-      nil
+      case (ENV['RETRY_WRITES'] || '').downcase
+      when 'yes', 'true', 'on', '1'
+        true
+      when 'no', 'false', 'off', '0'
+        false
+      else
+        nil
+      end
     end
   end
 
