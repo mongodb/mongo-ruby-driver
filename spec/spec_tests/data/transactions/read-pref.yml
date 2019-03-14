@@ -1,6 +1,7 @@
 # This test doesn't check contents of command-started events.
-database_name: &database_name "ruby-driver"
-collection_name: &collection_name "transactions-tests"
+topology: [replicaset, sharded]
+database_name: &database_name "transaction-tests"
+collection_name: &collection_name "test"
 
 data: []
 
