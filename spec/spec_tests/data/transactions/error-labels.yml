@@ -363,6 +363,7 @@ tests:
             pipeline:
               - $project:
                   _id: 1
+            cursor: {}
             readConcern:
             lsid: session0
             txnNumber:
