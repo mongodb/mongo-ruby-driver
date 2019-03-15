@@ -177,7 +177,7 @@ module Mongo
         context.verify_mode = OpenSSL::SSL::VERIFY_PEER
         cert_store = OpenSSL::X509::Store.new
         if options[:ssl_ca_cert]
-          cert_store.add_cert(OpenSSL::X509::Certificate.new(File.open(options[:ssl_ca_cert])))
+          cert_store.add_file(options[:ssl_ca_cert])
         elsif options[:ssl_ca_cert_string]
           cert_store.add_cert(OpenSSL::X509::Certificate.new(options[:ssl_ca_cert_string]))
         elsif options[:ssl_ca_cert_object]
