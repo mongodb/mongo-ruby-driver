@@ -41,6 +41,7 @@ tests:
             pipeline:
               - $match: {_id: {$gte: 2}}
               - $group: {_id: null, n: {$sum: 1}}
+            cursor: {}
             lsid: session0
             readConcern:
               level: snapshot
@@ -56,6 +57,7 @@ tests:
             pipeline:
               - $match: {_id: {$gte: 2}}
               - $group: {_id: null, n: {$sum: 1}}
+            cursor: {}
             lsid: session0
             readConcern:  # No readConcern
             txnNumber:
@@ -360,6 +362,7 @@ tests:
             pipeline:
               - $match: {_id: {$gte: 2}}
               - $group: {_id: null, n: {$sum: 1}}
+            cursor: {}
             lsid: session0
             readConcern:  # No readConcern
             txnNumber:
@@ -374,6 +377,7 @@ tests:
             pipeline:
               - $match: {_id: {$gte: 2}}
               - $group: {_id: null, n: {$sum: 1}}
+            cursor: {}
             lsid: session0
             readConcern:  # No readConcern
             txnNumber:
