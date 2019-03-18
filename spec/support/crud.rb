@@ -12,10 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'support/crud/read'
-require 'support/crud/write'
-require 'support/crud/verifier'
-
 module Mongo
   module CRUD
 
@@ -125,7 +121,13 @@ module Mongo
           @fail_point_command = FAIL_POINT_BASE_COMMAND.merge(test['failPoint'])
         end
         @description = test['description']
-        @operation = Operation.get(test['operation'])
+        if test['operations']
+          @operations = test['operations'].map do |op_spec|
+            Operation.get(op_spec)
+          end
+        else
+          @operations = [Operation.get(test['operation'], test['outcome'])]
+        end
         @outcome = test['outcome']
       end
 
@@ -143,7 +145,11 @@ module Mongo
       #
       # @since 2.0.0
       def run(collection)
-        @operation.execute(collection)
+        result = nil
+        @operations.each do |op|
+          result = op.execute(collection)
+        end
+        result
       end
 
       def setup_test(collection)
@@ -175,11 +181,11 @@ module Mongo
       #
       # @since 2.0.0
       def result
-        @operation.has_results? ? @outcome['result'] : []
+        @outcome['result'] || []
       end
 
       def error?
-        !!@outcome['error']
+        @operations.last.outcome.error?
       end
 
       # The expected data in the collection as an outcome after running this test.
@@ -192,7 +198,7 @@ module Mongo
       #
       # @since 2.4.0
       def outcome_collection_data
-        @outcome['collection']['data'] if @outcome['collection']
+        @outcome['collection']['data'] if @outcome && @outcome['collection']
       end
 
       private
@@ -204,30 +210,11 @@ module Mongo
         end
       end
     end
-
-    # Helper module for instantiating either a Read or Write test operation.
-    #
-    # @since 2.0.0
-    module Operation
-      extend self
-
-      # Get a new Operation.
-      #
-      # @example Get the operation.
-      #   Operation.get(spec)
-      #
-      # @param [ Hash ] spec The operation specification.
-      #
-      # @return [ Operation::Write, Operation::Read ] The Operation object.
-      #
-      # @since 2.0.0
-      def get(spec)
-        if Write::OPERATIONS.keys.include?(spec['name'])
-          Write.new(spec)
-        else
-          Read.new(spec)
-        end
-      end
-    end
   end
 end
+
+require 'support/crud/outcome'
+require 'support/crud/operation'
+require 'support/crud/read'
+require 'support/crud/write'
+require 'support/crud/verifier'

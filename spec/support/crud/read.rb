@@ -54,8 +54,9 @@ module Mongo
         # @return [ Hash ] spec The operation spec.
         #
         # @since 2.0.0
-        def initialize(spec)
+        def initialize(spec, outcome_spec = nil)
           @spec = spec
+          @outcome = Outcome.new(outcome_spec || spec)
           @name = spec['name']
         end
 

@@ -61,13 +61,18 @@ module Mongo
 
         # Instantiate the operation.
         #
-        # @return [ Hash ] spec The operation spec.
+        # @param [ Hash ] spec The operation specification.
+        # @param [ Hash ] outcome_spec The outcome specification.
+        #   If not provided, outcome is taken out of operation specification.
         #
         # @since 2.0.0
-        def initialize(spec)
+        def initialize(spec, outcome_spec = nil)
           @spec = spec
           @name = spec['name']
+          @outcome = Outcome.new(outcome_spec || spec)
         end
+
+        attr_reader :outcome
 
         # Whether the operation is expected to have results.
         #
