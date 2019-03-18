@@ -111,6 +111,7 @@ module Mongo
           return_doc['upsertedIds'] = result.upserted_ids if result.upserted_ids
           return_doc['upsertedId'] = result.upserted_id if upsert
           return_doc['upsertedCount'] = result.upserted_count if result.upserted_count
+          return_doc['insertedCount'] = result.inserted_count if result.inserted_count
           return_doc['matchedCount'] = result.matched_count if result.matched_count
           return_doc['modifiedCount'] = result.modified_count if result.modified_count
           return_doc
