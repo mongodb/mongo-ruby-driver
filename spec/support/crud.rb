@@ -128,10 +128,11 @@ module Mongo
         else
           @operations = [Operation.get(test['operation'], test['outcome'])]
         end
-        @outcome = test['outcome']
       end
 
-      attr_reader :outcome
+      def expected_outcome
+        @operations.last.outcome
+      end
 
       # Run the test.
       #
@@ -181,11 +182,11 @@ module Mongo
       #
       # @since 2.0.0
       def result
-        @outcome['result'] || []
+        expected_outcome.result
       end
 
       def error?
-        @operations.last.outcome.error?
+        expected_outcome.error?
       end
 
       # The expected data in the collection as an outcome after running this test.
@@ -198,14 +199,18 @@ module Mongo
       #
       # @since 2.4.0
       def outcome_collection_data
-        @outcome['collection']['data'] if @outcome && @outcome['collection']
+        if expected_outcome.collection_data?
+          expected_outcome.collection_data
+        else
+          nil
+        end
       end
 
       private
 
       def actual_collection_data
-        if @outcome['collection']
-          collection_name = @outcome['collection']['name'] || @collection.name
+        if expected_outcome.collection_data?
+          collection_name = expected_outcome.collection_name || @collection.name
           @collection.database[collection_name].find.to_a
         end
       end

@@ -17,13 +17,27 @@ module Mongo
     class Outcome
       def initialize(spec)
         @result = spec['result']
-        @data = spec['collection'] && spec['collection']['data']
+        @collection = spec['collection']
         @error = spec['error']
       end
 
       def error?
         !!@error
       end
+
+      def collection_data?
+        !!collection_data
+      end
+
+      def collection_data
+        @collection && @collection['data']
+      end
+
+      def collection_name
+        @collection && @collection['name']
+      end
+
+      attr_reader :result
     end
   end
 end
