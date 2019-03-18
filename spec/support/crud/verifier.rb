@@ -85,7 +85,9 @@ module Mongo
           return
         end
 
-        if %w(deletedCount).include?(k)
+        if %w(deletedCount matchedCount modifiedCount upsertedCount).include?(k)
+          # Some tests assert that some of these counts are zero.
+          # The driver may omit the respective key, which is fine.
           if expected[k] == 0
             expect([0, nil]).to include(actual[k])
             return
@@ -94,11 +96,9 @@ module Mongo
 
         if %w(insertedIds upsertedIds).include?(k)
           if expected[k] == {}
-            if actual[k]
-              expect(actual[k]).to eq({})
-            else
-              expect(actual).not_to have_key(k)
-            end
+            # Like with the counts, allow a response to not specify the
+            # ids in question if the expectation is for an empty id map.
+            expect([nil, []]).to include(actual[k])
           else
             expect(actual[k]).to eq(expected[k].values)
           end
