@@ -155,18 +155,42 @@ describe Mongo::Client do
 
     context 'when providing options' do
 
-      context 'when retry_writes is defined' do
-
-        let(:options) do
-          { retry_writes: true }
-        end
-
+      context 'retry_writes option' do
         let(:client) do
-          new_local_client_nmio(SpecConfig.instance.addresses, authorized_client.options.merge(options))
+          new_local_client_nmio(SpecConfig.instance.addresses, options)
         end
 
-        it 'sets the option' do
-          expect(client.options['retry_writes']).to eq(options[:retry_writes])
+        context 'when retry_writes is true' do
+
+          let(:options) do
+            { retry_writes: true }
+          end
+
+          it 'sets retry_writes to true' do
+            expect(client.options['retry_writes']).to be true
+          end
+        end
+
+        context 'when retry_writes is false' do
+
+          let(:options) do
+            { retry_writes: false }
+          end
+
+          it 'sets retry_writes to false' do
+            expect(client.options['retry_writes']).to be false
+          end
+        end
+
+        context 'when retry_writes is not given' do
+
+          let(:options) do
+            { retry_writes: true }
+          end
+
+          it 'sets retry_writes to true' do
+            expect(client.options['retry_writes']).to be true
+          end
         end
       end
 
@@ -630,7 +654,7 @@ describe Mongo::Client do
 
         let(:expected_options) do
           Mongo::Options::Redacted.new(:write => { :w => 3 },
-            monitoring_io: false, :database => 'testdb')
+            monitoring_io: false, :database => 'testdb', retry_writes: true)
         end
 
         it 'sets the options' do
@@ -731,7 +755,7 @@ describe Mongo::Client do
 
         let(:expected_options) do
           Mongo::Options::Redacted.new(:write => { :w => 3 },
-            monitoring_io: false, :database => 'testdb')
+            monitoring_io: false, :database => 'testdb', retry_writes: true)
         end
 
         it 'sets the options' do
@@ -751,7 +775,7 @@ describe Mongo::Client do
 
         let(:expected_options) do
           Mongo::Options::Redacted.new(:write => { :w => 4 },
-            monitoring_io: false, :database => 'testdb')
+            monitoring_io: false, :database => 'testdb', retry_writes: true)
         end
 
         it 'allows explicit options to take preference' do
@@ -987,16 +1011,14 @@ describe Mongo::Client do
 
       let(:new_options) do
         Mongo::Options::Redacted.new(:read => { :mode => :primary },
-                                             :write => { :w => 1 },
-                                             monitoring_io: false,
-                                             :database => SpecConfig.instance.test_db)
+          :write => { :w => 1 }, monitoring_io: false,
+          :database => SpecConfig.instance.test_db, retry_writes: true)
       end
 
       let(:original_options) do
         Mongo::Options::Redacted.new(:read => { :mode => :secondary },
-                                             :write => { :w => 1 },
-                                             monitoring_io: false,
-                                             :database => SpecConfig.instance.test_db)
+          :write => { :w => 1 }, monitoring_io: false,
+          :database => SpecConfig.instance.test_db, retry_writes: true)
       end
 
       it 'returns a new client' do
