@@ -69,7 +69,7 @@ module Mongo
           @name = spec['name']
         end
 
-        # Whether the operation is expected to have restuls.
+        # Whether the operation is expected to have results.
         #
         # @example Whether the operation is expected to have results.
         #   operation.has_results?
