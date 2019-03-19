@@ -96,6 +96,11 @@ describe Mongo::Retryable do
     LegacyRetryableTestConsumer.new(operation, cluster)
   end
 
+  before do
+    # Retryable reads perform server selection
+    allow_any_instance_of(Mongo::ServerSelector::Primary).to receive(:select_server).and_return(server)
+  end
+
   describe '#read_with_retry' do
 
     context 'when no exception occurs' do
