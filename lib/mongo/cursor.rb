@@ -53,7 +53,10 @@ module Mongo
     # @param [ Hash ] options The cursor options.
     #
     # @option options [ true, false ] :disable_retry Whether to disable
-    #   retrying on error when sending getMores.
+    #   retrying on error when sending getMore operations (deprecated, getMore
+    #   operations are no longer retried)
+    # @option options [ true, false ] :retry_reads Retry reads (following
+    #   the modern mechanism), default is true
     #
     # @since 2.0.0
     def initialize(view, result, server, options = {})
@@ -75,6 +78,8 @@ module Mongo
       end
     end
 
+    # @api private
+    attr_reader :server
 
     # Finalize the cursor for garbage collection. Schedules this cursor to be included
     # in a killCursors operation executed by the Cluster's CursorReaper.

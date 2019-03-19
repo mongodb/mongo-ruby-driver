@@ -37,14 +37,22 @@ module Mongo
         def each
           @cursor = nil
           session = client.send(:get_session, @options)
-          read_with_retry(session, server_selector) do |server|
+          @cursor = if respond_to?(:out?, true) && out?
+            server = server_selector.select_server(cluster)
             result = send_initial_query(server, session)
-            @cursor = Cursor.new(view, result, server, session: session)
+            Cursor.new(view, result, server, session: session)
+          else
+            read_with_retry_cursor(session, server_selector, view) do |server|
+              send_initial_query(server, session)
+            end
           end
-          @cursor.each do |doc|
-            yield doc
-          end if block_given?
-          @cursor.to_enum
+          if block_given?
+            @cursor.each do |doc|
+              yield doc
+            end
+          else
+            @cursor.to_enum
+          end
         end
 
         # Stop the iteration by sending a KillCursors command to the server.

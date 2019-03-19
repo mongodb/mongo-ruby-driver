@@ -146,14 +146,14 @@ module Mongo
           with_session(opts) do |session|
             read_with_retry(session, selector) do |server|
               apply_collation!(cmd, server, opts)
-              Operation::Count.new({
+              Operation::Count.new(
                                      :selector => cmd,
                                      :db_name => database.name,
                                      :options => {:limit => -1},
                                      :read => read_pref,
                                      :session => session
-                                    }).execute(server)
-              end.n.to_i
+              ).execute(server)
+            end.n.to_i
           end
         end
 

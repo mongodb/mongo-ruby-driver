@@ -22,6 +22,7 @@ module Mongo
   # @since 2.0.0
   class Database
     extend Forwardable
+    include Retryable
 
     # The admin database name.
     #
@@ -163,15 +164,16 @@ module Mongo
       txn_read_pref ||= opts[:read] || ServerSelector::PRIMARY
       Lint.validate_underscore_read_preference(txn_read_pref)
       preference = ServerSelector.get(txn_read_pref)
-      server = preference.select_server(cluster)
 
       client.send(:with_session, opts) do |session|
-        Operation::Command.new({
-          :selector => operation.dup,
-          :db_name => name,
-          :read => preference,
-          :session => session
-        }).execute(server)
+        read_with_retry(session, preference) do |server|
+          Operation::Command.new({
+            :selector => operation.dup,
+            :db_name => name,
+            :read => preference,
+            :session => session
+          }).execute(server)
+        end
       end
     end
 

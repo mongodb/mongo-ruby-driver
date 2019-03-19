@@ -443,6 +443,26 @@ module Mongo
       end
     end
 
+    # Whether reads executed with this session can be retried according to
+    # the modern retryable reads specification.
+    #
+    # If this method returns true, the modern retryable reads have been
+    # requested by the application. If the server selected for a read operation
+    # supports modern retryable reads, they will be used for that particular
+    # operation. If the server selected for a read operation does not support
+    # modern retryable reads, the read will not be retried.
+    #
+    # If this method returns false, legacy retryable reads have been requested
+    # by the application. Legacy retryable read logic will be used regardless
+    # of server version of the server(s) that the client is connected to.
+    # The number of read retries is given by :max_read_retries client option,
+    # which is 1 by default and can be set to 0 to disable legacy read retries.
+    #
+    # @api private
+    def retry_reads?
+      client.options[:retry_reads] != false
+    end
+
     # Will writes executed with this session be retried.
     #
     # @example Will writes be retried.

@@ -21,6 +21,7 @@ module Mongo
     class View
       extend Forwardable
       include Enumerable
+      include Retryable
 
       def_delegators :@database, :cluster, :read_preference, :client
       def_delegators :cluster, :next_primary
@@ -50,10 +51,12 @@ module Mongo
       # @since 2.0.0
       def collection_names(options = {})
         @batch_size = options[:batch_size]
-        server = next_primary(false)
         session = client.send(:get_session, options)
-        collections_info(server, session, name_only: true).collect do |info|
-          if server.features.list_collections_enabled?
+        cursor = read_with_retry_cursor(session, ServerSelector.get(mode: :primary), self) do |server|
+          send_initial_query(server, session, name_only: true)
+        end
+        cursor.map do |info|
+          if cursor.server.features.list_collections_enabled?
             info[Database::NAME]
           else
             (info[Database::NAME] &&
@@ -72,7 +75,7 @@ module Mongo
       # @since 2.0.5
       def list_collections
         session = client.send(:get_session)
-        collections_info(next_primary(false), session)
+        collections_info(session, ServerSelector.get(mode: :primary))
       end
 
       # Create the new database view.
@@ -92,12 +95,17 @@ module Mongo
 
       private
 
-      def collections_info(server, session, options = {}, &block)
-        cursor = Cursor.new(self, send_initial_query(server, session, options), server, session: session)
-        cursor.each do |doc|
-          yield doc
-        end if block_given?
-        cursor.to_enum
+      def collections_info(session, server_selector, options = {}, &block)
+        cursor = read_with_retry_cursor(session, server_selector, self) do |server|
+          send_initial_query(server, session, options)
+        end
+        if block_given?
+          cursor.each do |doc|
+            yield doc
+          end
+        else
+          cursor.to_enum
+        end
       end
 
       def collections_info_spec(session, options = {})
