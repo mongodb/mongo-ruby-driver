@@ -22,4 +22,24 @@ module Utils
     end
   end
   module_function :snakeize_hash
+
+  # Converts camel case clientOptions, as used in spec tests,
+  # to Ruby driver underscore options.
+  def convert_client_options(spec_test_options)
+    spec_test_options.reduce({}) do |opts, kv|
+      case kv.first
+      when 'readConcernLevel'
+        kv = [:read_concern, { 'level' => kv.last }]
+      when 'readPreference'
+        kv = [:read, { 'mode' => kv.last }]
+      when 'w'
+        kv = [:write, { w: kv.last }]
+      else
+        kv[0] = camel_to_snake(kv[0])
+      end
+
+      opts.tap { |o| o[kv.first] = kv.last }
+    end
+  end
+  module_function :convert_client_options
 end
