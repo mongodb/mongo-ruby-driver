@@ -110,13 +110,13 @@ describe Mongo::Cursor do
           before do
             expect(cursor).to receive(:get_more_operation).and_return(op).ordered
             expect(op).to receive(:execute).and_raise(Mongo::Error::SocketError).ordered
-            expect(cursor).to receive(:get_more_operation).and_call_original.ordered
           end
 
-          it 'iterates the documents' do
-            cursor.each do |doc|
-              expect(doc).to have_key('field')
-            end
+          it 'raises the error' do
+            expect do
+              cursor.each do |doc|
+              end
+            end.to raise_error(Mongo::Error::SocketError)
           end
         end
 
