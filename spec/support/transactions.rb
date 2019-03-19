@@ -103,6 +103,8 @@ module Mongo
       attr_reader :expected_results
       attr_reader :skip_reason
 
+      attr_reader :results
+
       # Instantiate the new CRUDTest.
       #
       # @example Create the test.
@@ -222,7 +224,6 @@ module Mongo
           e.command['getMore'] = { '$numberLong' => '42' } if e.command['getMore']
 
           # Remove fields if empty
-          e.command.delete('cursor') if e.command['cursor'] && e.command['cursor'].empty?
           e.command.delete('filter') if e.command['filter'] && e.command['filter'].empty?
           e.command.delete('query') if e.command['query'] && e.command['query'].empty?
 
@@ -246,7 +247,7 @@ module Mongo
           event['command_started_event'] = order_hash(event['command_started_event'])
         end
 
-        {
+        @results = {
           results: results,
           contents: @collection.find.to_a,
           events: events,
