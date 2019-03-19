@@ -119,7 +119,7 @@ module Mongo
         @spec = spec
         @data = data
         @description = test['description']
-        @client_options = convert_client_options(test['clientOptions'] || {})
+        @client_options = Utils.convert_client_options(test['clientOptions'] || {})
         @session_options = Utils.snakeize_hash(test['sessionOptions'] || {})
         @fail_point = test['failPoint']
         @operations = test['operations']
@@ -301,25 +301,6 @@ module Mongo
 
       def order_hash(hash)
         Hash[hash.to_a.sort]
-      end
-
-      private
-
-      def convert_client_options(client_options)
-        client_options.reduce({}) do |opts, kv|
-          case kv.first
-          when 'readConcernLevel'
-            kv = [:read_concern, { 'level' => kv.last }]
-          when 'readPreference'
-            kv = [:read, { 'mode' => kv.last }]
-          when 'w'
-            kv = [:write, { w: kv.last }]
-          else
-            kv[0] = Utils.camel_to_snake(kv[0])
-          end
-
-          opts.tap { |o| o[kv.first] = kv.last }
-        end
       end
     end
   end
