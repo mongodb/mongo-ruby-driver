@@ -103,4 +103,3 @@ operator:
       #=> Yields a BSON::Document.
 
     end
-
