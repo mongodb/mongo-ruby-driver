@@ -40,10 +40,10 @@ module Mongo
     #
     # @since 2.1.0
     def read_with_retry(session, server_selector)
+      server = server_selector.select_server(cluster)
       attempt = 0
       begin
         attempt += 1
-        server = server_selector.select_server(cluster)
         yield server
       rescue Error::SocketError, Error::SocketTimeoutError => e
         if attempt > cluster.max_read_retries || (session && session.in_transaction?)
