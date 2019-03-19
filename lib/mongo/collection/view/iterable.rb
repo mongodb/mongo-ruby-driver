@@ -37,8 +37,7 @@ module Mongo
         def each
           @cursor = nil
           session = client.send(:get_session, @options)
-          read_with_retry(session) do
-            server = server_selector.select_server(cluster)
+          read_with_retry(session, server_selector) do |server|
             result = send_initial_query(server, session)
             @cursor = Cursor.new(view, result, server, session: session)
           end
