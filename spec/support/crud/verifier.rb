@@ -70,28 +70,44 @@ module Mongo
         when nil
           expect(actual).to be nil
         when Hash
-          actual.each do |k, v|
-            ok = expected[k] == v || handle_upserted_id(k, expected[k], v) || handle_inserted_ids(k, expected[k], v)
-            expect(ok).to be true
+          expected.each do |k, v|
+            verify_hash_items_equal(expected, actual, k)
           end
         when Integer
           expect(actual).to eq(expected)
         end
       end
 
-      def handle_upserted_id(field, expected_id, actual_id)
-        return true if expected_id.nil?
-        if field == 'upsertedId'
-          if expected_id.is_a?(Integer)
-            actual_id.is_a?(BSON::ObjectId) || actual_id.nil?
+      def verify_hash_items_equal(expected, actual, k)
+        expect(actual).to be_a(Hash)
+
+        if expected[k] == actual[k]
+          return
+        end
+
+        if %w(deletedCount matchedCount modifiedCount upsertedCount).include?(k)
+          # Some tests assert that some of these counts are zero.
+          # The driver may omit the respective key, which is fine.
+          if expected[k] == 0
+            expect([0, nil]).to include(actual[k])
+            return
           end
         end
-      end
 
-      def handle_inserted_ids(field, expected, actual)
-        if field == 'insertedIds'
-          expected.values == actual
+        if %w(insertedIds upsertedIds).include?(k)
+          if expected[k] == {}
+            # Like with the counts, allow a response to not specify the
+            # ids in question if the expectation is for an empty id map.
+            expect([nil, []]).to include(actual[k])
+          else
+            expect(actual[k]).to eq(expected[k].values)
+          end
+          return
         end
+
+        # This should produce a meaningful error message,
+        # even though we do not actually require that expected[k] == actual[k]
+        expect(expected[k]).to eq(actual[k])
       end
     end
   end
