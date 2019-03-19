@@ -812,6 +812,7 @@ module Mongo
             if e.label?(Mongo::Error::UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL)
               # WriteConcernFailed
               if e.is_a?(Mongo::Error::OperationFailure) && e.code == 64 && e.wtimeout?
+                transaction_in_progress = false
                 raise
               end
               if Time.now >= deadline
