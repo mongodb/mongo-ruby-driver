@@ -185,7 +185,7 @@ describe Mongo::Client do
         context 'when retry_writes is not given' do
 
           let(:options) do
-            { retry_writes: true }
+            { }
           end
 
           it 'sets retry_writes to true' do
