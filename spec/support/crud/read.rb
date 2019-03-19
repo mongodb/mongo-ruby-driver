@@ -73,7 +73,7 @@ module Mongo
           send(Utils.camel_to_snake(name), collection)
         end
 
-        # Whether the operation is expected to have restuls.
+        # Whether the operation is expected to have results.
         #
         # @example Whether the operation is expected to have results.
         #   operation.has_results?
