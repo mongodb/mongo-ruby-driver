@@ -193,6 +193,8 @@ describe Mongo::Client do
       )
     end
 
+    let(:default_options) { Mongo::Options::Redacted.new(retry_writes: true) }
+
     let(:options) do
       Mongo::Options::Redacted.new(:read => { :mode => :primary },
                                     :local_threshold => 0.010,
@@ -201,7 +203,7 @@ describe Mongo::Client do
     end
 
     let(:expected) do
-      [client.cluster, options].hash
+      [client.cluster, default_options.merge(options)].hash
     end
 
     it 'returns a hash of the cluster and options' do
