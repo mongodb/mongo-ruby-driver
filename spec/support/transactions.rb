@@ -42,10 +42,15 @@ module Mongo
       #
       # @since 2.6.0
       def initialize(file)
-        file = File.new(file)
-        contents = ERB.new(file.read).result
+        contents = ERB.new(File.read(file)).result
+
+        # Since Ruby driver binds a client to a database, change the
+        # database name in the spec to the one we are using
+        contents.sub!(/"transaction-tests"/, '"ruby-driver"')
+        # ... and collection name because we apparently hardcode that too
+        contents.sub!(/"test"/, '"transactions-tests"')
+
         @spec = YAML.load(contents)
-        file.close
         @description = File.basename(file)
         @data = @spec['data']
         @transaction_tests = @spec['tests']
