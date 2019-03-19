@@ -60,6 +60,8 @@ module Mongo
           @name = spec['name']
         end
 
+        attr_reader :outcome
+
         # Execute the operation.
         #
         # @example Execute the operation.
