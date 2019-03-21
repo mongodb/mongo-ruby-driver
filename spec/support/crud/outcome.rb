@@ -29,6 +29,10 @@ module Mongo
         !!collection_data
       end
 
+      # The expected data in the collection as an outcome after running an
+      # operation.
+      #
+      # @return [ Array<Hash> ] The list of documents expected to be in the collection.
       def collection_data
         @collection && @collection['data']
       end
@@ -37,6 +41,9 @@ module Mongo
         @collection && @collection['name']
       end
 
+      # The expected result of running an operation.
+      #
+      # @return [ Array<Hash> ] The expected result.
       attr_reader :result
     end
   end

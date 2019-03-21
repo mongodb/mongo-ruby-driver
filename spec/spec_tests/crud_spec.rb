@@ -38,13 +38,17 @@ describe 'CRUD' do
             end
           end
 
-          it 'returns the correct result' do
-            verifier.verify_operation_result(results)
-          end
+          test.operations.each_with_index do |operation, index|
+            context "operation #{index+1}" do
+              it 'returns the correct result' do
+                verifier.verify_operation_result(results)
+              end
 
-          it 'has the correct data in the collection', if: test.outcome_collection_data do
-            results
-            verifier.verify_collection_data(actual_collection.find.to_a)
+              it 'has the correct data in the collection', if: operation.outcome.collection_data? do
+                results
+                verifier.verify_collection_data(actual_collection.find.to_a)
+              end
+            end
           end
         end
       end
