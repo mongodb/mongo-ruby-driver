@@ -24,29 +24,29 @@ describe 'CRUD' do
             authorized_collection.delete_many
           end
 
-          let!(:results) do
-            test.run(authorized_collection)
-          end
-
           let(:verifier) { Mongo::CRUD::Verifier.new(test) }
-
-          let(:actual_collection) do
-            if test.expected_outcome && test.expected_outcome.collection_name
-              authorized_client[test.expected_outcome.collection_name]
-            else
-              authorized_collection
-            end
-          end
 
           test.operations.each_with_index do |operation, index|
             context "operation #{index+1}" do
+
+              let!(:result) do
+                test.run(authorized_collection, index+1)
+              end
+
+              let(:actual_collection) do
+                if operation.outcome && operation.outcome.collection_name
+                  authorized_client[operation.outcome.collection_name]
+                else
+                  authorized_collection
+                end
+              end
+
               it 'returns the correct result' do
-                verifier.verify_operation_result(results)
+                verifier.verify_operation_result(operation, result)
               end
 
               it 'has the correct data in the collection', if: operation.outcome.collection_data? do
-                results
-                verifier.verify_collection_data(actual_collection.find.to_a)
+                verifier.verify_collection_data(operation, actual_collection.find.to_a)
               end
             end
           end

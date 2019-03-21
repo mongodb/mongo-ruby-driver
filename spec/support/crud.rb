@@ -139,19 +139,20 @@ module Mongo
 
       # Run the test.
       #
-      # @example Run the test.
-      #   test.run(collection)
+      # The specified number of operations are executed, so that the
+      # test can assert on the outcome of each specified operation in turn.
       #
       # @param [ Collection ] collection The collection the test
       #   should be run on.
+      # @param [ Integer ] num_ops Number of operations to run.
       #
       # @return [ Result, Array<Hash> ] The result(s) of running the test.
       #
       # @since 2.0.0
-      def run(collection)
+      def run(collection, num_ops)
         result = nil
-        @operations.each do |op|
-          result = op.execute(collection)
+        1.upto(num_ops) do |i|
+          result = @operations[i-1].execute(collection)
         end
         result
       end
