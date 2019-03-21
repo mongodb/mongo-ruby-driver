@@ -37,34 +37,39 @@ describe 'Retryable writes spec tests' do
             collection.delete_many
           end
 
-          let(:results) do
-            if test.error?
-              error = nil
-              begin
-                test.run(collection)
-              rescue => e
-                error = e
-              end
-              error
-            else
-              test.run(collection)
-            end
-          end
-
           let(:verifier) { Mongo::CRUD::Verifier.new(test) }
 
-          it 'has the correct data in the collection', if: test.outcome_collection_data do
-            results
-            verifier.verify_collection_data(authorized_collection.find.to_a)
-          end
+          test.operations.each_with_index do |operation, index|
+            context "operation #{index+1}" do
 
-          if test.error?
-            it 'raises an error' do
-              expect(results).to be_a(Mongo::Error)
-            end
-          else
-            it 'returns the correct result' do
-              verifier.verify_operation_result(results)
+              let(:result) do
+                if operation.outcome.error?
+                  error = nil
+                  begin
+                    test.run(collection, index+1)
+                  rescue => e
+                    error = e
+                  end
+                  error
+                else
+                  test.run(collection, index+1)
+                end
+              end
+
+              it 'has the correct data in the collection', if: operation.outcome.collection_data? do
+                result
+                verifier.verify_collection_data(operation, authorized_collection.find.to_a)
+              end
+
+              if operation.outcome.error?
+                it 'raises an error' do
+                  expect(result).to be_a(Mongo::Error)
+                end
+              else
+                it 'returns the correct result' do
+                  verifier.verify_operation_result(operation, result)
+                end
+              end
             end
           end
         end
