@@ -494,6 +494,23 @@ describe Mongo::Socket::SSL do
       end
     end
 
+    context 'when a CA certificate chain is provided' do
+      context 'as a path to a file' do
+        require_local_tls
+
+        let(:options) do
+          super().merge(
+            :ssl_ca_cert => CHAIN_PEM,
+            :ssl_verify => true
+          )
+        end
+
+        it 'verifies the server certificate' do
+          expect(socket).to be_alive
+        end
+      end
+    end
+
     context 'when ssl_verify is not specified' do
       require_local_tls
 

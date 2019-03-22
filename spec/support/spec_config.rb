@@ -166,7 +166,7 @@ EOT
   end
 
   def ssl_certs_dir
-    "#{spec_root}/support/certificates"
+    "#{spec_root}/support/certificates/chain"
   end
 
   def client_cert_pem

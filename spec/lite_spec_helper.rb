@@ -31,6 +31,10 @@ else
   CLIENT_CERT_PEM = "#{SSL_CERTS_DIR}/client_cert.pem"
   CLIENT_KEY_ENCRYPTED_PEM = "#{SSL_CERTS_DIR}/client_key_encrypted.pem"
   CLIENT_KEY_PASSPHRASE = "passphrase"
+
+  # Chain certs
+  SSL_CERTS_CHAIN_DIR = "#{SSL_CERTS_DIR}/chain"
+  CHAIN_PEM = "#{SSL_CERTS_CHAIN_DIR}/ca-chain.pem"
 end
 
 require 'mongo'
