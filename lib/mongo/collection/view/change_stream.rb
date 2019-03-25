@@ -81,6 +81,12 @@ module Mongo
         #   return changes that occurred at or after the specified timestamp. Any
         #   command run against the server will return a cluster time that can
         #   be used here. Only recognized by server versions 4.0+.
+        # @option options [ Bson::Document, Hash ] :start_after Similar to :resume_after, this
+        #   option takes a resume token and starts a new change stream returning the first
+        #   notification after the token. This will allow users to watch collections that have been
+        #   dropped and recreated or newly renamed collections without missing any notifications.
+        #
+        #   The server will report an error if `startAfter` and `resumeAfter` are both specified.
         #
         # @since 2.5.0
         def initialize(view, pipeline, changes_for, options = {})
@@ -89,6 +95,7 @@ module Mongo
           @change_stream_filters = pipeline && pipeline.dup
           @options = options && options.dup.freeze
           @resume_token = @options[:resume_after]
+          @start_after = @options[:start_after]
           create_cursor!
 
           # We send different parameters when we resume a change stream
@@ -296,6 +303,10 @@ module Mongo
               if @resume_token
                 # Spec says we need to remove startAtOperationTime if
                 # one was passed in by user, thus we won't forward it
+              elsif @start_after
+                # The spec says to set `resumeAfter` to the `startAfter` token and not to send
+                # either `startAfter` or `startAtOperationTime`.
+                @resume_token = @start_after
               elsif start_at_operation_time_supported? && @start_at_operation_time
                 # It is crucial to check @start_at_operation_time_supported
                 # here - we may have switched to an older server that
@@ -309,6 +320,10 @@ module Mongo
                 raise Mongo::Error::MissingResumeToken
               end
             else
+              if @start_after
+                doc[:startAfter] = @start_after
+              end
+
               if options[:start_at_operation_time]
                 doc[:startAtOperationTime] = time_to_bson_timestamp(
                   options[:start_at_operation_time])

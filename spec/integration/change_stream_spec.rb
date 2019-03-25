@@ -366,4 +366,57 @@ describe 'Change stream integration', retry: 4 do
       end.to raise_error(ArgumentError, 'Time must be a Time or a BSON::Timestamp instance')
     end
   end
+
+  describe ':start_after option' do
+    require_topology :replica_set
+    min_server_version '4.1'
+
+    let(:start_after) do
+      stream = authorized_collection.watch([])
+      authorized_collection.insert_one(x: 1)
+      stream.to_enum.next['_id']
+    end
+
+    let(:stream) do
+      authorized_collection.watch([], { start_after: start_after })
+    end
+
+    let(:events) do
+      start_after
+
+      subscriber = EventSubscriber.new
+      authorized_client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
+      stream
+
+      authorized_collection.insert_one(x: 1)
+      stream.to_enum.next
+
+
+      authorized_collection.insert_one(x: 1)
+      authorized_collection.client.use(:admin).command(fail_point_base_command.merge(
+        :mode => {:times => 1},
+        :data => {:failCommands => ['getMore'], errorCode: 100}))
+      stream.to_enum.next
+
+      subscriber.started_events.select { |e| e.command_name == 'aggregate' }
+    end
+
+    it 'sends startAfter on the initial aggregation when passed in' do
+      expect(events.size >= 1).to eq(true)
+
+      command = events.first.command
+      expect(command['pipeline'].size == 1).to eq(true)
+      expect(command['pipeline'].first.key?('$changeStream')).to eq(true)
+      expect(command['pipeline'].first['$changeStream'].key?('startAfter')).to eq(true)
+    end
+
+    it 'does not startAfter on resume even when passed in' do
+      expect(events.size == 2).to eq(true)
+
+      command = events.last.command
+      expect(command['pipeline'].size == 1).to eq(true)
+      expect(command['pipeline'].first.key?('$changeStream')).to eq(true)
+      expect(command['pipeline'].first['$changeStream'].key?('startAfter')).to eq(false)
+    end
+  end
 end
