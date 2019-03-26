@@ -61,13 +61,18 @@ module Mongo
 
         # Instantiate the operation.
         #
-        # @return [ Hash ] spec The operation spec.
+        # @param [ Hash ] spec The operation specification.
+        # @param [ Hash ] outcome_spec The outcome specification.
+        #   If not provided, outcome is taken out of operation specification.
         #
         # @since 2.0.0
-        def initialize(spec)
+        def initialize(spec, outcome_spec = nil)
           @spec = spec
           @name = spec['name']
+          @outcome = Outcome.new(outcome_spec || spec)
         end
+
+        attr_reader :outcome
 
         # Whether the operation is expected to have results.
         #
@@ -106,6 +111,7 @@ module Mongo
           return_doc['upsertedIds'] = result.upserted_ids if result.upserted_ids
           return_doc['upsertedId'] = result.upserted_id if upsert
           return_doc['upsertedCount'] = result.upserted_count if result.upserted_count
+          return_doc['insertedCount'] = result.inserted_count if result.inserted_count
           return_doc['matchedCount'] = result.matched_count if result.matched_count
           return_doc['modifiedCount'] = result.modified_count if result.modified_count
           return_doc

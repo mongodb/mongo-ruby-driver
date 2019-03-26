@@ -330,6 +330,13 @@ module Mongo
         @labels ||= parser.labels
       end
 
+      # Whether the operation failed with a write concern error.
+      #
+      # @api private
+      def write_concern_error?
+        !!(first_document && first_document['writeConcernError'])
+      end
+
       private
 
       def aggregate_returned_count

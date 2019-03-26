@@ -49,7 +49,7 @@ module Mongo
       # Uses RSpec matchers and raises expectation failures if there is a
       # mismatch.
       def verify_operation_result(actual)
-        expected = test_instance.outcome['result']
+        expected = test_instance.expected_outcome.result
         if expected.is_a?(Array)
           if expected.empty?
             expect(actual).to be_empty
@@ -107,7 +107,7 @@ module Mongo
 
         # This should produce a meaningful error message,
         # even though we do not actually require that expected[k] == actual[k]
-        expect(expected[k]).to eq(actual[k])
+        expect({k => expected[k]}).to eq({k => actual[k]})
       end
     end
   end
