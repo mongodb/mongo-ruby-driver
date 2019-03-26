@@ -20,7 +20,7 @@ class RetryableTestConsumer
   end
 
   def read
-    read_with_retry do
+    read_with_retry(nil, Mongo::ServerSelector.get(mode: :primary)) do
       operation.execute
     end
   end
@@ -82,7 +82,10 @@ describe Mongo::Retryable do
   let(:server) { double('server') }
 
   let(:cluster) do
-    double('cluster', next_primary: server)
+    double('cluster', next_primary: server).tap do |cluster|
+      allow(cluster).to receive(:replica_set?).and_return(true)
+      allow(cluster).to receive(:addresses).and_return(['x'])
+    end
   end
 
   let(:server_selector) do
@@ -91,6 +94,11 @@ describe Mongo::Retryable do
 
   let(:retryable) do
     LegacyRetryableTestConsumer.new(operation, cluster)
+  end
+
+  before do
+    # Retryable reads perform server selection
+    allow_any_instance_of(Mongo::ServerSelector::Primary).to receive(:select_server).and_return(server)
   end
 
   describe '#read_with_retry' do
@@ -123,6 +131,7 @@ describe Mongo::Retryable do
         expect(cluster).to receive(:max_read_retries).and_return(1).ordered
         expect(cluster).to receive(:scan!).and_return(true).ordered
         expect(operation).to receive(:execute).and_return(true).ordered
+        allow(cluster).to receive(:replica_set?).and_return(true)
       end
 
       it 'executes the operation twice' do
@@ -137,6 +146,7 @@ describe Mongo::Retryable do
         expect(cluster).to receive(:max_read_retries).and_return(1).ordered
         expect(cluster).to receive(:scan!).and_return(true).ordered
         expect(operation).to receive(:execute).and_return(true).ordered
+        allow(cluster).to receive(:replica_set?).and_return(true)
       end
 
       it 'executes the operation twice' do
