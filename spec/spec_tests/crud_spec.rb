@@ -31,8 +31,8 @@ describe 'CRUD' do
           let(:verifier) { Mongo::CRUD::Verifier.new(test) }
 
           let(:actual_collection) do
-            if test.outcome['collection'] && test.outcome['collection']['name']
-              authorized_client[test.outcome['collection']['name']]
+            if test.expected_outcome && test.expected_outcome.collection_name
+              authorized_client[test.expected_outcome.collection_name]
             else
               authorized_collection
             end

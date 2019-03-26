@@ -53,8 +53,18 @@ module Mongo
       #
       # @since 2.1.0
       def combine!(result, count)
-        combine_counts!(result)
-        combine_ids!(result)
+        # Errors can be communicated by the server in a variety of fields:
+        # writeError, writeErrors, writeConcernError, writeConcernErrors.
+        # Currently only errors given in writeConcernErrors will cause
+        # counts not to be added, because this behavior is covered by the
+        # retryable writes tests. It is possible that some or all of the
+        # other errors should also be excluded when combining counts and
+        # ids, and it is also possible that only a subset of these error
+        # fields is actually possible in the context of bulk writes.
+        unless result.write_concern_error?
+          combine_counts!(result)
+          combine_ids!(result)
+        end
         combine_errors!(result)
         @count += count
       end
