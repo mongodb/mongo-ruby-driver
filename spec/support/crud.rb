@@ -130,25 +130,29 @@ module Mongo
         end
       end
 
-      def expected_outcome
-        @operations.last.outcome
-      end
+      # Operations to be performed by the test.
+      #
+      # For CRUD tests, there is one operation for test. For retryable writes,
+      # there are multiple operations for each test. In either case we build
+      # an array of operations.
+      attr_reader :operations
 
       # Run the test.
       #
-      # @example Run the test.
-      #   test.run(collection)
+      # The specified number of operations are executed, so that the
+      # test can assert on the outcome of each specified operation in turn.
       #
       # @param [ Collection ] collection The collection the test
       #   should be run on.
+      # @param [ Integer ] num_ops Number of operations to run.
       #
       # @return [ Result, Array<Hash> ] The result(s) of running the test.
       #
       # @since 2.0.0
-      def run(collection)
+      def run(collection, num_ops)
         result = nil
-        @operations.each do |op|
-          result = op.execute(collection)
+        1.upto(num_ops) do |i|
+          result = @operations[i-1].execute(collection)
         end
         result
       end
@@ -170,39 +174,6 @@ module Mongo
       def clear_fail_point(collection)
         if @fail_point_command
           collection.client.use(:admin).command(FAIL_POINT_BASE_COMMAND.merge(mode: "off"))
-        end
-      end
-
-      # The expected result of running the test.
-      #
-      # @example Get the expected result of running the test.
-      #   test.result
-      #
-      # @return [ Array<Hash> ] The expected result of running the test.
-      #
-      # @since 2.0.0
-      def result
-        expected_outcome.result
-      end
-
-      def error?
-        expected_outcome.error?
-      end
-
-      # The expected data in the collection as an outcome after running this test.
-      #
-      # @example Get the outcome collection data
-      #   test.outcome_collection_data
-      #
-      # @return [ Array<Hash> ] The list of documents expected to be in the collection
-      #   after running this test.
-      #
-      # @since 2.4.0
-      def outcome_collection_data
-        if expected_outcome.collection_data?
-          expected_outcome.collection_data
-        else
-          nil
         end
       end
 
