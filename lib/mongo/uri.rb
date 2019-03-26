@@ -286,6 +286,12 @@ module Mongo
           raise_invalid_error_no_fmt!("tlsInsecure' and 'tlsAllowInvalidHostnames' cannot both be specified")
         end
       end
+
+      # Since we know that the only URI option that sets :ssl_cert is "tlsCertificateKeyFile", any
+      # value set for :ssl_cert must also be set for :ssl_key.
+      if @uri_options[:ssl_cert]
+        @uri_options[:ssl_key] = @uri_options[:ssl_cert]
+      end
     end
 
     # Get the credentials provided in the URI.

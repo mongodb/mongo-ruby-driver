@@ -208,6 +208,14 @@ EOT
     end
   end
 
+  def client_cert_key_pem
+    if drivers_tools?
+      ENV['DRIVER_TOOLS_CLIENT_CERT_KEY_PEM']
+    else
+      "#{ssl_certs_dir}/client.pem"
+    end
+  end
+
   # The default test database for all specs.
   def test_db
     'ruby-driver'.freeze
