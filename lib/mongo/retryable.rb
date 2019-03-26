@@ -24,23 +24,27 @@ module Mongo
     # @api private
     #
     # @example Execute the read.
-    #   read_with_retry do
+    #   read_with_retry(session, server_selector) do |server|
     #     ...
     #   end
     #
     # @note This only retries read operations on socket errors.
     #
-    # @param [ Mongo::Session ] session The session that the operation is being run on.
+    # @param [ Mongo::Session ] session The session that the operation is being
+    #   run on.
+    # @param [ Mongo::ServerSelector::Selectable ] server_selector Server
+    #   selector for the operation.
     # @param [ Proc ] block The block to execute.
     #
     # @return [ Result ] The result of the operation.
     #
     # @since 2.1.0
-    def read_with_retry(session = nil)
+    def read_with_retry(session, server_selector)
+      server = server_selector.select_server(cluster)
       attempt = 0
       begin
         attempt += 1
-        yield
+        yield server
       rescue Error::SocketError, Error::SocketTimeoutError => e
         if attempt > cluster.max_read_retries || (session && session.in_transaction?)
           raise
