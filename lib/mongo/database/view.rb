@@ -51,7 +51,6 @@ module Mongo
       def collection_names(options = {})
         @batch_size = options[:batch_size]
         server = next_primary(false)
-        @limit = -1 if server.features.list_collections_enabled?
         session = client.send(:get_session, options)
         collections_info(server, session, name_only: true).collect do |info|
           if server.features.list_collections_enabled?
