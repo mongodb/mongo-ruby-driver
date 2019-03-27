@@ -58,6 +58,17 @@ describe Mongo::Protocol::Msg do
         end
       end
     end
+
+    context 'with user-provided and driver-generated keys in global_args' do
+      let(:global_args) do
+        { 'ping' => 1, 'lsid' => '__lsid__', 'a' => 'b', '$clusterTime' => '__ct__',
+          'signature' => '__signature__', 'd' => 'f'}
+      end
+
+      it 'reorders global_args for better logging' do
+        expect(message.payload[:command].keys).to eq(%w(ping a d lsid $clusterTime signature))
+      end
+    end
   end
 
   describe '#==' do

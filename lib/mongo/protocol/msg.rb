@@ -31,6 +31,12 @@ module Mongo
       # @since 2.5.0
       DATABASE_IDENTIFIER = '$db'.freeze
 
+      # Keys that the driver adds to commands. These are going to be
+      # moved to the end of the hash for better logging.
+      #
+      # @api private
+      INTERNAL_KEYS = Set.new(%w($clusterTime lsid signature txnNumber)).freeze
+
       # Creates a new OP_MSG protocol message
       #
       # @example Create a OP_MSG wire protocol message
@@ -82,10 +88,26 @@ module Mongo
       #
       # @since 2.5.0
       def payload
+        # Reorder keys in global_args for better logging - see
+        # https://jira.mongodb.org/browse/RUBY-1591?filter=25988.
+        # Note that even without the reordering, the payload is an exact
+        # match to what is sent over the wire because the command combines
+        # keys from multiple sections.
+        ordered_command = {}
+        skipped_command = {}
+        command.each do |k, v|
+          if INTERNAL_KEYS.member?(k.to_s)
+            skipped_command[k] = v
+          else
+            ordered_command[k] = v
+          end
+        end
+        ordered_command.update(skipped_command)
+
         BSON::Document.new(
-          command_name: command.keys.first.to_s,
+          command_name: ordered_command.keys.first.to_s,
           database_name: global_args[DATABASE_IDENTIFIER],
-          command: command,
+          command: ordered_command,
           request_id: request_id,
           reply: sections[0]
         )
