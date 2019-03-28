@@ -74,6 +74,14 @@ module Authorization
       ClientRegistry.instance.global_client('authorized_without_retry_writes')
     end
 
+    context.let(:authorized_client_without_retry_reads) do
+      ClientRegistry.instance.global_client('authorized_without_retry_reads')
+    end
+
+    context.let(:authorized_client_without_any_retry_reads) do
+      ClientRegistry.instance.global_client('authorized_without_any_retry_reads')
+    end
+
     # Provides an authorized mongo client that has a Command subscriber.
     #
     # @since 2.5.1

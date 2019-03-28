@@ -3,6 +3,7 @@ require 'spec_helper'
 describe Mongo::Collection::View::ChangeStream do
   min_server_fcv '3.6'
   require_topology :replica_set
+  max_example_run_time 7
 
   let(:pipeline) do
     []
@@ -16,8 +17,16 @@ describe Mongo::Collection::View::ChangeStream do
     {}
   end
 
+  let(:client) do
+    authorized_client_without_any_retry_reads
+  end
+
+  let(:collection) do
+    client['mcv-change-stream']
+  end
+
   let(:view) do
-    Mongo::Collection::View.new(authorized_collection, {}, view_options)
+    Mongo::Collection::View.new(collection, {}, view_options)
   end
 
   let(:change_stream) do
@@ -30,8 +39,8 @@ describe Mongo::Collection::View::ChangeStream do
   end
 
   let!(:sample_resume_token) do
-    stream = authorized_collection.watch
-    authorized_collection.insert_one(a: 1)
+    stream = collection.watch
+    collection.insert_one(a: 1)
     doc = stream.to_enum.next
     stream.close
     doc[:_id]
@@ -61,7 +70,7 @@ describe Mongo::Collection::View::ChangeStream do
   end
 
   before do
-    authorized_collection.delete_many
+    collection.delete_many
   end
 
   after do
@@ -172,7 +181,8 @@ describe Mongo::Collection::View::ChangeStream do
     context 'when the collection has a readConcern' do
 
       let(:collection) do
-        authorized_collection.with(read_concern: { level: 'majority' })
+        client['mcv-change-stream'].with(
+          read_concern: { level: 'majority' })
       end
 
       let(:view) do
@@ -242,10 +252,6 @@ describe Mongo::Collection::View::ChangeStream do
             client.start_session
           end
 
-          let(:client) do
-            authorized_client
-          end
-
           it 'raises an error' do
             expect(operation_result.class).to eq(Mongo::Error::OperationFailure)
           end
@@ -281,12 +287,8 @@ describe Mongo::Collection::View::ChangeStream do
 
       let(:operation) do
         change_stream
-        authorized_collection.insert_one(a: 1)
+        collection.insert_one(a: 1)
         change_stream.to_enum.next
-      end
-
-      let(:client) do
-        authorized_client
       end
 
       context 'when the session is created from the same client used for the operation' do
@@ -327,7 +329,7 @@ describe Mongo::Collection::View::ChangeStream do
       context 'when a session from another client is provided' do
 
         let(:session) do
-          another_authorized_client.start_session
+          another_authorized_client.with(retry_reads: false).start_session
         end
 
         let(:operation_result) do
@@ -390,7 +392,7 @@ describe Mongo::Collection::View::ChangeStream do
 
       before do
         change_stream
-        authorized_collection.insert_one(a: 1)
+        collection.insert_one(a: 1)
         enum.next
         change_stream.close
       end
@@ -438,7 +440,7 @@ describe Mongo::Collection::View::ChangeStream do
 
     before do
       change_stream
-      authorized_collection.insert_one(a: 1)
+      collection.insert_one(a: 1)
     end
 
     context 'pre-4.1 server' do
@@ -467,8 +469,6 @@ describe Mongo::Collection::View::ChangeStream do
   context 'when an error is encountered the first time the command is run' do
     include PrimarySocket
 
-    let(:client) { authorized_collection.client }
-
     before do
       expect(primary_socket).to receive(:write).and_raise(error).once
     end
@@ -482,7 +482,7 @@ describe Mongo::Collection::View::ChangeStream do
       before do
         expect(view.send(:server_selector)).to receive(:select_server).twice.and_call_original
         change_stream
-        authorized_collection.insert_one(a: 1)
+        collection.insert_one(a: 1)
       end
 
       it 'runs the command again while using the same read preference and caches the resume token' do
@@ -497,7 +497,7 @@ describe Mongo::Collection::View::ChangeStream do
         end
 
         let(:session) do
-          authorized_client.start_session
+          client.start_session
         end
 
         before do
@@ -576,7 +576,7 @@ describe Mongo::Collection::View::ChangeStream do
         end
 
         let(:session) do
-          authorized_client.start_session
+          client.start_session
         end
 
         before do
@@ -601,9 +601,9 @@ describe Mongo::Collection::View::ChangeStream do
 
         before do
           change_stream
-          authorized_collection.insert_one(a: 1)
+          collection.insert_one(a: 1)
           enum.next
-          authorized_collection.insert_one(a: 2)
+          collection.insert_one(a: 2)
           expect(cursor).to receive(:get_more).once.and_raise(error)
           expect(cursor).to receive(:kill_cursors).and_call_original
           expect(Mongo::Operation::Aggregate).to receive(:new).and_call_original
@@ -629,7 +629,7 @@ describe Mongo::Collection::View::ChangeStream do
           end
 
           let(:session) do
-            authorized_client.start_session
+            client.start_session
           end
 
           before do
@@ -685,9 +685,9 @@ describe Mongo::Collection::View::ChangeStream do
 
       before do
         change_stream
-        authorized_collection.insert_one(a: 1)
+        collection.insert_one(a: 1)
         enum.next
-        authorized_collection.insert_one(a: 2)
+        collection.insert_one(a: 2)
         expect(cursor).to receive(:get_more).and_raise(Mongo::Error::MissingResumeToken)
         expect(cursor).to receive(:kill_cursors).and_call_original
         expect(Mongo::Operation::Aggregate).not_to receive(:new)
@@ -710,7 +710,7 @@ describe Mongo::Collection::View::ChangeStream do
         end
 
         let(:session) do
-          authorized_client.start_session
+          client.start_session
         end
 
         before do

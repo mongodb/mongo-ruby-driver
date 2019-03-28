@@ -654,7 +654,8 @@ describe Mongo::Client do
 
         let(:expected_options) do
           Mongo::Options::Redacted.new(:write => { :w => 3 },
-            monitoring_io: false, :database => 'testdb', retry_writes: true)
+            monitoring_io: false, :database => 'testdb', retry_writes: true,
+            retry_reads: true)
         end
 
         it 'sets the options' do
@@ -755,7 +756,8 @@ describe Mongo::Client do
 
         let(:expected_options) do
           Mongo::Options::Redacted.new(:write => { :w => 3 },
-            monitoring_io: false, :database => 'testdb', retry_writes: true)
+            monitoring_io: false, :database => 'testdb', retry_writes: true,
+            retry_reads: true)
         end
 
         it 'sets the options' do
@@ -775,7 +777,8 @@ describe Mongo::Client do
 
         let(:expected_options) do
           Mongo::Options::Redacted.new(:write => { :w => 4 },
-            monitoring_io: false, :database => 'testdb', retry_writes: true)
+            monitoring_io: false, :database => 'testdb', retry_writes: true,
+            retry_reads: true)
         end
 
         it 'allows explicit options to take preference' do
@@ -1012,13 +1015,13 @@ describe Mongo::Client do
       let(:new_options) do
         Mongo::Options::Redacted.new(:read => { :mode => :primary },
           :write => { :w => 1 }, monitoring_io: false,
-          :database => SpecConfig.instance.test_db, retry_writes: true)
+          :database => SpecConfig.instance.test_db, retry_writes: true, retry_reads: true)
       end
 
       let(:original_options) do
         Mongo::Options::Redacted.new(:read => { :mode => :secondary },
           :write => { :w => 1 }, monitoring_io: false,
-          :database => SpecConfig.instance.test_db, retry_writes: true)
+          :database => SpecConfig.instance.test_db, retry_writes: true, retry_reads: true)
       end
 
       it 'returns a new client' do

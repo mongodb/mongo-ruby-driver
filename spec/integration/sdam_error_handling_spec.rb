@@ -6,7 +6,7 @@ describe 'SDAM error handling' do
   end
 
   describe 'when there is an error during an operation' do
-    let(:client) { authorized_client }
+    let(:client) { authorized_client_without_any_retry_reads }
 
     before do
       wait_for_all_servers(client.cluster)

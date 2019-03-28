@@ -3,12 +3,14 @@ require 'spec_helper'
 class RetryableTestConsumer
   include Mongo::Retryable
 
+  attr_reader :client
   attr_reader :cluster
   attr_reader :operation
 
-  def initialize(operation, cluster)
+  def initialize(operation, cluster, client)
     @operation = operation
     @cluster = cluster
+    @client = client
   end
 
   def max_read_retries
@@ -81,10 +83,19 @@ describe Mongo::Retryable do
 
   let(:server) { double('server') }
 
+  let(:max_read_retries) { 1 }
+
   let(:cluster) do
     double('cluster', next_primary: server).tap do |cluster|
       allow(cluster).to receive(:replica_set?).and_return(true)
       allow(cluster).to receive(:addresses).and_return(['x'])
+      allow(cluster).to receive(:max_read_retries).and_return(max_read_retries)
+    end
+  end
+
+  let(:client) do
+    double('client').tap do |client|
+      allow(client).to receive(:cluster).and_return(cluster)
     end
   end
 
@@ -93,7 +104,7 @@ describe Mongo::Retryable do
   end
 
   let(:retryable) do
-    LegacyRetryableTestConsumer.new(operation, cluster)
+    LegacyRetryableTestConsumer.new(operation, cluster, client)
   end
 
   before do
@@ -115,7 +126,7 @@ describe Mongo::Retryable do
     end
 
     context 'when ending_transaction is true' do
-      let(:retryable) { RetryableTestConsumer.new(operation, cluster) }
+      let(:retryable) { RetryableTestConsumer.new(operation, cluster, client) }
 
       it 'raises ArgumentError' do
         expect do
@@ -127,11 +138,10 @@ describe Mongo::Retryable do
     context 'when a socket error occurs' do
 
       before do
+        expect(retryable).to receive(:select_server).ordered
         expect(operation).to receive(:execute).and_raise(Mongo::Error::SocketError).ordered
-        expect(cluster).to receive(:max_read_retries).and_return(1).ordered
-        expect(cluster).to receive(:scan!).and_return(true).ordered
+        expect(retryable).to receive(:select_server).ordered
         expect(operation).to receive(:execute).and_return(true).ordered
-        allow(cluster).to receive(:replica_set?).and_return(true)
       end
 
       it 'executes the operation twice' do
@@ -142,11 +152,10 @@ describe Mongo::Retryable do
     context 'when a socket timeout error occurs' do
 
       before do
+        expect(retryable).to receive(:select_server).ordered
         expect(operation).to receive(:execute).and_raise(Mongo::Error::SocketTimeoutError).ordered
-        expect(cluster).to receive(:max_read_retries).and_return(1).ordered
-        expect(cluster).to receive(:scan!).and_return(true).ordered
+        expect(retryable).to receive(:select_server).ordered
         expect(operation).to receive(:execute).and_return(true).ordered
-        allow(cluster).to receive(:replica_set?).and_return(true)
       end
 
       it 'executes the operation twice' do
@@ -199,10 +208,11 @@ describe Mongo::Retryable do
           context 'when the retry succeeds' do
 
             before do
+              expect(retryable).to receive(:select_server).ordered
               expect(operation).to receive(:execute).and_raise(error).ordered
               expect(cluster).to receive(:sharded?).and_return(true)
-              expect(cluster).to receive(:max_read_retries).and_return(1).ordered
               expect(cluster).to receive(:read_retry_interval).and_return(0.1).ordered
+              expect(retryable).to receive(:select_server).ordered
               expect(operation).to receive(:execute).and_return(true).ordered
             end
 
@@ -212,16 +222,20 @@ describe Mongo::Retryable do
           end
 
           context 'when the retry fails once and then succeeds' do
+            let(:max_read_retries) { 2 }
 
             before do
+              expect(retryable).to receive(:select_server).ordered
               expect(operation).to receive(:execute).and_raise(error).ordered
+
               expect(cluster).to receive(:sharded?).and_return(true)
-              expect(cluster).to receive(:max_read_retries).and_return(2).ordered
               expect(cluster).to receive(:read_retry_interval).and_return(0.1).ordered
+              expect(retryable).to receive(:select_server).ordered
               expect(operation).to receive(:execute).and_raise(error).ordered
+
               expect(cluster).to receive(:sharded?).and_return(true)
-              expect(cluster).to receive(:max_read_retries).and_return(2).ordered
               expect(cluster).to receive(:read_retry_interval).and_return(0.1).ordered
+              expect(retryable).to receive(:select_server).ordered
               expect(operation).to receive(:execute).and_return(true).ordered
             end
 
@@ -423,7 +437,7 @@ describe Mongo::Retryable do
   describe '#write_with_retry - modern' do
 
     let(:retryable) do
-      ModernRetryableTestConsumer.new(operation, cluster)
+      ModernRetryableTestConsumer.new(operation, cluster, client)
     end
 
     before do

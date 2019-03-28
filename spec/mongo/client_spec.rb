@@ -193,7 +193,7 @@ describe Mongo::Client do
       )
     end
 
-    let(:default_options) { Mongo::Options::Redacted.new(retry_writes: true) }
+    let(:default_options) { Mongo::Options::Redacted.new(retry_writes: true, retry_reads: true) }
 
     let(:options) do
       Mongo::Options::Redacted.new(:read => { :mode => :primary },
