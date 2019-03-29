@@ -89,10 +89,11 @@ module Mongo
       # @since 2.5.0
       def payload
         # Reorder keys in global_args for better logging - see
-        # https://jira.mongodb.org/browse/RUBY-1591?filter=25988.
-        # Note that even without the reordering, the payload is an exact
-        # match to what is sent over the wire because the command combines
-        # keys from multiple sections.
+        # https://jira.mongodb.org/browse/RUBY-1591.
+        # Note that even without the reordering, the payload is not an exact
+        # match to what is sent over the wire because the command as used in
+        # the published eent combines keys from multiple sections of the
+        # payload sent over the wire.
         ordered_command = {}
         skipped_command = {}
         command.each do |k, v|
