@@ -27,8 +27,7 @@ module Mongo
       #
       # Uses RSpec matchers and raises expectation failures if there is a
       # mismatch.
-      def verify_collection_data(actual_collection_data)
-        expected_collection_data = test_instance.outcome_collection_data
+      def verify_collection_data(expected_collection_data, actual_collection_data)
         if expected_collection_data.nil?
           expect(actual_collection_data).to be nil
         elsif expected_collection_data.empty?
@@ -48,8 +47,7 @@ module Mongo
       #
       # Uses RSpec matchers and raises expectation failures if there is a
       # mismatch.
-      def verify_operation_result(actual)
-        expected = test_instance.expected_outcome.result
+      def verify_operation_result(expected, actual)
         if expected.is_a?(Array)
           if expected.empty?
             expect(actual).to be_empty

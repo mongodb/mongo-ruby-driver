@@ -127,7 +127,9 @@ module Mongo
         @operations = test['operations']
         @expectations = test['expectations']
         @skip_reason = test['skipReason']
-        @outcome = test['outcome']
+        if test['outcome']
+          @outcome = Mongo::CRUD::Outcome.new(test['outcome'])
+        end
         @expected_results = @operations.map do |o|
           result = o['result']
           next result unless result.class == Hash
@@ -141,6 +143,8 @@ module Mongo
           end
         end
       end
+
+      attr_reader :outcome
 
       def support_client
         @support_client ||= ClientRegistry.instance.global_client('root_authorized').use(@spec.database_name)
@@ -285,19 +289,6 @@ module Mongo
         if @test_client
           @test_client.close
         end
-      end
-
-      # The expected data in the collection as an outcome after running this test.
-      #
-      # @example Get the outcome collection data
-      #   test.outcome_collection_data
-      #
-      # @return [ Array<Hash> ] The list of documents expected to be in the collection
-      #   after running this test.
-      #
-      # @since 2.6.0
-      def outcome_collection_data
-        @outcome['collection']['data'] if @outcome && @outcome['collection']
       end
 
       def order_hash(hash)
