@@ -42,11 +42,13 @@ describe 'CRUD' do
               end
 
               it 'returns the correct result' do
-                verifier.verify_operation_result(operation, result)
+                verifier.verify_operation_result(operation.outcome.result, result)
               end
 
               it 'has the correct data in the collection', if: operation.outcome.collection_data? do
-                verifier.verify_collection_data(operation, actual_collection.find.to_a)
+                verifier.verify_collection_data(
+                  operation.outcome.collection_data,
+                  actual_collection.find.to_a)
               end
             end
           end

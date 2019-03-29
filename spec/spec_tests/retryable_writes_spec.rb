@@ -58,7 +58,9 @@ describe 'Retryable writes spec tests' do
 
               it 'has the correct data in the collection', if: operation.outcome.collection_data? do
                 result
-                verifier.verify_collection_data(operation, authorized_collection.find.to_a)
+                verifier.verify_collection_data(
+                  operation.outcome.collection_data,
+                  authorized_collection.find.to_a)
               end
 
               if operation.outcome.error?
@@ -67,7 +69,7 @@ describe 'Retryable writes spec tests' do
                 end
               else
                 it 'returns the correct result' do
-                  verifier.verify_operation_result(operation, result)
+                  verifier.verify_operation_result(operation.outcome.result, result)
                 end
               end
             end

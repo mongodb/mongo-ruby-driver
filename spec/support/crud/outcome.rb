@@ -16,6 +16,9 @@ module Mongo
   module CRUD
     class Outcome
       def initialize(spec)
+        if spec.nil?
+          raise ArgumentError, 'Outcome specification cannot be nil'
+        end
         @result = spec['result']
         @collection = spec['collection']
         @error = spec['error']
