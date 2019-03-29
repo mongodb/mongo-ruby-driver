@@ -374,7 +374,7 @@ describe 'Change stream integration', retry: 4 do
     let(:start_after) do
       stream = authorized_collection.watch([])
       authorized_collection.insert_one(x: 1)
-      stream.to_enum.next['_id']
+      start_after = stream.to_enum.next['_id']
     end
 
     let(:stream) do
@@ -386,37 +386,48 @@ describe 'Change stream integration', retry: 4 do
 
       subscriber = EventSubscriber.new
       authorized_client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
-      stream
-
-      authorized_collection.insert_one(x: 1)
-      stream.to_enum.next
-
-
-      authorized_collection.insert_one(x: 1)
-      authorized_collection.client.use(:admin).command(fail_point_base_command.merge(
-        :mode => {:times => 1},
-        :data => {:failCommands => ['getMore'], errorCode: 100}))
-      stream.to_enum.next
+      use_stream
 
       subscriber.started_events.select { |e| e.command_name == 'aggregate' }
     end
 
-    it 'sends startAfter on the initial aggregation when passed in' do
-      expect(events.size >= 1).to eq(true)
+    context 'when an initial aggregation is run' do
+      let(:use_stream) do
+        stream
+      end
 
-      command = events.first.command
-      expect(command['pipeline'].size == 1).to eq(true)
-      expect(command['pipeline'].first.key?('$changeStream')).to eq(true)
-      expect(command['pipeline'].first['$changeStream'].key?('startAfter')).to eq(true)
+      it 'sends startAfter' do
+        expect(events.size >= 1).to eq(true)
+
+        command = events.first.command
+        expect(command['pipeline'].size == 1).to eq(true)
+        expect(command['pipeline'].first.key?('$changeStream')).to eq(true)
+        expect(command['pipeline'].first['$changeStream'].key?('startAfter')).to eq(true)
+      end
     end
 
-    it 'does not startAfter on resume even when passed in' do
-      expect(events.size == 2).to eq(true)
+    context 'when resuming' do
+      let(:use_stream) do
+        stream
 
-      command = events.last.command
-      expect(command['pipeline'].size == 1).to eq(true)
-      expect(command['pipeline'].first.key?('$changeStream')).to eq(true)
-      expect(command['pipeline'].first['$changeStream'].key?('startAfter')).to eq(false)
+        authorized_collection.insert_one(x: 1)
+        stream.to_enum.next
+
+        authorized_collection.insert_one(x: 1)
+        authorized_collection.client.use(:admin).command(fail_point_base_command.merge(
+          :mode => {:times => 1},
+          :data => {:failCommands => ['getMore'], errorCode: 100}))
+        stream.to_enum.next
+      end
+
+      it 'does not startAfter even when passed in' do
+        expect(events.size == 2).to eq(true)
+
+        command = events.last.command
+        expect(command['pipeline'].size == 1).to eq(true)
+        expect(command['pipeline'].first.key?('$changeStream')).to eq(true)
+        expect(command['pipeline'].first['$changeStream'].key?('startAfter')).to eq(false)
+      end
     end
   end
 end
