@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require_relative './gridfs'
+
 module Mongo
   module CRUD
 
@@ -42,8 +44,17 @@ module Mongo
         @crud_tests = @spec['tests']
         @min_server_version = @spec['minServerVersion']
         @max_server_version = @spec['maxServerVersion']
+        @topologies = if topologies = @spec['topology']
+          topologies.map do |topology|
+            {'replicaset' => :replica_set, 'single' => :single, 'sharded' => :sharded}[topology]
+          end
+        else
+          nil
+        end
       end
 
+      attr_reader :min_server_version
+      attr_reader :topologies
 
       # Whether the test can be run on a given server version.
       #
@@ -107,11 +118,13 @@ module Mongo
 
       # Instantiate the new CRUDTest.
       #
-      # @example Create the test.
-      #   CRUDTest.new(data, test)
+      # data can be an array of hashes, with each hash corresponding to a
+      # document to be inserted into the collection whose name is given in
+      # collection_name as configured in the YAML file. Alternatively data
+      # can be a map of collection names to arrays of hashes.
       #
-      # @param [ Array<Hash> ] data The documents the collection
-      # must have before the test runs.
+      # @param [ Hash | Array<Hash> ] data The documents the collection
+      #   must have before the test runs.
       # @param [ Hash ] test The test specification.
       #
       # @since 2.0.0
@@ -121,6 +134,7 @@ module Mongo
           @fail_point_command = FAIL_POINT_BASE_COMMAND.merge(test['failPoint'])
         end
         @description = test['description']
+        @client_options = Utils.convert_client_options(test['clientOptions'] || {})
         if test['operations']
           @operations = test['operations'].map do |op_spec|
             Operation.get(op_spec)
@@ -129,6 +143,8 @@ module Mongo
           @operations = [Operation.get(test['operation'], test['outcome'])]
         end
       end
+
+      attr_reader :client_options
 
       # Operations to be performed by the test.
       #
@@ -152,28 +168,58 @@ module Mongo
       def run(collection, num_ops)
         result = nil
         1.upto(num_ops) do |i|
-          result = @operations[i-1].execute(collection)
+          operation = @operations[i-1]
+          target = case operation.object
+          when 'collection'
+            collection
+          when 'database'
+            collection.database
+          when 'client'
+            collection.client
+          when 'gridfsbucket'
+            collection.database.fs
+          else
+            raise "Unknown target #{operation.object}"
+          end
+          result = operation.execute(target)
         end
         result
       end
 
-      def setup_test(collection)
-        clear_fail_point(collection)
-        @collection = collection
-        collection.delete_many
-        collection.insert_many(@data)
-        set_up_fail_point(collection)
+      class DataConverter
+        include Mongo::GridFS::Convertible
       end
 
-      def set_up_fail_point(collection)
+      def setup_test(collection)
+        client = collection.client
+        clear_fail_point(client)
+        if @data.is_a?(Array)
+          @collection = collection
+          collection.delete_many
+          collection.insert_many(@data)
+        elsif @data.is_a?(Hash)
+          converter = DataConverter.new
+          @data.each do |collection_name, data|
+            collection = client[collection_name]
+            collection.delete_many
+            data = converter.transform_docs(data)
+            collection.insert_many(data)
+          end
+        else
+          raise "Unknown type of data: #{@data}"
+        end
+        set_up_fail_point(client)
+      end
+
+      def set_up_fail_point(client)
         if @fail_point_command
-          collection.client.use(:admin).command(@fail_point_command)
+          client.use(:admin).command(@fail_point_command)
         end
       end
 
-      def clear_fail_point(collection)
+      def clear_fail_point(client)
         if @fail_point_command
-          collection.client.use(:admin).command(FAIL_POINT_BASE_COMMAND.merge(mode: "off"))
+          client.use(:admin).command(FAIL_POINT_BASE_COMMAND.merge(mode: "off"))
         end
       end
 
