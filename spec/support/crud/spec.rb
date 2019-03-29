@@ -25,19 +25,19 @@ module Mongo
         @description = File.basename(file)
         @data = @spec['data']
         @crud_tests = @spec['tests']
-        @min_server_version = @spec['minServerVersion']
-        @max_server_version = @spec['maxServerVersion']
-        @topologies = if topologies = @spec['topology']
-          topologies.map do |topology|
-            {'replicaset' => :replica_set, 'single' => :single, 'sharded' => :sharded}[topology]
+        @requirements = Requirement.new(@spec)
+        @requirements = if run_on = @spec['runOn']
+          run_on.map do |spec|
+            Requirement.new(spec)
           end
+        elsif Requirement::YAML_KEYS.any? { |key| @spec.key?(key) }
+          [Requirement.new(@spec)]
         else
           nil
         end
       end
 
-      attr_reader :min_server_version
-      attr_reader :topologies
+      attr_reader :requirements
 
       # Whether the test can be run on a given server version.
       #

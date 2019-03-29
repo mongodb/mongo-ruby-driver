@@ -13,6 +13,7 @@
 # limitations under the License.
 
 require 'support/gridfs'
+require 'support/crud/requirement'
 require 'support/crud/spec'
 require 'support/crud/test'
 require 'support/crud/outcome'
@@ -21,7 +22,7 @@ require 'support/crud/read'
 require 'support/crud/write'
 require 'support/crud/verifier'
 
-def define_crud_spec_test_examples(spec, &block)
+def define_crud_spec_test_examples(spec, req = nil, &block)
   spec.tests.each do |test|
 
     context(test.description) do
@@ -34,7 +35,7 @@ def define_crud_spec_test_examples(spec, &block)
 
       let(:verifier) { Mongo::CRUD::Verifier.new(test) }
 
-      instance_exec(spec, test, &block)
+      instance_exec(spec, req, test, &block)
 
       test.operations.each_with_index do |operation, index|
         context "operation #{index+1}" do
@@ -110,14 +111,29 @@ def define_crud_spec_tests(description, test_paths, &block)
       spec = Mongo::CRUD::Spec.new(path)
 
       context(spec.description) do
-        if spec.min_server_version
-          min_server_fcv spec.min_server_version.split('.')[0..1].join('.')
-        end
-        if spec.topologies
-          require_topology *spec.topologies
-        end
+        if spec.requirements
+          # This block defines the same set of examples multiple times,
+          # once for each requirement specified in the YAML files.
+          # This allows detecting when any of the configurations is
+          # not tested by CI.
+          spec.requirements.each do |req|
+            context(req.description) do
+              if req.min_server_version
+                min_server_fcv req.short_min_server_version
+              end
+              if req.max_server_version
+                max_server_version req.short_max_server_version
+              end
+              if req.topologies
+                require_topology *req.topologies
+              end
 
-        define_crud_spec_test_examples(spec, &block)
+              define_crud_spec_test_examples(spec, req, &block)
+            end
+          end
+        else
+          define_crud_spec_test_examples(spec, &block)
+        end
       end
     end
   end
