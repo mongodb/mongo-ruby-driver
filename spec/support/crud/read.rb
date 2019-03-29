@@ -62,6 +62,10 @@ module Mongo
 
         attr_reader :outcome
 
+        def object
+          @spec['object'] || 'collection'
+        end
+
         # Execute the operation.
         #
         # @example Execute the operation.
@@ -72,8 +76,14 @@ module Mongo
         # @return [ Result, Array<Hash> ] The result of executing the operation.
         #
         # @since 2.0.0
-        def execute(collection)
-          send(Utils.camel_to_snake(name), collection)
+        def execute(target)
+          op_name = Utils.camel_to_snake(name)
+          if target.is_a?(Mongo::Database)
+            op_name = "db_#{op_name}"
+          elsif target.is_a?(Mongo::Client)
+            op_name= "client_#{op_name}"
+          end
+          send(op_name, target)
         end
 
         # Whether the operation is expected to have results.
@@ -108,8 +118,10 @@ module Mongo
         end
 
         def estimated_document_count(collection)
+          # estimated_document_count defaults options to {}
+          args = arguments || {}
           options = ARGUMENT_MAP.reduce({}) do |opts, (key, value)|
-            opts.merge!(key => arguments[value]) if arguments[value]
+            opts.merge!(key => args[value]) if args[value]
             opts
           end
           collection.estimated_document_count(options)
@@ -126,6 +138,70 @@ module Mongo
         def find(collection)
           opts = modifiers ? options.merge(modifiers: BSON::Document.new(modifiers)) : options
           (read_preference ? collection.with(read: read_preference) : collection).find(filter, opts).to_a
+        end
+
+        def find_one(collection)
+          find(collection).first
+        end
+
+        def client_list_databases(client)
+          client.list_databases
+        end
+
+        def client_list_database_names(client)
+          client.list_databases({}, true)
+        end
+
+        def client_list_database_objects(client)
+          client.list_mongo_databases
+        end
+
+        def db_list_collections(database)
+          database.list_collections
+        end
+
+        def db_list_collection_names(database)
+          database.collection_names
+        end
+
+        def db_list_collection_objects(database)
+          database.collections
+        end
+
+        def list_index_names(collection)
+          collection.indexes.map { |i| i['name'] }
+        end
+
+        def list_indexes(collection)
+          collection.indexes.to_a
+        end
+
+        def watch(collection)
+          collection.watch
+        end
+
+        def db_watch(database)
+          database.watch
+        end
+
+        def client_watch(client)
+          client.watch
+        end
+
+        def download(fs_bucket)
+          stream = fs_bucket.open_download_stream(BSON::ObjectId.from_string(arguments['id']['$oid']))
+          stream.read
+        end
+
+        def download_by_name(fs_bucket)
+          stream = fs_bucket.open_download_stream_by_name(arguments['filename'])
+          stream.read
+        end
+
+        def map_reduce(collection)
+          view = Mongo::Collection::View.new(collection)
+          mr = Mongo::Collection::View::MapReduce.new(view, arguments['map']['$code'], arguments['reduce']['$code'])
+          mr.to_a
         end
 
         def options

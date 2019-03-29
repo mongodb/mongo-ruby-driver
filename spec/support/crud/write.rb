@@ -74,6 +74,10 @@ module Mongo
 
         attr_reader :outcome
 
+        def object
+          'collection'
+        end
+
         # Whether the operation is expected to have results.
         #
         # @example Whether the operation is expected to have results.

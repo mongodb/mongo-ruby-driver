@@ -33,7 +33,7 @@ describe 'Retryable writes spec tests' do
           end
 
           after do
-            test.clear_fail_point(collection)
+            test.clear_fail_point(collection.client)
             collection.delete_many
           end
 
