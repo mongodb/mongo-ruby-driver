@@ -83,6 +83,7 @@ functions:
               export MONGODB_VERSION=${VERSION}
               export FCV=${FCV}
               export MONGO_RUBY_DRIVER_LINT=${LINT}
+              export RETRY_READS=${RETRY_READS}
               export RETRY_WRITES=${RETRY_WRITES}
               export WITH_ACTIVE_SUPPORT="${WITH_ACTIVE_SUPPORT}"
            EOT
@@ -609,6 +610,13 @@ axes:
         display_name: Zlib
         variables:
            COMPRESSOR: "zlib"
+  - id: retry-reads
+    display_name: Retry Reads
+    values:
+      - id: no-retry-reads
+        display_name: No Retry Reads
+        variables:
+          RETRY_READS: 'false'
   - id: retry-writes
     display_name: Retry Writes
     values:
@@ -685,6 +693,19 @@ buildvariants:
     mongodb-version: ["4.0"]
     topology: "*"
   display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
+  run_on:
+    - ubuntu1404-test
+  tasks:
+     - name: "test"
+
+-
+  matrix_name: "no-retry-reads"
+  matrix_spec:
+    retry-reads: no-retry-reads
+    ruby: "ruby-2.6"
+    mongodb-version: ["4.0"]
+    topology: "*"
+  display_name: "${mongodb-version} ${topology} ${retry-reads} ${ruby}"
   run_on:
     - ubuntu1404-test
   tasks:

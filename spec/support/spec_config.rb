@@ -111,14 +111,22 @@ class SpecConfig
     end
   end
 
+  def retry_reads
+    uri_option_or_env_var(:retry_reads, 'RETRY_READS')
+  end
+
   def retry_writes
-    case uri_options[:retry_writes]
+    uri_option_or_env_var(:retry_writes, 'RETRY_WRITES')
+  end
+
+  def uri_option_or_env_var(driver_option_symbol, env_var_key)
+    case uri_options[driver_option_symbol]
     when true
       true
     when false
       false
     else
-      case (ENV['RETRY_WRITES'] || '').downcase
+      case (ENV[env_var_key] || '').downcase
       when 'yes', 'true', 'on', '1'
         true
       when 'no', 'false', 'off', '0'
