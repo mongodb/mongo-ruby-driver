@@ -29,12 +29,16 @@ describe 'Retryable writes spec tests' do
           end
 
           before do
-            test.setup_test(collection)
+            if spec.server_version_satisfied?(client)
+              test.setup_test(collection)
+            end
           end
 
           after do
-            test.clear_fail_point(collection.client)
-            collection.delete_many
+            if spec.server_version_satisfied?(client)
+              test.clear_fail_point(collection.client)
+              collection.delete_many
+            end
           end
 
           let(:verifier) { Mongo::CRUD::Verifier.new(test) }
