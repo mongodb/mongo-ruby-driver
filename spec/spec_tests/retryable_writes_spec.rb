@@ -11,7 +11,9 @@ describe 'Retryable writes spec tests' do
       spec.tests.each do |test|
 
         context(test.description) do
-          min_server_fcv '3.6'
+          # Retryable writes work on 3.6 servers but fail points only
+          # exist in 4.0 and higher
+          min_server_fcv '4.0'
           require_topology :replica_set
 
           let(:collection) do
