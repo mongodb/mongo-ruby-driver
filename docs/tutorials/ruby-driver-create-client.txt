@@ -722,30 +722,11 @@ Details on Retryable Writes
 ---------------------------
 
 The driver implements two mechanisms for retrying writes: modern and legacy.
-The modern mechanism is used when the driver connects to a MongoDB 3.6+
-replica set or a sharded cluster, and the ``retry_writes`` client option is
-not set to false. This mechanism retries writes once on network errors
-(timeout, connection reset, etc.) as well as transient errors resulting
-from servers being unavailable due to initialization, shutdown, replica
-set elections and similar events (the corresponding errors are not master,
-node is recovering, etc.). Prior to retrying the write the driver attempts
-to select a new primary, since the server that was previously used is
-likely to no longer be usable.
+As of driver version 2.9.0, the modern mechanism is used by default, and the
+legacy mechanism is deprecated.
 
-The legacy mechanism is used when the driver connects to MongoDB 3.4 or
-earlier clusters, or to MongoDB 3.6 or later standalone servers, or when
-``retry_writes`` client option is set to false. In this mode the driver will
-retry write operations once due to transient errors resulting from
-servers being unavailable due to initialization, shutdown, replica set
-elections and similar events, but will not retry writes on network errors
-like timeouts.
-
-Note that writes are always retried on transient server status-related
-errors like "not master" and "node is recovering", regardless of what
-``retry_writes`` option is set to.
-
-The following write methods used in day-to-day operations on collections will
-be automatically retried:
+The following write methods used in day-to-day operations on collections
+are subject to write retries:
 
 - ``collection#insert_one``
 - ``collection#update_one``
@@ -755,6 +736,44 @@ be automatically retried:
 - ``collection#find_one_and_replace``
 - ``collection#find_one_and_delete``
 - ``collection#bulk_write`` (for all single statement ops, i.e. not for ``update_many`` or ``delete_many``)
+
+Modern Retryable Writes
+```````````````````````
+
+The modern mechanism will retry failing writes once when the driver is
+connected to a MongoDB 3.6 or higher replica set or a sharded cluster,
+because they require an oplog on the serer. Modern mechanism will not retry
+writes when the driver is connected to a standalone MongoDB server or
+server versions 3.4 or older.
+
+The following errors will cause writes to be retried:
+
+- Network errors including timeouts
+- "not master" errors
+- "node is recovering" errors
+
+Prior to retrying the write the driver will perform server selection,
+since the server that the original write was sent to is likely no longer
+usable.
+
+Legacy Retryable Writes
+```````````````````````
+
+If modern retryable writes mechanism is disabled by setting the client
+option ``retry_writes: false`` or by using the ``retryWrites=false``
+URI option, the driver will utilize the legacy retryable writes mechanism.
+The legacy mechanism retries writes on the same operations as the modern
+mechanism, and retries one time as the modern mechanism does.
+The difference is that legacy mechanism retries writes for a different set
+of errors compared to the modern mechanism, and specifically does not
+retry writes when a network timeout is encountered.
+
+Disabling Retryable Writes
+``````````````````````````
+
+Currently the driver will always retry writes on transient server-related
+errors like "not master" and "node is recovering". A future version of
+the driver may provide a mechanism to disable write retries entirely.
 
 Logging
 -------
