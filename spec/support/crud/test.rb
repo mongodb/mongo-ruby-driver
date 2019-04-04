@@ -14,9 +14,9 @@ module Mongo
       attr_reader :description
 
       # Spec tests have configureFailPoint as a string, make it a string here too
-      FAIL_POINT_BASE_COMMAND = {
+      FAIL_POINT_BASE_COMMAND = BSON::Document.new(
         'configureFailPoint' => "onPrimaryTransactionalWrite",
-      }.freeze
+      ).freeze
 
       # Instantiate the new CRUDTest.
       #
@@ -121,7 +121,7 @@ module Mongo
 
       def clear_fail_point(client)
         if @fail_point_command
-          client.use(:admin).command(FAIL_POINT_BASE_COMMAND.merge(mode: "off"))
+          client.use(:admin).command(@fail_point_command.merge(mode: "off"))
         end
       end
 
