@@ -219,6 +219,8 @@ describe Mongo::Collection::View::Aggregation do
   end
 
   describe '#explain' do
+    # Broken on 4.2 - https://jira.mongodb.org/browse/RUBY-1788
+    max_server_version '4.0'
 
     it 'executes an explain' do
       expect(aggregation.explain).to_not be_empty
