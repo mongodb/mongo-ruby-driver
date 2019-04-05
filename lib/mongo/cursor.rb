@@ -237,13 +237,12 @@ module Mongo
     end
 
     def get_more
-      if @options[:disable_retry]
-        process(get_more_operation.execute(@server))
-      else
-        read_with_retry(@session) do
-          process(get_more_operation.execute(@server))
-        end
-      end
+      # Modern retryable reads specification prohibits retrying getMores.
+      # Legacy retryable read logic used to retry getMores, but since
+      # doing so may result in silent data loss, the driver no longer retries
+      # getMore operations in any circumstance.
+      # https://github.com/mongodb/specifications/blob/master/source/retryable-reads/retryable-reads.rst#qa
+      process(get_more_operation.execute(@server))
     end
 
     def get_more_operation

@@ -144,8 +144,7 @@ module Mongo
           read_pref = opts[:read] || read_preference
           selector = ServerSelector.get(read_pref || server_selector)
           with_session(opts) do |session|
-            read_with_retry(session) do
-              server = selector.select_server(cluster)
+            read_with_retry(session, selector) do |server|
               apply_collation!(cmd, server, opts)
               Operation::Count.new({
                                      :selector => cmd,
@@ -211,8 +210,7 @@ module Mongo
           read_pref = opts[:read] || read_preference
           selector = ServerSelector.get(read_pref || server_selector)
           with_session(opts) do |session|
-            read_with_retry(session) do
-              server = selector.select_server(cluster)
+            read_with_retry(session, selector) do |server|
               Operation::Count.new(
                 selector: cmd,
                 db_name: database.name,
@@ -249,8 +247,7 @@ module Mongo
           read_pref = opts[:read] || read_preference
           selector = ServerSelector.get(read_pref || server_selector)
           with_session(opts) do |session|
-            read_with_retry(session) do
-              server = selector.select_server(cluster)
+            read_with_retry(session, selector) do |server|
               apply_collation!(cmd, server, opts)
               Operation::Distinct.new({
                                         :selector => cmd,
