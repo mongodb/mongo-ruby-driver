@@ -13,20 +13,19 @@ class ClusterConfig
     basic_client.cluster.servers.length == 1
   end
 
-  def server!
-    server = basic_client.cluster.servers.first
-    if server.nil?
-      raise ScannedClientHasNoServers
-    end
-    server
-  end
-
   def mongos?
-    server!.mongos?
+    if @mongos.nil?
+      basic_client.cluster.next_primary
+      @mongos = basic_client.cluster.topology.is_a?(Mongo::Cluster::Topology::Sharded)
+    end
+    @mongos
   end
 
   def replica_set_name
-    @replica_set_name ||= server!.replica_set_name
+    @replica_set_name ||= begin
+      basic_client.cluster.next_primary
+      basic_client.cluster.topology.replica_set_name
+    end
   end
 
   def server_version
