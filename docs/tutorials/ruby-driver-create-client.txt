@@ -722,8 +722,9 @@ Details on Retryable Writes
 ---------------------------
 
 The driver implements two mechanisms for retrying writes: modern and legacy.
-As of driver version 2.9.0, the modern mechanism is used by default, and the
-legacy mechanism is deprecated.
+As of driver version 2.9.0, the modern mechanism is used by default on servers
+that support it, and the legacy mechanism is deprecated and disabled by default
+on all server versions.
 
 The following write methods used in day-to-day operations on collections
 are subject to write retries:
