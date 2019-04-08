@@ -39,9 +39,11 @@ describe 'Transactions' do
             verifier.verify_operation_result(results[:results])
           end
 
-          it 'has the correct data in the collection', if: test_instance.outcome_collection_data do
+          it 'has the correct data in the collection', if: test_instance.outcome && test_instance.outcome.collection_data? do
             results
-            verifier.verify_collection_data(results[:contents])
+            verifier.verify_collection_data(
+              test_instance.outcome.collection_data,
+              results[:contents])
           end
 
           if test_instance.expectations
