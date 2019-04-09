@@ -97,7 +97,7 @@ module Mongo
     #
     # @since 2.2.0
     def read_concern
-      options[:read_concern]
+      options[:read_concern] || database.read_concern
     end
 
     # Get the server selector on this collection.

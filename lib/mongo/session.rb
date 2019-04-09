@@ -874,6 +874,23 @@ module Mongo
       @client.cluster
     end
 
+		protected
+
+    # Get the read concern the session will use when starting a transaction.
+    #
+    # This is a driver style hash with underscore keys.
+    #
+    # @example Get the session's transaction read concern.
+    #   session.txn_read_concern
+    #
+    # @return [ Hash ] The read concern used for starting transactions.
+    #
+    # @since 2.9.0
+    def txn_read_concern
+      # Read concern is inherited from client but not db or collection.
+      txn_options && txn_options[:read_concern] || @client.read_concern
+    end
+
     private
 
     def within_states?(*states)
@@ -889,11 +906,6 @@ module Mongo
 
       raise Mongo::Error::InvalidTransactionOperation.new(
         Mongo::Error::InvalidTransactionOperation::NO_TRANSACTION_STARTED)
-    end
-
-    def txn_read_concern
-      # Read concern is inherited from client but not db or collection.
-      txn_options && txn_options[:read_concern] || @client.read_concern
     end
 
     def txn_write_concern

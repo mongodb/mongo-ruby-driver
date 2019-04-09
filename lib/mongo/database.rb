@@ -67,6 +67,7 @@ module Mongo
                    :cluster,
                    :read_preference,
                    :server_selector,
+                   :read_concern,
                    :write_concern
 
     # @return [ Mongo::Server ] Get the primary server from the cluster.

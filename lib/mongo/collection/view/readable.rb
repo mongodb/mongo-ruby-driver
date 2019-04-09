@@ -138,8 +138,8 @@ module Mongo
           cmd[:skip] = opts[:skip] if opts[:skip]
           cmd[:hint] = opts[:hint] if opts[:hint]
           cmd[:limit] = opts[:limit] if opts[:limit]
+          cmd[:readConcern] = read_concern if read_concern
           cmd[:maxTimeMS] = opts[:max_time_ms] if opts[:max_time_ms]
-          cmd[:readConcern] = collection.read_concern if collection.read_concern
           Mongo::Lint.validate_underscore_read_preference(opts[:read])
           read_pref = opts[:read] || read_preference
           selector = ServerSelector.get(read_pref || server_selector)
@@ -205,7 +205,7 @@ module Mongo
         def estimated_document_count(opts = {})
           cmd = { count: collection.name }
           cmd[:maxTimeMS] = opts[:max_time_ms] if opts[:max_time_ms]
-          cmd[:readConcern] = collection.read_concern if collection.read_concern
+          cmd[:readConcern] = read_concern if read_concern
           Mongo::Lint.validate_underscore_read_preference(opts[:read])
           read_pref = opts[:read] || read_preference
           selector = ServerSelector.get(read_pref || server_selector)
@@ -242,7 +242,7 @@ module Mongo
                   :key => field_name.to_s,
                   :query => filter }
           cmd[:maxTimeMS] = opts[:max_time_ms] if opts[:max_time_ms]
-          cmd[:readConcern] = collection.read_concern if collection.read_concern
+          cmd[:readConcern] = read_concern if read_concern
           Mongo::Lint.validate_underscore_read_preference(opts[:read])
           read_pref = opts[:read] || read_preference
           selector = ServerSelector.get(read_pref || server_selector)
@@ -539,6 +539,14 @@ module Mongo
           configure(:collation, doc)
         end
 
+        def read_concern
+          if options[:session] && options[:session].in_transaction?
+            options[:session].send(:txn_read_concern) || collection.client.read_concern
+          else
+            collection.read_concern
+          end
+        end
+
         def read_preference
           rp = if options[:session] && options[:session].in_transaction?
             options[:session].txn_read_preference || collection.client.read_preference
@@ -568,7 +576,7 @@ module Mongo
                   :coll_name => collection.name,
                   :db_name => database.name,
                   :cursor_count => cursor_count,
-                  :read_concern => collection.read_concern,
+                  :read_concern => read_concern,
                   :session => session,
                 }.merge!(options))
           cmd.execute(server).cursor_ids.map do |cursor_id|
