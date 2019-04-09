@@ -27,6 +27,12 @@ class RetryableTestConsumer
     end
   end
 
+  def read_legacy
+    read_with_retry do
+      operation.execute
+    end
+  end
+
   def write
     # This passes a nil session and therefore triggers
     # legacy_write_with_retry code path
@@ -112,7 +118,7 @@ describe Mongo::Retryable do
     allow_any_instance_of(Mongo::ServerSelector::Primary).to receive(:select_server).and_return(server)
   end
 
-  describe '#read_with_retry' do
+  shared_examples_for 'reads with retries' do
 
     context 'when no exception occurs' do
 
@@ -121,7 +127,7 @@ describe Mongo::Retryable do
       end
 
       it 'executes the operation once' do
-        expect(retryable.read).to be true
+        expect(read_operation).to be true
       end
     end
 
@@ -145,7 +151,7 @@ describe Mongo::Retryable do
       end
 
       it 'executes the operation twice' do
-        expect(retryable.read).to be true
+        expect(read_operation).to be true
       end
     end
 
@@ -159,7 +165,7 @@ describe Mongo::Retryable do
       end
 
       it 'executes the operation twice' do
-        expect(retryable.read).to be true
+        expect(read_operation).to be true
       end
     end
 
@@ -174,7 +180,7 @@ describe Mongo::Retryable do
 
         it 'raises an exception' do
           expect {
-            retryable.read
+            read_operation
           }.to raise_error(Mongo::Error::OperationFailure)
         end
       end
@@ -194,7 +200,7 @@ describe Mongo::Retryable do
 
           it 'raises the exception' do
             expect {
-              retryable.read
+              read_operation
             }.to raise_error(Mongo::Error::OperationFailure)
           end
         end
@@ -217,7 +223,7 @@ describe Mongo::Retryable do
             end
 
             it 'returns the result' do
-              expect(retryable.read).to be true
+              expect(read_operation).to be true
             end
           end
 
@@ -240,11 +246,32 @@ describe Mongo::Retryable do
             end
 
             it 'returns the result' do
-              expect(retryable.read).to be true
+              expect(read_operation).to be true
             end
           end
         end
       end
+    end
+  end
+
+  describe '#read_with_retry' do
+    let(:read_operation) do
+      retryable.read
+    end
+
+    it_behaves_like 'reads with retries'
+
+    context 'zero argument legacy invocation' do
+
+      before do
+        allow_any_instance_of(Mongo::ServerSelector::PrimaryPreferred).to receive(:select_server).and_return(server)
+      end
+
+      let(:read_operation) do
+        retryable.read_legacy
+      end
+
+      it_behaves_like 'reads with retries'
     end
   end
 

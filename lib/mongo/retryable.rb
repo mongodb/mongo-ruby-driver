@@ -96,8 +96,24 @@ module Mongo
     # @param [ Proc ] block The block to execute.
     #
     # @return [ Result ] The result of the operation.
-    def read_with_retry(session, server_selector, &block)
-      if session && session.retry_reads?
+    def read_with_retry(session = nil, server_selector = nil, &block)
+      if session.nil? && server_selector.nil?
+        # Older versions of Mongoid call read_with_retry without arguments.
+        # This is already not correct in a MongoDB 3.6+ environment with
+        # sessions. For compatibility we emulate the legacy driver behavior
+        # here but upgrading Mongoid is strongly recommended.
+        unless $_mongo_read_with_retry_warned
+          $_mongo_read_with_retry_warned = true
+          Logger.logger.warn("Legacy read_with_retry invocation - please update the application and/or its dependencies")
+        end
+        # Since we don't have a session, we cannot use the modern read retries.
+        # And we need to select a server but we don't have a server selector.
+        # Use PrimaryPreferred which will work as long as there is a data
+        # bearing node in the cluster; the block may select a different server
+        # which is fine.
+        server_selector = ServerSelector.get(mode: :primary_preferred)
+        legacy_read_with_retry(nil, server_selector, &block)
+      elsif session && session.retry_reads?
         modern_read_with_retry(session, server_selector, &block)
       elsif client.cluster.max_read_retries > 0
         legacy_read_with_retry(session, server_selector, &block)
