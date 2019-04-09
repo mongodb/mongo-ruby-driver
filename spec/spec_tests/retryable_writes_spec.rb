@@ -11,7 +11,9 @@ describe 'Retryable writes spec tests' do
       spec.tests.each do |test|
 
         context(test.description) do
-          min_server_fcv '3.6'
+          # Retryable writes work on 3.6 servers but fail points only
+          # exist in 4.0 and higher
+          min_server_fcv '4.0'
           require_topology :replica_set
 
           let(:collection) do
@@ -29,12 +31,16 @@ describe 'Retryable writes spec tests' do
           end
 
           before do
-            test.setup_test(collection)
+            if spec.server_version_satisfied?(client)
+              test.setup_test(collection)
+            end
           end
 
           after do
-            test.clear_fail_point(collection)
-            collection.delete_many
+            if spec.server_version_satisfied?(client)
+              test.clear_fail_point(collection.client)
+              collection.delete_many
+            end
           end
 
           let(:verifier) { Mongo::CRUD::Verifier.new(test) }

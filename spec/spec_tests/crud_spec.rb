@@ -1,58 +1,14 @@
 require 'spec_helper'
 
-describe 'CRUD' do
+describe do
+  define_crud_spec_tests('CRUD spec tests', CRUD_TESTS.sort) do |spec, req, test|
+    let(:client) { authorized_client }
+    let(:collection) { client['crud_spec_test'] }
 
-  CRUD_TESTS.each do |file|
-
-    spec = Mongo::CRUD::Spec.new(file)
-
-    context(spec.description) do
-
-      spec.tests.each do |test|
-
-        context(test.description) do
-
-          before(:each) do
-            unless spec.server_version_satisfied?(authorized_client)
-              skip 'Version requirement not satisfied'
-            end
-
-            test.setup_test(authorized_collection)
-          end
-
-          after(:each) do
-            authorized_collection.delete_many
-          end
-
-          let(:verifier) { Mongo::CRUD::Verifier.new(test) }
-
-          test.operations.each_with_index do |operation, index|
-            context "operation #{index+1}" do
-
-              let!(:result) do
-                test.run(authorized_collection, index+1)
-              end
-
-              let(:actual_collection) do
-                if operation.outcome && operation.outcome.collection_name
-                  authorized_client[operation.outcome.collection_name]
-                else
-                  authorized_collection
-                end
-              end
-
-              it 'returns the correct result' do
-                verifier.verify_operation_result(operation.outcome.result, result)
-              end
-
-              it 'has the correct data in the collection', if: operation.outcome.collection_data? do
-                verifier.verify_collection_data(
-                  operation.outcome.collection_data,
-                  actual_collection.find.to_a)
-              end
-            end
-          end
-        end
+    before do
+      if req.nil? || req.satisfied?
+        collection.delete_many
+        test.setup_test(collection)
       end
     end
   end

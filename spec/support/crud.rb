@@ -12,185 +12,129 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-module Mongo
-  module CRUD
+require 'support/gridfs'
+require 'support/crud/requirement'
+require 'support/crud/spec'
+require 'support/crud/test'
+require 'support/crud/outcome'
+require 'support/crud/operation'
+require 'support/crud/read'
+require 'support/crud/write'
+require 'support/crud/verifier'
 
-    # Represents a CRUD specification test.
-    #
-    # @since 2.0.0
-    class Spec
+def define_crud_spec_test_examples(spec, req = nil, &block)
+  spec.tests.each do |test|
 
-      # @return [ String ] description The spec description.
-      #
-      # @since 2.0.0
-      attr_reader :description
+    context(test.description) do
 
-      # Instantiate the new spec.
-      #
-      # @example Create the spec.
-      #   Spec.new(file)
-      #
-      # @param [ String ] file The name of the file.
-      #
-      # @since 2.0.0
-      def initialize(file)
-        file = File.new(file)
-        @spec = YAML.load(ERB.new(file.read).result)
-        file.close
-        @description = File.basename(file)
-        @data = @spec['data']
-        @crud_tests = @spec['tests']
-        @min_server_version = @spec['minServerVersion']
-        @max_server_version = @spec['maxServerVersion']
-      end
-
-
-      # Whether the test can be run on a given server version.
-      #
-      # @example Can the test run on this server version?
-      #   spec.server_version_satisfied?(client)
-      #
-      # @param [ Mongo::Client ] client The client to check.
-      #
-      # @return [ true, false ] Whether the test can be run on the given
-      #   server version.
-      #
-      # @since 2.4.0
-      def server_version_satisfied?(client)
-        lower_bound_satisfied?(client) && upper_bound_satisfied?(client)
-      end
-
-      # Get a list of CRUDTests for each test definition.
-      #
-      # @example Get the list of CRUDTests.
-      #   spec.tests
-      #
-      # @return [ Array<CRUDTest> ] The list of CRUDTests.
-      #
-      # @since 2.0.0
-      def tests
-        @crud_tests.collect do |test|
-          Mongo::CRUD::CRUDTest.new(@data, test)
+      before(:each) do
+        unless spec.server_version_satisfied?(client)
+          skip 'Version requirement not satisfied'
         end
       end
 
-      private
+      let(:verifier) { Mongo::CRUD::Verifier.new(test) }
 
-      def upper_bound_satisfied?(client)
-        return true unless @max_server_version
-        client.database.command(buildInfo: 1).first['version'] <= @max_server_version
-      end
+      instance_exec(spec, req, test, &block)
 
-      def lower_bound_satisfied?(client)
-        return true unless @min_server_version
-        #@min_server_version <= client.database.command(buildInfo: 1).first['version']
-        @min_server_version <= ClusterConfig.instance.fcv_ish
-      end
-    end
+      test.operations.each_with_index do |operation, index|
+        context "operation #{index+1}" do
 
-    # Represents a single CRUD test.
-    #
-    # @since 2.0.0
-    class CRUDTest
-
-      # The test description.
-      #
-      # @return [ String ] description The test description.
-      #
-      # @since 2.0.0
-      attr_reader :description
-
-      # Spec tests have configureFailPoint as a string, make it a string here too
-      FAIL_POINT_BASE_COMMAND = {
-        'configureFailPoint' => "onPrimaryTransactionalWrite",
-      }.freeze
-
-      # Instantiate the new CRUDTest.
-      #
-      # @example Create the test.
-      #   CRUDTest.new(data, test)
-      #
-      # @param [ Array<Hash> ] data The documents the collection
-      # must have before the test runs.
-      # @param [ Hash ] test The test specification.
-      #
-      # @since 2.0.0
-      def initialize(data, test)
-        @data = data
-        if test['failPoint']
-          @fail_point_command = FAIL_POINT_BASE_COMMAND.merge(test['failPoint'])
-        end
-        @description = test['description']
-        if test['operations']
-          @operations = test['operations'].map do |op_spec|
-            Operation.get(op_spec)
+          let(:result) do
+            if operation.outcome.error?
+              error = nil
+              begin
+                test.run(collection, index+1)
+              rescue => e
+                error = e
+              end
+              error
+            else
+              test.run(collection, index+1)
+            end
           end
-        else
-          @operations = [Operation.get(test['operation'], test['outcome'])]
-        end
-      end
 
-      # Operations to be performed by the test.
-      #
-      # For CRUD tests, there is one operation for test. For retryable writes,
-      # there are multiple operations for each test. In either case we build
-      # an array of operations.
-      attr_reader :operations
+          let(:verify_collection_name) do
+            if operation.outcome && operation.outcome.collection_name
+              operation.outcome.collection_name
+            else
+              'crud_spec_test'
+            end
+          end
 
-      # Run the test.
-      #
-      # The specified number of operations are executed, so that the
-      # test can assert on the outcome of each specified operation in turn.
-      #
-      # @param [ Collection ] collection The collection the test
-      #   should be run on.
-      # @param [ Integer ] num_ops Number of operations to run.
-      #
-      # @return [ Result, Array<Hash> ] The result(s) of running the test.
-      #
-      # @since 2.0.0
-      def run(collection, num_ops)
-        result = nil
-        1.upto(num_ops) do |i|
-          result = @operations[i-1].execute(collection)
-        end
-        result
-      end
+          let(:verify_collection) { client[verify_collection_name] }
 
-      def setup_test(collection)
-        clear_fail_point(collection)
-        @collection = collection
-        collection.delete_many
-        collection.insert_many(@data)
-        set_up_fail_point(collection)
-      end
+          if operation.outcome.error?
+            it 'raises an error' do
+              expect(result).to be_a(Mongo::Error)
+            end
+          else
+            tested = false
 
-      def set_up_fail_point(collection)
-        if @fail_point_command
-          collection.client.use(:admin).command(@fail_point_command)
-        end
-      end
+            if operation.outcome.result
+              tested = true
+              it 'returns the correct result' do
+                result
+                verifier.verify_operation_result(operation.outcome.result, result)
+              end
+            end
 
-      def clear_fail_point(collection)
-        if @fail_point_command
-          collection.client.use(:admin).command(FAIL_POINT_BASE_COMMAND.merge(mode: "off"))
-        end
-      end
+            if operation.outcome.collection_data?
+              tested = true
+              it 'has the correct data in the collection' do
+                result
+                verifier.verify_collection_data(
+                  operation.outcome.collection_data,
+                  verify_collection.find.to_a)
+              end
+            end
 
-      private
-
-      def actual_collection_data
-        if expected_outcome.collection_data?
-          collection_name = expected_outcome.collection_name || @collection.name
-          @collection.database[collection_name].find.to_a
+            unless tested
+              it 'succeeds' do
+                expect do
+                  result
+                end.not_to raise_error
+              end
+            end
+          end
         end
       end
     end
   end
 end
 
-require 'support/crud/outcome'
-require 'support/crud/operation'
-require 'support/crud/read'
-require 'support/crud/write'
-require 'support/crud/verifier'
+def define_crud_spec_tests(description, test_paths, &block)
+  describe(description) do
+
+    test_paths.each do |path|
+
+      spec = Mongo::CRUD::Spec.new(path)
+
+      context(spec.description) do
+        if spec.requirements
+          # This block defines the same set of examples multiple times,
+          # once for each requirement specified in the YAML files.
+          # This allows detecting when any of the configurations is
+          # not tested by CI.
+          spec.requirements.each do |req|
+            context(req.description) do
+              if req.min_server_version
+                min_server_fcv req.short_min_server_version
+              end
+              if req.max_server_version
+                max_server_version req.short_max_server_version
+              end
+              if req.topologies
+                require_topology *req.topologies
+              end
+
+              define_crud_spec_test_examples(spec, req, &block)
+            end
+          end
+        else
+          define_crud_spec_test_examples(spec, &block)
+        end
+      end
+    end
+  end
+end
