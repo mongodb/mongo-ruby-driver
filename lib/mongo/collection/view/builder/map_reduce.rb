@@ -133,7 +133,7 @@ module Mongo
 
           def map_reduce_command
             command = BSON::Document.new(
-              :mapreduce => collection.name,
+              :mapReduce => collection.name,
               :map => map,
               :reduce => reduce,
               :query => filter,
