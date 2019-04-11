@@ -146,14 +146,14 @@ module Mongo
           with_session(opts) do |session|
             read_with_retry(session, selector) do |server|
               apply_collation!(cmd, server, opts)
-              Operation::Count.new({
+              Operation::Count.new(
                                      :selector => cmd,
                                      :db_name => database.name,
                                      :options => {:limit => -1},
                                      :read => read_pref,
                                      :session => session
-                                    }).execute(server)
-              end.n.to_i
+              ).execute(server)
+            end.n.to_i
           end
         end
 
@@ -180,7 +180,7 @@ module Mongo
           pipeline = [:'$match' => filter]
           pipeline << { :'$skip' => opts[:skip] } if opts[:skip]
           pipeline << { :'$limit' => opts[:limit] } if opts[:limit]
-          pipeline << { :'$group' => { _id: nil, n: { :'$sum' => 1 } } }
+          pipeline << { :'$group' => { _id: 1, n: { :'$sum' => 1 } } }
 
           opts.select! { |k, _| [:hint, :max_time_ms, :read, :collation, :session].include?(k) }
           first = aggregate(pipeline, opts).first
