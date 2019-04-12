@@ -101,11 +101,6 @@ module Mongo
       # @since 2.0.0
       SELECTOR = :selector.freeze
 
-      # The startTransaction option
-      #
-      # @since 2.6.0
-      START_TRANSACTION = :start_transaction.freeze
-
       # The field for number to return.
       #
       # @since 2.0.0
@@ -556,17 +551,6 @@ module Mongo
       # @since 2.5.2
       def array_filters
         selector[Operation::ARRAY_FILTERS] if selector
-      end
-
-      # The startTransaction option.
-      #
-      # @example Get the startTransaction option.
-      #   specifiable.start_transaction
-      #
-      # @return  [ Boolean ] The startTransaction option.
-      #
-      def start_transaction
-        @spec[START_TRANSACTION]
       end
 
       # Does the operation have an acknowledged write concern.
