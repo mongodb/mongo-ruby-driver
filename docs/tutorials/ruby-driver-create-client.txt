@@ -841,3 +841,9 @@ driver in production:
   pool size will keep up to that many network connections to a server
   alive once they are established. This behavior may change in a future
   version of the driver (`RUBY-1605 <https://jira.mongodb.org/browse/RUBY-1605>`_).
+- If the application is reverse proxied to by another web server or a load
+  balancer, ``server_selection_timeout`` should generally be set to a lower
+  value than the reverse proxy's read timeout. For exampe, `Heroku request timeout
+  <https://devcenter.heroku.com/articles/request-timeout>`_ is 30 seconds and
+  is not configurable; if deploying a Ruby application using MongoDB to Heroku,
+  consider lowering server selection timeout to 20 or 15 seconds.
