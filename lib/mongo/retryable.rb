@@ -19,7 +19,68 @@ module Mongo
   # @since 2.1.0
   module Retryable
 
-    # Execute a read operation with a retry.
+    # Execute a read operation returning a cursor with retrying.
+    #
+    # This method performs server selection for the specified server selector
+    # and yields to the provided block, which should execute the initial
+    # query operation and return its result. The block will be passed the
+    # server selected for the operation. If the block raises an exception,
+    # and this exception corresponds to a read retryable error, and read
+    # retries are enabled for the client, this method will perform server
+    # selection again and yield to the block again (with potentially a
+    # different server). If the block returns successfully, the result
+    # of the block (which should be a Mongo::Operation::Result) is used to
+    # construct a Mongo::Cursor object for the result set. The cursor
+    # is then returned.
+    #
+    # If modern retry reads are on (which is the default), the initial read
+    # operation will be retried once. If legacy retry reads are on, the
+    # initial read operation will be retried zero or more times depending
+    # on the :max_read_retries client setting, the default for which is 1.
+    # To disable read retries, turn off modern read retries by setting
+    # retry_reads: false and set :max_read_retries to 0 on the client.
+    #
+    # @api private
+    #
+    # @example Execute a read returning a cursor.
+    #   cursor = read_with_retry_cursor(session, server_selector, view) do |server|
+    #     # return a Mongo::Operation::Result
+    #     ...
+    #   end
+    #
+    # @param [ Mongo::Session ] session The session that the operation is being
+    #   run on.
+    # @param [ Mongo::ServerSelector::Selectable ] server_selector Server
+    #   selector for the operation.
+    # @param [ CollectionView ] view The +CollectionView+ defining the query.
+    # @param [ Proc ] block The block to execute.
+    #
+    # @return [ Cursor ] The cursor for the result set.
+    def read_with_retry_cursor(session, server_selector, view, &block)
+      read_with_retry(session, server_selector) do |server|
+        result = yield server
+        Cursor.new(view, result, server, session: session)
+      end
+    end
+
+    # Execute a read operation with retrying.
+    #
+    # This method performs server selection for the specified server selector
+    # and yields to the provided block, which should execute the initial
+    # query operation and return its result. The block will be passed the
+    # server selected for the operation. If the block raises an exception,
+    # and this exception corresponds to a read retryable error, and read
+    # retries are enabled for the client, this method will perform server
+    # selection again and yield to the block again (with potentially a
+    # different server). If the block returns successfully, the result
+    # of the block is returned.
+    #
+    # If modern retry reads are on (which is the default), the initial read
+    # operation will be retried once. If legacy retry reads are on, the
+    # initial read operation will be retried zero or more times depending
+    # on the :max_read_retries client setting, the default for which is 1.
+    # To disable read retries, turn off modern read retries by setting
+    # retry_reads: false and set :max_read_retries to 0 on the client.
     #
     # @api private
     #
@@ -28,8 +89,6 @@ module Mongo
     #     ...
     #   end
     #
-    # @note This only retries read operations on socket errors.
-    #
     # @param [ Mongo::Session ] session The session that the operation is being
     #   run on.
     # @param [ Mongo::ServerSelector::Selectable ] server_selector Server
@@ -37,36 +96,22 @@ module Mongo
     # @param [ Proc ] block The block to execute.
     #
     # @return [ Result ] The result of the operation.
-    #
-    # @since 2.1.0
-    def read_with_retry(session, server_selector)
-      server = server_selector.select_server(cluster)
-      attempt = 0
-      begin
-        attempt += 1
+    def read_with_retry(session, server_selector, &block)
+      if session && session.retry_reads?
+        modern_read_with_retry(session, server_selector, &block)
+      elsif client.cluster.max_read_retries > 0
+        legacy_read_with_retry(session, server_selector, &block)
+      else
+        server = select_server(cluster, server_selector)
         yield server
-      rescue Error::SocketError, Error::SocketTimeoutError => e
-        if attempt > cluster.max_read_retries || (session && session.in_transaction?)
-          raise
-        end
-        log_retry(e)
-        cluster.scan!(false)
-        retry
-      rescue Error::OperationFailure => e
-        if cluster.sharded? && e.retryable? && !(session && session.in_transaction?)
-          if attempt > cluster.max_read_retries
-            raise
-          end
-          log_retry(e)
-          sleep(cluster.read_retry_interval)
-          retry
-        else
-          raise
-        end
       end
     end
 
-    # Execute a read operation with a single retry.
+    # Execute a read operation with a single retry on network errors.
+    #
+    # This method is used by the driver for some of the internal housekeeping
+    # operations. Application-requested reads should use read_with_retry
+    # rather than this method.
     #
     # @api private
     #
@@ -163,6 +208,52 @@ module Mongo
 
     private
 
+    def modern_read_with_retry(session, server_selector, &block)
+      attempt = 0
+      server = select_server(cluster, server_selector)
+      begin
+        yield server
+      rescue Error::SocketError, Error::SocketTimeoutError => e
+        if session.in_transaction?
+          raise
+        end
+        retry_read(e, server_selector, &block)
+      rescue Error::OperationFailure => e
+        if session.in_transaction? || !e.write_retryable?
+          raise
+        end
+        retry_read(e, server_selector, &block)
+      end
+    end
+
+    def legacy_read_with_retry(session, server_selector)
+      attempt = 0
+      server = select_server(cluster, server_selector)
+      begin
+        attempt += 1
+        yield server
+      rescue Error::SocketError, Error::SocketTimeoutError => e
+        if attempt > cluster.max_read_retries || (session && session.in_transaction?)
+          raise
+        end
+        log_retry(e)
+        server = select_server(cluster, server_selector)
+        retry
+      rescue Error::OperationFailure => e
+        if cluster.sharded? && e.retryable? && !(session && session.in_transaction?)
+          if attempt > cluster.max_read_retries
+            raise
+          end
+          log_retry(e)
+          sleep(cluster.read_retry_interval)
+          server = select_server(cluster, server_selector)
+          retry
+        else
+          raise
+        end
+      end
+    end
+
     def retry_write_allowed?(session, write_concern)
       unless session && session.retry_writes?
         return false
@@ -175,6 +266,27 @@ module Mongo
           write_concern = WriteConcern.get(write_concern)
         end
         write_concern.acknowledged?
+      end
+    end
+
+    def retry_read(original_error, server_selector, &block)
+      begin
+        server = select_server(cluster, server_selector)
+      rescue
+        raise original_error
+      end
+
+      log_retry(original_error, message: 'Read retry')
+
+      begin
+        yield server, true
+      rescue Error::SocketError, Error::SocketTimeoutError => e
+        raise e
+      rescue Error::OperationFailure => e
+        raise original_error unless e.write_retryable?
+        raise e
+      rescue
+        raise original_error
       end
     end
 
@@ -218,6 +330,12 @@ module Mongo
           raise
         end
       end
+    end
+
+    # This is a separate method to make it possible for the test suite to
+    # assert that server selection is performed during retry attempts.
+    def select_server(cluster, server_selector)
+      server_selector.select_server(cluster)
     end
 
     # Log a warning so that any application slow down is immediately obvious.

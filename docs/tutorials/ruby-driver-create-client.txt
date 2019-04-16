@@ -718,6 +718,79 @@ does not close it, the parent process will continue consuming a connection slot
 in the cluster and will continue monitoring the cluster for as long as the
 parent remains alive.
 
+
+Details on Retryable Reads
+--------------------------
+
+The driver implements two mechanisms for retrying reads: modern and legacy.
+As of driver version 2.9.0, the modern mechanism is used by default, and the
+legacy mechanism is deprecated.
+
+Modern Retryable Reads
+``````````````````````
+
+When the modern mechanism is used, read operations are retried once in the
+event of a network error, a "not master" error, or a "node is recovering" error.
+The following operations are covered:
+
+- `Collection#find <http://api.mongodb.com/ruby/current/Mongo/Collection.html#find-instance_method>`_
+  and related methods
+- `Collection#aggregate <http://api.mongodb.com/ruby/current/Mongo/Collection.html#aggregate-instance_method>`_
+- `Collection#count <http://api.mongodb.com/ruby/current/Mongo/Collection.html#count-instance_method>`_,
+  `Collection#count_documents <http://api.mongodb.com/ruby/current/Mongo/Collection.html#count_documents-instance_method>`_
+- Change stream helpers: `Collection#watch <http://api.mongodb.com/ruby/current/Mongo/Collection.html#watch-instance_method>`_,
+  `Database#watch <http://api.mongodb.com/ruby/current/Mongo/Database.html#watch-instance_method>`_,
+  `Client#watch <http://api.mongodb.com/ruby/current/Mongo/Client.html#watch-instance_method>`_
+- Enumeration commands: `Client#list_mongo_databases <http://api.mongodb.com/ruby/current/Mongo/Client.html#list_mongo_databases-instance_method>`_,
+  `Client#list_databases <http://api.mongodb.com/ruby/current/Mongo/Client.html#list_databases-instance_method>`_,
+  `Client#database_names <http://api.mongodb.com/ruby/current/Mongo/Client.html#database_names-instance_method>`_,
+  `Database#collection_names <http://api.mongodb.com/ruby/current/Mongo/Database.html#collection_names-instance_method>`_,
+  `Database#collections <http://api.mongodb.com/ruby/current/Mongo/Database.html#collections-instance_method>`_,
+  `Database#list_collections <http://api.mongodb.com/ruby/current/Mongo/Database.html#list_collections-instance_method>`_,
+  `Collection#indexes <http://api.mongodb.com/ruby/current/Mongo/Collection.html#indexes-instance_method>`_
+
+When an operation returns a cursor, only the initial read command can be retried.
+``getMore`` operations on cursors are not retried by driver version 2.9.0 or
+newer. Additionally, when a read operation is retried, a new server for the
+operation is selected; this may result in the retry being sent to a different
+server from the one which received the first read.
+
+The behavior of modern retryable reads is covered in detail by the
+`retryable reads specification
+<https://github.com/mongodb/specifications/blob/master/source/retryable-reads/retryable-reads.rst>`_.
+
+Note that the modern retryable reads can only be used with MongoDB 3.6 and
+higher servers. When used with MongoDB 3.4 and lower servers, Ruby driver
+version 2.9.0 and higher will not retry reads by default - the application
+must explicitly request legacy retryable reads by setting the
+``retry_reads: false`` client option or using ``retryReads=false`` URI option.
+
+Legacy Retryable Reads
+``````````````````````
+
+The legacy read retry behavior of the Ruby driver is available by setting the
+``retry_reads: false`` client option or passing the ``retryReads=false`` URI
+option to the client.
+
+When using legacy read retry behavior, the number of retries can be set
+by specifying the ``max_read_retries`` client option. When using driver version
+2.9.0 or higher, the set of operations which would be retried with legacy
+retryable reads is identical to the one described above for modern retryable
+reads. In older driver versions the behavior of legacy retryable writes was
+different in that some of the operations were not retried.
+
+As of driver version 2.9.0, legacy read retries perform server selection prior
+to retrying the operation, as modern retriable writes do. In older driver
+versions read retries would be sent to the same server which the initial read
+was sent to.
+
+Disabling Retryable Reads
+`````````````````````````
+
+To disable all read retries, set the following client options:
+``retry_reads: false, max_read_retries: 0``.
+
+
 Details on Retryable Writes
 ---------------------------
 

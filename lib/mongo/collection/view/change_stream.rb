@@ -270,17 +270,22 @@ module Mongo
           @start_at_operation_time_supported = nil
 
           session = client.send(:get_session, @options)
-          server = server_selector.select_server(cluster)
-          result = send_initial_query(server, session)
-          if doc = result.replies.first && result.replies.first.documents.first
-            @start_at_operation_time = doc['operationTime']
-          else
-            # The above may set @start_at_operation_time to nil
-            # if it was not in the document for some reason,
-            # for consistency set it to nil here as well
-            @start_at_operation_time = nil
+          start_at_operation_time = nil
+          @cursor = read_with_retry_cursor(session, server_selector, view) do |server|
+            result = send_initial_query(server, session)
+            if doc = result.replies.first && result.replies.first.documents.first
+              start_at_operation_time = doc['operationTime']
+            else
+              # The above may set @start_at_operation_time to nil
+              # if it was not in the document for some reason,
+              # for consistency set it to nil here as well.
+              # NB: since this block may be executed more than once, each
+              # execution must write to start_at_operation_time either way.
+              start_at_operation_time = nil
+            end
+            result
           end
-          @cursor = Cursor.new(view, result, server, disable_retry: true, session: session)
+          @start_at_operation_time = start_at_operation_time
         end
 
         def pipeline

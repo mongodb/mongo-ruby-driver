@@ -26,7 +26,7 @@ module Mongo
     # subcomponents.
     #
     # @since 2.1.0
-    CRUD_OPTIONS = [ :database, :read, :write, :retry_writes ].freeze
+    CRUD_OPTIONS = [ :database, :read, :write, :retry_reads, :retry_writes ].freeze
 
     # Valid client options.
     #
@@ -56,6 +56,7 @@ module Mongo
       :read_concern,
       :read_retry_interval,
       :replica_set,
+      :retry_reads,
       :retry_writes,
       :scan,
       :sdam_proc,
@@ -170,7 +171,7 @@ module Mongo
     #   # connect to the replica set if given the address of a server in
     #   # a replica set
     #
-    # @param [ Array<String>, String ] addresses_or_uri The array of server addresses in the
+    # @param [ Array<String> | String ] addresses_or_uri The array of server addresses in the
     #   form of host:port or a MongoDB URI connection string.
     # @param [ Hash ] options The options to be used by the client.
     #
@@ -238,10 +239,13 @@ module Mongo
     #   in which reads on a mongos are retried.
     # @option options [ Symbol ] :replica_set The name of the replica set to
     #   connect to. Servers not in this replica set will be ignored.
-    # @option options [ true, false ] :retry_writes Retry writes once when
+    # @option options [ true | false ] :retry_reads If true, modern retryable
+    #   reads are enabled (which is the default). If false, modern retryable
+    #   reads are disabled and legacy retryable reads are enabled.
+    # @option options [ true | false ] :retry_writes Retry writes once when
     #   connected to a replica set or sharded cluster versions 3.6 and up.
     #   (Default is true.)
-    # @option options [ true, false ] :scan Whether to scan all seeds
+    # @option options [ true | false ] :scan Whether to scan all seeds
     #   in constructor. The default in driver version 2.x is to do so;
     #   driver version 3.x will not scan seeds in constructor. Opt in to the
     #   new behavior by setting this option to false. *Note:* setting
@@ -318,6 +322,9 @@ module Mongo
         options = options.dup
       else
         options = {}
+      end
+      unless options[:retry_reads] == false
+        options[:retry_reads] = true
       end
       unless options[:retry_writes] == false
         options[:retry_writes] = true

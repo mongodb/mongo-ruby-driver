@@ -67,15 +67,17 @@ module Mongo
         def each
           @cursor = nil
           session = client.send(:get_session, @options)
-          legacy_write_with_retry do |server|
-            result = send_initial_query(server, session)
-            result = send_fetch_query(server, session) unless inline?
-            @cursor = Cursor.new(view, result, server, session: session)
+          server = cluster.next_primary
+          result = send_initial_query(server, session)
+          result = send_fetch_query(server, session) unless inline?
+          @cursor = Cursor.new(view, result, server, session: session)
+          if block_given?
+            @cursor.each do |doc|
+              yield doc
+            end
+          else
+            @cursor.to_enum
           end
-          @cursor.each do |doc|
-            yield doc
-          end if block_given?
-          @cursor.to_enum
         end
 
         # Set or get the finalize function for the operation.
@@ -106,8 +108,8 @@ module Mongo
         # @since 2.0.0
         def initialize(view, map, reduce, options = {})
           @view = view
-          @map_function = map.freeze
-          @reduce_function = reduce.freeze
+          @map_function = map.dup.freeze
+          @reduce_function = reduce.dup.freeze
           @options = BSON::Document.new(options).freeze
         end
 

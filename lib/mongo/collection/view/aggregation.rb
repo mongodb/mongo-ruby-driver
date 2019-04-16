@@ -110,8 +110,12 @@ module Mongo
           server.standalone? || server.mongos? || server.primary? || secondary_ok?
         end
 
+        def out?
+          pipeline.any? { |op| op.key?('$out') || op.key?(:$out) }
+        end
+
         def secondary_ok?
-          pipeline.none? { |op| op.key?('$out') || op.key?(:$out) }
+          !out?
         end
 
         def send_initial_query(server, session)

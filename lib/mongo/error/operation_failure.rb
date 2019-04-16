@@ -78,24 +78,24 @@ module Mongo
       # @since 2.6.0
       attr_reader :code_name
 
-      # Can the read operation that caused the error be retried?
+      # Whether the error is a retryable error according to the legacy read retry
+      # logic.
       #
-      # @example Is the error retryable?
-      #   error.retryable?
-      #
-      # @return [ true, false ] Whether the error is retryable.
+      # @return [ true, false ]
       #
       # @since 2.1.1
+      # @deprecated
       def retryable?
         RETRY_MESSAGES.any?{ |m| message.include?(m) }
       end
 
-      # Can the write operation that caused the error be retried?
+      # Whether the error is a retryable error according to the modern retryable
+      # reads and retryable writes specifications.
       #
-      # @example Is the error retryable for writes?
-      #   error.write_retryable?
+      # This method is also used by the legacy retryable write logic to determine
+      # whether an error is a retryable one.
       #
-      # @return [ true, false ] Whether the error is retryable.
+      # @return [ true, false ]
       #
       # @since 2.4.2
       def write_retryable?

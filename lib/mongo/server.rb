@@ -380,6 +380,13 @@ module Mongo
       raise
     end
 
+    # Whether the server supports modern read retries.
+    #
+    # @api private
+    def retry_reads?
+      !!(features.sessions_enabled? && logical_session_timeout)
+    end
+
     # Will writes sent to this server be retried.
     #
     # @example Will writes be retried.

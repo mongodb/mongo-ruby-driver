@@ -21,6 +21,7 @@ module Mongo
     class View
       extend Forwardable
       include Enumerable
+      include Retryable
 
       # @return [ Collection ] collection The indexes collection.
       attr_reader :collection
@@ -190,14 +191,17 @@ module Mongo
       #
       # @since 2.0.0
       def each(&block)
-        server = next_primary(false)
         session = client.send(:get_session, @options)
-        result = send_initial_query(server, session)
-        cursor = Cursor.new(self, result, server, session: session)
-        cursor.each do |doc|
-          yield doc
-        end if block_given?
-        cursor.to_enum
+        cursor = read_with_retry_cursor(session, ServerSelector.get(mode: :primary), self) do |server|
+          send_initial_query(server, session)
+        end
+        if block_given?
+          cursor.each do |doc|
+            yield doc
+          end
+        else
+          cursor.to_enum
+        end
       end
 
       # Create the new index view.
