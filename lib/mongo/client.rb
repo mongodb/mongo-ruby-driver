@@ -26,7 +26,10 @@ module Mongo
     # subcomponents.
     #
     # @since 2.1.0
-    CRUD_OPTIONS = [ :database, :read, :write, :retry_reads, :retry_writes ].freeze
+    CRUD_OPTIONS = [
+      :database, :read, :write, :retry_reads, :retry_writes,
+      :max_read_retries, :read_retry_interval, :max_write_retries,
+    ].freeze
 
     # Valid client options.
     #
@@ -47,6 +50,7 @@ module Mongo
       :max_idle_time,
       :max_pool_size,
       :max_read_retries,
+      :max_write_retries,
       :min_pool_size,
       :monitoring,
       :monitoring_io,
@@ -205,7 +209,9 @@ module Mongo
     # @option options [ Integer ] :max_pool_size The maximum size of the
     #   connection pool.
     # @option options [ Integer ] :max_read_retries The maximum number of read
-    #   retries on mongos query failures.
+    #   retries when legacy read retries are in use.
+    # @option options [ Integer ] :max_write_retries The maximum number of write
+    #   retries when legacy write retries are in use.
     # @option options [ Integer ] :min_pool_size The minimum size of the
     #   connection pool.
     # @option options [ true, false ] :monitoring If false is given, the
@@ -368,7 +374,43 @@ module Mongo
         server_selection_semaphore: @server_selection_semaphore,
         # but need to put the database back in for auth...
         database: options[:database],
+
+        # Put these options in for legacy compatibility, but note that
+        # their values on the client and the cluster do not have to match -
+        # applications should read these values from client, not from cluster
+        max_read_retries: options[:max_read_retries],
+        read_retry_interval: options[:read_retry_interval],
       )
+    end
+
+    # Get the maximum number of times the client can retry a read operation
+    # when using legacy read retries.
+    #
+    # @return [ Integer ] The maximum number of retries.
+    #
+    # @api private
+    def max_read_retries
+      options[:max_read_retries] || Cluster::MAX_READ_RETRIES
+    end
+
+    # Get the interval, in seconds, in which read retries when using legacy
+    # read retries.
+    #
+    # @return [ Float ] The interval.
+    #
+    # @api private
+    def read_retry_interval
+      options[:read_retry_interval] || Cluster::READ_RETRY_INTERVAL
+    end
+
+    # Get the maximum number of times the client can retry a write operation
+    # when using legacy write retries.
+    #
+    # @return [ Integer ] The maximum number of retries.
+    #
+    # @api private
+    def max_write_retries
+      options[:max_write_retries] || Cluster::MAX_WRITE_RETRIES
     end
 
     # Get an inspection of the client as a string.

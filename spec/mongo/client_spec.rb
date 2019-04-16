@@ -496,6 +496,35 @@ describe Mongo::Client do
     end
   end
 
+  [
+    [:max_read_retries, 1],
+    [:read_retry_interval, 5],
+    [:max_write_retries, 1],
+  ].each do |opt, default|
+    describe "##{opt}" do
+      let(:client_options) { {} }
+
+      let(:client) do
+        Mongo::Client.new(['127.0.0.1:27017'], {monitoring_io: false}.update(client_options))
+      end
+
+      it "defaults to #{default}" do
+        expect(default).not_to be nil
+        expect(client.options[opt]).to be nil
+        expect(client.send(opt)).to eq(default)
+      end
+
+      context 'specified on client' do
+        let(:client_options) { {opt => 2} }
+
+        it 'inherits from client' do
+          expect(client.options[opt]).to eq(2)
+          expect(client.send(opt)).to eq(2)
+        end
+      end
+    end
+  end
+
   describe '#database_names' do
 
     it 'returns a list of database names' do

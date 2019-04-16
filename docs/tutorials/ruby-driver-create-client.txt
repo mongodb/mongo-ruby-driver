@@ -328,7 +328,14 @@ Ruby Options
      - 5
 
    * - ``:max_read_retries``
-     - The maximum number of read retries on mongos query failures.
+     - The maximum number of read retries, when legacy read retries are used.
+       Set to 0 to disable legacy read retries.
+     - ``Integer``
+     - 1
+
+   * - ``:max_write_retries``
+     - The maximum number of write retries, when legacy write retries are used.
+       Set to 0 to disable legacy write retries.
      - ``Integer``
      - 1
 
@@ -837,17 +844,20 @@ If modern retryable writes mechanism is disabled by setting the client
 option ``retry_writes: false`` or by using the ``retryWrites=false``
 URI option, the driver will utilize the legacy retryable writes mechanism.
 The legacy mechanism retries writes on the same operations as the modern
-mechanism, and retries one time as the modern mechanism does.
-The difference is that legacy mechanism retries writes for a different set
+mechanism. By default the legacy mechanism retries once, like the modern
+mechanism does; to change the number of retries, set ``:max_write_retries``
+client option.
+
+The difference between legacy and modern retry mechanisms is that the
+legacy mechanism retries writes for a different set
 of errors compared to the modern mechanism, and specifically does not
 retry writes when a network timeout is encountered.
 
 Disabling Retryable Writes
 ``````````````````````````
 
-Currently the driver will always retry writes on transient server-related
-errors like "not master" and "node is recovering". A future version of
-the driver may provide a mechanism to disable write retries entirely.
+To disable all write retries, set the following client options:
+``retry_writes: false, max_write_retries: 0``.
 
 Logging
 -------

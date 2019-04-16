@@ -99,7 +99,7 @@ module Mongo
     def read_with_retry(session, server_selector, &block)
       if session && session.retry_reads?
         modern_read_with_retry(session, server_selector, &block)
-      elsif client.cluster.max_read_retries > 0
+      elsif client.max_read_retries > 0
         legacy_read_with_retry(session, server_selector, &block)
       else
         server = select_server(cluster, server_selector)
@@ -233,19 +233,19 @@ module Mongo
         attempt += 1
         yield server
       rescue Error::SocketError, Error::SocketTimeoutError => e
-        if attempt > cluster.max_read_retries || (session && session.in_transaction?)
+        if attempt > client.max_read_retries || (session && session.in_transaction?)
           raise
         end
-        log_retry(e)
+        log_retry(e, message: 'Legacy read retry')
         server = select_server(cluster, server_selector)
         retry
       rescue Error::OperationFailure => e
         if cluster.sharded? && e.retryable? && !(session && session.in_transaction?)
-          if attempt > cluster.max_read_retries
+          if attempt > client.max_read_retries
             raise
           end
-          log_retry(e)
-          sleep(cluster.read_retry_interval)
+          log_retry(e, message: 'Legacy read retry')
+          sleep(client.read_retry_interval)
           server = select_server(cluster, server_selector)
           retry
         else
@@ -298,7 +298,7 @@ module Mongo
       # server unknown). Here we just need to wait for server selection.
       server = cluster.next_primary
       raise original_error unless (server.retry_writes? && txn_num)
-      log_retry(original_error)
+      log_retry(original_error, message: 'Write retry')
       yield(server, txn_num, true)
     rescue Error::SocketError, Error::SocketTimeoutError => e
       raise e
@@ -319,11 +319,11 @@ module Mongo
         yield(server || cluster.next_primary)
       rescue Error::OperationFailure => e
         server = nil
-        if attempt > Cluster::MAX_WRITE_RETRIES
+        if attempt > client.max_write_retries
           raise
         end
         if e.write_retryable? && !(session && session.in_transaction?)
-          log_retry(e)
+          log_retry(e, message: 'Legacy write retry')
           cluster.scan!(false)
           retry
         else
