@@ -13,7 +13,6 @@
 # limitations under the License.
 
 require 'support/transactions/operation'
-require 'support/transactions/verifier'
 
 module Mongo
   module Transactions
@@ -186,75 +185,24 @@ module Mongo
         @session0.end_session
         @session1.end_session
 
-        events = event_subscriber.started_events.map do |e|
-
-          # Convert txnNumber field from a BSON integer to an extended JSON int64
-          if e.command['txnNumber']
-            e.command['txnNumber'] = {
-              '$numberLong' => e.command['txnNumber'].instance_variable_get(:@integer).to_s
-            }
-          end
+        actual_events = Utils.yamlify_command_events(event_subscriber.started_events)
+        actual_events.each do |e|
 
           # Replace the session id placeholders with the actual session ids.
-          e.command['lsid'] = 'session0' if e.command['lsid'] == session0_id
-          e.command['lsid'] = 'session1' if e.command['lsid'] == session1_id
+          payload = e['command_started_event']
+          payload['command']['lsid'] = 'session0' if payload['command']['lsid'] == session0_id
+          payload['command']['lsid'] = 'session1' if payload['command']['lsid'] == session1_id
 
-
-          # The spec files don't include these fields, so we delete them.
-          e.command.delete('$readPreference')
-          e.command.delete('bypassDocumentValidation')
-          e.command.delete('$clusterTime')
-
-
-          if e.command['readConcern']
-            # The spec test use an afterClusterTime value of 42 to indicate that we need to assert
-            # that the field exists in the actual read concern rather than comparing the value, so
-            # we replace any afterClusterTime value with 42.
-            if e.command['readConcern']['afterClusterTime']
-              e.command['readConcern']['afterClusterTime'] = 42
-            end
-
-            # Convert the readConcern level from a symbol to a string.
-            if e.command['readConcern']['level']
-              e.command['readConcern']['level'] = e.command['readConcern']['level'].to_s
-            end
-          end
-
-          # This write concern is sent for some server topologies/configurations, but not all, so it
-          # doesn't appear in the expected events.
-          e.command.delete('writeConcern') if e.command['writeConcern'] == { 'w' => 2 }
-
-          # The spec tests use 42 as a placeholder value for any getMore cursorId.
-          e.command['getMore'] = { '$numberLong' => '42' } if e.command['getMore']
-
-          # Remove fields if empty
-          e.command.delete('filter') if e.command['filter'] && e.command['filter'].empty?
-          e.command.delete('query') if e.command['query'] && e.command['query'].empty?
-
-          {
-            'command_started_event' => {
-              'command' => order_hash(e.command),
-              'command_name' => e.command_name.to_s,
-              'database_name' => e.database_name
-            }
-          }
         end
-
-        # Remove any events from authentication commands.
-        events.reject! { |c| c['command_started_event']['command_name'].start_with?('sasl') }
 
         if @fail_point
           admin_support_client.command(configureFailPoint: 'failCommand', mode: 'off')
         end
 
-        events.map! do |event|
-          event['command_started_event'] = order_hash(event['command_started_event'])
-        end
-
         @results = {
           results: results,
           contents: @collection.with(read_concern: { level: 'local' }).find.to_a,
-          events: events,
+          events: actual_events,
         }
       end
 
@@ -289,10 +237,6 @@ module Mongo
         if @test_client
           @test_client.close
         end
-      end
-
-      def order_hash(hash)
-        Hash[hash.to_a.sort]
       end
     end
   end

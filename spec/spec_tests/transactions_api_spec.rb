@@ -37,10 +37,10 @@ describe 'Transactions API' do
             test.run
           end
 
-          let(:verifier) { Mongo::Transactions::Verifier.new(test) }
+          let(:verifier) { Mongo::CRUD::Verifier.new(test) }
 
           it 'returns the correct result' do
-            verifier.verify_operation_result(results[:results])
+            verifier.verify_operation_result(test_instance.expected_results, results[:results])
           end
 
           it 'has the correct data in the collection', if: test_instance.outcome.collection_data? do
@@ -52,12 +52,14 @@ describe 'Transactions API' do
 
           if test_instance.expectations
             it 'has the correct number of command_started events' do
-              verifier.verify_command_started_event_count(results)
+              verifier.verify_command_started_event_count(
+                test_instance.expectations, results[:events])
             end
 
             test_instance.expectations.each_with_index do |expectation, i|
               it "has the correct command_started event #{i}" do
-                verifier.verify_command_started_event(results, i)
+                verifier.verify_command_started_event(
+                  test_instance.expectations, results[:events], i)
               end
             end
           end

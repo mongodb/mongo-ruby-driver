@@ -42,13 +42,6 @@ module Mongo
                                 'nearest' => :nearest
                               }.freeze
 
-        # The operation name.
-        #
-        # @return [ String ] name The operation name.
-        #
-        # @since 2.0.0
-        attr_reader :name
-
         # Instantiate the operation.
         #
         # @return [ Hash ] spec The operation spec.
@@ -60,10 +53,32 @@ module Mongo
           @name = spec['name']
         end
 
+        # The operation name.
+        #
+        # @return [ String ] name The operation name.
+        #
+        # @since 2.0.0
+        attr_reader :name
+
         attr_reader :outcome
 
         def object
           @spec['object'] || 'collection'
+        end
+
+        # Which collection to verify results from.
+        # Returns the collection name specified on the operation, or
+        # the collection name for the entire spec file.
+        def verify_collection_name
+          if outcome && outcome.collection_name
+            outcome.collection_name
+          else
+            spec.collection_name.tap do |cn|
+              if cn.nil?
+                raise "Collection name cannot be nil"
+              end
+            end
+          end
         end
 
         # Execute the operation.
@@ -166,10 +181,6 @@ module Mongo
 
         def db_list_collection_objects(database)
           database.collections
-        end
-
-        def list_index_names(collection)
-          collection.indexes.map { |i| i['name'] }
         end
 
         def list_indexes(collection)

@@ -42,4 +42,86 @@ module Utils
     end
   end
   module_function :convert_client_options
+
+  def order_hash(hash)
+    Hash[hash.to_a.sort]
+  end
+  module_function :order_hash
+
+  # Transforms an array of CommandStarted events to an array of hashes
+  # matching event specification in YAML spec files
+  def yamlify_command_events(events)
+    events = events.map do |e|
+      command = e.command.dup
+
+      # Convert txnNumber field from a BSON integer to an extended JSON int64
+      if command['txnNumber']
+        command['txnNumber'] = {
+          '$numberLong' => command['txnNumber'].instance_variable_get(:@integer).to_s
+        }
+      end
+
+      # Fake $code for map/reduce commands
+      %w(map reduce).each do |key|
+        if command[key].is_a?(String)
+          command[key] = {'$code' => command[key]}
+        end
+      end
+
+      # The spec files don't include these fields, so we delete them.
+      command.delete('$readPreference')
+      command.delete('bypassDocumentValidation')
+      command.delete('$clusterTime')
+
+      if command['readConcern']
+        # The spec test use an afterClusterTime value of 42 to indicate that we need to assert
+        # that the field exists in the actual read concern rather than comparing the value, so
+        # we replace any afterClusterTime value with 42.
+        if command['readConcern']['afterClusterTime']
+          command['readConcern']['afterClusterTime'] = 42
+        end
+
+        # Convert the readConcern level from a symbol to a string.
+        if command['readConcern']['level']
+          command['readConcern']['level'] = command['readConcern']['level'].to_s
+        end
+      end
+
+      # This write concern is sent for some server topologies/configurations, but not all, so it
+      # doesn't appear in the expected events.
+      command.delete('writeConcern') if command['writeConcern'] == { 'w' => 2 }
+
+      # The spec tests use 42 as a placeholder value for any getMore cursorId.
+      command['getMore'] = { '$numberLong' => '42' } if command['getMore']
+
+      # Remove fields if empty
+      #command.delete('filter') if command['filter'] && command['filter'].empty?
+      command.delete('query') if command['query'] && command['query'].empty?
+
+      if filter = command['filter']
+        # Since the Ruby driver does not implement extended JSON, hack
+        # the types here manually.
+        # Note that this code mutates the command.
+        %w(_id files_id).each do |key|
+          if filter[key] && filter[key].is_a?(BSON::ObjectId)
+            filter[key] = {'$oid' => filter[key].to_s}
+          end
+        end
+      end
+
+      {
+        'command_started_event' => order_hash(
+          'command' => order_hash(command),
+          'command_name' => e.command_name.to_s,
+          'database_name' => e.database_name,
+        )
+      }
+    end
+
+    # Remove any events from authentication commands.
+    events.reject! { |e| e['command_started_event']['command_name'].start_with?('sasl') }
+
+    events
+  end
+  module_function :yamlify_command_events
 end

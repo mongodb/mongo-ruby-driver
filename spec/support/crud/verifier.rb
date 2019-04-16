@@ -53,12 +53,61 @@ module Mongo
             expect(actual).to be_empty
           else
             expected.each_with_index do |expected_elt, i|
-              verify_result(expected_elt, actual[i])
+              # If the YAML spec test does not define a result,
+              # do not assert the operation's result - the operation may
+              # have produced a result, the test just does not care what it is
+              if expected_elt
+                verify_result(expected_elt, actual[i])
+              end
             end
           end
         else
           verify_result(expected, actual)
         end
+      end
+
+      def verify_command_started_event_count(expected_events, actual_events)
+        expect(actual_events.length).to eq(expected_events.length)
+      end
+
+      def verify_command_started_event(expected_events, actual_events, i)
+        expect(expected_events.length).to be > i
+        expect(actual_events.length).to be > i
+
+        expectation = expected_events[i]
+        actual_event = actual_events[i]['command_started_event'].dup
+
+        expect(expectation.keys).to eq(%w(command_started_event))
+        expected_event = expectation['command_started_event'].dup
+        # Retryable reads tests' YAML assertions omit some of the keys
+        # that are included in the actual command events.
+        # Transactions and transactions API tests specify all keys
+        # in YAML that are present in actual command events.
+        actual_event.keys.each do |key|
+          unless expected_event.key?(key)
+            actual_event.delete(key)
+          end
+        end
+        expect(actual_event).not_to be nil
+        expect(actual_event.keys).to eq(expected_event.keys)
+
+        expected_command = expected_event.delete('command')
+        actual_command = actual_event.delete('command')
+
+        # Hash#compact is ruby 2.4+
+        expected_presence = expected_command.select { |k, v| !v.nil? }
+        expected_absence = expected_command.select { |k, v| v.nil? }
+
+        expected_presence.each do |k, v|
+          expect(k => actual_command[k]).to eq(k => v)
+        end
+
+        expected_absence.each do |k, v|
+          expect(actual_command).not_to have_key(k)
+        end
+
+        # this compares remaining fields in events after command is removed
+        expect(actual_event).to eq(expected_event)
       end
 
       private
@@ -69,9 +118,24 @@ module Mongo
           expect(actual).to be nil
         when Hash
           expected.each do |k, v|
-            verify_hash_items_equal(expected, actual, k)
+            case k
+            when 'errorContains'
+              expect(actual['errorContains']).to include(v)
+            when 'errorLabelsContain'
+              v.each do |label|
+                expect(actual['errorLabels']).to include(label)
+              end
+            when 'errorLabelsOmit'
+              v.each do |label|
+                if actual['errorLabels']
+                  expect(actual['errorLabels']).not_to include(label)
+                end
+              end
+            else
+              verify_hash_items_equal(expected, actual, k)
+            end
           end
-        when Integer
+        else
           expect(actual).to eq(expected)
         end
       end

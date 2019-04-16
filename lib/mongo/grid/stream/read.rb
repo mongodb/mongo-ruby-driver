@@ -46,11 +46,15 @@ module Mongo
           # @param [ FSBucket ] fs The GridFS bucket object.
           # @param [ Hash ] options The read stream options.
           #
+          # @option options [ BSON::Document ] :file_info_doc For internal
+          #   driver use only. A BSON document to use as file information.
+          #
           # @since 2.1.0
           def initialize(fs, options)
             @fs = fs
             @options = options.dup
             @file_id = @options.delete(:file_id)
+            @options.freeze
             @open = true
           end
 
@@ -70,15 +74,19 @@ module Mongo
           # @since 2.1.0
           def each
             ensure_readable!
-            num_chunks = (file_info.length + file_info.chunk_size - 1) / file_info.chunk_size
-            view.each_with_index.reduce(0) do |length_read, (doc, index)|
-              chunk = Grid::File::Chunk.new(doc)
-              validate!(index, num_chunks, chunk, length_read)
-              data = chunk.data.data
-              yield data
-              length_read += data.size
-            end if block_given?
-            view.to_enum
+            info = file_info
+            num_chunks = (info.length + info.chunk_size - 1) / info.chunk_size
+            if block_given?
+              view.each_with_index.reduce(0) do |length_read, (doc, index)|
+                chunk = Grid::File::Chunk.new(doc)
+                validate!(index, num_chunks, chunk, length_read)
+                data = chunk.data.data
+                yield data
+                length_read += data.size
+              end
+            else
+              view.to_enum
+            end
           end
 
           # Read all file data.
@@ -97,18 +105,19 @@ module Mongo
 
           # Close the read stream.
           #
+          # If the stream is already closed, this method does nothing.
+          #
           # @example Close the stream.
           #   stream.close
           #
           # @return [ BSON::ObjectId, Object ] The file id.
           #
-          # @raise [ Error::ClosedStream ] If the stream is already closed.
-          #
           # @since 2.1.0
           def close
-            ensure_open!
-            view.close_query
-            @open = false
+            if @open
+              view.close_query
+              @open = false
+            end
             file_id
           end
 
@@ -136,18 +145,24 @@ module Mongo
             @read_preference ||= options[:read] || fs.read_preference
           end
 
-          # Get the files collection file information document for the file being read.
+          # Get the files collection file information document for the file
+          # being read.
           #
-          # @example Get the file info document.
-          #   stream.file_info
+          # @note The file information is cached in the stream. Subsequent
+          #   calls to file_info will return the same information that the
+          #   first call returned, and will not query the database again.
           #
-          # @return [ Hash ] The file info document.
+          # @return [ File::Info ] The file information object.
           #
           # @since 2.1.0
           def file_info
-            doc = fs.files_collection.find(_id: file_id).first
-            if doc
-              @file_info ||= File::Info.new(Options::Mapper.transform(doc, File::Info::MAPPINGS.invert))
+            @file_info ||= begin
+              doc = options[:file_info_doc] || fs.files_collection.find(_id: file_id).first
+              if doc
+                File::Info.new(Options::Mapper.transform(doc, File::Info::MAPPINGS.invert))
+              else
+                nil
+              end
             end
           end
 
