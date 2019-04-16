@@ -239,8 +239,9 @@ module Mongo
     #   in which reads on a mongos are retried.
     # @option options [ Symbol ] :replica_set The name of the replica set to
     #   connect to. Servers not in this replica set will be ignored.
-    # @option options [ true | false ] :retry_reads Retry reads once
-    #   (modern retry behavior)
+    # @option options [ true | false ] :retry_reads If true, modern retryable
+    #   reads are enabled (which is the default). If false, modern retryable
+    #   reads are disabled and legacy retryable reads are enabled.
     # @option options [ true | false ] :retry_writes Retry writes once when
     #   connected to a replica set or sharded cluster versions 3.6 and up.
     #   (Default is true.)
