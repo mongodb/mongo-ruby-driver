@@ -14,6 +14,7 @@
 
 require 'support/gridfs'
 require 'support/crud/requirement'
+require 'support/crud/spec_base'
 require 'support/crud/spec'
 require 'support/crud/test'
 require 'support/crud/outcome'
@@ -183,6 +184,32 @@ def define_crud_spec_test_examples(spec, req = nil, &block)
   end
 end
 
+def define_spec_tests_with_requirements(spec, &block)
+  if spec.requirements
+    # This block defines the same set of examples multiple times,
+    # once for each requirement specified in the YAML files.
+    # This allows detecting when any of the configurations is
+    # not tested by CI.
+    spec.requirements.each do |req|
+      context(req.description) do
+        if req.min_server_version
+          min_server_fcv req.short_min_server_version
+        end
+        if req.max_server_version
+          max_server_version req.short_max_server_version
+        end
+        if req.topologies
+          require_topology *req.topologies
+        end
+
+        instance_exec(req, &block)
+      end
+    end
+  else
+    yield
+  end
+end
+
 def define_crud_spec_tests(description, test_paths, &block)
   describe(description) do
 
@@ -191,28 +218,8 @@ def define_crud_spec_tests(description, test_paths, &block)
       spec = Mongo::CRUD::Spec.new(path)
 
       context(spec.description) do
-        if spec.requirements
-          # This block defines the same set of examples multiple times,
-          # once for each requirement specified in the YAML files.
-          # This allows detecting when any of the configurations is
-          # not tested by CI.
-          spec.requirements.each do |req|
-            context(req.description) do
-              if req.min_server_version
-                min_server_fcv req.short_min_server_version
-              end
-              if req.max_server_version
-                max_server_version req.short_max_server_version
-              end
-              if req.topologies
-                require_topology *req.topologies
-              end
-
-              define_crud_spec_test_examples(spec, req, &block)
-            end
-          end
-        else
-          define_crud_spec_test_examples(spec, &block)
+        define_spec_tests_with_requirements(spec) do |req|
+          define_crud_spec_test_examples(spec, req, &block)
         end
       end
     end

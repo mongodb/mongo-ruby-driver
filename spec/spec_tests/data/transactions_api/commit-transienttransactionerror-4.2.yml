@@ -1,7 +1,13 @@
-database_name: &database_name "ruby-driver"
-collection_name: &collection_name "test"
+runOn:
+    -
+        minServerVersion: "4.1.6"
+        topology: ["replicaset"]
+    -
+        minServerVersion: "4.1.8"
+        topology: ["sharded"]
 
-minServerVersion: '4.1.6'
+database_name: &database_name "withTransaction-tests"
+collection_name: &collection_name "test"
 
 data: []
 

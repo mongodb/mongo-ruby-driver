@@ -3,7 +3,7 @@ require 'spec_helper'
 describe Mongo::Operation::Delete::Command do
 
   let(:write_concern) do
-    Mongo::WriteConcern.get(SpecConfig.instance.write_concern)
+    Mongo::WriteConcern.get(w: :majority)
   end
 
   let(:session) { nil }

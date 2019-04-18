@@ -3,7 +3,7 @@ module Mongo
     # Represents a CRUD specification test.
     #
     # @since 2.0.0
-    class Spec
+    class Spec < SpecBase
 
       # @return [ String ] description The spec description.
       #
@@ -28,22 +28,13 @@ module Mongo
         @spec = YAML.load(ERB.new(contents).result)
         @description = File.basename(file)
         @data = @spec['data']
-        @crud_tests = @spec['tests']
+        @tests = @spec['tests']
         @requirements = Requirement.new(@spec)
-        @requirements = if run_on = @spec['runOn']
-          run_on.map do |spec|
-            Requirement.new(spec)
-          end
-        elsif Requirement::YAML_KEYS.any? { |key| @spec.key?(key) }
-          [Requirement.new(@spec)]
-        else
-          nil
-        end
         @collection_name = @spec['collection_name']
         @bucket_name = @spec['bucket_name']
-      end
 
-      attr_reader :requirements
+        super()
+      end
 
       def collection_name
         @collection_name || 'crud_spec_test'
@@ -75,7 +66,7 @@ module Mongo
       #
       # @since 2.0.0
       def tests
-        @crud_tests.collect do |test|
+        @tests.map do |test|
           Mongo::CRUD::CRUDTest.new(@data, test)
         end
       end
