@@ -122,6 +122,14 @@ class ClientRegistry
       ).tap do |client|
         client.subscribe(Mongo::Monitoring::COMMAND, EventSubscriber)
       end
+    # Provides an authorized mongo client that does not retry reads or writes
+    # at all.
+    when 'authorized_without_any_retries'
+      global_client('authorized').with(
+        retry_reads: false, max_read_retries: 0,
+        retry_writes: false, max_write_retries: 0,
+        server_selection_timeout: 4.27,
+      )
     # Provides an unauthorized mongo client on the admin database, for use in
     # setting up the first admin root user.
     when 'admin_unauthorized'

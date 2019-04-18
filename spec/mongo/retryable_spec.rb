@@ -14,11 +14,11 @@ class RetryableTestConsumer
   end
 
   def max_read_retries
-    cluster.max_read_retries
+    client.max_read_retries
   end
 
   def read_retry_interval
-    cluster.read_retry_interval
+    client.read_retry_interval
   end
 
   def read
@@ -90,18 +90,20 @@ describe Mongo::Retryable do
   let(:server) { double('server') }
 
   let(:max_read_retries) { 1 }
+  let(:max_write_retries) { 1 }
 
   let(:cluster) do
     double('cluster', next_primary: server).tap do |cluster|
       allow(cluster).to receive(:replica_set?).and_return(true)
       allow(cluster).to receive(:addresses).and_return(['x'])
-      allow(cluster).to receive(:max_read_retries).and_return(max_read_retries)
     end
   end
 
   let(:client) do
     double('client').tap do |client|
       allow(client).to receive(:cluster).and_return(cluster)
+      allow(client).to receive(:max_read_retries).and_return(max_read_retries)
+      allow(client).to receive(:max_write_retries).and_return(max_write_retries)
     end
   end
 
@@ -217,7 +219,7 @@ describe Mongo::Retryable do
               expect(retryable).to receive(:select_server).ordered
               expect(operation).to receive(:execute).and_raise(error).ordered
               expect(cluster).to receive(:sharded?).and_return(true)
-              expect(cluster).to receive(:read_retry_interval).and_return(0.1).ordered
+              expect(client).to receive(:read_retry_interval).and_return(0.1).ordered
               expect(retryable).to receive(:select_server).ordered
               expect(operation).to receive(:execute).and_return(true).ordered
             end
@@ -235,12 +237,12 @@ describe Mongo::Retryable do
               expect(operation).to receive(:execute).and_raise(error).ordered
 
               expect(cluster).to receive(:sharded?).and_return(true)
-              expect(cluster).to receive(:read_retry_interval).and_return(0.1).ordered
+              expect(client).to receive(:read_retry_interval).and_return(0.1).ordered
               expect(retryable).to receive(:select_server).ordered
               expect(operation).to receive(:execute).and_raise(error).ordered
 
               expect(cluster).to receive(:sharded?).and_return(true)
-              expect(cluster).to receive(:read_retry_interval).and_return(0.1).ordered
+              expect(client).to receive(:read_retry_interval).and_return(0.1).ordered
               expect(retryable).to receive(:select_server).ordered
               expect(operation).to receive(:execute).and_return(true).ordered
             end

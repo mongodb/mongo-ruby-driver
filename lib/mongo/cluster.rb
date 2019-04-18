@@ -29,17 +29,18 @@ module Mongo
     include Event::Subscriber
     include Loggable
 
-    # The default number of mongos read retries.
+    # The default number of legacy read retries.
     #
     # @since 2.1.1
     MAX_READ_RETRIES = 1
 
-    # The default number of mongos write retries.
+    # The default number of legacy write retries.
     #
     # @since 2.4.2
     MAX_WRITE_RETRIES = 1
 
-    # The default mongos read retry interval, in seconds.
+    # The default read retry interval, in seconds, when using legacy read
+    # retries.
     #
     # @since 2.1.1
     READ_RETRY_INTERVAL = 5
@@ -246,21 +247,30 @@ module Mongo
                    :single?, :unknown?
     def_delegators :@cursor_reaper, :register_cursor, :schedule_kill_cursor, :unregister_cursor
 
-    # Get the maximum number of times the cluster can retry a read operation on
-    # a mongos.
+    # Get the maximum number of times the client can retry a read operation
+    # when using legacy read retries.
+    #
+    # @note max_read_retries should be retrieved from the Client instance,
+    #   not from a Cluster instance, because clusters may be shared between
+    #   clients with different values for max read retries.
     #
     # @example Get the max read retries.
     #   cluster.max_read_retries
     #
-    # @return [ Integer ] The maximum retries.
+    # @return [ Integer ] The maximum number of retries.
     #
     # @since 2.1.1
+    # @deprecated
     def max_read_retries
       options[:max_read_retries] || MAX_READ_RETRIES
     end
 
-    # Get the interval, in seconds, in which a mongos read operation is
-    # retried.
+    # Get the interval, in seconds, in which read retries when using legacy
+    # read retries.
+    #
+    # @note read_retry_interval should be retrieved from the Client instance,
+    #   not from a Cluster instance, because clusters may be shared between
+    #   clients with different values for the read retry interval.
     #
     # @example Get the read retry interval.
     #   cluster.read_retry_interval
@@ -268,6 +278,7 @@ module Mongo
     # @return [ Float ] The interval.
     #
     # @since 2.1.1
+    # @deprecated
     def read_retry_interval
       options[:read_retry_interval] || READ_RETRY_INTERVAL
     end
