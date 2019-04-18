@@ -78,6 +78,10 @@ module Mongo
           'collection'
         end
 
+        def verify_collection_name
+          'crud_spec_test'
+        end
+
         # Whether the operation is expected to have results.
         #
         # @example Whether the operation is expected to have results.

@@ -44,6 +44,7 @@ module Mongo
         else
           @operations = [Operation.get(test['operation'], test['outcome'])]
         end
+        @expectations = test['expectations']
       end
 
       attr_reader :client_options
@@ -55,31 +56,34 @@ module Mongo
       # an array of operations.
       attr_reader :operations
 
+      # The expected command monitoring events
+      attr_reader :expectations
+
       # Run the test.
       #
       # The specified number of operations are executed, so that the
       # test can assert on the outcome of each specified operation in turn.
       #
-      # @param [ Collection ] collection The collection the test
-      #   should be run on.
+      # @param [ Client ] client The client the test
+      #   should be run with.
       # @param [ Integer ] num_ops Number of operations to run.
       #
       # @return [ Result, Array<Hash> ] The result(s) of running the test.
       #
       # @since 2.0.0
-      def run(collection, num_ops)
+      def run(spec, client, num_ops)
         result = nil
         1.upto(num_ops) do |i|
           operation = @operations[i-1]
           target = case operation.object
           when 'collection'
-            collection
+            client[spec.collection_name]
           when 'database'
-            collection.database
+            client.database
           when 'client'
-            collection.client
+            client
           when 'gridfsbucket'
-            collection.database.fs
+            client.database.fs
           else
             raise "Unknown target #{operation.object}"
           end
@@ -92,11 +96,10 @@ module Mongo
         include Mongo::GridFS::Convertible
       end
 
-      def setup_test(collection)
-        client = collection.client
+      def setup_test(spec, client)
         clear_fail_point(client)
         if @data.is_a?(Array)
-          @collection = collection
+          collection = client[spec.collection_name]
           collection.delete_many
           collection.insert_many(@data)
         elsif @data.is_a?(Hash)

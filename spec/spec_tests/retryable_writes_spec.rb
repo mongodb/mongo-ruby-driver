@@ -17,7 +17,7 @@ describe 'Retryable writes spec tests' do
           require_topology :replica_set
 
           let(:collection) do
-            client[TEST_COLL]
+            client[spec.collection_name]
           end
 
           let(:client) do
@@ -32,13 +32,13 @@ describe 'Retryable writes spec tests' do
 
           before do
             if spec.server_version_satisfied?(client)
-              test.setup_test(collection)
+              test.setup_test(spec, client)
             end
           end
 
           after do
             if spec.server_version_satisfied?(client)
-              test.clear_fail_point(collection.client)
+              test.clear_fail_point(client)
               collection.delete_many
             end
           end
@@ -52,13 +52,13 @@ describe 'Retryable writes spec tests' do
                 if operation.outcome.error?
                   error = nil
                   begin
-                    test.run(collection, index+1)
+                    test.run(spec, client, index+1)
                   rescue => e
                     error = e
                   end
                   error
                 else
-                  test.run(collection, index+1)
+                  test.run(spec, client, index+1)
                 end
               end
 
@@ -66,7 +66,7 @@ describe 'Retryable writes spec tests' do
                 result
                 verifier.verify_collection_data(
                   operation.outcome.collection_data,
-                  authorized_collection.find.to_a)
+                  collection.find.to_a)
               end
 
               if operation.outcome.error?

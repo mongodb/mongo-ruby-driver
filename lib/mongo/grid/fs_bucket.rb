@@ -147,6 +147,7 @@ module Mongo
       #   size.
       # @option options [ String ] :write The write concern.
       # @option options [ String ] :read The read preference.
+      # @option options [ Session ] :session The session to use.
       #
       # @since 2.0.0
       def initialize(database, options = {})
@@ -207,17 +208,24 @@ module Mongo
       #   fs.open_download_stream(id)
       #
       # @param [ BSON::ObjectId, Object ] id The id of the file to read.
+      # @param [ Hash ] options The options.
+      #
+      # @option options [ BSON::Document ] :file_info_doc For internal
+      #   driver use only. A BSON document to use as file information.
       #
       # @return [ Stream::Read ] The stream to read from.
       #
       # @yieldparam [ Hash ] The read stream.
       #
       # @since 2.1.0
-      def open_download_stream(id)
-        read_stream(id).tap do |stream|
+      def open_download_stream(id, options = nil)
+        read_stream(id, options).tap do |stream|
           if block_given?
-            yield stream
-            stream.close
+            begin
+              yield stream
+            ensure
+              stream.close
+            end
           end
         end
       end
@@ -283,16 +291,15 @@ module Mongo
           skip = revision
           sort = { 'uploadDate' => Mongo::Index::ASCENDING }
         end
-        file_doc = files_collection.find({ filename: filename} ,
-                                           projection: { _id: 1 },
+        file_info_doc = files_collection.find({ filename: filename} ,
                                            sort: sort,
                                            skip: skip,
                                            limit: -1).first
-        unless file_doc
+        unless file_info_doc
           raise Error::FileNotFound.new(filename, :filename) unless opts[:revision]
           raise Error::InvalidFileRevision.new(filename, opts[:revision])
         end
-        open_download_stream(file_doc[:_id], &block)
+        open_download_stream(file_info_doc[:_id], file_info_doc: file_info_doc, &block)
       end
 
       # Downloads the contents of the stored file specified by filename and by the
@@ -356,8 +363,11 @@ module Mongo
       def open_upload_stream(filename, opts = {})
         write_stream(filename, opts).tap do |stream|
           if block_given?
-            yield stream
-            stream.close
+            begin
+              yield stream
+            ensure
+              stream.close
+            end
           end
         end
       end
@@ -428,8 +438,12 @@ module Mongo
 
       private
 
-      def read_stream(id)
-        Stream.get(self, Stream::READ_MODE, { file_id: id }.merge!(options))
+      # @param [ Hash ] opts The options.
+      #
+      # @option opts [ BSON::Document ] :file_info_doc For internal
+      #   driver use only. A BSON document to use as file information.
+      def read_stream(id, opts = nil)
+        Stream.get(self, Stream::READ_MODE, { file_id: id }.update(options).update(opts || {}))
       end
 
       def write_stream(filename, opts)

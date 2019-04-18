@@ -238,10 +238,10 @@ describe Mongo::Grid::FSBucket::Stream::Read do
         stream.close
       end
 
-      it 'raises an exception' do
+      it 'does not raise an exception' do
         expect {
           stream.close
-        }.to raise_error(Mongo::Error::ClosedStream)
+        }.not_to raise_error
       end
     end
   end
