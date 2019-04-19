@@ -19,11 +19,6 @@ module Mongo
     # @since 2.6.0
     class Spec < Mongo::CRUD::SpecBase
 
-      # The name of the collection to run the tests against.
-      #
-      # @since 2.6.0
-      COLLECTION_NAME = 'transactions-tests'.freeze
-
       # @return [ String ] description The spec description.
       #
       # @since 2.6.0
