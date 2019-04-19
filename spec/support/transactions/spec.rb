@@ -43,7 +43,7 @@ module Mongo
         @spec = YAML.load(contents)
         @description = File.basename(file)
         @data = @spec['data']
-        @transaction_tests = @spec['tests']
+        @tests = @spec['tests']
 
         super()
       end
@@ -57,7 +57,7 @@ module Mongo
       #
       # @since 2.6.0
       def tests
-        @transaction_tests.map do |test|
+        @tests.map do |test|
           Proc.new { Mongo::Transactions::TransactionsTest.new(@data, test, self) }
         end.compact
       end
