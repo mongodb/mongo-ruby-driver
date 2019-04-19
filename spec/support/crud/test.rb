@@ -30,7 +30,7 @@ module Mongo
       # @param [ Hash ] test The test specification.
       #
       # @since 2.0.0
-      def initialize(data, test)
+      def initialize(data, test, spec)
         @data = data
         if test['failPoint']
           @fail_point_command = FAIL_POINT_BASE_COMMAND.merge(test['failPoint'])
