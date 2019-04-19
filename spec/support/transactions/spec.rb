@@ -39,8 +39,6 @@ module Mongo
         # database name in the spec to the one we are using
         contents.sub!(/"transaction-tests"/, '"ruby-driver"')
         contents.sub!(/"withTransaction-tests"/, '"ruby-driver"')
-        # ... and collection name because we apparently hardcode that too
-        contents.sub!(/"test"/, '"transactions-tests"')
 
         @spec = YAML.load(contents)
         @description = File.basename(file)
