@@ -21,8 +21,6 @@ describe 'Transactions' do
 
           context(test_instance.description) do
 
-            let(:test) { test_factory.call }
-
             if test_instance.skip_reason
               before do
                 skip test_instance.skip_reason
@@ -31,21 +29,21 @@ describe 'Transactions' do
 
             before(:each) do
               if req.satisfied?
-                test.setup_test
+                test_instance.setup_test
               end
             end
 
             after(:each) do
               if req.satisfied?
-                test.teardown_test
+                test_instance.teardown_test
               end
             end
 
             let(:results) do
-              test.run
+              test_instance.run
             end
 
-            let(:verifier) { Mongo::CRUD::Verifier.new(test) }
+            let(:verifier) { Mongo::CRUD::Verifier.new(test_instance) }
 
             it 'returns the correct result' do
               verifier.verify_operation_result(test_instance.expected_results, results[:results])
