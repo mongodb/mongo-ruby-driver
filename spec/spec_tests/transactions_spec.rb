@@ -16,8 +16,7 @@ describe 'Transactions' do
 
     context(spec.description) do
       define_spec_tests_with_requirements(spec) do |req|
-        spec.tests.each do |test_factory|
-          test_instance = test_factory.call
+        spec.tests.each do |test_instance|
 
           context(test_instance.description) do
 
