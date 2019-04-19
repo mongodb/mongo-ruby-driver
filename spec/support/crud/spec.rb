@@ -42,21 +42,6 @@ module Mongo
 
       attr_reader :bucket_name
 
-      # Whether the test can be run on a given server version.
-      #
-      # @example Can the test run on this server version?
-      #   spec.server_version_satisfied?(client)
-      #
-      # @param [ Mongo::Client ] client The client to check.
-      #
-      # @return [ true, false ] Whether the test can be run on the given
-      #   server version.
-      #
-      # @since 2.4.0
-      def server_version_satisfied?(client)
-        lower_bound_satisfied?(client) && upper_bound_satisfied?(client)
-      end
-
       # Get a list of CRUDTests for each test definition.
       #
       # @example Get the list of CRUDTests.
@@ -69,19 +54,6 @@ module Mongo
         @tests.map do |test|
           Mongo::CRUD::CRUDTest.new(@data, test)
         end
-      end
-
-      private
-
-      def upper_bound_satisfied?(client)
-        return true unless @max_server_version
-        client.database.command(buildInfo: 1).first['version'] <= @max_server_version
-      end
-
-      def lower_bound_satisfied?(client)
-        return true unless @min_server_version
-        #@min_server_version <= client.database.command(buildInfo: 1).first['version']
-        @min_server_version <= ClusterConfig.instance.fcv_ish
       end
     end
   end

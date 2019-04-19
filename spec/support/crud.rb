@@ -93,12 +93,6 @@ def define_crud_spec_test_examples(spec, req = nil, &block)
         EventSubscriber.new
       end
 
-      before(:each) do
-        unless spec.server_version_satisfied?(client)
-          skip 'Version requirement not satisfied'
-        end
-      end
-
       let(:verifier) { Mongo::CRUD::Verifier.new(test) }
 
       let(:verify_collection) { client[verify_collection_name] }
