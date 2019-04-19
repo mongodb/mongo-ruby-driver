@@ -14,7 +14,6 @@
 
 require 'support/gridfs'
 require 'support/crud/requirement'
-require 'support/crud/spec_base'
 require 'support/crud/spec'
 require 'support/crud/test'
 require 'support/crud/outcome'
