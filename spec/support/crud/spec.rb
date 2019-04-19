@@ -34,8 +34,6 @@ module Mongo
         else
           nil
         end
-
-        @test_cls = test_cls
       end
 
       # @return [ String ] description The spec description.
