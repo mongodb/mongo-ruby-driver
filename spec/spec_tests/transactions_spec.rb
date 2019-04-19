@@ -1,10 +1,18 @@
 require 'spec_helper'
 
+=begin
+describe do
+  define_crud_spec_tests('Transactions', TRANSACTIONS_TESTS.sort) do |spec, req, test|
+    let(:client) { authorized_client }
+  end
+end
+=end
+
 describe 'Transactions' do
 
   TRANSACTIONS_TESTS.sort.each do |file|
 
-    spec = Mongo::Transactions::Spec.new(file)
+    spec = Mongo::CRUD::Spec.new(file, Mongo::Transactions::TransactionsTest)
 
     context(spec.description) do
       define_spec_tests_with_requirements(spec) do |req|

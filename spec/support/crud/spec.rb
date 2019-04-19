@@ -1,14 +1,7 @@
 module Mongo
   module CRUD
     # Represents a CRUD specification test.
-    #
-    # @since 2.0.0
-    class Spec < SpecBase
-
-      # @return [ String ] description The spec description.
-      #
-      # @since 2.0.0
-      attr_reader :description
+    class Spec
 
       # Instantiate the new spec.
       #
@@ -18,40 +11,58 @@ module Mongo
       # @param [ String ] file The name of the file.
       #
       # @since 2.0.0
-      def initialize(file)
+      def initialize(file, test_cls = CRUDTest)
         contents = ERB.new(File.read(file)).result
 
         # Since Ruby driver binds a client to a database, change the
         # database name in the spec to the one we are using
         contents.sub!(/"retryable-reads-tests"/, '"ruby-driver"')
+        contents.sub!(/"transaction-tests"/, '"ruby-driver"')
+        contents.sub!(/"withTransaction-tests"/, '"ruby-driver"')
 
         @spec = YAML.load(ERB.new(contents).result)
         @description = File.basename(file)
         @data = @spec['data']
         @tests = @spec['tests']
-        @collection_name = @spec['collection_name']
-        @bucket_name = @spec['bucket_name']
 
-        super()
+        @requirements = if run_on = @spec['runOn']
+          run_on.map do |spec|
+            Requirement.new(spec)
+          end
+        elsif Requirement::YAML_KEYS.any? { |key| @spec.key?(key) }
+          [Requirement.new(@spec)]
+        else
+          nil
+        end
+
+        @test_cls = test_cls
       end
 
-      def collection_name
-        @collection_name || 'crud_spec_test'
-      end
-
-      attr_reader :bucket_name
-
-      # Get a list of CRUDTests for each test definition.
-      #
-      # @example Get the list of CRUDTests.
-      #   spec.tests
-      #
-      # @return [ Array<CRUDTest> ] The list of CRUDTests.
+      # @return [ String ] description The spec description.
       #
       # @since 2.0.0
+      attr_reader :description
+
+      attr_reader :requirements
+
+      def collection_name
+        # Older spec tests do not specify a collection name, thus
+        # we provide a default here
+        @spec['collection_name'] || 'crud_spec_test'
+      end
+
+      def bucket_name
+        @spec['bucket_name']
+      end
+
+      def database_name
+        @spec['database_name']
+      end
+
+      # Get a list of Test instances, one for each test definition.
       def tests
         @tests.map do |test|
-          Mongo::CRUD::CRUDTest.new(@data, test)
+          @test_cls.new(@data, test, self)
         end
       end
     end

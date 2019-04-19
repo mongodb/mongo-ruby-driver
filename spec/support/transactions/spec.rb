@@ -37,8 +37,6 @@ module Mongo
 
         # Since Ruby driver binds a client to a database, change the
         # database name in the spec to the one we are using
-        contents.sub!(/"transaction-tests"/, '"ruby-driver"')
-        contents.sub!(/"withTransaction-tests"/, '"ruby-driver"')
 
         @spec = YAML.load(contents)
         @description = File.basename(file)
@@ -60,10 +58,6 @@ module Mongo
         @tests.map do |test|
           Proc.new { Mongo::Transactions::TransactionsTest.new(@data, test, self) }
         end.compact
-      end
-
-      def database_name
-        @spec['database_name']
       end
 
       def collection_name
