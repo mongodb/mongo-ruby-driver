@@ -29,7 +29,6 @@ module Mongo
         @description = File.basename(file)
         @data = @spec['data']
         @tests = @spec['tests']
-        @requirements = Requirement.new(@spec)
         @collection_name = @spec['collection_name']
         @bucket_name = @spec['bucket_name']
 
