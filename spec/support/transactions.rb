@@ -13,5 +13,4 @@
 # limitations under the License.
 
 require 'support/transactions/operation'
-require 'support/transactions/spec'
 require 'support/transactions/test'
