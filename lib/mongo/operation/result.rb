@@ -79,8 +79,9 @@ module Mongo
       # @return [ Array<Protocol::Reply> ] replies The wrapped wire protocol replies.
       attr_reader :replies
 
+      # @api private
       def_delegators :parser,
-        :not_master?, :node_recovering?
+        :not_master?, :node_recovering?, :node_shutting_down?
 
       # Is the result acknowledged?
       #

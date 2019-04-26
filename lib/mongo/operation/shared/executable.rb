@@ -47,9 +47,13 @@ module Mongo
         server.update_cluster_time(result)
 
         if result.not_master? || result.node_recovering?
-          # Max wire version needs to be checked prior to marking the
-          # server unknown
-          disconnect_pool = server.description.max_wire_version < 8
+          if result.node_shutting_down?
+            disconnect_pool = true
+          else
+            # Max wire version needs to be checked prior to marking the
+            # server unknown
+            disconnect_pool = server.description.max_wire_version < 8
+          end
 
           server.unknown!
 
