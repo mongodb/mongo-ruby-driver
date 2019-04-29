@@ -12,10 +12,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require 'base64'
 require 'forwardable'
-require 'bson'
+require 'ipaddr'
+require 'logger'
 require 'openssl'
+require 'rbconfig'
+require 'resolv'
+require 'securerandom'
+require 'set'
+require 'socket'
+require 'stringio'
 require 'timeout'
+require 'uri'
+require 'zlib'
+
+require 'bson'
 
 require 'mongo/id'
 require 'mongo/bson'

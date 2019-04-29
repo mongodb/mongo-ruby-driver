@@ -12,9 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'securerandom'
-require 'base64'
-
 module Mongo
   module Auth
     class SCRAM

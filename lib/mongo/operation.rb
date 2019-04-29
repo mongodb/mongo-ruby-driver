@@ -1,4 +1,3 @@
-require 'forwardable'
 require 'mongo/operation/result'
 
 require 'mongo/operation/shared/executable'
