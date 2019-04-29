@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'forwardable'
-
 module Mongo
   # Base error class for all Mongo related errors.
   #

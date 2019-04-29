@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'rbconfig'
-
 module Mongo
   class Server
     # Application metadata that is sent to the server in an ismaster command,
