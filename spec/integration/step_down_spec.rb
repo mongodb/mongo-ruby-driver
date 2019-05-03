@@ -3,7 +3,7 @@ require 'spec_helper'
 describe 'Step down behavior' do
   require_topology :replica_set
 
-=begin Uncomment to shorten the runtime of this test
+=begin Uncommenting this will reduce the runtime of the test, but the spec currently does not allow us to do it
   before(:all) do
     # These before/after blocks are run even if the tests themselves are
     # skipped due to server version not being appropriate
