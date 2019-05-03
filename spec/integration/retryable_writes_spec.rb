@@ -284,7 +284,7 @@ describe 'Retryable writes integration tests' do
     end
 
     let!(:collection) do
-      client[TEST_COLL, write: SpecConfig.instance.write_concern]
+      client[TEST_COLL]
     end
 
     before do
@@ -341,7 +341,7 @@ describe 'Retryable writes integration tests' do
       context 'when the collection has write concern acknowledged' do
 
         let!(:collection) do
-          client[TEST_COLL, write: SpecConfig.instance.write_concern]
+          client[TEST_COLL, write: {w: :majority}]
         end
 
         it_behaves_like 'operation that is retried when server supports retryable writes'
@@ -366,7 +366,7 @@ describe 'Retryable writes integration tests' do
       context 'when the collection has write concern acknowledged' do
 
         let!(:collection) do
-          client[TEST_COLL, write: SpecConfig.instance.write_concern]
+          client[TEST_COLL, write: {w: :majority}]
         end
 
         it_behaves_like 'an operation that is not retried'

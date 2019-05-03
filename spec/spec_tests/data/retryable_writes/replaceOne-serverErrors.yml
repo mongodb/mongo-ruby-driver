@@ -1,8 +1,14 @@
+runOn:
+    -
+        minServerVersion: "4.0"
+        topology: ["replicaset"]
+    -
+        minServerVersion: "4.1.7"
+        topology: ["sharded"]
+
 data:
     - { _id: 1, x: 11 }
     - { _id: 2, x: 22 }
-
-minServerVersion: '4.0'
 
 tests:
     -

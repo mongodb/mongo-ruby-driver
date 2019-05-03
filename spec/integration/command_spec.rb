@@ -62,12 +62,6 @@ describe 'Command' do
         min_server_fcv '3.6'
 
         let(:session) { authorized_client.start_session }
-        # w will be 2 for a RS topology with 3 nodes
-        let(:w) do
-          authorized_client.write_concern.options[:w].tap do |w|
-            expect(w).to be_a(Integer)
-          end
-        end
 
         let(:expected_payload) do
           {
@@ -75,7 +69,6 @@ describe 'Command' do
               'commitTransaction' => 1,
               'lsid' => session.session_id,
               'txnNumber' => BSON::Int64.new(123),
-              'writeConcern' => {'w' => w},
             },
             'command_name' => 'commitTransaction',
             'database_name' => 'admin',

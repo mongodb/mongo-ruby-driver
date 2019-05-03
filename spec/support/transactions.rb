@@ -20,7 +20,7 @@ module Mongo
     # Represents a Transactions specification test.
     #
     # @since 2.6.0
-    class Spec
+    class Spec < Mongo::CRUD::SpecBase
 
       # The name of the collection to run the tests against.
       #
@@ -46,6 +46,7 @@ module Mongo
         # Since Ruby driver binds a client to a database, change the
         # database name in the spec to the one we are using
         contents.sub!(/"transaction-tests"/, '"ruby-driver"')
+        contents.sub!(/"withTransaction-tests"/, '"ruby-driver"')
         # ... and collection name because we apparently hardcode that too
         contents.sub!(/"test"/, '"transactions-tests"')
 
@@ -53,6 +54,8 @@ module Mongo
         @description = File.basename(file)
         @data = @spec['data']
         @transaction_tests = @spec['tests']
+
+        super()
       end
 
       # Get a list of TransactionTests for each test definition.
@@ -175,6 +178,21 @@ module Mongo
       def run
         test_client.subscribe(Mongo::Monitoring::COMMAND, event_subscriber)
 
+        $distinct_ran ||= if @ops.any? { |op| op.name == 'distinct' }
+          if ClusterConfig.instance.mongos?
+            client = ClientRegistry.instance.global_client('basic')
+            client.cluster.next_primary
+            client.cluster.servers.each do |server|
+              direct_client = ClientRegistry.instance.new_local_client(
+                [server.address.to_s],
+                SpecConfig.instance.test_options.merge(
+                  connect: :sharded
+                ).merge(SpecConfig.instance.auth_options))
+              direct_client['test'].distinct('foo').to_a
+            end
+          end
+        end
+
         results = @ops.map do |op|
           op.execute(@collection)
         end
@@ -213,7 +231,7 @@ module Mongo
         end
 
         coll = support_client[@spec.collection_name]
-        coll.database.drop
+        coll.drop
         coll.with(write: { w: :majority }).drop
         support_client.command(create: @spec.collection_name, writeConcern: { w: :majority })
 

@@ -1,6 +1,10 @@
 # Assumes the default for transactions is the same as for all ops, tests
 # setting the writeConcern to "majority".
-topology: [replicaset, sharded]
+runOn:
+    -
+        minServerVersion: "4.0"
+        topology: ["replicaset"]
+
 database_name: &database_name "transaction-tests"
 collection_name: &collection_name "test"
 

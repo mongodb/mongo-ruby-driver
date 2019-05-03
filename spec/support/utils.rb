@@ -87,10 +87,6 @@ module Utils
         end
       end
 
-      # This write concern is sent for some server topologies/configurations, but not all, so it
-      # doesn't appear in the expected events.
-      command.delete('writeConcern') if command['writeConcern'] == { 'w' => 2 }
-
       # The spec tests use 42 as a placeholder value for any getMore cursorId.
       command['getMore'] = { '$numberLong' => '42' } if command['getMore']
 
