@@ -92,7 +92,7 @@ module Mongo
         #
         # @since 2.0.0
         def execute(target)
-          op_name = Utils.camel_to_snake(name)
+          op_name = Utils.underscore(name)
           if target.is_a?(Mongo::Database)
             op_name = "db_#{op_name}"
           elsif target.is_a?(Mongo::Client)
