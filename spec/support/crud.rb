@@ -14,7 +14,6 @@
 
 require 'support/gridfs'
 require 'support/crud/requirement'
-require 'support/crud/spec_base'
 require 'support/crud/spec'
 require 'support/crud/test'
 require 'support/crud/outcome'
@@ -91,12 +90,6 @@ def define_crud_spec_test_examples(spec, req = nil, &block)
 
       let(:event_subscriber) do
         EventSubscriber.new
-      end
-
-      before(:each) do
-        unless spec.server_version_satisfied?(client)
-          skip 'Version requirement not satisfied'
-        end
       end
 
       let(:verifier) { Mongo::CRUD::Verifier.new(test) }

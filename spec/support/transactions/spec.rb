@@ -12,6 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'support/transactions/operation'
-require 'support/transactions/spec'
-require 'support/transactions/test'
+module Mongo
+  module Transactions
+
+    class Spec < Mongo::CRUD::Spec
+      def tests
+        @tests.map do |test|
+          lambda do
+            Mongo::Transactions::TransactionsTest.new(@data, test, self)
+          end
+        end
+      end
+    end
+  end
+end
