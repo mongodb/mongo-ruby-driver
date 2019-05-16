@@ -20,11 +20,15 @@ module Mongo
   # A logical session representing a set of sequential operations executed
   # by an application that are related in some way.
   #
+  # @note Session objects are not thread-safe. An application may use a session
+  #   from only one thread or process at a time.
+  #
   # @since 2.5.0
   class Session
     extend Forwardable
     include Retryable
     include Loggable
+    include ClusterTime::Consumer
 
     # Get the options for this session.
     #
@@ -35,11 +39,6 @@ module Mongo
     #
     # @since 2.5.1
     attr_reader :client
-
-    # The cluster time for this session.
-    #
-    # @since 2.5.0
-    attr_reader :cluster_time
 
     # The latest seen operation time for this session.
     #
@@ -401,28 +400,12 @@ module Mongo
     def process(result)
       unless implicit?
         set_operation_time(result)
-        set_cluster_time(result)
+        if cluster_time_doc = result.cluster_time
+          advance_cluster_time(cluster_time_doc)
+        end
       end
       @server_session.set_last_use!
       result
-    end
-
-    # Advance the cached cluster time document for this session.
-    #
-    # @example Advance the cluster time.
-    #   session.advance_cluster_time(doc)
-    #
-    # @param [ BSON::Document, Hash ] new_cluster_time The new cluster time.
-    #
-    # @return [ BSON::Document, Hash ] The new cluster time.
-    #
-    # @since 2.5.0
-    def advance_cluster_time(new_cluster_time)
-      if @cluster_time
-        @cluster_time = [ @cluster_time, new_cluster_time ].max_by { |doc| doc[Cluster::CLUSTER_TIME] }
-      else
-        @cluster_time = new_cluster_time
-      end
     end
 
     # Advance the cached operation time for this session.
@@ -961,16 +944,6 @@ module Mongo
     def set_operation_time(result)
       if result && result.operation_time
         @operation_time = result.operation_time
-      end
-    end
-
-    def set_cluster_time(result)
-      if cluster_time_doc = result.cluster_time
-        if @cluster_time.nil?
-          @cluster_time = cluster_time_doc
-        elsif cluster_time_doc[Cluster::CLUSTER_TIME] > @cluster_time[Cluster::CLUSTER_TIME]
-          @cluster_time = cluster_time_doc
-        end
       end
     end
 

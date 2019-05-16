@@ -93,6 +93,7 @@ module Mongo
     # The cluster time field constant.
     #
     # @since 2.5.0
+    # @deprecated
     CLUSTER_TIME = '$clusterTime'.freeze
   end
 end

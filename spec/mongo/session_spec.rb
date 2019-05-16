@@ -80,7 +80,7 @@ describe Mongo::Session do
       context 'when the original cluster time is less than the new cluster time' do
 
         let(:original_cluster_time) do
-          { 'clusterTime' => BSON::Timestamp.new(0, 1) }
+          Mongo::ClusterTime.new('clusterTime' => BSON::Timestamp.new(0, 1))
         end
 
         before do
@@ -96,7 +96,7 @@ describe Mongo::Session do
       context 'when the original cluster time is equal or greater than the new cluster time' do
 
         let(:original_cluster_time) do
-          { 'clusterTime' => BSON::Timestamp.new(0, 6) }
+          Mongo::ClusterTime.new('clusterTime' => BSON::Timestamp.new(0, 6))
         end
 
         before do
