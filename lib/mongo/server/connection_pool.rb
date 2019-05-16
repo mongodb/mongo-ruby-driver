@@ -518,7 +518,7 @@ module Mongo
       #
       # @raise [ Error::PoolClosedError ] If the pool has been closed.
       #
-      # @since 2.8.0
+      # @since 2.9.0
       def raise_if_closed!
         if closed?
           raise Error::PoolClosedError.new(@server.address)
