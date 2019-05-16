@@ -53,6 +53,18 @@ class EventSubscriber
       end
     end
 
+    def select_cmap_events(cls)
+      succeeded_events.select do |event|
+        event.is_a?(cls)
+      end
+    end
+
+    def cmap_event(event)
+      @mutex.synchronize do
+        @cmap_events << event
+      end
+    end
+
     # Clear all cached events.
     #
     # @since 2.5.1
@@ -60,6 +72,7 @@ class EventSubscriber
       @started_events = []
       @succeeded_events = []
       @failed_events = []
+      @cmap_events = []
       self
     end
 

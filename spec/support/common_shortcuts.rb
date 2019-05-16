@@ -90,6 +90,12 @@ module CommonShortcuts
 
     def make_node_recovering_reply
       make_protocol_reply(
+        'ok' => 0, 'code' => 11602, 'errmsg' => 'InterruptedDueToStepDown'
+      )
+    end
+
+    def make_node_shutting_down_reply
+      make_protocol_reply(
         'ok' => 0, 'code' => 91, 'errmsg' => 'shutdown in progress'
       )
     end

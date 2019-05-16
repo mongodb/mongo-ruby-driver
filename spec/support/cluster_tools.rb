@@ -47,6 +47,11 @@ require 'singleton'
 class ClusterTools
   include Singleton
 
+  def force_step_down
+    admin_client.database.command(
+      replSetStepDown: 1, force: true)
+  end
+
   # https://docs.mongodb.com/manual/reference/parameters/#param.enableElectionHandoff
   def set_election_handoff(value)
     unless [true, false].include?(value)

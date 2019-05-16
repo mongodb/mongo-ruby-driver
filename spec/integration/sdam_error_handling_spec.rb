@@ -93,6 +93,12 @@ describe 'SDAM error handling' do
       end
     end
 
+    shared_examples_for 'node shutting down' do
+      it_behaves_like 'marks server unknown'
+      it_behaves_like 'requests server scan'
+      it_behaves_like 'clears connection pool'
+    end
+
     context 'not master error' do
       let(:exception_message) do
         /not master/
@@ -105,9 +111,9 @@ describe 'SDAM error handling' do
       it_behaves_like 'not master or node recovering'
     end
 
-    context 'node is recovering error' do
+    context 'node recovering error' do
       let(:exception_message) do
-        /shutdown in progress/
+        /DueToStepDown/
       end
 
       let(:reply) do
@@ -115,6 +121,18 @@ describe 'SDAM error handling' do
       end
 
       it_behaves_like 'not master or node recovering'
+    end
+
+    context 'node shutting down error' do
+      let(:exception_message) do
+        /shutdown in progress/
+      end
+
+      let(:reply) do
+        make_node_shutting_down_reply
+      end
+
+      it_behaves_like 'node shutting down'
     end
 
     context 'network error' do
