@@ -16,55 +16,6 @@ module Mongo
   module Transactions
     class Operation
 
-      # Map of operation names to method names.
-      #
-      # @since 2.6.0
-      OPERATIONS = {
-        'startTransaction' => :start_transaction,
-        'abortTransaction' => :abort_transaction,
-        'commitTransaction' => :commit_transaction,
-        'withTransaction' => :with_transaction,
-        'aggregate' => :aggregate,
-        'deleteMany' => :delete_many,
-        'deleteOne' => :delete_one,
-        'insertMany' => :insert_many,
-        'insertOne' => :insert_one,
-        'replaceOne' => :replace_one,
-        'updateMany' => :update_many,
-        'updateOne' => :update_one,
-        'findOneAndDelete' => :find_one_and_delete,
-        'findOneAndReplace' => :find_one_and_replace,
-        'findOneAndUpdate' => :find_one_and_update,
-        'bulkWrite' => :bulk_write,
-        'count' => :count,
-        'countDocuments' => :count_documents,
-        'distinct' => :distinct,
-        'find' => :find,
-        'runCommand' => :run_command,
-      }.freeze
-
-      # Map of operation options to method names.
-      #
-      # @since 2.6.0
-      ARGUMENT_MAP = {
-        array_filters: 'arrayFilters',
-        batch_size: 'batchSize',
-        collation: 'collation',
-        read_preference: 'readPreference',
-        document: 'document',
-        field_name: 'fieldName',
-        filter: 'filter',
-        ordered: 'ordered',
-        pipeline: 'pipeline',
-        projection: 'projection',
-        replacement: 'replacement',
-        return_document: 'returnDocument',
-        session: 'session',
-        sort: 'sort',
-        update: 'update',
-        upsert: 'upsert'
-      }.freeze
-
       # The operation name.
       #
       # @return [ String ] name The operation name.
@@ -77,23 +28,10 @@ module Mongo
       # @return [ Hash ] spec The operation spec.
       #
       # @since 2.6.0
-      def initialize(spec, session0, session1, transaction_session=nil)
-        @spec = spec
+      def initialize(spec)
+        @spec = IceNine.deep_freeze(spec)
         @name = spec['name']
-        @session0 = session0
-        @session1 = session1
-        @arguments = case spec['arguments'] && spec['arguments']['session']
-                    when 'session0'
-                      spec['arguments'].merge('session' => @session0)
-                    when 'session1'
-                      spec['arguments'].merge('session' => @session1)
-                    else
-                      args = spec['arguments'] || {}
-                      if transaction_session
-                        args = args.merge('session' => transaction_session)
-                      end
-                      args
-                    end
+        @arguments = spec['arguments'] || {}
       end
 
       attr_reader :arguments
@@ -109,23 +47,44 @@ module Mongo
       # @return [ Result ] The result of executing the operation.
       #
       # @since 2.6.0
-      def execute(collection)
+      def execute(collection, session0, session1, active_session=nil)
         # Determine which object the operation method should be called on.
         obj = case object
-              when 'session0'
-                @session0
-              when 'session1'
-                @session1
-              when 'database'
-                collection.database
-              else
-                collection = collection.with(read: read_preference) if collection_read_preference
-                collection = collection.with(read_concern: read_concern) if read_concern
-                collection = collection.with(write: write_concern) if write_concern
-                collection
-              end
+        when 'session0'
+          session0
+        when 'session1'
+          session1
+        when 'database'
+          collection.database
+        else
+          if rp = collection_read_preference
+            collection = collection.with(read: rp)
+          end
+          collection = collection.with(read_concern: read_concern) if read_concern
+          collection = collection.with(write: write_concern) if write_concern
+          collection
+        end
 
-        if (op_name = OPERATIONS[name]) == :with_transaction
+        session = case arguments && arguments['session']
+        when 'session0'
+          session0
+        when 'session1'
+          session1
+        else
+          if active_session
+            active_session
+          else
+            nil
+          end
+        end
+
+        context = Context.new(
+          session0,
+          session1,
+          session)
+
+        op_name = Utils.underscore(name).to_sym
+        if op_name == :with_transaction
           args = [collection]
         else
           args = []
@@ -133,7 +92,7 @@ module Mongo
         if op_name.nil?
           raise "Unknown operation #{name}"
         end
-        send(op_name, obj, *args)
+        send(op_name, obj, context, *args)
       rescue Mongo::Error::OperationFailure => e
         err_doc = e.instance_variable_get(:@result).send(:first_document)
         error_code_name = err_doc['codeName'] || err_doc['writeConcernError'] && err_doc['writeConcernError']['codeName']
@@ -165,32 +124,32 @@ module Mongo
 
       private
 
-      def start_transaction(session)
+      def start_transaction(session, context)
         session.start_transaction(Utils.snakeize_hash(arguments['options'])) ; nil
       end
 
-      def commit_transaction(session)
+      def commit_transaction(session, context)
         session.commit_transaction ; nil
       end
 
-      def abort_transaction(session)
+      def abort_transaction(session, context)
         session.abort_transaction ; nil
       end
 
-      def with_transaction(session, collection)
-        unless callback = @spec['arguments']['callback']
+      def with_transaction(session, context, collection)
+        unless callback = arguments['callback']
           raise ArgumentError, 'with_transaction requires a callback to be present'
         end
 
-        if @spec['arguments']['options']
-          options = Utils.snakeize_hash(@spec['arguments']['options'])
+        if arguments['options']
+          options = Utils.snakeize_hash(arguments['options'])
         else
           options = nil
         end
         session.with_transaction(options) do
           callback['operations'].each do |op_spec|
-            op = Operation.new(op_spec, @session0, @session1, session)
-            rv = op.execute(collection)
+            op = Operation.new(op_spec)
+            rv = op.execute(collection, context.session0, context.session1, session)
             if rv && rv['exception']
               raise rv['exception']
             end
@@ -198,28 +157,28 @@ module Mongo
         end
       end
 
-      def run_command(database)
+      def run_command(database, context)
         # Convert the first key (i.e. the command name) to a symbol.
-        cmd = command.dup
+        cmd = arguments['command'].dup
         command_name = cmd.first.first
         command_value = cmd.delete(command_name)
         cmd = { command_name.to_sym => command_value }.merge(cmd)
 
-        opts = Utils.snakeize_hash(options)
+        opts = Utils.snakeize_hash(context.transform_arguments(options))
         opts[:read] = opts.delete(:read_preference)
         database.command(cmd, opts).documents.first
       end
 
-      def aggregate(collection)
-        collection.aggregate(pipeline, options).to_a
+      def aggregate(collection, context)
+        collection.aggregate(arguments['pipeline'], context.transform_arguments(options)).to_a
       end
 
-      def bulk_write(collection)
-        result = collection.bulk_write(requests, options)
+      def bulk_write(collection, context)
+        result = collection.bulk_write(requests, context.transform_arguments(options))
         return_doc = {}
         return_doc['deletedCount'] = result.deleted_count || 0
         return_doc['insertedIds'] = result.inserted_ids if result.inserted_ids
-        return_doc['upsertedId'] = result.upserted_id if upsert
+        return_doc['upsertedId'] = result.upserted_id if arguments['upsert']
         return_doc['upsertedCount'] = result.upserted_count || 0
         return_doc['matchedCount'] = result.matched_count || 0
         return_doc['modifiedCount'] = result.modified_count || 0
@@ -227,77 +186,80 @@ module Mongo
         return_doc
       end
 
-      def count(collection)
-        collection.count(filter, options).to_s
+      def count(collection, context)
+        collection.count(arguments['filter'], context.transform_arguments(options)).to_s
       end
 
-      def count_documents(collection)
-        collection.count_documents(filter, options)
+      def count_documents(collection, context)
+        collection.count_documents(arguments['filter'], context.transform_arguments(options))
       end
 
-      def delete_many(collection)
-        result = collection.delete_many(filter, options)
+      def delete_many(collection, context)
+        result = collection.delete_many(arguments['filter'], context.transform_arguments(options))
         { 'deletedCount' => result.deleted_count }
       end
 
-      def delete_one(collection)
-        result = collection.delete_one(filter, options)
+      def delete_one(collection, context)
+        result = collection.delete_one(arguments['filter'], context.transform_arguments(options))
         { 'deletedCount' => result.deleted_count }
       end
 
-      def distinct(collection)
-        collection.distinct(field_name, filter, options)
+      def distinct(collection, context)
+        collection.distinct(arguments['fieldName'], arguments['filter'], context.transform_arguments(options))
       end
 
-      def find(collection)
-        opts = modifiers ? options.merge(modifiers: BSON::Document.new(modifiers)) : options
-        collection.find(filter, opts).to_a
+      def find(collection, context)
+        opts = context.transform_arguments(options)
+        if arguments['modifiers']
+          opts = opts.merge(modifiers: BSON::Document.new(arguments['modifiers']))
+        end
+        collection.find(arguments['filter'], opts).to_a
       end
 
-      def insert_many(collection)
-        result = collection.insert_many(documents, options)
+      def insert_many(collection, context)
+        result = collection.insert_many(arguments['documents'], context.transform_arguments(options))
         { 'insertedIds' => result.inserted_ids }
       end
 
-      def insert_one(collection)
-        result = collection.insert_one(document, options)
+      def insert_one(collection, context)
+        result = collection.insert_one(arguments['document'], context.transform_arguments(options))
         { 'insertedId' => result.inserted_id }
       end
 
       def update_return_doc(result)
         return_doc = {}
-        return_doc['upsertedId'] = result.upserted_id if upsert
+        return_doc['upsertedId'] = result.upserted_id if arguments['upsert']
         return_doc['upsertedCount'] = result.upserted_count
         return_doc['matchedCount'] = result.matched_count
         return_doc['modifiedCount'] = result.modified_count if result.modified_count
         return_doc
       end
 
-      def replace_one(collection)
-        result = collection.replace_one(filter, replacement, options)
+      def replace_one(collection, context)
+        result = collection.replace_one(arguments['filter'], arguments['replacement'], context.transform_arguments(options))
         update_return_doc(result)
       end
 
-      def update_many(collection)
-        result = collection.update_many(filter, update, options)
+      def update_many(collection, context)
+        result = collection.update_many(arguments['filter'], arguments['update'], context.transform_arguments(options))
         update_return_doc(result)
       end
 
-      def update_one(collection)
-        result = collection.update_one(filter, update, options)
+      def update_one(collection, context)
+        result = collection.update_one(arguments['filter'], arguments['update'], context.transform_arguments(options))
         update_return_doc(result)
       end
 
-      def find_one_and_delete(collection)
-        collection.find_one_and_delete(filter, options)
+      def find_one_and_delete(collection, context)
+        collection.find_one_and_delete(arguments['filter'], context.transform_arguments(options))
       end
 
-      def find_one_and_replace(collection)
-        collection.find_one_and_replace(filter, replacement, options)
+      def find_one_and_replace(collection, context)
+        collection.find_one_and_replace(arguments['filter'], arguments['replacement'], context.transform_arguments(options))
       end
 
-      def find_one_and_update(collection)
-        collection.find_one_and_update(filter, update, options)
+      def find_one_and_update(collection, context)
+        collection.find_one_and_update(arguments['filter'], arguments['update'], context.transform_arguments(options))
       end
 
       def object
@@ -305,65 +267,17 @@ module Mongo
       end
 
       def options
-        ARGUMENT_MAP.reduce({}) do |opts, (key, value)|
-          arguments.key?(value) ? opts.merge!(key => send(key)) : opts
+        out = {}
+        arguments.each do |spec_k, v|
+          ruby_k = Utils.underscore(spec_k).to_sym
+
+          if respond_to?("transform_#{ruby_k}", true)
+            v = send("transform_#{ruby_k}", v)
+          end
+
+          out[ruby_k] = v
         end
-      end
-
-      def collation
-        arguments['collation']
-      end
-
-      def command
-        arguments['command']
-      end
-
-      def replacement
-        arguments['replacement']
-      end
-
-      def sort
-        arguments['sort']
-      end
-
-      def projection
-        arguments['projection']
-      end
-
-      def documents
-        arguments['documents']
-      end
-
-      def document
-        arguments['document']
-      end
-
-      def ordered
-        arguments['ordered']
-      end
-
-      def field_name
-        arguments['fieldName']
-      end
-
-      def filter
-        arguments['filter']
-      end
-
-      def pipeline
-        arguments['pipeline']
-      end
-
-      def array_filters
-        arguments['arrayFilters']
-      end
-
-      def batch_size
-        arguments['batchSize']
-      end
-
-      def session
-        arguments['session']
+        out
       end
 
       def requests
@@ -373,7 +287,7 @@ module Mongo
             { insert_one: request['insertOne']['document'] }
           when 'updateOne' then
             update = request['updateOne']
-            { update_one: { filter: update['filter'], update: update['update'] } }
+            { update_one: { filter: arguments['update']['filter'], update: arguments['update']['update'] } }
           when 'name' then
             bulk_request(request)
           end
@@ -381,7 +295,7 @@ module Mongo
       end
 
       def bulk_request(request)
-        op_name = OPERATIONS[request['name']]
+        op_name = Utils.underscore(request['name']).to_sym
         op = { op_name => {} }
 
         op[op_name][:filter] = request['arguments']['filter'] if request['arguments']['filter']
@@ -393,25 +307,8 @@ module Mongo
         op
       end
 
-      def upsert
-        arguments['upsert']
-      end
-
-      def return_document
-        case arguments['returnDocument']
-        when 'Before'
-          :before
-        when 'After'
-          :after
-        end
-      end
-
-      def update
-        arguments['update']
-      end
-
-      def modifiers
-        arguments['modifiers']
+      def transform_return_document(v)
+        Utils.underscore(v).to_sym
       end
 
       def read_concern
@@ -422,8 +319,8 @@ module Mongo
         Utils.snakeize_hash(@spec['collectionOptions'] && @spec['collectionOptions']['writeConcern'])
       end
 
-      def read_preference
-        Utils.snakeize_hash(arguments['readPreference'])
+      def transform_read_preference(v)
+        Utils.snakeize_hash(v)
       end
 
       def collection_read_preference

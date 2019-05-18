@@ -11,7 +11,7 @@ describe 'Cmap' do
     end
   end
 
-  CMAP_TESTS.sort.each do |file|
+  CMAP_TESTS.each do |file|
     spec = Mongo::Cmap::Spec.new(file)
 
     context("#{spec.description} (#{file.sub(%r'.*/data/cmap/', '')})") do

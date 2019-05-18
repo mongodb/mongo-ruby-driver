@@ -203,17 +203,14 @@ def define_spec_tests_with_requirements(spec, &block)
   end
 end
 
-def define_crud_spec_tests(description, test_paths, &block)
-  describe(description) do
+def define_crud_spec_tests(test_paths, spec_cls = Mongo::CRUD::Spec, &block)
+  test_paths.each do |path|
 
-    test_paths.each do |path|
+    spec = spec_cls.new(path)
 
-      spec = Mongo::CRUD::Spec.new(path)
-
-      context(spec.description) do
-        define_spec_tests_with_requirements(spec) do |req|
-          define_crud_spec_test_examples(spec, req, &block)
-        end
+    context(spec.description) do
+      define_spec_tests_with_requirements(spec) do |req|
+        define_crud_spec_test_examples(spec, req, &block)
       end
     end
   end
