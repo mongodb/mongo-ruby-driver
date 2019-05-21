@@ -18,8 +18,6 @@ require 'support/crud/spec'
 require 'support/crud/test'
 require 'support/crud/outcome'
 require 'support/crud/operation'
-require 'support/crud/read'
-require 'support/crud/write'
 require 'support/crud/verifier'
 
 def crud_execute_operations(spec, test, num_ops, event_subscriber, expect_error,

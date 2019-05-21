@@ -39,10 +39,10 @@ module Mongo
         @client_options = Utils.convert_client_options(test['clientOptions'] || {})
         if test['operations']
           @operations = test['operations'].map do |op_spec|
-            Operation.get(op_spec)
+            Operation.new(op_spec)
           end
         else
-          @operations = [Operation.get(test['operation'], test['outcome'])]
+          @operations = [Operation.new(test['operation'], test['outcome'])]
         end
         @expectations = test['expectations']
       end
