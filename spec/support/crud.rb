@@ -17,6 +17,7 @@ require 'support/crud/requirement'
 require 'support/crud/spec'
 require 'support/crud/test'
 require 'support/crud/outcome'
+require 'support/crud/context'
 require 'support/crud/operation'
 require 'support/crud/verifier'
 

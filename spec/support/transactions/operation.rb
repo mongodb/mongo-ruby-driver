@@ -14,27 +14,7 @@
 
 module Mongo
   module Transactions
-    class Operation
-
-      # The operation name.
-      #
-      # @return [ String ] name The operation name.
-      #
-      # @since 2.6.0
-      attr_reader :name
-
-      # Instantiate the operation.
-      #
-      # @return [ Hash ] spec The operation spec.
-      #
-      # @since 2.6.0
-      def initialize(spec)
-        @spec = IceNine.deep_freeze(spec)
-        @name = spec['name']
-        @arguments = spec['arguments'] || {}
-      end
-
-      attr_reader :arguments
+    class Operation < Mongo::CRUD::Operation
 
       # Execute the operation.
       #
@@ -124,6 +104,20 @@ module Mongo
 
       private
 
+      # operations
+
+      def run_command(database, context)
+        # Convert the first key (i.e. the command name) to a symbol.
+        cmd = arguments['command'].dup
+        command_name = cmd.first.first
+        command_value = cmd.delete(command_name)
+        cmd = { command_name.to_sym => command_value }.merge(cmd)
+
+        opts = Utils.snakeize_hash(context.transform_arguments(options)).dup
+        opts[:read] = opts.delete(:read_preference)
+        database.command(cmd, opts).documents.first
+      end
+
       def start_transaction(session, context)
         session.start_transaction(Utils.snakeize_hash(arguments['options'])) ; nil
       end
@@ -157,170 +151,12 @@ module Mongo
         end
       end
 
-      def run_command(database, context)
-        # Convert the first key (i.e. the command name) to a symbol.
-        cmd = arguments['command'].dup
-        command_name = cmd.first.first
-        command_value = cmd.delete(command_name)
-        cmd = { command_name.to_sym => command_value }.merge(cmd)
-
-        opts = Utils.snakeize_hash(context.transform_arguments(options))
-        opts[:read] = opts.delete(:read_preference)
-        database.command(cmd, opts).documents.first
-      end
-
-      def aggregate(collection, context)
-        collection.aggregate(arguments['pipeline'], context.transform_arguments(options)).to_a
-      end
-
-      def bulk_write(collection, context)
-        result = collection.bulk_write(requests, context.transform_arguments(options))
-        return_doc = {}
-        return_doc['deletedCount'] = result.deleted_count || 0
-        return_doc['insertedIds'] = result.inserted_ids if result.inserted_ids
-        return_doc['upsertedId'] = result.upserted_id if arguments['upsert']
-        return_doc['upsertedCount'] = result.upserted_count || 0
-        return_doc['matchedCount'] = result.matched_count || 0
-        return_doc['modifiedCount'] = result.modified_count || 0
-        return_doc['upsertedIds'] = result.upserted_ids if result.upserted_ids
-        return_doc
-      end
-
-      def count(collection, context)
-        collection.count(arguments['filter'], context.transform_arguments(options)).to_s
-      end
-
-      def count_documents(collection, context)
-        collection.count_documents(arguments['filter'], context.transform_arguments(options))
-      end
-
-      def delete_many(collection, context)
-        result = collection.delete_many(arguments['filter'], context.transform_arguments(options))
-        { 'deletedCount' => result.deleted_count }
-      end
-
-      def delete_one(collection, context)
-        result = collection.delete_one(arguments['filter'], context.transform_arguments(options))
-        { 'deletedCount' => result.deleted_count }
-      end
-
-      def distinct(collection, context)
-        collection.distinct(arguments['fieldName'], arguments['filter'], context.transform_arguments(options))
-      end
-
-      def find(collection, context)
-        opts = context.transform_arguments(options)
-        if arguments['modifiers']
-          opts = opts.merge(modifiers: BSON::Document.new(arguments['modifiers']))
-        end
-        collection.find(arguments['filter'], opts).to_a
-      end
-
-      def insert_many(collection, context)
-        result = collection.insert_many(arguments['documents'], context.transform_arguments(options))
-        { 'insertedIds' => result.inserted_ids }
-      end
-
-      def insert_one(collection, context)
-        result = collection.insert_one(arguments['document'], context.transform_arguments(options))
-        { 'insertedId' => result.inserted_id }
-      end
-
-      def update_return_doc(result)
-        return_doc = {}
-        return_doc['upsertedId'] = result.upserted_id if arguments['upsert']
-        return_doc['upsertedCount'] = result.upserted_count
-        return_doc['matchedCount'] = result.matched_count
-        return_doc['modifiedCount'] = result.modified_count if result.modified_count
-        return_doc
-      end
-
-      def replace_one(collection, context)
-        result = collection.replace_one(arguments['filter'], arguments['replacement'], context.transform_arguments(options))
-        update_return_doc(result)
-      end
-
-      def update_many(collection, context)
-        result = collection.update_many(arguments['filter'], arguments['update'], context.transform_arguments(options))
-        update_return_doc(result)
-      end
-
-      def update_one(collection, context)
-        result = collection.update_one(arguments['filter'], arguments['update'], context.transform_arguments(options))
-        update_return_doc(result)
-      end
-
-      def find_one_and_delete(collection, context)
-        collection.find_one_and_delete(arguments['filter'], context.transform_arguments(options))
-      end
-
-      def find_one_and_replace(collection, context)
-        collection.find_one_and_replace(arguments['filter'], arguments['replacement'], context.transform_arguments(options))
-      end
-
-      def find_one_and_update(collection, context)
-        collection.find_one_and_update(arguments['filter'], arguments['update'], context.transform_arguments(options))
-      end
-
-      def object
-        @spec['object']
-      end
-
-      def options
-        out = {}
-        arguments.each do |spec_k, v|
-          ruby_k = Utils.underscore(spec_k).to_sym
-
-          if respond_to?("transform_#{ruby_k}", true)
-            v = send("transform_#{ruby_k}", v)
-          end
-
-          out[ruby_k] = v
-        end
-        out
-      end
-
-      def requests
-        arguments['requests'].map do |request|
-          case request.keys.first
-          when 'insertOne' then
-            { insert_one: request['insertOne']['document'] }
-          when 'updateOne' then
-            update = request['updateOne']
-            { update_one: { filter: arguments['update']['filter'], update: arguments['update']['update'] } }
-          when 'name' then
-            bulk_request(request)
-          end
-        end
-      end
-
-      def bulk_request(request)
-        op_name = Utils.underscore(request['name']).to_sym
-        op = { op_name => {} }
-
-        op[op_name][:filter] = request['arguments']['filter'] if request['arguments']['filter']
-        op[op_name][:update] = request['arguments']['update'] if request['arguments']['update']
-        op[op_name][:upsert] = request['arguments']['upsert'] if request['arguments']['upsert']
-        op[op_name][:replacement] = request['arguments']['replacement'] if request['arguments']['replacement']
-        op[op_name][:array_filters] =  request['arguments']['arrayFilters'] if request['arguments']['arrayFilters']
-        op[op_name] = request['arguments']['document'] if request['arguments']['document']
-        op
-      end
-
-      def transform_return_document(v)
-        Utils.underscore(v).to_sym
-      end
-
       def read_concern
         Utils.snakeize_hash(@spec['collectionOptions'] && @spec['collectionOptions']['readConcern'])
       end
 
       def write_concern
         Utils.snakeize_hash(@spec['collectionOptions'] && @spec['collectionOptions']['writeConcern'])
-      end
-
-      def transform_read_preference(v)
-        Utils.snakeize_hash(v)
       end
 
       def collection_read_preference

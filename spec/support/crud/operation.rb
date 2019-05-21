@@ -87,93 +87,99 @@ module Mongo
         elsif target.is_a?(Mongo::Client)
           op_name= "client_#{op_name}"
         end
-        send(op_name, target)
+        send(op_name, target, Context.new)
       end
 
       private
 
       # read operations
 
-      def count(collection)
-        collection.count(filter, options)
+      def aggregate(collection, context)
+        collection.aggregate(arguments['pipeline'], context.transform_arguments(options)).to_a
       end
 
-      def count_documents(collection)
-        collection.count_documents(filter, options)
+      def count(collection, context)
+        collection.count(arguments['filter'], context.transform_arguments(options))
       end
 
-      def estimated_document_count(collection)
-        collection.estimated_document_count(options)
+      def count_documents(collection, context)
+        collection.count_documents(arguments['filter'], context.transform_arguments(options))
       end
 
-      def aggregate(collection)
-        collection.aggregate(pipeline, options).to_a
+      def distinct(collection, context)
+        collection.distinct(arguments['fieldName'], arguments['filter'], context.transform_arguments(options))
       end
 
-      def distinct(collection)
-        collection.distinct(field_name, filter, options)
+      def estimated_document_count(collection, context)
+        collection.estimated_document_count(context.transform_arguments(options))
       end
 
-      def find(collection)
-        opts = modifiers ? options.merge(modifiers: BSON::Document.new(modifiers)) : options
-        (read_preference ? collection.with(read: read_preference) : collection).find(filter, opts).to_a
+      def find(collection, context)
+        opts = context.transform_arguments(options)
+        if arguments['modifiers']
+          opts = opts.merge(modifiers: BSON::Document.new(arguments['modifiers']))
+        end
+        if read_preference
+          collection = collection.with(read: read_preference)
+        end
+        collection.find(arguments['filter'], opts).to_a
       end
 
-      def find_one(collection)
-        find(collection).first
+      def find_one(collection, context)
+        find(collection, context).first
       end
 
-      def client_list_databases(client)
+      def client_list_databases(client, context)
         client.list_databases
       end
 
-      def client_list_database_names(client)
+      def client_list_database_names(client, context)
         client.list_databases({}, true)
       end
 
-      def client_list_database_objects(client)
+      def client_list_database_objects(client, context)
         client.list_mongo_databases
       end
 
-      def db_list_collections(database)
+      def db_list_collections(database, context)
         database.list_collections
       end
 
-      def db_list_collection_names(database)
+      def db_list_collection_names(database, context)
         database.collection_names
       end
 
-      def db_list_collection_objects(database)
+      def db_list_collection_objects(database, context)
         database.collections
       end
 
-      def list_indexes(collection)
+      def list_indexes(collection, context)
         collection.indexes.to_a
       end
 
-      def watch(collection)
+      def watch(collection, context)
         collection.watch
       end
 
-      def db_watch(database)
+      def db_watch(database, context)
         database.watch
       end
 
-      def client_watch(client)
+      def client_watch(client, context)
         client.watch
       end
 
-      def download(fs_bucket)
+      def download(fs_bucket, context)
         stream = fs_bucket.open_download_stream(BSON::ObjectId.from_string(arguments['id']['$oid']))
         stream.read
       end
 
-      def download_by_name(fs_bucket)
+      def download_by_name(fs_bucket, context)
         stream = fs_bucket.open_download_stream_by_name(arguments['filename'])
         stream.read
       end
 
-      def map_reduce(collection)
+      def map_reduce(collection, context)
         view = Mongo::Collection::View.new(collection)
         mr = Mongo::Collection::View::MapReduce.new(view, arguments['map']['$code'], arguments['reduce']['$code'])
         mr.to_a
@@ -181,65 +187,65 @@ module Mongo
 
       # write operations
 
-      def bulk_write(collection)
-        result = collection.bulk_write(requests, options)
+      def bulk_write(collection, context)
+        result = collection.bulk_write(requests, context.transform_arguments(options))
         return_doc = {}
-        return_doc['deletedCount'] = result.deleted_count if result.deleted_count
+        return_doc['deletedCount'] = result.deleted_count || 0
         return_doc['insertedIds'] = result.inserted_ids if result.inserted_ids
-        return_doc['upsertedIds'] = result.upserted_ids if result.upserted_ids
-        return_doc['upsertedId'] = result.upserted_id if upsert
-        return_doc['upsertedCount'] = result.upserted_count if result.upserted_count
         return_doc['insertedCount'] = result.inserted_count if result.inserted_count
-        return_doc['matchedCount'] = result.matched_count if result.matched_count
-        return_doc['modifiedCount'] = result.modified_count if result.modified_count
+        return_doc['upsertedId'] = result.upserted_id if arguments['upsert']
+        return_doc['upsertedIds'] = result.upserted_ids if result.upserted_ids
+        return_doc['upsertedCount'] = result.upserted_count || 0
+        return_doc['matchedCount'] = result.matched_count || 0
+        return_doc['modifiedCount'] = result.modified_count || 0
         return_doc
       end
 
-      def delete_many(collection)
-        result = collection.delete_many(filter, options)
+      def delete_many(collection, context)
+        result = collection.delete_many(arguments['filter'], context.transform_arguments(options))
         { 'deletedCount' => result.deleted_count }
       end
 
-      def delete_one(collection)
-        result = collection.delete_one(filter, options)
+      def delete_one(collection, context)
+        result = collection.delete_one(arguments['filter'], context.transform_arguments(options))
         { 'deletedCount' => result.deleted_count }
       end
 
-      def insert_many(collection)
-        result = collection.insert_many(documents, options)
+      def insert_many(collection, context)
+        result = collection.insert_many(arguments['documents'], context.transform_arguments(options))
         { 'insertedIds' => result.inserted_ids }
       end
 
-      def insert_one(collection)
-        result = collection.insert_one(document)
+      def insert_one(collection, context)
+        result = collection.insert_one(arguments['document'], context.transform_arguments(options))
         { 'insertedId' => result.inserted_id }
       end
 
-      def replace_one(collection)
-        result = collection.replace_one(filter, replacement, options)
+      def replace_one(collection, context)
+        result = collection.replace_one(arguments['filter'], arguments['replacement'], context.transform_arguments(options))
         update_return_doc(result)
       end
 
-      def update_many(collection)
-        result = collection.update_many(filter, update, options)
+      def update_many(collection, context)
+        result = collection.update_many(arguments['filter'], arguments['update'], context.transform_arguments(options))
         update_return_doc(result)
       end
 
-      def update_one(collection)
-        result = collection.update_one(filter, update, options)
+      def update_one(collection, context)
+        result = collection.update_one(arguments['filter'], arguments['update'], context.transform_arguments(options))
         update_return_doc(result)
       end
 
-      def find_one_and_delete(collection)
-        collection.find_one_and_delete(filter, options)
+      def find_one_and_delete(collection, context)
+        collection.find_one_and_delete(arguments['filter'], context.transform_arguments(options))
       end
 
-      def find_one_and_replace(collection)
-        collection.find_one_and_replace(filter, replacement, options)
+      def find_one_and_replace(collection, context)
+        collection.find_one_and_replace(arguments['filter'], arguments['replacement'], context.transform_arguments(options))
       end
 
-      def find_one_and_update(collection)
-        collection.find_one_and_update(filter, update, options)
+      def find_one_and_update(collection, context)
+        collection.find_one_and_update(arguments['filter'], arguments['update'], context.transform_arguments(options))
       end
 
       # options & arguments
@@ -264,66 +270,6 @@ module Mongo
           out[ruby_k] = v
         end
         out
-      end
-
-      def collation
-        arguments['collation']
-      end
-
-      def batch_size
-        arguments['batchSize']
-      end
-
-      def filter
-        arguments['filter']
-      end
-
-      def pipeline
-        arguments['pipeline']
-      end
-
-      def modifiers
-        arguments['modifiers']
-      end
-
-      def field_name
-        arguments['fieldName']
-      end
-
-      def replacement
-        arguments['replacement']
-      end
-
-      def sort
-        arguments['sort']
-      end
-
-      def projection
-        arguments['projection']
-      end
-
-      def documents
-        arguments['documents']
-      end
-
-      def document
-        arguments['document']
-      end
-
-      def write_concern
-        arguments['writeConcern']
-      end
-
-      def ordered
-        arguments['ordered']
-      end
-
-      def filter
-        arguments['filter']
-      end
-
-      def array_filters
-        arguments['arrayFilters']
       end
 
       def requests
@@ -374,7 +320,7 @@ module Mongo
 
       def update_return_doc(result)
         return_doc = {}
-        return_doc['upsertedId'] = result.upserted_id if upsert
+        return_doc['upsertedId'] = result.upserted_id if arguments['upsert']
         return_doc['upsertedCount'] = result.upserted_count
         return_doc['matchedCount'] = result.matched_count
         return_doc['modifiedCount'] = result.modified_count if result.modified_count
