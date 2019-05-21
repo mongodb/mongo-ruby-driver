@@ -22,6 +22,7 @@ module Mongo
         #
         # @since 2.0.0
         class Result < Operation::Result
+          include Operation::Result::UseLegacyErrorParser
 
           # Whether an existing document was updated.
           #

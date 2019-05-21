@@ -22,7 +22,7 @@ describe Mongo::Error::Parser do
     context 'when the document contains an errmsg' do
 
       let(:document) do
-        { 'errmsg' => 'no such command: notacommand', 'code'=>59 }
+        { 'errmsg' => 'no such command: notacommand', 'code' => 59 }
       end
 
       it 'returns the message' do
@@ -101,6 +101,26 @@ describe Mongo::Error::Parser do
       described_class.new(document)
     end
 
+    context 'when document contains code and ok: 1' do
+      let(:document) do
+        { 'ok' => 1, 'errmsg' => 'not master', 'code' => 10107, 'codeName' => 'NotMaster' }
+      end
+
+      it 'returns nil' do
+        expect(parser.code).to be nil
+      end
+    end
+
+    context 'when document contains code and ok: 1.0' do
+      let(:document) do
+        { 'ok' => 1.0, 'errmsg' => 'not master', 'code' => 10107, 'codeName' => 'NotMaster' }
+      end
+
+      it 'returns nil' do
+        expect(parser.code).to be nil
+      end
+    end
+
     context 'when document contains code' do
       let(:document) do
         { 'ok' => 0, 'errmsg' => 'not master', 'code' => 10107, 'codeName' => 'NotMaster' }
@@ -108,6 +128,16 @@ describe Mongo::Error::Parser do
 
       it 'returns the code' do
         expect(parser.code).to eq(10107)
+      end
+
+      context 'with legacy option' do
+        let(:parser) do
+          described_class.new(document, nil, legacy: true)
+        end
+
+        it 'returns nil' do
+          expect(parser.code).to be nil
+        end
       end
     end
 
@@ -149,6 +179,26 @@ describe Mongo::Error::Parser do
       described_class.new(document)
     end
 
+    context 'when document contains code name and ok: 1' do
+      let(:document) do
+        { 'ok' => 1, 'errmsg' => 'not master', 'code' => 10107, 'codeName' => 'NotMaster' }
+      end
+
+      it 'returns nil' do
+        expect(parser.code_name).to be nil
+      end
+    end
+
+    context 'when document contains code name and ok: 1.0' do
+      let(:document) do
+        { 'ok' => 1.0, 'errmsg' => 'not master', 'code' => 10107, 'codeName' => 'NotMaster' }
+      end
+
+      it 'returns nil' do
+        expect(parser.code_name).to be nil
+      end
+    end
+
     context 'when document contains code name' do
       let(:document) do
         { 'ok' => 0, 'errmsg' => 'not master', 'code' => 10107, 'codeName' => 'NotMaster' }
@@ -156,6 +206,16 @@ describe Mongo::Error::Parser do
 
       it 'returns the code name' do
         expect(parser.code_name).to eq('NotMaster')
+      end
+
+      context 'with legacy option' do
+        let(:parser) do
+          described_class.new(document, nil, legacy: true)
+        end
+
+        it 'returns nil' do
+          expect(parser.code_name).to be nil
+        end
       end
     end
 

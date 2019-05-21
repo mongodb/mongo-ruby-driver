@@ -1,4 +1,4 @@
-# Copyright (C) 2014-2019 MongoDB, Inc.
+# Copyright (C) 2019 MongoDB, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,26 +14,14 @@
 
 module Mongo
   module Operation
-    class Find
-      class Legacy
+    class Result
 
-        # Defines custom behavior of results for a query.
-        #
-        # @since 2.1.0
-        class Result < Operation::Result
-          include Operation::Result::UseLegacyErrorParser
-
-          # Determine if the query was a success.
-          #
-          # @example Was the query successful?
-          #   result.successful?
-          #
-          # @return [ true, false ] If the query was successful.
-          #
-          # @since 2.0.0
-          def successful?
-            !query_failure?
-          end
+      # This module creates the Parser instance in legacy mode.
+      #
+      # @api private
+      module UseLegacyErrorParser
+        def parser
+          @parser ||= Error::Parser.new(first_document, replies, legacy: true)
         end
       end
     end
