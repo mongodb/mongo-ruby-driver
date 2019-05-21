@@ -20,6 +20,8 @@ class EventSubscriber
     # @since 2.5.0
     attr_reader :failed_events
 
+    attr_reader :published_events
+
     # Cache the succeeded event.
     #
     # @param [ Event ] event The event.
@@ -53,15 +55,15 @@ class EventSubscriber
       end
     end
 
-    def select_cmap_events(cls)
-      succeeded_events.select do |event|
+    def select_published_events(cls)
+      @published_events.select do |event|
         event.is_a?(cls)
       end
     end
 
-    def cmap_event(event)
+    def published(event)
       @mutex.synchronize do
-        @cmap_events << event
+        @published_events << event
       end
     end
 
@@ -72,7 +74,7 @@ class EventSubscriber
       @started_events = []
       @succeeded_events = []
       @failed_events = []
-      @cmap_events = []
+      @published_events = []
       self
     end
 

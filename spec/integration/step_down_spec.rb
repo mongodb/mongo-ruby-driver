@@ -64,7 +64,7 @@ describe 'Step down behavior' do
       item = enum.next
       expect(item['test']).to eq(1)
 
-      connection_created_events = EventSubscriber.succeeded_events.select do |event|
+      connection_created_events = EventSubscriber.published_events.select do |event|
         event.is_a?(Mongo::Monitoring::Event::Cmap::ConnectionCreated)
       end
       expect(connection_created_events).not_to be_empty
@@ -90,7 +90,7 @@ describe 'Step down behavior' do
       expect(get_more_events.length).to eq(1)
 
       # getMore should have been sent on the same connection as find
-      connection_created_events = EventSubscriber.succeeded_events.select do |event|
+      connection_created_events = EventSubscriber.published_events.select do |event|
         event.is_a?(Mongo::Monitoring::Event::Cmap::ConnectionCreated)
       end
       expect(connection_created_events).to be_empty
@@ -154,7 +154,7 @@ describe 'Step down behavior' do
           collection.insert_one(test: 1)
         end.to raise_error(Mongo::Error::OperationFailure, /10107/)
 
-        expect(event_subscriber.select_cmap_events(Mongo::Monitoring::Event::Cmap::PoolCleared).count).to eq(0)
+        expect(event_subscriber.select_published_events(Mongo::Monitoring::Event::Cmap::PoolCleared).count).to eq(0)
       end
     end
 
@@ -173,7 +173,7 @@ describe 'Step down behavior' do
           collection.insert_one(test: 1)
         end.to raise_error(Mongo::Error::OperationFailure, /10107/)
 
-        expect(event_subscriber.select_cmap_events(Mongo::Monitoring::Event::Cmap::PoolCleared).count).to eq(1)
+        expect(event_subscriber.select_published_events(Mongo::Monitoring::Event::Cmap::PoolCleared).count).to eq(1)
       end
     end
 
@@ -190,7 +190,7 @@ describe 'Step down behavior' do
           collection.insert_one(test: 1)
         end.to raise_error(Mongo::Error::OperationFailure, /11600/)
 
-        expect(event_subscriber.select_cmap_events(Mongo::Monitoring::Event::Cmap::PoolCleared).count).to eq(1)
+        expect(event_subscriber.select_published_events(Mongo::Monitoring::Event::Cmap::PoolCleared).count).to eq(1)
       end
     end
   end

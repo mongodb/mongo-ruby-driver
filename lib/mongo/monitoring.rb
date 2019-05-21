@@ -223,6 +223,9 @@ module Mongo
           end
         end
         subscribe(COMMAND, CommandLogSubscriber.new(options))
+        # CMAP events are not logged by default because this will create
+        # log entries for every operation performed by the driver.
+        #subscribe(CONNECTION_POOL, CmapLogSubscriber.new(options))
         subscribe(SERVER_OPENING, ServerOpeningLogSubscriber.new(options))
         subscribe(SERVER_CLOSED, ServerClosedLogSubscriber.new(options))
         subscribe(SERVER_DESCRIPTION_CHANGED, ServerDescriptionChangedLogSubscriber.new(options))
@@ -240,7 +243,23 @@ module Mongo
       options[:monitoring] != false
     end
 
+    # Publish an event.
+    #
+    # This method is used for event types which only have a single event
+    # in them.
+    #
+    # @param [ String ] topic The event topic.
+    # @param [ Event ] event The event to publish.
+    #
+    # @since 2.9.0
+    def published(topic, event)
+      subscribers_for(topic).each{ |subscriber| subscriber.published(event) }
+    end
+
     # Publish a started event.
+    #
+    # This method is used for event types which have the started/succeeded/failed
+    # events in them, such as command and heartbeat events.
     #
     # @example Publish a started event.
     #   monitoring.started(COMMAND, event)
@@ -255,6 +274,9 @@ module Mongo
 
     # Publish a succeeded event.
     #
+    # This method is used for event types which have the started/succeeded/failed
+    # events in them, such as command and heartbeat events.
+    #
     # @example Publish a succeeded event.
     #   monitoring.succeeded(COMMAND, event)
     #
@@ -267,6 +289,9 @@ module Mongo
     end
 
     # Publish a failed event.
+    #
+    # This method is used for event types which have the started/succeeded/failed
+    # events in them, such as command and heartbeat events.
     #
     # @example Publish a failed event.
     #   monitoring.failed(COMMAND, event)
@@ -293,6 +318,7 @@ end
 require 'mongo/monitoring/event'
 require 'mongo/monitoring/publishable'
 require 'mongo/monitoring/command_log_subscriber'
+require 'mongo/monitoring/cmap_log_subscriber'
 require 'mongo/monitoring/sdam_log_subscriber'
 require 'mongo/monitoring/server_description_changed_log_subscriber'
 require 'mongo/monitoring/server_closed_log_subscriber'

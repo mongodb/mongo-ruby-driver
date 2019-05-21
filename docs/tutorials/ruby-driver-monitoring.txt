@@ -13,10 +13,11 @@ Monitoring
 The driver allows the application to be notified when certain events happen.
 These events are organized into the following categories:
 
-- Command monitoring;
-- Topology lifecycle;
-- Server lifecycle;
-- Server heartbeats.
+- Command monitoring
+- Topology lifecycle
+- Server lifecycle
+- Server heartbeats
+- Connection pools and connections
 
 Topology and server events are part of Server Discovery and Monitoring (SDAM).
 
@@ -330,6 +331,60 @@ Sample output:
 
   D, [2018-09-23T13:44:10.707018 #1739] DEBUG -- : HEARTBEAT | 127.0.0.1:27027 | STARTED
   D, [2018-09-23T13:44:10.707778 #1739] DEBUG -- : HEARTBEAT | 127.0.0.1:27027 | SUCCEEDED | 0.000772381s
+
+Connection Pool And Connection Monitoring
+-----------------------------------------
+
+Each client maintains a connection pool for each server in the deployment that
+it is aware of, and publishes events for both connection pools and individual
+connections. To subscribe to these events, define a subscriber class implementing
+the method ``pubished`` which takes a single parameter for the event that
+is being published. Note that future versions of the driver may introduce
+additional events published through this mechanism.
+
+The following events are currently implemented by the driver, following
+the `CMAP specification <https://github.com/mongodb/specifications/blob/master/source/connection-monitoring-and-pooling/connection-monitoring-and-pooling.rst>`_:
+
+- PoolCreated
+- PoolCleared
+- PoolClosed
+- ConnectionCreated
+- ConnectionReady
+- ConnectionClosed
+- ConnectionCheckOutStarted
+- ConnectionCheckOutFailed
+- ConnectionCheckOutSucceeded
+- ConnectionCheckedIn
+
+The driver provides a logging subscriber which may be used to log all
+connection pool and connection-related events. This subscriber is not enabled
+by default because it will create log entries for each operation performed
+by the application. To enable this subscriber globally or per client:
+
+.. code-block:: ruby
+
+  Mongo::Monitoring::Global.subscribe(
+    Mongo::Monitoring::CONNECTION_POOL,
+    Mongo::Monitoring::CmapLogSubscriber.new)
+
+  client = Mongo::Client.new([ '127.0.0.1:27017' ], :database => 'test' )
+  subscriber = Mongo::Monitoring::CmapLogSubscriber.new
+  client.subscribe( Mongo::Monitoring::CONNECTION_POOL, subscriber )
+
+Sample output:
+
+.. code-block:: none
+
+  D, [2019-05-06T17:23:21.595412 #8576] DEBUG -- : MONGODB | EVENT: #<PoolCreated address=127.0.0.1:27741 options={...}>
+  D, [2019-05-06T17:23:21.595584 #8576] DEBUG -- : MONGODB | EVENT: #<PoolCleared address=127.0.0.1:27741>
+  D, [2019-05-06T17:23:21.603549 #8576] DEBUG -- : MONGODB | EVENT: #<PoolCreated address=localhost:27741 options={...}>
+  D, [2019-05-06T17:23:21.603616 #8576] DEBUG -- : MONGODB | EVENT: #<ConnectionCheckOutStarted address=localhost:27741>
+  D, [2019-05-06T17:23:21.603684 #8576] DEBUG -- : MONGODB | EVENT: #<ConnectionCreated address=localhost:27741 connection_id=1>
+  D, [2019-05-06T17:23:21.604079 #8576] DEBUG -- : MONGODB | EVENT: #<ConnectionCheckedOut address=localhost:27741 connection_id=1>
+  D, [2019-05-06T17:23:21.605759 #8576] DEBUG -- : MONGODB | EVENT: #<ConnectionReady address=localhost:27741 connection_id=1>
+  D, [2019-05-06T17:23:21.605784 #8576] DEBUG -- : MONGODB | EVENT: #<ConnectionCheckedIn address=localhost:27741 connection_id=1>
+  D, [2019-05-06T17:23:21.605817 #8576] DEBUG -- : MONGODB | EVENT: #<PoolCleared address=localhost:27741>
+  D, [2019-05-06T17:23:21.605852 #8576] DEBUG -- : MONGODB | EVENT: #<ConnectionClosed address=localhost:27741 connection_id=1 reason=stale>
 
 
 Disabling Monitoring

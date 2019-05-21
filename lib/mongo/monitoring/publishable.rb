@@ -24,6 +24,7 @@ module Mongo
       # @return [ Monitoring ] monitoring The monitoring.
       attr_reader :monitoring
 
+      # @deprecated
       def publish_event(topic, event)
         monitoring.succeeded(topic, event)
       end
@@ -38,7 +39,7 @@ module Mongo
       def publish_cmap_event(event)
         return unless monitoring?
 
-        publish_event(Monitoring::CONNECTION_POOL, event)
+        monitoring.published(Monitoring::CONNECTION_POOL, event)
       end
 
       private

@@ -84,7 +84,7 @@ module Mongo
           end
 
           result['error'] ||= nil
-          result['events'] = subscriber.succeeded_events.reduce([]) do |events, event|
+          result['events'] = subscriber.published_events.reduce([]) do |events, event|
             next events unless event.is_a?(Mongo::Monitoring::Event::Cmap::Base)
 
             event = case event
@@ -322,18 +322,22 @@ module Mongo
 
       def run_wait_for_event_op(state)
         subscriber = @spec.subscriber
-        looped = false
+        looped = 0
+        deadline = Time.now + 3
         loop do
-          actual_events = @spec.subscriber.succeeded_events.select do |e|
+          actual_events = @spec.subscriber.published_events.select do |e|
             e.class.name.sub(/.*::/, '').sub(/^ConnectionPool/, 'Pool') == @event.sub(/^ConnectionPool/, 'Pool')
           end
           if actual_events.length >= @count
             break
           end
-          if looped
+          if looped == 1
             puts("Waiting for #{@count} #{@event} events (have #{actual_events.length}): #{@spec.description}")
           end
-          looped = true
+          if Time.now > deadline
+            raise "Did not receive #{@count} #{@event} events in time (have #{actual_events.length}): #{@spec.description}"
+          end
+          looped += 1
           sleep 0.1
         end
       end
