@@ -28,6 +28,7 @@ module Mongo
     include Monitoring::Publishable
     include Event::Subscriber
     include Loggable
+    include ClusterTime::Consumer
 
     # The default number of legacy read retries.
     #
@@ -53,6 +54,7 @@ module Mongo
     # The cluster time key in responses from mongos servers.
     #
     # @since 2.5.0
+    # @deprecated
     CLUSTER_TIME = 'clusterTime'.freeze
 
     # Instantiate the new cluster.
@@ -224,11 +226,6 @@ module Mongo
     #
     # @since 2.4.0
     attr_reader :app_metadata
-
-    # @return [ BSON::Document ] The latest cluster time seen.
-    #
-    # @since 2.5.0
-    attr_reader :cluster_time
 
     # @return [ Array<String> ] The addresses of seed servers. Contains
     #   addresses that were given to Cluster when it was instantiated, not
@@ -559,11 +556,7 @@ module Mongo
     def update_cluster_time(result)
       if cluster_time_doc = result.cluster_time
         @cluster_time_lock.synchronize do
-          if @cluster_time.nil?
-            @cluster_time = cluster_time_doc
-          elsif cluster_time_doc[CLUSTER_TIME] > @cluster_time[CLUSTER_TIME]
-            @cluster_time = cluster_time_doc
-          end
+          advance_cluster_time(cluster_time_doc)
         end
       end
     end

@@ -313,11 +313,15 @@ module Mongo
       # @example Get the cluster time.
       #   result.cluster_time
       #
-      # @return [ BSON::Document ] The cluster time document.
+      # @return [ nil | ClusterTime ] The cluster time document.
+      #
+      # Changed in version 2.9.0: This attribute became an instance of
+      # ClusterTime, which is a subclass of BSON::Document.
+      # Previously it was an instance of BSON::Document.
       #
       # @since 2.5.0
       def cluster_time
-        first_document && first_document[CLUSTER_TIME]
+        first_document && ClusterTime[first_document['$clusterTime']]
       end
 
       # Gets the set of error labels associated with the result.

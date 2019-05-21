@@ -73,12 +73,10 @@ module Mongo
 
       def apply_cluster_time!(selector, server)
         if !server.standalone?
-          cluster_time = [server.cluster_time, (session && session.cluster_time)].max_by do |doc|
-            (doc && doc[Cluster::CLUSTER_TIME]) || ZERO_TIMESTAMP
-          end
+          cluster_time = [server.cluster_time, session && session.cluster_time].compact.max
 
-          if cluster_time && (cluster_time[Cluster::CLUSTER_TIME] > ZERO_TIMESTAMP)
-            selector[CLUSTER_TIME] = cluster_time
+          if cluster_time
+            selector['$clusterTime'] = cluster_time
           end
         end
       end

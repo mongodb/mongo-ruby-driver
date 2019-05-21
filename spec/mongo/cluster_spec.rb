@@ -482,7 +482,7 @@ describe Mongo::Cluster do
     context 'when the cluster_time variable has a value' do
 
       before do
-        cluster.instance_variable_set(:@cluster_time, BSON::Document.new(
+        cluster.instance_variable_set(:@cluster_time, Mongo::ClusterTime.new(
             Mongo::Cluster::CLUSTER_TIME => BSON::Timestamp.new(1, 1)))
         cluster.update_cluster_time(result)
       end
