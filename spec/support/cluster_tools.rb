@@ -309,8 +309,6 @@ class ClusterTools
     end
   end
 
-  private
-
   def admin_client
     # Since we are triggering elections, we need to have a higher server
     # selection timeout applied. The default timeout for tests assumes a
@@ -319,14 +317,17 @@ class ClusterTools
       with(server_selection_timeout: 15)
   end
 
-  def direct_client(address)
+  def direct_client(address, options = {})
     @direct_clients ||= {}
-    @direct_clients[address] ||= ClientRegistry.instance.new_local_client(
+    cache_key = {address: address}.update(options)
+    @direct_clients[cache_key] ||= ClientRegistry.instance.new_local_client(
       [address.to_s],
       SpecConfig.instance.test_options.merge(
         SpecConfig.instance.auth_options).merge(
-        connect: :direct, server_selection_timeout: 10))
+        connect: :direct, server_selection_timeout: 10).merge(options))
   end
+
+  private
 
   def each_server(&block)
     admin_client.cluster.servers_list.each(&block)

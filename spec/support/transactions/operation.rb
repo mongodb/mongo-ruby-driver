@@ -158,6 +158,24 @@ module Mongo
         expect(actual_state).to eq(arguments['state'])
       end
 
+      def targeted_fail_point(collection, context)
+        args = context.transform_arguments(options)
+        session = args[:session]
+        unless session.pinned_server
+          raise ArgumentError, 'Targeted fail point requires session to be pinned to a server'
+        end
+
+        client = ClusterTools.instance.direct_client(session.pinned_server.address,
+          database: 'admin')
+        client.command(arguments['failPoint'])
+
+        $disable_fail_points ||= []
+        $disable_fail_points << [
+          arguments['failPoint'],
+          session.pinned_server.address,
+        ]
+      end
+
       def read_concern
         Utils.snakeize_hash(@spec['collectionOptions'] && @spec['collectionOptions']['readConcern'])
       end

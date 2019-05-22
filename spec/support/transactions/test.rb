@@ -201,6 +201,15 @@ module Mongo
           admin_support_client.command(configureFailPoint: 'failCommand', mode: 'off')
         end
 
+        if $disable_fail_points
+          $disable_fail_points.each do |(fail_point, address)|
+            client = ClusterTools.instance.direct_client(address,
+              database: 'admin')
+            client.command(configureFailPoint: fail_point['configureFailPoint'],
+              mode: 'off')
+          end
+        end
+
         if @test_client
           @test_client.cluster.session_pool.end_sessions
         end
