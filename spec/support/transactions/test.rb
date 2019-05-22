@@ -124,7 +124,7 @@ module Mongo
       def run
         test_client.subscribe(Mongo::Monitoring::COMMAND, event_subscriber)
 
-        $distinct_ran ||= if @ops.any? { |op| op.name == 'distinct' }
+        $distinct_ran ||= if description =~ /distinct/ || @ops.any? { |op| op.name == 'distinct' }
           if ClusterConfig.instance.mongos?
             client = ClientRegistry.instance.global_client('basic')
             client.cluster.next_primary
