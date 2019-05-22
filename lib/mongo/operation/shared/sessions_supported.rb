@@ -134,32 +134,27 @@ module Mongo
         if server.features.sessions_enabled?
           apply_cluster_time!(sel, server)
           if session && (acknowledged_write? || session.in_transaction?)
-            sel[:txnNumber] = BSON::Int64.new(txn_num) if txn_num
-            apply_session_id!(sel)
-            apply_start_transaction!(sel)
-            apply_causal_consistency!(sel, server)
-            apply_autocommit!(sel)
-            apply_txn_opts!(sel)
-            suppress_read_write_concern!(sel)
-            validate_read_preference!(sel)
-            update_session_state!
-            apply_txn_num!(sel)
+            apply_session_options(sel, server)
           end
         elsif session && session.explicit?
-          apply_cluster_time!(sel, server)
-          sel[:txnNumber] = BSON::Int64.new(txn_num) if txn_num
-          apply_session_id!(sel)
-          apply_start_transaction!(sel)
-          apply_causal_consistency!(sel, server)
-          apply_autocommit!(sel)
-          apply_txn_opts!(sel)
-          suppress_read_write_concern!(sel)
-          validate_read_preference!(sel)
-          update_session_state!
-          apply_txn_num!(sel)
+          apply_session_options(sel, server)
         end
 
         sel
+      end
+
+      def apply_session_options(sel, server)
+        apply_cluster_time!(sel, server)
+        sel[:txnNumber] = BSON::Int64.new(txn_num) if txn_num
+        apply_session_id!(sel)
+        apply_start_transaction!(sel)
+        apply_causal_consistency!(sel, server)
+        apply_autocommit!(sel)
+        apply_txn_opts!(sel)
+        suppress_read_write_concern!(sel)
+        validate_read_preference!(sel)
+        update_session_state!
+        apply_txn_num!(sel)
       end
     end
   end
