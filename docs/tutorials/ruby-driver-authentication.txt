@@ -153,7 +153,7 @@ To use Kerberos authentication from Ruby,
 `mongo_kerberos <https://rubygems.org/gems/mongo_kerberos>`_ must be
 installed. Add to your ``Gemfile``:
 
-.. code-block:: plain
+.. code-block:: ruby
 
   gem 'mongo'
   gem 'mongo_kerberos'
