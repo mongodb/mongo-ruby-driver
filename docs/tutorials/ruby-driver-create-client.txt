@@ -679,6 +679,10 @@ When ``#close`` is called on a client by any thread, all connections are closed:
 Usage with Forking Servers
 --------------------------
 
+*Note:* Applications using Mongoid should follow `Mongoid's forking guidance
+<https://docs.mongodb.com/mongoid/current/tutorials/mongoid-configuration/#usage-with-forking-servers>`_.
+The sample code below is provided for applications using the Ruby driver directly.
+
 When using the Mongo Ruby driver with a forking web server such as Unicorn,
 worker processes should generally each have their own Mongo::Client instances.
 This is because:
