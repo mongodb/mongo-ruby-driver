@@ -27,6 +27,15 @@ MongoDB Compatibility
      - MongoDB 2.6
      - MongoDB 2.4
 
+   * - 2.9
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     -
+
    * - 2.8
      - |checkmark|
      - |checkmark|
@@ -171,6 +180,20 @@ Ruby Compatibility
      - JRuby 9.2
      - JRuby 9.1
      - JRuby
+
+   * - 2.9
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     -
+     - |checkmark|
+     - |checkmark|
+     -
 
    * - 2.8
      - |checkmark|
