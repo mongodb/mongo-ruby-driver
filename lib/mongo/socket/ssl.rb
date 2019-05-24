@@ -128,9 +128,20 @@ module Mongo
 
       def create_context(options)
         OpenSSL::SSL::SSLContext.new.tap do |context|
+          if OpenSSL::SSL.const_defined?(:OP_NO_RENEGOTIATION)
+            context.options = context.options | OpenSSL::SSL::OP_NO_RENEGOTIATION
+          end
+
+          if context.respond_to?(:renegotiation_cb=)
+            # Disable renegotiation for older Ruby versions per the sample code at
+            # https://rubydocs.org/d/ruby-2-6-0/classes/OpenSSL/SSL/SSLContext.html
+            context.renegotiation_cb = lambda do |ssl|
+              raise RuntimeError, 'Client renegotiation disabled'
+            end
+          end
+
           set_cert(context, options)
           set_key(context, options)
-
 
           if verify_certificate?
             context.verify_mode = OpenSSL::SSL::VERIFY_PEER

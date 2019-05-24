@@ -536,6 +536,18 @@ describe Mongo::Socket::SSL do
         expect(socket).to be_alive
       end
     end
+
+    context 'when OpenSSL allows disabling renegotiation 'do
+      before do
+        unless OpenSSL::SSL.const_defined?(:OP_NO_RENEGOTIATION)
+          skip 'OpenSSL::SSL::OP_NO_RENEGOTIATION is not defined'
+        end
+      end
+
+      it 'disables TLS renegotiation' do
+        expect(socket.context.options & OpenSSL::SSL::OP_NO_RENEGOTIATION).to eq(OpenSSL::SSL::OP_NO_RENEGOTIATION)
+      end
+    end
   end
 
   describe '#readbyte' do
