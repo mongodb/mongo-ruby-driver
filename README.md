@@ -1,4 +1,4 @@
-MongoDB Ruby Driver [![Build Status][travis-img]][travis-url] [![Code Climate][codeclimate-img]][codeclimate-url] [![Gem Version][rubygems-img]][rubygems-url]
+MongoDB Ruby Driver [![Code Climate][codeclimate-img]][codeclimate-url] [![Gem Version][rubygems-img]][rubygems-url]
 -----
 The officially supported Ruby driver for [MongoDB](http://www.mongodb.org).
 
@@ -107,7 +107,5 @@ License
 
 [rubygems-img]: https://badge.fury.io/rb/mongo.svg
 [rubygems-url]: http://badge.fury.io/rb/mongo
-[travis-img]: https://secure.travis-ci.org/mongodb/mongo-ruby-driver.svg?branch=master
-[travis-url]: http://travis-ci.org/mongodb/mongo-ruby-driver?branch=master
 [codeclimate-img]: https://codeclimate.com/github/mongodb/mongo-ruby-driver.svg?branch=master
 [codeclimate-url]: https://codeclimate.com/github/mongodb/mongo-ruby-driver?branch=master
