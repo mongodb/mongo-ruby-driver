@@ -4,6 +4,7 @@ class SpecConfig
   include Singleton
 
   def initialize
+    @uri_options = {}
     if ENV['MONGODB_URI']
       @mongodb_uri = Mongo::URI.new(ENV['MONGODB_URI'])
       @uri_options = Mongo::Options::Mapper.transform_keys_to_symbols(@mongodb_uri.uri_options)
