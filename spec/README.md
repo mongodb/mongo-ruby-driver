@@ -58,7 +58,7 @@ to start a replica set.
 
 First, install [mtools](https://github.com/rueckstiess/mtools):
 
-    pip install mtools --user
+    pip install 'mtools[mlaunch]' --user
     export PATH=~/.local/bin:$PATH
     
 Then, launch a replica set:
