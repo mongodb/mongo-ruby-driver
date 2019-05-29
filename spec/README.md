@@ -58,8 +58,11 @@ to start a replica set.
 
 First, install [mtools](https://github.com/rueckstiess/mtools):
 
-    pip install 'mtools[mlaunch]' --user
+    pip install 'mtools[mlaunch]' --user -U --upgrade-strategy eager
+    # On Linux:
     export PATH=~/.local/bin:$PATH
+    # On MacOS:
+    export PATH=$PATH:~/Library/Python/2.7/bin
     
 Then, launch a replica set:
 
