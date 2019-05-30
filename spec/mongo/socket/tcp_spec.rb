@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe Mongo::Socket::TCP do
-  require_no_ssl
+  require_no_tls
 
   let(:address) { default_address }
 

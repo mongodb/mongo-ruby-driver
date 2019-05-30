@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe Mongo::Socket::SSL do
-  require_ssl
+  require_tls
 
   let(:address) do
     default_address.tap do

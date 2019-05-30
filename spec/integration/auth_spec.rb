@@ -120,7 +120,7 @@ describe 'Auth' do
     end
 
     context 'attempting to connect to a non-tls server with tls' do
-      require_no_ssl
+      require_no_tls
 
       let(:options) { {ssl: true} }
 
@@ -138,7 +138,7 @@ describe 'Auth' do
     end
 
     context 'attempting to connect to a tls server without tls' do
-      require_ssl
+      require_tls
 
       let(:options) { {} }
 

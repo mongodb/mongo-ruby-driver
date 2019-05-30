@@ -8,7 +8,7 @@ describe 'SSL connections with URI options' do
   # that allows us to build the URI more easily.
   require_no_auth
   require_topology :single
-  require_ssl
+  require_tls
 
   let(:hosts) do
     SpecConfig.instance.addresses.join(',')
