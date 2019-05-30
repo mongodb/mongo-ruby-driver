@@ -72,7 +72,7 @@ module Constraints
     require_topology :replica_set
   end
 
-  def require_ssl
+  def require_tls
     before do
       unless SpecConfig.instance.ssl?
         skip "SSL not enabled"
@@ -80,7 +80,7 @@ module Constraints
     end
   end
 
-  def require_no_ssl
+  def require_no_tls
     before do
       if SpecConfig.instance.ssl?
         skip "SSL enabled"
