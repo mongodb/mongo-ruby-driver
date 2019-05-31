@@ -1,0 +1,74 @@
+Certificate:
+    Data:
+        Version: 3 (0x2)
+        Serial Number: 403728 (0x62910)
+        Signature Algorithm: sha256WithRSAEncryption
+        Issuer: CN = intermediate-server, OU = Ruby Driver, O = MongoDB, L = New York City, ST = New York, C = US
+        Validity
+            Not Before: May 30 22:28:04 2019 GMT
+            Not After : May 30 22:28:04 2039 GMT
+        Subject: CN = localhost, OU = Ruby Driver, O = MongoDB, L = New York City, ST = New York, C = US
+        Subject Public Key Info:
+            Public Key Algorithm: rsaEncryption
+                RSA Public-Key: (2048 bit)
+                Modulus:
+                    00:94:9a:50:f9:bc:68:39:68:e3:54:1d:48:d9:83:
+                    b7:7f:8c:59:cd:54:8d:ba:af:13:ef:25:a5:9d:c4:
+                    d6:0a:f4:10:c4:ee:e7:b5:60:81:83:5f:3f:88:bd:
+                    63:d7:39:68:8d:2b:d6:85:a8:f6:4a:6e:52:6c:f1:
+                    03:71:a7:2e:2f:e2:80:6a:c3:5a:94:7a:70:2c:5f:
+                    a1:ea:17:e5:db:54:24:75:d3:3a:8d:83:22:96:76:
+                    21:9f:b5:51:ff:b8:4d:33:b8:6c:39:bb:68:98:71:
+                    50:b5:41:67:bd:f5:76:f8:49:1e:58:fe:d7:a4:54:
+                    c1:15:25:b1:24:2f:20:ea:56:a4:29:2f:83:f4:c2:
+                    a9:13:12:a1:f3:9b:9e:95:6d:25:c4:bf:d9:74:0f:
+                    d3:1f:7a:87:f7:a8:f8:82:8b:0d:4f:e8:5b:6e:32:
+                    00:e0:e8:8a:35:91:75:82:56:37:7f:f5:ab:5d:0f:
+                    7f:b9:61:62:13:e4:38:44:f8:3b:58:f9:87:23:6a:
+                    aa:79:cf:6b:df:52:2b:40:0c:4d:12:b0:84:ac:40:
+                    f3:6e:f1:0f:37:23:f0:54:7c:f5:e3:b8:0b:20:77:
+                    27:ef:7f:2a:bf:20:ee:06:50:25:0b:42:57:1a:45:
+                    ca:a2:65:71:e1:bf:5d:f1:79:6f:66:3d:22:28:b9:
+                    d9:93
+                Exponent: 65537 (0x10001)
+        X509v3 extensions:
+            X509v3 Subject Alternative Name: 
+                DNS:localhost, IP Address:127.0.0.1
+    Signature Algorithm: sha256WithRSAEncryption
+         8a:2d:64:a3:92:30:31:8c:b8:50:8d:20:9f:24:e9:62:8f:98:
+         e4:6b:4b:75:3b:90:fb:51:b3:65:79:a8:5f:ac:fc:57:f1:ca:
+         34:72:6b:07:37:82:d0:b8:89:a4:6d:eb:4a:2e:c5:7c:f6:eb:
+         bf:40:84:5d:56:0c:77:c8:79:f6:28:6c:86:50:ad:0b:d4:99:
+         58:ec:da:b3:ad:e0:55:93:b6:be:2f:4a:29:dd:4c:f4:41:85:
+         41:59:ba:3f:0a:3d:ce:c5:66:c6:41:c6:b0:94:f5:f9:f9:e9:
+         ff:85:c4:df:f7:36:33:7e:80:fc:b6:89:cc:d8:72:c8:2f:ae:
+         49:80:c7:65:c2:ec:5b:31:c1:ed:da:76:39:92:bf:cb:d9:8a:
+         ef:44:7c:a3:e3:ae:db:17:19:4d:7e:4e:e5:61:09:bc:18:b8:
+         c4:09:b7:46:d8:0f:f9:6f:d8:60:ec:ec:a5:51:28:a7:06:83:
+         bd:5d:39:76:aa:26:cc:b1:d0:ac:f4:ad:88:40:0d:8b:73:32:
+         62:a8:5e:47:12:99:6c:a1:6a:25:a3:f4:62:45:5e:89:36:d4:
+         17:ed:e4:54:cf:1d:6a:67:19:67:eb:4e:64:83:7b:5b:67:e4:
+         a4:e5:26:1d:0e:56:4f:7f:b7:32:19:44:85:fe:ba:ae:58:d4:
+         e3:ed:a5:71
+-----BEGIN CERTIFICATE-----
+MIIDjTCCAnWgAwIBAgIDBikQMA0GCSqGSIb3DQEBCwUAMH4xHDAaBgNVBAMTE2lu
+dGVybWVkaWF0ZS1zZXJ2ZXIxFDASBgNVBAsTC1J1YnkgRHJpdmVyMRAwDgYDVQQK
+EwdNb25nb0RCMRYwFAYDVQQHEw1OZXcgWW9yayBDaXR5MREwDwYDVQQIEwhOZXcg
+WW9yazELMAkGA1UEBhMCVVMwHhcNMTkwNTMwMjIyODA0WhcNMzkwNTMwMjIyODA0
+WjB0MRIwEAYDVQQDEwlsb2NhbGhvc3QxFDASBgNVBAsTC1J1YnkgRHJpdmVyMRAw
+DgYDVQQKEwdNb25nb0RCMRYwFAYDVQQHEw1OZXcgWW9yayBDaXR5MREwDwYDVQQI
+EwhOZXcgWW9yazELMAkGA1UEBhMCVVMwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAw
+ggEKAoIBAQCUmlD5vGg5aONUHUjZg7d/jFnNVI26rxPvJaWdxNYK9BDE7ue1YIGD
+Xz+IvWPXOWiNK9aFqPZKblJs8QNxpy4v4oBqw1qUenAsX6HqF+XbVCR10zqNgyKW
+diGftVH/uE0zuGw5u2iYcVC1QWe99Xb4SR5Y/tekVMEVJbEkLyDqVqQpL4P0wqkT
+EqHzm56VbSXEv9l0D9Mfeof3qPiCiw1P6FtuMgDg6Io1kXWCVjd/9atdD3+5YWIT
+5DhE+DtY+Ycjaqp5z2vfUitADE0SsISsQPNu8Q83I/BUfPXjuAsgdyfvfyq/IO4G
+UCULQlcaRcqiZXHhv13xeW9mPSIoudmTAgMBAAGjHjAcMBoGA1UdEQQTMBGCCWxv
+Y2FsaG9zdIcEfwAAATANBgkqhkiG9w0BAQsFAAOCAQEAii1ko5IwMYy4UI0gnyTp
+Yo+Y5GtLdTuQ+1GzZXmoX6z8V/HKNHJrBzeC0LiJpG3rSi7FfPbrv0CEXVYMd8h5
+9ihshlCtC9SZWOzas63gVZO2vi9KKd1M9EGFQVm6Pwo9zsVmxkHGsJT1+fnp/4XE
+3/c2M36A/LaJzNhyyC+uSYDHZcLsWzHB7dp2OZK/y9mK70R8o+Ou2xcZTX5O5WEJ
+vBi4xAm3RtgP+W/YYOzspVEopwaDvV05dqomzLHQrPStiEANi3MyYqheRxKZbKFq
+JaP0YkVeiTbUF+3kVM8damcZZ+tOZIN7W2fkpOUmHQ5WT3+3MhlEhf66rljU4+2l
+cQ==
+-----END CERTIFICATE-----

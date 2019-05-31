@@ -1,0 +1,76 @@
+Certificate:
+    Data:
+        Version: 3 (0x2)
+        Serial Number: 210471 (0x33627)
+        Signature Algorithm: sha256WithRSAEncryption
+        Issuer: CN = Ruby Driver CA, OU = Drivers, O = MongoDB, L = New York City, ST = New York, C = US
+        Validity
+            Not Before: Feb 14 20:57:50 2019 GMT
+            Not After : Feb 14 20:57:50 2039 GMT
+        Subject: CN = Ruby Driver CA, OU = Drivers, O = MongoDB, L = New York City, ST = New York, C = US
+        Subject Public Key Info:
+            Public Key Algorithm: rsaEncryption
+                RSA Public-Key: (2048 bit)
+                Modulus:
+                    00:96:71:17:e8:aa:87:dc:16:8e:cb:90:4c:2c:61:
+                    11:d1:1d:9d:b8:04:75:18:8a:f1:41:37:2e:06:e6:
+                    cb:67:2c:16:f3:24:f4:53:02:33:06:1c:6e:e7:7e:
+                    83:14:44:a4:43:b6:5d:f1:4d:68:e7:8f:fe:4c:f7:
+                    ca:01:e5:d2:c1:2b:a5:93:2c:cd:12:58:c3:e1:6f:
+                    b2:31:c6:05:44:5b:99:61:99:f5:06:d0:a3:ad:de:
+                    8f:a2:73:a1:46:94:30:e7:f7:4b:5d:fb:34:76:7e:
+                    87:a5:26:89:0e:f9:8a:e7:12:5b:ff:11:71:e4:dd:
+                    87:2d:e0:a9:26:a3:1b:7d:c4:00:b8:11:3a:05:f7:
+                    00:f6:3b:80:7d:1b:0c:a3:38:42:0b:a2:17:e4:4a:
+                    c8:00:09:c8:a0:ad:d0:73:12:66:60:3d:ce:41:07:
+                    56:11:e5:06:9a:af:9b:ec:29:65:b6:56:b1:2a:b3:
+                    b2:2d:10:c4:75:05:eb:1d:cb:c4:b4:2d:8f:e9:08:
+                    3a:6d:67:e3:0a:81:6a:d5:97:9d:a0:08:f2:70:1c:
+                    9d:9e:4b:e3:9b:42:4d:02:91:93:b8:bf:e7:e9:69:
+                    7e:ef:ab:fc:a6:6a:69:35:37:ee:d9:b7:6f:c5:12:
+                    38:93:4f:09:ea:84:f4:21:df:5a:50:e0:89:c8:da:
+                    94:e1
+                Exponent: 65537 (0x10001)
+        X509v3 extensions:
+            X509v3 Basic Constraints: 
+                CA:TRUE
+            X509v3 Subject Alternative Name: 
+                DNS:localhost, IP Address:127.0.0.1
+    Signature Algorithm: sha256WithRSAEncryption
+         40:d9:19:82:d2:54:f5:eb:d5:f9:e1:85:b1:38:eb:d3:60:c2:
+         be:b7:7c:0a:59:90:0f:00:30:09:c9:7e:e1:83:7d:ce:d2:d6:
+         28:e8:21:3e:4e:ea:ee:47:eb:89:c0:e4:13:72:51:d2:3c:48:
+         06:06:86:51:55:da:24:0f:86:fa:1f:27:d6:98:58:ef:13:3f:
+         8f:2b:57:05:ad:d1:40:99:8f:35:2d:f7:13:9e:19:a5:1a:23:
+         5e:29:28:b8:cb:e4:7c:7a:2f:81:7f:1f:72:2f:2c:d2:a5:cc:
+         f1:fe:83:45:30:8d:23:d0:42:a5:f0:9d:e9:02:b5:09:ff:05:
+         72:af:00:ea:8b:38:41:88:3a:3c:75:6e:8b:5e:f3:b0:30:d3:
+         fb:ff:6f:4e:68:62:2a:30:6b:3e:06:3f:a2:a6:02:91:f1:f5:
+         5d:31:e7:f4:f0:07:9d:a6:1f:04:fa:23:7f:1e:d3:d3:30:d1:
+         3d:55:46:d8:2f:da:4b:fc:4d:d2:93:0a:51:bf:78:e4:07:3f:
+         15:77:7a:2b:20:81:54:9a:9f:21:09:86:47:81:85:dc:e4:50:
+         37:34:18:b0:43:91:2a:a2:9c:97:fe:a2:1a:02:91:6d:71:b3:
+         65:e1:c7:00:17:d5:26:d9:69:17:3b:ec:e1:5f:77:e8:19:4b:
+         a3:8c:2a:e0
+-----BEGIN CERTIFICATE-----
+MIIDkzCCAnugAwIBAgIDAzYnMA0GCSqGSIb3DQEBCwUAMHUxFzAVBgNVBAMTDlJ1
+YnkgRHJpdmVyIENBMRAwDgYDVQQLEwdEcml2ZXJzMRAwDgYDVQQKEwdNb25nb0RC
+MRYwFAYDVQQHEw1OZXcgWW9yayBDaXR5MREwDwYDVQQIEwhOZXcgWW9yazELMAkG
+A1UEBhMCVVMwHhcNMTkwMjE0MjA1NzUwWhcNMzkwMjE0MjA1NzUwWjB1MRcwFQYD
+VQQDEw5SdWJ5IERyaXZlciBDQTEQMA4GA1UECxMHRHJpdmVyczEQMA4GA1UEChMH
+TW9uZ29EQjEWMBQGA1UEBxMNTmV3IFlvcmsgQ2l0eTERMA8GA1UECBMITmV3IFlv
+cmsxCzAJBgNVBAYTAlVTMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA
+lnEX6KqH3BaOy5BMLGER0R2duAR1GIrxQTcuBubLZywW8yT0UwIzBhxu536DFESk
+Q7Zd8U1o54/+TPfKAeXSwSulkyzNEljD4W+yMcYFRFuZYZn1BtCjrd6PonOhRpQw
+5/dLXfs0dn6HpSaJDvmK5xJb/xFx5N2HLeCpJqMbfcQAuBE6BfcA9juAfRsMozhC
+C6IX5ErIAAnIoK3QcxJmYD3OQQdWEeUGmq+b7ClltlaxKrOyLRDEdQXrHcvEtC2P
+6Qg6bWfjCoFq1ZedoAjycBydnkvjm0JNApGTuL/n6Wl+76v8pmppNTfu2bdvxRI4
+k08J6oT0Id9aUOCJyNqU4QIDAQABoywwKjAMBgNVHRMEBTADAQH/MBoGA1UdEQQT
+MBGCCWxvY2FsaG9zdIcEfwAAATANBgkqhkiG9w0BAQsFAAOCAQEAQNkZgtJU9evV
++eGFsTjr02DCvrd8ClmQDwAwCcl+4YN9ztLWKOghPk7q7kfricDkE3JR0jxIBgaG
+UVXaJA+G+h8n1phY7xM/jytXBa3RQJmPNS33E54ZpRojXikouMvkfHovgX8fci8s
+0qXM8f6DRTCNI9BCpfCd6QK1Cf8Fcq8A6os4QYg6PHVui17zsDDT+/9vTmhiKjBr
+PgY/oqYCkfH1XTHn9PAHnaYfBPojfx7T0zDRPVVG2C/aS/xN0pMKUb945Ac/FXd6
+KyCBVJqfIQmGR4GF3ORQNzQYsEORKqKcl/6iGgKRbXGzZeHHABfVJtlpFzvs4V93
+6BlLo4wq4A==
+-----END CERTIFICATE-----
