@@ -287,13 +287,20 @@ module Mongo
     #   other end of the connection. One of :ssl_ca_cert, :ssl_ca_cert_string or
     #   :ssl_ca_cert_object (in order of priority) is required for :ssl_verify.
     # @option options [ String ] :ssl_cert The certificate file used to identify
-    #   the connection against MongoDB. This option, if present, takes precedence
-    #   over the values of :ssl_cert_string and :ssl_cert_object
+    #   the connection against MongoDB. A certificate chain may be passed by
+    #   specifying the client certificate first followed by any intermediate
+    #   certificates up to the CA certificate. The file may also contain the
+    #   certificate's private key, which will be ignored. This option, if present,
+    #   takes precedence over the values of :ssl_cert_string and :ssl_cert_object
     # @option options [ OpenSSL::X509::Certificate ] :ssl_cert_object The OpenSSL::X509::Certificate
-    #   used to identify the connection against MongoDB
+    #   used to identify the connection against MongoDB. Only one certificate
+    #   may be passed through this option.
     # @option options [ String ] :ssl_cert_string A string containing the PEM-encoded
-    #   certificate used to identify the connection against MongoDB. This option, if present,
-    #   takes precedence over the value of :ssl_cert_object
+    #   certificate used to identify the connection against MongoDB. A certificate
+    #   chain may be passed by specifying the client certificate first followed
+    #   by any intermediate certificates up to the CA certificate. The string
+    #   may also contain the certificate's private key, which will be ignored,
+    #   This option, if present, takes precedence over the value of :ssl_cert_object
     # @option options [ String ] :ssl_key The private keyfile used to identify the
     #   connection against MongoDB. Note that even if the key is stored in the same
     #   file as the certificate, both need to be explicitly specified. This option,
