@@ -26,11 +26,11 @@ if ENV['DRIVERS_TOOLS']
 else
   SSL_CERTS_DIR = "#{CURRENT_PATH}/support/certificates"
   CLIENT_PEM = "#{SSL_CERTS_DIR}/client.pem"
-  CA_PEM = "#{SSL_CERTS_DIR}/ca.pem"
+  CA_PEM = "#{SSL_CERTS_DIR}/ca.crt"
   CRL_PEM = "#{SSL_CERTS_DIR}/crl.pem"
-  CLIENT_KEY_PEM = "#{SSL_CERTS_DIR}/client_key.pem"
-  CLIENT_CERT_PEM = "#{SSL_CERTS_DIR}/client_cert.pem"
-  CLIENT_KEY_ENCRYPTED_PEM = "#{SSL_CERTS_DIR}/client_key_encrypted.pem"
+  CLIENT_KEY_PEM = "#{SSL_CERTS_DIR}/client.key"
+  CLIENT_CERT_PEM = "#{SSL_CERTS_DIR}/client.crt"
+  CLIENT_KEY_ENCRYPTED_PEM = "#{SSL_CERTS_DIR}/client-encrypted.key"
   CLIENT_KEY_PASSPHRASE = "passphrase"
 end
 

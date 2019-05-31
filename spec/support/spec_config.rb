@@ -196,7 +196,7 @@ EOT
     if drivers_tools?
       ENV['DRIVER_TOOLS_CLIENT_CERT_PEM']
     else
-      "#{ssl_certs_dir}/client_cert.pem"
+      "#{ssl_certs_dir}/client.crt"
     end
   end
 
@@ -204,7 +204,7 @@ EOT
     if drivers_tools?
       ENV['DRIVER_TOOLS_CLIENT_KEY_PEM']
     else
-      "#{ssl_certs_dir}/client_key.pem"
+      "#{ssl_certs_dir}/client.key"
     end
   end
 
