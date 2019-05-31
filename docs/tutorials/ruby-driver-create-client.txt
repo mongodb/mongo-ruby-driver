@@ -445,19 +445,41 @@ Ruby Options
      - none
 
    * - ``:ssl_cert``
-     - The certificate file path used to identify the connection against MongoDB. This option, if present,
-       takes precedence over the values of :ssl_cert_string and :ssl_cert_object.
+     - Path to the client certificate file used to identify the application to
+       the MongoDB servers. The file may also contain the certificate's private
+       key; if so, the private key is ignored by this option. The file may
+       also contain intermediate certificates forming the certificate chain
+       from the client certificate to the CA certificate; any intermediate
+       certificates will be parsed by the driver and provided to the OpenSSL
+       context in ``extra_chain_cert`` attribute. If intermediate certificates
+       are provided, they must follow the client certificate which must be
+       the first certificate in the file.
+       
+       This option, if present, takes precedence over ``:ssl_cert_string`` and
+       ``:ssl_cert_object`` options.
      - ``String``
      - none
 
    * - ``:ssl_cert_object``
-     - The OpenSSL::X509::Certificate used to identify the connection against MongoDB.
+     - The OpenSSL::X509::Certificate used to identify the application to
+       the MongoDB servers. Only one certificate may be passed through this
+       option.
      - ``OpenSSL::X509::Certificate``
      - none
 
    * - ``:ssl_cert_string``
-     - A string containing the PEM-encoded certificate used to identify the connection against MongoDB.
-       This option, if present, takes precedence over the value of :ssl_cert_object.
+     - A string containing the PEM-encoded certificate used to identify the
+       application to the MongoDB servers. The string may also contain the
+       certificate's private key; if so, the private key is ignored by this
+       option. The string may also contain intermediate certificates forming
+       the certificate chain from the client certificate to the CA certificate;
+       any intermediate certificates will be parsed by the driver and provided
+       to the OpenSSL context in ``extra_chain_cert`` attribute. If intermediate
+       certificates are provided, they must follow the client certificate which
+       must be the first certificatet in the string.
+       
+       This option, if present, takes precedence over the ``:ssl_cert_object``
+       option.
      - ``String``
      - none
 
@@ -588,6 +610,66 @@ Details on Timeout Options
   interrupted on the server. See the
   `CRUD specification <https://github.com/mongodb/specifications/blob/master/source/crud/crud.rst>`_ for details on
   operations that support this option.
+
+
+Details on TLS Connections
+--------------------------
+
+To connect to the MongoDB cluster using TLS, pass ``tls`` Ruby or URI option
+to the ``Mongo::Client`` constructor. TLS must be explicitly configured on the
+client side when the cluster requires TLS connections - there is currently no
+automatic detection of whether TLS is required.
+
+The driver will attempt to verify the server's TLS certificate by default, and
+will abort the connection if this verification fails. In order for this
+verification to succeed, you may need to specify the certificate authority
+that the server certificate is signed with via ``tlsCAFile`` URI option or
+``ssl_ca_cert`` Ruby option. If these options are not given, the driver will
+use the default system root certificate store as the trust anchor; if these
+options are given, the default system root certificate store will not be used.
+To omit TLS certificate verification by the client, which is not
+recommended, specify ``tlsInsecure=true`` URI option or ``ssl_verify: false``
+Ruby option.
+
+By default, MongoDB server will verify the connecting clients' TLS certificates,
+which requires the client to specify a client certificate when connecting.
+This can be accomplished through ``tlsCertificateKeyFile`` URI option which
+takes as the argument the path to a single file containing both the certificate
+and the corresponding private key, or through ``:ssl_cert`` and ``:ssl_key``
+Ruby options. The Ruby options allow passing separace certificate and key files
+to the driver, but also can be pointed at the single PEM file containing both
+the certificate and the corresponding private key. Further information on
+configuring MongoDB server for TLS is available in the `MongoDB manual
+<https://docs.mongodb.com/manual/tutorial/configure-ssl/>`_.
+
+Using Intermediate Certificates
+```````````````````````````````
+
+It is possible to use certificate chains for both the client and the server
+certificates. When using chains, the certificate authority parameter should
+be configured to contain the trusted root certificates only; the intermediate
+certificates, if any, should be provided in the server or client certificates
+by concatenating them after the leaf server and client certificates, respectively.
+
+``:ssl_cert`` and ``:ssl_cert_string`` Ruby options, as well as
+``tlsCertificateKeyFile`` URI option, support certificate chains.
+``:ssl_cert_object`` Ruby option, which takes an instance of
+``OpenSSL::X509::Certificate``, does not support certificate chains.
+
+The Ruby driver performs strict X509 certificate verification, which requires
+that both of the following fields are set in the intermediate certificate(s):
+
+- X509v3 Basic Constraints: CA: TRUE -- Can sign certificates
+- X509v3 Key Usage: Key Cert Sign -- Can sign certificates
+
+More information about these flags can be found `here
+<https://stackoverflow.com/questions/5795256/what-is-the-difference-between-the-x-509-v3-extensions-basic-constraints-and-key>`.
+
+It is a common pitfall to concatenate intermediate certificates to the root
+CA certificates passed in ``tlsCAFile`` / ``ssl_ca_cert`` options. By doing
+so, the intermediate certificates are elevated to trusted status and are
+themselves not verified against the actual CA root. More information on this
+issue is available `here <https://mail.python.org/pipermail/cryptography-dev/2016-August/000676.html>`.
 
 
 TCP Keepalive Configuration

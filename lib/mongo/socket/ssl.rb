@@ -150,9 +150,41 @@ module Mongo
 
       def set_cert(context, options)
         if options[:ssl_cert]
-          context.cert = OpenSSL::X509::Certificate.new(File.open(options[:ssl_cert]))
-        elsif options[:ssl_cert_string]
-          context.cert = OpenSSL::X509::Certificate.new(options[:ssl_cert_string])
+          cert_text = File.read(options[:ssl_cert])
+        else
+          cert_text = options[:ssl_cert_string]
+        end
+
+        # The client certificate may be a single certificate or a bundle
+        # (client certificate followed by intermediate certificates).
+        # The text may also include private keys for the certificates.
+        # OpenSSL supports passing the entire bundle as a certificate chain
+        # to the context via SSL_CTX_use_certificate_chain_file, but the
+        # Ruby openssl extension does not currently expose this functionality
+        # per https://github.com/ruby/openssl/issues/254.
+        # Therefore, extract the individual certificates from the certificate
+        # text, and if there is more than one certificate provided, use
+        # extra_chain_cert option to add the intermediate ones. This
+        # implementation is modeled after
+        # https://github.com/venuenext/ruby-kafka/commit/9495f5daf254b43bc88062acad9359c5f32cb8b5.
+        # Note that the parsing here is not identical to what OpenSSL employs -
+        # for instance, if there is no newline between two certificates
+        # this code will extract them both but OpenSSL fails in this situation.
+        if cert_text
+          certs = cert_text.scan(/-----BEGIN CERTIFICATE-----(?:.|\n)+?-----END CERTIFICATE-----/)
+          if certs.length > 1
+            context.cert = OpenSSL::X509::Certificate.new(certs.shift)
+            context.extra_chain_cert = certs.map do |cert|
+              OpenSSL::X509::Certificate.new(cert)
+            end
+            # All certificates are already added to the context, skip adding
+            # them again below.
+            cert_text = nil
+          end
+        end
+
+        if cert_text
+          context.cert = OpenSSL::X509::Certificate.new(cert_text)
         elsif options[:ssl_cert_object]
           context.cert = options[:ssl_cert_object]
         end
@@ -161,7 +193,7 @@ module Mongo
       def set_key(context, options)
         passphrase = options[:ssl_key_pass_phrase]
         if options[:ssl_key]
-          context.key = passphrase ? OpenSSL::PKey.read(File.open(options[:ssl_key]), passphrase) :
+          context.key = passphrase ? OpenSSL::PKey.read(File.read(options[:ssl_key]), passphrase) :
             OpenSSL::PKey.read(File.open(options[:ssl_key]))
         elsif options[:ssl_key_string]
           context.key = passphrase ? OpenSSL::PKey.read(options[:ssl_key_string], passphrase) :
@@ -175,7 +207,7 @@ module Mongo
         context.verify_mode = OpenSSL::SSL::VERIFY_PEER
         cert_store = OpenSSL::X509::Store.new
         if options[:ssl_ca_cert]
-          cert_store.add_cert(OpenSSL::X509::Certificate.new(File.open(options[:ssl_ca_cert])))
+          cert_store.add_cert(OpenSSL::X509::Certificate.new(File.read(options[:ssl_ca_cert])))
         elsif options[:ssl_ca_cert_string]
           cert_store.add_cert(OpenSSL::X509::Certificate.new(options[:ssl_ca_cert_string]))
         elsif options[:ssl_ca_cert_object]
