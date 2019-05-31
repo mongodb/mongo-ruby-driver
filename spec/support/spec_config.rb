@@ -189,7 +189,7 @@ EOT
   end
 
   def ssl_certs_dir
-    "#{spec_root}/support/certificates"
+    Pathname.new("#{spec_root}/support/certificates")
   end
 
   def client_cert_pem
@@ -226,6 +226,10 @@ EOT
 
   def second_level_cert_bundle_path
     "#{ssl_certs_dir}/client-second-level-bundle.pem"
+  end
+
+  def multi_ca_path
+    "#{ssl_certs_dir}/multi-ca.crt"
   end
 
   # The default test database for all specs.
