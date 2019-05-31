@@ -494,6 +494,98 @@ describe Mongo::Socket::SSL do
       end
     end
 
+    context 'when the client certificate uses an intermediate certificate' do
+      require_local_tls
+
+      let(:server) do
+        ClientRegistry.instance.global_client('authorized').cluster.next_primary
+      end
+
+      let(:connection) do
+        Mongo::Server::Connection.new(server, options)
+      end
+
+      context 'as a path to a file' do
+        context 'standalone' do
+          let(:options) do
+            SpecConfig.instance.test_options.merge(
+              ssl_cert: SpecConfig.instance.second_level_cert_path,
+              ssl_key: SpecConfig.instance.second_level_key_path,
+              ssl_ca_cert: CA_PEM,
+              ssl_verify: true,
+            )
+          end
+
+          it 'fails' do
+            connection
+            expect do
+              connection.connect!
+            end.to raise_error(Mongo::Error::SocketError)
+          end
+        end
+
+        context 'bundled with intermediate cert' do
+          let(:options) do
+            SpecConfig.instance.test_options.merge(
+              ssl_cert: SpecConfig.instance.second_level_cert_bundle_path,
+              ssl_key: SpecConfig.instance.second_level_key_path,
+              ssl_ca_cert: CA_PEM,
+              ssl_verify: true,
+            )
+          end
+
+          it 'succeeds' do
+            connection
+            expect do
+              connection.connect!
+            end.not_to raise_error
+          end
+        end
+      end
+
+      context 'as a string' do
+        context 'standalone' do
+          let(:options) do
+            SpecConfig.instance.test_options.merge(
+              ssl_cert: nil,
+              ssl_cert_string: File.read(SpecConfig.instance.second_level_cert_path),
+              ssl_key: nil,
+              ssl_key_string: File.read(SpecConfig.instance.second_level_key_path),
+              ssl_ca_cert: CA_PEM,
+              ssl_verify: true,
+            )
+          end
+
+          it 'fails' do
+            connection
+            expect do
+              connection.connect!
+            end.to raise_error(Mongo::Error::SocketError)
+          end
+        end
+
+        context 'bundled with intermediate cert' do
+          let(:options) do
+            SpecConfig.instance.test_options.merge(
+              ssl_cert: nil,
+              ssl_cert_string: File.read(SpecConfig.instance.second_level_cert_bundle_path),
+              ssl_key: nil,
+              ssl_key_string: File.read(SpecConfig.instance.second_level_key_path),
+              ssl_ca_cert: CA_PEM,
+              ssl_verify: true,
+            )
+          end
+
+          it 'succeeds' do
+            connection
+            expect do
+              connection.connect!
+            end.not_to raise_error
+          end
+        end
+      end
+    end
+
     context 'when ssl_verify is not specified' do
       require_local_tls
 

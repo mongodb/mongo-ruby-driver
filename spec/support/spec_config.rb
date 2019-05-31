@@ -216,6 +216,18 @@ EOT
     end
   end
 
+  def second_level_cert_path
+    "#{ssl_certs_dir}/client-second-level.crt"
+  end
+
+  def second_level_key_path
+    "#{ssl_certs_dir}/client-second-level.key"
+  end
+
+  def second_level_cert_bundle_path
+    "#{ssl_certs_dir}/client-second-level-bundle.pem"
+  end
+
   # The default test database for all specs.
   def test_db
     'ruby-driver'.freeze
