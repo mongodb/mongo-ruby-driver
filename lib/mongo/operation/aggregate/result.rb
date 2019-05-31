@@ -64,14 +64,16 @@ module Mongo
         #
         # @since 2.0.0
         def documents
-          reply.documents[0][RESULT] || explain_document ||
-              cursor_document[FIRST_BATCH]
+          res = reply.documents[0][RESULT] 
+          res ||= cursor_document[FIRST_BATCH] if cursor_document
+          res ||= explain_document 
+          res
         end
 
         private
 
         def explain_document
-          first_document[EXPLAIN] || first_document[EXPLAIN_LEGACY]
+          first_document[EXPLAIN] || first_document[EXPLAIN_LEGACY] || [first_document]
         end
 
         def cursor_document
