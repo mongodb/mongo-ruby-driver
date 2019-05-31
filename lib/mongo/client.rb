@@ -177,7 +177,9 @@ module Mongo
     #
     # @param [ Array<String> | String ] addresses_or_uri The array of server addresses in the
     #   form of host:port or a MongoDB URI connection string.
-    # @param [ Hash ] options The options to be used by the client.
+    # @param [ Hash ] options The options to be used by the client. If a MongoDB URI 
+    #   connection string is also provided, these options take precedence over any
+    #   analogous options present in the URI string. 
     #
     #
     # @option options [ String, Symbol ] :app_name Application name that is

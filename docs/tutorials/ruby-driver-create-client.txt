@@ -70,7 +70,8 @@ Client Options
 
 A number of different options can be passed to a ``Mongo::Client`` to configure driver
 behavior, either by providing them in the options hash to the constructor or by
-providing them in the URI.
+providing them in the URI. If both a URI and an options hash are provided, the options 
+take precedence over any analogous options present in the URI.
 
 Since the URI options are required in camel case, which is not the Ruby standard, the
 following table shows the option in the URI and its corresponding option if passed
