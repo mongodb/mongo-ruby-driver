@@ -663,13 +663,13 @@ that both of the following fields are set in the intermediate certificate(s):
 - X509v3 Key Usage: Key Cert Sign -- Can sign certificates
 
 More information about these flags can be found `here
-<https://stackoverflow.com/questions/5795256/what-is-the-difference-between-the-x-509-v3-extensions-basic-constraints-and-key>`.
+<https://stackoverflow.com/questions/5795256/what-is-the-difference-between-the-x-509-v3-extensions-basic-constraints-and-key>`_.
 
 It is a common pitfall to concatenate intermediate certificates to the root
 CA certificates passed in ``tlsCAFile`` / ``ssl_ca_cert`` options. By doing
 so, the intermediate certificates are elevated to trusted status and are
 themselves not verified against the actual CA root. More information on this
-issue is available `here <https://mail.python.org/pipermail/cryptography-dev/2016-August/000676.html>`.
+issue is available `here <https://mail.python.org/pipermail/cryptography-dev/2016-August/000676.html>`_.
 
 
 TCP Keepalive Configuration
