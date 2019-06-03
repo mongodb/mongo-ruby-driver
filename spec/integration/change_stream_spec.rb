@@ -369,7 +369,7 @@ describe 'Change stream integration', retry: 4 do
 
   describe ':start_after option' do
     require_topology :replica_set
-    min_server_version '4.1'
+    min_server_fcv '4.2'
 
     let(:start_after) do
       stream = authorized_collection.watch([])
