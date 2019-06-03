@@ -470,6 +470,66 @@ describe Mongo::Socket::SSL do
       end
     end
 
+    context 'when CA certificate file is not what server cert is signed with' do
+      require_local_tls
+
+      let(:server) do
+        ClientRegistry.instance.global_client('authorized').cluster.next_primary
+      end
+
+      let(:connection) do
+        Mongo::Server::Connection.new(server, options)
+      end
+
+      context 'as a file' do
+        let(:options) do
+          SpecConfig.instance.test_options.merge(
+            ssl_cert: SpecConfig.instance.client_cert_pem,
+            ssl_key: SpecConfig.instance.client_key_pem,
+            ssl_ca_cert: SpecConfig.instance.ssl_certs_dir.join('python-ca.crt').to_s,
+            ssl_verify: true,
+          )
+        end
+
+        it 'fails' do
+          connection
+          expect do
+            connection.connect!
+          end.to raise_error(Mongo::Error::SocketError, /SSLError/)
+        end
+      end
+    end
+
+    context 'when CA certificate file contains multiple certificates' do
+      require_local_tls
+
+      let(:server) do
+        ClientRegistry.instance.global_client('authorized').cluster.next_primary
+      end
+
+      let(:connection) do
+        Mongo::Server::Connection.new(server, options)
+      end
+
+      context 'as a file' do
+        let(:options) do
+          SpecConfig.instance.test_options.merge(
+            ssl_cert: SpecConfig.instance.client_cert_pem,
+            ssl_key: SpecConfig.instance.client_key_pem,
+            ssl_ca_cert: SpecConfig.instance.multi_ca_path,
+            ssl_verify: true,
+          )
+        end
+
+        it 'succeeds' do
+          connection
+          expect do
+            connection.connect!
+          end.not_to raise_error
+        end
+      end
+    end
+
     context 'when a CA certificate is not provided' do
       require_local_tls
 

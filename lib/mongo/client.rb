@@ -177,9 +177,9 @@ module Mongo
     #
     # @param [ Array<String> | String ] addresses_or_uri The array of server addresses in the
     #   form of host:port or a MongoDB URI connection string.
-    # @param [ Hash ] options The options to be used by the client. If a MongoDB URI 
+    # @param [ Hash ] options The options to be used by the client. If a MongoDB URI
     #   connection string is also provided, these options take precedence over any
-    #   analogous options present in the URI string. 
+    #   analogous options present in the URI string.
     #
     #
     # @option options [ String, Symbol ] :app_name Application name that is
@@ -276,16 +276,24 @@ module Mongo
     # @option options [ true, false ] :ssl Whether to use SSL.
     # @option options [ String ] :ssl_ca_cert The file containing concatenated
     #   certificate authority certificates used to validate certs passed from the
-    #   other end of the connection. One of :ssl_ca_cert, :ssl_ca_cert_string or
-    #   :ssl_ca_cert_object (in order of priority) is required for :ssl_verify.
-    # @option options [ Array<OpenSSL::X509::Certificate> ] :ssl_ca_cert_object An array of
-    #   OpenSSL::X509::Certificate representing the certificate authority certificates used
-    #   to validate certs passed from the other end of the connection. One of :ssl_ca_cert,
-    #   :ssl_ca_cert_string or :ssl_ca_cert_object (in order of priority) is required for :ssl_verify.
-    # @option options [ String ] :ssl_ca_cert_string A string containing concatenated
-    #   certificate authority certificates used to validate certs passed from the
-    #   other end of the connection. One of :ssl_ca_cert, :ssl_ca_cert_string or
-    #   :ssl_ca_cert_object (in order of priority) is required for :ssl_verify.
+    #   other end of the connection. Intermediate certificates should NOT be
+    #   specified in files referenced by this option. One of :ssl_ca_cert,
+    #   :ssl_ca_cert_string or :ssl_ca_cert_object (in order of priority) is
+    #   required when using :ssl_verify.
+    # @option options [ Array<OpenSSL::X509::Certificate> ] :ssl_ca_cert_object
+    #   An array of OpenSSL::X509::Certificate objects representing the
+    #   certificate authority certificates used to validate certs passed from
+    #   the other end of the connection. Intermediate certificates should NOT
+    #   be specified in files referenced by this option. One of :ssl_ca_cert,
+    #   :ssl_ca_cert_string or :ssl_ca_cert_object (in order of priority)
+    #   is required when using :ssl_verify.
+    # @option options [ String ] :ssl_ca_cert_string A string containing
+    #   certificate authority certificate used to validate certs passed from the
+    #   other end of the connection. This option allows passing only one CA
+    #   certificate to the driver. Intermediate certificates should NOT
+    #   be specified in files referenced by this option. One of :ssl_ca_cert,
+    #   :ssl_ca_cert_string or :ssl_ca_cert_object (in order of priority) is
+    #   required when using :ssl_verify.
     # @option options [ String ] :ssl_cert The certificate file used to identify
     #   the connection against MongoDB. A certificate chain may be passed by
     #   specifying the client certificate first followed by any intermediate
