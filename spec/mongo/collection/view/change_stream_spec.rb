@@ -443,7 +443,7 @@ describe Mongo::Collection::View::ChangeStream do
       collection.insert_one(a: 1)
     end
 
-    context 'pre-4.1 server' do
+    context 'pre-4.2 server' do
       max_server_version '4.0'
 
       it 'driver raises an exception and closes the cursor' do
@@ -454,7 +454,7 @@ describe Mongo::Collection::View::ChangeStream do
       end
     end
 
-    context '4.1+ server' do
+    context '4.2+ server' do
       min_server_fcv '4.2'
 
       it 'server errors, driver closes the cursor' do
