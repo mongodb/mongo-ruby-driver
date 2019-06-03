@@ -671,6 +671,23 @@ so, the intermediate certificates are elevated to trusted status and are
 themselves not verified against the actual CA root. More information on this
 issue is available `here <https://mail.python.org/pipermail/cryptography-dev/2016-August/000676.html>`_.
 
+Specifying Multiple CA Certificates
+```````````````````````````````````
+
+``:ssl_ca_cert`` Ruby option and ``tlsCAFile`` URI option can be used with
+a file containing multiple certificates. All certificates thus referenced
+will become trust anchors.
+
+``:ssl_ca_cert_object`` option takes an array of certificates, and thus
+can also be used to add multiple certificates as certificate authorities.
+
+``:ssl_ca_cert_string`` option supports passing only one CA certificate to the
+driver.
+
+Intermediate certificates should not be specified in files given to any
+of these options, because they would then not be verified against actual
+trusted CA certificates.
+
 
 TCP Keepalive Configuration
 ---------------------------
