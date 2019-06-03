@@ -253,7 +253,7 @@ module Mongo
       def options
         out = {}
         # Most tests have an "arguments" key which is a hash of options to
-        # be provided to the operation. The command monitotring unacknowledged
+        # be provided to the operation. The command monitoring unacknowledged
         # bulk write test is an exception in that it has an "options" key
         # with the options.
         arguments.merge(arguments['options'] || {}).each do |spec_k, v|
