@@ -53,9 +53,9 @@ module Mongo
         end
 
         # Get the documents for the aggregation result. This is either the
-        # first document's 'result' field, or if a cursor option was selected
-        # it is the 'firstBatch' field in the 'cursor' field of the first
-        # document returned.
+        # first document's 'result' field, or if a cursor option was selected, 
+        # it is the 'firstBatch' field in the 'cursor' field of the first 
+        # document returned. Otherwise, it is an explain document.
         #
         # @example Get the documents.
         #   result.documents
@@ -72,6 +72,8 @@ module Mongo
 
         private
 
+        # This should only be called on explain responses; it will never
+        # return a nil result and will only be meaningful on explain responses
         def explain_document
           first_document[EXPLAIN] || first_document[EXPLAIN_LEGACY] || [first_document]
         end
