@@ -254,7 +254,7 @@ describe Mongo::Collection::View::Aggregation do
       end
     end
 
-    context 'when a collation is specified' do
+    context 'when a collation is specified pre 4.1' do
       max_server_version '4.0'
 
       before do
@@ -323,7 +323,7 @@ describe Mongo::Collection::View::Aggregation do
       end
     end
 
-    context 'when a collation is specified post 4.0' do
+    context 'when a collation is specified' do
       min_server_version '4.1'
 
       before do
