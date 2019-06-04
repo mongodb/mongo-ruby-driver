@@ -23,6 +23,15 @@ module Utils
   end
   module_function :snakeize_hash
 
+  def camelize(str, upcase_first = true)
+    str = str.gsub(%r,_(\w),) { |m| m[1].upcase }
+    if upcase_first
+      str = str[0].upcase + str[1...str.length]
+    end
+    str
+  end
+  module_function :camelize
+
   # Converts camel case clientOptions, as used in spec tests,
   # to Ruby driver underscore options.
   def convert_client_options(spec_test_options)

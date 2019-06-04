@@ -117,7 +117,7 @@ module Mongo
               :selector => {endSessions: @queue.shift(10_000).collect { |s| s.session_id }},
               :db_name => Database::ADMIN).execute(server)
         end
-      rescue
+      rescue Mongo::Error
       end
 
       private

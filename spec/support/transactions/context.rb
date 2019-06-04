@@ -1,4 +1,4 @@
-# Copyright (C) 2014-2019 MongoDB, Inc.
+# Copyright (C) 2019 MongoDB, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,11 +14,18 @@
 
 module Mongo
   module Transactions
-
-    class Spec < Mongo::CRUD::Spec
-      def tests
-        @tests.map do |test|
-          Mongo::Transactions::TransactionsTest.new(@data, test, self)
+    Context = Struct.new(
+      :session0,
+      :session1,
+      :session,
+    ) do
+      def transform_arguments(arguments)
+        arguments.dup.tap do |out|
+          [:session].each do |key|
+            if out[key]
+              out[key] = send(key)
+            end
+          end
         end
       end
     end
