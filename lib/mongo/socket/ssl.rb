@@ -135,8 +135,19 @@ module Mongo
           if context.respond_to?(:renegotiation_cb=)
             # Disable renegotiation for older Ruby versions per the sample code at
             # https://rubydocs.org/d/ruby-2-6-0/classes/OpenSSL/SSL/SSLContext.html
+            # In JRuby we must allow one call as this callback is invoked for
+            # the initial connection also, not just for renegotiations -
+            # https://github.com/jruby/jruby-openssl/issues/180
+            if BSON::Environment.jruby?
+              allowed_calls = 1
+            else
+              allowed_calls = 0
+            end
             context.renegotiation_cb = lambda do |ssl|
-              raise RuntimeError, 'Client renegotiation disabled'
+              if allowed_calls <= 0
+                raise RuntimeError, 'Client renegotiation disabled'
+              end
+              allowed_calls -= 1
             end
           end
 
