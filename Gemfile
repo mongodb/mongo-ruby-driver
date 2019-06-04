@@ -43,6 +43,10 @@ group :testing do
   gem 'rfc'
   gem 'fuubar'
   gem 'timeout-interrupt', platforms: :mri
+  
+  if RUBY_VERSION < '2.3'
+    gem 'ffi', '<1.11'
+  end
 end
 
 group :development do
