@@ -16,7 +16,7 @@ MongoDB Compatibility
 .. list-table::
    :header-rows: 1
    :stub-columns: 1
-   :class: compatibility
+   :class: compatibility-large no-padding
 
    * - Ruby Driver
      - MongoDB 4.0
@@ -165,7 +165,7 @@ Ruby Compatibility
 .. list-table::
    :header-rows: 1
    :stub-columns: 1
-   :class: compatibility
+   :class: compatibility-large no-padding
 
    * - Ruby Driver
      - Ruby 2.6
