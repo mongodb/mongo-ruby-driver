@@ -77,6 +77,11 @@ module Mongo
         # @since 2.0.0
         attr_reader :description
 
+        # Optional list of command-started events in Extended JSON format
+        #
+        # @return [ Array<Hash> ] The list of command-started events
+        attr_reader :expectations
+
         def initialize(test, coll1, coll2, db1, db2)
           @description = test['description']
           @min_server_version = test['minServerVersion']
@@ -177,12 +182,8 @@ module Mongo
         end
 
         def match_commands?(actual)
-          if @expectations
-            @expectations.each_with_index.all? do |e, i|
-              actual[i] && match?(e, actual[i])
-            end
-          else
-            true
+          @expectations.each_with_index.all? do |e, i|
+            actual[i] && match?(e, actual[i])
           end
         end
 

@@ -124,11 +124,6 @@ module Mongo
         {:code_name => 'Interrupted', :code => 11601},
       ].freeze
 
-      # Error label that should result in a failing getMore command
-      #
-      # @api private
-      CHANGE_STREAM_NOT_RESUME_LABEL = 'NonResumableChangeStreamError'.freeze
-
       # Change stream can be resumed when these error messages are encountered.
       #
       # @since 2.6.0
@@ -146,7 +141,7 @@ module Mongo
       # @since 2.6.0
       def change_stream_resumable?
         if @result && @result.is_a?(Mongo::Operation::GetMore::Result)
-          change_stream_resumable_label? &&
+          !change_stream_not_resumable_label? &&
           (change_stream_resumable_message? ||
           change_stream_resumable_code?)
         else
@@ -168,14 +163,14 @@ module Mongo
       end
       private :change_stream_resumable_code?
 
-      def change_stream_resumable_label?
+      def change_stream_not_resumable_label?
         if labels
-          !labels.include? CHANGE_STREAM_NOT_RESUME_LABEL 
+          labels.include? 'NonResumableChangeStreamError' 
         else
-          true
+          false
         end
       end
-      private :change_stream_resumable_label?
+      private :change_stream_not_resumable_label?
 
 
       # Create the operation failure.
