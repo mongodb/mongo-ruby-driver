@@ -33,6 +33,11 @@ module Mongo
           cursor_document ? cursor_document[CURSOR_ID] : super
         end
 
+        # TODO what should be scope?
+        def post_batch_resume_token
+          cursor_document ? cursor_document['postBatchResumeToken'] : nil
+        end
+
         # Get the documents in the result.
         #
         # @example Get the documents.

@@ -127,16 +127,26 @@ module Mongo
     #
     # @since 2.0.0
     def each
-      process(@initial_result).each do |doc| 
+      docs = process(@initial_result)
+      docs.each_with_index do |doc, i| 
         cache_resume_token(doc)
+        if i == docs.size
+          cache_batch_resume_token
+        end
         yield doc 
       end
+      cache_batch_resume_token
       while more?
         return kill_cursors if exhausted?
-        get_more.each do |doc| 
+        docs = get_more
+        docs.each_with_index do |doc, i| 
           cache_resume_token(doc)
-          yield doc
+          if i == docs.size
+            cache_batch_resume_token
+          end
+          yield doc 
         end
+        cache_batch_resume_token
       end
     end
 
@@ -160,6 +170,8 @@ module Mongo
       end
 
       if @documents.empty?
+        cache_batch_resume_token
+
         if more?
           if exhausted?
             kill_cursors
@@ -173,8 +185,15 @@ module Mongo
         # keep documents as an empty array
       end
 
-      if @documents && @documents[0]
-        cache_resume_token(@documents[0])
+      if @documents 
+        if @documents[0]
+          cache_resume_token(@documents[0])
+        end
+
+        if @documents.size <= 1
+          cache_batch_resume_token
+        end
+        
         return @documents.shift
       end
 
@@ -255,6 +274,10 @@ module Mongo
       end
     end
 
+    def cache_batch_resume_token
+      @resume_token = @post_batch_resume_token if @post_batch_resume_token
+    end
+
     def exhausted?
       limited? ? @remaining <= 0 : false
     end
@@ -316,6 +339,7 @@ module Mongo
       @coll_name ||= result.namespace.sub("#{database.name}.", '') if result.namespace
       unregister if result.cursor_id == 0
       @cursor_id = result.cursor_id
+      @post_batch_resume_token = result.post_batch_resume_token
       end_session if !more?
       result.documents
     end

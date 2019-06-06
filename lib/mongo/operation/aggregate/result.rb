@@ -52,6 +52,11 @@ module Mongo
           cursor_document ? cursor_document[CURSOR_ID] : 0
         end
 
+        # TODO what should be scope?
+        def post_batch_resume_token
+          cursor_document ? cursor_document['postBatchResumeToken'] : nil
+        end
+
         # Get the documents for the aggregation result. This is either the
         # first document's 'result' field, or if a cursor option was selected, 
         # it is the 'firstBatch' field in the 'cursor' field of the first 

@@ -94,8 +94,8 @@ module Mongo
           @changes_for = changes_for
           @change_stream_filters = pipeline && pipeline.dup
           @options = options && options.dup.freeze
-          @resume_token = @options[:resume_after]     # todo document: only use this if no cursor
           @start_after = @options[:start_after]
+          @resume_token = @start_after || @options[:resume_after]     # todo document: only use this if no cursor
           create_cursor!
 
           # We send different parameters when we resume a change stream
@@ -304,13 +304,14 @@ module Mongo
               # a resume token we won't have a resume token to use.
               # Use start_at_operation time in this case
               if resume_token
-                # Spec says we need to remove startAtOperationTime if
-                # one was passed in by user, thus we won't forward it
-              elsif @start_after
-                # The spec says to set `resumeAfter` to the `startAfter` token and not to send
-                # either `startAfter` or `startAtOperationTime`.
-                # @resume_token = @start_after
-                 doc[:resumeAfter] = @startAfter
+                # Spec says we need to remove both startAtOperationTime and startAfter if
+                # either was passed in by user, thus we won't forward them
+              # elsif @start_after
+              #   # The spec says to set `resumeAfter` to the `startAfter` token and not to send
+              #   # either `startAfter` or `startAtOperationTime`.
+              #   @resume_token = @start_after
+              #   #doc[:resumeAfter] = @startAfter
+                doc[:resumeAfter] = resume_token
               elsif start_at_operation_time_supported? && @start_at_operation_time
                 # It is crucial to check @start_at_operation_time_supported
                 # here - we may have switched to an older server that
@@ -321,6 +322,7 @@ module Mongo
                 doc[:startAtOperationTime] = @start_at_operation_time
               else
                 # Can't resume if we don't have either
+                # TODO The driver MUST use the original aggregation command to resume.??
                 raise Mongo::Error::MissingResumeToken
               end
             else
@@ -334,7 +336,7 @@ module Mongo
               end
             end
 
-            doc[:resumeAfter] = resume_token if resume_token
+            # doc[:resumeAfter] = resume_token if resume_token # TODO is this ok?
             doc[:allChangesForCluster] = true if for_cluster?
           end
         end
