@@ -23,15 +23,15 @@ module Mongo
       # The ssl option prefix.
       #
       # @since 2.1.0
+      # @deprecated
       SSL = 'ssl'.freeze
 
       # The default time in seconds to timeout an operation executed on a socket.
       #
       # @since 2.0.0
       #
-      # @deprecated Timeouts on Ruby sockets aren't effective so this default option is
-      #   no longer used.
-      #   Will be removed in driver version 3.0.
+      # @deprecated Timeouts on Ruby sockets aren't effective so this default
+      #   option is no longer used. Will be removed in driver version 3.0.
       TIMEOUT = 5.freeze
 
       # @return [ Integer ] pid The process id when the connection was created.
@@ -69,7 +69,11 @@ module Mongo
       private
 
       def ssl_options
-        @ssl_options[:ssl] == true ? @ssl_options : {}
+        @ssl_options ||= if options[:ssl]
+          options.select { |k, v| k.to_s.start_with?('ssl') }
+        else
+          {}
+        end.freeze
       end
 
       def ensure_connected
