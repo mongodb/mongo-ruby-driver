@@ -42,6 +42,8 @@ module Mongo
     # @return [ Collection::View ] view The collection view.
     attr_reader :view
 
+    attr_reader :resume_token
+
     # Creates a +Cursor+ object.
     #
     # @example Instantiate the cursor.
@@ -125,10 +127,16 @@ module Mongo
     #
     # @since 2.0.0
     def each
-      process(@initial_result).each { |doc| yield doc }
+      process(@initial_result).each do |doc| 
+        cache_resume_token(doc)
+        yield doc 
+      end
       while more?
         return kill_cursors if exhausted?
-        get_more.each { |doc| yield doc }
+        get_more.each do |doc| 
+          cache_resume_token(doc)
+          yield doc
+        end
       end
     end
 
@@ -165,7 +173,8 @@ module Mongo
         # keep documents as an empty array
       end
 
-      if @documents
+      if @documents && @documents[0]
+        cache_resume_token(@documents[0])
         return @documents.shift
       end
 
@@ -234,8 +243,17 @@ module Mongo
     def to_return
       use_limit? ? @remaining : (batch_size || 0)
     end
-
+    
     private
+
+    def cache_resume_token(doc)
+      # Always record both resume token and operation time,
+      # in case we get an older or newer server during rolling
+      # upgrades/downgrades
+      unless @resume_token = (doc[:_id] && doc[:_id].dup)
+        raise Error::MissingResumeToken
+      end
+    end
 
     def exhausted?
       limited? ? @remaining <= 0 : false

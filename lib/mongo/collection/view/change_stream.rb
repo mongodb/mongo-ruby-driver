@@ -94,7 +94,7 @@ module Mongo
           @changes_for = changes_for
           @change_stream_filters = pipeline && pipeline.dup
           @options = options && options.dup.freeze
-          @resume_token = @options[:resume_after]
+          @resume_token = @options[:resume_after]     # todo document: only use this if no cursor
           @start_after = @options[:start_after]
           create_cursor!
 
@@ -123,10 +123,7 @@ module Mongo
           raise StopIteration.new if closed?
           retried = false
           begin
-            @cursor.each do |doc|
-              cache_resume_token(doc)
-              yield doc
-            end if block_given?
+            @cursor.each { |doc| yield doc } if block_given?
             @cursor.to_enum
           rescue Mongo::Error => e
             if retried || !e.change_stream_resumable?
@@ -137,6 +134,9 @@ module Mongo
             # Rerun initial aggregation.
             # Any errors here will stop iteration and break out of this
             # method
+
+            # Save cursor's resume token so we can start there with new cursor
+            @resume_token = @cursor.resume_token 
             close
             create_cursor!
             retry
@@ -173,6 +173,9 @@ module Mongo
               # Rerun initial aggregation.
               # Any errors here will stop iteration and break out of this
               # method
+
+              # Save cursor's resume token so we can start there with new cursor
+              @resume_token = @cursor.resume_token 
               close
               create_cursor!
               retried = false
@@ -184,9 +187,6 @@ module Mongo
             end
           end
 
-          if doc
-            cache_resume_token(doc)
-          end
           doc
         end
 
@@ -238,7 +238,14 @@ module Mongo
         # @since 2.5.0
         def inspect
           "#<Mongo::Collection::View:ChangeStream:0x#{object_id} filters=#{@change_stream_filters} " +
-            "options=#{@options} resume_token=#{@resume_token}>"
+            "options=#{@options} resume_token=#{resume_token}>"
+        end
+
+        def resume_token
+          if @cursor
+            @cursor.resume_token
+          end
+          @resume_token
         end
 
         private
@@ -253,15 +260,6 @@ module Mongo
 
         def for_collection?
           !for_cluster? && !for_database?
-        end
-
-        def cache_resume_token(doc)
-          # Always record both resume token and operation time,
-          # in case we get an older or newer server during rolling
-          # upgrades/downgrades
-          unless @resume_token = (doc[:_id] && doc[:_id].dup)
-            raise Error::MissingResumeToken
-          end
         end
 
         def create_cursor!
@@ -305,13 +303,14 @@ module Mongo
               # However, if the first getMore fails and the user didn't pass
               # a resume token we won't have a resume token to use.
               # Use start_at_operation time in this case
-              if @resume_token
+              if resume_token
                 # Spec says we need to remove startAtOperationTime if
                 # one was passed in by user, thus we won't forward it
               elsif @start_after
                 # The spec says to set `resumeAfter` to the `startAfter` token and not to send
                 # either `startAfter` or `startAtOperationTime`.
-                @resume_token = @start_after
+                # @resume_token = @start_after
+                 doc[:resumeAfter] = @startAfter
               elsif start_at_operation_time_supported? && @start_at_operation_time
                 # It is crucial to check @start_at_operation_time_supported
                 # here - we may have switched to an older server that
@@ -334,7 +333,8 @@ module Mongo
                   options[:start_at_operation_time])
               end
             end
-            doc[:resumeAfter] = @resume_token if @resume_token
+
+            doc[:resumeAfter] = resume_token if resume_token
             doc[:allChangesForCluster] = true if for_cluster?
           end
         end
