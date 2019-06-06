@@ -147,8 +147,9 @@ read preference and does not heal quickly enough, ``next`` and ``each``
 will raise an error. In these cases the application must track, via the
 resume token, which documents from the change stream it has processed and
 create a new change stream object via the ``watch`` call, passing an
-appropriate ``:resume_after`` argument. The resume token is exposed
-at the key ``_id`` in each change document.
+appropriate ``:resume_after`` argument. The ``_id`` key in each change 
+document can be used as a resume token. However, to get the most up-to-date 
+resume token, use the ``resume_token`` method.
 
 .. code-block:: ruby
 
@@ -166,7 +167,7 @@ To watch a collection indefinitely, retrying on all MongoDB errors:
       enum = stream.to_enum
       while doc = enum.next
         process(doc)
-        token = doc['_id']
+        token = stream.resume_token
       end
     rescue Mongo::Error
       sleep 1
