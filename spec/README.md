@@ -163,6 +163,10 @@ permissions:
 
     sudo chmod 0666 /tmp/mongodb-27017.sock
 
+Alternatively, specify the following argument to `mlaunch` or `mongod`:
+
+    --filePermissions 0666
+
 ### Non-Identical Hostnames
 
 The test suite should be configured to connect to exactly the hostnames
