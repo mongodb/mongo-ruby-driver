@@ -198,12 +198,13 @@ module Mongo
       end
 
       if @documents 
-        # if there is at least one document, 
+        # If there is at least one document, cache its id
         if @documents[0]
           cache_resume_token(@documents[0])
         end
 
-        # 
+        # Cache the batch resume token if we are iterating
+        # over the last document, or if the batch is empty
         if @documents.size <= 1
           cache_batch_resume_token
         end

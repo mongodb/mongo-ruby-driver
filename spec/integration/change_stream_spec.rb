@@ -462,6 +462,7 @@ describe 'Change stream integration', retry: 4 do
 
           res_tok = stream.resume_token
           expect(res_tok).to eq(getmore_command['cursor']['postBatchResumeToken'])
+          expect(res_tok).to_not eq(aggregate_command['cursor']['postBatchResumeToken'])
         end
       end
 
@@ -477,7 +478,7 @@ describe 'Change stream integration', retry: 4 do
 
         it 'returns _id of previous document returned if one exists' do
           doc_id = stream_doc_id
-          expect(stream.resume_token).to eq(stream_doc_id)
+          expect(stream.resume_token).to eq(doc_id)
         end
 
         it 'must return startAfter from the initial aggregate if the option was specified' do
@@ -512,8 +513,7 @@ describe 'Change stream integration', retry: 4 do
         authorized_collection.insert_one(:a => 1)
         authorized_collection.insert_one(:a => 1)
         authorized_collection.insert_one(:a => 1)
-
-        c = stream.to_enum.next
+        stream.to_enum.next
 
         change = stream.to_enum.next
 
@@ -521,7 +521,7 @@ describe 'Change stream integration', retry: 4 do
       end
     end
 
-    # the watch does the initial aggregate
+    # Note that the watch method executes the initial aggregate command
     context 'for non-empty, non-iterated batch, only the initial aggregate command executed' do
       let(:stream_doc_id) do
         stream
