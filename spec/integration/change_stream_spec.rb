@@ -482,12 +482,16 @@ describe 'Change stream integration', retry: 4 do
           expect(stream.resume_token).to eq(doc_id)
         end
 
-        it 'must return startAfter from the initial aggregate if the option was specified' do
-          start_after = stream_doc_id
-          authorized_collection.insert_one(:a => 1)
-          stream = authorized_collection.watch([], { start_after: start_after })
+        context 'when start_after is specified' do
+          min_server_fcv '4.2'
 
-          expect(stream.resume_token).to eq(start_after)
+          it 'must return startAfter from the initial aggregate if the option was specified' do
+            start_after = stream_doc_id
+            authorized_collection.insert_one(:a => 1)
+            stream = authorized_collection.watch([], { start_after: start_after })
+
+            expect(stream.resume_token).to eq(start_after)
+          end
         end
 
         it 'must return resumeAfter from the initial aggregate if the option was specified' do
