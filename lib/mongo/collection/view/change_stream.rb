@@ -125,27 +125,11 @@ module Mongo
         # @yieldparam [ BSON::Document ] Each change stream document.
         def each
           raise StopIteration.new if closed?
-          retried = false
-          begin
-            @cursor.each { |doc| yield doc } if block_given?
-            @cursor.to_enum
-          rescue Mongo::Error => e
-            if retried || !e.change_stream_resumable?
-              raise
-            end
-
-            retried = true
-            # Rerun initial aggregation.
-            # Any errors here will stop iteration and break out of this
-            # method
-
-            # Save cursor's resume token so we can use it
-            # to create a new cursor
-            @resume_token = @cursor.resume_token 
-
-            close
-            create_cursor!
-            retry
+          loop do
+            document = try_next
+            yield document if document
+          rescue StopIteration => e
+            return self
           end
         end
 
@@ -170,29 +154,28 @@ module Mongo
 
           begin
             doc = @cursor.try_next
+            if @cursor.resume_token.nil?
+              raise Error::MissingResumeToken
+            end
+          rescue Error::MissingResumeToken => e
+            raise
           rescue Mongo::Error => e
-            unless e.change_stream_resumable?
+            if retried || !e.change_stream_resumable?
               raise
             end
 
-            if retried
-              # Rerun initial aggregation.
-              # Any errors here will stop iteration and break out of this
-              # method
+            retried = true
+            # Rerun initial aggregation.
+            # Any errors here will stop iteration and break out of this
+            # method
 
-              # Save cursor's resume token so we can use it
-              # to create a new cursor
-              @resume_token = @cursor.resume_token 
+            # Save cursor's resume token so we can use it
+            # to create a new cursor
+            @resume_token = @cursor.resume_token 
 
-              close
-              create_cursor!
-              retried = false
-              doc = @cursor.try_next
-            else
-              # Attempt to retry a getMore once
-              retried = true
-              retry
-            end
+            close
+            create_cursor!
+            retry
           end
 
           doc

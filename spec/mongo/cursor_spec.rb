@@ -1,6 +1,7 @@
 require 'spec_helper'
 
 describe Mongo::Cursor do
+
   let(:authorized_collection) do
     authorized_client['cursor_spec_collection']
   end
@@ -273,7 +274,7 @@ describe Mongo::Cursor do
     context 'when the cursor is not fully iterated and is garbage collected' do
 
       let(:documents) do
-        (1..3).map{ |i| { field: "test#{i}" }}
+        (1..4).map{ |i| { field: "test#{i}" }}
       end
 
       let(:cluster) do
@@ -304,14 +305,17 @@ describe Mongo::Cursor do
         cluster.instance_variable_get(:@periodic_executor).flush
         expect {
           cursor.to_a
-        }.to raise_exception(Mongo::Error::OperationFailure)
+        }.to raise_exception(Mongo::Error::OperationFailure, /cursor.*not found/)
       end
 
       context 'when the cursor is unregistered before the kill cursors operations are executed' do
 
         it 'does not send a kill cursors operation for the unregistered cursor' do
+          # We need to verify that the cursor was able to retrieve more documents
+          # from the server so that more than one batch is successfully received
+
           cluster.unregister_cursor(cursor.id)
-          expect(cursor.to_a.size).to eq(documents.size)
+          expect(cursor.to_a.size > 2).to be(true)
         end
       end
     end

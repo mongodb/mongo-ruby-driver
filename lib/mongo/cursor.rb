@@ -130,40 +130,48 @@ module Mongo
     #
     # @since 2.0.0
     def each
-      docs = process(@initial_result)
-      docs.each_with_index do |doc, i| 
-        cache_resume_token(doc)
-
-        # If we iterate over the last doc in the
-        # batch, we need to set the resume token
-        # to the post batch resume token
-        if i == docs.size
-          cache_batch_resume_token
-        end
-        yield doc 
+      loop do 
+        document = try_next
+        yield document if document
+      rescue StopIteration => e
+        return self
       end
+      # docs = process(@initial_result)
+      # docs.each_with_index do |doc, i| 
+      #   cache_resume_token(doc)
 
-      # Handles the case when docs is empty
-      cache_batch_resume_token
+      #   # If we iterate over the last doc in the
+      #   # batch, we need to set the resume token
+      #   # to the post batch resume token
+      #   if i == docs.size - 1
+      #     cache_batch_resume_token
+      #   end
+      #   pp "returning"
+      #   pp doc
+      #   yield doc 
+      # end
 
-      while more?
-        return kill_cursors if exhausted?
-        docs = get_more
-        docs.each_with_index do |doc, i| 
-          cache_resume_token(doc)
-          if i == docs.size
-            cache_batch_resume_token
-          end
-          yield doc 
-        end
+      # # Handles the case when docs is empty
+      # cache_batch_resume_token
 
-        cache_batch_resume_token
-      end
+      # while more?
+      #   return kill_cursors if exhausted?
+      #   docs = get_more
+      #   docs.each_with_index do |doc, i| 
+      #     cache_resume_token(doc)
+      #     if i == docs.size - 1
+      #       cache_batch_resume_token
+      #     end
+      #     pp "returning"
+      #   pp doc
+      #     yield doc 
+      #   end
+
+      #   cache_batch_resume_token
+      # end
     end
 
     # Return one document from the query, if one is available.
-    #
-    # Retries once on a resumable error.
     #
     # This method will wait up to max_await_time_ms milliseconds
     # for changes from the server, and if no changes are received
@@ -187,10 +195,11 @@ module Mongo
         if more?
           if exhausted?
             kill_cursors
-            return nil
+            raise StopIteration.new
           end
-
           @documents = get_more
+        else
+          raise StopIteration.new
         end
       else
         # cursor is closed here
@@ -298,9 +307,7 @@ module Mongo
       # Always record both resume token and operation time,
       # in case we get an older or newer server during rolling
       # upgrades/downgrades
-      unless @resume_token = (doc[:_id] && doc[:_id].dup)
-        raise Error::MissingResumeToken
-      end
+      @resume_token = (doc[:_id] && doc[:_id].dup)
     end
 
     def cache_batch_resume_token
@@ -350,6 +357,7 @@ module Mongo
       @cursor_id != 0
     end
 
+    # TODO document return value 
     def process(result)
       @remaining -= result.returned_count if limited?
       @coll_name ||= result.namespace.sub("#{database.name}.", '') if result.namespace
@@ -359,8 +367,9 @@ module Mongo
       if result.respond_to?(:post_batch_resume_token)
         @post_batch_resume_token = result.post_batch_resume_token
       end
-      
+
       end_session if !more?
+
       result.documents
     end
 
