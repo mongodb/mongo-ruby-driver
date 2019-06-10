@@ -46,6 +46,7 @@ module Mongo
     #
     # @api private
     attr_reader :resume_token
+    attr_reader :missing_token
 
     # Creates a +Cursor+ object.
     #
@@ -73,6 +74,7 @@ module Mongo
       @coll_name = nil
       @options = options
       @session = @options[:session]
+      @missing_token = false
       register
       if @cursor_id && @cursor_id > 0
         ObjectSpace.define_finalizer(self, self.class.finalize(@cursor_id,
@@ -306,12 +308,10 @@ module Mongo
     end
 
     def cache_resume_token(doc)
-      # Always record both resume token and operation time,
-      # in case we get an older or newer server during rolling
-      # upgrades/downgrades
-      if doc[:_id].respond_to?(:dup)
-        @resume_token = doc[:_id] && doc[:_id].dup
-      end
+      @missing_token = doc[:_id].nil?
+      @resume_token = doc[:_id] && doc[:_id].dup
+    rescue TypeError
+      # dup was called on a Fixnum; do nothing
     end
 
     def cache_batch_resume_token

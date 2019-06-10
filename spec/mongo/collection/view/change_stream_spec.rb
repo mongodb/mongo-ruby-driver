@@ -3,7 +3,7 @@ require 'spec_helper'
 describe Mongo::Collection::View::ChangeStream do
   min_server_fcv '3.6'
   require_topology :replica_set
-  max_example_run_time 7
+  #max_example_run_time 7
 
   let(:pipeline) do
     []

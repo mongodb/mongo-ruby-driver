@@ -332,6 +332,8 @@ module Mongo
             else
               if @start_after
                 doc[:startAfter] = @start_after
+              elsif resume_token
+                doc[:resumeAfter] = resume_token
               end
 
               if options[:start_at_operation_time]
