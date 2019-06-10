@@ -154,6 +154,9 @@ module Mongo
 
           begin
             doc = @cursor.try_next
+
+            # We need to verify the cursor has a resume token; 
+            # if not, there was a document missing an _id
             if @cursor.resume_token.nil?
               raise Error::MissingResumeToken
             end

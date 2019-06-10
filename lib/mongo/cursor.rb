@@ -200,6 +200,7 @@ module Mongo
           end
           @documents = get_more
         else
+          # no more documents to return
           raise StopIteration.new
         end
       else
@@ -208,7 +209,7 @@ module Mongo
       end
 
       if @documents 
-        # If there is at least one document, cache its id
+        # If there is at least one document, cache its _id
         if @documents[0]
           cache_resume_token(@documents[0])
         end
@@ -308,7 +309,9 @@ module Mongo
       # Always record both resume token and operation time,
       # in case we get an older or newer server during rolling
       # upgrades/downgrades
-      @resume_token = (doc[:_id] && doc[:_id].dup)
+      if doc[:_id].respond_to?(:dup)
+        @resume_token = doc[:_id] && doc[:_id].dup
+      end
     end
 
     def cache_batch_resume_token
