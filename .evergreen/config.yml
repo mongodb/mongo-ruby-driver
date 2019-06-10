@@ -655,7 +655,7 @@ buildvariants:
     topology: "*"
   display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
   run_on:
-    - ubuntu1404-test
+    - rhel70-small
   tasks:
      - name: "test"
 
@@ -668,7 +668,7 @@ buildvariants:
     topology: "*"
   display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
   run_on:
-    - ubuntu1404-test
+    - rhel70-small
   tasks:
      - name: "test"
 
@@ -681,7 +681,7 @@ buildvariants:
     topology: "*"
   display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
   run_on:
-    - ubuntu1404-test
+    - rhel70-small
   tasks:
      - name: "test"
 
@@ -694,7 +694,7 @@ buildvariants:
     topology: "*"
   display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
   run_on:
-    - ubuntu1404-test
+    - rhel70-small
   tasks:
      - name: "test"
 
@@ -707,7 +707,7 @@ buildvariants:
     topology: "*"
   display_name: "${mongodb-version} ${topology} ${retry-reads} ${ruby}"
   run_on:
-    - ubuntu1404-test
+    - rhel70-small
   tasks:
      - name: "test"
 
@@ -720,7 +720,7 @@ buildvariants:
     topology: [replica-set, sharded-cluster]
   display_name: "${mongodb-version} ${topology} ${retry-writes} ${ruby}"
   run_on:
-    - ubuntu1404-test
+    - rhel70-small
   tasks:
      - name: "test"
 
@@ -733,7 +733,7 @@ buildvariants:
     topology: [replica-set, sharded-cluster]
   display_name: "${mongodb-version} ${topology} ${lint} ${ruby}"
   run_on:
-    - ubuntu1404-test
+    - rhel70-small
   tasks:
      - name: "test"
 
@@ -746,7 +746,7 @@ buildvariants:
     topology: "*"
   display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
   run_on:
-    - ubuntu1404-test
+    - rhel70-small
   tasks:
      - name: "test"
 
@@ -759,7 +759,7 @@ buildvariants:
     topology: "*"
   display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
   run_on:
-    - ubuntu1404-test
+    - rhel70-small
   tasks:
      - name: "test"
 
@@ -773,7 +773,7 @@ buildvariants:
     compressor: 'zlib'
   display_name: "${compressor} ${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
   run_on:
-    - ubuntu1404-test
+    - rhel70-small
   tasks:
      - name: "test"
 
@@ -787,7 +787,7 @@ buildvariants:
     compressor: 'zlib'
   display_name: "${compressor} ${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
   run_on:
-    - ubuntu1404-test
+    - rhel70-small
   tasks:
      - name: "test"
 
@@ -808,7 +808,7 @@ buildvariants:
     as: as
   display_name: "AS ${mongodb-version} ${topology} ${ruby}"
   run_on:
-    - ubuntu1404-test
+    - rhel70-small
   tasks:
      - name: "test"
 
@@ -821,7 +821,7 @@ buildvariants:
     topology: replica-set
   display_name: "3.6 Replica Set with 3.4 FCV"
   run_on:
-    - ubuntu1404-test
+    - rhel70-small
   tasks:
     - name: "test"
 
@@ -832,7 +832,7 @@ buildvariants:
     ruby: ["ruby-2.6", "ruby-2.5", "jruby-9.1", "jruby-9.2"]
   display_name: "Enterprise Auth Ubuntu ${ruby}"
   run_on:
-    - ubuntu1404-test
+    - ubuntu1604-test
   tasks:
     - name: "enterprise-auth-tests"
 

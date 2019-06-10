@@ -1,3 +1,34 @@
+host_arch() {
+  local arch
+  arch=
+  if test -f /etc/debian_version; then
+    # Debian or Ubuntu
+    if lsb_release -i |grep -q Debian; then
+      release=`lsb_release -r |awk '{print $2}'`
+      arch="debian$release"
+    elif lsb_release -i |grep -q Ubuntu; then
+      release=`lsb_release -r |awk '{print $2}' |tr -d .`
+      arch="ubuntu$release"
+    else
+      echo 'Unknown Debian flavor' 1>&2
+      return 1
+    fi
+  elif test -f /etc/redhat-release; then
+    # RHEL or CentOS
+    if lsb_release -i |grep -q RedHat; then
+      release=`lsb_release -r |awk '{print $2}' |tr -d .`
+      arch="rhel$release"
+    else
+      echo 'Unknown RHEL flavor' 1>&2
+      return 1
+    fi
+  else
+    echo 'Unknown distro' 1>&2
+    return 1
+  fi
+  echo $arch
+}
+
 set_fcv() {
   if test -n "$FCV"; then
     mongo --eval 'assert.commandWorked(db.adminCommand( { setFeatureCompatibilityVersion: "'"$FCV"'" } ));' "$MONGODB_URI"
@@ -56,9 +87,13 @@ setup_ruby() {
     if ! test "$RVM_RUBY" = ruby-1.9; then
     
     # For testing toolchains:
-    toolchain_url=https://s3.amazonaws.com//mciuploads/mongo-ruby-toolchain/ubuntu1404/8cd47ac2cf636710740a6d79167f055e4c0a0154/mongo_ruby_driver_toolchain_ubuntu1404_patch_8cd47ac2cf636710740a6d79167f055e4c0a0154_5c452b76e3c3312273591db4_19_01_21_02_16_23.tar.gz
+    toolchain_url=https://s3.amazonaws.com//mciuploads/mongo-ruby-toolchain/`host_arch`/741a9eba5788e6d5254a09319d7d237b40a9f4d6/mongo_ruby_driver_toolchain_`host_arch`_patch_741a9eba5788e6d5254a09319d7d237b40a9f4d6_5cfa8ad0d6d80a02bbb45be7_19_06_07_16_03_30.tar.gz
     curl -fL $toolchain_url |tar zxf -
     export PATH=`pwd`/rubies/$RVM_RUBY/bin:$PATH
+    
+    # Attempt to get bundler to report all errors - so far unsuccessful
+    #curl -o bundler-openssl.diff https://github.com/bundler/bundler/compare/v2.0.1...p-mongo:report-errors.diff
+    #find . -path \*/lib/bundler/fetcher.rb -exec patch {} bundler-openssl.diff \;
     
     else
     
@@ -103,6 +138,8 @@ EOH
 
 install_deps() {
   echo "Installing all gem dependencies"
+  which bundle
+  bundle --version
   bundle install
   bundle exec rake clean
 }

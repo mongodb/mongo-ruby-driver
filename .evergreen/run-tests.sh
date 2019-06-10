@@ -29,6 +29,8 @@ setup_ruby
 install_deps
 
 echo "Running specs"
+which bundle
+bundle --version
 bundle exec rake spec:ci
 test_status=$?
 echo "TEST STATUS"
