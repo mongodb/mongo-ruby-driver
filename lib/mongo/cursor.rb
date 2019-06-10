@@ -130,12 +130,13 @@ module Mongo
     #
     # @since 2.0.0
     def each
-      loop do 
+      loop do
         document = try_next
         yield document if document
-      rescue StopIteration => e
-        return self
       end
+    rescue StopIteration => e
+      return self
+      
       # docs = process(@initial_result)
       # docs.each_with_index do |doc, i| 
       #   cache_resume_token(doc)

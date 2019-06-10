@@ -64,7 +64,10 @@ You can also receive the notifications as they become available:
   end
 
 The ``next`` method blocks and polls the cluster until a change is available.
-If there is a non-resumable error, ``next`` will raise an exception.
+Use the ``try_next`` method to iterate a change stream without blocking; this 
+method will wait up to max_await_time_ms milliseconds for changes from the server, 
+and if no changes are received it will return nil. If there is a non-resumable 
+error, both ``next`` and ``try_next`` will raise an exception.
 See Resuming a Change Stream section below for an example that reads
 changes from a collection indefinitely.
 
@@ -156,7 +159,7 @@ resume token, use the ``resume_token`` method.
   token = doc['_id']
   stream = collection.watch([], resume_after: token)
 
-To watch a collection indefinitely, retrying on all MongoDB errors:
+To watch a collection indefinitely, retrying on all MongoDB errors, using ``next``:
 
 .. code-block:: ruby
 

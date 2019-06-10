@@ -128,9 +128,9 @@ module Mongo
           loop do
             document = try_next
             yield document if document
-          rescue StopIteration => e
-            return self
           end
+        rescue StopIteration => e
+          return self
         end
 
         # Return one document from the change stream, if one is available.
