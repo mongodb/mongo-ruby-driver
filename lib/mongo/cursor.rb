@@ -42,6 +42,7 @@ module Mongo
     # @return [ Collection::View ] view The collection view.
     attr_reader :view
 
+    # @api private
     attr_reader :resume_token
 
     # Creates a +Cursor+ object.
@@ -193,7 +194,7 @@ module Mongo
         if @documents.size <= 1
           cache_batch_resume_token
         end
-        
+
         return @documents.shift
       end
 
@@ -263,6 +264,16 @@ module Mongo
       use_limit? ? @remaining : (batch_size || 0)
     end
     
+    # @api private
+    def get_more
+      # Modern retryable reads specification prohibits retrying getMores.
+      # Legacy retryable read logic used to retry getMores, but since
+      # doing so may result in silent data loss, the driver no longer retries
+      # getMore operations in any circumstance.
+      # https://github.com/mongodb/specifications/blob/master/source/retryable-reads/retryable-reads.rst#qa
+      process(get_more_operation.execute(@server))
+    end
+
     private
 
     def cache_resume_token(doc)
@@ -280,15 +291,6 @@ module Mongo
 
     def exhausted?
       limited? ? @remaining <= 0 : false
-    end
-
-    def get_more
-      # Modern retryable reads specification prohibits retrying getMores.
-      # Legacy retryable read logic used to retry getMores, but since
-      # doing so may result in silent data loss, the driver no longer retries
-      # getMore operations in any circumstance.
-      # https://github.com/mongodb/specifications/blob/master/source/retryable-reads/retryable-reads.rst#qa
-      process(get_more_operation.execute(@server))
     end
 
     def get_more_operation

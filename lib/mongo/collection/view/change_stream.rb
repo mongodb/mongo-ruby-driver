@@ -242,10 +242,16 @@ module Mongo
         end
 
         def resume_token
+          cursor_resume_token = @cursor.resume_token if @cursor
+          cursor_resume_token || @resume_token
+        end
+
+        # Just does the get more aggregation  TODO does this make sense
+        # @api private
+        def get_more
           if @cursor
-            @cursor.resume_token
+            @cursor.get_more
           end
-          @resume_token
         end
 
         private
