@@ -452,6 +452,7 @@ describe 'Change stream integration', retry: 4 do
       end
 
       context 'post 4.0.7' do
+        min_server_fcv '4.1'
         it 'returns post batch resume token from current command response' do
           expect(events.size).to eq(2)
 
@@ -467,7 +468,7 @@ describe 'Change stream integration', retry: 4 do
       end
 
       context 'pre 4.0.7' do
-        min_server_fcv '4.1'
+        max_server_version '4.0'
 
         let(:stream_doc_id) do
           stream
@@ -587,7 +588,7 @@ describe 'Change stream integration', retry: 4 do
       end
 
       context 'pre 4.0.7' do
-        max_server_version '4.1' # this is incorrect
+        max_server_version '4.0' # this is incorrect
 
         let(:stream_doc_id) do
           stream
