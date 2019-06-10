@@ -42,6 +42,7 @@ module Mongo
         # The reroute message.
         #
         # @since 2.1.0
+        # @deprecated
         REROUTE = 'Rerouting the Aggregation operation to the primary server.'.freeze
 
         # Set to true if disk usage is allowed during the aggregation.
@@ -120,8 +121,8 @@ module Mongo
 
         def send_initial_query(server, session)
           unless valid_server?(server)
-            log_warn(REROUTE)
-            server = cluster.next_primary(false)
+            log_warn("Rerouting the Aggregation operation to the primary server - #{server.summary} is not suitable")
+            server = cluster.next_primary
           end
           validate_collation!(server)
           initial_query_op(session).execute(server)
