@@ -355,7 +355,11 @@ module Mongo
       @coll_name ||= result.namespace.sub("#{database.name}.", '') if result.namespace
       unregister if result.cursor_id == 0
       @cursor_id = result.cursor_id
-      @post_batch_resume_token = result.post_batch_resume_token
+
+      if result.respond_to?(:post_batch_resume_token)
+        @post_batch_resume_token = result.post_batch_resume_token
+      end
+      
       end_session if !more?
       result.documents
     end
