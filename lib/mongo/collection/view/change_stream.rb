@@ -95,7 +95,11 @@ module Mongo
           @change_stream_filters = pipeline && pipeline.dup
           @options = options && options.dup.freeze
           @start_after = @options[:start_after]
-          @resume_token = @start_after || @options[:resume_after]     # todo document: only use this if no cursor
+
+          # The resume token tracked by the change stream, used only
+          # when there is no cursor, or no cursor resume token
+          @resume_token = @start_after || @options[:resume_after]     
+
           create_cursor!
 
           # We send different parameters when we resume a change stream
@@ -135,8 +139,10 @@ module Mongo
             # Any errors here will stop iteration and break out of this
             # method
 
-            # Save cursor's resume token so we can start there with new cursor
+            # Save cursor's resume token so we can use it
+            # to create a new cursor
             @resume_token = @cursor.resume_token 
+
             close
             create_cursor!
             retry
@@ -174,8 +180,10 @@ module Mongo
               # Any errors here will stop iteration and break out of this
               # method
 
-              # Save cursor's resume token so we can start there with new cursor
+              # Save cursor's resume token so we can use it
+              # to create a new cursor
               @resume_token = @cursor.resume_token 
+
               close
               create_cursor!
               retried = false
@@ -241,12 +249,22 @@ module Mongo
             "options=#{@options} resume_token=#{resume_token}>"
         end
 
+        # Returns the resume token that the stream will
+        # use to automatically resume, if one exists.
+        #
+        # @example Get the change stream resume token.
+        #   stream.resume_token
+        #
+        # @return [ Hash | nil ] The change stream resume token.
+        # 
+        # @since 4.0.7
         def resume_token
           cursor_resume_token = @cursor.resume_token if @cursor
           cursor_resume_token || @resume_token
         end
 
-        # Just does the get more aggregation  TODO does this make sense
+        # Executes a getMore command, for testing purposes.
+        #
         # @api private
         def get_more
           if @cursor
@@ -312,11 +330,6 @@ module Mongo
               if resume_token
                 # Spec says we need to remove both startAtOperationTime and startAfter if
                 # either was passed in by user, thus we won't forward them
-              # elsif @start_after
-              #   # The spec says to set `resumeAfter` to the `startAfter` token and not to send
-              #   # either `startAfter` or `startAtOperationTime`.
-              #   @resume_token = @start_after
-              #   #doc[:resumeAfter] = @startAfter
                 doc[:resumeAfter] = resume_token
               elsif start_at_operation_time_supported? && @start_at_operation_time
                 # It is crucial to check @start_at_operation_time_supported
@@ -328,7 +341,6 @@ module Mongo
                 doc[:startAtOperationTime] = @start_at_operation_time
               else
                 # Can't resume if we don't have either
-                # TODO The driver MUST use the original aggregation command to resume.??
                 raise Mongo::Error::MissingResumeToken
               end
             else
@@ -342,7 +354,6 @@ module Mongo
               end
             end
 
-            # doc[:resumeAfter] = resume_token if resume_token # TODO is this ok?
             doc[:allChangesForCluster] = true if for_cluster?
           end
         end

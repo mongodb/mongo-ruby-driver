@@ -444,8 +444,6 @@ describe 'Change stream integration', retry: 4 do
     end
 
     context 'when batch has been emptied' do
-      min_server_fcv '4.1' # todo 4.0.7?
-
       let(:use_stream) do
         stream
 
@@ -453,16 +451,57 @@ describe 'Change stream integration', retry: 4 do
         stream.to_enum.next
       end
 
-      it 'returns post batch resume token from current command response' do
-        expect(events.size).to eq(2)
+      context 'post 4.0.7' do
+        it 'returns post batch resume token from current command response' do
+          expect(events.size).to eq(2)
 
-        aggregate_command = events.first.reply
-        getmore_command = events.last.reply
-        expect(aggregate_command['cursor'].key?('postBatchResumeToken')).to eq(true)
-        expect(getmore_command['cursor'].key?('postBatchResumeToken')).to eq(true)
+          aggregate_command = events.first.reply
+          getmore_command = events.last.reply
+          expect(aggregate_command['cursor'].key?('postBatchResumeToken')).to eq(true)
+          expect(getmore_command['cursor'].key?('postBatchResumeToken')).to eq(true)
 
-        res_tok = stream.resume_token
-        expect(res_tok).to eq(getmore_command['cursor']['postBatchResumeToken'])
+          res_tok = stream.resume_token
+          expect(res_tok).to eq(getmore_command['cursor']['postBatchResumeToken'])
+        end
+      end
+
+      context 'pre 4.0.7' do
+        min_server_fcv '4.1'
+
+        let(:stream_doc_id) do
+          stream
+
+          authorized_collection.insert_one(x: 1)
+          stream_doc_id = stream.to_enum.next['_id']
+        end
+
+        it 'returns _id of previous document returned if one exists' do
+          doc_id = stream_doc_id
+          expect(stream.resume_token).to eq(stream_doc_id)
+        end
+
+        it 'must return startAfter from the initial aggregate if the option was specified' do
+          start_after = stream_doc_id
+          authorized_collection.insert_one(:a => 1)
+          stream = authorized_collection.watch([], { start_after: start_after })
+
+          expect(stream.resume_token).to eq(start_after)
+        end
+
+        it 'must return resumeAfter from the initial aggregate if the option was specified' do
+          resume_after = stream_doc_id
+          authorized_collection.insert_one(:a => 1)
+          stream = authorized_collection.watch([], { resume_after: resume_after })
+
+          expect(stream.resume_token).to eq(resume_after)
+        end
+
+        it 'must be empty if neither the startAfter nor resumeAfter options were specified' do
+          authorized_collection.insert_one(:a => 1)
+          stream = authorized_collection.watch
+
+          expect(stream.resume_token).to be(nil)
+        end
       end
     end
 
@@ -482,9 +521,8 @@ describe 'Change stream integration', retry: 4 do
       end
     end
 
-      ## the watch does the initial aggregate, I believe? 
+    # the watch does the initial aggregate
     context 'for non-empty, non-iterated batch, only the initial aggregate command executed' do
-
       let(:stream_doc_id) do
         stream
 
@@ -492,20 +530,24 @@ describe 'Change stream integration', retry: 4 do
         stream_doc_id = stream.to_enum.next['_id']
       end
 
-      it 'must return startAfter from the initial aggregate if the option was specified' do
-        sa = stream_doc_id
-        authorized_collection.insert_one(:a => 1)
-        stream = authorized_collection.watch([], { start_after: sa })
+      context 'if startAfter was specified' do
+        min_server_fcv '4.2'
 
-        expect(stream.resume_token).to eq(stream_doc_id)
+        it 'must return startAfter from the initial aggregate' do
+          start_after = stream_doc_id
+          authorized_collection.insert_one(:a => 1)
+          stream = authorized_collection.watch([], { start_after: start_after })
+
+          expect(stream.resume_token).to eq(start_after)
+        end
       end
-
+      
       it 'must return resumeAfter from the initial aggregate if the option was specified' do
-        ra = stream_doc_id
+        resume_after = stream_doc_id
         authorized_collection.insert_one(:a => 1)
-        stream = authorized_collection.watch([], { resume_after: ra })
+        stream = authorized_collection.watch([], { resume_after: resume_after })
 
-        expect(stream.resume_token).to eq(stream_doc_id)
+        expect(stream.resume_token).to eq(resume_after)
       end
 
       it 'must be empty if neither the startAfter nor resumeAfter options were specified' do
@@ -513,52 +555,81 @@ describe 'Change stream integration', retry: 4 do
         stream = authorized_collection.watch
 
         expect(stream.resume_token).to be(nil)
-      end
+      end   
     end
 
 
-    context 'for non-empty, non-iterated batch directly after get_more post 4.0.7' do
-      min_server_fcv '4.1' # todo 4.0.7?
+    context 'for non-empty, non-iterated batch directly after get_more' do
+      context 'post 4.0.7' do
+        min_server_fcv '4.1' # todo 4.0.7?
+        let(:use_stream) do
+          stream
 
-      let(:use_stream) do
-        stream
+          authorized_collection.insert_one(:a => 1)
+          stream.to_enum.next
 
-        authorized_collection.insert_one(:a => 1)
-        stream.to_enum.next
+          authorized_collection.insert_one(:a => 1)
+          stream.get_more
+        end
 
-        authorized_collection.insert_one(:a => 1)
-        stream.get_more
+        it 'returns post batch resume token from previous command response' do
+          expect(events.size).to eq(3)
+
+          first_getmore = events[1].reply
+          second_getmore = events[2].reply
+          expect(first_getmore['cursor'].key?('postBatchResumeToken')).to eq(true)
+          expect(second_getmore['cursor'].key?('postBatchResumeToken')).to eq(true)
+
+          res_tok = stream.resume_token
+          expect(res_tok).to eq(first_getmore['cursor']['postBatchResumeToken'])
+          expect(res_tok).not_to eq(second_getmore['cursor']['postBatchResumeToken'])
+        end
       end
 
-      it 'returns post batch resume token from previous command response' do
-        expect(events.size).to eq(3)
+      context 'pre 4.0.7' do
+        max_server_version '4.1' # this is incorrect
 
-        first_getmore = events[1].reply
-        second_getmore = events[2].reply
-        expect(first_getmore['cursor'].key?('postBatchResumeToken')).to eq(true)
-        expect(second_getmore['cursor'].key?('postBatchResumeToken')).to eq(true)
+        let(:stream_doc_id) do
+          stream
 
-        res_tok = stream.resume_token
-        expect(res_tok).to eq(first_getmore['cursor']['postBatchResumeToken'])
-        expect(res_tok).not_to eq(second_getmore['cursor']['postBatchResumeToken'])
-      end
-    end
+          authorized_collection.insert_one(x: 1)
+          stream_doc_id = stream.to_enum.next['_id']
+        end
 
-    context 'for non-empty, non-iterated batch, only the initial aggregate command executed' do
-      max_server_version '4.1' # this is incorrect
+        let(:do_get_more) do
+          authorized_collection.insert_one(:a => 1)
+          stream.get_more
+        end
 
-      it 'must return _id of previous document if one exists' do
-        stream
+        it 'returns _id of previous document returned if one exists' do
+          doc_id = stream_doc_id
+          do_get_more
+          expect(stream.resume_token).to eq(stream_doc_id)
+        end
 
-        authorized_collection.insert_one(x: 1)
-        doc = stream.to_enum.next
-        id = doc['_id']
+        context 'when startAfter is specified' do
+          min_server_fcv '4.2'
 
-        authorized_collection.insert_one(:a => 1)
-        stream.get_more
+          it 'must return startAfter from the initial aggregate if the option was specified' do
+            start_after = stream_doc_id
+            stream = authorized_collection.watch([], { start_after: start_after })
+            do_get_more
+            expect(stream.resume_token).to eq(start_after)
+          end
+        end 
 
-        res_tok = stream.resume_token
-        expect(res_tok).to eq(id)
+        it 'must return resumeAfter from the initial aggregate if the option was specified' do
+          resume_after = stream_doc_id
+          stream = authorized_collection.watch([], { resume_after: resume_after })
+          do_get_more
+          expect(stream.resume_token).to eq(resume_after)
+        end
+
+        it 'must be empty if neither the startAfter nor resumeAfter options were specified' do
+          stream = authorized_collection.watch
+          do_get_more
+          expect(stream.resume_token).to be(nil)
+        end
       end
     end
   end

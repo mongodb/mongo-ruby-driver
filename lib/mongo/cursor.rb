@@ -42,6 +42,8 @@ module Mongo
     # @return [ Collection::View ] view The collection view.
     attr_reader :view
 
+    # The cursor tracks its resume token
+    #
     # @api private
     attr_reader :resume_token
 
@@ -131,12 +133,19 @@ module Mongo
       docs = process(@initial_result)
       docs.each_with_index do |doc, i| 
         cache_resume_token(doc)
+
+        # If we iterate over the last doc in the
+        # batch, we need to set the resume token
+        # to the post batch resume token
         if i == docs.size
           cache_batch_resume_token
         end
         yield doc 
       end
+
+      # Handles the case when docs is empty
       cache_batch_resume_token
+
       while more?
         return kill_cursors if exhausted?
         docs = get_more
@@ -147,6 +156,7 @@ module Mongo
           end
           yield doc 
         end
+
         cache_batch_resume_token
       end
     end
@@ -171,6 +181,7 @@ module Mongo
       end
 
       if @documents.empty?
+        # On empty batches, we cache the batch resume token
         cache_batch_resume_token
 
         if more?
@@ -187,10 +198,12 @@ module Mongo
       end
 
       if @documents 
+        # if there is at least one document, 
         if @documents[0]
           cache_resume_token(@documents[0])
         end
 
+        # 
         if @documents.size <= 1
           cache_batch_resume_token
         end
@@ -276,6 +289,10 @@ module Mongo
 
     private
 
+    def exhausted?
+      limited? ? @remaining <= 0 : false
+    end
+
     def cache_resume_token(doc)
       # Always record both resume token and operation time,
       # in case we get an older or newer server during rolling
@@ -287,10 +304,6 @@ module Mongo
 
     def cache_batch_resume_token
       @resume_token = @post_batch_resume_token if @post_batch_resume_token
-    end
-
-    def exhausted?
-      limited? ? @remaining <= 0 : false
     end
 
     def get_more_operation
