@@ -136,40 +136,6 @@ module Mongo
       end
     rescue StopIteration => e
       return self
-      
-      # docs = process(@initial_result)
-      # docs.each_with_index do |doc, i| 
-      #   cache_resume_token(doc)
-
-      #   # If we iterate over the last doc in the
-      #   # batch, we need to set the resume token
-      #   # to the post batch resume token
-      #   if i == docs.size - 1
-      #     cache_batch_resume_token
-      #   end
-      #   pp "returning"
-      #   pp doc
-      #   yield doc 
-      # end
-
-      # # Handles the case when docs is empty
-      # cache_batch_resume_token
-
-      # while more?
-      #   return kill_cursors if exhausted?
-      #   docs = get_more
-      #   docs.each_with_index do |doc, i| 
-      #     cache_resume_token(doc)
-      #     if i == docs.size - 1
-      #       cache_batch_resume_token
-      #     end
-      #     pp "returning"
-      #   pp doc
-      #     yield doc 
-      #   end
-
-      #   cache_batch_resume_token
-      # end
     end
 
     # Return one document from the query, if one is available.
@@ -289,6 +255,10 @@ module Mongo
       use_limit? ? @remaining : (batch_size || 0)
     end
     
+    # Execute a getMore command and return the documents obtained
+    # from the server.
+    #
+    # TODO: document return value
     # @api private
     def get_more
       # Modern retryable reads specification prohibits retrying getMores.
