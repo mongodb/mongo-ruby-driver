@@ -141,8 +141,9 @@ module Mongo
       # @since 2.6.0
       def change_stream_resumable?
         if @result && @result.is_a?(Mongo::Operation::GetMore::Result)
-          change_stream_resumable_message? ||
-          change_stream_resumable_code?
+          !change_stream_not_resumable_label? &&
+          (change_stream_resumable_message? ||
+          change_stream_resumable_code?)
         else
           false
         end
@@ -161,6 +162,16 @@ module Mongo
         end
       end
       private :change_stream_resumable_code?
+
+      def change_stream_not_resumable_label?
+        if labels
+          labels.include? 'NonResumableChangeStreamError' 
+        else
+          false
+        end
+      end
+      private :change_stream_not_resumable_label?
+
 
       # Create the operation failure.
       #

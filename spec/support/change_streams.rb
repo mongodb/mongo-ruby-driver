@@ -77,6 +77,11 @@ module Mongo
         # @since 2.0.0
         attr_reader :description
 
+        # Optional list of command-started events in Extended JSON format
+        #
+        # @return [ Array<Hash> ] The list of command-started events
+        attr_reader :expectations
+
         def initialize(test, coll1, coll2, db1, db2)
           @description = test['description']
           @min_server_version = test['minServerVersion']
@@ -136,18 +141,30 @@ module Mongo
             op.execute(@db1, @db2)
           end
 
-          changes = [].tap do |changes|
-                           next unless @result['success']
+          changes = []
 
-                           unless @result['success'].empty?
-                             change_stream.take_while do |change|
-                               changes << change
-                               changes.length < @result['success'].length
-                             end
-                           end
+          # attempt first next call (catch NonResumableChangeStreamError errors)
+          begin 
+            change = change_stream.to_enum.next
+            changes << change
+          rescue Mongo::Error::OperationFailure => e
+            return {
+              result: { 'error' => { 'code' => e.code, 'errorLabels' => e.labels} },
+              events: events
+            }
+          end 
 
-                           change_stream.close
-                         end
+          # continue until changeStream has received as many changes as there 
+          # are in result.success
+          if @result['success'] && changes.length < @result['success'].length
+            change_stream.take_while do |change|
+              changes << change
+              changes.length < @result['success'].length
+            end
+          end
+
+          change_stream.close
+                         
 
           {
             result: { 'success' => changes },

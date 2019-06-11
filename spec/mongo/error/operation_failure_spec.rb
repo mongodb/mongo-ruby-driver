@@ -148,6 +148,52 @@ describe Mongo::Error::OperationFailure do
         end
       end
     end
+
+    context 'when there is a non-resumable label' do
+      context 'getMore response' do
+        let(:error) { Mongo::Error::OperationFailure.new('no message',
+          Mongo::Operation::GetMore::Result.new([]),
+          :code => 91, :code_name => 'ShutdownInProgress',
+          :labels => ['NonResumableChangeStreamError']) }
+
+        it 'returns false' do
+          expect(error.change_stream_resumable?).to eql(false)
+        end
+      end
+
+      context 'not a getMore response' do
+        let(:error) { Mongo::Error::OperationFailure.new('no message', nil,
+          :code => 91, :code_name => 'ShutdownInProgress',
+          :labels => ['NonResumableChangeStreamError']) }
+
+        it 'returns false' do
+          expect(error.change_stream_resumable?).to eql(false)
+        end
+      end
+    end
+
+    context 'when there is another label' do
+      context 'getMore response' do
+        let(:error) { Mongo::Error::OperationFailure.new('no message',
+          Mongo::Operation::GetMore::Result.new([]),
+          :code => 91, :code_name => 'ShutdownInProgress',
+          :labels => [ Mongo::Error::TRANSIENT_TRANSACTION_ERROR_LABEL ]) }
+
+        it 'returns true' do
+          expect(error.change_stream_resumable?).to eql(true)
+        end
+      end
+
+      context 'not a getMore response' do
+        let(:error) { Mongo::Error::OperationFailure.new('no message', nil,
+          :code => 91, :code_name => 'ShutdownInProgress',
+          :labels => [ Mongo::Error::TRANSIENT_TRANSACTION_ERROR_LABEL ]) }
+
+        it 'returns false' do
+          expect(error.change_stream_resumable?).to eql(false)
+        end
+      end
+    end
   end
 
   describe '#labels' do
