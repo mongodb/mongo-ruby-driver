@@ -149,10 +149,16 @@ module Mongo
       end
 
       def set_cert(context, options)
+        # Since we clear cert_text during processing, we need to examine
+        # ssl_cert_object here to avoid considering it if we have also
+        # processed the text.
         if options[:ssl_cert]
           cert_text = File.read(options[:ssl_cert])
+          cert_object = nil
+        elsif cert_text = options[:ssl_cert_string]
+          cert_object = nil
         else
-          cert_text = options[:ssl_cert_string]
+          cert_object = options[:ssl_cert_object]
         end
 
         # The client certificate may be a single certificate or a bundle
@@ -185,8 +191,8 @@ module Mongo
 
         if cert_text
           context.cert = OpenSSL::X509::Certificate.new(cert_text)
-        elsif options[:ssl_cert_object]
-          context.cert = options[:ssl_cert_object]
+        elsif cert_object
+          context.cert = cert_object
         end
       end
 
