@@ -38,6 +38,14 @@ class SpecConfig
       end
     end
 
+    @uri_tls_options = {}
+    @uri_options.each do |k, v|
+      k = k.to_s.downcase
+      if k.start_with?('ssl')
+        @uri_tls_options[k] = v
+      end
+    end
+
     if @addresses.nil?
       # Discover deployment topology
       if @mongodb_uri
@@ -192,27 +200,41 @@ EOT
     Pathname.new("#{spec_root}/support/certificates")
   end
 
-  def client_cert_pem
-    if drivers_tools?
-      ENV['DRIVER_TOOLS_CLIENT_CERT_PEM']
-    else
-      "#{ssl_certs_dir}/client.crt"
-    end
+  # TLS certificates & keys
+
+  def local_client_key_path
+    "#{ssl_certs_dir}/client.key"
   end
 
-  def client_key_pem
-    if drivers_tools?
+  def client_key_path
+    if drivers_tools? && ENV['DRIVER_TOOLS_CLIENT_KEY_PEM']
       ENV['DRIVER_TOOLS_CLIENT_KEY_PEM']
     else
-      "#{ssl_certs_dir}/client.key"
+      local_client_key_path
     end
   end
 
-  def client_cert_key_pem
-    if drivers_tools?
+  def local_client_cert_path
+    "#{ssl_certs_dir}/client.crt"
+  end
+
+  def client_cert_path
+    if drivers_tools? && ENV['DRIVER_TOOLS_CLIENT_CERT_PEM']
+      ENV['DRIVER_TOOLS_CLIENT_CERT_PEM']
+    else
+      local_client_cert_path
+    end
+  end
+
+  def local_client_pem_path
+    "#{ssl_certs_dir}/client.pem"
+  end
+
+  def client_pem_path
+    if drivers_tools? && ENV['DRIVER_TOOLS_CLIENT_CERT_KEY_PEM']
       ENV['DRIVER_TOOLS_CLIENT_CERT_KEY_PEM']
     else
-      "#{ssl_certs_dir}/client.pem"
+      local_client_pem_path
     end
   end
 
@@ -226,6 +248,34 @@ EOT
 
   def second_level_cert_bundle_path
     "#{ssl_certs_dir}/client-second-level-bundle.pem"
+  end
+
+  def local_client_encrypted_key_path
+    "#{ssl_certs_dir}/client-encrypted.key"
+  end
+
+  def client_encrypted_key_path
+    if drivers_tools? && ENV['DRIVER_TOOLS_CLIENT_KEY_ENCRYPTED_PEM']
+      ENV['DRIVER_TOOLS_CLIENT_KEY_ENCRYPTED_PEM']
+    else
+      local_client_encrypted_key_path
+    end
+  end
+
+  def client_encrypted_key_passphrase
+    'passphrase'
+  end
+
+  def local_ca_cert_path
+    "#{ssl_certs_dir}/ca.crt"
+  end
+
+  def ca_cert_path
+    if drivers_tools? && ENV['DRIVER_TOOLS_CA_PEM']
+      ENV['DRIVER_TOOLS_CA_PEM']
+    else
+      local_ca_cert_path
+    end
   end
 
   def multi_ca_path
@@ -251,10 +301,11 @@ EOT
     if ssl?
       {
         ssl: true,
-        ssl_verify: false,
-        ssl_cert:  client_cert_pem,
-        ssl_key:  client_key_pem,
-      }
+        ssl_verify: true,
+        ssl_cert:  client_cert_path,
+        ssl_key:  client_key_path,
+        ssl_ca_cert: ca_cert_path,
+      }.merge(@uri_tls_options)
     else
       {}
     end

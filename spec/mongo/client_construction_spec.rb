@@ -318,23 +318,23 @@ describe Mongo::Client do
 
         let(:options) do
           {
-              :ssl => true,
-              :ssl_ca_cert => CA_PEM,
-              :ssl_ca_cert_string => 'ca cert string',
-              :ssl_ca_cert_object => 'ca cert object',
-              :ssl_cert => CLIENT_CERT_PEM,
-              :ssl_cert_string => 'cert string',
-              :ssl_cert_object => 'cert object',
-              :ssl_key => CLIENT_KEY_PEM,
-              :ssl_key_string => 'key string',
-              :ssl_key_object => 'key object',
-              :ssl_key_pass_phrase => 'passphrase',
-              :ssl_verify => true
+            :ssl => true,
+            :ssl_ca_cert => SpecConfig.instance.ca_cert_path,
+            :ssl_ca_cert_string => 'ca cert string',
+            :ssl_ca_cert_object => 'ca cert object',
+            :ssl_cert => SpecConfig.instance.client_cert_path,
+            :ssl_cert_string => 'cert string',
+            :ssl_cert_object => 'cert object',
+            :ssl_key => SpecConfig.instance.client_key_path,
+            :ssl_key_string => 'key string',
+            :ssl_key_object => 'key object',
+            :ssl_key_pass_phrase => 'passphrase',
+            :ssl_verify => true
           }
         end
 
         let(:client) do
-          new_local_client_nmio(['127.0.0.1:27017'], SpecConfig.instance.test_options.merge(options))
+          new_local_client_nmio(['127.0.0.1:27017'], options)
         end
 
         it 'sets the ssl option' do
