@@ -175,7 +175,7 @@ module Mongo
 
           # We need to verify each doc has an _id, so we
           # have a resume token to work with
-          if doc['_id'].nil?
+          if doc && doc['_id'].nil?
             raise Error::MissingResumeToken
           end
           doc
