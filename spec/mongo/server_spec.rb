@@ -364,7 +364,8 @@ describe Mongo::Server do
 
     context 'server is unknown' do
       let(:server) do
-        described_class.new(address, cluster, monitoring, listeners, SpecConfig.instance.test_options)
+        described_class.new(address, cluster, monitoring, listeners,
+          SpecConfig.instance.test_options.merge(monitoring_io: false))
       end
 
       before do
