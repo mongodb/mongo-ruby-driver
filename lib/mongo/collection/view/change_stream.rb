@@ -154,14 +154,6 @@ module Mongo
 
           begin
             doc = @cursor.try_next
-
-            # We need to verify the cursor has a resume token; 
-            # if not, there was a document missing an _id
-            if @cursor.resume_token.nil?
-              raise Error::MissingResumeToken
-            end
-          rescue Error::MissingResumeToken => e
-            raise
           rescue Mongo::Error => e
             if retried || !e.change_stream_resumable?
               raise
@@ -181,6 +173,11 @@ module Mongo
             retry
           end
 
+          # We need to verify each doc has an _id, so we
+          # have a resume token to work with
+          if doc['_id'].nil?
+            raise Error::MissingResumeToken
+          end
           doc
         end
 
