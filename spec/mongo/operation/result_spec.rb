@@ -261,6 +261,17 @@ describe Mongo::Operation::Result do
         end
       end
     end
+
+    context 'when there is a write concern error' do
+      let(:documents) do
+        [{'ok' => 1.0, 'writeConcernError' => {
+          'code' => 91, 'errmsg' => 'Replication is being shut down'}}]
+      end
+
+      it 'is false' do
+        expect(result).not_to be_successful
+      end
+    end
   end
 
   describe '#written_count' do
@@ -307,6 +318,22 @@ describe Mongo::Operation::Result do
 
     it 'uses the Result class of the operation' do
       expect(result).to be_a(Mongo::Operation::Result)
+    end
+  end
+
+  describe '#validate!' do
+
+    context 'when there is a write concern error' do
+      let(:documents) do
+        [{'ok' => 1.0, 'writeConcernError' => {
+          'code' => 91, 'errmsg' => 'Replication is being shut down'}}]
+      end
+
+      it 'raises OperationFailure' do
+        expect do
+          result.validate!
+        end.to raise_error(Mongo::Error::OperationFailure, /Replication is being shut down \(91\)/)
+      end
     end
   end
 end
