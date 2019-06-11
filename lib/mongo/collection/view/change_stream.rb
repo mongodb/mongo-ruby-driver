@@ -143,10 +143,7 @@ module Mongo
         # for changes from the server, and if no changes are received
         # it will return nil.
         #
-        # @note This method is experimental and subject to change.
-        #
         # @return [ BSON::Document | nil ] A change stream document.
-        # @api experimental
         # @since 2.6.0
         def try_next
           raise StopIteration.new if closed?
@@ -240,19 +237,10 @@ module Mongo
         #
         # @return [ Hash | nil ] The change stream resume token.
         # 
-        # @since 4.0.7
+        # @since 2.10.0
         def resume_token
           cursor_resume_token = @cursor.resume_token if @cursor
           cursor_resume_token || @resume_token
-        end
-
-        # Executes a getMore command, for testing purposes.
-        #
-        # @api private
-        def get_more
-          if @cursor
-            @cursor.get_more
-          end
         end
 
         private

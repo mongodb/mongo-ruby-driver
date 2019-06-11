@@ -43,7 +43,8 @@ module Mongo
     attr_reader :view
 
     # The resume token tracked by the cursor for change stream resuming
-    #
+    # 
+    # @return [ Hash | nil ] The cursor resume token. 
     # @api private
     attr_reader :resume_token
 
@@ -164,11 +165,11 @@ module Mongo
         if more?
           if exhausted?
             kill_cursors
-            raise StopIteration.new
+            raise StopIteration
           end
           @documents = get_more
         else
-          raise StopIteration.new
+          raise StopIteration
         end
       else
         # cursor is closed here

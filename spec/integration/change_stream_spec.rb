@@ -451,23 +451,23 @@ describe 'Change stream integration', retry: 4 do
         stream.to_enum.next
       end
 
-      context 'post 4.0.7' do
+      context '4.2+' do
         min_server_fcv '4.2'
         it 'returns post batch resume token from current command response' do
           expect(events.size).to eq(2)
 
           aggregate_command = events.first.reply
-          getmore_command = events.last.reply
+          get_more_command = events.last.reply
           expect(aggregate_command['cursor'].key?('postBatchResumeToken')).to eq(true)
-          expect(getmore_command['cursor'].key?('postBatchResumeToken')).to eq(true)
+          expect(get_more_command['cursor'].key?('postBatchResumeToken')).to eq(true)
 
           res_tok = stream.resume_token
-          expect(res_tok).to eq(getmore_command['cursor']['postBatchResumeToken'])
+          expect(res_tok).to eq(get_more_command['cursor']['postBatchResumeToken'])
           expect(res_tok).to_not eq(aggregate_command['cursor']['postBatchResumeToken'])
         end
       end
 
-      context 'pre 4.0.7' do
+      context '4.0-' do
         max_server_version '4.0'
 
         let(:stream_doc_id) do
@@ -565,7 +565,7 @@ describe 'Change stream integration', retry: 4 do
 
 
     context 'for non-empty, non-iterated batch directly after get_more' do
-      context 'post 4.0.7' do
+      context '4.2+' do
         min_server_fcv '4.2'
         let(:use_stream) do
           stream
@@ -574,24 +574,24 @@ describe 'Change stream integration', retry: 4 do
           stream.to_enum.next
 
           authorized_collection.insert_one(:a => 1)
-          stream.get_more
+          stream.instance_variable_get('@cursor').get_more
         end
 
         it 'returns post batch resume token from previous command response' do
           expect(events.size).to eq(3)
 
-          first_getmore = events[1].reply
-          second_getmore = events[2].reply
-          expect(first_getmore['cursor'].key?('postBatchResumeToken')).to eq(true)
-          expect(second_getmore['cursor'].key?('postBatchResumeToken')).to eq(true)
+          first_get_more = events[1].reply
+          second_get_more = events[2].reply
+          expect(first_get_more['cursor'].key?('postBatchResumeToken')).to eq(true)
+          expect(second_get_more['cursor'].key?('postBatchResumeToken')).to eq(true)
 
           res_tok = stream.resume_token
-          expect(res_tok).to eq(first_getmore['cursor']['postBatchResumeToken'])
-          expect(res_tok).not_to eq(second_getmore['cursor']['postBatchResumeToken'])
+          expect(res_tok).to eq(first_get_more['cursor']['postBatchResumeToken'])
+          expect(res_tok).not_to eq(second_get_more['cursor']['postBatchResumeToken'])
         end
       end
 
-      context 'pre 4.0.7' do
+      context '4.0-' do
         max_server_version '4.0'
 
         let(:stream_doc_id) do
@@ -603,7 +603,7 @@ describe 'Change stream integration', retry: 4 do
 
         let(:do_get_more) do
           authorized_collection.insert_one(:a => 1)
-          stream.get_more
+          stream.instance_variable_get('@cursor').get_more
         end
 
         it 'returns _id of previous document returned if one exists' do
