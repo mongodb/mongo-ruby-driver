@@ -87,13 +87,39 @@ cluster topology.
 ## TLS With Verification
 
 The test suite includes a set of TLS certificates for configuring a server
-and a client to perform full TLS verification. The server can be started as
-follows, if the current directory is the top of the driver source tree:
+and a client to perform full TLS verification in the `spec/support/certificates`
+directory. The server can be started as follows, if the current directory is
+the top of the driver source tree:
 
     mlaunch init --single --dir /tmp/mdb-ssl --sslMode requireSSL \
       --sslPEMKeyFile `pwd`/spec/support/certificates/server.pem \
       --sslCAFile `pwd`/spec/support/certificates/ca.pem \
       --sslClientCertificate `pwd`/spec/support/certificates/client.pem
+
+To test that the driver works when the server's certificate is signed by an
+intermediate certificate (i.e. uses certificate chaining), use the chained
+server certificate bundle:
+
+    mlaunch init --single --dir /tmp/mdb-ssl --sslMode requireSSL \
+      --sslPEMKeyFile `pwd`/spec/support/certificates/server-second-level-bundle.pem \
+      --sslCAFile `pwd`/spec/support/certificates/ca.pem \
+      --sslClientCertificate `pwd`/spec/support/certificates/client.pem
+
+The driver's test suite is configured to verify certificates by default.
+If the server is launched with the certificates from the driver's test suite,
+the test suite can be run simply by specifying `tls=true` URI option:
+
+    MONGODB_URI='mongodb://localhost:27017/?tls=true' rake 
+
+The driver's test suite can also be executed against a server launched with
+any other certificates. In this case the certificates need to be explicitly
+specified in the URI, for example as follows:
+
+    MONGODB_URI='mongodb://localhost:27017/?tls=true&tlsCAFile=path/to/ca.crt&tlsCertificateKeyFile=path/to/client.pem' rake 
+
+Note that some tests (specifically testing TLS verification) expect the server
+to be launched using the certificates in the driver's test suite, and will
+fail when run against a server using other certificates.
 
 ## TLS Without Verification
 
@@ -110,6 +136,9 @@ To run the test suite against such a server, also omitting certificate
 verification, run:
 
     MONGODB_URI='mongodb://localhost:27017/?tls=true&tlsInsecure=true' rake 
+
+Note that there are tests in the test suite that cover TLS verification, and
+they may fail if the test suite is run in this way.
 
 ## Authentication
 

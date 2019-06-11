@@ -114,7 +114,6 @@ module Mongo
           @address = address
           @options = options.freeze
           @app_metadata = options[:app_metadata]
-          @ssl_options = options.reject { |k, v| !k.to_s.start_with?(SSL) }
           @socket = nil
           @pid = Process.pid
           @compressor = nil
