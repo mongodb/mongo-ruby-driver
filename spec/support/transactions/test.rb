@@ -113,6 +113,21 @@ module Mongo
         @event_subscriber ||= EventSubscriber.new
       end
 
+      def mongos_each_direct_client
+        if ClusterConfig.instance.mongos?
+          client = ClientRegistry.instance.global_client('basic')
+          client.cluster.next_primary
+          client.cluster.servers.each do |server|
+            direct_client = ClientRegistry.instance.new_local_client(
+              [server.address.to_s],
+              SpecConfig.instance.test_options.merge(
+                connect: :sharded
+              ).merge(SpecConfig.instance.auth_options))
+            yield direct_client
+          end
+        end
+      end
+
       # Run the test.
       #
       # @example Run the test.
@@ -125,17 +140,8 @@ module Mongo
         test_client.subscribe(Mongo::Monitoring::COMMAND, event_subscriber)
 
         $distinct_ran ||= if description =~ /distinct/ || @ops.any? { |op| op.name == 'distinct' }
-          if ClusterConfig.instance.mongos?
-            client = ClientRegistry.instance.global_client('basic')
-            client.cluster.next_primary
-            client.cluster.servers.each do |server|
-              direct_client = ClientRegistry.instance.new_local_client(
-                [server.address.to_s],
-                SpecConfig.instance.test_options.merge(
-                  connect: :sharded
-                ).merge(SpecConfig.instance.auth_options))
-              direct_client['test'].distinct('foo').to_a
-            end
+          mongos_each_direct_client do |direct_client|
+            direct_client['test'].distinct('foo').to_a
           end
         end
 
@@ -176,6 +182,10 @@ module Mongo
         begin
           admin_support_client.command(killAllSessions: [])
         rescue Mongo::Error
+        end
+
+        mongos_each_direct_client do |direct_client|
+          direct_client.command(configureFailPoint: 'failCommand', mode: 'off')
         end
 
         coll = support_client[@spec.collection_name].with(write: { w: :majority })
