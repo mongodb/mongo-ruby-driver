@@ -306,9 +306,11 @@ describe Mongo::Collection::View::Aggregation do
           min_server_fcv '4.2'
 
           let(:result) do
+            skip 'RUBY-1827 / upgrading evergreen 4.1 server binary'
+
             aggregation.explain['queryPlanner']['collation']['locale']
           end
-          
+
           it_behaves_like 'applies the collation'
         end
       end

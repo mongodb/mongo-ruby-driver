@@ -347,6 +347,16 @@ functions:
           ${PREPARE_SHELL}
           MONGODB_URI="${MONGODB_URI}" .evergreen/run-tests.sh
 
+  "run local tls tests":
+    - command: shell.exec
+      type: test
+      params:
+        shell: bash
+        working_dir: "src"
+        script: |
+          ${PREPARE_SHELL}
+          MONGODB_URI="${MONGODB_URI}" .evergreen/run-local-tls-tests.sh
+
   "run enterprise auth tests":
     - command: shell.exec
       type: test
@@ -370,7 +380,7 @@ functions:
 
             ENTERPRISE_AUTH_TESTS=1 IP_ADDR=$IP_ADDR SASL_HOST=${sasl_host} SASL_PORT=${sasl_port} SASL_USER=${sasl_user} SASL_PASS=${sasl_pass} SASL_DB=${sasl_db} PRINCIPAL=${principal} KERBEROS_DB=${kerberos_db} KEYTAB_BASE64=${keytab_base64} PROJECT_DIRECTORY=${PROJECT_DIRECTORY} RVM_RUBY="${RVM_RUBY}" ${PROJECT_DIRECTORY}/.evergreen/run-enterprise-auth-tests.sh
 
-  "cleanup":
+  "cleanup mo":
     - command: shell.exec
       params:
         script: |
@@ -383,8 +393,20 @@ functions:
             . venv/Scripts/activate
           fi
           mongo-orchestration stop
-          cd -
-          rm -rf $DRIVERS_TOOLS || true
+
+  "cleanup mo if running":
+    - command: shell.exec
+      params:
+        script: |
+          ${PREPARE_SHELL}
+          cd "$MONGO_ORCHESTRATION_HOME"
+          # source the mongo-orchestration virtualenv if it exists
+          if [ -f venv/bin/activate ]; then
+            . venv/bin/activate
+          elif [ -f venv/Scripts/activate ]; then
+            . venv/Scripts/activate
+          fi
+          mongo-orchestration stop || true
 
   "fix absolute paths":
     - command: shell.exec
@@ -422,13 +444,13 @@ functions:
           echo '{"results": [{ "status": "FAIL", "test_file": "Build", "log_raw": "No test-results.json found was created"  } ]}' > ${PROJECT_DIRECTORY}/test-results.json
 
   "install dependencies":
-    type: test
-    params:
-      working_dir: "src"
-      script: |
-        ${PREPARE_SHELL}
-        file="${PROJECT_DIRECTORY}/.evergreen/install-dependencies.sh"
-        [ -f ${file} ] && sh ${file} || echo "${file} not available, skipping"
+    - command: shell.exec
+      params:
+        working_dir: "src"
+        script: |
+          ${PREPARE_SHELL}
+          file="${PROJECT_DIRECTORY}/.evergreen/install-dependencies.sh"
+          [ -f $file ] && sh $file || echo "$file not available, skipping"
 
 pre:
   - func: "fetch source"
@@ -445,7 +467,7 @@ post:
   - func: "upload mo artifacts"
   #- func: "upload test results"
   - func: "upload test results to s3"
-  - func: "cleanup"
+  - func: "cleanup mo if running"
 
 tasks:
 
@@ -464,6 +486,10 @@ tasks:
       commands:
         - func: "bootstrap mongo-orchestration"
         - func: "run tests"
+        #- func: "cleanup mo"
+    - name: "local-tls-tests"
+      commands:
+        - func: "run local tls tests"
     - name: "enterprise-auth-tests"
       commands:
         - func: "run enterprise auth tests"
@@ -824,6 +850,19 @@ buildvariants:
     - ubuntu1404-test
   tasks:
     - name: "test"
+
+-
+  matrix_name: "local-tls"
+  matrix_spec:
+    # No JRuby due to https://jira.mongodb.org/browse/RUBY-1830
+    ruby: ["ruby-2.6", "ruby-1.9"]
+    mongodb-version: '4.0'
+    topology: standalone
+  display_name: "Local TLS ${ruby}"
+  run_on:
+    - ubuntu1404-test
+  tasks:
+    - name: "local-tls-tests"
 
 -
   matrix_name: "enterprise-auth-tests-ubuntu"
