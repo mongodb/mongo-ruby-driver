@@ -67,6 +67,8 @@ class ModernRetryableTestConsumer < LegacyRetryableTestConsumer
       i = 1
       allow(session).to receive(:next_txn_num) { i += 1 }
       allow(session).to receive(:in_transaction?).and_return(false)
+      allow(session).to receive(:pinned_server)
+      allow(session).to receive(:starting_transaction?).and_return(false)
     end
   end
 
