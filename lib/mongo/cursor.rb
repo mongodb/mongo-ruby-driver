@@ -42,7 +42,7 @@ module Mongo
     # @return [ Collection::View ] view The collection view.
     attr_reader :view
 
-    # The cursor tracks its resume token
+    # The resume token tracked by the cursor for change stream resuming
     #
     # @api private
     attr_reader :resume_token
@@ -142,7 +142,9 @@ module Mongo
     #
     # This method will wait up to max_await_time_ms milliseconds
     # for changes from the server, and if no changes are received
-    # it will return nil.
+    # it will return nil. If there are no more documents to return
+    # from the server, or if we have exhausted the cursor, it will
+    # raise a StopIteration exception.
     #
     # @note This method is experimental and subject to change.
     #
@@ -166,7 +168,6 @@ module Mongo
           end
           @documents = get_more
         else
-          # no more documents to return
           raise StopIteration.new
         end
       else
