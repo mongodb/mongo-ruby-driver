@@ -854,8 +854,7 @@ buildvariants:
 -
   matrix_name: "local-tls"
   matrix_spec:
-    # No JRuby due to https://jira.mongodb.org/browse/RUBY-1830
-    ruby: ["ruby-2.6", "ruby-1.9"]
+    ruby: "*"
     mongodb-version: '4.0'
     topology: standalone
   display_name: "Local TLS ${ruby}"
