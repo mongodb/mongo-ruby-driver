@@ -63,14 +63,22 @@ module Mongo
           @outcome = Mongo::CRUD::Outcome.new(test['outcome'])
         end
         @expected_results = @operations.map do |o|
-          result = o['result']
-          next result unless result.class == Hash
+          if o.key?('error')
+            if o['error']
+              {'error' => true}
+            else
+              raise "Unsupported error value #{o['error']}"
+            end
+          else
+            result = o['result']
+            next result unless result.class == Hash
 
-          # Change maps of result ids to arrays of ids
-          result.dup.tap do |r|
-            r.each do |k, v|
-              next unless ['insertedIds', 'upsertedIds'].include?(k)
-              r[k] = v.to_a.sort_by(&:first).map(&:last)
+            # Change maps of result ids to arrays of ids
+            result.dup.tap do |r|
+              r.each do |k, v|
+                next unless ['insertedIds', 'upsertedIds'].include?(k)
+                r[k] = v.to_a.sort_by(&:first).map(&:last)
+              end
             end
           end
         end
