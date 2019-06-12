@@ -235,7 +235,7 @@ module Mongo
         # @example Get the change stream resume token.
         #   stream.resume_token
         #
-        # @return [ Hash | nil ] The change stream resume token.
+        # @return [ BSON::Document | nil ] The change stream resume token.
         # 
         # @since 2.10.0
         def resume_token

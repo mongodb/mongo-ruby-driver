@@ -54,6 +54,8 @@ module Mongo
 
         # Get the post batch resume token for the result
         #
+        # @return [ BSON::Document | nil ] The post batch resume token
+        #
         # @api private
         def post_batch_resume_token
           cursor_document ? cursor_document['postBatchResumeToken'] : nil

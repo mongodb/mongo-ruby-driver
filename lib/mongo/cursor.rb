@@ -44,7 +44,7 @@ module Mongo
 
     # The resume token tracked by the cursor for change stream resuming
     # 
-    # @return [ Hash | nil ] The cursor resume token. 
+    # @return [ BSON::Document | nil ] The cursor resume token. 
     # @api private
     attr_reader :resume_token
 
@@ -176,22 +176,18 @@ module Mongo
         # keep documents as an empty array
       end
 
-      if @documents 
-        # If there is at least one document, cache its _id
-        if @documents[0]
-          cache_resume_token(@documents[0])
-        end
-
-        # Cache the batch resume token if we are iterating
-        # over the last document, or if the batch is empty
-        if @documents.size <= 1
-          cache_batch_resume_token
-        end
-
-        return @documents.shift
+      # If there is at least one document, cache its _id
+      if @documents[0]
+        cache_resume_token(@documents[0])
       end
 
-      nil
+      # Cache the batch resume token if we are iterating
+      # over the last document, or if the batch is empty
+      if @documents.size <= 1
+        cache_batch_resume_token
+      end
+
+      return @documents.shift
     end
 
     # Get the batch size.
@@ -257,10 +253,11 @@ module Mongo
       use_limit? ? @remaining : (batch_size || 0)
     end
     
-    # Execute a getMore command and return the documents obtained
-    # from the server.
+    # Execute a getMore command and return the batch of documents 
+    # obtained from the server.
     #
-    # TODO: document return value
+    # @return [ Array<BSON::Document> ] The batch of documents
+    #
     # @api private
     def get_more
       # Modern retryable reads specification prohibits retrying getMores.
@@ -278,9 +275,9 @@ module Mongo
     end
 
     def cache_resume_token(doc)
-      @resume_token = doc[:_id] && doc[:_id].dup
-    rescue TypeError
-      # dup was called on a Fixnum; do nothing
+      if doc[:_id] && doc[:_id].is_a?(Hash)
+        @resume_token = doc[:_id] && doc[:_id].dup.freeze
+      end
     end
 
     def cache_batch_resume_token
@@ -330,7 +327,6 @@ module Mongo
       @cursor_id != 0
     end
 
-    # TODO document return value 
     def process(result)
       @remaining -= result.returned_count if limited?
       @coll_name ||= result.namespace.sub("#{database.name}.", '') if result.namespace

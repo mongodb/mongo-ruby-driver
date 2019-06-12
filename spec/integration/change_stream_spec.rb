@@ -456,14 +456,14 @@ describe 'Change stream integration', retry: 4 do
         it 'returns post batch resume token from current command response' do
           expect(events.size).to eq(2)
 
-          aggregate_command = events.first.reply
-          get_more_command = events.last.reply
-          expect(aggregate_command['cursor'].key?('postBatchResumeToken')).to eq(true)
-          expect(get_more_command['cursor'].key?('postBatchResumeToken')).to eq(true)
+          aggregate_response = events.first.reply
+          get_more_response = events.last.reply
+          expect(aggregate_response['cursor'].key?('postBatchResumeToken')).to eq(true)
+          expect(get_more_response['cursor'].key?('postBatchResumeToken')).to eq(true)
 
           res_tok = stream.resume_token
-          expect(res_tok).to eq(get_more_command['cursor']['postBatchResumeToken'])
-          expect(res_tok).to_not eq(aggregate_command['cursor']['postBatchResumeToken'])
+          expect(res_tok).to eq(get_more_response['cursor']['postBatchResumeToken'])
+          expect(res_tok).to_not eq(aggregate_response['cursor']['postBatchResumeToken'])
         end
       end
 
