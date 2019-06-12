@@ -559,9 +559,6 @@ describe Mongo::Socket::SSL do
     context 'when the client certificate uses an intermediate certificate' do
       require_local_tls
 
-      # https://github.com/jruby/jruby-openssl/issues/181
-      fails_on_jruby
-
       let(:server) do
         ClientRegistry.instance.global_client('authorized').cluster.next_primary
       end
@@ -590,6 +587,10 @@ describe Mongo::Socket::SSL do
         end
 
         context 'bundled with intermediate cert' do
+
+          # https://github.com/jruby/jruby-openssl/issues/181
+          fails_on_jruby
+
           let(:options) do
             SpecConfig.instance.test_options.merge(
               ssl: true,
@@ -631,6 +632,10 @@ describe Mongo::Socket::SSL do
         end
 
         context 'bundled with intermediate cert' do
+
+          # https://github.com/jruby/jruby-openssl/issues/181
+          fails_on_jruby
+
           let(:options) do
             SpecConfig.instance.test_options.merge(
               ssl: true,
@@ -650,6 +655,35 @@ describe Mongo::Socket::SSL do
             end.not_to raise_error
           end
         end
+      end
+    end
+
+    context 'when client certificate and private key are bunded in a pem file' do
+      require_local_tls
+
+      let(:server) do
+        ClientRegistry.instance.global_client('authorized').cluster.next_primary
+      end
+
+      let(:connection) do
+        Mongo::Server::Connection.new(server, options)
+      end
+
+      let(:options) do
+        SpecConfig.instance.test_options.merge(
+          ssl: true,
+          ssl_cert: SpecConfig.instance.client_pem_path,
+          ssl_key: SpecConfig.instance.client_pem_path,
+          ssl_ca_cert: SpecConfig.instance.local_ca_cert_path,
+          ssl_verify: true,
+        )
+      end
+
+      it 'succeeds' do
+        connection
+        expect do
+          connection.connect!
+        end.not_to raise_error
       end
     end
 

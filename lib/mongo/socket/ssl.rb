@@ -221,14 +221,33 @@ module Mongo
       def set_key(context, options)
         passphrase = options[:ssl_key_pass_phrase]
         if options[:ssl_key]
-          context.key = passphrase ? OpenSSL::PKey.read(File.read(options[:ssl_key]), passphrase) :
-            OpenSSL::PKey.read(File.open(options[:ssl_key]))
+          context.key = load_private_key(File.read(options[:ssl_key]), passphrase)
         elsif options[:ssl_key_string]
-          context.key = passphrase ? OpenSSL::PKey.read(options[:ssl_key_string], passphrase) :
-            OpenSSL::PKey.read(options[:ssl_key_string])
+          context.key = load_private_key(options[:ssl_key_string], passphrase)
         elsif options[:ssl_key_object]
           context.key = options[:ssl_key_object]
         end
+      end
+
+      def load_private_key(text, passphrase)
+        args = if passphrase
+          [text, passphrase]
+        else
+          [text]
+        end
+        # On JRuby, PKey.read does not grok cert+key bundles.
+        # https://github.com/jruby/jruby-openssl/issues/176
+        if BSON::Environment.jruby?
+          [OpenSSL::PKey::RSA, OpenSSL::PKey::DSA].each do |cls|
+            begin
+              return cls.send(:new, *args)
+            rescue OpenSSL::PKey::PKeyError
+              # ignore
+            end
+          end
+          # Neither RSA nor DSA worked, fall through to trying PKey
+        end
+        OpenSSL::PKey.send(:read, *args)
       end
 
       def set_cert_verification(context, options)
