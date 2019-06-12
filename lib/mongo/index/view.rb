@@ -192,7 +192,7 @@ module Mongo
       # @since 2.0.0
       def each(&block)
         session = client.send(:get_session, @options)
-        cursor = read_with_retry_cursor(session, ServerSelector.get(mode: :primary), self) do |server|
+        cursor = read_with_retry_cursor(session, ServerSelector.primary, self) do |server|
           send_initial_query(server, session)
         end
         if block_given?

@@ -468,7 +468,11 @@ module Mongo
     #
     # @since 2.5.0
     def server_selector
-      @server_selector ||= ServerSelector.get(read_preference || ServerSelector::PRIMARY)
+      @server_selector ||= if read_preference
+        ServerSelector.get(read_preference)
+      else
+        ServerSelector.primary
+      end
     end
 
     # Get the read preference from the options passed to the client.

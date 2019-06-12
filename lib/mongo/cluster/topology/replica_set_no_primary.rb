@@ -74,7 +74,7 @@ module Mongo
         #
         # @since 2.4.0
         def has_readable_server?(cluster, server_selector = nil)
-          (server_selector || ServerSelector.get(mode: :primary)).candidates(cluster).any?
+          (server_selector || ServerSelector.primary).candidates(cluster).any?
         end
 
         # Determine if the topology would select a writable server for the

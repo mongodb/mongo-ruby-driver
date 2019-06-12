@@ -74,5 +74,15 @@ module Mongo
       Mongo::Lint.validate_underscore_read_preference(preference)
       PREFERENCES.fetch((preference[:mode] || :primary).to_sym).new(preference)
     end
+
+    # Returns the primary server selector.
+    #
+    # A call to this method is equivalent to `get(mode: :primary)`, except the
+    # resulting server selector object is cached and not recreated each time.
+    #
+    # @api private
+    def primary
+      @primary ||= get(mode: :primary).freeze
+    end
   end
 end

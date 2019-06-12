@@ -341,7 +341,7 @@ describe Mongo::ServerSelector do
         Mongo::Error::UnsupportedFeatures.new('Test UnsupportedFeatures')
       end
 
-      let(:selector) { described_class.get(mode: :primary) }
+      let(:selector) { described_class.primary }
 
       it 'raises Error::UnsupportedFeatures' do
         expect(topology).to receive(:compatible?).and_return(false)
@@ -378,7 +378,7 @@ describe Mongo::ServerSelector do
       end
 
       let(:read_pref) do
-        described_class.get(mode: :primary)
+        described_class.primary
       end
 
       it 'raises a NoServerAvailable error' do
