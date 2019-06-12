@@ -82,7 +82,7 @@ module Mongo
     #
     # @api private
     def primary
-      @primary ||= get(mode: :primary).freeze
+      @primary ||= get(mode: :primary)
     end
   end
 end
