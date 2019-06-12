@@ -121,8 +121,7 @@ module Mongo
           raise Error::NoServerAvailable.new(self, cluster, msg)
         end
 =end
-        @local_threshold = cluster.options[:local_threshold] || LOCAL_THRESHOLD
-        @server_selection_timeout = cluster.options[:server_selection_timeout] || SERVER_SELECTION_TIMEOUT
+        server_selection_timeout = cluster.options[:server_selection_timeout] || SERVER_SELECTION_TIMEOUT
         deadline = Time.now + server_selection_timeout
         while (time_remaining = deadline - Time.now) > 0
           servers = candidates(cluster)
@@ -167,7 +166,7 @@ module Mongo
 
         msg = "No #{name} server is available in cluster: #{cluster.summary} " +
                 "with timeout=#{server_selection_timeout}, " +
-                "LT=#{local_threshold}"
+                "LT=#{local_threshold_with_cluster(cluster)}"
         dead_monitors = []
         cluster.servers_list.each do |server|
           thread = server.monitor.instance_variable_get('@thread')
@@ -200,6 +199,10 @@ module Mongo
           (options[:server_selection_timeout] || ServerSelector::SERVER_SELECTION_TIMEOUT)
       end
 
+      def local_threshold_with_cluster(cluster)
+        options[:local_threshold] || cluster.options[:local_threshold] || LOCAL_THRESHOLD
+      end
+
       # Get the local threshold boundary for nearest selection in seconds.
       #
       # @example Get the local threshold.
@@ -229,7 +232,10 @@ module Mongo
         if cluster.single?
           cluster.servers.each { |server| validate_max_staleness_support!(server) }
         elsif cluster.sharded?
-          near_servers(cluster.servers).each { |server| validate_max_staleness_support!(server) }
+          local_threshold = local_threshold_with_cluster(cluster)
+          near_servers(cluster.servers, local_threshold).each do |server|
+            validate_max_staleness_support!(server)
+          end
         else
           validate_max_staleness_value!(cluster) unless cluster.unknown?
           select(cluster.servers)
@@ -276,13 +282,17 @@ module Mongo
       #
       # @param [ Array ] candidates List of candidate servers to select the
       #   near servers from.
+      # @param [ Integer ] local_threshold Local threshold. This parameter
+      #   will be required in driver version 3.0.
       #
       # @return [ Array ] The near servers.
       #
       # @since 2.0.0
-      def near_servers(candidates = [])
+      def near_servers(candidates = [], local_threshold = nil)
         return candidates if candidates.empty?
         nearest_server = candidates.min_by(&:average_round_trip_time)
+        # Default for legacy signarure
+        local_threshold ||= self.local_threshold
         threshold = nearest_server.average_round_trip_time + local_threshold
         candidates.select { |server| server.average_round_trip_time <= threshold }.shuffle!
       end
