@@ -39,15 +39,23 @@ mlaunch --dir "$dbdir" --binarypath "$BINDIR" --single \
   --sslCAFile spec/support/certificates/ca.crt \
   --sslClientCertificate spec/support/certificates/client.pem
 
+if echo $RVM_RUBY |grep -q jruby; then
+  # JRuby does not grok chained certificate bundles -
+  # https://github.com/jruby/jruby-openssl/issues/181
+  client_pem=client.pem
+else
+  client_pem=client-second-level-bundle.pem
+fi
+
 echo "Running specs"
 export MONGODB_URI="mongodb://localhost:27017/?tls=true&serverSelectionTimeoutMS=30000&"\
 "tlsCAFile=spec/support/certificates/ca.crt&"\
-"tlsCertificateKeyFile=spec/support/certificates/client-second-level-bundle.pem"
+"tlsCertificateKeyFile=spec/support/certificates/$client_pem"
 bundle exec rake spec:prepare
 
 export MONGODB_URI="mongodb://localhost:27017/?tls=true&"\
 "tlsCAFile=spec/support/certificates/ca.crt&"\
-"tlsCertificateKeyFile=spec/support/certificates/client-second-level-bundle.pem"
+"tlsCertificateKeyFile=spec/support/certificates/$client_pem"
 bundle exec rspec spec/mongo/socket*
 test_status=$?
 echo "TEST STATUS"
