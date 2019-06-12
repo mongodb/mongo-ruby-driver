@@ -58,7 +58,8 @@ module Mongo
       client.send(:with_session, @options) do |session|
         operations.each do |operation|
           if single_statement?(operation)
-            write_with_retry(session, write_concern) do |server, txn_num|
+            applied_write_concern = applied_write_concern(session)
+            write_with_retry(session, applied_write_concern) do |server, txn_num|
               execute_operation(
                   operation.keys.first,
                   operation.values.flatten,
@@ -154,11 +155,25 @@ module Mongo
       SINGLE_STATEMENT_OPS.include?(operation.keys.first)
     end
 
+    # Returns the write concern to use for the bulk write.
+    #
+    # Returns nil if in a transaction, otherwise returns the 
+    # default write concern for the bulk write.
+    #
+    # @return [ Mongo::WriteConcern | nil ] The write concern.
+    def applied_write_concern(session)
+      if session.respond_to?(:in_transaction?) && session.in_transaction?
+        nil
+      else
+        write_concern
+      end
+    end
+
     def base_spec(operation_id, session)
       {
         :db_name => database.name,
         :coll_name => collection.name,
-        :write_concern => write_concern,
+        :write_concern => applied_write_concern(session),
         :ordered => ordered?,
         :operation_id => operation_id,
         :bypass_document_validation => !!options[:bypass_document_validation],

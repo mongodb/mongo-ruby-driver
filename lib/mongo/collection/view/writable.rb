@@ -44,10 +44,12 @@ module Mongo
           cmd[:fields] = projection if projection
           cmd[:sort] = sort if sort
           cmd[:maxTimeMS] = max_time_ms if max_time_ms
-          cmd[:writeConcern] = write_concern.options if write_concern
+
+          applied_write_concern = applied_write_concern(opts, write_concern)
+          cmd[:writeConcern] = applied_write_concern.options if applied_write_concern
 
           with_session(opts) do |session|
-            write_with_retry(session, write_concern) do |server, txn_num|
+            write_with_retry(session, applied_write_concern) do |server, txn_num|
               apply_collation!(cmd, server, opts)
               Operation::Command.new(
                   :selector => cmd,
@@ -115,10 +117,12 @@ module Mongo
           cmd[:upsert] = opts[:upsert] if opts[:upsert]
           cmd[:maxTimeMS] = max_time_ms if max_time_ms
           cmd[:bypassDocumentValidation] = !!opts[:bypass_document_validation]
-          cmd[:writeConcern] = write_concern.options if write_concern
+
+          applied_write_concern = applied_write_concern(opts, write_concern)
+          cmd[:writeConcern] = applied_write_concern.options if applied_write_concern
 
           value = with_session(opts) do |session|
-            write_with_retry(session, write_concern) do |server, txn_num|
+            write_with_retry(session, applied_write_concern) do |server, txn_num|
               apply_collation!(cmd, server, opts)
               apply_array_filters!(cmd, server, opts)
               Operation::Command.new(
@@ -146,6 +150,7 @@ module Mongo
         # @since 2.0.0
         def delete_many(opts = {})
           delete_doc = { Operation::Q => filter, Operation::LIMIT => 0 }
+          write_concern = applied_write_concern(opts, collection.write_concern)
           with_session(opts) do |session|
             legacy_write_with_retry do |server|
               apply_collation!(delete_doc, server, opts)
@@ -153,7 +158,7 @@ module Mongo
                   :deletes => [ delete_doc ],
                   :db_name => collection.database.name,
                   :coll_name => collection.name,
-                  :write_concern => collection.write_concern,
+                  :write_concern => write_concern,
                   :session => session
               ).execute(server)
             end
@@ -174,7 +179,7 @@ module Mongo
         # @since 2.0.0
         def delete_one(opts = {})
           delete_doc = { Operation::Q => filter, Operation::LIMIT => 1 }
-          write_concern = collection.write_concern
+          write_concern = applied_write_concern(opts, collection.write_concern)
           with_session(opts) do |session|
             write_with_retry(session, write_concern) do |server, txn_num|
               apply_collation!(delete_doc, server, opts)
@@ -211,7 +216,7 @@ module Mongo
                          Operation::MULTI => false,
                          Operation::UPSERT => !!opts[:upsert]
                         }
-          write_concern = collection.write_concern
+          write_concern = applied_write_concern(opts, collection.write_concern)
           with_session(opts) do |session|
             write_with_retry(session, write_concern) do |server, txn_num|
               apply_collation!(update_doc, server, opts)
@@ -252,6 +257,7 @@ module Mongo
                          Operation::U => spec,
                          Operation::MULTI => true,
                          Operation::UPSERT => !!opts[:upsert] }
+          write_concern = applied_write_concern(opts, collection.write_concern)
           with_session(opts) do |session|
             legacy_write_with_retry do |server|
               apply_collation!(update_doc, server, opts)
@@ -260,7 +266,7 @@ module Mongo
                   :updates => [ update_doc ],
                   :db_name => collection.database.name,
                   :coll_name => collection.name,
-                  :write_concern => collection.write_concern,
+                  :write_concern => write_concern,
                   :bypass_document_validation => !!opts[:bypass_document_validation],
                   :session => session
               ).execute(server)
@@ -290,7 +296,7 @@ module Mongo
                          Operation::U => spec,
                          Operation::MULTI => false,
                          Operation::UPSERT => !!opts[:upsert] }
-          write_concern = collection.write_concern
+          write_concern = applied_write_concern(opts, collection.write_concern)
           with_session(opts) do |session|
             write_with_retry(session, write_concern) do |server, txn_num|
               apply_collation!(update_doc, server, opts)
@@ -321,6 +327,22 @@ module Mongo
         def validate_array_filters!(server, filters)
           if filters && !server.features.array_filters_enabled?
             raise Error::UnsupportedArrayFilters.new
+          end
+        end
+
+        # Returns the write concern to use for an operation.
+        #
+        # Returns nil if in a transaction, otherwise returns the 
+        # default write concern for the operation (either the 
+        # collection's write concern or the view's write concern).
+        #
+        # @return [ Mongo::WriteConcern | nil ] The write concern.
+        def applied_write_concern(opts, default)
+          if opts[:session].respond_to?(:in_transaction?) &&
+            opts[:session].in_transaction?
+            nil
+          else
+            default
           end
         end
       end
