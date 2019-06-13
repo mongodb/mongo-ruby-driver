@@ -172,6 +172,20 @@ describe Mongo::Error::Parser do
         expect(parser.code).to be nil
       end
     end
+
+    context 'when both top level code and write concern code are present' do
+
+      let(:document) do
+        { 'ok' => 0,
+          'errmsg' => 'not master', 'code' => 10107, 'codeName' => 'NotMaster',
+          'writeConcernError' => {
+            'code' => 100, 'errmsg' => 'Not enough data-bearing nodes' } }
+      end
+
+      it 'returns top level code' do
+        expect(parser.code).to eq(10107)
+      end
+    end
   end
 
   describe '#code_name' do
@@ -249,6 +263,20 @@ describe Mongo::Error::Parser do
 
       it 'returns nil' do
         expect(parser.code_name).to be nil
+      end
+    end
+
+    context 'when both top level code and write concern code are present' do
+
+      let(:document) do
+        { 'ok' => 0,
+          'errmsg' => 'not master', 'code' => 10107, 'codeName' => 'NotMaster',
+          'writeConcernError' => {
+            'code' => 100, 'errmsg' => 'Not enough data-bearing nodes' } }
+      end
+
+      it 'returns top level code' do
+        expect(parser.code_name).to eq('NotMaster')
       end
     end
   end
