@@ -137,7 +137,7 @@ describe 'change streams examples in Ruby' do
       expect(next_next_change['documentKey']['_id']).to eq(next_next_change['fullDocument']['_id'])
 
       # Start Changestream Example 3
-
+      
       resume_token = next_change['_id']
       cursor = inventory.watch([], resume_after: resume_token).to_enum
       resumed_change = cursor.next
