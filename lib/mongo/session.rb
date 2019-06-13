@@ -647,10 +647,8 @@ module Mongo
         e.send(:add_label, Mongo::Error::UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL)
         raise e
       rescue Mongo::Error::OperationFailure => e
-        err_doc = e.instance_variable_get(:@result).send(:first_document)
-
-        if e.write_retryable? || (err_doc['writeConcernError'] &&
-            !UNLABELED_WRITE_CONCERN_CODES.include?(err_doc['writeConcernError']['code']))
+        if e.write_retryable? || (e.write_concern_error? &&
+            !UNLABELED_WRITE_CONCERN_CODES.include?(e.write_concern_error_code))
           e.send(:add_label, Mongo::Error::UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL)
         end
 

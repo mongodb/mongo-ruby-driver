@@ -70,11 +70,13 @@ module Mongo
 
       def_delegators :@result, :operation_time
 
-      # @return [ Integer ] code The error code parsed from the document.
+      # @return [ Integer ] The error code parsed from the document.
+      #
       # @since 2.6.0
       attr_reader :code
 
-      # @return [ String ] code_name The error code name parsed from the document.
+      # @return [ String ] The error code name parsed from the document.
+      #
       # @since 2.6.0
       attr_reader :code_name
 
@@ -165,13 +167,33 @@ module Mongo
 
       def change_stream_not_resumable_label?
         if labels
-          labels.include? 'NonResumableChangeStreamError' 
+          labels.include? 'NonResumableChangeStreamError'
         else
           false
         end
       end
       private :change_stream_not_resumable_label?
 
+      # @return [ true | false ] Whether the failure includes a write
+      #   concern error. A failure may have a top level error and a write
+      #   concern error or either one of the two.
+      #
+      # @since 2.10.0
+      def write_concern_error?
+        @write_concern_error
+      end
+
+      # @return [ Integer | nil ] The error code for the write concern error,
+      #   if a write concern error is present and has a code.
+      #
+      # @since 2.10.0
+      attr_reader :write_concern_error_code
+
+      # @return [ String | nil ] The code name for the write concern error,
+      #   if a write concern error is present and has a code name.
+      #
+      # @since 2.10.0
+      attr_reader :write_concern_error_code_name
 
       # Create the operation failure.
       #
@@ -183,19 +205,28 @@ module Mongo
       #
       # @param [ String ] message The error message.
       # @param [ Operation::Result ] result The result object.
-      # @param [ Hash ] options Additional parameters
+      # @param [ Hash ] options Additional parameters.
       #
-      # @option options [ Integer ] :code Error code
-      # @option options [ String ] :code_name Error code name
+      # @option options [ Integer ] :code Error code.
+      # @option options [ String ] :code_name Error code name.
+      # @option options [ true | false ] :write_concern_error Whether the
+      #   write concern error is present.
+      # @option options [ Integer ] :write_concern_error_code Error code for
+      #   write concern error, if any.
+      # @option options [ String ] :write_concern_error_code_name Error code
+      #   name for write concern error, if any.
       # @option options [ Array<String> ] :labels The set of labels associated
-      #   with the error
-      # @option options [ true | false ] :wtimeout Whether the error is a wtimeout
+      #   with the error.
+      # @option options [ true | false ] :wtimeout Whether the error is a wtimeout.
       #
       # @since 2.5.0, options added in 2.6.0
       def initialize(message = nil, result = nil, options = {})
         @result = result
         @code = options[:code]
         @code_name = options[:code_name]
+        @write_concern_error = !!options[:write_concern_error]
+        @write_concern_error_code = options[:write_concern_error_code]
+        @write_concern_error_code_name = options[:write_concern_error_code_name]
         @labels = options[:labels]
         @wtimeout = !!options[:wtimeout]
         super(message)
