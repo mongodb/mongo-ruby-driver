@@ -48,6 +48,7 @@ module Mongo
           applied_write_concern = applied_write_concern(opts[:session])
           cmd[:writeConcern] = applied_write_concern.options if applied_write_concern
 
+          byebug
           with_session(opts) do |session|
             write_with_retry(session, applied_write_concern) do |server, txn_num|
               apply_collation!(cmd, server, opts)
@@ -345,6 +346,8 @@ module Mongo
             if wc && WriteConcern.send(:unacknowledged?, wc.options)
               opts = wc.options.dup
               opts.delete(:w)
+              byebug
+              write_concern
               return WriteConcern.get(opts)
             end
           end

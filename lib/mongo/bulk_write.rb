@@ -58,8 +58,8 @@ module Mongo
       client.send(:with_session, @options) do |session|
         operations.each do |operation|
           if single_statement?(operation)
-            applied_write_concern = applied_write_concern(session)
-            write_with_retry(session, applied_write_concern) do |server, txn_num|
+            write_concern = write_concern(session)
+            write_with_retry(session, write_concern) do |server, txn_num|
               execute_operation(
                   operation.keys.first,
                   operation.values.flatten,
@@ -132,6 +132,11 @@ module Mongo
 
     # Get the write concern for the bulk write.
     #
+    # If in a transaction and the bulk write inherits an 
+    # unacknowledged write concern from the collection, remove
+    # the write concern's :w option. Otherwise, return the
+    # unmodified write concern.
+    #
     # @api private
     #
     # @example Get the write concern.
@@ -140,9 +145,12 @@ module Mongo
     # @return [ WriteConcern ] The write concern.
     #
     # @since 2.1.0
-    def write_concern
-      @write_concern ||= options[:write_concern] ?
-        WriteConcern.get(options[:write_concern]) : collection.write_concern
+    def write_concern(session)
+      if options[:write_concern]
+        WriteConcern.get(options[:write_concern])
+      else 
+        applied_collection_write_concern(session)
+      end
     end
 
     private
@@ -153,22 +161,6 @@ module Mongo
 
     def single_statement?(operation)
       SINGLE_STATEMENT_OPS.include?(operation.keys.first)
-    end
-
-    # Get the write concern for the bulk write.
-    #
-    # If in a transaction and the bulk write inherits an 
-    # unacknowledged write concern from the collection, remove
-    # the write concern's :w option. Otherwise, return the
-    # unmodified write concern.
-    #
-    # @return [ Mongo::WriteConcern ] The write concern.
-    def applied_write_concern(session)
-      if options[:write_concern]
-        WriteConcern.get(options[:write_concern])
-      else 
-        applied_collection_write_concern(session)
-      end
     end
 
     def applied_collection_write_concern(session)
@@ -187,7 +179,7 @@ module Mongo
       {
         :db_name => database.name,
         :coll_name => collection.name,
-        :write_concern => applied_write_concern(session),
+        :write_concern => write_concern(session),
         :ordered => ordered?,
         :operation_id => operation_id,
         :bypass_document_validation => !!options[:bypass_document_validation],
