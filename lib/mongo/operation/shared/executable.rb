@@ -20,10 +20,16 @@ module Mongo
     # @since 2.5.2
     module Executable
 
+      def do_execute(server)
+        get_result(server).tap do |result|
+          process_result(result, server)
+        end
+      end
+
       def execute(server)
-        result = get_result(server)
-        process_result(result, server)
-        result.validate!
+        do_execute(server).tap do |result|
+          validate_result(result)
+        end
       end
 
       private

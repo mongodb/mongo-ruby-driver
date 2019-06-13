@@ -20,6 +20,12 @@ module Mongo
     # @since 2.5.2
     module SessionsSupported
 
+      def do_execute(server)
+        add_error_labels do
+          super
+        end
+      end
+
       private
 
       ZERO_TIMESTAMP = BSON::Timestamp.new(0, 0)

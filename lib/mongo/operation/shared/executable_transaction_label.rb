@@ -22,15 +22,6 @@ module Mongo
     #
     # @api private
     module ExecutableTransactionLabel
-
-      def execute(server)
-        super
-      rescue Mongo::Error::SocketError => e
-        if session && session.in_transaction?
-          e.add_label('TransientTransactionError')
-        end
-        raise e
-      end
     end
   end
 end
