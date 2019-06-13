@@ -222,6 +222,41 @@ module Mongo
       end
     end
 
+    # Implements legacy write retrying functionality by yielding to the passed
+    # block one or more times.
+    #
+    # This method is used for operations which are not supported by modern
+    # retryable writes, such as delete_many and update_many.
+    #
+    # @param [ Server ] server The server which should be used for the
+    #   operation. If not provided, the current primary will be retrieved from
+    #   the cluster.
+    # @param [ nil | Session ] session Optional session to use with the operation.
+    #
+    # @api private
+    def legacy_write_with_retry(server = nil, session = nil)
+      # This is the pre-session retry logic, and is not subject to
+      # current retryable write specifications.
+      # In particular it does not retry on SocketError and SocketTimeoutError.
+      attempt = 0
+      begin
+        attempt += 1
+        yield(server || cluster.next_primary)
+      rescue Error::OperationFailure => e
+        server = nil
+        if attempt > client.max_write_retries
+          raise
+        end
+        if e.write_retryable? && !(session && session.in_transaction?)
+          log_retry(e, message: 'Legacy write retry')
+          cluster.scan!(false)
+          retry
+        else
+          raise
+        end
+      end
+    end
+
     private
 
     def modern_read_with_retry(session, server_selector, &block)
@@ -323,29 +358,6 @@ module Mongo
       raise e
     rescue
       raise original_error
-    end
-
-    def legacy_write_with_retry(server = nil, session = nil)
-      # This is the pre-session retry logic, and is not subject to
-      # current retryable write specifications.
-      # In particular it does not retry on SocketError and SocketTimeoutError.
-      attempt = 0
-      begin
-        attempt += 1
-        yield(server || cluster.next_primary)
-      rescue Error::OperationFailure => e
-        server = nil
-        if attempt > client.max_write_retries
-          raise
-        end
-        if e.write_retryable? && !(session && session.in_transaction?)
-          log_retry(e, message: 'Legacy write retry')
-          cluster.scan!(false)
-          retry
-        else
-          raise
-        end
-      end
     end
 
     # This is a separate method to make it possible for the test suite to

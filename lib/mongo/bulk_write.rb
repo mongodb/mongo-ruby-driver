@@ -23,7 +23,6 @@ require 'mongo/bulk_write/result_combiner'
 module Mongo
   class BulkWrite
     extend Forwardable
-    include Retryable
 
     # @return [ Mongo::Collection ] collection The collection.
     attr_reader :collection
@@ -38,6 +37,8 @@ module Mongo
     def_delegators :@collection,
                    :database,
                    :cluster,
+                   :write_with_retry,
+                   :legacy_write_with_retry,
                    :next_primary
 
     def_delegators :database, :client

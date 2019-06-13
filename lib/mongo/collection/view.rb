@@ -46,7 +46,6 @@ module Mongo
       include Immutable
       include Iterable
       include Readable
-      include Retryable
       include Explainable
       include Writable
 
@@ -60,7 +59,11 @@ module Mongo
       def_delegators :collection,
                      :client,
                      :cluster,
-                     :database
+                     :database,
+                     :read_with_retry,
+                     :read_with_retry_cursor,
+                     :write_with_retry,
+                     :legacy_write_with_retry
 
       # Delegate to the cluster for the next primary.
       def_delegators :cluster, :next_primary
