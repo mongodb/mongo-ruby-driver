@@ -644,12 +644,12 @@ module Mongo
           end
         end
       rescue Mongo::Error::NoServerAvailable, Mongo::Error::SocketError => e
-        e.send(:add_label, Mongo::Error::UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL)
+        e.add_label(Mongo::Error::UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL)
         raise e
       rescue Mongo::Error::OperationFailure => e
         if e.write_retryable? || (e.write_concern_error? &&
             !UNLABELED_WRITE_CONCERN_CODES.include?(e.write_concern_error_code))
-          e.send(:add_label, Mongo::Error::UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL)
+          e.add_label(Mongo::Error::UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL)
         end
 
         raise e

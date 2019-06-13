@@ -124,8 +124,12 @@ module Mongo
       @labels.dup
     end
 
-    private
-
+    # Adds the specified label to the error instance, if the label is not
+    # already in the set of labels.
+    #
+    # @param [ String ] label The label to add.
+    #
+    # @api private
     def add_label(label)
       @labels << label unless label?(label)
     end

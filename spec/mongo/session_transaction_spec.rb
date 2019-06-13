@@ -137,7 +137,7 @@ describe Mongo::Session do
             sleep 0.1
 
             exc = Mongo::Error::OperationFailure.new('timeout test')
-            exc.send(:add_label, Mongo::Error::TRANSIENT_TRANSACTION_ERROR_LABEL)
+            exc.add_label(Mongo::Error::TRANSIENT_TRANSACTION_ERROR_LABEL)
             raise exc
           end
         end.to raise_error(Mongo::Error::OperationFailure, 'timeout test')
@@ -169,7 +169,7 @@ describe Mongo::Session do
           end
 
           exc = Mongo::Error::OperationFailure.new('timeout test')
-          exc.send(:add_label, Mongo::Error.const_get(label))
+          exc.add_label(Mongo::Error.const_get(label))
 
           expect(session).to receive(:commit_transaction).and_raise(exc).at_least(:once)
 
