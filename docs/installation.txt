@@ -18,7 +18,7 @@ To install the mongo gem manually:
 
 .. code-block:: sh
 
-  gem install mongo -v 2.9.0.rc0
+  gem install mongo -v 2.9.0.rc1
 
 TLS/SSL and the Ruby driver
 ---------------------------
