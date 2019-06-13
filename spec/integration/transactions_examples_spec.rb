@@ -44,8 +44,8 @@ describe 'Transactions examples' do
         session.commit_transaction
         puts 'Transaction committed.'
       rescue Mongo::Error => e
-        if e.label?(Mongo::Error::UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL)
-          puts "#{Mongo::Error::UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL}, retrying commit operation..."
+        if e.label?('UnknownTransactionCommitResult')
+          puts "UnknownTransactionCommitResult, retrying commit operation..."
           retry
         else
           puts 'Error during commit ...'
@@ -80,9 +80,9 @@ describe 'Transactions examples' do
         rescue Mongo::Error => e
 
           puts 'Transaction aborted. Caught exception during transaction.'
-          raise unless e.label?(Mongo::Error::TRANSIENT_TRANSACTION_ERROR_LABEL)
+          raise unless e.label?('TransientTransactionError')
 
-          puts "#{Mongo::Error::TRANSIENT_TRANSACTION_ERROR_LABEL}, retrying transaction ..."
+          puts "TransientTransactionError, retrying transaction ..."
           retry
         end
       end
@@ -110,8 +110,8 @@ describe 'Transactions examples' do
           session.commit_transaction
           puts 'Transaction committed.'
         rescue Mongo::Error=> e
-          if e.label?(Mongo::Error::UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL)
-            puts "#{Mongo::Error::UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL}, retrying commit operation..."
+          if e.label?('UnknownTransactionCommitResult')
+            puts "UnknownTransactionCommitResult, retrying commit operation..."
             retry
           else
             puts 'Error during commit ...'
@@ -154,8 +154,8 @@ describe 'Transactions examples' do
           yield session # performs transaction
         rescue Mongo::Error => e
           puts 'Transaction aborted. Caught exception during transaction.'
-          raise unless e.label?(Mongo::Error::TRANSIENT_TRANSACTION_ERROR_LABEL)
-          puts "#{Mongo::Error::TRANSIENT_TRANSACTION_ERROR_LABEL}, retrying transaction ..."
+          raise unless e.label?('TransientTransactionError')
+          puts "TransientTransactionError, retrying transaction ..."
           retry
         end
       end
@@ -165,8 +165,8 @@ describe 'Transactions examples' do
           session.commit_transaction
           puts 'Transaction committed.'
         rescue Mongo::Error => e
-          if e.label?(Mongo::Error::UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL)
-            puts "#{Mongo::Error::UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL}, retrying commit operation ..."
+          if e.label?('UnknownTransactionCommitResult')
+            puts "UnknownTransactionCommitResult, retrying commit operation ..."
             retry
           else
             puts 'Error during commit ...'

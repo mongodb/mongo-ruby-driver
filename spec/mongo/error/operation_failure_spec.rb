@@ -177,7 +177,7 @@ describe Mongo::Error::OperationFailure do
         let(:error) { Mongo::Error::OperationFailure.new('no message',
           Mongo::Operation::GetMore::Result.new([]),
           :code => 91, :code_name => 'ShutdownInProgress',
-          :labels => [ Mongo::Error::TRANSIENT_TRANSACTION_ERROR_LABEL ]) }
+          :labels => %w(TransientTransactionError)) }
 
         it 'returns true' do
           expect(error.change_stream_resumable?).to eql(true)
@@ -187,7 +187,7 @@ describe Mongo::Error::OperationFailure do
       context 'not a getMore response' do
         let(:error) { Mongo::Error::OperationFailure.new('no message', nil,
           :code => 91, :code_name => 'ShutdownInProgress',
-          :labels => [ Mongo::Error::TRANSIENT_TRANSACTION_ERROR_LABEL ]) }
+          :labels => %w(TransientTransactionError)) }
 
         it 'returns false' do
           expect(error.change_stream_resumable?).to eql(false)
@@ -256,7 +256,7 @@ describe Mongo::Error::OperationFailure do
       context 'when the error has labels' do
 
         let(:labels) do
-          [ Mongo::Error::TRANSIENT_TRANSACTION_ERROR_LABEL ]
+          %w(TransientTransactionError)
         end
 
         it 'has the correct labels' do

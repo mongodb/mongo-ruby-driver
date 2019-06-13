@@ -156,7 +156,7 @@ if it fails. Here is the Ruby code to do so:
   begin
     session.commit_transaction
   rescue Mongo::Error => e
-    if e.label?(Mongo::Error::UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL)
+    if e.label?('UnknownTransactionCommitResult')
       retry
     else
       raise

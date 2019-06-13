@@ -224,15 +224,15 @@ module Mongo
       #
       # @since 2.5.0, options added in 2.6.0
       def initialize(message = nil, result = nil, options = {})
+        super(message)
         @result = result
         @code = options[:code]
         @code_name = options[:code_name]
         @write_concern_error = !!options[:write_concern_error]
         @write_concern_error_code = options[:write_concern_error_code]
         @write_concern_error_code_name = options[:write_concern_error_code_name]
-        @labels = options[:labels]
+        @labels = options[:labels] || []
         @wtimeout = !!options[:wtimeout]
-        super(message)
       end
 
       # Whether the error is a write concern timeout.
