@@ -98,7 +98,7 @@ module Mongo
 
           # The resume token tracked by the change stream, used only
           # when there is no cursor, or no cursor resume token
-          @resume_token = @start_after || @options[:resume_after]     
+          @resume_token = @start_after || @options[:resume_after]
 
           create_cursor!
 
@@ -163,7 +163,7 @@ module Mongo
 
             # Save cursor's resume token so we can use it
             # to create a new cursor
-            @resume_token = @cursor.resume_token 
+            @resume_token = @cursor.resume_token
 
             close
             create_cursor!
@@ -236,7 +236,7 @@ module Mongo
         #   stream.resume_token
         #
         # @return [ BSON::Document | nil ] The change stream resume token.
-        # 
+        #
         # @since 2.10.0
         def resume_token
           cursor_resume_token = @cursor.resume_token if @cursor
@@ -264,7 +264,10 @@ module Mongo
 
           session = client.send(:get_session, @options)
           start_at_operation_time = nil
+          start_at_operation_time_supported = nil
           @cursor = read_with_retry_cursor(session, server_selector, view) do |server|
+            start_at_operation_time_supported = server.description.max_wire_version >= 7
+
             result = send_initial_query(server, session)
             if doc = result.replies.first && result.replies.first.documents.first
               start_at_operation_time = doc['operationTime']
@@ -279,6 +282,7 @@ module Mongo
             result
           end
           @start_at_operation_time = start_at_operation_time
+          @start_at_operation_time_supported = start_at_operation_time_supported
         end
 
         def pipeline
@@ -302,7 +306,7 @@ module Mongo
                 # Spec says we need to remove both startAtOperationTime and startAfter if
                 # either was passed in by user, thus we won't forward them
                 doc[:resumeAfter] = resume_token
-              elsif start_at_operation_time_supported? && @start_at_operation_time
+              elsif @start_at_operation_time_supported && @start_at_operation_time
                 # It is crucial to check @start_at_operation_time_supported
                 # here - we may have switched to an older server that
                 # does not support operation times and therefore shouldn't
@@ -348,14 +352,6 @@ module Mongo
 
         def resuming?
           !!@resuming
-        end
-
-        def start_at_operation_time_supported?
-          if @start_at_operation_time_supported.nil?
-            server = server_selector.select_server(cluster)
-            @start_at_operation_time_supported = server.description.max_wire_version >= 7
-          end
-          @start_at_operation_time_supported
         end
       end
     end

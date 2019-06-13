@@ -197,7 +197,7 @@ module Mongo
           db_name: name,
           write_concern: write_concern,
           session: session
-        }).execute(next_primary)
+        }).execute(next_primary(nil, session))
       end
     end
 

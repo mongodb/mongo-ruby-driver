@@ -184,11 +184,12 @@ module Mongo
     def create(opts = {})
       operation = { :create => name }.merge(options)
       operation.delete(:write)
-      server = next_primary
-      if (options[:collation] || options[Operation::COLLATION]) && !server.features.collation_enabled?
-        raise Error::UnsupportedCollation.new
-      end
       client.send(:with_session, opts) do |session|
+        server = next_primary(nil, session)
+        if (options[:collation] || options[Operation::COLLATION]) && !server.features.collation_enabled?
+          raise Error::UnsupportedCollation
+        end
+
         Operation::Create.new({
                                 selector: operation,
                                 db_name: database.name,
@@ -220,7 +221,7 @@ module Mongo
                               db_name: database.name,
                               write_concern: write_concern,
                               session: session
-                              }).execute(next_primary)
+                              }).execute(next_primary(nil, session))
       end
     rescue Error::OperationFailure => ex
       raise ex unless ex.message =~ /ns not found/

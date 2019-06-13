@@ -68,7 +68,7 @@ module Mongo
         def each
           @cursor = nil
           session = client.send(:get_session, @options)
-          server = cluster.next_primary
+          server = cluster.next_primary(nil, session)
           result = send_initial_query(server, session)
           result = send_fetch_query(server, session) unless inline?
           @cursor = Cursor.new(view, result, server, session: session)
@@ -234,7 +234,7 @@ module Mongo
         def send_initial_query(server, session)
           unless valid_server?(server)
             log_warn("Rerouting the MapReduce operation to the primary server - #{server.summary} is not suitable")
-            server = cluster.next_primary
+            server = cluster.next_primary(nil, session)
           end
           validate_collation!(server)
           initial_query_op(session).execute(server)

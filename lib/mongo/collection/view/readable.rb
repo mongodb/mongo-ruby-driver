@@ -571,7 +571,7 @@ module Mongo
           else
             session = nil
           end
-          server = server_selector.select_server(cluster)
+          server = server_selector.select_server(cluster, nil, session)
           cmd = Operation::ParallelScan.new({
                   :coll_name => collection.name,
                   :db_name => database.name,
