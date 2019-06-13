@@ -200,7 +200,7 @@ module Mongo
       # If we are here, session is not nil. A session being nil would have
       # failed retry_write_allowed? check.
 
-      server = cluster.next_primary(nil, session)
+      server = select_server(cluster, ServerSelector.primary, session)
 
       unless ending_transaction || server.retry_writes?
         return legacy_write_with_retry(server, session, &block)
@@ -241,7 +241,8 @@ module Mongo
       attempt = 0
       begin
         attempt += 1
-        yield server || cluster.next_primary(nil, session)
+        server ||= select_server(cluster, ServerSelector.primary, session)
+        yield server
       rescue Error::OperationFailure => e
         server = nil
         if attempt > client.max_write_retries
@@ -347,7 +348,7 @@ module Mongo
       # server description and/or topology as necessary (specifically,
       # a socket error or a not master error should have marked the respective
       # server unknown). Here we just need to wait for server selection.
-      server = cluster.next_primary(nil, session)
+      server = select_server(cluster, ServerSelector.primary, session)
       raise original_error unless (server.retry_writes? && txn_num)
       log_retry(original_error, message: 'Write retry')
       yield(server, txn_num, true)
