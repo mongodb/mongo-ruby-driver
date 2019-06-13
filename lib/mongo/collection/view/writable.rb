@@ -45,7 +45,7 @@ module Mongo
           cmd[:sort] = sort if sort
           cmd[:maxTimeMS] = max_time_ms if max_time_ms
 
-          applied_write_concern = applied_write_concern(opts, write_concern)
+          applied_write_concern = applied_write_concern(opts[:session])
           cmd[:writeConcern] = applied_write_concern.options if applied_write_concern
 
           with_session(opts) do |session|
@@ -118,7 +118,7 @@ module Mongo
           cmd[:maxTimeMS] = max_time_ms if max_time_ms
           cmd[:bypassDocumentValidation] = !!opts[:bypass_document_validation]
 
-          applied_write_concern = applied_write_concern(opts, write_concern)
+          applied_write_concern = applied_write_concern(opts[:session])
           cmd[:writeConcern] = applied_write_concern.options if applied_write_concern
 
           value = with_session(opts) do |session|
@@ -150,7 +150,7 @@ module Mongo
         # @since 2.0.0
         def delete_many(opts = {})
           delete_doc = { Operation::Q => filter, Operation::LIMIT => 0 }
-          write_concern = applied_write_concern(opts, collection.write_concern)
+          write_concern = applied_collection_write_concern(opts[:session])
           with_session(opts) do |session|
             legacy_write_with_retry do |server|
               apply_collation!(delete_doc, server, opts)
@@ -179,7 +179,7 @@ module Mongo
         # @since 2.0.0
         def delete_one(opts = {})
           delete_doc = { Operation::Q => filter, Operation::LIMIT => 1 }
-          write_concern = applied_write_concern(opts, collection.write_concern)
+          write_concern = applied_collection_write_concern(opts[:session])
           with_session(opts) do |session|
             write_with_retry(session, write_concern) do |server, txn_num|
               apply_collation!(delete_doc, server, opts)
@@ -216,7 +216,7 @@ module Mongo
                          Operation::MULTI => false,
                          Operation::UPSERT => !!opts[:upsert]
                         }
-          write_concern = applied_write_concern(opts, collection.write_concern)
+          write_concern = applied_collection_write_concern(opts[:session])
           with_session(opts) do |session|
             write_with_retry(session, write_concern) do |server, txn_num|
               apply_collation!(update_doc, server, opts)
@@ -257,7 +257,7 @@ module Mongo
                          Operation::U => spec,
                          Operation::MULTI => true,
                          Operation::UPSERT => !!opts[:upsert] }
-          write_concern = applied_write_concern(opts, collection.write_concern)
+          write_concern = applied_collection_write_concern(opts[:session])
           with_session(opts) do |session|
             legacy_write_with_retry do |server|
               apply_collation!(update_doc, server, opts)
@@ -296,7 +296,7 @@ module Mongo
                          Operation::U => spec,
                          Operation::MULTI => false,
                          Operation::UPSERT => !!opts[:upsert] }
-          write_concern = applied_write_concern(opts, collection.write_concern)
+          write_concern = applied_collection_write_concern(opts[:session])
           with_session(opts) do |session|
             write_with_retry(session, write_concern) do |server, txn_num|
               apply_collation!(update_doc, server, opts)
@@ -330,19 +330,40 @@ module Mongo
           end
         end
 
-        # Returns the write concern to use for an operation.
+        # Return the write concern to use for an operation which
+        # can only inherit the write concern from the collection.
+        # 
+        # If in a transaction and the operation inherits an 
+        # unacknowledged write concern from the collection, remove
+        # the write concern's :w option. Otherwise, return the
+        # unmodified write concern.
+        # 
+        # @return [ Mongo::WriteConcern ] The write concern.
+        def applied_collection_write_concern(session)
+          wc = collection.write_concern
+          if session.respond_to?(:in_transaction?) && session.in_transaction?
+            if wc && WriteConcern.send(:unacknowledged?, wc.options)
+              opts = wc.options.dup
+              opts.delete(:w)
+              return WriteConcern.get(opts)
+            end
+          end
+          wc
+        end
+
+        # Get the write concern for an operation
         #
-        # Returns nil if in a transaction, otherwise returns the 
-        # default write concern for the operation (either the 
-        # collection's write concern or the view's write concern).
+        # If in a transaction and the operation inherits an 
+        # unacknowledged write concern from the collection, remove
+        # the write concern's :w option. Otherwise, return the
+        # unmodified write concern.
         #
-        # @return [ Mongo::WriteConcern | nil ] The write concern.
-        def applied_write_concern(opts, default)
-          if opts[:session].respond_to?(:in_transaction?) &&
-            opts[:session].in_transaction?
-            nil
-          else
-            default
+        # @return [ Mongo::WriteConcern ] The write concern.
+        def applied_write_concern(session)
+          if options[:write] || options[:write_concern]
+            WriteConcern.get(options[:write] || options[:write_concern])
+          else 
+            applied_collection_write_concern(session)
           end
         end
       end
