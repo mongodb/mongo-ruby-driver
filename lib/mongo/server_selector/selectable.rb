@@ -108,6 +108,9 @@ module Mongo
       #
       # @since 2.0.0
       def select_server(cluster, ping = nil, session = nil)
+        server_selection_timeout = cluster.options[:server_selection_timeout] || SERVER_SELECTION_TIMEOUT
+        deadline = Time.now + server_selection_timeout
+
         if session && session.pinned_server
           if Mongo::Lint.enabled?
             unless cluster.sharded?
@@ -124,7 +127,15 @@ module Mongo
             # This will no longer be the case once SRV polling is implemented.
 
             unless server.mongos?
-              raise "Pinned server not a mongos: #{server.summary}"
+              while (time_remaining = deadline - Time.now) > 0
+                wait_for_server_selection(cluster, time_remaining)
+              end
+
+              unless server.mongos?
+                msg = "The session being used is pinned to the server which is not a mongos: #{server.summary} " +
+                  "(after #{server_selection_timeout} seconds)"
+                raise Error::NoServerAvailable.new(self, cluster, msg)
+              end
             end
 
             return server
@@ -149,8 +160,6 @@ module Mongo
           raise Error::NoServerAvailable.new(self, cluster, msg)
         end
 =end
-        server_selection_timeout = cluster.options[:server_selection_timeout] || SERVER_SELECTION_TIMEOUT
-        deadline = Time.now + server_selection_timeout
         while (time_remaining = deadline - Time.now) > 0
           servers = candidates(cluster)
           if Lint.enabled?
@@ -186,32 +195,13 @@ module Mongo
             return server
           end
           cluster.scan!(false)
-          if cluster.server_selection_semaphore
-            cluster.server_selection_semaphore.wait(time_remaining)
-          else
-            if Lint.enabled?
-              raise Error::LintError, 'Waiting for server selection without having a server selection semaphore'
-            end
-            sleep 0.25
-          end
+          wait_for_server_selection(cluster, time_remaining)
         end
 
         msg = "No #{name} server is available in cluster: #{cluster.summary} " +
                 "with timeout=#{server_selection_timeout}, " +
                 "LT=#{local_threshold_with_cluster(cluster)}"
-        dead_monitors = []
-        cluster.servers_list.each do |server|
-          thread = server.monitor.instance_variable_get('@thread')
-          if thread.nil? || !thread.alive?
-            dead_monitors << server
-          end
-        end
-        if dead_monitors.any?
-          msg += ". The following servers have dead monitor threads: #{dead_monitors.map(&:summary).join(', ')}"
-        end
-        unless cluster.connected?
-          msg += ". The cluster is disconnected (client may have been closed)"
-        end
+        msg += server_selection_diagnostic_message(cluster)
         raise Error::NoServerAvailable.new(self, cluster, msg)
       rescue Error::NoServerAvailable => e
         if session && session.in_transaction? && !session.committing_transaction?
@@ -412,6 +402,35 @@ module Mongo
             raise Error::InvalidServerPreference.new(msg)
           end
         end
+      end
+
+      def wait_for_server_selection(cluster, time_remaining)
+        if cluster.server_selection_semaphore
+          cluster.server_selection_semaphore.wait(time_remaining)
+        else
+          if Lint.enabled?
+            raise Error::LintError, 'Waiting for server selection without having a server selection semaphore'
+          end
+          sleep [time_remaining, 0.25].min
+        end
+      end
+
+      def server_selection_diagnostic_message(cluster)
+        msg = ''
+        dead_monitors = []
+        cluster.servers_list.each do |server|
+          thread = server.monitor.instance_variable_get('@thread')
+          if thread.nil? || !thread.alive?
+            dead_monitors << server
+          end
+        end
+        if dead_monitors.any?
+          msg += ". The following servers have dead monitor threads: #{dead_monitors.map(&:summary).join(', ')}"
+        end
+        unless cluster.connected?
+          msg += ". The cluster is disconnected (client may have been closed)"
+        end
+        msg
       end
     end
   end
