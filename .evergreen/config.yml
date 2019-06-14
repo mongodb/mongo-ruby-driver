@@ -506,6 +506,10 @@ axes:
         display_name: "4.0"
         variables:
           VERSION: "4.0"
+      - id: "4.2"
+        display_name: "4.2"
+        variables:
+          VERSION: "4.2"
       - id: "3.6"
         display_name: "3.6"
         variables:
@@ -855,7 +859,7 @@ buildvariants:
   matrix_name: "local-tls"
   matrix_spec:
     ruby: "*"
-    mongodb-version: '4.0'
+    mongodb-version: ['4.0', '4.2']
     topology: standalone
   display_name: "Local TLS ${ruby}"
   run_on:

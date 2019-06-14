@@ -15,18 +15,8 @@
 module Mongo
   module Transactions
     class Operation < Mongo::CRUD::Operation
+      include RSpec::Matchers
 
-      # Execute the operation.
-      #
-      # @example Execute the operation.
-      #   operation.execute
-      #
-      # @param [ Collection ] collection The collection to execute
-      #   the operation on.
-      #
-      # @return [ Result ] The result of executing the operation.
-      #
-      # @since 2.6.0
       def execute(collection, session0, session1, active_session=nil)
         # Determine which object the operation method should be called on.
         obj = case object
@@ -51,11 +41,8 @@ module Mongo
         when 'session1'
           session1
         else
-          if active_session
-            active_session
-          else
-            nil
-          end
+          # active session could be nil
+          active_session
         end
 
         context = Context.new(
@@ -72,7 +59,14 @@ module Mongo
         if op_name.nil?
           raise "Unknown operation #{name}"
         end
-        send(op_name, obj, context, *args)
+        result = send(op_name, obj, context, *args)
+        if result
+          if result.is_a?(Hash)
+            result = result.dup
+            result['error'] = false
+          end
+        end
+        result
       rescue Mongo::Error::OperationFailure => e
         err_doc = e.instance_variable_get(:@result).send(:first_document)
         error_code_name = err_doc['codeName'] || err_doc['writeConcernError'] && err_doc['writeConcernError']['codeName']
@@ -89,12 +83,23 @@ module Mongo
           'errorContains' => e.message,
           'errorLabels' => e.labels,
           'exception' => e,
+          'error' => true,
         }
       rescue Mongo::Error => e
         {
           'errorContains' => e.message,
           'errorLabels' => e.labels,
           'exception' => e,
+          'error' => true,
+        }
+      # We do not have a base class for client side BSON-related errors.
+      # See https://jira.mongodb.org/browse/RUBY-1806.
+      # Rescue this particular exception for the time being.
+      rescue BSON::String::IllegalKey => e
+        {
+          'exception' => e,
+          'clientError' => true,
+          'error' => true,
         }
       end
 
@@ -145,6 +150,12 @@ module Mongo
             end
           end
         end
+      end
+
+      def assert_session_transaction_state(collection, context)
+        session = context.send(arguments['session'])
+        actual_state = session.instance_variable_get('@state').to_s.sub(/^transaction_|_transaction$/, '').sub(/^no$/, 'none')
+        expect(actual_state).to eq(arguments['state'])
       end
 
       def read_concern
