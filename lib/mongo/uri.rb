@@ -378,13 +378,8 @@ module Mongo
           raise_invalid_error!("Value for option #{key} contains the key/value delimiter (=): #{value}")
         end
         key = ::URI.decode(key)
-        strategy = URI_OPTION_MAP[key.downcase]
-        if strategy.nil?
-          log_warn("Unsupported URI option '#{key}' on URI '#{@string}'. It will be ignored.")
-        else
-          value = ::URI.decode(value)
-          add_uri_option(key, strategy, value, uri_options)
-        end
+        value = ::URI.decode(value)
+        add_uri_option(key, value, uri_options)
         uri_options
       end
     end
@@ -527,6 +522,7 @@ module Mongo
     uri_option 'appname', :app_name
     uri_option 'compressors', :compressors, :type => :array
     uri_option 'readconcernlevel', :level, group: :read_concern
+    uri_option 'retryreads', :retry_reads, :type => :retry_reads
     uri_option 'retrywrites', :retry_writes, :type => :retry_writes
     uri_option 'zlibcompressionlevel', :zlib_compression_level, :type => :zlib_compression_level
 
@@ -592,10 +588,15 @@ module Mongo
     #   Merges the option into the target.
     #
     # @param key [String] URI option name.
-    # @param strategy [Symbol] The strategy for this option.
     # @param value [String] The value of the option.
     # @param uri_options [Hash] The base option target.
-    def add_uri_option(key, strategy, value, uri_options)
+    def add_uri_option(key, value, uri_options)
+      strategy = URI_OPTION_MAP[key.downcase]
+      if strategy.nil?
+        log_warn("Unsupported URI option '#{key}' on URI '#{@string}'. It will be ignored.")
+        return
+      end
+
       target = select_target(uri_options, strategy[:group])
       value = apply_transform(key, value, strategy[:type])
       merge_uri_option(target, value, strategy[:name])
@@ -783,6 +784,16 @@ module Mongo
     #   (and a warning will be logged).
     def ssl_verify_hostname(value)
       inverse_bool('tlsAllowInvalidHostnames', value)
+    end
+
+    # Parses the retryReads value.
+    #
+    # @param value [ String ] The retryReads value.
+    #
+    # @return [ true | false | nil ] The boolean value parsed out, otherwise nil (and a warning
+    #   will be logged).
+    def retry_reads(value)
+      convert_bool('retryReads', value)
     end
 
     # Parses the retryWrites value.
