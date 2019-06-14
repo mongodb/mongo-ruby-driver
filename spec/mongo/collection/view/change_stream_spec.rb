@@ -279,7 +279,6 @@ describe Mongo::Collection::View::ChangeStream do
     end
 
     context 'when provided a session' do
-      min_server_fcv '3.6'
 
       let(:options) do
         { session: session }
