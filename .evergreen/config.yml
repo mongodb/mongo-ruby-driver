@@ -728,7 +728,7 @@ buildvariants:
   matrix_spec:
     auth-and-ssl: ["auth-and-ssl", "noauth-and-nossl"]
     ruby: "ruby-2.6"
-    mongodb-version: "4.2"
+    mongodb-version: ["4.2", latest]
     topology: "sharded-cluster"
     single-mongos: single-mongos
   display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
