@@ -52,7 +52,7 @@ module Mongo
       def collection_names(options = {})
         @batch_size = options[:batch_size]
         session = client.send(:get_session, options)
-        cursor = read_with_retry_cursor(session, ServerSelector.get(mode: :primary), self) do |server|
+        cursor = read_with_retry_cursor(session, ServerSelector.primary, self) do |server|
           send_initial_query(server, session, name_only: true)
         end
         cursor.map do |info|
@@ -75,7 +75,7 @@ module Mongo
       # @since 2.0.5
       def list_collections
         session = client.send(:get_session)
-        collections_info(session, ServerSelector.get(mode: :primary))
+        collections_info(session, ServerSelector.primary)
       end
 
       # Create the new database view.

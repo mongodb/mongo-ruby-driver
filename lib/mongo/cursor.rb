@@ -42,6 +42,12 @@ module Mongo
     # @return [ Collection::View ] view The collection view.
     attr_reader :view
 
+    # The resume token tracked by the cursor for change stream resuming
+    # 
+    # @return [ BSON::Document | nil ] The cursor resume token. 
+    # @api private
+    attr_reader :resume_token
+
     # Creates a +Cursor+ object.
     #
     # @example Instantiate the cursor.
@@ -125,20 +131,21 @@ module Mongo
     #
     # @since 2.0.0
     def each
-      process(@initial_result).each { |doc| yield doc }
-      while more?
-        return kill_cursors if exhausted?
-        get_more.each { |doc| yield doc }
+      loop do
+        document = try_next
+        yield document if document
       end
+    rescue StopIteration => e
+      return self
     end
 
     # Return one document from the query, if one is available.
     #
-    # Retries once on a resumable error.
-    #
     # This method will wait up to max_await_time_ms milliseconds
     # for changes from the server, and if no changes are received
-    # it will return nil.
+    # it will return nil. If there are no more documents to return
+    # from the server, or if we have exhausted the cursor, it will
+    # raise a StopIteration exception.
     #
     # @note This method is experimental and subject to change.
     #
@@ -152,24 +159,35 @@ module Mongo
       end
 
       if @documents.empty?
+        # On empty batches, we cache the batch resume token
+        cache_batch_resume_token
+
         if more?
           if exhausted?
             kill_cursors
-            return nil
+            raise StopIteration
           end
-
           @documents = get_more
+        else
+          raise StopIteration
         end
       else
         # cursor is closed here
         # keep documents as an empty array
       end
 
-      if @documents
-        return @documents.shift
+      # If there is at least one document, cache its _id
+      if @documents[0]
+        cache_resume_token(@documents[0])
       end
 
-      nil
+      # Cache the batch resume token if we are iterating
+      # over the last document, or if the batch is empty
+      if @documents.size <= 1
+        cache_batch_resume_token
+      end
+
+      return @documents.shift
     end
 
     # Get the batch size.
@@ -234,13 +252,13 @@ module Mongo
     def to_return
       use_limit? ? @remaining : (batch_size || 0)
     end
-
-    private
-
-    def exhausted?
-      limited? ? @remaining <= 0 : false
-    end
-
+    
+    # Execute a getMore command and return the batch of documents 
+    # obtained from the server.
+    #
+    # @return [ Array<BSON::Document> ] The batch of documents
+    #
+    # @api private
     def get_more
       # Modern retryable reads specification prohibits retrying getMores.
       # Legacy retryable read logic used to retry getMores, but since
@@ -248,6 +266,22 @@ module Mongo
       # getMore operations in any circumstance.
       # https://github.com/mongodb/specifications/blob/master/source/retryable-reads/retryable-reads.rst#qa
       process(get_more_operation.execute(@server))
+    end
+
+    private
+
+    def exhausted?
+      limited? ? @remaining <= 0 : false
+    end
+
+    def cache_resume_token(doc)
+      if doc[:_id] && doc[:_id].is_a?(Hash)
+        @resume_token = doc[:_id] && doc[:_id].dup.freeze
+      end
+    end
+
+    def cache_batch_resume_token
+      @resume_token = @post_batch_resume_token if @post_batch_resume_token
     end
 
     def get_more_operation
@@ -298,7 +332,13 @@ module Mongo
       @coll_name ||= result.namespace.sub("#{database.name}.", '') if result.namespace
       unregister if result.cursor_id == 0
       @cursor_id = result.cursor_id
+
+      if result.respond_to?(:post_batch_resume_token)
+        @post_batch_resume_token = result.post_batch_resume_token
+      end
+
       end_session if !more?
+
       result.documents
     end
 

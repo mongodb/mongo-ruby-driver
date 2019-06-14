@@ -94,8 +94,12 @@ module Mongo
           @changes_for = changes_for
           @change_stream_filters = pipeline && pipeline.dup
           @options = options && options.dup.freeze
-          @resume_token = @options[:resume_after]
           @start_after = @options[:start_after]
+
+          # The resume token tracked by the change stream, used only
+          # when there is no cursor, or no cursor resume token
+          @resume_token = @start_after || @options[:resume_after]     
+
           create_cursor!
 
           # We send different parameters when we resume a change stream
@@ -121,26 +125,12 @@ module Mongo
         # @yieldparam [ BSON::Document ] Each change stream document.
         def each
           raise StopIteration.new if closed?
-          retried = false
-          begin
-            @cursor.each do |doc|
-              cache_resume_token(doc)
-              yield doc
-            end if block_given?
-            @cursor.to_enum
-          rescue Mongo::Error => e
-            if retried || !e.change_stream_resumable?
-              raise
-            end
-
-            retried = true
-            # Rerun initial aggregation.
-            # Any errors here will stop iteration and break out of this
-            # method
-            close
-            create_cursor!
-            retry
+          loop do
+            document = try_next
+            yield document if document
           end
+        rescue StopIteration => e
+          return self
         end
 
         # Return one document from the change stream, if one is available.
@@ -153,10 +143,7 @@ module Mongo
         # for changes from the server, and if no changes are received
         # it will return nil.
         #
-        # @note This method is experimental and subject to change.
-        #
         # @return [ BSON::Document | nil ] A change stream document.
-        # @api experimental
         # @since 2.6.0
         def try_next
           raise StopIteration.new if closed?
@@ -165,27 +152,28 @@ module Mongo
           begin
             doc = @cursor.try_next
           rescue Mongo::Error => e
-            unless e.change_stream_resumable?
+            if retried || !e.change_stream_resumable?
               raise
             end
 
-            if retried
-              # Rerun initial aggregation.
-              # Any errors here will stop iteration and break out of this
-              # method
-              close
-              create_cursor!
-              retried = false
-              doc = @cursor.try_next
-            else
-              # Attempt to retry a getMore once
-              retried = true
-              retry
-            end
+            retried = true
+            # Rerun initial aggregation.
+            # Any errors here will stop iteration and break out of this
+            # method
+
+            # Save cursor's resume token so we can use it
+            # to create a new cursor
+            @resume_token = @cursor.resume_token 
+
+            close
+            create_cursor!
+            retry
           end
 
-          if doc
-            cache_resume_token(doc)
+          # We need to verify each doc has an _id, so we
+          # have a resume token to work with
+          if doc && doc['_id'].nil?
+            raise Error::MissingResumeToken
           end
           doc
         end
@@ -238,7 +226,21 @@ module Mongo
         # @since 2.5.0
         def inspect
           "#<Mongo::Collection::View:ChangeStream:0x#{object_id} filters=#{@change_stream_filters} " +
-            "options=#{@options} resume_token=#{@resume_token}>"
+            "options=#{@options} resume_token=#{resume_token}>"
+        end
+
+        # Returns the resume token that the stream will
+        # use to automatically resume, if one exists.
+        #
+        # @example Get the change stream resume token.
+        #   stream.resume_token
+        #
+        # @return [ BSON::Document | nil ] The change stream resume token.
+        # 
+        # @since 2.10.0
+        def resume_token
+          cursor_resume_token = @cursor.resume_token if @cursor
+          cursor_resume_token || @resume_token
         end
 
         private
@@ -253,15 +255,6 @@ module Mongo
 
         def for_collection?
           !for_cluster? && !for_database?
-        end
-
-        def cache_resume_token(doc)
-          # Always record both resume token and operation time,
-          # in case we get an older or newer server during rolling
-          # upgrades/downgrades
-          unless @resume_token = (doc[:_id] && doc[:_id].dup)
-            raise Error::MissingResumeToken
-          end
         end
 
         def create_cursor!
@@ -305,13 +298,10 @@ module Mongo
               # However, if the first getMore fails and the user didn't pass
               # a resume token we won't have a resume token to use.
               # Use start_at_operation time in this case
-              if @resume_token
-                # Spec says we need to remove startAtOperationTime if
-                # one was passed in by user, thus we won't forward it
-              elsif @start_after
-                # The spec says to set `resumeAfter` to the `startAfter` token and not to send
-                # either `startAfter` or `startAtOperationTime`.
-                @resume_token = @start_after
+              if resume_token
+                # Spec says we need to remove both startAtOperationTime and startAfter if
+                # either was passed in by user, thus we won't forward them
+                doc[:resumeAfter] = resume_token
               elsif start_at_operation_time_supported? && @start_at_operation_time
                 # It is crucial to check @start_at_operation_time_supported
                 # here - we may have switched to an older server that
@@ -327,6 +317,8 @@ module Mongo
             else
               if @start_after
                 doc[:startAfter] = @start_after
+              elsif resume_token
+                doc[:resumeAfter] = resume_token
               end
 
               if options[:start_at_operation_time]
@@ -334,7 +326,7 @@ module Mongo
                   options[:start_at_operation_time])
               end
             end
-            doc[:resumeAfter] = @resume_token if @resume_token
+
             doc[:allChangesForCluster] = true if for_cluster?
           end
         end

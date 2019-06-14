@@ -74,7 +74,7 @@ describe Mongo::Cluster do
   describe '#has_readable_server?' do
 
     let(:selector) do
-      Mongo::ServerSelector.get(mode: :primary)
+      Mongo::ServerSelector.primary
     end
 
     it 'delegates to the topology' do
@@ -92,7 +92,7 @@ describe Mongo::Cluster do
   describe '#inspect' do
 
     let(:preference) do
-      Mongo::ServerSelector.get(ServerSelector::PRIMARY)
+      Mongo::ServerSelector.primary
     end
 
     it 'displays the cluster seeds and topology' do
@@ -104,7 +104,7 @@ describe Mongo::Cluster do
   describe '#replica_set_name' do
 
     let(:preference) do
-      Mongo::ServerSelector.get(ServerSelector::PRIMARY)
+      Mongo::ServerSelector.primary
     end
 
     context 'when the option is provided' do
@@ -141,7 +141,7 @@ describe Mongo::Cluster do
   describe '#scan!' do
 
     let(:preference) do
-      Mongo::ServerSelector.get(ServerSelector::PRIMARY)
+      Mongo::ServerSelector.primary
     end
 
     let(:known_servers) do

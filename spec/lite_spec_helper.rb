@@ -19,22 +19,6 @@ TRANSACTIONS_API_TESTS = Dir.glob("#{CURRENT_PATH}/spec_tests/data/transactions_
 CHANGE_STREAMS_TESTS = Dir.glob("#{CURRENT_PATH}/spec_tests/data/change_streams/*.yml").sort
 CMAP_TESTS = Dir.glob("#{CURRENT_PATH}/spec_tests/data/cmap/*.yml").sort
 
-if ENV['DRIVERS_TOOLS']
-  CLIENT_CERT_PEM = ENV['DRIVER_TOOLS_CLIENT_CERT_PEM']
-  CLIENT_KEY_PEM = ENV['DRIVER_TOOLS_CLIENT_KEY_PEM']
-  CA_PEM = ENV['DRIVER_TOOLS_CA_PEM']
-  CLIENT_KEY_ENCRYPTED_PEM = ENV['DRIVER_TOOLS_CLIENT_KEY_ENCRYPTED_PEM']
-else
-  SSL_CERTS_DIR = "#{CURRENT_PATH}/support/certificates"
-  CLIENT_PEM = "#{SSL_CERTS_DIR}/client.pem"
-  CA_PEM = "#{SSL_CERTS_DIR}/ca.crt"
-  CRL_PEM = "#{SSL_CERTS_DIR}/crl.pem"
-  CLIENT_KEY_PEM = "#{SSL_CERTS_DIR}/client.key"
-  CLIENT_CERT_PEM = "#{SSL_CERTS_DIR}/client.crt"
-  CLIENT_KEY_ENCRYPTED_PEM = "#{SSL_CERTS_DIR}/client-encrypted.key"
-  CLIENT_KEY_PASSPHRASE = "passphrase"
-end
-
 require 'mongo'
 
 unless ENV['CI']

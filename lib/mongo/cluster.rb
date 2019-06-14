@@ -524,8 +524,7 @@ module Mongo
     #
     # @since 2.0.0
     def next_primary(ping = true)
-      @primary_selector ||= ServerSelector.get(ServerSelector::PRIMARY)
-      @primary_selector.select_server(self)
+      ServerSelector.primary.select_server(self)
     end
 
     # Get the connection pool for the server.

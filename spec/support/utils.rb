@@ -3,7 +3,7 @@ module Utils
   # Converts a 'camelCase' string or symbol to a :under_score symbol.
   def underscore(str)
     str = str.to_s
-    str = str[0].downcase + str[1...str.length].gsub(/([A-Z])/) { |m| "_#{m.downcase}" }
+    str = str[0].downcase + str[1...str.length].gsub(/([A-Z]+)/) { |m| "_#{m.downcase}" }
     str.to_sym
   end
   module_function :underscore

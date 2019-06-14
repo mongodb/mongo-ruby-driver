@@ -46,7 +46,6 @@ module Mongo
       include Immutable
       include Iterable
       include Readable
-      include Retryable
       include Explainable
       include Writable
 
@@ -61,6 +60,10 @@ module Mongo
                      :client,
                      :cluster,
                      :database,
+                     :read_with_retry,
+                     :read_with_retry_cursor,
+                     :write_with_retry,
+                     :legacy_write_with_retry,
                      :write_concern_with_session
 
       # Delegate to the cluster for the next primary.

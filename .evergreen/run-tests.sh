@@ -18,11 +18,11 @@ set -o errexit  # Exit the script with error if any of the commands fail
 set_fcv
 set_env_vars
 
-export DRIVER_TOOLS_CLIENT_CERT_PEM="${DRIVERS_TOOLS}/.evergreen/x509gen/client-public.pem"
-export DRIVER_TOOLS_CLIENT_KEY_PEM="${DRIVERS_TOOLS}/.evergreen/x509gen/client-private.pem"
-export DRIVER_TOOLS_CLIENT_CERT_KEY_PEM="${DRIVERS_TOOLS}/.evergreen/x509gen/client.pem"
-export DRIVER_TOOLS_CA_PEM="${DRIVERS_TOOLS}/.evergreen/x509gen/ca.pem"
-export DRIVER_TOOLS_CLIENT_KEY_ENCRYPTED_PEM="${DRIVERS_TOOLS}/.evergreen/x509gen/password_protected.pem"
+#export DRIVER_TOOLS_CLIENT_CERT_PEM="${DRIVERS_TOOLS}/.evergreen/x509gen/client-public.pem"
+#export DRIVER_TOOLS_CLIENT_KEY_PEM="${DRIVERS_TOOLS}/.evergreen/x509gen/client-private.pem"
+#export DRIVER_TOOLS_CLIENT_CERT_KEY_PEM="${DRIVERS_TOOLS}/.evergreen/x509gen/client.pem"
+#export DRIVER_TOOLS_CA_PEM="${DRIVERS_TOOLS}/.evergreen/x509gen/ca.pem"
+#export DRIVER_TOOLS_CLIENT_KEY_ENCRYPTED_PEM="${DRIVERS_TOOLS}/.evergreen/x509gen/password_protected.pem"
 
 setup_ruby
 
