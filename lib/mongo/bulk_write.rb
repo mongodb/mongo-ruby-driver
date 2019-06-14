@@ -132,11 +132,6 @@ module Mongo
 
     # Get the write concern for the bulk write.
     #
-    # If in a transaction and the bulk write inherits an 
-    # unacknowledged write concern from the collection, remove
-    # the write concern's :w option. Otherwise, return the
-    # unmodified write concern.
-    #
     # @api private
     #
     # @example Get the write concern.
@@ -145,12 +140,10 @@ module Mongo
     # @return [ WriteConcern ] The write concern.
     #
     # @since 2.1.0
-    def write_concern(session)
-      if options[:write_concern]
-        WriteConcern.get(options[:write_concern])
-      else 
-        applied_collection_write_concern(session)
-      end
+    def write_concern(session = nil)
+      @write_concern ||= options[:write_concern] ?
+        WriteConcern.get(options[:write_concern]) :
+        collection.write_concern_with_session(session)
     end
 
     private
@@ -161,18 +154,6 @@ module Mongo
 
     def single_statement?(operation)
       SINGLE_STATEMENT_OPS.include?(operation.keys.first)
-    end
-
-    def applied_collection_write_concern(session)
-      wc = collection.write_concern
-      if session.respond_to?(:in_transaction?) && session.in_transaction?
-        if wc && WriteConcern.send(:unacknowledged?, wc.options)
-          opts = wc.options.dup
-          opts.delete(:w)
-          return WriteConcern.get(opts)
-        end
-      end
-      wc
     end
 
     def base_spec(operation_id, session)
