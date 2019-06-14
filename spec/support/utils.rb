@@ -35,19 +35,10 @@ module Utils
   # Converts camel case clientOptions, as used in spec tests,
   # to Ruby driver underscore options.
   def convert_client_options(spec_test_options)
-    spec_test_options.reduce({}) do |opts, kv|
-      case kv.first
-      when 'readConcernLevel'
-        kv = [:read_concern, { 'level' => kv.last }]
-      when 'readPreference'
-        kv = [:read, { 'mode' => kv.last }]
-      when 'w'
-        kv = [:write, { w: kv.last }]
-      else
-        kv[0] = underscore(kv[0])
-      end
-
-      opts.tap { |o| o[kv.first] = kv.last }
+    uri = Mongo::URI.new('mongodb://localhost')
+    spec_test_options.reduce({}) do |opts, (name, value)|
+      uri.send(:add_uri_option, name, value.to_s, opts)
+      opts
     end
   end
   module_function :convert_client_options
