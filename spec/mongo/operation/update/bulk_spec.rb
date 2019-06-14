@@ -1,6 +1,7 @@
 require 'spec_helper'
 
 describe Mongo::Operation::Update do
+  require_no_multi_shard
 
   let(:documents) do
     [{ :q => { :foo => 1 },
