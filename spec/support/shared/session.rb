@@ -148,6 +148,7 @@ shared_examples 'an explicit session with an unacknowledged write' do
     end
 
     it 'does not add a session id to the operation' do
+      expect(Mongo::Session).not_to receive(:new)
       operation
       expect(EventSubscriber.started_events.collect(&:command).collect { |cmd| cmd['lsid'] }.compact).to be_empty
     end
