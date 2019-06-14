@@ -63,6 +63,8 @@ module Mongo
           @outcome = Mongo::CRUD::Outcome.new(test['outcome'])
         end
         @expected_results = @operations.map do |o|
+          # We check both o.key('error') and o['error'] to provide a better
+          # error message in case error: false is ever needed in the tests
           if o.key?('error')
             if o['error']
               {'error' => true}
