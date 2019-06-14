@@ -378,13 +378,8 @@ module Mongo
           raise_invalid_error!("Value for option #{key} contains the key/value delimiter (=): #{value}")
         end
         key = ::URI.decode(key)
-        strategy = URI_OPTION_MAP[key.downcase]
-        if strategy.nil?
-          log_warn("Unsupported URI option '#{key}' on URI '#{@string}'. It will be ignored.")
-        else
-          value = ::URI.decode(value)
-          add_uri_option(key, strategy, value, uri_options)
-        end
+        value = ::URI.decode(value)
+        add_uri_option(key, value, uri_options)
         uri_options
       end
     end
@@ -592,10 +587,15 @@ module Mongo
     #   Merges the option into the target.
     #
     # @param key [String] URI option name.
-    # @param strategy [Symbol] The strategy for this option.
     # @param value [String] The value of the option.
     # @param uri_options [Hash] The base option target.
-    def add_uri_option(key, strategy, value, uri_options)
+    def add_uri_option(key, value, uri_options)
+      strategy = URI_OPTION_MAP[key.downcase]
+      if strategy.nil?
+        log_warn("Unsupported URI option '#{key}' on URI '#{@string}'. It will be ignored.")
+        return
+      end
+
       target = select_target(uri_options, strategy[:group])
       value = apply_transform(key, value, strategy[:type])
       merge_uri_option(target, value, strategy[:name])

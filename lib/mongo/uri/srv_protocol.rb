@@ -170,8 +170,7 @@ module Mongo
           raise Error::InvalidTXTRecord.new(INVALID_OPTS_VALUE_DELIM) unless opt.index(URI_OPTS_VALUE_DELIM)
           key, value = opt.split(URI_OPTS_VALUE_DELIM)
           raise Error::InvalidTXTRecord.new(INVALID_TXT_RECORD_OPTION) unless VALID_TXT_OPTIONS.include?(key.downcase)
-          strategy = URI_OPTION_MAP[key.downcase]
-          add_uri_option(key, strategy, value, txt_options)
+          add_uri_option(key, value, txt_options)
           txt_options
         end
       end
