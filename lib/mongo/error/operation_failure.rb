@@ -179,6 +179,7 @@ module Mongo
       #   concern error or either one of the two.
       #
       # @since 2.10.0
+      # @api experimental
       def write_concern_error?
         @write_concern_error
       end
@@ -187,12 +188,14 @@ module Mongo
       #   if a write concern error is present and has a code.
       #
       # @since 2.10.0
+      # @api experimental
       attr_reader :write_concern_error_code
 
       # @return [ String | nil ] The code name for the write concern error,
       #   if a write concern error is present and has a code name.
       #
       # @since 2.10.0
+      # @api experimental
       attr_reader :write_concern_error_code_name
 
       # Create the operation failure.

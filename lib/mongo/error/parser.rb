@@ -125,6 +125,7 @@ module Mongo
       #   if a write concern error is present and has a code name.
       #
       # @since 2.10.0
+      # @api experimental
       def write_concern_error_code_name
         write_concern_error_document && write_concern_error_document['codeName']
       end
