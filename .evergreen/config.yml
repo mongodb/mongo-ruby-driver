@@ -86,6 +86,7 @@ functions:
               export RETRY_READS=${RETRY_READS}
               export RETRY_WRITES=${RETRY_WRITES}
               export WITH_ACTIVE_SUPPORT="${WITH_ACTIVE_SUPPORT}"
+              export SINGLE_MONGOS="${SINGLE_MONGOS}"
            EOT
            # See what we've done
            cat expansion.yml
@@ -668,6 +669,13 @@ axes:
         display_name: AS
         variables:
           WITH_ACTIVE_SUPPORT: true
+  - id: "single-mongos"
+    display_name: Single Mongos
+    values:
+      - id: "single-mongos"
+        display_name: Single Mongos
+        variables:
+          SINGLE_MONGOS: true
 
 
 buildvariants:
@@ -709,6 +717,20 @@ buildvariants:
     ruby: "ruby-2.6"
     mongodb-version: "*"
     topology: "*"
+  display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
+  run_on:
+    - rhel70-small
+  tasks:
+     - name: "test"
+
+-
+  matrix_name: "single-mongos"
+  matrix_spec:
+    auth-and-ssl: ["auth-and-ssl", "noauth-and-nossl"]
+    ruby: "ruby-2.6"
+    mongodb-version: "4.2"
+    topology: "sharded-cluster"
+    single-mongos: single-mongos
   display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
   run_on:
     - rhel70-small

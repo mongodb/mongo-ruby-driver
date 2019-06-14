@@ -6,6 +6,11 @@ describe 'SDAM error handling' do
   end
 
   describe 'when there is an error during an operation' do
+
+    # These tests operate on specific servers, and don't work in a multi
+    # shard cluster where multiple servers are equally eligible
+    require_no_multi_shard
+
     let(:client) { authorized_client_without_any_retries }
 
     before do
