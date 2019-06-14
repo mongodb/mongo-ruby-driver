@@ -144,9 +144,7 @@ shared_examples 'an explicit session with an unacknowledged write' do
     max_server_version '3.4'
 
     let(:session) do
-      double('session').tap do |s|
-        allow(s).to receive(:validate!)
-      end
+      nil
     end
 
     it 'does not add a session id to the operation' do
