@@ -81,11 +81,7 @@ module Mongo
           # but does return the error code (or we can parse the error code
           # out of the message).
           # https://jira.mongodb.org/browse/SERVER-39706
-          if e.code == 11000
-            error_code_name = 'DuplicateKey'
-          else
-            warn "Error without error code name: #{e.code}"
-          end
+          warn "Error without error code name: #{e.code}"
         end
 
         {
