@@ -149,8 +149,8 @@ module Mongo
       #
       # @since 2.0.0
       def create_many(*models)
-        server = next_primary
         client.send(:with_session, @options) do |session|
+          server = next_primary(nil, session)
           spec = {
                   indexes: normalize_models(models.flatten, server),
                   db_name: database.name,
@@ -234,7 +234,7 @@ module Mongo
                    index_name: name,
                    session: session
                  }
-          server = next_primary
+          server = next_primary(nil, session)
           spec[:write_concern] = write_concern if server.features.collation_enabled?
           Operation::DropIndex.new(spec).execute(server)
         end

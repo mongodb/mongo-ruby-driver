@@ -141,7 +141,7 @@ shared_examples 'an explicit session with an unacknowledged write' do
   end
 
   context 'when sessions are not supported' do
-    min_server_fcv '3.6'
+    max_server_version '3.4'
 
     let(:session) do
       double('session').tap do |s|
@@ -172,7 +172,7 @@ shared_examples 'an implicit session with an unacknowledged write' do
   end
 
   context 'when sessions are not supported' do
-    min_server_fcv '3.6'
+    max_server_version '3.4'
 
     it 'does not add a session id to the operation' do
       operation

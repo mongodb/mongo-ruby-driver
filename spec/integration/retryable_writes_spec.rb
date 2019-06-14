@@ -115,7 +115,7 @@ describe 'Retryable writes integration tests' do
 
         before do
           legacy_primary = double('legacy primary', :'retry_writes?' => false)
-          allow(client.cluster).to receive(:next_primary).and_return(primary_server, legacy_primary)
+          expect(collection).to receive(:select_server).and_return(primary_server, legacy_primary)
           expect(primary_socket).to receive(:write).and_raise(error)
         end
 

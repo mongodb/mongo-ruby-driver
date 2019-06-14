@@ -268,14 +268,33 @@ module Mongo
         !successful? ? raise_operation_failure : self
       end
 
-      def raise_operation_failure
-        raise Error::OperationFailure.new(
+      # The exception instance (of the Error::OperationFailure class)
+      # that would be raised during processing of this result.
+      #
+      # This method should only be called when result is not successful.
+      #
+      # @return [ Error::OperationFailure ] The exception.
+      #
+      # @api private
+      def error
+        @error ||= Error::OperationFailure.new(
           parser.message,
           self,
           code: parser.code,
           code_name: parser.code_name,
+          write_concern_error: parser.write_concern_error?,
+          write_concern_error_code: parser.write_concern_error_code,
+          write_concern_error_code_name: parser.write_concern_error_code_name,
           labels: parser.labels,
           wtimeout: parser.wtimeout)
+      end
+
+      # Raises a Mongo::OperationFailure exception corresponding to the
+      # error information in this result.
+      #
+      # @raise Error::OperationFailure
+      def raise_operation_failure
+        raise error
       end
       private :raise_operation_failure
 
