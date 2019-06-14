@@ -39,8 +39,12 @@ module Mongo
       # Returns a Protocol::Message or nil
       def dispatch_message(server)
         server.with_connection do |connection|
-          connection.dispatch([ message(server) ], operation_id)
+          connection.dispatch([ build_message(server) ], operation_id)
         end
+      end
+
+      def build_message(server)
+        message(server)
       end
 
       def process_result(result, server)

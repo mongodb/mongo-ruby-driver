@@ -121,10 +121,6 @@ module Mongo
         session.validate_read_preference!(selector) if read_command?(selector)
       end
 
-      def update_session_state!
-        session.update_state!
-      end
-
       def command(server)
         sel = selector(server).dup
         add_write_concern!(sel)
@@ -153,8 +149,20 @@ module Mongo
         apply_txn_opts!(sel)
         suppress_read_write_concern!(sel)
         validate_read_preference!(sel)
-        update_session_state!
         apply_txn_num!(sel)
+      end
+
+      def build_message(server)
+        super.tap do |message|
+          if session
+            # Serialize the message to detect client-side problems,
+            # such as invalid BSON keys. The message will be serialized again
+            # later prior to being sent to the server.
+            message.serialize(BSON::ByteBuffer.new)
+
+            session.update_state!
+          end
+        end
       end
     end
   end
