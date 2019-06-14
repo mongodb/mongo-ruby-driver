@@ -1,12 +1,11 @@
 require 'spec_helper'
 
 describe Mongo::Error::Parser do
+  let(:parser) do
+    described_class.new(document)
+  end
 
   describe '#message' do
-
-    let(:parser) do
-      described_class.new(document)
-    end
 
     context 'when the document contains no error message' do
 
@@ -97,9 +96,6 @@ describe Mongo::Error::Parser do
   end
 
   describe '#code' do
-    let(:parser) do
-      described_class.new(document)
-    end
 
     context 'when document contains code and ok: 1' do
       let(:document) do
@@ -172,12 +168,23 @@ describe Mongo::Error::Parser do
         expect(parser.code).to be nil
       end
     end
+
+    context 'when both top level code and write concern code are present' do
+
+      let(:document) do
+        { 'ok' => 0,
+          'errmsg' => 'not master', 'code' => 10107, 'codeName' => 'NotMaster',
+          'writeConcernError' => {
+            'code' => 100, 'errmsg' => 'Not enough data-bearing nodes' } }
+      end
+
+      it 'returns top level code' do
+        expect(parser.code).to eq(10107)
+      end
+    end
   end
 
   describe '#code_name' do
-    let(:parser) do
-      described_class.new(document)
-    end
 
     context 'when document contains code name and ok: 1' do
       let(:document) do
@@ -251,12 +258,151 @@ describe Mongo::Error::Parser do
         expect(parser.code_name).to be nil
       end
     end
+
+    context 'when both top level code and write concern code are present' do
+
+      let(:document) do
+        { 'ok' => 0,
+          'errmsg' => 'not master', 'code' => 10107, 'codeName' => 'NotMaster',
+          'writeConcernError' => {
+            'code' => 100, 'errmsg' => 'Not enough data-bearing nodes' } }
+      end
+
+      it 'returns top level code' do
+        expect(parser.code_name).to eq('NotMaster')
+      end
+    end
+  end
+
+  describe '#write_concern_error?' do
+    context 'there is a write concern error' do
+
+      let(:document) do
+        { 'ok' => 1,
+          'writeConcernError' => {
+            'code' => 100, 'errmsg' => 'Not enough data-bearing nodes' } }
+      end
+
+      it 'is true' do
+        expect(parser.write_concern_error?).to be true
+      end
+    end
+
+    context 'there is no write concern error' do
+
+      let(:document) do
+        { 'ok' => 0,
+          'errmsg' => 'not master', 'code' => 10107, 'codeName' => 'NotMaster',
+        }
+      end
+
+      it 'is false' do
+        expect(parser.write_concern_error?).to be false
+      end
+    end
+
+    context 'there is a top level error and write concern error' do
+
+      let(:document) do
+        { 'ok' => 0,
+          'errmsg' => 'not master', 'code' => 10107, 'codeName' => 'NotMaster',
+          'writeConcernError' => {
+            'code' => 100, 'errmsg' => 'Not enough data-bearing nodes' } }
+      end
+
+      it 'is true' do
+        expect(parser.write_concern_error?).to be true
+      end
+    end
+  end
+
+  describe '#write_concern_error_code' do
+    context 'there is a write concern error' do
+
+      let(:document) do
+        { 'ok' => 1,
+          'writeConcernError' => {
+            'code' => 100, 'errmsg' => 'Not enough data-bearing nodes' } }
+      end
+
+      it 'is true' do
+        expect(parser.write_concern_error_code).to eq(100)
+      end
+    end
+
+    context 'there is no write concern error' do
+
+      let(:document) do
+        { 'ok' => 0,
+          'errmsg' => 'not master', 'code' => 10107, 'codeName' => 'NotMaster',
+        }
+      end
+
+      it 'is nil' do
+        expect(parser.write_concern_error_code).to be nil
+      end
+    end
+
+    context 'there is a top level error and write concern error' do
+
+      let(:document) do
+        { 'ok' => 0,
+          'errmsg' => 'not master', 'code' => 10107, 'codeName' => 'NotMaster',
+          'writeConcernError' => {
+            'code' => 100, 'errmsg' => 'Not enough data-bearing nodes' } }
+      end
+
+      it 'is true' do
+        expect(parser.write_concern_error_code).to eq(100)
+      end
+    end
+  end
+
+  describe '#write_concern_error_code_name' do
+    context 'there is a write concern error' do
+
+      let(:document) do
+        { 'ok' => 1,
+          'writeConcernError' => {
+            'code' => 100, 'codeName' => 'SomeCodeName',
+              'errmsg' => 'Not enough data-bearing nodes' } }
+      end
+
+      it 'is the code name' do
+        expect(parser.write_concern_error_code_name).to eq('SomeCodeName')
+      end
+    end
+
+    context 'there is no write concern error' do
+
+      let(:document) do
+        { 'ok' => 0,
+          'errmsg' => 'not master', 'code' => 10107, 'codeName' => 'NotMaster',
+        }
+      end
+
+      it 'is nil' do
+        expect(parser.write_concern_error_code_name).to be nil
+      end
+    end
+
+    context 'there is a top level error and write concern error' do
+
+      let(:document) do
+        { 'ok' => 0,
+          'errmsg' => 'not master', 'code' => 10107, 'codeName' => 'NotMaster',
+          'writeConcernError' => {
+            'code' => 100, 'codeName' => 'SomeCodeName',
+              'errmsg' => 'Not enough data-bearing nodes' } }
+      end
+
+      it 'is the code name' do
+        expect(parser.write_concern_error_code_name).to eq('SomeCodeName')
+      end
+    end
   end
 
   describe '#document' do
-    let(:parser) do
-      described_class.new(document)
-    end
 
     let(:document) do
       { 'ok' => 0, 'errmsg' => 'not master', 'code' => 10107, 'codeName' => 'NotMaster' }
@@ -268,9 +414,6 @@ describe Mongo::Error::Parser do
   end
 
   describe '#replies' do
-    let(:parser) do
-      described_class.new(document)
-    end
 
     context 'when there are no replies' do
       let(:document) do
@@ -284,9 +427,6 @@ describe Mongo::Error::Parser do
   end
 
   describe '#labels' do
-    let(:parser) do
-      described_class.new(document)
-    end
 
     let(:document) do
       {
@@ -318,9 +458,6 @@ describe Mongo::Error::Parser do
   end
 
   describe '#wtimeout' do
-    let(:parser) do
-      described_class.new(document)
-    end
 
     context 'when document contains wtimeout' do
       let(:document) do
