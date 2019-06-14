@@ -48,7 +48,7 @@ module Mongo
               user: user,
               db_name: database.name,
               session: session
-            ).execute(next_primary)
+            ).execute(next_primary(nil, session))
           end
         end
 
@@ -83,7 +83,7 @@ module Mongo
               user_name: name,
               db_name: database.name,
               session: session
-            ).execute(next_primary)
+            ).execute(next_primary(nil, session))
           end
         end
 
@@ -107,7 +107,7 @@ module Mongo
               user: user,
               db_name: database.name,
               session: session
-            ).execute(next_primary)
+            ).execute(next_primary(nil, session))
           end
         end
 
@@ -136,7 +136,7 @@ module Mongo
               user_name: name,
               db_name: database.name,
               session: session
-            ).execute(next_primary)
+            ).execute(next_primary(nil, session))
           end
         end
 

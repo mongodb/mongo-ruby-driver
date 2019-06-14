@@ -97,12 +97,17 @@ module Mongo
       # @example Select a server from the cluster.
       #   selector.select_server(cluster)
       #
-      # @param [ Mongo::Cluster ] cluster The cluster from which to select an eligible server.
+      # @param [ Mongo::Cluster ] cluster The cluster from which to select
+      #   an eligible server.
+      # @param [ true, false ] ping Whether to ping the server before selection.
+      #   Deprecated and ignored.
+      # @param [ Session | nil ] session Optional session to take into account
+      #   for mongos pinning.
       #
       # @return [ Mongo::Server ] A server matching the server preference.
       #
       # @since 2.0.0
-      def select_server(cluster, ping = nil)
+      def select_server(cluster, ping = nil, session = nil)
         if cluster.replica_set?
           validate_max_staleness_value_early!
         end

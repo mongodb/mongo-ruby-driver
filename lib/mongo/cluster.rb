@@ -516,15 +516,16 @@ module Mongo
     # @example Get the next primary server.
     #   cluster.next_primary
     #
-    # @param [ true, false ] ping Whether to ping the server before selection. Deprecated,
-    #   not necessary with the implementation of the Server Selection specification.
-    #
+    # @param [ true, false ] ping Whether to ping the server before selection.
+    #   Deprecated and ignored.
+    # @param [ Session | nil ] session Optional session to take into account
+    #   for mongos pinning.
     #
     # @return [ Mongo::Server ] A primary server.
     #
     # @since 2.0.0
-    def next_primary(ping = true)
-      ServerSelector.primary.select_server(self)
+    def next_primary(ping = nil, session = nil)
+      ServerSelector.primary.select_server(self, nil, session)
     end
 
     # Get the connection pool for the server.
@@ -662,6 +663,11 @@ module Mongo
     # @note If the cluster has no data bearing servers, for example because
     #   the deployment is in the middle of a failover, this method returns
     #   false.
+    #
+    # @note This method returns as soon as the driver connects to any single
+    #   server in the deployment. Whether deployment overall supports sessions
+    #   can change depending on how many servers have been contacted, if
+    #   the servers are configured differently.
     def sessions_supported?
       if topology.data_bearing_servers?
         return !!topology.logical_session_timeout
