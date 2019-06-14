@@ -59,6 +59,7 @@ module Mongo
         @operations = test['operations']
         @expectations = test['expectations']
         @skip_reason = test['skipReason']
+        @multiple_mongoses = test['useMultipleMongoses']
         if test['outcome']
           @outcome = Mongo::CRUD::Outcome.new(test['outcome'])
         end
@@ -87,6 +88,10 @@ module Mongo
       end
 
       attr_reader :outcome
+
+      def multiple_mongoses?
+        @multiple_mongoses
+      end
 
       def support_client
         @support_client ||= ClientRegistry.instance.global_client('root_authorized').use(@spec.database_name)

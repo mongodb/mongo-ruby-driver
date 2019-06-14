@@ -27,6 +27,14 @@ def define_transactions_spec_tests(test_paths)
       define_spec_tests_with_requirements(spec) do |req|
         spec.tests.each do |test|
 
+          before do
+            if test.multiple_mongoses?
+              unless SpecConfig.instance.addresses.length > 1
+                skip "Test requires multiple mongoses"
+              end
+            end
+          end
+
           context(test.description) do
 
             if test.skip_reason
