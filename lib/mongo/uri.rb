@@ -522,6 +522,7 @@ module Mongo
     uri_option 'appname', :app_name
     uri_option 'compressors', :compressors, :type => :array
     uri_option 'readconcernlevel', :level, group: :read_concern
+    uri_option 'retryreads', :retry_reads, :type => :retry_reads
     uri_option 'retrywrites', :retry_writes, :type => :retry_writes
     uri_option 'zlibcompressionlevel', :zlib_compression_level, :type => :zlib_compression_level
 
@@ -783,6 +784,16 @@ module Mongo
     #   (and a warning will be logged).
     def ssl_verify_hostname(value)
       inverse_bool('tlsAllowInvalidHostnames', value)
+    end
+
+    # Parses the retryReads value.
+    #
+    # @param value [ String ] The retryReads value.
+    #
+    # @return [ true | false | nil ] The boolean value parsed out, otherwise nil (and a warning
+    #   will be logged).
+    def retry_reads(value)
+      convert_bool('retryReads', value)
     end
 
     # Parses the retryWrites value.
