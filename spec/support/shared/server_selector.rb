@@ -10,6 +10,16 @@ shared_context 'server selector' do
   end
   let(:primary) { make_server(:primary) }
   let(:secondary) { make_server(:secondary) }
+  let(:mongos) do
+    make_server(:mongos).tap do |server|
+      expect(server.mongos?).to be true
+    end
+  end
+  let(:unknown) do
+    make_server(:unknown).tap do |server|
+      expect(server.unknown?).to be true
+    end
+  end
   let(:options) { { :mode => name, :tag_sets => tag_sets, max_staleness: max_staleness } }
   let(:selector) { described_class.new(options) }
   let(:monitoring) do
