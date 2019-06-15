@@ -79,7 +79,8 @@ module Mongo
         end
 
         {
-          'errorCodeName' => error_code_name,
+          'errorCode' => e.code,
+          'errorCodeName' => e.code_name,
           'errorContains' => e.message,
           'errorLabels' => e.labels,
           'exception' => e,
@@ -174,6 +175,22 @@ module Mongo
           arguments['failPoint'],
           session.pinned_server.address,
         ]
+      end
+
+      def assert_session_pinned(collection, context)
+        args = context.transform_arguments(options)
+        session = args[:session]
+        unless session.pinned_server
+          raise ArgumentError, 'Expected session to be pinned'
+        end
+      end
+
+      def assert_session_unpinned(collection, context)
+        args = context.transform_arguments(options)
+        session = args[:session]
+        if session.pinned_server
+          raise ArgumentError, 'Expected session to not be pinned'
+        end
       end
 
       def read_concern
