@@ -574,23 +574,30 @@ module Mongo
       end
 
       def add_error_labels
-        yield
-      rescue Mongo::Error::SocketError => e
-        if session && session.in_transaction? && !session.committing_transaction?
-          e.add_label('TransientTransactionError')
-        end
-        if session && session.committing_transaction?
-          e.add_label('UnknownTransactionCommitResult')
-        end
-        raise e
-      rescue Mongo::Error::OperationFailure => e
-        if session && session.committing_transaction?
-          if e.write_retryable? || e.wtimeout? || (e.write_concern_error? &&
-              !Session::UNLABELED_WRITE_CONCERN_CODES.include?(e.write_concern_error_code))
+        begin
+          yield
+        rescue Mongo::Error::SocketError => e
+          if session && session.in_transaction? && !session.committing_transaction?
+            e.add_label('TransientTransactionError')
+          end
+          if session && session.committing_transaction?
             e.add_label('UnknownTransactionCommitResult')
           end
+          raise e
+        rescue Mongo::Error::OperationFailure => e
+          if session && session.committing_transaction?
+            if e.write_retryable? || e.wtimeout? || (e.write_concern_error? &&
+                !Session::UNLABELED_WRITE_CONCERN_CODES.include?(e.write_concern_error_code))
+              e.add_label('UnknownTransactionCommitResult')
+            end
+          end
+          raise e
         end
-        raise e
+      rescue Mongo::Error => e
+        if session
+          session.unpin_maybe(e)
+        end
+        raise
       end
     end
   end

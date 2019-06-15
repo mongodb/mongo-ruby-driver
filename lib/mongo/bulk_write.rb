@@ -184,6 +184,11 @@ module Mongo
       rescue Error::MaxBSONSize, Error::MaxMessageSize => e
         raise e if values.size <= 1
         split_execute(name, values, server, operation_id, result_combiner, session, txn_num)
+      rescue Mongo::Error => e
+        if session
+          session.unpin_maybe(e)
+        end
+        raise
       end
     end
 

@@ -20,12 +20,6 @@ module Mongo
     # @since 2.5.2
     module SessionsSupported
 
-      def do_execute(server)
-        add_error_labels do
-          super
-        end
-      end
-
       private
 
       ZERO_TIMESTAMP = BSON::Timestamp.new(0, 0)
@@ -156,6 +150,11 @@ module Mongo
         suppress_read_write_concern!(sel)
         validate_read_preference!(sel)
         apply_txn_num!(sel)
+        if session.recovery_token &&
+          (sel[:commitTransaction] || sel[:abortTransaction])
+        then
+          sel[:recoveryToken] = session.recovery_token
+        end
       end
 
       def build_message(server)

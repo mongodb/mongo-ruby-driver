@@ -144,6 +144,10 @@ module Mongo
       @state = NO_TRANSACTION_STATE
     end
 
+    attr_reader :pinned_server
+
+    attr_accessor :recovery_token
+
     # Get a formatted string for use in inspection.
     #
     # @example Inspect the session object.
@@ -154,6 +158,31 @@ module Mongo
     # @since 2.5.0
     def inspect
       "#<Mongo::Session:0x#{object_id} session_id=#{session_id} options=#{@options}>"
+    end
+
+    def pin(server)
+      if server.nil?
+        raise ArgumentError, 'Cannot pin to a nil server'
+      end
+      @pinned_server = server
+    end
+
+    def unpin
+      @pinned_server = nil
+    end
+
+    def unpin_maybe(error)
+      if !within_states?(Session::NO_TRANSACTION_STATE) &&
+        error.label?('TransientTransactionError')
+      then
+        unpin
+      end
+
+      if committing_transaction? &&
+        error.label?('UnknownTransactionCommitResult')
+      then
+        unpin
+      end
     end
 
     # End this session.
@@ -405,6 +434,13 @@ module Mongo
         end
       end
       @server_session.set_last_use!
+
+      if doc = result.reply && result.reply.documents.first
+        if doc[:recoveryToken]
+          self.recovery_token = doc[:recoveryToken]
+        end
+      end
+
       result
     end
 
@@ -571,6 +607,8 @@ module Mongo
         raise Mongo::Error::InvalidTransactionOperation.new(
           Mongo::Error::InvalidTransactionOperation::TRANSACTION_ALREADY_IN_PROGRESS)
       end
+
+      unpin
 
       next_txn_num
       @txn_options = options || @options[:default_transaction_options] || {}
@@ -875,6 +913,11 @@ module Mongo
       @client.cluster
     end
 
+    # @api private
+    def starting_transaction?
+      within_states?(STARTING_TRANSACTION_STATE)
+    end
+
 		protected
 
     # Get the read concern the session will use when starting a transaction.
@@ -897,10 +940,7 @@ module Mongo
     def within_states?(*states)
       states.include?(@state)
     end
-
-    def starting_transaction?
-      within_states?(STARTING_TRANSACTION_STATE)
-    end
+    public :within_states?
 
     def check_if_no_transaction!
       return unless within_states?(NO_TRANSACTION_STATE)

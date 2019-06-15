@@ -108,6 +108,29 @@ module Mongo
       #
       # @since 2.0.0
       def select_server(cluster, ping = nil, session = nil)
+        if session && session.pinned_server
+          if Mongo::Lint.enabled?
+            unless cluster.sharded?
+              raise Error::LintError, "Session has a pinned server in a non-sharded topology: #{topology}"
+            end
+          end
+
+          if !session.in_transaction?
+            session.unpin
+          end
+
+          if server = session.pinned_server
+            # Here we assume that a mongos stays in the topology indefinitely.
+            # This will no longer be the case once SRV polling is implemented.
+
+            unless server.mongos?
+              raise "Pinned server not a mongos: #{server.summary}"
+            end
+
+            return server
+          end
+        end
+
         if cluster.replica_set?
           validate_max_staleness_value_early!
         end
@@ -154,6 +177,10 @@ module Mongo
             then
               msg = "Cluster topology specifies replica set name #{cluster.topology.replica_set_name}, but the server has replica set name #{server.description.replica_set_name || '<nil>'}"
               raise Error::NoServerAvailable.new(self, cluster, msg)
+            end
+
+            if session && session.starting_transaction? && cluster.sharded?
+              session.pin(server)
             end
 
             return server

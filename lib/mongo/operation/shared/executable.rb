@@ -21,8 +21,10 @@ module Mongo
     module Executable
 
       def do_execute(server)
-        get_result(server).tap do |result|
-          process_result(result, server)
+        add_error_labels do
+          get_result(server).tap do |result|
+            process_result(result, server)
+          end
         end
       end
 
