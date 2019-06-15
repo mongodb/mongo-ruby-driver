@@ -46,18 +46,23 @@ module CommonShortcuts
       tags = options[:tags] || {}
       average_round_trip_time = options[:average_round_trip_time] || 0
 
-      ismaster = {
-        'ismaster' => mode == :primary,
-        'secondary' => mode == :secondary,
-        'arbiterOnly' => mode == :arbiter,
-        'isreplicaset' => mode == :ghost,
-        'hidden' => mode == :other,
-        'tags' => tags,
-        'ok' => 1,
-        'minWireVersion' => 2, 'maxWireVersion' => 8,
-      }
-      if [:primary, :secondary, :arbiter, :other].include?(mode)
-        ismaster['setName'] = 'mongodb_set'
+      if mode == :unknown
+        ismaster = {}
+      else
+        ismaster = {
+          'ismaster' => mode == :primary,
+          'secondary' => mode == :secondary,
+          'arbiterOnly' => mode == :arbiter,
+          'isreplicaset' => mode == :ghost,
+          'hidden' => mode == :other,
+          'msg' => mode == :mongos ? 'isdbgrid' : nil,
+          'tags' => tags,
+          'ok' => 1,
+          'minWireVersion' => 2, 'maxWireVersion' => 8,
+        }
+        if [:primary, :secondary, :arbiter, :other].include?(mode)
+          ismaster['setName'] = 'mongodb_set'
+        end
       end
 
       listeners = Mongo::Event::Listeners.new
