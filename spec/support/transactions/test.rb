@@ -56,10 +56,15 @@ module Mongo
         @client_options = Utils.convert_client_options(test['clientOptions'] || {})
         @session_options = Utils.snakeize_hash(test['sessionOptions'] || {})
         @fail_point = test['failPoint']
-        @operations = test['operations']
-        @expectations = test['expectations']
         @skip_reason = test['skipReason']
         @multiple_mongoses = test['useMultipleMongoses']
+
+        @operations = test['operations']
+        @ops = @operations.map do |op|
+          Operation.new(op)
+        end
+
+        @expectations = test['expectations']
         if test['outcome']
           @outcome = Mongo::CRUD::Outcome.new(test['outcome'])
         end
@@ -139,12 +144,6 @@ module Mongo
       def run
         test_client.subscribe(Mongo::Monitoring::COMMAND, event_subscriber)
 
-        $distinct_ran ||= if description =~ /distinct/ || @ops.any? { |op| op.name == 'distinct' }
-          mongos_each_direct_client do |direct_client|
-            direct_client['test'].distinct('foo').to_a
-          end
-        end
-
         results = @ops.map do |op|
           op.execute(@collection, @session0, @session1)
         end
@@ -193,16 +192,19 @@ module Mongo
         support_client.command(create: @spec.collection_name, writeConcern: { w: :majority })
 
         coll.insert_many(@data) unless @data.empty?
+
+        $distinct_ran ||= if description =~ /distinct/ || @ops.any? { |op| op.name == 'distinct' }
+          mongos_each_direct_client do |direct_client|
+            direct_client['test'].distinct('foo').to_a
+          end
+        end
+
         admin_support_client.command(@fail_point) if @fail_point
 
         @collection = test_client[@spec.collection_name]
 
         @session0 = test_client.start_session(@session_options[:session0] || {})
         @session1 = test_client.start_session(@session_options[:session1] || {})
-
-        @ops = @operations.map do |op|
-          Operation.new(op)
-        end
       end
 
       def teardown_test
