@@ -144,8 +144,16 @@ module Mongo
       @state = NO_TRANSACTION_STATE
     end
 
+    # @return [ Server | nil ] The server (which should be a mongos) that this
+    #   session is pinned to, if any.
+    #
+    # @api private
     attr_reader :pinned_server
 
+    # @return [ BSON::Document | nil ] Recovery token for the sharded
+    #   transaction being executed on this session, if any.
+    #
+    # @api private
     attr_accessor :recovery_token
 
     # Get a formatted string for use in inspection.
@@ -160,17 +168,40 @@ module Mongo
       "#<Mongo::Session:0x#{object_id} session_id=#{session_id} options=#{@options}>"
     end
 
+    # Pins this session to the specified server, which should be a mongos.
+    #
+    # @param [ Server ] server The server to pin this session to.
+    #
+    # @api private
     def pin(server)
       if server.nil?
         raise ArgumentError, 'Cannot pin to a nil server'
       end
+      if Lint.enabled?
+        unless server.mongos?
+          raise Error::LintError, "Attempted to pin the session to server #{server.summary} which is not a mongos"
+        end
+      end
       @pinned_server = server
     end
 
+    # Unpins this session from the pinned server, if the session was pinned.
+    #
+    # @api private
     def unpin
       @pinned_server = nil
     end
 
+    # Unpins this session from the pinned server, if the session was pinned
+    # and the specified exception instance and the session's transaction state
+    # require it to be unpinned.
+    #
+    # The exception instance should already have all of the labels set on it
+    # (both client- and server-side generated ones).
+    #
+    # @param [ Error ] The exception instance to process.
+    #
+    # @api private
     def unpin_maybe(error)
       if !within_states?(Session::NO_TRANSACTION_STATE) &&
         error.label?('TransientTransactionError')
@@ -918,7 +949,7 @@ module Mongo
       within_states?(STARTING_TRANSACTION_STATE)
     end
 
-		protected
+    private
 
     # Get the read concern the session will use when starting a transaction.
     #
@@ -935,12 +966,9 @@ module Mongo
       txn_options && txn_options[:read_concern] || @client.read_concern
     end
 
-    private
-
     def within_states?(*states)
       states.include?(@state)
     end
-    public :within_states?
 
     def check_if_no_transaction!
       return unless within_states?(NO_TRANSACTION_STATE)

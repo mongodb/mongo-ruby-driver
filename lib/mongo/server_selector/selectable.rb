@@ -92,19 +92,38 @@ module Mongo
         "#<#{self.class.name}:0x#{object_id} tag_sets=#{tag_sets.inspect} max_staleness=#{max_staleness.inspect}>"
       end
 
-      # Select a server from eligible candidates.
+      # Select a server from the specified cluster, taking into account
+      # mongos pinning for the specified session.
       #
-      # @example Select a server from the cluster.
-      #   selector.select_server(cluster)
+      # If the session is given and has a pinned server, this server is the
+      # only server considered for selection. If the server is of type mongos,
+      # it is returned immediately; otherwise monitoring checks on this
+      # server are initiated to update its status, and if the server becomes
+      # a mongos within the server selection timeout, it is returned.
+      #
+      # If no session is given or the session does not have a pinned server,
+      # normal server selection process is performed among all servers in the
+      # specified cluster matching the preference of this server selector
+      # object. Monitoring checks are initiated on servers in the cluster until
+      # a suitable server is found, up to the server selection timeout.
+      #
+      # If a suitable server is not found within the server selection timeout,
+      # this method raises Error::NoServerAvailable.
       #
       # @param [ Mongo::Cluster ] cluster The cluster from which to select
       #   an eligible server.
       # @param [ true, false ] ping Whether to ping the server before selection.
       #   Deprecated and ignored.
       # @param [ Session | nil ] session Optional session to take into account
-      #   for mongos pinning.
+      #   for mongos pinning. Added in version 2.10.0.
       #
       # @return [ Mongo::Server ] A server matching the server preference.
+      #
+      # @raise [ Error::NoServerAvailable ] No server was found matching the
+      #   specified preference / pinning requirement in the server selection
+      #   timeout.
+      # @raise [ Error::LintError ] An unexpected condition was detected, and
+      #   lint mode is enabled.
       #
       # @since 2.0.0
       def select_server(cluster, ping = nil, session = nil)

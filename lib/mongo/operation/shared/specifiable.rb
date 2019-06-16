@@ -573,6 +573,12 @@ module Mongo
         end
       end
 
+      # Adds error labels to exceptions raised in the yielded to block,
+      # which should perform MongoDB operations and raise Mongo::Errors on
+      # failure. This method handles network errors (Error::SocketError)
+      # and server-side errors (Error::OperationFailure); it does not
+      # handle server selection errors (Error::NoServerAvailable), for which
+      # labels are added in the server selection code.
       def add_error_labels
         begin
           yield
