@@ -20,6 +20,7 @@ module Mongo
     #
     # @since 2.0.0
     module Specifiable
+      include Unpinnable
 
       # The field for database name.
       #
@@ -568,8 +569,10 @@ module Mongo
       private
 
       def validate_result(result)
-        add_error_labels do
-          result.validate!
+        unpin_maybe(session) do
+          add_error_labels do
+            result.validate!
+          end
         end
       end
 
@@ -599,11 +602,6 @@ module Mongo
           end
           raise e
         end
-      rescue Mongo::Error => e
-        if session
-          session.unpin_maybe(e)
-        end
-        raise
       end
     end
   end
