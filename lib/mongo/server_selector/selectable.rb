@@ -423,6 +423,22 @@ module Mongo
         end
       end
 
+      # Waits for server state changes in the specified cluster.
+      #
+      # If the cluster has a server selection semaphore, waits on that
+      # semaphore up to the specified remaining time. Any change in server
+      # state resulting from SDAM will immediately wake up this method and
+      # cause it to return.
+      #
+      # If the cluster des not have a server selection semaphore, waits
+      # the smaller of 0.25 seconds and the specified remaining time.
+      # This functionality is provided for backwards compatibilty only for
+      # applications directly invoking the server selection process.
+      # If lint mode is enabled and the cluster does not have a server
+      # selection semaphore, Error::LintError will be raised.
+      #
+      # @param [ Cluster ] cluster The cluster to wait for.
+      # @param [ Numeric ] time_remaining Maximum time to wait, in seconds.
       def wait_for_server_selection(cluster, time_remaining)
         if cluster.server_selection_semaphore
           cluster.server_selection_semaphore.wait(time_remaining)
@@ -434,6 +450,20 @@ module Mongo
         end
       end
 
+      # Creates a diagnostic message when server selection fails.
+      #
+      # The diagnostic message includes the following information, as applicable:
+      #
+      # - Servers having dead monitor threads
+      # - Cluster is disconnected
+      #
+      # If none of the conditions for diagnostic messages apply, an empty string
+      # is returned.
+      #
+      # @param [ Cluster ] cluster The cluster on which server selection was
+      #   performed.
+      #
+      # @return [ String ] The diagnostic message.
       def server_selection_diagnostic_message(cluster)
         msg = ''
         dead_monitors = []
