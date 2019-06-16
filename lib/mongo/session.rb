@@ -765,26 +765,6 @@ module Mongo
       end
     end
 
-    # Whether or not the session is currently in a transaction.
-    #
-    # @example Is the session in a transaction?
-    #   session.in_transaction?
-    #
-    # @return [ true | false ] Whether or not the session in a transaction.
-    #
-    # @since 2.6.0
-    def in_transaction?
-      within_states?(STARTING_TRANSACTION_STATE, TRANSACTION_IN_PROGRESS_STATE)
-    end
-
-    # @return [ true | false ] Whether the session is currently committing a
-    #   transaction.
-    #
-    # @api private
-    def committing_transaction?
-      !!@committing_transaction
-    end
-
     # Executes the provided block in a transaction, retrying as necessary.
     #
     # Returns the return value of the block.
@@ -947,6 +927,26 @@ module Mongo
     # @api private
     def starting_transaction?
       within_states?(STARTING_TRANSACTION_STATE)
+    end
+
+    # Whether or not the session is currently in a transaction.
+    #
+    # @example Is the session in a transaction?
+    #   session.in_transaction?
+    #
+    # @return [ true | false ] Whether or not the session in a transaction.
+    #
+    # @since 2.6.0
+    def in_transaction?
+      within_states?(STARTING_TRANSACTION_STATE, TRANSACTION_IN_PROGRESS_STATE)
+    end
+
+    # @return [ true | false ] Whether the session is currently committing a
+    #   transaction.
+    #
+    # @api private
+    def committing_transaction?
+      !!@committing_transaction
     end
 
     private
