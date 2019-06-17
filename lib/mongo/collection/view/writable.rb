@@ -34,7 +34,15 @@ module Mongo
         #
         # @param [ Hash ] opts The options.
         #
+        # @option opts [ Integer ] :max_time_ms The maximum amount of time to allow the command
+        #   to run in milliseconds.
+        # @option opts [ Hash ] :projection The fields to include or exclude in the returned doc.
+        # @option opts [ Hash ] :sort The key and direction pairs by which the result set
+        #   will be sorted.
+        # @option opts [ Hash ] :write_concern The write concern options.
+        #   Defaults to the collection's write concern.
         # @option opts [ Hash ] :collation The collation to use.
+        # @option opts [ Session ] :session The session to use.
         #
         # @return [ BSON::Document, nil ] The document, if found.
         #
@@ -44,10 +52,11 @@ module Mongo
           cmd[:fields] = projection if projection
           cmd[:sort] = sort if sort
           cmd[:maxTimeMS] = max_time_ms if max_time_ms
-          cmd[:writeConcern] = write_concern.options if write_concern
 
           with_session(opts) do |session|
-            write_with_retry(session, write_concern) do |server, txn_num|
+            applied_write_concern = applied_write_concern(session)
+            cmd[:writeConcern] = applied_write_concern.options if applied_write_concern
+            write_with_retry(session, applied_write_concern) do |server, txn_num|
               apply_collation!(cmd, server, opts)
               Operation::Command.new(
                   :selector => cmd,
@@ -93,6 +102,11 @@ module Mongo
         # @param [ BSON::Document ] document The updates.
         # @param [ Hash ] opts The options.
         #
+        # @option options [ Integer ] :max_time_ms The maximum amount of time to allow the command
+        #   to run in milliseconds.
+        # @option opts [ Hash ] :projection The fields to include or exclude in the returned doc.
+        # @option opts [ Hash ] :sort The key and direction pairs by which the result set
+        #   will be sorted.
         # @option opts [ Symbol ] :return_document Either :before or :after.
         # @option opts [ true, false ] :upsert Whether to upsert if the document doesn't exist.
         # @option opts [ true, false ] :bypass_document_validation Whether or
@@ -102,6 +116,7 @@ module Mongo
         # @option opts [ Hash ] :collation The collation to use.
         # @option opts [ Array ] :array_filters A set of filters specifying to which array elements
         # an update should apply.
+        # @option opts [ Session ] :session The session to use.
         #
         # @return [ BSON::Document ] The document.
         #
@@ -115,10 +130,11 @@ module Mongo
           cmd[:upsert] = opts[:upsert] if opts[:upsert]
           cmd[:maxTimeMS] = max_time_ms if max_time_ms
           cmd[:bypassDocumentValidation] = !!opts[:bypass_document_validation]
-          cmd[:writeConcern] = write_concern.options if write_concern
 
           value = with_session(opts) do |session|
-            write_with_retry(session, write_concern) do |server, txn_num|
+            applied_write_concern = applied_write_concern(opts[:session])
+            cmd[:writeConcern] = applied_write_concern.options if applied_write_concern
+            write_with_retry(session, applied_write_concern) do |server, txn_num|
               apply_collation!(cmd, server, opts)
               apply_array_filters!(cmd, server, opts)
               Operation::Command.new(
@@ -140,6 +156,7 @@ module Mongo
         # @param [ Hash ] opts The options.
         #
         # @option opts [ Hash ] :collation The collation to use.
+        # @option opts [ Session ] :session The session to use.
         #
         # @return [ Result ] The response from the database.
         #
@@ -147,13 +164,14 @@ module Mongo
         def delete_many(opts = {})
           delete_doc = { Operation::Q => filter, Operation::LIMIT => 0 }
           with_session(opts) do |session|
+            write_concern = write_concern_with_session(opts[:session])
             legacy_write_with_retry do |server|
               apply_collation!(delete_doc, server, opts)
               Operation::Delete.new(
                   :deletes => [ delete_doc ],
                   :db_name => collection.database.name,
                   :coll_name => collection.name,
-                  :write_concern => collection.write_concern,
+                  :write_concern => write_concern,
                   :session => session
               ).execute(server)
             end
@@ -168,14 +186,15 @@ module Mongo
         # @param [ Hash ] opts The options.
         #
         # @option opts [ Hash ] :collation The collation to use.
+        # @option opts [ Session ] :session The session to use.
         #
         # @return [ Result ] The response from the database.
         #
         # @since 2.0.0
         def delete_one(opts = {})
           delete_doc = { Operation::Q => filter, Operation::LIMIT => 1 }
-          write_concern = collection.write_concern
           with_session(opts) do |session|
+            write_concern = write_concern_with_session(opts[:session])
             write_with_retry(session, write_concern) do |server, txn_num|
               apply_collation!(delete_doc, server, opts)
               Operation::Delete.new(
@@ -200,7 +219,10 @@ module Mongo
         #
         # @option opts [ true, false ] :upsert Whether to upsert if the
         #   document doesn't exist.
+        # @option opts [ true, false ] :bypass_document_validation Whether or
+        #   not to skip document level validation.
         # @option opts [ Hash ] :collation The collation to use.
+        # @option opts [ Session ] :session The session to use.
         #
         # @return [ Result ] The response from the database.
         #
@@ -211,8 +233,8 @@ module Mongo
                          Operation::MULTI => false,
                          Operation::UPSERT => !!opts[:upsert]
                         }
-          write_concern = collection.write_concern
           with_session(opts) do |session|
+            write_concern = write_concern_with_session(opts[:session])
             write_with_retry(session, write_concern) do |server, txn_num|
               apply_collation!(update_doc, server, opts)
               apply_array_filters!(update_doc, server, opts)
@@ -240,9 +262,12 @@ module Mongo
         #
         # @option opts [ true, false ] :upsert Whether to upsert if the
         #   document doesn't exist.
+        # @option opts [ true, false ] :bypass_document_validation Whether or
+        #   not to skip document level validation.
         # @option opts [ Hash ] :collation The collation to use.
         # @option opts [ Array ] :array_filters A set of filters specifying to which array elements
         #   an update should apply.
+        # @option opts [ Session ] :session The session to use.
         #
         # @return [ Result ] The response from the database.
         #
@@ -253,6 +278,7 @@ module Mongo
                          Operation::MULTI => true,
                          Operation::UPSERT => !!opts[:upsert] }
           with_session(opts) do |session|
+            write_concern = write_concern_with_session(opts[:session])
             legacy_write_with_retry do |server|
               apply_collation!(update_doc, server, opts)
               apply_array_filters!(update_doc, server, opts)
@@ -260,7 +286,7 @@ module Mongo
                   :updates => [ update_doc ],
                   :db_name => collection.database.name,
                   :coll_name => collection.name,
-                  :write_concern => collection.write_concern,
+                  :write_concern => write_concern,
                   :bypass_document_validation => !!opts[:bypass_document_validation],
                   :session => session
               ).execute(server)
@@ -278,9 +304,12 @@ module Mongo
         #
         # @option opts [ true, false ] :upsert Whether to upsert if the
         #   document doesn't exist.
+        # @option opts [ true, false ] :bypass_document_validation Whether or
+        #   not to skip document level validation.
         # @option opts [ Hash ] :collation The collation to use.
         # @option opts [ Array ] :array_filters A set of filters specifying to which array elements
         #   an update should apply.
+        # @option opts [ Session ] :session The session to use.
         #
         # @return [ Result ] The response from the database.
         #
@@ -290,8 +319,8 @@ module Mongo
                          Operation::U => spec,
                          Operation::MULTI => false,
                          Operation::UPSERT => !!opts[:upsert] }
-          write_concern = collection.write_concern
           with_session(opts) do |session|
+            write_concern = write_concern_with_session(opts[:session])
             write_with_retry(session, write_concern) do |server, txn_num|
               apply_collation!(update_doc, server, opts)
               apply_array_filters!(update_doc, server, opts)
@@ -321,6 +350,17 @@ module Mongo
         def validate_array_filters!(server, filters)
           if filters && !server.features.array_filters_enabled?
             raise Error::UnsupportedArrayFilters.new
+          end
+        end
+
+        # Get the write concern for an operation
+        #
+        # @return [ Mongo::WriteConcern ] The write concern.
+        def applied_write_concern(session)
+          if options[:write] || options[:write_concern]
+            WriteConcern.get(options[:write] || options[:write_concern])
+          else 
+            write_concern_with_session(session)
           end
         end
       end

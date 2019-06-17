@@ -136,6 +136,28 @@ module Mongo
       @write_concern ||= WriteConcern.get(options[:write] || database.write_concern)
     end
 
+    # Get the write concern for the collection, given the session.
+    #
+    # If the session is in a transaction and the collection 
+    # has an unacknowledged write concern, remove the write 
+    # concern's :w option. Otherwise, return the unmodified 
+    # write concern.
+    #
+    # @return [ Mongo::WriteConcern ] The write concern.
+    #
+    # @api private
+    def write_concern_with_session(session)
+      wc = write_concern
+      if session && session.in_transaction?
+        if wc && WriteConcern.send(:unacknowledged?, wc.options)
+          opts = wc.options.dup
+          opts.delete(:w)
+          return WriteConcern.get(opts)
+        end
+      end
+      wc
+    end
+
     # Provides a new collection with either a new read preference or new write concern
     # merged over the existing read preference / write concern.
     #
@@ -476,6 +498,7 @@ module Mongo
     # @since 2.0.0
     def insert_one(document, opts = {})
       client.send(:with_session, opts) do |session|
+        write_concern = write_concern_with_session(session)
         write_with_retry(session, write_concern) do |server, txn_num|
           Operation::Insert.new(
               :documents => [ document ],

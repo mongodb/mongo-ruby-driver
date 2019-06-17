@@ -59,6 +59,7 @@ module Mongo
       client.send(:with_session, @options) do |session|
         operations.each do |operation|
           if single_statement?(operation)
+            write_concern = write_concern(session)
             write_with_retry(session, write_concern) do |server, txn_num|
               execute_operation(
                   operation.keys.first,
@@ -140,9 +141,10 @@ module Mongo
     # @return [ WriteConcern ] The write concern.
     #
     # @since 2.1.0
-    def write_concern
+    def write_concern(session = nil)
       @write_concern ||= options[:write_concern] ?
-        WriteConcern.get(options[:write_concern]) : collection.write_concern
+        WriteConcern.get(options[:write_concern]) :
+        collection.write_concern_with_session(session)
     end
 
     private
@@ -159,7 +161,7 @@ module Mongo
       {
         :db_name => database.name,
         :coll_name => collection.name,
-        :write_concern => write_concern,
+        :write_concern => write_concern(session),
         :ordered => ordered?,
         :operation_id => operation_id,
         :bypass_document_validation => !!options[:bypass_document_validation],
