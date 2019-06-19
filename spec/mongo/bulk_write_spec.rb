@@ -1223,6 +1223,10 @@ describe Mongo::BulkWrite do
 
             context 'when write_concern is specified as an option' do
 
+              # In a multi-sharded cluster, the write seems to go to a
+              # different shard from the read
+              require_no_multi_shard
+
               let(:extra_options) do
                 { write_concern: { w: 0 } }
               end
@@ -1888,6 +1892,11 @@ describe Mongo::BulkWrite do
           context 'when retryable writes are supported' do
             min_server_fcv '3.6'
             require_topology :replica_set, :sharded
+
+            # In a multi-shard cluster, retries may go to a different server
+            # than original command which these tests are not prepared to handle
+            require_no_multi_shard
+
 
             let(:subscriber) { EventSubscriber.new }
 

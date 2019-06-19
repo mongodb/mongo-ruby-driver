@@ -24,6 +24,18 @@ set_env_vars
 #export DRIVER_TOOLS_CA_PEM="${DRIVERS_TOOLS}/.evergreen/x509gen/ca.pem"
 #export DRIVER_TOOLS_CLIENT_KEY_ENCRYPTED_PEM="${DRIVERS_TOOLS}/.evergreen/x509gen/password_protected.pem"
 
+if test -n "$SINGLE_MONGOS"; then
+  # Some tests may run into https://jira.mongodb.org/browse/SERVER-16836
+  # when executing against a multi-sharded mongos.
+  # At the same time, due to pinning in sharded transactions,
+  # it is beneficial to test a single shard to ensure that server
+  # monitoring and selection are working correctly and recover the driver's
+  # ability to operate in reasonable time after errors and fail points trigger
+  # on a single shard
+  echo Restricting to a single mongos
+  export MONGODB_URI=`echo "$MONGODB_URI" |sed -e 's/,.*//'`
+fi
+
 setup_ruby
 
 install_deps

@@ -12,11 +12,7 @@ class SpecConfig
         @addresses = @mongodb_uri.servers
         @connect_options = { connect: :replica_set, replica_set: @uri_options[:replica_set] }
       elsif @uri_options[:connect] == :sharded || ENV['TOPOLOGY'] == 'sharded_cluster'
-        # See SERVER-16836 for why we can only use one host:port
-        if @mongodb_uri.servers.length > 1
-          warn "Using only the first mongos (#{@mongodb_uri.servers.first})"
-        end
-        @addresses = [ @mongodb_uri.servers.first ]
+        @addresses = @mongodb_uri.servers
         @connect_options = { connect: :sharded }
       elsif @uri_options[:connect] == :direct
         @addresses = @mongodb_uri.servers

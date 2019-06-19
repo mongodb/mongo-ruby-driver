@@ -1,6 +1,8 @@
 require 'spec_helper'
 
 describe Mongo::Operation::Insert do
+  require_no_multi_shard
+
   before do
     begin
       authorized_collection.delete_many
@@ -188,7 +190,6 @@ describe Mongo::Operation::Insert do
       end
 
       context 'when write concern is unacknowledged' do
-
         let(:write_concern) do
           Mongo::WriteConcern.get(w: 0)
         end

@@ -157,4 +157,12 @@ module Constraints
       end
     end
   end
+
+  def require_no_multi_shard
+    before do
+      if ClusterConfig.instance.topology == :sharded && SpecConfig.instance.addresses.length > 1
+        skip 'Test requires a single shard if run in sharded topology'
+      end
+    end
+  end
 end
