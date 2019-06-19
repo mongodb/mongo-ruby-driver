@@ -380,5 +380,19 @@ describe Mongo::Server do
         expect(server.summary).not_to include('replica_set')
       end
     end
+
+    context 'server is a mongos' do
+      let(:server) do
+        make_server(:mongos)
+      end
+
+      before do
+        expect(server).to be_mongos
+      end
+
+      it 'specifies the server is a mongos' do
+        expect(server.summary).to match(/MONGOS/)
+      end
+    end
   end
 end

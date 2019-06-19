@@ -263,6 +263,8 @@ module Mongo
         'GHOST'
       when other?
         'OTHER'
+      when mongos?
+        'MONGOS'
       when unknown?
         'UNKNOWN'
       else
