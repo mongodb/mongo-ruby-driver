@@ -55,7 +55,11 @@ class ClusterConfig
     if server_version >= '3.4' && !mongos?
       fcv
     else
-      short_server_version
+      if short_server_version == '4.1'
+        '4.2'
+      else
+        short_server_version
+      end
     end
   end
 
