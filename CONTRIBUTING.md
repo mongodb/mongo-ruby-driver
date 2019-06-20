@@ -9,8 +9,8 @@ JIRA Tickets
 ------------
 
 The Ruby driver team uses MongoDB JIRA to schedule and track work.
-To report a problem with the driver, please [create a new issue]
-(https://jira.mongodb.org/secure/CreateIssue!default.jspa) in the Ruby
+To report a problem with the driver, please [create a new
+issue](https://jira.mongodb.org/secure/CreateIssue!default.jspa) in the Ruby
 JIRA project. A ticket is appreciated, though not necessary, when submitting
 a pull request.
 
@@ -46,6 +46,5 @@ Talk To Us
 ----------
 
 We would love to hear from you. If you want to work on something or have
-questions please reach out to us by creating a [question]
-(https://jira.mongodb.org/secure/CreateIssue.jspa?pid=10005&issuetype=6)
+questions please reach out to us by creating a [question](https://jira.mongodb.org/secure/CreateIssue.jspa?pid=10005&issuetype=6)
 in JIRA.
