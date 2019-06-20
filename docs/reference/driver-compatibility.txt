@@ -186,10 +186,10 @@ Ruby Compatibility
      - |checkmark|
      - |checkmark|
      - |checkmark|
-     - |checkmark|
-     - |checkmark|
-     - |checkmark|
-     - |checkmark|
+     - D
+     - D
+     - D
+     - D
      -
      - |checkmark|
      - |checkmark|
@@ -362,6 +362,12 @@ Ruby Compatibility
      -
      -
      - |checkmark|
+
+Support for Ruby versions less than 2.3 has been deprecated. Driver version
+2.10 will be the last release to support Ruby 1.9-2.2. As of driver version
+2.11.0, the minimum required Ruby version will be 2.3. Please note that,
+as of January 1, 2019, Ruby versions 2.2 and older are `not supported by
+the Ruby core team <https://www.ruby-lang.org/en/downloads/branches/>`_.
 
 Rails/ActiveSupport Compatibility
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
