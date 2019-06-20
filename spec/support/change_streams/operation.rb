@@ -63,7 +63,7 @@ module Mongo
       end
 
       def drop(coll)
-        coll.drop()
+        coll.drop
       end
 
       def rename(coll)
