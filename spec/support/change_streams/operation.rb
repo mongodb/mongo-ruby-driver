@@ -50,12 +50,39 @@ module Mongo
         coll.insert_one(document)
       end
 
+      def update_one(coll)
+        coll.update_one(filter, arguments['update'])
+      end
+
+      def replace_one(coll)
+        coll.replace_one(filter, arguments['replacement'])
+      end
+
+      def delete_one(coll)
+        coll.delete_one(filter)
+      end
+
+      def drop(coll)
+        coll.drop()
+      end
+
+      def rename(coll)
+        coll.client.use(:admin).command({
+          renameCollection: "#{coll.database.name}.#{coll.name}", 
+          to: "#{coll.database.name}.#{arguments['to']}"
+        })
+      end
+
       def arguments
         @spec['arguments']
       end
 
       def document
         arguments['document']
+      end
+
+      def filter
+        arguments['filter']
       end
     end
   end
