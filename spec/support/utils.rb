@@ -87,6 +87,10 @@ module Utils
         end
       end
 
+      if command['recoveryToken']
+        command['recoveryToken'] = 42
+      end
+
       # The spec tests use 42 as a placeholder value for any getMore cursorId.
       command['getMore'] = { '$numberLong' => '42' } if command['getMore']
 

@@ -144,6 +144,18 @@ module Mongo
       @state = NO_TRANSACTION_STATE
     end
 
+    # @return [ Server | nil ] The server (which should be a mongos) that this
+    #   session is pinned to, if any.
+    #
+    # @api private
+    attr_reader :pinned_server
+
+    # @return [ BSON::Document | nil ] Recovery token for the sharded
+    #   transaction being executed on this session, if any.
+    #
+    # @api private
+    attr_accessor :recovery_token
+
     # Get a formatted string for use in inspection.
     #
     # @example Inspect the session object.
@@ -154,6 +166,54 @@ module Mongo
     # @since 2.5.0
     def inspect
       "#<Mongo::Session:0x#{object_id} session_id=#{session_id} options=#{@options}>"
+    end
+
+    # Pins this session to the specified server, which should be a mongos.
+    #
+    # @param [ Server ] server The server to pin this session to.
+    #
+    # @api private
+    def pin(server)
+      if server.nil?
+        raise ArgumentError, 'Cannot pin to a nil server'
+      end
+      if Lint.enabled?
+        unless server.mongos?
+          raise Error::LintError, "Attempted to pin the session to server #{server.summary} which is not a mongos"
+        end
+      end
+      @pinned_server = server
+    end
+
+    # Unpins this session from the pinned server, if the session was pinned.
+    #
+    # @api private
+    def unpin
+      @pinned_server = nil
+    end
+
+    # Unpins this session from the pinned server, if the session was pinned
+    # and the specified exception instance and the session's transaction state
+    # require it to be unpinned.
+    #
+    # The exception instance should already have all of the labels set on it
+    # (both client- and server-side generated ones).
+    #
+    # @param [ Error ] The exception instance to process.
+    #
+    # @api private
+    def unpin_maybe(error)
+      if !within_states?(Session::NO_TRANSACTION_STATE) &&
+        error.label?('TransientTransactionError')
+      then
+        unpin
+      end
+
+      if committing_transaction? &&
+        error.label?('UnknownTransactionCommitResult')
+      then
+        unpin
+      end
     end
 
     # End this session.
@@ -405,6 +465,13 @@ module Mongo
         end
       end
       @server_session.set_last_use!
+
+      if doc = result.reply && result.reply.documents.first
+        if doc[:recoveryToken]
+          self.recovery_token = doc[:recoveryToken]
+        end
+      end
+
       result
     end
 
@@ -572,6 +639,8 @@ module Mongo
           Mongo::Error::InvalidTransactionOperation::TRANSACTION_ALREADY_IN_PROGRESS)
       end
 
+      unpin
+
       next_txn_num
       @txn_options = options || @options[:default_transaction_options] || {}
 
@@ -694,26 +763,6 @@ module Mongo
         @state = TRANSACTION_ABORTED_STATE
         raise
       end
-    end
-
-    # Whether or not the session is currently in a transaction.
-    #
-    # @example Is the session in a transaction?
-    #   session.in_transaction?
-    #
-    # @return [ true | false ] Whether or not the session in a transaction.
-    #
-    # @since 2.6.0
-    def in_transaction?
-      within_states?(STARTING_TRANSACTION_STATE, TRANSACTION_IN_PROGRESS_STATE)
-    end
-
-    # @return [ true | false ] Whether the session is currently committing a
-    #   transaction.
-    #
-    # @api private
-    def committing_transaction?
-      !!@committing_transaction
     end
 
     # Executes the provided block in a transaction, retrying as necessary.
@@ -875,7 +924,32 @@ module Mongo
       @client.cluster
     end
 
-		protected
+    # @api private
+    def starting_transaction?
+      within_states?(STARTING_TRANSACTION_STATE)
+    end
+
+    # Whether or not the session is currently in a transaction.
+    #
+    # @example Is the session in a transaction?
+    #   session.in_transaction?
+    #
+    # @return [ true | false ] Whether or not the session in a transaction.
+    #
+    # @since 2.6.0
+    def in_transaction?
+      within_states?(STARTING_TRANSACTION_STATE, TRANSACTION_IN_PROGRESS_STATE)
+    end
+
+    # @return [ true | false ] Whether the session is currently committing a
+    #   transaction.
+    #
+    # @api private
+    def committing_transaction?
+      !!@committing_transaction
+    end
+
+    private
 
     # Get the read concern the session will use when starting a transaction.
     #
@@ -892,14 +966,8 @@ module Mongo
       txn_options && txn_options[:read_concern] || @client.read_concern
     end
 
-    private
-
     def within_states?(*states)
       states.include?(@state)
-    end
-
-    def starting_transaction?
-      within_states?(STARTING_TRANSACTION_STATE)
     end
 
     def check_if_no_transaction!

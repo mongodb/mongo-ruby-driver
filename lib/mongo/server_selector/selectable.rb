@@ -92,22 +92,75 @@ module Mongo
         "#<#{self.class.name}:0x#{object_id} tag_sets=#{tag_sets.inspect} max_staleness=#{max_staleness.inspect}>"
       end
 
-      # Select a server from eligible candidates.
+      # Select a server from the specified cluster, taking into account
+      # mongos pinning for the specified session.
       #
-      # @example Select a server from the cluster.
-      #   selector.select_server(cluster)
+      # If the session is given and has a pinned server, this server is the
+      # only server considered for selection. If the server is of type mongos,
+      # it is returned immediately; otherwise monitoring checks on this
+      # server are initiated to update its status, and if the server becomes
+      # a mongos within the server selection timeout, it is returned.
+      #
+      # If no session is given or the session does not have a pinned server,
+      # normal server selection process is performed among all servers in the
+      # specified cluster matching the preference of this server selector
+      # object. Monitoring checks are initiated on servers in the cluster until
+      # a suitable server is found, up to the server selection timeout.
+      #
+      # If a suitable server is not found within the server selection timeout,
+      # this method raises Error::NoServerAvailable.
       #
       # @param [ Mongo::Cluster ] cluster The cluster from which to select
       #   an eligible server.
       # @param [ true, false ] ping Whether to ping the server before selection.
       #   Deprecated and ignored.
       # @param [ Session | nil ] session Optional session to take into account
-      #   for mongos pinning.
+      #   for mongos pinning. Added in version 2.10.0.
       #
       # @return [ Mongo::Server ] A server matching the server preference.
       #
+      # @raise [ Error::NoServerAvailable ] No server was found matching the
+      #   specified preference / pinning requirement in the server selection
+      #   timeout.
+      # @raise [ Error::LintError ] An unexpected condition was detected, and
+      #   lint mode is enabled.
+      #
       # @since 2.0.0
       def select_server(cluster, ping = nil, session = nil)
+        server_selection_timeout = cluster.options[:server_selection_timeout] || SERVER_SELECTION_TIMEOUT
+        deadline = Time.now + server_selection_timeout
+
+        if session && session.pinned_server
+          if Mongo::Lint.enabled?
+            unless cluster.sharded?
+              raise Error::LintError, "Session has a pinned server in a non-sharded topology: #{topology}"
+            end
+          end
+
+          if !session.in_transaction?
+            session.unpin
+          end
+
+          if server = session.pinned_server
+            # Here we assume that a mongos stays in the topology indefinitely.
+            # This will no longer be the case once SRV polling is implemented.
+
+            unless server.mongos?
+              while (time_remaining = deadline - Time.now) > 0
+                wait_for_server_selection(cluster, time_remaining)
+              end
+
+              unless server.mongos?
+                msg = "The session being used is pinned to the server which is not a mongos: #{server.summary} " +
+                  "(after #{server_selection_timeout} seconds)"
+                raise Error::NoServerAvailable.new(self, cluster, msg)
+              end
+            end
+
+            return server
+          end
+        end
+
         if cluster.replica_set?
           validate_max_staleness_value_early!
         end
@@ -126,8 +179,6 @@ module Mongo
           raise Error::NoServerAvailable.new(self, cluster, msg)
         end
 =end
-        server_selection_timeout = cluster.options[:server_selection_timeout] || SERVER_SELECTION_TIMEOUT
-        deadline = Time.now + server_selection_timeout
         while (time_remaining = deadline - Time.now) > 0
           servers = candidates(cluster)
           if Lint.enabled?
@@ -156,35 +207,20 @@ module Mongo
               raise Error::NoServerAvailable.new(self, cluster, msg)
             end
 
+            if session && session.starting_transaction? && cluster.sharded?
+              session.pin(server)
+            end
+
             return server
           end
           cluster.scan!(false)
-          if cluster.server_selection_semaphore
-            cluster.server_selection_semaphore.wait(time_remaining)
-          else
-            if Lint.enabled?
-              raise Error::LintError, 'Waiting for server selection without having a server selection semaphore'
-            end
-            sleep 0.25
-          end
+          wait_for_server_selection(cluster, time_remaining)
         end
 
         msg = "No #{name} server is available in cluster: #{cluster.summary} " +
                 "with timeout=#{server_selection_timeout}, " +
                 "LT=#{local_threshold_with_cluster(cluster)}"
-        dead_monitors = []
-        cluster.servers_list.each do |server|
-          thread = server.monitor.instance_variable_get('@thread')
-          if thread.nil? || !thread.alive?
-            dead_monitors << server
-          end
-        end
-        if dead_monitors.any?
-          msg += ". The following servers have dead monitor threads: #{dead_monitors.map(&:summary).join(', ')}"
-        end
-        unless cluster.connected?
-          msg += ". The cluster is disconnected (client may have been closed)"
-        end
+        msg += server_selection_diagnostic_message(cluster)
         raise Error::NoServerAvailable.new(self, cluster, msg)
       rescue Error::NoServerAvailable => e
         if session && session.in_transaction? && !session.committing_transaction?
@@ -385,6 +421,65 @@ module Mongo
             raise Error::InvalidServerPreference.new(msg)
           end
         end
+      end
+
+      # Waits for server state changes in the specified cluster.
+      #
+      # If the cluster has a server selection semaphore, waits on that
+      # semaphore up to the specified remaining time. Any change in server
+      # state resulting from SDAM will immediately wake up this method and
+      # cause it to return.
+      #
+      # If the cluster des not have a server selection semaphore, waits
+      # the smaller of 0.25 seconds and the specified remaining time.
+      # This functionality is provided for backwards compatibilty only for
+      # applications directly invoking the server selection process.
+      # If lint mode is enabled and the cluster does not have a server
+      # selection semaphore, Error::LintError will be raised.
+      #
+      # @param [ Cluster ] cluster The cluster to wait for.
+      # @param [ Numeric ] time_remaining Maximum time to wait, in seconds.
+      def wait_for_server_selection(cluster, time_remaining)
+        if cluster.server_selection_semaphore
+          cluster.server_selection_semaphore.wait(time_remaining)
+        else
+          if Lint.enabled?
+            raise Error::LintError, 'Waiting for server selection without having a server selection semaphore'
+          end
+          sleep [time_remaining, 0.25].min
+        end
+      end
+
+      # Creates a diagnostic message when server selection fails.
+      #
+      # The diagnostic message includes the following information, as applicable:
+      #
+      # - Servers having dead monitor threads
+      # - Cluster is disconnected
+      #
+      # If none of the conditions for diagnostic messages apply, an empty string
+      # is returned.
+      #
+      # @param [ Cluster ] cluster The cluster on which server selection was
+      #   performed.
+      #
+      # @return [ String ] The diagnostic message.
+      def server_selection_diagnostic_message(cluster)
+        msg = ''
+        dead_monitors = []
+        cluster.servers_list.each do |server|
+          thread = server.monitor.instance_variable_get('@thread')
+          if thread.nil? || !thread.alive?
+            dead_monitors << server
+          end
+        end
+        if dead_monitors.any?
+          msg += ". The following servers have dead monitor threads: #{dead_monitors.map(&:summary).join(', ')}"
+        end
+        unless cluster.connected?
+          msg += ". The cluster is disconnected (client may have been closed)"
+        end
+        msg
       end
     end
   end

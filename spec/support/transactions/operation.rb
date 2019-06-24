@@ -79,7 +79,8 @@ module Mongo
         end
 
         {
-          'errorCodeName' => error_code_name,
+          'errorCode' => e.code,
+          'errorCodeName' => e.code_name,
           'errorContains' => e.message,
           'errorLabels' => e.labels,
           'exception' => e,
@@ -156,6 +157,40 @@ module Mongo
         session = context.send(arguments['session'])
         actual_state = session.instance_variable_get('@state').to_s.sub(/^transaction_|_transaction$/, '').sub(/^no$/, 'none')
         expect(actual_state).to eq(arguments['state'])
+      end
+
+      def targeted_fail_point(collection, context)
+        args = context.transform_arguments(options)
+        session = args[:session]
+        unless session.pinned_server
+          raise ArgumentError, 'Targeted fail point requires session to be pinned to a server'
+        end
+
+        client = ClusterTools.instance.direct_client(session.pinned_server.address,
+          database: 'admin')
+        client.command(arguments['failPoint'])
+
+        $disable_fail_points ||= []
+        $disable_fail_points << [
+          arguments['failPoint'],
+          session.pinned_server.address,
+        ]
+      end
+
+      def assert_session_pinned(collection, context)
+        args = context.transform_arguments(options)
+        session = args[:session]
+        unless session.pinned_server
+          raise ArgumentError, 'Expected session to be pinned'
+        end
+      end
+
+      def assert_session_unpinned(collection, context)
+        args = context.transform_arguments(options)
+        session = args[:session]
+        if session.pinned_server
+          raise ArgumentError, 'Expected session to not be pinned'
+        end
       end
 
       def read_concern

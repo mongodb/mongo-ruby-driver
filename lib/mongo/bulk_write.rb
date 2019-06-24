@@ -23,6 +23,7 @@ require 'mongo/bulk_write/result_combiner'
 module Mongo
   class BulkWrite
     extend Forwardable
+    include Operation::Unpinnable
 
     # @return [ Mongo::Collection ] collection The collection.
     attr_reader :collection
@@ -174,15 +175,17 @@ module Mongo
     def execute_operation(name, values, server, operation_id, result_combiner, session, txn_num = nil)
       raise Error::UnsupportedCollation.new if op_combiner.has_collation && !server.features.collation_enabled?
       raise Error::UnsupportedArrayFilters.new if op_combiner.has_array_filters && !server.features.array_filters_enabled?
-      begin
+      unpin_maybe(session) do
         if values.size > server.max_write_batch_size
           split_execute(name, values, server, operation_id, result_combiner, session, txn_num)
         else
           result = send(name, values, server, operation_id, session, txn_num)
           result_combiner.combine!(result, values.size)
         end
-      rescue Error::MaxBSONSize, Error::MaxMessageSize => e
-        raise e if values.size <= 1
+      end
+    rescue Error::MaxBSONSize, Error::MaxMessageSize => e
+      raise e if values.size <= 1
+      unpin_maybe(session) do
         split_execute(name, values, server, operation_id, result_combiner, session, txn_num)
       end
     end

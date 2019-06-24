@@ -59,6 +59,7 @@ module Mongo
         @operations = test['operations']
         @expectations = test['expectations']
         @skip_reason = test['skipReason']
+        @multiple_mongoses = test['useMultipleMongoses']
         if test['outcome']
           @outcome = Mongo::CRUD::Outcome.new(test['outcome'])
         end
@@ -88,6 +89,10 @@ module Mongo
 
       attr_reader :outcome
 
+      def multiple_mongoses?
+        @multiple_mongoses
+      end
+
       def support_client
         @support_client ||= ClientRegistry.instance.global_client('root_authorized').use(@spec.database_name)
       end
@@ -108,6 +113,21 @@ module Mongo
         @event_subscriber ||= EventSubscriber.new
       end
 
+      def mongos_each_direct_client
+        if ClusterConfig.instance.mongos?
+          client = ClientRegistry.instance.global_client('basic')
+          client.cluster.next_primary
+          client.cluster.servers.each do |server|
+            direct_client = ClientRegistry.instance.new_local_client(
+              [server.address.to_s],
+              SpecConfig.instance.test_options.merge(
+                connect: :sharded
+              ).merge(SpecConfig.instance.auth_options))
+            yield direct_client
+          end
+        end
+      end
+
       # Run the test.
       #
       # @example Run the test.
@@ -119,18 +139,9 @@ module Mongo
       def run
         test_client.subscribe(Mongo::Monitoring::COMMAND, event_subscriber)
 
-        $distinct_ran ||= if @ops.any? { |op| op.name == 'distinct' }
-          if ClusterConfig.instance.mongos?
-            client = ClientRegistry.instance.global_client('basic')
-            client.cluster.next_primary
-            client.cluster.servers.each do |server|
-              direct_client = ClientRegistry.instance.new_local_client(
-                [server.address.to_s],
-                SpecConfig.instance.test_options.merge(
-                  connect: :sharded
-                ).merge(SpecConfig.instance.auth_options))
-              direct_client['test'].distinct('foo').to_a
-            end
+        $distinct_ran ||= if description =~ /distinct/ || @ops.any? { |op| op.name == 'distinct' }
+          mongos_each_direct_client do |direct_client|
+            direct_client['test'].distinct('foo').to_a
           end
         end
 
@@ -173,6 +184,10 @@ module Mongo
         rescue Mongo::Error
         end
 
+        mongos_each_direct_client do |direct_client|
+          direct_client.command(configureFailPoint: 'failCommand', mode: 'off')
+        end
+
         coll = support_client[@spec.collection_name].with(write: { w: :majority })
         coll.drop
         support_client.command(create: @spec.collection_name, writeConcern: { w: :majority })
@@ -194,6 +209,15 @@ module Mongo
 
         if @fail_point
           admin_support_client.command(configureFailPoint: 'failCommand', mode: 'off')
+        end
+
+        if $disable_fail_points
+          $disable_fail_points.each do |(fail_point, address)|
+            client = ClusterTools.instance.direct_client(address,
+              database: 'admin')
+            client.command(configureFailPoint: fail_point['configureFailPoint'],
+              mode: 'off')
+          end
         end
 
         if @test_client
