@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+require 'mongo/server/connection_pool_populator'
 
 module Mongo
   class Server
@@ -37,6 +38,8 @@ module Mongo
       #
       # @since 2.9.0
       DEFAULT_WAIT_TIMEOUT = 1.freeze
+
+      attr_reader :request_semaphore
 
       # Create the new connection pool.
       #
@@ -111,6 +114,11 @@ module Mongo
         # available connection when pool is at max size
         @available_semaphore = Semaphore.new
 
+        # Condition variable broadcast when check_out is called but
+        # there are no available connections, to wake up the background
+        # thread to populate @available_connections
+        @request_semaphore = Semaphore.new
+
         finalizer = proc do
           available_connections.each do |connection|
             connection.disconnect!(reason: :pool_closed)
@@ -125,6 +133,16 @@ module Mongo
         publish_cmap_event(
           Monitoring::Event::Cmap::PoolCreated.new(@server.address, options)
         )
+
+
+        # Thread.new { 
+        #   while !closed? do
+        #     populate 
+        #     sleep 1
+        #   end
+        # }
+        @populator = ConnectionPoolPopulator.new(self, @available_semaphore, @request_semaphore)
+        @populator.run!
       end
 
       # @return [ Hash ] options The pool options.
@@ -384,6 +402,7 @@ module Mongo
           end
         end
 
+        @request_semaphore.signal
         true
       end
 
@@ -491,6 +510,8 @@ module Mongo
             i += 1
           end
         end
+
+        @request_semaphore.signal
       end
 
       # Creates up to the min size connections.
@@ -499,8 +520,19 @@ module Mongo
       #
       # @api private
       def populate
-        while size < min_size
-          @available_connections << create_connection
+        return if closed?
+
+        catch(:done) do
+          loop do
+             @lock.synchronize do
+              if unsynchronized_size < min_size
+                @available_connections << create_connection
+                @available_semaphore.signal
+              else
+                throw(:done)
+              end
+             end
+          end
         end
       end
 
