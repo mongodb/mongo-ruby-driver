@@ -448,7 +448,7 @@ describe Mongo::Error::Parser do
 
     context 'when there are labels' do
       let(:labels) do
-        [ Mongo::Error::TRANSIENT_TRANSACTION_ERROR_LABEL ]
+        %w(TransientTransactionError)
       end
 
       it 'has the correct labels' do

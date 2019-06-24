@@ -186,6 +186,14 @@ module Mongo
           msg += ". The cluster is disconnected (client may have been closed)"
         end
         raise Error::NoServerAvailable.new(self, cluster, msg)
+      rescue Error::NoServerAvailable => e
+        if session && session.in_transaction? && !session.committing_transaction?
+          e.add_label('TransientTransactionError')
+        end
+        if session && session.committing_transaction?
+          e.add_label('UnknownTransactionCommitResult')
+        end
+        raise e
       end
 
       # Get the timeout for server selection.

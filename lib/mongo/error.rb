@@ -85,17 +85,19 @@ module Mongo
     # manually retried by the user.
     #
     # @since 2.6.0
+    # @deprecated
     UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL = 'UnknownTransactionCommitResult'.freeze
 
     # Error label describing errors that will likely not occur if a transaction is manually retried
     # from the start.
     #
     # @since 2.6.0
+    # @deprecated
     TRANSIENT_TRANSACTION_ERROR_LABEL = 'TransientTransactionError'.freeze
 
     def initialize(msg = nil)
-      @labels ||= []
-      super(msg)
+      super
+      @labels = []
     end
 
     # Does the error have the given label?

@@ -137,14 +137,14 @@ describe Mongo::Session do
             sleep 0.1
 
             exc = Mongo::Error::OperationFailure.new('timeout test')
-            exc.add_label(Mongo::Error::TRANSIENT_TRANSACTION_ERROR_LABEL)
+            exc.add_label('TransientTransactionError')
             raise exc
           end
         end.to raise_error(Mongo::Error::OperationFailure, 'timeout test')
       end
     end
 
-    %w(UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL TRANSIENT_TRANSACTION_ERROR_LABEL).each do |label|
+    %w(UnknownTransactionCommitResult TransientTransactionError).each do |label|
       context "timeout with commit raising with #{label}" do
         max_example_run_time 7
 
@@ -169,7 +169,7 @@ describe Mongo::Session do
           end
 
           exc = Mongo::Error::OperationFailure.new('timeout test')
-          exc.add_label(Mongo::Error.const_get(label))
+          exc.add_label(label)
 
           expect(session).to receive(:commit_transaction).and_raise(exc).at_least(:once)
 

@@ -619,6 +619,7 @@ module Mongo
           @last_commit_skipped = true
         else
           @last_commit_skipped = false
+          @committing_transaction = true
 
           write_concern = options[:write_concern] || txn_options[:write_concern]
           if write_concern && !write_concern.is_a?(WriteConcern::Base)
@@ -643,18 +644,9 @@ module Mongo
             ).execute(server)
           end
         end
-      rescue Mongo::Error::NoServerAvailable, Mongo::Error::SocketError => e
-        e.add_label(Mongo::Error::UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL)
-        raise e
-      rescue Mongo::Error::OperationFailure => e
-        if e.write_retryable? || (e.write_concern_error? &&
-            !UNLABELED_WRITE_CONCERN_CODES.include?(e.write_concern_error_code))
-          e.add_label(Mongo::Error::UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL)
-        end
-
-        raise e
       ensure
         @state = TRANSACTION_COMMITTED_STATE
+        @committing_transaction = false
       end
     end
 
@@ -714,6 +706,14 @@ module Mongo
     # @since 2.6.0
     def in_transaction?
       within_states?(STARTING_TRANSACTION_STATE, TRANSACTION_IN_PROGRESS_STATE)
+    end
+
+    # @return [ true | false ] Whether the session is currently committing a
+    #   transaction.
+    #
+    # @api private
+    def committing_transaction?
+      !!@committing_transaction
     end
 
     # Executes the provided block in a transaction, retrying as necessary.
@@ -794,7 +794,7 @@ module Mongo
             raise
           end
 
-          if e.is_a?(Mongo::Error) && e.label?(Mongo::Error::TRANSIENT_TRANSACTION_ERROR_LABEL)
+          if e.is_a?(Mongo::Error) && e.label?('TransientTransactionError')
             next
           end
 
@@ -810,7 +810,7 @@ module Mongo
             transaction_in_progress = false
             return rv
           rescue Mongo::Error => e
-            if e.label?(Mongo::Error::UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL)
+            if e.label?('UnknownTransactionCommitResult')
               # WriteConcernFailed
               if e.is_a?(Mongo::Error::OperationFailure) && e.code == 64 && e.wtimeout?
                 transaction_in_progress = false
@@ -830,7 +830,7 @@ module Mongo
                 end
               commit_options[:write_concern] = wc_options.merge(w: :majority)
               retry
-            elsif e.label?(Mongo::Error::TRANSIENT_TRANSACTION_ERROR_LABEL)
+            elsif e.label?('TransientTransactionError')
               if Time.now >= deadline
                 transaction_in_progress = false
                 raise
