@@ -219,9 +219,9 @@ tests:
       - name: commitTransaction
         object: session0
         result:
-          errorLabelsContain: ["TransientTransactionError"]
-          errorLabelsOmit: ["UnknownTransactionCommitResult"]
-          errorCodeName: NoSuchTransaction
+          # https://jira.mongodb.org/browse/SPEC-1330
+          errorLabelsContain: ["UnknownTransactionCommitResult"]
+          errorLabelsOmit: ["TransientTransactionError"]
 
     expectations:
       - command_started_event:
