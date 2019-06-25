@@ -14,25 +14,34 @@
 
 module Mongo
   class Server
-
+  	
   	# A manager that maintains the invariant that the
   	# size of a connection pool is at least minPoolSize.
   	#
   	# @api private
   	class ConnectionPoolPopulator
-  	  def initialize(pool, available_semaphore, request_semaphore)
+  	  def initialize(pool)
   	  	@pool = pool
-  	  	@available_semaphore = available_semaphore
-  	  	@request_semaphore = request_semaphore
+  	  	@thread = nil
   	  end
 
-  	  def run!
+
+  	  def start!
   	  	@thread = Thread.new {
+  	  	  # TODO is it better to rely on stop! or loop on !closed
   	  	  while !@pool.closed? do
   	  	  	@pool.populate
-  	  	  	@request_semaphore.wait(5)	# TODO what should be timeout and why? for when pool closes?
+  	  	  	@pool.size_decrease_semaphore.wait(5)
   	  	  end
   	  	}
+  	  end
+
+  	  def stop!
+  	  	@thread.kill
+  	  end
+
+  	  def is_running?
+  	  	@thread && @thread.alive?
   	  end
   	end
   end

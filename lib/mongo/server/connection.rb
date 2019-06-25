@@ -226,8 +226,7 @@ module Mongo
           )
           @close_event_published = true
         end
-        
-        @server.pool.request_semaphore.signal
+
         true
       end
 

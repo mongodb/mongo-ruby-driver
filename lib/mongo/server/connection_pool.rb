@@ -39,7 +39,7 @@ module Mongo
       # @since 2.9.0
       DEFAULT_WAIT_TIMEOUT = 1.freeze
 
-      attr_reader :request_semaphore
+      attr_reader :size_decrease_semaphore
 
       # Create the new connection pool.
       #
@@ -114,10 +114,10 @@ module Mongo
         # available connection when pool is at max size
         @available_semaphore = Semaphore.new
 
-        # Condition variable broadcast when check_out is called but
-        # there are no available connections, to wake up the background
-        # thread to populate @available_connections
-        @request_semaphore = Semaphore.new
+        # Condition variable broadcast when the size of the pool
+        # may have changed, to wake up the background
+        # thread to populate the pool size to min_size
+        @size_decrease_semaphore = Semaphore.new
 
         finalizer = proc do
           available_connections.each do |connection|
@@ -134,15 +134,8 @@ module Mongo
           Monitoring::Event::Cmap::PoolCreated.new(@server.address, options)
         )
 
-
-        # Thread.new { 
-        #   while !closed? do
-        #     populate 
-        #     sleep 1
-        #   end
-        # }
-        @populator = ConnectionPoolPopulator.new(self, @available_semaphore, @request_semaphore)
-        @populator.run!
+        @populator = ConnectionPoolPopulator.new(self)
+        @populator.start!
       end
 
       # @return [ Hash ] options The pool options.
@@ -292,6 +285,7 @@ module Mongo
                   next
                 end
 
+                @checked_out_connections << connection
                 throw(:done)
               end
 
@@ -302,6 +296,7 @@ module Mongo
                 # but if it did, it would be performing i/o under our lock,
                 # which is bad. Fix in the future.
                 connection = create_connection
+                @checked_out_connections << connection
                 throw(:done)
               end
             end
@@ -320,10 +315,14 @@ module Mongo
           end
         end
 
-        @checked_out_connections << connection
+        # in case connections were removed
+        @size_decrease_semaphore.signal 
+
         publish_cmap_event(
           Monitoring::Event::Cmap::ConnectionCheckedOut.new(@server.address, connection.id),
         )
+
+        #connection.connect!
         connection
       end
 
@@ -370,6 +369,9 @@ module Mongo
             @available_semaphore.signal
           end
         end
+
+        # in case connection not re-added to available
+        @size_decrease_semaphore.signal 
       end
 
       # Closes all idle connections in the pool and schedules currently checked
@@ -402,7 +404,8 @@ module Mongo
           end
         end
 
-        @request_semaphore.signal
+        # in case available connections is empty
+        @size_decrease_semaphore.signal
         true
       end
 
@@ -438,6 +441,10 @@ module Mongo
               @checked_out_connections.delete(connection)
             end
           end
+
+          # stop populator before releasing lock so it 
+          # cannot create connections
+          @populator.stop!
         end
 
         @closed = true
@@ -511,12 +518,15 @@ module Mongo
           end
         end
 
-        @request_semaphore.signal
+        # in case connections were disconnected
+        @size_decrease_semaphore.signal
       end
 
-      # Creates up to the min size connections.
+      # Creates and adds connections to the pool until the
+      # pool size is at least min_size.
       #
       # Used by the spec test runner.
+      # Also used by pool populator background thread.
       #
       # @api private
       def populate
@@ -524,14 +534,13 @@ module Mongo
 
         catch(:done) do
           loop do
-             @lock.synchronize do
+            @lock.synchronize do
               if unsynchronized_size < min_size
                 @available_connections << create_connection
-                @available_semaphore.signal
               else
                 throw(:done)
               end
-             end
+            end
           end
         end
       end
