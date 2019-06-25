@@ -1,6 +1,8 @@
 require 'spec_helper'
 
 describe 'read concern' do
+  min_server_version '3.2'
+
   let(:subscriber) do
     EventSubscriber.new
   end
