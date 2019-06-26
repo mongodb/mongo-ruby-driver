@@ -76,10 +76,10 @@ module Mongo
     #
     # @since 2.0.0
     def get(options)
-      return options if options.is_a?(Unacknowledged) || options.is_a?(Acknowledged)
+      return options if options.is_a?(Base)
       if options
         validate!(options)
-        if unacknowledged?(options)
+        if (options[:w] || options['w']) == 0
           Unacknowledged.new(options)
         else
           Acknowledged.new(options)
@@ -97,19 +97,6 @@ module Mongo
           raise Mongo::Error::InvalidWriteConcern.new
         end
       end
-    end
-
-    # Determine if the options are for an unacknowledged write concern.
-    #
-    # @api private
-    #
-    # @param [ Hash ] options The options to check.
-    #
-    # @return [ true, false ] If the options are unacknowledged.
-    #
-    # @since 2.0.0
-    def unacknowledged?(options)
-      options[W] == 0
     end
   end
 end
