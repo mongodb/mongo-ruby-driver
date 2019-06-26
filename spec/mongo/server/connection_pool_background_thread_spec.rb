@@ -90,17 +90,17 @@ describe Mongo::Server::ConnectionPool do
         described_class.new(server, :min_pool_size => 1)
       end
 
-      it 'repopulates the pool after check_in of closed connec' do
+      it 'repopulates the pool after check_in of closed connection' do
         pool
 
         sleep 2
-        connec = pool.check_out
+        connection = pool.check_out
         expect(pool.size).to eq(1)
 
-        connec.disconnect!
+        connection.disconnect!
         expect(pool.size).to eq(1)
 
-        pool.check_in(connec)
+        pool.check_in(connection)
         expect(pool.size).to eq(0)
 
         sleep 2
@@ -116,36 +116,36 @@ describe Mongo::Server::ConnectionPool do
         described_class.new(server, :min_pool_size => 2, :max_idle_time => 1)
       end
 
-      it 'repopulates the pool after check_out empties idle connecs' do
+      it 'repopulates the pool after check_out empties idle connections' do
         pool
 
-        first_connec = pool.check_out
-        second_connec = pool.check_out
+        first_connection = pool.check_out
+        second_connection = pool.check_out
 
-        first_connec.record_checkin!
-        second_connec.record_checkin!
+        first_connection.record_checkin!
+        second_connection.record_checkin!
 
-        pool.check_in(first_connec)
-        pool.check_in(second_connec)
+        pool.check_in(first_connection)
+        pool.check_in(second_connection)
 
         expect(pool.size).to eq(2)
 
-        # let both connecs become idle
+        # let both connections become idle
         sleep 2
 
-        # should trigger in-flow creation of a single connec,
+        # should trigger in-flow creation of a single connection,
         # then wake up populate thread
-        third_connec = pool.check_out
+        third_connection = pool.check_out
         expect(pool.size).to eq(1)
-        expect(third_connec).to_not eq(first_connec)
-        expect(third_connec).to_not eq(second_connec)
+        expect(third_connection).to_not eq(first_connection)
+        expect(third_connection).to_not eq(second_connection)
 
         sleep 2
         expect(pool.size).to eq(2)
-        fourth_connec = pool.check_out
-        expect(fourth_connec).to_not eq(first_connec)
-        expect(fourth_connec).to_not eq(second_connec)
-        expect(fourth_connec).to_not eq(third_connec)
+        fourth_connection = pool.check_out
+        expect(fourth_connection).to_not eq(first_connection)
+        expect(fourth_connection).to_not eq(second_connection)
+        expect(fourth_connection).to_not eq(third_connection)
 
       end
     end
@@ -166,7 +166,7 @@ describe Mongo::Server::ConnectionPool do
         sleep 2
         expect(pool.size).to eq(2)
 
-        connec = pool.check_out
+        connection = pool.check_out
 
         expect(pool.size).to eq(2)
         pool.close(:force => true)
@@ -198,11 +198,11 @@ describe Mongo::Server::ConnectionPool do
         sleep 2
         expect(pool.size).to eq(1)
 
-        connec = pool.check_out
-        connec.record_checkin!
-        pool.check_in(connec)
+        connection = pool.check_out
+        connection.record_checkin!
+        pool.check_in(connection)
         
-        # let the connec become idle
+        # let the connection become idle
         sleep 1
 
         # force close idle_sockets so it triggers populate, 
@@ -213,7 +213,7 @@ describe Mongo::Server::ConnectionPool do
         # wait for populate to finish
         sleep 1
         expect(pool.size).to eq(1)
-        expect(pool.check_out).not_to eq(connec)
+        expect(pool.check_out).not_to eq(connection)
       end
     end
   end

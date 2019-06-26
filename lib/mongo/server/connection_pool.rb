@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-require 'mongo/server/connection_pool_populator'
+require 'mongo/server/connection_pool/connection_pool_populator'
 
 module Mongo
   class Server
@@ -39,7 +39,7 @@ module Mongo
       # @since 2.9.0
       DEFAULT_WAIT_TIMEOUT = 1.freeze
 
-      attr_reader :size_decrease_semaphore
+      attr_reader :populate_semaphore
 
       # Create the new connection pool.
       #
@@ -117,7 +117,7 @@ module Mongo
         # Condition variable broadcast when the size of the pool
         # may have changed, to wake up the background
         # thread to populate the pool size to min_size
-        @size_decrease_semaphore = Semaphore.new
+        @populate_semaphore = Semaphore.new
 
         finalizer = proc do
           available_connections.each do |connection|
@@ -275,6 +275,7 @@ module Mongo
                   # Stale connections should be disconnected in the clear
                   # method, but if any don't, check again here
                   connection.disconnect!(reason: :stale)
+                  @populate_semaphore.signal 
                   next
                 end
 
@@ -282,6 +283,7 @@ module Mongo
                   Time.now - connection.last_checkin > max_idle_time
                 then
                   connection.disconnect!(reason: :idle)
+                  @populate_semaphore.signal 
                   next
                 end
 
@@ -314,9 +316,6 @@ module Mongo
             @available_semaphore.wait(wait)
           end
         end
-
-        # in case connections were removed
-        @size_decrease_semaphore.signal 
 
         publish_cmap_event(
           Monitoring::Event::Cmap::ConnectionCheckedOut.new(@server.address, connection.id),
@@ -358,8 +357,10 @@ module Mongo
           if connection.closed?
             # Connection was closed - for example, because it experienced
             # a network error. Nothing else needs to be done here.
+            @populate_semaphore.signal 
           elsif connection.generation != @generation
             connection.disconnect!(reason: :stale)
+            @populate_semaphore.signal 
           else
             connection.record_checkin!
             @available_connections << connection
@@ -369,9 +370,6 @@ module Mongo
             @available_semaphore.signal
           end
         end
-
-        # in case connection not re-added to available
-        @size_decrease_semaphore.signal 
       end
 
       # Closes all idle connections in the pool and schedules currently checked
@@ -400,12 +398,10 @@ module Mongo
             until @available_connections.empty?
               connection = @available_connections.pop
               connection.disconnect!(reason: :stale)
+              @populate_semaphore.signal
             end
           end
         end
-
-        # in case available connections is empty
-        @size_decrease_semaphore.signal
         true
       end
 
@@ -511,15 +507,13 @@ module Mongo
               if (Time.now - last_checkin) > max_idle_time
                 connection.disconnect!(reason: :idle)
                 @available_connections.delete_at(i)
+                @populate_semaphore.signal
                 next
               end
             end
             i += 1
           end
         end
-
-        # in case connections were disconnected
-        @size_decrease_semaphore.signal
       end
 
       # Creates and adds connections to the pool until the
