@@ -74,7 +74,7 @@ describe Mongo::Server::ConnectionPool do
         pool.clear
         expect(pool.size).to eq(0)
 
-        sleep 2
+        sleep 3
         expect(pool.size).to eq(1)
 
         # ensure populator is re-run
@@ -136,11 +136,11 @@ describe Mongo::Server::ConnectionPool do
         # should trigger in-flow creation of a single connection,
         # then wake up populate thread
         third_connection = pool.check_out
-        expect(pool.size).to eq(1)
+        # expect(pool.size).to eq(1) # this fails tests if bg thread is scheduled immediately
         expect(third_connection).to_not eq(first_connection)
         expect(third_connection).to_not eq(second_connection)
 
-        sleep 2
+        sleep 3
         expect(pool.size).to eq(2)
         fourth_connection = pool.check_out
         expect(fourth_connection).to_not eq(first_connection)
@@ -211,7 +211,7 @@ describe Mongo::Server::ConnectionPool do
         expect(pool.size).to eq(0)
 
         # wait for populate to finish
-        sleep 1
+        sleep 2
         expect(pool.size).to eq(1)
         expect(pool.check_out).not_to eq(connection)
       end

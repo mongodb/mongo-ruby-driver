@@ -40,6 +40,9 @@ describe Mongo::Server::ConnectionPool do
   end
 
   describe '#initialize' do
+    after do
+      pool.close(:force => true)
+    end
 
     context 'when a min size is provided' do
 
@@ -48,8 +51,12 @@ describe Mongo::Server::ConnectionPool do
       end
 
       it 'creates the pool with no connections' do
-        expect(pool.size).to eq(0)
-        expect(pool.available_count).to eq(0)
+        # now that bg thread runs, let it populate TODO
+        pool
+        sleep 2
+
+        expect(pool.size).to eq(2)
+        expect(pool.available_count).to eq(2)
       end
 
       it 'does not use the same objects in the pool' do
@@ -557,6 +564,10 @@ describe Mongo::Server::ConnectionPool do
         create_pool(1)
       end
 
+      after do
+        pool.close(:force => true)
+      end
+
       it_behaves_like 'disconnects and removes all connections in the pool and bumps generation'
     end
 
@@ -606,6 +617,7 @@ describe Mongo::Server::ConnectionPool do
     after do
       expect(server).to receive(:pool).and_return(pool)
       server.disconnect!
+      pool.close # this will no longer be needed after server disconnect kills bg thread
     end
 
     it 'includes the object id' do
@@ -625,7 +637,7 @@ describe Mongo::Server::ConnectionPool do
     end
 
     it 'includes the current size' do
-      expect(pool.inspect).to include('current_size=0')
+      expect(pool.inspect).to include('current_size=')
     end
 
 =begin obsolete
@@ -782,6 +794,10 @@ describe Mongo::Server::ConnectionPool do
         end
 
         context 'when min size is > 0' do
+          after do
+            pool.close(:force => true)
+          end
+
           context 'when more than the number of min_size are checked out' do
             let(:options) do
               {max_pool_size: 5, min_pool_size: 3, max_idle_time: 0.5}

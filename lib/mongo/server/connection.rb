@@ -210,8 +210,6 @@ module Mongo
         end
         @closed = true
 
-       # @server.pool.populate_semaphore.signal
-
         # To satisfy CMAP spec tests, publish close events even if the
         # socket was never connected (and thus the ready event was never
         # published). But track whether we published close event and do not
@@ -229,6 +227,8 @@ module Mongo
           @close_event_published = true
         end
 
+        # for some reason, signaling here is slower
+        @server.pool.populate_semaphore.signal
         true
       end
 
