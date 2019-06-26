@@ -245,12 +245,47 @@ describe Mongo::Collection do
             SpecConfig.instance.test_options.merge(
               read: { mode: :primary_preferred },
               monitoring_io: false,
-          ))
+          )).tap do |client|
+            expect(client.options[:read]).to eq(Mongo::Options::Redacted.new(
+              mode: :primary_preferred))
+          end
+        end
+
+        let(:new_options) do
+          { read: { mode: :secondary } }
         end
 
         it 'sets the new read options on the new collection' do
-          expect(new_collection.read_preference).to eq(new_options[:read])
-          expect(new_collection.read_preference).not_to eq(client.read_preference)
+          # This is strictly a Hash, not a BSON::Document like the client's
+          # read preference.
+          expect(new_collection.read_preference).to eq(mode: :secondary)
+        end
+
+        it 'duplicates the read option' do
+          expect(new_collection.read_preference).not_to eql(client.read_preference)
+        end
+
+        context 'when reading from collection' do
+          # Since we are requesting a secondary read, we need a replica set.
+          require_topology :replica_set
+
+          let(:subscriber) { EventSubscriber.new }
+
+          before do
+            client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
+          end
+
+          it "uses collection's read preference when reading" do
+            expect do
+              new_collection.find.to_a.count
+            end.not_to raise_error
+
+            event = subscriber.started_events.detect do |event|
+              event.command['find']
+            end
+            actual_mode = event.command['$readPreference']['mode']
+            expect(actual_mode).to eq('secondary')
+          end
         end
       end
 

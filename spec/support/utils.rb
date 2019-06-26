@@ -124,4 +124,39 @@ module Utils
     events
   end
   module_function :yamlify_command_events
+
+  def convert_operation_options(options)
+    if options
+      Hash[options.map do |k, v|
+        out_v = case k
+        when 'readPreference'
+          out_k = :read
+          out_v = {}
+          v.each do |sub_k, sub_v|
+            if sub_k == 'mode'
+              out_v[:mode] = Utils.underscore(v['mode'])
+            else
+              out_v[sub_k.to_sym] = sub_v
+            end
+          end
+          out_v
+        when 'defaultTransactionOptions'
+          out_k = Utils.underscore(k).to_sym
+          convert_operation_options(v)
+        when 'readConcern', 'causalConsistency'
+          out_k = Utils.underscore(k).to_sym
+          v
+        when 'writeConcern'
+          out_k = :write
+          v
+        else
+          raise "Unhandled operation option #{k}"
+        end
+        [out_k, out_v]
+      end]
+    else
+      {}
+    end
+  end
+  module_function :convert_operation_options
 end
