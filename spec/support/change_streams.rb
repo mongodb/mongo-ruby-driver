@@ -221,6 +221,7 @@ module Mongo
 
         def match_array?(expected, actual)
           return false unless actual.is_a?(Array)
+          return false unless expected.length == actual.length
 
           expected.each_with_index.all? do |e, i|
             actual[i] && match?(e, actual[i])
