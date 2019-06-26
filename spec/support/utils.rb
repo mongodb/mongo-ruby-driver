@@ -147,8 +147,13 @@ module Utils
           out_k = Utils.underscore(k).to_sym
           v
         when 'writeConcern'
-          out_k = :write
-          v
+          # Write concern option is called :write on the client, but
+          # :write_concern on all levels below the client.
+          out_k = :write_concern
+          # The client expects write concern value to only have symbol keys.
+          Hash[v.map do |sub_k, sub_v|
+            [sub_k.to_sym, sub_v]
+          end]
         else
           raise "Unhandled operation option #{k}"
         end
