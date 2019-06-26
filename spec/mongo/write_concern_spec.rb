@@ -4,6 +4,8 @@ describe Mongo::WriteConcern do
 
   describe '#get' do
 
+    let(:wc) { Mongo::WriteConcern.get(options) }
+
     context 'when no options are set' do
 
       let(:options) do
@@ -153,6 +155,32 @@ describe Mongo::WriteConcern do
 
       it 'sets w to a string' do
         expect(Mongo::WriteConcern.get(options).options[:w]).to eq('majority')
+      end
+    end
+
+    context 'when options are provided with string keys' do
+
+      context 'acknowledged write concern' do
+        let(:options) do
+          { 'w' => 2, 'j' => true }
+        end
+
+        it 'converts keys to symbols' do
+          expect(wc).to be_a(Mongo::WriteConcern::Acknowledged)
+          expect(wc.options[:w]).to eq(2)
+          expect(wc.options[:j]).to be true
+        end
+      end
+
+      context 'unacknowledged write concern' do
+        let(:options) do
+          { 'w' => 0 }
+        end
+
+        it 'converts keys to symbols' do
+          expect(wc).to be_a(Mongo::WriteConcern::Unacknowledged)
+          expect(wc.options[:w]).to eq(0)
+        end
       end
     end
   end

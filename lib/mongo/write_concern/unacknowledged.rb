@@ -37,6 +37,18 @@ module Mongo
         NOOP
       end
 
+      # Is this write concern acknowledged.
+      #
+      # @example Whether this write concern object is acknowledged.
+      #   write_concern.acknowledged?
+      #
+      # @return [ true, false ] Whether this write concern is acknowledged.
+      #
+      # @since 2.5.0
+      def acknowledged?
+        false
+      end
+
       # Get a human-readable string representation of an unacknowledged write concern.
       #
       # @example Inspect the write concern.

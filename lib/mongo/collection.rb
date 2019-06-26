@@ -149,7 +149,7 @@ module Mongo
     def write_concern_with_session(session)
       wc = write_concern
       if session && session.in_transaction?
-        if wc && WriteConcern.send(:unacknowledged?, wc.options)
+        if wc && !wc.acknowledged?
           opts = wc.options.dup
           opts.delete(:w)
           return WriteConcern.get(opts)

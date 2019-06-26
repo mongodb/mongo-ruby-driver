@@ -644,7 +644,7 @@ module Mongo
       next_txn_num
       @txn_options = options || @options[:default_transaction_options] || {}
 
-      if txn_write_concern && WriteConcern.send(:unacknowledged?, txn_write_concern)
+      if txn_write_concern && !WriteConcern.get(txn_write_concern).acknowledged?
         raise Mongo::Error::InvalidTransactionOperation.new(
           Mongo::Error::InvalidTransactionOperation::UNACKNOWLEDGED_WRITE_CONCERN)
       end
