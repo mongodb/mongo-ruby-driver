@@ -22,20 +22,22 @@ module Mongo
       def initialize(pool)
         @pool = pool
         @thread = nil
+        @stopped = false
       end
 
 
       def start!
         @thread = Thread.new {
-          while !@pool.closed? do
+          while !@stopped do
             @pool.populate
-            @pool.populate_semaphore.wait(5)
+            @pool.populate_semaphore.wait(nil)
           end
         }
       end
 
       def stop!
-        @thread.kill
+        @stopped = true
+        @pool.populate_semaphore.signal
       end
 
       def is_running?

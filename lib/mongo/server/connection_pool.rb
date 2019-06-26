@@ -134,8 +134,11 @@ module Mongo
           Monitoring::Event::Cmap::PoolCreated.new(@server.address, options)
         )
 
+        # todo: more graceful way of doing this?
         @populator = ConnectionPoolPopulator.new(self)
-        @populator.start!
+        if min_size > 0
+          @populator.start!
+        end
       end
 
       # @return [ Hash ] options The pool options.
@@ -437,12 +440,11 @@ module Mongo
             end
           end
 
-          # stop populator before releasing lock so it 
-          # cannot create connections
+          # mark pool as closed and stop populator before releasing lock so 
+          # no connections can be created, checked in, or checked out
+          @closed = true
           @populator.stop!
         end
-
-        @closed = true
 
         publish_cmap_event(
           Monitoring::Event::Cmap::PoolClosed.new(@server.address)
