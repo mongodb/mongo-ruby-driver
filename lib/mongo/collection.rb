@@ -138,9 +138,9 @@ module Mongo
 
     # Get the write concern for the collection, given the session.
     #
-    # If the session is in a transaction and the collection 
-    # has an unacknowledged write concern, remove the write 
-    # concern's :w option. Otherwise, return the unmodified 
+    # If the session is in a transaction and the collection
+    # has an unacknowledged write concern, remove the write
+    # concern's :w option. Otherwise, return the unmodified
     # write concern.
     #
     # @return [ Mongo::WriteConcern ] The write concern.
