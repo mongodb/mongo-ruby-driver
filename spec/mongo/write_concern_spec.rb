@@ -72,6 +72,19 @@ describe Mongo::WriteConcern do
               Mongo::WriteConcern.get(options)
             }.to raise_error(Mongo::Error::InvalidWriteConcern)
           end
+
+          context 'when j is given as a string' do
+
+            let(:options) do
+              { w: 0, 'j' => true }
+            end
+
+            it 'raises an exception' do
+              expect {
+                Mongo::WriteConcern.get(options)
+              }.to raise_error(Mongo::Error::InvalidWriteConcern)
+            end
+          end
         end
 
         context 'when fsync is true' do
@@ -116,7 +129,7 @@ describe Mongo::WriteConcern do
     context 'when w is greater than 0' do
 
       let(:options) do
-        { w: 2, journal: true }
+        { w: 2, j: true }
       end
 
       it 'returns an Acknowledged write concern object' do
@@ -131,7 +144,7 @@ describe Mongo::WriteConcern do
     context 'when w is a string' do
 
       let(:options) do
-        { w: 'majority', journal: true }
+        { w: 'majority', j: true }
       end
 
       it 'returns an Acknowledged write concern object' do
@@ -146,7 +159,7 @@ describe Mongo::WriteConcern do
     context 'when w is a symbol' do
 
       let(:options) do
-        { w: :majority, journal: true }
+        { w: :majority, j: true }
       end
 
       it 'returns an Acknowledged write concern object' do
@@ -181,6 +194,18 @@ describe Mongo::WriteConcern do
           expect(wc).to be_a(Mongo::WriteConcern::Unacknowledged)
           expect(wc.options[:w]).to eq(0)
         end
+      end
+    end
+
+    context 'when :journal option is given' do
+      let(:options) do
+        { 'w' => 1, journal: true }
+      end
+
+      it 'raises an exception' do
+        expect do
+          wc
+        end.to raise_error(Mongo::Error::InvalidWriteConcern, /use :j for journal/)
       end
     end
   end

@@ -43,8 +43,24 @@ module Mongo
       #
       # @since 2.0.0
       def initialize(options)
-        opts = Options::Mapper.transform_keys_to_symbols(options)
-        @options = Options::Mapper.transform_values_to_strings(opts).freeze
+        options = Options::Mapper.transform_keys_to_symbols(options)
+        options = Options::Mapper.transform_values_to_strings(options).freeze
+
+        if options[:w]
+          if options[:w] == 0 && options[:j]
+            raise Error::InvalidWriteConcern, "Invalid write concern options: :j cannot be true when :w is 0: #{options.inspect}"
+          elsif options[:w] == 0 && options[:fsync]
+            raise Error::InvalidWriteConcern, "Invalid write concern options: :fsync cannot be true when :w is 0: #{options.inspect}"
+          elsif options[:w].is_a?(Integer) && options[:w] < 0
+            raise Error::InvalidWriteConcern, "Invalid write concern options: :w cannot be negative (#{options[:w]}): #{options.inspect}"
+          end
+        end
+
+        if options[:journal]
+          raise Error::InvalidWriteConcern, "Invalid write concern options: use :j for journal: #{options.inspect}"
+        end
+
+        @options = options
       end
     end
   end
