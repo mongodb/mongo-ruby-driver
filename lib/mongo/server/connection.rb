@@ -227,8 +227,6 @@ module Mongo
           @close_event_published = true
         end
 
-        # for some reason, signaling here is slower
-        @server.pool.populate_semaphore.signal
         true
       end
 

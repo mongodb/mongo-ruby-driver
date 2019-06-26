@@ -275,7 +275,7 @@ module Mongo
                   # Stale connections should be disconnected in the clear
                   # method, but if any don't, check again here
                   connection.disconnect!(reason: :stale)
-                  #@populate_semaphore.signal 
+                  @populate_semaphore.signal 
                   next
                 end
 
@@ -283,7 +283,7 @@ module Mongo
                   Time.now - connection.last_checkin > max_idle_time
                 then
                   connection.disconnect!(reason: :idle)
-                  #@populate_semaphore.signal 
+                  @populate_semaphore.signal 
                   next
                 end
 
@@ -358,7 +358,7 @@ module Mongo
             @populate_semaphore.signal 
           elsif connection.generation != @generation
             connection.disconnect!(reason: :stale)
-            #@populate_semaphore.signal 
+            @populate_semaphore.signal 
           else
             connection.record_checkin!
             @available_connections << connection
@@ -396,7 +396,7 @@ module Mongo
             until @available_connections.empty?
               connection = @available_connections.pop
               connection.disconnect!(reason: :stale)
-              #@populate_semaphore.signal
+              @populate_semaphore.signal
             end
           end
         end
@@ -506,7 +506,7 @@ module Mongo
               if (Time.now - last_checkin) > max_idle_time
                 connection.disconnect!(reason: :idle)
                 @available_connections.delete_at(i)
-                #@populate_semaphore.signal
+                @populate_semaphore.signal
                 next
               end
             end
