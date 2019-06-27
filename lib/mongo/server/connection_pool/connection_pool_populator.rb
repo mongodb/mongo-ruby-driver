@@ -41,7 +41,7 @@ module Mongo
       end
 
       def is_running?
-        @thread && @thread.alive?
+        @thread ? @thread.alive? : false
       end
     end
   end

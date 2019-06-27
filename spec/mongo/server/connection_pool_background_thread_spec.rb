@@ -57,6 +57,20 @@ describe Mongo::Server::ConnectionPool do
         expect(pool.check_out).to_not equal(pool.check_out)
       end
     end
+
+    context 'when min size is zero' do
+      let(:pool) do
+        described_class.new(server)
+      end
+
+      it 'does not start the background thread' do
+        pool
+        sleep 2
+
+        expect(pool.size).to eq(0)
+        expect(pool.instance_variable_get('@populator').is_running?).to be false
+      end
+    end
   end
 
   describe '#clear' do
@@ -220,4 +234,31 @@ describe Mongo::Server::ConnectionPool do
 
   # todo test not going over max size / interactions between 
   # bg thread and in-flow checkout
+
+  describe 'forking test' do
+    context 'when min size is provided' do
+      min_server_version '2.8'
+
+      client = ClientRegistry.instance.global_client('authorized').with(max_pool_size: 2, min_pool_size: 2)
+      servers = client.cluster.servers
+
+      it 'populates the parent pool' do
+        pool = servers[0].pool
+        sleep 2
+        expect(pool.size).to eq(2)
+      end
+
+      fork do
+        client.close
+        client.reconnect
+        servers = client.cluster.servers
+
+        it 'populates the child pool' do
+          pool = servers[0].pool
+          sleep 2
+          expect(pool.size).to eq(2)
+        end
+      end
+    end
+  end
 end
