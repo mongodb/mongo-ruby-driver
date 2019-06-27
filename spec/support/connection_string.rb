@@ -223,9 +223,9 @@ module Mongo
         'maxidletimems' => :max_idle_time,
 
          # Write  Options
-        'journal' => [:write, 'j'],
-        'w' => [:write, 'w'],
-        'wtimeoutms' => [:write, 'wtimeout'],
+        'journal' => [:write_concern, 'j'],
+        'w' => [:write_concern, 'w'],
+        'wtimeoutms' => [:write_concern, 'wtimeout'],
 
         # Read Options
         'readpreference' => ['read', 'mode'],
