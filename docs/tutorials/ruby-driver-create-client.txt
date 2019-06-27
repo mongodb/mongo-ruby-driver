@@ -129,13 +129,13 @@ URI Options Conversions
      - ``:connect_timeout => Float``
 
    * - fsync=Boolean
-     - ``{ :write => { :fsync => true|false }}``
+     - ``{ :write_concern => { :fsync => true|false }}``
 
    * - heartbeatFrequencyMS=Integer
      - ``:heartbeat_frequency => Float``
 
    * - journal=Boolean
-     - ``{ :write => { :j => true|false }}``
+     - ``{ :write_concern => { :j => true|false }}``
 
    * - localThresholdMS=Integer
      - ``:local_threshold => Float``
@@ -217,13 +217,13 @@ URI Options Conversions
        is inverted before being used to set ``ssl_verify``.
 
    * - w=Integer|String
-     - ``{ :write => { :w => Integer|String }}``
+     - ``{ :write_concern => { :w => Integer|String }}``
 
    * - waitQueueTimeoutMS=Integer
      - ``:wait_queue_timeout => Float``
 
    * - wtimeoutMS=Integer
-     - ``{ :write => { :wtimeout => Float }}``
+     - ``{ :write_concern => { :wtimeout => Float }}``
 
    * - zlibCompressionLevel=Integer
      - ``:zlib_compression_level => Integer``
@@ -543,15 +543,22 @@ Ruby Options
      - 1
 
    * - ``:write``
+     - Deprecated. Equivalent to ``:write_concern`` option. If both ``:write``
+       and ``:write_concern`` are specified, their values must be identical.
+
+     - ``Hash``
+     - ``{ w: 1 }``
+
+   * - ``:write_concern``
      - Specifies write concern options as a ``Hash``.
        Keys in the hash can be ``:w``, ``:wtimeout``, ``:j``, ``:fsync``.
 
        .. code-block:: ruby
 
-         { :write => { :w => 2 } }
+         { write_concern: { w: 2 } }
 
      - ``Hash``
-     - ``{ :w => 1 }``
+     - ``{ w: 1 }``
 
    * - ``:zlib_compression_level``
      - The Zlib compression level to use, if using compression. See Ruby's Zlib module for valid levels.
