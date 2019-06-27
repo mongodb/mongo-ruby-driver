@@ -38,6 +38,15 @@ module Mongo
       def stop!
         @stopped = true
         @pool.populate_semaphore.signal
+
+        # this could fail; if stop! is called right after populate
+        # but before wait, or during populate when we don't
+        # have the lock, we will wait forever
+        # one solution is to kill the thread instead...
+
+        # what happens if a thread is killed in the middle of connecting a connection?
+        # if we set up the locks in such a way that this cannot happen, then kill
+        # seems like the right strategy, even if less graceful
       end
 
       def is_running?

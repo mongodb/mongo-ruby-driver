@@ -136,9 +136,7 @@ module Mongo
 
         # todo: more graceful way of doing this?
         @populator = ConnectionPoolPopulator.new(self)
-        if min_size > 0
-          @populator.start!
-        end
+        @populator.start! if min_size > 0
       end
 
       # @return [ Hash ] options The pool options.
@@ -530,7 +528,7 @@ module Mongo
         catch(:done) do
           loop do
             @lock.synchronize do
-              if unsynchronized_size < min_size
+              if !closed? && unsynchronized_size < min_size
                 @available_connections << create_connection
               else
                 throw(:done)

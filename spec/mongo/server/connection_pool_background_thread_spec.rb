@@ -163,8 +163,6 @@ describe Mongo::Server::ConnectionPool do
 
       end
     end
-
-    # todo test normal check out
   end
 
   describe '#close' do
@@ -235,7 +233,7 @@ describe Mongo::Server::ConnectionPool do
   # todo test not going over max size / interactions between 
   # bg thread and in-flow checkout
 
-  describe 'forking test' do
+  describe 'when forking is enabled' do    
     context 'when min size is provided' do
       min_server_version '2.8'
 
@@ -248,6 +246,7 @@ describe Mongo::Server::ConnectionPool do
         expect(pool.size).to eq(2)
       end
 
+      # errors on jruby because fork is not defined
       fork do
         client.close
         client.reconnect

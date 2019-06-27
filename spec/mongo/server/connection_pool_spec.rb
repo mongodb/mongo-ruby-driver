@@ -50,8 +50,8 @@ describe Mongo::Server::ConnectionPool do
         described_class.new(server, :min_pool_size => 2)
       end
 
-      it 'creates the pool with no connections' do
-        # now that bg thread runs, let it populate TODO
+      it 'creates the pool with min size connections' do
+        # let bg thread populate pool
         pool
         sleep 2
 
