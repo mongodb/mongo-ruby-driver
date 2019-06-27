@@ -196,8 +196,10 @@ describe Mongo::Collection do
   describe '#with' do
 
     let(:client) do
-      new_local_client(SpecConfig.instance.addresses,
-        SpecConfig.instance.test_options.merge(monitoring_io: false))
+      new_local_client_nmio(SpecConfig.instance.addresses,
+        SpecConfig.instance.test_options.merge(
+          SpecConfig.instance.auth_options
+      ))
     end
 
     let(:database) do
