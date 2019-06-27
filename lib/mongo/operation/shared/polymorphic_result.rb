@@ -27,8 +27,16 @@ module Mongo
 
       private
 
+      def self.included(base)
+        base.extend ClassMethods
+      end
+
+      module ClassMethods
+        attr_accessor :result_class
+      end
+
       def result_class
-        begin
+        self.class.result_class ||= begin
           polymorphic_class(self.class.name, :Result)
         rescue NameError
           polymorphic_class(self.class.name.sub(/::[^:]*$/, ''), :Result)
