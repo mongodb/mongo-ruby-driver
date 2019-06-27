@@ -35,14 +35,14 @@ describe 'Client construction' do
     it 'creates connection pool and keeps it populated' do
       client = ClientRegistry.instance.new_local_client([SpecConfig.instance.addresses.first],
         base_options.merge(min_pool_size: 1))
-      pool = client.cluster.servers[0].pool
+      sleep 1
 
-      sleep 2
-      expect(pool.size).to eq(1)
+      server = client.cluster.next_primary
+      expect(server.pool.size).to eq(1)
 
       # do query
       client['client_construction'].insert_one(test: 1)
-      expect(pool.size).to eq(1)
+      expect(server.pool.size).to eq(1)
     end
   end
 

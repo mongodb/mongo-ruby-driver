@@ -47,7 +47,7 @@ describe Mongo::Server::ConnectionPool do
 
       it 'creates the pool with min pool size connections' do
         pool
-        sleep 2
+        sleep 0.1
 
         expect(pool.size).to eq(2)
         expect(pool.available_count).to eq(2)
@@ -65,7 +65,7 @@ describe Mongo::Server::ConnectionPool do
 
       it 'does not start the background thread' do
         pool
-        sleep 2
+        sleep 0.1
 
         expect(pool.size).to eq(0)
         expect(pool.instance_variable_get('@populator').is_running?).to be false
@@ -80,19 +80,19 @@ describe Mongo::Server::ConnectionPool do
       end
 
       it 'repopulates the pool periodically only up to min size' do
-        pool 
+        pool
 
-        sleep 2
+        sleep 0.1
         expect(pool.size).to eq(1)
 
         pool.clear
-        expect(pool.size).to eq(0)
+        expect(pool.size).to eq(0) # todo what if bg thread is scheduled before?
 
-        sleep 3
+        sleep 0.1
         expect(pool.size).to eq(1)
 
-        # ensure populator is re-run
-        sleep 6
+        # even if populate is re-run, size does not change
+        pool.populate
         expect(pool.size).to eq(1)
       end
     end
@@ -107,7 +107,7 @@ describe Mongo::Server::ConnectionPool do
       it 'repopulates the pool after check_in of closed connection' do
         pool
 
-        sleep 2
+        sleep 0.1
         connection = pool.check_out
         expect(pool.size).to eq(1)
 
@@ -115,9 +115,9 @@ describe Mongo::Server::ConnectionPool do
         expect(pool.size).to eq(1)
 
         pool.check_in(connection)
-        expect(pool.size).to eq(0)
+        expect(pool.size).to eq(0) # todo what if bg thread is scheduled before?
 
-        sleep 2
+        sleep 0.1
         expect(pool.size).to eq(1)
       end
     end
@@ -145,16 +145,15 @@ describe Mongo::Server::ConnectionPool do
         expect(pool.size).to eq(2)
 
         # let both connections become idle
-        sleep 2
+        sleep 1
 
         # should trigger in-flow creation of a single connection,
         # then wake up populate thread
         third_connection = pool.check_out
-        # expect(pool.size).to eq(1) # this fails tests if bg thread is scheduled immediately
         expect(third_connection).to_not eq(first_connection)
         expect(third_connection).to_not eq(second_connection)
 
-        sleep 3
+        sleep 0.1
         expect(pool.size).to eq(2)
         fourth_connection = pool.check_out
         expect(fourth_connection).to_not eq(first_connection)
@@ -175,7 +174,7 @@ describe Mongo::Server::ConnectionPool do
       it 'does not repopulate the pool after pool is closed' do
         pool
 
-        sleep 2
+        sleep 0.1
         expect(pool.size).to eq(2)
 
         connection = pool.check_out
@@ -187,9 +186,9 @@ describe Mongo::Server::ConnectionPool do
         expect(pool.instance_variable_get('@available_connections').empty?).to be true
         expect(pool.instance_variable_get('@checked_out_connections').empty?).to be true
 
-        # ensure populator could be re-run
-        sleep 6
-
+        # even if populate is re-run, the state of the closed pool does not change
+        sleep 0.1
+        pool.populate
         expect(pool.closed?).to be true
         expect(pool.instance_variable_get('@available_connections').empty?).to be true
         expect(pool.instance_variable_get('@checked_out_connections').empty?).to be true
@@ -207,54 +206,55 @@ describe Mongo::Server::ConnectionPool do
       it 'repopulates pool after sockets are closes' do
         pool
 
-        sleep 2
+        sleep 0.1
         expect(pool.size).to eq(1)
 
         connection = pool.check_out
         connection.record_checkin!
         pool.check_in(connection)
-        
+
         # let the connection become idle
         sleep 1
 
-        # force close idle_sockets so it triggers populate, 
+        # force close idle_sockets so it triggers populate,
         # and it is unlikely to be because of bg thread timeout
         pool.close_idle_sockets
-        expect(pool.size).to eq(0)
+        expect(pool.size).to eq(0) # todo what if bg thread is scheduled before?
 
         # wait for populate to finish
-        sleep 2
+        sleep 0.1
         expect(pool.size).to eq(1)
         expect(pool.check_out).not_to eq(connection)
       end
     end
   end
 
-  # todo test not going over max size / interactions between 
+  # todo test not going over max size / interactions between
   # bg thread and in-flow checkout
 
-  describe 'when forking is enabled' do    
+  describe 'when forking is enabled' do
+    only_mri
+
     context 'when min size is provided' do
       min_server_version '2.8'
 
-      client = ClientRegistry.instance.global_client('authorized').with(max_pool_size: 2, min_pool_size: 2)
-      servers = client.cluster.servers
-
-      it 'populates the parent pool' do
-        pool = servers[0].pool
-        sleep 2
-        expect(pool.size).to eq(2)
+      let (:client) do
+        ClientRegistry.instance.new_local_client([SpecConfig.instance.addresses.first], SpecConfig.instance.test_options.merge( max_pool_size: 2, min_pool_size: 2 ))
       end
 
-      # errors on jruby because fork is not defined
-      fork do
-        client.close
-        client.reconnect
-        servers = client.cluster.servers
+      it 'populates the parent and child pools' do
+        server = client.cluster.next_primary
+        pool = server.pool
+        sleep 0.1
+        expect(pool.size).to eq(2)
 
-        it 'populates the child pool' do
-          pool = servers[0].pool
-          sleep 2
+        fork do
+          # follow forking guidance
+          client.close
+          client.reconnect
+          server = client.cluster.next_primary
+          pool = server.pool
+          sleep 0.1
           expect(pool.size).to eq(2)
         end
       end

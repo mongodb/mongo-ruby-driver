@@ -71,6 +71,9 @@ module Mongo
       end
       @connected = true
       @pool_lock = Mutex.new
+
+      # trigger pool creation
+      pool
     end
 
     # @return [ String ] The configured address for the server.

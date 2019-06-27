@@ -22,7 +22,7 @@ module Mongo
       def initialize(pool)
         @pool = pool
         @thread = nil
-        @stopped = false
+        # @stopped = false
       end
 
 
@@ -36,10 +36,10 @@ module Mongo
       end
 
       def stop!
-        @stopped = true
-        @pool.populate_semaphore.signal
+        # @stopped = true
+        # @pool.populate_semaphore.signal
 
-        # this could fail; if stop! is called right after populate
+        # the above could fail; if stop! is called right after populate
         # but before wait, or during populate when we don't
         # have the lock, we will wait forever
         # one solution is to kill the thread instead...
@@ -47,6 +47,9 @@ module Mongo
         # what happens if a thread is killed in the middle of connecting a connection?
         # if we set up the locks in such a way that this cannot happen, then kill
         # seems like the right strategy, even if less graceful
+        # for example, kill is called within close, which has the @lock, meaning (for now)
+        # the bg thread could not currently be creating a connection
+        @thread.kill if @thread
       end
 
       def is_running?

@@ -134,7 +134,8 @@ module Mongo
           Monitoring::Event::Cmap::PoolCreated.new(@server.address, options)
         )
 
-        # todo: more graceful way of doing this?
+        # Background thread reponsible for maintaining the size of
+        # the pool to at least min_size
         @populator = ConnectionPoolPopulator.new(self)
         @populator.start! if min_size > 0
       end
@@ -276,7 +277,7 @@ module Mongo
                   # Stale connections should be disconnected in the clear
                   # method, but if any don't, check again here
                   connection.disconnect!(reason: :stale)
-                  @populate_semaphore.signal 
+                  @populate_semaphore.signal
                   next
                 end
 
@@ -284,7 +285,7 @@ module Mongo
                   Time.now - connection.last_checkin > max_idle_time
                 then
                   connection.disconnect!(reason: :idle)
-                  @populate_semaphore.signal 
+                  @populate_semaphore.signal
                   next
                 end
 
@@ -318,6 +319,8 @@ module Mongo
           end
         end
 
+        # should only connect ones just created, and does the IO outside of the lock
+        # connection.connect! if connection
         publish_cmap_event(
           Monitoring::Event::Cmap::ConnectionCheckedOut.new(@server.address, connection.id),
         )
@@ -356,10 +359,10 @@ module Mongo
           if connection.closed?
             # Connection was closed - for example, because it experienced
             # a network error. Nothing else needs to be done here.
-            @populate_semaphore.signal 
+            @populate_semaphore.signal
           elsif connection.generation != @generation
             connection.disconnect!(reason: :stale)
-            @populate_semaphore.signal 
+            @populate_semaphore.signal
           else
             connection.record_checkin!
             @available_connections << connection
@@ -438,7 +441,7 @@ module Mongo
             end
           end
 
-          # mark pool as closed and stop populator before releasing lock so 
+          # mark pool as closed and stop populator before releasing lock so
           # no connections can be created, checked in, or checked out
           @closed = true
           @populator.stop!
@@ -527,13 +530,16 @@ module Mongo
 
         catch(:done) do
           loop do
+            connection = nil
             @lock.synchronize do
               if !closed? && unsynchronized_size < min_size
-                @available_connections << create_connection
+                connection = create_connection
+                @available_connections << connection
               else
                 throw(:done)
               end
             end
+            # connection.connect! if connection # what if someone grabs this connection before we connect it?
           end
         end
       end
