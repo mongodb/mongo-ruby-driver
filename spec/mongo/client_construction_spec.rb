@@ -653,7 +653,7 @@ describe Mongo::Client do
         end
 
         let(:expected_options) do
-          Mongo::Options::Redacted.new(:write => { :w => 3 },
+          Mongo::Options::Redacted.new(write_concern: { :w => 3 },
             monitoring_io: false, :database => 'testdb', retry_writes: true,
             retry_reads: true)
         end
@@ -765,24 +765,38 @@ describe Mongo::Client do
         end
       end
 
-      context 'when options are provided in the string and explicitly' do
+      context 'when options are provided in the URI and as Ruby options' do
 
         let!(:uri) do
           'mongodb://127.0.0.1:27017/testdb?w=3'
         end
 
         let(:client) do
-          new_local_client_nmio(uri, :write => { :w => 4 })
+          new_local_client_nmio(uri, option_name => { :w => 4 })
         end
 
         let(:expected_options) do
-          Mongo::Options::Redacted.new(:write => { :w => 4 },
+          Mongo::Options::Redacted.new(option_name => { :w => 4 },
             monitoring_io: false, :database => 'testdb', retry_writes: true,
             retry_reads: true)
         end
 
-        it 'allows explicit options to take preference' do
-          expect(client.options).to eq(expected_options)
+        shared_examples_for 'allows explicit options to take preference' do
+          it 'allows explicit options to take preference' do
+            expect(client.options).to eq(expected_options)
+          end
+        end
+
+        context 'when using :write' do
+          let(:option_name) { :write }
+
+          it_behaves_like 'allows explicit options to take preference'
+        end
+
+        context 'when using :write_concern' do
+          let(:option_name) { :write_concern }
+
+          it_behaves_like 'allows explicit options to take preference'
         end
       end
 
@@ -820,6 +834,26 @@ describe Mongo::Client do
           expect(client.options.keys).not_to include('invalid')
         end
       end
+
+=begin WriteConcern object support
+      context 'when write concern is provided via a WriteConcern object' do
+
+        let(:client) do
+          new_local_client_nmio(['127.0.0.1:27017'], write_concern: wc)
+        end
+
+        let(:wc) { Mongo::WriteConcern.get(w: 2) }
+
+        it 'stores write concern options in client options' do
+          expect(client.options[:write_concern]).to eq(
+            Mongo::Options::Redacted.new(w: 2))
+        end
+
+        it 'caches write concern object' do
+          expect(client.write_concern).to be wc
+        end
+      end
+=end
     end
   end
 
@@ -1044,7 +1078,12 @@ describe Mongo::Client do
     context 'when the write concern is changed' do
 
       let(:client) do
-        new_local_client(['127.0.0.1:27017'], :write => { :w => 1 }, :database => SpecConfig.instance.test_db)
+        new_local_client(['127.0.0.1:27017'],
+          {monitoring_io: false}.merge(client_options))
+      end
+
+      let(:client_options) do
+        { :write => { :w => 1 } }
       end
 
       context 'when the write concern has not been accessed' do
@@ -1075,6 +1114,116 @@ describe Mongo::Client do
 
         it 'returns the correct write concern' do
           expect(get_last_error).to be_nil
+        end
+      end
+
+      context 'when write concern is given as :write' do
+
+        let(:client_options) do
+          { :write => { :w => 1 } }
+        end
+
+        it 'sets :write option' do
+          expect(client.options[:write]).to eq(Mongo::Options::Redacted.new(w: 1))
+        end
+
+        it 'does not set :write_concern option' do
+          expect(client.options[:write_concern]).to be nil
+        end
+
+        it 'returns correct write concern' do
+          expect(client.write_concern).to be_a(Mongo::WriteConcern::Acknowledged)
+          expect(client.write_concern.options).to eq(w: 1)
+        end
+      end
+
+      context 'when write concern is given as :write_concern' do
+
+        let(:client_options) do
+          { :write_concern => { :w => 1 } }
+        end
+
+        it 'sets :write_concern option' do
+          expect(client.options[:write_concern]).to eq(Mongo::Options::Redacted.new(w: 1))
+        end
+
+        it 'does not set :write option' do
+          expect(client.options[:write]).to be nil
+        end
+
+        it 'returns correct write concern' do
+            expect(client.write_concern).to be_a(Mongo::WriteConcern::Acknowledged)
+            expect(client.write_concern.options).to eq(w: 1)
+        end
+      end
+
+      context 'when write concern is given as both :write and :write_concern' do
+        context 'with identical values' do
+
+          let(:client_options) do
+            { write: {w: 1}, write_concern: { w: 1 } }
+          end
+
+          it 'sets :write_concern option' do
+            expect(client.options[:write_concern]).to eq(Mongo::Options::Redacted.new(w: 1))
+          end
+
+          it 'sets :write option' do
+            expect(client.options[:write]).to eq(Mongo::Options::Redacted.new(w: 1))
+          end
+
+          it 'returns correct write concern' do
+            expect(client.write_concern).to be_a(Mongo::WriteConcern::Acknowledged)
+            expect(client.write_concern.options).to eq(w: 1)
+          end
+        end
+
+        context 'with different values' do
+
+          let(:client_options) do
+            { write: {w: 1}, write_concern: { w: 2 } }
+          end
+
+          it 'raises an exception' do
+            expect do
+              client
+            end.to raise_error(ArgumentError, /If :write and :write_concern are both given, they must be identical/)
+          end
+        end
+      end
+
+      context 'when #with uses a different write concern option name' do
+
+        context 'from :write_concern to :write' do
+
+          let(:client_options) do
+            { :write_concern => { :w => 1 } }
+          end
+
+          let!(:new_client) do
+            client.with(:write => { :w => 2 })
+          end
+
+          it 'uses the new option' do
+            expect(new_client.options[:write]).to eq(Mongo::Options::Redacted.new(w: 2))
+            expect(new_client.options[:write_concern]).to be nil
+          end
+        end
+
+        context 'from :write to :write_concern' do
+
+          let(:client_options) do
+            { :write => { :w => 1 } }
+          end
+
+          let!(:new_client) do
+            client.with(:write_concern => { :w => 2 })
+          end
+
+          it 'uses the new option' do
+            expect(new_client.options[:write_concern]).to eq(Mongo::Options::Redacted.new(w: 2))
+            expect(new_client.options[:write]).to be nil
+          end
         end
       end
     end
