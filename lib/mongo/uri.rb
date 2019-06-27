@@ -483,10 +483,10 @@ module Mongo
     uri_option 'maxidletimems', :max_idle_time, :type => :max_idle_time
 
     # Write Options
-    uri_option 'w', :w, :group => :write, type: :w
-    uri_option 'journal', :j, :group => :write, :type => :journal
-    uri_option 'fsync', :fsync, :group => :write, type: :bool
-    uri_option 'wtimeoutms', :wtimeout, :group => :write, :type => :wtimeout
+    uri_option 'w', :w, :group => :write_concern, type: :w
+    uri_option 'journal', :j, :group => :write_concern, :type => :journal
+    uri_option 'fsync', :fsync, :group => :write_concern, type: :bool
+    uri_option 'wtimeoutms', :wtimeout, :group => :write_concern, :type => :wtimeout
 
     # Read Options
     uri_option 'readpreference', :mode, :group => :read, :type => :read_mode
