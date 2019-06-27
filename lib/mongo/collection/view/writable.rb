@@ -357,9 +357,9 @@ module Mongo
         #
         # @return [ Mongo::WriteConcern ] The write concern.
         def applied_write_concern(session)
-          if options[:write] || options[:write_concern]
-            WriteConcern.get(options[:write] || options[:write_concern])
-          else 
+          if wco = options[:write_concern] || options[:write]
+            WriteConcern.get(wco)
+          else
             write_concern_with_session(session)
           end
         end
