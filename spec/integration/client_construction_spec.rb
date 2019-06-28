@@ -35,7 +35,6 @@ describe 'Client construction' do
     it 'creates connection pool and keeps it populated' do
       client = ClientRegistry.instance.new_local_client([SpecConfig.instance.addresses.first],
         base_options.merge(min_pool_size: 1))
-
       # allow connection pool to populate
       sleep 0.1
 

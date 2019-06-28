@@ -247,19 +247,22 @@ describe Mongo::Server::ConnectionPool do
       it 'populates the parent and child pools' do
         client = ClientRegistry.instance.new_local_client([SpecConfig.instance.addresses.first],
           server_options.merge(min_pool_size: 2))
+        # let pool populate
+        sleep 0.1
+
         server = client.cluster.next_primary
         pool = server.pool
-        sleep 0.1
         expect(pool.size).to eq(2)
 
         fork do
           # follow forking guidance
           client.close
           client.reconnect
+          # let pool populate
+          sleep 0.1
 
           server = client.cluster.next_primary
           pool = server.pool
-          sleep 0.1
           expect(pool.size).to eq(2)
         end
       end

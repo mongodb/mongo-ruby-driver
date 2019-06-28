@@ -120,20 +120,11 @@ module Mongo
         # available connection when pool is at max size
         @available_semaphore = Semaphore.new
 
-        finalizer = proc do
-          available_connections.each do |connection|
-            connection.disconnect!(reason: :pool_closed)
-          end
-          available_connections.clear
-          # Finalizer does not close checked out connections.
-          # Those would have to be garbage collected on their own
-          # and that should close them.
-        end
-        ObjectSpace.define_finalizer(self, finalizer)
-
         @populate_semaphore = Semaphore.new
         @populator = ConnectionPoolPopulator.new(self)
         @populator.start! if min_size > 0
+
+        ObjectSpace.define_finalizer(self, self.class.finalize(@available_connections, @populator))
 
         publish_cmap_event(
           Monitoring::Event::Cmap::PoolCreated.new(@server.address, options)
@@ -535,6 +526,25 @@ module Mongo
               end
             end
           end
+        end
+      end
+
+      # Finalize the connection pool for garbage collection.
+      #
+      # @param [ List<Mongo::Connection> ] available_connections The available connections.
+      # @param [ ConnectionPoolPopulator ] populator The populator.
+      #
+      # @return [ Proc ] The Finalizer.
+      def self.finalize(available_connections, populator)
+        proc do
+          populator.stop!
+          available_connections.each do |connection|
+            connection.disconnect!(reason: :pool_closed)
+          end
+          available_connections.clear
+          # Finalizer does not close checked out connections.
+          # Those would have to be garbage collected on their own
+          # and that should close them.
         end
       end
 
