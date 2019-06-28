@@ -71,10 +71,7 @@ module Mongo
       end
       @connected = true
 
-      @pool_lock = Mutex.new
-      @pool_lock.synchronize do
-        @pool = ConnectionPool.new(self, options)
-      end
+      @pool = ConnectionPool.new(self, options)
     end
 
     # @return [ String ] The configured address for the server.
@@ -296,9 +293,7 @@ module Mongo
     #
     # @since 2.0.0
     def pool
-      @pool_lock.synchronize do
         @pool
-      end
     end
 
     # Determine if the provided tags are a subset of the server's tags.
