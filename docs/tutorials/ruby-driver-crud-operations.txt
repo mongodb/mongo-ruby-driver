@@ -470,6 +470,8 @@ Deleting
   result = artists.delete_many(:label => 'Mute')
   result.deleted_count # Returns the number deleted.
 
+.. _write-concern:
+
 Write Concern
 -------------
 
