@@ -51,9 +51,9 @@ describe Mongo::Server::ConnectionPool do
       end
 
       it 'creates the pool with min size connections' do
-        # let bg thread populate pool
+        # Allow background thread to populate pool
         pool
-        sleep 2
+        sleep 0.1
 
         expect(pool.size).to eq(2)
         expect(pool.available_count).to eq(2)
@@ -516,6 +516,9 @@ describe Mongo::Server::ConnectionPool do
 
     def create_pool(min_pool_size)
       described_class.new(server, max_pool_size: 3, min_pool_size: min_pool_size).tap do |pool|
+        # kill background thread to test disconnect behavior
+        pool.populator.stop!
+
         # make pool be of size 2 so that it has enqueued connections
         # when told to disconnect
         c1 = pool.check_out
@@ -794,6 +797,11 @@ describe Mongo::Server::ConnectionPool do
         end
 
         context 'when min size is > 0' do
+          before do
+            # Kill background thread to test close_idle_socket behavior
+            pool.populator.stop!
+          end
+
           after do
             pool.close(:force => true)
           end

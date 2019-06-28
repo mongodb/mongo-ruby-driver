@@ -70,10 +70,11 @@ module Mongo
         start_monitoring
       end
       @connected = true
-      @pool_lock = Mutex.new
 
-      # trigger pool creation
-      pool
+      @pool_lock = Mutex.new
+      @pool_lock.synchronize do
+        @pool = ConnectionPool.new(self, options)
+      end
     end
 
     # @return [ String ] The configured address for the server.
@@ -296,7 +297,7 @@ module Mongo
     # @since 2.0.0
     def pool
       @pool_lock.synchronize do
-        @pool ||= ConnectionPool.new(self, options)
+        @pool
       end
     end
 

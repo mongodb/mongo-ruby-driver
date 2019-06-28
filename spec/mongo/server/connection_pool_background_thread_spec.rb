@@ -68,7 +68,7 @@ describe Mongo::Server::ConnectionPool do
         sleep 0.1
 
         expect(pool.size).to eq(0)
-        expect(pool.instance_variable_get('@populator').is_running?).to be false
+        expect(pool.populator.is_running?).to be false
       end
     end
   end
@@ -84,16 +84,25 @@ describe Mongo::Server::ConnectionPool do
 
         sleep 0.1
         expect(pool.size).to eq(1)
+        expect(pool.available_count).to eq(1)
+        first_connection = pool.check_out
+        pool.check_in(first_connection)
 
         pool.clear
-        expect(pool.size).to eq(0) # todo what if bg thread is scheduled before?
 
         sleep 0.1
         expect(pool.size).to eq(1)
+        expect(pool.available_count).to eq(1)
+        second_connection = pool.check_out
+        pool.check_in(second_connection)
+        expect(second_connection).to_not eq(first_connection)
 
-        # even if populate is re-run, size does not change
+        # When populate is re-run, the pool size should not change
         pool.populate
         expect(pool.size).to eq(1)
+        expect(pool.available_count).to eq(1)
+        third_connection = pool.check_out
+        expect(third_connection).to eq(second_connection)
       end
     end
   end
@@ -104,21 +113,22 @@ describe Mongo::Server::ConnectionPool do
         described_class.new(server, :min_pool_size => 1)
       end
 
-      it 'repopulates the pool after check_in of closed connection' do
+      it 'repopulates the pool after check_in of a closed connection' do
         pool
 
         sleep 0.1
-        connection = pool.check_out
+        expect(pool.size).to eq(1)
+        first_connection = pool.check_out
+        first_connection.disconnect!
         expect(pool.size).to eq(1)
 
-        connection.disconnect!
-        expect(pool.size).to eq(1)
-
-        pool.check_in(connection)
-        expect(pool.size).to eq(0) # todo what if bg thread is scheduled before?
+        pool.check_in(first_connection)
 
         sleep 0.1
         expect(pool.size).to eq(1)
+        expect(pool.available_count).to eq(1)
+        second_connection = pool.check_out
+        expect(second_connection).to_not eq(first_connection)
       end
     end
   end
@@ -127,7 +137,7 @@ describe Mongo::Server::ConnectionPool do
     context 'when min size and idle time are provided' do
 
       let(:pool) do
-        described_class.new(server, :min_pool_size => 2, :max_idle_time => 1)
+        described_class.new(server, :min_pool_size => 2, :max_idle_time => 0.5)
       end
 
       it 'repopulates the pool after check_out empties idle connections' do
@@ -145,21 +155,21 @@ describe Mongo::Server::ConnectionPool do
         expect(pool.size).to eq(2)
 
         # let both connections become idle
-        sleep 1
+        sleep 0.5
 
-        # should trigger in-flow creation of a single connection,
-        # then wake up populate thread
+        # check_out should discard first two connections, trigger in-flow
+        # creation of a single connection, then wake up populate thread
         third_connection = pool.check_out
         expect(third_connection).to_not eq(first_connection)
         expect(third_connection).to_not eq(second_connection)
 
+        # populate thread should create a new connection for the pool
         sleep 0.1
         expect(pool.size).to eq(2)
         fourth_connection = pool.check_out
         expect(fourth_connection).to_not eq(first_connection)
         expect(fourth_connection).to_not eq(second_connection)
         expect(fourth_connection).to_not eq(third_connection)
-
       end
     end
   end
@@ -171,7 +181,7 @@ describe Mongo::Server::ConnectionPool do
         described_class.new(server, :min_pool_size => 2)
       end
 
-      it 'does not repopulate the pool after pool is closed' do
+      it 'terminates and does not repopulate the pool after pool is closed' do
         pool
 
         sleep 0.1
@@ -186,13 +196,15 @@ describe Mongo::Server::ConnectionPool do
         expect(pool.instance_variable_get('@available_connections').empty?).to be true
         expect(pool.instance_variable_get('@checked_out_connections').empty?).to be true
 
-        # even if populate is re-run, the state of the closed pool does not change
+        # populate thread should terminate
         sleep 0.1
-        pool.populate
+        expect(pool.populator.is_running?).to be false
         expect(pool.closed?).to be true
+
+        # running populate should not change state of pool
+        pool.populate
         expect(pool.instance_variable_get('@available_connections').empty?).to be true
         expect(pool.instance_variable_get('@checked_out_connections').empty?).to be true
-        expect(pool.instance_variable_get('@populator').is_running?).to be false
       end
     end
   end
@@ -200,7 +212,7 @@ describe Mongo::Server::ConnectionPool do
   describe '#close_idle_sockets' do
     context 'when min size and idle time are provided' do
       let(:pool) do
-        described_class.new(server, :min_pool_size => 1, :max_idle_time => 1)
+        described_class.new(server, :min_pool_size => 1, :max_idle_time => 0.5)
       end
 
       it 'repopulates pool after sockets are closes' do
@@ -214,14 +226,11 @@ describe Mongo::Server::ConnectionPool do
         pool.check_in(connection)
 
         # let the connection become idle
-        sleep 1
+        sleep 0.5
 
-        # force close idle_sockets so it triggers populate,
-        # and it is unlikely to be because of bg thread timeout
+        # close idle_sockets should trigger populate
         pool.close_idle_sockets
-        expect(pool.size).to eq(0) # todo what if bg thread is scheduled before?
 
-        # wait for populate to finish
         sleep 0.1
         expect(pool.size).to eq(1)
         expect(pool.check_out).not_to eq(connection)
@@ -229,20 +238,15 @@ describe Mongo::Server::ConnectionPool do
     end
   end
 
-  # todo test not going over max size / interactions between
-  # bg thread and in-flow checkout
-
   describe 'when forking is enabled' do
     only_mri
 
     context 'when min size is provided' do
       min_server_version '2.8'
 
-      let (:client) do
-        ClientRegistry.instance.new_local_client([SpecConfig.instance.addresses.first], SpecConfig.instance.test_options.merge( max_pool_size: 2, min_pool_size: 2 ))
-      end
-
       it 'populates the parent and child pools' do
+        client = ClientRegistry.instance.new_local_client([SpecConfig.instance.addresses.first],
+          server_options.merge(min_pool_size: 2))
         server = client.cluster.next_primary
         pool = server.pool
         sleep 0.1
@@ -252,6 +256,7 @@ describe Mongo::Server::ConnectionPool do
           # follow forking guidance
           client.close
           client.reconnect
+
           server = client.cluster.next_primary
           pool = server.pool
           sleep 0.1

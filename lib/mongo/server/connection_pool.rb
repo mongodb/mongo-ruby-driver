@@ -39,6 +39,12 @@ module Mongo
       # @since 2.9.0
       DEFAULT_WAIT_TIMEOUT = 1.freeze
 
+      # Background thread reponsible for maintaining the size of
+      # the pool to at least min_size
+      attr_reader :populator
+
+      # Condition variable broadcast when the size of the pool changes
+      # to wake up the populator
       attr_reader :populate_semaphore
 
       # Create the new connection pool.
@@ -114,11 +120,6 @@ module Mongo
         # available connection when pool is at max size
         @available_semaphore = Semaphore.new
 
-        # Condition variable broadcast when the size of the pool
-        # may have changed, to wake up the background
-        # thread to populate the pool size to min_size
-        @populate_semaphore = Semaphore.new
-
         finalizer = proc do
           available_connections.each do |connection|
             connection.disconnect!(reason: :pool_closed)
@@ -130,14 +131,13 @@ module Mongo
         end
         ObjectSpace.define_finalizer(self, finalizer)
 
+        @populate_semaphore = Semaphore.new
+        @populator = ConnectionPoolPopulator.new(self)
+        @populator.start! if min_size > 0
+
         publish_cmap_event(
           Monitoring::Event::Cmap::PoolCreated.new(@server.address, options)
         )
-
-        # Background thread reponsible for maintaining the size of
-        # the pool to at least min_size
-        @populator = ConnectionPoolPopulator.new(self)
-        @populator.start! if min_size > 0
       end
 
       # @return [ Hash ] options The pool options.
@@ -319,8 +319,6 @@ module Mongo
           end
         end
 
-        # should only connect ones just created, and does the IO outside of the lock
-        # connection.connect! if connection
         publish_cmap_event(
           Monitoring::Event::Cmap::ConnectionCheckedOut.new(@server.address, connection.id),
         )
@@ -518,11 +516,10 @@ module Mongo
         end
       end
 
-      # Creates and adds connections to the pool until the
+      # Create and add connections to the pool until the
       # pool size is at least min_size.
       #
-      # Used by the spec test runner.
-      # Also used by pool populator background thread.
+      # Used by the spec test runner and the pool populator background thread.
       #
       # @api private
       def populate
@@ -530,16 +527,13 @@ module Mongo
 
         catch(:done) do
           loop do
-            connection = nil
             @lock.synchronize do
               if !closed? && unsynchronized_size < min_size
-                connection = create_connection
-                @available_connections << connection
+                @available_connections << create_connection
               else
                 throw(:done)
               end
             end
-            # connection.connect! if connection # what if someone grabs this connection before we connect it?
           end
         end
       end
