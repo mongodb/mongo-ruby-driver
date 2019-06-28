@@ -651,6 +651,12 @@ module Mongo
 
       @state = STARTING_TRANSACTION_STATE
       @already_committed = false
+
+      # This method has no explicit return value.
+      # We could return nil here but true indicates to the user that the
+      # operation succeeded. This is intended for interactive use.
+      # Note that the return value is not documented.
+      true
     end
 
     # Commit the currently active transaction on the session.
@@ -717,6 +723,10 @@ module Mongo
         @state = TRANSACTION_COMMITTED_STATE
         @committing_transaction = false
       end
+
+      # No official return value, but return true so that in interactive
+      # use the method hints that it succeeded.
+      true
     end
 
     # Abort the currently active transaction without making any changes to the database.
@@ -763,6 +773,10 @@ module Mongo
         @state = TRANSACTION_ABORTED_STATE
         raise
       end
+
+      # No official return value, but return true so that in interactive
+      # use the method hints that it succeeded.
+      true
     end
 
     # Executes the provided block in a transaction, retrying as necessary.
@@ -892,6 +906,10 @@ module Mongo
           end
         end
       end
+
+      # No official return value, but return true so that in interactive
+      # use the method hints that it succeeded.
+      true
     ensure
       if transaction_in_progress
         log_warn('with_transaction callback altered with_transaction loop, aborting transaction')
