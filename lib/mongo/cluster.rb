@@ -390,7 +390,7 @@ module Mongo
       unless @connecting || @connected
         return true
       end
-      @periodic_executor.stop!
+      @periodic_executor.stop!(wait)
       @servers.each do |server|
         if server.connected?
           server.disconnect!(wait)
