@@ -243,9 +243,7 @@ describe Mongo::Collection do
       context 'when the client has a read preference set' do
 
         let(:client) do
-          new_local_client(SpecConfig.instance.addresses,
-            SpecConfig.instance.test_options.merge(client_options)
-          ).tap do |client|
+          authorized_client.with(client_options).tap do |client|
             expect(client.options[:read]).to eq(Mongo::Options::Redacted.new(
               mode: :primary_preferred))
           end
