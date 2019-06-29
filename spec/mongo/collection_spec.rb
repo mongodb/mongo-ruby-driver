@@ -244,13 +244,18 @@ describe Mongo::Collection do
 
         let(:client) do
           new_local_client(SpecConfig.instance.addresses,
-            SpecConfig.instance.test_options.merge(
-              read: { mode: :primary_preferred },
-              monitoring_io: false,
-          )).tap do |client|
+            SpecConfig.instance.test_options.merge(client_options)
+          ).tap do |client|
             expect(client.options[:read]).to eq(Mongo::Options::Redacted.new(
               mode: :primary_preferred))
           end
+        end
+
+        let(:client_options) do
+          {
+            read: { mode: :primary_preferred },
+            monitoring_io: false,
+          }
         end
 
         let(:new_options) do
@@ -270,6 +275,12 @@ describe Mongo::Collection do
         context 'when reading from collection' do
           # Since we are requesting a secondary read, we need a replica set.
           require_topology :replica_set
+
+          let(:client_options) do
+            {
+              read: { mode: :primary_preferred },
+            }
+          end
 
           let(:subscriber) { EventSubscriber.new }
 
