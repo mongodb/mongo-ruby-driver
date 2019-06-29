@@ -43,8 +43,8 @@ module Mongo
     attr_reader :view
 
     # The resume token tracked by the cursor for change stream resuming
-    # 
-    # @return [ BSON::Document | nil ] The cursor resume token. 
+    #
+    # @return [ BSON::Document | nil ] The cursor resume token.
     # @api private
     attr_reader :resume_token
 
@@ -252,8 +252,8 @@ module Mongo
     def to_return
       use_limit? ? @remaining : (batch_size || 0)
     end
-    
-    # Execute a getMore command and return the batch of documents 
+
+    # Execute a getMore command and return the batch of documents
     # obtained from the server.
     #
     # @return [ Array<BSON::Document> ] The batch of documents
