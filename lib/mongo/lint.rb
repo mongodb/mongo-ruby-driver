@@ -79,7 +79,7 @@ module Mongo
       end
       level = read_concern[:level]
       return if [:local, :available, :majority, :linearizable, :snapshot].include?(level)
-      raise Error::LintError, "Read concern level is invalid: #{level.inspect}"
+      raise Error::LintError, "Read concern level is invalid: value must be a symbol: #{level.inspect}"
     end
     module_function :validate_read_concern_option
 
