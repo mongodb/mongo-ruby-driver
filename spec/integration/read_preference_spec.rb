@@ -10,7 +10,7 @@ describe 'Read preference' do
   require_topology :replica_set
 
   let(:client) do
-    authorized_client.with(client_options).use('test')
+    authorized_client.with(client_options)
   end
 
   let(:subscriber) { EventSubscriber.new }
