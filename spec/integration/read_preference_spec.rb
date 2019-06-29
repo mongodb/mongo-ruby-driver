@@ -47,11 +47,7 @@ describe 'Read preference' do
     it 'does not use expected read preference when writing' do
       write_operation
 
-      events = subscriber.started_events.select do |event|
-        event.command['insert']
-      end
-      expect(events.count).to eq(1)
-      event = events.first
+      event = subscriber.single_command_started_event('insert')
       actual_preference = event.command['$readPreference']
       expect(actual_preference).to be nil
     end
@@ -59,11 +55,7 @@ describe 'Read preference' do
     it 'uses expected read preference when reading' do
       read_operation
 
-      events = subscriber.started_events.select do |event|
-        event.command['find']
-      end
-      expect(events.count).to eq(1)
-      event = events.first
+      event = subscriber.single_command_started_event('find')
       actual_preference = event.command['$readPreference']
       expect(actual_preference).to eq(expected_read_preference)
     end
@@ -241,11 +233,7 @@ describe 'Read preference' do
           expect(res).to eq(1)
         end
 
-        events = subscriber.started_events.select do |event|
-          event.command['find']
-        end
-        expect(events.count).to eq(1)
-        event = events.first
+        event = subscriber.single_command_started_event('find')
         actual_preference = event.command['$readPreference']
         expect(actual_preference).to eq(expected_read_preference)
       end
