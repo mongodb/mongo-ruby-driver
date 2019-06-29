@@ -241,6 +241,7 @@ describe Mongo::Collection do
       end
 
       context 'when the client has a read preference set' do
+        clean_slate_on_evergreen
 
         let(:client) do
           authorized_client.with(client_options).tap do |client|
