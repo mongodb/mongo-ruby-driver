@@ -117,14 +117,17 @@ module Mongo
 
       def start_transaction(session, context)
         session.start_transaction(Utils.convert_operation_options(arguments['options']))
+        nil
       end
 
       def commit_transaction(session, context)
-        session.commit_transaction ; nil
+        session.commit_transaction
+        nil
       end
 
       def abort_transaction(session, context)
-        session.abort_transaction ; nil
+        session.abort_transaction
+        nil
       end
 
       def with_transaction(session, context, collection)
