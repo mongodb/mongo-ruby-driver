@@ -9,6 +9,36 @@ module CommonShortcuts
         end
       end
     end
+
+    # For tests which require clients to connect, clean slate asks all
+    # existing clients to be closed prior to the test execution.
+    # Note that clean_slate closes all clients for each test in the scope.
+    def clean_slate
+      before do
+        ClientRegistry.instance.close_all_clients
+      end
+    end
+
+    # Similar to clean slate but closes clients once before all tests in
+    # the scope. Use when the tests do not create new clients but do not
+    # want any background output from previously existing clients.
+    def clean_slate_for_all
+      before(:all) do
+        ClientRegistry.instance.close_all_clients
+      end
+    end
+
+    # For some reason, there are tests which fail on evergreen either
+    # intermittently or reliably that always succeed locally.
+    # Debugging of tests in evergreen is difficult/impossible,
+    # thus this workaround.
+    def clean_slate_on_evergreen
+      before(:all) do
+        if SpecConfig.instance.ci?
+          ClientRegistry.instance.close_all_clients
+        end
+      end
+    end
   end
 
   module InstanceMethods

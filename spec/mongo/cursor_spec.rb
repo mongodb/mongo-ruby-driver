@@ -39,6 +39,8 @@ describe Mongo::Cursor do
     end
 
     context 'cursor not exhausted by initial result' do
+      clean_slate
+
       let(:view) do
         Mongo::Collection::View.new(authorized_collection, {}, batch_size: 2)
       end

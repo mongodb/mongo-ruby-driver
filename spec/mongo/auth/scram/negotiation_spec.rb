@@ -2,10 +2,7 @@ require 'spec_helper'
 
 describe 'SCRAM-SHA auth mechanism negotiation' do
   min_server_fcv '4.0'
-
-  before(:all) do
-    ClientRegistry.instance.close_all_clients
-  end
+  clean_slate
 
   URI_OPTION_MAP = {
     :auth_source => 'authsource',
