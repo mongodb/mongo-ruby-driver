@@ -139,12 +139,6 @@ module Mongo
 
         if arguments['options']
           options = Utils.snakeize_hash(arguments['options'])
-          if options[:read_concern]
-            options[:read_concern] = Options::Mapper.transform_keys_to_symbols(options[:read_concern])
-            if options[:read_concern][:level] == 'majority'
-              options[:read_concern][:level] = :majority
-            end
-          end
         else
           options = nil
         end
