@@ -206,6 +206,8 @@ describe 'Read preference' do
   end
 
   context 'in transaction' do
+    min_server_fcv '4.0'
+
     let(:write_operation) do
       expect do
         session = client.start_session(session_options)
