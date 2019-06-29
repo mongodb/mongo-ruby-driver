@@ -8,13 +8,7 @@ require 'spec_helper'
 
 describe 'Read preference' do
   require_topology :replica_set
-
-  before(:all) do
-    # For some reason all of these tests fail in evergreen otherwise
-    if SpecConfig.instance.ci?
-      ClientRegistry.instance.close_all_clients
-    end
-  end
+  clean_slate_on_evergreen
 
   let(:client) do
     authorized_client.with(client_options)
