@@ -10,11 +10,7 @@ describe 'Read preference' do
   require_topology :replica_set
 
   let(:client) do
-    new_local_client(SpecConfig.instance.addresses,
-      SpecConfig.instance.test_options.merge(
-        SpecConfig.instance.auth_options
-      ).merge(client_options).merge(database: 'test')
-    )
+    authorized_client.with(client_options).use('test')
   end
 
   let(:subscriber) { EventSubscriber.new }
