@@ -28,6 +28,10 @@ describe Mongo::Cursor do
     end
 
     context 'cursor exhausted by initial result' do
+      before do
+        ClientRegistry.instance.close_all_clients
+      end
+
       let(:view) do
         Mongo::Collection::View.new(authorized_collection)
       end
