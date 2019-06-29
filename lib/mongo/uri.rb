@@ -521,7 +521,7 @@ module Mongo
     # Client Options
     uri_option 'appname', :app_name
     uri_option 'compressors', :compressors, :type => :array
-    uri_option 'readconcernlevel', :level, group: :read_concern
+    uri_option 'readconcernlevel', :level, group: :read_concern, type: :symbol
     uri_option 'retryreads', :retry_reads, :type => :retry_reads
     uri_option 'retrywrites', :retry_writes, :type => :retry_writes
     uri_option 'zlibcompressionlevel', :zlib_compression_level, :type => :zlib_compression_level

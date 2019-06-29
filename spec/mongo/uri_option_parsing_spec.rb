@@ -319,8 +319,8 @@ describe Mongo::URI do
 
     it_behaves_like 'parses successfully'
 
-    it 'is a string' do
-      expect(uri.uri_options[:read_concern]).to eq(BSON::Document.new(level: 'snapshot'))
+    it 'is a symbol' do
+      expect(uri.uri_options[:read_concern]).to eq(BSON::Document.new(level: :snapshot))
     end
   end
 
