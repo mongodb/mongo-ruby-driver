@@ -593,6 +593,32 @@ describe Mongo::Collection::View::ChangeStream do
     end
   end
 
+  context 'when a killCursors command is issued for the cursor' do
+    before do
+      change_stream
+      collection.insert_one(a:1)
+      enum.next
+      collection.insert_one(a:2)
+      client.use(:admin).command({
+        killCursors: collection.name,
+        cursors: [cursor.id]
+      })
+    end
+
+    let(:enum) do
+      change_stream.to_enum
+    end
+
+    it 'should create a new cursor and resume' do
+      document = enum.next
+
+      expect(document[:fullDocument][:a]).to eq(2)
+
+      # 'cursor' still references the cursor that was killed
+      expect(change_stream.instance_variable_get(:@cursor).id).not_to eq(cursor.id)
+    end
+  end
+
   context 'when a server error is encountered during a getMore' do
     fails_on_jruby
 
