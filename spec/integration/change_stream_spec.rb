@@ -569,37 +569,53 @@ describe 'Change stream integration', retry: 4 do
     # Note that the watch method executes the initial aggregate command
     context 'for non-empty, non-iterated batch, only the initial aggregate command executed' do
       let(:stream_doc_id) do
-        stream
-
+        cs = authorized_collection.watch([])
         authorized_collection.insert_one(x: 1)
-        stream_doc_id = stream.to_enum.next['_id']
+        cs.to_enum.next['_id']
+      end
+
+      let (:use_stream) do
+        authorized_collection.insert_one(:a => 1)
+        stream
       end
 
       context 'if startAfter was specified' do
         min_server_fcv '4.2'
 
-        it 'must return startAfter from the initial aggregate' do
-          start_after = stream_doc_id
-          authorized_collection.insert_one(:a => 1)
-          stream = authorized_collection.watch([], { start_after: start_after })
+        let (:stream) do
+          authorized_collection.watch([], { start_after: stream_doc_id })
+        end
 
-          expect(stream.resume_token).to eq(start_after)
+        it 'must return startAfter from the initial aggregate' do
+          stream_doc_id
+
+          # Verify that only the initial aggregate command was executed
+          expect(events.size).to eq(1)
+          expect(events.first.command_name).to eq('aggregate')
+          expect(stream.resume_token).to eq(stream_doc_id)
         end
       end
 
-      it 'must return resumeAfter from the initial aggregate if the option was specified' do
-        resume_after = stream_doc_id
-        authorized_collection.insert_one(:a => 1)
-        stream = authorized_collection.watch([], { resume_after: resume_after })
+      context 'if resumeAfter was specified' do
+        let (:stream) do
+          authorized_collection.watch([], { resume_after: stream_doc_id })
+        end
 
-        expect(stream.resume_token).to eq(resume_after)
+        it 'must return resumeAfter from the initial aggregate' do
+          stream_doc_id
+
+          expect(events.size).to eq(1)
+          expect(events.first.command_name).to eq('aggregate')
+          expect(stream.resume_token).to eq(stream_doc_id)
+        end
       end
 
-      it 'must be empty if neither the startAfter nor resumeAfter options were specified' do
-        authorized_collection.insert_one(:a => 1)
-        stream = authorized_collection.watch
-
-        expect(stream.resume_token).to be(nil)
+      context 'if neither the startAfter nor resumeAfter options were specified' do
+        it 'must be empty' do
+          expect(events.size).to eq(1)
+          expect(events.first.command_name).to eq('aggregate')
+          expect(stream.resume_token).to be(nil)
+        end
       end
     end
 
