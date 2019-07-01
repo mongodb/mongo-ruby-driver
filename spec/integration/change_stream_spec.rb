@@ -45,6 +45,16 @@ describe 'Change stream integration', retry: 4 do
       end
     end
 
+    shared_context 'errors with a non-resumable error' do
+      it 'errors with a non-resumable error' do
+        change_stream
+
+        expect do
+          change_stream.to_enum.next
+        end.to raise_error(Mongo::Error::OperationFailure, /Failing command due to 'failCommand' failpoint \((11601|136|237)\)/)
+      end
+    end
+
     context 'no errors' do
       it 'next returns changes' do
         change_stream
@@ -109,6 +119,38 @@ describe 'Change stream integration', retry: 4 do
         end
 
         it_behaves_like 'returns a change document'
+      end
+
+      context 'non-resumable error on a getMore' do
+        context 'when the error is Interrupted' do
+          before do
+            authorized_collection.client.use(:admin).command(fail_point_base_command.merge(
+              :mode => {:times => 1},
+              :data => {:failCommands => ['getMore'], errorCode: 11601}))
+          end
+
+          it_behaves_like 'errors with a non-resumable error'
+        end
+
+        context 'when the error is CappedPositionLost' do
+          before do
+            authorized_collection.client.use(:admin).command(fail_point_base_command.merge(
+              :mode => {:times => 1},
+              :data => {:failCommands => ['getMore'], errorCode: 136}))
+          end
+
+          it_behaves_like 'errors with a non-resumable error'
+        end
+
+        context 'when the error is CursorKilled' do
+          before do
+            authorized_collection.client.use(:admin).command(fail_point_base_command.merge(
+              :mode => {:times => 1},
+              :data => {:failCommands => ['getMore'], errorCode: 237}))
+          end
+
+          it_behaves_like 'errors with a non-resumable error'
+        end
       end
     end
 
@@ -438,8 +480,8 @@ describe 'Change stream integration', retry: 4 do
       subscriber = EventSubscriber.new
       authorized_client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
       use_stream
-      subscriber.succeeded_events.select { |e| 
-        e.command_name == 'aggregate' || e.command_name === 'getMore' 
+      subscriber.succeeded_events.select { |e|
+        e.command_name == 'aggregate' || e.command_name === 'getMore'
       }
     end
 
@@ -546,7 +588,7 @@ describe 'Change stream integration', retry: 4 do
           expect(stream.resume_token).to eq(start_after)
         end
       end
-      
+
       it 'must return resumeAfter from the initial aggregate if the option was specified' do
         resume_after = stream_doc_id
         authorized_collection.insert_one(:a => 1)
@@ -560,7 +602,7 @@ describe 'Change stream integration', retry: 4 do
         stream = authorized_collection.watch
 
         expect(stream.resume_token).to be(nil)
-      end   
+      end
     end
 
 
@@ -621,7 +663,7 @@ describe 'Change stream integration', retry: 4 do
             do_get_more
             expect(stream.resume_token).to eq(start_after)
           end
-        end 
+        end
 
         it 'must return resumeAfter from the initial aggregate if the option was specified' do
           resume_after = stream_doc_id
