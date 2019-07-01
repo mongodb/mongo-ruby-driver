@@ -98,10 +98,106 @@ describe Mongo::Collection do
     end
   end
 
+  describe '#initialize' do
+
+    let(:client) do
+      new_local_client(SpecConfig.instance.addresses,
+        SpecConfig.instance.test_options.merge(monitoring_io: false))
+    end
+
+    let(:database) { client.database }
+
+    context 'write concern given in :write option' do
+      let(:collection) do
+        Mongo::Collection.new(database, 'foo', write: {w: 1})
+      end
+
+      it 'stores write concern' do
+        expect(collection.write_concern).to be_a(Mongo::WriteConcern::Acknowledged)
+        expect(collection.write_concern.options).to eq(w: 1)
+      end
+
+      it 'stores write concern under :write' do
+        expect(collection.options[:write]).to eq(w: 1)
+        expect(collection.options[:write_concern]).to be nil
+      end
+    end
+
+    context 'write concern given in :write_concern option' do
+      let(:collection) do
+        Mongo::Collection.new(database, 'foo', write_concern: {w: 1})
+      end
+
+      it 'stores write concern' do
+        expect(collection.write_concern).to be_a(Mongo::WriteConcern::Acknowledged)
+        expect(collection.write_concern.options).to eq(w: 1)
+      end
+
+      it 'stores write concern under :write_concern' do
+        expect(collection.options[:write_concern]).to eq(w: 1)
+        expect(collection.options[:write]).to be nil
+      end
+    end
+
+    context 'write concern given in both :write and :write_concern options' do
+      context 'identical values' do
+
+        let(:collection) do
+          Mongo::Collection.new(database, 'foo',
+            write: {w: 1}, write_concern: {w: 1})
+        end
+
+        it 'stores write concern' do
+          expect(collection.write_concern).to be_a(Mongo::WriteConcern::Acknowledged)
+          expect(collection.write_concern.options).to eq(w: 1)
+        end
+
+        it 'stores write concern under both options' do
+          expect(collection.options[:write]).to eq(w: 1)
+          expect(collection.options[:write_concern]).to eq(w: 1)
+        end
+      end
+
+      context 'different values' do
+
+        let(:collection) do
+          Mongo::Collection.new(database, 'foo',
+            write: {w: 1}, write_concern: {w: 2})
+        end
+
+        it 'raises an exception' do
+          expect do
+            collection
+          end.to raise_error(ArgumentError, /If :write and :write_concern are both given, they must be identical/)
+        end
+      end
+    end
+
+=begin WriteConcern object support
+    context 'when write concern is provided via a WriteConcern object' do
+
+      let(:collection) do
+        Mongo::Collection.new(database, 'foo', write_concern: wc)
+      end
+
+      let(:wc) { Mongo::WriteConcern.get(w: 2) }
+
+      it 'stores write concern options in collection options' do
+        expect(collection.options[:write_concern]).to eq(w: 2)
+      end
+
+      it 'caches write concern object' do
+        expect(collection.write_concern).to be wc
+      end
+    end
+=end
+  end
+
   describe '#with' do
 
     let(:client) do
-      new_local_client(SpecConfig.instance.addresses, SpecConfig.instance.test_options)
+      new_local_client(SpecConfig.instance.addresses,
+        SpecConfig.instance.test_options.merge(monitoring_io: false))
     end
 
     let(:database) do
@@ -133,7 +229,8 @@ describe Mongo::Collection do
       context 'when the client has a server selection timeout setting' do
 
         let(:client) do
-          new_local_client(SpecConfig.instance.addresses, SpecConfig.instance.test_options.merge(server_selection_timeout: 2))
+          new_local_client(SpecConfig.instance.addresses,
+            SpecConfig.instance.test_options.merge(server_selection_timeout: 2, monitoring_io: false))
         end
 
         it 'passes the the server_selection_timeout to the cluster' do
@@ -144,7 +241,11 @@ describe Mongo::Collection do
       context 'when the client has a read preference set' do
 
         let(:client) do
-          new_local_client(SpecConfig.instance.addresses, SpecConfig.instance.test_options.merge(read: { mode: :primary_preferred }))
+          new_local_client(SpecConfig.instance.addresses,
+            SpecConfig.instance.test_options.merge(
+              read: { mode: :primary_preferred },
+              monitoring_io: false,
+          ))
         end
 
         it 'sets the new read options on the new collection' do
@@ -156,7 +257,12 @@ describe Mongo::Collection do
       context 'when the client has a read preference and server selection timeout set' do
 
         let(:client) do
-          new_local_client(SpecConfig.instance.addresses, SpecConfig.instance.test_options.merge(read: { mode: :primary_preferred }, server_selection_timeout: 2))
+          new_local_client(SpecConfig.instance.addresses,
+            SpecConfig.instance.test_options.merge(
+              read: { mode: :primary_preferred },
+              server_selection_timeout: 2,
+              monitoring_io: false
+          ))
         end
 
         it 'sets the new read options on the new collection' do
@@ -186,11 +292,115 @@ describe Mongo::Collection do
       context 'when the client has a write concern set' do
 
         let(:client) do
-          new_local_client(SpecConfig.instance.addresses, SpecConfig.instance.test_options.merge(write: INVALID_WRITE_CONCERN))
+          new_local_client(SpecConfig.instance.addresses,
+            SpecConfig.instance.test_options.merge(
+              write: INVALID_WRITE_CONCERN,
+              monitoring_io: false,
+          ))
         end
 
         it 'sets the new write options on the new collection' do
           expect(new_collection.write_concern.options).to eq(Mongo::WriteConcern.get(new_options[:write]).options)
+        end
+
+        context 'when client uses :write_concern and collection uses :write' do
+
+          let(:client) do
+            new_local_client(SpecConfig.instance.addresses,
+              SpecConfig.instance.test_options.merge(
+                write_concern: {w: 1},
+                monitoring_io: false,
+            ))
+          end
+
+          it 'uses :write from collection options only' do
+            expect(new_collection.options[:write]).to eq(w: 5)
+            expect(new_collection.options[:write_concern]).to be nil
+          end
+        end
+
+        context 'when client uses :write and collection uses :write_concern' do
+
+          let(:client) do
+            new_local_client(SpecConfig.instance.addresses,
+              SpecConfig.instance.test_options.merge(
+                write: {w: 1},
+                monitoring_io: false,
+            ))
+          end
+
+          let(:new_options) do
+            { write_concern: { w: 5 } }
+          end
+
+          it 'uses :write_concern from collection options only' do
+            expect(new_collection.options[:write_concern]).to eq(w: 5)
+            expect(new_collection.options[:write]).to be nil
+          end
+        end
+
+        context 'when collection previously had :wrte_concern and :write is used with a different value' do
+
+          let(:collection) do
+            database.collection(:users, write_concern: {w: 2})
+          end
+
+          let(:new_options) do
+            { write: { w: 5 } }
+          end
+
+          it 'uses the new option' do
+            expect(new_collection.options[:write]).to eq(w: 5)
+            expect(new_collection.options[:write_concern]).to be nil
+          end
+        end
+
+        context 'when collection previously had :wrte and :write_concern is used with a different value' do
+
+          let(:collection) do
+            database.collection(:users, write: {w: 2})
+          end
+
+          let(:new_options) do
+            { write_concern: { w: 5 } }
+          end
+
+          it 'uses the new option' do
+            expect(new_collection.options[:write_concern]).to eq(w: 5)
+            expect(new_collection.options[:write]).to be nil
+          end
+        end
+
+        context 'when collection previously had :wrte_concern and :write is used with the same value' do
+
+          let(:collection) do
+            database.collection(:users, write_concern: {w: 2})
+          end
+
+          let(:new_options) do
+            { write: { w: 2 } }
+          end
+
+          it 'uses the new option' do
+            expect(new_collection.options[:write]).to eq(w: 2)
+            expect(new_collection.options[:write_concern]).to be nil
+          end
+        end
+
+        context 'when collection previously had :wrte and :write_concern is used with the same value' do
+
+          let(:collection) do
+            database.collection(:users, write: {w: 2})
+          end
+
+          let(:new_options) do
+            { write_concern: { w: 2 } }
+          end
+
+          it 'uses the new option' do
+            expect(new_collection.options[:write]).to be nil
+            expect(new_collection.options[:write_concern]).to eq(w: 2)
+          end
         end
       end
     end
@@ -219,7 +429,11 @@ describe Mongo::Collection do
       context 'when the client has a server selection timeout setting' do
 
         let(:client) do
-          new_local_client(SpecConfig.instance.addresses, SpecConfig.instance.test_options.merge(server_selection_timeout: 2))
+          new_local_client(SpecConfig.instance.addresses,
+            SpecConfig.instance.test_options.merge(
+              server_selection_timeout: 2,
+              monitoring_io: false,
+          ))
         end
 
         it 'passes the server_selection_timeout setting to the cluster' do
@@ -230,7 +444,11 @@ describe Mongo::Collection do
       context 'when the client has a read preference set' do
 
         let(:client) do
-          new_local_client(SpecConfig.instance.addresses, SpecConfig.instance.test_options.merge(read: { mode: :primary_preferred }))
+          new_local_client(SpecConfig.instance.addresses,
+            SpecConfig.instance.test_options.merge(
+              read: { mode: :primary_preferred },
+              monitoring_io: false,
+          ))
         end
 
         it 'sets the new read options on the new collection' do

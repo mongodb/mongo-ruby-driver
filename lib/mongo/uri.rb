@@ -483,10 +483,10 @@ module Mongo
     uri_option 'maxidletimems', :max_idle_time, :type => :max_idle_time
 
     # Write Options
-    uri_option 'w', :w, :group => :write, type: :w
-    uri_option 'journal', :j, :group => :write, :type => :journal
-    uri_option 'fsync', :fsync, :group => :write, type: :bool
-    uri_option 'wtimeoutms', :wtimeout, :group => :write, :type => :wtimeout
+    uri_option 'w', :w, :group => :write_concern, type: :w
+    uri_option 'journal', :j, :group => :write_concern, :type => :journal
+    uri_option 'fsync', :fsync, :group => :write_concern, type: :bool
+    uri_option 'wtimeoutms', :wtimeout, :group => :write_concern, :type => :wtimeout
 
     # Read Options
     uri_option 'readpreference', :mode, :group => :read, :type => :read_mode
@@ -521,7 +521,7 @@ module Mongo
     # Client Options
     uri_option 'appname', :app_name
     uri_option 'compressors', :compressors, :type => :array
-    uri_option 'readconcernlevel', :level, group: :read_concern
+    uri_option 'readconcernlevel', :level, group: :read_concern, type: :symbol
     uri_option 'retryreads', :retry_reads, :type => :retry_reads
     uri_option 'retrywrites', :retry_writes, :type => :retry_writes
     uri_option 'zlibcompressionlevel', :zlib_compression_level, :type => :zlib_compression_level

@@ -358,11 +358,11 @@ describe Mongo::URI::SRVProtocol do
           let(:concern) { Mongo::Options::Redacted.new(:w => 1)}
 
           it 'sets the write concern options' do
-            expect(uri.uri_options[:write]).to eq(concern)
+            expect(uri.uri_options[:write_concern]).to eq(concern)
           end
 
           it 'sets the options on a client created with the uri' do
-            expect(client.options[:write]).to eq(concern)
+            expect(client.options[:write_concern]).to eq(concern)
           end
         end
 
@@ -371,11 +371,11 @@ describe Mongo::URI::SRVProtocol do
           let(:concern) { Mongo::Options::Redacted.new(:w => :majority) }
 
           it 'sets the write concern options' do
-            expect(uri.uri_options[:write]).to eq(concern)
+            expect(uri.uri_options[:write_concern]).to eq(concern)
           end
 
           it 'sets the options on a client created with the uri' do
-            expect(client.options[:write]).to eq(concern)
+            expect(client.options[:write_concern]).to eq(concern)
           end
         end
 
@@ -384,11 +384,11 @@ describe Mongo::URI::SRVProtocol do
           let(:concern) { Mongo::Options::Redacted.new(:j => true) }
 
           it 'sets the write concern options' do
-            expect(uri.uri_options[:write]).to eq(concern)
+            expect(uri.uri_options[:write_concern]).to eq(concern)
           end
 
           it 'sets the options on a client created with the uri' do
-            expect(client.options[:write]).to eq(concern)
+            expect(client.options[:write_concern]).to eq(concern)
           end
         end
 
@@ -397,11 +397,11 @@ describe Mongo::URI::SRVProtocol do
           let(:concern) { Mongo::Options::Redacted.new(:fsync => true) }
 
           it 'sets the write concern options' do
-            expect(uri.uri_options[:write]).to eq(concern)
+            expect(uri.uri_options[:write_concern]).to eq(concern)
           end
 
           it 'sets the options on a client created with the uri' do
-            expect(client.options[:write]).to eq(concern)
+            expect(client.options[:write_concern]).to eq(concern)
           end
         end
 
@@ -411,11 +411,11 @@ describe Mongo::URI::SRVProtocol do
           let(:concern) { Mongo::Options::Redacted.new(:w => 2, :wtimeout => timeout) }
 
           it 'sets the write concern options' do
-            expect(uri.uri_options[:write]).to eq(concern)
+            expect(uri.uri_options[:write_concern]).to eq(concern)
           end
 
           it 'sets the options on a client created with the uri' do
-            expect(client.options[:write]).to eq(concern)
+            expect(client.options[:write_concern]).to eq(concern)
           end
         end
       end

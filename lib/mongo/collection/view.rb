@@ -167,7 +167,7 @@ module Mongo
       #
       # @since 2.0.0
       def write_concern
-        WriteConcern.get(options[:write] || options[:write_concern] || collection.write_concern)
+        WriteConcern.get(options[:write_concern] || options[:write] || collection.write_concern)
       end
 
       private

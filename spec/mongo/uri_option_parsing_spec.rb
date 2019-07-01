@@ -236,7 +236,7 @@ describe Mongo::URI do
     it_behaves_like 'parses successfully'
 
     it 'is a boolean' do
-      expect(uri.uri_options[:write]).to eq(BSON::Document.new(fsync: true))
+      expect(uri.uri_options[:write_concern]).to eq(BSON::Document.new(fsync: true))
     end
   end
 
@@ -255,7 +255,7 @@ describe Mongo::URI do
     it_behaves_like 'parses successfully'
 
     it 'is a boolean' do
-      expect(uri.uri_options[:write]).to eq(BSON::Document.new(j: true))
+      expect(uri.uri_options[:write_concern]).to eq(BSON::Document.new(j: true))
     end
   end
 
@@ -319,8 +319,8 @@ describe Mongo::URI do
 
     it_behaves_like 'parses successfully'
 
-    it 'is a string' do
-      expect(uri.uri_options[:read_concern]).to eq(BSON::Document.new(level: 'snapshot'))
+    it 'is a symbol' do
+      expect(uri.uri_options[:read_concern]).to eq(BSON::Document.new(level: :snapshot))
     end
   end
 
@@ -451,7 +451,7 @@ describe Mongo::URI do
       it_behaves_like 'parses successfully'
 
       it 'is an integer' do
-        expect(uri.uri_options[:write]).to eq(BSON::Document.new(w: 1))
+        expect(uri.uri_options[:write_concern]).to eq(BSON::Document.new(w: 1))
       end
     end
 
@@ -461,7 +461,7 @@ describe Mongo::URI do
       it_behaves_like 'parses successfully'
 
       it 'is a string' do
-        expect(uri.uri_options[:write]).to eq(BSON::Document.new(w: 'foo'))
+        expect(uri.uri_options[:write_concern]).to eq(BSON::Document.new(w: 'foo'))
       end
     end
 
@@ -471,7 +471,7 @@ describe Mongo::URI do
       it_behaves_like 'parses successfully'
 
       it 'is a symbol' do
-        expect(uri.uri_options[:write]).to eq(BSON::Document.new(w: :majority))
+        expect(uri.uri_options[:write_concern]).to eq(BSON::Document.new(w: :majority))
       end
     end
   end
@@ -491,7 +491,7 @@ describe Mongo::URI do
     it_behaves_like 'parses successfully'
 
     it 'is a float' do
-      expect(uri.uri_options[:write]).to eq(BSON::Document.new(wtimeout: 100))
+      expect(uri.uri_options[:write_concern]).to eq(BSON::Document.new(wtimeout: 100))
     end
   end
 

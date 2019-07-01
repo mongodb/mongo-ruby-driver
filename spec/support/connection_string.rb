@@ -123,6 +123,7 @@ module Mongo
     end
 
     class Test
+      include RSpec::Core::Pending
 
       attr_reader :description
       attr_reader :uri_string
@@ -153,6 +154,10 @@ module Mongo
 
       def client
         @client ||= ClientRegistry.instance.new_local_client(@spec['uri'], monitoring_io: false)
+      rescue Mongo::Error::LintError => e
+        if e.message =~ /arbitraryButStillValid/
+          skip 'Test uses a read concern that fails linter'
+        end
       end
 
       def uri
@@ -223,9 +228,9 @@ module Mongo
         'maxidletimems' => :max_idle_time,
 
          # Write  Options
-        'journal' => [:write, 'j'],
-        'w' => [:write, 'w'],
-        'wtimeoutms' => [:write, 'wtimeout'],
+        'journal' => [:write_concern, 'j'],
+        'w' => [:write_concern, 'w'],
+        'wtimeoutms' => [:write_concern, 'wtimeout'],
 
         # Read Options
         'readpreference' => ['read', 'mode'],
