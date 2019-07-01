@@ -128,6 +128,16 @@ module Mongo
       # @since 2.0.0
       def select_server(cluster, ping = nil, session = nil)
         server_selection_timeout = cluster.options[:server_selection_timeout] || SERVER_SELECTION_TIMEOUT
+
+        # Special handling for zero timeout: if we have to select a server,
+        # and the timeout is zero, fail immediately (since server selection
+        # will take some non-zero amount of time in any case).
+        if server_selection_timeout == 0
+          msg = "Failing server selection due to zero timeout. " +
+            " Requested #{name} in cluster: #{cluster.summary}"
+          raise Error::NoServerAvailable.new(self, cluster, msg)
+        end
+
         deadline = Time.now + server_selection_timeout
 
         if session && session.pinned_server
@@ -179,7 +189,7 @@ module Mongo
           raise Error::NoServerAvailable.new(self, cluster, msg)
         end
 =end
-        while (time_remaining = deadline - Time.now) > 0
+        loop do
           servers = candidates(cluster)
           if Lint.enabled?
             servers.each do |server|
@@ -213,8 +223,20 @@ module Mongo
 
             return server
           end
+
           cluster.scan!(false)
-          wait_for_server_selection(cluster, time_remaining)
+
+          time_remaining = deadline - Time.now
+          if time_remaining > 0
+            wait_for_server_selection(cluster, time_remaining)
+
+            # If we wait for server selection, perform another round of
+            # attempting to locate a suitable server. Otherwise server selection
+            # can raise NoServerAvailable message when the diagnostics
+            # reports an available server of the requested type.
+          else
+            break
+          end
         end
 
         msg = "No #{name} server is available in cluster: #{cluster.summary} " +
