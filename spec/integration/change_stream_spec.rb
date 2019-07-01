@@ -122,33 +122,31 @@ describe 'Change stream integration', retry: 4 do
       end
 
       context 'non-resumable error on a getMore' do
-        context 'when the error is Interrupted' do
-          before do
-            authorized_collection.client.use(:admin).command(fail_point_base_command.merge(
-              :mode => {:times => 1},
-              :data => {:failCommands => ['getMore'], errorCode: 11601}))
-          end
 
+        before do
+          authorized_collection.client.use(:admin).command(fail_point_base_command.merge(
+            :mode => {:times => 1},
+            :data => {:failCommands => ['getMore'], errorCode: errorCode}))
+        end
+
+        context 'when the error is Interrupted' do
+          let(:errorCode) do
+            11601
+          end
           it_behaves_like 'errors with a non-resumable error'
         end
 
         context 'when the error is CappedPositionLost' do
-          before do
-            authorized_collection.client.use(:admin).command(fail_point_base_command.merge(
-              :mode => {:times => 1},
-              :data => {:failCommands => ['getMore'], errorCode: 136}))
+          let(:errorCode) do
+            136
           end
-
           it_behaves_like 'errors with a non-resumable error'
         end
 
         context 'when the error is CursorKilled' do
-          before do
-            authorized_collection.client.use(:admin).command(fail_point_base_command.merge(
-              :mode => {:times => 1},
-              :data => {:failCommands => ['getMore'], errorCode: 237}))
+          let(:errorCode) do
+            237
           end
-
           it_behaves_like 'errors with a non-resumable error'
         end
       end
