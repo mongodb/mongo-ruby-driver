@@ -605,6 +605,7 @@ describe Mongo::Collection::View::ChangeStream do
           collection.insert_one(a: 2)
           expect(cursor).to receive(:get_more).once.and_raise(error)
           expect(cursor).to receive(:kill_cursors).and_call_original
+          expect(view.send(:server_selector)).to receive(:select_server).once.and_call_original
           expect(Mongo::Operation::Aggregate).to receive(:new).and_call_original
         end
 
