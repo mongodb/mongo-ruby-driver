@@ -68,7 +68,7 @@ describe Mongo::Server::ConnectionPool do
         sleep 0.1
 
         expect(pool.size).to eq(0)
-        expect(pool.populator.is_running?).to be false
+        expect(pool.populator.running?).to be false
       end
     end
   end
@@ -198,7 +198,7 @@ describe Mongo::Server::ConnectionPool do
 
         # populate thread should terminate
         sleep 0.1
-        expect(pool.populator.is_running?).to be false
+        expect(pool.populator.running?).to be false
         expect(pool.closed?).to be true
 
         # running populate should not change state of pool

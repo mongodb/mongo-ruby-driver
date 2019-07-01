@@ -543,6 +543,20 @@ module Mongo
       server.pool
     end
 
+    # Find the server with the provided address and create the server's
+    # connection pool so it can start establishing connections in the background.
+    #
+    # @param [ Mongo::Address ] address The address of the server with the
+    # connection pool to start
+    #
+    # @api private
+    def start_server_pool(address)
+      servers_to_start = servers_list.select { |s| s.address == address }
+      servers_to_start.each do |server|
+        server.pool
+      end
+    end
+
     # Update the max cluster time seen in a response.
     #
     # @example Update the cluster time.

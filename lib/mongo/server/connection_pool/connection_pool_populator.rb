@@ -40,7 +40,7 @@ module Mongo
         @thread.kill if @thread
       end
 
-      def is_running?
+      def running?
         @thread ? @thread.alive? : false
       end
     end

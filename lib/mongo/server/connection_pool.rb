@@ -122,9 +122,10 @@ module Mongo
 
         @populate_semaphore = Semaphore.new
         @populator = ConnectionPoolPopulator.new(self)
-        @populator.start! if min_size > 0
 
         ObjectSpace.define_finalizer(self, self.class.finalize(@available_connections, @populator))
+
+        @populator.start! if min_size > 0
 
         publish_cmap_event(
           Monitoring::Event::Cmap::PoolCreated.new(@server.address, options)
@@ -510,7 +511,7 @@ module Mongo
       # Create and add connections to the pool until the
       # pool size is at least min_size.
       #
-      # Used by the spec test runner and the pool populator background thread.
+      # Used by the pool populator background thread.
       #
       # @api private
       def populate
