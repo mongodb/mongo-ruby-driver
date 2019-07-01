@@ -76,23 +76,33 @@ module Mongo
     # @param [ Hash ] options Options. Client constructor forwards its
     #   options to Cluster constructor, although Cluster recognizes
     #   only a subset of the options recognized by Client.
-    # @option options [ true, false ] :scan Whether to scan all seeds
+    # @option options [ true | false ] :scan Whether to scan all seeds
     #   in constructor. The default in driver version 2.x is to do so;
     #   driver version 3.x will not scan seeds in constructor. Opt in to the
     #   new behavior by setting this option to false. *Note:* setting
     #   this option to nil enables scanning seeds in constructor in driver
     #   version 2.x. Driver version 3.x will recognize this option but
     #   will ignore it and will never scan seeds in the constructor.
-    # @option options [ true, false ] :monitoring_io For internal driver
+    # @option options [ true | false ] :monitoring_io For internal driver
     #   use only. Set to false to prevent SDAM-related I/O from being
     #   done by this cluster or servers under it. Note: setting this option
     #   to false will make the cluster non-functional. It is intended for
     #   use in tests which manually invoke SDAM state transitions.
+    # @option options [ true | false ] :cleanup For internal driver use only.
+    #   Set to false to prevent endSessions command being sent to the server
+    #   to clean up server sessions when the cluster is disconnected, and to
+    #   to not start the periodic executor. If :monitoring_io is false,
+    #   :cleanup automatically defaults to false as well.
     #
     # @since 2.0.0
     def initialize(seeds, monitoring, options = Options::Redacted.new)
       if options[:monitoring_io] != false && !options[:server_selection_semaphore]
         raise ArgumentError, 'Need server selection semaphore'
+      end
+
+      if options[:monitoring_io] == false && !options.key?(:cleanup)
+        options = options.dup
+        options[:cleanup] = false
       end
 
       @servers = []
@@ -150,12 +160,14 @@ module Mongo
         return
       end
 
-      @cursor_reaper = CursorReaper.new
-      @socket_reaper = SocketReaper.new(self)
-      @periodic_executor = PeriodicExecutor.new(@cursor_reaper, @socket_reaper)
-      @periodic_executor.run!
+      if options[:cleanup] != false
+        @cursor_reaper = CursorReaper.new
+        @socket_reaper = SocketReaper.new(self)
+        @periodic_executor = PeriodicExecutor.new(@cursor_reaper, @socket_reaper)
+        @periodic_executor.run!
 
-      ObjectSpace.define_finalizer(self, self.class.finalize({}, @periodic_executor, @session_pool))
+        ObjectSpace.define_finalizer(self, self.class.finalize({}, @periodic_executor, @session_pool))
+      end
 
       @connecting = false
       @connected = true
@@ -242,7 +254,14 @@ module Mongo
 
     def_delegators :topology, :replica_set?, :replica_set_name, :sharded?,
                    :single?, :unknown?
-    def_delegators :@cursor_reaper, :register_cursor, :schedule_kill_cursor, :unregister_cursor
+
+    [:register_cursor, :schedule_kill_cursor, :unregister_cursor].each do |m|
+      define_method(m) do |*args|
+        if options[:cleanup] != false
+          @cursor_reaper.send(m, *args)
+        end
+      end
+    end
 
     # Get the maximum number of times the client can retry a read operation
     # when using legacy read retries.
@@ -390,7 +409,12 @@ module Mongo
       unless @connecting || @connected
         return true
       end
-      @periodic_executor.stop!
+      if options[:cleanup] != false
+        if wait
+          session_pool.end_sessions
+        end
+        @periodic_executor.stop!(wait)
+      end
       @servers.each do |server|
         if server.connected?
           server.disconnect!(wait)

@@ -1170,8 +1170,11 @@ describe Mongo::Client do
 
       it 'does not notify subscribers set up by sdam_proc' do
         client = new_local_client(['a'], sdam_proc: sdam_proc)
-        expect(subscriber.started_events.length).to eq 1
+        expect(subscriber.started_events.length).to be > 0
         subscriber.started_events.clear
+
+        # If this test takes longer than heartbeat interval,
+        # subscriber may receive events from the original client.
 
         new_client
         expect(subscriber.started_events.length).to eq 0

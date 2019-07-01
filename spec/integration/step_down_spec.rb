@@ -3,12 +3,19 @@ require 'spec_helper'
 describe 'Step down behavior' do
   require_topology :replica_set
 
-=begin Uncommenting this will reduce the runtime of the test, but the spec currently does not allow us to do it
+  # This setup reduces the runtime of the test and makes execution more
+  # reliable. The spec as written requests a simple brute force step down,
+  # but this causes intermittent failures.
   before(:all) do
     # These before/after blocks are run even if the tests themselves are
     # skipped due to server version not being appropriate
     if ClusterConfig.instance.fcv_ish >= '4.2' && ClusterConfig.instance.topology == :replica_set
-      ClusterTools.instance.set_election_timeout(1)
+      # It seems that a short election timeout can cause unintended elections,
+      # which makes the server close connections which causes the driver to
+      # reconnect which then fails the step down test.
+      # The election timeout here is greater than the catch up period and
+      # step down timeout specified in cluster tools.
+      ClusterTools.instance.set_election_timeout(5)
       ClusterTools.instance.set_election_handoff(false)
     end
   end
@@ -20,7 +27,6 @@ describe 'Step down behavior' do
       ClusterTools.instance.reset_priorities
     end
   end
-=end
 
   let(:event_subscriber) { EventSubscriber.new }
 
@@ -70,7 +76,7 @@ describe 'Step down behavior' do
       expect(connection_created_events).not_to be_empty
 
       current_primary = subscribed_client.cluster.next_primary
-      ClusterTools.instance.force_step_down
+      ClusterTools.instance.change_primary
 
       EventSubscriber.clear_events!
 
