@@ -45,6 +45,9 @@ class ClientRegistry
     # clients global to the test suite, should not be closed in an after hooks
     # but their monitoring may need to be suspended/resumed
     @global_clients = {}
+
+    # JRuby appears to somehow manage to access client registry concurrently
+    @lock = Mutex.new
   end
 
   def global_client(name)
@@ -184,24 +187,32 @@ class ClientRegistry
 
   def new_local_client(*args)
     Mongo::Client.new(*args).tap do |client|
-      @local_clients << client
+      @lock.synchronize do
+        @local_clients << client
+      end
     end
   end
 
   def register_local_client(client)
-    @local_clients << client
+    @lock.synchronize do
+      @local_clients << client
+    end
     client
   end
 
   def close_local_clients
-    @local_clients.map(&:close)
-    @local_clients = []
+    @lock.synchronize do
+      @local_clients.map(&:close)
+      @local_clients = []
+    end
   end
 
   def close_all_clients
     close_local_clients
-    @global_clients.each do |name, client|
-      client.close(true)
+    @lock.synchronize do
+      @global_clients.each do |name, client|
+        client.close(true)
+      end
     end
   end
 end
