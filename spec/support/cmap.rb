@@ -67,7 +67,9 @@ module Mongo
             pool_options.merge(monitoring_io: false))
 
         @pool = server.pool
-        @pool.populate
+
+        # let pool populate
+        sleep 0.1
       end
 
       def run
