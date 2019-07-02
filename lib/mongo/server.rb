@@ -181,6 +181,7 @@ module Mongo
     #
     # @since 2.0.0
     def disconnect!(wait=false)
+      monitor.stop!(wait)
       begin
         # For backwards compatibility we disconnect/clear the pool rather
         # than close it here.
@@ -188,7 +189,6 @@ module Mongo
       rescue Error::PoolClosedError
         # If the pool was already closed, we don't need to do anything here.
       end
-      monitor.stop!(wait)
       @connected = false
       true
     end
