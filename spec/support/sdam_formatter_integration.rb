@@ -1,3 +1,5 @@
+$sdam_formatter_lock = Mutex.new
+
 module SdamFormatterIntegration
   def log_entries
     @log_entries ||= []
@@ -10,10 +12,12 @@ module SdamFormatterIntegration
   module_function :clear_log_entries
 
   def assign_log_entries(example_id)
-    @log_entries_by_example_id ||= {}
-    @log_entries_by_example_id[example_id] ||= []
-    @log_entries_by_example_id[example_id] += log_entries
-    clear_log_entries
+    $sdam_formatter_lock.synchronize do
+      @log_entries_by_example_id ||= {}
+      @log_entries_by_example_id[example_id] ||= []
+      @log_entries_by_example_id[example_id] += log_entries
+      clear_log_entries
+    end
   end
   module_function :assign_log_entries
 
