@@ -29,6 +29,9 @@ tests:
           # DuplicateKey is reported in writeErrors, not as a top-level
           # command error.
           errorLabelsOmit: ["TransientTransactionError", "UnknownTransactionCommitResult"]
+          # DuplicateKey error code included in the bulk write error message
+          # returned by the server
+          errorContains: E11000
       - name: abortTransaction
         object: session0
 
