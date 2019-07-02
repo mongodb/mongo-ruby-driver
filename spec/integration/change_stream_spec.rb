@@ -55,6 +55,29 @@ describe 'Change stream integration', retry: 4 do
       end
     end
 
+    shared_examples 'non-resumable error' do
+      context 'when the error is Interrupted' do
+        let(:errorCode) do
+          11601
+        end
+        it_behaves_like 'errors with a non-resumable error'
+      end
+
+      context 'when the error is CappedPositionLost' do
+        let(:errorCode) do
+          136
+        end
+        it_behaves_like 'errors with a non-resumable error'
+      end
+
+      context 'when the error is CursorKilled' do
+        let(:errorCode) do
+          237
+        end
+        it_behaves_like 'errors with a non-resumable error'
+      end
+    end
+
     context 'no errors' do
       it 'next returns changes' do
         change_stream
@@ -96,10 +119,19 @@ describe 'Change stream integration', retry: 4 do
         before do
           authorized_collection.client.use(:admin).command(fail_point_base_command.merge(
             :mode => {:times => 1},
-            :data => {:failCommands => ['getMore'], errorCode: 100}))
+            :data => {:failCommands => ['getMore'], errorCode: errorCode}))
         end
 
-        it_behaves_like 'returns a change document'
+        context 'when the error is resumable' do
+          let(:errorCode) do
+            100
+          end
+          it_behaves_like 'returns a change document'
+        end
+
+        context 'when the error is non-resumable' do
+          it_behaves_like 'non-resumable error'
+        end
       end
 
       context 'error on a getMore other than first' do
@@ -115,39 +147,18 @@ describe 'Change stream integration', retry: 4 do
 
           authorized_collection.client.use(:admin).command(fail_point_base_command.merge(
             :mode => {:times => 1},
-            :data => {:failCommands => ['getMore'], errorCode: 100}))
-        end
-
-        it_behaves_like 'returns a change document'
-      end
-
-      context 'non-resumable error on a getMore' do
-
-        before do
-          authorized_collection.client.use(:admin).command(fail_point_base_command.merge(
-            :mode => {:times => 1},
             :data => {:failCommands => ['getMore'], errorCode: errorCode}))
         end
 
-        context 'when the error is Interrupted' do
+        context 'when the error is resumable' do
           let(:errorCode) do
-            11601
+            100
           end
-          it_behaves_like 'errors with a non-resumable error'
+          it_behaves_like 'returns a change document'
         end
 
-        context 'when the error is CappedPositionLost' do
-          let(:errorCode) do
-            136
-          end
-          it_behaves_like 'errors with a non-resumable error'
-        end
-
-        context 'when the error is CursorKilled' do
-          let(:errorCode) do
-            237
-          end
-          it_behaves_like 'errors with a non-resumable error'
+        context 'when the error is non-resumable' do
+          it_behaves_like 'non-resumable error'
         end
       end
     end
