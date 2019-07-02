@@ -46,11 +46,6 @@ module Mongo
         cluster.sdam_flow_lock.synchronize do
           Mongo::Cluster::SdamFlow.new(cluster, previous_desc, updated_desc).server_description_changed
         end
-        if updated_desc.data_bearing? && !previous_desc.data_bearing?
-          # SDAM has now determined a server is data bearing;
-          # start populating the server's connection pool
-          cluster.start_server_pool(updated_desc.address)
-        end
       end
     end
   end
