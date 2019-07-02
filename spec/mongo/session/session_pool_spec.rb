@@ -3,9 +3,15 @@ require 'spec_helper'
 describe Mongo::Session::SessionPool do
   min_server_fcv '3.6'
   require_topology :replica_set, :sharded
+  clean_slate_for_all
 
   let(:cluster) do
-    authorized_client.cluster
+    authorized_client.cluster.tap do |cluster|
+      # Cluster time assertions can fail if there are background operations
+      # that cause cluster time to be updated. This also necessitates clean
+      # state requirement.
+      authorized_client.close
+    end
   end
 
   describe '.create' do

@@ -1,13 +1,10 @@
 require 'spec_helper'
 
 describe Mongo::Server::Monitor::Connection do
-
-  before do
-    ClientRegistry.instance.close_all_clients
-  end
+  clean_slate
 
   let(:client) do
-    authorized_client.with(options)
+    authorized_client.with(options.merge(cleanup: false))
   end
 
   let(:address) do
