@@ -233,7 +233,8 @@ module Mongo
 
         def send_initial_query(server, session)
           unless valid_server?(server)
-            log_warn("Rerouting the MapReduce operation to the primary server - #{server.summary} is not suitable")
+            msg = "Rerouting the MapReduce operation to the primary server - #{server.summary} is not suitable"
+            log_warn(msg)
             server = cluster.next_primary(nil, session)
           end
           validate_collation!(server)

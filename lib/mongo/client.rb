@@ -39,6 +39,7 @@ module Mongo
       :auth_mech,
       :auth_mech_properties,
       :auth_source,
+      :cleanup,
       :compressors,
       :connect,
       :connect_timeout,
@@ -231,6 +232,11 @@ module Mongo
     #   done by this client or servers under it. Note: setting this option
     #   to false will make the client non-functional. It is intended for
     #   use in tests which manually invoke SDAM state transitions.
+    # @option options [ true | false ] :cleanup For internal driver use only.
+    #   Set to false to prevent endSessions command being sent to the server
+    #   to clean up server sessions when the cluster is disconnected, and to
+    #   to not start the periodic executor. If :monitoring_io is false,
+    #   :cleanup automatically defaults to false as well.
     # @option options [ String ] :password The user's password.
     # @option options [ String ] :platform Platform information to include in
     #   the metadata printed to the mongod logs upon establishing a connection

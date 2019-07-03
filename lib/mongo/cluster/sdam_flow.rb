@@ -411,6 +411,7 @@ class Mongo::Cluster
       # not all processed together.
 
       publish_description_change_event
+      start_pool_if_data_bearing
 
       topology_changed_event_published = false
       if topology.object_id != cluster.topology.object_id || @need_topology_changed_event
@@ -445,6 +446,18 @@ class Mongo::Cluster
       @topology = topology.class.new(topology.options, topology.monitoring, cluster)
       # This sends the SDAM event
       cluster.update_topology(topology)
+    end
+
+    # If the server being processed is identified as data bearing, creates the
+    # server's connection pool so it can start populating
+    def start_pool_if_data_bearing
+      return if !updated_desc.data_bearing?
+
+      servers_list.each do |server|
+        if server.address == @updated_desc.address
+          server.pool
+        end
+      end
     end
 
     # Checks if the cluster has a primary, and if not, transitions the topology

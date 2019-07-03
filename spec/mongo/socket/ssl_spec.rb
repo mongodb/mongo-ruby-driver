@@ -1,6 +1,8 @@
 require 'spec_helper'
 
-describe Mongo::Socket::SSL do
+# this test performs direct network connections without retries.
+# In case of intermittent network issues, retry the entire failing test.
+describe Mongo::Socket::SSL, retry: 3 do
   require_tls
 
   let(:address) do
@@ -478,7 +480,7 @@ describe Mongo::Socket::SSL do
       end
 
       let(:connection) do
-        Mongo::Server::Connection.new(server, options)
+        Mongo::Server::Connection.new(server, options.merge(socket_timeout: 2))
       end
 
       context 'as a file' do
@@ -509,7 +511,7 @@ describe Mongo::Socket::SSL do
       end
 
       let(:connection) do
-        Mongo::Server::Connection.new(server, options)
+        Mongo::Server::Connection.new(server, options.merge(socket_timeout: 2))
       end
 
       context 'as a file' do
@@ -564,7 +566,7 @@ describe Mongo::Socket::SSL do
       end
 
       let(:connection) do
-        Mongo::Server::Connection.new(server, options)
+        Mongo::Server::Connection.new(server, options.merge(socket_timeout: 2))
       end
 
       context 'as a path to a file' do
@@ -666,7 +668,7 @@ describe Mongo::Socket::SSL do
       end
 
       let(:connection) do
-        Mongo::Server::Connection.new(server, options)
+        Mongo::Server::Connection.new(server, options.merge(socket_timeout: 2))
       end
 
       let(:options) do

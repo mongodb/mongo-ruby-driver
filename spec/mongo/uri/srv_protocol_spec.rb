@@ -1,19 +1,13 @@
-require 'spec_helper'
+require 'lite_spec_helper'
 
 describe Mongo::URI::SRVProtocol do
+  clean_slate_for_all
 
   let(:scheme) { 'mongodb+srv://' }
   let(:uri) { described_class.new(string) }
 
-  before(:all) do
-    # Since these tests assert on warnings being produced,
-    # close clients to ensure background threads do not interfere with
-    # their warnings.
-    ClientRegistry.instance.close_all_clients
-  end
-
   let(:client) do
-    new_local_client(string, monitoring_io: false)
+    new_local_client_nmio(string)
   end
 
   describe 'invalid uris' do
@@ -581,7 +575,7 @@ describe Mongo::URI::SRVProtocol do
       end
 
       context 'replica set option provided' do
-        let(:rs_name) { TEST_SET }
+        let(:rs_name) { 'test-rs-name' }
         let(:options) { "replicaSet=#{rs_name}" }
 
         it 'sets the replica set option' do

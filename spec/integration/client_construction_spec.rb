@@ -31,6 +31,18 @@ describe 'Client construction' do
       expect(client.cluster.topology).to be_a(Mongo::Cluster::Topology::Single)
       expect(client.options[:connect]).to eq :direct
     end
+
+    it 'creates connection pool and keeps it populated' do
+      client = ClientRegistry.instance.new_local_client([SpecConfig.instance.addresses.first],
+        base_options.merge(min_pool_size: 1))
+      # allow connection pool to populate
+      sleep 0.1
+
+      server = client.cluster.next_primary
+      expect(server.pool.size).to eq(1)
+      client['client_construction'].insert_one(test: 1)
+      expect(server.pool.size).to eq(1)
+    end
   end
 
   context 'in replica set topology' do

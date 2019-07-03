@@ -1,6 +1,7 @@
 require 'spec_helper'
 
 describe Mongo::Collection::View::MapReduce do
+  clean_slate_on_evergreen
 
   let(:map) do
   %Q{
@@ -578,7 +579,9 @@ describe Mongo::Collection::View::MapReduce do
 
         it 'reroutes the operation to a primary' do
           allow(map_reduce).to receive(:valid_server?).and_return(false)
-          expect(Mongo::Logger.logger).to receive(:warn?).and_call_original
+          expect(Mongo::Logger.logger).to receive(:warn).once do |msg|
+            expect(msg).to include('Rerouting the MapReduce operation to the primary server')
+          end
           map_reduce.to_a
         end
 
@@ -650,13 +653,12 @@ describe Mongo::Collection::View::MapReduce do
           # We are inspecting server state - kill monitor threads so that
           # server state is not changed in background due to intermittent
           # connectivity issues in Evergreen
-          authorized_collection.client.cluster.servers_list.map do |server|
-            server.monitor.stop!
-          end
+          ClientRegistry.instance.close_all_clients
+          authorized_collection.client.cluster.disconnect!
         end
 
         it 'does not reroute the operation to a primary' do
-          expect(Mongo::Logger.logger).not_to receive(:warn?)
+          expect(Mongo::Logger.logger).not_to receive(:warn)
           map_reduce.to_a
         end
       end
