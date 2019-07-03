@@ -29,11 +29,13 @@ describe 'change streams examples in Ruby' do
         inventory.insert_one(x: 1)
       end
 
+      change_stream = nil
       stream_thread = Thread.new do
 
         # Start Changestream Example 1
 
-        cursor = inventory.watch.to_enum
+        change_stream = inventory.watch
+        cursor = change_stream.to_enum
         next_change = cursor.next
 
         # End Changestream Example 1
@@ -41,6 +43,7 @@ describe 'change streams examples in Ruby' do
 
       insert_thread.value
       change = stream_thread.value
+      change_stream.close
 
       expect(change['_id']).not_to be_nil
       expect(change['_id']['_data']).not_to be_nil
@@ -67,11 +70,13 @@ describe 'change streams examples in Ruby' do
         inventory.update_one({ _id: 1}, { '$set' => { x: 5 }})
       end
 
+      change_stream = nil
       stream_thread = Thread.new do
 
         # Start Changestream Example 2
 
-        cursor = inventory.watch([], full_document: 'updateLookup').to_enum
+        change_stream = inventory.watch([], full_document: 'updateLookup')
+        cursor = change_stream.to_enum
         next_change = cursor.next
 
         # End Changestream Example 2
@@ -80,6 +85,7 @@ describe 'change streams examples in Ruby' do
 
       update_thread.value
       change = stream_thread.value
+      change_stream.close
 
       expect(change['_id']).not_to be_nil
       expect(change['_id']['_data']).not_to be_nil
@@ -103,10 +109,34 @@ describe 'change streams examples in Ruby' do
 
     it 'returns the correct change when resuming' do
 
-      stream = inventory.watch
-      cursor = stream.to_enum
-      inventory.insert_one(x: 1)
-      next_change = cursor.next
+      insert_thread = Thread.new do
+        sleep 2
+        inventory.insert_one(x: 1)
+        inventory.insert_one(x: 2)
+      end
+
+      next_change = nil
+      resumed_change = nil
+      change_stream = nil
+
+      stream_thread = Thread.new do
+
+        # Start Changestream Example 3
+
+        change_stream = inventory.watch
+        cursor = change_stream.to_enum
+        next_change = cursor.next
+
+        resume_token = change_stream.resume_token
+        new_cursor = inventory.watch([], resume_after: resume_token).to_enum
+        resumed_change = new_cursor.next
+
+        # End Changestream Example 3
+      end
+
+      insert_thread.value
+      stream_thread.value
+      change_stream.close
 
       expect(next_change['_id']).not_to be_nil
       expect(next_change['_id']['_data']).not_to be_nil
@@ -120,32 +150,20 @@ describe 'change streams examples in Ruby' do
       expect(next_change['documentKey']).not_to be_nil
       expect(next_change['documentKey']['_id']).to eq(next_change['fullDocument']['_id'])
 
-      inventory.insert_one(x: 2)
-      next_next_change = cursor.next
-      stream.close
+      expect(resumed_change['_id']).not_to be_nil
+      expect(resumed_change['_id']['_data']).not_to be_nil
+      expect(resumed_change['operationType']).to eq('insert')
+      expect(resumed_change['fullDocument']).not_to be_nil
+      expect(resumed_change['fullDocument']['_id']).not_to be_nil
+      expect(resumed_change['fullDocument']['x']).to eq(2)
+      expect(resumed_change['ns']).not_to be_nil
+      expect(resumed_change['ns']['db']).to eq(SpecConfig.instance.test_db)
+      expect(resumed_change['ns']['coll']).to eq(inventory.name)
+      expect(resumed_change['documentKey']).not_to be_nil
+      expect(resumed_change['documentKey']['_id']).to eq(resumed_change['fullDocument']['_id'])
 
-      expect(next_next_change['_id']).not_to be_nil
-      expect(next_next_change['_id']['_data']).not_to be_nil
-      expect(next_next_change['operationType']).to eq('insert')
-      expect(next_next_change['fullDocument']).not_to be_nil
-      expect(next_next_change['fullDocument']['_id']).not_to be_nil
-      expect(next_next_change['fullDocument']['x']).to eq(2)
-      expect(next_next_change['ns']).not_to be_nil
-      expect(next_next_change['ns']['db']).to eq(SpecConfig.instance.test_db)
-      expect(next_next_change['ns']['coll']).to eq(inventory.name)
-      expect(next_next_change['documentKey']).not_to be_nil
-      expect(next_next_change['documentKey']['_id']).to eq(next_next_change['fullDocument']['_id'])
-
-      # Start Changestream Example 3
-      
-      resume_token = next_change['_id']
-      cursor = inventory.watch([], resume_after: resume_token).to_enum
-      resumed_change = cursor.next
-
-      # End Changestream Example 3
-
-      expect(resumed_change.length).to eq(next_next_change.length)
-      resumed_change.each { |key| expect(resumed_change[key]).to eq(next_next_change[key]) }
+      expect(resumed_change.length).to eq(resumed_change.length)
+      resumed_change.each { |key| expect(resumed_change[key]).to eq(resumed_change[key]) }
     end
   end
 
