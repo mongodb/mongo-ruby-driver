@@ -29,13 +29,11 @@ describe 'change streams examples in Ruby' do
         inventory.insert_one(x: 1)
       end
 
-      change_stream = nil
       stream_thread = Thread.new do
 
         # Start Changestream Example 1
 
-        change_stream = inventory.watch
-        cursor = change_stream.to_enum
+        cursor = inventory.watch.to_enum
         next_change = cursor.next
 
         # End Changestream Example 1
@@ -43,7 +41,6 @@ describe 'change streams examples in Ruby' do
 
       insert_thread.value
       change = stream_thread.value
-      change_stream.close
 
       expect(change['_id']).not_to be_nil
       expect(change['_id']['_data']).not_to be_nil
@@ -70,13 +67,11 @@ describe 'change streams examples in Ruby' do
         inventory.update_one({ _id: 1}, { '$set' => { x: 5 }})
       end
 
-      change_stream = nil
       stream_thread = Thread.new do
 
         # Start Changestream Example 2
 
-        change_stream = inventory.watch([], full_document: 'updateLookup')
-        cursor = change_stream.to_enum
+        cursor = inventory.watch([], full_document: 'updateLookup').to_enum
         next_change = cursor.next
 
         # End Changestream Example 2
@@ -85,7 +80,6 @@ describe 'change streams examples in Ruby' do
 
       update_thread.value
       change = stream_thread.value
-      change_stream.close
 
       expect(change['_id']).not_to be_nil
       expect(change['_id']['_data']).not_to be_nil
@@ -116,18 +110,15 @@ describe 'change streams examples in Ruby' do
       end
 
       next_change = nil
-      resumed_change = nil
-      change_stream = nil
-
-      stream_thread = Thread.new do
+      resume_stream_thread = Thread.new do
 
         # Start Changestream Example 3
 
         change_stream = inventory.watch
         cursor = change_stream.to_enum
         next_change = cursor.next
-
         resume_token = change_stream.resume_token
+
         new_cursor = inventory.watch([], resume_after: resume_token).to_enum
         resumed_change = new_cursor.next
 
@@ -135,8 +126,7 @@ describe 'change streams examples in Ruby' do
       end
 
       insert_thread.value
-      stream_thread.value
-      change_stream.close
+      resumed_change = resume_stream_thread.value
 
       expect(next_change['_id']).not_to be_nil
       expect(next_change['_id']['_data']).not_to be_nil
