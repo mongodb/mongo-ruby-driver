@@ -276,7 +276,6 @@ describe Mongo::Collection::View::ChangeStream do
       it 'does not close the cursor' do
         expect(cursor).to be_a(Mongo::Cursor)
         expect(cursor.closed?).to be false
-        expect(cursor.id).not_to be_nil
       end
     end
 

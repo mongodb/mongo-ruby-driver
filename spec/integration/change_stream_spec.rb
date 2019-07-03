@@ -45,36 +45,13 @@ describe 'Change stream integration', retry: 4 do
       end
     end
 
-    shared_context 'errors with a non-resumable error' do
+    shared_context 'next errors with a non-resumable error' do
       it 'errors with a non-resumable error' do
         change_stream
 
         expect do
           change_stream.to_enum.next
         end.to raise_error(Mongo::Error::OperationFailure, /Failing command due to 'failCommand' failpoint \((11601|136|237)\)/)
-      end
-    end
-
-    shared_examples 'non-resumable error' do
-      context 'when the error is Interrupted' do
-        let(:errorCode) do
-          11601
-        end
-        it_behaves_like 'errors with a non-resumable error'
-      end
-
-      context 'when the error is CappedPositionLost' do
-        let(:errorCode) do
-          136
-        end
-        it_behaves_like 'errors with a non-resumable error'
-      end
-
-      context 'when the error is CursorKilled' do
-        let(:errorCode) do
-          237
-        end
-        it_behaves_like 'errors with a non-resumable error'
       end
     end
 
@@ -129,8 +106,25 @@ describe 'Change stream integration', retry: 4 do
           it_behaves_like 'returns a change document'
         end
 
-        context 'when the error is non-resumable' do
-          it_behaves_like 'non-resumable error'
+        context 'when the error is Interrupted' do
+          let(:errorCode) do
+            11601
+          end
+          it_behaves_like 'next errors with a non-resumable error'
+        end
+
+        context 'when the error is CappedPositionLost' do
+          let(:errorCode) do
+            136
+          end
+          it_behaves_like 'next errors with a non-resumable error'
+        end
+
+        context 'when the error is CursorKilled' do
+          let(:errorCode) do
+            237
+          end
+          it_behaves_like 'next errors with a non-resumable error'
         end
       end
 
@@ -157,8 +151,25 @@ describe 'Change stream integration', retry: 4 do
           it_behaves_like 'returns a change document'
         end
 
-        context 'when the error is non-resumable' do
-          it_behaves_like 'non-resumable error'
+        context 'when the error is Interrupted' do
+          let(:errorCode) do
+            11601
+          end
+          it_behaves_like 'next errors with a non-resumable error'
+        end
+
+        context 'when the error is CappedPositionLost' do
+          let(:errorCode) do
+            136
+          end
+          it_behaves_like 'next errors with a non-resumable error'
+        end
+
+        context 'when the error is CursorKilled' do
+          let(:errorCode) do
+            237
+          end
+          it_behaves_like 'next errors with a non-resumable error'
         end
       end
     end
@@ -494,10 +505,12 @@ describe 'Change stream integration', retry: 4 do
       }
     end
 
-    let(:stream_doc_id) do
-      cs = authorized_collection.watch([])
-      authorized_collection.insert_one(x: 1)
-      cs.to_enum.next['_id']
+    let!(:sample_resume_token) do
+      cs = authorized_collection.watch
+      authorized_collection.insert_one(a: 1)
+      doc = cs.to_enum.next
+      cs.close
+      doc[:_id]
     end
 
     let(:use_stream) do
@@ -535,7 +548,7 @@ describe 'Change stream integration', retry: 4 do
           min_server_fcv '4.2'
 
           it 'must return startAfter from the initial aggregate if the option was specified' do
-            start_after = stream_doc_id
+            start_after = sample_resume_token
             authorized_collection.insert_one(:a => 1)
             stream = authorized_collection.watch([], { start_after: start_after })
 
@@ -544,7 +557,7 @@ describe 'Change stream integration', retry: 4 do
         end
 
         it 'must return resumeAfter from the initial aggregate if the option was specified' do
-          resume_after = stream_doc_id
+          resume_after = sample_resume_token
           authorized_collection.insert_one(:a => 1)
           stream = authorized_collection.watch([], { resume_after: resume_after })
 
@@ -587,30 +600,32 @@ describe 'Change stream integration', retry: 4 do
         min_server_fcv '4.2'
 
         let (:stream) do
-          authorized_collection.watch([], { start_after: stream_doc_id })
+          authorized_collection.watch([], { start_after: sample_resume_token })
         end
 
         it 'must return startAfter from the initial aggregate' do
-          stream_doc_id
+          # Need to obtain a doc id from the stream before we use the stream, so
+          # the events subscriber does not record these commands as part of the example.
+          sample_resume_token
 
           # Verify that only the initial aggregate command was executed
           expect(events.size).to eq(1)
           expect(events.first.command_name).to eq('aggregate')
-          expect(stream.resume_token).to eq(stream_doc_id)
+          expect(stream.resume_token).to eq(sample_resume_token)
         end
       end
 
       context 'if resumeAfter was specified' do
         let (:stream) do
-          authorized_collection.watch([], { resume_after: stream_doc_id })
+          authorized_collection.watch([], { resume_after: sample_resume_token })
         end
 
         it 'must return resumeAfter from the initial aggregate' do
-          stream_doc_id
+          sample_resume_token
 
           expect(events.size).to eq(1)
           expect(events.first.command_name).to eq('aggregate')
-          expect(stream.resume_token).to eq(stream_doc_id)
+          expect(stream.resume_token).to eq(sample_resume_token)
         end
       end
 
@@ -625,17 +640,7 @@ describe 'Change stream integration', retry: 4 do
 
 
     context 'for non-empty, non-iterated batch directly after get_more' do
-      before do
-        expect(events.last.command_name).to eq('getMore')
-      end
-
-      let(:use_stream) do
-        stream
-        return_doc
-        do_get_more
-      end
-
-      let(:return_doc) do
+      let(:next_doc) do
         authorized_collection.insert_one(:a => 1)
         stream.to_enum.next
       end
@@ -648,8 +653,16 @@ describe 'Change stream integration', retry: 4 do
       context '4.2+' do
         min_server_fcv '4.2'
 
+        let(:use_stream) do
+          stream
+          next_doc
+          do_get_more
+        end
+
         it 'returns post batch resume token from previous command response' do
           expect(events.size).to eq(3)
+
+          expect(events.last.command_name).to eq('getMore')
 
           first_get_more = events[1].reply
           second_get_more = events[2].reply
@@ -666,8 +679,15 @@ describe 'Change stream integration', retry: 4 do
         max_server_version '4.0'
 
         context 'if a document was returned' do
+          let(:use_stream) do
+            stream
+            next_doc
+            do_get_more
+          end
+
           it 'returns _id of previous document' do
-            expect(stream.resume_token).to eq(return_doc['_id'])
+            expect(events.last.command_name).to eq('getMore')
+            expect(stream.resume_token).to eq(next_doc['_id'])
           end
         end
 
@@ -679,18 +699,20 @@ describe 'Change stream integration', retry: 4 do
 
           context 'when resumeAfter is specified' do
             let (:stream) do
-              authorized_collection.watch([], { resume_after: stream_doc_id })
+              authorized_collection.watch([], { resume_after: sample_resume_token })
             end
 
             it 'must return resumeAfter from the initial aggregate if the option was specified' do
-              stream_doc_id
+              sample_resume_token
 
-              expect(stream.resume_token).to eq(stream_doc_id)
+              expect(events.last.command_name).to eq('getMore')
+              expect(stream.resume_token).to eq(sample_resume_token)
             end
           end
 
           context 'if neither the startAfter nor resumeAfter options were specified' do
             it 'must be empty' do
+              expect(events.last.command_name).to eq('getMore')
               expect(stream.resume_token).to be(nil)
             end
           end
