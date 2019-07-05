@@ -127,7 +127,9 @@ module Mongo
         sel = selector(server).dup
         add_write_concern!(sel)
         sel[Protocol::Msg::DATABASE_IDENTIFIER] = db_name
-        sel['$readPreference'] = read.to_doc if read
+        unless server.standalone?
+          sel['$readPreference'] = read.to_doc if read
+        end
 
         if server.features.sessions_enabled?
           apply_cluster_time!(sel, server)
