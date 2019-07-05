@@ -143,7 +143,14 @@ module Utils
         when 'defaultTransactionOptions'
           out_k = Utils.underscore(k).to_sym
           convert_operation_options(v)
-        when 'readConcern', 'causalConsistency'
+        when 'readConcern'
+          out_k = Utils.underscore(k).to_sym
+          Mongo::Options::Mapper.transform_keys_to_symbols(v).tap do |out|
+            if out[:level]
+              out[:level] = out[:level].to_sym
+            end
+          end
+        when 'causalConsistency'
           out_k = Utils.underscore(k).to_sym
           v
         when 'writeConcern'
