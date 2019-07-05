@@ -7,7 +7,6 @@ require 'spec_helper'
 # duplicating the examples.
 
 describe 'Read preference' do
-  require_topology :replica_set
   clean_slate_on_evergreen
 
   let(:client) do
@@ -72,7 +71,30 @@ describe 'Read preference' do
       expect(actual_preference).to be nil
     end
 
-    it_behaves_like 'sends expected read preference when reading'
+    context 'standalone' do
+      require_topology :single
+
+      it_behaves_like 'does not send read preference when reading'
+    end
+
+    context 'RS, sharded cluster' do
+      # Supposedly read preference should only be sent in a sharded cluster
+      # topology. However, transactions spec tests contain read preference
+      # assertions also when they are run in RS topologies.
+      require_topology :sharded, :replica_set
+
+      context 'pre-OP_MSG server' do
+        max_server_version '3.4'
+
+        it_behaves_like 'does not send read preference when reading'
+      end
+
+      context 'server supporting OP_MSG' do
+        min_server_fcv '3.6'
+
+        it_behaves_like 'sends expected read preference when reading'
+      end
+    end
   end
 
   shared_examples_for 'sends expected read preference' do
@@ -213,7 +235,11 @@ describe 'Read preference' do
   end
 
   context 'in transaction' do
-    min_server_fcv '4.0'
+    # 4.0/RS is a valid topology to test against, but our tooling doesn't
+    # support multiple constraint specifications like runOn does.
+    # There is no loss of generality to constrain these tests to 4.2+.
+    min_server_fcv '4.2'
+    require_topology :sharded, :replica_set
 
     let(:write_operation) do
       expect do
