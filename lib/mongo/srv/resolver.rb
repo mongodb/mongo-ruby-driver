@@ -52,18 +52,19 @@ module Mongo
       # @raise [ Mongo::Error::NoSRVRecords ] If the :raise_in_invalid Resolver
       #   option is true and no records are found.
       #
-      # @return [ Mongo::SRV::Records ] The records obtained for the hostname.
+      # @return [ Mongo::SRV::Result ] SRV lookup result.
       def get_records(hostname)
         query_name = RECORD_PREFIX + hostname
         resources = @resolver.getresources(query_name, Resolv::DNS::Resource::IN::SRV)
 
-        # Collect all of the records into a Records object, raising an error
+        # Collect all of the records into a Result object, raising an error
         # or logging a warning if a record with a mismatched domain is found.
-        # Note that in the case a warning is raised, the
-        # record is _not_ added to the Records object.
-        records = resources.reduce(SRV::Records.new(hostname)) do |records, record|
+        # Note that in the case a warning is raised, the record is _not_
+        # added to the Result object.
+        result = SRV::Result.new(hostname)
+        resources.each do |record|
           begin
-            records.add_record(record)
+            result.add_record(record)
           rescue Error::MismatchedDomain => e
             if raise_on_invalid?
               raise
@@ -71,13 +72,11 @@ module Mongo
               log_warn(e.message)
             end
           end
-
-          records
         end
 
         # If no records are found, either raise an error or log a warning
         # based on the Resolver's :raise_on_invalid option.
-        if records.empty?
+        if result.empty?
           if raise_on_invalid?
             raise Error::NoSRVRecords.new(URI::SRVProtocol::NO_SRV_RECORDS % hostname)
           else
@@ -85,7 +84,7 @@ module Mongo
           end
         end
 
-        records
+        result
       end
 
       # Obtains the TXT records of a host.

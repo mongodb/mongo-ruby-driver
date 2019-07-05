@@ -12,5 +12,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/srv/records'
+require 'mongo/srv/result'
 require 'mongo/srv/resolver'

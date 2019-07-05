@@ -16,11 +16,13 @@ module Mongo
 
   module SRV
 
-    # This SRV::Records class is used to keep track of the SRV records discovered for a given
-    # hostname. It also keeps track of the minimum TTL of the records added so far.
+    # SRV record lookup result.
+    #
+    # Contains server addresses that the query resolved to, and minimum TTL
+    # of the DNS records.
     #
     # @api private
-    class Records
+    class Result
 
       # @return [ String ] MISMATCHED_DOMAINNAME Error message format string indicating that an SRV
       #   record found does not match the domain of a hostname.
@@ -56,8 +58,6 @@ module Mongo
       # Adds a new record.
       #
       # @param [ Resolv::DNS::Resource ] record An SRV record found for the hostname.
-      #
-      # @return [ Records ] the Records object itself
       def add_record(record)
         record_host = record.target.to_s
         port = record.port
@@ -70,7 +70,7 @@ module Mongo
           @min_ttl = [@min_ttl, record.ttl].min
         end
 
-        self
+        nil
       end
 
       private
