@@ -349,7 +349,19 @@ module Mongo
         end
       end
 
-      @servers = parse_servers!(hosts)
+      unless hosts.length > 0
+        raise_invalid_error!("Missing host; at least one must be provided")
+      end
+
+      @servers = hosts.split(',').map do |host|
+        if host.empty?
+          raise_invalid_error!('Empty host given in the host list')
+        end
+        decode(host).tap do |host|
+          validate_host!(host)
+        end
+      end
+
       @user = parse_user!(creds)
       @password = parse_password!(creds)
       @uri_options = Options::Redacted.new(parse_uri_options!(options))
@@ -421,23 +433,44 @@ module Mongo
       end
     end
 
-    def parse_servers!(string)
-      raise_invalid_error!(INVALID_HOST) unless string.size > 0
-      string.split(HOST_DELIM).reduce([]) do |servers, host|
-        if host[0] == '['
-          if host.index(']:')
-            h, p = host.split(']:')
-            validate_port_string!(p)
-          end
-        elsif host.index(HOST_PORT_DELIM)
-          h, _, p = host.partition(HOST_PORT_DELIM)
-          raise_invalid_error!(INVALID_HOST) unless h.size > 0
-          validate_port_string!(p)
-        elsif host =~ UNIX_SOCKET
-          raise_invalid_error!(UNESCAPED_UNIX_SOCKET) if host =~ UNSAFE
-          host = decode(host)
+    # Takes a host in ipv4/ipv6/hostname/socket path format and validates
+    # its format.
+    def validate_host!(host)
+      case host
+      when /\A\[[\d:]+\](?::(\d+))?\z/
+        # ipv6 with optional port
+        if port_str = $1
+          validate_port_string!(port_str)
         end
-        servers << host
+      when /\A\//, /\.sock\z/
+        # Unix socket path.
+        # Spec requires us to validate that the path has no unescaped
+        # slashes, but if this were to be the case, parsing would have
+        # already failed elsewhere because the URI would've been split in
+        # a weird place.
+        # The spec also allows relative socket paths and requires that
+        # socket paths end in ".sock". We accept all paths but special case
+        # the .sock extension to avoid relative paths falling into the
+        # host:port case below.
+      when /[\/\[\]]/
+        # Not a host:port nor an ipv4 address with optional port.
+        # Possibly botched ipv6 address with e.g. port delimiter present and
+        # port missing, or extra junk before or after.
+        raise_invalid_error!("Invalid hostname: #{host}")
+      when /:.*:/m
+        raise_invalid_error!("Multiple port delimiters are not allowed: #{host}")
+      else
+        # host:port or ipv4 address with optional port number
+        host, port = host.split(':')
+        if host.empty?
+          raise_invalid_error!("Host is empty: #{host}")
+        end
+
+        if port && port.empty?
+          raise_invalid_error!("Port is empty: #{port}")
+        end
+
+        validate_port_string!(port)
       end
     end
 
