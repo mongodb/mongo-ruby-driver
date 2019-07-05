@@ -106,7 +106,7 @@ module Mongo
       #
       # @return [ Mongo::SRV::Resolver ]
       def resolver
-        @resolver ||= SRV::Resolver.new(true)
+        @resolver ||= SRV::Resolver.new(raise_on_invalid: true)
       end
 
       # Parses the credentials from the URI and performs DNS queries to obtain
