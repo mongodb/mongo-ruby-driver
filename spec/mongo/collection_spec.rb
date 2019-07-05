@@ -287,16 +287,52 @@ describe Mongo::Collection do
             client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
           end
 
-          it "uses collection's read preference when reading" do
-            expect do
-              new_collection.find.to_a.count
-            end.not_to raise_error
+          shared_examples_for "uses collection's read preference when reading" do
+            it "uses collection's read preference when reading" do
+              expect do
+                new_collection.find.to_a.count
+              end.not_to raise_error
 
-            event = subscriber.started_events.detect do |event|
-              event.command['find']
+              event = subscriber.started_events.detect do |event|
+                event.command['find']
+              end
+              actual_rp = event.command['$readPreference']
+              expect(actual_rp).to eq(expected_read_preference)
             end
-            actual_mode = event.command['$readPreference']['mode']
-            expect(actual_mode).to eq('secondary')
+          end
+
+          context 'post-OP_MSG server' do
+            min_server_fcv '3.6'
+
+            context 'standalone' do
+              require_topology :single
+
+              let(:expected_read_preference) do
+                nil
+              end
+
+              it_behaves_like "uses collection's read preference when reading"
+            end
+
+            context 'RS, sharded' do
+              require_topology :replica_set, :sharded
+
+              let(:expected_read_preference) do
+                {'mode' => 'secondary'}
+              end
+
+              it_behaves_like "uses collection's read preference when reading"
+            end
+          end
+
+          context 'pre-OP-MSG server' do
+            max_server_version '3.4'
+
+            let(:expected_read_preference) do
+              nil
+            end
+
+            it_behaves_like "uses collection's read preference when reading"
           end
         end
       end
