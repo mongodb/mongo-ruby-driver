@@ -31,7 +31,10 @@ module Mongo
         def selector(server)
           sel = { :parallelCollectionScan => coll_name, :numCursors => cursor_count }
           sel[:maxTimeMS] = max_time_ms if max_time_ms
-          sel[:readConcern] = read_concern if read_concern
+          if read_concern
+            sel[:readConcern] = Options::Mapper.transform_values_to_strings(
+              read_concern)
+          end
           sel
         end
       end

@@ -44,6 +44,18 @@ class EventSubscriber
       end
     end
 
+    # Locates command stated events for the specified command name,
+    # asserts that there is exactly one such event, and returns it.
+    def single_command_started_event(command_name)
+      events = started_events.select do |event|
+        event.command[command_name]
+      end
+      if events.length != 1
+        raise "Expected a single #{command_name} event but we have #{events.length}"
+      end
+      events.first
+    end
+
     # Cache the failed event.
     #
     # @param [ Event ] event The event.

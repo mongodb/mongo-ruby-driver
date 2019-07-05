@@ -53,7 +53,7 @@ module Mongo
     # Options that can be updated on a new Collection instance via the #with method.
     #
     # @since 2.1.0
-    CHANGEABLE_OPTIONS = [ :read, :read_concern, :write ].freeze
+    CHANGEABLE_OPTIONS = [ :read, :read_concern, :write, :write_concern ].freeze
 
     # Check if a collection is equal to another object. Will check the name and
     # the database for equality.
@@ -80,12 +80,28 @@ module Mongo
     # @param [ String, Symbol ] name The collection name.
     # @param [ Hash ] options The collection options.
     #
+    # @option options [ Hash ] :write Deprecated. Equivalent to :write_concern
+    #   option.
+    # @option options [ Hash ] :write_concern The write concern options.
+    #   Can be :w => Integer|String, :fsync => Boolean, :j => Boolean.
+    #
     # @since 2.0.0
     def initialize(database, name, options = {})
       raise Error::InvalidCollectionName.new unless name
+      if options[:write] && options[:write_concern] && options[:write] != options[:write_concern]
+        raise ArgumentError, "If :write and :write_concern are both given, they must be identical: #{options.inspect}"
+      end
       @database = database
       @name = name.to_s.freeze
-      @options = options.freeze
+      @options = options.dup
+=begin WriteConcern object support
+      if @options[:write_concern].is_a?(WriteConcern::Base)
+        # Cache the instance so that we do not needlessly reconstruct it.
+        @write_concern = @options[:write_concern]
+        @options[:write_concern] = @write_concern.options
+      end
+=end
+      @options.freeze
     end
 
     # Get the read concern for this collection instance.
@@ -133,7 +149,8 @@ module Mongo
     #
     # @since 2.0.0
     def write_concern
-      @write_concern ||= WriteConcern.get(options[:write] || database.write_concern)
+      @write_concern ||= WriteConcern.get(
+        options[:write_concern] || options[:write] || database.write_concern)
     end
 
     # Get the write concern for the collection, given the session.
@@ -161,11 +178,11 @@ module Mongo
     # Provides a new collection with either a new read preference or new write concern
     # merged over the existing read preference / write concern.
     #
-    # @example Get a collection with changed read preference.
-    #   collection.with(:read => { :mode => :primary_preferred })
+    # @example Get a collection with a changed read preference.
+    #   collection.with(read: { mode: :primary_preferred })
     #
-    # @example Get a collection with changed write concern.
-    #   collection.with(:write => { w:  3 })
+    # @example Get a collection with a changed write concern.
+    #   collection.with(write_concern: { w:  3 })
 
     # @param [ Hash ] new_options The new options to use.
     #
@@ -176,7 +193,14 @@ module Mongo
       new_options.keys.each do |k|
         raise Error::UnchangeableCollectionOption.new(k) unless CHANGEABLE_OPTIONS.include?(k)
       end
-      Collection.new(database, name, options.merge(new_options))
+      options = @options.dup
+      if options[:write] && new_options[:write_concern]
+        options.delete(:write)
+      end
+      if options[:write_concern] && new_options[:write]
+        options.delete(:write_concern)
+      end
+      Collection.new(database, name, options.update(new_options))
     end
 
     # Is the collection capped?
@@ -204,8 +228,16 @@ module Mongo
     #
     # @since 2.0.0
     def create(opts = {})
+      # Passing read options to create command causes it to break.
+      # Filter the read options out.
+      # TODO put the list of read options in a class-level constant when
+      # we figure out what the full set of them is.
+      options = Hash[self.options.reject do |key, value|
+        %w(read read_preference).include?(key.to_s)
+      end]
       operation = { :create => name }.merge(options)
       operation.delete(:write)
+      operation.delete(:write_concern)
       client.send(:with_session, opts) do |session|
         server = next_primary(nil, session)
         if (options[:collation] || options[Operation::COLLATION]) && !server.features.collation_enabled?

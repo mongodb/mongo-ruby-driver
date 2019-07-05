@@ -108,7 +108,7 @@ module Mongo
       def gridfs_upload(repetitions)
         client.database.drop
         create_collection
-        fs = client.with(write: { w: 1 }).database.fs(write: { w: 1})
+        fs = client.with(write_concern: { w: 1 }).database.fs(write_concern: { w: 1})
 
         s = StringIO.new('a')
         fs.upload_from_stream('create-indices.test', s)
@@ -137,7 +137,7 @@ module Mongo
       def gridfs_download(repetitions = Benchmarking::TEST_REPETITIONS)
         client.database.drop
         create_collection
-        fs = client.with(write: { w: 1 }).database.fs(write: { w: 1})
+        fs = client.with(write_concern: { w: 1 }).database.fs(write_concern: { w: 1})
 
         file_id = fs.upload_from_stream('gridfstest', File.open(GRIDFS_FILE))
         io = StringIO.new

@@ -96,7 +96,10 @@ module Mongo
 
           def find_command
             document = BSON::Document.new('find' => collection.name, 'filter' => filter)
-            document[:readConcern] = collection.read_concern if collection.read_concern
+            if collection.read_concern
+              document[:readConcern] = Options::Mapper.transform_values_to_strings(
+                collection.read_concern)
+            end
             command = Options::Mapper.transform_documents(convert_flags(options), MAPPINGS, document)
             convert_limit_and_batch_size(command)
             command
