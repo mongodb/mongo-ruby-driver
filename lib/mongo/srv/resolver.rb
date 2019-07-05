@@ -93,7 +93,7 @@ module Mongo
       # @param [ String ] host The host whose TXT records should be obtained.
       #
       # @return [ Array<Resolv::DNS::Resource> ] The TXT records.
-      def get_txt_opts(host)
+      def get_txt_options(host)
         @resolver.getresources(host, Resolv::DNS::Resource::IN::TXT)
       end
 

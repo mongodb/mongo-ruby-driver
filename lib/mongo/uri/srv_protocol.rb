@@ -131,7 +131,7 @@ module Mongo
         validate_hostname(hostname)
 
         @srv_records = resolver.get_records(hostname)
-        @txt_options = get_txt_opts(hostname) || {}
+        @txt_options = get_txt_options(hostname) || {}
         records = srv_records.hosts
         records.each do |record|
           validate_host!(record)
@@ -173,8 +173,8 @@ module Mongo
       # @return [ Hash | nil ] The TXT record options (or nil if no TXT records are found).
       #
       # @raise [ Mongo::Error::InvalidTXTRecord ] If more than one TXT record is found.
-      def get_txt_opts(host)
-        records = resolver.get_txt_opts(host)
+      def get_txt_options(host)
+        records = resolver.get_txt_options(host)
         unless records.empty?
           if records.size > 1
             raise Error::InvalidTXTRecord.new(MORE_THAN_ONE_TXT_RECORD_FOUND % host)
