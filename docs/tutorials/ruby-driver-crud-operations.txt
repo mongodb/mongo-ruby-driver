@@ -500,7 +500,7 @@ GridFS examples are provided on the :ref:`GridFS <gridfs>` page.
 
 .. code-block:: ruby
 
-  client = Mongo::Client.new([ '127.0.0.1:27741' ], database: 'music',
+  client = Mongo::Client.new([ '127.0.0.1:27017' ], database: 'music',
     write_concern: {w: 2})
   alt_client = client.with(write_concern: {w: :majority})
   
@@ -518,7 +518,7 @@ backwards compatibility, but is deprecated:
 
 .. code-block:: ruby
 
-  client = Mongo::Client.new([ '127.0.0.1:27741' ], database: 'music',
+  client = Mongo::Client.new([ '127.0.0.1:27017' ], database: 'music',
     write: {w: 2})
   alt_client = client.with(write: {w: :majority})
   
@@ -531,11 +531,11 @@ values must be identical or an exception will be raised:
 .. code-block:: ruby
 
   # OK
-  client = Mongo::Client.new([ '127.0.0.1:27741' ], database: 'music',
+  client = Mongo::Client.new([ '127.0.0.1:27017' ], database: 'music',
     write_concern: {w: 3}, write: {w: 3})
   
   # Error
-  client = Mongo::Client.new([ '127.0.0.1:27741' ], database: 'music',
+  client = Mongo::Client.new([ '127.0.0.1:27017' ], database: 'music',
     write_concern: {w: 3}, write: {w: :majority})
 
 When ``#with`` methods are used to alter the options on a client or collection,
@@ -543,11 +543,15 @@ the last provided option wins in case of naming differences:
 
 .. code-block:: ruby
 
-  client = Mongo::Client.new([ '127.0.0.1:27741' ], database: 'music',
+  client = Mongo::Client.new([ '127.0.0.1:27017' ], database: 'music',
     write_concern: {w: 2})
   alt_client = client.with(write: {w: 3})
+  
   alt_client.options[:write]
+  # => {"w"=>3}
+  
   alt_client.options[:write_concern]
+  # => nil
 
 When using transactions, write concern is only sent to the server in
 ``commit_transaction`` and ``abort_transaction`` operations
@@ -564,7 +568,7 @@ driver version.
 
 .. code-block:: ruby
   
-  client = Mongo::Client.new([ '127.0.0.1:27741' ], database: 'music',
+  client = Mongo::Client.new([ '127.0.0.1:27017' ], database: 'music',
     write_concern: {w: 2})
   collection = client[:artists, write_concern: {w: :majority}]
   
@@ -600,7 +604,7 @@ is not inherited in the following case:
 
 .. code-block:: ruby
   
-  client = Mongo::Client.new([ '127.0.0.1:27741' ], database: 'music',
+  client = Mongo::Client.new([ '127.0.0.1:27017' ], database: 'music',
     write_concern: {w: 1, j: true})
   collection = client[:artists, write_concern: {w: 2}]
   
@@ -612,7 +616,7 @@ recognize the ``:write_concern`` option:
   
 .. code-block:: ruby
 
-  client = Mongo::Client.new([ '127.0.0.1:27741' ], database: 'music',
+  client = Mongo::Client.new([ '127.0.0.1:27017' ], database: 'music',
     write_concern: {w: 2})
   collection = client[:artists, write_concern: {w: :majority}]
   
