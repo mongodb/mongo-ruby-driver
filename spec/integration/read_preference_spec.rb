@@ -43,16 +43,8 @@ describe 'Read preference' do
     {}
   end
 
-  shared_examples_for 'non-transactional read preference examples' do
-    it 'does not use expected read preference when writing' do
-      write_operation
-
-      event = subscriber.single_command_started_event('insert')
-      actual_preference = event.command['$readPreference']
-      expect(actual_preference).to be nil
-    end
-
-    it 'uses expected read preference when reading' do
+  shared_examples_for 'sends expected read preference when reading' do
+    it 'sends expected read preference when reading' do
       read_operation
 
       event = subscriber.single_command_started_event('find')
@@ -61,7 +53,29 @@ describe 'Read preference' do
     end
   end
 
-  shared_examples_for 'uses expected read preference' do
+  shared_examples_for 'does not send read preference when reading' do
+    it 'does not send read preference when reading' do
+      read_operation
+
+      event = subscriber.single_command_started_event('find')
+      actual_preference = event.command['$readPreference']
+      expect(actual_preference).to be nil
+    end
+  end
+
+  shared_examples_for 'non-transactional read preference examples' do
+    it 'does not send read preference when writing' do
+      write_operation
+
+      event = subscriber.single_command_started_event('insert')
+      actual_preference = event.command['$readPreference']
+      expect(actual_preference).to be nil
+    end
+
+    it_behaves_like 'sends expected read preference when reading'
+  end
+
+  shared_examples_for 'sends expected read preference' do
     it_behaves_like 'non-transactional read preference examples'
   end
 
@@ -76,7 +90,7 @@ describe 'Read preference' do
         nil
       end
 
-      it_behaves_like 'uses expected read preference'
+      it_behaves_like 'sends expected read preference'
     end
 
     context 'when read preference is given in client options' do
@@ -88,7 +102,7 @@ describe 'Read preference' do
         {'mode' => 'primary'}
       end
 
-      it_behaves_like 'uses expected read preference'
+      it_behaves_like 'sends expected read preference'
     end
 
     context 'when read preference is given in operation options' do
@@ -100,7 +114,7 @@ describe 'Read preference' do
         {read: {mode: :primary}}
       end
 
-      it_behaves_like 'uses expected read preference'
+      it_behaves_like 'sends expected read preference'
     end
 
     context 'when read preference is given in client and operation options' do
@@ -117,7 +131,7 @@ describe 'Read preference' do
         {read: {mode: :primary}}
       end
 
-      it_behaves_like 'uses expected read preference'
+      it_behaves_like 'sends expected read preference'
     end
 
     context 'when read preference is given in collection and operation options' do
@@ -134,7 +148,7 @@ describe 'Read preference' do
         {read: {mode: :primary}}
       end
 
-      it_behaves_like 'uses expected read preference'
+      it_behaves_like 'sends expected read preference'
     end
   end
 
@@ -165,7 +179,7 @@ describe 'Read preference' do
         {'mode' => 'primary'}
       end
 
-      it_behaves_like 'uses expected read preference'
+      it_behaves_like 'sends expected read preference'
     end
 
     context 'when read preference is given in collection options via #with' do
@@ -177,7 +191,7 @@ describe 'Read preference' do
         {'mode' => 'primary'}
       end
 
-      it_behaves_like 'uses expected read preference'
+      it_behaves_like 'sends expected read preference'
     end
 
     context 'when read preference is given in client and collection options' do
@@ -194,7 +208,7 @@ describe 'Read preference' do
         {'mode' => 'primary'}
       end
 
-      it_behaves_like 'uses expected read preference'
+      it_behaves_like 'sends expected read preference'
     end
   end
 
@@ -221,10 +235,10 @@ describe 'Read preference' do
       end.not_to raise_error
     end
 
-    shared_examples_for 'uses expected read preference' do
+    shared_examples_for 'sends expected read preference' do
       it_behaves_like 'non-transactional read preference examples'
 
-      it 'uses expected read preference when starting transaction' do
+      it 'sends expected read preference when starting transaction' do
         collection.insert_one(hello: 'world')
 
         session = client.start_session(session_options)
@@ -255,7 +269,7 @@ describe 'Read preference' do
         nil
       end
 
-      it_behaves_like 'uses expected read preference'
+      it_behaves_like 'sends expected read preference'
     end
 
     context 'when read preference is given in collection options via #with' do
@@ -268,7 +282,7 @@ describe 'Read preference' do
         nil
       end
 
-      it_behaves_like 'uses expected read preference'
+      it_behaves_like 'sends expected read preference'
     end
 
     context 'when read preference is given in client and collection options' do
@@ -285,7 +299,7 @@ describe 'Read preference' do
         {'mode' => 'primary'}
       end
 
-      it_behaves_like 'uses expected read preference'
+      it_behaves_like 'sends expected read preference'
     end
 
     context 'when read preference is given in default transaction options' do
@@ -297,7 +311,7 @@ describe 'Read preference' do
         {'mode' => 'primary'}
       end
 
-      it_behaves_like 'uses expected read preference'
+      it_behaves_like 'sends expected read preference'
     end
 
     context 'when read preference is given in client and default transaction options' do
@@ -313,7 +327,7 @@ describe 'Read preference' do
         {'mode' => 'primary'}
       end
 
-      it_behaves_like 'uses expected read preference'
+      it_behaves_like 'sends expected read preference'
     end
 
     context 'when read preference is given in collection and default transaction options' do
@@ -329,7 +343,7 @@ describe 'Read preference' do
         {'mode' => 'primary'}
       end
 
-      it_behaves_like 'uses expected read preference'
+      it_behaves_like 'sends expected read preference'
     end
 
     context 'when read preference is given in default transaction and transaction options' do
@@ -345,7 +359,7 @@ describe 'Read preference' do
         {'mode' => 'primary'}
       end
 
-      it_behaves_like 'uses expected read preference'
+      it_behaves_like 'sends expected read preference'
     end
 
     context 'when read preference is given in default transaction and operation options' do
@@ -361,7 +375,7 @@ describe 'Read preference' do
         {'mode' => 'primary'}
       end
 
-      it 'uses operation read preference and fails' do
+      it 'sends operation read preference and fails' do
         expect do
           session = client.start_session(session_options)
           session.with_transaction(tx_options) do
@@ -382,7 +396,7 @@ describe 'Read preference' do
         {'mode' => 'primary'}
       end
 
-      it_behaves_like 'uses expected read preference'
+      it_behaves_like 'sends expected read preference'
     end
 
     context 'when read preference is given in client and transaction options' do
@@ -398,7 +412,7 @@ describe 'Read preference' do
         {'mode' => 'primary'}
       end
 
-      it_behaves_like 'uses expected read preference'
+      it_behaves_like 'sends expected read preference'
     end
 
     context 'when read preference is given in collection and transaction options' do
@@ -414,7 +428,7 @@ describe 'Read preference' do
         {'mode' => 'primary'}
       end
 
-      it_behaves_like 'uses expected read preference'
+      it_behaves_like 'sends expected read preference'
     end
 
     context 'when read preference is given in transaction and operation options' do
@@ -430,7 +444,7 @@ describe 'Read preference' do
         {'mode' => 'primary'}
       end
 
-      it 'uses operation read preference and fails' do
+      it 'sends operation read preference and fails' do
         expect do
           session = client.start_session(session_options)
           session.with_transaction(tx_options) do
