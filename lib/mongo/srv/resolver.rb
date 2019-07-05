@@ -89,11 +89,25 @@ module Mongo
 
       # Obtains the TXT records of a host.
       #
-      # @param [ String ] host The host whose TXT records should be obtained.
+      # @param [ String ] hostname The host whose TXT records should be obtained.
       #
-      # @return [ Array<Resolv::DNS::Resource> ] The TXT records.
-      def get_txt_options(host)
-        @resolver.getresources(host, Resolv::DNS::Resource::IN::TXT)
+      # @return [ nil | String ] URI options string from TXT record
+      #   associated with the hostname, or nil if there is no such record.
+      #
+      # @raise [ Mongo::Error::InvalidTXTRecord ] If more than one TXT record is found.
+      def get_txt_options_string(hostname)
+        records = @resolver.getresources(hostname, Resolv::DNS::Resource::IN::TXT)
+        if records.empty?
+          return nil
+        end
+
+        if records.length > 1
+          msg = "Only one TXT record is allowed: querying hostname #{hostname} returned #{records.length} records"
+
+          raise Error::InvalidTXTRecord, msg
+        end
+
+        records[0].strings.join
       end
 
       private

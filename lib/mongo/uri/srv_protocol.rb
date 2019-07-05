@@ -33,8 +33,6 @@ module Mongo
     # @since 2.5.0
     class SRVProtocol < URI
 
-      attr_reader :srv_records
-
       # Gets the options hash that needs to be passed to a Mongo::Client on instantiation, so we
       # don't have to merge the txt record options, credentials, and database in at that point -
       # we only have a single point here.
@@ -80,11 +78,6 @@ module Mongo
       #   were found.
       NO_SRV_RECORDS = "The DNS query returned no SRV records at hostname (%s)".freeze
 
-      # @return [ String ] MORE_THAN_ONE_TXT_RECORD_FOUND Error message format string indicating
-      #   that multiple TXT records were found.
-      MORE_THAN_ONE_TXT_RECORD_FOUND = "Only one TXT record is allowed. Querying hostname (%s) " +
-                                         "returned more than one result.".freeze
-
       # @return [ String ] INVALID_TXT_RECORD_OPTION Error message format string indicating that an
       #   unexpected TXT record option was found.
       INVALID_TXT_RECORD_OPTION = "TXT records can only specify the options " +
@@ -119,7 +112,7 @@ module Mongo
       # Parses the credentials from the URI and performs DNS queries to obtain
       # the hosts and TXT options.
       #
-      # @param [ String ] remainingThe portion of the URI pertaining to the
+      # @param [ String ] remaining The portion of the URI pertaining to the
       #   authentication credentials and the hosts.
       def parse!(remaining)
         super
@@ -130,9 +123,9 @@ module Mongo
         hostname = @servers.first
         validate_hostname(hostname)
 
-        @srv_records = resolver.get_records(hostname)
+        srv_result = resolver.get_records(hostname)
         @txt_options = get_txt_options(hostname) || {}
-        records = srv_records.address_strs
+        records = srv_result.address_strs
         records.each do |record|
           validate_host!(record)
         end
@@ -168,19 +161,18 @@ module Mongo
 
       # Obtains the TXT options of a host.
       #
-      # @param [ String ] host The hostname whose records should be obtained.
+      # @param [ String ] hostname The hostname whose records should be obtained.
       #
-      # @return [ Hash | nil ] The TXT record options (or nil if no TXT records are found).
+      # @return [ Hash ] The TXT record options (an empyt hash if no TXT
+      #   records are found).
       #
       # @raise [ Mongo::Error::InvalidTXTRecord ] If more than one TXT record is found.
-      def get_txt_options(host)
-        records = resolver.get_txt_options(host)
-        unless records.empty?
-          if records.size > 1
-            raise Error::InvalidTXTRecord.new(MORE_THAN_ONE_TXT_RECORD_FOUND % host)
-          end
-          options_string = records[0].strings.join
+      def get_txt_options(hostname)
+        options_string = resolver.get_txt_options_string(hostname)
+        if options_string
           parse_txt_options!(options_string)
+        else
+          {}
         end
       end
 
@@ -194,7 +186,6 @@ module Mongo
       # @raise [ Mongo::Error::InvalidTXTRecord ] If the TXT record does not fit the expected form
       #   or the option specified is not a valid TXT option.
       def parse_txt_options!(string)
-        return {} unless string
         string.split(INDIV_URI_OPTS_DELIM).reduce({}) do |txt_options, opt|
           raise Error::InvalidTXTRecord.new(INVALID_OPTS_VALUE_DELIM) unless opt.index(URI_OPTS_VALUE_DELIM)
           key, value = opt.split(URI_OPTS_VALUE_DELIM)
