@@ -1,4 +1,4 @@
-# Copyright (C) 2014-2019 MongoDB, Inc.
+# Copyright (C) 2017-2019 MongoDB, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the 'License');
 # you may not use this file except in compliance with the License.
@@ -11,8 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-require 'resolv'
 
 module Mongo
   module SRV
