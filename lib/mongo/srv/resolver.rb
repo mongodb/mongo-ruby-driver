@@ -15,46 +15,51 @@
 module Mongo
   module SRV
 
-    # The SRV::Resolver class encapsulates the necessary behavior for querying SRV records as
-    # required by the driver.
+    # The SRV::Resolver class encapsulates the necessary behavior for
+    # querying SRV records as required by the driver.
     #
     # @api private
     class Resolver
       include Loggable
 
-      # @return [ String ] RECORD_PREFIX The prefix appended to each hostname before querying SRV
-      #   records.
+      # @return [ String ] RECORD_PREFIX The prefix appended to each hostname
+      #   before querying SRV records.
       RECORD_PREFIX = '_mongodb._tcp.'.freeze
 
       # Creates a new Resolver.
       #
       # @param [ Hash ] options The options for the resolver.
       #
-      # @option options [ Boolean ] :raise_on_invalid Whether or not to raise an error if either a
-      #   record with a mismatched domain is found or if no records are found. Defaults to true.
+      # @option options [ Boolean ] :raise_on_invalid Whether or not to raise
+      #   an exception if either a record with a mismatched domain is found
+      #   or if no records are found. Defaults to true.
       def initialize(options = nil)
         @options ||= {}
         @resolver = Resolv::DNS.new
       end
 
-      # Obtains all of the SRV records for a given hostname. If a record with a mismatched domain is
-      # found or no records a found, then an error will be raised if the :raise_on_invalid Resolver
-      # option is true and a warning will be logged otherwise.
+      # Obtains all of the SRV records for a given hostname.
+      #
+      # In the event that a record with a mismatched domain is found or no
+      # records are found, if the :raise_on_invalid option is true,
+      # an exception will be raised, otherwise a warning will be logged.
       #
       # @param [ String ] hostname The hostname whose records should be obtained.
       #
-      # @raise [ Mongo::Error::MismatchedDomain ] If the :raise_in_invalid Resolver option is true
-      #   and a record with a domain name that does not match the hostname's is found.
-      # @raise [ Mongo::Error::NoSRVRecords ] If the :raise_in_invalid Resolver option is true
-      #   and a no records are found.
+      # @raise [ Mongo::Error::MismatchedDomain ] If the :raise_in_invalid
+      #   Resolver option is true and a record with a domain name that does
+      #   not match the hostname's is found.
+      # @raise [ Mongo::Error::NoSRVRecords ] If the :raise_in_invalid Resolver
+      #   option is true and no records are found.
       #
       # @return [ Mongo::SRV::Records ] The records obtained for the hostname.
       def get_records(hostname)
         query_name = RECORD_PREFIX + hostname
         resources = @resolver.getresources(query_name, Resolv::DNS::Resource::IN::SRV)
 
-        # Collect all of the records into a Records object, raising an error or logging a warning if
-        # a record with a mismatched domain is found. Note that in the case a warning is raised, the
+        # Collect all of the records into a Records object, raising an error
+        # or logging a warning if a record with a mismatched domain is found.
+        # Note that in the case a warning is raised, the
         # record is _not_ added to the Records object.
         records = resources.reduce(SRV::Records.new(hostname)) do |records, record|
           begin
@@ -70,8 +75,8 @@ module Mongo
           records
         end
 
-        # If no records are found, either raise an error or log a warning based on the Resolver's
-        # :raise_on_invalid option.
+        # If no records are found, either raise an error or log a warning
+        # based on the Resolver's :raise_on_invalid option.
         if records.empty?
           if raise_on_invalid?
             raise Error::NoSRVRecords.new(URI::SRVProtocol::NO_SRV_RECORDS % hostname)
@@ -94,8 +99,8 @@ module Mongo
 
       private
 
-      # Checks whether an error should be raised due to either a record with a mismatched domain
-      # being found or no records being found.
+      # Checks whether an error should be raised due to either a record with
+      # a mismatched domain being found or no records being found.
       #
       # @return [ Boolean ] Whether an error should be raised.
       def raise_on_invalid?
