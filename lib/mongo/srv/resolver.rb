@@ -22,7 +22,7 @@ module Mongo
     class Resolver
       include Loggable
 
-      # @return [ String ] RECORD_PREFIX The prefix appended to each hostname
+      # @return [ String ] RECORD_PREFIX The prefix prepended to each hostname
       #   before querying SRV records.
       RECORD_PREFIX = '_mongodb._tcp.'.freeze
 
