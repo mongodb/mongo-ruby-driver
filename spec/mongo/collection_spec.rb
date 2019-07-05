@@ -244,7 +244,9 @@ describe Mongo::Collection do
         clean_slate_on_evergreen
 
         let(:client) do
-          authorized_client.with(client_options).tap do |client|
+          authorized_client.with(SpecConfig.instance.auth_options.merge(
+            client_options
+          )).tap do |client|
             expect(client.options[:read]).to eq(Mongo::Options::Redacted.new(
               mode: :primary_preferred))
           end
