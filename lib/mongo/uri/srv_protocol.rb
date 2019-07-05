@@ -132,7 +132,7 @@ module Mongo
 
         @srv_records = resolver.get_records(hostname)
         @txt_options = get_txt_options(hostname) || {}
-        records = srv_records.hosts
+        records = srv_records.address_strs
         records.each do |record|
           validate_host!(record)
         end

@@ -29,22 +29,23 @@ module Mongo
       MISMATCHED_DOMAINNAME = "Parent domain name in SRV record result (%s) does not match " +
                                  "that of the hostname (%s)".freeze
 
-      # @return [ String ] hostname The hostname pointing to the DNS records.
-      attr_reader :hostname
+      # @return [ String ] query_hostname The hostname pointing to the DNS records.
+      attr_reader :query_hostname
 
-      # @return [ Array<String> ] hosts The host strings of the SRV records for the hostname.
-      attr_reader :hosts
+      # @return [ Array<String> ] address_strs The host strings of the SRV records
+      #   for the query hostname.
+      attr_reader :address_strs
 
-      # @return [ Integer | nil ] min_ttl The smallest TTL found among the records (or nil if no
-      #   records have been added).
+      # @return [ Integer | nil ] min_ttl The smallest TTL found among the
+      #   records (or nil if no records have been added).
       attr_accessor :min_ttl
 
       # Create a new object to keep track of the SRV records of the hostname.
       #
       # @param [ String ] hostname The hostname pointing to the DNS records.
       def initialize(hostname)
-        @hostname = hostname
-        @hosts = []
+        @query_hostname = hostname
+        @address_strs = []
         @min_ttl = nil
       end
 
@@ -52,7 +53,7 @@ module Mongo
       #
       # @return [ Boolean ] Whether or not there are any records.
       def empty?
-        @hosts.empty?
+        @address_strs.empty?
       end
 
       # Adds a new record.
@@ -62,7 +63,13 @@ module Mongo
         record_host = record.target.to_s
         port = record.port
         validate_record!(record_host)
-        @hosts << "#{record_host}#{URI::SRVProtocol::HOST_PORT_DELIM}#{port}"
+        address_str = if record_host.index(':')
+          # IPV6 address
+          "[#{record_host}]:#{port}"
+        else
+          "#{record_host}:#{port}"
+        end
+        @address_strs << address_str
 
         if @min_ttl.nil?
           @min_ttl = record.ttl
@@ -75,16 +82,18 @@ module Mongo
 
       private
 
-      # Ensures that a record's domain name matches that of the hostname. A hostname's domain name
-      # consists of each of the '.' delineated parts after the first. For example, the hostname
-      # 'foo.bar.baz' has the domain name 'bar.baz'.
+      # Ensures that a record's domain name matches that of the hostname.
+      #
+      # A hostname's domain name consists of each of the '.' delineated
+      # parts after the first. For example, the hostname 'foo.bar.baz'
+      # has the domain name 'bar.baz'.
       #
       # @param [ String ] record_host The host of the SRV record.
       #
       # @raise [ Mongo::Error::MismatchedDomain ] If the record's domain name doesn't match that of
       #   the hostname.
       def validate_record!(record_host)
-        @domainname ||= hostname.split(URI::SRVProtocol::DOT_PARTITION)[1..-1]
+        @domainname ||= query_hostname.split(URI::SRVProtocol::DOT_PARTITION)[1..-1]
         host_parts = record_host.split(URI::SRVProtocol::DOT_PARTITION)
 
         unless (host_parts.size > @domainname.size) && (@domainname == host_parts[-@domainname.length..-1])
