@@ -65,7 +65,10 @@ module Mongo
         include Id
       end
       @monitor = Monitor.new(address, event_listeners, monitoring,
-        options.merge(app_metadata: Monitor::AppMetadata.new(cluster.options)))
+        options.merge(
+          app_metadata: Monitor::AppMetadata.new(cluster.options),
+          cluster: @cluster,
+      ))
       unless monitor == false
         start_monitoring
       end
@@ -416,10 +419,9 @@ module Mongo
     #
     # @since 2.4.0, SDAM events are sent as of version 2.7.0
     def unknown!
-      # Just dispatch the description changed event here, SDAM flow
-      # will update description on the server without in-place mutations
-      # and invoke SDAM transitions as needed.
-      publish(Event::DESCRIPTION_CHANGED, description, Description.new(address))
+      # SDAM flow will update description on the server without in-place
+      # mutations and invoke SDAM transitions as needed.
+      monitor.run_sdam_flow(cluster, description, Description.new(address))
     end
 
     # @api private

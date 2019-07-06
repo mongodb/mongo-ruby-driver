@@ -126,8 +126,6 @@ module Mongo
         Monitoring::Event::TopologyOpening.new(opening_topology)
       )
 
-      subscribe_to(Event::DESCRIPTION_CHANGED, Event::DescriptionChanged.new(self))
-
       @seeds = seeds
       servers = seeds.map do |seed|
         # Server opening events must be sent after topology change events.

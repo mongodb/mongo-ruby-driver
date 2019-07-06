@@ -36,6 +36,7 @@ module Mongo
     # When a server is to be removed from a cluster.
     #
     # @since 2.0.6
+    # @deprecated Will be removed in 3.0
     DESCRIPTION_CHANGED = 'description_changed'.freeze
   end
 end
@@ -44,4 +45,3 @@ require 'mongo/event/base'
 require 'mongo/event/listeners'
 require 'mongo/event/publisher'
 require 'mongo/event/subscriber'
-require 'mongo/event/description_changed'
