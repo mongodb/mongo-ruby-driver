@@ -342,7 +342,7 @@ module Mongo
         end
 
         new_description = Description.new(address, response, average_rtt)
-        @server.monitor.publish(Event::DESCRIPTION_CHANGED, @server.description, new_description)
+        @server.monitor.run_sdam_flow(@server.cluster, @server.description, new_description)
       end
 
       def authenticate!(pending_connection)
