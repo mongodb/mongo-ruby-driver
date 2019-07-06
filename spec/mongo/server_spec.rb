@@ -28,16 +28,28 @@ describe Mongo::Server do
     server.pool
   end
 
+  let(:server_options) do
+    {}
+  end
+
+  let(:server) do
+    register_server(
+      described_class.new(address, cluster, monitoring, listeners,
+        SpecConfig.instance.test_options.merge(monitoring_io: false).merge(server_options))
+    )
+  end
+
+  shared_context 'with monitoring io' do
+    let(:server_options) do
+      {monitoring_io: true}
+    end
+
+    before do
+      allow(cluster).to receive(:heartbeat_interval).and_return(1000)
+    end
+  end
+
   describe '#==' do
-
-    let(:server) do
-      described_class.new(address, cluster, monitoring, listeners, SpecConfig.instance.test_options)
-    end
-
-    after do
-      expect(server).to receive(:pool).and_return(pool)
-      server.disconnect!
-    end
 
     context 'when the other is not a server' do
 
@@ -55,7 +67,10 @@ describe Mongo::Server do
       context 'when the addresses match' do
 
         let(:other) do
-          described_class.new(address, cluster, monitoring, listeners, SpecConfig.instance.test_options)
+          register_server(
+            described_class.new(address, cluster, monitoring, listeners,
+              SpecConfig.instance.test_options.merge(monitoring_io: false))
+          )
         end
 
         it 'returns true' do
@@ -70,7 +85,10 @@ describe Mongo::Server do
         end
 
         let(:other) do
-          described_class.new(other_address, cluster, monitoring, listeners, SpecConfig.instance.test_options)
+          register_server(
+            described_class.new(other_address, cluster, monitoring, listeners,
+              SpecConfig.instance.test_options.merge(monitoring_io: false))
+          )
         end
 
         it 'returns false' do
@@ -82,14 +100,13 @@ describe Mongo::Server do
 
   describe '#disconnect!' do
 
-    let(:server) do
-      described_class.new(address, cluster, monitoring, listeners, SpecConfig.instance.test_options)
-    end
+    context 'with monitoring io' do
+      include_context 'with monitoring io'
 
-    it 'stops the monitor instance' do
-      expect(server.instance_variable_get(:@monitor)).to receive(:stop!).and_return(true)
-      expect(server).to receive(:pool).and_return(pool)
-      server.disconnect!
+      it 'stops the monitor instance' do
+        expect(server.instance_variable_get(:@monitor)).to receive(:stop!).and_call_original
+        server.disconnect!
+      end
     end
 
     it 'disconnects the connection pool' do
@@ -128,20 +145,10 @@ describe Mongo::Server do
   end
 
   describe '#initialize' do
+    include_context 'with monitoring io'
 
-    let(:server) do
-      described_class.new(
-        address,
-        cluster,
-        monitoring,
-        listeners,
-        SpecConfig.instance.test_options.merge(:heartbeat_frequency => 5)
-      )
-    end
-
-    after do
-      expect(server).to receive(:pool).and_return(pool)
-      server.disconnect!
+    before do
+      allow(cluster).to receive(:run_sdam_flow)
     end
 
     it 'sets the address host' do
@@ -153,7 +160,7 @@ describe Mongo::Server do
     end
 
     it 'sets the options' do
-      expect(server.options).to eq(SpecConfig.instance.test_options.merge(:heartbeat_frequency => 5))
+      expect(server.options[:monitoring_io]).to be true
     end
 
     it 'creates monitor with monitoring app metadata' do
@@ -161,51 +168,44 @@ describe Mongo::Server do
     end
 
     context 'monitoring_io: false' do
-      let(:server) do
-        described_class.new(
-          address,
-          cluster,
-          monitoring,
-          listeners,
-          SpecConfig.instance.test_options.merge(monitoring_io: false)
-        )
+
+      let(:server_options) do
+        {monitoring_io: false}
       end
 
       it 'does not create monitoring thread' do
         expect(server.monitor.instance_variable_get('@thread')).to be nil
       end
     end
+
+    context 'monitoring_io: true' do
+      include_context 'with monitoring io'
+
+      it 'creates monitoring thread' do
+        expect(server.monitor.instance_variable_get('@thread')).to be_a(Thread)
+      end
+    end
   end
 
   describe '#scan!' do
+    include_context 'with monitoring io'
 
-    let(:server) do
-      described_class.new(address, cluster, monitoring, listeners, SpecConfig.instance.test_options)
+    it 'delegates scan to the monitor' do
+      expect(server.monitor).to receive(:scan!)
+      server.scan!
     end
 
-    after do
-      expect(server).to receive(:pool).and_return(pool)
-      server.disconnect!
-    end
-
-    it 'forces a scan on the monitor' do
-      expect(server.scan!).to eq(server.description)
+    it 'invokes sdam flow eventually' do
+      expect(cluster).to receive(:run_sdam_flow)
+      server.scan!
     end
   end
 
   describe '#reconnect!' do
-
-    let(:server) do
-      described_class.new(address, cluster, monitoring, listeners, SpecConfig.instance.test_options)
-    end
+    include_context 'with monitoring io'
 
     before do
       expect(server.monitor).to receive(:restart!).and_call_original
-    end
-
-    after do
-      expect(server).to receive(:pool).and_return(pool)
-      server.disconnect!
     end
 
     it 'restarts the monitor and returns true' do
@@ -214,10 +214,6 @@ describe Mongo::Server do
   end
 
   describe 'retry_writes?' do
-
-    let(:server) do
-      described_class.new(address, cluster, monitoring, listeners, SpecConfig.instance.test_options)
-    end
 
     before do
       allow(server).to receive(:features).and_return(features)
@@ -392,9 +388,9 @@ describe Mongo::Server do
     end
 
     context 'server is unknown' do
-      let(:server) do
-        described_class.new(address, cluster, monitoring, listeners,
-          SpecConfig.instance.test_options.merge(monitoring_io: false))
+
+      let(:server_options) do
+        {monitoring_io: false}
       end
 
       before do

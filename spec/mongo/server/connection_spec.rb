@@ -31,9 +31,7 @@ describe Mongo::Server::Connection, retry: 3 do
       allow(cl).to receive(:options).and_return({})
       allow(cl).to receive(:cluster_time).and_return(nil)
       allow(cl).to receive(:update_cluster_time)
-      pool = double('pool')
-      allow(pool).to receive(:disconnect!)
-      allow(cl).to receive(:pool).and_return(pool)
+      allow(cl).to receive(:run_sdam_flow)
     end
   end
 
@@ -41,20 +39,26 @@ describe Mongo::Server::Connection, retry: 3 do
 
   let(:server_options) { SpecConfig.instance.test_options.merge(monitoring_io: false) }
   let(:server) do
-    Mongo::Server.new(address, cluster, monitoring, listeners, server_options)
+    register_server(
+      Mongo::Server.new(address, cluster, monitoring, listeners, server_options)
+    )
   end
 
   let(:monitored_server) do
-    Mongo::Server.new(address, cluster, monitoring, listeners,
-      SpecConfig.instance.test_options
-    ).tap do |server|
-      server.scan!
-      expect(server).not_to be_unknown
-    end
+    register_server(
+      Mongo::Server.new(address, cluster, monitoring, listeners,
+        SpecConfig.instance.test_options.merge(monitoring_io: false)
+      ).tap do |server|
+        allow(server).to receive(:description).and_return(ClusterConfig.instance.primary_description)
+        expect(server).not_to be_unknown
+      end
+    )
   end
 
   let(:pool) do
-    double('pool')
+    double('pool').tap do |pool|
+      allow(pool).to receive(:close)
+    end
   end
 
   describe '#connect!' do
@@ -63,7 +67,7 @@ describe Mongo::Server::Connection, retry: 3 do
       before do
         # we want the server to not start in unknown state,
         # hence scan it and transition to some other state here
-        server.scan!
+        #server.scan!
       end
 
       it 'does not mark server unknown' do
@@ -76,7 +80,7 @@ describe Mongo::Server::Connection, retry: 3 do
       before do
         # we want the server to not start in unknown state,
         # hence scan it and transition to some other state here
-        server.scan!
+        #server.scan!
       end
 
       it 'marks server unknown' do
@@ -280,7 +284,7 @@ describe Mongo::Server::Connection, retry: 3 do
 
     shared_examples_for 'disconnects connection pool' do
       it 'disconnects non-monitoring sockets' do
-        expect(server).to receive(:pool).and_return(pool)
+        expect(server).to receive(:pool).at_least(:once).and_return(pool)
         expect(pool).to receive(:disconnect!).and_return(true)
         error
       end
@@ -711,7 +715,7 @@ describe Mongo::Server::Connection, retry: 3 do
         end
 
         it 'does not request server scan' do
-          expect(server.monitor.scan_semaphore).not_to receive(:signal)
+          expect(server.scan_semaphore).not_to receive(:signal)
           result
         end
 
@@ -866,7 +870,9 @@ describe Mongo::Server::Connection, retry: 3 do
 
       context 'two pools for different servers' do
         let(:server2) do
-          Mongo::Server.new(address, cluster, monitoring, listeners, server_options)
+          register_server(
+            Mongo::Server.new(address, cluster, monitoring, listeners, server_options)
+          )
         end
 
         it 'ids do not share namespace' do

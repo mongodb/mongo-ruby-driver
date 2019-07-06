@@ -114,7 +114,7 @@ module Mongo
       end
 
       def mongos_each_direct_client
-        if ClusterConfig.instance.mongos?
+        if ClusterConfig.instance.topology == :sharded
           client = ClientRegistry.instance.global_client('basic')
           client.cluster.next_primary
           client.cluster.servers.each do |server|

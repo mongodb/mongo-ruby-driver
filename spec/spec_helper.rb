@@ -12,6 +12,7 @@ require 'support/cluster_config'
 require 'support/cluster_tools'
 require 'rspec/retry'
 require 'support/monitoring_ext'
+require 'support/local_resource_registry'
 
 RSpec.configure do |config|
   config.include(Authorization)
@@ -21,6 +22,10 @@ RSpec.configure do |config|
     if ClusterConfig.instance.fcv_ish >= '3.6'
       kill_all_server_sessions
     end
+  end
+
+  config.after do
+    LocalResourceRegistry.instance.close_all
   end
 end
 

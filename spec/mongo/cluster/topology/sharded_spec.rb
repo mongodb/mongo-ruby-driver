@@ -36,17 +36,26 @@ describe Mongo::Cluster::Topology::Sharded do
 
   let(:mongos) do
     Mongo::Server.new(address, cluster, monitoring, listeners,
-      SpecConfig.instance.test_options.merge(monitoring_io: false))
+      SpecConfig.instance.test_options.merge(monitoring_io: false)
+    ).tap do |server|
+      allow(server).to receive(:description).and_return(mongos_description)
+    end
   end
 
   let(:standalone) do
     Mongo::Server.new(address, cluster, monitoring, listeners,
-      SpecConfig.instance.test_options.merge(monitoring_io: false))
+      SpecConfig.instance.test_options.merge(monitoring_io: false)
+    ).tap do |server|
+      allow(server).to receive(:description).and_return(standalone_description)
+    end
   end
 
   let(:replica_set) do
     Mongo::Server.new(address, cluster, monitoring, listeners,
-      SpecConfig.instance.test_options.merge(monitoring_io: false))
+      SpecConfig.instance.test_options.merge(monitoring_io: false)
+    ).tap do |server|
+      allow(server).to receive(:description).and_return(replica_set_description)
+    end
   end
 
   let(:mongos_description) do
@@ -80,12 +89,6 @@ describe Mongo::Cluster::Topology::Sharded do
   end
 
   describe '.servers' do
-
-    before do
-      mongos.monitor.instance_variable_set(:@description, mongos_description)
-      standalone.monitor.instance_variable_set(:@description, standalone_description)
-      replica_set.monitor.instance_variable_set(:@description, replica_set_description)
-    end
 
     let(:servers) do
       topology.servers([ mongos, standalone, replica_set ])
