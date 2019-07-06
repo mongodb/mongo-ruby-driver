@@ -32,10 +32,18 @@ module Mongo
         end
       end
 
-      def stop!
+      def stop!(wait = false)
         # Kill the thread instead of signaling so that if stop! is called during
         # populate or before the wait() on the semaphore, the thread still terminates
-        @thread.kill if @thread
+        if @thread
+          @thread.kill
+          if wait
+            @thread.join
+          end
+          !@thread.alive?
+        else
+          true
+        end
       end
 
       def running?
