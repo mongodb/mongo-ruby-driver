@@ -31,7 +31,13 @@ describe Mongo::Server::ConnectionPool do
   end
 
   let(:server) do
-    Mongo::Server.new(address, cluster, monitoring, listeners, server_options)
+    register_server(
+      Mongo::Server.new(address, cluster, monitoring, listeners,
+        {monitoring_io: false}.update(server_options)
+      ).tap do |server|
+        allow(server).to receive(:description).and_return(ClusterConfig.instance.primary_description)
+      end
+    )
   end
 
   let(:pool) do

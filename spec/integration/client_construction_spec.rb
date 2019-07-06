@@ -73,7 +73,7 @@ describe 'Client construction' do
     end
 
     it 'connects directly' do
-      primary_address = ClusterConfig.instance.primary_address
+      primary_address = ClusterConfig.instance.primary_address_str
       client = ClientRegistry.instance.new_local_client([primary_address],
         base_options.merge(connect: :direct))
       client['client_construction'].insert_one(test: 1)
@@ -96,7 +96,7 @@ describe 'Client construction' do
     end
 
     it 'connects directly' do
-      primary_address = ClusterConfig.instance.primary_address
+      primary_address = ClusterConfig.instance.primary_address_str
       client = ClientRegistry.instance.new_local_client([SpecConfig.instance.addresses.first],
         base_options.merge(connect: :direct))
       client['client_construction'].insert_one(test: 1)

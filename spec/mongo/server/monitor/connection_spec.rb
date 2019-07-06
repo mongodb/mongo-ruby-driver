@@ -18,14 +18,27 @@ describe Mongo::Server::Monitor::Connection do
       allow(cl).to receive(:topology).and_return(topology)
       allow(cl).to receive(:app_metadata).and_return(Mongo::Server::Monitor::AppMetadata.new(authorized_client.cluster.options))
       allow(cl).to receive(:options).and_return({})
+      allow(cl).to receive(:heartbeat_interval).and_return(1000)
+      allow(cl).to receive(:run_sdam_flow)
     end
   end
 
   let(:server) do
     Mongo::Server.new(address,
-                      cluster,
-                      Mongo::Monitoring.new,
-                      Mongo::Event::Listeners.new, options)
+      cluster,
+      Mongo::Monitoring.new,
+      Mongo::Event::Listeners.new, {monitoring_io: false}.update(options))
+  end
+
+  let(:monitor) do
+    register_server_monitor(
+      Mongo::Server::Monitor.new(server, server.event_listeners, server.monitoring,
+        {
+          app_metadata: Mongo::Server::Monitor::AppMetadata.new(options),
+        }.update(options))
+    ).tap do |monitor|
+      monitor.run!
+    end
   end
 
   let(:connection) do
@@ -34,7 +47,7 @@ describe Mongo::Server::Monitor::Connection do
     # we must wait here for the connection to be established.
     # Do not call connect! on this connection as then the main thread
     # will be racing the monitoring thread to connect.
-    server.monitor.connection.tap do |connection|
+    monitor.connection.tap do |connection|
       expect(connection).not_to be nil
 
       deadline = Time.now + 1
@@ -160,9 +173,8 @@ describe Mongo::Server::Monitor::Connection do
     context 'network error' do
       before do
         address
-        server.monitor.instance_variable_get('@thread').kill
-        server.monitor.connection.disconnect!
-        expect_any_instance_of(Mongo::Socket).to receive(:write).and_raise(Mongo::Error::SocketError, 'test error')
+        monitor.instance_variable_get('@thread').kill
+        monitor.connection.disconnect!
       end
 
       let(:options) { SpecConfig.instance.test_options }
@@ -170,9 +182,10 @@ describe Mongo::Server::Monitor::Connection do
       let(:expected_message) { "MONGODB | Failed to handshake with #{address}: Mongo::Error::SocketError: test error" }
 
       it 'logs a warning' do
+        expect_any_instance_of(Mongo::Socket).to receive(:write).and_raise(Mongo::Error::SocketError, 'test error')
         expect(Mongo::Logger.logger).to receive(:warn).with(expected_message).and_call_original
         expect do
-          server.monitor.connection.connect!
+          monitor.connection.connect!
         end.to raise_error(Mongo::Error::SocketError, 'test error')
       end
     end

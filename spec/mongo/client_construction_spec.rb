@@ -87,10 +87,9 @@ describe Mongo::Client do
         # https://github.com/rspec/rspec-mocks/issues/1242.
         #expect_any_instance_of(Mongo::Server::Monitor).to receive(:scan!).
         #  exactly(SpecConfig.instance.addresses.length).times.and_call_original
-        c = ClientRegistry.instance.new_local_client(
+        c = new_local_client(
           SpecConfig.instance.addresses, SpecConfig.instance.test_options)
         expect(c.cluster.servers).not_to be_empty
-        c.close
       end
 
       # This checks the case of all initial seeds being removed from
@@ -1323,7 +1322,10 @@ describe Mongo::Client do
 
     context 'when new client has a new cluster' do
       let(:client) do
-        new_local_client(['127.0.0.1:27017'], :database => SpecConfig.instance.test_db)
+        new_local_client(['127.0.0.1:27017'],
+          database: SpecConfig.instance.test_db,
+          server_selection_timeout: 0.5,
+          socket_timeout: 0.1, connect_timeout: 0.1)
       end
       let(:new_client) do
         client.with(app_name: 'client_construction_spec').tap do |new_client|
@@ -1359,12 +1361,14 @@ describe Mongo::Client do
       let(:new_client) { client.with(database: 'foo') }
 
       it 'does not copy sdam_proc option to new client' do
-        client = new_local_client(['a'], sdam_proc: sdam_proc)
+        client = new_local_client_nmio(['a'], sdam_proc: sdam_proc)
         expect(new_client.options[:sdam_proc]).to be nil
       end
 
       it 'does not notify subscribers set up by sdam_proc' do
-        client = new_local_client(['a'], sdam_proc: sdam_proc)
+        client = new_local_client(['a'], sdam_proc: sdam_proc,
+          connect_timeout: 0.1, socket_timeout: 0.1,
+          server_selection_timeout: 0.1)
         expect(subscriber.started_events.length).to be > 0
         subscriber.started_events.clear
 
@@ -1380,7 +1384,7 @@ describe Mongo::Client do
   describe '#dup' do
 
     let(:client) do
-      new_local_client(
+      new_local_client_nmio(
           ['127.0.0.1:27017'],
           :read => { :mode => :primary },
           :database => SpecConfig.instance.test_db

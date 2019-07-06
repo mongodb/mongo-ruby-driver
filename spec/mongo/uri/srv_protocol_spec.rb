@@ -603,7 +603,8 @@ describe Mongo::URI::SRVProtocol do
           end
 
           it 'is case-insensitive' do
-            expect(new_local_client(string.downcase).options[:auth_mech]).to eq(expected)
+            client = new_local_client_nmio(string.downcase)
+            expect(client.options[:auth_mech]).to eq(expected)
           end
         end
 
@@ -620,7 +621,8 @@ describe Mongo::URI::SRVProtocol do
           end
 
           it 'is case-insensitive' do
-            expect(new_local_client(string.downcase).options[:auth_mech]).to eq(expected)
+            client = new_local_client_nmio(string.downcase)
+            expect(client.options[:auth_mech]).to eq(expected)
           end
         end
 
@@ -637,7 +639,8 @@ describe Mongo::URI::SRVProtocol do
           end
 
           it 'is case-insensitive' do
-            expect(new_local_client(string.downcase).options[:auth_mech]).to eq(expected)
+            client = new_local_client_nmio(string.downcase)
+            expect(client.options[:auth_mech]).to eq(expected)
           end
         end
 
@@ -654,7 +657,8 @@ describe Mongo::URI::SRVProtocol do
           end
 
           it 'is case-insensitive' do
-            expect(new_local_client(string.downcase).options[:auth_mech]).to eq(expected)
+            client = new_local_client_nmio(string.downcase)
+            expect(client.options[:auth_mech]).to eq(expected)
           end
         end
 
@@ -671,14 +675,16 @@ describe Mongo::URI::SRVProtocol do
           end
 
           it 'is case-insensitive' do
-            expect(new_local_client(string.downcase).options[:auth_mech]).to eq(expected)
+              client = new_local_client_nmio(string.downcase)
+            expect(client.options[:auth_mech]).to eq(expected)
           end
 
           context 'when a username is not provided' do
 
             it 'recognizes the mechanism with no username' do
-              expect(new_local_client(string.downcase).options[:auth_mech]).to eq(expected)
-              expect(new_local_client(string.downcase).options[:user]).to be_nil
+              client = new_local_client_nmio(string.downcase)
+              expect(client.options[:auth_mech]).to eq(expected)
+              expect(client.options[:user]).to be_nil
             end
           end
         end

@@ -56,6 +56,11 @@ module Mongo
       # @param [ Monitoring ] monitoring The monitoring..
       # @param [ Hash ] options The options.
       #
+      # @option options [ Float ] :connect_timeout The timeout, in seconds, to
+      #   use when establishing the monitoring connection.
+      # @option options [ Float ] :socket_timeout The timeout, in seconds, to
+      #   execute operations on the monitoring connection.
+      #
       # @since 2.0.0
       # @api private
       def initialize(server, event_listeners, monitoring, options = {})

@@ -28,11 +28,18 @@ describe Mongo::Server::ConnectionPool do
       allow(cl).to receive(:app_metadata).and_return(app_metadata)
       allow(cl).to receive(:options).and_return({})
       allow(cl).to receive(:update_cluster_time)
+      allow(cl).to receive(:run_sdam_flow)
     end
   end
 
   let(:server) do
-    Mongo::Server.new(address, cluster, monitoring, listeners, server_options)
+    register_server(
+      Mongo::Server.new(address, cluster, monitoring, listeners,
+        {monitoring_io: false}.update(server_options)
+      ).tap do |server|
+        allow(server).to receive(:description).and_return(ClusterConfig.instance.primary_description)
+      end
+    )
   end
 
   let(:pool) do
@@ -921,13 +928,15 @@ describe Mongo::Server::ConnectionPool do
         conn
       end
 
-      before do
-        expect(connection).not_to receive(:disconnect!)
-        pool.close_idle_sockets
-      end
-
       it 'does not close any sockets' do
-        expect(connection.connected?).to be(true)
+        # Since per-test cleanup will close the pool and disconnect
+        # the connection, we need to explicitly define the scope for the
+        # assertions
+        RSpec::Mocks.with_temporary_scope do
+          expect(connection).not_to receive(:disconnect!)
+          pool.close_idle_sockets
+          expect(connection.connected?).to be(true)
+        end
       end
     end
   end
