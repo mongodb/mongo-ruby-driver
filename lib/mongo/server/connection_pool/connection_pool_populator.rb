@@ -1,4 +1,4 @@
-# Copyright (C) 2014-2019 MongoDB, Inc.
+# Copyright (C) 2019 MongoDB, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,14 +24,12 @@ module Mongo
         @thread = nil
       end
 
-
-      def start!
-        @thread = Thread.new {
-          while !@pool.closed? do
-            @pool.populate
-            @pool.populate_semaphore.wait(nil)
-          end
-        }
+      def run!
+        if running?
+          @thread
+        else
+          start!
+        end
       end
 
       def stop!
@@ -41,7 +39,22 @@ module Mongo
       end
 
       def running?
-        @thread ? @thread.alive? : false
+        if @thread
+          @thread.alive?
+        else
+          false
+        end
+      end
+
+      private
+
+      def start!
+        @thread = Thread.new do
+          while !@pool.closed? do
+            @pool.populate
+            @pool.populate_semaphore.wait
+          end
+        end
       end
     end
   end

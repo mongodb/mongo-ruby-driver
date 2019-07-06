@@ -50,7 +50,11 @@ module Mongo
       #
       # @since 2.5.0
       def run!
-        @thread && @thread.alive? ? @thread : start!
+        if @thread && @thread.alive?
+          @thread
+        else
+          start!
+        end
       end
       alias :restart! :run!
 
@@ -83,7 +87,8 @@ module Mongo
       #
       # @since 2.5.0
       def execute
-        @executors.each(&:execute) and true
+        @executors.each(&:execute)
+        true
       end
 
       # Execute all pending operations.
@@ -95,7 +100,8 @@ module Mongo
       #
       # @since 2.5.0
       def flush
-        @executors.each(&:flush) and true
+        @executors.each(&:flush)
+        true
       end
 
       private
