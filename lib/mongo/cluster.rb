@@ -164,7 +164,8 @@ module Mongo
         @socket_reaper = SocketReaper.new(self)
         @periodic_executor = PeriodicExecutor.new(@cursor_reaper, @socket_reaper)
 
-        ObjectSpace.define_finalizer(self, self.class.finalize({}, @periodic_executor, @session_pool))
+        ObjectSpace.define_finalizer(self, self.class.finalize(
+          {}, @periodic_executor, @session_pool))
 
         @periodic_executor.run!
       end
