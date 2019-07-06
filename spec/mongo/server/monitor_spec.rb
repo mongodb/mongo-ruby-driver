@@ -13,14 +13,26 @@ describe Mongo::Server::Monitor do
     Mongo::Event::Listeners.new
   end
 
+  let(:monitor_options) do
+    {}
+  end
+
+  let(:cluster) do
+    double('cluster').tap do |cluster|
+      allow(cluster).to receive(:run_sdam_flow)
+    end
+  end
+
+  let(:monitor) do
+    register_server_monitor(
+      described_class.new(address, listeners, Mongo::Monitoring.new,
+        SpecConfig.instance.test_options.merge(cluster: cluster).merge(monitor_options))
+    )
+  end
+
   describe '#scan!' do
 
     context 'when calling multiple times in succession' do
-
-      let(:monitor) do
-        described_class.new(address, listeners, Mongo::Monitoring.new,
-          SpecConfig.instance.test_options)
-      end
 
       it 'throttles the scans to minimum 500ms' do
         start = Time.now
@@ -32,9 +44,8 @@ describe Mongo::Server::Monitor do
 
     context 'when the ismaster fails the first time' do
 
-      let(:monitor) do
-        described_class.new(address, listeners, Mongo::Monitoring.new,
-          SpecConfig.instance.test_options.merge(monitoring_io: false))
+      let(:monitor_options) do
+        {monitoring_io: false}
       end
 
       let(:socket) do
@@ -42,70 +53,24 @@ describe Mongo::Server::Monitor do
         monitor.connection.__send__(:socket)
       end
 
-      before do
+      it 'retries the ismaster' do
         expect(socket).to receive(:write).once.and_raise(Mongo::Error::SocketError)
         expect(socket).to receive(:write).and_call_original
+        expect(cluster).to receive(:run_sdam_flow)
         monitor.scan!
-      end
-
-      context 'in single topology' do
-        require_topology :single
-
-        it 'retries the ismaster' do
-          expect(monitor.description).to be_standalone
-        end
-      end
-
-      context 'in replica set topology' do
-        require_topology :replica_set
-
-        it 'retries the ismaster' do
-          expect(monitor.description).to be_primary
-        end
-      end
-
-      context 'in sharded topology' do
-        require_topology :sharded
-
-        it 'retries the ismaster' do
-          expect(monitor.description).to be_mongos
-        end
       end
     end
 
     context 'when the ismaster command succeeds' do
 
-      let(:monitor) do
-        described_class.new(address, listeners, Mongo::Monitoring.new,
-          SpecConfig.instance.test_options)
-      end
-
-      before do
+      it 'invokes sdam flow' do
+        updated_desc = nil
+        expect(cluster).to receive(:run_sdam_flow) do |prev_desc, _updated_desc|
+          updated_desc = _updated_desc
+        end
         monitor.scan!
-      end
 
-      context 'in single topology' do
-        require_topology :single
-
-        it 'updates the server description' do
-          expect(monitor.description).to be_standalone
-        end
-      end
-
-      context 'in replica set topology' do
-        require_topology :replica_set
-
-        it 'updates the server description' do
-          expect(monitor.description).to be_primary
-        end
-      end
-
-      context 'in sharded topology' do
-        require_topology :sharded
-
-        it 'updates the server description' do
-          expect(monitor.description).to be_mongos
-        end
+        expect(updated_desc).not_to be_unknown
       end
     end
 
@@ -118,7 +83,10 @@ describe Mongo::Server::Monitor do
         end
 
         let(:monitor) do
-          described_class.new(bad_address, listeners, Mongo::Monitoring.new)
+          register_server_monitor(
+            described_class.new(bad_address, listeners, Mongo::Monitoring.new,
+              cluster: cluster)
+          )
         end
 
         before do
@@ -137,7 +105,10 @@ describe Mongo::Server::Monitor do
         end
 
         let(:monitor) do
-          described_class.new(bad_address, listeners, Mongo::Monitoring.new)
+          register_server_monitor(
+            described_class.new(bad_address, listeners, Mongo::Monitoring.new,
+              cluster: cluster)
+          )
         end
 
         let(:socket) do
@@ -165,8 +136,8 @@ describe Mongo::Server::Monitor do
 
     context 'when an option is provided' do
 
-      let(:monitor) do
-        described_class.new(address, listeners, Mongo::Monitoring.new, :heartbeat_frequency => 5)
+      let(:monitor_options) do
+        {:heartbeat_frequency => 5}
       end
 
       it 'returns the option' do
@@ -176,8 +147,8 @@ describe Mongo::Server::Monitor do
 
     context 'when no option is provided' do
 
-      let(:monitor) do
-        described_class.new(address, listeners, Mongo::Monitoring.new)
+      let(:monitor_options) do
+        {:heartbeat_frequency => nil}
       end
 
       it 'defaults to 10' do
@@ -188,8 +159,8 @@ describe Mongo::Server::Monitor do
 
   describe '#run!' do
 
-    let(:monitor) do
-      described_class.new(address, listeners, Mongo::Monitoring.new, :heartbeat_frequency => 1)
+    let(:monitor_options) do
+      {:heartbeat_frequency => 1}
     end
 
     before do
@@ -203,10 +174,6 @@ describe Mongo::Server::Monitor do
   end
 
   describe '#restart!' do
-
-    let(:monitor) do
-      described_class.new(address, listeners, Mongo::Monitoring.new, SpecConfig.instance.test_options)
-    end
 
     let!(:thread) do
       monitor.run!
@@ -233,10 +200,6 @@ describe Mongo::Server::Monitor do
   end
 
   describe '#stop' do
-    let(:monitor) do
-      described_class.new(address, listeners, Mongo::Monitoring.new,
-        SpecConfig.instance.test_options)
-    end
 
     let(:thread) do
       monitor.run!
@@ -249,6 +212,10 @@ describe Mongo::Server::Monitor do
       expect(monitor.connection).to receive(:disconnect!).and_call_original
       monitor.stop!(true)
       expect(thread.alive?).to be(false)
+
+      # Our automatic cleanup will try to disconect again, messing with
+      # this test's assertion.
+      LocalResourceRegistry.instance.unregister(monitor)
     end
   end
 
@@ -260,8 +227,8 @@ describe Mongo::Server::Monitor do
         1
       end
 
-      let(:monitor) do
-        described_class.new(address, listeners, Mongo::Monitoring.new, SpecConfig.instance.test_options.merge(connect_timeout: connect_timeout))
+      let(:monitor_options) do
+        {connect_timeout: connect_timeout}
       end
 
       it 'sets the value as the timeout on the connection' do

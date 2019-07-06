@@ -147,5 +147,12 @@ module CommonShortcuts
       end
       LocalResourceRegistry.instance.register(server, finalizer)
     end
+
+    def register_server_monitor(monitor)
+      finalizer = lambda do |monitor|
+        monitor.stop!(true)
+      end
+      LocalResourceRegistry.instance.register(monitor, finalizer)
+    end
   end
 end

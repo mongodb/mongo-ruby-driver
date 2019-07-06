@@ -13,6 +13,12 @@ class LocalResourceRegistry
     resource
   end
 
+  def unregister(resource)
+    @resources.delete_if do |_resource, finalizer|
+      _resource == resource
+    end
+  end
+
   def close_all
     @resources.each do |resource, finalizer|
       if finalizer.is_a?(Symbol)
