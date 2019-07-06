@@ -421,7 +421,7 @@ module Mongo
     def unknown!
       # SDAM flow will update description on the server without in-place
       # mutations and invoke SDAM transitions as needed.
-      monitor.run_sdam_flow(cluster, description, Description.new(address))
+      cluster.run_sdam_flow(description, Description.new(address))
     end
 
     # @api private
