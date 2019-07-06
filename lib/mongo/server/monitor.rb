@@ -156,7 +156,7 @@ module Mongo
         result = ismaster
         new_description = Description.new(description.address, result,
           @round_trip_time_averager.average_round_trip_time)
-        run_sdam_flow(@cluster, description, new_description)
+        @cluster.run_sdam_flow(description, new_description)
         @description
       end
 
@@ -211,31 +211,6 @@ module Mongo
 
       # @api private
       attr_reader :round_trip_time_averager
-
-      # @param [ Cluster ] cluster The cluster which the server belongs to.
-      # @param [ Server::Description ] previous_desc Previous server description.
-      # @param [ Server::Description ] updated_desc The changed description.
-      #
-      # @api private
-      def run_sdam_flow(cluster, previous_desc, updated_desc)
-        cluster.sdam_flow_lock.synchronize do
-          Cluster::SdamFlow.new(cluster, previous_desc, updated_desc).server_description_changed
-
-          # If this server's response has a mismatched me, or for other reasons,
-          # this server may be removed from topology. When this happens the
-          # monitor thread gets killed. As a result, any code after the publish
-          # call may not run in a particular monitor instance, hence there
-          # shouldn't be any code here.
-          @description = updated_desc
-        end
-
-        # This call can be after the publish event because if the
-        # monitoring thread gets killed the server is closed and no client
-        # should be waiting for it.
-        if options[:server_selection_semaphore] && !updated_desc.unknown?
-          options[:server_selection_semaphore].broadcast
-        end
-      end
 
       private
 

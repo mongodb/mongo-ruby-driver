@@ -404,7 +404,6 @@ module Mongo
         sdam_proc.call(self)
       end
 
-      @server_selection_semaphore = Semaphore.new
       @cluster = Cluster.new(addresses, @monitoring, cluster_options)
 
       # Unset monitoring, it will be taken out of cluster from now on
@@ -421,7 +420,6 @@ module Mongo
       options.reject do |key, value|
         CRUD_OPTIONS.include?(key.to_sym)
       end.merge(
-        server_selection_semaphore: @server_selection_semaphore,
         # but need to put the database back in for auth...
         database: options[:database],
 
