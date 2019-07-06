@@ -96,10 +96,6 @@ module Mongo
     #
     # @since 2.0.0
     def initialize(seeds, monitoring, options = Options::Redacted.new)
-      if options[:monitoring_io] != false && !options[:server_selection_semaphore]
-        raise ArgumentError, 'Need server selection semaphore'
-      end
-
       if options[:monitoring_io] == false && !options.key?(:cleanup)
         options = options.dup
         options[:cleanup] = false
@@ -114,6 +110,7 @@ module Mongo
       @sdam_flow_lock = Mutex.new
       @cluster_time = nil
       @cluster_time_lock = Mutex.new
+      @server_selection_semaphore = Semaphore.new
       @topology = Topology.initial(self, monitoring, options)
       Session::SessionPool.create(self)
 
@@ -198,7 +195,7 @@ module Mongo
           if (time_remaining = deadline - Time.now) <= 0
             break
           end
-          options[:server_selection_semaphore].wait(time_remaining)
+          server_selection_semaphore.wait(time_remaining)
         end
       end
     end
@@ -368,9 +365,7 @@ module Mongo
     end
 
     # @api private
-    def server_selection_semaphore
-      options[:server_selection_semaphore]
-    end
+    attr_reader :server_selection_semaphore
 
     # Finalize the cluster for garbage collection.
     #
@@ -490,6 +485,36 @@ module Mongo
       true
     end
 
+    # @param [ Server::Description ] previous_desc Previous server description.
+    # @param [ Server::Description ] updated_desc The changed description.
+    #
+    # @api private
+    def run_sdam_flow(previous_desc, updated_desc)
+      @sdam_flow_lock.synchronize do
+        flow = SdamFlow.new(self, previous_desc, updated_desc)
+        flow.server_description_changed
+
+        # SDAM flow may alter the updated description - grab the final
+        # version for the purposes of broadcasting if a server is available
+        updated_desc = flow.updated_desc
+      end
+
+      # Some updated descriptions, e.g. a mismatched me one, result in the
+      # server whose description we are processing being removed from
+      # the topology. When this happens, the server's monitoring thread gets
+      # killed. As a result, any code after the flow invocation may not run
+      # a particular monitor instance, hence there should generally not be
+      # any code in this method past the flow invocation.
+      #
+      # However, this broadcast call can be here because if the monitoring
+      # thread got killed the server should have been closed and no client
+      # should be currently waiting for it, thus not signaling the semaphore
+      # shouldn't cause any problems.
+      unless updated_desc.unknown?
+        server_selection_semaphore.broadcast
+      end
+    end
+
     # Determine if this cluster of servers is equal to another object. Checks the
     # servers currently in the cluster, not what was configured.
     #
@@ -503,9 +528,7 @@ module Mongo
     # @since 2.0.0
     def ==(other)
       return false unless other.is_a?(Cluster)
-      addresses == other.addresses &&
-        options.merge(server_selection_semaphore: nil) ==
-          other.options.merge(server_selection_semaphore: nil)
+      addresses == other.addresses && options == other.options
     end
 
     # Determine if the cluster would select a readable server for the
@@ -655,9 +678,6 @@ module Mongo
     def servers_list
       @update_lock.synchronize { @servers.dup }
     end
-
-    # @api private
-    attr_reader :sdam_flow_lock
 
     private
 
