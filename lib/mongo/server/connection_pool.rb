@@ -410,6 +410,8 @@ module Mongo
       #
       # @option options [ true | false ] :force Also close all checked out
       #   connections.
+      # @option options [ true | false ] :wait Wait for background threads to
+      #   exit before returning. Added in 2.10.0.
       #
       # @return [ true ] true.
       #
@@ -417,13 +419,15 @@ module Mongo
       def close(options = nil)
         return if closed?
 
+        options ||= {}
+
         @lock.synchronize do
           until @available_connections.empty?
             connection = @available_connections.pop
             connection.disconnect!(reason: :pool_closed)
           end
 
-          if options && options[:force]
+          if options[:force]
             until @checked_out_connections.empty?
               connection = @checked_out_connections.take(1).first
               connection.disconnect!(reason: :pool_closed)
@@ -434,7 +438,7 @@ module Mongo
           # mark pool as closed and stop populator before releasing lock so
           # no connections can be created, checked in, or checked out
           @closed = true
-          @populator.stop!
+          @populator.stop!(options[:wait])
         end
 
         publish_cmap_event(
