@@ -103,7 +103,11 @@ module CommonShortcuts
       allow(cluster).to receive(:topology).and_return(topology)
       allow(cluster).to receive(:app_metadata)
       allow(cluster).to receive(:options).and_return({})
+      allow(cluster).to receive(:run_sdam_flow)
       server = Mongo::Server.new(address, cluster, monitoring, listeners, SpecConfig.instance.test_options)
+      # Since the server references a double for the cluster, the server
+      # must be closed in the scope of the example.
+      register_server(server)
       description = Mongo::Server::Description.new(address, ismaster, average_round_trip_time)
       server.tap do |s|
         allow(s).to receive(:description).and_return(description)
@@ -133,6 +137,15 @@ module CommonShortcuts
       make_protocol_reply(
         'ok' => 0, 'code' => 91, 'errmsg' => 'shutdown in progress'
       )
+    end
+
+    def register_server(server)
+      finalizer = lambda do |server|
+        if server.connected?
+          server.disconnect!(true)
+        end
+      end
+      LocalResourceRegistry.instance.register(server, finalizer)
     end
   end
 end

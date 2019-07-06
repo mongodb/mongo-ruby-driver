@@ -33,7 +33,9 @@ describe Mongo::Server::ConnectionPool do
   end
 
   let(:server) do
-    Mongo::Server.new(address, cluster, monitoring, listeners, server_options)
+    register_server(
+      Mongo::Server.new(address, cluster, monitoring, listeners, server_options)
+    )
   end
 
   let(:pool) do
