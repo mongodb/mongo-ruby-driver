@@ -64,6 +64,7 @@ module Mongo
       @connection_id_gen = Class.new do
         include Id
       end
+      @scan_semaphore = Semaphore.new
       @monitor = Monitor.new(self, event_listeners, monitoring,
         options.merge(
           app_metadata: Monitor::AppMetadata.new(cluster.options),
@@ -128,6 +129,12 @@ module Mongo
 
     def_delegators :features,
                    :check_driver_support!
+
+    # @return [ Semaphore ] Semaphore to signal to request an immediate scan
+    #   of this server by its monitor, if one is running.
+    #
+    # @api private
+    attr_reader :scan_semaphore
 
     # Is this server equal to another?
     #

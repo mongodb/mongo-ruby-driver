@@ -75,7 +75,7 @@ module Mongo
             server.pool.disconnect!
           end
 
-          server.monitor.scan_semaphore.signal
+          server.scan_semaphore.signal
         end
 
         session.process(result) if session
