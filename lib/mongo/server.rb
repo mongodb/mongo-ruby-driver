@@ -64,10 +64,9 @@ module Mongo
       @connection_id_gen = Class.new do
         include Id
       end
-      @monitor = Monitor.new(address, event_listeners, monitoring,
+      @monitor = Monitor.new(self, event_listeners, monitoring,
         options.merge(
           app_metadata: Monitor::AppMetadata.new(cluster.options),
-          cluster: @cluster,
       ))
       unless monitor == false
         start_monitoring
