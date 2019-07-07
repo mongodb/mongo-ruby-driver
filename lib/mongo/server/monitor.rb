@@ -70,7 +70,6 @@ module Mongo
         @options = options.freeze
         # This is a Mongo::Server::Monitor::Connection
         @connection = Connection.new(server.address, options)
-        @last_scan = nil
         @mutex = Mutex.new
       end
 
@@ -84,10 +83,8 @@ module Mongo
       # @return [ Hash ] options The server options.
       attr_reader :options
 
-      # @return [ Time ] last_scan The time when the last server scan started.
-      #
-      # @since 2.4.0
-      attr_reader :last_scan
+      # @deprecated
+      def_delegators :server, :last_scan
 
       # The compressor is determined during the handshake, so it must be an attribute
       # of the connection.
@@ -244,12 +241,12 @@ module Mongo
       # @note If the system clock is set to a time in the past, this method
       #   can sleep for a very long time.
       def throttle_scan_frequency!
-        if @last_scan
-          difference = (Time.now - @last_scan)
+        if server.last_scan
+          difference = (Time.now - server.last_scan)
           throttle_time = (MIN_SCAN_FREQUENCY - difference)
           sleep(throttle_time) if throttle_time > 0
         end
-        @last_scan = Time.now
+        server.update_last_scan
       end
     end
   end
