@@ -65,7 +65,6 @@ module Mongo
           raise ArgumentError, "Wrong monitoring type: #{monitoring.inspect}"
         end
         @server = server
-        @description = Description.new(server.address, {})
         @event_listeners = event_listeners
         @monitoring = monitoring
         @options = options.freeze
@@ -81,10 +80,6 @@ module Mongo
 
       # @return [ Mongo::Server::Monitor::Connection ] connection The connection to use.
       attr_reader :connection
-
-      # @return [ Server::Description ] description The server
-      #   description the monitor refreshes.
-      attr_reader :description
 
       # @return [ Hash ] options The server options.
       attr_reader :options
@@ -144,6 +139,9 @@ module Mongo
       # @note If the system clock is set to a time in the past, this method
       #   can sleep for a very long time.
       #
+      # @note The return value of this method is deprecated. In version 3.0.0
+      #   this method will not have a return value.
+      #
       # @example Run a scan.
       #   monitor.scan!
       #
@@ -153,10 +151,10 @@ module Mongo
       def scan!
         throttle_scan_frequency!
         result = ismaster
-        new_description = Description.new(description.address, result,
+        new_description = Description.new(server.address, result,
           server.round_trip_time_averager.average_round_trip_time)
-        server.cluster.run_sdam_flow(description, new_description)
-        @description
+        server.cluster.run_sdam_flow(server.description, new_description)
+        server.description
       end
 
       # Stops the server monitor. Kills the thread so it doesn't continue
@@ -215,7 +213,7 @@ module Mongo
           if monitoring.monitoring?
             monitoring.started(
               Monitoring::SERVER_HEARTBEAT,
-              Monitoring::Event::ServerHeartbeatStarted.new(description.address)
+              Monitoring::Event::ServerHeartbeatStarted.new(server.address)
             )
           end
 
@@ -223,11 +221,11 @@ module Mongo
             connection.ismaster
           end
           if exc
-            log_debug("Error running ismaster on #{description.address}: #{exc.message}")
+            log_debug("Error running ismaster on #{server.address}: #{exc.message}")
             if monitoring.monitoring?
               monitoring.failed(
                 Monitoring::SERVER_HEARTBEAT,
-                Monitoring::Event::ServerHeartbeatFailed.new(description.address, rtt, exc)
+                Monitoring::Event::ServerHeartbeatFailed.new(server.address, rtt, exc)
               )
             end
             result = {}
@@ -235,7 +233,7 @@ module Mongo
             if monitoring.monitoring?
               monitoring.succeeded(
                 Monitoring::SERVER_HEARTBEAT,
-                Monitoring::Event::ServerHeartbeatSucceeded.new(description.address, rtt)
+                Monitoring::Event::ServerHeartbeatSucceeded.new(server.address, rtt)
               )
             end
           end
