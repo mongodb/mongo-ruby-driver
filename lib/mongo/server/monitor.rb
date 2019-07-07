@@ -48,34 +48,35 @@ module Mongo
       #
       # @note Monitor must never be directly instantiated outside of a Server.
       #
-      # @param [ Address ] address The address to monitor.
+      # @param [ Server ] server The server to monitor.
       # @param [ Event::Listeners ] event_listeners The event listeners.
       # @param [ Monitoring ] monitoring The monitoring..
       # @param [ Hash ] options The options.
       # @option options [ Float ] :heartbeat_frequency The interval, in seconds,
       #   between server description refreshes via ismaster.
-      # @option options [ Cluster ] :cluster The server,s cluster. Required.
       #
       # @since 2.0.0
       # @api private
-      def initialize(address, event_listeners, monitoring, options = {})
+      def initialize(server, event_listeners, monitoring, options = {})
         unless monitoring.is_a?(Monitoring)
           raise ArgumentError, "Wrong monitoring type: #{monitoring.inspect}"
         end
-        unless @cluster = options[:cluster]
-          raise ArgumentError, 'Cluster argument is required for Monitor'
-        end
-        @description = Description.new(address, {})
+        @server = server
+        @description = Description.new(server.address, {})
         @event_listeners = event_listeners
         @monitoring = monitoring
         @options = options.freeze
         @round_trip_time_averager = RoundTripTimeAverager.new
         @scan_semaphore = Semaphore.new
         # This is a Mongo::Server::Monitor::Connection
-        @connection = Connection.new(address, options)
+        @connection = Connection.new(server.address, options)
         @last_scan = nil
         @mutex = Mutex.new
       end
+
+      # @return [ Server ] server The server that this monitor is monitoring.
+      # @api private
+      attr_reader :server
 
       # @return [ Mongo::Server::Monitor::Connection ] connection The connection to use.
       attr_reader :connection
@@ -156,7 +157,7 @@ module Mongo
         result = ismaster
         new_description = Description.new(description.address, result,
           @round_trip_time_averager.average_round_trip_time)
-        @cluster.run_sdam_flow(description, new_description)
+        server.cluster.run_sdam_flow(description, new_description)
         @description
       end
 
