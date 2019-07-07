@@ -67,6 +67,7 @@ module Mongo
       @scan_semaphore = Semaphore.new
       @round_trip_time_averager = RoundTripTimeAverager.new
       @description = Description.new(address, {})
+      @last_scan = nil
       @monitor = Monitor.new(self, event_listeners, monitoring,
         options.merge(
           app_metadata: Monitor::AppMetadata.new(cluster.options),
@@ -97,10 +98,14 @@ module Mongo
     #   description the monitor refreshes.
     attr_reader :description
 
+    # @return [ Time ] last_scan The time when the last server scan started.
+    #
+    # @since 2.4.0
+    attr_reader :last_scan
+
     def_delegators :monitor,
       :scan!,
       :heartbeat_frequency,
-      :last_scan,
       :compressor
     alias :heartbeat_frequency_seconds :heartbeat_frequency
 
@@ -446,6 +451,11 @@ module Mongo
     # @api private
     def next_connection_id
       @connection_id_gen.next_id
+    end
+
+    # @api private
+    def update_last_scan
+      @last_scan = Time.now
     end
   end
 end
