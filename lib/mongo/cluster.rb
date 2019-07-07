@@ -479,7 +479,7 @@ module Mongo
         end
       else
         servers_list.each do |server|
-          server.monitor.scan_semaphore.signal
+          server.scan_semaphore.signal
         end
       end
       true
