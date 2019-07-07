@@ -35,8 +35,10 @@ describe Mongo::Server::Connection, retry: 3 do
   declare_topology_double
 
   let(:server) do
-    Mongo::Server.new(address, cluster, monitoring, listeners,
-      SpecConfig.instance.test_options.merge(monitoring_io: false))
+    register_server(
+      Mongo::Server.new(address, cluster, monitoring, listeners,
+        SpecConfig.instance.test_options.merge(monitoring_io: false))
+    )
   end
 
   before(:all) do

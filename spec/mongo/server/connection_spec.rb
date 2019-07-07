@@ -31,9 +31,7 @@ describe Mongo::Server::Connection, retry: 3 do
       allow(cl).to receive(:options).and_return({})
       allow(cl).to receive(:cluster_time).and_return(nil)
       allow(cl).to receive(:update_cluster_time)
-      pool = double('pool')
-      allow(pool).to receive(:disconnect!)
-      allow(cl).to receive(:pool).and_return(pool)
+      allow(cl).to receive(:run_sdam_flow)
     end
   end
 
@@ -41,16 +39,20 @@ describe Mongo::Server::Connection, retry: 3 do
 
   let(:server_options) { SpecConfig.instance.test_options.merge(monitoring_io: false) }
   let(:server) do
-    Mongo::Server.new(address, cluster, monitoring, listeners, server_options)
+    register_server(
+      Mongo::Server.new(address, cluster, monitoring, listeners, server_options)
+    )
   end
 
   let(:monitored_server) do
-    Mongo::Server.new(address, cluster, monitoring, listeners,
-      SpecConfig.instance.test_options
-    ).tap do |server|
-      server.scan!
-      expect(server).not_to be_unknown
-    end
+    register_server(
+      Mongo::Server.new(address, cluster, monitoring, listeners,
+        SpecConfig.instance.test_options
+      ).tap do |server|
+        server.scan!
+        expect(server).not_to be_unknown
+      end
+    )
   end
 
   let(:pool) do
@@ -866,7 +868,9 @@ describe Mongo::Server::Connection, retry: 3 do
 
       context 'two pools for different servers' do
         let(:server2) do
-          Mongo::Server.new(address, cluster, monitoring, listeners, server_options)
+          register_server(
+            Mongo::Server.new(address, cluster, monitoring, listeners, server_options)
+          )
         end
 
         it 'ids do not share namespace' do
