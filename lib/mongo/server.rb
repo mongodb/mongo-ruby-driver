@@ -65,6 +65,7 @@ module Mongo
         include Id
       end
       @scan_semaphore = Semaphore.new
+      @round_trip_time_averager = RoundTripTimeAverager.new
       @monitor = Monitor.new(self, event_listeners, monitoring,
         options.merge(
           app_metadata: Monitor::AppMetadata.new(cluster.options),
@@ -135,6 +136,10 @@ module Mongo
     #
     # @api private
     attr_reader :scan_semaphore
+
+    # @return [ RoundTripTimeAverager ] Round trip time averager object.
+    # @api private
+    attr_reader :round_trip_time_averager
 
     # Is this server equal to another?
     #
