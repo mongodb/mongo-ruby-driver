@@ -924,13 +924,15 @@ describe Mongo::Server::ConnectionPool do
         conn
       end
 
-      before do
-        expect(connection).not_to receive(:disconnect!)
-        pool.close_idle_sockets
-      end
-
       it 'does not close any sockets' do
-        expect(connection.connected?).to be(true)
+        # Since per-test cleanup will close the pool and disconnect
+        # the connection, we need to explicitly define the scope for the
+        # assertions
+        RSpec::Mocks.with_temporary_scope do
+          expect(connection).not_to receive(:disconnect!)
+          pool.close_idle_sockets
+          expect(connection.connected?).to be(true)
+        end
       end
     end
   end
