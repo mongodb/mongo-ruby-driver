@@ -101,7 +101,7 @@ describe Mongo::Database do
     end
 
     it 'does not include system collections' do
-      expect(database.collection_names).to_not include('system.indexes')
+      expect(database.collection_names).to_not include('system.version')
     end
 
     context 'when provided a session' do
@@ -155,15 +155,15 @@ describe Mongo::Database do
     end
 
     before do
-      database[:users].drop
-      database[:users].create
+      database[:acol].drop
+      database[:acol].create
     end
 
     context 'server 3.0+' do
       min_server_fcv '3.0'
 
       it 'returns a list of the collections info' do
-        expect(result).to include('users')
+        expect(result).to include('acol')
       end
     end
 
@@ -171,7 +171,17 @@ describe Mongo::Database do
       max_server_fcv '2.6'
 
       it 'returns a list of the collections info' do
-        expect(result).to include("#{SpecConfig.instance.test_db}.users")
+        expect(result).to include("#{SpecConfig.instance.test_db}.acol")
+      end
+    end
+
+    context 'on admin database' do
+      let(:database) do
+        described_class.new(root_authorized_client, 'admin')
+      end
+
+      it 'includes system collections' do
+        expect(result).to include('system.version')
       end
     end
   end
@@ -196,9 +206,17 @@ describe Mongo::Database do
       it 'returns collection objects for each name' do
         expect(database.collections).to include(collection)
       end
+    end
 
-      it 'does not include the system collections' do
-        expect(database.collections.collect(&:name).none? { |name| name =~ /system\.|\$/ }).to be(true)
+    context 'on admin database' do
+
+      let(:database) do
+        described_class.new(authorized_client, 'admin')
+      end
+
+      it 'includes the system collections' do
+        collection_names = database.collections.map(&:name)
+        expect(collection_names).to include('system.version')
       end
     end
 
