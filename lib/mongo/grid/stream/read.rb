@@ -182,8 +182,15 @@ module Mongo
           end
 
           def view
-            @view ||= (opts = options.merge(read: read_preference) if read_preference
-                         fs.chunks_collection.find({ :files_id => file_id }, opts || options).sort(:n => 1))
+            @view ||= begin
+              opts = if read_preference
+                options.merge(read: read_preference)
+              else
+                options
+              end
+
+              fs.chunks_collection.find({ :files_id => file_id }, opts).sort(:n => 1)
+            end
           end
 
           def validate!(index, num_chunks, chunk, length_read)

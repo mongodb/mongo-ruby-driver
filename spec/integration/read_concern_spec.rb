@@ -8,6 +8,10 @@ describe 'read concern' do
   end
 
   let(:specified_read_concern) do
+    { :level => :local }
+  end
+
+  let(:expected_read_concern) do
     { 'level' => 'local' }
   end
 
@@ -19,7 +23,7 @@ describe 'read concern' do
 
   shared_examples_for 'a read concern is specified' do
     it 'sends a read concern to the server' do
-      expect(sent_read_concern).to eq(specified_read_concern)
+      expect(sent_read_concern).to eq(expected_read_concern)
     end
   end
 

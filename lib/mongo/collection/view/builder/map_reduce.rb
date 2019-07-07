@@ -139,7 +139,10 @@ module Mongo
               :query => filter,
               :out => { inline: 1 }
             )
-            command[:readConcern] = collection.read_concern if collection.read_concern
+            if collection.read_concern
+              command[:readConcern] = Options::Mapper.transform_values_to_strings(
+                collection.read_concern)
+            end
             command.merge!(view_options)
             command.merge!(Options::Mapper.transform_documents(options, MAPPINGS))
             command
