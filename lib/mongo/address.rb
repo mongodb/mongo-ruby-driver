@@ -67,6 +67,9 @@ module Mongo
     #
     # @since 2.0.0
     def initialize(seed, options = {})
+      if seed.nil?
+        raise ArgumentError, "address must be not nil"
+      end
       @seed = seed
       @host, @port = parse_host_port
       @options = options

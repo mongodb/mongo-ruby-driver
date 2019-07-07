@@ -51,47 +51,69 @@ module Mongo
 
       private
 
-      RECORD_PREFIX = '_mongodb._tcp.'.freeze
-
+      # @return [ String ] DOT_PARTITION The '.' character used to delineate the parts of a
+      #   hostname.
       DOT_PARTITION = '.'.freeze
 
+      # @return [ Array<String> ] VALID_TXT_OPTIONS The valid options for a TXT record to specify.
       VALID_TXT_OPTIONS = ['replicaset', 'authsource'].freeze
 
+      # @return [ String ] INVALID_HOST Error message format string indicating that the hostname in
+      #   in the URI does not fit the expected form.
       INVALID_HOST = "One and only one host is required in a connection string with the " +
                        "'#{MONGODB_SRV_SCHEME}' protocol.".freeze
 
+      # @return [ String ] INVALID_PORT Error message format string indicating that a port was
+      #   included with an SRV hostname.
       INVALID_PORT = "It is not allowed to specify a port in a connection string with the " +
                        "'#{MONGODB_SRV_SCHEME}' protocol.".freeze
 
+      # @return [ String ] INVALID_DOMAIN Error message format string indicating that the domain name
+      #   of the hostname does not fit the expected form.
       # @deprecated
       INVALID_DOMAIN = "The domain name must consist of at least two parts: the domain name, " +
                          "and a TLD.".freeze
 
+      # @return [ String ] NO_SRV_RECORDS Error message format string indicating that no SRV records
+      #   were found.
       NO_SRV_RECORDS = "The DNS query returned no SRV records at hostname (%s)".freeze
 
-      MORE_THAN_ONE_TXT_RECORD_FOUND = "Only one TXT record is allowed. Querying hostname (%s) " +
-                                         "returned more than one result.".freeze
-
+      # @return [ String ] INVALID_TXT_RECORD_OPTION Error message format string indicating that an
+      #   unexpected TXT record option was found.
       INVALID_TXT_RECORD_OPTION = "TXT records can only specify the options " +
                                     "[#{VALID_TXT_OPTIONS.join(', ')}].".freeze
 
-      MISMATCHED_DOMAINNAME = "Parent domain name in SRV record result (%s) does not match " +
-                                 "that of the hostname (%s)".freeze
-
+      # @return [ String ] FORMAT The expected SRV URI format.
       FORMAT = 'mongodb+srv://[username:password@]host[/[database][?options]]'.freeze
 
+      # Gets the MongoDB SRV URI scheme.
+      #
+      # @return [ String ] The MongoDB SRV URI scheme.
       def scheme
         MONGODB_SRV_SCHEME
       end
 
+      # Raises an InvalidURI error.
+      #
+      # @param [ String ] details A detailed error message.
+      #
+      # @raise [ Mongo::Error::InvalidURI ]
       def raise_invalid_error!(details)
         raise Error::InvalidURI.new(@string, details, FORMAT)
       end
 
+      # Gets the SRV resolver.
+      #
+      # @return [ Mongo::SRV::Resolver ]
       def resolver
-        @resolver ||= Resolv::DNS.new
+        @resolver ||= SRV::Resolver.new(raise_on_invalid: true)
       end
 
+      # Parses the credentials from the URI and performs DNS queries to obtain
+      # the hosts and TXT options.
+      #
+      # @param [ String ] remaining The portion of the URI pertaining to the
+      #   authentication credentials and the hosts.
       def parse!(remaining)
         super
 
@@ -101,8 +123,9 @@ module Mongo
         hostname = @servers.first
         validate_hostname(hostname)
 
-        records = get_records(hostname)
-        @txt_options = get_txt_opts(hostname) || {}
+        srv_result = resolver.get_records(hostname)
+        @txt_options = get_txt_options(hostname) || {}
+        records = srv_result.address_strs
         records.each do |record|
           validate_host!(record)
         end
@@ -136,39 +159,33 @@ module Mongo
         end
       end
 
-      def get_records(hostname)
-        query_name = RECORD_PREFIX + hostname
-        records = resolver.getresources(query_name, Resolv::DNS::Resource::IN::SRV).collect do |record|
-          record_host = record.target.to_s
-          port = record.port
-          validate_record!(record_host, hostname)
-          "#{record_host}#{HOST_PORT_DELIM}#{port}"
-        end
-        raise Error::NoSRVRecords.new(NO_SRV_RECORDS % hostname) if records.empty?
-        records
-      end
-
-      def validate_record!(record_host, hostname)
-        domainname = hostname.split(DOT_PARTITION)[1..-1]
-        host_parts = record_host.split(DOT_PARTITION)
-        unless (host_parts.size > domainname.size) && (domainname == host_parts[-domainname.length..-1])
-          raise Error::MismatchedDomain.new(MISMATCHED_DOMAINNAME % [record_host, domainname])
-        end
-      end
-
-      def get_txt_opts(host)
-        records = resolver.getresources(host, Resolv::DNS::Resource::IN::TXT)
-        unless records.empty?
-          if records.size > 1
-            raise Error::InvalidTXTRecord.new(MORE_THAN_ONE_TXT_RECORD_FOUND % host)
-          end
-          options_string = records[0].strings.join
+      # Obtains the TXT options of a host.
+      #
+      # @param [ String ] hostname The hostname whose records should be obtained.
+      #
+      # @return [ Hash ] The TXT record options (an empyt hash if no TXT
+      #   records are found).
+      #
+      # @raise [ Mongo::Error::InvalidTXTRecord ] If more than one TXT record is found.
+      def get_txt_options(hostname)
+        options_string = resolver.get_txt_options_string(hostname)
+        if options_string
           parse_txt_options!(options_string)
+        else
+          {}
         end
       end
 
+      # Parses the TXT record options into a hash and adds the options to set of all URI options
+      # parsed.
+      #
+      # @param [ String ] string The concatenated TXT options.
+      #
+      # @return [ Hash ] The parsed TXT options.
+      #
+      # @raise [ Mongo::Error::InvalidTXTRecord ] If the TXT record does not fit the expected form
+      #   or the option specified is not a valid TXT option.
       def parse_txt_options!(string)
-        return {} unless string
         string.split(INDIV_URI_OPTS_DELIM).reduce({}) do |txt_options, opt|
           raise Error::InvalidTXTRecord.new(INVALID_OPTS_VALUE_DELIM) unless opt.index(URI_OPTS_VALUE_DELIM)
           key, value = opt.split(URI_OPTS_VALUE_DELIM)
