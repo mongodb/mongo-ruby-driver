@@ -69,7 +69,6 @@ module Mongo
         @event_listeners = event_listeners
         @monitoring = monitoring
         @options = options.freeze
-        @round_trip_time_averager = RoundTripTimeAverager.new
         # This is a Mongo::Server::Monitor::Connection
         @connection = Connection.new(server.address, options)
         @last_scan = nil
@@ -155,7 +154,7 @@ module Mongo
         throttle_scan_frequency!
         result = ismaster
         new_description = Description.new(description.address, result,
-          @round_trip_time_averager.average_round_trip_time)
+          server.round_trip_time_averager.average_round_trip_time)
         server.cluster.run_sdam_flow(description, new_description)
         @description
       end
@@ -209,9 +208,6 @@ module Mongo
         end
       end
 
-      # @api private
-      attr_reader :round_trip_time_averager
-
       private
 
       def ismaster
@@ -223,7 +219,7 @@ module Mongo
             )
           end
 
-          result, exc, rtt, average_rtt = round_trip_time_averager.measure do
+          result, exc, rtt, average_rtt = server.round_trip_time_averager.measure do
             connection.ismaster
           end
           if exc
