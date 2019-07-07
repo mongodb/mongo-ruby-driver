@@ -290,7 +290,7 @@ module Mongo
         @server.handle_handshake_failure! do
           begin
             response, exc, rtt, average_rtt =
-              @server.monitor.round_trip_time_averager.measure do
+              @server.round_trip_time_averager.measure do
                 socket.write(app_metadata.ismaster_bytes)
                 Protocol::Message.deserialize(socket, max_message_size).documents[0]
               end
