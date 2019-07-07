@@ -66,6 +66,7 @@ module Mongo
       end
       @scan_semaphore = Semaphore.new
       @round_trip_time_averager = RoundTripTimeAverager.new
+      @description = Description.new(address, {})
       @monitor = Monitor.new(self, event_listeners, monitoring,
         options.merge(
           app_metadata: Monitor::AppMetadata.new(cluster.options),
@@ -92,9 +93,11 @@ module Mongo
     # @return [ Monitoring ] monitoring The monitoring.
     attr_reader :monitoring
 
-    # Get the description from the monitor and scan on monitor.
+    # @return [ Server::Description ] description The server
+    #   description the monitor refreshes.
+    attr_reader :description
+
     def_delegators :monitor,
-      :description,
       :scan!,
       :heartbeat_frequency,
       :last_scan,
@@ -437,7 +440,7 @@ module Mongo
 
     # @api private
     def update_description(description)
-      monitor.instance_variable_set('@description', description)
+      @description = description
     end
 
     # @api private
