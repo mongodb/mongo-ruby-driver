@@ -182,12 +182,19 @@ module Mongo
     # @since 2.0.0
     def disconnect!(wait=false)
       monitor.stop!(wait)
-      begin
+      if wait
+        pool.close(wait: wait)
+        # Need to clear @pool as otherwise the old pool will continue to be
+        # used if this server is reconnected in the future.
+        @pool = nil
+      else
         # For backwards compatibility we disconnect/clear the pool rather
         # than close it here.
-        pool.disconnect!
-      rescue Error::PoolClosedError
-        # If the pool was already closed, we don't need to do anything here.
+        begin
+          pool.disconnect!
+        rescue Error::PoolClosedError
+          # If the pool was already closed, we don't need to do anything here.
+        end
       end
       @connected = false
       true

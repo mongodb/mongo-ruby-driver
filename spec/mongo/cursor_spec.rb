@@ -30,6 +30,8 @@ describe Mongo::Cursor do
     context 'cursor exhausted by initial result' do
       before do
         ClientRegistry.instance.close_all_clients
+        # Create the pool which schedules pool populator's finalizer
+        authorized_collection.find(a: 1).to_a
       end
 
       let(:view) do
@@ -50,6 +52,9 @@ describe Mongo::Cursor do
       end
 
       it 'schedules the finalizer' do
+        # Create the pool which schedules pool populator's finalizer
+        authorized_collection.find(a: 1).to_a
+
         expect(ObjectSpace).to receive(:define_finalizer)
         cursor
       end
