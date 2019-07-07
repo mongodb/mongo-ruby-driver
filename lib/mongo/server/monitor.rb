@@ -15,8 +15,11 @@
 module Mongo
   class Server
 
-    # This object is responsible for keeping server status up to date, running in
-    # a separate thread as to not disrupt other operations.
+    # Responsible for periodically polling a server via ismaster commands to
+    # keep the server's status up to date.
+    #
+    # Does all work in a background thread so as to not interfere with other
+    # operations performed by the driver.
     #
     # @since 2.0.0
     class Monitor
