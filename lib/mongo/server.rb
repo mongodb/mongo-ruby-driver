@@ -228,8 +228,8 @@ module Mongo
         Monitoring::Event::ServerOpening.new(address, cluster.topology)
       )
       if options[:monitoring_io] != false
-        monitor.run!
         ObjectSpace.define_finalizer(self, self.class.finalize(monitor))
+        monitor.run!
       end
     end
 
