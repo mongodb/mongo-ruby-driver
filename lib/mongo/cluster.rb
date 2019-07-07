@@ -146,18 +146,20 @@ module Mongo
         )
       end
 
-      servers.each do |server|
-        server.start_monitoring
-      end
-
       if options[:monitoring_io] == false
         # Omit periodic executor construction, because without servers
         # no commands can be sent to the cluster and there shouldn't ever
         # be anything that needs to be cleaned up.
         #
-        # Also omit legacy single round of SDAM on the main thread,
-        # as it would race with tests that mock SDAM responses.
+        # Omit monitoring individual servers and the legacy single round of
+        # of SDAM on the main thread, as it would race with tests that mock
+        # SDAM responses.
+        @connecting = @connected = false
         return
+      end
+
+      servers.each do |server|
+        server.start_monitoring
       end
 
       if options[:cleanup] != false
