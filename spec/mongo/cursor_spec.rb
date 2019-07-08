@@ -28,6 +28,12 @@ describe Mongo::Cursor do
     end
 
     context 'cursor exhausted by initial result' do
+      before do
+        ClientRegistry.instance.close_all_clients
+        # Create the pool which schedules pool populator's finalizer
+        authorized_collection.find(a: 1).to_a
+      end
+
       let(:view) do
         Mongo::Collection::View.new(authorized_collection)
       end
@@ -39,11 +45,16 @@ describe Mongo::Cursor do
     end
 
     context 'cursor not exhausted by initial result' do
+      clean_slate
+
       let(:view) do
         Mongo::Collection::View.new(authorized_collection, {}, batch_size: 2)
       end
 
       it 'schedules the finalizer' do
+        # Create the pool which schedules pool populator's finalizer
+        authorized_collection.find(a: 1).to_a
+
         expect(ObjectSpace).to receive(:define_finalizer)
         cursor
       end
@@ -273,7 +284,7 @@ describe Mongo::Cursor do
     context 'when the cursor is not fully iterated and is garbage collected' do
 
       let(:documents) do
-        (1..4).map{ |i| { field: "test#{i}" }}
+        (1..6).map{ |i| { field: "test#{i}" }}
       end
 
       let(:cluster) do
@@ -313,8 +324,25 @@ describe Mongo::Cursor do
           # We need to verify that the cursor was able to retrieve more documents
           # from the server so that more than one batch is successfully received
 
+          # The initial read is done on an enum obtained from the cursor.
+          # The read below is done directly on the cursor. These are two
+          # different objects. In MRI, iterating like this yields all of the
+          # documents, hence we retrieved one document in the setup and
+          # we expect to retrieve the remaining 5 here. In JRuby it appears that
+          # the enum buffers the first batch, so that the second document is
+          # lost to the iteration and we retrieve 4 documents below.
+          # The 4 documents still are retrieved via two batches thus
+          # fulfilling the requirement of the test to continue iterating the
+          # cursor.
+
+          if BSON::Environment.jruby?
+            expected_count = 4
+          else
+            expected_count = 5
+          end
+
           cluster.unregister_cursor(cursor.id)
-          expect(cursor.to_a.size > 2).to be(true)
+          expect(cursor.to_a.size).to eq(expected_count)
         end
       end
     end

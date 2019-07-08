@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+require 'mongo/server/connection_pool/connection_pool_populator'
 
 module Mongo
   class Server
@@ -37,6 +38,14 @@ module Mongo
       #
       # @since 2.9.0
       DEFAULT_WAIT_TIMEOUT = 1.freeze
+
+      # Background thread reponsible for maintaining the size of
+      # the pool to at least min_size
+      attr_reader :populator
+
+      # Condition variable broadcast when the size of the pool changes
+      # to wake up the populator
+      attr_reader :populate_semaphore
 
       # Create the new connection pool.
       #
@@ -111,16 +120,12 @@ module Mongo
         # available connection when pool is at max size
         @available_semaphore = Semaphore.new
 
-        finalizer = proc do
-          available_connections.each do |connection|
-            connection.disconnect!(reason: :pool_closed)
-          end
-          available_connections.clear
-          # Finalizer does not close checked out connections.
-          # Those would have to be garbage collected on their own
-          # and that should close them.
-        end
-        ObjectSpace.define_finalizer(self, finalizer)
+        @populate_semaphore = Semaphore.new
+        @populator = ConnectionPoolPopulator.new(self)
+
+        ObjectSpace.define_finalizer(self, self.class.finalize(@available_connections, @populator))
+
+        @populator.run! if min_size > 0
 
         publish_cmap_event(
           Monitoring::Event::Cmap::PoolCreated.new(@server.address, options)
@@ -264,6 +269,7 @@ module Mongo
                   # Stale connections should be disconnected in the clear
                   # method, but if any don't, check again here
                   connection.disconnect!(reason: :stale)
+                  @populate_semaphore.signal
                   next
                 end
 
@@ -271,9 +277,11 @@ module Mongo
                   Time.now - connection.last_checkin > max_idle_time
                 then
                   connection.disconnect!(reason: :idle)
+                  @populate_semaphore.signal
                   next
                 end
 
+                @checked_out_connections << connection
                 throw(:done)
               end
 
@@ -284,6 +292,7 @@ module Mongo
                 # but if it did, it would be performing i/o under our lock,
                 # which is bad. Fix in the future.
                 connection = create_connection
+                @checked_out_connections << connection
                 throw(:done)
               end
             end
@@ -302,7 +311,6 @@ module Mongo
           end
         end
 
-        @checked_out_connections << connection
         publish_cmap_event(
           Monitoring::Event::Cmap::ConnectionCheckedOut.new(@server.address, connection.id),
         )
@@ -341,8 +349,10 @@ module Mongo
           if connection.closed?
             # Connection was closed - for example, because it experienced
             # a network error. Nothing else needs to be done here.
+            @populate_semaphore.signal
           elsif connection.generation != @generation
             connection.disconnect!(reason: :stale)
+            @populate_semaphore.signal
           else
             connection.record_checkin!
             @available_connections << connection
@@ -380,6 +390,7 @@ module Mongo
             until @available_connections.empty?
               connection = @available_connections.pop
               connection.disconnect!(reason: :stale)
+              @populate_semaphore.signal
             end
           end
         end
@@ -399,6 +410,8 @@ module Mongo
       #
       # @option options [ true | false ] :force Also close all checked out
       #   connections.
+      # @option options [ true | false ] :wait Wait for background threads to
+      #   exit before returning. Added in 2.10.0.
       #
       # @return [ true ] true.
       #
@@ -406,22 +419,27 @@ module Mongo
       def close(options = nil)
         return if closed?
 
+        options ||= {}
+
         @lock.synchronize do
           until @available_connections.empty?
             connection = @available_connections.pop
             connection.disconnect!(reason: :pool_closed)
           end
 
-          if options && options[:force]
+          if options[:force]
             until @checked_out_connections.empty?
               connection = @checked_out_connections.take(1).first
               connection.disconnect!(reason: :pool_closed)
               @checked_out_connections.delete(connection)
             end
           end
-        end
 
-        @closed = true
+          # mark pool as closed and stop populator before releasing lock so
+          # no connections can be created, checked in, or checked out
+          @closed = true
+          @populator.stop!(options[:wait])
+        end
 
         publish_cmap_event(
           Monitoring::Event::Cmap::PoolClosed.new(@server.address)
@@ -485,6 +503,7 @@ module Mongo
               if (Time.now - last_checkin) > max_idle_time
                 connection.disconnect!(reason: :idle)
                 @available_connections.delete_at(i)
+                @populate_semaphore.signal
                 next
               end
             end
@@ -493,14 +512,44 @@ module Mongo
         end
       end
 
-      # Creates up to the min size connections.
+      # Create and add connections to the pool until the
+      # pool size is at least min_size.
       #
-      # Used by the spec test runner.
+      # Used by the pool populator background thread.
       #
       # @api private
       def populate
-        while size < min_size
-          @available_connections << create_connection
+        return if closed?
+
+        catch(:done) do
+          loop do
+            @lock.synchronize do
+              if !closed? && unsynchronized_size < min_size
+                @available_connections << create_connection
+              else
+                throw(:done)
+              end
+            end
+          end
+        end
+      end
+
+      # Finalize the connection pool for garbage collection.
+      #
+      # @param [ List<Mongo::Connection> ] available_connections The available connections.
+      # @param [ ConnectionPoolPopulator ] populator The populator.
+      #
+      # @return [ Proc ] The Finalizer.
+      def self.finalize(available_connections, populator)
+        proc do
+          populator.stop!
+          available_connections.each do |connection|
+            connection.disconnect!(reason: :pool_closed)
+          end
+          available_connections.clear
+          # Finalizer does not close checked out connections.
+          # Those would have to be garbage collected on their own
+          # and that should close them.
         end
       end
 

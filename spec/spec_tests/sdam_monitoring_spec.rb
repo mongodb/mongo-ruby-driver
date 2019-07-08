@@ -29,6 +29,12 @@ describe 'SDAM Monitoring' do
         @servers_cache = {}
         @client.cluster.servers_list.each do |server|
           @servers_cache[server.address.to_s] = server
+
+          # Since we set monitoring_io: false, servers are not monitored
+          # by the cluster. Start monitoring on them manually (this publishes
+          # the server opening event but, again due to monitoring_io being
+          # false, does not do network I/O or change server status)>
+          server.start_monitoring
         end
       end
 

@@ -1,11 +1,14 @@
 require 'spec_helper'
 
+# This test should set cleanup: false on all clients, because due to
+# https://jira.mongodb.org/browse/RUBY-1772 we may be getting connections
+# established after the client is closed which screws up our assertions on
+# the auth calls. When 1772 is fixed, the cleanup should happen on existing
+# connections and thus should no longer interfere with auth assertions.
+
 describe 'SCRAM-SHA auth mechanism negotiation' do
   min_server_fcv '4.0'
-
-  before(:all) do
-    ClientRegistry.instance.close_all_clients
-  end
+  clean_slate
 
   URI_OPTION_MAP = {
     :auth_source => 'authsource',
@@ -24,7 +27,7 @@ describe 'SCRAM-SHA auth mechanism negotiation' do
         roles: ['root'],
         mechanisms: server_user_auth_mechanisms,
       )
-      client.close
+      client.close(true)
     end
   end
 
@@ -49,7 +52,7 @@ describe 'SCRAM-SHA auth mechanism negotiation' do
 
       new_local_client(
         SpecConfig.instance.addresses,
-        SpecConfig.instance.test_options.merge(opts)
+        SpecConfig.instance.test_options.merge(opts).update(cleanup: false)
       )
     end
 
@@ -332,7 +335,7 @@ describe 'SCRAM-SHA auth mechanism negotiation' do
     end
 
     let(:client) do
-      new_local_client(uri, SpecConfig.instance.ssl_options)
+      new_local_client(uri, SpecConfig.instance.ssl_options.merge(cleanup: false))
     end
 
     context 'when the user exists' do
