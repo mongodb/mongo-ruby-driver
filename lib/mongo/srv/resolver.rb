@@ -13,10 +13,10 @@
 # limitations under the License.
 
 module Mongo
-  module SRV
+  module Srv
 
-    # The SRV::Resolver class encapsulates the necessary behavior for
-    # querying SRV records as required by the driver.
+    # Encapsulates the necessary behavior for querying SRV records as
+    # required by the driver.
     #
     # @api private
     class Resolver
@@ -52,7 +52,7 @@ module Mongo
       # @raise [ Mongo::Error::NoSRVRecords ] If the :raise_in_invalid Resolver
       #   option is true and no records are found.
       #
-      # @return [ Mongo::SRV::Result ] SRV lookup result.
+      # @return [ Mongo::Srv::Result ] SRV lookup result.
       def get_records(hostname)
         query_name = RECORD_PREFIX + hostname
         resources = @resolver.getresources(query_name, Resolv::DNS::Resource::IN::SRV)
@@ -61,7 +61,7 @@ module Mongo
         # or logging a warning if a record with a mismatched domain is found.
         # Note that in the case a warning is raised, the record is _not_
         # added to the Result object.
-        result = SRV::Result.new(hostname)
+        result = Srv::Result.new(hostname)
         resources.each do |record|
           begin
             result.add_record(record)

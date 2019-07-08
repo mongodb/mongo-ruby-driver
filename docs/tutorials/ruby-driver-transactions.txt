@@ -28,7 +28,7 @@ helper method:
 
   session = client.start_session
   session.with_transaction do
-    collection.insert_one(hello: 'world')
+    collection.insert_one({hello: 'world'}, session: session)
   end
 
 The ``with_transaction`` helper does the following:
@@ -71,7 +71,7 @@ which are read concern, write concern and read preference:
     write_concern: {w: 3},
     read: {mode: :primary}
   ) do
-    collection.insert_one(hello: 'world')
+    collection.insert_one({hello: 'world'}, session: session)
   end
 
 
