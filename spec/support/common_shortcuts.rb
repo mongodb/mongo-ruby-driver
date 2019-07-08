@@ -104,7 +104,8 @@ module CommonShortcuts
       allow(cluster).to receive(:app_metadata)
       allow(cluster).to receive(:options).and_return({})
       allow(cluster).to receive(:run_sdam_flow)
-      server = Mongo::Server.new(address, cluster, monitoring, listeners, SpecConfig.instance.test_options)
+      server = Mongo::Server.new(address, cluster, monitoring, listeners,
+        SpecConfig.instance.test_options.merge(monitoring_io: false))
       # Since the server references a double for the cluster, the server
       # must be closed in the scope of the example.
       register_server(server)

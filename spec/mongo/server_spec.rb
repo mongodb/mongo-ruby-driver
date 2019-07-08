@@ -35,8 +35,18 @@ describe Mongo::Server do
   let(:server) do
     register_server(
       described_class.new(address, cluster, monitoring, listeners,
-        SpecConfig.instance.test_options.merge(server_options))
+        SpecConfig.instance.test_options.merge(monitoring_io: false).merge(server_options))
     )
+  end
+
+  shared_context 'with monitoring io' do
+    let(:server_options) do
+      {monitoring_io: true}
+    end
+
+    before do
+      allow(cluster).to receive(:heartbeat_interval).and_return(1000)
+    end
   end
 
   describe '#==' do
@@ -58,7 +68,8 @@ describe Mongo::Server do
 
         let(:other) do
           register_server(
-            described_class.new(address, cluster, monitoring, listeners, SpecConfig.instance.test_options)
+            described_class.new(address, cluster, monitoring, listeners,
+              SpecConfig.instance.test_options.merge(monitoring_io: false))
           )
         end
 
@@ -75,7 +86,8 @@ describe Mongo::Server do
 
         let(:other) do
           register_server(
-            described_class.new(other_address, cluster, monitoring, listeners, SpecConfig.instance.test_options)
+            described_class.new(other_address, cluster, monitoring, listeners,
+              SpecConfig.instance.test_options.merge(monitoring_io: false))
           )
         end
 
@@ -88,9 +100,13 @@ describe Mongo::Server do
 
   describe '#disconnect!' do
 
-    it 'stops the monitor instance' do
-      expect(server.instance_variable_get(:@monitor)).to receive(:stop!).and_call_original
-      server.disconnect!
+    context 'with monitoring io' do
+      include_context 'with monitoring io'
+
+      it 'stops the monitor instance' do
+        expect(server.instance_variable_get(:@monitor)).to receive(:stop!).and_call_original
+        server.disconnect!
+      end
     end
 
     it 'disconnects the connection pool' do
@@ -129,9 +145,10 @@ describe Mongo::Server do
   end
 
   describe '#initialize' do
+    include_context 'with monitoring io'
 
-    let(:server_options) do
-      {:heartbeat_frequency => 5}
+    before do
+      allow(cluster).to receive(:run_sdam_flow)
     end
 
     it 'sets the address host' do
@@ -143,7 +160,7 @@ describe Mongo::Server do
     end
 
     it 'sets the options' do
-      expect(server.options[:heartbeat_frequency]).to eq(5)
+      expect(server.options[:monitoring_io]).to be true
     end
 
     it 'creates monitor with monitoring app metadata' do
@@ -160,9 +177,18 @@ describe Mongo::Server do
         expect(server.monitor.instance_variable_get('@thread')).to be nil
       end
     end
+
+    context 'monitoring_io: true' do
+      include_context 'with monitoring io'
+
+      it 'creates monitoring thread' do
+        expect(server.monitor.instance_variable_get('@thread')).to be_a(Thread)
+      end
+    end
   end
 
   describe '#scan!' do
+    include_context 'with monitoring io'
 
     it 'delegates scan to the monitor' do
       expect(server.monitor).to receive(:scan!)
@@ -176,6 +202,7 @@ describe Mongo::Server do
   end
 
   describe '#reconnect!' do
+    include_context 'with monitoring io'
 
     before do
       expect(server.monitor).to receive(:restart!).and_call_original
