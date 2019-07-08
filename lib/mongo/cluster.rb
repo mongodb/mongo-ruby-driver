@@ -490,6 +490,8 @@ module Mongo
         servers_list.each do |server|
           if server.monitor
             server.monitor.scan!
+          else
+            log_warn("Synchronous scan requested on cluster #{summary} but server #{server} has no monitor")
           end
         end
       else
