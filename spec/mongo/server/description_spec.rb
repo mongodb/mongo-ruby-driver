@@ -516,7 +516,8 @@ describe Mongo::Server::Description do
     end
 
     let(:server) do
-      Mongo::Server.new(address, cluster, monitoring, listeners)
+      Mongo::Server.new(address, cluster, monitoring, listeners,
+        monitoring_io: false)
     end
 
     let(:description) do
@@ -537,7 +538,8 @@ describe Mongo::Server::Description do
       end
 
       let(:server) do
-        Mongo::Server.new(other_address, cluster, monitoring, listeners)
+        Mongo::Server.new(other_address, cluster, monitoring, listeners,
+          monitoring_io: false)
       end
 
       it 'returns false' do
@@ -603,7 +605,8 @@ describe Mongo::Server::Description do
     end
 
     let(:server) do
-      Mongo::Server.new(server_address, cluster, monitoring, listeners)
+      Mongo::Server.new(server_address, cluster, monitoring, listeners,
+        monitoring_io: false)
     end
 
     context 'when the server is included in the description hosts list' do

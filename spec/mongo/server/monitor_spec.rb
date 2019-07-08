@@ -20,12 +20,18 @@ describe Mongo::Server::Monitor do
   let(:cluster) do
     double('cluster').tap do |cluster|
       allow(cluster).to receive(:run_sdam_flow)
+      allow(cluster).to receive(:heartbeat_interval).and_return(1000)
     end
+  end
+
+  let(:server) do
+    Mongo::Server.new(address, cluster, Mongo::Monitoring.new, listeners,
+      monitoring_io: false)
   end
 
   let(:monitor) do
     register_server_monitor(
-      described_class.new(address, listeners, Mongo::Monitoring.new,
+      described_class.new(server, listeners, Mongo::Monitoring.new,
         SpecConfig.instance.test_options.merge(cluster: cluster).merge(monitor_options))
     )
   end
@@ -64,6 +70,9 @@ describe Mongo::Server::Monitor do
     context 'when the ismaster command succeeds' do
 
       it 'invokes sdam flow' do
+        server.unknown!
+        expect(server.description).to be_unknown
+
         updated_desc = nil
         expect(cluster).to receive(:run_sdam_flow) do |prev_desc, _updated_desc|
           updated_desc = _updated_desc
@@ -78,37 +87,25 @@ describe Mongo::Server::Monitor do
 
       context 'when no server is running on the address' do
 
-        let(:bad_address) do
+        let(:address) do
           Mongo::Address.new('127.0.0.1:27050')
         end
 
-        let(:monitor) do
-          register_server_monitor(
-            described_class.new(bad_address, listeners, Mongo::Monitoring.new,
-              cluster: cluster)
-          )
-        end
-
         before do
+          server.unknown!
+          expect(server.description).to be_unknown
           monitor.scan!
         end
 
         it 'keeps the server unknown' do
-          expect(monitor.description).to be_unknown
+          expect(server.description).to be_unknown
         end
       end
 
       context 'when the socket gets an exception' do
 
-        let(:bad_address) do
+        let(:address) do
           default_address
-        end
-
-        let(:monitor) do
-          register_server_monitor(
-            described_class.new(bad_address, listeners, Mongo::Monitoring.new,
-              cluster: cluster)
-          )
         end
 
         let(:socket) do
@@ -118,11 +115,13 @@ describe Mongo::Server::Monitor do
 
         before do
           expect(socket).to receive(:write).twice.and_raise(Mongo::Error::SocketError)
+          server.unknown!
+          expect(server.description).to be_unknown
           monitor.scan!
         end
 
         it 'keeps the server unknown' do
-          expect(monitor.description).to be_unknown
+          expect(server.description).to be_unknown
         end
 
         it 'disconnects the connection' do
@@ -132,6 +131,7 @@ describe Mongo::Server::Monitor do
     end
   end
 
+=begin heartbeat interval is now taken out of cluster, monitor has no useful options
   describe '#heartbeat_frequency' do
 
     context 'when an option is provided' do
@@ -156,6 +156,7 @@ describe Mongo::Server::Monitor do
       end
     end
   end
+=end
 
   describe '#run!' do
 
