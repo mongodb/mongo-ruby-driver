@@ -106,11 +106,23 @@ module Mongo
     # @since 2.4.0
     attr_reader :last_scan
 
-    def_delegators :monitor,
-      :scan!,
-      :heartbeat_frequency,
-      :compressor
+    # @deprecated
+    def heartbeat_frequency
+      cluster.heartbeat_interval
+    end
+
+    # @deprecated
     alias :heartbeat_frequency_seconds :heartbeat_frequency
+
+    # @deprecated
+    def_delegators :monitor, :scan!
+
+    # The last compressor discovered by the server monitor.
+    #
+    # The compressor state should be determined for each individual
+    # connection rather than kept per server. A future version of the
+    # driver will change how compressors are tracked and used.
+    def_delegators :monitor, :compressor
 
     # Delegate convenience methods to the monitor description.
     def_delegators :description,

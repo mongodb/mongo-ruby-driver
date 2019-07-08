@@ -55,8 +55,6 @@ module Mongo
       # @param [ Event::Listeners ] event_listeners The event listeners.
       # @param [ Monitoring ] monitoring The monitoring..
       # @param [ Hash ] options The options.
-      # @option options [ Float ] :heartbeat_frequency The interval, in seconds,
-      #   between server description refreshes via ismaster.
       #
       # @since 2.0.0
       # @api private
@@ -96,14 +94,12 @@ module Mongo
       # Get the refresh interval for the server. This will be defined via an
       # option or will default to 10.
       #
-      # @example Get the refresh interval.
-      #   server.heartbeat_frequency
-      #
-      # @return [ Integer ] The heartbeat frequency, in seconds.
+      # @return [ Float ] The heartbeat interval, in seconds.
       #
       # @since 2.0.0
+      # @deprecated
       def heartbeat_frequency
-        @heartbeat_frequency ||= options[:heartbeat_frequency] || HEARTBEAT_FREQUENCY
+        server.cluster.heartbeat_interval
       end
 
       # Runs the server monitor. Refreshing happens on a separate thread per
@@ -116,7 +112,7 @@ module Mongo
       #
       # @since 2.0.0
       def run!
-        @thread = Thread.new(heartbeat_frequency) do |i|
+        @thread = Thread.new(server.cluster.heartbeat_interval) do |i|
           loop do
             scan!
             server.scan_semaphore.wait(i)

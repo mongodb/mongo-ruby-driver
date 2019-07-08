@@ -93,6 +93,8 @@ module Mongo
     #   to clean up server sessions when the cluster is disconnected, and to
     #   to not start the periodic executor. If :monitoring_io is false,
     #   :cleanup automatically defaults to false as well.
+    # @option options [ Float ] :heartbeat_frequency The interval, in seconds,
+    #   for the server monitor to refresh its description via ismaster.
     #
     # @since 2.0.0
     def initialize(seeds, monitoring, options = Options::Redacted.new)
@@ -297,6 +299,17 @@ module Mongo
       options[:read_retry_interval] || READ_RETRY_INTERVAL
     end
 
+    # Get the refresh interval for the server. This will be defined via an
+    # option or will default to 10.
+    #
+    # @return [ Float ] The heartbeat interval, in seconds.
+    #
+    # @since 2.10.0
+    # @api private
+    def heartbeat_interval
+      options[:heartbeat_frequency] || Server::Monitor::HEARTBEAT_FREQUENCY
+    end
+
     # Whether the cluster object is connected to its cluster.
     #
     # @return [ true|false ] Whether the cluster is connected.
@@ -475,7 +488,7 @@ module Mongo
     def scan!(sync=true)
       if sync
         servers_list.each do |server|
-          server.scan!
+          server.monitor.scan!
         end
       else
         servers_list.each do |server|
