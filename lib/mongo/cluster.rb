@@ -488,7 +488,9 @@ module Mongo
     def scan!(sync=true)
       if sync
         servers_list.each do |server|
-          server.monitor.scan!
+          if server.monitor
+            server.monitor.scan!
+          end
         end
       else
         servers_list.each do |server|
