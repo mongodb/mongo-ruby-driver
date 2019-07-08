@@ -181,6 +181,7 @@ module Mongo
     #
     # @since 2.0.0
     def disconnect!(wait=false)
+      monitor.stop!(wait)
       begin
         # For backwards compatibility we disconnect/clear the pool rather
         # than close it here.
@@ -188,7 +189,6 @@ module Mongo
       rescue Error::PoolClosedError
         # If the pool was already closed, we don't need to do anything here.
       end
-      monitor.stop!(wait)
       @connected = false
       true
     end
@@ -228,8 +228,8 @@ module Mongo
         Monitoring::Event::ServerOpening.new(address, cluster.topology)
       )
       if options[:monitoring_io] != false
-        monitor.run!
         ObjectSpace.define_finalizer(self, self.class.finalize(monitor))
+        monitor.run!
       end
     end
 
