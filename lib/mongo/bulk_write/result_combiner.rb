@@ -112,7 +112,7 @@ module Mongo
       def combine_write_errors!(result)
         if write_errors = result.aggregate_write_errors(count)
           results.merge!(
-            Error::WRITE_ERRORS => ((results[Error::WRITE_ERRORS] || []) << write_errors).flatten
+            'writeErrors' => ((results['writeErrors'] || []) << write_errors).flatten
           )
         else
           result.validate!
@@ -121,7 +121,7 @@ module Mongo
 
       def combine_write_concern_errors!(result)
         if write_concern_errors = result.aggregate_write_concern_errors(count)
-          results[Error::WRITE_CONCERN_ERRORS] = (results[Error::WRITE_CONCERN_ERRORS] || []) +
+          results['writeConcernErrors'] = (results['writeConcernErrors'] || []) +
                                                    write_concern_errors
         end
       end

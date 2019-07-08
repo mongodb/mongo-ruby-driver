@@ -41,16 +41,19 @@ module Mongo
     # The constant for the writeErrors array.
     #
     # @since 2.0.0
+    # @deprecated
     WRITE_ERRORS = 'writeErrors'.freeze
 
     # The constant for a write concern error.
     #
     # @since 2.0.0
+    # @deprecated
     WRITE_CONCERN_ERROR = 'writeConcernError'.freeze
 
     # The constant for write concern errors.
     #
     # @since 2.1.0
+    # @deprecated
     WRITE_CONCERN_ERRORS = 'writeConcernErrors'.freeze
 
     # Constant for an unknown error.
