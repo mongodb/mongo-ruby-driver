@@ -3,36 +3,19 @@ require 'singleton'
 class ClusterConfig
   include Singleton
 
-  def basic_client
-    # Do not cache the result here so that if the client gets closed,
-    # client registry reconnects it in subsequent tests
-    ClientRegistry.instance.global_client('basic')
-  end
-
   def single_server?
-    basic_client.cluster.servers.length == 1
-  end
-
-  def mongos?
-    if @mongos.nil?
-      basic_client.cluster.next_primary
-      @mongos = basic_client.cluster.topology.is_a?(Mongo::Cluster::Topology::Sharded)
-    end
-    @mongos
+    determine_cluster_config
+    @single_server
   end
 
   def replica_set_name
-    @replica_set_name ||= begin
-      basic_client.cluster.next_primary
-      basic_client.cluster.topology.replica_set_name
-    end
+    determine_cluster_config
+    @replica_set_name
   end
 
   def server_version
-    @server_version ||= begin
-      client = ClientRegistry.instance.global_client('authorized')
-      client.database.command(buildInfo: 1).first['version']
-    end
+    determine_cluster_config
+    @server_version
   end
 
   def short_server_version
@@ -40,11 +23,8 @@ class ClusterConfig
   end
 
   def fcv
-    @fcv ||= begin
-      client = ClientRegistry.instance.global_client('root_authorized')
-      rv = client.use(:admin).command(getParameter: 1, featureCompatibilityVersion: 1).first['featureCompatibilityVersion']
-      rv['version'] || rv
-    end
+    determine_cluster_config
+    @fcv
   end
 
   # Per https://jira.mongodb.org/browse/SERVER-39052, working with FCV
@@ -52,7 +32,7 @@ class ClusterConfig
   # less than 3.4. This method returns FCV on 3.4+ servers when in single
   # or RS topologies, and otherwise returns the major.minor server version.
   def fcv_ish
-    if server_version >= '3.4' && !mongos?
+    if server_version >= '3.4' && topology != :sharded
       fcv
     else
       if short_server_version == '4.1'
@@ -63,15 +43,14 @@ class ClusterConfig
     end
   end
 
-  def primary_address
-    @primary_address ||= begin
-      client = ClientRegistry.instance.global_client('authorized')
-      if client.cluster.topology.is_a?(Mongo::Cluster::Topology::ReplicaSetWithPrimary)
-        client.cluster.servers.detect { |server| server.primary? }.address
-      else
-        client.cluster.servers.first.address
-      end.seed
-    end
+  def primary_address_str
+    determine_cluster_config
+    @primary_address.seed
+  end
+
+  def primary_description
+    determine_cluster_config
+    @primary_description
   end
 
   # Try running a command on the admin database to see if the mongod was
@@ -88,13 +67,49 @@ class ClusterConfig
   end
 
   def topology
+    determine_cluster_config
+    @topology
+  end
+
+  private
+
+  def determine_cluster_config
+    return if @primary_address
+
+    # Run all commands to figure out the cluster configuration from the same
+    # client. This is somewhat wasteful when running a single test, but reduces
+    # test runtime for the suite overall because all commands are sent on the
+    # same connection rather than each command connecting to the cluster by
+    # itself.
+    client = ClientRegistry.instance.global_client('root_authorized')
+
+    primary = client.cluster.next_primary
+    @primary_address = primary.address
+    @primary_description = primary.description
+    @replica_set_name = client.cluster.topology.replica_set_name
+
     @topology ||= begin
-      topology = basic_client.cluster.topology.class.name.sub(/.*::/, '')
+      topology = client.cluster.topology.class.name.sub(/.*::/, '')
       topology = topology.gsub(/([A-Z])/) { |match| '_' + match.downcase }.sub(/^_/, '')
       if topology =~ /^replica_set/
         topology = 'replica_set'
       end
       topology.to_sym
     end
+
+    @single_server = client.cluster.servers_list.length == 1
+
+    @server_version = client.database.command(buildInfo: 1).first['version']
+
+    if @topology != :sharded && short_server_version >= '3.4'
+      rv = client.use(:admin).command(getParameter: 1, featureCompatibilityVersion: 1).first['featureCompatibilityVersion']
+      @fcv = rv['version'] || rv
+    end
+  end
+
+  def basic_client
+    # Do not cache the result here so that if the client gets closed,
+    # client registry reconnects it in subsequent tests
+    ClientRegistry.instance.global_client('basic')
   end
 end
