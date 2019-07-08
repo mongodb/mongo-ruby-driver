@@ -103,7 +103,10 @@ module Mongo
 
         records = get_records(hostname)
         @txt_options = get_txt_opts(hostname) || {}
-        @servers = parse_servers!(records.join(','))
+        records.each do |record|
+          validate_host!(record)
+        end
+        @servers = records
       end
 
       # Validates the hostname used in an SRV URI.
