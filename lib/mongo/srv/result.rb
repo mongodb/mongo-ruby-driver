@@ -14,7 +14,7 @@
 
 module Mongo
 
-  module SRV
+  module Srv
 
     # SRV record lookup result.
     #

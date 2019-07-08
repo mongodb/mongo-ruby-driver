@@ -104,9 +104,9 @@ module Mongo
 
       # Gets the SRV resolver.
       #
-      # @return [ Mongo::SRV::Resolver ]
+      # @return [ Mongo::Srv::Resolver ]
       def resolver
-        @resolver ||= SRV::Resolver.new(raise_on_invalid: true)
+        @resolver ||= Srv::Resolver.new(raise_on_invalid: true)
       end
 
       # Parses the credentials from the URI and performs DNS queries to obtain
