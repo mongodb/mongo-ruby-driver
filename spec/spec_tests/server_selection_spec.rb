@@ -47,8 +47,6 @@ describe 'Server Selection' do
           allow(c).to receive(:app_metadata).and_return(app_metadata)
           allow(c).to receive(:options).and_return({})
           allow(c).to receive(:server_selection_semaphore).and_return(nil)
-          allow(c).to receive(:heartbeat_interval).and_return(10000)
-          allow(c).to receive(:run_sdam_flow)
         end
       end
 
