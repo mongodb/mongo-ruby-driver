@@ -25,7 +25,7 @@ module Mongo
 
     # Waits for the semaphore to be signaled up to timeout seconds.
     # If semaphore is not signaled, returns after timeout seconds.
-    def wait(timeout)
+    def wait(timeout = nil)
       @lock.synchronize do
         @cv.wait(@lock, timeout)
       end
