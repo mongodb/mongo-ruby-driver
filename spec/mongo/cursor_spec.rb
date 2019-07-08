@@ -324,25 +324,26 @@ describe Mongo::Cursor do
           # We need to verify that the cursor was able to retrieve more documents
           # from the server so that more than one batch is successfully received
 
+          cluster.unregister_cursor(cursor.id)
+
           # The initial read is done on an enum obtained from the cursor.
           # The read below is done directly on the cursor. These are two
           # different objects. In MRI, iterating like this yields all of the
           # documents, hence we retrieved one document in the setup and
           # we expect to retrieve the remaining 5 here. In JRuby it appears that
-          # the enum buffers the first batch, so that the second document is
-          # lost to the iteration and we retrieve 4 documents below.
-          # The 4 documents still are retrieved via two batches thus
-          # fulfilling the requirement of the test to continue iterating the
-          # cursor.
+          # the enum may buffers the first batch, such that the second document
+          # sometimes is lost to the iteration and we retrieve 4 documents below.
+          # But sometimes we get all 5 documents. In either case, all of the
+          # documents are retrieved via two batches thus fulfilling the
+          # requirement of the test to continue iterating the cursor.
 
           if BSON::Environment.jruby?
-            expected_count = 4
+            expected_counts = [4, 5]
           else
-            expected_count = 5
+            expected_counts = [5]
           end
 
-          cluster.unregister_cursor(cursor.id)
-          expect(cursor.to_a.size).to eq(expected_count)
+          expect(expected_counts).to include(cursor.to_a.size)
         end
       end
     end
