@@ -34,22 +34,34 @@ describe Mongo::Cluster::Topology::ReplicaSetNoPrimary do
 
     let(:mongos) do
       Mongo::Server.new(address, cluster, monitoring, listeners,
-        SpecConfig.instance.test_options.merge(monitoring_io: false))
+        SpecConfig.instance.test_options.merge(monitoring_io: false)
+      ).tap do |server|
+        allow(server).to receive(:description).and_return(mongos_description)
+      end
     end
 
     let(:standalone) do
       Mongo::Server.new(address, cluster, monitoring, listeners,
-        SpecConfig.instance.test_options.merge(monitoring_io: false))
+        SpecConfig.instance.test_options.merge(monitoring_io: false)
+      ).tap do |server|
+        allow(server).to receive(:description).and_return(standalone_description)
+      end
     end
 
     let(:replica_set) do
       Mongo::Server.new(address, cluster, monitoring, listeners,
-        SpecConfig.instance.test_options.merge(monitoring_io: false))
+        SpecConfig.instance.test_options.merge(monitoring_io: false)
+      ).tap do |server|
+        allow(server).to receive(:description).and_return(replica_set_description)
+      end
     end
 
     let(:replica_set_two) do
       Mongo::Server.new(address, cluster, monitoring, listeners,
-        SpecConfig.instance.test_options.merge(monitoring_io: false))
+        SpecConfig.instance.test_options.merge(monitoring_io: false)
+      ).tap do |server|
+        allow(server).to receive(:description).and_return(replica_set_two_description)
+      end
     end
 
     let(:mongos_description) do
@@ -72,13 +84,6 @@ describe Mongo::Cluster::Topology::ReplicaSetNoPrimary do
       Mongo::Server::Description.new(address, { 'ismaster' => true,
         'minWireVersion' => 2, 'maxWireVersion' => 8,
         'setName' => 'test', 'ok' => 1 })
-    end
-
-    before do
-      mongos.monitor.instance_variable_set(:@description, mongos_description)
-      standalone.monitor.instance_variable_set(:@description, standalone_description)
-      replica_set.monitor.instance_variable_set(:@description, replica_set_description)
-      replica_set_two.monitor.instance_variable_set(:@description, replica_set_two_description)
     end
 
     context 'when a replica set name is provided' do
