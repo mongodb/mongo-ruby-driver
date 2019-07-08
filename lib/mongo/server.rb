@@ -68,12 +68,14 @@ module Mongo
       @round_trip_time_averager = RoundTripTimeAverager.new
       @description = Description.new(address, {})
       @last_scan = nil
-      @monitor = Monitor.new(self, event_listeners, monitoring,
-        options.merge(
-          app_metadata: Monitor::AppMetadata.new(cluster.options),
-      ))
-      unless monitor == false
-        start_monitoring
+      unless options[:monitoring_io] == false
+        @monitor = Monitor.new(self, event_listeners, monitoring,
+          options.merge(
+            app_metadata: Monitor::AppMetadata.new(cluster.options),
+        ))
+        unless monitor == false
+          start_monitoring
+        end
       end
       @connected = true
       @pool_lock = Mutex.new
@@ -85,7 +87,8 @@ module Mongo
     # @return [ Cluster ] cluster The server cluster.
     attr_reader :cluster
 
-    # @return [ Monitor ] monitor The server monitor.
+    # @return [ nil | Monitor ] monitor The server monitor. nil if the servenr
+    #   was created with monitoring_io: false option.
     attr_reader :monitor
 
     # @return [ Hash ] The options hash.
@@ -203,7 +206,9 @@ module Mongo
     #
     # @since 2.0.0
     def disconnect!(wait=false)
-      monitor.stop!(wait)
+      if monitor
+        monitor.stop!(wait)
+      end
       if wait
         pool.close(wait: wait)
         # Need to clear @pool as otherwise the old pool will continue to be
