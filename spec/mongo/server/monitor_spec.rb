@@ -158,22 +158,6 @@ describe Mongo::Server::Monitor do
   end
 =end
 
-  describe '#run!' do
-
-    let(:monitor_options) do
-      {:heartbeat_frequency => 1}
-    end
-
-    before do
-      monitor.run!
-      sleep(1)
-    end
-
-    it 'refreshes the server on the provided interval' do
-      expect(monitor.description).to_not be_nil
-    end
-  end
-
   describe '#restart!' do
 
     let!(:thread) do
