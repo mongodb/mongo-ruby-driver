@@ -180,7 +180,7 @@ module Mongo
       #
       # @since 2.1.0
       def validate!
-        if @results[Error::WRITE_ERRORS] || @results[Error::WRITE_CONCERN_ERRORS]
+        if @results['writeErrors'] || @results['writeConcernErrors']
           raise Error::BulkWriteError.new(@results)
         else
           self
