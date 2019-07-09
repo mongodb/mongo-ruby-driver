@@ -80,7 +80,7 @@ describe Mongo::BulkWrite do
           end
 
           it 'sets the document index on the error' do
-            expect(error.result[Mongo::Error::WRITE_ERRORS].first['index']).to eq(2)
+            expect(error.result['writeErrors'].first['index']).to eq(2)
           end
 
           context 'when a session is provided' do
@@ -1848,7 +1848,7 @@ describe Mongo::BulkWrite do
 
           it 'sets the document index on the error' do
             requests.push({ insert_one: { _id: 5 }})
-            expect(error.result[Mongo::Error::WRITE_ERRORS].first['index']).to eq(batch_size)
+            expect(error.result['writeErrors'].first['index']).to eq(batch_size)
           end
         end
 

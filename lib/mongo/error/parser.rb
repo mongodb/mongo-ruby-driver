@@ -133,7 +133,7 @@ module Mongo
       private
 
       def write_concern_error_document
-        document[WRITE_CONCERN_ERROR]
+        document['writeConcernError']
       end
 
       def parse!
@@ -141,7 +141,7 @@ module Mongo
         parse_single(@message, ERR)
         parse_single(@message, ERROR)
         parse_single(@message, ERRMSG)
-        parse_multiple(@message, WRITE_ERRORS)
+        parse_multiple(@message, 'writeErrors')
         if write_concern_error_document
           parse_single(@message, ERRMSG, write_concern_error_document)
         end
@@ -202,7 +202,7 @@ module Mongo
         if @code.nil? && @code_name.nil?
           # If we have writeErrors, and all of their codes are the same,
           # use that code. Otherwise don't set the code
-          if write_errors = document[WRITE_ERRORS]
+          if write_errors = document['writeErrors']
             codes = write_errors.map { |e| e['code'] }.compact
             if codes.uniq.length == 1
               @code = codes.first
