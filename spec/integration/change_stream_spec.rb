@@ -45,13 +45,22 @@ describe 'Change stream integration', retry: 4 do
       end
     end
 
-    shared_context 'next errors with a non-resumable error' do
-      it 'errors with a non-resumable error' do
+    shared_examples_for 'raises an exception' do
+      it 'raises an exception and does not attempt to resume' do
         change_stream
+
+        subscriber = EventSubscriber.new
+        authorized_client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
 
         expect do
           change_stream.to_enum.next
-        end.to raise_error(Mongo::Error::OperationFailure, /Failing command due to 'failCommand' failpoint \((11601|136|237)\)/)
+        end.to raise_error(Mongo::Error::OperationFailure)
+
+        aggregate_commands = subscriber.started_events.select { |e| e.command_name == 'aggregate' }
+        expect(aggregate_commands.length).to be 0
+
+        get_more_commands = subscriber.started_events.select { |e| e.command_name == 'getMore' }
+        expect(get_more_commands.length).to be 1
       end
     end
 
@@ -110,21 +119,21 @@ describe 'Change stream integration', retry: 4 do
           let(:errorCode) do
             11601
           end
-          it_behaves_like 'next errors with a non-resumable error'
+          it_behaves_like 'raises an exception'
         end
 
         context 'when the error is CappedPositionLost' do
           let(:errorCode) do
             136
           end
-          it_behaves_like 'next errors with a non-resumable error'
+          it_behaves_like 'raises an exception'
         end
 
         context 'when the error is CursorKilled' do
           let(:errorCode) do
             237
           end
-          it_behaves_like 'next errors with a non-resumable error'
+          it_behaves_like 'raises an exception'
         end
       end
 
@@ -155,21 +164,21 @@ describe 'Change stream integration', retry: 4 do
           let(:errorCode) do
             11601
           end
-          it_behaves_like 'next errors with a non-resumable error'
+          it_behaves_like 'raises an exception'
         end
 
         context 'when the error is CappedPositionLost' do
           let(:errorCode) do
             136
           end
-          it_behaves_like 'next errors with a non-resumable error'
+          it_behaves_like 'raises an exception'
         end
 
         context 'when the error is CursorKilled' do
           let(:errorCode) do
             237
           end
-          it_behaves_like 'next errors with a non-resumable error'
+          it_behaves_like 'raises an exception'
         end
       end
     end
@@ -604,7 +613,7 @@ describe 'Change stream integration', retry: 4 do
         end
 
         it 'must return startAfter from the initial aggregate' do
-          # Need to obtain a doc id from the stream before we use the stream, so
+          # Need to sample a doc id from the stream before we use the stream, so
           # the events subscriber does not record these commands as part of the example.
           sample_resume_token
 
