@@ -52,9 +52,9 @@ class SpecConfig
       if @mongodb_uri
         @mongodb_uri.servers
       else
-        client = Mongo::Client.new(['localhost:27017'], server_selection_timeout: 5)
+        client = Mongo::Client.new(['localhost:27017'], server_selection_timeout: 5.02)
         client.cluster.next_primary
-        client.cluster.servers_list.map do |server|
+        @addresses = client.cluster.servers_list.map do |server|
           server.address.to_s
         end
       end

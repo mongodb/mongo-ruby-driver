@@ -13,6 +13,8 @@ require 'spec_helper'
 describe 'Retryable writes integration tests' do
   include PrimarySocket
 
+  require_wired_tiger_on_36
+
   # These tests override server selector, which fails if there are multiple
   # eligible servers as would be the case in a multi-shard sharded cluster
   require_no_multi_shard
