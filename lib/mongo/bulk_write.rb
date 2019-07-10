@@ -39,7 +39,7 @@ module Mongo
                    :database,
                    :cluster,
                    :write_with_retry,
-                   :legacy_write_with_retry,
+                   :nro_write_with_retry,
                    :next_primary
 
     def_delegators :database, :client
@@ -72,7 +72,7 @@ module Mongo
                   txn_num)
             end
           else
-            legacy_write_with_retry do |server|
+            nro_write_with_retry(session, write_concern) do |server|
               execute_operation(
                   operation.keys.first,
                   operation.values.flatten,

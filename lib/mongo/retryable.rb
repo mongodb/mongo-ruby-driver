@@ -222,6 +222,31 @@ module Mongo
       end
     end
 
+    # Retryable writes wrapper for operations not supporting modern retryable
+    # writes.
+    #
+    # If the driver is configured to use modern retryable writes, this method
+    # yields to the passed block exactly once, thus not retrying any writes.
+    #
+    # If the driver is configured to use legacy retryable writes, this method
+    # delegates to legacy_write_with_retry which performs write retries using
+    # legacy logic.
+    #
+    # @param [ nil | Session ] session Optional session to use with the operation.
+    # @param [ nil | Hash | WriteConcern::Base ] write_concern The write concern.
+    #
+    # @yieldparam [ Server ] server The server to which the write should be sent.
+    #
+    # @api private
+    def nro_write_with_retry(session, write_concern, &block)
+      if session && session.client.options[:retry_writes]
+        server = select_server(cluster, ServerSelector.primary, session)
+        yield server
+      else
+        legacy_write_with_retry(nil, session, &block)
+      end
+    end
+
     # Implements legacy write retrying functionality by yielding to the passed
     # block one or more times.
     #
@@ -232,6 +257,8 @@ module Mongo
     #   operation. If not provided, the current primary will be retrieved from
     #   the cluster.
     # @param [ nil | Session ] session Optional session to use with the operation.
+    #
+    # @yieldparam [ Server ] server The server to which the write should be sent.
     #
     # @api private
     def legacy_write_with_retry(server = nil, session = nil)
