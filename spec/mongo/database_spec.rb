@@ -651,4 +651,38 @@ describe Mongo::Database do
       end
     end
   end
+
+  describe '#write_concern' do
+
+    let(:client) do
+      new_local_client(['127.0.0.1:27017'],
+        {monitoring_io: false}.merge(client_options))
+    end
+
+    let(:database) { client.database }
+
+    context 'when client write concern uses :write' do
+
+      let(:client_options) do
+        { :write => { :w => 1 } }
+      end
+
+      it 'is the correct write concern' do
+        expect(database.write_concern).to be_a(Mongo::WriteConcern::Acknowledged)
+        expect(database.write_concern.options).to eq(w: 1)
+      end
+    end
+
+    context 'when client write concern uses :write_concern' do
+
+      let(:client_options) do
+        { :write_concern => { :w => 1 } }
+      end
+
+      it 'is the correct write concern' do
+        expect(database.write_concern).to be_a(Mongo::WriteConcern::Acknowledged)
+        expect(database.write_concern.options).to eq(w: 1)
+      end
+    end
+  end
 end
