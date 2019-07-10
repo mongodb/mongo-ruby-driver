@@ -1,6 +1,8 @@
 require 'spec_helper'
 
 describe Mongo::Server::ConnectionPool do
+  require_no_tls
+
   let(:options) { {max_pool_size: 2} }
 
   let(:server_options) do
