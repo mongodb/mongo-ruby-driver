@@ -135,6 +135,9 @@ describe Mongo::Server::ConnectionPool do
   end
 
   describe '#max_size' do
+    after do
+      pool.close(:force => true)
+    end
 
     context 'when a max pool size option is provided' do
 
@@ -166,6 +169,9 @@ describe Mongo::Server::ConnectionPool do
   end
 
   describe '#wait_timeout' do
+    after do
+      pool.close(:force => true)
+    end
 
     context 'when the wait timeout option is provided' do
 
@@ -187,6 +193,10 @@ describe Mongo::Server::ConnectionPool do
   end
 
   describe '#size' do
+    after do
+      pool.close(:force => true)
+    end
+
     context 'pool without connections' do
       it 'is 0' do
         expect(pool.size).to eq(0)
@@ -228,6 +238,10 @@ describe Mongo::Server::ConnectionPool do
   end
 
   describe '#available_count' do
+    after do
+      pool.close(:force => true)
+    end
+
     context 'pool without connections' do
       it 'is 0' do
         expect(pool.available_count).to eq(0)
@@ -287,6 +301,9 @@ describe Mongo::Server::ConnectionPool do
   end
 
   describe '#check_in' do
+    after do
+      pool.close(:force => true)
+    end
 
     let!(:pool) do
       server.pool
@@ -395,6 +412,9 @@ describe Mongo::Server::ConnectionPool do
   end
 
   describe '#check_out' do
+    after do
+      pool.close(:force => true)
+    end
 
     let!(:pool) do
       server.pool
@@ -513,6 +533,9 @@ describe Mongo::Server::ConnectionPool do
   end
 
   describe '#disconnect!' do
+    after do
+      pool.close(:force => true)
+    end
 
     def create_pool(min_pool_size)
       described_class.new(server, max_pool_size: 3, min_pool_size: min_pool_size).tap do |pool|
@@ -669,6 +692,9 @@ describe Mongo::Server::ConnectionPool do
   end
 
   describe '#with_connection' do
+    after do
+      pool.close(:force => true)
+    end
 
     let!(:pool) do
       server.pool
@@ -702,6 +728,9 @@ describe Mongo::Server::ConnectionPool do
 
   # TODO verify modification.
   context 'when the connection does not finish authenticating before the thread is killed' do
+    after do
+      pool.close(:force => true)
+    end
 
     let!(:pool) do
       server.pool

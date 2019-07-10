@@ -1,12 +1,19 @@
 require 'spec_helper'
 
 describe Mongo::Server::ConnectionPool do
-  require_no_tls
 
   let(:options) { {max_pool_size: 2} }
 
+  let(:ssl_options) do
+    if SpecConfig.instance.ssl?
+      {ssl: true}
+    else
+      {}
+    end
+  end
+
   let(:server_options) do
-    { user: SpecConfig.instance.root_user.name, password: SpecConfig.instance.root_user.password }.merge(SpecConfig.instance.test_options).merge(options)
+    { user: SpecConfig.instance.root_user.name, password: SpecConfig.instance.root_user.password }.merge(SpecConfig.instance.test_options).merge(options).merge(ssl_options)
   end
 
   let(:address) do
