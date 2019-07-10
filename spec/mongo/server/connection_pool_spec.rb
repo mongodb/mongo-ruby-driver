@@ -39,10 +39,13 @@ describe Mongo::Server::ConnectionPool do
     described_class.new(server)
   end
 
-  describe '#initialize' do
-    after do
+  after do
+    if pool
       pool.close(:force => true)
     end
+  end
+
+  describe '#initialize' do
 
     context 'when a min size is provided' do
 
@@ -135,10 +138,6 @@ describe Mongo::Server::ConnectionPool do
   end
 
   describe '#max_size' do
-    after do
-      pool.close(:force => true)
-    end
-
     context 'when a max pool size option is provided' do
 
       let(:pool) do
@@ -169,10 +168,6 @@ describe Mongo::Server::ConnectionPool do
   end
 
   describe '#wait_timeout' do
-    after do
-      pool.close(:force => true)
-    end
-
     context 'when the wait timeout option is provided' do
 
       let(:pool) do
@@ -193,10 +188,6 @@ describe Mongo::Server::ConnectionPool do
   end
 
   describe '#size' do
-    after do
-      pool.close(:force => true)
-    end
-
     context 'pool without connections' do
       it 'is 0' do
         expect(pool.size).to eq(0)
@@ -238,10 +229,6 @@ describe Mongo::Server::ConnectionPool do
   end
 
   describe '#available_count' do
-    after do
-      pool.close(:force => true)
-    end
-
     context 'pool without connections' do
       it 'is 0' do
         expect(pool.available_count).to eq(0)
@@ -301,10 +288,6 @@ describe Mongo::Server::ConnectionPool do
   end
 
   describe '#check_in' do
-    after do
-      pool.close(:force => true)
-    end
-
     let!(:pool) do
       server.pool
     end
@@ -412,10 +395,6 @@ describe Mongo::Server::ConnectionPool do
   end
 
   describe '#check_out' do
-    after do
-      pool.close(:force => true)
-    end
-
     let!(:pool) do
       server.pool
     end
@@ -461,10 +440,6 @@ describe Mongo::Server::ConnectionPool do
 
       before do
         pool.check_in(connection)
-      end
-
-      after do
-        pool.close(force: true)
       end
 
       it 'closes stale connection and creates a new one' do
@@ -533,10 +508,6 @@ describe Mongo::Server::ConnectionPool do
   end
 
   describe '#disconnect!' do
-    after do
-      pool.close(:force => true)
-    end
-
     def create_pool(min_pool_size)
       described_class.new(server, max_pool_size: 3, min_pool_size: min_pool_size).tap do |pool|
         # kill background thread to test disconnect behavior
@@ -588,10 +559,6 @@ describe Mongo::Server::ConnectionPool do
     context 'min size is not 0' do
       let(:pool) do
         create_pool(1)
-      end
-
-      after do
-        pool.close(:force => true)
       end
 
       it_behaves_like 'disconnects and removes all connections in the pool and bumps generation'
@@ -692,10 +659,6 @@ describe Mongo::Server::ConnectionPool do
   end
 
   describe '#with_connection' do
-    after do
-      pool.close(:force => true)
-    end
-
     let!(:pool) do
       server.pool
     end
@@ -728,10 +691,6 @@ describe Mongo::Server::ConnectionPool do
 
   # TODO verify modification.
   context 'when the connection does not finish authenticating before the thread is killed' do
-    after do
-      pool.close(:force => true)
-    end
-
     let!(:pool) do
       server.pool
     end
@@ -757,6 +716,10 @@ describe Mongo::Server::ConnectionPool do
   end
 
   describe '#close_idle_sockets' do
+    after do
+      allow_any_instance_of(Mongo::Server::Connection).to receive(:disconnect!)
+      pool.close(:force => true)
+    end
 
     let!(:pool) do
       server.pool
@@ -817,10 +780,6 @@ describe Mongo::Server::ConnectionPool do
           before do
             # Kill background thread to test close_idle_socket behavior
             pool.populator.stop!
-          end
-
-          after do
-            pool.close(:force => true)
           end
 
           context 'when more than the number of min_size are checked out' do
@@ -908,9 +867,9 @@ describe Mongo::Server::ConnectionPool do
 
       it 'disconnects all expired and only expired connections' do
         c1 = pool.check_out
-        expect(c1).to receive(:disconnect!)
+        expect(c1).to receive(:disconnect!).with(hash_including(reason: :idle))
         c2 = pool.check_out
-        expect(c2).not_to receive(:disconnect!)
+        expect(c2).not_to receive(:disconnect!).with(hash_including(reason: :idle))
 
         pool.check_in(c1)
         Timecop.travel(Time.now + 1)
@@ -939,7 +898,7 @@ describe Mongo::Server::ConnectionPool do
       end
 
       before do
-        expect(connection).not_to receive(:disconnect!)
+        expect(connection).not_to receive(:disconnect!).with(hash_including(reason: :idle))
         pool.close_idle_sockets
       end
 

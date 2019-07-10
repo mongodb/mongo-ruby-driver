@@ -4,44 +4,52 @@ describe Mongo::Server::ConnectionPool do
 
   let(:options) { {max_pool_size: 2} }
 
-  let(:ssl_options) do
-    if SpecConfig.instance.ssl?
-      {ssl: true}
-    else
-      {}
-    end
-  end
+  # let(:ssl_options) do
+  #   if SpecConfig.instance.ssl?
+  #     {ssl: true}
+  #   else
+  #     {}
+  #   end
+  # end
 
   let(:server_options) do
-    { user: SpecConfig.instance.root_user.name, password: SpecConfig.instance.root_user.password }.merge(SpecConfig.instance.test_options).merge(options).merge(ssl_options)
+    { user: SpecConfig.instance.root_user.name, password: SpecConfig.instance.root_user.password }.merge(SpecConfig.instance.test_options).merge(options)
   end
 
-  let(:address) do
-    Mongo::Address.new(SpecConfig.instance.addresses.first)
-  end
+  # let(:address) do
+  #   Mongo::Address.new(SpecConfig.instance.addresses.first)
+  # end
 
-  let(:monitoring) do
-    Mongo::Monitoring.new(monitoring: false)
-  end
+  # let(:monitoring) do
+  #   Mongo::Monitoring.new(monitoring: false)
+  # end
 
-  let(:listeners) do
-    Mongo::Event::Listeners.new
-  end
+  # let(:listeners) do
+  #   Mongo::Event::Listeners.new
+  # end
 
   declare_topology_double
 
-  let(:cluster) do
-    double('cluster').tap do |cl|
-      allow(cl).to receive(:topology).and_return(topology)
-      allow(cl).to receive(:app_metadata).and_return(app_metadata)
-      allow(cl).to receive(:options).and_return({})
-      allow(cl).to receive(:update_cluster_time)
-    end
+  # let(:cluster) do
+  #   double('cluster').tap do |cl|
+  #     allow(cl).to receive(:topology).and_return(topology)
+  #     allow(cl).to receive(:app_metadata).and_return(app_metadata)
+  #     allow(cl).to receive(:options).and_return({})
+  #     allow(cl).to receive(:update_cluster_time)
+  #     allow(cl).to receive(:cluster_time).and_return(nil)
+  #   end
+  # end
+
+  # let(:server) do
+  #   Mongo::Server.new(address, cluster, monitoring, listeners, server_options)
+  # end
+
+  before(:all) do
+    ClientRegistry.instance.close_all_clients
   end
 
-  let(:server) do
-    Mongo::Server.new(address, cluster, monitoring, listeners, server_options)
-  end
+  let(:client) { ClientRegistry.instance.global_client('authorized').with(options) }
+  let(:server) { client.cluster.servers.first }
 
   let(:pool) do
     described_class.new(server)
