@@ -1,65 +1,48 @@
 require 'spec_helper'
 
 describe Mongo::Server::ConnectionPool do
-  let (:extras) { {} }
-  let(:options) { {max_pool_size: 2}.merge(extras) }
-
-  # let(:ssl_options) do
-  #   if SpecConfig.instance.ssl?
-  #     {ssl: true}
-  #   else
-  #     {}
-  #   end
-  # end
+  let(:options) { {max_pool_size: 2} }
 
   let(:server_options) do
-    { user: SpecConfig.instance.root_user.name, password: SpecConfig.instance.root_user.password }.merge(SpecConfig.instance.test_options).merge(options)
+    SpecConfig.instance.test_options.merge(options)
   end
 
-  # let(:address) do
-  #   Mongo::Address.new(SpecConfig.instance.addresses.first)
-  # end
+  let(:address) do
+    Mongo::Address.new(SpecConfig.instance.addresses.first)
+  end
 
-  # let(:monitoring) do
-  #   Mongo::Monitoring.new(monitoring: false)
-  # end
+  let(:monitoring) do
+    Mongo::Monitoring.new(monitoring: false)
+  end
 
-  # let(:listeners) do
-  #   Mongo::Event::Listeners.new
-  # end
+  let(:listeners) do
+    Mongo::Event::Listeners.new
+  end
 
   declare_topology_double
 
-  # let(:cluster) do
-  #   double('cluster').tap do |cl|
-  #     allow(cl).to receive(:topology).and_return(topology)
-  #     allow(cl).to receive(:app_metadata).and_return(app_metadata)
-  #     allow(cl).to receive(:options).and_return({})
-  #     allow(cl).to receive(:update_cluster_time)
-  #     allow(cl).to receive(:cluster_time).and_return(nil)
-  #   end
-  # end
-
-  # let(:server) do
-  #   Mongo::Server.new(address, cluster, monitoring, listeners, server_options)
-  # end
-
-  before(:all) do
-    ClientRegistry.instance.close_all_clients
+  let(:cluster) do
+    double('cluster').tap do |cl|
+      allow(cl).to receive(:topology).and_return(topology)
+      allow(cl).to receive(:app_metadata).and_return(app_metadata)
+      allow(cl).to receive(:options).and_return({})
+      allow(cl).to receive(:update_cluster_time)
+    end
   end
 
-  let(:client) { ClientRegistry.instance.global_client('authorized').with(options) }
-  let(:server) { client.cluster.servers.first }
+  let(:server) do
+    Mongo::Server.new(address, cluster, monitoring, listeners, server_options)
+  end
 
   let(:pool) do
-    server.pool
+    described_class.new(server)
   end
 
   describe '#initialize' do
     context 'when a min size is provided' do
 
-      let(:extras) do
-        {:min_pool_size => 2}
+      let(:pool) do
+        described_class.new(server, :min_pool_size => 2)
       end
 
       it 'creates the pool with min pool size connections' do
@@ -76,6 +59,9 @@ describe Mongo::Server::ConnectionPool do
     end
 
     context 'when min size is zero' do
+      let(:pool) do
+        described_class.new(server)
+      end
 
       it 'does not start the background thread' do
         pool
@@ -89,8 +75,8 @@ describe Mongo::Server::ConnectionPool do
 
   describe '#clear' do
     context 'when a min size is provided' do
-      let(:extras) do
-        {:min_pool_size => 1}
+      let(:pool) do
+        described_class.new(server, :min_pool_size => 1)
       end
 
       it 'repopulates the pool periodically only up to min size' do
@@ -123,8 +109,8 @@ describe Mongo::Server::ConnectionPool do
 
   describe '#check_in' do
     context 'when a min size is provided' do
-      let(:extras) do
-        {:min_pool_size => 1}
+      let(:pool) do
+        described_class.new(server, :min_pool_size => 1)
       end
 
       it 'repopulates the pool after check_in of a closed connection' do
@@ -150,8 +136,8 @@ describe Mongo::Server::ConnectionPool do
   describe '#check_out' do
     context 'when min size and idle time are provided' do
 
-      let(:extras) do
-        { :min_pool_size => 2, :max_pool_size => 2, :max_idle_time => 0.5}
+      let(:pool) do
+        described_class.new(server, :max_pool_size => 2, :min_pool_size => 2, :max_idle_time => 0.5)
       end
 
       it 'repopulates the pool after check_out empties idle connections' do
@@ -170,6 +156,7 @@ describe Mongo::Server::ConnectionPool do
 
         # let both connections become idle
         sleep 0.5
+
         # check_out should discard first two connections, trigger in-flow
         # creation of a single connection, then wake up populate thread
         third_connection = pool.check_out
@@ -190,8 +177,8 @@ describe Mongo::Server::ConnectionPool do
   describe '#close' do
     context 'when min size is provided' do
 
-      let(:extras) do
-        {:min_pool_size => 2}
+      let(:pool) do
+        described_class.new(server, :min_pool_size => 2)
       end
 
       it 'terminates and does not repopulate the pool after pool is closed' do
@@ -224,8 +211,8 @@ describe Mongo::Server::ConnectionPool do
 
   describe '#close_idle_sockets' do
     context 'when min size and idle time are provided' do
-      let(:extras) do
-        { :min_pool_size => 1, :max_idle_time => 0.5 }
+      let(:pool) do
+        described_class.new(server, :min_pool_size => 1, :max_idle_time => 0.5)
       end
 
       it 'repopulates pool after sockets are closes' do

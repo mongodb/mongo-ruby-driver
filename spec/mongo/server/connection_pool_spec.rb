@@ -40,6 +40,7 @@ describe Mongo::Server::ConnectionPool do
   end
 
   after do
+    # todo change so we don't create a pool if one was not created already
     if pool
       pool.close(:force => true)
     end
@@ -716,11 +717,6 @@ describe Mongo::Server::ConnectionPool do
   end
 
   describe '#close_idle_sockets' do
-    after do
-      allow_any_instance_of(Mongo::Server::Connection).to receive(:disconnect!)
-      pool.close(:force => true)
-    end
-
     let!(:pool) do
       server.pool
     end
