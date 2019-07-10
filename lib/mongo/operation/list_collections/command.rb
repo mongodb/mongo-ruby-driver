@@ -31,9 +31,7 @@ module Mongo
         private
 
         def selector(server)
-          (spec[SELECTOR] || {}).merge(
-              listCollections: 1, filter: { name: { '$not' => /system\.|\$/ }}
-          )
+          (spec[SELECTOR] || {}).merge(listCollections: 1)
         end
 
         def message(server)
