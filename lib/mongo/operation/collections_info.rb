@@ -50,7 +50,7 @@ module Mongo
       private
 
       def selector(server)
-        { :name => { '$not' => /system\.|\$/ } }
+        {}
       end
 
       def message(server)
