@@ -575,12 +575,14 @@ module Mongo
       end
 
       # true if the connection is connected, false otherwise
+      # connects connection; if handshake/auth fails, closes connection
       def authenticate_connection(connection)
         begin
           connection.connect!
           return true
         rescue Exception => e
-          # TODO do something here, maybe pass exception up?
+          # TODO close here or elsewhere? what if this errors?
+          connection.disconnect!
           raise e
         end
       end

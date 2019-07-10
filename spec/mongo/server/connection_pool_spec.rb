@@ -5,7 +5,7 @@ describe Mongo::Server::ConnectionPool do
   let(:options) { {max_pool_size: 2} }
 
   let(:server_options) do
-    SpecConfig.instance.test_options.merge(options)
+    SpecConfig.instance.test_options.merge(options).merge(SpecConfig.instance.auth_options)
   end
 
   let(:address) do
@@ -28,6 +28,7 @@ describe Mongo::Server::ConnectionPool do
       allow(cl).to receive(:app_metadata).and_return(app_metadata)
       allow(cl).to receive(:options).and_return({})
       allow(cl).to receive(:update_cluster_time)
+      allow(cl).to receive(:cluster_time).and_return(nil)
     end
   end
 
@@ -35,8 +36,12 @@ describe Mongo::Server::ConnectionPool do
     Mongo::Server.new(address, cluster, monitoring, listeners, server_options)
   end
 
+  let (:pool_options) do
+    {}
+  end
+
   let(:pool) do
-    described_class.new(server)
+    described_class.new(server, pool_options.merge(SpecConfig.instance.auth_options))
   end
 
   after do
@@ -49,9 +54,8 @@ describe Mongo::Server::ConnectionPool do
   describe '#initialize' do
 
     context 'when a min size is provided' do
-
-      let(:pool) do
-        described_class.new(server, :min_pool_size => 2)
+      let (:pool_options) do
+        { :min_pool_size => 2 }
       end
 
       it 'creates the pool with min size connections' do
@@ -69,9 +73,8 @@ describe Mongo::Server::ConnectionPool do
     end
 
     context 'when min size exceeds default max size' do
-
-      let(:pool) do
-        described_class.new(server, :min_pool_size => 10)
+      let (:pool_options) do
+        { :min_pool_size => 10 }
       end
 
       it 'sets max size to equal provided min size' do
@@ -81,10 +84,6 @@ describe Mongo::Server::ConnectionPool do
 
     context 'when no min size is provided' do
 
-      let(:pool) do
-        described_class.new(server)
-      end
-
       it 'creates the pool with no connections' do
         expect(pool.size).to eq(0)
         expect(pool.available_count).to eq(0)
@@ -92,9 +91,8 @@ describe Mongo::Server::ConnectionPool do
     end
 
     context 'sizes given as min_size and max_size' do
-
-      let(:pool) do
-        described_class.new(server, min_size: 3, max_size: 7)
+      let (:pool_options) do
+        { :min_size => 3, :max_size => 7 }
       end
 
       it 'sets sizes correctly' do
@@ -104,9 +102,8 @@ describe Mongo::Server::ConnectionPool do
     end
 
     context 'sizes given as min_pool_size and max_pool_size' do
-
-      let(:pool) do
-        described_class.new(server, min_pool_size: 3, max_pool_size: 7)
+      let (:pool_options) do
+        { :min_pool_size => 3, :max_pool_size => 7 }
       end
 
       it 'sets sizes correctly' do
@@ -116,9 +113,8 @@ describe Mongo::Server::ConnectionPool do
     end
 
     context 'timeout given as wait_timeout' do
-
-      let(:pool) do
-        described_class.new(server, wait_timeout: 4)
+      let (:pool_options) do
+        { :wait_timeout => 4 }
       end
 
       it 'sets wait timeout correctly' do
@@ -127,9 +123,8 @@ describe Mongo::Server::ConnectionPool do
     end
 
     context 'timeout given as wait_queue_timeout' do
-
-      let(:pool) do
-        described_class.new(server, wait_queue_timeout: 4)
+      let (:pool_options) do
+        { :wait_queue_timeout => 4 }
       end
 
       it 'sets wait timeout correctly' do
@@ -140,9 +135,8 @@ describe Mongo::Server::ConnectionPool do
 
   describe '#max_size' do
     context 'when a max pool size option is provided' do
-
-      let(:pool) do
-        described_class.new(server, :max_pool_size => 3)
+      let (:pool_options) do
+        { :max_pool_size => 3 }
       end
 
       it 'returns the max size' do
@@ -170,9 +164,8 @@ describe Mongo::Server::ConnectionPool do
 
   describe '#wait_timeout' do
     context 'when the wait timeout option is provided' do
-
-      let(:pool) do
-        described_class.new(server, :wait_queue_timeout => 3)
+      let (:pool_options) do
+        { :wait_queue_timeout => 3 }
       end
 
       it 'returns the wait timeout' do
@@ -851,8 +844,12 @@ describe Mongo::Server::ConnectionPool do
     end
 
     context 'when available connections include idle and non-idle ones' do
+      let (:pool_options) do
+        { max_pool_size: 2, max_idle_time: 0.5}
+      end
+
       let(:pool) do
-        described_class.new(server, max_pool_size: 2, max_idle_time: 0.5)
+        described_class.new(server, pool_options.merge(SpecConfig.instance.auth_options))
       end
 
       let(:connection) do
