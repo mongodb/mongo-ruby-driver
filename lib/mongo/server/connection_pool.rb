@@ -108,6 +108,7 @@ module Mongo
         # or in the checked out connections set.
         @available_connections = available_connections = []
         @checked_out_connections = Set.new
+        @pending_connections = Set.new
 
         # Mutex used for synchronizing access to @available_connections and
         # @checked_out_connections. The pool object is thread-safe, thus
@@ -123,7 +124,7 @@ module Mongo
         @populate_semaphore = Semaphore.new
         @populator = ConnectionPoolPopulator.new(self)
 
-        ObjectSpace.define_finalizer(self, self.class.finalize(@available_connections, @populator))
+        ObjectSpace.define_finalizer(self, self.class.finalize(@available_connections, @pending_connections, @populator))
 
         @populator.run! if min_size > 0
 
@@ -199,7 +200,7 @@ module Mongo
       # already holding the lock as Ruby does not allow a thread holding a
       # lock to acquire this lock again.
       def unsynchronized_size
-        @available_connections.length + @checked_out_connections.size
+        @available_connections.length + @checked_out_connections.size + @pending_connections.size
       end
       private :unsynchronized_size
 
@@ -309,6 +310,17 @@ module Mongo
             end
             @available_semaphore.wait(wait)
           end
+        end
+
+        begin
+          authenticate_connection(connection)
+        rescue Exception => e
+          # Authentication failed
+          @lock.synchronize do
+            @checked_out_connections.delete(connection)
+          end
+          # TODO publish CMAP error and raise appropriate exception
+          raise e
         end
 
         publish_cmap_event(
@@ -427,6 +439,12 @@ module Mongo
             connection.disconnect!(reason: :pool_closed)
           end
 
+          until @pending_connections.empty?
+            connection = @pending_connections.take(1).first
+            connection.disconnect!(reason: :pool_closed)
+            @pending_connections.delete(connection)
+          end
+
           if options[:force]
             until @checked_out_connections.empty?
               connection = @checked_out_connections.take(1).first
@@ -523,30 +541,70 @@ module Mongo
 
         catch(:done) do
           loop do
+            connection = nil
             @lock.synchronize do
               if !closed? && unsynchronized_size < min_size
-                @available_connections << create_connection
+                connection = create_connection
+                @pending_connections << connection
               else
                 throw(:done)
               end
             end
+
+            begin
+              authenticate_connection(connection)
+              @lock.synchronize do
+                if !closed?
+                  # TODO need to check it still exists in pending here,
+                  # in case pool is closed before we re-obtain the lock
+                  @available_connections << connection
+                  @pending_connections.delete(connection)
+
+                  # wake up one thread waiting for connections, since one was created
+                  @available_semaphore.signal
+                end
+              end
+            rescue Exception => e
+              @lock.synchronize do
+                @pending_connections.delete(connection)
+              end
+              raise e
+            end
           end
+        end
+      end
+
+      # true if the connection is connected, false otherwise
+      def authenticate_connection(connection)
+        begin
+          connection.connect!
+          return true
+        rescue Exception => e
+          # TODO do something here, maybe pass exception up?
+          raise e
         end
       end
 
       # Finalize the connection pool for garbage collection.
       #
       # @param [ List<Mongo::Connection> ] available_connections The available connections.
+      # @param [ List<Mongo::Connection> ] pending_connections The pending connections.
       # @param [ ConnectionPoolPopulator ] populator The populator.
       #
       # @return [ Proc ] The Finalizer.
-      def self.finalize(available_connections, populator)
+      def self.finalize(available_connections, pending_connections, populator)
         proc do
           populator.stop!
           available_connections.each do |connection|
             connection.disconnect!(reason: :pool_closed)
           end
           available_connections.clear
+
+          pending_connections.each do |connection|
+            connection.disconnect!(reason: :pool_closed)
+          end
+          pending_connections.clear
+
           # Finalizer does not close checked out connections.
           # Those would have to be garbage collected on their own
           # and that should close them.

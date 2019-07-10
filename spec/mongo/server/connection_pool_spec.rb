@@ -53,7 +53,7 @@ describe Mongo::Server::ConnectionPool do
       it 'creates the pool with min size connections' do
         # Allow background thread to populate pool
         pool
-        sleep 0.1
+        sleep 1
 
         expect(pool.size).to eq(2)
         expect(pool.available_count).to eq(2)
@@ -679,6 +679,7 @@ describe Mongo::Server::ConnectionPool do
       it 'does not add the connection to the pool' do
         pending 'Re-enable when connections are connected prior to being returned from check_out method'
 
+        # fails because with_connection raises the SocketError which is not caught anywhere
         allow(pool).to receive(:check_out).and_raise(Mongo::Error::SocketError)
         pool.with_connection { |c| c }
 
@@ -699,6 +700,7 @@ describe Mongo::Server::ConnectionPool do
     end
   end
 
+  # TODO verify modification.
   context 'when the connection does not finish authenticating before the thread is killed' do
 
     let!(:pool) do
@@ -706,7 +708,7 @@ describe Mongo::Server::ConnectionPool do
     end
 
     let(:server_options) do
-      { user: SpecConfig.instance.root_user.name, password: SpecConfig.instance.root_user.password }.merge(SpecConfig.instance.test_options).merge(max_pool_size: 1)
+      { user: SpecConfig.instance.root_user.name, password: SpecConfig.instance.root_user.password }.merge(SpecConfig.instance.test_options).merge(min_pool_size:0, max_pool_size: 1)
     end
 
     before do
@@ -715,27 +717,13 @@ describe Mongo::Server::ConnectionPool do
     end
 
     it 'creates a new connection' do
-      invoked = nil
+      expect(Mongo::Auth).to receive(:get).and_raise(Mongo::Error)
+      expect { pool.check_out }.to raise_error(Mongo::Error)
+      expect(pool.size).to be(0)
 
-      t = Thread.new do
-        # Kill the thread when it's authenticating
-        expect(Mongo::Auth).to receive(:get) do
-          if Thread.current != t
-            raise 'Auth invoked on unexpected thread'
-          end
-          invoked = true
-          t.kill
-          raise 'Should not get here'
-        end
-        pool.with_connection do |c|
-          c.send(:ensure_connected) { |socket| socket }
-        end
-      end
-      t.join
-
-      #expect(Mongo::Auth).to receive(:get).and_call_original
+      expect(Mongo::Auth).to receive(:get).and_call_original
       expect(pool.check_out).to be_a(Mongo::Server::Connection)
-      expect(invoked).to be true
+      expect(pool.size).to be(1)
     end
   end
 

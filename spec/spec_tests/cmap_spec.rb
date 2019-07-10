@@ -8,6 +8,7 @@ describe 'Cmap' do
     double('cluster').tap do |cl|
       allow(cl).to receive(:topology).and_return(topology)
       allow(cl).to receive(:options).and_return({})
+      allow(cl).to receive(:app_metadata).and_return(Mongo::Server::AppMetadata.new({}))
     end
   end
 
