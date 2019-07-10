@@ -1,8 +1,8 @@
 require 'spec_helper'
 
 describe Mongo::Server::ConnectionPool do
-
-  let(:options) { {max_pool_size: 2} }
+  let (:extras) { {} }
+  let(:options) { {max_pool_size: 2}.merge(extras) }
 
   # let(:ssl_options) do
   #   if SpecConfig.instance.ssl?
@@ -52,14 +52,14 @@ describe Mongo::Server::ConnectionPool do
   let(:server) { client.cluster.servers.first }
 
   let(:pool) do
-    described_class.new(server)
+    server.pool
   end
 
   describe '#initialize' do
     context 'when a min size is provided' do
 
-      let(:pool) do
-        described_class.new(server, :min_pool_size => 2)
+      let(:extras) do
+        {:min_pool_size => 2}
       end
 
       it 'creates the pool with min pool size connections' do
@@ -76,9 +76,6 @@ describe Mongo::Server::ConnectionPool do
     end
 
     context 'when min size is zero' do
-      let(:pool) do
-        described_class.new(server)
-      end
 
       it 'does not start the background thread' do
         pool
@@ -92,8 +89,8 @@ describe Mongo::Server::ConnectionPool do
 
   describe '#clear' do
     context 'when a min size is provided' do
-      let(:pool) do
-        described_class.new(server, :min_pool_size => 1)
+      let(:extras) do
+        {:min_pool_size => 1}
       end
 
       it 'repopulates the pool periodically only up to min size' do
@@ -126,8 +123,8 @@ describe Mongo::Server::ConnectionPool do
 
   describe '#check_in' do
     context 'when a min size is provided' do
-      let(:pool) do
-        described_class.new(server, :min_pool_size => 1)
+      let(:extras) do
+        {:min_pool_size => 1}
       end
 
       it 'repopulates the pool after check_in of a closed connection' do
@@ -153,8 +150,8 @@ describe Mongo::Server::ConnectionPool do
   describe '#check_out' do
     context 'when min size and idle time are provided' do
 
-      let(:pool) do
-        described_class.new(server, :min_pool_size => 2, :max_pool_size => 2, :max_idle_time => 0.5)
+      let(:extras) do
+        { :min_pool_size => 2, :max_pool_size => 2, :max_idle_time => 0.5}
       end
 
       it 'repopulates the pool after check_out empties idle connections' do
@@ -193,8 +190,8 @@ describe Mongo::Server::ConnectionPool do
   describe '#close' do
     context 'when min size is provided' do
 
-      let(:pool) do
-        described_class.new(server, :min_pool_size => 2)
+      let(:extras) do
+        {:min_pool_size => 2}
       end
 
       it 'terminates and does not repopulate the pool after pool is closed' do
@@ -227,8 +224,8 @@ describe Mongo::Server::ConnectionPool do
 
   describe '#close_idle_sockets' do
     context 'when min size and idle time are provided' do
-      let(:pool) do
-        described_class.new(server, :min_pool_size => 1, :max_idle_time => 0.5)
+      let(:extras) do
+        { :min_pool_size => 1, :max_idle_time => 0.5 }
       end
 
       it 'repopulates pool after sockets are closes' do
