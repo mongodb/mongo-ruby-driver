@@ -145,14 +145,25 @@ module Mongo
       #   collections.
       # @option options [ Integer ] :chunk_size Override the default chunk
       #   size.
-      # @option options [ String ] :write The write concern.
       # @option options [ String ] :read The read preference.
       # @option options [ Session ] :session The session to use.
+      # @option options [ Hash ] :write Deprecated. Equivalent to :write_concern
+      #   option.
+      # @option options [ Hash ] :write_concern The write concern options.
+      #   Can be :w => Integer|String, :fsync => Boolean, :j => Boolean.
       #
       # @since 2.0.0
       def initialize(database, options = {})
         @database = database
-        @options = options
+        @options = options.dup
+=begin WriteConcern object support
+        if @options[:write_concern].is_a?(WriteConcern::Base)
+          # Cache the instance so that we do not needlessly reconstruct it.
+          @write_concern = @options[:write_concern]
+          @options[:write_concern] = @write_concern.options
+        end
+=end
+        @options.freeze
         @chunks_collection = database[chunks_name]
         @files_collection = database[files_name]
       end
@@ -347,13 +358,16 @@ module Mongo
       #
       # @option opts [ Object ] :file_id An optional unique file id. An ObjectId is generated otherwise.
       # @option opts [ Integer ] :chunk_size Override the default chunk size.
-      # @option opts [ Hash ] :write The write concern.
       # @option opts [ Hash ] :metadata User data for the 'metadata' field of the files
       #   collection document.
       # @option opts [ String ] :content_type The content type of the file.
       #   Deprecated, please use the metadata document instead.
       # @option opts [ Array<String> ] :aliases A list of aliases.
       #   Deprecated, please use the metadata document instead.
+      # @option options [ Hash ] :write Deprecated. Equivalent to :write_concern
+      #   option.
+      # @option options [ Hash ] :write_concern The write concern options.
+      #   Can be :w => Integer|String, :fsync => Boolean, :j => Boolean.
       #
       # @return [ Stream::Write ] The write stream.
       #
@@ -386,13 +400,16 @@ module Mongo
       #
       # @option opts [ Object ] :file_id An optional unique file id. An ObjectId is generated otherwise.
       # @option opts [ Integer ] :chunk_size Override the default chunk size.
-      # @option opts [ Hash ] :write The write concern.
       # @option opts [ Hash ] :metadata User data for the 'metadata' field of the files
       #   collection document.
       # @option opts [ String ] :content_type The content type of the file. Deprecated, please
       #   use the metadata document instead.
       # @option opts [ Array<String> ] :aliases A list of aliases. Deprecated, please use the
       #   metadata document instead.
+      # @option options [ Hash ] :write Deprecated. Equivalent to :write_concern
+      #   option.
+      # @option options [ Hash ] :write_concern The write concern options.
+      #   Can be :w => Integer|String, :fsync => Boolean, :j => Boolean.
       #
       # @return [ BSON::ObjectId ] The ObjectId file id.
       #
@@ -432,8 +449,11 @@ module Mongo
       #
       # @since 2.1.0
       def write_concern
-        @write_concern ||= @options[:write] ? WriteConcern.get(@options[:write]) :
-            database.write_concern
+        @write_concern ||= if wco = @options[:write_concern] || @options[:write]
+          WriteConcern.get(wco)
+        else
+          database.write_concern
+        end
       end
 
       private

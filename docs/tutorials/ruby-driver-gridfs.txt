@@ -1,3 +1,5 @@
+.. _gridfs:
+
 ======
 GridFS
 ======
@@ -31,13 +33,18 @@ The options that ``Grid::FSBucket`` supports are:
    * - ``:bucket_name``
      - The name of the GridFS Bucket. Default is ``fs``.
    * - ``:fs_name``
-     - The name of the GridFS Bucket. Takes precedence over ``bucket_name``. Default is ``fs``.
+     - The name of the GridFS Bucket. Takes precedence over ``bucket_name``.
+       Default is ``fs``.
    * - ``:chunk_size``
      - Specifies the size of each file chunk in the database.
+   * - ``:write_concern``
+     - The write concern to use when uploading files. Please see the
+       :ref:`Write Concern <write-concern>` section under CRUD operations
+       for how to work with write concerns.
    * - ``:write``
-     - The write concern used when uploading files.
+     - Deprecated. Same as ``:write_concern``.
    * - ``:read``
-     - The read preference used when downloading files.
+     - The read preference to use when downloading files.
 
 
 For example, you can create a GridFS bucket object with a particular read preference:
@@ -50,74 +57,119 @@ For example, you can create a GridFS bucket object with a particular read prefer
 Working with write streams
 --------------------------
 
-To upload a file to GridFS using a write stream, you can either open a stream and write to it directly or write the
-entire contents of an IO object to GridFS all at once.
+To upload a file to GridFS using a write stream, you can either open a stream
+and write to it directly or write the entire contents of an ``IO`` object to
+GridFS all at once.
 
 To open an upload stream and write to it:
 
 .. code-block:: ruby
 
-  file = File.open('/path/to/my-file.txt', 'r')
-  fs_bucket.open_upload_stream('my-file.txt') do |stream|
-    stream.write(file)
+  File.open('/path/to/my-file.txt', 'r') do |file|
+    fs_bucket.open_upload_stream('my-file.txt') do |stream|
+      stream.write(file)
+    end
   end
-  file.close
 
 To upload the entire contents of an IO object in one call:
 
 .. code-block:: ruby
 
-  file = File.open('/path/to/my-file.txt', 'r')
-  fs_bucket.upload_from_stream('my-file.txt', file)
-  file.close
+  File.open('/path/to/my-file.txt', 'r') do |file|
+    fs_bucket.upload_from_stream('my-file.txt', file)
+  end
+
+Write streams support the following options:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 40 80
+
+   * - Option
+     - Description
+   * - ``:chunk_size``
+     - Specifies the size of each file chunk in the database.
+   * - ``:write_concern``
+     - The write concern to use when uploading files. Please see the
+       :ref:`Write Concern <write-concern>` section under CRUD operations
+       for how to work with write concerns.
+   * - ``:write``
+     - Deprecated. Same as ``:write_concern``.
+
+The options can be provided as the last argument to the write stream methods:
+
+.. code-block:: ruby
+
+    fs_bucket.open_upload_stream('my-file.txt', write_concern: {w: 2}) do |stream|
+      stream.write_concern
+      # => #<Mongo::WriteConcern::Acknowledged:0x46980201422160 options={:w=>2}>
+      
+      # ...
+    end
+
+    fs_bucket.upload_from_stream('my-file.txt', file, write_concern: {w: 2})
 
 
 Working with read streams
 -------------------------
 
-To download a file from GridFS using a read stream, you can either open a read stream and read from it directly or
-download the entire file all at once.
+To download a file from GridFS using a read stream, you can either open a
+read stream and read from it directly or download the entire file all at once.
 
 To open a download stream and read from it:
 
 .. code-block:: ruby
 
-  file = File.open('/path/to/my-output-file.txt', 'w')
-  fs_bucket.open_download_stream(file_id) do |stream|
-    file.write(stream.read)
+  File.open('/path/to/my-output-file.txt', 'w') do |file|
+    fs_bucket.open_download_stream(file_id) do |stream|
+      file.write(stream.read)
+    end
   end
-  file.close
 
 To download the file all at once and write it to an IO object:
 
 .. code-block:: ruby
 
-  file = File.open('/path/to/my-output-file.txt', 'w')
-  fs_bucket.download_from_stream(file_id, file)
-  file.close
+  File.open('/path/to/my-output-file.txt', 'w') do |file|
+    fs_bucket.download_from_stream(file_id, file)
+  end
 
 You can also download a file specified by a name and (optionally)
-revision number. Revision numbers are used to distinguish
-between files sharing the same name, ordered by date of upload. The revision number passed to
+revision number. Revision numbers are used to distinguish between files
+sharing the same name, ordered by date of upload. The revision number passed to
 ``open_download_stream_by_name`` can be positive or negative.
 
 .. code-block:: ruby
 
-  file = File.open('/path/to/my-output-file.txt', 'w')
-  fs_bucket.open_download_stream_by_name('my-file.txt', revision: -2) do |stream|
-    file.write(stream.read)
+  File.open('/path/to/my-output-file.txt', 'w') do |file|
+    fs_bucket.open_download_stream_by_name('my-file.txt', revision: -2) do |stream|
+      file.write(stream.read)
+    end
   end
-  file.close
 
 To download the entire contents of the file specified by name and (optionally)
 revision number:
 
 .. code-block:: ruby
 
-  file = File.open('/path/to/my-output-file.txt', 'w')
-  fs_bucket.download_to_stream_by_name('my-file.txt', file, revision: -2)
-  file.close
+  File.open('/path/to/my-output-file.txt', 'w') do |file|
+    fs_bucket.download_to_stream_by_name('my-file.txt', file, revision: -2)
+  end
 
+Read streams support the following options:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 40 80
+
+   * - Option
+     - Description
+   * - ``:read``
+     - The read preference to use when downloading files.
+
+Some, but not all, of the read methods listed above pass these options to
+the underlying read streams. Please consult the API documentation for each
+method to determine whether it supports a particular option.
 
 Finding file metadata
 ---------------------
@@ -141,7 +193,8 @@ You can delete a file by id.
 Working with Grid::File objects
 -------------------------------
 
-This object can be used to wrap a file to be inserted into the database using GridFS and the object that is retrieved.
+This object can be used to wrap a file to be inserted into the database using
+GridFS and the object that is retrieved.
 
 To create a file with raw data:
 
@@ -256,6 +309,3 @@ To delete a file, pass the file object to ``delete_one``.
   fs = client.database.fs
   file = fs.find_one(:filename => 'new-file.txt')
   fs.delete_one(file)
-
-
-    coll.find.to_a # { '_id' => ..., 'x' => 3 }
