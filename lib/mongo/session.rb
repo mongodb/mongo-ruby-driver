@@ -407,11 +407,6 @@ module Mongo
             return rv
           rescue Mongo::Error => e
             if e.label?('UnknownTransactionCommitResult')
-              # WriteConcernFailed
-              if e.is_a?(Mongo::Error::OperationFailure) && e.code == 64 && e.wtimeout?
-                transaction_in_progress = false
-                raise
-              end
               if Time.now >= deadline
                 transaction_in_progress = false
                 raise
