@@ -183,4 +183,12 @@ module Constraints
       end
     end
   end
+
+  def require_mmapv1
+    before do
+      if ClusterConfig.instance.storage_engine != :mmapv1
+        skip 'Test requires MMAPv1 storage engine'
+      end
+    end
+  end
 end
