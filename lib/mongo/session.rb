@@ -799,13 +799,13 @@ module Mongo
           if rc.nil? || rc.empty?
             c.delete(:readConcern)
           else
-            c[:readConcern ] = rc
+            c[:readConcern ] = Options::Mapper.transform_values_to_strings(rc)
           end
         end
 
         # We need to send the read concern level as a string rather than a symbol.
-        if c[:readConcern] && c[:readConcern][:level]
-          c[:readConcern][:level] = c[:readConcern][:level].to_s
+        if c[:readConcern]
+          c[:readConcern] = Options::Mapper.transform_values_to_strings(c[:readConcern])
         end
 
         # The write concern should be added to any abortTransaction or commitTransaction command.

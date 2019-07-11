@@ -138,7 +138,10 @@ module Mongo
           cmd[:skip] = opts[:skip] if opts[:skip]
           cmd[:hint] = opts[:hint] if opts[:hint]
           cmd[:limit] = opts[:limit] if opts[:limit]
-          cmd[:readConcern] = read_concern if read_concern
+          if read_concern
+            cmd[:readConcern] = Options::Mapper.transform_values_to_strings(
+              read_concern)
+          end
           cmd[:maxTimeMS] = opts[:max_time_ms] if opts[:max_time_ms]
           Mongo::Lint.validate_underscore_read_preference(opts[:read])
           read_pref = opts[:read] || read_preference
@@ -205,7 +208,10 @@ module Mongo
         def estimated_document_count(opts = {})
           cmd = { count: collection.name }
           cmd[:maxTimeMS] = opts[:max_time_ms] if opts[:max_time_ms]
-          cmd[:readConcern] = read_concern if read_concern
+          if read_concern
+            cmd[:readConcern] = Options::Mapper.transform_values_to_strings(
+              read_concern)
+          end
           Mongo::Lint.validate_underscore_read_preference(opts[:read])
           read_pref = opts[:read] || read_preference
           selector = ServerSelector.get(read_pref || server_selector)
@@ -242,7 +248,10 @@ module Mongo
                   :key => field_name.to_s,
                   :query => filter }
           cmd[:maxTimeMS] = opts[:max_time_ms] if opts[:max_time_ms]
-          cmd[:readConcern] = read_concern if read_concern
+          if read_concern
+            cmd[:readConcern] = Options::Mapper.transform_values_to_strings(
+              read_concern)
+          end
           Mongo::Lint.validate_underscore_read_preference(opts[:read])
           read_pref = opts[:read] || read_preference
           selector = ServerSelector.get(read_pref || server_selector)
