@@ -127,8 +127,8 @@ module Mongo
       # May be nil.
       #
       # @api private
-      def pool_object_id
-        options[:pool_object_id]
+      def pool
+        options[:pool]
       end
 
       # Whether the connection was closed.
@@ -159,7 +159,7 @@ module Mongo
       def connect!
         if closed?
           if Lint.enabled?
-            raise Error::LintError, "Reconnecting closed connections is no longer supported"
+            raise Error::LintError, "Reconnecting closed connections is no longer supported (for #{address})"
           else
             log_warn("Reconnecting closed connections is deprecated (for #{address})")
           end
@@ -298,7 +298,7 @@ module Mongo
 
       def handshake!(socket)
         unless socket
-          raise Error::HandshakeError, "Cannot handshake because there is no usable socket"
+          raise Error::HandshakeError, "Cannot handshake because there is no usable socket (for #{address})"
         end
 
         response = average_rtt = nil
