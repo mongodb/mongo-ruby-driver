@@ -332,6 +332,7 @@ EOT
 
   # Base test options.
   def base_test_options
+    uri_options = @uri_options || {}
     {
       max_pool_size: 1,
       heartbeat_frequency: 20,
@@ -342,7 +343,7 @@ EOT
       # means the test suite hangs for about 4 seconds before
       # failing.
       # Server selection timeout of 1 is insufficient for evergreen.
-      server_selection_timeout: ssl? ? 4.01 : 2.01,
+      server_selection_timeout: uri_options[:server_selection_timeout] || (ssl? ? 4.01 : 2.01),
       wait_queue_timeout: 2,
       connect_timeout: 3,
       max_idle_time: 5
