@@ -228,6 +228,13 @@ module Mongo
     #
     # @since 2.0.0
     def create(opts = {})
+      # Passing read options to create command causes it to break.
+      # Filter the read options out.
+      # TODO put the list of read options in a class-level constant when
+      # we figure out what the full set of them is.
+      options = Hash[self.options.reject do |key, value|
+        %w(read read_preference).include?(key.to_s)
+      end]
       operation = { :create => name }.merge(options)
       operation.delete(:write)
       operation.delete(:write_concern)

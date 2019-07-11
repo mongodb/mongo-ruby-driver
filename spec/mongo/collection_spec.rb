@@ -196,8 +196,10 @@ describe Mongo::Collection do
   describe '#with' do
 
     let(:client) do
-      new_local_client(SpecConfig.instance.addresses,
-        SpecConfig.instance.test_options.merge(monitoring_io: false))
+      new_local_client_nmio(SpecConfig.instance.addresses,
+        SpecConfig.instance.test_options.merge(
+          SpecConfig.instance.auth_options
+      ))
     end
 
     let(:database) do
@@ -239,18 +241,101 @@ describe Mongo::Collection do
       end
 
       context 'when the client has a read preference set' do
+        clean_slate_on_evergreen
 
         let(:client) do
-          new_local_client(SpecConfig.instance.addresses,
-            SpecConfig.instance.test_options.merge(
-              read: { mode: :primary_preferred },
-              monitoring_io: false,
-          ))
+          authorized_client.with(SpecConfig.instance.auth_options.merge(
+            client_options
+          )).tap do |client|
+            expect(client.options[:read]).to eq(Mongo::Options::Redacted.new(
+              mode: :primary_preferred))
+          end
+        end
+
+        let(:client_options) do
+          {
+            read: { mode: :primary_preferred },
+            monitoring_io: false,
+          }
+        end
+
+        let(:new_options) do
+          { read: { mode: :secondary } }
         end
 
         it 'sets the new read options on the new collection' do
-          expect(new_collection.read_preference).to eq(new_options[:read])
-          expect(new_collection.read_preference).not_to eq(client.read_preference)
+          # This is strictly a Hash, not a BSON::Document like the client's
+          # read preference.
+          expect(new_collection.read_preference).to eq(mode: :secondary)
+        end
+
+        it 'duplicates the read option' do
+          expect(new_collection.read_preference).not_to eql(client.read_preference)
+        end
+
+        context 'when reading from collection' do
+          # Since we are requesting a secondary read, we need a replica set.
+          require_topology :replica_set
+
+          let(:client_options) do
+            {
+              read: { mode: :primary_preferred },
+            }
+          end
+
+          let(:subscriber) { EventSubscriber.new }
+
+          before do
+            client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
+          end
+
+          shared_examples_for "uses collection's read preference when reading" do
+            it "uses collection's read preference when reading" do
+              expect do
+                new_collection.find.to_a.count
+              end.not_to raise_error
+
+              event = subscriber.started_events.detect do |event|
+                event.command['find']
+              end
+              actual_rp = event.command['$readPreference']
+              expect(actual_rp).to eq(expected_read_preference)
+            end
+          end
+
+          context 'post-OP_MSG server' do
+            min_server_fcv '3.6'
+
+            context 'standalone' do
+              require_topology :single
+
+              let(:expected_read_preference) do
+                nil
+              end
+
+              it_behaves_like "uses collection's read preference when reading"
+            end
+
+            context 'RS, sharded' do
+              require_topology :replica_set, :sharded
+
+              let(:expected_read_preference) do
+                {'mode' => 'secondary'}
+              end
+
+              it_behaves_like "uses collection's read preference when reading"
+            end
+          end
+
+          context 'pre-OP-MSG server' do
+            max_server_version '3.4'
+
+            let(:expected_read_preference) do
+              nil
+            end
+
+            it_behaves_like "uses collection's read preference when reading"
+          end
         end
       end
 

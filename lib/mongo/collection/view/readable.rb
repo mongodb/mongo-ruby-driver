@@ -557,13 +557,22 @@ module Mongo
         end
 
         def read_preference
-          rp = if options[:session] && options[:session].in_transaction?
-            options[:session].txn_read_preference || collection.client.read_preference
-          else
-            @read_preference ||= (options[:read] || collection.read_preference)
+          @read_preference ||= begin
+            # Operation read preference is always respected, and has the
+            # highest priority. If we are in a transaction, we look at
+            # transaction read preference and default to client, ignoring
+            # collection read preference. If we are not in transaction we
+            # look at collection read preference which defaults to client.
+            rp = if options[:read]
+              options[:read]
+            elsif options[:session] && options[:session].in_transaction?
+              options[:session].txn_read_preference || collection.client.read_preference
+            else
+              collection.read_preference
+            end
+            Lint.validate_underscore_read_preference(rp)
+            rp
           end
-          Lint.validate_underscore_read_preference(rp)
-          rp
         end
 
         def server_selector
