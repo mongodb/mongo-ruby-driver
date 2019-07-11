@@ -348,20 +348,24 @@ module Mongo
       # @since 2.9.0
       def check_in(connection)
         @lock.synchronize do
-          unless @checked_out_connections.include?(connection)
-            raise ArgumentError, "Trying to check in a connection which is not currently checked out by this pool: #{connection}"
+          unless connection.pool_object_id == object_id
+            raise ArgumentError, "Trying to check in a connection which was not checked out by this pool: #{connection}"
           end
-
-          @checked_out_connections.delete(connection)
 
           # Note: if an event handler raises, resource will not be signaled.
           # This means threads waiting for a connection to free up when
           # the pool is at max size may time out.
           # Threads that begin waiting after this method completes (with
           # the exception) should be fine.
-          publish_cmap_event(
-            Monitoring::Event::Cmap::ConnectionCheckedIn.new(@server.address, connection.id)
-          )
+
+          if @checked_out_connections.include?(connection)
+            # It is possible the connection was already checked in; we only
+            # want to publish this event once.
+            @checked_out_connections.delete(connection)
+            publish_cmap_event(
+              Monitoring::Event::Cmap::ConnectionCheckedIn.new(@server.address, connection.id)
+            )
+          end
 
           if closed?
             connection.disconnect!(reason: :pool_closed)
@@ -375,7 +379,7 @@ module Mongo
           elsif connection.generation != @generation
             connection.disconnect!(reason: :stale)
             @populate_semaphore.signal
-          else
+          elsif !@available_connections.include?(connection)
             connection.record_checkin!
             @available_connections << connection
 
@@ -620,7 +624,8 @@ module Mongo
       private
 
       def create_connection
-        Connection.new(@server, options.merge(generation: generation))
+        connection = Connection.new(@server, options.merge(generation: generation,
+          pool_object_id: object_id))
       end
 
       # Create a connection, connect it, and add it to the pool.
