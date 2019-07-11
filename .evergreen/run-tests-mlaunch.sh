@@ -36,6 +36,7 @@ mkdir -p "$dbdir"
 
 args="--setParameter enableTestCommands=1"
 args="$args --setParameter diagnosticDataCollectionEnabled=false"
+uri_options=
 if test "$TOPOLOGY" = replica_set; then
   args="$args --replicaset --name ruby-driver-rs"
 elif test "$TOPOLOGY" = sharded_cluster; then
@@ -45,6 +46,7 @@ else
 fi
 if test -n "$MMAPV1"; then
   args="$args --storageEngine mmapv1"
+  uri_options="$uri_options&retryReads=false&retryWrites=false"
 fi
 mlaunch --dir "$dbdir" --binarypath "$BINDIR" $args
 
@@ -52,10 +54,10 @@ echo "Running specs"
 which bundle
 bundle --version
 
-export MONGODB_URI="mongodb://localhost:27017/?serverSelectionTimeoutMS=30000"
+export MONGODB_URI="mongodb://localhost:27017/?serverSelectionTimeoutMS=30000$uri_options"
 bundle exec rake spec:prepare
 
-export MONGODB_URI="mongodb://localhost:27017"
+export MONGODB_URI="mongodb://localhost:27017/?appName=test-suite$uri_options"
 bundle exec rake spec:ci
 test_status=$?
 echo "TEST STATUS"
