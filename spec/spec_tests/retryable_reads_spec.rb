@@ -1,6 +1,7 @@
 require 'spec_helper'
 
 describe 'Retryable reads spec tests' do
+  require_wired_tiger
   require_no_multi_shard
 
   define_crud_spec_tests(RETRYABLE_READS_TESTS) do |spec, req, test|

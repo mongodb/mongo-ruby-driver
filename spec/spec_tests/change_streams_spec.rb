@@ -1,6 +1,7 @@
 require 'spec_helper'
 
 describe 'ChangeStreams' do
+  require_wired_tiger
 
   CHANGE_STREAMS_TESTS.each do |file|
 

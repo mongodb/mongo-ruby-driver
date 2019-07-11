@@ -1,6 +1,7 @@
 require 'spec_helper'
 
 describe 'Transactions examples' do
+  require_wired_tiger
   require_transaction_support
 
   let(:hr) do
