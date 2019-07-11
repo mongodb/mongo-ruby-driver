@@ -60,12 +60,6 @@ module Mongo
       @server_session = server_session
       options = options.dup
 
-      # Because the read preference will need to be inserted into a command
-      # as a string, we convert it from a symbol immediately upon receiving it.
-      #if options[:read_preference] && options[:read_preference][:mode]
-        #options[:read_preference][:mode] = options[:read_preference][:mode].to_s
-      #end
-
       @client = client.use(:admin)
       @options = options.freeze
       @cluster_time = nil
@@ -778,15 +772,6 @@ module Mongo
     # @api private
     def add_txn_opts!(command, read)
       command.tap do |c|
-        # The read preference should be added for all read operations.
-        if false && read && txn_read_pref = txn_read_preference
-          Mongo::Lint.validate_underscore_read_preference(txn_read_pref)
-          txn_read_pref = txn_read_pref.dup
-          txn_read_pref[:mode] = txn_read_pref[:mode].to_s.gsub(/(_\w)/) { |match| match[1].upcase }
-          Mongo::Lint.validate_camel_case_read_preference(txn_read_pref)
-          c['$readPreference'] = txn_read_pref
-        end
-
         # The read concern should be added to any command that starts a transaction.
         if starting_transaction?
           # https://jira.mongodb.org/browse/SPEC-1161: transaction's
