@@ -52,7 +52,7 @@ echo "Running specs"
 which bundle
 bundle --version
 
-export MONGODB_URI="mongodb://localhost:27017/serverSelectionTimeoutMS=30000"
+export MONGODB_URI="mongodb://localhost:27017/?serverSelectionTimeoutMS=30000"
 bundle exec rake spec:prepare
 
 export MONGODB_URI="mongodb://localhost:27017"
