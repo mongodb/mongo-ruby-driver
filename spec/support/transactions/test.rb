@@ -54,6 +54,12 @@ module Mongo
         @data = data
         @description = test['description']
         @client_options = Utils.convert_client_options(test['clientOptions'] || {})
+        if @client_options[:read_concern]
+          @client_options[:read_concern] = Options::Mapper.transform_keys_to_symbols(@client_options[:read_concern])
+          if @client_options[:read_concern][:level].is_a?(String)
+            @client_options[:read_concern][:level] = @client_options[:read_concern][:level].to_sym
+          end
+        end
         @session_options = Utils.snakeize_hash(test['sessionOptions'] || {})
         @fail_point = test['failPoint']
         @operations = test['operations']

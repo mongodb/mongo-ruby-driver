@@ -62,7 +62,9 @@ module Mongo
         if !server.standalone?
           cc_doc = session.send(:causal_consistency_doc)
           if cc_doc
-            selector[:readConcern] = (selector[:readConcern] || read_concern || {}).merge(cc_doc)
+            rc_doc = (selector[:readConcern] || read_concern || {}).merge(cc_doc)
+            selector[:readConcern] = Options::Mapper.transform_values_to_strings(
+              rc_doc)
           end
         end
       end

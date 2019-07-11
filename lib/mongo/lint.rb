@@ -67,11 +67,18 @@ module Mongo
       end
       return if read_concern.empty?
       keys = read_concern.keys
-      if keys != [:level]
+      if read_concern.is_a?(BSON::Document)
+        # Permits indifferent access
+        allowed_keys = ['level']
+      else
+        # Does not permit indifferent access
+        allowed_keys = [:level]
+      end
+      if keys != allowed_keys
         raise Error::LintError, "Read concern has invalid keys: #{keys.inspect}"
       end
       level = read_concern[:level]
-      return if [:local, :majority, :snapshot].include?(level)
+      return if [:local, :available, :majority, :linearizable, :snapshot].include?(level)
       raise Error::LintError, "Read concern level is invalid: #{level.inspect}"
     end
     module_function :validate_read_concern_option
