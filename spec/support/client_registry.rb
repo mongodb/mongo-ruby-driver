@@ -125,6 +125,15 @@ class ClientRegistry
       ).tap do |client|
         client.subscribe(Mongo::Monitoring::COMMAND, EventSubscriber)
       end
+    # Provides an authorized mongo client that does not retry writes
+    # using either modern or legacy mechanisms.
+    when 'authorized_without_any_retry_writes'
+      global_client('authorized').with(
+        retry_writes: false, max_write_retries: 0,
+        server_selection_timeout: 4.99,
+      ).tap do |client|
+        client.subscribe(Mongo::Monitoring::COMMAND, EventSubscriber)
+      end
     # Provides an authorized mongo client that does not retry reads or writes
     # at all.
     when 'authorized_without_any_retries'

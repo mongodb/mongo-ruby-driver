@@ -27,12 +27,7 @@ module Mongo
         when 'database'
           collection.database
         else
-          if rp = collection_read_preference
-            collection = collection.with(read: rp)
-          end
-          collection = collection.with(read_concern: read_concern) if read_concern
-          collection = collection.with(write: write_concern) if write_concern
-          collection
+          collection.with(collection_options)
         end
 
         session = case arguments && arguments['session']
@@ -121,15 +116,18 @@ module Mongo
       end
 
       def start_transaction(session, context)
-        session.start_transaction(Utils.snakeize_hash(arguments['options'])) ; nil
+        session.start_transaction(Utils.convert_operation_options(arguments['options']))
+        nil
       end
 
       def commit_transaction(session, context)
-        session.commit_transaction ; nil
+        session.commit_transaction
+        nil
       end
 
       def abort_transaction(session, context)
-        session.abort_transaction ; nil
+        session.abort_transaction
+        nil
       end
 
       def with_transaction(session, context, collection)
@@ -139,12 +137,6 @@ module Mongo
 
         if arguments['options']
           options = Utils.snakeize_hash(arguments['options'])
-          if options[:read_concern]
-            options[:read_concern] = Options::Mapper.transform_keys_to_symbols(options[:read_concern])
-            if options[:read_concern][:level] == 'majority'
-              options[:read_concern][:level] = :majority
-            end
-          end
         else
           options = nil
         end
@@ -199,16 +191,8 @@ module Mongo
         end
       end
 
-      def read_concern
-        Utils.snakeize_hash(@spec['collectionOptions'] && @spec['collectionOptions']['readConcern'])
-      end
-
-      def write_concern
-        Utils.snakeize_hash(@spec['collectionOptions'] && @spec['collectionOptions']['writeConcern'])
-      end
-
-      def collection_read_preference
-        Utils.snakeize_hash(@spec['collectionOptions'] && @spec['collectionOptions']['readPreference'])
+      def collection_options
+        Utils.convert_operation_options(@spec['collectionOptions'])
       end
     end
   end

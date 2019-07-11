@@ -60,12 +60,6 @@ module Mongo
       @server_session = server_session
       options = options.dup
 
-      # Because the read preference will need to be inserted into a command as a string, we convert
-      # it from a symbol immediately upon receiving it.
-      if options[:read_preference] && options[:read_preference][:mode]
-        options[:read_preference][:mode] = options[:read_preference][:mode].to_s
-      end
-
       @client = client.use(:admin)
       @options = options.freeze
       @cluster_time = nil
@@ -168,7 +162,7 @@ module Mongo
     #
     # @since 2.6.0
     def txn_read_preference
-      rp = txn_options && txn_options[:read_preference] ||
+      rp = txn_options && txn_options[:read] ||
         @client.read_preference
       Mongo::Lint.validate_underscore_read_preference(rp)
       rp
@@ -476,6 +470,18 @@ module Mongo
     def start_transaction(options = nil)
       if options
         Lint.validate_read_concern_option(options[:read_concern])
+
+=begin
+        # It would be handy to detect invalid read preferences here, but
+        # some of the spec tests require later detection of invalid read prefs.
+        # Maybe we can do this when lint mode is on.
+        mode = options[:read] && options[:read][:mode].to_s
+        if mode && mode != 'primary'
+          raise Mongo::Error::InvalidTransactionOperation.new(
+            "read preference in a transaction must be primary (requested: #{mode})"
+          )
+        end
+=end
       end
 
       check_if_ended!
@@ -488,7 +494,7 @@ module Mongo
       unpin
 
       next_txn_num
-      @txn_options = options || @options[:default_transaction_options] || {}
+      @txn_options = (@options[:default_transaction_options] || {}).merge(options || {})
 
       if txn_write_concern && !WriteConcern.get(txn_write_concern).acknowledged?
         raise Mongo::Error::InvalidTransactionOperation.new(
@@ -769,15 +775,6 @@ module Mongo
     # @api private
     def add_txn_opts!(command, read)
       command.tap do |c|
-        # The read preference should be added for all read operations.
-        if read && txn_read_pref = txn_read_preference
-          Mongo::Lint.validate_underscore_read_preference(txn_read_pref)
-          txn_read_pref = txn_read_pref.dup
-          txn_read_pref[:mode] = txn_read_pref[:mode].to_s.gsub(/(_\w)/) { |match| match[1].upcase }
-          Mongo::Lint.validate_camel_case_read_preference(txn_read_pref)
-          c['$readPreference'] = txn_read_pref
-        end
-
         # The read concern should be added to any command that starts a transaction.
         if starting_transaction?
           # https://jira.mongodb.org/browse/SPEC-1161: transaction's
@@ -856,10 +853,16 @@ module Mongo
     # @since 2.6.0
     # @api private
     def validate_read_preference!(command)
-      return unless in_transaction? && non_primary_read_preference_mode?(command)
+      return unless in_transaction?
+      return unless command['$readPreference']
 
-      raise Mongo::Error::InvalidTransactionOperation.new(
-        Mongo::Error::InvalidTransactionOperation::INVALID_READ_PREFERENCE)
+      mode = command['$readPreference']['mode'] || command['$readPreference'][:mode]
+
+      if mode && mode != 'primary'
+        raise Mongo::Error::InvalidTransactionOperation.new(
+          "read preference in a transaction must be primary (requested: #{mode})"
+        )
+      end
     end
 
     # Update the state of the session due to a (non-commit and non-abort) operation being run.
@@ -1005,13 +1008,6 @@ module Mongo
     def txn_write_concern
       (txn_options && txn_options[:write_concern]) ||
         (@client.write_concern && @client.write_concern.options)
-    end
-
-    def non_primary_read_preference_mode?(command)
-      return false unless command['$readPreference']
-
-      mode = command['$readPreference']['mode'] || command['$readPreference'][:mode]
-      mode && mode != 'primary'
     end
 
     # Returns causal consistency document if the last operation time is
