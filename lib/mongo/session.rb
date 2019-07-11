@@ -472,6 +472,9 @@ module Mongo
         Lint.validate_read_concern_option(options[:read_concern])
 
 =begin
+        # It would be handy to detect invalid read preferences here, but
+        # some of the spec tests require later detection of invalid read prefs.
+        # Maybe we can do this when lint mode is on.
         mode = options[:read] && options[:read][:mode].to_s
         if mode && mode != 'primary'
           raise Mongo::Error::InvalidTransactionOperation.new(
