@@ -64,12 +64,6 @@ describe Mongo::Server::Connection, retry: 3 do
   describe '#connect!' do
 
     shared_examples_for 'keeps server type and topology' do
-      before do
-        # we want the server to not start in unknown state,
-        # hence scan it and transition to some other state here
-        #server.scan!
-      end
-
       it 'does not mark server unknown' do
         expect(server).not_to receive(:unknown!)
         error
@@ -77,12 +71,6 @@ describe Mongo::Server::Connection, retry: 3 do
     end
 
     shared_examples_for 'marks server unknown' do
-      before do
-        # we want the server to not start in unknown state,
-        # hence scan it and transition to some other state here
-        #server.scan!
-      end
-
       it 'marks server unknown' do
         expect(server).to receive(:unknown!)
         error
