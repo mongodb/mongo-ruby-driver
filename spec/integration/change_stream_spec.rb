@@ -5,6 +5,7 @@ describe 'Change stream integration', retry: 4 do
   max_example_run_time 7
   min_server_fcv '3.6'
   require_topology :replica_set
+  require_wired_tiger
 
   let(:fail_point_base_command) do
     { 'configureFailPoint' => "failCommand" }

@@ -1180,6 +1180,7 @@ describe Mongo::Collection do
     context 'when provided options' do
 
       context 'when a session is provided' do
+        require_wired_tiger
 
         let(:operation) do
           authorized_collection.find({}, session: session).to_a
@@ -1204,6 +1205,7 @@ describe Mongo::Collection do
       context 'session id' do
         min_server_fcv '3.6'
         require_topology :replica_set, :sharded
+        require_wired_tiger
 
         let(:options) do
           { session: session }
@@ -1232,6 +1234,7 @@ describe Mongo::Collection do
       end
 
       context 'when a session supporting causal consistency is used' do
+        require_wired_tiger
 
         let(:operation) do
           collection.find({}, session: session).to_a
@@ -1844,6 +1847,7 @@ describe Mongo::Collection do
     end
 
     context 'when a session is provided' do
+      require_wired_tiger
 
       let(:session) do
         authorized_client.start_session
@@ -1895,6 +1899,7 @@ describe Mongo::Collection do
     end
 
     context 'when a session supporting causal consistency is used' do
+      require_wired_tiger
 
       let(:operation) do
         collection.aggregate([], session: session).first
@@ -2020,6 +2025,7 @@ describe Mongo::Collection do
 
   describe '#count_documents' do
     context 'when transactions are enabled' do
+      require_wired_tiger
       require_transaction_support
 
       before do
@@ -2075,6 +2081,7 @@ describe Mongo::Collection do
       end
 
       context 'when a session is provided' do
+        require_wired_tiger
 
         let(:session) do
           authorized_client.start_session
@@ -2097,6 +2104,7 @@ describe Mongo::Collection do
       end
 
       context 'when a session supporting causal consistency is used' do
+        require_wired_tiger
 
         let(:operation) do
           collection.count({}, session: session)
@@ -2190,6 +2198,7 @@ describe Mongo::Collection do
       end
 
       context 'when a session is provided' do
+        require_wired_tiger
 
         let(:session) do
           authorized_client.start_session
@@ -2213,6 +2222,7 @@ describe Mongo::Collection do
     end
 
     context 'when a session supporting causal consistency is used' do
+      require_wired_tiger
 
       let(:operation) do
         collection.distinct(:field, {}, session: session)
@@ -2715,6 +2725,7 @@ describe Mongo::Collection do
     end
 
     context 'when a session is provided' do
+      require_wired_tiger
 
       let(:cursors) do
         authorized_collection.parallel_scan(2, session: session)
@@ -2764,6 +2775,7 @@ describe Mongo::Collection do
     end
 
     context 'when a session supporting causal consistency is used' do
+      require_wired_tiger
 
       let(:cursors) do
         collection.parallel_scan(2, session: session)
@@ -2784,6 +2796,7 @@ describe Mongo::Collection do
     end
 
     context 'when a read concern is provided' do
+      require_wired_tiger
       min_server_fcv '3.2'
 
       let(:result) do
@@ -4994,6 +5007,7 @@ describe Mongo::Collection do
   describe '#watch' do
 
     context 'when change streams can be tested' do
+      require_wired_tiger
       min_server_fcv '3.6'
       require_topology :replica_set
 

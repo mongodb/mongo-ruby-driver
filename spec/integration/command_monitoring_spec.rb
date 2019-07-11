@@ -79,6 +79,7 @@ describe 'Command monitoring' do
   end
 
   context 'when write concern is specified outside of command document' do
+    require_wired_tiger
     require_topology :replica_set
     min_server_fcv '4.0'
 
