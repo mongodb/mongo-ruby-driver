@@ -7,7 +7,7 @@ require 'spec_helper'
 # duplicating the examples.
 
 describe 'Read preference' do
-  require_topology :replica_set
+  clean_slate_on_evergreen
 
   let(:client) do
     authorized_client.with(client_options)
@@ -42,16 +42,8 @@ describe 'Read preference' do
     {}
   end
 
-  shared_examples_for 'non-transactional read preference examples' do
-    it 'does not use expected read preference when writing' do
-      write_operation
-
-      event = subscriber.single_command_started_event('insert')
-      actual_preference = event.command['$readPreference']
-      expect(actual_preference).to be nil
-    end
-
-    it 'uses expected read preference when reading' do
+  shared_examples_for 'sends expected read preference when reading' do
+    it 'sends expected read preference when reading' do
       read_operation
 
       event = subscriber.single_command_started_event('find')
@@ -60,7 +52,52 @@ describe 'Read preference' do
     end
   end
 
-  shared_examples_for 'uses expected read preference' do
+  shared_examples_for 'does not send read preference when reading' do
+    it 'does not send read preference when reading' do
+      read_operation
+
+      event = subscriber.single_command_started_event('find')
+      actual_preference = event.command['$readPreference']
+      expect(actual_preference).to be nil
+    end
+  end
+
+  shared_examples_for 'non-transactional read preference examples' do
+    it 'does not send read preference when writing' do
+      write_operation
+
+      event = subscriber.single_command_started_event('insert')
+      actual_preference = event.command['$readPreference']
+      expect(actual_preference).to be nil
+    end
+
+    context 'standalone' do
+      require_topology :single
+
+      it_behaves_like 'does not send read preference when reading'
+    end
+
+    context 'RS, sharded cluster' do
+      # Supposedly read preference should only be sent in a sharded cluster
+      # topology. However, transactions spec tests contain read preference
+      # assertions also when they are run in RS topologies.
+      require_topology :sharded, :replica_set
+
+      context 'pre-OP_MSG server' do
+        max_server_version '3.4'
+
+        it_behaves_like 'does not send read preference when reading'
+      end
+
+      context 'server supporting OP_MSG' do
+        min_server_fcv '3.6'
+
+        it_behaves_like 'sends expected read preference when reading'
+      end
+    end
+  end
+
+  shared_examples_for 'sends expected read preference' do
     it_behaves_like 'non-transactional read preference examples'
   end
 
@@ -75,7 +112,7 @@ describe 'Read preference' do
         nil
       end
 
-      it_behaves_like 'uses expected read preference'
+      it_behaves_like 'sends expected read preference'
     end
 
     context 'when read preference is given in client options' do
@@ -87,7 +124,7 @@ describe 'Read preference' do
         {'mode' => 'primary'}
       end
 
-      it_behaves_like 'uses expected read preference'
+      it_behaves_like 'sends expected read preference'
     end
 
     context 'when read preference is given in operation options' do
@@ -99,7 +136,7 @@ describe 'Read preference' do
         {read: {mode: :primary}}
       end
 
-      it_behaves_like 'uses expected read preference'
+      it_behaves_like 'sends expected read preference'
     end
 
     context 'when read preference is given in client and operation options' do
@@ -116,7 +153,7 @@ describe 'Read preference' do
         {read: {mode: :primary}}
       end
 
-      it_behaves_like 'uses expected read preference'
+      it_behaves_like 'sends expected read preference'
     end
 
     context 'when read preference is given in collection and operation options' do
@@ -133,7 +170,7 @@ describe 'Read preference' do
         {read: {mode: :primary}}
       end
 
-      it_behaves_like 'uses expected read preference'
+      it_behaves_like 'sends expected read preference'
     end
   end
 
@@ -164,7 +201,7 @@ describe 'Read preference' do
         {'mode' => 'primary'}
       end
 
-      it_behaves_like 'uses expected read preference'
+      it_behaves_like 'sends expected read preference'
     end
 
     context 'when read preference is given in collection options via #with' do
@@ -176,7 +213,7 @@ describe 'Read preference' do
         {'mode' => 'primary'}
       end
 
-      it_behaves_like 'uses expected read preference'
+      it_behaves_like 'sends expected read preference'
     end
 
     context 'when read preference is given in client and collection options' do
@@ -193,12 +230,16 @@ describe 'Read preference' do
         {'mode' => 'primary'}
       end
 
-      it_behaves_like 'uses expected read preference'
+      it_behaves_like 'sends expected read preference'
     end
   end
 
   context 'in transaction' do
-    min_server_fcv '4.0'
+    # 4.0/RS is a valid topology to test against, but our tooling doesn't
+    # support multiple constraint specifications like runOn does.
+    # There is no loss of generality to constrain these tests to 4.2+.
+    min_server_fcv '4.2'
+    require_topology :sharded, :replica_set
 
     let(:write_operation) do
       expect do
@@ -220,10 +261,10 @@ describe 'Read preference' do
       end.not_to raise_error
     end
 
-    shared_examples_for 'uses expected read preference' do
+    shared_examples_for 'sends expected read preference' do
       it_behaves_like 'non-transactional read preference examples'
 
-      it 'uses expected read preference when starting transaction' do
+      it 'sends expected read preference when starting transaction' do
         collection.insert_one(hello: 'world')
 
         session = client.start_session(session_options)
@@ -254,7 +295,7 @@ describe 'Read preference' do
         nil
       end
 
-      it_behaves_like 'uses expected read preference'
+      it_behaves_like 'sends expected read preference'
     end
 
     context 'when read preference is given in collection options via #with' do
@@ -267,7 +308,7 @@ describe 'Read preference' do
         nil
       end
 
-      it_behaves_like 'uses expected read preference'
+      it_behaves_like 'sends expected read preference'
     end
 
     context 'when read preference is given in client and collection options' do
@@ -284,7 +325,7 @@ describe 'Read preference' do
         {'mode' => 'primary'}
       end
 
-      it_behaves_like 'uses expected read preference'
+      it_behaves_like 'sends expected read preference'
     end
 
     context 'when read preference is given in default transaction options' do
@@ -296,7 +337,7 @@ describe 'Read preference' do
         {'mode' => 'primary'}
       end
 
-      it_behaves_like 'uses expected read preference'
+      it_behaves_like 'sends expected read preference'
     end
 
     context 'when read preference is given in client and default transaction options' do
@@ -312,7 +353,7 @@ describe 'Read preference' do
         {'mode' => 'primary'}
       end
 
-      it_behaves_like 'uses expected read preference'
+      it_behaves_like 'sends expected read preference'
     end
 
     context 'when read preference is given in collection and default transaction options' do
@@ -328,7 +369,7 @@ describe 'Read preference' do
         {'mode' => 'primary'}
       end
 
-      it_behaves_like 'uses expected read preference'
+      it_behaves_like 'sends expected read preference'
     end
 
     context 'when read preference is given in default transaction and transaction options' do
@@ -344,7 +385,7 @@ describe 'Read preference' do
         {'mode' => 'primary'}
       end
 
-      it_behaves_like 'uses expected read preference'
+      it_behaves_like 'sends expected read preference'
     end
 
     context 'when read preference is given in default transaction and operation options' do
@@ -360,7 +401,7 @@ describe 'Read preference' do
         {'mode' => 'primary'}
       end
 
-      it 'uses operation read preference and fails' do
+      it 'sends operation read preference and fails' do
         expect do
           session = client.start_session(session_options)
           session.with_transaction(tx_options) do
@@ -381,7 +422,7 @@ describe 'Read preference' do
         {'mode' => 'primary'}
       end
 
-      it_behaves_like 'uses expected read preference'
+      it_behaves_like 'sends expected read preference'
     end
 
     context 'when read preference is given in client and transaction options' do
@@ -397,7 +438,7 @@ describe 'Read preference' do
         {'mode' => 'primary'}
       end
 
-      it_behaves_like 'uses expected read preference'
+      it_behaves_like 'sends expected read preference'
     end
 
     context 'when read preference is given in collection and transaction options' do
@@ -413,7 +454,7 @@ describe 'Read preference' do
         {'mode' => 'primary'}
       end
 
-      it_behaves_like 'uses expected read preference'
+      it_behaves_like 'sends expected read preference'
     end
 
     context 'when read preference is given in transaction and operation options' do
@@ -429,7 +470,7 @@ describe 'Read preference' do
         {'mode' => 'primary'}
       end
 
-      it 'uses operation read preference and fails' do
+      it 'sends operation read preference and fails' do
         expect do
           session = client.start_session(session_options)
           session.with_transaction(tx_options) do
