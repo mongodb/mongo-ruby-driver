@@ -58,7 +58,7 @@ module Mongo
       @cluster = cluster
       @monitoring = monitoring
       options = options.dup
-      monitor = options.delete(:monitor)
+      _monitor = options.delete(:monitor)
       @options = options.freeze
       @event_listeners = event_listeners
       @connection_id_gen = Class.new do
@@ -73,7 +73,7 @@ module Mongo
           options.merge(
             app_metadata: Monitor::AppMetadata.new(cluster.options),
         ))
-        unless monitor == false
+        unless _monitor == false
           start_monitoring
         end
       end
