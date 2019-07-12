@@ -70,10 +70,12 @@ describe 'Server selector' do
 
     context 'monitoring thread is dead' do
       before do
-        client.cluster.servers.first.monitor.instance_variable_get('@thread').kill
+        client.cluster.servers.each do |server|
+          server.monitor.instance_variable_get('@thread').kill
+        end
         server = client.cluster.next_primary
         if server
-          server.monitor.instance_variable_set('@description', Mongo::Server::Description.new({}))
+          server.instance_variable_set('@description', Mongo::Server::Description.new({}))
         end
       end
 

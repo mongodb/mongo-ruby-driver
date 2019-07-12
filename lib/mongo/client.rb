@@ -201,8 +201,8 @@ module Mongo
     # @option options [ Float ] :connect_timeout The timeout, in seconds, to
     #   attempt a connection.
     # @option options [ String ] :database The database to connect to.
-    # @option options [ Float ] :heartbeat_frequency The number of seconds for
-    #   the server monitor to refresh it's description via ismaster.
+    # @option options [ Float ] :heartbeat_frequency The interval, in seconds,
+    #   for the server monitor to refresh its description via ismaster.
     # @option options [ Object ] :id_generator A custom object to generate ids
     #   for documents. Must respond to #generate.
     # @option options [ Integer ] :local_threshold The local threshold boundary
@@ -404,7 +404,6 @@ module Mongo
         sdam_proc.call(self)
       end
 
-      @server_selection_semaphore = Semaphore.new
       @cluster = Cluster.new(addresses, @monitoring, cluster_options)
 
       # Unset monitoring, it will be taken out of cluster from now on
@@ -421,7 +420,6 @@ module Mongo
       options.reject do |key, value|
         CRUD_OPTIONS.include?(key.to_sym)
       end.merge(
-        server_selection_semaphore: @server_selection_semaphore,
         # but need to put the database back in for auth...
         database: options[:database],
 

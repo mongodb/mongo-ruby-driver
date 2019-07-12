@@ -37,19 +37,35 @@ describe Mongo::Cluster::Topology::Single do
   describe '.servers' do
 
     let(:mongos) do
-      Mongo::Server.new(address, cluster, monitoring, listeners, SpecConfig.instance.test_options)
+      Mongo::Server.new(address, cluster, monitoring, listeners,
+        SpecConfig.instance.test_options.merge(monitoring_io: false)
+      ).tap do |server|
+        allow(server).to receive(:description).and_return(mongos_description)
+      end
     end
 
     let(:standalone) do
-      Mongo::Server.new(address, cluster, monitoring, listeners, SpecConfig.instance.test_options)
+      Mongo::Server.new(address, cluster, monitoring, listeners,
+        SpecConfig.instance.test_options.merge(monitoring_io: false)
+      ).tap do |server|
+        allow(server).to receive(:description).and_return(standalone_description)
+      end
     end
 
     let(:standalone_two) do
-      Mongo::Server.new(address, cluster, monitoring, listeners, SpecConfig.instance.test_options)
+      Mongo::Server.new(address, cluster, monitoring, listeners,
+        SpecConfig.instance.test_options.merge(monitoring_io: false)
+      ).tap do |server|
+        allow(server).to receive(:description).and_return(standalone_description)
+      end
     end
 
     let(:replica_set) do
-      Mongo::Server.new(address, cluster, monitoring, listeners, SpecConfig.instance.test_options)
+      Mongo::Server.new(address, cluster, monitoring, listeners,
+        SpecConfig.instance.test_options.merge(monitoring_io: false)
+      ).tap do |server|
+        allow(server).to receive(:description).and_return(replica_set_description)
+      end
     end
 
     let(:mongos_description) do
@@ -65,13 +81,6 @@ describe Mongo::Cluster::Topology::Single do
       Mongo::Server::Description.new(address, { 'ismaster' => true,
         'minWireVersion' => 2, 'maxWireVersion' => 8,
         'setName' => 'testing' })
-    end
-
-    before do
-      mongos.monitor.instance_variable_set(:@description, mongos_description)
-      standalone.monitor.instance_variable_set(:@description, standalone_description)
-      standalone_two.monitor.instance_variable_set(:@description, standalone_description)
-      replica_set.monitor.instance_variable_set(:@description, replica_set_description)
     end
 
     let(:servers) do
