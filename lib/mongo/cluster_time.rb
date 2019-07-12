@@ -53,12 +53,10 @@ module Mongo
     def <=>(other)
       if self['clusterTime'] && other['clusterTime']
         self['clusterTime'] <=> other['clusterTime']
-      elsif self['clusterTime']
-        -1
-      elsif other['clusterTime']
-        1
-      else
-        0
+      elsif !self['clusterTime']
+        raise ArgumentError, "Cannot compare cluster times when receiver is missing clusterTime key: #{inspect}"
+      else other['clusterTime']
+        raise ArgumentError, "Cannot compare cluster times when other is missing clusterTime key: #{other.inspect}"
       end
     end
 
