@@ -356,13 +356,6 @@ module Mongo
         options = {}
       end
 
-      unless options[:retry_reads] == false
-        options[:retry_reads] = true
-      end
-      unless options[:retry_writes] == false
-        options[:retry_writes] = true
-      end
-
       if addresses_or_uri.is_a?(::String)
         uri = URI.get(addresses_or_uri, options)
         addresses = uri.servers
@@ -377,6 +370,13 @@ module Mongo
         options = uri_options.merge(options)
       else
         addresses = addresses_or_uri
+      end
+
+      unless options[:retry_reads] == false
+        options[:retry_reads] = true
+      end
+      unless options[:retry_writes] == false
+        options[:retry_writes] = true
       end
 
       # Special handling for sdam_proc as it is only used during client
