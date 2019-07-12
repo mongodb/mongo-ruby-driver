@@ -9,6 +9,7 @@ describe 'Cmap' do
       allow(cl).to receive(:topology).and_return(topology)
       allow(cl).to receive(:options).and_return({})
       allow(cl).to receive(:app_metadata).and_return(Mongo::Server::AppMetadata.new({}))
+      allow(cl).to receive(:run_sdam_flow)
     end
   end
 
