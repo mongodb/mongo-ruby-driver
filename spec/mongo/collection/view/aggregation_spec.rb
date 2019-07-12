@@ -615,7 +615,7 @@ describe Mongo::Collection::View::Aggregation do
 
      it 'reroutes the operation to a primary' do
        allow(aggregation).to receive(:valid_server?).and_return(false)
-       expect(Mongo::Logger.logger).to receive(:warn?).and_call_original
+       expect(Mongo::Logger.logger).to receive(:warn).and_call_original
        aggregation.to_a
      end
     end
@@ -623,7 +623,7 @@ describe Mongo::Collection::View::Aggregation do
     context 'when the server is a valid for writing' do
 
      it 'does not reroute the operation to a primary' do
-       expect(Mongo::Logger.logger).not_to receive(:warn?)
+       expect(Mongo::Logger.logger).not_to receive(:warn)
        aggregation.to_a
      end
 
