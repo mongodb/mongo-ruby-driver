@@ -6,7 +6,12 @@ describe Mongo::Server::ConnectionPool do
 
   let(:server_options) do
     if options
-      options.merge(SpecConfig.instance.auth_options)
+      default_opts = SpecConfig.instance.test_options.dup
+      default_opts.delete(:max_pool_size)
+      default_opts.delete(:wait_queue_timeout)
+      default_opts.delete(:connect_timeout)
+      default_opts.delete(:max_idle_time)
+      default_opts.merge(options).merge(SpecConfig.instance.auth_options)
     else
       SpecConfig.instance.test_options.merge(SpecConfig.instance.auth_options)
     end
@@ -524,8 +529,8 @@ describe Mongo::Server::ConnectionPool do
 
   describe '#disconnect!' do
     def create_pool(min_pool_size)
-      options = { max_pool_size: 3, min_pool_size: min_pool_size }
-      described_class.new(server, options.merge(SpecConfig.instance.auth_options)).tap do |pool|
+      opts = SpecConfig.instance.test_options.merge(max_pool_size: 3, min_pool_size: min_pool_size)
+      described_class.new(server, opts).tap do |pool|
         # kill background thread to test disconnect behavior
         pool.populator.stop!
 
@@ -711,7 +716,7 @@ describe Mongo::Server::ConnectionPool do
       server.pool
     end
 
-    let(:server_options) do
+    let(:options) do
       { user: SpecConfig.instance.root_user.name, password: SpecConfig.instance.root_user.password }.merge(SpecConfig.instance.test_options).merge(min_pool_size:0, max_pool_size: 1)
     end
 
@@ -721,11 +726,12 @@ describe Mongo::Server::ConnectionPool do
     end
 
     it 'creates a new connection' do
-      expect(Mongo::Auth).to receive(:get).and_raise(Mongo::Error)
-      expect { pool.check_out }.to raise_error(Mongo::Error)
-      expect(pool.size).to be(0)
+      RSpec::Mocks.with_temporary_scope do
+        expect_any_instance_of(Mongo::Server::Connection).to receive(:handshake!).and_raise(Mongo::Error)
+        expect { pool.check_out }.to raise_error(Mongo::Error)
+        expect(pool.size).to be(0)
+      end
 
-      expect(Mongo::Auth).to receive(:get).and_call_original
       expect(pool.check_out).to be_a(Mongo::Server::Connection)
       expect(pool.size).to be(1)
     end
