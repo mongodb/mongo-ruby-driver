@@ -10,6 +10,8 @@ describe 'Cmap' do
       allow(cl).to receive(:options).and_return({})
       allow(cl).to receive(:app_metadata).and_return(Mongo::Server::AppMetadata.new({}))
       allow(cl).to receive(:run_sdam_flow)
+      allow(cl).to receive(:update_cluster_time)
+      allow(cl).to receive(:cluster_time).and_return(nil)
     end
   end
 

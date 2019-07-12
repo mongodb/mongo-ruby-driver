@@ -177,6 +177,14 @@ describe Mongo::Server do
         expect(server.monitor.instance_variable_get('@thread')).to be nil
       end
     end
+  end
+
+  describe '#scan!' do
+    include_context 'with monitoring io'
+
+    let(:server_options) do
+      { monitoring_io: true, min_pool_size: 0 }
+    end
 
     context 'monitoring_io: true' do
       include_context 'with monitoring io'
@@ -189,10 +197,6 @@ describe Mongo::Server do
 
   describe '#scan!' do
     include_context 'with monitoring io'
-
-    let(:server_options) do
-      { monitoring_io: true, min_pool_size: 0 }
-    end
 
     it 'delegates scan to the monitor' do
       expect(server.monitor).to receive(:scan!)
