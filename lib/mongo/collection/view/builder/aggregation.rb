@@ -90,6 +90,10 @@ module Mongo
             pipeline.any? { |operator| operator[:$out] || operator['$out'] }
           end
 
+          def merge?
+            pipeline.any? { |operator| operator[:$merge] || operator['$merge'] }
+          end
+
           def aggregation_command
             command = BSON::Document.new(:aggregate => collection.name, :pipeline => pipeline)
             command[:cursor] = cursor if cursor
@@ -108,7 +112,14 @@ module Mongo
           end
 
           def batch_size_doc
-            (value = options[:batch_size] || view.batch_size) ?  { :batchSize => value } : {}
+            value = options[:batch_size] || view.batch_size
+            if value == 0 && (write? || merge?)
+              {}
+            elsif value
+              { :batchSize => value }
+            else
+              {}
+            end
           end
         end
       end
