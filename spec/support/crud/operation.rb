@@ -24,7 +24,8 @@ module Mongo
       #   If not provided, outcome is taken out of operation specification.
       #
       # @since 2.0.0
-      def initialize(spec, outcome_spec = nil)
+      def initialize(crud_test, spec, outcome_spec = nil)
+        @crud_test = crud_test
         @spec = IceNine.deep_freeze(spec)
         @name = spec['name']
         @arguments = spec['arguments'] || {}
@@ -88,6 +89,10 @@ module Mongo
           op_name= "client_#{op_name}"
         end
         send(op_name, target, Context.new)
+      end
+
+      def collection_options
+        Utils.convert_operation_options(@spec['collectionOptions'])
       end
 
       private
