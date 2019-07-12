@@ -59,12 +59,18 @@ module Mongo
         monitoring = Mongo::Monitoring.new(monitoring: false)
         monitoring.subscribe(Mongo::Monitoring::CONNECTION_POOL, subscriber)
 
+        default_opts = SpecConfig.instance.test_options.dup
+        default_opts.delete(:max_pool_size)
+        default_opts.delete(:wait_queue_timeout)
+        default_opts.delete(:connect_timeout)
+        default_opts.delete(:max_idle_time)
+
         server = Mongo::Server.new(
             Address.new(SpecConfig.instance.addresses.first),
             cluster,
             monitoring,
             Mongo::Event::Listeners.new,
-            pool_options.merge(monitoring_io: false))
+            default_opts.merge(pool_options).merge(monitoring_io: false).merge(SpecConfig.instance.auth_options))
 
         @pool = server.pool
 
