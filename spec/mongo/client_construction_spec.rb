@@ -742,6 +742,52 @@ describe Mongo::Client do
             end
           end
         end
+
+        context 'when retryReads URI option is given' do
+
+          context 'it is false' do
+            let!(:uri) do
+              'mongodb://127.0.0.1:27017/testdb?retryReads=false'
+            end
+
+            it 'sets the option on the client' do
+              expect(client.options[:retry_reads]).to be false
+            end
+          end
+
+          context 'it is true' do
+            let!(:uri) do
+              'mongodb://127.0.0.1:27017/testdb?retryReads=true'
+            end
+
+            it 'sets the option on the client' do
+              expect(client.options[:retry_reads]).to be true
+            end
+          end
+        end
+
+        context 'when retryWrites URI option is given' do
+
+          context 'it is false' do
+            let!(:uri) do
+              'mongodb://127.0.0.1:27017/testdb?retryWrites=false'
+            end
+
+            it 'sets the option on the client' do
+              expect(client.options[:retry_writes]).to be false
+            end
+          end
+
+          context 'it is true' do
+            let!(:uri) do
+              'mongodb://127.0.0.1:27017/testdb?retryWrites=true'
+            end
+
+            it 'sets the option on the client' do
+              expect(client.options[:retry_writes]).to be true
+            end
+          end
+        end
       end
 
       context 'when options are provided not in the string' do
