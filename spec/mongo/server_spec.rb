@@ -190,6 +190,10 @@ describe Mongo::Server do
   describe '#scan!' do
     include_context 'with monitoring io'
 
+    let(:server_options) do
+      { monitoring_io: true, min_pool_size: 0 }
+    end
+
     it 'delegates scan to the monitor' do
       expect(server.monitor).to receive(:scan!)
       server.scan!

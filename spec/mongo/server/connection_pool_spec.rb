@@ -727,12 +727,13 @@ describe Mongo::Server::ConnectionPool do
 
     it 'creates a new connection' do
       t = Thread.new do
-        # Kill the thread when it's authenticating
-        RSpec::Mocks.with_temporary_scope do
-          allow_any_instance_of(Mongo::Server::Connection).to receive(:handshake!).and_raise(Mongo::Error)
-          expect { pool.check_out }.to raise_error(Mongo::Error) # todo more specific
-          expect(pool.size).to be(0)
-        end
+        expect {
+          pool.with_connection do |c|
+            expect(c).to receive(:connect!).and_raise(Mongo::Error)
+            c.send(:ensure_connected) { |socket| socket}
+          end
+        }.to raise_error(Mongo::Error)
+        expect(pool.size).to be(0)
       end
       t.join
 
