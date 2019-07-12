@@ -63,7 +63,7 @@ module Mongo
                      :read_with_retry,
                      :read_with_retry_cursor,
                      :write_with_retry,
-                     :legacy_write_with_retry,
+                     :nro_write_with_retry,
                      :write_concern_with_session
 
       # Delegate to the cluster for the next primary.
