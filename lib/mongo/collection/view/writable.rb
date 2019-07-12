@@ -164,8 +164,8 @@ module Mongo
         def delete_many(opts = {})
           delete_doc = { Operation::Q => filter, Operation::LIMIT => 0 }
           with_session(opts) do |session|
-            write_concern = write_concern_with_session(opts[:session])
-            legacy_write_with_retry do |server|
+            write_concern = write_concern_with_session(session)
+            nro_write_with_retry(session, write_concern) do |server|
               apply_collation!(delete_doc, server, opts)
               Operation::Delete.new(
                   :deletes => [ delete_doc ],
@@ -194,7 +194,7 @@ module Mongo
         def delete_one(opts = {})
           delete_doc = { Operation::Q => filter, Operation::LIMIT => 1 }
           with_session(opts) do |session|
-            write_concern = write_concern_with_session(opts[:session])
+            write_concern = write_concern_with_session(session)
             write_with_retry(session, write_concern) do |server, txn_num|
               apply_collation!(delete_doc, server, opts)
               Operation::Delete.new(
@@ -234,7 +234,7 @@ module Mongo
                          Operation::UPSERT => !!opts[:upsert]
                         }
           with_session(opts) do |session|
-            write_concern = write_concern_with_session(opts[:session])
+            write_concern = write_concern_with_session(session)
             write_with_retry(session, write_concern) do |server, txn_num|
               apply_collation!(update_doc, server, opts)
               apply_array_filters!(update_doc, server, opts)
@@ -278,8 +278,8 @@ module Mongo
                          Operation::MULTI => true,
                          Operation::UPSERT => !!opts[:upsert] }
           with_session(opts) do |session|
-            write_concern = write_concern_with_session(opts[:session])
-            legacy_write_with_retry do |server|
+            write_concern = write_concern_with_session(session)
+            nro_write_with_retry(session, write_concern) do |server|
               apply_collation!(update_doc, server, opts)
               apply_array_filters!(update_doc, server, opts)
               Operation::Update.new(
@@ -320,7 +320,7 @@ module Mongo
                          Operation::MULTI => false,
                          Operation::UPSERT => !!opts[:upsert] }
           with_session(opts) do |session|
-            write_concern = write_concern_with_session(opts[:session])
+            write_concern = write_concern_with_session(session)
             write_with_retry(session, write_concern) do |server, txn_num|
               apply_collation!(update_doc, server, opts)
               apply_array_filters!(update_doc, server, opts)
