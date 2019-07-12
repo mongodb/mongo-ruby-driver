@@ -346,14 +346,10 @@ module Mongo
       else
         options = {}
       end
-      unless options[:retry_reads] == false
-        options[:retry_reads] = true
-      end
-      unless options[:retry_writes] == false
-        options[:retry_writes] = true
-      end
+
       Lint.validate_underscore_read_preference(options[:read])
       Lint.validate_read_concern_option(options[:read_concern])
+
       if addresses_or_uri.is_a?(::String)
         uri = URI.get(addresses_or_uri, options)
         addresses = uri.servers
@@ -361,6 +357,14 @@ module Mongo
       else
         addresses = addresses_or_uri
       end
+
+      unless options[:retry_reads] == false
+        options[:retry_reads] = true
+      end
+      unless options[:retry_writes] == false
+        options[:retry_writes] = true
+      end
+
       # Special handling for sdam_proc as it is only used during client
       # construction
       sdam_proc = options.delete(:sdam_proc)
