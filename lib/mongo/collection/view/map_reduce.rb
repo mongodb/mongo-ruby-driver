@@ -195,7 +195,8 @@ module Mongo
         # @since 2.5.0
         def execute
           view.send(:with_session, @options) do |session|
-            legacy_write_with_retry do |server|
+            write_concern = view.write_concern_with_session(session)
+            nro_write_with_retry(session, write_concern) do |server|
               send_initial_query(server, session)
             end
           end
