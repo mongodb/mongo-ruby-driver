@@ -50,6 +50,18 @@ tests:
                 q: {}
                 u: { $set: { "y.$[i].b": 2 } }
                 arrayFilters: [ { "i.b": 3 } ]
+            ordered: true
+            # TODO: check that these fields do not exist once
+            # https://jira.mongodb.org/browse/SPEC-1215 has been resolved.
+            # writeConcern: null
+            # bypassDocumentValidation: null
+          command_name: update
+          database_name: *database_name
+      -
+        command_started_event:
+          command:
+            update: *collection_name
+            updates:
               -
                 q: {}
                 u: { $set: { "y.$[i].b": 2 } }
