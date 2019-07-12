@@ -197,7 +197,7 @@ module Mongo
         return_doc = {}
         return_doc['deletedCount'] = result.deleted_count || 0
         return_doc['insertedIds'] = result.inserted_ids if result.inserted_ids
-        return_doc['insertedCount'] = result.inserted_count if result.inserted_count
+        return_doc['insertedCount'] = result.inserted_count || 0
         return_doc['upsertedId'] = result.upserted_id if arguments['upsert']
         return_doc['upsertedIds'] = result.upserted_ids if result.upserted_ids
         return_doc['upsertedCount'] = result.upserted_count || 0
