@@ -5,7 +5,7 @@ describe Mongo::Server::ConnectionPool do
   let(:options) { {max_pool_size: 2} }
 
   let(:server_options) do
-    SpecConfig.instance.test_options.merge(options).merge(SpecConfig.instance.auth_options)
+    SpecConfig.instance.test_options.merge(SpecConfig.instance.auth_options).merge(options)
   end
 
   let(:address) do
@@ -29,11 +29,18 @@ describe Mongo::Server::ConnectionPool do
       allow(cl).to receive(:options).and_return({})
       allow(cl).to receive(:update_cluster_time)
       allow(cl).to receive(:cluster_time).and_return(nil)
+      allow(cl).to receive(:run_sdam_flow)
     end
   end
 
   let(:server) do
-    Mongo::Server.new(address, cluster, monitoring, listeners, server_options)
+    register_server(
+      Mongo::Server.new(address, cluster, monitoring, listeners,
+        {monitoring_io: false}.update(server_options)
+      ).tap do |server|
+        allow(server).to receive(:description).and_return(ClusterConfig.instance.primary_description)
+      end
+    )
   end
 
   let (:pool_options) do
@@ -859,25 +866,30 @@ describe Mongo::Server::ConnectionPool do
       end
 
       it 'disconnects all expired and only expired connections' do
-        c1 = pool.check_out
-        expect(c1).to receive(:disconnect!).with(hash_including(reason: :idle))
-        c2 = pool.check_out
-        expect(c2).not_to receive(:disconnect!).with(hash_including(reason: :idle))
+        # Since per-test cleanup will close the pool and disconnect
+        # the connection, we need to explicitly define the scope for the
+        # assertions
+        RSpec::Mocks.with_temporary_scope do
+          c1 = pool.check_out
+          expect(c1).to receive(:disconnect!)
+          c2 = pool.check_out
+          expect(c2).not_to receive(:disconnect!)
 
-        pool.check_in(c1)
-        Timecop.travel(Time.now + 1)
-        pool.check_in(c2)
+          pool.check_in(c1)
+          Timecop.travel(Time.now + 1)
+          pool.check_in(c2)
 
-        expect(pool.size).to eq(2)
-        expect(pool.available_count).to eq(2)
+          expect(pool.size).to eq(2)
+          expect(pool.available_count).to eq(2)
 
-        expect(c1).not_to receive(:connect!)
-        expect(c2).not_to receive(:connect!)
+          expect(c1).not_to receive(:connect!)
+          expect(c2).not_to receive(:connect!)
 
-        pool.close_idle_sockets
+          pool.close_idle_sockets
 
-        expect(pool.size).to eq(1)
-        expect(pool.available_count).to eq(1)
+          expect(pool.size).to eq(1)
+          expect(pool.available_count).to eq(1)
+        end
       end
     end
 
@@ -890,13 +902,15 @@ describe Mongo::Server::ConnectionPool do
         conn
       end
 
-      before do
-        expect(connection).not_to receive(:disconnect!).with(hash_including(reason: :idle))
-        pool.close_idle_sockets
-      end
-
       it 'does not close any sockets' do
-        expect(connection.connected?).to be(true)
+        # Since per-test cleanup will close the pool and disconnect
+        # the connection, we need to explicitly define the scope for the
+        # assertions
+        RSpec::Mocks.with_temporary_scope do
+          expect(connection).not_to receive(:disconnect!)
+          pool.close_idle_sockets
+          expect(connection.connected?).to be(true)
+        end
       end
     end
   end

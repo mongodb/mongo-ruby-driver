@@ -93,13 +93,11 @@ module Mongo
     #   to clean up server sessions when the cluster is disconnected, and to
     #   to not start the periodic executor. If :monitoring_io is false,
     #   :cleanup automatically defaults to false as well.
+    # @option options [ Float ] :heartbeat_frequency The interval, in seconds,
+    #   for the server monitor to refresh its description via ismaster.
     #
     # @since 2.0.0
     def initialize(seeds, monitoring, options = Options::Redacted.new)
-      if options[:monitoring_io] != false && !options[:server_selection_semaphore]
-        raise ArgumentError, 'Need server selection semaphore'
-      end
-
       if options[:monitoring_io] == false && !options.key?(:cleanup)
         options = options.dup
         options[:cleanup] = false
@@ -114,6 +112,7 @@ module Mongo
       @sdam_flow_lock = Mutex.new
       @cluster_time = nil
       @cluster_time_lock = Mutex.new
+      @server_selection_semaphore = Semaphore.new
       @topology = Topology.initial(self, monitoring, options)
       Session::SessionPool.create(self)
 
@@ -125,8 +124,6 @@ module Mongo
         Monitoring::TOPOLOGY_OPENING,
         Monitoring::Event::TopologyOpening.new(opening_topology)
       )
-
-      subscribe_to(Event::DESCRIPTION_CHANGED, Event::DescriptionChanged.new(self))
 
       @seeds = seeds
       servers = seeds.map do |seed|
@@ -200,7 +197,7 @@ module Mongo
           if (time_remaining = deadline - Time.now) <= 0
             break
           end
-          options[:server_selection_semaphore].wait(time_remaining)
+          server_selection_semaphore.wait(time_remaining)
         end
       end
     end
@@ -302,6 +299,17 @@ module Mongo
       options[:read_retry_interval] || READ_RETRY_INTERVAL
     end
 
+    # Get the refresh interval for the server. This will be defined via an
+    # option or will default to 10.
+    #
+    # @return [ Float ] The heartbeat interval, in seconds.
+    #
+    # @since 2.10.0
+    # @api private
+    def heartbeat_interval
+      options[:heartbeat_frequency] || Server::Monitor::HEARTBEAT_FREQUENCY
+    end
+
     # Whether the cluster object is connected to its cluster.
     #
     # @return [ true|false ] Whether the cluster is connected.
@@ -370,9 +378,7 @@ module Mongo
     end
 
     # @api private
-    def server_selection_semaphore
-      options[:server_selection_semaphore]
-    end
+    attr_reader :server_selection_semaphore
 
     # Finalize the cluster for garbage collection.
     #
@@ -482,14 +488,48 @@ module Mongo
     def scan!(sync=true)
       if sync
         servers_list.each do |server|
-          server.scan!
+          if server.monitor
+            server.monitor.scan!
+          else
+            log_warn("Synchronous scan requested on cluster #{summary} but server #{server} has no monitor")
+          end
         end
       else
         servers_list.each do |server|
-          server.monitor.scan_semaphore.signal
+          server.scan_semaphore.signal
         end
       end
       true
+    end
+
+    # @param [ Server::Description ] previous_desc Previous server description.
+    # @param [ Server::Description ] updated_desc The changed description.
+    #
+    # @api private
+    def run_sdam_flow(previous_desc, updated_desc)
+      @sdam_flow_lock.synchronize do
+        flow = SdamFlow.new(self, previous_desc, updated_desc)
+        flow.server_description_changed
+
+        # SDAM flow may alter the updated description - grab the final
+        # version for the purposes of broadcasting if a server is available
+        updated_desc = flow.updated_desc
+      end
+
+      # Some updated descriptions, e.g. a mismatched me one, result in the
+      # server whose description we are processing being removed from
+      # the topology. When this happens, the server's monitoring thread gets
+      # killed. As a result, any code after the flow invocation may not run
+      # a particular monitor instance, hence there should generally not be
+      # any code in this method past the flow invocation.
+      #
+      # However, this broadcast call can be here because if the monitoring
+      # thread got killed the server should have been closed and no client
+      # should be currently waiting for it, thus not signaling the semaphore
+      # shouldn't cause any problems.
+      unless updated_desc.unknown?
+        server_selection_semaphore.broadcast
+      end
     end
 
     # Determine if this cluster of servers is equal to another object. Checks the
@@ -505,9 +545,7 @@ module Mongo
     # @since 2.0.0
     def ==(other)
       return false unless other.is_a?(Cluster)
-      addresses == other.addresses &&
-        options.merge(server_selection_semaphore: nil) ==
-          other.options.merge(server_selection_semaphore: nil)
+      addresses == other.addresses && options == other.options
     end
 
     # Determine if the cluster would select a readable server for the
@@ -657,9 +695,6 @@ module Mongo
     def servers_list
       @update_lock.synchronize { @servers.dup }
     end
-
-    # @api private
-    attr_reader :sdam_flow_lock
 
     private
 

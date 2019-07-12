@@ -63,8 +63,7 @@ describe 'SDAM Monitoring' do
               result['maxWireVersion'] ||= 0
               new_description = Mongo::Server::Description.new(
                 server.description.address, result, 0.5)
-              publisher = SdamSpecEventPublisher.new(@client.cluster.send(:event_listeners))
-              publisher.publish(Mongo::Event::DESCRIPTION_CHANGED, server.description, new_description)
+              @client.cluster.run_sdam_flow(server.description, new_description)
             end
             @subscriber.phase_finished(phase_index)
           end

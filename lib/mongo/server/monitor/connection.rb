@@ -228,6 +228,8 @@ module Mongo
             reply = Protocol::Message.deserialize(socket, Mongo::Protocol::Message::MAX_MESSAGE_SIZE).documents[0]
             set_compressor!(reply)
             reply
+          else
+            log_warn("Asked to handshake with #{address} but there was no app metadata provided")
           end
         rescue => e
           log_warn("Failed to handshake with #{address}: #{e.class}: #{e}")

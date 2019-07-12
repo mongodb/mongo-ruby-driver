@@ -51,14 +51,14 @@ describe 'SDAM error handling' do
 
     shared_examples_for 'requests server scan' do
       it 'requests server scan' do
-        expect(server.monitor.scan_semaphore).to receive(:signal)
+        expect(server.scan_semaphore).to receive(:signal)
         operation
       end
     end
 
     shared_examples_for 'does not request server scan' do
       it 'does not request server scan' do
-        expect(server.monitor.scan_semaphore).not_to receive(:signal)
+        expect(server.scan_semaphore).not_to receive(:signal)
         operation
       end
     end

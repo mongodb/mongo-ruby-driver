@@ -27,7 +27,7 @@ module Mongo
     #
     # @since 2.1.0
     CRUD_OPTIONS = [
-      :database, :read, :write, :retry_reads, :retry_writes,
+      :database, :read, :write, :write_concern, :retry_reads, :retry_writes,
       :max_read_retries, :read_retry_interval, :max_write_retries,
     ].freeze
 
@@ -85,6 +85,7 @@ module Mongo
       :user,
       :wait_queue_timeout,
       :write,
+      :write_concern,
       :zlib_compression_level,
     ].freeze
 
@@ -200,8 +201,8 @@ module Mongo
     # @option options [ Float ] :connect_timeout The timeout, in seconds, to
     #   attempt a connection.
     # @option options [ String ] :database The database to connect to.
-    # @option options [ Float ] :heartbeat_frequency The number of seconds for
-    #   the server monitor to refresh it's description via ismaster.
+    # @option options [ Float ] :heartbeat_frequency The interval, in seconds,
+    #   for the server monitor to refresh its description via ismaster.
     # @option options [ Object ] :id_generator A custom object to generate ids
     #   for documents. Must respond to #generate.
     # @option options [ Integer ] :local_threshold The local threshold boundary
@@ -340,8 +341,10 @@ module Mongo
     # @option options [ String ] :user The user name.
     # @option options [ Float ] :wait_queue_timeout The time to wait, in
     #   seconds, in the connection pool for a connection to be checked in.
-    # @option options [ Hash ] :write The write concern options. Can be :w =>
-    #   Integer|String, :fsync => Boolean, :j => Boolean.
+    # @option options [ Hash ] :write Deprecated. Equivalent to :write_concern
+    #   option.
+    # @option options [ Hash ] :write_concern The write concern options.
+    #   Can be :w => Integer|String, :fsync => Boolean, :j => Boolean.
     # @option options [ Integer ] :zlib_compression_level The Zlib compression level to use, if using compression.
     #   See Ruby's Zlib module for valid levels.
     #
@@ -352,34 +355,57 @@ module Mongo
       else
         options = {}
       end
+
       unless options[:retry_reads] == false
         options[:retry_reads] = true
       end
       unless options[:retry_writes] == false
         options[:retry_writes] = true
       end
-      Lint.validate_underscore_read_preference(options[:read])
-      Lint.validate_read_concern_option(options[:read_concern])
+
       if addresses_or_uri.is_a?(::String)
         uri = URI.get(addresses_or_uri, options)
         addresses = uri.servers
-        options = uri.client_options.merge(options)
+        uri_options = uri.client_options.dup
+        # Special handing for :write and :write_concern: allow client Ruby
+        # options to override URI options, even when the Ruby option uses the
+        # deprecated :write key and the URI option uses the current
+        # :write_concern key
+        if options[:write]
+          uri_options.delete(:write_concern)
+        end
+        options = uri_options.merge(options)
       else
         addresses = addresses_or_uri
       end
+
       # Special handling for sdam_proc as it is only used during client
       # construction
       sdam_proc = options.delete(:sdam_proc)
-      @options = validate_options!(Database::DEFAULT_OPTIONS.merge(options)).freeze
+
+      @options = validate_new_options!(Database::DEFAULT_OPTIONS.merge(options))
+=begin WriteConcern object support
+      if @options[:write_concern].is_a?(WriteConcern::Base)
+        # Cache the instance so that we do not needlessly reconstruct it.
+        @write_concern = @options[:write_concern]
+        @options[:write_concern] = @write_concern.options
+      end
+=end
+      @options.freeze
+      validate_options!
+
       @database = Database.new(self, @options[:database], @options)
+
       # Temporarily set monitoring so that event subscriptions can be
       # set up without there being a cluster
       @monitoring = Monitoring.new(@options)
+
       if sdam_proc
         sdam_proc.call(self)
       end
-      @server_selection_semaphore = Semaphore.new
+
       @cluster = Cluster.new(addresses, @monitoring, cluster_options)
+
       # Unset monitoring, it will be taken out of cluster from now on
       remove_instance_variable('@monitoring')
 
@@ -394,7 +420,6 @@ module Mongo
       options.reject do |key, value|
         CRUD_OPTIONS.include?(key.to_sym)
       end.merge(
-        server_selection_semaphore: @server_selection_semaphore,
         # but need to put the database back in for auth...
         database: options[:database],
 
@@ -538,14 +563,43 @@ module Mongo
     # @since 2.0.0
     def with(new_options = Options::Redacted.new)
       clone.tap do |client|
-        opts = validate_options!(new_options)
-        client.options.update(opts)
+        opts = client.update_options(new_options)
         Database.create(client)
         # We can't use the same cluster if some options that would affect it
         # have changed.
         if cluster_modifying?(opts)
           Cluster.create(client)
         end
+      end
+    end
+
+    # Updates this client's options from new_options, validating all options.
+    #
+    # The new options may be transformed according to various rules.
+    # The final hash of options actually applied to the client is returned.
+    #
+    # If options fail validation, this method may warn or raise an exception.
+    # If this method raises an exception, the client should be discarded
+    # (similarly to if a constructor raised an exception).
+    #
+    # @param [ Hash ] new_options The new options to use.
+    #
+    # @return [ Hash ] Modified new options written into the client.
+    #
+    # @api private
+    def update_options(new_options)
+      validate_new_options!(new_options).tap do |opts|
+        # Our options are frozen
+        options = @options.dup
+        if options[:write] && opts[:write_concern]
+          options.delete(:write)
+        end
+        if options[:write_concern] && opts[:write]
+          options.delete(:write_concern)
+        end
+        options.update(opts)
+        @options = options.freeze
+        validate_options!
       end
     end
 
@@ -572,7 +626,7 @@ module Mongo
     #
     # @since 2.0.0
     def write_concern
-      @write_concern ||= WriteConcern.get(options[:write])
+      @write_concern ||= WriteConcern.get(options[:write_concern] || options[:write])
     end
 
     # Close all connections.
@@ -760,8 +814,14 @@ module Mongo
       end
     end
 
-    def validate_options!(opts = Options::Redacted.new)
+    # Validates options in the provided argument for validity.
+    # The argument may contain a subset of options that the client will
+    # eventually have; this method validates each of the provided options
+    # but does not check for interactions between combinations of options.
+    def validate_new_options!(opts = Options::Redacted.new)
       return Options::Redacted.new unless opts
+      Lint.validate_underscore_read_preference(opts[:read])
+      Lint.validate_read_concern_option(opts[:read_concern])
       opts.each.inject(Options::Redacted.new) do |_options, (k, v)|
         key = k.to_sym
         if VALID_OPTIONS.include?(key)
@@ -777,6 +837,15 @@ module Mongo
           log_warn("Unsupported client option '#{k}'. It will be ignored.")
         end
         _options
+      end
+    end
+
+    # Validates all options after they are set on the client.
+    # This method is intended to catch combinations of options which do are
+    # not allowed.
+    def validate_options!
+      if options[:write] && options[:write_concern] && options[:write] != options[:write_concern]
+        raise ArgumentError, "If :write and :write_concern are both given, they must be identical: #{options.inspect}"
       end
     end
 

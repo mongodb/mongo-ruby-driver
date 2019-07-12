@@ -148,8 +148,15 @@ describe Mongo::Cluster do
       cluster.instance_variable_get(:@servers)
     end
 
+    let(:server) { known_servers.first }
+
+    let(:monitor) do
+      double('monitor')
+    end
+
     before do
-      expect(known_servers.first).to receive(:scan!).and_call_original
+      expect(server).to receive(:monitor).at_least(:once).and_return(monitor)
+      expect(monitor).to receive(:scan!)
     end
 
     it 'returns true' do

@@ -18,7 +18,7 @@ tests:
           failCommands: ["commitTransaction"]
           closeConnection: true
     operations:
-      -
+      - &withTransaction
         name: withTransaction
         object: session0
         arguments:
@@ -191,20 +191,7 @@ tests:
           errorCode: 10107 # NotMaster
           closeConnection: false
     operations:
-      -
-        name: withTransaction
-        object: session0
-        arguments:
-          callback:
-            operations:
-              -
-                name: insertOne
-                object: collection
-                arguments:
-                  session: session0
-                  document: { _id: 1 }
-                result:
-                  insertedId: 1
+      - *withTransaction
     expectations:
       -
         command_started_event:

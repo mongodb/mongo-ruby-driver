@@ -56,6 +56,8 @@ describe 'Max Staleness Spec' do
           allow(c).to receive(:options).and_return(options)
           allow(c).to receive(:scan!).and_return(true)
           allow(c).to receive(:app_metadata).and_return(app_metadata)
+          allow(c).to receive(:heartbeat_interval).and_return(
+            spec.heartbeat_frequency || Mongo::Server::Monitor::HEARTBEAT_FREQUENCY)
         end
       end
 
@@ -66,7 +68,9 @@ describe 'Max Staleness Spec' do
             allow(feat).to receive(:check_driver_support!).and_return(true)
           end
           address = Mongo::Address.new(server['address'])
-          Mongo::Server.new(address, cluster, monitoring, listeners, options).tap do |s|
+          Mongo::Server.new(address, cluster, monitoring, listeners,
+            {monitoring_io: false}.update(options)
+          ).tap do |s|
             allow(s).to receive(:average_round_trip_time).and_return(server['avg_rtt_ms'] / 1000.0) if server['avg_rtt_ms']
             allow(s).to receive(:tags).and_return(server['tags'])
             allow(s).to receive(:secondary?).and_return(server['type'] == 'RSSecondary')
@@ -83,7 +87,8 @@ describe 'Max Staleness Spec' do
 
       let(:in_latency_window) do
         spec.in_latency_window.collect do |server|
-          Mongo::Server.new(Mongo::Address.new(server['address']), cluster, monitoring, listeners, options.merge(monitor: false))
+          Mongo::Server.new(Mongo::Address.new(server['address']), cluster, monitoring, listeners,
+            options.merge(monitoring_io: false))
         end
       end
 

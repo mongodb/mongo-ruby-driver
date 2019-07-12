@@ -64,10 +64,18 @@ module Mongo
       @connection_id_gen = Class.new do
         include Id
       end
-      @monitor = Monitor.new(address, event_listeners, monitoring,
-        options.merge(app_metadata: Monitor::AppMetadata.new(cluster.options)))
-      unless monitor == false
-        start_monitoring
+      @scan_semaphore = Semaphore.new
+      @round_trip_time_averager = RoundTripTimeAverager.new
+      @description = Description.new(address, {})
+      @last_scan = nil
+      unless options[:monitoring_io] == false
+        @monitor = Monitor.new(self, event_listeners, monitoring,
+          options.merge(
+            app_metadata: Monitor::AppMetadata.new(cluster.options),
+        ))
+        unless monitor == false
+          start_monitoring
+        end
       end
       @connected = true
       @pool_lock = Mutex.new
@@ -79,7 +87,8 @@ module Mongo
     # @return [ Cluster ] cluster The server cluster.
     attr_reader :cluster
 
-    # @return [ Monitor ] monitor The server monitor.
+    # @return [ nil | Monitor ] monitor The server monitor. nil if the servenr
+    #   was created with monitoring_io: false option.
     attr_reader :monitor
 
     # @return [ Hash ] The options hash.
@@ -88,14 +97,38 @@ module Mongo
     # @return [ Monitoring ] monitoring The monitoring.
     attr_reader :monitoring
 
-    # Get the description from the monitor and scan on monitor.
-    def_delegators :monitor,
-      :description,
-      :scan!,
-      :heartbeat_frequency,
-      :last_scan,
-      :compressor
+    # @return [ Server::Description ] description The server
+    #   description the monitor refreshes.
+    attr_reader :description
+
+    # @return [ Time ] last_scan The time when the last server scan started.
+    #
+    # @since 2.4.0
+    attr_reader :last_scan
+
+    # @deprecated
+    def heartbeat_frequency
+      cluster.heartbeat_interval
+    end
+
+    # @deprecated
     alias :heartbeat_frequency_seconds :heartbeat_frequency
+
+    # @deprecated
+    def_delegators :monitor, :scan!
+
+    # The last compressor discovered by the server monitor.
+    #
+    # The compressor state should be determined for each individual
+    # connection rather than kept per server. A future version of the
+    # driver will change how compressors are tracked and used.
+    def compressor
+      if monitor
+        monitor.compressor
+      else
+        nil
+      end
+    end
 
     # Delegate convenience methods to the monitor description.
     def_delegators :description,
@@ -126,6 +159,16 @@ module Mongo
 
     def_delegators :features,
                    :check_driver_support!
+
+    # @return [ Semaphore ] Semaphore to signal to request an immediate scan
+    #   of this server by its monitor, if one is running.
+    #
+    # @api private
+    attr_reader :scan_semaphore
+
+    # @return [ RoundTripTimeAverager ] Round trip time averager object.
+    # @api private
+    attr_reader :round_trip_time_averager
 
     # Is this server equal to another?
     #
@@ -181,7 +224,9 @@ module Mongo
     #
     # @since 2.0.0
     def disconnect!(wait=false)
-      monitor.stop!(wait)
+      if monitor
+        monitor.stop!(wait)
+      end
       if wait
         pool.close(wait: wait)
         # Need to clear @pool as otherwise the old pool will continue to be
@@ -416,20 +461,24 @@ module Mongo
     #
     # @since 2.4.0, SDAM events are sent as of version 2.7.0
     def unknown!
-      # Just dispatch the description changed event here, SDAM flow
-      # will update description on the server without in-place mutations
-      # and invoke SDAM transitions as needed.
-      publish(Event::DESCRIPTION_CHANGED, description, Description.new(address))
+      # SDAM flow will update description on the server without in-place
+      # mutations and invoke SDAM transitions as needed.
+      cluster.run_sdam_flow(description, Description.new(address))
     end
 
     # @api private
     def update_description(description)
-      monitor.instance_variable_set('@description', description)
+      @description = description
     end
 
     # @api private
     def next_connection_id
       @connection_id_gen.next_id
+    end
+
+    # @api private
+    def update_last_scan
+      @last_scan = Time.now
     end
   end
 end

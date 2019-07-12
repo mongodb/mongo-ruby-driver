@@ -444,18 +444,6 @@ the modification occurs.
   )
   doc # Return the document after the update.
 
-Write Concern
-~~~~~~~~~~~~~
-
-Write concern can be given for specific operations on a collection
-using the ``with`` method, similarly to read preference:
-
-.. code-block:: ruby
-
-  client = Mongo::Client.new([ '127.0.0.1:27017' ], :database => 'music')
-  artists = client[:artists]
-  artists.with(:write => { :w => :3 }).insert_one( { :name => 'Depeche Mode' } )
-
 Deleting
 --------
 
@@ -481,6 +469,177 @@ Deleting
 
   result = artists.delete_many(:label => 'Mute')
   result.deleted_count # Returns the number deleted.
+
+.. _write-concern:
+
+Write Concern
+-------------
+
+All write operations in MongoDB are executed with a write concern which is
+the level of acknowledgment requested from MongoDB for the particular write.
+More information about write concerns in general is available in the
+`MongoDB manual <https://docs.mongodb.com/manual/reference/write-concern/>`_.
+
+The Ruby driver supports specifying write concern on client, collection,
+session (for transactions on that session), transaction, GridFS bucket
+and write stream levels, as well as when manually issuing commands via
+``Database#command``.
+
+As of driver version 2.10, all driver objects accepting write concerns do so
+through the ``:write_concern`` option, which should be given a hash with
+the write concern options. Usage of the ``:write`` option is deprecated.
+In driver versions 2.9 and below, client, collection and GridFS objects
+took write concern options in the ``:write`` option with session and
+transaction objects employing the ``:write_concern`` option.
+
+Below are some examples of passing write concerns to client and colection
+objects. The ``:write_concern`` option can be provided when constructing
+new client and collection objects,  or to the ``#with`` methods.
+
+GridFS examples are provided on the :ref:`GridFS <gridfs>` page.
+
+.. code-block:: ruby
+
+  client = Mongo::Client.new([ '127.0.0.1:27017' ], database: 'music',
+    write_concern: {w: 2})
+  alt_client = client.with(write_concern: {w: :majority})
+  
+  collection = client[:artists, write_concern: {w: 3}]
+  alt_collection = collection.with(write_concern: {w: :majority})
+  
+  # Uses w: 3
+  collection.insert_one({name: 'SUN Project'})
+  # Uses w: :majority
+  alt_collection.insert_one({name: 'SUN Project'})
+
+Driver versions 2.9 and earlier accepted write concerns on client and collection
+level via the ``:write`` option. This usage continues to be supported for
+backwards compatibility, but is deprecated:
+
+.. code-block:: ruby
+
+  client = Mongo::Client.new([ '127.0.0.1:27017' ], database: 'music',
+    write: {w: 2})
+  alt_client = client.with(write: {w: :majority})
+  
+  collection = client[:artists, write: {w: 3}]
+  alt_collection = collection.with(write: {w: :majority})
+
+If both ``:write`` and ``:write_concern`` options are provided, their
+values must be identical or an exception will be raised:
+
+.. code-block:: ruby
+
+  # OK
+  client = Mongo::Client.new([ '127.0.0.1:27017' ], database: 'music',
+    write_concern: {w: 3}, write: {w: 3})
+  
+  # Error
+  client = Mongo::Client.new([ '127.0.0.1:27017' ], database: 'music',
+    write_concern: {w: 3}, write: {w: :majority})
+
+When ``#with`` methods are used to alter the options on a client or collection,
+the last provided option wins in case of naming differences:
+
+.. code-block:: ruby
+
+  client = Mongo::Client.new([ '127.0.0.1:27017' ], database: 'music',
+    write_concern: {w: 2})
+  alt_client = client.with(write: {w: 3})
+  
+  alt_client.options[:write]
+  # => {"w"=>3}
+  
+  alt_client.options[:write_concern]
+  # => nil
+
+When using transactions, write concern is only sent to the server in
+``commit_transaction`` and ``abort_transaction`` operations
+per the `transactions specification
+<https://github.com/mongodb/specifications/blob/master/source/transactions/transactions.rst#writeconcern>`_.
+Write concern may be set via the ``:write_concern`` option in a
+``with_transaction`` or ``start_transaction`` call, or via
+``default_transaction_options`` option on a session object.
+If neither of these is set, write concern of the client is used; note
+that transactions ignore write concerns of collections that are involved
+in their operations. Note that when setting the write concern as a
+transaction option, the ``:write`` option is not recognized by any
+driver version.
+
+.. code-block:: ruby
+  
+  client = Mongo::Client.new([ '127.0.0.1:27017' ], database: 'music',
+    write_concern: {w: 2})
+  collection = client[:artists, write_concern: {w: :majority}]
+  
+  
+  session = client.start_session
+  session.with_transaction do
+    collection.insert_one({test: 1}, session: session)
+  
+    # Uses w: 2 when committing
+  end
+  
+  
+  session = client.start_session(default_transaction_options:
+    {write_concern: {w: 3})
+  )
+  session.with_transaction do
+    collection.insert_one({test: 1}, session: session)
+  
+    # Uses w: 3 when committing
+  end
+  
+  
+  session = client.start_session
+  session.with_transaction(write_concern: {w: 3}) do
+    collection.insert_one({test: 1}, session: session)
+  
+    # Uses w: 3 when committing
+  end
+
+When write concerns are inherited, inheritance applies to the entire
+write concern hash rather than individual elements. For example, ``j: true``
+is not inherited in the following case:
+
+.. code-block:: ruby
+  
+  client = Mongo::Client.new([ '127.0.0.1:27017' ], database: 'music',
+    write_concern: {w: 1, j: true})
+  collection = client[:artists, write_concern: {w: 2}]
+  
+  collection.write_concern.options
+  # => #<Mongo::WriteConcern::Acknowledged:0x47289650367880 options={:w=>2}>
+
+Although CRUD operations accept an options hash, they currently do not
+recognize the ``:write_concern`` option:
+  
+.. code-block:: ruby
+
+  client = Mongo::Client.new([ '127.0.0.1:27017' ], database: 'music',
+    write_concern: {w: 2})
+  collection = client[:artists, write_concern: {w: :majority}]
+  
+  # Still uses w: :majority
+  collection.insert_one({name: 'SUN Project'}, write_concern: {w: 1})
+
+The easiest workaround for this is to use ``#with`` to obtain a new collection
+instance with the desired write concern:
+  
+.. code-block:: ruby
+
+  # Uses w: 1
+  collection.with(write_concern: {w: 1}).insert_one(name: 'SUN Project')
+
+Write concern can also be manually specified in ``Database#command``:
+  
+.. code-block:: ruby
+
+    client.database.command(create: 'foo-collection', writeConcern: {w: :majority})
+
+Note that writeConcern here is part of the operation rather than options,
+and the syntax is the camel case one that MongoDB server recognizes, not the
+underscore one that Ruby driver uses.
 
 A Note about the BSON Symbol type
 ---------------------------------

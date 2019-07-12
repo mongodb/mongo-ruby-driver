@@ -29,10 +29,8 @@ describe 'Server Discovery and Monitoring' do
       before(:all) do
         # Since we supply all server descriptions and drive events,
         # background monitoring only gets in the way. Disable it.
-        @client = Mongo::Client.new(spec.uri_string, monitoring_io: false)
-        client_options = @client.instance_variable_get(:@options)
-        @client.instance_variable_set(:@options, client_options.merge(heartbeat_frequency: 100, connect_timeout: 0.1))
-        @client.cluster.instance_variable_set(:@options, client_options.merge(heartbeat_frequency: 100, connect_timeout: 0.1))
+        @client = Mongo::Client.new(spec.uri_string,
+          monitoring_io: false, heartbeat_frequency: 1000, connect_timeout: 0.1)
       end
 
       after(:all) do
@@ -66,8 +64,7 @@ describe 'Server Discovery and Monitoring' do
               result['maxWireVersion'] ||= 0
               new_description = Mongo::Server::Description.new(
                 server.description.address, result, 0.5)
-              publisher = SdamSpecEventPublisher.new(@client.cluster.send(:event_listeners))
-              publisher.publish(Mongo::Event::DESCRIPTION_CHANGED, server.description, new_description)
+              @client.cluster.run_sdam_flow(server.description, new_description)
             end
           end
 

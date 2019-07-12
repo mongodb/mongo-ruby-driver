@@ -25,6 +25,7 @@ describe Mongo::Server::Connection, retry: 3 do
       allow(cl).to receive(:options).and_return({})
       allow(cl).to receive(:cluster_time).and_return(nil)
       allow(cl).to receive(:update_cluster_time)
+      allow(cl).to receive(:run_sdam_flow)
       pool = double('pool')
       allow(pool).to receive(:disconnect!)
       allow(cl).to receive(:pool).and_return(pool)
@@ -34,8 +35,10 @@ describe Mongo::Server::Connection, retry: 3 do
   declare_topology_double
 
   let(:server) do
-    Mongo::Server.new(address, cluster, monitoring, listeners,
-      SpecConfig.instance.test_options.merge(monitoring_io: false))
+    register_server(
+      Mongo::Server.new(address, cluster, monitoring, listeners,
+        SpecConfig.instance.test_options.merge(monitoring_io: false))
+    )
   end
 
   before(:all) do

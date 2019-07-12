@@ -28,11 +28,18 @@ describe Mongo::Server::ConnectionPool do
       allow(cl).to receive(:options).and_return({})
       allow(cl).to receive(:update_cluster_time)
       allow(cl).to receive(:cluster_time).and_return(nil)
+      allow(cl).to receive(:run_sdam_flow)
     end
   end
 
   let(:server) do
-    Mongo::Server.new(address, cluster, monitoring, listeners, server_options)
+    register_server(
+      Mongo::Server.new(address, cluster, monitoring, listeners,
+        {monitoring_io: false}.update(server_options)
+      ).tap do |server|
+        allow(server).to receive(:description).and_return(ClusterConfig.instance.primary_description)
+      end
+    )
   end
 
   let(:pool) do
