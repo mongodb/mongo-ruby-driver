@@ -24,6 +24,8 @@ def define_transactions_spec_tests(test_paths)
     spec = Mongo::Transactions::Spec.new(file)
 
     context(spec.description) do
+      require_wired_tiger
+
       define_spec_tests_with_requirements(spec) do |req|
         spec.tests.each do |test|
 

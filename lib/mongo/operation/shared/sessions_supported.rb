@@ -62,7 +62,9 @@ module Mongo
         if !server.standalone?
           cc_doc = session.send(:causal_consistency_doc)
           if cc_doc
-            selector[:readConcern] = (selector[:readConcern] || read_concern || {}).merge(cc_doc)
+            rc_doc = (selector[:readConcern] || read_concern || {}).merge(cc_doc)
+            selector[:readConcern] = Options::Mapper.transform_values_to_strings(
+              rc_doc)
           end
         end
       end
@@ -125,7 +127,9 @@ module Mongo
         sel = selector(server).dup
         add_write_concern!(sel)
         sel[Protocol::Msg::DATABASE_IDENTIFIER] = db_name
-        sel['$readPreference'] = read.to_doc if read
+        unless server.standalone?
+          sel['$readPreference'] = read.to_doc if read
+        end
 
         if server.features.sessions_enabled?
           apply_cluster_time!(sel, server)

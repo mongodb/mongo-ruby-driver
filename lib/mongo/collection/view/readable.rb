@@ -138,7 +138,10 @@ module Mongo
           cmd[:skip] = opts[:skip] if opts[:skip]
           cmd[:hint] = opts[:hint] if opts[:hint]
           cmd[:limit] = opts[:limit] if opts[:limit]
-          cmd[:readConcern] = read_concern if read_concern
+          if read_concern
+            cmd[:readConcern] = Options::Mapper.transform_values_to_strings(
+              read_concern)
+          end
           cmd[:maxTimeMS] = opts[:max_time_ms] if opts[:max_time_ms]
           Mongo::Lint.validate_underscore_read_preference(opts[:read])
           read_pref = opts[:read] || read_preference
@@ -205,7 +208,10 @@ module Mongo
         def estimated_document_count(opts = {})
           cmd = { count: collection.name }
           cmd[:maxTimeMS] = opts[:max_time_ms] if opts[:max_time_ms]
-          cmd[:readConcern] = read_concern if read_concern
+          if read_concern
+            cmd[:readConcern] = Options::Mapper.transform_values_to_strings(
+              read_concern)
+          end
           Mongo::Lint.validate_underscore_read_preference(opts[:read])
           read_pref = opts[:read] || read_preference
           selector = ServerSelector.get(read_pref || server_selector)
@@ -242,7 +248,10 @@ module Mongo
                   :key => field_name.to_s,
                   :query => filter }
           cmd[:maxTimeMS] = opts[:max_time_ms] if opts[:max_time_ms]
-          cmd[:readConcern] = read_concern if read_concern
+          if read_concern
+            cmd[:readConcern] = Options::Mapper.transform_values_to_strings(
+              read_concern)
+          end
           Mongo::Lint.validate_underscore_read_preference(opts[:read])
           read_pref = opts[:read] || read_preference
           selector = ServerSelector.get(read_pref || server_selector)
@@ -548,13 +557,22 @@ module Mongo
         end
 
         def read_preference
-          rp = if options[:session] && options[:session].in_transaction?
-            options[:session].txn_read_preference || collection.client.read_preference
-          else
-            @read_preference ||= (options[:read] || collection.read_preference)
+          @read_preference ||= begin
+            # Operation read preference is always respected, and has the
+            # highest priority. If we are in a transaction, we look at
+            # transaction read preference and default to client, ignoring
+            # collection read preference. If we are not in transaction we
+            # look at collection read preference which defaults to client.
+            rp = if options[:read]
+              options[:read]
+            elsif options[:session] && options[:session].in_transaction?
+              options[:session].txn_read_preference || collection.client.read_preference
+            else
+              collection.read_preference
+            end
+            Lint.validate_underscore_read_preference(rp)
+            rp
           end
-          Lint.validate_underscore_read_preference(rp)
-          rp
         end
 
         def server_selector

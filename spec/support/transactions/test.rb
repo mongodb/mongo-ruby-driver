@@ -54,7 +54,13 @@ module Mongo
         @data = data
         @description = test['description']
         @client_options = Utils.convert_client_options(test['clientOptions'] || {})
-        @session_options = Utils.snakeize_hash(test['sessionOptions'] || {})
+        @session_options = if opts = test['sessionOptions']
+          Hash[opts.map do |session_name, options|
+            [session_name.to_sym, Utils.convert_operation_options(options)]
+          end]
+        else
+          {}
+        end
         @fail_point = test['failPoint']
         @operations = test['operations']
         @expectations = test['expectations']
@@ -102,8 +108,10 @@ module Mongo
       end
 
       def test_client
+        # Disable all write retries until
+        # https://jira.mongodb.org/browse/RUBY-1840 is resolved
         @test_client ||= ClientRegistry.instance.global_client(
-          'authorized_without_retry_writes'
+          'authorized_without_any_retry_writes'
         ).with(@client_options.merge(
           database: @spec.database_name,
         ))

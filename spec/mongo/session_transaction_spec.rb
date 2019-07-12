@@ -3,6 +3,7 @@ require 'spec_helper'
 class SessionTransactionSpecError < StandardError; end
 
 describe Mongo::Session do
+  require_wired_tiger
   min_server_fcv '4.0'
   require_topology :replica_set, :sharded
 

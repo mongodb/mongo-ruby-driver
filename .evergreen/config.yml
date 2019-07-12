@@ -87,6 +87,7 @@ functions:
               export RETRY_WRITES=${RETRY_WRITES}
               export WITH_ACTIVE_SUPPORT="${WITH_ACTIVE_SUPPORT}"
               export SINGLE_MONGOS="${SINGLE_MONGOS}"
+              export MMAPV1="${MMAPV1}"
            EOT
            # See what we've done
            cat expansion.yml
@@ -348,6 +349,16 @@ functions:
           ${PREPARE_SHELL}
           MONGODB_URI="${MONGODB_URI}" .evergreen/run-tests.sh
 
+  "run tests via mlaunch":
+    - command: shell.exec
+      type: test
+      params:
+        shell: bash
+        working_dir: "src"
+        script: |
+          ${PREPARE_SHELL}
+          MONGODB_URI="${MONGODB_URI}" .evergreen/run-tests-mlaunch.sh
+
   "run local tls tests":
     - command: shell.exec
       type: test
@@ -488,6 +499,9 @@ tasks:
         - func: "bootstrap mongo-orchestration"
         - func: "run tests"
         #- func: "cleanup mo"
+    - name: "test-mlaunch"
+      commands:
+        - func: "run tests via mlaunch"
     - name: "local-tls-tests"
       commands:
         - func: "run local tls tests"
@@ -675,7 +689,15 @@ axes:
       - id: "single-mongos"
         display_name: Single Mongos
         variables:
-          SINGLE_MONGOS: true
+          SINGLE_MONGOS: 'true'
+  - id: storage-engine
+    display_name: Storage Engine
+    values:
+      - id: mmapv1
+        display_name: MMAPv1
+        run_on: ubuntu1404-test
+        variables:
+          MMAPV1: 'true'
 
 
 buildvariants:
@@ -731,7 +753,7 @@ buildvariants:
     mongodb-version: ["4.2", latest]
     topology: "sharded-cluster"
     single-mongos: single-mongos
-  display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
+  display_name: "${mongodb-version} ${topology} single-mongos ${auth-and-ssl} ${ruby}"
   run_on:
     - rhel70-small
   tasks:
@@ -777,11 +799,24 @@ buildvariants:
      - name: "test"
 
 -
+  matrix_name: mmapv1
+  matrix_spec:
+    ruby: "ruby-2.6"
+    mongodb-version: [3.6, 4.0]
+    topology: '*'
+    storage-engine: mmapv1
+  display_name: "${mongodb-version} ${topology} mmapv1 ${ruby}"
+  run_on:
+    - rhel70-small
+  tasks:
+     - name: "test-mlaunch"
+
+-
   matrix_name: "lint"
   matrix_spec:
     lint: on
     ruby: "ruby-2.6"
-    mongodb-version: ["4.0"]
+    mongodb-version: ["4.0", "4.2"]
     topology: [replica-set, sharded-cluster]
   display_name: "${mongodb-version} ${topology} ${lint} ${ruby}"
   run_on:
@@ -883,7 +918,7 @@ buildvariants:
     ruby: "*"
     mongodb-version: ['4.0', '4.2']
     topology: standalone
-  display_name: "Local TLS ${ruby}"
+  display_name: "Local TLS ${mongodb-version} ${ruby}"
   run_on:
     - ubuntu1404-test
   tasks:

@@ -1890,6 +1890,7 @@ describe Mongo::BulkWrite do
           end
 
           context 'when retryable writes are supported' do
+            require_wired_tiger
             min_server_fcv '3.6'
             require_topology :replica_set, :sharded
 

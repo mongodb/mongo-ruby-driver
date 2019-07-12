@@ -112,4 +112,29 @@ class ClusterConfig
     # client registry reconnects it in subsequent tests
     ClientRegistry.instance.global_client('basic')
   end
+
+  def storage_engine
+    @storage_engine ||= begin
+      # 2.6 does not have wired tiger
+      if short_server_version == '2.6'
+        :mmapv1
+      else
+        client = ClientRegistry.instance.global_client('root_authorized')
+        if topology == :sharded
+          shards = client.use(:admin).command(listShards: 1).first
+          shard = shards['shards'].first
+          address_str = shard['host'].sub(/^.*\//, '').sub(/,.*/, '')
+          client = ClusterTools.instance.direct_client(address_str,
+            SpecConfig.instance.test_options.merge(SpecConfig.instance.auth_options).merge(connect: :direct))
+        end
+        rv = client.use(:admin).command(serverStatus: 1).first
+        rv = rv['storageEngine']['name']
+        rv_map = {
+          'wiredTiger' => :wired_tiger,
+          'mmapv1' => :mmapv1,
+        }
+        rv_map[rv] || rv
+      end
+    end
+  end
 end

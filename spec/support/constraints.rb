@@ -165,4 +165,30 @@ module Constraints
       end
     end
   end
+
+  def require_wired_tiger
+    before(:all) do
+      if ClusterConfig.instance.storage_engine != :wired_tiger
+        skip 'Test requires WiredTiger storage engine'
+      end
+    end
+  end
+
+  def require_wired_tiger_on_36
+    before(:all) do
+      if ClusterConfig.instance.short_server_version >= '3.6'
+        if ClusterConfig.instance.storage_engine != :wired_tiger
+          skip 'Test requires WiredTiger storage engine on 3.6+ servers'
+        end
+      end
+    end
+  end
+
+  def require_mmapv1
+    before do
+      if ClusterConfig.instance.storage_engine != :mmapv1
+        skip 'Test requires MMAPv1 storage engine'
+      end
+    end
+  end
 end

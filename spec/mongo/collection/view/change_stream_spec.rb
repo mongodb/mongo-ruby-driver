@@ -1,6 +1,7 @@
 require 'spec_helper'
 
 describe Mongo::Collection::View::ChangeStream do
+  require_wired_tiger
   min_server_fcv '3.6'
   require_topology :replica_set
   max_example_run_time 7
@@ -275,6 +276,7 @@ describe Mongo::Collection::View::ChangeStream do
 
       it 'does not close the cursor' do
         expect(cursor).to be_a(Mongo::Cursor)
+        expect(cursor.closed?).to be false
       end
     end
 
@@ -591,6 +593,34 @@ describe Mongo::Collection::View::ChangeStream do
     end
   end
 
+  context 'when a killCursors command is issued for the cursor' do
+    before do
+      change_stream
+      collection.insert_one(a:1)
+      enum.next
+      collection.insert_one(a:2)
+    end
+
+    let(:enum) do
+      change_stream.to_enum
+    end
+
+    it 'should create a new cursor and resume' do
+      original_cursor_id = cursor.id
+
+      client.use(:admin).command({
+        killCursors: collection.name,
+        cursors: [cursor.id]
+      })
+
+      document = enum.next
+      expect(document[:fullDocument][:a]).to eq(2)
+
+      new_cursor_id = change_stream.instance_variable_get(:@cursor).id
+      expect(new_cursor_id).not_to eq(original_cursor_id)
+    end
+  end
+
   context 'when a server error is encountered during a getMore' do
     fails_on_jruby
 
@@ -605,6 +635,7 @@ describe Mongo::Collection::View::ChangeStream do
           collection.insert_one(a: 2)
           expect(cursor).to receive(:get_more).once.and_raise(error)
           expect(cursor).to receive(:kill_cursors).and_call_original
+          expect(view.send(:server_selector)).to receive(:select_server).once.and_call_original
           expect(Mongo::Operation::Aggregate).to receive(:new).and_call_original
         end
 
