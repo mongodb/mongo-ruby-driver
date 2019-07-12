@@ -126,7 +126,7 @@ module Mongo
 
         ObjectSpace.define_finalizer(self, self.class.finalize(@available_connections, @pending_connections, @populator))
 
-        @populator.run! if min_size > 0
+        @populator.run! if min_size > 0 && !options[:disable_populator]
 
         publish_cmap_event(
           Monitoring::Event::Cmap::PoolCreated.new(@server.address, options)

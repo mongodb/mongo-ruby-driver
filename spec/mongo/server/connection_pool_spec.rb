@@ -801,12 +801,13 @@ describe Mongo::Server::ConnectionPool do
         context 'when min size is > 0' do
           before do
             # Kill background thread to test close_idle_socket behavior
-            pool.populator.stop!
+            # pool.populator.stop!
+            expect(pool.populator.running?).to be false
           end
 
           context 'when more than the number of min_size are checked out' do
             let(:options) do
-              {max_pool_size: 5, min_pool_size: 3, max_idle_time: 0.5}
+              {max_pool_size: 5, min_pool_size: 3, max_idle_time: 0.5, disable_populator: true}
             end
 
             it 'closes and removes connections with idle sockets and does not connect new ones' do
@@ -835,7 +836,7 @@ describe Mongo::Server::ConnectionPool do
           context 'when between 0 and min_size number of connections are checked out' do
 
             let(:options) do
-              {max_pool_size: 5, min_pool_size: 3, max_idle_time: 0.5}
+              {max_pool_size: 5, min_pool_size: 3, max_idle_time: 0.5, disable_populator: true}
             end
 
             it 'closes and removes connections with idle sockets and does not connect new ones' do
