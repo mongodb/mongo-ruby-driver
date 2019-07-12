@@ -192,8 +192,12 @@ module Mongo
           updates = BSON::Document.new
           updates.store(Message::Q, filter)
           updates.store(U, update)
-          updates.store(MULTI, flags.include?(:multi_update))
-          updates.store(UPSERT, flags.include?(:upsert))
+          if flags.include?(:multi_update)
+            updates.store(MULTI, true)
+          end
+          if flags.include?(:upsert)
+            updates.store(UPSERT, true)
+          end
           document.store(UPDATE, collection)
           document.store(Message::ORDERED, true)
           document.store(UPDATES, [ updates ])
