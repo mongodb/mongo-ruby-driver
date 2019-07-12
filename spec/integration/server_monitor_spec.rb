@@ -21,7 +21,7 @@ describe 'Server::Monitor' do
     expect(server.description).to be_unknown
 
     # Wait for background thread to update the description
-    sleep 1
+    sleep 1.5
 
     expect(server.description).not_to be_unknown
   end
