@@ -188,6 +188,8 @@ describe Mongo::Server do
   end
 
   describe '#scan!' do
+    clean_slate
+
     include_context 'with monitoring io'
 
     it 'delegates scan to the monitor' do
