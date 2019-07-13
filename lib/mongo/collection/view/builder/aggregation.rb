@@ -87,11 +87,10 @@ module Mongo
           private
 
           def write?
-            pipeline.any? { |operator| operator[:$out] || operator['$out'] }
-          end
-
-          def merge?
-            pipeline.any? { |operator| operator[:$merge] || operator['$merge'] }
+            pipeline.any? do |operator|
+              operator[:$out] || operator['$out'] ||
+              operator[:$merge] || operator['$merge']
+            end
           end
 
           def aggregation_command
@@ -113,7 +112,7 @@ module Mongo
 
           def batch_size_doc
             value = options[:batch_size] || view.batch_size
-            if value == 0 && (write? || merge?)
+            if value == 0 && write?
               {}
             elsif value
               { :batchSize => value }

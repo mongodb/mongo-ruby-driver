@@ -111,12 +111,12 @@ module Mongo
           server.standalone? || server.mongos? || server.primary? || secondary_ok?
         end
 
-        def out?
-          pipeline.any? { |op| op.key?('$out') || op.key?(:$out) }
+        def write?
+          pipeline.any? { |op| op.key?('$out') || op.key?(:$out) || op.key?('$merge') || op.key?(:$merge) }
         end
 
         def secondary_ok?
-          !out?
+          !write?
         end
 
         def send_initial_query(server, session)
