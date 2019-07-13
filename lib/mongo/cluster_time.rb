@@ -60,6 +60,22 @@ module Mongo
       end
     end
 
+    # Older Rubies do not implement other logical operators through <=>.
+    # TODO revise whether these methods are needed when
+    # https://jira.mongodb.org/browse/RUBY-1622 is implemented.
+    def >=(other)
+      (self <=> other) != -1
+    end
+    def >(other)
+      (self <=> other) == 1
+    end
+    def <=(other)
+      (self <=> other) != 1
+    end
+    def <(other)
+      (self <=> other) == -1
+    end
+
     # Compares two ClusterTime instances by comparing their timestamps.
     def ==(other)
       if self['clusterTime'] && other['clusterTime'] &&
