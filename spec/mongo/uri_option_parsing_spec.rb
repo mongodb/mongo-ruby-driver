@@ -129,6 +129,22 @@ describe Mongo::URI do
       expect(uri.uri_options[ruby_option]).to eq('foo')
     end
 
+    context 'it is escaped in URI' do
+      let(:string) { "mongodb://example.com/?#{uri_option}=foo%2f" }
+
+      it 'is unescaped' do
+        expect(uri.uri_options[ruby_option]).to eq('foo/')
+      end
+    end
+
+    context 'it is escaped twice in URI' do
+      let(:string) { "mongodb://example.com/?#{uri_option}=foo%252f" }
+
+      it 'is unescaped once' do
+        expect(uri.uri_options[ruby_option]).to eq('foo%2f')
+      end
+    end
+
     context 'value is a number' do
       let(:string) { "mongodb://example.com/?#{uri_option}=1" }
 

@@ -505,7 +505,7 @@ module Mongo
     end
 
     # Replica Set Options
-    uri_option 'replicaset', :replica_set, :type => :replica_set
+    uri_option 'replicaset', :replica_set
 
     # Timeout Options
     uri_option 'connecttimeoutms', :connect_timeout, :type => :connect_timeout
@@ -633,15 +633,6 @@ module Mongo
       target = select_target(uri_options, strategy[:group])
       value = apply_transform(key, value, strategy[:type])
       merge_uri_option(target, value, strategy[:name])
-    end
-
-    # Replica set transformation, avoid converting to Symbol.
-    #
-    # @param value [String] Replica set name.
-    #
-    # @return [String] Same value to avoid cast to Symbol.
-    def replica_set(value)
-      decode(value)
     end
 
     # Auth source transformation, either db string or :external.
