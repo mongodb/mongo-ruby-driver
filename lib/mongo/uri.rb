@@ -642,7 +642,7 @@ module Mongo
     # @return [String] If auth source is database name.
     # @return [:external] If auth source is external authentication.
     def auth_source(value)
-      value == '$external' ? :external : decode(value)
+      value == '$external' ? :external : value
     end
 
     # Authentication mechanism transformation.

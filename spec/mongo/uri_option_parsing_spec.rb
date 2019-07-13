@@ -206,6 +206,14 @@ describe Mongo::URI do
     let(:ruby_option) { :auth_source }
 
     it_behaves_like 'a string option'
+
+    context '$external' do
+      let(:string) { "mongodb://example.com/?#{uri_option}=$external" }
+
+      it 'is converted to ;external' do
+        expect(uri.uri_options[ruby_option]).to eq(:external)
+      end
+    end
   end
 
   context 'compressors' do
