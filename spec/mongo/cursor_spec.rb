@@ -30,10 +30,15 @@ describe Mongo::Cursor do
     shared_context 'with initialized pool' do
       before do
         ClientRegistry.instance.close_all_clients
-        # Create the pool which schedules pool populator's finalizer
-        authorized_collection.find(a: 1).to_a
-        # Also make sure the server we use is predictable
-        server
+
+        # These tests really like creating pools (and thus scheduling
+        # the pools' finalizers) when querying collections.
+        # Deal with this by pre-creating pools for all known servers.
+        cluster = authorized_collection.client.cluster
+        cluster.next_primary
+        cluster.servers_list.each do |server|
+          server.pool
+        end
       end
     end
 
