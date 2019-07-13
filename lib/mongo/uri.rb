@@ -662,7 +662,7 @@ module Mongo
     #
     # @return [Symbol] The read mode symbol.
     def read_mode(value)
-      READ_MODE_MAP[value.downcase]
+      READ_MODE_MAP[value.downcase] || value
     end
 
     # Read preference tags transformation.

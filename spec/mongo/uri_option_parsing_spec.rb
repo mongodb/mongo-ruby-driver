@@ -357,6 +357,15 @@ describe Mongo::URI do
     it 'is a string' do
       expect(uri.uri_options[:read]).to eq(BSON::Document.new(mode: :nearest))
     end
+
+    context 'an unknown value' do
+
+      let(:string) { "mongodb://example.com/?readPreference=foobar" }
+
+      it 'is unchanged' do
+        expect(uri.uri_options[:read]).to eq(BSON::Document.new(mode: 'foobar'))
+      end
+    end
   end
 
   context 'readPreferenceTags' do
