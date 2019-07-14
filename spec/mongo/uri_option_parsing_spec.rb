@@ -238,6 +238,14 @@ describe Mongo::URI do
         expect(uri.uri_options[ruby_option]).to eq(:external)
       end
     end
+
+    context 'empty' do
+      let(:string) { "mongodb://example.com/?#{uri_option}=" }
+
+      it 'is mapped to the empty string' do
+        expect(uri.uri_options[ruby_option]).to eq('')
+      end
+    end
   end
 
   context 'compressors' do
