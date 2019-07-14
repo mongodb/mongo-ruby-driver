@@ -199,10 +199,10 @@ module Mongo
 
     # Options that are allowed to appear more than once in the uri.
     #
-    # In order to follow the URI options spec requirement that all instances of 'tls' and 'ssl' have
-    # the same value, we need to keep track of all of the values passed in for those options.
-    # Assuming they don't conflict, they will be condensed to a single value immediately after
-    # parsing the URI.
+    # In order to follow the URI options spec requirement that all instances
+    # of 'tls' and 'ssl' have the same value, we need to keep track of all
+    # of the values passed in for those options. Assuming they don't conflict,
+    # they will be condensed to a single value immediately after parsing the URI.
     #
     # @since 2.1.0
     REPEATABLE_OPTIONS = [ :tag_sets, :ssl ]
