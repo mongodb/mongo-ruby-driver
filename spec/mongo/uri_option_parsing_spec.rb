@@ -198,6 +198,30 @@ describe Mongo::URI do
         canonicalize_host_name: true,
       ))
     end
+
+    context 'canonicalize host name is false' do
+
+      let(:string) { 'mongodb://example.com/?authmechanismproperties=SERVICE_REALM:foo,CANONICALIZE_HOST_NAME:false' }
+
+      it 'parses correctly' do
+        expect(uri.uri_options[:auth_mech_properties]).to eq(BSON::Document.new(
+          service_realm: 'foo',
+          canonicalize_host_name: false,
+        ))
+      end
+    end
+
+    context 'canonicalize host name is true in mixed case' do
+
+      let(:string) { 'mongodb://example.com/?authmechanismproperties=SERVICE_REALM:foo,CANONICALIZE_HOST_NAME:TrUe' }
+
+      it 'parses correctly' do
+        expect(uri.uri_options[:auth_mech_properties]).to eq(BSON::Document.new(
+          service_realm: 'foo',
+          canonicalize_host_name: true,
+        ))
+      end
+    end
   end
 
   context 'authSource' do

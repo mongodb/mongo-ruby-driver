@@ -692,7 +692,7 @@ module Mongo
       properties = hash_extractor('authMechanismProperties', value)
       if properties[:canonicalize_host_name]
         properties.merge!(canonicalize_host_name:
-          %w(true TRUE).include?(properties[:canonicalize_host_name]))
+          properties[:canonicalize_host_name].downcase == 'true')
       end
       properties
     end
