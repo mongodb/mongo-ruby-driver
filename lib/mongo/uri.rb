@@ -519,7 +519,7 @@ module Mongo
     uri_option 'w', :w, :group => :write_concern, type: :w
     uri_option 'journal', :j, :group => :write_concern, :type => :bool
     uri_option 'fsync', :fsync, :group => :write_concern, type: :bool
-    uri_option 'wtimeoutms', :wtimeout, :group => :write_concern, :type => :wtimeout
+    uri_option 'wtimeoutms', :wtimeout, :group => :write_concern, :type => :integer
 
     # Read Options
     uri_option 'readpreference', :mode, :group => :read, :type => :read_mode
@@ -872,21 +872,6 @@ module Mongo
 
       log_warn("Invalid max staleness value: #{value}")
       nil
-    end
-
-    # Parses the wtimeoutMS value.
-    #
-    # @param value [ String ] The wtimeoutMS value.
-    #
-    # @return [ Integer | nil ] The integer parsed out, otherwise nil (and a warning will be
-    #   logged).
-    def wtimeout(value)
-      unless /\A\d+\z/ =~ value
-        log_warn("Invalid wtimeoutMS value: #{value}")
-        return nil
-      end
-
-      value.to_i
     end
 
     # Ruby's convention is to provide timeouts in seconds, not milliseconds and

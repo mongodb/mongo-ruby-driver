@@ -223,7 +223,7 @@ URI Options Conversions
      - ``:wait_queue_timeout => Float``
 
    * - wtimeoutMS=Integer
-     - ``{ :write_concern => { :wtimeout => Float }}``
+     - ``{ :write_concern => { :wtimeout => Integer }}``
 
    * - zlibCompressionLevel=Integer
      - ``:zlib_compression_level => Integer``
