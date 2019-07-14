@@ -115,6 +115,7 @@ module Mongo
     # The character delimiting multiple options.
     #
     # @since 2.1.0
+    # @deprecated
     INDIV_URI_OPTS_DELIM = '&'.freeze
 
     # The character delimiting an option and its value.
@@ -380,9 +381,15 @@ module Mongo
     end
 
     def parse_uri_options!(string)
-      return {} unless string
-      string.split(INDIV_URI_OPTS_DELIM).reduce({}) do |uri_options, opt|
-        key, value = opt.split('=', 2)
+      uri_options = {}
+      unless string
+        return uri_options
+      end
+      string.split('&').each do |option_str|
+        if option_str.empty?
+          next
+        end
+        key, value = option_str.split('=', 2)
         if value.nil?
           raise_invalid_error!("Option #{key} has no value")
         end
@@ -392,8 +399,8 @@ module Mongo
         key = decode(key)
         value = decode(value)
         add_uri_option(key, value, uri_options)
-        uri_options
       end
+      uri_options
     end
 
     def parse_user!(string)

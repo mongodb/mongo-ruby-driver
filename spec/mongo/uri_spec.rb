@@ -262,6 +262,19 @@ describe Mongo::URI do
       end
     end
 
+    context 'options start with ampersand' do
+
+      let(:string) { 'mongodb://example.com/?&appName=foo' }
+
+      it 'returns a Mongo::URI object' do
+        expect(uri).to be_a(Mongo::URI)
+      end
+
+      it 'parses the options' do
+        expect(uri.uri_options[:app_name]).to eq('foo')
+      end
+    end
+
     context 'mongodb://alice:foo:bar@127.0.0.1' do
 
       let(:string) { 'mongodb://alice:foo:bar@127.0.0.1' }
