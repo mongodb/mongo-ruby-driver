@@ -389,8 +389,8 @@ module Mongo
         if value.index('=')
           raise_invalid_error!("Value for option #{key} contains the key/value delimiter (=): #{value}")
         end
-        key = ::URI.decode(key)
-        value = ::URI.decode(value)
+        key = decode(key)
+        value = decode(value)
         add_uri_option(key, value, uri_options)
         uri_options
       end
