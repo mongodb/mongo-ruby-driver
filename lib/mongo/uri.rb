@@ -532,8 +532,8 @@ module Mongo
     uri_option 'waitqueuetimeoutms', :wait_queue_timeout, :type => :ms
 
     # Security Options
-    uri_option 'ssl', :ssl, :type => :ssl
-    uri_option 'tls', :ssl, :type => :tls
+    uri_option 'ssl', :ssl, :type => :repeated_bool
+    uri_option 'tls', :ssl, :type => :repeated_bool
     uri_option 'tlsallowinvalidcertificates', :ssl_verify_certificate,
                :type => :inverse_bool
     uri_option 'tlsallowinvalidhostnames', :ssl_verify_hostname,
@@ -716,24 +716,15 @@ module Mongo
       nil
     end
 
-    # Parses the ssl value from the URI.
+    # Converts the value into a boolean and returns it wrapped in an array.
     #
-    # @param value [ String ] The ssl value.
+    # @param name [ String ] Name of the URI option being processed.
+    # @param value [ String ] URI option value.
     #
-    # @return [ Array<true | false> ] The ssl value parsed out (stored in an array to facilitate
-    #   keeping track of all values).
-    def ssl(value)
-      [convert_bool('ssl', value)]
-    end
-
-    # Parses the tls value from the URI.
-    #
-    # @param value [ String ] The tls value.
-    #
-    # @return [ Array<true | false> ] The tls value parsed out (stored in an array to facilitate
-    #   keeping track of all values).
-    def tls(value)
-      [convert_bool('tls', value)]
+    # @return [ Array<true | false> ] The boolean value parsed and wraped
+    #   in an array.
+    def convert_repeated_bool(name, value)
+      [convert_bool(name, value)]
     end
 
     # Converts +value+ into an integer.
