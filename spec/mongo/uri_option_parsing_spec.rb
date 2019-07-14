@@ -402,6 +402,16 @@ describe Mongo::URI do
       expect(uri.uri_options[:read]).to eq(BSON::Document.new(
         tag_sets: [{'dc' => 'ny', 'rack' => '1'}]))
     end
+
+    context 'with double escaped keys and values' do
+
+      let(:string) { "mongodb://example.com/?readPreferenceTags=dc%252f:ny,rack:1%252f" }
+
+      it 'unescapes once' do
+        expect(uri.uri_options[:read]).to eq(BSON::Document.new(
+          tag_sets: [{'dc%2f' => 'ny', 'rack' => '1%2f'}]))
+      end
+    end
   end
 
   context 'replicaSet' do

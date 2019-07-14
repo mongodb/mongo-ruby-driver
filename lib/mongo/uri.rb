@@ -877,7 +877,7 @@ module Mongo
           return nil
         end
 
-        set.merge(decode(k).downcase.to_sym => decode(v))
+        set.merge(k.downcase.to_sym => v)
       end
     end
 
