@@ -517,7 +517,7 @@ module Mongo
 
     # Write Options
     uri_option 'w', :w, :group => :write_concern, type: :w
-    uri_option 'journal', :j, :group => :write_concern, :type => :journal
+    uri_option 'journal', :j, :group => :write_concern, :type => :bool
     uri_option 'fsync', :fsync, :group => :write_concern, type: :bool
     uri_option 'wtimeoutms', :wtimeout, :group => :write_concern, :type => :wtimeout
 
@@ -555,8 +555,8 @@ module Mongo
     uri_option 'appname', :app_name
     uri_option 'compressors', :compressors, :type => :array
     uri_option 'readconcernlevel', :level, group: :read_concern, type: :symbol
-    uri_option 'retryreads', :retry_reads, :type => :retry_reads
-    uri_option 'retrywrites', :retry_writes, :type => :retry_writes
+    uri_option 'retryreads', :retry_reads, :type => :bool
+    uri_option 'retrywrites', :retry_writes, :type => :bool
     uri_option 'zlibcompressionlevel', :zlib_compression_level, :type => :zlib_compression_level
 
     # Applies URI value transformation by either using the default cast
@@ -716,16 +716,6 @@ module Mongo
       nil
     end
 
-    # Parses the journal value.
-    #
-    # @param value [ String ] The journal value.
-    #
-    # @return [ true | false | nil ] The journal value parsed out, otherwise nil (and a warning
-    #   will be logged).
-    def journal(value)
-      convert_bool('journal', value)
-    end
-
     # Parses the ssl value from the URI.
     #
     # @param value [ String ] The ssl value.
@@ -777,26 +767,6 @@ module Mongo
     #   (and a warning will be logged).
     def ssl_verify_hostname(value)
       inverse_bool('tlsAllowInvalidHostnames', value)
-    end
-
-    # Parses the retryReads value.
-    #
-    # @param value [ String ] The retryReads value.
-    #
-    # @return [ true | false | nil ] The boolean value parsed out, otherwise nil (and a warning
-    #   will be logged).
-    def retry_reads(value)
-      convert_bool('retryReads', value)
-    end
-
-    # Parses the retryWrites value.
-    #
-    # @param value [ String ] The retryWrites value.
-    #
-    # @return [ true | false | nil ] The boolean value parsed out, otherwise nil (and a warning
-    #   will be logged).
-    def retry_writes(value)
-      convert_bool('retryWrites', value)
     end
 
     # Converts +value+ into an integer.
