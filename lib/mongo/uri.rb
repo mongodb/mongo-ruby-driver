@@ -508,12 +508,12 @@ module Mongo
     uri_option 'replicaset', :replica_set
 
     # Timeout Options
-    uri_option 'connecttimeoutms', :connect_timeout, :type => :connect_timeout
-    uri_option 'sockettimeoutms', :socket_timeout, :type => :socket_timeout
-    uri_option 'serverselectiontimeoutms', :server_selection_timeout, :type => :server_selection_timeout
-    uri_option 'localthresholdms', :local_threshold, :type => :local_threshold
-    uri_option 'heartbeatfrequencyms', :heartbeat_frequency, :type => :heartbeat_frequency
-    uri_option 'maxidletimems', :max_idle_time, :type => :max_idle_time
+    uri_option 'connecttimeoutms', :connect_timeout, :type => :ms
+    uri_option 'sockettimeoutms', :socket_timeout, :type => :ms
+    uri_option 'serverselectiontimeoutms', :server_selection_timeout, :type => :ms
+    uri_option 'localthresholdms', :local_threshold, :type => :ms
+    uri_option 'heartbeatfrequencyms', :heartbeat_frequency, :type => :ms
+    uri_option 'maxidletimems', :max_idle_time, :type => :ms
 
     # Write Options
     uri_option 'w', :w, :group => :write_concern, type: :w
@@ -529,7 +529,7 @@ module Mongo
     # Pool options
     uri_option 'minpoolsize', :min_pool_size, :type => :integer
     uri_option 'maxpoolsize', :max_pool_size, :type => :integer
-    uri_option 'waitqueuetimeoutms', :wait_queue_timeout, :type => :wait_queue_timeout
+    uri_option 'waitqueuetimeoutms', :wait_queue_timeout, :type => :ms
 
     # Security Options
     uri_option 'ssl', :ssl, :type => :ssl
@@ -874,76 +874,6 @@ module Mongo
       nil
     end
 
-    # Parses the connectTimeoutMS value.
-    #
-    # @param value [ String ] The connectTimeoutMS value.
-    #
-    # @return [ Integer | nil ] The integer parsed out, otherwise nil (and a warning will be
-    #   logged).
-    def connect_timeout(value)
-      ms_convert('connectTimeoutMS', value)
-    end
-
-    # Parses the localThresholdMS value.
-    #
-    # @param value [ String ] The localThresholdMS value.
-    #
-    # @return [ Integer | nil ] The integer parsed out, otherwise nil (and a warning will be
-    #   logged).
-    def local_threshold(value)
-      ms_convert('localThresholdMS', value)
-    end
-
-    # Parses the heartbeatFrequencyMS value.
-    #
-    # @param value [ String ] The heartbeatFrequencyMS value.
-    #
-    # @return [ Integer | nil ] The integer parsed out, otherwise nil (and a warning will be
-    #   logged).
-    def heartbeat_frequency(value)
-      ms_convert('heartbeatFrequencyMS', value)
-    end
-
-    # Parses the maxIdleTimeMS value.
-    #
-    # @param value [ String ] The maxIdleTimeMS value.
-    #
-    # @return [ Integer | nil ] The integer parsed out, otherwise nil (and a warning will be
-    #   logged).
-    def max_idle_time(value)
-      ms_convert('maxIdleTimeMS', value)
-    end
-
-    # Parses the serverSelectionMS value.
-    #
-    # @param value [ String ] The serverSelectionMS value.
-    #
-    # @return [ Integer | nil ] The integer parsed out, otherwise nil (and a warning will be
-    #   logged).
-    def server_selection_timeout(value)
-      ms_convert('serverSelectionTimeoutMS', value)
-    end
-
-    # Parses the socketTimeoutMS value.
-    #
-    # @param value [ String ] The socketTimeoutMS value.
-    #
-    # @return [ Integer | nil ] The integer parsed out, otherwise nil (and a warning will be
-    #   logged).
-    def socket_timeout(value)
-      ms_convert('socketTimeoutMS', value)
-    end
-
-    # Parses the waitQueueTimeoutMS value.
-    #
-    # @param value [ String ] The waitQueueTimeoutMS value.
-    #
-    # @return [ Integer | nil ] The integer parsed out, otherwise nil (and a warning will be
-    #   logged).
-    def wait_queue_timeout(value)
-      ms_convert('MS', value)
-    end
-
     # Parses the wtimeoutMS value.
     #
     # @param value [ String ] The wtimeoutMS value.
@@ -968,7 +898,7 @@ module Mongo
     # @return [ Float ] The seconds value.
     #
     # @since 2.0.0
-    def ms_convert(name, value)
+    def convert_ms(name, value)
       unless /\A-?\d+(\.\d+)?\z/ =~ value
         log_warn("Invalid ms value for #{name}: #{value}")
         return nil
