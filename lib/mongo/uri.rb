@@ -818,11 +818,15 @@ module Mongo
     # @return [ Integer | nil ] The max staleness integer parsed out if it is valid, otherwise nil
     #   (and a warning will be logged).
     def max_staleness(value)
-      if /\A\d+\z/ =~ value
+      if /\A-?\d+\z/ =~ value
         int = value.to_i
 
-        if int >= 0 && int < 90
-          log_warn("max staleness must be either 0 or greater than 90: #{value}")
+        if int == -1
+          int = nil
+        end
+
+        if int && (int >= 0 && int < 90 || int < 0)
+          log_warn("max staleness should be either 0 or greater than 90: #{value}")
         end
 
         return int

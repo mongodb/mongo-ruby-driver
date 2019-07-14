@@ -144,7 +144,13 @@ URI Options Conversions
      - ``:max_idle_time => Float``
 
    * - maxStalenessSeconds=Integer
-     - ``:max_staleness => Float``
+     - ``:max_staleness => Integer``
+     
+       If the maxStalenessSeconds URI option value is -1, the option is ignored.
+       If the option value is an integer, the Ruby option is set to the
+       specified value (but note that the value should be either 0 or greater
+       than 90, while accepted by the driver, may cause errors during operations).
+       If the option value is of any other type, it is ignored.
 
    * - maxPoolSize=Integer
      - ``:max_pool_size => Integer``
