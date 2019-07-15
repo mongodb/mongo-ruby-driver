@@ -43,14 +43,14 @@ describe Mongo::Server::ConnectionPool do
   end
 
   let(:pool) do
-    described_class.new(server, server_options)
+    register_pool(described_class.new(server, server_options)) # todo: options just for pool?
   end
 
   describe '#initialize' do
     context 'when a min size is provided' do
 
       let(:options) do
-        { :min_pool_size => 2, :max_pool_size => 5 }
+        { min_pool_size: 2, max_pool_size: 5 }
       end
 
       it 'creates the pool with min pool size connections' do
@@ -81,7 +81,7 @@ describe Mongo::Server::ConnectionPool do
   describe '#clear' do
     context 'when a min size is provided' do
        let(:options) do
-        { :min_pool_size => 1 }
+        { min_pool_size: 1 }
       end
 
       it 'repopulates the pool periodically only up to min size' do
@@ -115,7 +115,7 @@ describe Mongo::Server::ConnectionPool do
   describe '#check_in' do
     context 'when a min size is provided' do
        let(:options) do
-        { :min_pool_size => 1 }
+        { min_pool_size: 1 }
       end
 
       it 'repopulates the pool after check_in of a closed connection' do
@@ -142,7 +142,7 @@ describe Mongo::Server::ConnectionPool do
     context 'when min size and idle time are provided' do
 
       let(:options) do
-        { :max_pool_size => 2, :min_pool_size => 2, :max_idle_time => 0.5 }
+        { max_pool_size: 2, min_pool_size: 2, max_idle_time: 0.5 }
       end
 
       it 'repopulates the pool after check_out empties idle connections' do
@@ -183,7 +183,7 @@ describe Mongo::Server::ConnectionPool do
     context 'when min size is provided' do
 
        let(:options) do
-        { :min_pool_size => 2, :max_pool_size => 5 }
+        { min_pool_size: 2, max_pool_size: 5 }
       end
 
       it 'terminates and does not repopulate the pool after pool is closed' do
@@ -195,7 +195,7 @@ describe Mongo::Server::ConnectionPool do
         connection = pool.check_out
 
         expect(pool.size).to eq(2)
-        pool.close(:force => true)
+        pool.close(force: true)
 
         expect(pool.closed?).to be true
         expect(pool.instance_variable_get('@available_connections').empty?).to be true
@@ -212,7 +212,7 @@ describe Mongo::Server::ConnectionPool do
   describe '#close_idle_sockets' do
     context 'when min size and idle time are provided' do
       let(:options) do
-        { :min_pool_size => 1, :max_idle_time => 0.5 }
+        { min_pool_size: 1, max_idle_time: 0.5 }
       end
 
       it 'repopulates pool after sockets are closes' do

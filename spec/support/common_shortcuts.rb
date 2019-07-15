@@ -156,5 +156,14 @@ module CommonShortcuts
       end
       LocalResourceRegistry.instance.register(monitor, finalizer)
     end
+
+    def register_pool(pool)
+      finalizer = lambda do |pool|
+        if !pool.closed?
+          pool.close(wait: true)
+        end
+      end
+      LocalResourceRegistry.instance.register(pool, finalizer)
+    end
   end
 end
