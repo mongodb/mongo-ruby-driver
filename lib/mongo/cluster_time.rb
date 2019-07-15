@@ -53,13 +53,27 @@ module Mongo
     def <=>(other)
       if self['clusterTime'] && other['clusterTime']
         self['clusterTime'] <=> other['clusterTime']
-      elsif self['clusterTime']
-        -1
-      elsif other['clusterTime']
-        1
-      else
-        0
+      elsif !self['clusterTime']
+        raise ArgumentError, "Cannot compare cluster times when receiver is missing clusterTime key: #{inspect}"
+      else other['clusterTime']
+        raise ArgumentError, "Cannot compare cluster times when other is missing clusterTime key: #{other.inspect}"
       end
+    end
+
+    # Older Rubies do not implement other logical operators through <=>.
+    # TODO revise whether these methods are needed when
+    # https://jira.mongodb.org/browse/RUBY-1622 is implemented.
+    def >=(other)
+      (self <=> other) != -1
+    end
+    def >(other)
+      (self <=> other) == 1
+    end
+    def <=(other)
+      (self <=> other) != 1
+    end
+    def <(other)
+      (self <=> other) == -1
     end
 
     # Compares two ClusterTime instances by comparing their timestamps.

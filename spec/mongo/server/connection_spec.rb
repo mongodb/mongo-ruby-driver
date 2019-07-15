@@ -766,7 +766,7 @@ describe Mongo::Server::Connection, retry: 3 do
       it 'raises a timeout when it expires' do
         start = Time.now
         begin
-          Timeout::timeout(1.5 + 2) do
+          Timeout::timeout(1.5 + 15) do
             client[authorized_collection.name].find("$where" => "sleep(2000) || true").first
           end
         rescue => ex

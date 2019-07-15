@@ -191,10 +191,15 @@ describe Mongo::Session::SessionPool do
       context 'when talking to a replica set or mongos' do
 
         it 'sends the endSessions command with all the session ids and cluster time' do
+          start_time = client.cluster.cluster_time
           end_sessions_command
+          end_time = client.cluster.cluster_time
           expect(end_sessions_command.command[:endSessions]).to include(BSON::Document.new(session_a.session_id))
           expect(end_sessions_command.command[:endSessions]).to include(BSON::Document.new(session_b.session_id))
-          expect(end_sessions_command.command[:$clusterTime]).to eq(client.cluster.cluster_time)
+          # cluster time may have been advanced due to background operations
+          actual_cluster_time = Mongo::ClusterTime.new(end_sessions_command.command[:$clusterTime])
+          expect(actual_cluster_time).to be >= start_time
+          expect(actual_cluster_time).to be <= end_time
         end
       end
     end
