@@ -39,10 +39,6 @@ module Mongo
       # @since 2.9.0
       DEFAULT_WAIT_TIMEOUT = 1.freeze
 
-      # Background thread reponsible for maintaining the size of
-      # the pool to at least min_size
-      attr_reader :populator
-
       # Condition variable broadcast when the size of the pool changes
       # to wake up the populator
       attr_reader :populate_semaphore
@@ -121,12 +117,14 @@ module Mongo
         # available connection when pool is at max size
         @available_semaphore = Semaphore.new
 
-        @populate_semaphore = Semaphore.new
+        # Background thread reponsible for maintaining the size of
+        # the pool to at least min_size
         @populator = ConnectionPoolPopulator.new(self)
+        @populate_semaphore = Semaphore.new
 
         ObjectSpace.define_finalizer(self, self.class.finalize(@available_connections, @pending_connections, @populator))
 
-        @populator.run! if min_size > 0 && !options[:disable_populator]
+        @populator.run! if min_size > 0
 
         publish_cmap_event(
           Monitoring::Event::Cmap::PoolCreated.new(@server.address, options)
@@ -433,16 +431,12 @@ module Mongo
 
         options ||= {}
 
+        stop_populator(options[:wait])
+
         @lock.synchronize do
           until @available_connections.empty?
             connection = @available_connections.pop
             connection.disconnect!(reason: :pool_closed)
-          end
-
-          until @pending_connections.empty?
-            connection = @pending_connections.take(1).first
-            connection.disconnect!(reason: :pool_closed)
-            @pending_connections.delete(connection)
           end
 
           if options[:force]
@@ -453,10 +447,9 @@ module Mongo
             end
           end
 
-          # mark pool as closed and stop populator before releasing lock so
+          # mark pool as closed before releasing lock so
           # no connections can be created, checked in, or checked out
           @closed = true
-          @populator.stop!(options[:wait])
         end
 
         publish_cmap_event(
@@ -554,15 +547,12 @@ module Mongo
             begin
               authenticate_connection(connection)
               @lock.synchronize do
-                if !closed?
-                  # TODO need to check it still exists in pending here,
-                  # in case pool is closed before we re-obtain the lock
-                  @available_connections << connection
-                  @pending_connections.delete(connection)
+                raise_if_closed!
+                @available_connections << connection
+                @pending_connections.delete(connection)
 
-                  # wake up one thread waiting for connections, since one was created
-                  @available_semaphore.signal
-                end
+                # wake up one thread waiting for connections, since one was created
+                @available_semaphore.signal
               end
             rescue Exception => e
               @lock.synchronize do
@@ -574,6 +564,18 @@ module Mongo
         end
       end
 
+      def stop_populator(wait = false)
+        @lock.synchronize do
+          @populator.stop!(wait)
+
+          until @pending_connections.empty?
+            connection = @pending_connections.take(1).first
+            connection.disconnect!
+            @pending_connections.delete(connection)
+          end
+        end
+      end
+
       # true if the connection is connected, false otherwise
       # connects connection; if handshake/auth fails, closes connection
       def authenticate_connection(connection)
@@ -581,8 +583,8 @@ module Mongo
           connection.connect!
           return true
         rescue Exception => e
-          # TODO close here or elsewhere? what if this errors?
-          connection.disconnect!
+          # Disconnect should not throw an exception.
+          connection.disconnect!(reason: :error)
           raise e
         end
       end

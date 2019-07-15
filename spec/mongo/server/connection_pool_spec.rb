@@ -532,8 +532,7 @@ describe Mongo::Server::ConnectionPool do
       opts = SpecConfig.instance.test_options.merge(max_pool_size: 3, min_pool_size: min_pool_size)
       described_class.new(server, opts).tap do |pool|
         # kill background thread to test disconnect behavior
-        pool.populator.stop!
-
+        pool.stop_populator(true)
         # make pool be of size 2 so that it has enqueued connections
         # when told to disconnect
         c1 = pool.check_out
@@ -801,13 +800,13 @@ describe Mongo::Server::ConnectionPool do
         context 'when min size is > 0' do
           before do
             # Kill background thread to test close_idle_socket behavior
-            # pool.populator.stop!
-            expect(pool.populator.running?).to be false
+            pool.stop_populator(true)
+            expect(pool.instance_variable_get('@populator').running?).to be false
           end
 
           context 'when more than the number of min_size are checked out' do
             let(:options) do
-              {max_pool_size: 5, min_pool_size: 3, max_idle_time: 0.5, disable_populator: true}
+              {max_pool_size: 5, min_pool_size: 3, max_idle_time: 0.5}
             end
 
             it 'closes and removes connections with idle sockets and does not connect new ones' do
@@ -836,7 +835,7 @@ describe Mongo::Server::ConnectionPool do
           context 'when between 0 and min_size number of connections are checked out' do
 
             let(:options) do
-              {max_pool_size: 5, min_pool_size: 3, max_idle_time: 0.5, disable_populator: true}
+              {max_pool_size: 5, min_pool_size: 3, max_idle_time: 0.5}
             end
 
             it 'closes and removes connections with idle sockets and does not connect new ones' do
