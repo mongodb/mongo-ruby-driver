@@ -210,7 +210,7 @@ module Mongo
         txn_num = session.in_transaction? ? session.txn_num : session.next_txn_num
         yield(server, txn_num, false)
       rescue Error::SocketError, Error::SocketTimeoutError => e
-        if session.in_transaction? && !ending_transaction
+        if session && session.in_transaction? && !ending_transaction
           raise
         end
         retry_write(e, session, txn_num, &block)
@@ -296,12 +296,12 @@ module Mongo
       begin
         yield server
       rescue Error::SocketError, Error::SocketTimeoutError => e
-        if session.in_transaction?
+        if session && session.in_transaction?
           raise
         end
         retry_read(e, server_selector, session, &block)
       rescue Error::OperationFailure => e
-        if session.in_transaction? || !e.write_retryable?
+        if (session && session.in_transaction?) || !e.write_retryable?
           raise
         end
         retry_read(e, server_selector, session, &block)
