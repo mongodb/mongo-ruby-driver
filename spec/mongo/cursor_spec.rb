@@ -37,8 +37,12 @@ describe Mongo::Cursor do
       end
 
       it 'does not schedule the finalizer' do
-        expect(ObjectSpace).not_to receive(:define_finalizer)
-        cursor
+        # Due to https://jira.mongodb.org/browse/RUBY-1772, restrict
+        # the scope of the assertion
+        RSpec::Mocks.with_temporary_scope do
+          expect(ObjectSpace).not_to receive(:define_finalizer)
+          cursor
+        end
       end
     end
 

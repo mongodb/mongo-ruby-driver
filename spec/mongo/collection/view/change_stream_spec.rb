@@ -594,30 +594,59 @@ describe Mongo::Collection::View::ChangeStream do
   end
 
   context 'when a killCursors command is issued for the cursor' do
-    before do
-      change_stream
-      collection.insert_one(a:1)
-      enum.next
-      collection.insert_one(a:2)
+    context 'using Enumerable' do
+      only_mri
+
+      before do
+        change_stream
+        collection.insert_one(a:1)
+        enum.next
+        collection.insert_one(a:2)
+      end
+
+      let(:enum) do
+        change_stream.to_enum
+      end
+
+      it 'should create a new cursor and resume' do
+        original_cursor_id = cursor.id
+
+        client.use(:admin).command({
+          killCursors: collection.name,
+          cursors: [cursor.id]
+        })
+
+        document = enum.next
+        expect(document[:fullDocument][:a]).to eq(2)
+
+        new_cursor_id = change_stream.instance_variable_get(:@cursor).id
+        expect(new_cursor_id).not_to eq(original_cursor_id)
+      end
     end
 
-    let(:enum) do
-      change_stream.to_enum
-    end
+    context 'using try_next' do
+      before do
+        change_stream
+        collection.insert_one(a:1)
+        expect(change_stream.try_next).to be_a(BSON::Document)
+        collection.insert_one(a:2)
+      end
 
-    it 'should create a new cursor and resume' do
-      original_cursor_id = cursor.id
+      it 'should create a new cursor and resume' do
+        original_cursor_id = cursor.id
 
-      client.use(:admin).command({
-        killCursors: collection.name,
-        cursors: [cursor.id]
-      })
+        client.use(:admin).command({
+          killCursors: collection.name,
+          cursors: [cursor.id]
+        })
 
-      document = enum.next
-      expect(document[:fullDocument][:a]).to eq(2)
+        document = change_stream.try_next
+        expect(document).to be_a(BSON::Document)
+        expect(document[:fullDocument][:a]).to eq(2)
 
-      new_cursor_id = change_stream.instance_variable_get(:@cursor).id
-      expect(new_cursor_id).not_to eq(original_cursor_id)
+        new_cursor_id = change_stream.instance_variable_get(:@cursor).id
+        expect(new_cursor_id).not_to eq(original_cursor_id)
+      end
     end
   end
 

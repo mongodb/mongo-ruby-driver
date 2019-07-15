@@ -18,8 +18,8 @@ describe 'SDAM Monitoring' do
           client.subscribe(Mongo::Monitoring::TOPOLOGY_OPENING, @subscriber)
           client.subscribe(Mongo::Monitoring::TOPOLOGY_CHANGED, @subscriber)
         end
-        @client = Mongo::Client.new(spec.uri_string,
-          sdam_proc: sdam_proc, monitoring_io: false,
+        @client = new_local_client_nmio(spec.uri_string,
+          sdam_proc: sdam_proc,
           heartbeat_frequency: 100, connect_timeout: 0.1)
         # We do not want to create servers when an event referencing them
         # is processed, because this may result in server duplication

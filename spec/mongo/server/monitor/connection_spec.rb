@@ -3,12 +3,8 @@ require 'spec_helper'
 describe Mongo::Server::Monitor::Connection do
   clean_slate
 
-  let(:client) do
-    authorized_client.with(options.merge(cleanup: false))
-  end
-
   let(:address) do
-    client.cluster.next_primary.address
+    Mongo::Address.new(ClusterConfig.instance.primary_address_str, options)
   end
 
   declare_topology_double
@@ -16,7 +12,7 @@ describe Mongo::Server::Monitor::Connection do
   let(:cluster) do
     double('cluster').tap do |cl|
       allow(cl).to receive(:topology).and_return(topology)
-      allow(cl).to receive(:app_metadata).and_return(Mongo::Server::Monitor::AppMetadata.new(authorized_client.cluster.options))
+      allow(cl).to receive(:app_metadata).and_return(Mongo::Server::Monitor::AppMetadata.new({}))
       allow(cl).to receive(:options).and_return({})
     end
   end

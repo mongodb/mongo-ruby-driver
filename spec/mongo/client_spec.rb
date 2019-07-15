@@ -505,7 +505,7 @@ describe Mongo::Client do
       let(:client_options) { {} }
 
       let(:client) do
-        Mongo::Client.new(['127.0.0.1:27017'], {monitoring_io: false}.update(client_options))
+        new_local_client_nmio(['127.0.0.1:27017'], client_options)
       end
 
       it "defaults to #{default}" do
