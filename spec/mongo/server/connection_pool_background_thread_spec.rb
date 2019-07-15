@@ -205,11 +205,6 @@ describe Mongo::Server::ConnectionPool do
         sleep 2
         expect(pool.instance_variable_get('@populator').running?).to be false
         expect(pool.closed?).to be true
-
-        # running populate should not change state of pool
-        pool.populate
-        expect(pool.instance_variable_get('@available_connections').empty?).to be true
-        expect(pool.instance_variable_get('@checked_out_connections').empty?).to be true
       end
     end
   end

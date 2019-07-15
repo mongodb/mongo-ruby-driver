@@ -53,13 +53,13 @@ describe Mongo::Server::ConnectionPool do
   end
 
   let(:pool) do
-    described_class.new(server, server_options)
+    @pool = described_class.new(server, server_options)
   end
 
   after do
-    # todo change so we don't create a pool if one was not created already
-    if pool
-      pool.close(:force => true)
+    # Only close the pool if one was successfully created by the test
+    if @pool
+      @pool.close(:force => true)
     end
   end
 
@@ -305,7 +305,7 @@ describe Mongo::Server::ConnectionPool do
 
   describe '#check_in' do
     let!(:pool) do
-      server.pool
+      @pool = server.pool
     end
 
     after do
@@ -416,7 +416,7 @@ describe Mongo::Server::ConnectionPool do
     end
 
     let!(:pool) do
-      server.pool
+      @pool = server.pool
     end
 
     context 'when a connection is checked out on a different thread' do
@@ -570,7 +570,7 @@ describe Mongo::Server::ConnectionPool do
 
     context 'min size is 0' do
       let(:pool) do
-        create_pool(0)
+        @pool = create_pool(0)
       end
 
       it_behaves_like 'disconnects and removes all connections in the pool and bumps generation'
@@ -578,7 +578,7 @@ describe Mongo::Server::ConnectionPool do
 
     context 'min size is not 0' do
       let(:pool) do
-        create_pool(1)
+        @pool = create_pool(1)
       end
 
       it_behaves_like 'disconnects and removes all connections in the pool and bumps generation'
@@ -624,7 +624,7 @@ describe Mongo::Server::ConnectionPool do
     let(:options) { {min_pool_size: 3, max_pool_size: 7, wait_timeout: 9, wait_queue_timeout: 9} }
 
     let!(:pool) do
-      server.pool
+      @pool = server.pool
     end
 
     after do
@@ -680,7 +680,7 @@ describe Mongo::Server::ConnectionPool do
 
   describe '#with_connection' do
     let!(:pool) do
-      server.pool
+      @pool = server.pool
     end
 
     context 'when a connection cannot be checked out' do
@@ -709,10 +709,10 @@ describe Mongo::Server::ConnectionPool do
     end
   end
 
-  # TODO verify modification.
+  # TODO is this the only way
   context 'when the connection does not finish authenticating before the thread is killed' do
     let!(:pool) do
-      server.pool
+      @pool = server.pool
     end
 
     let(:options) do
@@ -743,7 +743,7 @@ describe Mongo::Server::ConnectionPool do
 
   describe '#close_idle_sockets' do
     let!(:pool) do
-      server.pool
+      @pool = server.pool
     end
 
     context 'when there is a max_idle_time specified' do

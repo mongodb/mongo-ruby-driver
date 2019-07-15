@@ -287,9 +287,6 @@ module Mongo
               # Ruby does not allow a thread to lock a mutex which it already
               # holds.
               if unsynchronized_size < max_size
-                # This does not currently connect the socket and handshake,
-                # but if it did, it would be performing i/o under our lock,
-                # which is bad. Fix in the future.
                 connection = create_connection
                 @checked_out_connections << connection
                 throw(:done)
@@ -311,13 +308,19 @@ module Mongo
         end
 
         begin
-          authenticate_connection(connection)
+          connect_connection(connection)
         rescue Exception => e
           # Authentication failed
           @lock.synchronize do
             @checked_out_connections.delete(connection)
           end
-          # TODO publish CMAP error and raise appropriate exception
+
+          publish_cmap_event(
+            Monitoring::Event::Cmap::ConnectionCheckOutFailed.new(
+              @server.address,
+              Monitoring::Event::Cmap::ConnectionCheckOutFailed::CONNECTION_ERROR
+            ),
+          )
           raise e
         end
 
@@ -524,19 +527,28 @@ module Mongo
       end
 
       # Create and add connections to the pool until the
-      # pool size is at least min_size.
+      # pool size is at least min_size. Terminates if two connections
+      # encounter errors while authenticating.
       #
       # Used by the pool populator background thread.
       #
+      # @return [ true | false ] True if populate ran to completion, false if it
+      # terminated because of errors encountered while connecting connections.
+      #
       # @api private
       def populate
-        return if closed?
+        raise_if_closed!
 
+        # If the pool is closed during this loop, the locks ensure either
+        # the connection is not created, the connection is in @pending_connections,
+        # or the connection is in @available_connections.
         catch(:done) do
+          retried = false
+
           loop do
             connection = nil
             @lock.synchronize do
-              if !closed? && unsynchronized_size < min_size
+              if unsynchronized_size < min_size
                 connection = create_connection
                 @pending_connections << connection
               else
@@ -545,9 +557,8 @@ module Mongo
             end
 
             begin
-              authenticate_connection(connection)
+              connect_connection(connection)
               @lock.synchronize do
-                raise_if_closed!
                 @available_connections << connection
                 @pending_connections.delete(connection)
 
@@ -558,34 +569,35 @@ module Mongo
               @lock.synchronize do
                 @pending_connections.delete(connection)
               end
-              raise e
+
+              if retried
+                return false
+              end
+              retried = true
             end
           end
         end
+
+        true
       end
 
+      # Stop the background populator thread and clean up any connections created
+      # by the thread which have not been connected yet.
+      #
+      # @option [ true | false ] wait Wait for background thread to exit before
+      # terminating.
       def stop_populator(wait = false)
         @lock.synchronize do
           @populator.stop!(wait)
 
+          # If stop_populator is called while populate is running, there may be
+          # connections waiting to be connected or connections which have not yet
+          # been moved to available_connections. These should be cleaned up.
           until @pending_connections.empty?
             connection = @pending_connections.take(1).first
             connection.disconnect!
             @pending_connections.delete(connection)
           end
-        end
-      end
-
-      # true if the connection is connected, false otherwise
-      # connects connection; if handshake/auth fails, closes connection
-      def authenticate_connection(connection)
-        begin
-          connection.connect!
-          return true
-        rescue Exception => e
-          # Disconnect should not throw an exception.
-          connection.disconnect!(reason: :error)
-          raise e
         end
       end
 
@@ -618,11 +630,7 @@ module Mongo
       private
 
       def create_connection
-        connection = Connection.new(@server, options.merge(generation: generation))
-        # CMAP spec requires connections to be returned from the pool
-        # fully established.
-        #connection.connect!
-        connection
+        Connection.new(@server, options.merge(generation: generation))
       end
 
       # Asserts that the pool has not been closed.
@@ -633,6 +641,19 @@ module Mongo
       def raise_if_closed!
         if closed?
           raise Error::PoolClosedError.new(@server.address)
+        end
+      end
+
+      # true if the connection is connected, false otherwise
+      # connects connection; if handshake/auth fails, closes connection
+      def connect_connection(connection)
+        begin
+          connection.connect!
+          return true
+        rescue Exception => e
+          # Disconnect should not throw an exception.
+          connection.disconnect!(reason: :error)
+          raise e
         end
       end
     end

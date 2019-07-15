@@ -59,8 +59,12 @@ module Mongo
       def start!
         @thread = Thread.new do
           while !@pool.closed? do
-            @pool.populate
-            @pool.populate_semaphore.wait
+            if @pool.populate
+              @pool.populate_semaphore.wait
+            else
+              # Populate encountered connection errors; try again later
+              @pool.populate_semaphore.wait(5)
+            end
           end
         end
       end
