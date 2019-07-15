@@ -63,6 +63,9 @@ module Mongo
       #   are given, their values must be identical.
       # @option options [ Float ] :max_idle_time The time, in seconds,
       #   after which idle connections should be closed by the pool.
+      # Note: Additionally, options for connections created by this pool should
+      #   be included in the options passed here, and they will be forwarded to
+      #   any connections created by the pool.
       #
       # @since 2.0.0, API changed in 2.9.0
       def initialize(server, options = {})
@@ -528,7 +531,7 @@ module Mongo
 
       # Create and add connections to the pool until the
       # pool size is at least min_size. Terminates if two connections
-      # encounter errors while authenticating.
+      # encounter errors (in a row) while authenticating.
       #
       # Used by the pool populator background thread.
       #
@@ -558,6 +561,7 @@ module Mongo
 
             begin
               connect_connection(connection)
+              retried = false
               @lock.synchronize do
                 @available_connections << connection
                 @pending_connections.delete(connection)
@@ -610,7 +614,8 @@ module Mongo
       # @return [ Proc ] The Finalizer.
       def self.finalize(available_connections, pending_connections, populator)
         proc do
-          populator.stop!
+          populator.stop!(true)
+
           available_connections.each do |connection|
             connection.disconnect!(reason: :pool_closed)
           end
@@ -644,14 +649,12 @@ module Mongo
         end
       end
 
-      # true if the connection is connected, false otherwise
-      # connects connection; if handshake/auth fails, closes connection
+      # Attempts to connect (handshake and auth) the connection. If an error is
+      # encountered, closes the connection and raises the error.
       def connect_connection(connection)
         begin
           connection.connect!
-          return true
         rescue Exception => e
-          # Disconnect should not throw an exception.
           connection.disconnect!(reason: :error)
           raise e
         end

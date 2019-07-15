@@ -33,8 +33,6 @@ module Mongo
       # @return [ EventSubscriber ] subscriber The subscriber receiving the CMAP events.
       attr_reader :subscriber
 
-      attr_reader :server
-
       # Instantiate the new spec.
       #
       # @example Create the spec.

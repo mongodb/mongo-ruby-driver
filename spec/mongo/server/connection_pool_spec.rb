@@ -2,19 +2,12 @@ require 'spec_helper'
 
 describe Mongo::Server::ConnectionPool do
 
-  let(:options) { nil }
+  let(:options) { {} }
 
   let(:server_options) do
-    if options
-      default_opts = SpecConfig.instance.test_options.dup
-      default_opts.delete(:max_pool_size)
-      default_opts.delete(:wait_queue_timeout)
-      default_opts.delete(:connect_timeout)
-      default_opts.delete(:max_idle_time)
-      default_opts.merge(options).merge(SpecConfig.instance.auth_options)
-    else
-      SpecConfig.instance.test_options.merge(SpecConfig.instance.auth_options)
-    end
+    SpecConfig.instance.ssl_options.merge(SpecConfig.instance.compressor_options)
+      .merge(SpecConfig.instance.retry_writes_options).merge(SpecConfig.instance.auth_options)
+      .merge(options)
   end
 
   let(:address) do
@@ -150,20 +143,12 @@ describe Mongo::Server::ConnectionPool do
     end
 
     context 'when no pool size option is provided' do
-      let (:options) do
-        {}
-      end
-
       it 'returns the default size' do
         expect(pool.max_size).to eq(5)
       end
     end
 
     context 'when pool is closed' do
-      let (:options) do
-        {}
-      end
-
       before do
         pool.close
       end
@@ -186,10 +171,6 @@ describe Mongo::Server::ConnectionPool do
     end
 
     context 'when the wait timeout option is not provided' do
-      let (:options) do
-        {}
-      end
-
       it 'returns the default wait timeout' do
         expect(pool.wait_timeout).to eq(1)
       end
@@ -406,10 +387,6 @@ describe Mongo::Server::ConnectionPool do
   end
 
   describe '#check_out' do
-    let(:options) do
-      {}
-    end
-
     let!(:pool) do
       server.pool
     end

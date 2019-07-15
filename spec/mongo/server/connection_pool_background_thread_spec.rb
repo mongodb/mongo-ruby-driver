@@ -182,7 +182,7 @@ describe Mongo::Server::ConnectionPool do
   describe '#close' do
     context 'when min size is provided' do
 
-       let(:options) do
+      let(:options) do
         { min_pool_size: 2, max_pool_size: 5 }
       end
 

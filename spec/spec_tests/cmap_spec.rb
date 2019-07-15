@@ -20,12 +20,9 @@ describe 'Cmap' do
 
     context("#{spec.description} (#{file.sub(%r'.*/data/cmap/', '')})") do
       let(:options) do
-        default_opts = SpecConfig.instance.test_options.dup
-        default_opts.delete(:max_pool_size)
-        default_opts.delete(:wait_queue_timeout)
-        default_opts.delete(:connect_timeout)
-        default_opts.delete(:max_idle_time)
-        default_opts.merge(spec.pool_options).merge(monitoring_io: false).merge(SpecConfig.instance.auth_options)
+        SpecConfig.instance.ssl_options.merge(SpecConfig.instance.compressor_options)
+          .merge(SpecConfig.instance.retry_writes_options).merge(SpecConfig.instance.auth_options)
+          .merge(monitoring_io: false).merge(spec.pool_options)
       end
 
       before do
