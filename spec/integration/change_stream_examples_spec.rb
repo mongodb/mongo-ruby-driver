@@ -5,6 +5,11 @@ describe 'change streams examples in Ruby' do
   require_topology :replica_set
   require_wired_tiger
 
+  # On JRuby, change streams should be accessed using try_next on the
+  # change stream objects rather than using the Enumerable interface.
+  # https://jira.mongodb.org/browse/RUBY-1877
+  fails_on_jruby
+
   let!(:inventory) do
     client[:inventory]
   end

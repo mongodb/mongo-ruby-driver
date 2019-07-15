@@ -29,8 +29,8 @@ describe 'Server Discovery and Monitoring' do
       before(:all) do
         # Since we supply all server descriptions and drive events,
         # background monitoring only gets in the way. Disable it.
-        @client = Mongo::Client.new(spec.uri_string,
-          monitoring_io: false, heartbeat_frequency: 1000, connect_timeout: 0.1)
+        @client = new_local_client_nmio(spec.uri_string,
+          heartbeat_frequency: 1000, connect_timeout: 0.1)
       end
 
       after(:all) do

@@ -27,36 +27,52 @@ describe Mongo::Cursor do
       authorized_collection.insert_many(documents)
     end
 
-    context 'cursor exhausted by initial result' do
+    shared_context 'with initialized pool' do
       before do
         ClientRegistry.instance.close_all_clients
-        # Create the pool which schedules pool populator's finalizer
-        authorized_collection.find(a: 1).to_a
+
+        # These tests really like creating pools (and thus scheduling
+        # the pools' finalizers) when querying collections.
+        # Deal with this by pre-creating pools for all known servers.
+        cluster = authorized_collection.client.cluster
+        cluster.next_primary
+        cluster.servers_list.each do |server|
+          server.pool
+        end
       end
+    end
+
+    context 'cursor exhausted by initial result' do
+      include_context 'with initialized pool'
 
       let(:view) do
         Mongo::Collection::View.new(authorized_collection)
       end
 
       it 'does not schedule the finalizer' do
-        expect(ObjectSpace).not_to receive(:define_finalizer)
-        cursor
+        # Due to https://jira.mongodb.org/browse/RUBY-1772, restrict
+        # the scope of the assertion
+        RSpec::Mocks.with_temporary_scope do
+          expect(ObjectSpace).not_to receive(:define_finalizer)
+          cursor
+        end
       end
     end
 
     context 'cursor not exhausted by initial result' do
-      clean_slate
+      include_context 'with initialized pool'
 
       let(:view) do
         Mongo::Collection::View.new(authorized_collection, {}, batch_size: 2)
       end
 
       it 'schedules the finalizer' do
-        # Create the pool which schedules pool populator's finalizer
-        authorized_collection.find(a: 1).to_a
-
-        expect(ObjectSpace).to receive(:define_finalizer)
-        cursor
+        # Due to https://jira.mongodb.org/browse/RUBY-1772, restrict
+        # the scope of the assertion
+        RSpec::Mocks.with_temporary_scope do
+          expect(ObjectSpace).to receive(:define_finalizer)
+          cursor
+        end
       end
     end
   end

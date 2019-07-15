@@ -17,11 +17,7 @@ describe 'Server selector' do
     end
 
     context 'no servers in the cluster' do
-      let(:client) { Mongo::Client.new([], server_selection_timeout: 2) }
-
-      after do
-        client.close
-      end
+      let(:client) { new_local_client_nmio([], server_selection_timeout: 2) }
 
       it 'raises NoServerAvailable with a message explaining the situation' do
         expect do

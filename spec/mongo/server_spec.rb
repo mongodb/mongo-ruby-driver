@@ -188,7 +188,15 @@ describe Mongo::Server do
   end
 
   describe '#scan!' do
+    clean_slate
+
     include_context 'with monitoring io'
+
+    before do
+      # We are invoking scan! on the monitor manually, stop the background
+      # thread to avoid it interfering with our assertions.
+      server.monitor.stop!(true)
+    end
 
     it 'delegates scan to the monitor' do
       expect(server.monitor).to receive(:scan!)

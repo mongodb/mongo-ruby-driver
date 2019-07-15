@@ -57,6 +57,7 @@ class SpecConfig
         @addresses = client.cluster.servers_list.map do |server|
           server.address.to_s
         end
+        client.close
       end
     end
   end
