@@ -35,6 +35,13 @@ module Mongo
           # @since 2.9.0
           TIMEOUT = :timeout
 
+          # @return [ Symbol ] CONNECTION_ERROR Indicates that the connection
+          #   check out failed due to an error encountered while setting up a
+          #   new connection.
+          #
+          # @since 2.10.0
+          CONNECTION_ERROR = :connection_error
+
           # @return [ Mongo::Address ] address The address of the server the
           #   connection would have connected to.
           #
