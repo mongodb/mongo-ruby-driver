@@ -551,7 +551,7 @@ module Mongo
           loop do
             connection = nil
             @lock.synchronize do
-              if unsynchronized_size < min_size
+              if !closed? && unsynchronized_size < min_size
                 connection = create_connection
                 @pending_connections << connection
               else
@@ -561,6 +561,8 @@ module Mongo
 
             begin
               connect_connection(connection)
+
+              raise_if_closed!
               retried = false
               @lock.synchronize do
                 @available_connections << connection
