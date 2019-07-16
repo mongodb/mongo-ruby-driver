@@ -150,8 +150,8 @@ describe Mongo::BulkWrite::OrderedCombiner do
             [
               {
                 replace_one: [
-                  { 'q' => { _id: 0 }, 'u' => { name: 'test' }, 'multi' => false, 'upsert' => false },
-                  { 'q' => { _id: 1 }, 'u' => { name: 'test' }, 'multi' => false, 'upsert' => false }
+                  { 'q' => { _id: 0 }, 'u' => { name: 'test' }, },
+                  { 'q' => { _id: 1 }, 'u' => { name: 'test' }, },
                 ]
               }
             ]
@@ -192,8 +192,8 @@ describe Mongo::BulkWrite::OrderedCombiner do
             [
               {
                 update_one: [
-                  { 'q' => { _id: 0 }, 'u' => { '$set' => { name: 'test' }}, 'multi' => false, 'upsert' => false },
-                  { 'q' => { _id: 1 }, 'u' => { '$set' => { name: 'test' }}, 'multi' => false, 'upsert' => false }
+                  { 'q' => { _id: 0 }, 'u' => { '$set' => { name: 'test' }}, },
+                  { 'q' => { _id: 1 }, 'u' => { '$set' => { name: 'test' }}, },
                 ]
               }
             ]
@@ -234,8 +234,8 @@ describe Mongo::BulkWrite::OrderedCombiner do
             [
               {
                 update_many: [
-                  { 'q' => { _id: 0 }, 'u' => { '$set' => { name: 'test' }}, 'multi' => true, 'upsert' => false },
-                  { 'q' => { _id: 1 }, 'u' => { '$set' => { name: 'test' }}, 'multi' => true, 'upsert' => false }
+                  { 'q' => { _id: 0 }, 'u' => { '$set' => { name: 'test' }}, 'multi' => true, },
+                  { 'q' => { _id: 1 }, 'u' => { '$set' => { name: 'test' }}, 'multi' => true, },
                 ]
               }
             ]
