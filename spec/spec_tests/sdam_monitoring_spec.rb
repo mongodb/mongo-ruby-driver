@@ -39,7 +39,7 @@ describe 'SDAM Monitoring' do
       end
 
       after(:all) do
-        @client.close
+        @client.close(true)
       end
 
       spec.phases.each_with_index do |phase, phase_index|

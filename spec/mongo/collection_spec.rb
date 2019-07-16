@@ -1490,7 +1490,7 @@ describe Mongo::Collection do
       end
 
       after do
-        custom_client.close
+        custom_client.close(true)
       end
 
       it 'inserts with the custom id' do
@@ -1541,7 +1541,7 @@ describe Mongo::Collection do
       end
 
       after do
-        client.close
+        client.close(true)
       end
 
       let(:insert_events) do
@@ -1754,7 +1754,7 @@ describe Mongo::Collection do
       end
 
       after do
-        custom_client.close
+        custom_client.close(true)
       end
 
       it 'inserts with the custom id' do
@@ -2836,7 +2836,7 @@ describe Mongo::Collection do
       end
 
       after do
-        client.close
+        client.close(true)
       end
 
       let(:client) do
@@ -3988,7 +3988,7 @@ describe Mongo::Collection do
       end
 
       after do
-        client.close
+        client.close(true)
       end
 
       let(:update_events) do

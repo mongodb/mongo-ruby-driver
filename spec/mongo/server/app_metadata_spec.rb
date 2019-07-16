@@ -23,7 +23,7 @@ describe Mongo::Server::AppMetadata do
       end
 
       after do
-        client.close
+        client.close(true)
       end
 
       it 'sets the app name' do
@@ -41,7 +41,7 @@ describe Mongo::Server::AppMetadata do
         end
 
         after do
-          client.close
+          client.close(true)
         end
 
         it 'raises an error' do
