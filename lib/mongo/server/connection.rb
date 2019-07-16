@@ -173,11 +173,21 @@ module Mongo
 
       # Separate method to permit easier mocking in the test suite.
       def do_connect
-        socket = address.socket(socket_timeout, ssl_options,
-          connect_timeout: address.connect_timeout)
-        handshake!(socket)
-        pending_connection = PendingConnection.new(socket, @server, monitoring, options)
-        authenticate!(pending_connection)
+        socket = nil
+
+        begin
+          socket = address.socket(socket_timeout, ssl_options,
+            connect_timeout: address.connect_timeout)
+          handshake!(socket)
+          pending_connection = PendingConnection.new(socket, @server, monitoring, options)
+          authenticate!(pending_connection)
+        rescue Exception => e
+          if socket
+            socket.close
+          end
+          raise e
+        end
+
         socket
       end
       private :do_connect
