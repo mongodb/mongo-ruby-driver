@@ -15,15 +15,17 @@ describe 'Cmap' do
     end
   end
 
+  let(:options) do
+    SpecConfig.instance.ssl_options.merge(SpecConfig.instance.compressor_options)
+      .merge(SpecConfig.instance.retry_writes_options).merge(SpecConfig.instance.auth_options)
+      .merge(monitoring_io: false)
+  end
+
   CMAP_TESTS.each do |file|
     spec = Mongo::Cmap::Spec.new(file)
 
     context("#{spec.description} (#{file.sub(%r'.*/data/cmap/', '')})") do
-      let(:options) do
-        SpecConfig.instance.ssl_options.merge(SpecConfig.instance.compressor_options)
-          .merge(SpecConfig.instance.retry_writes_options).merge(SpecConfig.instance.auth_options)
-          .merge(monitoring_io: false).merge(spec.pool_options)
-      end
+
 
       before do
         subscriber = EventSubscriber.new
@@ -37,7 +39,7 @@ describe 'Cmap' do
             cluster,
             monitoring,
             Mongo::Event::Listeners.new,
-            options
+            options.merge(spec.pool_options)
           ).tap do |server|
             allow(server).to receive(:description).and_return(ClusterConfig.instance.primary_description)
           end

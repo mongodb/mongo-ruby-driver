@@ -46,7 +46,7 @@ describe Mongo::Server::ConnectionPool do
   end
 
   let(:pool) do
-    register_pool(described_class.new(server, server_options)) # todo -- server options naming?
+    register_pool(described_class.new(server, server_options))
   end
 
   describe '#initialize' do
@@ -683,7 +683,6 @@ describe Mongo::Server::ConnectionPool do
     end
   end
 
-  # TODO is this the only way
   context 'when the connection does not finish authenticating before the thread is killed' do
     let!(:pool) do
       server.pool

@@ -542,9 +542,6 @@ module Mongo
       def populate
         raise_if_closed!
 
-        # If the pool is closed during this loop, the locks ensure either
-        # the connection is not created, the connection is in @pending_connections,
-        # or the connection is in @available_connections.
         catch(:done) do
           retried = false
 
@@ -561,16 +558,6 @@ module Mongo
 
             begin
               connect_connection(connection)
-
-              raise_if_closed!
-              retried = false
-              @lock.synchronize do
-                @available_connections << connection
-                @pending_connections.delete(connection)
-
-                # wake up one thread waiting for connections, since one was created
-                @available_semaphore.signal
-              end
             rescue Exception => e
               @lock.synchronize do
                 @pending_connections.delete(connection)
@@ -580,6 +567,16 @@ module Mongo
                 return false
               end
               retried = true
+              next
+            end
+
+            retried = false
+            @lock.synchronize do
+              @available_connections << connection
+              @pending_connections.delete(connection)
+
+              # wake up one thread waiting for connections, since one was created
+              @available_semaphore.signal
             end
           end
         end
@@ -593,12 +590,13 @@ module Mongo
       # @option [ true | false ] wait Wait for background thread to exit before
       # terminating.
       def stop_populator(wait = false)
-        @lock.synchronize do
-          @populator.stop!(wait)
+        @populator.stop!(wait)
 
+        @lock.synchronize do
           # If stop_populator is called while populate is running, there may be
-          # connections waiting to be connected or connections which have not yet
-          # been moved to available_connections. These should be cleaned up.
+          # connections waiting to be connected, connections which have not yet
+          # been moved to available_connections, or connections moved to available_connections
+          # but not deleted from pending_connections. These should be cleaned up.
           until @pending_connections.empty?
             connection = @pending_connections.take(1).first
             connection.disconnect!

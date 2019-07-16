@@ -43,7 +43,7 @@ describe Mongo::Server::ConnectionPool do
   end
 
   let(:pool) do
-    register_pool(described_class.new(server, server_options)) # todo: options just for pool?
+    register_pool(described_class.new(server, server_options))
   end
 
   describe '#initialize' do
