@@ -272,6 +272,7 @@ module Mongo
                   # method, but if any don't, check again here
                   connection.disconnect!(reason: :stale)
                   @populate_semaphore.signal
+                  # SHOULD we signal here?
                   next
                 end
 
@@ -313,10 +314,12 @@ module Mongo
         begin
           connect_connection(connection)
         rescue Exception => e
-          # Authentication failed
+          # Handshake or authentication failed
           @lock.synchronize do
             @checked_out_connections.delete(connection)
           end
+
+          # TODO signal here??
 
           publish_cmap_event(
             Monitoring::Event::Cmap::ConnectionCheckOutFailed.new(
@@ -361,6 +364,9 @@ module Mongo
             connection.disconnect!(reason: :pool_closed)
             return
           end
+
+          # TODO should we not always signal? either connection closed & we have a new slot to make one
+          # OR connection free
 
           if connection.closed?
             # Connection was closed - for example, because it experienced
@@ -521,6 +527,7 @@ module Mongo
                 connection.disconnect!(reason: :idle)
                 @available_connections.delete_at(i)
                 @populate_semaphore.signal
+                # TODO signal free slot?
                 next
               end
             end
@@ -564,6 +571,10 @@ module Mongo
               end
 
               if retried
+                # wake up one thread waiting for connections, since one could not
+                # be created here, and can instead be created in flow
+                @available_semaphore.signal
+
                 return false
               end
               retried = true
@@ -601,6 +612,8 @@ module Mongo
             connection = @pending_connections.take(1).first
             connection.disconnect!
             @pending_connections.delete(connection)
+
+            #TODO signal here?
           end
         end
       end

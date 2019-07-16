@@ -180,14 +180,12 @@ describe Mongo::Server do
   end
 
   describe '#scan!' do
-    include_context 'with monitoring io'
-
-    let(:server_options) do
-      { monitoring_io: true, min_pool_size: 0 }
-    end
-
     context 'monitoring_io: true' do
       include_context 'with monitoring io'
+
+      let(:server_options) do
+        { monitoring_io: true, min_pool_size: 0 }
+      end
 
       it 'creates monitoring thread' do
         expect(server.monitor.instance_variable_get('@thread')).to be_a(Thread)
