@@ -402,7 +402,7 @@ describe Mongo::Server::ConnectionPool do
 
         expect do
           pool_other.check_in(connection)
-        end.to raise_error(ArgumentError)
+        end.to raise_error(ArgumentError, /Trying to check in a connection which was not checked out by this pool.*/)
       end
     end
   end
