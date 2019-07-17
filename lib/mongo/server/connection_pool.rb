@@ -421,6 +421,8 @@ module Mongo
 
         options ||= {}
 
+        @populator.stop!
+
         @lock.synchronize do
           until @available_connections.empty?
             connection = @available_connections.pop
@@ -438,7 +440,6 @@ module Mongo
           # mark pool as closed and stop populator before releasing lock so
           # no connections can be created, checked in, or checked out
           @closed = true
-          @populator.stop!
         end
 
         publish_cmap_event(
