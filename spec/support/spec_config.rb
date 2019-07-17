@@ -57,7 +57,7 @@ class SpecConfig
         @addresses = client.cluster.servers_list.map do |server|
           server.address.to_s
         end
-        client.close
+        client.close(true)
       end
     end
   end
@@ -82,7 +82,7 @@ class SpecConfig
       else
         raise "Weird topology #{client.cluster.topology}"
       end
-      client.close
+      client.close(true)
       options
     end
   end

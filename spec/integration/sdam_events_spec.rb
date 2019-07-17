@@ -17,7 +17,7 @@ describe 'SDAM events' do
       client.database.command(ismaster: 1)
       expect(subscriber.events).to be_empty
 
-      client.close
+      client.close(true)
 
       expect(subscriber.events).not_to be_empty
       event = subscriber.first_event('server_closed_event')
@@ -35,7 +35,7 @@ describe 'SDAM events' do
       client.database.command(ismaster: 1)
       expect(subscriber.events).to be_empty
 
-      client.close
+      client.close(true)
 
       expect(subscriber.events).not_to be_empty
       event = subscriber.first_event('topology_closed_event')
