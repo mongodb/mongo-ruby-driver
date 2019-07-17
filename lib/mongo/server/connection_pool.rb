@@ -284,7 +284,7 @@ module Mongo
                   next
                 end
 
-                @checked_out_connections << connection
+                @pending_connections << connection
                 throw(:done)
               end
 
@@ -292,7 +292,7 @@ module Mongo
               # holds.
               if unsynchronized_size < max_size
                 connection = create_connection
-                @checked_out_connections << connection
+                @pending_connections << connection
                 throw(:done)
               end
             end
@@ -316,7 +316,7 @@ module Mongo
         rescue Exception => e
           # Handshake or authentication failed
           @lock.synchronize do
-            @checked_out_connections.delete(connection)
+            @pending_connections.delete(connection)
           end
 
           # TODO signal here??
@@ -328,6 +328,11 @@ module Mongo
             ),
           )
           raise e
+        end
+
+        @lock.synchronize do
+          @checked_out_connections << connection
+          @pending_connections.delete(connection)
         end
 
         publish_cmap_event(
