@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-require 'mongo/server/connection_pool/connection_pool_populator'
+require 'mongo/server/connection_pool/populator'
 
 module Mongo
   class Server
@@ -122,7 +122,7 @@ module Mongo
 
         # Background thread reponsible for maintaining the size of
         # the pool to at least min_size
-        @populator = ConnectionPoolPopulator.new(self)
+        @populator = Populator.new(self)
         @populate_semaphore = Semaphore.new
 
         ObjectSpace.define_finalizer(self, self.class.finalize(@available_connections, @pending_connections, @populator))
@@ -318,8 +318,7 @@ module Mongo
           @lock.synchronize do
             @pending_connections.delete(connection)
           end
-
-          # TODO signal here??
+          @populate_semaphore.signal
 
           publish_cmap_event(
             Monitoring::Event::Cmap::ConnectionCheckOutFailed.new(
@@ -369,9 +368,6 @@ module Mongo
             connection.disconnect!(reason: :pool_closed)
             return
           end
-
-          # TODO should we not always signal? either connection closed & we have a new slot to make one
-          # OR connection free
 
           if connection.closed?
             # Connection was closed - for example, because it experienced
@@ -534,7 +530,6 @@ module Mongo
                 connection.disconnect!(reason: :idle)
                 @available_connections.delete_at(i)
                 @populate_semaphore.signal
-                # TODO signal free slot?
                 next
               end
             end
@@ -608,10 +603,11 @@ module Mongo
       # Used when closing the pool or when terminating the bg thread for testing
       # purposes. In the latter case, this method must be called before the pool
       # is used, to ensure no connections in pending_connections were created in-flow
-      # in the check_out method.
+      # by the check_out method.
       #
       # @option [ true | false ] wait Wait for background thread to exit before
       # terminating.
+      # @api private
       def stop_populator
         @populator.stop!(true)
 
@@ -624,8 +620,6 @@ module Mongo
             connection = @pending_connections.take(1).first
             connection.disconnect!
             @pending_connections.delete(connection)
-
-            #TODO signal here?
           end
         end
       end

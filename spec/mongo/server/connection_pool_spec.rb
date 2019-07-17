@@ -505,6 +505,7 @@ describe Mongo::Server::ConnectionPool do
       described_class.new(server, opts).tap do |pool|
         # kill background thread to test disconnect behavior
         pool.stop_populator
+        expect(pool.instance_variable_get('@populator').running?).to be false
         # make pool be of size 2 so that it has enqueued connections
         # when told to disconnect
         c1 = pool.check_out

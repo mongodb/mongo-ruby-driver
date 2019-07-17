@@ -18,7 +18,7 @@ module Mongo
     # size of a connection pool is at least minPoolSize.
     #
     # @api private
-    class ConnectionPoolPopulator
+    class Populator
       def initialize(pool)
         @pool = pool
         @thread = nil
