@@ -444,7 +444,7 @@ describe Mongo::Server::ConnectionPool do
     context 'when there are no available connections' do
 
       let(:options) do
-        { max_pool_size: 1 }
+        { max_pool_size: 1, min_pool_size: 0 }
       end
 
       context 'when the max size is not reached' do
