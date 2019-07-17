@@ -232,7 +232,7 @@ describe Mongo::Session do
       end
 
       after do
-        client.close
+        client.close(true)
       end
 
       it 'returns false' do

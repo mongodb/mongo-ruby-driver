@@ -649,9 +649,10 @@ describe Mongo::Client do
     end
 
     it 'disconnects the cluster and returns true' do
-      # note that disconnect! is called also in the after block
-      expect(client.cluster).to receive(:disconnect!).and_call_original
-      expect(client.close).to be(true)
+      RSpec::Mocks.with_temporary_scope do
+        expect(client.cluster).to receive(:disconnect!).and_call_original
+        expect(client.close(true)).to be(true)
+      end
     end
   end
 

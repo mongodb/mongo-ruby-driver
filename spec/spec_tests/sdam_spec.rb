@@ -36,7 +36,7 @@ describe 'Server Discovery and Monitoring' do
       end
 
       after(:all) do
-        @client && @client.close
+        @client && @client.close(true)
       end
 
       spec.phases.each_with_index do |phase, index|

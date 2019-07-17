@@ -992,7 +992,7 @@ describe Mongo::Server::Connection, retry: 3 do
     end
 
     after do
-      client.close
+      client.close(true)
     end
 
     context 'when a connect_timeout is in the options' do

@@ -39,7 +39,7 @@ describe 'Server selector' do
       context 'there is a known primary' do
         before do
           client.cluster.next_primary
-          client.close
+          client.close(true)
           expect(client.cluster.connected?).to be false
         end
 
@@ -51,7 +51,7 @@ describe 'Server selector' do
       context 'there is no known primary' do
         before do
           primary_server = client.cluster.next_primary
-          client.close
+          client.close(true)
           expect(client.cluster.connected?).to be false
           primary_server.unknown!
         end
