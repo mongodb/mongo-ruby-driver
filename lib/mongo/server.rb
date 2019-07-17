@@ -225,7 +225,7 @@ module Mongo
     # @since 2.0.0
     def disconnect!(wait=false)
       if monitor
-        monitor.stop!(wait)
+        monitor.stop!
       end
       if wait
         pool.close(wait: wait)

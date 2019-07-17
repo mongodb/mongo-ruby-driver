@@ -15,6 +15,7 @@
 require 'support/gridfs'
 require 'support/crud/requirement'
 require 'support/crud/spec'
+require 'support/crud/test_base'
 require 'support/crud/test'
 require 'support/crud/outcome'
 require 'support/crud/context'
@@ -41,7 +42,7 @@ def crud_execute_operations(spec, test, num_ops, event_subscriber, expect_error,
     result = if expect_error.nil?
       res = nil
       begin
-        res = test.run(spec, client, num_ops)
+        res = test.run(client, num_ops)
       rescue => e
         res = e
       end
@@ -49,13 +50,13 @@ def crud_execute_operations(spec, test, num_ops, event_subscriber, expect_error,
     elsif expect_error
       error = nil
       begin
-        test.run(spec, client, num_ops)
+        test.run(client, num_ops)
       rescue => e
         error = e
       end
       error
     else
-      test.run(spec, client, num_ops)
+      test.run(client, num_ops)
     end
 
     $crud_event_cache ||= {}

@@ -26,6 +26,7 @@ module Mongo
       include Loggable
       extend Forwardable
       include Event::Publisher
+      include BackgroundThread
 
       # The default time for a server to refresh its status is 10 seconds.
       #
@@ -116,13 +117,26 @@ module Mongo
       # @return [ Thread ] The thread the monitor runs on.
       #
       # @since 2.0.0
-      def run!
-        @thread = Thread.new(server.cluster.heartbeat_interval) do |i|
-          loop do
-            scan!
-            server.scan_semaphore.wait(i)
-          end
-        end
+      def do_work
+        scan!
+        server.scan_semaphore.wait(server.cluster.heartbeat_interval)
+      end
+
+      def pre_stop
+        server.scan_semaphore.signal
+      end
+
+      def stop!
+        super
+
+        # Although disconnect! documentation implies a possibility of
+        # failure, all of our disconnects always return true.
+        #
+        # Important: disconnect should happen after the background thread
+        # terminated.
+        connection.disconnect!
+
+        true
       end
 
       # Perform a check of the server with throttling, and update
@@ -153,39 +167,6 @@ module Mongo
           server.round_trip_time_averager.average_round_trip_time)
         server.cluster.run_sdam_flow(server.description, new_description)
         server.description
-      end
-
-      # Stops the server monitor. Kills the thread so it doesn't continue
-      # taking memory and sending commands to the connection.
-      #
-      # @example Stop the monitor.
-      #   monitor.stop!
-      #
-      # @param [ Boolean ] wait Whether to wait for background threads to
-      #   finish running.
-      #
-      # @return [ Boolean ] Is the thread stopped?
-      #
-      # @since 2.0.0
-      def stop!(wait=false)
-        # Although disconnect! documentation implies a possibility of
-        # failure, all of our disconnects always return true
-        if connection.disconnect!
-          if @thread
-            @thread.kill
-            if wait
-              @thread.join
-              @thread = nil
-              true
-            else
-              !@thread.alive?
-            end
-          else
-            true
-          end
-        else
-          false
-        end
       end
 
       # Restarts the server monitor unless the current thread is alive.
