@@ -272,7 +272,6 @@ module Mongo
                   # method, but if any don't, check again here
                   connection.disconnect!(reason: :stale)
                   @populate_semaphore.signal
-                  # SHOULD we signal here?
                   next
                 end
 
@@ -535,65 +534,6 @@ module Mongo
           end
         end
       end
-
-      # # Create and add connections to the pool until the
-      # # pool size is at least min_size. Terminates if two connections
-      # # encounter errors (in a row) while authenticating.
-      # #
-      # # Used by the pool populator background thread.
-      # #
-      # # @return [ true | false ] True if populate ran to completion, false if it
-      # # terminated because of errors encountered while connecting connections.
-      # #
-      # # @api private
-      # def populate
-      #   raise_if_closed!
-
-      #   catch(:done) do
-      #     retried = false
-
-      #     loop do
-      #       connection = nil
-      #       @lock.synchronize do
-      #         if !closed? && unsynchronized_size < min_size
-      #           connection = create_connection
-      #           @pending_connections << connection
-      #         else
-      #           throw(:done)
-      #         end
-      #       end
-
-      #       begin
-      #         connect_connection(connection)
-      #       rescue Exception => e
-      #         @lock.synchronize do
-      #           @pending_connections.delete(connection)
-      #         end
-
-      #         if retried
-      #           # wake up one thread waiting for connections, since one could not
-      #           # be created here, and can instead be created in flow
-      #           @available_semaphore.signal
-
-      #           return false
-      #         end
-      #         retried = true
-      #         next
-      #       end
-
-      #       retried = false
-      #       @lock.synchronize do
-      #         @available_connections << connection
-      #         @pending_connections.delete(connection)
-
-      #         # wake up one thread waiting for connections, since one was created
-      #         @available_semaphore.signal
-      #       end
-      #     end
-      #   end
-
-      #   true
-      # end
 
       # Stop the background populator thread and clean up any connections created
       # which have not been connected yet.
