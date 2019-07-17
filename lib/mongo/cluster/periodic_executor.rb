@@ -22,6 +22,7 @@ module Mongo
     #
     # @since 2.5.0
     class PeriodicExecutor
+      include BackgroundThread
 
       # The default time interval for the periodic executor to execute.
       #
@@ -39,43 +40,29 @@ module Mongo
       def initialize(*executors)
         @thread = nil
         @executors = executors
+        @stop_semaphore = Semaphore.new
       end
 
-      # Start the thread.
-      #
-      # @example Start the periodic executor's thread.
-      #   periodic_executor.run!
-      #
-      # @api private
-      #
-      # @since 2.5.0
-      def run!
-        if @thread && @thread.alive?
-          @thread
-        else
-          start!
-        end
-      end
       alias :restart! :run!
 
-      # Stop the executor's thread.
-      #
-      # @example Stop the executors's thread.
-      #   periodic_executor.stop!
-      #
-      # @param [ Boolean ] wait Whether to wait for background threads to
-      #   finish running.
-      #
-      # @api private
-      #
-      # @since 2.5.0
-      def stop!(wait=false)
-        begin; flush; rescue; end
-        @thread.kill
-        if wait
-          @thread.join
+      def do_work
+        execute
+        @stop_semaphore.wait(FREQUENCY)
+      end
+
+      def pre_stop
+        @stop_semaphore.signal
+      end
+
+      def stop(final = false)
+        super
+
+        begin
+          flush
+        rescue
         end
-        !@thread.alive?
+
+        true
       end
 
       # Trigger an execute call on each reaper.
@@ -102,17 +89,6 @@ module Mongo
       def flush
         @executors.each(&:flush)
         true
-      end
-
-      private
-
-      def start!
-        @thread = Thread.new(FREQUENCY) do |i|
-          loop do
-            sleep(i)
-            execute
-          end
-        end
       end
     end
   end

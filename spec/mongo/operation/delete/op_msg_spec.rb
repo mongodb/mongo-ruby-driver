@@ -153,7 +153,7 @@ describe Mongo::Operation::Delete::OpMsg do
           before do
             session.instance_variable_set(:@options, { implicit: true })
             # Topology is standalone, hence there is exactly one server
-            authorized_client.cluster.servers.first.monitor.stop!(true)
+            authorized_client.cluster.servers.first.monitor.stop!
             allow(authorized_primary.features).to receive(:sessions_enabled?).and_return(false)
           end
 

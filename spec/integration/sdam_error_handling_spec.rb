@@ -20,7 +20,7 @@ describe 'SDAM error handling' do
       # have different behavior from non-handshake errors
       client.database.command(ping: 1)
       client.cluster.servers_list.each do |server|
-        server.monitor.stop!(true)
+        server.monitor.stop!
       end
     end
 

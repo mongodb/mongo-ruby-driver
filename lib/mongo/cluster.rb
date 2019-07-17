@@ -399,7 +399,7 @@ module Mongo
       end
     end
 
-    # Disconnect all servers.
+    # Close the cluster and disconnect all servers.
     #
     # @note Applications should call Client#close to disconnect from
     # the cluster rather than calling this method. This method is for
@@ -419,10 +419,8 @@ module Mongo
         return true
       end
       if options[:cleanup] != false
-        if wait
-          session_pool.end_sessions
-        end
-        @periodic_executor.stop!(wait)
+        session_pool.end_sessions
+        @periodic_executor.stop!
       end
       @servers.each do |server|
         if server.connected?

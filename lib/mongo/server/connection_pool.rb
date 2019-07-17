@@ -421,6 +421,8 @@ module Mongo
 
         options ||= {}
 
+        @populator.stop!
+
         @lock.synchronize do
           until @available_connections.empty?
             connection = @available_connections.pop
@@ -438,7 +440,6 @@ module Mongo
           # mark pool as closed and stop populator before releasing lock so
           # no connections can be created, checked in, or checked out
           @closed = true
-          @populator.stop!(options[:wait])
         end
 
         publish_cmap_event(
@@ -512,24 +513,23 @@ module Mongo
         end
       end
 
-      # Create and add connections to the pool until the
-      # pool size is at least min_size.
+      # Creates and adds a connection to the pool, if the pool's size is below
+      # min_size.
       #
       # Used by the pool populator background thread.
       #
+      # @return [ true | false ] Whether this method should be called again
+      #   to create more connections.
       # @api private
       def populate
-        return if closed?
+        return false if closed?
 
-        catch(:done) do
-          loop do
-            @lock.synchronize do
-              if !closed? && unsynchronized_size < min_size
-                @available_connections << create_connection
-              else
-                throw(:done)
-              end
-            end
+        @lock.synchronize do
+          if !closed? && unsynchronized_size < min_size
+            @available_connections << create_connection
+            true
+          else
+            false
           end
         end
       end

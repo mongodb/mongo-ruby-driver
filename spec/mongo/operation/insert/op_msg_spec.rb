@@ -164,7 +164,7 @@ describe Mongo::Operation::Insert::OpMsg do
           before do
             session.instance_variable_set(:@options, { implicit: true })
             # Topology is standalone, hence there is exactly one server
-            authorized_client.cluster.servers.first.monitor.stop!(true)
+            authorized_client.cluster.servers.first.monitor.stop!
             expect(authorized_primary.features).to receive(:sessions_enabled?).at_least(:once).and_return(false)
           end
 

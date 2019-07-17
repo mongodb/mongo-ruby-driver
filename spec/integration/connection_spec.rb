@@ -84,7 +84,7 @@ describe 'Connections' do
 
             # stop background monitoring to prevent it from racing with the test
             client.cluster.servers.each do |server|
-              server.monitor.stop!(true)
+              server.monitor.stop!
             end
 
             connection
@@ -174,7 +174,7 @@ describe 'Connections' do
       it 'performs SDAM flow' do
         client['foo'].insert_one(bar: 1)
         client.cluster.servers_list.each do |server|
-          server.monitor.stop!(true)
+          server.monitor.stop!
         end
         expect(client.cluster.topology.class).to eq(Mongo::Cluster::Topology::ReplicaSetWithPrimary)
 

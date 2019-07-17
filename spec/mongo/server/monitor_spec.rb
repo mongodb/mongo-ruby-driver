@@ -193,14 +193,13 @@ describe Mongo::Server::Monitor do
     it 'kills the monitor thread' do
       ClientRegistry.instance.close_all_clients
       thread
-      sleep 1
-      expect(monitor.connection).to receive(:disconnect!).and_call_original
-      monitor.stop!(true)
-      expect(thread.alive?).to be(false)
+      sleep 0.5
 
-      # Our automatic cleanup will try to disconect again, messing with
-      # this test's assertion.
-      LocalResourceRegistry.instance.unregister(monitor)
+      RSpec::Mocks.with_temporary_scope do
+        expect(monitor.connection).to receive(:disconnect!).and_call_original
+        monitor.stop!
+        expect(thread.alive?).to be(false)
+      end
     end
   end
 
