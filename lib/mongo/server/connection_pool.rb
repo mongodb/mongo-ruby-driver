@@ -448,7 +448,9 @@ module Mongo
 
         options ||= {}
 
-        stop_populator(options[:wait])
+        # for now, this always waits for the background thread to finish running;
+        # may be changed
+        stop_populator
 
         @lock.synchronize do
           until @available_connections.empty?
@@ -601,12 +603,17 @@ module Mongo
       end
 
       # Stop the background populator thread and clean up any connections created
-      # by the thread which have not been connected yet.
+      # which have not been connected yet.
+      #
+      # Used when closing the pool or when terminating the bg thread for testing
+      # purposes. In the latter case, this method must be called before the pool
+      # is used, to ensure no connections in pending_connections were created in-flow
+      # in the check_out method.
       #
       # @option [ true | false ] wait Wait for background thread to exit before
       # terminating.
-      def stop_populator(wait = false)
-        @populator.stop!(wait)
+      def stop_populator
+        @populator.stop!(true)
 
         @lock.synchronize do
           # If stop_populator is called while populate is running, there may be
