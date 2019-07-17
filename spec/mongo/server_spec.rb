@@ -195,7 +195,7 @@ describe Mongo::Server do
     before do
       # We are invoking scan! on the monitor manually, stop the background
       # thread to avoid it interfering with our assertions.
-      server.monitor.stop!(true)
+      server.monitor.stop!
     end
 
     it 'delegates scan to the monitor' do

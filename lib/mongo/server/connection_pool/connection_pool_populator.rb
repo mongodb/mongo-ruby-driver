@@ -19,49 +19,23 @@ module Mongo
     #
     # @api private
     class ConnectionPoolPopulator
+      include BackgroundThread
+
       def initialize(pool)
         @pool = pool
         @thread = nil
       end
 
-      def run!
-        if running?
-          @thread
-        else
-          start!
-        end
-      end
-
-      def stop!(wait = false)
-        # Kill the thread instead of signaling so that if stop! is called during
-        # populate or before the wait() on the semaphore, the thread still terminates
-        if @thread
-          @thread.kill
-          if wait
-            @thread.join
-          end
-          !@thread.alive?
-        else
-          true
-        end
-      end
-
-      def running?
-        if @thread
-          @thread.alive?
-        else
-          false
-        end
+      def pre_stop
+        @pool.populate_semaphore.signal
       end
 
       private
 
-      def start!
-        @thread = Thread.new do
-          while !@pool.closed? do
-            @pool.populate
-            @pool.populate_semaphore.wait
-          end
+      def do_work
+        throw(:done) if @pool.closed?
+        unless @pool.populate
+          @pool.populate_semaphore.wait
         end
       end
     end

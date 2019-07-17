@@ -197,7 +197,7 @@ describe Mongo::Server::Monitor do
 
       RSpec::Mocks.with_temporary_scope do
         expect(monitor.connection).to receive(:disconnect!).and_call_original
-        monitor.stop!(true)
+        monitor.stop!
         expect(thread.alive?).to be(false)
       end
     end
