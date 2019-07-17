@@ -230,9 +230,10 @@ module Mongo
         def replace_one(replacement, opts = {})
           update_doc = { Operation::Q => filter,
                          Operation::U => replacement,
-                         Operation::MULTI => false,
-                         Operation::UPSERT => !!opts[:upsert]
                         }
+          if opts[:upsert]
+            update_doc[:upsert] = true
+          end
           with_session(opts) do |session|
             write_concern = write_concern_with_session(session)
             write_with_retry(session, write_concern) do |server, txn_num|
@@ -276,7 +277,10 @@ module Mongo
           update_doc = { Operation::Q => filter,
                          Operation::U => spec,
                          Operation::MULTI => true,
-                         Operation::UPSERT => !!opts[:upsert] }
+                         }
+          if opts[:upsert]
+            update_doc[:upsert] = true
+          end
           with_session(opts) do |session|
             write_concern = write_concern_with_session(session)
             nro_write_with_retry(session, write_concern) do |server|
@@ -317,8 +321,10 @@ module Mongo
         def update_one(spec, opts = {})
           update_doc = { Operation::Q => filter,
                          Operation::U => spec,
-                         Operation::MULTI => false,
-                         Operation::UPSERT => !!opts[:upsert] }
+                         }
+          if opts[:upsert]
+            update_doc[:upsert] = true
+          end
           with_session(opts) do |session|
             write_concern = write_concern_with_session(session)
             write_with_retry(session, write_concern) do |server, txn_num|

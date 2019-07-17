@@ -29,12 +29,12 @@ class SpecSetup
         raise
       end
     end
-    admin_unauthorized_client.close
+    admin_unauthorized_client.close(true)
 
     # Adds the test user to the test database with permissions on all
     # databases that will be used in the test suite.
     create_user(admin_authorized_test_client, SpecConfig.instance.test_user)
-    admin_authorized_test_client.close
+    admin_authorized_test_client.close(true)
   end
 
   def create_user(client, user)

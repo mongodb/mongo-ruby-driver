@@ -369,7 +369,7 @@ describe Mongo::Collection::View::Readable do
     context 'when the collection has a read preference set' do
 
       after do
-        client.close
+        client.close(true)
       end
 
       let(:client) do
@@ -438,7 +438,7 @@ describe Mongo::Collection::View::Readable do
         require_topology :single, :replica_set
 
         after do
-          client.close
+          client.close(true)
         end
 
         let(:client) do
@@ -756,7 +756,7 @@ describe Mongo::Collection::View::Readable do
       end
 
       after do
-        client.close
+        client.close(true)
       end
 
       let(:client) do
@@ -819,7 +819,7 @@ describe Mongo::Collection::View::Readable do
         end
 
         after do
-          client.close
+          client.close(true)
         end
 
         let(:client) do

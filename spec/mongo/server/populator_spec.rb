@@ -256,7 +256,7 @@ describe Mongo::Server::ConnectionPool do
 
         fork do
           # follow forking guidance
-          client.close
+          client.close(true)
           client.reconnect
           # let pool populate
           sleep 2

@@ -23,7 +23,7 @@ describe 'change streams examples in Ruby' do
   end
 
   after do
-    client.close
+    client.close(true)
   end
 
   context 'example 1 - basic watching'do
