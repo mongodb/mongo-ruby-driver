@@ -144,7 +144,7 @@ URI Options Conversions
      - ``:max_idle_time => Float``
 
    * - maxStalenessSeconds=Integer
-     - ``:max_staleness => Integer``
+     - ``{ :read => { :max_staleness => Integer }}``
      
        If the maxStalenessSeconds URI option value is -1, the option is ignored.
        If the option value is an integer, the Ruby option is set to the
@@ -375,14 +375,16 @@ Ruby Options
      - none
 
    * - ``:read``
-     - Specifies the read preference mode and tag sets for selecting servers as a ``Hash``.
-       Keys in the hash are ``:mode`` and ``:tag_sets``.
+     - Specifies the read preference mode and tag sets for selecting servers
+       as a ``Hash``. Allowed Keys in the hash are ``:mode``, ``:tag_sets`` and
+       ``:max_staleness``.
 
        .. code-block:: ruby
 
          { :read =>
            { :mode => :secondary,
-             :tag_sets => [ "berlin" ]
+             :tag_sets => [ "berlin" ],
+             :max_staleness => 5,
            }
          }
 
