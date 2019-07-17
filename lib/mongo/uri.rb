@@ -189,11 +189,11 @@ module Mongo
     #
     # @since 2.0.0
     AUTH_MECH_MAP = {
-      'PLAIN'        => :plain,
+      'GSSAPI'       => :gssapi,
       # MONGODB-CR is deprecated and will be removed in driver version 3.0
       'MONGODB-CR'   => :mongodb_cr,
-      'GSSAPI'       => :gssapi,
       'MONGODB-X509' => :mongodb_x509,
+      'PLAIN'        => :plain,
       'SCRAM-SHA-1'  => :scram,
       'SCRAM-SHA-256' => :scram256
     }.freeze
@@ -658,7 +658,7 @@ module Mongo
     #
     # @return [Symbol] The transformed authentication mechanism.
     def auth_mech(value)
-      AUTH_MECH_MAP[value.upcase].tap do |mech|
+      (AUTH_MECH_MAP[value.upcase] || value).tap do |mech|
         log_warn("#{value} is not a valid auth mechanism") unless mech
       end
     end

@@ -184,6 +184,17 @@ describe Mongo::URI do
         expect(uri.uri_options[:auth_mech]).to eq(:scram256)
       end
     end
+
+    context 'unrecognized value' do
+
+      let(:string) { 'mongodb://example.com/?authMechanism=foobar' }
+
+      it_behaves_like 'parses successfully'
+
+      it 'is mapped to auth mechanism' do
+        expect(uri.uri_options[:auth_mech]).to eq('foobar')
+      end
+    end
   end
 
   context 'authMechanismProperties' do

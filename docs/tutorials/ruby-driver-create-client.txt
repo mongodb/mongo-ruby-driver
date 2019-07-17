@@ -103,6 +103,22 @@ URI Options Conversions
 
    * - authMechanism=String
      - ``:auth_mech => Symbol``
+     
+       Auth mechanism values are converted as follows from URI options to
+       Ruby options:
+       
+       - ``GSSAPI`` => ``:gssapi``
+       - ``MONGODB-CR`` => ``:mongodb_cr``
+       - ``MONGODB-X509`` => ``:mongodb_x509``
+       - ``PLAIN`` => ``:plain``
+       - ``SCRAM-SHA-1`` => ``:scram``
+       - ``SCRAM-SHA-256`` => ``:scram256``
+       
+       If a different value is provided for auth mechanism, it is converted
+       to the Ruby option unmodified and retains its ``String`` type.
+       Note that, while currently the driver allows a ``Client`` instance
+       to be constructed with an unrecognized auth mechanism, this behavior
+       `may change in a future version of the driver <https://jira.mongodb.org/browse/RUBY-1745>`_.
 
    * - authMechanismProperties=Strings
      - ``{ :auth_mech_properties => { :service_realm => String, :canonicalize_host_name => true|false, :service_name => String } }``
