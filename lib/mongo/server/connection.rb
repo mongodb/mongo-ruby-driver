@@ -175,9 +175,16 @@ module Mongo
       def do_connect
         socket = address.socket(socket_timeout, ssl_options,
           connect_timeout: address.connect_timeout)
-        handshake!(socket)
-        pending_connection = PendingConnection.new(socket, @server, monitoring, options)
-        authenticate!(pending_connection)
+
+        begin
+          handshake!(socket)
+          pending_connection = PendingConnection.new(socket, @server, monitoring, options)
+          authenticate!(pending_connection)
+        rescue Exception
+          socket.close
+          raise
+        end
+
         socket
       end
       private :do_connect
