@@ -17,19 +17,7 @@ module Mongo
     class Operation < Mongo::CRUD::Operation
       include RSpec::Matchers
 
-      def execute(collection, session0, session1, active_session=nil)
-        # Determine which object the operation method should be called on.
-        obj = case object
-        when 'session0'
-          session0
-        when 'session1'
-          session1
-        when 'database'
-          collection.database
-        else
-          collection.with(collection_options)
-        end
-
+      def execute(target, session0, session1, active_session=nil)
         session = case arguments && arguments['session']
         when 'session0'
           session0
@@ -47,14 +35,14 @@ module Mongo
 
         op_name = Utils.underscore(name).to_sym
         if op_name == :with_transaction
-          args = [collection]
+          args = [target]
         else
           args = []
         end
         if op_name.nil?
           raise "Unknown operation #{name}"
         end
-        result = send(op_name, obj, context, *args)
+        result = send(op_name, target, context, *args)
         if result
           if result.is_a?(Hash)
             result = result.dup
@@ -142,8 +130,9 @@ module Mongo
         end
         session.with_transaction(options) do
           callback['operations'].each do |op_spec|
-            op = Operation.new(op_spec)
-            rv = op.execute(collection, context.session0, context.session1, session)
+            op = Operation.new(@crud_test, op_spec)
+            target = @crud_test.resolve_target(@crud_test.test_client, op)
+            rv = op.execute(target, context.session0, context.session1, session)
             if rv && rv['exception']
               raise rv['exception']
             end
@@ -189,10 +178,6 @@ module Mongo
         if session.pinned_server
           raise ArgumentError, 'Expected session to not be pinned'
         end
-      end
-
-      def collection_options
-        Utils.convert_operation_options(@spec['collectionOptions'])
       end
     end
   end

@@ -248,7 +248,7 @@ module Mongo
         @description = test['description']
         @max_server_version = test['ignore_if_server_version_greater_than']
         @min_server_fcv = test['ignore_if_server_version_less_than']
-        @operation = Mongo::CRUD::Operation.new(test['operation'])
+        @operation = Mongo::CRUD::Operation.new(self, test['operation'])
         @expectations = test['expectations'].map{ |e| Expectation.new(e) }
       end
 

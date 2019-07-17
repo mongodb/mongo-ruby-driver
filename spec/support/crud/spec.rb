@@ -16,6 +16,7 @@ module Mongo
 
         # Since Ruby driver binds a client to a database, change the
         # database name in the spec to the one we are using
+        contents.sub!(/"crud-tests"/, '"ruby-driver"')
         contents.sub!(/"retryable-reads-tests"/, '"ruby-driver"')
         contents.sub!(/"transaction-tests"/, '"ruby-driver"')
         contents.sub!(/"withTransaction-tests"/, '"ruby-driver"')
@@ -60,7 +61,7 @@ module Mongo
       # Get a list of Test instances, one for each test definition.
       def tests
         @tests.map do |test|
-          Mongo::CRUD::CRUDTest.new(@data, test)
+          Mongo::CRUD::CRUDTest.new(self, @data, test)
         end
       end
     end
