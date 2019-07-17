@@ -151,6 +151,16 @@ describe Mongo::Server::Monitor::Connection do
         connection.ismaster
       end
 
+      before do
+        # Since we set expectations on the connection, kill the
+        # background thread (but without disconnecting the connection).
+        # Note also that we need to have the connection connected in
+        # the first place, thus the scan! call here.
+        monitor.scan!
+        monitor.instance_variable_get('@thread').kill
+        monitor.instance_variable_get('@thread').join
+      end
+
       it 'retries ismaster and is successful' do
         expect(result).to be_a(Hash)
         expect(result['ok']).to eq(1.0)
