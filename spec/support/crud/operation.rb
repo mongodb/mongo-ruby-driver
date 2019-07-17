@@ -24,7 +24,8 @@ module Mongo
       #   If not provided, outcome is taken out of operation specification.
       #
       # @since 2.0.0
-      def initialize(spec, outcome_spec = nil)
+      def initialize(crud_test, spec, outcome_spec = nil)
+        @crud_test = crud_test
         @spec = IceNine.deep_freeze(spec)
         @name = spec['name']
         @arguments = spec['arguments'] || {}
@@ -88,6 +89,10 @@ module Mongo
           op_name= "client_#{op_name}"
         end
         send(op_name, target, Context.new)
+      end
+
+      def collection_options
+        Utils.convert_operation_options(@spec['collectionOptions'])
       end
 
       private
@@ -192,7 +197,7 @@ module Mongo
         return_doc = {}
         return_doc['deletedCount'] = result.deleted_count || 0
         return_doc['insertedIds'] = result.inserted_ids if result.inserted_ids
-        return_doc['insertedCount'] = result.inserted_count if result.inserted_count
+        return_doc['insertedCount'] = result.inserted_count || 0
         return_doc['upsertedId'] = result.upserted_id if arguments['upsert']
         return_doc['upsertedIds'] = result.upserted_ids if result.upserted_ids
         return_doc['upsertedCount'] = result.upserted_count || 0

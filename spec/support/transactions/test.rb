@@ -18,7 +18,7 @@ module Mongo
     # Represents a single transaction test.
     #
     # @since 2.6.0
-    class TransactionsTest
+    class TransactionsTest < CRUD::CRUDTestBase
 
       # The test description.
       #
@@ -42,15 +42,15 @@ module Mongo
       # @example Create the test.
       #   TransactionTest.new(data, test)
       #
+      # @param [ Crud::Spec ] crud_spec The top level YAML specification object.
       # @param [ Array<Hash> ] data The documents the collection
       # must have before the test runs.
       # @param [ Hash ] test The test specification.
-      # @param [ Hash ] spec The top level YAML specification.
       #
       # @since 2.6.0
-      def initialize(data, test, spec)
+      def initialize(crud_spec, data, test)
         test = IceNine.deep_freeze(test)
-        @spec = spec
+        @spec = crud_spec
         @data = data
         @description = test['description']
         @client_options = Utils.convert_client_options(test['clientOptions'] || {})
@@ -67,7 +67,7 @@ module Mongo
 
         @operations = test['operations']
         @ops = @operations.map do |op|
-          Operation.new(op)
+          Operation.new(self, op)
         end
 
         @expectations = test['expectations']
@@ -151,7 +151,8 @@ module Mongo
         test_client.subscribe(Mongo::Monitoring::COMMAND, event_subscriber)
 
         results = @ops.map do |op|
-          op.execute(@collection, @session0, @session1)
+          target = resolve_target(test_client, op)
+          op.execute(target, @session0, @session1)
         end
 
         session0_id = @session0.session_id
@@ -230,6 +231,20 @@ module Mongo
 
         if @test_client
           @test_client.cluster.session_pool.end_sessions
+        end
+      end
+
+      def resolve_target(client, operation)
+        case operation.object
+        when 'session0'
+          @session0
+        when 'session1'
+          @session1
+        when 'testRunner'
+          # We don't actually use this target in any way.
+          nil
+        else
+          super
         end
       end
     end

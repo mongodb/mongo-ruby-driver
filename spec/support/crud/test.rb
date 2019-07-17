@@ -4,7 +4,7 @@ module Mongo
     # Represents a single CRUD test.
     #
     # @since 2.0.0
-    class CRUDTest
+    class CRUDTest < CRUDTestBase
 
       # The test description.
       #
@@ -25,12 +25,14 @@ module Mongo
       # collection_name as configured in the YAML file. Alternatively data
       # can be a map of collection names to arrays of hashes.
       #
+      # @param [ Crud::Spec ] crud_spec The top level YAML specification object.
       # @param [ Hash | Array<Hash> ] data The documents the collection
       #   must have before the test runs.
       # @param [ Hash ] test The test specification.
       #
       # @since 2.0.0
-      def initialize(data, test)
+      def initialize(crud_spec, data, test)
+        @spec = crud_spec
         @data = data
         if test['failPoint']
           @fail_point_command = FAIL_POINT_BASE_COMMAND.merge(test['failPoint'])
@@ -39,10 +41,10 @@ module Mongo
         @client_options = Utils.convert_client_options(test['clientOptions'] || {})
         if test['operations']
           @operations = test['operations'].map do |op_spec|
-            Operation.new(op_spec)
+            Operation.new(self, op_spec)
           end
         else
-          @operations = [Operation.new(test['operation'], test['outcome'])]
+          @operations = [Operation.new(self, test['operation'], test['outcome'])]
         end
         @expectations = test['expectations']
       end
@@ -71,22 +73,11 @@ module Mongo
       # @return [ Result, Array<Hash> ] The result(s) of running the test.
       #
       # @since 2.0.0
-      def run(spec, client, num_ops)
+      def run(client, num_ops)
         result = nil
         1.upto(num_ops) do |i|
           operation = @operations[i-1]
-          target = case operation.object
-          when 'collection'
-            client[spec.collection_name]
-          when 'database'
-            client.database
-          when 'client'
-            client
-          when 'gridfsbucket'
-            client.database.fs
-          else
-            raise "Unknown target #{operation.object}"
-          end
+          target = resolve_target(client, operation)
           result = operation.execute(target)
         end
         result
@@ -113,10 +104,10 @@ module Mongo
         else
           raise "Unknown type of data: #{@data}"
         end
-        set_up_fail_point(client)
+        setup_fail_point(client)
       end
 
-      def set_up_fail_point(client)
+      def setup_fail_point(client)
         if @fail_point_command
           client.use(:admin).command(@fail_point_command)
         end

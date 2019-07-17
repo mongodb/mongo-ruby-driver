@@ -18,7 +18,7 @@ module Mongo
     class Spec < Mongo::CRUD::Spec
       def tests
         @tests.map do |test|
-          Mongo::Transactions::TransactionsTest.new(@data, test, self)
+          Mongo::Transactions::TransactionsTest.new(self, @data, test)
         end
       end
     end
