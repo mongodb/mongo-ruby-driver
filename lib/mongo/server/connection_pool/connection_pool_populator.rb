@@ -46,7 +46,7 @@ module Mongo
         rescue Error => e
           # Errors encountered when trying to add connections to
           # pool; try again later
-          log_warn("Populator failed to connect a connection due to #{e.message}.")
+          log_warn("Populator failed to connect a connection: #{e.class}: #{e}.")
           @pool.populate_semaphore.wait(5)
         end
       end
