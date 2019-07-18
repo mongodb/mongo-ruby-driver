@@ -312,7 +312,7 @@ module Mongo
 
         begin
           connect_connection(connection)
-        rescue Exception => e
+        rescue Exception
           # Handshake or authentication failed
           @lock.synchronize do
             @pending_connections.delete(connection)
@@ -325,7 +325,7 @@ module Mongo
               Monitoring::Event::Cmap::ConnectionCheckOutFailed::CONNECTION_ERROR
             ),
           )
-          raise e
+          raise
         end
 
         @lock.synchronize do
@@ -433,7 +433,7 @@ module Mongo
       # @option options [ true | false ] :force Also close all checked out
       #   connections.
       # @option options [ true | false ] :wait Wait for background threads to
-      #   exit before returning. Added in 2.10.0. TODO should this be omitted or deprecated?
+      #   exit before returning. Added in 2.10.0.
       #
       # @return [ true ] true.
       #
@@ -543,8 +543,6 @@ module Mongo
       # is used, to ensure no connections in pending_connections were created in-flow
       # by the check_out method.
       #
-      # @option [ true | false ] wait Wait for background thread to exit before
-      # terminating.
       # @api private
       def stop_populator
         @populator.stop!
@@ -602,7 +600,7 @@ module Mongo
       # @return [ Proc ] The Finalizer.
       def self.finalize(available_connections, pending_connections, populator)
         proc do
-          populator.stop!(true)
+          populator.stop!
 
           available_connections.each do |connection|
             connection.disconnect!(reason: :pool_closed)
@@ -679,9 +677,9 @@ module Mongo
       def connect_connection(connection)
         begin
           connection.connect!
-        rescue Exception => e
+        rescue Exception
           connection.disconnect!(reason: :error)
-          raise e
+          raise
         end
       end
     end
