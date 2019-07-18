@@ -23,6 +23,19 @@ module Utils
   end
   module_function :snakeize_hash
 
+  # Like snakeize_hash but does not recurse.
+  def shallow_snakeize_hash(value)
+    return underscore(value) if value.is_a?(String)
+    return value unless value.is_a?(Hash)
+
+    value.reduce({}) do |hash, (k, v)|
+      hash.tap do |h|
+        h[underscore(k)] = v
+      end
+    end
+  end
+  module_function :shallow_snakeize_hash
+
   def camelize(str, upcase_first = true)
     str = str.gsub(%r,_(\w),) { |m| m[1].upcase }
     if upcase_first

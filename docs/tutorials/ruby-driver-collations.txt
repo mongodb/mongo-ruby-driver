@@ -15,8 +15,8 @@ Overview
 
 .. versionadded:: 3.4
 
-Collations provide a set of rules which comply with the conventions
-of a particular language when comparing strings.
+Collations are sets of rules for how to compare strings, typically in a
+particular natural language.
 
 For example, in Canadian French, the last accent in a given word
 determines the sorting order.
