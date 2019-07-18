@@ -352,20 +352,20 @@ module Mongo
             raise ArgumentError, "Trying to check in a connection which was not checked out by this pool: #{connection} checked out from pool #{connection.pool} (for #{self})"
           end
 
+          unless @checked_out_connections.include?(connection)
+            raise ArgumentError, "Trying to check in a connection which is not currently checked out by this pool: #{connection} (for #{self})"
+          end
+
           # Note: if an event handler raises, resource will not be signaled.
           # This means threads waiting for a connection to free up when
           # the pool is at max size may time out.
           # Threads that begin waiting after this method completes (with
           # the exception) should be fine.
 
-          if @checked_out_connections.include?(connection)
-            # It is possible the connection was already checked in; we only
-            # want to publish this event once.
-            @checked_out_connections.delete(connection)
-            publish_cmap_event(
-              Monitoring::Event::Cmap::ConnectionCheckedIn.new(@server.address, connection.id)
-            )
-          end
+          @checked_out_connections.delete(connection)
+          publish_cmap_event(
+            Monitoring::Event::Cmap::ConnectionCheckedIn.new(@server.address, connection.id)
+          )
 
           if closed?
             connection.disconnect!(reason: :pool_closed)
@@ -379,7 +379,7 @@ module Mongo
           elsif connection.generation != @generation
             connection.disconnect!(reason: :stale)
             @populate_semaphore.signal
-          elsif !@available_connections.include?(connection)
+          else
             connection.record_checkin!
             @available_connections << connection
 
