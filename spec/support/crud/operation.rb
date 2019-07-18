@@ -293,14 +293,14 @@ module Mongo
 
       def bulk_request(request)
         op_name = Utils.underscore(request['name'])
-        op = { op_name => {} }
-        op[op_name].merge!(filter: request['arguments']['filter']) if request['arguments']['filter']
-        op[op_name].merge!(update: request['arguments']['update']) if request['arguments']['update']
-        op[op_name].merge!(upsert: request['arguments']['upsert']) if request['arguments']['upsert']
-        op[op_name].merge!(replacement: request['arguments']['replacement']) if request['arguments']['replacement']
-        op[op_name].merge!(array_filters: request['arguments']['arrayFilters']) if request['arguments']['arrayFilters']
-        op[op_name] = request['arguments']['document'] if request['arguments']['document']
-        op
+        args = Utils.shallow_snakeize_hash(request['arguments'])
+        if args[:document]
+          unless args.keys == [:document]
+            raise "If :document is given, it must be the only key"
+          end
+          args = args[:document]
+        end
+        { op_name => args }
       end
 
       def upsert
