@@ -576,19 +576,18 @@ module Mongo
 
         begin
           return create_and_add_connection
-        rescue Exception
+        rescue Error::SocketError, Error::SocketTimeoutError => e
           # an error was encountered while connecting the connection,
           # ignore this first error and try again.
+          log_warn("Populator failed to connect a connection due to #{e.message}. It will retry.")
         end
 
-        begin
-          return create_and_add_connection
-        rescue Exception
-          # wake up one thread waiting for connections, since one could not
-          # be created here, and can instead be created in flow
-          @available_semaphore.signal
-          raise
-        end
+        return create_and_add_connection
+      rescue Exception
+        # wake up one thread waiting for connections, since one could not
+        # be created here, and can instead be created in flow
+        @available_semaphore.signal
+        raise
       end
 
       # Finalize the connection pool for garbage collection.

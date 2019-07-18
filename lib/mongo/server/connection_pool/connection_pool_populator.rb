@@ -20,9 +20,13 @@ module Mongo
     # @api private
     class ConnectionPoolPopulator
       include BackgroundThread
+      include Loggable
+
+      attr_reader :options
 
       def initialize(pool)
         @pool = pool
+        @options = @pool.options
         @thread = nil
       end
 
@@ -39,9 +43,10 @@ module Mongo
           unless @pool.populate
             @pool.populate_semaphore.wait
           end
-        rescue Exception
+        rescue Error => e
           # Errors encountered when trying to add connections to
           # pool; try again later
+          log_warn("Populator failed to connect a connection due to #{e.message}.")
           @pool.populate_semaphore.wait(5)
         end
       end
