@@ -95,7 +95,7 @@ tests:
                     - { _id: 2, x: 22 }
                     - { _id: 3, x: 33 }
     -
-        description: "InsertOne succeeds after InterruptedDueToStepDown"
+        description: "InsertOne succeeds after InterruptedDueToReplStateChange"
         failPoint:
             configureFailPoint: failCommand
             mode: { times: 1 }
@@ -304,7 +304,7 @@ tests:
                     - { _id: 2, x: 22 }
                     - { _id: 3, x: 33 }
     -
-        description: "InsertOne succeeds after WriteConcernError InterruptedDueToStepDown"
+        description: "InsertOne succeeds after WriteConcernError InterruptedDueToReplStateChange"
         failPoint:
             configureFailPoint: failCommand
             mode: { times: 1 }
