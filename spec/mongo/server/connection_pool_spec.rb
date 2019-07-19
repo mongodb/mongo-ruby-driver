@@ -396,7 +396,7 @@ describe Mongo::Server::ConnectionPool do
 
     context 'when connection is checked in to a different pool' do
       it 'raises an ArgumentError and does not change the state of either pool' do
-        pool_other = described_class.new(server)
+        pool_other = register_pool(described_class.new(server))
 
         expect do
           pool_other.check_in(connection)
