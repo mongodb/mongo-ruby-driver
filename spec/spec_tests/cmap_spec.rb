@@ -1,4 +1,4 @@
-require 'lite_spec_helper'
+require 'spec_helper'
 
 describe 'Cmap' do
 
@@ -8,15 +8,43 @@ describe 'Cmap' do
     double('cluster').tap do |cl|
       allow(cl).to receive(:topology).and_return(topology)
       allow(cl).to receive(:options).and_return({})
+      allow(cl).to receive(:app_metadata).and_return(Mongo::Server::AppMetadata.new({}))
+      allow(cl).to receive(:run_sdam_flow)
+      allow(cl).to receive(:update_cluster_time)
+      allow(cl).to receive(:cluster_time).and_return(nil)
     end
+  end
+
+  let(:options) do
+    SpecConfig.instance.ssl_options.merge(SpecConfig.instance.compressor_options)
+      .merge(SpecConfig.instance.retry_writes_options).merge(SpecConfig.instance.auth_options)
+      .merge(monitoring_io: false)
   end
 
   CMAP_TESTS.each do |file|
     spec = Mongo::Cmap::Spec.new(file)
 
     context("#{spec.description} (#{file.sub(%r'.*/data/cmap/', '')})") do
+
+
       before do
-        spec.setup(cluster)
+        subscriber = EventSubscriber.new
+
+        monitoring = Mongo::Monitoring.new(monitoring: false)
+        monitoring.subscribe(Mongo::Monitoring::CONNECTION_POOL, subscriber)
+
+        server = register_server(
+          Mongo::Server.new(
+            Mongo::Address.new(SpecConfig.instance.addresses.first),
+            cluster,
+            monitoring,
+            Mongo::Event::Listeners.new,
+            options.merge(spec.pool_options)
+          ).tap do |server|
+            allow(server).to receive(:description).and_return(ClusterConfig.instance.primary_description)
+          end
+        )
+        spec.setup(server, subscriber)
       end
 
       let!(:result) do

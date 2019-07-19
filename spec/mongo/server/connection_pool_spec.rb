@@ -2,10 +2,12 @@ require 'spec_helper'
 
 describe Mongo::Server::ConnectionPool do
 
-  let(:options) { {max_pool_size: 2} }
+  let(:options) { {} }
 
   let(:server_options) do
-    SpecConfig.instance.test_options.merge(options)
+    SpecConfig.instance.ssl_options.merge(SpecConfig.instance.compressor_options)
+      .merge(SpecConfig.instance.retry_writes_options).merge(SpecConfig.instance.auth_options)
+      .merge(options)
   end
 
   let(:address) do
@@ -28,6 +30,7 @@ describe Mongo::Server::ConnectionPool do
       allow(cl).to receive(:app_metadata).and_return(app_metadata)
       allow(cl).to receive(:options).and_return({})
       allow(cl).to receive(:update_cluster_time)
+      allow(cl).to receive(:cluster_time).and_return(nil)
       allow(cl).to receive(:run_sdam_flow)
     end
   end
@@ -43,24 +46,20 @@ describe Mongo::Server::ConnectionPool do
   end
 
   let(:pool) do
-    described_class.new(server)
+    register_pool(described_class.new(server, server_options))
   end
 
   describe '#initialize' do
-    after do
-      pool.close(:force => true)
-    end
 
     context 'when a min size is provided' do
-
-      let(:pool) do
-        described_class.new(server, :min_pool_size => 2)
+      let (:options) do
+        { min_pool_size: 2 }
       end
 
       it 'creates the pool with min size connections' do
         # Allow background thread to populate pool
         pool
-        sleep 0.1
+        sleep 1
 
         expect(pool.size).to eq(2)
         expect(pool.available_count).to eq(2)
@@ -72,9 +71,8 @@ describe Mongo::Server::ConnectionPool do
     end
 
     context 'when min size exceeds default max size' do
-
-      let(:pool) do
-        described_class.new(server, :min_pool_size => 10)
+      let (:options) do
+        { min_pool_size: 10 }
       end
 
       it 'sets max size to equal provided min size' do
@@ -84,10 +82,6 @@ describe Mongo::Server::ConnectionPool do
 
     context 'when no min size is provided' do
 
-      let(:pool) do
-        described_class.new(server)
-      end
-
       it 'creates the pool with no connections' do
         expect(pool.size).to eq(0)
         expect(pool.available_count).to eq(0)
@@ -95,9 +89,8 @@ describe Mongo::Server::ConnectionPool do
     end
 
     context 'sizes given as min_size and max_size' do
-
-      let(:pool) do
-        described_class.new(server, min_size: 3, max_size: 7)
+      let (:options) do
+        { min_size: 3, max_size: 7 }
       end
 
       it 'sets sizes correctly' do
@@ -107,9 +100,8 @@ describe Mongo::Server::ConnectionPool do
     end
 
     context 'sizes given as min_pool_size and max_pool_size' do
-
-      let(:pool) do
-        described_class.new(server, min_pool_size: 3, max_pool_size: 7)
+      let (:options) do
+        { min_pool_size: 3, max_pool_size: 7 }
       end
 
       it 'sets sizes correctly' do
@@ -119,9 +111,8 @@ describe Mongo::Server::ConnectionPool do
     end
 
     context 'timeout given as wait_timeout' do
-
-      let(:pool) do
-        described_class.new(server, wait_timeout: 4)
+      let (:options) do
+        { wait_timeout: 4 }
       end
 
       it 'sets wait timeout correctly' do
@@ -130,9 +121,8 @@ describe Mongo::Server::ConnectionPool do
     end
 
     context 'timeout given as wait_queue_timeout' do
-
-      let(:pool) do
-        described_class.new(server, wait_queue_timeout: 4)
+      let (:options) do
+        { wait_queue_timeout: 4 }
       end
 
       it 'sets wait timeout correctly' do
@@ -142,11 +132,9 @@ describe Mongo::Server::ConnectionPool do
   end
 
   describe '#max_size' do
-
     context 'when a max pool size option is provided' do
-
-      let(:pool) do
-        described_class.new(server, :max_pool_size => 3)
+      let (:options) do
+        { max_pool_size: 3 }
       end
 
       it 'returns the max size' do
@@ -155,7 +143,6 @@ describe Mongo::Server::ConnectionPool do
     end
 
     context 'when no pool size option is provided' do
-
       it 'returns the default size' do
         expect(pool.max_size).to eq(5)
       end
@@ -173,11 +160,9 @@ describe Mongo::Server::ConnectionPool do
   end
 
   describe '#wait_timeout' do
-
     context 'when the wait timeout option is provided' do
-
-      let(:pool) do
-        described_class.new(server, :wait_queue_timeout => 3)
+      let (:options) do
+        { wait_queue_timeout: 3 }
       end
 
       it 'returns the wait timeout' do
@@ -186,7 +171,6 @@ describe Mongo::Server::ConnectionPool do
     end
 
     context 'when the wait timeout option is not provided' do
-
       it 'returns the default wait timeout' do
         expect(pool.wait_timeout).to eq(1)
       end
@@ -294,7 +278,6 @@ describe Mongo::Server::ConnectionPool do
   end
 
   describe '#check_in' do
-
     let!(:pool) do
       server.pool
     end
@@ -304,7 +287,9 @@ describe Mongo::Server::ConnectionPool do
       server.disconnect!
     end
 
-    let(:options) { {max_pool_size: 2} }
+    let(:options) do
+      { max_pool_size: 2 }
+    end
 
     let(:connection) do
       pool.check_out
@@ -402,7 +387,6 @@ describe Mongo::Server::ConnectionPool do
   end
 
   describe '#check_out' do
-
     let!(:pool) do
       server.pool
     end
@@ -435,7 +419,7 @@ describe Mongo::Server::ConnectionPool do
 
     context 'when there is an available connection which is stale' do
       let(:options) do
-        {max_pool_size: 2, max_idle_time: 0.1}
+        { max_pool_size: 2, max_idle_time: 0.1 }
       end
 
       let(:connection) do
@@ -450,10 +434,6 @@ describe Mongo::Server::ConnectionPool do
         pool.check_in(connection)
       end
 
-      after do
-        pool.close(force: true)
-      end
-
       it 'closes stale connection and creates a new one' do
         expect(connection).to receive(:disconnect!)
         expect(Mongo::Server::Connection).to receive(:new).and_call_original
@@ -464,7 +444,7 @@ describe Mongo::Server::ConnectionPool do
     context 'when there are no available connections' do
 
       let(:options) do
-        {max_pool_size: 1}
+        { max_pool_size: 1, min_pool_size: 0 }
       end
 
       context 'when the max size is not reached' do
@@ -520,12 +500,12 @@ describe Mongo::Server::ConnectionPool do
   end
 
   describe '#disconnect!' do
-
     def create_pool(min_pool_size)
-      described_class.new(server, max_pool_size: 3, min_pool_size: min_pool_size).tap do |pool|
+      opts = SpecConfig.instance.test_options.merge(max_pool_size: 3, min_pool_size: min_pool_size)
+      described_class.new(server, opts).tap do |pool|
         # kill background thread to test disconnect behavior
-        pool.populator.stop!
-
+        pool.stop_populator
+        expect(pool.instance_variable_get('@populator').running?).to be false
         # make pool be of size 2 so that it has enqueued connections
         # when told to disconnect
         c1 = pool.check_out
@@ -563,7 +543,7 @@ describe Mongo::Server::ConnectionPool do
 
     context 'min size is 0' do
       let(:pool) do
-        create_pool(0)
+        register_pool(create_pool(0))
       end
 
       it_behaves_like 'disconnects and removes all connections in the pool and bumps generation'
@@ -571,11 +551,7 @@ describe Mongo::Server::ConnectionPool do
 
     context 'min size is not 0' do
       let(:pool) do
-        create_pool(1)
-      end
-
-      after do
-        pool.close(:force => true)
+        register_pool(create_pool(1))
       end
 
       it_behaves_like 'disconnects and removes all connections in the pool and bumps generation'
@@ -618,7 +594,9 @@ describe Mongo::Server::ConnectionPool do
   end
 
   describe '#inspect' do
-    let(:options) { {min_pool_size: 3, max_pool_size: 7, wait_timeout: 9, wait_queue_timeout: 9} }
+    let(:options) do
+      { min_pool_size: 3, max_pool_size: 7, wait_timeout: 9, wait_queue_timeout: 9 }
+    end
 
     let!(:pool) do
       server.pool
@@ -676,7 +654,6 @@ describe Mongo::Server::ConnectionPool do
   end
 
   describe '#with_connection' do
-
     let!(:pool) do
       server.pool
     end
@@ -686,6 +663,7 @@ describe Mongo::Server::ConnectionPool do
       it 'does not add the connection to the pool' do
         pending 'Re-enable when connections are connected prior to being returned from check_out method'
 
+        # fails because with_connection raises the SocketError which is not caught anywhere
         allow(pool).to receive(:check_out).and_raise(Mongo::Error::SocketError)
         pool.with_connection { |c| c }
 
@@ -707,13 +685,12 @@ describe Mongo::Server::ConnectionPool do
   end
 
   context 'when the connection does not finish authenticating before the thread is killed' do
-
     let!(:pool) do
       server.pool
     end
 
-    let(:server_options) do
-      { user: SpecConfig.instance.root_user.name, password: SpecConfig.instance.root_user.password }.merge(SpecConfig.instance.test_options).merge(max_pool_size: 1)
+    let(:options) do
+      { min_pool_size:0, max_pool_size: 1 }
     end
 
     before do
@@ -722,32 +699,23 @@ describe Mongo::Server::ConnectionPool do
     end
 
     it 'creates a new connection' do
-      invoked = nil
-
       t = Thread.new do
-        # Kill the thread when it's authenticating
-        expect(Mongo::Auth).to receive(:get) do
-          if Thread.current != t
-            raise 'Auth invoked on unexpected thread'
+        expect {
+          pool.with_connection do |c|
+            expect(c).to receive(:connect!).and_raise(Mongo::Error)
+            c.send(:ensure_connected) { |socket| socket}
           end
-          invoked = true
-          t.kill
-          raise 'Should not get here'
-        end
-        pool.with_connection do |c|
-          c.send(:ensure_connected) { |socket| socket }
-        end
+        }.to raise_error(Mongo::Error)
+        expect(pool.size).to be(0)
       end
       t.join
 
-      #expect(Mongo::Auth).to receive(:get).and_call_original
       expect(pool.check_out).to be_a(Mongo::Server::Connection)
-      expect(invoked).to be true
+      expect(pool.size).to be(1)
     end
   end
 
   describe '#close_idle_sockets' do
-
     let!(:pool) do
       server.pool
     end
@@ -755,7 +723,7 @@ describe Mongo::Server::ConnectionPool do
     context 'when there is a max_idle_time specified' do
 
       let(:options) do
-        {max_pool_size: 2, max_idle_time: 0.5}
+        { max_pool_size: 2, max_idle_time: 0.5 }
       end
 
       after do
@@ -784,7 +752,7 @@ describe Mongo::Server::ConnectionPool do
         context 'when min size is 0' do
 
           let(:options) do
-            {max_pool_size: 2, min_pool_size: 0, max_idle_time: 0.5}
+            { max_pool_size: 2, min_pool_size: 0, max_idle_time: 0.5 }
           end
 
           before do
@@ -806,16 +774,13 @@ describe Mongo::Server::ConnectionPool do
         context 'when min size is > 0' do
           before do
             # Kill background thread to test close_idle_socket behavior
-            pool.populator.stop!
-          end
-
-          after do
-            pool.close(:force => true)
+            pool.stop_populator
+            expect(pool.instance_variable_get('@populator').running?).to be false
           end
 
           context 'when more than the number of min_size are checked out' do
             let(:options) do
-              {max_pool_size: 5, min_pool_size: 3, max_idle_time: 0.5}
+              { max_pool_size: 5, min_pool_size: 3, max_idle_time: 0.5 }
             end
 
             it 'closes and removes connections with idle sockets and does not connect new ones' do
@@ -844,7 +809,7 @@ describe Mongo::Server::ConnectionPool do
           context 'when between 0 and min_size number of connections are checked out' do
 
             let(:options) do
-              {max_pool_size: 5, min_pool_size: 3, max_idle_time: 0.5}
+              { max_pool_size: 5, min_pool_size: 3, max_idle_time: 0.5 }
             end
 
             it 'closes and removes connections with idle sockets and does not connect new ones' do
@@ -886,8 +851,8 @@ describe Mongo::Server::ConnectionPool do
     end
 
     context 'when available connections include idle and non-idle ones' do
-      let(:pool) do
-        described_class.new(server, max_pool_size: 2, max_idle_time: 0.5)
+      let (:options) do
+        { max_pool_size: 2, max_idle_time: 0.5 }
       end
 
       let(:connection) do
@@ -897,25 +862,30 @@ describe Mongo::Server::ConnectionPool do
       end
 
       it 'disconnects all expired and only expired connections' do
-        c1 = pool.check_out
-        expect(c1).to receive(:disconnect!)
-        c2 = pool.check_out
-        expect(c2).not_to receive(:disconnect!)
+        # Since per-test cleanup will close the pool and disconnect
+        # the connection, we need to explicitly define the scope for the
+        # assertions
+        RSpec::Mocks.with_temporary_scope do
+          c1 = pool.check_out
+          expect(c1).to receive(:disconnect!)
+          c2 = pool.check_out
+          expect(c2).not_to receive(:disconnect!)
 
-        pool.check_in(c1)
-        Timecop.travel(Time.now + 1)
-        pool.check_in(c2)
+          pool.check_in(c1)
+          Timecop.travel(Time.now + 1)
+          pool.check_in(c2)
 
-        expect(pool.size).to eq(2)
-        expect(pool.available_count).to eq(2)
+          expect(pool.size).to eq(2)
+          expect(pool.available_count).to eq(2)
 
-        expect(c1).not_to receive(:connect!)
-        expect(c2).not_to receive(:connect!)
+          expect(c1).not_to receive(:connect!)
+          expect(c2).not_to receive(:connect!)
 
-        pool.close_idle_sockets
+          pool.close_idle_sockets
 
-        expect(pool.size).to eq(1)
-        expect(pool.available_count).to eq(1)
+          expect(pool.size).to eq(1)
+          expect(pool.available_count).to eq(1)
+        end
       end
     end
 

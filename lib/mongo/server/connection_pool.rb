@@ -39,10 +39,6 @@ module Mongo
       # @since 2.9.0
       DEFAULT_WAIT_TIMEOUT = 1.freeze
 
-      # Background thread reponsible for maintaining the size of
-      # the pool to at least min_size
-      attr_reader :populator
-
       # Condition variable broadcast when the size of the pool changes
       # to wake up the populator
       attr_reader :populate_semaphore
@@ -67,6 +63,9 @@ module Mongo
       #   are given, their values must be identical.
       # @option options [ Float ] :max_idle_time The time, in seconds,
       #   after which idle connections should be closed by the pool.
+      # Note: Additionally, options for connections created by this pool should
+      #   be included in the options passed here, and they will be forwarded to
+      #   any connections created by the pool.
       #
       # @since 2.0.0, API changed in 2.9.0
       def initialize(server, options = {})
@@ -108,6 +107,7 @@ module Mongo
         # or in the checked out connections set.
         @available_connections = available_connections = []
         @checked_out_connections = Set.new
+        @pending_connections = Set.new
 
         # Mutex used for synchronizing access to @available_connections and
         # @checked_out_connections. The pool object is thread-safe, thus
@@ -120,10 +120,12 @@ module Mongo
         # available connection when pool is at max size
         @available_semaphore = Semaphore.new
 
-        @populate_semaphore = Semaphore.new
+        # Background thread reponsible for maintaining the size of
+        # the pool to at least min_size
         @populator = ConnectionPoolPopulator.new(self)
+        @populate_semaphore = Semaphore.new
 
-        ObjectSpace.define_finalizer(self, self.class.finalize(@available_connections, @populator))
+        ObjectSpace.define_finalizer(self, self.class.finalize(@available_connections, @pending_connections, @populator))
 
         @populator.run! if min_size > 0
 
@@ -199,7 +201,7 @@ module Mongo
       # already holding the lock as Ruby does not allow a thread holding a
       # lock to acquire this lock again.
       def unsynchronized_size
-        @available_connections.length + @checked_out_connections.size
+        @available_connections.length + @checked_out_connections.size + @pending_connections.size
       end
       private :unsynchronized_size
 
@@ -281,18 +283,15 @@ module Mongo
                   next
                 end
 
-                @checked_out_connections << connection
+                @pending_connections << connection
                 throw(:done)
               end
 
               # Ruby does not allow a thread to lock a mutex which it already
               # holds.
               if unsynchronized_size < max_size
-                # This does not currently connect the socket and handshake,
-                # but if it did, it would be performing i/o under our lock,
-                # which is bad. Fix in the future.
                 connection = create_connection
-                @checked_out_connections << connection
+                @pending_connections << connection
                 throw(:done)
               end
             end
@@ -309,6 +308,29 @@ module Mongo
             end
             @available_semaphore.wait(wait)
           end
+        end
+
+        begin
+          connect_connection(connection)
+        rescue Exception
+          # Handshake or authentication failed
+          @lock.synchronize do
+            @pending_connections.delete(connection)
+          end
+          @populate_semaphore.signal
+
+          publish_cmap_event(
+            Monitoring::Event::Cmap::ConnectionCheckOutFailed.new(
+              @server.address,
+              Monitoring::Event::Cmap::ConnectionCheckOutFailed::CONNECTION_ERROR
+            ),
+          )
+          raise
+        end
+
+        @lock.synchronize do
+          @checked_out_connections << connection
+          @pending_connections.delete(connection)
         end
 
         publish_cmap_event(
@@ -421,7 +443,7 @@ module Mongo
 
         options ||= {}
 
-        @populator.stop!
+        stop_populator
 
         @lock.synchronize do
           until @available_connections.empty?
@@ -437,7 +459,7 @@ module Mongo
             end
           end
 
-          # mark pool as closed and stop populator before releasing lock so
+          # mark pool as closed before releasing lock so
           # no connections can be created, checked in, or checked out
           @closed = true
         end
@@ -513,40 +535,82 @@ module Mongo
         end
       end
 
+      # Stop the background populator thread and clean up any connections created
+      # which have not been connected yet.
+      #
+      # Used when closing the pool or when terminating the bg thread for testing
+      # purposes. In the latter case, this method must be called before the pool
+      # is used, to ensure no connections in pending_connections were created in-flow
+      # by the check_out method.
+      #
+      # @api private
+      def stop_populator
+        @populator.stop!
+
+        @lock.synchronize do
+          # If stop_populator is called while populate is running, there may be
+          # connections waiting to be connected, connections which have not yet
+          # been moved to available_connections, or connections moved to available_connections
+          # but not deleted from pending_connections. These should be cleaned up.
+          until @pending_connections.empty?
+            connection = @pending_connections.take(1).first
+            connection.disconnect!
+            @pending_connections.delete(connection)
+          end
+        end
+      end
+
       # Creates and adds a connection to the pool, if the pool's size is below
-      # min_size.
+      # min_size. Retries once if an error is encountered during this process
+      # and raises if a second error occurs.
       #
       # Used by the pool populator background thread.
       #
       # @return [ true | false ] Whether this method should be called again
       #   to create more connections.
+      # @raise [ Mongo::Error ] The second error raised if a retry occured
+      #
       # @api private
       def populate
         return false if closed?
 
-        @lock.synchronize do
-          if !closed? && unsynchronized_size < min_size
-            @available_connections << create_connection
-            true
-          else
-            false
-          end
+        begin
+          return create_and_add_connection
+        rescue Error::SocketError, Error::SocketTimeoutError => e
+          # an error was encountered while connecting the connection,
+          # ignore this first error and try again.
+          log_warn("Populator failed to connect a connection: #{e.class}: #{e}. It will retry.")
         end
+
+        return create_and_add_connection
+      rescue Exception
+        # wake up one thread waiting for connections, since one could not
+        # be created here, and can instead be created in flow
+        @available_semaphore.signal
+        raise
       end
 
       # Finalize the connection pool for garbage collection.
       #
       # @param [ List<Mongo::Connection> ] available_connections The available connections.
+      # @param [ List<Mongo::Connection> ] pending_connections The pending connections.
       # @param [ ConnectionPoolPopulator ] populator The populator.
       #
       # @return [ Proc ] The Finalizer.
-      def self.finalize(available_connections, populator)
+      def self.finalize(available_connections, pending_connections, populator)
         proc do
           populator.stop!
+
           available_connections.each do |connection|
             connection.disconnect!(reason: :pool_closed)
           end
           available_connections.clear
+
+          pending_connections.each do |connection|
+            connection.disconnect!(reason: :pool_closed)
+          end
+          pending_connections.clear
+
           # Finalizer does not close checked out connections.
           # Those would have to be garbage collected on their own
           # and that should close them.
@@ -556,11 +620,44 @@ module Mongo
       private
 
       def create_connection
-        connection = Connection.new(@server, options.merge(generation: generation))
-        # CMAP spec requires connections to be returned from the pool
-        # fully established.
-        #connection.connect!
-        connection
+        Connection.new(@server, options.merge(generation: generation))
+      end
+
+      # Create a connection, connect it, and add it to the pool.
+      #
+      # @return [ true | false ] True if a connection was created and
+      #    added to the pool, false otherwise
+      # @raise [ Mongo::Error ] An error encountered during connection connect
+      def create_and_add_connection
+        connection = nil
+
+        @lock.synchronize do
+          if !closed? && unsynchronized_size < min_size
+            connection = create_connection
+            @pending_connections << connection
+          else
+            return false
+          end
+        end
+
+        begin
+          connect_connection(connection)
+        rescue Exception
+          @lock.synchronize do
+            @pending_connections.delete(connection)
+          end
+          raise
+        end
+
+        @lock.synchronize do
+          @available_connections << connection
+          @pending_connections.delete(connection)
+
+          # wake up one thread waiting for connections, since one was created
+          @available_semaphore.signal
+        end
+
+        true
       end
 
       # Asserts that the pool has not been closed.
@@ -571,6 +668,17 @@ module Mongo
       def raise_if_closed!
         if closed?
           raise Error::PoolClosedError.new(@server.address)
+        end
+      end
+
+      # Attempts to connect (handshake and auth) the connection. If an error is
+      # encountered, closes the connection and raises the error.
+      def connect_connection(connection)
+        begin
+          connection.connect!
+        rescue Exception
+          connection.disconnect!(reason: :error)
+          raise
         end
       end
     end

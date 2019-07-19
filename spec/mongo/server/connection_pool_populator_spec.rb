@@ -1,10 +1,10 @@
 require 'spec_helper'
 
 describe Mongo::Server::ConnectionPool do
-  let(:options) { {max_pool_size: 2} }
+  let(:options) { {} }
 
   let(:server_options) do
-    SpecConfig.instance.test_options.merge(options)
+    SpecConfig.instance.test_options.merge(options).merge(SpecConfig.instance.auth_options)
   end
 
   let(:address) do
@@ -27,6 +27,8 @@ describe Mongo::Server::ConnectionPool do
       allow(cl).to receive(:app_metadata).and_return(app_metadata)
       allow(cl).to receive(:options).and_return({})
       allow(cl).to receive(:update_cluster_time)
+      allow(cl).to receive(:cluster_time).and_return(nil)
+      allow(cl).to receive(:run_sdam_flow)
     end
   end
 
@@ -41,19 +43,19 @@ describe Mongo::Server::ConnectionPool do
   end
 
   let(:pool) do
-    described_class.new(server)
+    register_pool(described_class.new(server, server_options))
   end
 
   describe '#initialize' do
     context 'when a min size is provided' do
 
-      let(:pool) do
-        described_class.new(server, :min_pool_size => 2)
+      let(:options) do
+        { min_pool_size: 2, max_pool_size: 5 }
       end
 
       it 'creates the pool with min pool size connections' do
         pool
-        sleep 0.1
+        sleep 2
 
         expect(pool.size).to eq(2)
         expect(pool.available_count).to eq(2)
@@ -65,30 +67,27 @@ describe Mongo::Server::ConnectionPool do
     end
 
     context 'when min size is zero' do
-      let(:pool) do
-        described_class.new(server)
-      end
 
       it 'does not start the background thread' do
         pool
-        sleep 0.1
+        sleep 2
 
         expect(pool.size).to eq(0)
-        expect(pool.populator.running?).to be false
+        expect(pool.instance_variable_get('@populator').running?).to be false
       end
     end
   end
 
   describe '#clear' do
     context 'when a min size is provided' do
-      let(:pool) do
-        described_class.new(server, :min_pool_size => 1)
+       let(:options) do
+        { min_pool_size: 1 }
       end
 
       it 'repopulates the pool periodically only up to min size' do
         pool
 
-        sleep 0.1
+        sleep 2
         expect(pool.size).to eq(1)
         expect(pool.available_count).to eq(1)
         first_connection = pool.check_out
@@ -96,7 +95,7 @@ describe Mongo::Server::ConnectionPool do
 
         pool.clear
 
-        sleep 0.1
+        sleep 2
         expect(pool.size).to eq(1)
         expect(pool.available_count).to eq(1)
         second_connection = pool.check_out
@@ -115,14 +114,14 @@ describe Mongo::Server::ConnectionPool do
 
   describe '#check_in' do
     context 'when a min size is provided' do
-      let(:pool) do
-        described_class.new(server, :min_pool_size => 1)
+       let(:options) do
+        { min_pool_size: 1 }
       end
 
       it 'repopulates the pool after check_in of a closed connection' do
         pool
 
-        sleep 0.1
+        sleep 2
         expect(pool.size).to eq(1)
         first_connection = pool.check_out
         first_connection.disconnect!
@@ -130,7 +129,7 @@ describe Mongo::Server::ConnectionPool do
 
         pool.check_in(first_connection)
 
-        sleep 0.1
+        sleep 2
         expect(pool.size).to eq(1)
         expect(pool.available_count).to eq(1)
         second_connection = pool.check_out
@@ -142,8 +141,8 @@ describe Mongo::Server::ConnectionPool do
   describe '#check_out' do
     context 'when min size and idle time are provided' do
 
-      let(:pool) do
-        described_class.new(server, :min_pool_size => 2, :max_idle_time => 0.5)
+      let(:options) do
+        { max_pool_size: 2, min_pool_size: 2, max_idle_time: 0.5 }
       end
 
       it 'repopulates the pool after check_out empties idle connections' do
@@ -170,7 +169,7 @@ describe Mongo::Server::ConnectionPool do
         expect(third_connection).to_not eq(second_connection)
 
         # populate thread should create a new connection for the pool
-        sleep 0.1
+        sleep 2
         expect(pool.size).to eq(2)
         fourth_connection = pool.check_out
         expect(fourth_connection).to_not eq(first_connection)
@@ -183,48 +182,43 @@ describe Mongo::Server::ConnectionPool do
   describe '#close' do
     context 'when min size is provided' do
 
-      let(:pool) do
-        described_class.new(server, :min_pool_size => 2)
+      let(:options) do
+        { min_pool_size: 2, max_pool_size: 5 }
       end
 
       it 'terminates and does not repopulate the pool after pool is closed' do
         pool
 
-        sleep 0.1
+        sleep 2
         expect(pool.size).to eq(2)
 
         connection = pool.check_out
 
         expect(pool.size).to eq(2)
-        pool.close(:force => true)
+        pool.close(force: true)
 
         expect(pool.closed?).to be true
         expect(pool.instance_variable_get('@available_connections').empty?).to be true
         expect(pool.instance_variable_get('@checked_out_connections').empty?).to be true
 
         # populate thread should terminate
-        sleep 0.1
-        expect(pool.populator.running?).to be false
+        sleep 2
+        expect(pool.instance_variable_get('@populator').running?).to be false
         expect(pool.closed?).to be true
-
-        # running populate should not change state of pool
-        pool.populate
-        expect(pool.instance_variable_get('@available_connections').empty?).to be true
-        expect(pool.instance_variable_get('@checked_out_connections').empty?).to be true
       end
     end
   end
 
   describe '#close_idle_sockets' do
     context 'when min size and idle time are provided' do
-      let(:pool) do
-        described_class.new(server, :min_pool_size => 1, :max_idle_time => 0.5)
+      let(:options) do
+        { min_pool_size: 1, max_idle_time: 0.5 }
       end
 
       it 'repopulates pool after sockets are closes' do
         pool
 
-        sleep 0.1
+        sleep 2
         expect(pool.size).to eq(1)
 
         connection = pool.check_out
@@ -237,9 +231,31 @@ describe Mongo::Server::ConnectionPool do
         # close idle_sockets should trigger populate
         pool.close_idle_sockets
 
-        sleep 0.1
+        sleep 2
         expect(pool.size).to eq(1)
         expect(pool.check_out).not_to eq(connection)
+      end
+    end
+  end
+
+  describe '#populate' do
+    let(:options) do
+      { min_pool_size: 1 }
+    end
+
+    context 'when populate encounters a network error twice' do
+      it 'retries once and does not stop the populator' do
+        expect(pool).to receive(:create_and_add_connection).twice.and_raise(Mongo::Error::SocketError)
+        sleep 0.5
+        expect(pool.instance_variable_get('@populator').running?).to be true
+      end
+    end
+
+    context 'when populate encounters a non-network error' do
+      it 'does not retry and does not stop the populator' do
+        expect(pool).to receive(:create_and_add_connection).and_raise(Mongo::Error)
+        sleep 0.5
+        expect(pool.instance_variable_get('@populator').running?).to be true
       end
     end
   end
@@ -252,9 +268,9 @@ describe Mongo::Server::ConnectionPool do
 
       it 'populates the parent and child pools' do
         client = ClientRegistry.instance.new_local_client([SpecConfig.instance.addresses.first],
-          server_options.merge(min_pool_size: 2))
+          server_options.merge(min_pool_size: 2, max_pool_size: 5))
         # let pool populate
-        sleep 0.1
+        sleep 2
 
         server = client.cluster.next_primary
         pool = server.pool
@@ -265,7 +281,7 @@ describe Mongo::Server::ConnectionPool do
           client.close(true)
           client.reconnect
           # let pool populate
-          sleep 0.1
+          sleep 2
 
           server = client.cluster.next_primary
           pool = server.pool
