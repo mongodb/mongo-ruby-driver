@@ -127,11 +127,11 @@ module Mongo
 
         ObjectSpace.define_finalizer(self, self.class.finalize(@available_connections, @pending_connections, @populator))
 
-        @populator.run! if min_size > 0
-
         publish_cmap_event(
           Monitoring::Event::Cmap::PoolCreated.new(@server.address, options)
         )
+
+        @populator.run! if min_size > 0
       end
 
       # @return [ Hash ] options The pool options.
