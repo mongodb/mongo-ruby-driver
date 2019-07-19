@@ -2,6 +2,9 @@ runOn:
     -
         minServerVersion: "4.0"
         topology: ["replicaset"]
+    -
+        minServerVersion: "4.1.8"
+        topology: ["sharded"]
 
 database_name: &database_name "withTransaction-tests"
 collection_name: &collection_name "test"
@@ -11,6 +14,7 @@ data: []
 tests:
   -
     description: withTransaction and no transaction options set
+    useMultipleMongoses: true
     operations: &operations
       -
         name: withTransaction
@@ -62,6 +66,7 @@ tests:
           - { _id: 1 }
   -
     description: withTransaction inherits transaction options from client
+    useMultipleMongoses: true
     clientOptions:
       readConcernLevel: local
       w: 1
@@ -99,6 +104,7 @@ tests:
     outcome: *outcome
   -
     description: withTransaction inherits transaction options from defaultTransactionOptions
+    useMultipleMongoses: true
     sessionOptions:
       session0:
         defaultTransactionOptions:
@@ -138,6 +144,7 @@ tests:
     outcome: *outcome
   -
     description: withTransaction explicit transaction options
+    useMultipleMongoses: true
     operations: &operations_explicit_transactionOptions
       -
         name: withTransaction
@@ -189,6 +196,7 @@ tests:
     outcome: *outcome
   -
     description: withTransaction explicit transaction options override defaultTransactionOptions
+    useMultipleMongoses: true
     sessionOptions:
       session0:
         defaultTransactionOptions:
@@ -228,6 +236,7 @@ tests:
     outcome: *outcome
   -
     description: withTransaction explicit transaction options override client options
+    useMultipleMongoses: true
     clientOptions:
       readConcernLevel: majority
       w: majority
