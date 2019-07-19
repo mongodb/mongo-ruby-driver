@@ -67,7 +67,13 @@ module Mongo
       end
 
       def verify_command_started_event_count(expected_events, actual_events)
-        expect(actual_events.length).to eq(expected_events.length)
+        if actual_events.length != expected_events.length
+          raise RSpec::Expectations::ExpectationNotMetError.new, <<-EOT
+Expected #{expected_events.length} events, got #{actual_events.length} events.
+Expected events: #{expected_events.pretty_inspect}
+Actual events: #{actual_events.pretty_inspect}
+EOT
+        end
       end
 
       def verify_command_started_event(expected_events, actual_events, i)
