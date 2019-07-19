@@ -168,4 +168,72 @@ describe 'Connection pool stress test' do
 			it_behaves_like 'does not raise error'
 		end
 	end
+
+	describe 'when primary pool is disconnected' do
+		let(:options) do
+			{ max_pool_size: 5, min_pool_size: 3 }
+		end
+
+		let(:thread_count) { 5 }
+
+		let(:threads) do
+			threads = []
+
+			# thread that performs operations
+			threads << Thread.new do
+				10.times do |j|
+					collection.find(a: j)
+					sleep 0.5
+					collection.find(a: j)
+				end
+			end
+
+			# thread that marks primary unknown and disconnects its pool
+			threads << Thread.new do
+				sleep 0.2
+				server = authorized_client.cluster.next_primary
+				server.unknown!
+				server.pool.disconnect!
+			end
+		end
+
+		context 'primary disconnected' do
+			it_behaves_like 'does not raise error'
+		end
+	end
+
+	describe 'when all pools are disconnected' do
+		let(:options) do
+			{ max_pool_size: 5, min_pool_size: 3 }
+		end
+
+		let(:thread_count) { 5 }
+
+		let(:threads) do
+			threads = []
+
+			# thread that performs operations
+			threads << Thread.new do
+				10.times do |j|
+					collection.find(a: j)
+					sleep 0.5
+					collection.find(a: j)
+				end
+			end
+
+			# thread that marks primary unknown and disconnects its pool
+			threads << Thread.new do
+				sleep 0.2
+
+				authorized_client.cluster.servers_list.each do |server|
+					server.unknown!
+					server.pool.disconnect!
+				end
+			end
+		end
+
+		context 'primary disconnected' do
+			it_behaves_like 'does not raise error'
+		end
+	end
 end
