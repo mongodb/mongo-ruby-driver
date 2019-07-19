@@ -685,4 +685,144 @@ describe Mongo::Database do
       end
     end
   end
+
+  describe '#aggregate' do
+    min_server_fcv '3.6'
+
+    let(:client) do
+      root_authorized_admin_client
+    end
+
+    let(:database) { client.database }
+
+    let(:pipeline) do
+      [{'$currentOp' => {}}]
+    end
+
+    describe 'updating cluster time' do
+      # The shared examples use their own client which we cannot override
+      # from here, and it uses the wrong credentials for admin database which
+      # is the one we need for our pipeline when auth is on.
+      require_no_auth
+
+      let(:database_via_client) do
+        client.use(:admin).database
+      end
+
+      let(:operation) do
+        database_via_client.aggregate(pipeline).first
+      end
+
+      let(:operation_with_session) do
+        database_via_client.aggregate(pipeline, session: session).first
+      end
+
+      let(:second_operation) do
+        database_via_client.aggregate(pipeline, session: session).first
+      end
+
+      it_behaves_like 'an operation updating cluster time'
+    end
+
+    it 'returns an Aggregation object' do
+      expect(database.aggregate(pipeline)).to be_a(Mongo::Collection::View::Aggregation)
+    end
+
+    context 'when options are provided' do
+
+      let(:options) do
+        { :allow_disk_use => true, :bypass_document_validation => true }
+      end
+
+      it 'sets the options on the Aggregation object' do
+        expect(database.aggregate(pipeline, options).options).to eq(BSON::Document.new(options))
+      end
+
+      context 'when the :comment option is provided' do
+
+        let(:options) do
+          { :comment => 'testing' }
+        end
+
+        it 'sets the options on the Aggregation object' do
+          expect(database.aggregate(pipeline, options).options).to eq(BSON::Document.new(options))
+        end
+      end
+
+      context 'when a session is provided' do
+
+        let(:session) do
+          client.start_session
+        end
+
+        let(:operation) do
+          database.aggregate(pipeline, session: session).to_a
+        end
+
+        let(:failed_operation) do
+          database.aggregate([ { '$invalid' => 1 }], session: session).to_a
+        end
+
+        it_behaves_like 'an operation using a session'
+        it_behaves_like 'a failed operation using a session'
+      end
+
+      context 'when a hint is provided' do
+
+        let(:options) do
+          { 'hint' => { 'y' => 1 } }
+        end
+
+        it 'sets the options on the Aggregation object' do
+          expect(database.aggregate(pipeline, options).options).to eq(options)
+        end
+      end
+
+      context 'when collation is provided' do
+
+        let(:pipeline) do
+          [{ "$currentOp" => {} }]
+        end
+
+        let(:options) do
+          { collation: { locale: 'en_US', strength: 2 } }
+        end
+
+        let(:result) do
+          database.aggregate(pipeline, options).collect { |doc| doc.keys.grep(/host/).first }
+        end
+
+        context 'when the server selected supports collations' do
+          min_server_fcv '3.4'
+
+          it 'applies the collation' do
+            expect(result.uniq).to eq(['host'])
+          end
+        end
+
+        context 'when the server selected does not support collations' do
+          max_server_version '3.2'
+
+          it 'raises an exception' do
+            expect {
+              result
+            }.to raise_exception(Mongo::Error::UnsupportedCollation)
+          end
+
+          context 'when a String key is used' do
+
+            let(:options) do
+              { 'collation' => { locale: 'en_US', strength: 2 } }
+            end
+
+            it 'raises an exception' do
+              expect {
+                result
+              }.to raise_exception(Mongo::Error::UnsupportedCollation)
+            end
+          end
+        end
+      end
+    end
+  end
 end

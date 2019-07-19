@@ -542,12 +542,7 @@ module Mongo
           configure(:cursor_type, type)
         end
 
-        private
-
-        def collation(doc = nil)
-          configure(:collation, doc)
-        end
-
+        # @api private
         def read_concern
           if options[:session] && options[:session].in_transaction?
             options[:session].send(:txn_read_concern) || collection.client.read_concern
@@ -556,6 +551,7 @@ module Mongo
           end
         end
 
+        # @api private
         def read_preference
           @read_preference ||= begin
             # Operation read preference is always respected, and has the
@@ -573,6 +569,12 @@ module Mongo
             Lint.validate_underscore_read_preference(rp)
             rp
           end
+        end
+
+        private
+
+        def collation(doc = nil)
+          configure(:collation, doc)
         end
 
         def server_selector

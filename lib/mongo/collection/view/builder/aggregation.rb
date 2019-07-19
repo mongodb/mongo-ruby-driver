@@ -94,12 +94,21 @@ module Mongo
           end
 
           def aggregation_command
-            command = BSON::Document.new(:aggregate => collection.name, :pipeline => pipeline)
-            command[:cursor] = cursor if cursor
-            if collection.read_concern
-              command[:readConcern] = Options::Mapper.transform_values_to_strings(
-                collection.read_concern)
+            command = BSON::Document.new
+            # aggregate must be the first key in the command document
+            if view.is_a?(Collection::View)
+              command[:aggregate] = collection.name
+            elsif view.is_a?(Database::View)
+              command[:aggregate] = 1
+            else
+              raise ArgumentError, "Unknown view class: #{view}"
             end
+            command[:pipeline] = pipeline
+            if read_concern = view.read_concern
+              command[:readConcern] = Options::Mapper.transform_values_to_strings(
+                read_concern)
+            end
+            command[:cursor] = cursor if cursor
             command.merge!(Options::Mapper.transform_documents(options, MAPPINGS))
             command
           end
