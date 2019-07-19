@@ -452,6 +452,8 @@ module Mongo
     #
     # @param [ Hash ] options The options for the transaction being started.
     #
+    # @option options [ Integer ] :max_commit_time_ms The maximum amount of
+    #   time to allow a single commitTransaction command to run, in milliseconds.
     # @option options [ Hash ] read_concern The read concern options hash,
     #   with the following optional keys:
     #   - *:level* -- the read preference level as a symbol; valid values
@@ -562,13 +564,14 @@ module Mongo
                 write_concern = WriteConcern.get(w: :majority, wtimeout: 10000)
               end
             end
-            Operation::Command.new(
+            spec = {
               selector: { commitTransaction: 1 },
               db_name: 'admin',
               session: self,
               txn_num: txn_num,
               write_concern: write_concern,
-            ).execute(server)
+            }
+            Operation::Command.new(spec).execute(server)
           end
         end
       ensure
@@ -803,6 +806,12 @@ module Mongo
         # We need to send the read concern level as a string rather than a symbol.
         if c[:readConcern]
           c[:readConcern] = Options::Mapper.transform_values_to_strings(c[:readConcern])
+        end
+
+        if c[:commitTransaction]
+          if max_time_ms = txn_options[:max_commit_time_ms]
+            c[:maxTimeMS] = max_time_ms
+          end
         end
 
         # The write concern should be added to any abortTransaction or commitTransaction command.
