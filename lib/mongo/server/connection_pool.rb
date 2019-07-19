@@ -357,17 +357,21 @@ module Mongo
       # @since 2.9.0
       def check_in(connection)
         @lock.synchronize do
-          unless @checked_out_connections.include?(connection)
-            raise ArgumentError, "Trying to check in a connection which is not currently checked out by this pool: #{connection}"
+          unless connection.connection_pool == self
+            raise ArgumentError, "Trying to check in a connection which was not checked out by this pool: #{connection} checked out from pool #{connection.connection_pool} (for #{self})"
           end
 
-          @checked_out_connections.delete(connection)
+          unless @checked_out_connections.include?(connection)
+            raise ArgumentError, "Trying to check in a connection which is not currently checked out by this pool: #{connection} (for #{self})"
+          end
 
           # Note: if an event handler raises, resource will not be signaled.
           # This means threads waiting for a connection to free up when
           # the pool is at max size may time out.
           # Threads that begin waiting after this method completes (with
           # the exception) should be fine.
+
+          @checked_out_connections.delete(connection)
           publish_cmap_event(
             Monitoring::Event::Cmap::ConnectionCheckedIn.new(@server.address, connection.id)
           )
@@ -629,7 +633,8 @@ module Mongo
       private
 
       def create_connection
-        Connection.new(@server, options.merge(generation: generation))
+        connection = Connection.new(@server, options.merge(generation: generation,
+          connection_pool: self))
       end
 
       # Create a connection, connect it, and add it to the pool.

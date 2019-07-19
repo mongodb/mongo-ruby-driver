@@ -123,6 +123,14 @@ module Mongo
         options[:generation]
       end
 
+      # The connection pool from which this connection was created.
+      # May be nil.
+      #
+      # @api private
+      def connection_pool
+        options[:connection_pool]
+      end
+
       # Whether the connection was closed.
       #
       # Closed connections should no longer be used. Instead obtain a new
@@ -151,7 +159,7 @@ module Mongo
       def connect!
         if closed?
           if Lint.enabled?
-            raise Error::LintError, "Reconnecting closed connections is no longer supported"
+            raise Error::LintError, "Reconnecting closed connections is no longer supported (for #{address})"
           else
             log_warn("Reconnecting closed connections is deprecated (for #{address})")
           end
@@ -290,7 +298,7 @@ module Mongo
 
       def handshake!(socket)
         unless socket
-          raise Error::HandshakeError, "Cannot handshake because there is no usable socket"
+          raise Error::HandshakeError, "Cannot handshake because there is no usable socket (for #{address})"
         end
 
         response = average_rtt = nil

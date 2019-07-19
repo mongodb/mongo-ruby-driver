@@ -369,8 +369,6 @@ describe Mongo::Server::ConnectionPool do
     end
 
     context 'when pool is closed' do
-      let(:connection) { pool.check_out }
-
       before do
         connection
         pool.close
@@ -382,6 +380,29 @@ describe Mongo::Server::ConnectionPool do
         pool.check_in(connection)
         expect(connection.closed?).to be true
         expect(pool.instance_variable_get('@available_connections').length).to eq(0)
+      end
+    end
+
+    context 'when connection is checked in twice' do
+      it 'raises an ArgumentError and does not change pool state' do
+        pool.check_in(connection)
+        expect do
+          pool.check_in(connection)
+        end.to raise_error(ArgumentError, /Trying to check in a connection which is not currently checked out by this pool.*/)
+        expect(pool.size).to eq(1)
+        expect(pool.check_out).to eq(connection)
+      end
+    end
+
+    context 'when connection is checked in to a different pool' do
+      it 'raises an ArgumentError and does not change the state of either pool' do
+        pool_other = register_pool(described_class.new(server))
+
+        expect do
+          pool_other.check_in(connection)
+        end.to raise_error(ArgumentError, /Trying to check in a connection which was not checked out by this pool.*/)
+        expect(pool.size).to eq(1)
+        expect(pool_other.size).to eq(0)
       end
     end
   end

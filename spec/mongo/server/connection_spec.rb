@@ -561,7 +561,7 @@ describe Mongo::Server::Connection, retry: 3 do
 
           expect do
             connection.dispatch([ query_alice ]).documents
-          end.to raise_error(Mongo::Error::LintError, 'Reconnecting closed connections is no longer supported')
+          end.to raise_error(Mongo::Error::LintError, /Reconnecting closed connections is no longer supported.*/)
         end
       end
 
