@@ -497,6 +497,37 @@ describe Mongo::Server::ConnectionPool do
         end.to raise_error(Mongo::Error::PoolClosedError)
       end
     end
+
+    context 'when connection set up throws an error during check out' do
+      let(:client) do
+        new_local_client(SpecConfig.instance.addresses, authorized_client.options.merge(options))
+      end
+
+       let(:pool) do
+        client.cluster.next_primary.pool
+      end
+
+       before do
+        ClientRegistry.instance.close_all_clients
+        pool
+      end
+
+       it 'raises an error and emits ConnectionCheckOutFailedEvent' do
+        subscriber = EventSubscriber.new
+        client.subscribe(Mongo::Monitoring::CONNECTION_POOL, subscriber)
+
+         subscriber.clear_events!
+        expect(Mongo::Auth).to receive(:get).at_least(:once).and_raise(Mongo::Error)
+        expect { pool.check_out }.to raise_error(Mongo::Error)
+        expect(pool.size).to eq(0)
+
+         checkout_failed_events = subscriber.published_events.select do |event|
+          event.is_a?(Mongo::Monitoring::Event::Cmap::ConnectionCheckOutFailed)
+        end
+        expect(checkout_failed_events.size).to eq(1)
+        expect(checkout_failed_events.first.reason).to be(:connection_error)
+      end
+    end
   end
 
   describe '#disconnect!' do
