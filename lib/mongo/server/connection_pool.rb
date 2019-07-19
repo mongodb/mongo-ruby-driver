@@ -127,11 +127,11 @@ module Mongo
 
         ObjectSpace.define_finalizer(self, self.class.finalize(@available_connections, @pending_connections, @populator))
 
-        @populator.run! if min_size > 0
-
         publish_cmap_event(
           Monitoring::Event::Cmap::PoolCreated.new(@server.address, options)
         )
+
+        @populator.run! if min_size > 0
       end
 
       # @return [ Hash ] options The pool options.
@@ -243,16 +243,25 @@ module Mongo
       # checked back in via the check_in method.
       #
       # @return [ Mongo::Server::Connection ] The checked out connection.
+      # @raise [ Error::PoolClosedError ] If the pool has been closed.
       # @raise [ Timeout::Error ] If the connection pool is at maximum size
       #   and remains so for longer than the wait timeout.
       #
       # @since 2.9.0
       def check_out
-        raise_if_closed!
-
         publish_cmap_event(
           Monitoring::Event::Cmap::ConnectionCheckOutStarted.new(@server.address)
         )
+
+        if closed?
+          publish_cmap_event(
+            Monitoring::Event::Cmap::ConnectionCheckOutFailed.new(
+              @server.address,
+              Monitoring::Event::Cmap::ConnectionCheckOutFailed::POOL_CLOSED
+            ),
+          )
+          raise Error::PoolClosedError.new(@server.address)
+        end
 
         deadline = Time.now + wait_timeout
         connection = nil
