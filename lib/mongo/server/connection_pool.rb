@@ -122,7 +122,7 @@ module Mongo
 
         # Background thread reponsible for maintaining the size of
         # the pool to at least min_size
-        @populator = ConnectionPoolPopulator.new(self)
+        @populator = ConnectionPoolPopulator.new(self, options)
         @populate_semaphore = Semaphore.new
 
         ObjectSpace.define_finalizer(self, self.class.finalize(@available_connections, @pending_connections, @populator))

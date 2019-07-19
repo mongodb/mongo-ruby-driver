@@ -22,6 +22,7 @@ module Mongo
   #
   # @api private
   module BackgroundThread
+    include Loggable
 
     # Start the background thread.
     #
@@ -45,7 +46,10 @@ module Mongo
       end
     end
 
-    # Stop the background thread.
+    # Stop the background thread and wait for to terminate for a reasonable
+    # amount of time.
+    #
+    # @return [ true | false ] Whether the thread was terminated.
     #
     # @api public for backwards compatibility only
     def stop!
@@ -80,13 +84,31 @@ module Mongo
       # Wait for the thread to die. This is important in order to reliably
       # clean up resources like connections knowing that no background
       # thread will reconnect because it is still working.
-      @thread.join
+      #
+      # However, we do not want to wait indefinitely because in theory
+      # a background thread could be performing, say, network I/O and if
+      # the network is no longer available that could take a long time.
+      start_time = Time.now
+      ([0.1, 0.15] + [0.2] * 5 + [0.3] * 20).each do |interval|
+        begin
+          Timeout.timeout(interval) do
+            @thread.join
+          end
+          break
+        rescue Timeout::Error
+          pass
+        end
+      end
 
       # Some driver objects can be reconnected, for backwards compatibiilty
       # reasons. Clear the thread instance variable to support this cleanly.
-      @thread = nil
-
-      true
+      if @thread.alive?
+        log_warn("Failed to stop background thread in #{self} in #{(Time.now - start_time).to_i} seconds")
+        false
+      else
+        @thread = nil
+        true
+      end
     end
 
     private

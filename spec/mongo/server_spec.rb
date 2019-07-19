@@ -428,4 +428,12 @@ describe Mongo::Server do
       end
     end
   end
+
+  describe '#log_warn' do
+    it 'works' do
+      expect do
+        server.log_warn('test warning')
+      end.not_to raise_error
+    end
+  end
 end
