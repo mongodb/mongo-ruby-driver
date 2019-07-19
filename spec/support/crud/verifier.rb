@@ -117,6 +117,11 @@ module Mongo
         when nil
           expect(actual).to be nil
         when Hash
+          if actual['error'] && !expected.keys.any? { |key| key.start_with?('error') }
+            raise RSpec::Expectations::ExpectationNotMetError.new,
+              "Expected operation not to fail but it failed: #{actual.inspect}"
+          end
+
           expected.each do |k, v|
             case k
             when 'errorContains'
