@@ -89,7 +89,9 @@ module Mongo
     # on this session.
     #
     # @since 2.6.0
-    attr_reader :txn_options
+    def txn_options
+      @txn_options or raise ArgumentError, "There is no active transaction"
+    end
 
     # Is this session an implicit one (not user-created).
     #
@@ -162,7 +164,7 @@ module Mongo
     #
     # @since 2.6.0
     def txn_read_preference
-      rp = txn_options && txn_options[:read] ||
+      rp = txn_options[:read] ||
         @client.read_preference
       Mongo::Lint.validate_underscore_read_preference(rp)
       rp
@@ -1000,7 +1002,7 @@ module Mongo
     # @since 2.9.0
     def txn_read_concern
       # Read concern is inherited from client but not db or collection.
-      txn_options && txn_options[:read_concern] || @client.read_concern
+      txn_options[:read_concern] || @client.read_concern
     end
 
     def within_states?(*states)
@@ -1015,7 +1017,7 @@ module Mongo
     end
 
     def txn_write_concern
-      (txn_options && txn_options[:write_concern]) ||
+      txn_options[:write_concern] ||
         (@client.write_concern && @client.write_concern.options)
     end
 
