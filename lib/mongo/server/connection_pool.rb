@@ -348,8 +348,8 @@ module Mongo
       # @since 2.9.0
       def check_in(connection)
         @lock.synchronize do
-          unless connection.pool == self
-            raise ArgumentError, "Trying to check in a connection which was not checked out by this pool: #{connection} checked out from pool #{connection.pool} (for #{self})"
+          unless connection.connection_pool == self
+            raise ArgumentError, "Trying to check in a connection which was not checked out by this pool: #{connection} checked out from pool #{connection.connection_pool} (for #{self})"
           end
 
           unless @checked_out_connections.include?(connection)
@@ -625,7 +625,7 @@ module Mongo
 
       def create_connection
         connection = Connection.new(@server, options.merge(generation: generation,
-          pool: self))
+          connection_pool: self))
       end
 
       # Create a connection, connect it, and add it to the pool.

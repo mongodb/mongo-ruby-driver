@@ -123,12 +123,12 @@ module Mongo
         options[:generation]
       end
 
-      # ID of the connection pool from which this connection was created.
+      # The connection pool from which this connection was created.
       # May be nil.
       #
       # @api private
-      def pool
-        options[:pool]
+      def connection_pool
+        options[:connection_pool]
       end
 
       # Whether the connection was closed.
