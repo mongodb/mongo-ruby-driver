@@ -500,23 +500,20 @@ describe Mongo::Server::ConnectionPool do
 
     context 'when connection set up throws an error during check out' do
       let(:client) do
-        new_local_client(SpecConfig.instance.addresses, authorized_client.options.merge(options))
+        authorized_client
       end
 
        let(:pool) do
         client.cluster.next_primary.pool
       end
 
-       before do
-        ClientRegistry.instance.close_all_clients
-        pool
-      end
-
        it 'raises an error and emits ConnectionCheckOutFailedEvent' do
+        pool
+
         subscriber = EventSubscriber.new
         client.subscribe(Mongo::Monitoring::CONNECTION_POOL, subscriber)
 
-         subscriber.clear_events!
+        subscriber.clear_events!
         expect(Mongo::Auth).to receive(:get).at_least(:once).and_raise(Mongo::Error)
         expect { pool.check_out }.to raise_error(Mongo::Error)
         expect(pool.size).to eq(0)

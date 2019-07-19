@@ -246,7 +246,7 @@ describe Mongo::Server::ConnectionPool do
     context 'when populate encounters a network error twice' do
       it 'retries once and does not stop the populator' do
         expect(pool).to receive(:create_and_add_connection).twice.and_raise(Mongo::Error::SocketError)
-        sleep 0.5
+        sleep 2
         expect(pool.instance_variable_get('@populator').running?).to be true
       end
     end
@@ -254,7 +254,7 @@ describe Mongo::Server::ConnectionPool do
     context 'when populate encounters a non-network error' do
       it 'does not retry and does not stop the populator' do
         expect(pool).to receive(:create_and_add_connection).and_raise(Mongo::Error)
-        sleep 0.5
+        sleep 2
         expect(pool.instance_variable_get('@populator').running?).to be true
       end
     end
