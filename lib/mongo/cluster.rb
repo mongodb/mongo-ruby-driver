@@ -169,7 +169,8 @@ module Mongo
           @cursor_reaper, @socket_reaper,
         ], options)
 
-        ObjectSpace.define_finalizer(self, self.class.finalize({}, @periodic_executor, @session_pool))
+        ObjectSpace.define_finalizer(self, self.class.finalize(
+          {}, @periodic_executor, @session_pool))
 
         @periodic_executor.run!
       end

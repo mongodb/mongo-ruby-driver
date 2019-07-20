@@ -93,8 +93,10 @@ module Mongo
       # @raise [ Mongo::Error::MismatchedDomain ] If the record's domain name doesn't match that of
       #   the hostname.
       def validate_record!(record_host)
-        @domainname ||= query_hostname.split(URI::SRVProtocol::DOT_PARTITION)[1..-1]
-        host_parts = record_host.split(URI::SRVProtocol::DOT_PARTITION)
+        # TODO deal with case mismatches
+
+        @domainname ||= query_hostname.split('.')[1..-1]
+        host_parts = record_host.split('.')
 
         unless (host_parts.size > @domainname.size) && (@domainname == host_parts[-@domainname.length..-1])
           raise Error::MismatchedDomain.new(MISMATCHED_DOMAINNAME % [record_host, @domainname])

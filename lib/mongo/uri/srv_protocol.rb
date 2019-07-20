@@ -53,6 +53,8 @@ module Mongo
 
       # @return [ String ] DOT_PARTITION The '.' character used to delineate the parts of a
       #   hostname.
+      #
+      # @deprecated
       DOT_PARTITION = '.'.freeze
 
       # @return [ Array<String> ] VALID_TXT_OPTIONS The valid options for a TXT record to specify.
