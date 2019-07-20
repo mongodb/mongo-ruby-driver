@@ -65,6 +65,7 @@ module Mongo
     # Error details for an invalid scheme.
     #
     # @since 2.1.0
+    # @deprecated
     INVALID_SCHEME = "Invalid scheme. Scheme must be '#{MONGODB_SCHEME}' or '#{MONGODB_SRV_SCHEME}'".freeze
 
     # MongoDB URI format specification.
@@ -225,7 +226,7 @@ module Mongo
         when MONGODB_SRV_SCHEME
           SRVProtocol.new(string, opts)
         else
-          raise Error::InvalidURI.new(string, INVALID_SCHEME)
+          raise Error::InvalidURI.new(string, "Invalid scheme '#{scheme}'. Scheme must be '#{MONGODB_SCHEME}' or '#{MONGODB_SRV_SCHEME}'")
       end
     end
 
@@ -259,7 +260,9 @@ module Mongo
       @string = string
       @options = options
       parsed_scheme, _, remaining = string.partition(SCHEME_DELIM)
-      raise_invalid_error!(INVALID_SCHEME) unless parsed_scheme == scheme
+      unless parsed_scheme == scheme
+        raise_invalid_error!("Invalid scheme '#{parsed_scheme}'. Scheme must be '#{MONGODB_SCHEME}'. Use URI#get to parse SRV URIs.")
+      end
       if remaining.empty?
         raise_invalid_error!('No hosts in the URI')
       end
