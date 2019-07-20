@@ -129,9 +129,11 @@ module Mongo
         @txt_options = get_txt_options(hostname) || {}
         records = srv_result.address_strs
         records.each do |record|
-          validate_host!(record)
+          validate_address_str!(record)
         end
         @servers = records
+      rescue Error::InvalidAddress => e
+        raise_invalid_error!(e.message)
       end
 
       # Validates the hostname used in an SRV URI.
