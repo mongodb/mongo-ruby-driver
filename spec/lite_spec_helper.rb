@@ -21,6 +21,7 @@ CHANGE_STREAMS_TESTS = Dir.glob("#{CURRENT_PATH}/spec_tests/data/change_streams/
 CMAP_TESTS = Dir.glob("#{CURRENT_PATH}/spec_tests/data/cmap/*.yml").sort
 
 require 'mongo'
+require 'pp'
 
 unless ENV['CI']
   begin
