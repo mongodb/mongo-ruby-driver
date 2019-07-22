@@ -89,7 +89,9 @@ module Mongo
     # on this session.
     #
     # @since 2.6.0
-    attr_reader :txn_options
+    def txn_options
+      @txn_options or raise ArgumentError, "There is no active transaction"
+    end
 
     # Is this session an implicit one (not user-created).
     #
@@ -162,7 +164,7 @@ module Mongo
     #
     # @since 2.6.0
     def txn_read_preference
-      rp = txn_options && txn_options[:read] ||
+      rp = txn_options[:read] ||
         @client.read_preference
       Mongo::Lint.validate_underscore_read_preference(rp)
       rp
@@ -452,6 +454,8 @@ module Mongo
     #
     # @param [ Hash ] options The options for the transaction being started.
     #
+    # @option options [ Integer ] :max_commit_time_ms The maximum amount of
+    #   time to allow a single commitTransaction command to run, in milliseconds.
     # @option options [ Hash ] read_concern The read concern options hash,
     #   with the following optional keys:
     #   - *:level* -- the read preference level as a symbol; valid values
@@ -562,13 +566,14 @@ module Mongo
                 write_concern = WriteConcern.get(w: :majority, wtimeout: 10000)
               end
             end
-            Operation::Command.new(
+            spec = {
               selector: { commitTransaction: 1 },
               db_name: 'admin',
               session: self,
               txn_num: txn_num,
               write_concern: write_concern,
-            ).execute(server)
+            }
+            Operation::Command.new(spec).execute(server)
           end
         end
       ensure
@@ -805,6 +810,12 @@ module Mongo
           c[:readConcern] = Options::Mapper.transform_values_to_strings(c[:readConcern])
         end
 
+        if c[:commitTransaction]
+          if max_time_ms = txn_options[:max_commit_time_ms]
+            c[:maxTimeMS] = max_time_ms
+          end
+        end
+
         # The write concern should be added to any abortTransaction or commitTransaction command.
         if (c[:abortTransaction] || c[:commitTransaction])
           if @already_committed
@@ -991,7 +1002,7 @@ module Mongo
     # @since 2.9.0
     def txn_read_concern
       # Read concern is inherited from client but not db or collection.
-      txn_options && txn_options[:read_concern] || @client.read_concern
+      txn_options[:read_concern] || @client.read_concern
     end
 
     def within_states?(*states)
@@ -1006,7 +1017,7 @@ module Mongo
     end
 
     def txn_write_concern
-      (txn_options && txn_options[:write_concern]) ||
+      txn_options[:write_concern] ||
         (@client.write_concern && @client.write_concern.options)
     end
 

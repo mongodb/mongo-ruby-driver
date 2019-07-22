@@ -61,7 +61,13 @@ describe 'Command' do
       context 'with session' do
         min_server_fcv '3.6'
 
-        let(:session) { authorized_client.start_session }
+        let(:session) do
+          authorized_client.start_session.tap do |session|
+            # We are bypassing the normal transaction lifecycle, which would
+            # set txn_options
+            allow(session).to receive(:txn_options).and_return({})
+          end
+        end
 
         let(:expected_payload) do
           {
