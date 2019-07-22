@@ -4,6 +4,10 @@ runOn:
         topology: ["replicaset"]
     -
         minServerVersion: "4.1.8"
+        # Skip these tests on 4.3 due to
+        # https://jira.mongodb.org/browse/SERVER-40685 and
+        # https://jira.mongodb.org/browse/HELP-10518
+        maxServerVersion: "4.2.99"
         topology: ["sharded"]
 
 database_name: &database_name "transaction-tests"
