@@ -22,15 +22,12 @@ module Mongo
       include BackgroundThread
       include Loggable
 
-      attr_reader :options
-
       # @param [ Server::ConnectionPool ] The connection pool.
       # @param [ Hash ] options The options.
       #
       # @option options [ Logger ] :logger A custom logger to use.
       def initialize(pool, options = {})
         @pool = pool
-        @options = @pool.options
         @thread = nil
         @options = options
       end
