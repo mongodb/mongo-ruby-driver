@@ -313,8 +313,8 @@ class ClusterTools
     # Since we are triggering elections, we need to have a higher server
     # selection timeout applied. The default timeout for tests assumes a
     # stable deployment.
-    @admin_client ||= ClientRegistry.instance.global_client('root_authorized_admin').
-      with(server_selection_timeout: 15)
+    @admin_client ||= ClientRegistry.instance.global_client('root_authorized').
+      with(server_selection_timeout: 15).use(:admin)
   end
 
   def direct_client(address, options = {})

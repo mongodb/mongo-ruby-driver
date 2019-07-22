@@ -24,6 +24,8 @@ module Mongo
       include Retryable
 
       def_delegators :@database, :cluster, :read_preference, :client
+      # @api private
+      def_delegators :@database, :server_selector, :read_concern
       def_delegators :cluster, :next_primary
 
       # @return [ Integer ] batch_size The size of the batch of results
@@ -91,6 +93,27 @@ module Mongo
         @batch_size =  nil
         @limit = nil
         @collection = @database[Database::COMMAND]
+      end
+
+      # @api private
+      attr_reader :database
+
+      # Execute an aggregation on the database view.
+      #
+      # @example Aggregate documents.
+      #   view.aggregate([
+      #     { "$listLocalSessions" => {} }
+      #   ])
+      #
+      # @param [ Array<Hash> ] pipeline The aggregation pipeline.
+      # @param [ Hash ] options The aggregation options.
+      #
+      # @return [ Aggregation ] The aggregation object.
+      #
+      # @since 2.10.0
+      # @api private
+      def aggregate(pipeline, options = {})
+        Collection::View::Aggregation.new(self, pipeline, options)
       end
 
       private

@@ -27,8 +27,11 @@ module Mongo
     #
     # @since 2.1.0
     CRUD_OPTIONS = [
-      :database, :read, :write, :write_concern, :retry_reads, :retry_writes,
-      :max_read_retries, :read_retry_interval, :max_write_retries,
+      :database,
+      :read, :read_concern,
+      :write, :write_concern,
+      :retry_reads, :max_read_retries, :read_retry_interval,
+      :retry_writes, :max_write_retries,
     ].freeze
 
     # Valid client options.

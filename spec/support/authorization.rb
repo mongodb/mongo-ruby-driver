@@ -111,6 +111,10 @@ module Authorization
     # @since 2.0.0
     context.let(:root_authorized_client) { ClientRegistry.instance.global_client('root_authorized') }
 
+    context.let(:root_authorized_admin_client) do
+      ClientRegistry.instance.global_client('root_authorized').use(:admin)
+    end
+
     # Gets the default test collection from the authorized client.
     #
     # @since 2.0.0

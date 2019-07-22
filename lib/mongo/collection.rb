@@ -332,18 +332,21 @@ module Mongo
     # @param [ Array<Hash> ] pipeline The aggregation pipeline.
     # @param [ Hash ] options The aggregation options.
     #
-    # @option options [ true, false ] :allow_disk_use Set to true if disk usage is allowed during
-    #   the aggregation.
-    # @option options [ Integer ] :batch_size The number of documents to return per batch.
-    # @option options [ Integer ] :max_time_ms The maximum amount of time in milliseconds to allow the
-    #   aggregation to run.
-    # @option options [ true, false ] :use_cursor Indicates whether the command will request that the server
-    #   provide results using a cursor. Note that as of server version 3.6, aggregations always provide results
-    #   using a cursor and this option is therefore not valid.
+    # @option options [ true, false ] :allow_disk_use Set to true if disk
+    #   usage is allowed during the aggregation.
+    # @option options [ Integer ] :batch_size The number of documents to return
+    #   per batch.
     # @option options [ true, false ] :bypass_document_validation Whether or
     #   not to skip document level validation.
     # @option options [ Hash ] :collation The collation to use.
     # @option options [ String ] :comment Associate a comment with the aggregation.
+    # @option options [ String ] :hint The index to use for the aggregation.
+    # @option options [ Integer ] :max_time_ms The maximum amount of time in
+    #   milliseconds to allow the aggregation to run.
+    # @option options [ true, false ] :use_cursor Indicates whether the command
+    #   will request that the server provide results using a cursor. Note that
+    #   as of server version 3.6, aggregations always provide results using a
+    #   cursor and this option is therefore not valid.
     # @option options [ Session ] :session The session to use.
     #
     # @return [ Aggregation ] The aggregation object.
