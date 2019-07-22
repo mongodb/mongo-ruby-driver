@@ -115,6 +115,7 @@ module Mongo
     # The character delimiting multiple options.
     #
     # @since 2.1.0
+    # @deprecated
     INDIV_URI_OPTS_DELIM = '&'.freeze
 
     # The character delimiting an option and its value.
@@ -188,21 +189,21 @@ module Mongo
     #
     # @since 2.0.0
     AUTH_MECH_MAP = {
-      'PLAIN'        => :plain,
+      'GSSAPI'       => :gssapi,
       # MONGODB-CR is deprecated and will be removed in driver version 3.0
       'MONGODB-CR'   => :mongodb_cr,
-      'GSSAPI'       => :gssapi,
       'MONGODB-X509' => :mongodb_x509,
+      'PLAIN'        => :plain,
       'SCRAM-SHA-1'  => :scram,
       'SCRAM-SHA-256' => :scram256
     }.freeze
 
     # Options that are allowed to appear more than once in the uri.
     #
-    # In order to follow the URI options spec requirement that all instances of 'tls' and 'ssl' have
-    # the same value, we need to keep track of all of the values passed in for those options.
-    # Assuming they don't conflict, they will be condensed to a single value immediately after
-    # parsing the URI.
+    # In order to follow the URI options spec requirement that all instances
+    # of 'tls' and 'ssl' have the same value, we need to keep track of all
+    # of the values passed in for those options. Assuming they don't conflict,
+    # they will be condensed to a single value immediately after parsing the URI.
     #
     # @since 2.1.0
     REPEATABLE_OPTIONS = [ :tag_sets, :ssl ]
@@ -380,20 +381,26 @@ module Mongo
     end
 
     def parse_uri_options!(string)
-      return {} unless string
-      string.split(INDIV_URI_OPTS_DELIM).reduce({}) do |uri_options, opt|
-        key, value = opt.split('=', 2)
+      uri_options = {}
+      unless string
+        return uri_options
+      end
+      string.split('&').each do |option_str|
+        if option_str.empty?
+          next
+        end
+        key, value = option_str.split('=', 2)
         if value.nil?
           raise_invalid_error!("Option #{key} has no value")
         end
         if value.index('=')
           raise_invalid_error!("Value for option #{key} contains the key/value delimiter (=): #{value}")
         end
-        key = ::URI.decode(key)
-        value = ::URI.decode(value)
+        key = decode(key)
+        value = decode(value)
         add_uri_option(key, value, uri_options)
-        uri_options
       end
+      uri_options
     end
 
     def parse_user!(string)
@@ -505,21 +512,21 @@ module Mongo
     end
 
     # Replica Set Options
-    uri_option 'replicaset', :replica_set, :type => :replica_set
+    uri_option 'replicaset', :replica_set
 
     # Timeout Options
-    uri_option 'connecttimeoutms', :connect_timeout, :type => :connect_timeout
-    uri_option 'sockettimeoutms', :socket_timeout, :type => :socket_timeout
-    uri_option 'serverselectiontimeoutms', :server_selection_timeout, :type => :server_selection_timeout
-    uri_option 'localthresholdms', :local_threshold, :type => :local_threshold
-    uri_option 'heartbeatfrequencyms', :heartbeat_frequency, :type => :heartbeat_frequency
-    uri_option 'maxidletimems', :max_idle_time, :type => :max_idle_time
+    uri_option 'connecttimeoutms', :connect_timeout, :type => :ms
+    uri_option 'sockettimeoutms', :socket_timeout, :type => :ms
+    uri_option 'serverselectiontimeoutms', :server_selection_timeout, :type => :ms
+    uri_option 'localthresholdms', :local_threshold, :type => :ms
+    uri_option 'heartbeatfrequencyms', :heartbeat_frequency, :type => :ms
+    uri_option 'maxidletimems', :max_idle_time, :type => :ms
 
     # Write Options
     uri_option 'w', :w, :group => :write_concern, type: :w
-    uri_option 'journal', :j, :group => :write_concern, :type => :journal
+    uri_option 'journal', :j, :group => :write_concern, :type => :bool
     uri_option 'fsync', :fsync, :group => :write_concern, type: :bool
-    uri_option 'wtimeoutms', :wtimeout, :group => :write_concern, :type => :wtimeout
+    uri_option 'wtimeoutms', :wtimeout, :group => :write_concern, :type => :integer
 
     # Read Options
     uri_option 'readpreference', :mode, :group => :read, :type => :read_mode
@@ -527,21 +534,21 @@ module Mongo
     uri_option 'maxstalenessseconds', :max_staleness, :group => :read, :type => :max_staleness
 
     # Pool options
-    uri_option 'minpoolsize', :min_pool_size, :type => :min_pool_size
-    uri_option 'maxpoolsize', :max_pool_size, :type => :max_pool_size
-    uri_option 'waitqueuetimeoutms', :wait_queue_timeout, :type => :wait_queue_timeout
+    uri_option 'minpoolsize', :min_pool_size, :type => :integer
+    uri_option 'maxpoolsize', :max_pool_size, :type => :integer
+    uri_option 'waitqueuetimeoutms', :wait_queue_timeout, :type => :ms
 
     # Security Options
-    uri_option 'ssl', :ssl, :type => :ssl
-    uri_option 'tls', :ssl, :type => :tls
+    uri_option 'ssl', :ssl, :type => :repeated_bool
+    uri_option 'tls', :ssl, :type => :repeated_bool
     uri_option 'tlsallowinvalidcertificates', :ssl_verify_certificate,
-               :type => :ssl_verify_certificate
+               :type => :inverse_bool
     uri_option 'tlsallowinvalidhostnames', :ssl_verify_hostname,
-               :type => :ssl_verify_hostname
+               :type => :inverse_bool
     uri_option 'tlscafile', :ssl_ca_cert
     uri_option 'tlscertificatekeyfile', :ssl_cert
     uri_option 'tlscertificatekeyfilepassword', :ssl_key_pass_phrase
-    uri_option 'tlsinsecure', :ssl_verify, :type => :ssl_verify
+    uri_option 'tlsinsecure', :ssl_verify, :type => :inverse_bool
 
     # Topology options
     uri_option 'connect', :connect, type: :symbol
@@ -555,8 +562,8 @@ module Mongo
     uri_option 'appname', :app_name
     uri_option 'compressors', :compressors, :type => :array
     uri_option 'readconcernlevel', :level, group: :read_concern, type: :symbol
-    uri_option 'retryreads', :retry_reads, :type => :retry_reads
-    uri_option 'retrywrites', :retry_writes, :type => :retry_writes
+    uri_option 'retryreads', :retry_reads, :type => :bool
+    uri_option 'retrywrites', :retry_writes, :type => :bool
     uri_option 'zlibcompressionlevel', :zlib_compression_level, :type => :zlib_compression_level
 
     # Applies URI value transformation by either using the default cast
@@ -635,15 +642,6 @@ module Mongo
       merge_uri_option(target, value, strategy[:name])
     end
 
-    # Replica set transformation, avoid converting to Symbol.
-    #
-    # @param value [String] Replica set name.
-    #
-    # @return [String] Same value to avoid cast to Symbol.
-    def replica_set(value)
-      decode(value)
-    end
-
     # Auth source transformation, either db string or :external.
     #
     # @param value [String] Authentication source.
@@ -651,7 +649,7 @@ module Mongo
     # @return [String] If auth source is database name.
     # @return [:external] If auth source is external authentication.
     def auth_source(value)
-      value == '$external' ? :external : decode(value)
+      value == '$external' ? :external : value
     end
 
     # Authentication mechanism transformation.
@@ -660,7 +658,7 @@ module Mongo
     #
     # @return [Symbol] The transformed authentication mechanism.
     def auth_mech(value)
-      AUTH_MECH_MAP[value.upcase].tap do |mech|
+      (AUTH_MECH_MAP[value.upcase] || value).tap do |mech|
         log_warn("#{value} is not a valid auth mechanism") unless mech
       end
     end
@@ -671,7 +669,7 @@ module Mongo
     #
     # @return [Symbol] The read mode symbol.
     def read_mode(value)
-      READ_MODE_MAP[value.downcase]
+      READ_MODE_MAP[value.downcase] || value
     end
 
     # Read preference tags transformation.
@@ -701,7 +699,7 @@ module Mongo
       properties = hash_extractor('authMechanismProperties', value)
       if properties[:canonicalize_host_name]
         properties.merge!(canonicalize_host_name:
-          %w(true TRUE).include?(properties[:canonicalize_host_name]))
+          properties[:canonicalize_host_name].downcase == 'true')
       end
       properties
     end
@@ -725,118 +723,15 @@ module Mongo
       nil
     end
 
-    # Parses the max pool size.
+    # Converts the value into a boolean and returns it wrapped in an array.
     #
-    # @param value [ String ] The max pool size string.
+    # @param name [ String ] Name of the URI option being processed.
+    # @param value [ String ] URI option value.
     #
-    # @return [ Integer | nil ] The min pool size if it is valid, otherwise nil (and a warning will)
-    #   be logged.
-    def max_pool_size(value)
-      if /\A\d+\z/ =~ value
-        return value.to_i
-      end
-
-      log_warn("#{value} is not a valid maxPoolSize")
-      nil
-    end
-
-
-    # Parses the min pool size.
-    #
-    # @param value [ String ] The min pool size string.
-    #
-    # @return [ Integer | nil ] The min pool size if it is valid, otherwise nil (and a warning will
-    #   be logged).
-    def min_pool_size(value)
-      if /\A\d+\z/ =~ value
-        return value.to_i
-      end
-
-      log_warn("#{value} is not a valid minPoolSize")
-      nil
-    end
-
-    # Parses the journal value.
-    #
-    # @param value [ String ] The journal value.
-    #
-    # @return [ true | false | nil ] The journal value parsed out, otherwise nil (and a warning
-    #   will be logged).
-    def journal(value)
-      convert_bool('journal', value)
-    end
-
-    # Parses the ssl value from the URI.
-    #
-    # @param value [ String ] The ssl value.
-    #
-    # @return [ Array<true | false> ] The ssl value parsed out (stored in an array to facilitate
-    #   keeping track of all values).
-    def ssl(value)
-      [convert_bool('ssl', value)]
-    end
-
-    # Parses the tls value from the URI.
-    #
-    # @param value [ String ] The tls value.
-    #
-    # @return [ Array<true | false> ] The tls value parsed out (stored in an array to facilitate
-    #   keeping track of all values).
-    def tls(value)
-      [convert_bool('tls', value)]
-    end
-
-    # Parses the ssl_verify value from the tlsInsecure URI value. Note that this will be the inverse
-    # of the value of tlsInsecure (if present).
-    #
-    # @param value [ String ] The tlsInsecure value.
-    #
-    # @return [ true | false | nil ] The ssl_verify value parsed out, otherwise nil (and a warning
-    #   will be logged).
-    def ssl_verify(value)
-      inverse_bool('tlsAllowInvalidCertificates', value)
-    end
-
-    # Parses the ssl_verify_certificate value from the tlsAllowInvalidCertificates URI value. Note
-    # that this will be the inverse of the value of tlsInsecure (if present).
-    #
-    # @param value [ String ] The tlsAllowInvalidCertificates value.
-    #
-    # @return [ true | false | nil ] The ssl_verify_certificate value parsed out, otherwise nil
-    #   (and a warning will be logged).
-    def ssl_verify_certificate(value)
-      inverse_bool('tlsAllowInvalidCertificates', value)
-    end
-
-    # Parses the ssl_verify_hostname value from the tlsAllowInvalidHostnames URI value. Note that
-    # this will be the inverse of the value of tlsAllowInvalidHostnames (if present).
-    #
-    # @param value [ String ] The tlsAllowInvalidHostnames value.
-    #
-    # @return [ true | false | nil ] The ssl_verify_hostname value parsed out, otherwise nil
-    #   (and a warning will be logged).
-    def ssl_verify_hostname(value)
-      inverse_bool('tlsAllowInvalidHostnames', value)
-    end
-
-    # Parses the retryReads value.
-    #
-    # @param value [ String ] The retryReads value.
-    #
-    # @return [ true | false | nil ] The boolean value parsed out, otherwise nil (and a warning
-    #   will be logged).
-    def retry_reads(value)
-      convert_bool('retryReads', value)
-    end
-
-    # Parses the retryWrites value.
-    #
-    # @param value [ String ] The retryWrites value.
-    #
-    # @return [ true | false | nil ] The boolean value parsed out, otherwise nil (and a warning
-    #   will be logged).
-    def retry_writes(value)
-      convert_bool('retryWrites', value)
+    # @return [ Array<true | false> ] The boolean value parsed and wraped
+    #   in an array.
+    def convert_repeated_bool(name, value)
+      [convert_bool(name, value)]
     end
 
     # Converts +value+ into an integer.
@@ -913,7 +808,7 @@ module Mongo
     #
     # @return [ true | false | nil ] The inverse of the  boolean value parsed out, otherwise nil
     #   (and a warning will be logged).
-     def inverse_bool(name, value)
+    def convert_inverse_bool(name, value)
       b = convert_bool(name, value)
 
       if b.nil?
@@ -930,11 +825,15 @@ module Mongo
     # @return [ Integer | nil ] The max staleness integer parsed out if it is valid, otherwise nil
     #   (and a warning will be logged).
     def max_staleness(value)
-      if /\A\d+\z/ =~ value
+      if /\A-?\d+\z/ =~ value
         int = value.to_i
 
-        if int >= 0 && int < 90
-          log_warn("max staleness must be either 0 or greater than 90: #{value}")
+        if int == -1
+          int = nil
+        end
+
+        if int && (int >= 0 && int < 90 || int < 0)
+          log_warn("max staleness should be either 0 or greater than 90: #{value}")
         end
 
         return int
@@ -942,91 +841,6 @@ module Mongo
 
       log_warn("Invalid max staleness value: #{value}")
       nil
-    end
-
-    # Parses the connectTimeoutMS value.
-    #
-    # @param value [ String ] The connectTimeoutMS value.
-    #
-    # @return [ Integer | nil ] The integer parsed out, otherwise nil (and a warning will be
-    #   logged).
-    def connect_timeout(value)
-      ms_convert('connectTimeoutMS', value)
-    end
-
-    # Parses the localThresholdMS value.
-    #
-    # @param value [ String ] The localThresholdMS value.
-    #
-    # @return [ Integer | nil ] The integer parsed out, otherwise nil (and a warning will be
-    #   logged).
-    def local_threshold(value)
-      ms_convert('localThresholdMS', value)
-    end
-
-    # Parses the heartbeatFrequencyMS value.
-    #
-    # @param value [ String ] The heartbeatFrequencyMS value.
-    #
-    # @return [ Integer | nil ] The integer parsed out, otherwise nil (and a warning will be
-    #   logged).
-    def heartbeat_frequency(value)
-      ms_convert('heartbeatFrequencyMS', value)
-    end
-
-    # Parses the maxIdleTimeMS value.
-    #
-    # @param value [ String ] The maxIdleTimeMS value.
-    #
-    # @return [ Integer | nil ] The integer parsed out, otherwise nil (and a warning will be
-    #   logged).
-    def max_idle_time(value)
-      ms_convert('maxIdleTimeMS', value)
-    end
-
-    # Parses the serverSelectionMS value.
-    #
-    # @param value [ String ] The serverSelectionMS value.
-    #
-    # @return [ Integer | nil ] The integer parsed out, otherwise nil (and a warning will be
-    #   logged).
-    def server_selection_timeout(value)
-      ms_convert('serverSelectionTimeoutMS', value)
-    end
-
-    # Parses the socketTimeoutMS value.
-    #
-    # @param value [ String ] The socketTimeoutMS value.
-    #
-    # @return [ Integer | nil ] The integer parsed out, otherwise nil (and a warning will be
-    #   logged).
-    def socket_timeout(value)
-      ms_convert('socketTimeoutMS', value)
-    end
-
-    # Parses the waitQueueTimeoutMS value.
-    #
-    # @param value [ String ] The waitQueueTimeoutMS value.
-    #
-    # @return [ Integer | nil ] The integer parsed out, otherwise nil (and a warning will be
-    #   logged).
-    def wait_queue_timeout(value)
-      ms_convert('MS', value)
-    end
-
-    # Parses the wtimeoutMS value.
-    #
-    # @param value [ String ] The wtimeoutMS value.
-    #
-    # @return [ Integer | nil ] The integer parsed out, otherwise nil (and a warning will be
-    #   logged).
-    def wtimeout(value)
-      unless /\A\d+\z/ =~ value
-        log_warn("Invalid wtimeoutMS value: #{value}")
-        return nil
-      end
-
-      value.to_i
     end
 
     # Ruby's convention is to provide timeouts in seconds, not milliseconds and
@@ -1038,7 +852,7 @@ module Mongo
     # @return [ Float ] The seconds value.
     #
     # @since 2.0.0
-    def ms_convert(name, value)
+    def convert_ms(name, value)
       unless /\A-?\d+(\.\d+)?\z/ =~ value
         log_warn("Invalid ms value for #{name}: #{value}")
         return nil
@@ -1065,7 +879,7 @@ module Mongo
           return nil
         end
 
-        set.merge(decode(k).downcase.to_sym => decode(v))
+        set.merge(k.downcase.to_sym => v)
       end
     end
 
