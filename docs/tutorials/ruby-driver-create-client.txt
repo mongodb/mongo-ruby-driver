@@ -103,6 +103,22 @@ URI Options Conversions
 
    * - authMechanism=String
      - ``:auth_mech => Symbol``
+     
+       Auth mechanism values are converted as follows from URI options to
+       Ruby options:
+       
+       - ``GSSAPI`` => ``:gssapi``
+       - ``MONGODB-CR`` => ``:mongodb_cr``
+       - ``MONGODB-X509`` => ``:mongodb_x509``
+       - ``PLAIN`` => ``:plain``
+       - ``SCRAM-SHA-1`` => ``:scram``
+       - ``SCRAM-SHA-256`` => ``:scram256``
+       
+       If a different value is provided for auth mechanism, it is converted
+       to the Ruby option unmodified and retains its ``String`` type.
+       Note that, while currently the driver allows a ``Client`` instance
+       to be constructed with an unrecognized auth mechanism, this behavior
+       `may change in a future version of the driver <https://jira.mongodb.org/browse/RUBY-1745>`_.
 
    * - authMechanismProperties=Strings
      - ``{ :auth_mech_properties => { :service_realm => String, :canonicalize_host_name => true|false, :service_name => String } }``
@@ -144,7 +160,18 @@ URI Options Conversions
      - ``:max_idle_time => Float``
 
    * - maxStalenessSeconds=Integer
-     - ``:max_staleness => Float``
+     - ``{ :read => { :max_staleness => Integer }}``
+     
+       If the maxStalenessSeconds URI option value is -1, the driver treats
+       this as if the option was not given at all. Otherwise,
+       if the option value is numeric, the Ruby option is set to the
+       specified value converted to an ``Integer``.
+       Note that numeric values greater than 0 but less than 90, or less than
+       -1, are accepted by the ``Client`` constructor but will cause server
+       selection to fail (unless the option is changed via, for example, the
+       ``with`` method prior to any operations being performed on the driver).
+       If the option value is non-numeric, it is ignored and the driver
+       treats this case as if the option was not given at all.
 
    * - maxPoolSize=Integer
      - ``:max_pool_size => Integer``
@@ -223,7 +250,7 @@ URI Options Conversions
      - ``:wait_queue_timeout => Float``
 
    * - wtimeoutMS=Integer
-     - ``{ :write_concern => { :wtimeout => Float }}``
+     - ``{ :write_concern => { :wtimeout => Integer }}``
 
    * - zlibCompressionLevel=Integer
      - ``:zlib_compression_level => Integer``
@@ -369,14 +396,16 @@ Ruby Options
      - none
 
    * - ``:read``
-     - Specifies the read preference mode and tag sets for selecting servers as a ``Hash``.
-       Keys in the hash are ``:mode`` and ``:tag_sets``.
+     - Specifies the read preference mode and tag sets for selecting servers
+       as a ``Hash``. Allowed Keys in the hash are ``:mode``, ``:tag_sets`` and
+       ``:max_staleness``.
 
        .. code-block:: ruby
 
          { :read =>
            { :mode => :secondary,
-             :tag_sets => [ "berlin" ]
+             :tag_sets => [ "berlin" ],
+             :max_staleness => 5,
            }
          }
 

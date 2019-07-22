@@ -129,6 +129,22 @@ describe Mongo::URI do
       expect(uri.uri_options[ruby_option]).to eq('foo')
     end
 
+    context 'it is escaped in URI' do
+      let(:string) { "mongodb://example.com/?#{uri_option}=foo%2f" }
+
+      it 'is unescaped' do
+        expect(uri.uri_options[ruby_option]).to eq('foo/')
+      end
+    end
+
+    context 'it is escaped twice in URI' do
+      let(:string) { "mongodb://example.com/?#{uri_option}=foo%252f" }
+
+      it 'is unescaped once' do
+        expect(uri.uri_options[ruby_option]).to eq('foo%2f')
+      end
+    end
+
     context 'value is a number' do
       let(:string) { "mongodb://example.com/?#{uri_option}=1" }
 
@@ -168,6 +184,17 @@ describe Mongo::URI do
         expect(uri.uri_options[:auth_mech]).to eq(:scram256)
       end
     end
+
+    context 'unrecognized value' do
+
+      let(:string) { 'mongodb://example.com/?authMechanism=foobar' }
+
+      it_behaves_like 'parses successfully'
+
+      it 'is mapped to auth mechanism' do
+        expect(uri.uri_options[:auth_mech]).to eq('foobar')
+      end
+    end
   end
 
   context 'authMechanismProperties' do
@@ -182,6 +209,30 @@ describe Mongo::URI do
         canonicalize_host_name: true,
       ))
     end
+
+    context 'canonicalize host name is false' do
+
+      let(:string) { 'mongodb://example.com/?authmechanismproperties=SERVICE_REALM:foo,CANONICALIZE_HOST_NAME:false' }
+
+      it 'parses correctly' do
+        expect(uri.uri_options[:auth_mech_properties]).to eq(BSON::Document.new(
+          service_realm: 'foo',
+          canonicalize_host_name: false,
+        ))
+      end
+    end
+
+    context 'canonicalize host name is true in mixed case' do
+
+      let(:string) { 'mongodb://example.com/?authmechanismproperties=SERVICE_REALM:foo,CANONICALIZE_HOST_NAME:TrUe' }
+
+      it 'parses correctly' do
+        expect(uri.uri_options[:auth_mech_properties]).to eq(BSON::Document.new(
+          service_realm: 'foo',
+          canonicalize_host_name: true,
+        ))
+      end
+    end
   end
 
   context 'authSource' do
@@ -190,6 +241,22 @@ describe Mongo::URI do
     let(:ruby_option) { :auth_source }
 
     it_behaves_like 'a string option'
+
+    context '$external' do
+      let(:string) { "mongodb://example.com/?#{uri_option}=$external" }
+
+      it 'is converted to ;external' do
+        expect(uri.uri_options[ruby_option]).to eq(:external)
+      end
+    end
+
+    context 'empty' do
+      let(:string) { "mongodb://example.com/?#{uri_option}=" }
+
+      it 'is mapped to the empty string' do
+        expect(uri.uri_options[ruby_option]).to eq('')
+      end
+    end
   end
 
   context 'compressors' do
@@ -333,6 +400,15 @@ describe Mongo::URI do
     it 'is a string' do
       expect(uri.uri_options[:read]).to eq(BSON::Document.new(mode: :nearest))
     end
+
+    context 'an unknown value' do
+
+      let(:string) { "mongodb://example.com/?readPreference=foobar" }
+
+      it 'is unchanged' do
+        expect(uri.uri_options[:read]).to eq(BSON::Document.new(mode: 'foobar'))
+      end
+    end
   end
 
   context 'readPreferenceTags' do
@@ -344,6 +420,16 @@ describe Mongo::URI do
     it 'parses correctly' do
       expect(uri.uri_options[:read]).to eq(BSON::Document.new(
         tag_sets: [{'dc' => 'ny', 'rack' => '1'}]))
+    end
+
+    context 'with double escaped keys and values' do
+
+      let(:string) { "mongodb://example.com/?readPreferenceTags=dc%252f:ny,rack:1%252f" }
+
+      it 'unescapes once' do
+        expect(uri.uri_options[:read]).to eq(BSON::Document.new(
+          tag_sets: [{'dc%2f' => 'ny', 'rack' => '1%2f'}]))
+      end
     end
   end
 
