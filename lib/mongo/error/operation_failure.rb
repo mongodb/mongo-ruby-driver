@@ -243,6 +243,15 @@ module Mongo
       def wtimeout?
         @wtimeout
       end
+
+      # Whether the error is MaxTimeMSExpired.
+      #
+      # @return [ true | false ] Whether the error is MaxTimeMSExpired.
+      #
+      # @since 2.10.0
+      def max_time_ms_expired?
+        code == 50 # MaxTimeMSExpired
+      end
     end
   end
 end

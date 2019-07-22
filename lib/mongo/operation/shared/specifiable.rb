@@ -596,7 +596,8 @@ module Mongo
         rescue Mongo::Error::OperationFailure => e
           if session && session.committing_transaction?
             if e.write_retryable? || e.wtimeout? || (e.write_concern_error? &&
-                !Session::UNLABELED_WRITE_CONCERN_CODES.include?(e.write_concern_error_code))
+                !Session::UNLABELED_WRITE_CONCERN_CODES.include?(e.write_concern_error_code)
+            ) || e.max_time_ms_expired?
               e.add_label('UnknownTransactionCommitResult')
             end
           end
