@@ -103,6 +103,10 @@ module Mongo
         collection.aggregate(arguments['pipeline'], context.transform_arguments(options)).to_a
       end
 
+      def db_aggregate(database, context)
+        database.aggregate(arguments['pipeline'], context.transform_arguments(options)).to_a
+      end
+
       def count(collection, context)
         collection.count(arguments['filter'], context.transform_arguments(options))
       end

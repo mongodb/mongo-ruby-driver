@@ -89,7 +89,9 @@ module Mongo
 
       def setup_test(spec, client)
         clear_fail_point(client)
-        if @data.is_a?(Array)
+        if @data.nil?
+          # nothing to do
+        elsif @data.is_a?(Array)
           collection = client[spec.collection_name]
           collection.delete_many
           collection.insert_many(@data)

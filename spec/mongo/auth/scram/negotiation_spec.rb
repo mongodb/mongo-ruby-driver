@@ -16,7 +16,7 @@ describe 'SCRAM-SHA auth mechanism negotiation' do
   }
 
   let(:create_user!) do
-    ClientRegistry.instance.global_client('root_authorized_admin').tap do |client|
+    root_authorized_admin_client.tap do |client|
       users = client.database.users
       if users.info(user.name).any?
         users.remove(user.name)
