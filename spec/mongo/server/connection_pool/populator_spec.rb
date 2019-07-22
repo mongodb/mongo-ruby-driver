@@ -10,7 +10,9 @@ describe Mongo::Server::ConnectionPoolPopulator do
   end
 
   let(:populator) do
-    described_class.new(pool, pool.options)
+    register_background_thread_object(
+      described_class.new(pool, pool.options)
+    )
   end
 
   describe '#log_warn' do

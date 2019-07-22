@@ -150,11 +150,11 @@ module CommonShortcuts
       LocalResourceRegistry.instance.register(server, finalizer)
     end
 
-    def register_server_monitor(monitor)
-      finalizer = lambda do |monitor|
-        monitor.stop!
+    def register_background_thread_object(bgt_object)
+      finalizer = lambda do |bgt_object|
+        bgt_object.stop!
       end
-      LocalResourceRegistry.instance.register(monitor, finalizer)
+      LocalResourceRegistry.instance.register(bgt_object, finalizer)
     end
 
     def register_pool(pool)

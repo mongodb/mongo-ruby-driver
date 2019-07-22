@@ -30,7 +30,7 @@ describe Mongo::Server::Monitor do
   end
 
   let(:monitor) do
-    register_server_monitor(
+    register_background_thread_object(
       described_class.new(server, listeners, Mongo::Monitoring.new,
         SpecConfig.instance.test_options.merge(cluster: cluster).merge(monitor_options))
     )
