@@ -37,7 +37,7 @@ module Mongo
         def each
           @cursor = nil
           session = client.send(:get_session, @options)
-          @cursor = if respond_to?(:out?, true) && out?
+          @cursor = if respond_to?(:write?, true) && write?
             server = server_selector.select_server(cluster, nil, session)
             result = send_initial_query(server, session)
             Cursor.new(view, result, server, session: session)
