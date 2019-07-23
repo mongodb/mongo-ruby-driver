@@ -403,7 +403,9 @@ module Mongo
             return rv
           rescue Mongo::Error => e
             if e.label?('UnknownTransactionCommitResult')
-              if Time.now >= deadline
+              if Time.now >= deadline ||
+                e.is_a?(Error::OperationFailure) && e.max_time_ms_expired?
+              then
                 transaction_in_progress = false
                 raise
               end
