@@ -20,7 +20,6 @@ module Mongo
     # @api private
     class ConnectionPoolPopulator
       include BackgroundThread
-      include Loggable
 
       # @param [ Server::ConnectionPool ] The connection pool.
       # @param [ Hash ] options The options.
