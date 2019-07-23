@@ -131,6 +131,24 @@ module Mongo
     #
     # @since 2.0.0
     def each
+      # If we already iterated past the first batch (i.e., called get_more
+      # at least once), the cursor on the server side has advanced past
+      # the first batch and restarting iteration from the beginning by
+      # returning initial result would miss documents in the second batch
+      # and subsequent batches up to wherever the cursor is. Detect this
+      # condition and abort the iteration.
+      #
+      # In a future driver version, each would either continue from the
+      # end of previous iteration or would always restart from the
+      # beginning.
+      if @get_more_called
+        raise NotImplementedError, 'Cannot restart iteration of a cursor which issued a getMore'
+      end
+
+      # To maintain compatibility with pre-2.10 driver versions, reset
+      # the documents array each time a new iteration is started.
+      @documents = nil
+
       loop do
         document = try_next
         yield document if document
@@ -260,6 +278,8 @@ module Mongo
     #
     # @api private
     def get_more
+      @get_more_called = true
+
       # Modern retryable reads specification prohibits retrying getMores.
       # Legacy retryable read logic used to retry getMores, but since
       # doing so may result in silent data loss, the driver no longer retries
@@ -339,7 +359,10 @@ module Mongo
 
       end_session if !more?
 
-      result.documents
+      # Since our iteration code mutates the documents array by calling #shift
+      # on it, duplicate the documents here to permit restarting iteration
+      # from the beginning of the cursor as long as get_more was not called
+      result.documents.dup
     end
 
     def use_limit?
