@@ -5,6 +5,12 @@ describe 'Connection pool stress test' do
     ClientRegistry.instance.close_all_clients
   end
 
+  let(:options) do
+		{ max_pool_size: 5, min_pool_size: 3 }
+	end
+
+	let(:thread_count) { 5 }
+
 	let(:documents) do
 		[].tap do |documents|
 			100.times do |i|
@@ -176,12 +182,6 @@ describe 'Connection pool stress test' do
 	end
 
 	describe 'when primary pool is disconnected' do
-		let(:options) do
-			{ max_pool_size: 5, min_pool_size: 3 }
-		end
-
-		let(:thread_count) { 5 }
-
 		let(:threads) do
 			threads = []
 
@@ -194,7 +194,7 @@ describe 'Connection pool stress test' do
 				end
 			end
 
-			# thread that marks primary unknown and disconnects its pool
+			# thread that disconnects primary's pool
 			threads << Thread.new do
 				sleep 0.2
 				server = client.cluster.next_primary
@@ -208,12 +208,6 @@ describe 'Connection pool stress test' do
 	end
 
 	describe 'when all pools are disconnected' do
-		let(:options) do
-			{ max_pool_size: 5, min_pool_size: 3 }
-		end
-
-		let(:thread_count) { 5 }
-
 		let(:threads) do
 			threads = []
 
@@ -226,7 +220,7 @@ describe 'Connection pool stress test' do
 				end
 			end
 
-			# thread that marks primary unknown and disconnects its pool
+			# thread that disconnects each server's pool
 			threads << Thread.new do
 				sleep 0.2
 
@@ -241,5 +235,50 @@ describe 'Connection pool stress test' do
 		end
 	end
 
-	describe ''
+	describe 'when primary server is removed from topology' do
+		let(:threads) do
+			threads = []
+
+			# thread that performs operations
+			threads << Thread.new do
+				10.times do |j|
+					collection.find(a: j)
+					sleep 0.5
+					collection.find(a: j)
+				end
+			end
+
+			# thread that marks removes the primary from the cluster
+			threads << Thread.new do
+				sleep 0.2
+				server = client.cluster.next_primary
+				client.cluster.remove(server.address.host)
+			end
+		end
+
+		context 'when primary server is removed' do
+			it_behaves_like 'does not raise error'
+		end
+	end
+
+	describe 'when connection auth fails' do
+
+		context 'when primary server is removed' do
+			it 'works' do
+				allow(Mongo::Server::Connection).to receive(:connect!).and_wrap_original { |m, *args|
+					if rand < 0.2
+						raise Mongo::Error::SocketError
+					else
+						m.call(*args)
+					end
+				}
+
+				threads
+
+				expect {
+					threads.collect { |t| t.join }
+				}.not_to raise_error
+			end
+		end
+	end
 end
