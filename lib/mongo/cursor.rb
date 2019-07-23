@@ -171,7 +171,11 @@ module Mongo
     # @api private
     def try_next
       if @documents.nil?
-        @documents = process(@initial_result)
+        # Since published versions of Mongoid have a copy of old driver cursor
+        # code, our dup call in #process isn't invoked when Mongoid query
+        # cache is active. Work around that by also calling dup here on
+        # the result of #process which might come out of Mongoid's code.
+        @documents = process(@initial_result).dup
         # the documents here can be an empty array, hence
         # we may end up issuing a getMore in the first try_next call
       end

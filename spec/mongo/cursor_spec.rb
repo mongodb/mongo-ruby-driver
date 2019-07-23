@@ -353,11 +353,18 @@ describe Mongo::Cursor do
           # documents are retrieved via two batches thus fulfilling the
           # requirement of the test to continue iterating the cursor.
 
+=begin When repeated iteration of cursors is prohibited, these are the expectations
           if BSON::Environment.jruby?
             expected_counts = [4, 5]
           else
             expected_counts = [5]
           end
+=end
+
+          # Since currently repeated iteration of cursors is allowed, calling
+          # to_a on the cursor would perform such an iteration and return
+          # all documents of the initial read.
+          expected_counts = [6]
 
           expect(expected_counts).to include(cursor.to_a.size)
         end
