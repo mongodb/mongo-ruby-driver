@@ -75,7 +75,7 @@ functions:
               export TMPDIR="$MONGO_ORCHESTRATION_HOME/db"
               export PATH="$MONGODB_BINARIES:$PATH"
               export PROJECT="${project}"
-              
+
               export AUTH=${AUTH}
               export SSL=${SSL}
               export TOPOLOGY=${TOPOLOGY}
@@ -359,6 +359,16 @@ functions:
           ${PREPARE_SHELL}
           MONGODB_URI="${MONGODB_URI}" .evergreen/run-tests-mlaunch.sh
 
+  "run conn pool stress tests":
+    - command: shell.exec
+      type: test
+      params:
+        shell: bash
+        working_dir: "src"
+        script: |
+          ${PREPARE_SHELL}
+          MONGODB_URI="${MONGODB_URI}" .evergreen/run-conn-pool-stress-tests.sh
+
   "run local tls tests":
     - command: shell.exec
       type: test
@@ -502,6 +512,9 @@ tasks:
     - name: "test-mlaunch"
       commands:
         - func: "run tests via mlaunch"
+    - name: "conn-pool-stress-tests"
+      commands:
+        - func: "run conn pool stress tests"
     - name: "local-tls-tests"
       commands:
         - func: "run local tls tests"
@@ -911,6 +924,18 @@ buildvariants:
     - rhel70-small
   tasks:
     - name: "test"
+
+-
+  matrix_name: "conn-pool-stress"
+  matrix_spec:
+    ruby: "*"
+    mongodb-version: ['4.0', '4.2']
+    topology: "*"
+  display_name: "Conn Pool Stress ${mongodb-version} ${ruby}"
+  run_on:
+    - ubuntu1404-test
+  tasks:
+    - name: "conn-pool-stress-tests"
 
 -
   matrix_name: "local-tls"

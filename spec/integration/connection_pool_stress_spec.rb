@@ -1,6 +1,10 @@
 require 'spec_helper'
 
 describe 'Connection pool stress test' do
+	before(:all) do
+    ClientRegistry.instance.close_all_clients
+  end
+
 	let(:collection) do
 		authorized_client.with(options)[authorized_collection.name]
 	end
