@@ -5,10 +5,6 @@ describe 'Connection pool stress test' do
     ClientRegistry.instance.close_all_clients
   end
 
-	let(:collection) do
-		authorized_client.with(options)[authorized_collection.name]
-	end
-
 	let(:documents) do
 		[].tap do |documents|
 			100.times do |i|
@@ -31,13 +27,20 @@ describe 'Connection pool stress test' do
 		end
 	end
 
-	before do
-		collection.insert_many(documents)
+	let(:client) do
+		authorized_client.with(options)
+	end
+
+	let(:collection) do
+		client[authorized_collection.name].tap do |collection|
+			collection.delete_many
+			collection.insert_many(documents)
+		end
 	end
 
 	after do
-		collection.delete_many
-	end
+    client.close(true)
+  end
 
 	shared_examples_for 'does not raise error' do
 		it 'does not raise error' do
@@ -194,8 +197,7 @@ describe 'Connection pool stress test' do
 			# thread that marks primary unknown and disconnects its pool
 			threads << Thread.new do
 				sleep 0.2
-				server = authorized_client.cluster.next_primary
-				server.unknown!
+				server = client.cluster.next_primary
 				server.pool.disconnect!
 			end
 		end
@@ -228,15 +230,16 @@ describe 'Connection pool stress test' do
 			threads << Thread.new do
 				sleep 0.2
 
-				authorized_client.cluster.servers_list.each do |server|
-					server.unknown!
+				client.cluster.servers_list.each do |server|
 					server.pool.disconnect!
 				end
 			end
 		end
 
-		context 'primary disconnected' do
+		context 'all disconnected disconnected' do
 			it_behaves_like 'does not raise error'
 		end
 	end
+
+	describe ''
 end
