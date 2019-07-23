@@ -28,7 +28,6 @@ describe 'Connection pool stress test' do
 	end
 
 	before do
-		collection.delete_many
 		collection.insert_many(documents)
 	end
 
