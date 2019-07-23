@@ -123,10 +123,13 @@ EOT
         when nil
           expect(actual).to be nil
         when Hash
-          if actual['error'] && !expected.keys.any? { |key| key.start_with?('error') }
+          if actual.is_a?(Hash) && actual['error'] &&
+            !expected.keys.any? { |key| key.start_with?('error') }
+          then
             raise RSpec::Expectations::ExpectationNotMetError.new,
               "Expected operation not to fail but it failed: #{actual.inspect}"
           end
+          expect(actual).to be_a(Hash)
 
           expected.each do |k, v|
             case k
