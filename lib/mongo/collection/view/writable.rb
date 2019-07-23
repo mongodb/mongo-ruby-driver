@@ -258,7 +258,7 @@ module Mongo
         # @example Update multiple documents in the collection.
         #   collection_view.update_many('$set' => { name: 'test' })
         #
-        # @param [ Hash ] spec The update statement.
+        # @param [ Hash | Array<Hash> ] spec The update document or pipeline.
         # @param [ Hash ] opts The options.
         #
         # @option opts [ true, false ] :upsert Whether to upsert if the
@@ -266,8 +266,8 @@ module Mongo
         # @option opts [ true, false ] :bypass_document_validation Whether or
         #   not to skip document level validation.
         # @option opts [ Hash ] :collation The collation to use.
-        # @option opts [ Array ] :array_filters A set of filters specifying to which array elements
-        #   an update should apply.
+        # @option opts [ Array ] :array_filters A set of filters specifying to
+        #   which array elements an update should apply.
         # @option opts [ Session ] :session The session to use.
         #
         # @return [ Result ] The response from the database.
@@ -303,7 +303,7 @@ module Mongo
         # @example Update a single document in the collection.
         #   collection_view.update_one('$set' => { name: 'test' })
         #
-        # @param [ Hash ] spec The update statement.
+        # @param [ Hash | Array<Hash> ] spec The update document or pipeline.
         # @param [ Hash ] opts The options.
         #
         # @option opts [ true, false ] :upsert Whether to upsert if the
@@ -311,8 +311,8 @@ module Mongo
         # @option opts [ true, false ] :bypass_document_validation Whether or
         #   not to skip document level validation.
         # @option opts [ Hash ] :collation The collation to use.
-        # @option opts [ Array ] :array_filters A set of filters specifying to which array elements
-        #   an update should apply.
+        # @option opts [ Array ] :array_filters A set of filters specifying to
+        #   which array elements an update should apply.
         # @option opts [ Session ] :session The session to use.
         #
         # @return [ Result ] The response from the database.
