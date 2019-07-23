@@ -679,7 +679,7 @@ module Mongo
     #   collection.update_many({ name: 'test'}, '$set' => { name: 'test1' })
     #
     # @param [ Hash ] filter The filter to use.
-    # @param [ Hash ] update The update statement.
+    # @param [ Hash | Array<Hash> ] update The update document or pipeline.
     # @param [ Hash ] options The options.
     #
     # @option options [ true, false ] :upsert Whether to upsert if the
@@ -704,7 +704,7 @@ module Mongo
     #   collection.update_one({ name: 'test'}, '$set' => { name: 'test1'})
     #
     # @param [ Hash ] filter The filter to use.
-    # @param [ Hash ] update The update statement.
+    # @param [ Hash | Array<Hash> ] update The update document or pipeline.
     # @param [ Hash ] options The options.
     #
     # @option options [ true, false ] :upsert Whether to upsert if the
@@ -759,7 +759,7 @@ module Mongo
     #   collection.find_one_and_update({ name: 'test' }, { "$set" => { name: 'test1' }}, :return_document => :after)
     #
     # @param [ Hash ] filter The filter to use.
-    # @param [ BSON::Document ] update The update statement.
+    # @param [ Hash | Array<Hash> ] update The update document or pipeline.
     # @param [ Hash ] options The options.
     #
     # @option options [ Integer ] :max_time_ms The maximum amount of time to allow the command
