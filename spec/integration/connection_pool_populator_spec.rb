@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe Mongo::Server::ConnectionPool do
+describe 'Connection pool populator integration' do
   let(:options) { {} }
 
   let(:server_options) do
@@ -43,7 +43,7 @@ describe Mongo::Server::ConnectionPool do
   end
 
   let(:pool) do
-    register_pool(described_class.new(server, server_options))
+    register_pool(Mongo::Server::ConnectionPool.new(server, server_options))
   end
 
   describe '#initialize' do

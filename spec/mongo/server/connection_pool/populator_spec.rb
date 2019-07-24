@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe Mongo::Server::ConnectionPoolPopulator do
+describe Mongo::Server::Populator do
   let(:server) do
     authorized_client.cluster.next_primary
   end

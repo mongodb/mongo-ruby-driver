@@ -608,7 +608,7 @@ module Mongo
       #
       # @param [ List<Mongo::Connection> ] available_connections The available connections.
       # @param [ List<Mongo::Connection> ] pending_connections The pending connections.
-      # @param [ ConnectionPoolPopulator ] populator The populator.
+      # @param [ Populator ] populator The populator.
       #
       # @return [ Proc ] The Finalizer.
       def self.finalize(available_connections, pending_connections, populator)
