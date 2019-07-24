@@ -60,7 +60,7 @@ module Mongo
       #
       # @param [ Resolv::DNS::Resource ] record An SRV record found for the hostname.
       def add_record(record)
-        record_host = record.target.to_s
+        record_host = record.target.to_s.downcase
         port = record.port
         validate_record!(record_host)
         address_str = if record_host.index(':')
@@ -93,8 +93,6 @@ module Mongo
       # @raise [ Mongo::Error::MismatchedDomain ] If the record's domain name doesn't match that of
       #   the hostname.
       def validate_record!(record_host)
-        # TODO deal with case mismatches
-
         @domainname ||= query_hostname.split('.')[1..-1]
         host_parts = record_host.split('.')
 
