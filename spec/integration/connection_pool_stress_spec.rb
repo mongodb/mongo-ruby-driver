@@ -13,7 +13,7 @@ describe 'Connection pool stress test' do
 
   let(:documents) do
     [].tap do |documents|
-      100.times do |i|
+      10000.times do |i|
         documents << { a: i}
       end
     end
@@ -285,6 +285,71 @@ describe 'Connection pool stress test' do
         expect {
           threads.collect { |t| t.join }
         }.not_to raise_error
+      end
+    end
+  end
+
+  describe 'timing' do
+    let(:threads) do
+      [].tap do |threads|
+        thread_count.times do |i|
+          threads << Thread.new do
+            2000.times do |j|
+              collection.find(a: i+j)
+              sleep 0.001
+              collection.find(a: i+j)
+              collection.find(a: i+j)
+            end
+          end
+        end
+      end
+    end
+
+    let(:thread_count) { 5 }
+
+    context 'when there is no max idle time' do
+      let(:options) do
+        { max_pool_size: 5, min_pool_size: 5 }
+      end
+
+      it 'works' do
+        threads
+
+        start = Time.now
+
+        expect {
+          threads.collect { |t| t.join }
+        }.not_to raise_error
+
+        @duration = Time.now - start
+        client.cluster.log_warn("Old: #{@duration}")
+      end
+    end
+
+    # what this actually probably does with 5&5 is make it so
+    # more connections are connected in flow (they are disconnected in flow,
+    # during check_out, since that is where the idle check happens more frequently,
+    # since close_idle_sockets is called infrequently relative to test length)
+    #
+    # to test more bg connected connections, possibly have a larger pool and
+    # periodically bump the generation by calling clear, forcing many to close at once,
+    # so the populator will be able to create more than one at a time
+    context 'when there is a low max idle time' do
+      let(:options) do
+        { max_pool_size: 5, min_pool_size: 5, max_idle_time: 0.0001 }
+      end
+
+      it 'works' do
+        threads
+
+        start = Time.now
+
+        expect {
+          threads.collect { |t| t.join }
+        }.not_to raise_error
+
+        @new_duration = Time.now - start
+        client.cluster.log_warn("New: #{@new_duration}")
       end
     end
   end
