@@ -60,7 +60,7 @@ module Mongo
       #
       # @param [ Resolv::DNS::Resource ] record An SRV record found for the hostname.
       def add_record(record)
-        record_host = record.target.to_s.downcase
+        record_host = normalize_hostname(record.target.to_s)
         port = record.port
         validate_record!(record_host)
         address_str = if record_host.index(':')
@@ -81,6 +81,25 @@ module Mongo
       end
 
       private
+
+      # Transforms the provided hostname to simplify its validation later on.
+      #
+      # This method is safe to call during both initial DNS seed list discovery
+      # and during SRV monitoring, in that it does not convert invalid hostnames
+      # into valid ones.
+      #
+      # - Converts the hostname to lower case.
+      # - Removes one trailing dot, if there is exactly one. If the hostname
+      #   has multiple trailing dots, it is unchanged.
+      #
+      # @param [ String ] host Hostname to transform.
+      def normalize_hostname(host)
+        host = host.downcase
+        unless host.end_with?('..')
+          host = host.sub(/\.\z/, '')
+        end
+        host
+      end
 
       # Ensures that a record's domain name matches that of the hostname.
       #

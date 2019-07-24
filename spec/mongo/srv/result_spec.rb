@@ -21,4 +21,34 @@ describe Mongo::Srv::Result do
       end
     end
   end
+
+  describe '#normalize_hostname' do
+    let(:actual) do
+      result.send(:normalize_hostname, hostname)
+    end
+
+    context 'when hostname is in mixed case' do
+      let(:hostname) { 'FOO.bar.COM' }
+
+      it 'converts to lower case' do
+        expect(actual).to eq('foo.bar.com')
+      end
+    end
+
+    context 'when hostname has one trailing dot' do
+      let(:hostname) { 'foo.' }
+
+      it 'removes the trailing dot' do
+        expect(actual).to eq('foo')
+      end
+    end
+
+    context 'when hostname has multiple trailing dots' do
+      let(:hostname) { 'foo..' }
+
+      it 'returns hostname unchanged' do
+        expect(actual).to eq('foo..')
+      end
+    end
+  end
 end
