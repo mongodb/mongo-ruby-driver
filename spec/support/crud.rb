@@ -22,6 +22,10 @@ require 'support/crud/context'
 require 'support/crud/operation'
 require 'support/crud/verifier'
 
+def collection_data(collection)
+  collection.find.to_a
+end
+
 def crud_execute_operations(spec, test, num_ops, event_subscriber, expect_error,
   client
 )
@@ -68,7 +72,7 @@ def crud_execute_operations(spec, test, num_ops, event_subscriber, expect_error,
     if last_op.outcome && last_op.outcome.collection_data?
       verify_collection = client[last_op.verify_collection_name]
       $crud_collection_data_cache ||= {}
-      $crud_collection_data_cache[cache_key] = verify_collection.find.to_a
+      $crud_collection_data_cache[cache_key] = collection_data(verify_collection)
     end
 
     result
@@ -136,7 +140,7 @@ def define_crud_spec_test_examples(spec, req = nil, &block)
                 result
                 verifier.verify_collection_data(
                   operation.outcome.collection_data,
-                  verify_collection.find.to_a)
+                  collection_data(verify_collection))
               end
             end
 
@@ -171,6 +175,20 @@ def define_crud_spec_test_examples(spec, req = nil, &block)
             verifier.verify_command_started_event(
               test.expectations, actual_events, i)
           end
+        end
+      end
+
+      if test.outcome && test.outcome.collection_data?
+        let(:result) do
+          crud_execute_operations(spec, test, test.operations.length,
+            event_subscriber, nil, client)
+        end
+
+        it 'has the correct data in the collection' do
+          result
+          verifier.verify_collection_data(
+            test.outcome.collection_data,
+            collection_data(client[test.outcome.collection_name || spec.collection_name]))
         end
       end
     end
