@@ -353,11 +353,18 @@ describe Mongo::Cursor do
           # documents are retrieved via two batches thus fulfilling the
           # requirement of the test to continue iterating the cursor.
 
+=begin When repeated iteration of cursors is prohibited, these are the expectations
           if BSON::Environment.jruby?
             expected_counts = [4, 5]
           else
             expected_counts = [5]
           end
+=end
+
+          # Since currently repeated iteration of cursors is allowed, calling
+          # to_a on the cursor would perform such an iteration and return
+          # all documents of the initial read.
+          expected_counts = [6]
 
           expect(expected_counts).to include(cursor.to_a.size)
         end
@@ -506,6 +513,80 @@ describe Mongo::Cursor do
 
     it 'returns a string containing the collection view inspect string' do
       expect(cursor.inspect).to match(/.*#{view.inspect}.*/)
+    end
+  end
+
+  describe '#to_a' do
+
+    let(:view) do
+      Mongo::Collection::View.new(authorized_collection, {}, batch_size: 10)
+    end
+
+    let(:query_spec) do
+      { :selector => {}, :options => {}, :db_name => SpecConfig.instance.test_db,
+        :coll_name => authorized_collection.name }
+    end
+
+    let(:reply) do
+      view.send(:send_initial_query, authorized_primary)
+    end
+
+    let(:cursor) do
+      described_class.new(view, reply, authorized_primary)
+    end
+
+    context 'after partially iterating the cursor' do
+      before do
+        authorized_collection.drop
+        docs = []
+        100.times do |i|
+          docs << {a: i}
+        end
+        authorized_collection.insert_many(docs)
+      end
+
+      context 'after #each was called once' do
+        before do
+          cursor.each do |doc|
+            break
+          end
+        end
+
+        it 'iterates from the beginning of the view' do
+          expect(cursor.to_a.map { |doc| doc['a'] }).to eq((0..99).to_a)
+        end
+      end
+
+      context 'after exactly one batch was iterated' do
+        before do
+          cursor.each_with_index do |doc, i|
+            break if i == 9
+          end
+        end
+
+        it 'iterates from the beginning of the view' do
+          expect(cursor.to_a.map { |doc| doc['a'] }).to eq((0..99).to_a)
+        end
+      end
+
+      context 'after two batches were iterated' do
+        before do
+          cursor.each_with_index do |doc, i|
+            break if i == 19
+          end
+        end
+
+=begin Behavior of pre-2.10 driver:
+        it 'skips the second batch' do
+          expect(cursor.to_a.map { |doc| doc['a'] }).to eq((0..9).to_a + (20..99).to_a)
+        end
+=end
+        it 'raises NotImplementedError' do
+          expect do
+            cursor.to_a
+          end.to raise_error(NotImplementedError, 'Cannot restart iteration of a cursor which issued a getMore')
+        end
+      end
     end
   end
 end
