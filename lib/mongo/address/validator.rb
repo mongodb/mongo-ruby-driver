@@ -54,20 +54,7 @@ module Mongo
             raise Error::InvalidAddress, "Host is empty: #{address_str}"
           end
 
-          # Since we are performing same origin verification during SRV
-          # processing, prohibit leading dots in hostnames, trailing dots
-          # and runs of multiple dots. DNS resolution of SRV records yields
-          # hostnames with trailing dots, those trailing dots are removed
-          # during normalization process prior to validation.
-          if host.start_with?('.')
-            raise Error::InvalidAddress, "Hostname cannot start with a dot: #{address_str}"
-          end
-          if host.end_with?('.')
-            raise Error::InvalidAddress, "Hostname cannot end with a dot: #{address_str}"
-          end
-          if host.include?('..')
-            raise Error::InvalidAddress, "Runs of multiple dots are not allowed in hostname: #{address_str}"
-          end
+          validate_hostname!(host)
 
           if port && port.empty?
             raise Error::InvalidAddress, "Port is empty: #{address_str}"
@@ -78,6 +65,28 @@ module Mongo
       end
 
       private
+
+      # Validates format of the hostname, in particular for further use as
+      # the origin in same origin verification.
+      #
+      # The hostname must have been normalized to remove the trailing dot if
+      # it was obtained from a DNS record. This method prohibits trailing dots.
+      def validate_hostname!(host)
+        # Since we are performing same origin verification during SRV
+        # processing, prohibit leading dots in hostnames, trailing dots
+        # and runs of multiple dots. DNS resolution of SRV records yields
+        # hostnames with trailing dots, those trailing dots are removed
+        # during normalization process prior to validation.
+        if host.start_with?('.')
+          raise Error::InvalidAddress, "Hostname cannot start with a dot: #{host}"
+        end
+        if host.end_with?('.')
+          raise Error::InvalidAddress, "Hostname cannot end with a dot: #{host}"
+        end
+        if host.include?('..')
+          raise Error::InvalidAddress, "Runs of multiple dots are not allowed in hostname: #{host}"
+        end
+      end
 
       def validate_port_str!(port)
         unless port.nil? || (port.length > 0 && port.to_i > 0 && port.to_i <= 65535)

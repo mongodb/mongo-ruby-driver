@@ -23,6 +23,7 @@ module Mongo
     #
     # @api private
     class Result
+      include Address::Validator
 
       # @return [ String ] MISMATCHED_DOMAINNAME Error message format string indicating that an SRV
       #   record found does not match the domain of a hostname.
@@ -62,7 +63,8 @@ module Mongo
       def add_record(record)
         record_host = normalize_hostname(record.target.to_s)
         port = record.port
-        validate_record!(record_host)
+        validate_hostname!(record_host)
+        validate_same_origin!(record_host)
         address_str = if record_host.index(':')
           # IPV6 address
           "[#{record_host}]:#{port}"
@@ -111,12 +113,12 @@ module Mongo
       #
       # @raise [ Mongo::Error::MismatchedDomain ] If the record's domain name doesn't match that of
       #   the hostname.
-      def validate_record!(record_host)
-        @domainname ||= query_hostname.split('.')[1..-1]
+      def validate_same_origin!(record_host)
+        domain_name ||= query_hostname.split('.')[1..-1]
         host_parts = record_host.split('.')
 
-        unless (host_parts.size > @domainname.size) && (@domainname == host_parts[-@domainname.length..-1])
-          raise Error::MismatchedDomain.new(MISMATCHED_DOMAINNAME % [record_host, @domainname])
+        unless (host_parts.size > domain_name.size) && (domain_name == host_parts[-domain_name.length..-1])
+          raise Error::MismatchedDomain.new(MISMATCHED_DOMAINNAME % [record_host, domain_name])
         end
       end
     end
