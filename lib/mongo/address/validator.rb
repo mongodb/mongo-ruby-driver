@@ -54,6 +54,21 @@ module Mongo
             raise Error::InvalidAddress, "Host is empty: #{address_str}"
           end
 
+          # Since we are performing same origin verification during SRV
+          # processing, prohibit leading dots in hostnames, trailing dots
+          # and runs of multiple dots. DNS resolution of SRV records yields
+          # hostnames with trailing dots, those trailing dots are removed
+          # during normalization process prior to validation.
+          if host.start_with?('.')
+            raise Error::InvalidAddress, "Hostname cannot start with a dot: #{address_str}"
+          end
+          if host.end_with?('.')
+            raise Error::InvalidAddress, "Hostname cannot end with a dot: #{address_str}"
+          end
+          if host.include?('..')
+            raise Error::InvalidAddress, "Runs of multiple dots are not allowed in hostname: #{address_str}"
+          end
+
           if port && port.empty?
             raise Error::InvalidAddress, "Port is empty: #{address_str}"
           end
