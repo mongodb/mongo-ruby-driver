@@ -46,6 +46,9 @@ module Mongo
         else
           @operations = [Operation.new(self, test['operation'], test['outcome'])]
         end
+        if test['outcome']
+          @outcome = Mongo::CRUD::Outcome.new(test['outcome'])
+        end
         @expectations = test['expectations']
       end
 
@@ -60,6 +63,8 @@ module Mongo
 
       # The expected command monitoring events
       attr_reader :expectations
+
+      attr_reader :outcome
 
       # Run the test.
       #
@@ -92,7 +97,7 @@ module Mongo
         if @data.nil?
           # nothing to do
         elsif @data.is_a?(Array)
-          collection = client[spec.collection_name]
+          collection = client[spec.collection_name, write_concern: {w: :majority}]
           collection.delete_many
           collection.insert_many(@data)
         elsif @data.is_a?(Hash)
@@ -121,13 +126,12 @@ module Mongo
         end
       end
 
-      private
-
-      def actual_collection_data
-        if expected_outcome.collection_data?
-          collection_name = expected_outcome.collection_name || @collection.name
-          @collection.database[collection_name].find.to_a
+      def actual_collection_contents(client)
+        unless @spec.collection_name
+          raise ArgumentError, 'Spec does not specify a global collection'
         end
+
+        client[@spec.collection_name, read_concern: {level: :majority}].find.to_a
       end
     end
   end
