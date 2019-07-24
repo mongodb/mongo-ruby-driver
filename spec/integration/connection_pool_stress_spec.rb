@@ -34,12 +34,12 @@ describe 'Connection pool stress test' do
 	end
 
 	let(:client) do
-		authorized_client.with(options)
+		authorized_client.with(options.merge(monitoring: true))
 	end
 
 	let(:collection) do
 		client[authorized_collection.name].tap do |collection|
-			collection.delete_many
+			collection.drop
 			collection.insert_many(documents)
 		end
 	end
@@ -224,13 +224,15 @@ describe 'Connection pool stress test' do
 			threads << Thread.new do
 				sleep 0.2
 
-				client.cluster.servers_list.each do |server|
-					server.pool.disconnect!
+				client.cluster.servers_list.reverse.each do |server|
+					if !server.arbiter?
+						server.pool.disconnect!
+					end
 				end
 			end
 		end
 
-		context 'all disconnected disconnected' do
+		context 'all pools disconnected' do
 			it_behaves_like 'does not raise error'
 		end
 	end
@@ -262,6 +264,9 @@ describe 'Connection pool stress test' do
 	end
 
 	describe 'when connection auth fails' do
+		# TODO should either increase max size or decrease staleness timeouts
+		# otherwise a connection is connected at most 5 times (max size), and the
+		# socket error may never be triggered
 
 		context 'when primary server is removed' do
 			it 'works' do
