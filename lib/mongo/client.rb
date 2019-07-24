@@ -210,7 +210,7 @@ module Mongo
     #   for documents. Must respond to #generate.
     # @option options [ Integer ] :local_threshold The local threshold boundary
     #   in seconds for selecting a near server for an operation.
-    # @option options [ Logger ] :logger A custom logger if desired.
+    # @option options [ Logger ] :logger A custom logger to use.
     # @option options [ Integer ] :max_idle_time The maximum seconds a socket can remain idle
     #   since it has been checked in to the pool.
     # @option options [ Integer ] :max_pool_size The maximum size of the

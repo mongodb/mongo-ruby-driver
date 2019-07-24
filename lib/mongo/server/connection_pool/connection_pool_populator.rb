@@ -20,15 +20,18 @@ module Mongo
     # @api private
     class ConnectionPoolPopulator
       include BackgroundThread
-      include Loggable
+
+      # @param [ Server::ConnectionPool ] The connection pool.
+      # @param [ Hash ] options The options.
+      #
+      # @option options [ Logger ] :logger A custom logger to use.
+      def initialize(pool, options = {})
+        @pool = pool
+        @thread = nil
+        @options = options
+      end
 
       attr_reader :options
-
-      def initialize(pool)
-        @pool = pool
-        @options = @pool.options
-        @thread = nil
-      end
 
       def pre_stop
         @pool.populate_semaphore.signal

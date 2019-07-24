@@ -27,7 +27,7 @@ describe Mongo::Server::Monitor::Connection do
   end
 
   let(:monitor) do
-    register_server_monitor(
+    register_background_thread_object(
       Mongo::Server::Monitor.new(server, server.event_listeners, server.monitoring,
         {
           app_metadata: Mongo::Server::Monitor::AppMetadata.new(options),

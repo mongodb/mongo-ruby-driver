@@ -59,6 +59,7 @@ module Mongo
       #
       # @option options [ Float ] :connect_timeout The timeout, in seconds, to
       #   use when establishing the monitoring connection.
+      # @option options [ Logger ] :logger A custom logger to use.
       # @option options [ Float ] :socket_timeout The timeout, in seconds, to
       #   execute operations on the monitoring connection.
       #

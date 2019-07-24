@@ -30,7 +30,7 @@ describe Mongo::Server::Monitor do
   end
 
   let(:monitor) do
-    register_server_monitor(
+    register_background_thread_object(
       described_class.new(server, listeners, Mongo::Monitoring.new,
         SpecConfig.instance.test_options.merge(cluster: cluster).merge(monitor_options))
     )
@@ -223,6 +223,14 @@ describe Mongo::Server::Monitor do
         monitor.connection.connect!
         expect(monitor.connection.send(:socket).timeout).to eq(connect_timeout)
       end
+    end
+  end
+
+  describe '#log_warn' do
+    it 'works' do
+      expect do
+        monitor.log_warn('test warning')
+      end.not_to raise_error
     end
   end
 end
