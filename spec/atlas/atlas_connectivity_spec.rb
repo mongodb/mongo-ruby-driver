@@ -10,7 +10,7 @@ describe 'Atlas connectivity' do
     end
   end
 
-  it 'connects to Atlas' do
+  describe 'connection to Atlas' do
     it 'runs ismaster successfully' do
       result = client.database.command(:ismaster => 1)
       expect(result.documents.first['ismaster']).to be true
