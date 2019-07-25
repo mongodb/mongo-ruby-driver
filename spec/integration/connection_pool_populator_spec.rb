@@ -43,7 +43,7 @@ describe 'Connection pool populator integration' do
   end
 
   let(:pool) do
-    register_pool(Mongo::Server::ConnectionPool.new(server, server_options))
+    server.pool
   end
 
   describe '#initialize' do
@@ -266,12 +266,14 @@ describe 'Connection pool populator integration' do
     context 'when min size is provided' do
       min_server_version '2.8'
 
+      let!(:client) do
+        register_client(ClientRegistry.instance.new_local_client([SpecConfig.instance.addresses.first],
+          server_options.merge(min_pool_size: 2, max_pool_size: 5)))
+      end
+
       it 'populates the parent and child pools' do
-        client = ClientRegistry.instance.new_local_client([SpecConfig.instance.addresses.first],
-          server_options.merge(min_pool_size: 2, max_pool_size: 5))
         # let pool populate
         sleep 2
-
         server = client.cluster.next_primary
         pool = server.pool
         expect(pool.size).to eq(2)
