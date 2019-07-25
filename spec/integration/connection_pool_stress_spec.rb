@@ -34,7 +34,7 @@ describe 'Connection pool stress test' do
   end
 
   let(:client) do
-    authorized_client.with(options.merge(monitoring: true))
+    @client = authorized_client.with(options.merge(monitoring: true))
   end
 
   let!(:collection) do
@@ -45,7 +45,9 @@ describe 'Connection pool stress test' do
   end
 
   after do
-    client.close(true)
+    if @client
+      @client.close(true)
+    end
   end
 
   shared_examples_for 'does not raise error' do
@@ -58,7 +60,7 @@ describe 'Connection pool stress test' do
     end
   end
 
-  describe 'min pool size less than max, fixed thread count' do
+  describe 'when several threads run operations on the collection' do
     context 'min pool size 0, max pool size 5' do
       let(:options) do
         { max_pool_size: 5, min_pool_size: 0 }
@@ -103,10 +105,8 @@ describe 'Connection pool stress test' do
 
       it_behaves_like 'does not raise error'
     end
-  end
 
-  describe 'min pool size equal to max' do
-    context 'thread count greater than max pool size' do
+    context 'min pool size 5, max pool size 5' do
       let(:options) do
         { max_pool_size: 5, min_pool_size: 5 }
       end
@@ -114,74 +114,35 @@ describe 'Connection pool stress test' do
 
       it_behaves_like 'does not raise error'
     end
-
-    context 'thread count equal to max pool size' do
-      let(:options) do
-        { max_pool_size: 5, min_pool_size: 5 }
-      end
-      let(:thread_count) { 5 }
-
-      it_behaves_like 'does not raise error'
-    end
   end
 
-  describe 'thread count greater than max pool size' do
-    context '6 threads, max pool size 5' do
-      let(:options) do
-        { max_pool_size: 5, min_pool_size: 3 }
-      end
-      let(:thread_count) { 6 }
-
-      it_behaves_like 'does not raise error'
-    end
-
-    context '7 threads, max pool size 5' do
-      let(:options) do
-        { max_pool_size: 5, min_pool_size: 3 }
-      end
-      let(:thread_count) { 7 }
-
-      it_behaves_like 'does not raise error'
-    end
-
-    context '8 threads, max pool size 5' do
-      let(:options) do
-        { max_pool_size: 5, min_pool_size: 3 }
-      end
-      let(:thread_count) { 8 }
-
-      it_behaves_like 'does not raise error'
-    end
-
+  describe 'when there are many more threads than the max pool size' do
     context '10 threads, max pool size 5' do
-      let(:options) do
-        { max_pool_size: 5, min_pool_size: 3 }
-      end
       let(:thread_count) { 10 }
 
       it_behaves_like 'does not raise error'
     end
 
     context '15 threads, max pool size 5' do
-      let(:options) do
-        { max_pool_size: 5, min_pool_size: 3 }
-      end
       let(:thread_count) { 15 }
 
       it_behaves_like 'does not raise error'
     end
 
     context '20 threads, max pool size 5' do
-      let(:options) do
-        { max_pool_size: 5, min_pool_size: 3 }
-      end
+      let(:thread_count) { 20 }
+
+      it_behaves_like 'does not raise error'
+    end
+
+    context '25 threads, max pool size 5' do
       let(:thread_count) { 20 }
 
       it_behaves_like 'does not raise error'
     end
   end
 
-  describe 'when primary pool is disconnected' do
+  context 'when primary pool is disconnected' do
     let(:threads) do
       threads = []
 
@@ -202,12 +163,10 @@ describe 'Connection pool stress test' do
       end
     end
 
-    context 'primary disconnected' do
-      it_behaves_like 'does not raise error'
-    end
+    it_behaves_like 'does not raise error'
   end
 
-  describe 'when all pools are disconnected' do
+  context 'when all pools are disconnected' do
     let(:threads) do
       threads = []
 
@@ -232,12 +191,10 @@ describe 'Connection pool stress test' do
       end
     end
 
-    context 'all pools disconnected' do
-      it_behaves_like 'does not raise error'
-    end
+    it_behaves_like 'does not raise error'
   end
 
-  describe 'when primary server is removed from topology' do
+  context 'when primary server is removed from topology' do
     let(:threads) do
       threads = []
 
@@ -258,34 +215,29 @@ describe 'Connection pool stress test' do
       end
     end
 
-    context 'when primary server is removed' do
-      it_behaves_like 'does not raise error'
-    end
+    it_behaves_like 'does not raise error'
   end
 
-  describe 'when connection auth fails' do
+  context 'when connection auth sometimes fails' do
     let(:options) do
       { max_pool_size: 5, min_pool_size: 5 }
     end
-
     let(:thread_count) { 10 }
 
-    context 'when primary server is removed' do
-      it 'works' do
-        allow_any_instance_of(Mongo::Server::Connection).to receive(:connect!).and_wrap_original { |m, *args|
-          if rand < 0.2
-            raise Mongo::Error::SocketError
-          else
-            m.call(*args)
-          end
-        }
+    it 'does not raise error' do
+      allow_any_instance_of(Mongo::Server::Connection).to receive(:connect!).and_wrap_original { |m, *args|
+        if rand < 0.2
+          raise Mongo::Error::SocketError
+        else
+          m.call(*args)
+        end
+      }
 
-        threads
+      threads
 
-        expect {
-          threads.collect { |t| t.join }
-        }.not_to raise_error
-      end
+      expect {
+        threads.collect { |t| t.join }
+      }.not_to raise_error
     end
   end
 
@@ -312,7 +264,7 @@ describe 'Connection pool stress test' do
         { max_pool_size: 5, min_pool_size: 5 }
       end
 
-      it 'works' do
+      it 'does not error' do
         threads
 
         start = Time.now
@@ -322,7 +274,7 @@ describe 'Connection pool stress test' do
         }.not_to raise_error
 
         @duration = Time.now - start
-        client.cluster.log_warn("Old: #{@duration}")
+        client.cluster.log_warn("No max idle time: #{@duration}")
       end
     end
 
@@ -339,6 +291,46 @@ describe 'Connection pool stress test' do
         { max_pool_size: 5, min_pool_size: 5, max_idle_time: 0.0001 }
       end
 
+      it 'does not error' do
+        threads
+
+        start = Time.now
+
+        expect {
+          threads.collect { |t| t.join }
+        }.not_to raise_error
+
+        @duration_with_idle_time = Time.now - start
+        client.cluster.log_warn("Low max idle time: #{@duration_with_idle_time}")
+      end
+    end
+
+    context 'when clear is called periodically' do
+      let(:options) do
+        { max_pool_size: 5, min_pool_size: 5 }
+      end
+
+      let(:threads) do
+        threads = []
+        thread_count.times do |i|
+          threads << Thread.new do
+            2000.times do |j|
+              collection.find(a: i+j)
+              sleep 0.001
+              collection.find(a: i+j)
+              collection.find(a: i+j)
+            end
+          end
+        end
+        threads << Thread.new do
+          10.times do
+            client.cluster.next_primary.pool.clear
+            sleep 0.01
+          end
+        end
+        threads
+      end
+
       it 'works' do
         threads
 
@@ -348,8 +340,62 @@ describe 'Connection pool stress test' do
           threads.collect { |t| t.join }
         }.not_to raise_error
 
-        @new_duration = Time.now - start
-        client.cluster.log_warn("New: #{@new_duration}")
+        @duration_with_clear = Time.now - start
+        client.cluster.log_warn("Clear called periodically: #{@duration_with_clear}")
+      end
+    end
+  end
+
+  describe 'timing cold start' do
+    let(:options) do
+      { max_pool_size: 10, min_pool_size: 5 }
+    end
+
+    let!(:collection) do
+      client['cold_start_test'].tap do |collection|
+        collection.drop
+        collection.insert_many(documents)
+      end
+    end
+
+    # todo, maybe combine w max idle time
+    # worst case for ald verion: threads that run at about the same rate as max idle time
+    # so they always have to connect in flow
+    let(:threads) do
+      threads = []
+
+      10.times do |i|
+        threads << Thread.new do
+          2000.times do |j|
+            collection.find(a: j)
+            sleep 0.001
+            collection.find(a: j)
+          end
+        end
+      end
+
+      threads << Thread.new do
+        sleep 0.1
+        ClusterTools.instance.change_primary
+      end
+
+      threads
+    end
+
+    context 'when timing cold start' do
+      it 'works' do
+        ClusterTools.instance.set_client(client)
+
+        threads
+
+        start = Time.now
+
+        expect {
+          threads.collect { |t| t.join }
+        }.not_to raise_error
+
+        @cold_start_duration = Time.now - start
+        pp "Cold start duration: #{@cold_start_duration}"
       end
     end
   end
