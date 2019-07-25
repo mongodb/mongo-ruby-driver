@@ -50,7 +50,9 @@ set_env_vars() {
   if [ "$COMPRESSOR" == "zlib" ]; then
     export COMPRESSOR="zlib"
   fi
-  export CI=true
+  export CI=evergreen
+  # JRUBY_OPTS were initially set for Mongoid
+  export JRUBY_OPTS="--server -J-Xms512m -J-Xmx1G"
 }
 
 setup_ruby() {
