@@ -34,7 +34,7 @@ describe 'Connection pool stress test' do
   end
 
   let(:client) do
-    @client = authorized_client.with(options.merge(monitoring: true))
+    @client = authorized_client.with(options)
   end
 
   let!(:collection) do
@@ -52,8 +52,6 @@ describe 'Connection pool stress test' do
 
   shared_examples_for 'does not raise error' do
     it 'does not raise error' do
-      threads
-
       expect {
         threads.collect { |t| t.join }
       }.not_to raise_error
@@ -233,8 +231,6 @@ describe 'Connection pool stress test' do
         end
       }
 
-      threads
-
       expect {
         threads.collect { |t| t.join }
       }.not_to raise_error
@@ -250,7 +246,6 @@ describe 'Connection pool stress test' do
               collection.find(a: i+j)
               sleep 0.001
               collection.find(a: i+j)
-              collection.find(a: i+j)
             end
           end
         end
@@ -261,53 +256,37 @@ describe 'Connection pool stress test' do
 
     context 'when there is no max idle time' do
       let(:options) do
-        { max_pool_size: 5, min_pool_size: 5 }
+        { max_pool_size: 10, min_pool_size: 5 }
       end
 
       it 'does not error' do
-        threads
-
         start = Time.now
-
         expect {
           threads.collect { |t| t.join }
         }.not_to raise_error
-
         @duration = Time.now - start
-        client.cluster.log_warn("No max idle time: #{@duration}")
+        puts "No max idle time: #{@duration}"
       end
     end
 
-    # what this actually probably does with 5&5 is make it so
-    # more connections are connected in flow (they are disconnected in flow,
-    # during check_out, since that is where the idle check happens more frequently,
-    # since close_idle_sockets is called infrequently relative to test length)
-    #
-    # to test more bg connected connections, possibly have a larger pool and
-    # periodically bump the generation by calling clear, forcing many to close at once,
-    # so the populator will be able to create more than one at a time
     context 'when there is a low max idle time' do
       let(:options) do
-        { max_pool_size: 5, min_pool_size: 5, max_idle_time: 0.0001 }
+        { max_pool_size: 10, min_pool_size: 5, max_idle_time: 0.0001 }
       end
 
       it 'does not error' do
-        threads
-
         start = Time.now
-
         expect {
           threads.collect { |t| t.join }
         }.not_to raise_error
-
         @duration_with_idle_time = Time.now - start
-        client.cluster.log_warn("Low max idle time: #{@duration_with_idle_time}")
+        puts "Low max idle time: #{@duration_with_idle_time}"
       end
     end
 
     context 'when clear is called periodically' do
       let(:options) do
-        { max_pool_size: 5, min_pool_size: 5 }
+        { max_pool_size: 10, min_pool_size: 5 }
       end
 
       let(:threads) do
@@ -318,10 +297,10 @@ describe 'Connection pool stress test' do
               collection.find(a: i+j)
               sleep 0.001
               collection.find(a: i+j)
-              collection.find(a: i+j)
             end
           end
         end
+
         threads << Thread.new do
           10.times do
             client.cluster.next_primary.pool.clear
@@ -331,71 +310,55 @@ describe 'Connection pool stress test' do
         threads
       end
 
-      it 'works' do
-        threads
-
+      it 'does not error' do
         start = Time.now
-
         expect {
           threads.collect { |t| t.join }
         }.not_to raise_error
-
         @duration_with_clear = Time.now - start
-        client.cluster.log_warn("Clear called periodically: #{@duration_with_clear}")
-      end
-    end
-  end
-
-  describe 'timing cold start' do
-    let(:options) do
-      { max_pool_size: 10, min_pool_size: 5 }
-    end
-
-    let!(:collection) do
-      client['cold_start_test'].tap do |collection|
-        collection.drop
-        collection.insert_many(documents)
+        puts "Clear called periodically: #{@duration_with_clear}"
       end
     end
 
-    # todo, maybe combine w max idle time
-    # worst case for ald verion: threads that run at about the same rate as max idle time
-    # so they always have to connect in flow
-    let(:threads) do
-      threads = []
+    context 'when primary is changed' do
+      min_server_fcv '4.2'
+      require_topology :replica_set
 
-      10.times do |i|
-        threads << Thread.new do
-          2000.times do |j|
-            collection.find(a: j)
-            sleep 0.001
-            collection.find(a: j)
+      let(:options) do
+        { max_pool_size: 10, min_pool_size: 5 }
+      end
+
+      let(:threads) do
+        threads = []
+
+        20.times do |i|
+          threads << Thread.new do
+            4000.times do |j|
+              collection.find(a: i+j)
+              sleep 0.001
+              collection.find(a: i+j)
+            end
           end
         end
-      end
 
-      threads << Thread.new do
-        sleep 0.1
-        ClusterTools.instance.change_primary
-      end
-
-      threads
-    end
-
-    context 'when timing cold start' do
-      it 'works' do
-        ClusterTools.instance.set_client(client)
-
+        threads << Thread.new do
+          sleep 1
+          @exec_end = Time.now
+          ClusterTools.instance.change_primary
+          @start = Time.now
+        end
         threads
+      end
 
-        start = Time.now
-
+      it 'does not error' do
+        threads
+        @exec_start = Time.now
         expect {
           threads.collect { |t| t.join }
         }.not_to raise_error
-
-        @cold_start_duration = Time.now - start
-        pp "Cold start duration: #{@cold_start_duration}"
+        @after_primary_change_duration = Time.now - @start
+        puts "Duration before primary change: #{@exec_end - @exec_start}"
+        puts "Duration after primary change: #{@after_primary_change_duration}"
       end
     end
   end
