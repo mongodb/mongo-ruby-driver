@@ -142,6 +142,7 @@ class ClusterTools
   # - call step down on the existing primary
   # - call step up on the target in a loop until it becomes the primary
   def change_primary
+    start = Time.now
     existing_primary = admin_client.cluster.next_primary
     existing_primary_address = existing_primary.address
 
@@ -172,6 +173,7 @@ class ClusterTools
 
     new_primary = admin_client.cluster.next_primary
     puts "#{Time.now} [CT] Primary changed to #{new_primary.address}"
+    puts "Time to change primaries: #{Time.now - start}"
   end
 
   def persistently_step_up(address)
