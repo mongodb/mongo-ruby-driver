@@ -574,14 +574,15 @@ module Mongo
       end
 
       # Creates and adds a connection to the pool, if the pool's size is below
-      # min_size. Retries once if an error is encountered during this process
-      # and raises if a second error occurs.
+      # min_size. Retries once if a socket-related error is encountered during
+      # this process and raises if a second error or a non socket-related error occurs.
       #
       # Used by the pool populator background thread.
       #
       # @return [ true | false ] Whether this method should be called again
       #   to create more connections.
-      # @raise [ Mongo::Error ] The second error raised if a retry occured
+      # @raise [ Error::AuthError, Error ] The second socket-related error raised if a retry
+      # occured, or the non socket-related error
       #
       # @api private
       def populate
@@ -596,7 +597,7 @@ module Mongo
         end
 
         return create_and_add_connection
-      rescue Exception
+      rescue Error::AuthError, Error
         # wake up one thread waiting for connections, since one could not
         # be created here, and can instead be created in flow
         @available_semaphore.signal

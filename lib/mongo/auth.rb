@@ -73,7 +73,7 @@ module Mongo
     # Raised when trying to get an invalid authorization mechanism.
     #
     # @since 2.0.0
-    class InvalidMechanism < RuntimeError
+    class InvalidMechanism < Mongo::Error::AuthError
 
       # Instantiate the new error.
       #
@@ -94,7 +94,7 @@ module Mongo
     # Raised when a user is not authorized on a database.
     #
     # @since 2.0.0
-    class Unauthorized < RuntimeError
+    class Unauthorized < Mongo::Error::AuthError
 
       # Instantiate the new error.
       #

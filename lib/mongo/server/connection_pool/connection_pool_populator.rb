@@ -46,7 +46,7 @@ module Mongo
           unless @pool.populate
             @pool.populate_semaphore.wait
           end
-        rescue Error => e
+        rescue Error::AuthError, Error => e
           # Errors encountered when trying to add connections to
           # pool; try again later
           log_warn("Populator failed to connect a connection: #{e.class}: #{e}.")
