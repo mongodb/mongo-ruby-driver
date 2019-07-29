@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe Mongo::Server::ConnectionPool do
+describe 'Connection pool populator integration' do
   let(:options) { {} }
 
   let(:server_options) do
@@ -43,7 +43,7 @@ describe Mongo::Server::ConnectionPool do
   end
 
   let(:pool) do
-    register_pool(described_class.new(server, server_options))
+    server.pool
   end
 
   describe '#initialize' do
@@ -271,7 +271,6 @@ describe Mongo::Server::ConnectionPool do
           server_options.merge(min_pool_size: 2, max_pool_size: 5))
         # let pool populate
         sleep 2
-
         server = client.cluster.next_primary
         pool = server.pool
         expect(pool.size).to eq(2)

@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-require 'mongo/server/connection_pool/connection_pool_populator'
+require 'mongo/server/connection_pool/populator'
 
 module Mongo
   class Server
@@ -122,7 +122,7 @@ module Mongo
 
         # Background thread reponsible for maintaining the size of
         # the pool to at least min_size
-        @populator = ConnectionPoolPopulator.new(self, options)
+        @populator = Populator.new(self, options)
         @populate_semaphore = Semaphore.new
 
         ObjectSpace.define_finalizer(self, self.class.finalize(@available_connections, @pending_connections, @populator))
@@ -608,7 +608,7 @@ module Mongo
       #
       # @param [ List<Mongo::Connection> ] available_connections The available connections.
       # @param [ List<Mongo::Connection> ] pending_connections The pending connections.
-      # @param [ ConnectionPoolPopulator ] populator The populator.
+      # @param [ Populator ] populator The populator.
       #
       # @return [ Proc ] The Finalizer.
       def self.finalize(available_connections, pending_connections, populator)

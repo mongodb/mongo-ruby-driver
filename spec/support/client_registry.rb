@@ -198,7 +198,9 @@ class ClientRegistry
 
   def close_local_clients
     @lock.synchronize do
-      @local_clients.map(&:close)
+      @local_clients.each do |client|
+        client.close(true)
+      end
       @local_clients = []
     end
   end
