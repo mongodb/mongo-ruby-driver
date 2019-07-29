@@ -17,7 +17,11 @@ module Mongo
 
     # Raised when authentication fails.
     #
-    # @since 2.7.0
+    # Note: This class is derived from RuntimeError for
+    # backwards compatibility reasons. It is subject to
+    # change in future major versions of the driver.
+    #
+    # @since 2.11.0
     class AuthError < RuntimeError
     end
   end
