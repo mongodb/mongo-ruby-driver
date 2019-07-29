@@ -1,7 +1,6 @@
 require 'spec_helper'
 
 describe 'Connection pool timing test' do
-
   after(:all) do
     if ClusterConfig.instance.fcv_ish >= '4.2' && ClusterConfig.instance.topology == :replica_set
       ClusterTools.instance.set_election_timeout(10)
@@ -12,13 +11,12 @@ describe 'Connection pool timing test' do
 
   # TODO: From step down spec; should update Cluster Tools
   # This setup reduces the runtime of the test and makes execution more
-  # reliable. The spec as written requests a simple brute force step down,
-  # but this causes intermittent failures.
+  # reliable.
   before(:all) do
     ClientRegistry.instance.close_all_clients
-    Mongo::Monitoring::Global.subscribe(
-      Mongo::Monitoring::CONNECTION_POOL,
-      Mongo::Monitoring::CmapLogSubscriber.new)
+    # Mongo::Monitoring::Global.subscribe(
+    #   Mongo::Monitoring::CONNECTION_POOL,
+    #   Mongo::Monitoring::CmapLogSubscriber.new)
 
     # These before/after blocks are run even if the tests themselves are
     # skipped due to server version not being appropriate
@@ -35,8 +33,14 @@ describe 'Connection pool timing test' do
 
   let(:client) do
     @client = authorized_client.with(options.merge(monitoring: true)).tap do |client|
-      subscriber = Mongo::Monitoring::CmapLogSubscriber.new
-      client.subscribe( Mongo::Monitoring::CONNECTION_POOL, subscriber )
+      # subscriber = Mongo::Monitoring::CmapLogSubscriber.new
+      # client.subscribe( Mongo::Monitoring::CONNECTION_POOL, subscriber )
+    end
+  end
+
+  after(:all) do
+    if @client
+      @client.close(true)
     end
   end
 
@@ -55,14 +59,14 @@ describe 'Connection pool timing test' do
     end
   end
 
-  let(:threads) do
+  let(:operation_threads) do
     [].tap do |threads|
       thread_count.times do |i|
         threads << Thread.new do
-          2000.times do |j|
-            collection.find(a: i+j)
+          100.times do |j|
+            collection.find(a: i+j).to_a
             sleep 0.001
-            collection.find(a: i+j)
+            collection.find(a: i+j).to_a
           end
         end
       end
@@ -76,6 +80,8 @@ describe 'Connection pool timing test' do
       { max_pool_size: 10, min_pool_size: 5 }
     end
 
+    let(:threads) { operation_threads }
+
     it 'does not error' do
       start = Time.now
       expect {
@@ -88,8 +94,10 @@ describe 'Connection pool timing test' do
 
   context 'when there is a low max idle time' do
     let(:options) do
-      { max_pool_size: 10, min_pool_size: 5, max_idle_time: 0.0001 }
+      { max_pool_size: 10, min_pool_size: 5, max_idle_time: 0.1 }
     end
+
+    let(:threads) { operation_threads }
 
     it 'does not error' do
       start = Time.now
@@ -107,21 +115,11 @@ describe 'Connection pool timing test' do
     end
 
     let(:threads) do
-      threads = []
-      thread_count.times do |i|
-        threads << Thread.new do
-          2000.times do |j|
-            collection.find(a: i+j)
-            sleep 0.001
-            collection.find(a: i+j)
-          end
-        end
-      end
-
+      threads = operation_threads
       threads << Thread.new do
         10.times do
           client.cluster.next_primary.pool.clear
-          sleep 0.01
+          sleep 0.1
         end
       end
       threads
@@ -147,9 +145,9 @@ describe 'Connection pool timing test' do
 
     let(:more_threads) do
       [].tap do |more_threads|
-        10.times do |i|
+        5.times do |i|
           threads << Thread.new do
-            1.times do |j|
+            10.times do |j|
               collection.find(a: i+j).to_a
               sleep 0.001
               collection.find(a: i+j).to_a

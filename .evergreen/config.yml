@@ -75,7 +75,6 @@ functions:
               export TMPDIR="$MONGO_ORCHESTRATION_HOME/db"
               export PATH="$MONGODB_BINARIES:$PATH"
               export PROJECT="${project}"
-
               export AUTH=${AUTH}
               export SSL=${SSL}
               export TOPOLOGY=${TOPOLOGY}
