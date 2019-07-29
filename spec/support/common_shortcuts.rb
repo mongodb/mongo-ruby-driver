@@ -165,12 +165,5 @@ module CommonShortcuts
       end
       LocalResourceRegistry.instance.register(pool, finalizer)
     end
-
-    def register_client(client)
-      finalizer = lambda do |client|
-        client.close(true)
-      end
-      LocalResourceRegistry.instance.register(client, finalizer)
-    end
   end
 end
