@@ -581,7 +581,7 @@ module Mongo
       #
       # @return [ true | false ] Whether this method should be called again
       #   to create more connections.
-      # @raise [ Exception ] The second socket-related error raised if a retry
+      # @raise [ Error::AuthError, Error ] The second socket-related error raised if a retry
       # occured, or the non socket-related error
       #
       # @api private
@@ -597,7 +597,7 @@ module Mongo
         end
 
         return create_and_add_connection
-      rescue Exception
+      rescue Error::AuthError, Error
         # wake up one thread waiting for connections, since one could not
         # be created here, and can instead be created in flow
         @available_semaphore.signal
