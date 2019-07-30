@@ -163,7 +163,7 @@ describe 'Connection pool stress test' do
       threads << Thread.new do
         sleep 0.2
 
-        client.cluster.servers_list.reverse.each do |server|
+        client.cluster.servers_list.each do |server|
           if server.description.data_bearing?
             server.pool.disconnect!
           end
@@ -173,23 +173,6 @@ describe 'Connection pool stress test' do
 
     it_behaves_like 'does not raise error'
   end
-
-  # context 'when primary server is removed from topology' do
-  #   require_topology :replica_set
-  #   let(:threads) do
-  #     threads = operation_threads
-
-  #     # thread that removes the primary from the cluster
-  #     threads << Thread.new do
-  #       sleep 0.2
-  #       server = client.cluster.next_primary
-  #       client.cluster.remove(server.address.host)
-  #       @removed_host = server.address.host
-  #     end
-  #   end
-
-  #   it_behaves_like 'does not raise error'
-  # end
 
   context 'when connection auth sometimes fails' do
     let(:threads) { operation_threads }
