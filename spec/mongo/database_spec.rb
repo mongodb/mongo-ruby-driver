@@ -96,12 +96,25 @@ describe Mongo::Database do
       database[:users].create
     end
 
+    let(:actual) do
+      database.collection_names
+    end
+
     it 'returns the stripped names of the collections' do
-      expect(database.collection_names).to include('users')
+      expect(actual).to include('users')
     end
 
     it 'does not include system collections' do
-      expect(database.collection_names).to_not include('system.version')
+      expect(actual).to_not include('version')
+      expect(actual).to_not include('system.version')
+    end
+
+    context 'on 2.6 server' do
+      max_server_version '2.6'
+    end
+
+    it 'does not include collections with $ in names' do
+      expect(actual.none? { |name| name.include?('$') }).to be true
     end
 
     context 'when provided a session' do
@@ -177,13 +190,33 @@ describe Mongo::Database do
       end
     end
 
+    it 'does not include collections with $ in names' do
+      expect(result.none? { |name| name.include?('$') }).to be true
+    end
+
     context 'on admin database' do
       let(:database) do
         described_class.new(root_authorized_client, 'admin')
       end
 
-      it 'includes system collections' do
-        expect(result.any? { |name| name =~ /(^|\.)system\./ }).to be true
+      it 'does not include system collections' do
+        expect(result.none? { |name| name =~ /(^|\.)system\./ }).to be true
+      end
+
+      context 'server 3.0+' do
+        min_server_fcv '3.0'
+
+        it 'returns results' do
+          expect(result).to include('acol')
+        end
+      end
+
+      context 'server 2.6-' do
+        max_server_version '2.6'
+
+        it 'returns results' do
+          expect(result).to include('admin.acol')
+        end
       end
     end
   end
@@ -208,6 +241,10 @@ describe Mongo::Database do
       it 'returns collection objects for each name' do
         expect(database.collections).to include(collection)
       end
+
+      it 'does not include collections with $ in names' do
+        expect(database.collections.none? { |c| c.name.include?('$') }).to be true
+      end
     end
 
     context 'on admin database' do
@@ -216,9 +253,10 @@ describe Mongo::Database do
         described_class.new(root_authorized_client, 'admin')
       end
 
-      it 'includes the system collections' do
+      it 'does not include the system collections' do
         collection_names = database.collections.map(&:name)
-        expect(collection_names).to include('system.version')
+        expect(collection_names).not_to include('system.version')
+        expect(collection_names.none? { |name| name =~ /(^|\.)system\./ }).to be true
       end
     end
 

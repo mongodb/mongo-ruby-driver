@@ -42,6 +42,7 @@ module Mongo
     # Database name field constant.
     #
     # @since 2.1.0
+    # @deprecated
     NAME = 'name'.freeze
 
     # Databases constant.
@@ -109,34 +110,36 @@ module Mongo
 
     # Get all the names of the non-system collections in the database.
     #
-    # @example Get the collection names.
-    #   database.collection_names
+    # @note The set of returned collection names depends on the version of
+    #   MongoDB server that fulfills the request.
     #
-    # @return [ Array<String> ] The names of all non-system collections.
+    # @return [ Array<String> ] Names of the collections.
     #
     # @since 2.0.0
     def collection_names(options = {})
       View.new(self).collection_names(options)
     end
 
-    # Get info on all the collections in the database.
+    # Get info on all the non-system collections in the database.
     #
-    # @example Get info on each collection.
-    #   database.list_collections
+    # @note The set of collections returned, and the schema of the
+    #   information hash per collection, depends on the MongoDB server
+    #   version that fulfills the request.
     #
-    # @return [ Array<Hash> ] Info for each collection in the database.
+    # @return [ Array<Hash> ] Array of information hashes, one for each
+    #   collection in the database.
     #
     # @since 2.0.5
     def list_collections
       View.new(self).list_collections
     end
 
-    # Get all the collections that belong to this database.
+    # Get all the non-system collections that belong to this database.
     #
-    # @example Get all the collections.
-    #   database.collections
+    # @note The set of returned collections depends on the version of
+    #   MongoDB server that fulfills the request.
     #
-    # @return [ Array<Mongo::Collection> ] All the collections.
+    # @return [ Array<Mongo::Collection> ] The collections.
     #
     # @since 2.0.0
     def collections

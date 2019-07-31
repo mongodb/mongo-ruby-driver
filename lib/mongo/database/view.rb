@@ -40,8 +40,8 @@ module Mongo
 
       # Get all the names of the non-system collections in the database.
       #
-      # @example Get the collection names.
-      #   database.collection_names
+      # @note The set of returned collection names depends on the version of
+      #   MongoDB server that fulfills the request.
       #
       # @param [ Hash ] options Options for the listCollections command.
       #
@@ -59,15 +59,21 @@ module Mongo
         end
         cursor.map do |info|
           if cursor.server.features.list_collections_enabled?
-            info[Database::NAME]
+            info['name']
           else
-            (info[Database::NAME] &&
-              info[Database::NAME].sub("#{@database.name}.", ''))
+            (info['name'] &&
+              info['name'].sub("#{@database.name}.", ''))
           end
+        end.reject do |name|
+          name.start_with?('system.') || name.include?('$')
         end
       end
 
       # Get info on all the collections in the database.
+      #
+      # @note The set of collections returned, and the schema of the
+      #   information hash per collection, depends on the MongoDB server
+      #   version that fulfills the request.
       #
       # @example Get info on each collection.
       #   database.list_collections
@@ -119,15 +125,29 @@ module Mongo
       private
 
       def collections_info(session, server_selector, options = {}, &block)
+        description = nil
         cursor = read_with_retry_cursor(session, server_selector, self) do |server|
+          # TODO take description from the connection used to send the query
+          # once https://jira.mongodb.org/browse/RUBY-1601 is fixed.
+          description = server.description
           send_initial_query(server, session, options)
         end
-        if block_given?
-          cursor.each do |doc|
-            yield doc
+        # On 3.0+ servers, we get just the collection names.
+        # On 2.6 server, we get collection names prefixed with the database
+        # name. We need to filter system collections out here because
+        # in the caller we don't know which server version executed the
+        # command and thus what the proper filtering logic should be
+        # (it is valid for collection names to have dots, thus filtering out
+        # collections named system.* here for 2.6 servers would actually
+        # filter out collections in the system database).
+        if description.server_version_gte?('3.0')
+          cursor.reject do |doc|
+            doc['name'].start_with?('system.') || doc['name'].include?('$')
           end
         else
-          cursor.to_enum
+          docs = cursor.reject do |doc|
+            doc['name'].start_with?("#{database.name}.system") || doc['name'].include?('$')
+          end
         end
       end
 
