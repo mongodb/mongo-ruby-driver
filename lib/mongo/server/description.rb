@@ -705,6 +705,30 @@ module Mongo
       end
       alias_method :eql?, :==
 
+      # @api private
+      def server_version_gte?(version)
+        required_wv = case version
+          when '4.2'
+            8
+          when '4.0'
+            7
+          when '3.6'
+            6
+          when '3.4'
+            5
+          when '3.2'
+            4
+          when '3.0'
+            3
+          when '2.6'
+            2
+          else
+            raise ArgumentError, "Bogus required version #{version}"
+          end
+
+        required_wv >= min_wire_version && required_wv <= max_wire_version
+      end
+
       private
 
       def compare_config(other)

@@ -679,7 +679,7 @@ module Mongo
     #
     # @since 2.0.5
     def database_names(filter = {}, opts = {})
-      list_databases(filter, true, opts).collect{ |info| info[Database::NAME] }
+      list_databases(filter, true, opts).collect{ |info| info['name'] }
     end
 
     # Get info for each database.
