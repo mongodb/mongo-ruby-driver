@@ -33,7 +33,7 @@ describe 'Connection pool stress test' do
     @client = authorized_client.with(options)
   end
 
-  let!(:collection) do
+  let(:collection) do
     client[authorized_collection.name].tap do |collection|
       collection.drop
       collection.insert_many(documents)
@@ -48,6 +48,8 @@ describe 'Connection pool stress test' do
 
   shared_examples_for 'does not raise error' do
     it 'does not raise error' do
+      collection
+
       expect {
         threads.collect { |t| t.join }
       }.not_to raise_error
@@ -174,13 +176,19 @@ describe 'Connection pool stress test' do
     it_behaves_like 'does not raise error'
   end
 
-  context 'when connection auth sometimes fails' do
+  context 'when populator connection auth sometimes fails' do
     let(:threads) { operation_threads }
 
-    # unlikely, but possible this fails. TODO: acceptable?
-    it 'does not raise error', retry: 2 do
-      allow_any_instance_of(Mongo::Server::Connection).to receive(:connect!).and_wrap_original { |m, *args|
-        if rand < 0.01
+    it 'does not raise error' do
+      server = client.cluster.next_primary
+
+      # We only want to test connection failure on the populator; connection failures
+      # occurring in the check_out method should raise an error.
+      # The populator calls create_and_add_connection, which calls connection.connect!
+      # and raises if an error occurs (eg, an auth error), so in this test we
+      # randomly raise errors on this method.
+      expect(server.pool).to receive(:create_and_add_connection).at_least(:once).and_wrap_original { |m, *args|
+        if rand < 0.05
           raise Mongo::Error::SocketError
         else
           m.call(*args)

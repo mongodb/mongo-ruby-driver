@@ -172,8 +172,7 @@ class ClusterTools
     persistently_step_up(target.address)
 
     new_primary = admin_client.cluster.next_primary
-    puts "#{Time.now} [CT] Primary changed to #{new_primary.address}"
-    puts "Time to change primaries: #{Time.now - start}"
+    puts "#{Time.now} [CT] Primary changed to #{new_primary.address} \nTime to change primaries: #{Time.now - start}"
   end
 
   def persistently_step_up(address)
@@ -348,6 +347,11 @@ class ClusterTools
       end
       @direct_clients = nil
     end
+  end
+
+  def clear_clients
+    @direct_clients = nil
+    @admin_client = nil
   end
 
   private

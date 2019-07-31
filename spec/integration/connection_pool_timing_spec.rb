@@ -1,6 +1,18 @@
 require 'spec_helper'
 
 describe 'Connection pool timing test' do
+  before(:all) do
+    ClientRegistry.instance.close_all_clients
+    ClusterTools.instance.clear_clients
+
+    # This set up is taken from the step_down_spec file. In a future PR, ClusterTools
+    # may be modified so this set up is no longer necessary.
+    if ClusterConfig.instance.fcv_ish >= '4.2' && ClusterConfig.instance.topology == :replica_set
+      ClusterTools.instance.set_election_timeout(5)
+      ClusterTools.instance.set_election_handoff(false)
+    end
+  end
+
   after(:all) do
     if ClusterConfig.instance.fcv_ish >= '4.2' && ClusterConfig.instance.topology == :replica_set
       ClusterTools.instance.set_election_timeout(10)
@@ -9,33 +21,8 @@ describe 'Connection pool timing test' do
     end
   end
 
-  # TODO: From step down spec; should update Cluster Tools
-  # This setup reduces the runtime of the test and makes execution more
-  # reliable.
-  before(:all) do
-    ClientRegistry.instance.close_all_clients
-    # Mongo::Monitoring::Global.subscribe(
-    #   Mongo::Monitoring::CONNECTION_POOL,
-    #   Mongo::Monitoring::CmapLogSubscriber.new)
-
-    # These before/after blocks are run even if the tests themselves are
-    # skipped due to server version not being appropriate
-    if ClusterConfig.instance.fcv_ish >= '4.2' && ClusterConfig.instance.topology == :replica_set
-      # It seems that a short election timeout can cause unintended elections,
-      # which makes the server close connections which causes the driver to
-      # reconnect which then fails the step down test.
-      # The election timeout here is greater than the catch up period and
-      # step down timeout specified in cluster tools.
-      ClusterTools.instance.set_election_timeout(5)
-      ClusterTools.instance.set_election_handoff(false)
-    end
-  end
-
   let(:client) do
-    @client = authorized_client.with(options.merge(monitoring: true)).tap do |client|
-      # subscriber = Mongo::Monitoring::CmapLogSubscriber.new
-      # client.subscribe( Mongo::Monitoring::CONNECTION_POOL, subscriber )
-    end
+    @client = authorized_client.with(options.merge(monitoring: true))
   end
 
   after(:all) do
@@ -65,7 +52,7 @@ describe 'Connection pool timing test' do
         threads << Thread.new do
           100.times do |j|
             collection.find(a: i+j).to_a
-            sleep 0.001
+            sleep 0.01
             collection.find(a: i+j).to_a
           end
         end
@@ -87,8 +74,7 @@ describe 'Connection pool timing test' do
       expect {
         threads.collect { |t| t.join }
       }.not_to raise_error
-      @duration = Time.now - start
-      puts "No max idle time: #{@duration}"
+      puts "Duration with no max idle time: #{Time.now - start}"
     end
   end
 
@@ -104,8 +90,7 @@ describe 'Connection pool timing test' do
       expect {
         threads.collect { |t| t.join }
       }.not_to raise_error
-      @duration_with_idle_time = Time.now - start
-      puts "Low max idle time: #{@duration_with_idle_time}"
+      puts "Duration with low max idle time: #{Time.now - start}"
     end
   end
 
@@ -118,8 +103,8 @@ describe 'Connection pool timing test' do
       threads = operation_threads
       threads << Thread.new do
         10.times do
-          client.cluster.next_primary.pool.clear
           sleep 0.1
+          client.cluster.next_primary.pool.clear
         end
       end
       threads
@@ -130,12 +115,11 @@ describe 'Connection pool timing test' do
       expect {
         threads.collect { |t| t.join }
       }.not_to raise_error
-      @duration_with_clear = Time.now - start
-      puts "Clear called periodically: #{@duration_with_clear}"
+      puts "Duration when clear is called periodically: #{Time.now - start}"
     end
   end
 
-  context 'when primary is changed' do
+  context 'when primary is changed, then more operations are performed' do
     min_server_fcv '4.2'
     require_topology :replica_set
 
@@ -149,7 +133,7 @@ describe 'Connection pool timing test' do
           threads << Thread.new do
             10.times do |j|
               collection.find(a: i+j).to_a
-              sleep 0.001
+              sleep 0.01
               collection.find(a: i+j).to_a
             end
           end
@@ -164,17 +148,22 @@ describe 'Connection pool timing test' do
         threads << Thread.new do
           10.times do |j|
             collection.find(a: i+j).to_a
-            sleep 0.001
+            sleep 0.01
             collection.find(a: i+j).to_a
           end
         end
       end
 
       threads << Thread.new do
+        # Wait for other threads to terminate first, otherwise we get an error
+        # when trying to perform operations during primary change
         sleep 1
-        @exec_end = Time.now
+
+        @primary_chane_start = Time.now
         ClusterTools.instance.change_primary
-        @start = Time.now
+        @primary_change_end = Time.now
+
+        # Primary change is complete; execute more operations
         more_threads.collect { |t| t.join }
       end
       threads
@@ -182,13 +171,12 @@ describe 'Connection pool timing test' do
 
     it 'does not error' do
       threads
-      @exec_start = Time.now
+      start = Time.now
       expect {
         threads.collect { |t| t.join }
       }.not_to raise_error
-      @after_primary_change_duration = Time.now - @start
-      puts "Duration before primary change: #{@exec_end - @exec_start}"
-      puts "Duration after primary change: #{@after_primary_change_duration}"
+      puts "Duration before primary change: #{@primary_chane_start - start}"
+      puts "Duration after primary change: #{Time.now - @primary_change_end}"
     end
   end
 end
