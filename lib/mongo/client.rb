@@ -32,6 +32,17 @@ module Mongo
       :write, :write_concern,
       :retry_reads, :max_read_retries, :read_retry_interval,
       :retry_writes, :max_write_retries,
+
+      # Options which cannot currently be here:
+      #
+      # :server_selection_timeout
+      # Server selection timeout is used by cluster constructor to figure out
+      # how long to wait for initial scan in compatibility mode, but once
+      # the cluster is initialized it no longer uses this timeout.
+      # Unfortunately server selector reads server selection timeout out of
+      # the cluster, and this behavior is required by Cluster#next_primary
+      # which takes no arguments. When next_primary is removed we can revsit
+      # using the same cluster object with different server selection timeouts.
     ].freeze
 
     # Valid client options.

@@ -217,7 +217,7 @@ module Mongo
       # @return [ Features ] features The features for the server.
       def features
         if unknown?
-          raise ArgumentError, "An unknown server's features are not known"
+          return Features.new(0..0, address.to_s)
         end
         @features
       end
