@@ -349,11 +349,6 @@ class ClusterTools
     end
   end
 
-  def clear_clients
-    @direct_clients = nil
-    @admin_client = nil
-  end
-
   private
 
   def each_server(&block)

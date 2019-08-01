@@ -3,7 +3,6 @@ require 'spec_helper'
 describe 'Connection pool timing test' do
   before(:all) do
     ClientRegistry.instance.close_all_clients
-    ClusterTools.instance.clear_clients
 
     # This set up is taken from the step_down_spec file. In a future PR, ClusterTools
     # may be modified so this set up is no longer necessary.
