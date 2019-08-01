@@ -36,8 +36,17 @@ module Mongo
 
       # The default timeout, in seconds, to wait for a connection.
       #
+      # This timeout applies while in flow threads are waiting for background
+      # threads to establish connections (and hence they must connect, handshake
+      # and auth in the allotted time).
+      #
+      # It is currently set to 10 seconds. The default connect timeout is
+      # 10 seconds by itself, but setting large timeouts can get applications
+      # in trouble if their requests get timed out by the reverse proxy,
+      # thus anything over 15 seconds is potentially dangerous.
+      #
       # @since 2.9.0
-      DEFAULT_WAIT_TIMEOUT = 1.freeze
+      DEFAULT_WAIT_TIMEOUT = 10.freeze
 
       # Condition variable broadcast when the size of the pool changes
       # to wake up the populator
@@ -201,7 +210,7 @@ module Mongo
       # already holding the lock as Ruby does not allow a thread holding a
       # lock to acquire this lock again.
       def unsynchronized_size
-        @available_connections.length + @checked_out_connections.size + @pending_connections.size
+        @available_connections.length + @checked_out_connections.length + @pending_connections.length
       end
       private :unsynchronized_size
 
@@ -225,6 +234,17 @@ module Mongo
       # @since 2.9.0
       def closed?
         !!@closed
+      end
+
+      # @note This method is experimental and subject to change.
+      #
+      # @api experimental
+      # @since 2.11.0
+      def summary
+        @lock.synchronize do
+          "#<ConnectionPool size=#{unsynchronized_size} (#{min_size}-#{max_size}) " +
+            "used=#{@checked_out_connections.length} avail=#{@available_connections.length} pending=#{@pending_connections.length}>"
+        end
       end
 
       # @since 2.9.0
@@ -313,7 +333,15 @@ module Mongo
                   Monitoring::Event::Cmap::ConnectionCheckOutFailed::TIMEOUT,
                 ),
               )
-              raise Error::ConnectionCheckOutTimeout.new(@server.address, wait_timeout)
+
+              msg = @lock.synchronize do
+                "Timed out when attempting to check out a connection " +
+                  "from pool for #{@server.address} after #{wait_timeout} sec. " +
+                  "Connections in pool: #{@available_connections.length} available, " +
+                  "#{@checked_out_connections.length} checked out, " +
+                  "#{@pending_connections.length} pending"
+              end
+              raise Error::ConnectionCheckOutTimeout.new(msg, address: @server.address)
             end
             @available_semaphore.wait(wait)
           end

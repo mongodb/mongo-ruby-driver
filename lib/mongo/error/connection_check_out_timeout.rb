@@ -33,16 +33,15 @@ module Mongo
 
       # Instantiate the new exception.
       #
-      # @param [ Address ] address
-      # @param [ Float ] wait_timeout
+      # @option options [ Address ] :address
       #
-      # @since 2.9.0
       # @api private
-      def initialize(address, wait_timeout)
-        @address = address
-
-        super("Timed out when attempting to check out a connection from pool with address " +
-                "#{address} after #{wait_timeout} sec")
+      def initialize(msg, options)
+        super(msg)
+        @address = options[:address]
+        unless @address
+          raise ArgumentError, 'Address argument is required'
+        end
       end
     end
   end
