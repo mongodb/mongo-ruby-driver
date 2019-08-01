@@ -313,18 +313,39 @@ class ClusterTools
     # Since we are triggering elections, we need to have a higher server
     # selection timeout applied. The default timeout for tests assumes a
     # stable deployment.
-    @admin_client ||= ClientRegistry.instance.global_client('root_authorized').
-      with(server_selection_timeout: 15).use(:admin)
+    (
+      @admin_client ||= ClientRegistry.instance.global_client('root_authorized').
+        with(server_selection_timeout: 15).use(:admin)
+    ).tap do |client|
+      ClientRegistry.reconnect_client_if_perished(client)
+    end
   end
 
   def direct_client(address, options = {})
     @direct_clients ||= {}
     cache_key = {address: address}.update(options)
-    @direct_clients[cache_key] ||= ClientRegistry.instance.new_local_client(
-      [address.to_s],
-      SpecConfig.instance.test_options.merge(
-        SpecConfig.instance.auth_options).merge(
-        connect: :direct, server_selection_timeout: 10).merge(options))
+    (
+      @direct_clients[cache_key] ||= ClientRegistry.instance.new_local_client(
+        [address.to_s],
+        SpecConfig.instance.test_options.merge(
+          SpecConfig.instance.auth_options).merge(
+          connect: :direct, server_selection_timeout: 10).merge(options))
+    ).tap do |client|
+      ClientRegistry.reconnect_client_if_perished(client)
+    end
+  end
+
+  def close_clients
+    if @admin_client
+      @admin_client.close
+      @admin_client = nil
+    end
+    if @direct_clients
+      @direct_clients.each do |cache_key, client|
+        client.close
+      end
+      @direct_clients = nil
+    end
   end
 
   private
