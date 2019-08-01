@@ -266,7 +266,7 @@ module Mongo
           start_at_operation_time = nil
           start_at_operation_time_supported = nil
           @cursor = read_with_retry_cursor(session, server_selector, view) do |server|
-            start_at_operation_time_supported = server.description.max_wire_version >= 7
+            start_at_operation_time_supported = server.description.server_version_gte?('4.0')
 
             result = send_initial_query(server, session)
             if doc = result.replies.first && result.replies.first.documents.first
