@@ -959,4 +959,103 @@ describe Mongo::Server::ConnectionPool do
       end
     end
   end
+
+  describe '#populate' do
+    before do
+      # Disable the populator and clear the pool to isolate populate behavior
+      pool.stop_populator
+      pool.clear
+    end
+
+    let(:options) { {min_pool_size: 2, max_pool_size: 3} }
+
+    context 'when pool size is at least min_pool_size' do
+      before do
+        first_connection = pool.check_out
+        second_connection = pool.check_out
+        expect(pool.size).to eq 2
+        expect(pool.available_count).to eq 0
+      end
+
+      it 'does not create a connection and returns false' do
+        expect(pool.populate).to be false
+        expect(pool.size).to eq 2
+        expect(pool.available_count).to eq 0
+      end
+    end
+
+    context 'when pool size is less than min_pool_size' do
+      before do
+        first_connection = pool.check_out
+        expect(pool.size).to eq 1
+        expect(pool.available_count).to eq 0
+      end
+
+      it 'creates one connection, connects it, and returns true' do
+        expect(pool.populate).to be true
+        expect(pool.size).to eq 2
+        expect(pool.available_count).to eq 1
+      end
+    end
+
+    context 'when pool is closed' do
+      before do
+        pool.close
+      end
+
+      it 'does not create a connection and returns false' do
+        expect(pool.populate).to be false
+
+        # Can't just check pool size; size errors when pool is closed
+        expect(pool.instance_variable_get('@available_connections').length).to eq(0)
+        expect(pool.instance_variable_get('@checked_out_connections').length).to eq(0)
+        expect(pool.instance_variable_get('@pending_connections').length).to eq(0)
+      end
+    end
+
+    context 'when connect fails with socket related error once' do
+      before do
+        i = 0
+        expect(pool).to receive(:connect_connection).exactly(:twice).and_wrap_original{ |m, *args|
+          i += 1
+          if i == 1
+            raise Mongo::Error::SocketError
+          else
+            m.call(*args)
+          end
+        }
+        expect(pool.size).to eq 0
+      end
+
+      it 'retries then succeeds in creating a connection' do
+        expect(pool.populate).to be true
+        expect(pool.size).to eq 1
+        expect(pool.available_count).to eq 1
+      end
+    end
+
+    context 'when connect fails with socket related error twice' do
+      before do
+        expect(pool).to receive(:connect_connection).exactly(:twice).and_raise(Mongo::Error::SocketError)
+        expect(pool.size).to eq 0
+      end
+
+      it 'retries, raises the second error, and fails to create a connection' do
+        expect{ pool.populate }.to raise_error(Mongo::Error::SocketError)
+        expect(pool.size).to eq 0
+      end
+    end
+
+    context 'when connect fails with non socket related error' do
+      before do
+        expect(pool).to receive(:connect_connection).once.and_raise(Mongo::Auth::InvalidMechanism.new(""))
+        expect(pool.size).to eq 0
+      end
+
+      it 'does not retry, raises the error, and fails to create a connection' do
+        expect{ pool.populate }.to raise_error(Mongo::Auth::InvalidMechanism)
+        expect(pool.size).to eq 0
+      end
+    end
+  end
 end
