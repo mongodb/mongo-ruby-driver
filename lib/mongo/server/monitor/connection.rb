@@ -235,7 +235,7 @@ module Mongo
         end
 
         def retry_message
-          "Retrying ismaster on #{address}"
+          "Retrying ismaster in monitor for #{address}"
         end
       end
     end

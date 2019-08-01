@@ -155,7 +155,7 @@ describe Mongo::Server::Monitor::Connection do
 
       it 'logs the retry' do
         expect(Mongo::Logger.logger).to receive(:warn) do |msg|
-          expect(msg).to match(/Retrying ismaster on #{connection.address}/)
+          expect(msg).to match(/Retrying ismaster in monitor for #{connection.address}/)
         end
         expect(result).to be_a(Hash)
       end
