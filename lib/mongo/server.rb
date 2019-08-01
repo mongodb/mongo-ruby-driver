@@ -327,11 +327,17 @@ module Mongo
       if replica_set_name
         status += " replica_set=#{replica_set_name}"
       end
+
+      if @pool
+        status += " pool=#{@pool.summary}"
+      end
+
       address_bit = if address
         "#{address.host}:#{address.port}"
       else
         'nil'
       end
+
       "#<Server address=#{address_bit} #{status}>"
     end
 

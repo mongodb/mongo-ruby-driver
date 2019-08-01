@@ -236,6 +236,17 @@ module Mongo
         !!@closed
       end
 
+      # @note This method is experimental and subject to change.
+      #
+      # @api experimental
+      # @since 2.11.0
+      def summary
+        @lock.synchronize do
+          "#<ConnectionPool size=#{unsynchronized_size} (#{min_size}-#{max_size}) " +
+            "used=#{@checked_out_connections.length} avail=#{@available_connections.length} pending=#{@pending_connections.length}>"
+        end
+      end
+
       # @since 2.9.0
       def_delegators :@server, :monitoring
 
