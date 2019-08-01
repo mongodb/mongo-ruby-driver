@@ -172,7 +172,7 @@ describe Mongo::Server::ConnectionPool do
 
     context 'when the wait timeout option is not provided' do
       it 'returns the default wait timeout' do
-        expect(pool.wait_timeout).to eq(1)
+        expect(pool.wait_timeout).to eq(10)
       end
     end
   end

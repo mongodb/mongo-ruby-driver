@@ -36,8 +36,17 @@ module Mongo
 
       # The default timeout, in seconds, to wait for a connection.
       #
+      # This timeout applies while in flow threads are waiting for background
+      # threads to establish connections (and hence they must connect, handshake
+      # and auth in the allotted time).
+      #
+      # It is currently set to 10 seconds. The default connect timeout is
+      # 10 seconds by itself, but setting large timeouts can get applications
+      # in trouble if their requests get timed out by the reverse proxy,
+      # thus anything over 15 seconds is potentially dangerous.
+      #
       # @since 2.9.0
-      DEFAULT_WAIT_TIMEOUT = 1.freeze
+      DEFAULT_WAIT_TIMEOUT = 10.freeze
 
       # Condition variable broadcast when the size of the pool changes
       # to wake up the populator
