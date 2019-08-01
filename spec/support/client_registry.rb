@@ -50,22 +50,33 @@ class ClientRegistry
     @lock = Mutex.new
   end
 
-  def global_client(name)
-    if client = @global_clients[name]
+  class << self
+    def client_perished?(client)
       if !client.cluster.connected?
-        reconnect = true
+        true
       else
-        reconnect = false
+        perished = false
         client.cluster.servers_list.each do |server|
           thread = server.monitor.instance_variable_get('@thread')
           if thread.nil? || !thread.alive?
-            reconnect = true
+            perished = true
           end
         end
+        perished
       end
-      if reconnect
+    end
+    private :client_perished?
+
+    def reconnect_client_if_perished(client)
+      if client_perished?(client)
         client.reconnect
       end
+    end
+  end
+
+  def global_client(name)
+    if client = @global_clients[name]
+      self.class.reconnect_client_if_perished(client)
       return client
     end
 
@@ -204,6 +215,7 @@ class ClientRegistry
   end
 
   def close_all_clients
+    ClusterTools.instance.close_clients
     close_local_clients
     @lock.synchronize do
       @global_clients.each do |name, client|
