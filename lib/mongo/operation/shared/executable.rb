@@ -66,7 +66,7 @@ module Mongo
           else
             # Max wire version needs to be checked prior to marking the
             # server unknown
-            disconnect_pool = server.description.max_wire_version < 8
+            disconnect_pool = !server.description.server_version_gte?('4.2')
           end
 
           server.unknown!
