@@ -201,7 +201,7 @@ module Mongo
       # already holding the lock as Ruby does not allow a thread holding a
       # lock to acquire this lock again.
       def unsynchronized_size
-        @available_connections.length + @checked_out_connections.size + @pending_connections.size
+        @available_connections.length + @checked_out_connections.length + @pending_connections.length
       end
       private :unsynchronized_size
 
@@ -313,7 +313,15 @@ module Mongo
                   Monitoring::Event::Cmap::ConnectionCheckOutFailed::TIMEOUT,
                 ),
               )
-              raise Error::ConnectionCheckOutTimeout.new(@server.address, wait_timeout)
+
+              msg = @lock.synchronize do
+                "Timed out when attempting to check out a connection " +
+                  "from pool for #{@server.address} after #{wait_timeout} sec. " +
+                  "Connections in pool: #{@available_connections.length} available, " +
+                  "#{@checked_out_connections.length} checked out, " +
+                  "#{@pending_connections.length} pending"
+              end
+              raise Error::ConnectionCheckOutTimeout.new(msg, address: @server.address)
             end
             @available_semaphore.wait(wait)
           end
