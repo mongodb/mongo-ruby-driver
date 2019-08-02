@@ -502,11 +502,25 @@ module Mongo
       true
     end
 
+    # Runs SDAM flow on the cluster.
+    #
+    # This method can be invoked to process a new server description returned
+    # by the server on a monitoring or non-monitoring connection, and also
+    # by the driver when it marks a server unknown as a result of a (network)
+    # error.
+    #
     # @param [ Server::Description ] previous_desc Previous server description.
     # @param [ Server::Description ] updated_desc The changed description.
+    # @param [ Hash ] options Options.
+    #
+    # @option options [ true | false ] :keep_connection_pool Usually when the
+    #   new server description is unknown, the connection pool on the
+    #   respective server is cleared. Set this option to true to keep the
+    #   existing connection pool (required when handling not master errors
+    #   on 4.2+ servers).
     #
     # @api private
-    def run_sdam_flow(previous_desc, updated_desc)
+    def run_sdam_flow(previous_desc, updated_desc, options = {})
       @sdam_flow_lock.synchronize do
         flow = SdamFlow.new(self, previous_desc, updated_desc)
         flow.server_description_changed
@@ -514,6 +528,16 @@ module Mongo
         # SDAM flow may alter the updated description - grab the final
         # version for the purposes of broadcasting if a server is available
         updated_desc = flow.updated_desc
+
+        unless options[:keep_connection_pool]
+          if flow.became_unknown?
+            servers_list.each do |server|
+              if server.address == updated_desc.address
+                server.clear_connection_pool
+              end
+            end
+          end
+        end
       end
 
       # Some updated descriptions, e.g. a mismatched me one, result in the

@@ -62,18 +62,13 @@ module Mongo
 
         if result.not_master? || result.node_recovering?
           if result.node_shutting_down?
-            disconnect_pool = true
+            keep_pool = false
           else
-            # Max wire version needs to be checked prior to marking the
-            # server unknown
-            disconnect_pool = !server.description.server_version_gte?('4.2')
+            # Max wire version needs to be examined while the server is known
+            keep_pool = server.description.server_version_gte?('4.2')
           end
 
-          server.unknown!
-
-          if disconnect_pool
-            server.pool.disconnect!
-          end
+          server.unknown!(keep_connection_pool: keep_pool)
 
           server.scan_semaphore.signal
         end

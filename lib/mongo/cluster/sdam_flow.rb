@@ -28,7 +28,7 @@ class Mongo::Cluster
     def initialize(cluster, previous_desc, updated_desc)
       @cluster = cluster
       @topology = cluster.topology
-      @previous_desc = previous_desc
+      @original_desc = @previous_desc = previous_desc
       @updated_desc = updated_desc
     end
 
@@ -48,6 +48,7 @@ class Mongo::Cluster
 
     attr_reader :previous_desc
     attr_reader :updated_desc
+    attr_reader :original_desc
 
     def_delegators :topology, :replica_set_name
 
@@ -489,6 +490,13 @@ class Mongo::Cluster
         end
       end
       false
+    end
+
+    # Returns whether the server whose description this flow processed
+    # was not previously unknown, and is now. Used to decide, in particular,
+    # whether to clear the server's connection pool.
+    def became_unknown?
+      updated_desc.unknown? && !original_desc.unknown?
     end
   end
 end
