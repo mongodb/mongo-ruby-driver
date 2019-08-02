@@ -417,7 +417,11 @@ module Mongo
 
     # @api private
     def update_description(description)
+      clear_pool = @pool && description.unknown? && !@description.unknown?
       monitor.instance_variable_set('@description', description)
+      if clear_pool
+        @pool.disconnect!
+      end
     end
 
     # @api private
