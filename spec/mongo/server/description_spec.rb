@@ -21,7 +21,7 @@ describe Mongo::Server::Description do
       'maxMessageSizeBytes' => 48000000,
       'maxWriteBatchSize' => 1000,
       'maxWireVersion' => 2,
-      'minWireVersion' => 0,
+      'minWireVersion' => 1,
       'localTime' => Time.now,
       'lastWrite' => { 'lastWriteDate' => Time.now },
       'logicalSessionTimeoutMinutes' => 7,
@@ -194,7 +194,7 @@ describe Mongo::Server::Description do
       end
 
       it 'returns the default' do
-        expect(description.max_wire_version).to be nil
+        expect(description.max_wire_version).to eq(0)
       end
     end
   end
@@ -208,7 +208,7 @@ describe Mongo::Server::Description do
       end
 
       it 'returns the value' do
-        expect(description.min_wire_version).to eq(0)
+        expect(description.min_wire_version).to eq(1)
       end
     end
 
@@ -219,7 +219,7 @@ describe Mongo::Server::Description do
       end
 
       it 'returns the default' do
-        expect(description.min_wire_version).to be nil
+        expect(description.min_wire_version).to eq(0)
       end
     end
   end

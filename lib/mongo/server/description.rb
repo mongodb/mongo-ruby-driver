@@ -21,11 +21,11 @@ module Mongo
     # ismaster command.
     #
     # Note: Unknown servers do not have wire versions, but for legacy reasons
-    # we return 0 for min_wire_version and max_wire_version of an unknown server.
-    # Presently the driver sometimes constructs commands when the server is unknown,
-    # so references to min_wire_version and max_wire_version should not be nil. When
-    # driver behavior is changed (https://jira.mongodb.org/browse/RUBY-1805), this
-    # may no longer be necessary.
+    # we return 0 for min_wire_version and max_wire_version of any server that does
+    # not have them. Presently the driver sometimes constructs commands when the
+    # server is unknown, so references to min_wire_version and max_wire_version
+    # should not be nil. When driver behavior is changed
+    # (https://jira.mongodb.org/browse/RUBY-1805), this may no longer be necessary.
     #
     # @since 2.0.0
     class Description
@@ -335,7 +335,7 @@ module Mongo
         config[MAX_WRITE_BATCH_SIZE] || DEFAULT_MAX_WRITE_BATCH_SIZE
       end
 
-      # Get the maximum wire version.
+      # Get the maximum wire version. Defaults to zero.
       #
       # @example Get the max wire version.
       #   description.max_wire_version
@@ -347,7 +347,7 @@ module Mongo
         config[MAX_WIRE_VERSION] || 0
       end
 
-      # Get the minimum wire version.
+      # Get the minimum wire version. Defaults to zero.
       #
       # @example Get the min wire version.
       #   description.min_wire_version
