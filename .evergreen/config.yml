@@ -88,6 +88,8 @@ functions:
               export WITH_ACTIVE_SUPPORT="${WITH_ACTIVE_SUPPORT}"
               export SINGLE_MONGOS="${SINGLE_MONGOS}"
               export MMAPV1="${MMAPV1}"
+
+              export STRESS_SPEC=true
            EOT
            # See what we've done
            cat expansion.yml

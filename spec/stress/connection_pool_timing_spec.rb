@@ -2,6 +2,10 @@ require 'spec_helper'
 
 describe 'Connection pool timing test' do
   before(:all) do
+    if !SpecConfig.instance.stress_spec?
+      #skip 'Stress spec not enabled'
+    end
+
     ClientRegistry.instance.close_all_clients
 
     # This set up is taken from the step_down_spec file. In a future PR, ClusterTools
@@ -73,7 +77,7 @@ describe 'Connection pool timing test' do
       expect {
         threads.collect { |t| t.join }
       }.not_to raise_error
-      puts "Duration with no max idle time: #{Time.now - start}"
+      puts "[Connection Pool Timing] Duration with no max idle time: #{Time.now - start}"
     end
   end
 
@@ -89,7 +93,7 @@ describe 'Connection pool timing test' do
       expect {
         threads.collect { |t| t.join }
       }.not_to raise_error
-      puts "Duration with low max idle time: #{Time.now - start}"
+      puts "[Connection Pool Timing] Duration with low max idle time: #{Time.now - start}"
     end
   end
 
@@ -114,7 +118,7 @@ describe 'Connection pool timing test' do
       expect {
         threads.collect { |t| t.join }
       }.not_to raise_error
-      puts "Duration when clear is called periodically: #{Time.now - start}"
+      puts "[Connection Pool Timing] Duration when clear is called periodically: #{Time.now - start}"
     end
   end
 
@@ -174,8 +178,8 @@ describe 'Connection pool timing test' do
       expect {
         threads.collect { |t| t.join }
       }.not_to raise_error
-      puts "Duration before primary change: #{@primary_chane_start - start}"
-      puts "Duration after primary change: #{Time.now - @primary_change_end}"
+      puts "[Connection Pool Timing] Duration before primary change: #{@primary_chane_start - start}. "\
+        "Duration after primary change: #{Time.now - @primary_change_end}"
     end
   end
 end

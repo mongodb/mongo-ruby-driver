@@ -105,6 +105,10 @@ class SpecConfig
     RUBY_PLATFORM
   end
 
+  def stress_spec?
+    !!ENV['STRESS_SPEC']
+  end
+
   # Test suite configuration
 
   def client_debug?
