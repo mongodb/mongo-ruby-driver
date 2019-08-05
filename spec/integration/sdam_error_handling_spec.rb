@@ -172,6 +172,11 @@ describe 'SDAM error handling' do
   end
 
   describe 'when there is an error on monitoring connection' do
+    let(:client) do
+      authorized_client_without_any_retries.with(
+        connect_timeout: 1, socket_timeout: 1)
+    end
+
     let(:operation) do
       expect(server.monitor.connection).not_to be nil
       expect(server.monitor.connection).to receive(:ismaster).at_least(:once).and_raise(exception)
