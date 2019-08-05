@@ -160,7 +160,8 @@ describe 'Step down behavior' do
           collection.insert_one(test: 1)
         end.to raise_error(Mongo::Error::OperationFailure, /10107/)
 
-        expect(event_subscriber.select_published_events(Mongo::Monitoring::Event::Cmap::PoolCleared).count).to eq(0)
+        # Temporarily add 1 due to RUBY-1894 backport
+        expect(event_subscriber.select_published_events(Mongo::Monitoring::Event::Cmap::PoolCleared).count).to eq(0+1)
       end
     end
 
@@ -179,7 +180,8 @@ describe 'Step down behavior' do
           collection.insert_one(test: 1)
         end.to raise_error(Mongo::Error::OperationFailure, /10107/)
 
-        expect(event_subscriber.select_published_events(Mongo::Monitoring::Event::Cmap::PoolCleared).count).to eq(1)
+        # Temporarily add 1 due to RUBY-1894 backport
+        expect(event_subscriber.select_published_events(Mongo::Monitoring::Event::Cmap::PoolCleared).count).to eq(1+1)
       end
     end
 
@@ -196,7 +198,8 @@ describe 'Step down behavior' do
           collection.insert_one(test: 1)
         end.to raise_error(Mongo::Error::OperationFailure, /11600/)
 
-        expect(event_subscriber.select_published_events(Mongo::Monitoring::Event::Cmap::PoolCleared).count).to eq(1)
+        # Temporarily add 1 due to RUBY-1894 backport
+        expect(event_subscriber.select_published_events(Mongo::Monitoring::Event::Cmap::PoolCleared).count).to eq(1+1)
       end
     end
   end
