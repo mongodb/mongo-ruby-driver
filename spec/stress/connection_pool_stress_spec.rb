@@ -3,7 +3,7 @@ require 'spec_helper'
 describe 'Connection pool stress test' do
   before(:all) do
     if !SpecConfig.instance.stress_spec?
-      #skip 'Stress spec not enabled'
+      skip 'Stress spec not enabled'
     end
   end
 
