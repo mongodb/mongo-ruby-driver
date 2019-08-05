@@ -432,7 +432,6 @@ module Mongo
     rescue Mongo::Error::SocketError
       # non-timeout network error
       unknown!
-      pool.disconnect!
       raise
     rescue Auth::Unauthorized
       # auth error, keep server description and topology as they are
@@ -465,16 +464,33 @@ module Mongo
     # Marks server unknown and publishes the associated SDAM event
     # (server description changed).
     #
+    # @param [ Hash ] options Options.
+    #
+    # @option options [ true | false ] :keep_connection_pool Usually when the
+    #   new server description is unknown, the connection pool on the
+    #   respective server is cleared. Set this option to true to keep the
+    #   existing connection pool (required when handling not master errors
+    #   on 4.2+ servers).
+    #
     # @since 2.4.0, SDAM events are sent as of version 2.7.0
-    def unknown!
+    def unknown!(options = {})
       # SDAM flow will update description on the server without in-place
       # mutations and invoke SDAM transitions as needed.
-      cluster.run_sdam_flow(description, Description.new(address))
+      cluster.run_sdam_flow(description, Description.new(address), options)
     end
 
     # @api private
     def update_description(description)
       @description = description
+    end
+
+    # @api private
+    def clear_connection_pool
+      @pool_lock.synchronize do
+        if @pool
+          @pool.disconnect!
+        end
+      end
     end
 
     # @api private
