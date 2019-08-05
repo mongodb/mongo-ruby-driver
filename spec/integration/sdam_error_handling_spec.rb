@@ -174,9 +174,15 @@ describe 'SDAM error handling' do
   describe 'when there is an error on monitoring connection' do
     let(:operation) do
       expect(server.monitor.connection).not_to be nil
-      expect(server.monitor.connection).to receive(:ismaster).and_raise(exception)
+      expect(server.monitor.connection).to receive(:ismaster).at_least(:once).and_raise(exception)
       server.scan_semaphore.broadcast
-      sleep 2
+      6.times do
+        sleep 0.5
+        if server.unknown?
+          break
+        end
+      end
+      expect(server).to be_unknown
     end
 
     context 'non-timeout network error' do
