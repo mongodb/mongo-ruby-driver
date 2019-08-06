@@ -20,6 +20,13 @@ module Mongo
     # Represents a description of the server, populated by the result of the
     # ismaster command.
     #
+    # Note: Unknown servers do not have wire versions, but for legacy reasons
+    # we return 0 for min_wire_version and max_wire_version of any server that does
+    # not have them. Presently the driver sometimes constructs commands when the
+    # server is unknown, so references to min_wire_version and max_wire_version
+    # should not be nil. When driver behavior is changed
+    # (https://jira.mongodb.org/browse/RUBY-1805), this may no longer be necessary.
+    #
     # @since 2.0.0
     class Description
 
@@ -192,9 +199,7 @@ module Mongo
       def initialize(address, config = {}, average_round_trip_time = nil)
         @address = address
         @config = config
-        unless unknown?
-          @features = Features.new(wire_versions, me || @address.to_s)
-        end
+        @features = Features.new(wire_versions, me || @address.to_s)
         @average_round_trip_time = average_round_trip_time
         @last_update_time = Time.now.dup.freeze
 
@@ -216,9 +221,6 @@ module Mongo
 
       # @return [ Features ] features The features for the server.
       def features
-        if unknown?
-          return Features.new(0..0, address.to_s)
-        end
         @features
       end
 
@@ -333,7 +335,7 @@ module Mongo
         config[MAX_WRITE_BATCH_SIZE] || DEFAULT_MAX_WRITE_BATCH_SIZE
       end
 
-      # Get the maximum wire version.
+      # Get the maximum wire version. Defaults to zero.
       #
       # @example Get the max wire version.
       #   description.max_wire_version
@@ -342,10 +344,10 @@ module Mongo
       #
       # @since 2.0.0
       def max_wire_version
-        config[MAX_WIRE_VERSION]
+        config[MAX_WIRE_VERSION] || 0
       end
 
-      # Get the minimum wire version.
+      # Get the minimum wire version. Defaults to zero.
       #
       # @example Get the min wire version.
       #   description.min_wire_version
@@ -354,7 +356,7 @@ module Mongo
       #
       # @since 2.0.0
       def min_wire_version
-        config[MIN_WIRE_VERSION]
+        config[MIN_WIRE_VERSION] || 0
       end
 
       # Get the me field value.
