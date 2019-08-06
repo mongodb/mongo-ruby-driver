@@ -11,7 +11,7 @@ describe Mongo::Server::Monitor::Connection do
   end
 
   let(:address) do
-    client.cluster.next_primary.address
+    Mongo::Address.new(ClusterConfig.instance.primary_address, options)
   end
 
   declare_topology_double
@@ -30,6 +30,8 @@ describe Mongo::Server::Monitor::Connection do
                       Mongo::Monitoring.new,
                       Mongo::Event::Listeners.new, options)
   end
+
+  let(:monitor) { server.monitor }
 
   let(:connection) do
     # NB this connection is set up in the background thread,
