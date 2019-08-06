@@ -24,3 +24,8 @@ group :development do
   gem 'pry-rescue'
   gem 'pry-nav'
 end
+
+group :test do
+  gem 'rfc'
+  gem 'fuubar'
+end

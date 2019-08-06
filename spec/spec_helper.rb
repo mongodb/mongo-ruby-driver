@@ -51,8 +51,12 @@ require 'support/gridfs'
 
 RSpec.configure do |config|
   config.color     = true
-  config.fail_fast = true unless ENV['CI']
-  config.formatter = 'documentation'
+  #config.fail_fast = true unless ENV['CI']
+  if ENV['CI']
+    config.formatter = 'Rfc::Rif'
+  else
+    config.formatter = 'Fuubar'
+  end
   config.include(Authorization)
 
   config.before(:suite) do
