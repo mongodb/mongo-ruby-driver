@@ -417,7 +417,23 @@ module Mongo
 
     # @api private
     def update_description(description)
+      prev_description = monitor.instance_variable_get('@description')
       monitor.instance_variable_set('@description', description)
+      if description.unknown? && !prev_description.unknown?
+        # This clears redundantly sometimes and also clears the pool on
+        # 4.2+ servers after not master errors which should not be done.
+        # Driver version 2.11+ has the correct implementation.
+        clear_connection_pool
+      end
+    end
+
+    # @api private
+    def clear_connection_pool
+      @pool_lock.synchronize do
+        if @pool
+          @pool.disconnect!
+        end
+      end
     end
 
     # @api private
