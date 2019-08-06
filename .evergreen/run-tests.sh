@@ -13,6 +13,8 @@ set -o errexit  # Exit the script with error if any of the commands fail
 #                               For example: "ruby-2.3" or "jruby-9.1"
 #       DRIVER_TOOLS            Path to driver tools.
 
+. `dirname "$0"`/functions.sh
+
 AUTH=${AUTH:-noauth}
 SSL=${SSL:-nossl}
 MONGODB_URI=${MONGODB_URI:-}
@@ -40,14 +42,7 @@ source ~/.rvm/scripts/rvm
 export JAVACMD=/opt/java/jdk8/bin/java
 export PATH=$PATH:/opt/java/jdk8/bin
 
-if [ "$RVM_RUBY" == "ruby-head" ]; then
-  rvm reinstall $RVM_RUBY
-fi
-
-# Don't errexit because this may call scripts which error
-set +o errexit
-rvm use $RVM_RUBY
-set -o errexit
+setup_ruby
 
 # Ensure we're using the right ruby
 python - <<EOH
@@ -56,9 +51,6 @@ version = "${RVM_RUBY}".split("-")[1]
 assert(ruby in "`ruby --version`")
 assert(version in "`ruby --version`")
 EOH
-
-echo 'updating rubygems'
-gem update --system
 
 gem install bundler
 
