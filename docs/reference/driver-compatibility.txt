@@ -206,6 +206,20 @@ Ruby Compatibility
      - JRuby 9.1
      - JRuby
 
+   * - 2.10
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     - D
+     - D
+     - D
+     - D
+     -
+     - |checkmark|
+     - |checkmark|
+     -
+
    * - 2.9
      - |checkmark|
      - |checkmark|
