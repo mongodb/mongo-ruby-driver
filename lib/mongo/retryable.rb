@@ -215,6 +215,10 @@ module Mongo
         end
         retry_write(e, session, txn_num, &block)
       rescue Error::OperationFailure => e
+        if !storage_engine_allows_retry?(e)
+          raise e, "This MongoDB deployment does not support retryable writes. Please add retryWrites=false to your connection string."
+        end
+
         if (session.in_transaction? && !ending_transaction) || !e.write_retryable?
           raise
         end
@@ -275,6 +279,11 @@ module Mongo
         if attempt > client.max_write_retries
           raise
         end
+
+        if !storage_engine_allows_retry?(e)
+          raise e, "This MongoDB deployment does not support retryable writes. Please add retryWrites=false to your connection string."
+        end
+
         if e.write_retryable? && !(session && session.in_transaction?)
           log_retry(e, message: 'Legacy write retry')
           cluster.scan!(false)
@@ -402,6 +411,12 @@ module Mongo
         "Retry"
       end
       Logger.logger.warn "#{message} due to: #{e.class.name} #{e.message}"
+    end
+
+
+    # TODO this may be more appropriate in Operation Failure class
+    def storage_engine_allows_retry?(e)
+      !(e.code == 20 && e.message.start_with?("Transaction numbers"))
     end
   end
 end
