@@ -468,27 +468,28 @@ axes:
         display_name: Sharded
         variables:
            TOPOLOGY: "sharded_cluster"
-  - id: "auth"
-    display_name: Authentication
+  - id: "auth-and-ssl"
+    display_name: Authentication and SSL
     values:
-      - id: "auth"
-        display_name: Auth
+      - id: "auth-and-ssl"
+        display_name: Auth SSL
         variables:
            AUTH: "auth"
-      - id: "noauth"
-        display_name: NoAuth
+           SSL: "ssl"
+      - id: "auth-and-nossl"
+        display_name: Auth NoSSL
+        variables:
+           AUTH: "auth"
+           SSL: "nossl"
+      - id: "noauth-and-ssl"
+        display_name: NoAuth SSL
         variables:
            AUTH: "noauth"
-  - id: "ssl"
-    display_name: SSL
-    values:
-      - id: "ssl"
-        display_name: SSL
-        variables:
            SSL: "ssl"
-      - id: "nossl"
-        display_name: NoSSL
+      - id: "noauth-and-nossl"
+        display_name: NoAuth NoSSL
         variables:
+           AUTH: "noauth"
            SSL: "nossl"
   - id: "ruby"
     display_name: Ruby Version
