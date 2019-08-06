@@ -52,8 +52,6 @@ assert(ruby in "`ruby --version`")
 assert(version in "`ruby --version`")
 EOH
 
-gem install bundler
-
 echo "Installing all gem dependencies"
 bundle install
 bundle exec rake clean
