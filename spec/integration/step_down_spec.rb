@@ -9,6 +9,7 @@ describe 'Step down behavior' do
   before(:all) do
     # These before/after blocks are run even if the tests themselves are
     # skipped due to server version not being appropriate
+    ClientRegistry.instance.close_all_clients
     if ClusterConfig.instance.fcv_ish >= '4.2' && ClusterConfig.instance.topology == :replica_set
       # It seems that a short election timeout can cause unintended elections,
       # which makes the server close connections which causes the driver to
