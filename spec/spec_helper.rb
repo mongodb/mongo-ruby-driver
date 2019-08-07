@@ -31,6 +31,7 @@ else
 end
 
 require 'mongo'
+require 'byebug'
 
 Mongo::Logger.logger = Logger.new($stdout)
 Mongo::Logger.logger.level = Logger::INFO

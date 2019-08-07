@@ -28,4 +28,5 @@ end
 group :test do
   gem 'rfc'
   gem 'fuubar'
+  gem 'byebug'
 end
