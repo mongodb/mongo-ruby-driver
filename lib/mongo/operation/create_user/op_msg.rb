@@ -29,7 +29,7 @@ module Mongo
         private
 
         def selector(server)
-          { :createUser => user.name, :digestPassword => false }.merge(user.spec)
+          { :createUser => user.name }.merge(user.spec)
         end
 
         def message(server)

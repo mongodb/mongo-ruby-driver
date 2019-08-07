@@ -29,7 +29,7 @@ module Mongo
         private
 
         def selector(server)
-          { :updateUser => user.name, :digestPassword => false }.merge(user.spec)
+          { :updateUser => user.name }.merge(user.spec)
         end
 
         def message(server)

@@ -150,7 +150,7 @@ module Mongo
       #
       # @since 2.0.0
       def spec
-        { pwd: hashed_password, roles: roles }
+        { pwd: password, roles: roles }
       end
 
       private
