@@ -601,7 +601,7 @@ describe Mongo::Retryable do
       it 'raises an exception with the correct error message' do
         expect {
           retryable.write
-        }.to raise_error(Mongo::Error::OperationFailure, 'This MongoDB deployment does not support retryable writes. Please add retryWrites=false to your connection string.')
+        }.to raise_error(Mongo::Error::OperationFailure, /This MongoDB deployment does not support retryable writes. Please add retryWrites=false to your connection string or use the retry_writes: false Ruby client option/)
       end
     end
   end
