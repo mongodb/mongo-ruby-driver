@@ -215,9 +215,12 @@ module Mongo
         end
         retry_write(e, session, txn_num, &block)
       rescue Error::OperationFailure => e
-        if (session.in_transaction? && !ending_transaction) || !e.write_retryable?
+        if e.unsupported_retryable_write?
+          raise_unsupported_error(e)
+        elsif (session.in_transaction? && !ending_transaction) || !e.write_retryable?
           raise
         end
+
         retry_write(e, session, txn_num, &block)
       end
     end
@@ -402,6 +405,16 @@ module Mongo
         "Retry"
       end
       Logger.logger.warn "#{message} due to: #{e.class.name} #{e.message}"
+    end
+
+    # Retry writes on MMAPv1 should raise an actionable error; append actionable
+    # information to the error message and preserve the backtrace.
+    def raise_unsupported_error(e)
+      new_error = Error::OperationFailure.new("#{e.class}: #{e} "\
+        "This MongoDB deployment does not support retryable writes. Please add "\
+        "retryWrites=false to your connection string or use the retry_writes: false Ruby client option")
+      new_error.set_backtrace(e.backtrace)
+      raise new_error
     end
   end
 end
