@@ -1,4 +1,4 @@
-require 'lite_spec_helper'
+require 'spec_helper'
 
 describe Mongo::Socket do
 
@@ -49,6 +49,52 @@ describe Mongo::Socket do
           raise OpenSSL::SSL::SSLError.new('Test error')
         end
       end.to raise_error(Mongo::Error::SocketError, 'OpenSSL::SSL::SSLError: Test error (for fake-address) (MongoDB may not be configured with SSL support)')
+    end
+  end
+
+  describe '#read' do
+    let(:target_host) do
+      host = ClusterConfig.instance.primary_address_host
+      # Take ipv4 address
+      Socket.getaddrinfo(host, 0).detect { |ai| ai.first == 'AF_INET' }[3]
+    end
+
+    let(:socket) do
+      Mongo::Socket::TCP.new(target_host, ClusterConfig.instance.primary_address_port, 1, Socket::PF_INET)
+    end
+
+    let(:raw_socket) { socket.instance_variable_get('@socket') }
+
+    let(:wait_readable_class) do
+      Class.new(Exception) do
+        include IO::WaitReadable
+      end
+    end
+
+    context 'timeout' do
+      shared_examples_for 'times out' do
+        it 'times out' do
+          expect(socket).to receive(:timeout).at_least(:once).and_return(0.2)
+          expect(raw_socket).to receive(:read_nonblock) do |len, buf|
+            raise wait_readable_class
+          end
+
+          expect do
+            socket.read(10)
+          end.to raise_error(Mongo::Error::SocketTimeoutError, /Took more than .* seconds to receive data \(for /)
+        end
+      end
+
+      context 'with WaitReadable' do
+
+        let(:wait_readable_class) do
+          Class.new(Exception) do
+            include IO::WaitReadable
+          end
+        end
+
+        it_behaves_like 'times out'
+      end
     end
   end
 end

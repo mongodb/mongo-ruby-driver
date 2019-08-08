@@ -49,6 +49,9 @@ module Mongo
     # @return [ Hash ] The options.
     attr_reader :options
 
+    # @return [ Float ] timeout The socket timeout.
+    attr_reader :timeout
+
     # Is the socket connection alive?
     #
     # @example Is the socket alive?
@@ -235,7 +238,7 @@ module Mongo
       rescue IO::WaitReadable
         select_timeout = (deadline - Time.now) if deadline
         if (select_timeout && select_timeout <= 0) || !Kernel::select([@socket], nil, [@socket], select_timeout)
-          raise Timeout::Error.new("Took more than #{timeout} seconds to receive data.")
+          raise Errno::ETIMEDOUT, "Took more than #{timeout} seconds to receive data"
         end
         retry
       end
