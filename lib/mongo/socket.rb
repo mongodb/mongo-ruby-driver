@@ -241,6 +241,14 @@ module Mongo
           raise Errno::ETIMEDOUT, "Took more than #{timeout} seconds to receive data"
         end
         retry
+      # As explained in https://ruby-doc.com/core-trunk/IO.html#method-c-select,
+      # reading from a TLS socket may require writing which may raise WaitWritable
+      rescue IO::WaitWritable
+        select_timeout = (deadline - Time.now) if deadline
+        if (select_timeout && select_timeout <= 0) || !Kernel::select(nil, [@socket], [@socket], select_timeout)
+          raise Errno::ETIMEDOUT, "Took more than #{timeout} seconds to receive data"
+        end
+        retry
       end
 
       data

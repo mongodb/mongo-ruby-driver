@@ -775,8 +775,8 @@ describe Mongo::Server::Connection, retry: 3 do
           end
         rescue => ex
           end_time = Time.now
-          expect(ex).to be_a(Timeout::Error)
-          expect(ex.message).to eq("Took more than 1.5 seconds to receive data.")
+          expect(ex).to be_a(Mongo::Error::SocketTimeoutError)
+          expect(ex.message).to match(/Took more than 1.5 seconds to receive data/)
         end
         # Account for wait queue timeout (2s) and rescue
         expect(end_time - start).to be_within(2.5).of(1.5)
@@ -807,7 +807,7 @@ describe Mongo::Server::Connection, retry: 3 do
         it 'raises a timeout error' do
           expect {
             reply
-          }.to raise_exception(Timeout::Error)
+          }.to raise_exception(Mongo::Error::SocketTimeoutError)
         end
       end
     end

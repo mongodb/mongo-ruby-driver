@@ -75,8 +75,11 @@ describe Mongo::Socket do
       shared_examples_for 'times out' do
         it 'times out' do
           expect(socket).to receive(:timeout).at_least(:once).and_return(0.2)
-          expect(raw_socket).to receive(:read_nonblock) do |len, buf|
-            raise wait_readable_class
+          # When we raise WaitWritable, the socket object is ready for
+          # writing which makes the read method invoke read_nonblock many times
+          expect(raw_socket).to receive(:read_nonblock).at_least(:once) do |len, buf|
+            sleep 0.01
+            raise exception_class
           end
 
           expect do
@@ -87,9 +90,20 @@ describe Mongo::Socket do
 
       context 'with WaitReadable' do
 
-        let(:wait_readable_class) do
+        let(:exception_class) do
           Class.new(Exception) do
             include IO::WaitReadable
+          end
+        end
+
+        it_behaves_like 'times out'
+      end
+
+      context 'with WaitWritable' do
+
+        let(:exception_class) do
+          Class.new(Exception) do
+            include IO::WaitWritable
           end
         end
 
