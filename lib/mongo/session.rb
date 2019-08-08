@@ -299,7 +299,7 @@ module Mongo
         if within_states?(TRANSACTION_IN_PROGRESS_STATE)
           begin
             abort_transaction
-          rescue Mongo::Error
+          rescue Mongo::Error, Error::AuthError
           end
         end
         @client.cluster.session_pool.checkin(@server_session)
@@ -429,6 +429,9 @@ module Mongo
               transaction_in_progress = false
               raise
             end
+          rescue Error::AuthError
+            transaction_in_progress = false
+            raise
           end
         end
       end
