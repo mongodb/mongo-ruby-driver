@@ -748,16 +748,18 @@ describe Mongo::Server::Connection, retry: 3 do
       end
     end
 
-    context 'when a socket timeout is set' do
+    context 'when a socket timeout is set on client' do
 
       let(:connection) do
         described_class.new(server, socket_timeout: 10)
       end
 
-      it 'sets the timeout' do
+      it 'is propagated to connection timeout' do
         expect(connection.timeout).to eq(10)
       end
+    end
 
+    context 'when an operation never completes' do
       let(:client) do
         authorized_client.with(socket_timeout: 1.5)
       end
@@ -767,7 +769,7 @@ describe Mongo::Server::Connection, retry: 3 do
         authorized_collection.insert_one(a: 1)
       end
 
-      it 'raises a timeout when it expires' do
+      it 'times out and raises SocketTimeoutError' do
         start = Time.now
         begin
           Timeout::timeout(1.5 + 15) do
