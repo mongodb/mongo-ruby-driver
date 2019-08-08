@@ -126,10 +126,14 @@ module Mongo
     def read(length)
       handle_errors do
         data = read_from_socket(length)
-        raise IOError unless (data.length > 0 || length == 0)
+        unless (data.length > 0 || length == 0)
+          raise IOError, "Expected to read > 0 bytes but read 0 bytes"
+        end
         while data.length < length
           chunk = read_from_socket(length - data.length)
-          raise IOError unless (chunk.length > 0 || length == 0)
+          unless (chunk.length > 0 || length == 0)
+            raise IOError, "Expected to read > 0 bytes but read 0 bytes"
+          end
           data << chunk
         end
         data
