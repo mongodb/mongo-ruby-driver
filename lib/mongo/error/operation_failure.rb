@@ -252,6 +252,18 @@ module Mongo
       def max_time_ms_expired?
         code == 50 # MaxTimeMSExpired
       end
+
+      # Whether the error is caused by an attempted retryable write
+      # on a storage engine that does not support retryable writes.
+      #
+      # @return [ true | false ] Whether the error is caused by an attempted
+      # retryable write on a storage engine that does not support retryable writes.
+      #
+      # @since 2.11.0
+      def unsupported_retryable_write?
+        # code 20 is IllegalOperation
+        code == 20 && message.start_with?("Transaction numbers")
+      end
     end
   end
 end

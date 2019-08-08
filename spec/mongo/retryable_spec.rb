@@ -591,5 +591,18 @@ describe Mongo::Retryable do
       end
     end
 
+    context 'when an error due to using an unsupported storage engine occurs' do
+      before do
+        expect(operation).to receive(:execute).and_raise(
+          Mongo::Error::OperationFailure.new('Transaction numbers are only allowed on...',
+            nil, :code=>20)).ordered
+      end
+
+      it 'raises an exception with the correct error message' do
+        expect {
+          retryable.write
+        }.to raise_error(Mongo::Error::OperationFailure, /This MongoDB deployment does not support retryable writes. Please add retryWrites=false to your connection string or use the retry_writes: false Ruby client option/)
+      end
+    end
   end
 end
