@@ -192,7 +192,9 @@ module Mongo
         return ''.force_encoding('BINARY')
       end
 
-      deadline = (Time.now + timeout) if timeout
+      if _timeout = self.timeout
+        deadline = Time.now + _timeout
+      end
 
       # We want to have a fixed and reasonably small size buffer for reads
       # because, for example, OpenSSL reads in 16 kb chunks max.
@@ -212,6 +214,7 @@ module Mongo
       # kills performance
       buf = allocate_string(buf_size)
       retrieved = 0
+      timed_out = false
       begin
         while retrieved < length
           retrieve = length - retrieved
@@ -239,18 +242,22 @@ module Mongo
           data[retrieved, chunk.length] = chunk
           retrieved += chunk.length
         end
-      rescue IO::WaitReadable
-        select_timeout = (deadline - Time.now) if deadline
-        if (select_timeout && select_timeout <= 0) || !Kernel::select([@socket], nil, [@socket], select_timeout)
-          raise Errno::ETIMEDOUT, "Took more than #{timeout} seconds to receive data"
-        end
-        retry
       # As explained in https://ruby-doc.com/core-trunk/IO.html#method-c-select,
       # reading from a TLS socket may require writing which may raise WaitWritable
-      rescue IO::WaitWritable
-        select_timeout = (deadline - Time.now) if deadline
-        if (select_timeout && select_timeout <= 0) || !Kernel::select(nil, [@socket], [@socket], select_timeout)
-          raise Errno::ETIMEDOUT, "Took more than #{timeout} seconds to receive data"
+      rescue IO::WaitReadable, IO::WaitWritable => exc
+        if deadline
+          select_timeout = deadline - Time.now
+          if select_timeout <= 0
+            raise Errno::ETIMEDOUT, "Took more than #{_timeout} seconds to receive data"
+          end
+        end
+        if exc.is_a?(IO::WaitReadable)
+          select_args = [[@socket], nil, [@socket], select_timeout]
+        else
+          select_args = [nil, [@socket], [@socket], select_timeout]
+        end
+        unless Kernel::select(*select_args)
+          raise Errno::ETIMEDOUT, "Took more than #{_timeout} seconds to receive data"
         end
         retry
       end
