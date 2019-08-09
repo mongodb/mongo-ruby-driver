@@ -137,7 +137,7 @@ module Mongo
         ObjectSpace.define_finalizer(self, self.class.finalize(@available_connections, @pending_connections, @populator))
 
         publish_cmap_event(
-          Monitoring::Event::Cmap::PoolCreated.new(@server.address, options)
+          Monitoring::Event::Cmap::PoolCreated.new(@server.address, options, self)
         )
 
         @populator.run! if min_size > 0
@@ -280,7 +280,7 @@ module Mongo
               Monitoring::Event::Cmap::ConnectionCheckOutFailed::POOL_CLOSED
             ),
           )
-          raise Error::PoolClosedError.new(@server.address)
+          raise Error::PoolClosedError.new(@server.address, self)
         end
 
         deadline = Time.now + wait_timeout
@@ -371,7 +371,7 @@ module Mongo
         end
 
         publish_cmap_event(
-          Monitoring::Event::Cmap::ConnectionCheckedOut.new(@server.address, connection.id),
+          Monitoring::Event::Cmap::ConnectionCheckedOut.new(@server.address, connection.id, self),
         )
         connection
       end
@@ -401,7 +401,7 @@ module Mongo
 
           @checked_out_connections.delete(connection)
           publish_cmap_event(
-            Monitoring::Event::Cmap::ConnectionCheckedIn.new(@server.address, connection.id)
+            Monitoring::Event::Cmap::ConnectionCheckedIn.new(@server.address, connection.id, self)
           )
 
           if closed?
@@ -506,7 +506,7 @@ module Mongo
         end
 
         publish_cmap_event(
-          Monitoring::Event::Cmap::PoolClosed.new(@server.address)
+          Monitoring::Event::Cmap::PoolClosed.new(@server.address, self)
         )
 
         true
@@ -710,7 +710,7 @@ module Mongo
       # @since 2.9.0
       def raise_if_closed!
         if closed?
-          raise Error::PoolClosedError.new(@server.address)
+          raise Error::PoolClosedError.new(@server.address, self)
         end
       end
 
