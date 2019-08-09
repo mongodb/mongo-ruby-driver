@@ -146,6 +146,9 @@ module Mongo
       # @return [ Hash ] options The pool options.
       attr_reader :options
 
+      # @api private
+      def_delegators :@server, :address
+
       # Get the maximum size of the connection pool.
       #
       # @return [ Integer ] The maximum size of the connection pool.
@@ -621,7 +624,7 @@ module Mongo
         rescue Error::SocketError, Error::SocketTimeoutError => e
           # an error was encountered while connecting the connection,
           # ignore this first error and try again.
-          log_warn("Populator failed to connect a connection: #{e.class}: #{e}. It will retry.")
+          log_warn("Populator failed to connect a connection for #{address}: #{e.class}: #{e}. It will retry.")
         end
 
         return create_and_add_connection
