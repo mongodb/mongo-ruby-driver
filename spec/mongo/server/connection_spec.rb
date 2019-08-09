@@ -761,12 +761,14 @@ describe Mongo::Server::Connection, retry: 3 do
 
     context 'when an operation never completes' do
       let(:client) do
-        authorized_client.with(socket_timeout: 1.5)
+        authorized_client.with(socket_timeout: 1.5,
+          # Read retries would cause the reads to be attempted twice,
+          # thus making the find take twice as long to time out.
+          retry_reads: false, max_read_retries: 0)
       end
 
       before do
-        authorized_collection.delete_many
-        authorized_collection.insert_one(a: 1)
+        client.cluster.next_primary
       end
 
       it 'times out and raises SocketTimeoutError' do
@@ -780,8 +782,8 @@ describe Mongo::Server::Connection, retry: 3 do
           expect(ex).to be_a(Mongo::Error::SocketTimeoutError)
           expect(ex.message).to match(/Took more than 1.5 seconds to receive data/)
         end
-        # Account for wait queue timeout (2s) and rescue
-        expect(end_time - start).to be_within(2.5).of(1.5)
+        # allow 1.5 seconds +- 0.5 seconds
+        expect(end_time - start).to be_within(1).of(2)
       end
 
       context 'when the socket_timeout is negative' do
