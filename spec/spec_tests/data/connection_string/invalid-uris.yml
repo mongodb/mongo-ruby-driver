@@ -239,3 +239,23 @@ tests:
         hosts: ~
         auth: ~
         options: ~
+
+    -
+        description: "Username with password containing an unescaped percent sign and an escaped one"
+        uri: "mongodb://user%20%:password@localhost"
+        valid: false
+        warning: ~
+        hosts: ~
+        auth: ~
+        options: ~
+
+    -
+        description: "Username with password containing an unescaped percent sign (non hex digit)"
+        uri: "mongodb://user%w:password@localhost"
+        valid: false
+        warning: ~
+        hosts: ~
+        auth: ~
+        options: ~
+
+    
