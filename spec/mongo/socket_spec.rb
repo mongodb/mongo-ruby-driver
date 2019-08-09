@@ -72,6 +72,8 @@ describe Mongo::Socket do
     end
 
     context 'timeout' do
+      clean_slate_for_all
+
       shared_examples_for 'times out' do
         it 'times out' do
           expect(socket).to receive(:timeout).at_least(:once).and_return(0.2)
