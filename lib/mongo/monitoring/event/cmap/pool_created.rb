@@ -33,16 +33,23 @@ module Mongo
           # @since 2.9.0
           attr_reader :options
 
+          # @return [ Integer ] pool_id The id of the pool that was just
+          # created.
+          #
+          # @since 2.10.0
+          attr_reader :pool_id
+
           # Create the event.
           #
           # @example Create the event.
-          #   PoolCreated.new(address, options)
+          #   PoolCreated.new(address, options, pool_id)
           #
           # @since 2.9.0
           # @api private
-          def initialize(address, options)
+          def initialize(address, options, pool_id)
             @address = address
             @options = options.dup.freeze
+            @pool_id = pool_id
           end
 
           # Returns a concise yet useful summary of the event.
@@ -54,7 +61,8 @@ module Mongo
           # @since 2.9.0
           # @api experimental
           def summary
-            "#<#{self.class.name.sub(/^Mongo::Monitoring::Event::Cmap::/, '')} address=#{address} options=#{options}>"
+            "#<#{self.class.name.sub(/^Mongo::Monitoring::Event::Cmap::/, '')} " +
+                "address=#{address} options=#{options} pool=0x#{pool_id}>"
           end
         end
       end

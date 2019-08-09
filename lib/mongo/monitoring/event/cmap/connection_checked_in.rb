@@ -32,16 +32,23 @@ module Mongo
           # @since 2.9.0
           attr_reader :connection_id
 
+          # @return [ Integer ] pool_id The id of the pool that the connection
+          # was checked in to.
+          #
+          # @since 2.10.0
+          attr_reader :pool_id
+
           # Create the event.
           #
           # @example Create the event.
-          #   ConnectionCheckedIn.new(address, id)
+          #   ConnectionCheckedIn.new(address, id, pool_id)
           #
           # @since 2.9.0
           # @api private
-          def initialize(address, id)
+          def initialize(address, id, pool_id)
             @address = address
             @connection_id = id
+            @pool_id = pool_id
           end
 
           # Returns a concise yet useful summary of the event.
@@ -54,7 +61,7 @@ module Mongo
           # @api experimental
           def summary
             "#<#{self.class.name.sub(/^Mongo::Monitoring::Event::Cmap::/, '')} " +
-                "address=#{address} connection_id=#{connection_id}>"
+                "address=#{address} connection_id=#{connection_id} pool=0x#{pool_id}>"
           end
         end
       end

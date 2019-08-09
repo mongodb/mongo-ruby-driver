@@ -26,17 +26,23 @@ module Mongo
       # @since 2.9.0
       attr_reader :address
 
+      # @return [ Integer ] pool_id The id of the pool that is closed.
+      #
+      # @since 2.10.0
+      attr_reader :pool_id
+
       # Instantiate the new exception.
       #
       # @example Instantiate the exception.
-      #   Mongo::Error::PoolClosedError.new(address)
+      #   Mongo::Error::PoolClosedError.new(address, pool_id)
       #
       # @since 2.9.0
       # @api private
-      def initialize(address)
+      def initialize(address, pool_id)
         @address = address
-
-        super("Attempted to use a connection pool which has been closed (for #{address})")
+        @pool_id = pool_id
+        super("Attempted to use a connection pool which has been closed (for #{address} " +
+            "with pool 0x#{pool_id})")
       end
     end
   end
