@@ -28,21 +28,22 @@ module Mongo
           # @since 2.9.0
           attr_reader :address
 
-          # @return [ Integer ] pool_id The id of the pool that was closed.
+          # @return [ Mongo::Server::ConnectionPool ] pool The pool that was closed.
           #
-          # @since 2.10.0
-          attr_reader :pool_id
+          # @since 2.11.0
+          # @api experimental
+          attr_reader :pool
 
           # Create the event.
           #
           # @example Create the event.
-          #   PoolClosed.new(address, pool_id)
+          #   PoolClosed.new(address, pool)
           #
           # @since 2.9.0
           # @api private
-          def initialize(address, pool_id)
+          def initialize(address, pool)
             @address = address
-            @pool_id = pool_id
+            @pool = pool
           end
 
           # Returns a concise yet useful summary of the event.
@@ -55,7 +56,7 @@ module Mongo
           # @api experimental
           def summary
             "#<#{self.class.name.sub(/^Mongo::Monitoring::Event::Cmap::/, '')} " +
-                "address=#{address} pool=0x#{pool_id}>"
+                "address=#{address} pool=0x#{pool.object_id}>"
           end
         end
       end

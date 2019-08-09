@@ -1,4 +1,4 @@
-require 'lite_spec_helper'
+require 'spec_helper'
 
 describe Mongo::Monitoring::Event::Cmap::ConnectionCheckedIn do
 
@@ -12,16 +12,19 @@ describe Mongo::Monitoring::Event::Cmap::ConnectionCheckedIn do
       1
     end
 
-    let(:pool_id) do
-      7
+    declare_topology_double
+
+    let(:pool) do
+      server = make_server(:primary)
+      Mongo::Server::ConnectionPool.new(server)
     end
 
     let(:event) do
-      described_class.new(address, id, pool_id)
+      described_class.new(address, id, pool)
     end
 
     it 'renders correctly' do
-      expect(event.summary).to eq("#<ConnectionCheckedIn address=127.0.0.1:27017 connection_id=1 pool=0x7>")
+      expect(event.summary).to eq("#<ConnectionCheckedIn address=127.0.0.1:27017 connection_id=1 pool=0x#{pool.object_id}>")
     end
   end
 end

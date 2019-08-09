@@ -33,23 +33,24 @@ module Mongo
           # @since 2.9.0
           attr_reader :connection_id
 
-          # @return [ Integer ] pool_id The id of the pool that the connection
+          # @return [ Mongo::Server::ConnectionPool ] pool The pool that the connection
           # was checked out from.
           #
-          # @since 2.10.0
-          attr_reader :pool_id
+          # @since 2.11.0
+          # @api experimental
+          attr_reader :pool
 
           # Create the event.
           #
           # @example Create the event.
-          #   ConnectionCheckedOut.new(address, id, pool_id)
+          #   ConnectionCheckedOut.new(address, id, pool)
           #
           # @since 2.9.0
           # @api private
-          def initialize(address, id, pool_id)
+          def initialize(address, id, pool)
             @address = address
             @connection_id = id
-            @pool_id = pool_id
+            @pool = pool
           end
 
           # Returns a concise yet useful summary of the event.
@@ -62,7 +63,7 @@ module Mongo
           # @api experimental
           def summary
             "#<#{self.class.name.sub(/^Mongo::Monitoring::Event::Cmap::/, '')} " +
-                "address=#{address} connection_id=#{connection_id} pool=0x#{pool_id}>"
+                "address=#{address} connection_id=#{connection_id} pool=0x#{pool.object_id}>"
           end
         end
       end
