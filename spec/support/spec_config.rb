@@ -341,7 +341,6 @@ EOT
     {
       max_pool_size: 1,
       heartbeat_frequency: 20,
-      max_read_retries: 5,
       # The test suite seems to perform a number of operations
       # requiring server selection. Hence a timeout of 1 here,
       # together with e.g. a misconfigured replica set,
