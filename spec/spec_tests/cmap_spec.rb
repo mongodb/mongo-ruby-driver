@@ -35,7 +35,7 @@ describe 'Cmap' do
 
         server = register_server(
           Mongo::Server.new(
-            Mongo::Address.new(SpecConfig.instance.addresses.first),
+            ClusterConfig.instance.primary_address,
             cluster,
             monitoring,
             Mongo::Event::Listeners.new,
