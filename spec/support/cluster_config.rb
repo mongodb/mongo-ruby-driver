@@ -48,6 +48,16 @@ class ClusterConfig
     @primary_address.seed
   end
 
+  def primary_address_host
+    both = primary_address_str
+    both.split(':').first
+  end
+
+  def primary_address_port
+    both = primary_address_str
+    both.split(':')[1] || 27017
+  end
+
   def primary_description
     determine_cluster_config
     @primary_description

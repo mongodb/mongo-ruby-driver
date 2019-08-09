@@ -49,6 +49,9 @@ module Mongo
     # @return [ Hash ] The options.
     attr_reader :options
 
+    # @return [ Float ] timeout The socket timeout.
+    attr_reader :timeout
+
     # Is the socket connection alive?
     #
     # @example Is the socket alive?
@@ -123,10 +126,14 @@ module Mongo
     def read(length)
       handle_errors do
         data = read_from_socket(length)
-        raise IOError unless (data.length > 0 || length == 0)
+        unless (data.length > 0 || length == 0)
+          raise IOError, "Expected to read > 0 bytes but read 0 bytes"
+        end
         while data.length < length
           chunk = read_from_socket(length - data.length)
-          raise IOError unless (chunk.length > 0 || length == 0)
+          unless (chunk.length > 0 || length == 0)
+            raise IOError, "Expected to read > 0 bytes but read 0 bytes"
+          end
           data << chunk
         end
         data
@@ -185,7 +192,9 @@ module Mongo
         return ''.force_encoding('BINARY')
       end
 
-      deadline = (Time.now + timeout) if timeout
+      if _timeout = self.timeout
+        deadline = Time.now + _timeout
+      end
 
       # We want to have a fixed and reasonably small size buffer for reads
       # because, for example, OpenSSL reads in 16 kb chunks max.
@@ -232,10 +241,22 @@ module Mongo
           data[retrieved, chunk.length] = chunk
           retrieved += chunk.length
         end
-      rescue IO::WaitReadable
-        select_timeout = (deadline - Time.now) if deadline
-        if (select_timeout && select_timeout <= 0) || !Kernel::select([@socket], nil, [@socket], select_timeout)
-          raise Timeout::Error.new("Took more than #{timeout} seconds to receive data.")
+      # As explained in https://ruby-doc.com/core-trunk/IO.html#method-c-select,
+      # reading from a TLS socket may require writing which may raise WaitWritable
+      rescue IO::WaitReadable, IO::WaitWritable => exc
+        if deadline
+          select_timeout = deadline - Time.now
+          if select_timeout <= 0
+            raise Errno::ETIMEDOUT, "Took more than #{_timeout} seconds to receive data"
+          end
+        end
+        if exc.is_a?(IO::WaitReadable)
+          select_args = [[@socket], nil, [@socket], select_timeout]
+        else
+          select_args = [nil, [@socket], [@socket], select_timeout]
+        end
+        unless Kernel::select(*select_args)
+          raise Errno::ETIMEDOUT, "Took more than #{_timeout} seconds to receive data"
         end
         retry
       end

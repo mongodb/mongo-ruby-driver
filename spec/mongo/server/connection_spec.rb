@@ -748,26 +748,30 @@ describe Mongo::Server::Connection, retry: 3 do
       end
     end
 
-    context 'when a socket timeout is set' do
+    context 'when a socket timeout is set on client' do
 
       let(:connection) do
         described_class.new(server, socket_timeout: 10)
       end
 
-      it 'sets the timeout' do
+      it 'is propagated to connection timeout' do
         expect(connection.timeout).to eq(10)
       end
+    end
 
+    context 'when an operation never completes' do
       let(:client) do
-        authorized_client.with(socket_timeout: 1.5)
+        authorized_client.with(socket_timeout: 1.5,
+          # Read retries would cause the reads to be attempted twice,
+          # thus making the find take twice as long to time out.
+          retry_reads: false, max_read_retries: 0)
       end
 
       before do
-        authorized_collection.delete_many
-        authorized_collection.insert_one(a: 1)
+        client.cluster.next_primary
       end
 
-      it 'raises a timeout when it expires' do
+      it 'times out and raises SocketTimeoutError' do
         start = Time.now
         begin
           Timeout::timeout(1.5 + 15) do
@@ -775,11 +779,11 @@ describe Mongo::Server::Connection, retry: 3 do
           end
         rescue => ex
           end_time = Time.now
-          expect(ex).to be_a(Timeout::Error)
-          expect(ex.message).to eq("Took more than 1.5 seconds to receive data.")
+          expect(ex).to be_a(Mongo::Error::SocketTimeoutError)
+          expect(ex.message).to match(/Took more than 1.5 seconds to receive data/)
         end
-        # Account for wait queue timeout (2s) and rescue
-        expect(end_time - start).to be_within(2.5).of(1.5)
+        # allow 1.5 seconds +- 0.5 seconds
+        expect(end_time - start).to be_within(1).of(2)
       end
 
       context 'when the socket_timeout is negative' do
@@ -807,7 +811,7 @@ describe Mongo::Server::Connection, retry: 3 do
         it 'raises a timeout error' do
           expect {
             reply
-          }.to raise_exception(Timeout::Error)
+          }.to raise_exception(Mongo::Error::SocketTimeoutError)
         end
       end
     end
