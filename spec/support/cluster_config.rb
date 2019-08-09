@@ -74,6 +74,20 @@ class ClusterConfig
     end
   end
 
+  def primary_address_str
+    primary_address
+  end
+
+  def primary_address_host
+    both = primary_address_str
+    both.split(':').first
+  end
+
+  def primary_address_port
+    both = primary_address_str
+    both.split(':')[1] || 27017
+  end
+
   # Try running a command on the admin database to see if the mongod was
   # started with auth.
   def auth_enabled?
