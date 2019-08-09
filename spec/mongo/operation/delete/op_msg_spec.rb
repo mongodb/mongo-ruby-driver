@@ -143,6 +143,8 @@ describe Mongo::Operation::Delete::OpMsg do
         end
 
         context 'when an implicit session is created and the topology is then updated and the server does not support sessions' do
+          # Mocks on features are incompatible with linting
+          skip_if_linting
 
           let(:expected_global_args) do
             global_args.dup.tap do |args|
@@ -153,15 +155,20 @@ describe Mongo::Operation::Delete::OpMsg do
           before do
             session.instance_variable_set(:@options, { implicit: true })
             # Topology is standalone, hence there is exactly one server
-            authorized_client.cluster.servers.first.monitor.stop!
-            allow(authorized_primary.features).to receive(:sessions_enabled?).and_return(false)
+            authorized_primary.monitor.stop!
           end
 
           it 'creates the correct OP_MSG message' do
-            authorized_client.command(ping:1)
-            expect(expected_global_args[:session]).to be nil
-            expect(Mongo::Protocol::Msg).to receive(:new).with([], {}, expected_global_args, expected_payload_1)
-            op.send(:message, authorized_primary)
+            RSpec::Mocks.with_temporary_scope do
+              # Override description as it gets replaced on every connection
+              description = authorized_primary.description
+              allow(authorized_primary).to receive(:description).and_return(description)
+              allow(description.features).to receive(:sessions_enabled?).and_return(false)
+
+              expect(expected_global_args[:session]).to be nil
+              expect(Mongo::Protocol::Msg).to receive(:new).with([], {}, expected_global_args, expected_payload_1)
+              op.send(:message, authorized_primary)
+            end
           end
         end
       end
@@ -232,8 +239,10 @@ describe Mongo::Operation::Delete::OpMsg do
 
           it 'does not send a session id in the command' do
             authorized_client.command(ping:1)
-            expect(Mongo::Protocol::Msg).to receive(:new).with([:more_to_come], {}, expected_global_args, expected_payload_1)
-            op.send(:message, authorized_primary)
+            RSpec::Mocks.with_temporary_scope do
+              expect(Mongo::Protocol::Msg).to receive(:new).with([:more_to_come], {}, expected_global_args, expected_payload_1)
+              op.send(:message, authorized_primary)
+            end
           end
         end
       end
