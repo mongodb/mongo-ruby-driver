@@ -214,7 +214,6 @@ module Mongo
       # kills performance
       buf = allocate_string(buf_size)
       retrieved = 0
-      timed_out = false
       begin
         while retrieved < length
           retrieve = length - retrieved
