@@ -26,9 +26,6 @@ module Mongo
       # @return [ Integer ] port The port to connect to.
       attr_reader :port
 
-      # @return [ Float ] timeout The socket timeout.
-      attr_reader :timeout
-
       # Establishes a socket connection.
       #
       # @example Connect the socket.
