@@ -815,7 +815,7 @@ buildvariants:
   matrix_spec:
     auth-and-ssl: "noauth-and-nossl"
     ruby: "jruby-9.1"
-    mongodb-version: "2.6"
+    mongodb-version: "*"
     topology: "*"
     os: rhel70
   display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
