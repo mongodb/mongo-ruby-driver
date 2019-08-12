@@ -132,11 +132,12 @@ describe Mongo::Client do
         end
 
         it 'does not wait for server selection timeout' do
-          start_time = Time.now
-          # Client is created here.
-          client
-          expect(client.cluster.topology).not_to be_unknown
-          time_taken = Time.now - start_time
+          time_taken = Benchmark.realtime do
+            # Client is created here.
+            client
+            expect(client.cluster.topology).not_to be_unknown
+          end
+          puts "client_construction_spec.rb: Cluster is: #{client.cluster.summary}"
           expect(time_taken).to be < 5
 
           # run a command to ensure the client is a working one
