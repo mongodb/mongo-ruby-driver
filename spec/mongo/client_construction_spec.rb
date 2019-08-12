@@ -133,9 +133,11 @@ describe Mongo::Client do
 
         it 'does not wait for server selection timeout' do
           start_time = Time.now
+          # Client is created here.
           client
+          expect(client.cluster.topology).not_to be_unknown
           time_taken = Time.now - start_time
-          expect(time_taken < 5).to be true
+          expect(time_taken).to be < 5
 
           # run a command to ensure the client is a working one
           client.database.command(ismaster: 1)
