@@ -23,6 +23,8 @@ CMAP_TESTS = Dir.glob("#{CURRENT_PATH}/spec_tests/data/cmap/*.yml").sort
 require 'mongo'
 require 'pp'
 
+autoload :Benchmark, 'benchmark'
+
 unless ENV['CI']
   begin
     require 'byebug'
