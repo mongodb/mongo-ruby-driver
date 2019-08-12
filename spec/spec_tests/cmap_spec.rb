@@ -1,6 +1,10 @@
 require 'spec_helper'
 
+# Temporary scopes in all of the tests are needed to exclude endSessions
+# commands being sent during cleanup from interfering with assertions.
+
 describe 'Cmap' do
+  clean_slate
 
   declare_topology_double
 
@@ -26,14 +30,13 @@ describe 'Cmap' do
 
     context("#{spec.description} (#{file.sub(%r'.*/data/cmap/', '')})") do
 
-
       before do
         subscriber = EventSubscriber.new
 
         monitoring = Mongo::Monitoring.new(monitoring: false)
         monitoring.subscribe(Mongo::Monitoring::CONNECTION_POOL, subscriber)
 
-        server = register_server(
+        @server = register_server(
           Mongo::Server.new(
             ClusterConfig.instance.primary_address,
             cluster,
@@ -44,13 +47,23 @@ describe 'Cmap' do
             allow(server).to receive(:description).and_return(ClusterConfig.instance.primary_description)
           end
         )
-        spec.setup(server, subscriber)
+        spec.setup(@server, subscriber)
+      end
+
+      after do
+        if @server && (pool = @server.instance_variable_get('@pool'))
+          begin
+            pool.disconnect!
+          rescue Mongo::Error::PoolClosedError
+          end
+        end
       end
 
       let!(:result) do
-        mock_socket = double('socket')
-        allow(mock_socket).to receive(:close)
-        allow_any_instance_of(Mongo::Server::Connection).to receive(:do_connect).and_return(mock_socket)
+        socket = double('fake socket')
+        allow(socket).to receive(:close)
+
+        allow_any_instance_of(Mongo::Server::Connection).to receive(:do_connect).and_return(socket)
         spec.run
       end
 
@@ -59,18 +72,24 @@ describe 'Cmap' do
       end
 
       it 'raises the correct error' do
-        expect(result['error']).to eq(spec.expected_error)
+        RSpec::Mocks.with_temporary_scope do
+          expect(result['error']).to eq(spec.expected_error)
+        end
       end
 
       let(:actual_events) { result['events'].freeze }
 
       it 'emits the correct number of events' do
-        expect(actual_events.length).to eq(spec.expected_events.length)
+        RSpec::Mocks.with_temporary_scope do
+          expect(actual_events.length).to eq(spec.expected_events.length)
+        end
       end
 
       spec.expected_events.each_with_index do |expected_event, index|
         it "emits correct event #{index+1}" do
-          verifier.verify_hashes(actual_events[index], expected_event)
+          RSpec::Mocks.with_temporary_scope do
+            verifier.verify_hashes(actual_events[index], expected_event)
+          end
         end
       end
     end
