@@ -81,11 +81,6 @@ module Utils
         end
       end
 
-      # The spec files don't include these fields, so we delete them.
-      command.delete('$readPreference')
-      command.delete('bypassDocumentValidation')
-      command.delete('$clusterTime')
-
       if command['readConcern']
         # The spec test use an afterClusterTime value of 42 to indicate that we need to assert
         # that the field exists in the actual read concern rather than comparing the value, so
