@@ -124,14 +124,18 @@ describe Mongo::Client do
             [address],
             # Specify server selection timeout here because test suite sets
             # one by default and it's fairly low
-            SpecConfig.instance.test_options.merge(server_selection_timeout: 5))
+            SpecConfig.instance.test_options.merge(
+              connect_timeout: 1,
+              socket_timeout: 1,
+              server_selection_timeout: 8,
+            ))
         end
 
         it 'does not wait for server selection timeout' do
           start_time = Time.now
           client
           time_taken = Time.now - start_time
-          expect(time_taken < 3).to be true
+          expect(time_taken < 5).to be true
 
           # run a command to ensure the client is a working one
           client.database.command(ismaster: 1)
