@@ -80,7 +80,7 @@ module Mongo
     # Unsafe characters that must be urlencoded.
     #
     # @since 2.1.0
-    UNSAFE = /[\:\/\+\@]/
+    UNSAFE = /[\:\/\@]/
 
     # Percent sign that must be encoded in user creds.
     #
