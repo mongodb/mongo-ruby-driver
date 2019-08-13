@@ -135,9 +135,14 @@ describe Mongo::Client do
           time_taken = Benchmark.realtime do
             # Client is created here.
             client
-            expect(client.cluster.topology).not_to be_unknown
           end
           puts "client_construction_spec.rb: Cluster is: #{client.cluster.summary}"
+          actual_class = client.cluster.topology.class
+          expect([
+            Mongo::Cluster::Topology::ReplicaSetWithPrimary,
+            Mongo::Cluster::Topology::Single,
+            Mongo::Cluster::Topology::Sharded,
+          ]).to include(actual_class)
           expect(time_taken).to be < 5
 
           # run a command to ensure the client is a working one
