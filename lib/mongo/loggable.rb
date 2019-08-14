@@ -99,7 +99,7 @@ module Mongo
     private
 
     def format_message(message)
-      format("%s | %s".freeze, PREFIX, message)
+      format("%s | %s".freeze, options[:log_prefix] || PREFIX, message)
     end
   end
 end
