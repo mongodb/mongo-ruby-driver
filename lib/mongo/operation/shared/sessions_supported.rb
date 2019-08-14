@@ -95,10 +95,6 @@ module Mongo
         session.add_autocommit!(selector)
       end
 
-      def apply_session_id!(selector)
-        session.add_id!(selector)
-      end
-
       def apply_start_transaction!(selector)
         session.add_start_transaction!(selector)
       end
@@ -146,7 +142,7 @@ module Mongo
       def apply_session_options(sel, server)
         apply_cluster_time!(sel, server)
         sel[:txnNumber] = BSON::Int64.new(txn_num) if txn_num
-        apply_session_id!(sel)
+        sel.merge!(lsid: session.session_id)
         apply_start_transaction!(sel)
         apply_causal_consistency!(sel, server)
         apply_autocommit!(sel)
