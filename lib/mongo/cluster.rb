@@ -198,7 +198,7 @@ module Mongo
           servers = @sdam_flow_lock.synchronize do
             servers_list.dup
           end
-          if servers.all? { |server| server.description.last_update_time >= start_time }
+          if servers.all? { |server| server.last_scan && server.last_scan >= start_time }
             break
           end
           if (time_remaining = deadline - Time.now) <= 0

@@ -388,6 +388,10 @@ module Mongo
       def filter_stale_servers(candidates, primary = nil)
         return candidates unless @max_staleness
 
+        # last_scan is filled out by the Monitor, and can be nil if a server
+        # had its description manually set rather than being normally updated
+        # via the SDAM flow. We don't handle the possibility of a nil
+        # last_scan here.
         if primary
           candidates.select do |server|
             validate_max_staleness_support!(server)

@@ -101,7 +101,8 @@ module Mongo
     #   description the monitor refreshes.
     attr_reader :description
 
-    # @return [ Time ] last_scan The time when the last server scan started.
+    # @return [ Time | nil ] last_scan The time when the last server scan
+    #   completed, or nil if the server has not yet been scanned by its monitor.
     #
     # @since 2.4.0
     attr_reader :last_scan

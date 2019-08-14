@@ -76,6 +76,7 @@ module Mongo
         # This is a Mongo::Server::Monitor::Connection
         @connection = Connection.new(server.address, options)
         @mutex = Mutex.new
+        @scan_started_at = nil
       end
 
       # @return [ Server ] server The server that this monitor is monitoring.
@@ -226,12 +227,18 @@ module Mongo
       # @note If the system clock is set to a time in the past, this method
       #   can sleep for a very long time.
       def throttle_scan_frequency!
-        if server.last_scan
-          difference = (Time.now - server.last_scan)
+        # Normally server.last_scan indicates when the previous scan
+        # completed, but if scan! is manually invoked repeatedly then
+        # server.last_scan won't be updated and multiple scans with no
+        # cooldown can be obtained. Guard against repeated direct scan!
+        # invocation also.
+        last_time = [server.last_scan, @scan_started_at].compact.max
+        if last_time
+          difference = (Time.now - last_time)
           throttle_time = (MIN_SCAN_FREQUENCY - difference)
           sleep(throttle_time) if throttle_time > 0
         end
-        server.update_last_scan
+        @scan_started_at = Time.now
       end
     end
   end

@@ -57,7 +57,6 @@ describe Mongo::Server::Description do
         expect(obj.frozen?).to be false
 
         description = described_class.new(address)
-        expect(description.last_update_time).to eq(obj)
         expect(obj.frozen?).to be false
       end
     end
