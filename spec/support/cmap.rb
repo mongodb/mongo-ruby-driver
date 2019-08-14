@@ -58,7 +58,12 @@ module Mongo
         @pool = server.pool
 
         # let pool populate
-        sleep 1
+        ([0.1, 0.15, 0.15] + [0.2] * 20).each do |t|
+          if @pool.size >= @pool.min_size
+            break
+          end
+          sleep t
+        end
       end
 
       def run

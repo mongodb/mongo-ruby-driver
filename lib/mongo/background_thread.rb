@@ -96,7 +96,6 @@ module Mongo
           end
           break
         rescue Timeout::Error
-          pass
         end
       end
 
