@@ -119,6 +119,15 @@ describe Mongo::Client do
           end
         end
 
+        let(:subscriber) do
+          Mongo::Monitoring::UnifiedSdamLogSubscriber.new(
+            logger: Logger.new(STDOUT).tap do |logger|
+              logger.level = Logger::DEBUG
+            end,
+            log_prefix: 'CCS-SDAM',
+          )
+        end
+
         let(:client) do
           ClientRegistry.instance.new_local_client(
             [address],
@@ -128,6 +137,9 @@ describe Mongo::Client do
               connect_timeout: 1,
               socket_timeout: 1,
               server_selection_timeout: 8,
+              sdam_proc: lambda do |client|
+                subscriber.subscribe(client)
+              end
             ))
         end
 
