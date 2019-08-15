@@ -855,7 +855,7 @@ module Mongo
     end
 
     # Validates all options after they are set on the client.
-    # This method is intended to catch combinations of options which do are
+    # This method is intended to catch combinations of options which are
     # not allowed.
     def validate_options!
       if options[:write] && options[:write_concern] && options[:write] != options[:write_concern]
