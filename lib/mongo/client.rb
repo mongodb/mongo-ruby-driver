@@ -407,6 +407,7 @@ module Mongo
 =end
       @options.freeze
       validate_options!
+      validate_authentication_options!
 
       @database = Database.new(self, @options[:database], @options)
 
@@ -614,6 +615,7 @@ module Mongo
         options.update(opts)
         @options = options.freeze
         validate_options!
+        validate_authentication_options!
       end
     end
 
@@ -860,6 +862,21 @@ module Mongo
     def validate_options!
       if options[:write] && options[:write_concern] && options[:write] != options[:write_concern]
         raise ArgumentError, "If :write and :write_concern are both given, they must be identical: #{options.inspect}"
+      end
+    end
+
+    # Validates all authentication-related options after they are set on the client
+    # This method is intended to catch combinations of options which are not allowed
+    def validate_authentication_options!
+      case options[:auth_mech]
+      when :mongodb_cr, :plain, :scram, :scram256
+        raise ArgumentError("% requires username" % options[:auth_mech]) if options[:username].blank?
+      when :mongodb_x509
+        # TODO: what does it mean for the auth source to be invalid?
+        raise ArgumentError("% does not take a password" % options[:auth_mech]) if options[:password].present?
+      when nil
+      
+      default
       end
     end
 
