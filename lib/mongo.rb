@@ -31,6 +31,7 @@ require 'bson'
 
 require 'mongo/id'
 require 'mongo/bson'
+require 'mongo/reentrant_mutex'
 require 'mongo/semaphore'
 require 'mongo/options'
 require 'mongo/loggable'
