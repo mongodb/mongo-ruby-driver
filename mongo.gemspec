@@ -4,10 +4,7 @@ require 'mongo/version'
 
 Gem::Specification.new do |s|
   s.name              = 'mongo'
-  # The dup call makes `bundle install` work on ruby 1.9.3.
-  # Without it rubygems tries to modify version which fails because
-  # Mongo::VERSION is frozen.
-  s.version           = Mongo::VERSION.dup
+  s.version           = Mongo::VERSION
   s.platform          = Gem::Platform::RUBY
 
   s.authors           = ['Tyler Brock', 'Emily Stolfo', 'Durran Jordan']
@@ -31,6 +28,8 @@ Gem::Specification.new do |s|
   s.executables       = ['mongo_console']
   s.require_paths     = ['lib']
   s.bindir            = 'bin'
+
+  s.required_ruby_version = ">= 2.3"
 
   s.add_dependency 'bson', '>=4.4.2', '<5.0.0'
 end
