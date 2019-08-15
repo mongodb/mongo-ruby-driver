@@ -591,7 +591,7 @@ describe Mongo::Socket::SSL, retry: 3 do
         context 'bundled with intermediate cert' do
 
           # https://github.com/jruby/jruby-openssl/issues/181
-          fails_on_jruby
+          only_mri
 
           let(:options) do
             SpecConfig.instance.test_options.merge(
@@ -636,7 +636,7 @@ describe Mongo::Socket::SSL, retry: 3 do
         context 'bundled with intermediate cert' do
 
           # https://github.com/jruby/jruby-openssl/issues/181
-          fails_on_jruby
+          only_mri
 
           let(:options) do
             SpecConfig.instance.test_options.merge(

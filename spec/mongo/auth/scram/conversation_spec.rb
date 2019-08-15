@@ -57,7 +57,6 @@ describe Mongo::Auth::SCRAM::Conversation, retry: 3 do
     end
 
     describe '#continue' do
-      fails_on_jruby
 
       let(:reply) do
         Mongo::Protocol::Message.new
@@ -125,7 +124,6 @@ describe Mongo::Auth::SCRAM::Conversation, retry: 3 do
     end
 
     describe '#finalize' do
-      fails_on_jruby
 
       let(:continue_reply) do
         Mongo::Protocol::Message.new
