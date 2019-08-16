@@ -70,6 +70,26 @@ module Mongo
       SOURCES[mechanism].new(user)
     end
 
+    # Raised when trying to authorize with an invalid configuration
+    #
+    # @since 2.11.0
+    class InvalidConfiguration < Mongo::Error::AuthError
+
+      # Instantiate the new error
+      #
+      # @example Instantiate the error
+      #   Mongo::Auth::InvalidConfiguration.new(:mongodb_cr, "User required")
+      #
+      # @param [ Symbol ] mechanism The provided mechanism.
+      # @param [ String ] reason The reason that this configuration is invalid.
+      #
+      # @since 2.11.0
+      def initialize(mechanism, reason)
+        mechanism_string = mechanism.nil? ? "Default" : mechanism.inspect
+        super("Invalid auth configuration for mechanism #{mechanism_string}: #{reason}")
+      end
+    end
+
     # Raised when trying to get an invalid authorization mechanism.
     #
     # @since 2.0.0
