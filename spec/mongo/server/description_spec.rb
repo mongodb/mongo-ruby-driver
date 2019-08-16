@@ -56,7 +56,7 @@ describe Mongo::Server::Description do
         expect(Time).to receive(:now).at_least(:once).and_return(obj)
         expect(obj.frozen?).to be false
 
-        description = described_class.new(address)
+        description = described_class.new(address, replica)
         expect(description.last_update_time).to eq(obj)
         expect(obj.frozen?).to be false
       end
@@ -774,6 +774,24 @@ describe Mongo::Server::Description do
 
       it 'returns false when second config is the receiver' do
         expect(two == one).to be false
+      end
+    end
+  end
+
+  describe '#last_update_time' do
+    context 'stub description' do
+      let(:description) { described_class.new(address) }
+
+      it 'is nil' do
+        expect(description.last_update_time).to be nil
+      end
+    end
+
+    context 'filled out description' do
+      let(:description) { described_class.new(address, replica) }
+
+      it 'is nil' do
+        expect(description.last_update_time).to be_a(Time)
       end
     end
   end
