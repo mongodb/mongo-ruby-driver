@@ -870,14 +870,15 @@ module Mongo
     def validate_authentication_options!
       case options[:auth_mech]
       when :mongodb_cr, :plain, :scram, :scram256
-        raise "#{options[:auth_mech]} requires username" if options[:username].nil?
+        raise "#{options[:auth_mech]} requires user" if options[:user].nil?
       when :mongodb_x509
         raise 'Authentication source must be $external or nil for MONGODB-X509' if !['$external', nil].include?(options[:auth_source])
         raise 'Passwords are not supported by MONGODB-X509' if !options[:password].nil?
       when nil
-        raise 'Authentication source without a username is invalid' if !options[:auth_source].nil? && options[:username].nil?
-        # raise 'Blank username is invalid with default mechanism' if options[:username].empty?
-        # raise 'Blank password is invalid with default mechanism' if options[:password].empty?
+        raise 'Authentication source without a user is invalid' if !options[:auth_source].nil? && options[:user].nil?
+        byebug
+        raise 'Blank user is invalid with default mechanism' if options[:user].empty?
+        raise 'Blank password is invalid with default mechanism' if options[:password].empty?
       else
         raise "#{options[:auth_mech]} is an invalid authentication mechanism"
       end

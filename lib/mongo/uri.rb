@@ -405,27 +405,23 @@ module Mongo
 
     def parse_user!(string)
       if (string && user = string.partition(AUTH_USER_PWD_DELIM)[0])
-        if user.length > 0
-          raise_invalid_error!(UNESCAPED_USER_PWD) if user =~ UNSAFE
-          user_decoded = decode(user)
-          if user_decoded =~ PERCENT_CHAR && encode(user_decoded) != user
-            raise_invalid_error!(UNESCAPED_USER_PWD)
-          end
-          user_decoded
+        raise_invalid_error!(UNESCAPED_USER_PWD) if user =~ UNSAFE
+        user_decoded = decode(user)
+        if user_decoded =~ PERCENT_CHAR && encode(user_decoded) != user
+          raise_invalid_error!(UNESCAPED_USER_PWD)
         end
+        user_decoded
       end
     end
 
     def parse_password!(string)
       if (string && pwd = string.partition(AUTH_USER_PWD_DELIM)[2])
-        if pwd.length > 0
-          raise_invalid_error!(UNESCAPED_USER_PWD) if pwd =~ UNSAFE
-          pwd_decoded = decode(pwd)
-          if pwd_decoded =~ PERCENT_CHAR && encode(pwd_decoded) != pwd
-            raise_invalid_error!(UNESCAPED_USER_PWD)
-          end
-          pwd_decoded
+        raise_invalid_error!(UNESCAPED_USER_PWD) if pwd =~ UNSAFE
+        pwd_decoded = decode(pwd)
+        if pwd_decoded =~ PERCENT_CHAR && encode(pwd_decoded) != pwd
+          raise_invalid_error!(UNESCAPED_USER_PWD)
         end
+        pwd_decoded
       end
     end
 
