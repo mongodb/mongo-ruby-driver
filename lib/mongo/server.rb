@@ -67,7 +67,6 @@ module Mongo
       @scan_semaphore = Semaphore.new
       @round_trip_time_averager = RoundTripTimeAverager.new
       @description = Description.new(address, {})
-      @last_scan = nil
       unless options[:monitoring_io] == false
         @monitor = Monitor.new(self, event_listeners, monitoring,
           options.merge(
@@ -102,10 +101,12 @@ module Mongo
     attr_reader :description
 
     # @return [ Time | nil ] last_scan The time when the last server scan
-    #   completed, or nil if the server has not yet been scanned by its monitor.
+    #   completed, or nil if the server has not been scanned yet.
     #
     # @since 2.4.0
-    attr_reader :last_scan
+    def last_scan
+      description && description.last_update_time
+    end
 
     # @deprecated
     def heartbeat_frequency

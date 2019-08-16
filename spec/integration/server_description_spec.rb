@@ -31,4 +31,15 @@ describe 'Server description' do
       expect(desc.last_write_date).to be_a(Time)
     end
   end
+
+  describe '#last_update_time' do
+
+    it 'is set' do
+      expect(desc).not_to be_unknown
+
+      expect(desc.last_update_time).to be_a(Time)
+      # checked while this test was running
+      expect(desc.last_update_time).to be > start_time
+    end
+  end
 end
