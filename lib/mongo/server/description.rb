@@ -201,11 +201,7 @@ module Mongo
         @config = config
         @features = Features.new(wire_versions, me || @address.to_s)
         @average_round_trip_time = average_round_trip_time
-        if config.empty?
-          @last_update_time = nil
-        else
-          @last_update_time = Time.now.dup.freeze
-        end
+        @last_update_time = Time.now.dup.freeze
 
         if Mongo::Lint.enabled?
           # prepopulate cache instance variables
@@ -687,12 +683,14 @@ module Mongo
         end
       end
 
-      # Time when the server check producing this description completed.
+      # Time when this server description was created.
       #
-      # If the description is an unknown one not resulting from a server check,
-      # this attribute is nil.
+      # @note This time does not indicate when a successful server check
+      # completed, because marking a server unknown updates its description
+      # and last_update_time. Use Server#last_scan to find out when the server
+      # was last successfully checked by its Monitor.
       #
-      # @return [ Time | nil ] Last check time.
+      # @return [ Time ] Server description creation time.
       #
       # @since 2.7.0
       attr_reader :last_update_time

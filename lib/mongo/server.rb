@@ -67,6 +67,7 @@ module Mongo
       @scan_semaphore = Semaphore.new
       @round_trip_time_averager = RoundTripTimeAverager.new
       @description = Description.new(address, {})
+      @last_scan = nil
       unless options[:monitoring_io] == false
         @monitor = Monitor.new(self, event_listeners, monitoring,
           options.merge(
@@ -105,7 +106,11 @@ module Mongo
     #
     # @since 2.4.0
     def last_scan
-      description && description.last_update_time
+      if description && !description.config.empty?
+        description.last_update_time
+      else
+        @last_scan
+      end
     end
 
     # @deprecated
