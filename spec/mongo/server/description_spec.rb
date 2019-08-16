@@ -782,15 +782,15 @@ describe Mongo::Server::Description do
     context 'stub description' do
       let(:description) { described_class.new(address) }
 
-      it 'is nil' do
-        expect(description.last_update_time).to be nil
+      it 'is present' do
+        expect(description.last_update_time).to be_a(Time)
       end
     end
 
     context 'filled out description' do
       let(:description) { described_class.new(address, replica) }
 
-      it 'is nil' do
+      it 'is present' do
         expect(description.last_update_time).to be_a(Time)
       end
     end
