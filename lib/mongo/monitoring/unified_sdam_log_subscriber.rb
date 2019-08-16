@@ -24,7 +24,7 @@ module Mongo
 
       # @return [ Hash ] options The options.
       #
-      # @since 2.9.0
+      # @since 2.11.0
       attr_reader :options
 
       # Create the new log subscriber.
@@ -33,7 +33,7 @@ module Mongo
       #
       # @option options [ Logger ] :logger An optional custom logger.
       #
-      # @since 2.9.0
+      # @since 2.11.0
       def initialize(options = {})
         @options = options
       end
@@ -42,7 +42,7 @@ module Mongo
       #
       # @param [ Event ] event The event.
       #
-      # @since 2.9.0
+      # @since 2.11.0
       def published(event)
         log_debug("EVENT: #{event.summary}") if logger.debug?
       end
