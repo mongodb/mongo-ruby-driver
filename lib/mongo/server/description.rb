@@ -683,9 +683,14 @@ module Mongo
         end
       end
 
-      # Time when the server was last checked.
+      # Time when this server description was created.
       #
-      # @return [ Time ] Last check time.
+      # @note This time does not indicate when a successful server check
+      # completed, because marking a server unknown updates its description
+      # and last_update_time. Use Server#last_scan to find out when the server
+      # was last successfully checked by its Monitor.
+      #
+      # @return [ Time ] Server description creation time.
       #
       # @since 2.7.0
       attr_reader :last_update_time
