@@ -1,6 +1,7 @@
 require 'spec_helper'
 
 describe Mongo::Server do
+  fails_on_jruby '9.1'
 
   declare_topology_double
 
