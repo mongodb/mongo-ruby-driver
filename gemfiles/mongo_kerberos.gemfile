@@ -5,5 +5,5 @@ gem 'mongo_kerberos', github: "mongodb/mongo-ruby-kerberos", branch: "testing"
 
 group :test do
   gem 'fuubar'
-  gem 'rspec', '~> 3.4.0'
+  gem 'rspec', '~> 3.4'
 end
