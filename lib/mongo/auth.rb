@@ -85,8 +85,7 @@ module Mongo
       #
       # @since 2.11.0
       def initialize(mechanism, reason)
-        mechanism_string = mechanism.nil? ? "Default" : mechanism.inspect
-        super("Invalid auth configuration for mechanism #{mechanism_string}: #{reason}")
+        super("Invalid auth configuration for #{mechanism.inspect} mechanism: #{reason}")
       end
     end
 

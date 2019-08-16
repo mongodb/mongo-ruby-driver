@@ -870,14 +870,14 @@ module Mongo
     def validate_authentication_options!
       case options[:auth_mech]
       when :mongodb_cr, :plain, :scram, :scram256
-        raise Mongo::Auth::InvalidConfiguration.new(options[:auth_mech], 'Username is required') if options[:user].nil?
+        raise Mongo::Auth::InvalidConfiguration.new(options[:auth_mech], 'user is required') if options[:user].nil?
       when :mongodb_x509
         raise Mongo::Auth::InvalidConfiguration.new(:mongodb_x509, 'auth_source must be $external or nil') if !['$external', nil].include?(options[:auth_source])
-        raise Mongo::Auth::InvalidConfiguration.new(:mongodb_x509, 'Passwords are not supported') if !options[:password].nil?
+        raise Mongo::Auth::InvalidConfiguration.new(:mongodb_x509, 'password is not supported') if !options[:password].nil?
       when nil
-        raise Mongo::Auth::InvalidConfiguration.new(nil, 'auth_source cannot be present without a user') if !options[:auth_source].nil? && options[:user].nil?
-        raise Mongo::Auth::InvalidConfiguration.new(nil, 'user information cannot be present without a user') if options[:user] == ""
-        raise Mongo::Auth::InvalidConfiguration.new(nil, 'user information cannot be present without a password') if options[:user] == ""
+        raise Mongo::Auth::InvalidConfiguration.new(:default, 'auth_source cannot be present without a user') if !options[:auth_source].nil? && options[:user].nil?
+        raise Mongo::Auth::InvalidConfiguration.new(:default, 'do not include user information delimiter (@) in URI for blank user') if !options[:user].nil? && !options[:user].length
+        raise Mongo::Auth::InvalidConfiguration.new(:default, 'do not include password delimiter (:) in URI for blank password') if !options[:password].nil? && !options[:password].length
       else
         raise Mongo::Auth::InvalidMechanism.new(options[:auth_mech]) if !Mongo::Auth::SOURCES.has_key?(options[:auth_mech])
       end
