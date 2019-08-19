@@ -117,11 +117,15 @@ describe Mongo::Client do
           end
         end
 
+        let(:logger) do
+          Logger.new(STDOUT).tap do |logger|
+            logger.level = Logger::DEBUG
+          end
+        end
+
         let(:subscriber) do
           Mongo::Monitoring::UnifiedSdamLogSubscriber.new(
-            logger: Logger.new(STDOUT).tap do |logger|
-              logger.level = Logger::DEBUG
-            end,
+            logger: logger,
             log_prefix: 'CCS-SDAM',
           )
         end
@@ -135,6 +139,8 @@ describe Mongo::Client do
               connect_timeout: 1,
               socket_timeout: 1,
               server_selection_timeout: 8,
+              logger: logger,
+              log_prefix: 'CCS-CLIENT',
               sdam_proc: lambda do |client|
                 subscriber.subscribe(client)
               end

@@ -204,6 +204,7 @@ module Mongo
           if (time_remaining = deadline - Time.now) <= 0
             break
           end
+          log_debug("Waiting for up to #{'%.2f' % time_remaining} seconds for servers to be scanned: #{summary}")
           server_selection_semaphore.wait(time_remaining)
         end
       end
