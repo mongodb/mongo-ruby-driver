@@ -43,6 +43,11 @@ class ClusterConfig
     end
   end
 
+  def primary_address
+    determine_cluster_config
+    @primary_address
+  end
+
   def primary_address_str
     determine_cluster_config
     @primary_address.seed

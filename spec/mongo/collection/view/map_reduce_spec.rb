@@ -578,11 +578,13 @@ describe Mongo::Collection::View::MapReduce do
       context 'when the server is not a valid for writing' do
 
         it 'reroutes the operation to a primary' do
-          allow(map_reduce).to receive(:valid_server?).and_return(false)
-          expect(Mongo::Logger.logger).to receive(:warn).once do |msg|
-            expect(msg).to include('Rerouting the MapReduce operation to the primary server')
+          RSpec::Mocks.with_temporary_scope do
+            allow(map_reduce).to receive(:valid_server?).and_return(false)
+            expect(Mongo::Logger.logger).to receive(:warn).once do |msg|
+              expect(msg).to include('Rerouting the MapReduce operation to the primary server')
+            end
+            map_reduce.to_a
           end
-          map_reduce.to_a
         end
 
         context 'when the view has a write concern' do
