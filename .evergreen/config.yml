@@ -799,23 +799,11 @@ buildvariants:
      - name: "test"
 
 -
-  matrix_name: "jruby-new"
+  matrix_name: "jruby"
   matrix_spec:
     auth-and-ssl: "auth-and-ssl"
     ruby: "jruby-9.2"
-    mongodb-version: "4.0"
-    topology: "*"
-    os: rhel70
-  display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
-  tasks:
-     - name: "test"
-
--
-  matrix_name: "jruby-old"
-  matrix_spec:
-    auth-and-ssl: "noauth-and-nossl"
-    ruby: "jruby-9.1"
-    mongodb-version: "*"
+    mongodb-version: ["4.2", "2.6"]
     topology: "*"
     os: rhel70
   display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
