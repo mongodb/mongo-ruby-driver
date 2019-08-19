@@ -165,5 +165,16 @@ module CommonShortcuts
       end
       LocalResourceRegistry.instance.register(pool, finalizer)
     end
+
+    # Stop monitoring threads on the specified clients, after ensuring
+    # each client has a writable server. Used for tests which assert on
+    # global side effects like log messages being generated, to prevent
+    # background threads from interfering with assertions.
+    def stop_monitoring(*clients)
+      clients.each do |client|
+        client.cluster.next_primary
+        client.cluster.disconnect!
+      end
+    end
   end
 end

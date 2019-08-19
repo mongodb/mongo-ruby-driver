@@ -576,6 +576,11 @@ describe Mongo::Collection::View::MapReduce do
       end
 
       context 'when the server is not a valid for writing' do
+        clean_slate
+
+        before do
+          stop_monitoring(authorized_client)
+        end
 
         it 'reroutes the operation to a primary' do
           RSpec::Mocks.with_temporary_scope do
@@ -651,12 +656,10 @@ describe Mongo::Collection::View::MapReduce do
       end
 
       context 'when the server is a valid for writing' do
+        clean_slate
+
         before do
-          # We are inspecting server state - kill monitor threads so that
-          # server state is not changed in background due to intermittent
-          # connectivity issues in Evergreen
-          ClientRegistry.instance.close_all_clients
-          authorized_collection.client.cluster.disconnect!
+          stop_monitoring(authorized_client)
         end
 
         it 'does not reroute the operation to a primary' do
