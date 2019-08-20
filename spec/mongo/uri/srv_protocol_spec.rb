@@ -629,18 +629,23 @@ describe Mongo::URI::SRVProtocol do
         end
 
         context 'gssapi' do
+          before(:each) do
+            skip 'ENTERPRISE_AUTH_TESTS env var not specified' unless ENV['ENTERPRISE_AUTH_TESTS']
+            require 'mongo_kerberos'
+          end
+
           let(:mechanism) { 'GSSAPI' }
           let(:expected) { :gssapi }
 
-          it 'sets the auth mechanism to :gssapi', gssapi: true do
+          it 'sets the auth mechanism to :gssapi' do
             expect(uri.uri_options[:auth_mech]).to eq(expected)
           end
 
-          it 'sets the options on a client created with the uri', gssapi: true do
+          it 'sets the options on a client created with the uri' do
             expect(client.options[:auth_mech]).to eq(expected)
           end
 
-          it 'is case-insensitive', gssapi: true do
+          it 'is case-insensitive' do
             client = new_local_client_nmio(string.downcase)
             expect(client.options[:auth_mech]).to eq(expected)
           end

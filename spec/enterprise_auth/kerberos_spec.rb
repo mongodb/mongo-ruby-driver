@@ -27,11 +27,10 @@ describe 'kerberos authentication' do
 
   before do
     skip 'ENTERPRISE_AUTH_TESTS env var not specified' unless ENV['ENTERPRISE_AUTH_TESTS']
+    require 'mongo_kerberos'
   end
 
   let(:doc) do
-    require 'mongo_kerberos'
-
     client.database[:test].find.first
   end
 

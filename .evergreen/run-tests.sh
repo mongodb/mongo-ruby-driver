@@ -40,8 +40,6 @@ setup_ruby
 
 install_deps
 
-export SKIP_GSSAPI=true
-
 echo "Running specs"
 which bundle
 bundle --version
