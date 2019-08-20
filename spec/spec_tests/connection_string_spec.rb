@@ -39,12 +39,13 @@ describe 'ConnectionString' do
       end
 
       spec.tests.each_with_index do |test, index|
+        tests_gssapi = test.description.include?("gssapi") || test.description.include?("GSSAPI")
 
         context "when a #{test.description} is provided" do
 
           context 'when the uri is invalid', unless: test.valid? do
 
-            it 'raises an error' do
+            it 'raises an error', gssapi: tests_gssapi do
               expect{
                 test.uri
               }.to raise_exception(Mongo::Error::InvalidURI)
@@ -57,26 +58,26 @@ describe 'ConnectionString' do
               expect(Mongo::Logger.logger).to receive(:warn)
             end
 
-            it 'warns' do
+            it 'warns', gssapi: tests_gssapi do
               expect(test.client).to be_a(Mongo::Client)
             end
           end
 
           context 'when the uri is valid', if: test.valid? do
 
-            it 'does not raise an exception' do
+            it 'does not raise an exception', gssapi: tests_gssapi do
               expect(test.uri).to be_a(Mongo::URI)
             end
 
-            it 'creates a client with the correct hosts' do
+            it 'creates a client with the correct hosts', gssapi: tests_gssapi do
               expect(test.client).to have_hosts(test)
             end
 
-            it 'creates a client with the correct authentication properties' do
+            it 'creates a client with the correct authentication properties', gssapi: tests_gssapi do
               expect(test.client).to match_auth(test)
             end
 
-            it 'creates a client with the correct options' do
+            it 'creates a client with the correct options', gssapi: tests_gssapi do
               expect(test.client).to match_options(test)
             end
           end

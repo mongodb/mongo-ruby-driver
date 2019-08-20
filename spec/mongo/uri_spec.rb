@@ -750,16 +750,16 @@ describe Mongo::URI do
         let(:mechanism) { 'GSSAPI' }
         let(:expected) { :gssapi }
 
-        it 'sets the auth mechanism to :gssapi' do
+        it 'sets the auth mechanism to :gssapi', gssapi: true do
           expect(uri.uri_options[:auth_mech]).to eq(expected)
         end
 
-        it 'sets the options on a client created with the uri' do
+        it 'sets the options on a client created with the uri', gssapi: true do
           client = new_local_client_nmio(string)
           expect(client.options[:auth_mech]).to eq(expected)
         end
 
-        it 'is case-insensitive' do
+        it 'is case-insensitive', gssapi: true do
           client = new_local_client_nmio(string.downcase)
           expect(client.options[:auth_mech]).to eq(expected)
         end

@@ -43,7 +43,7 @@ install_deps
 echo "Running specs"
 which bundle
 bundle --version
-bundle exec rake spec:ci
+bundle exec rake spec:ci --tag ~gssapi
 test_status=$?
 echo "TEST STATUS"
 echo ${test_status}

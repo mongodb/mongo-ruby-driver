@@ -17,6 +17,7 @@ describe 'Uri Options' do
       end
 
       spec.tests.each do |test|
+        tests_gssapi = test.description.include?("gssapi") || test.description.include?("GSSAPI")
 
         context "#{test.description}" do
 
@@ -26,14 +27,14 @@ describe 'Uri Options' do
               expect(Mongo::Logger.logger).to receive(:warn)
             end
 
-            it 'warns' do
+            it 'warns', gssapi: tests_gssapi do
               expect(test.client).to be_a(Mongo::Client)
             end
           end
 
           context 'when the uri is invalid', unless: test.valid? do
 
-            it 'raises an error' do
+            it 'raises an error', gssapi: tests_gssapi do
               expect{
                 test.uri
               }.to raise_exception(Mongo::Error::InvalidURI)
@@ -46,22 +47,22 @@ describe 'Uri Options' do
               expect(Mongo::Logger.logger).not_to receive(:warn)
             end
 
-            it 'does not raise an exception or warning' do
+            it 'does not raise an exception or warning', gssapi: tests_gssapi do
               expect(test.client).to be_a(Mongo::Client)
             end
           end
 
           context 'when the uri is valid', if: test.valid? do
 
-            it 'creates a client with the correct hosts' do
+            it 'creates a client with the correct hosts', gssapi: tests_gssapi do
               expect(test.client).to have_hosts(test)
             end
 
-            it 'creates a client with the correct authentication properties' do
+            it 'creates a client with the correct authentication properties', gssapi: tests_gssapi do
               expect(test.client).to match_auth(test)
             end
 
-            it 'creates a client with the correct options' do
+            it 'creates a client with the correct options', gssapi: tests_gssapi do
               expect(test.client).to match_options(test)
             end
           end
