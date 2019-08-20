@@ -872,7 +872,7 @@ module Mongo
       when :mongodb_cr, :plain, :scram, :scram256
         raise Mongo::Auth::InvalidConfiguration.new(options[:auth_mech], 'user is required') if options[:user].nil?
       when :mongodb_x509
-        raise Mongo::Auth::InvalidConfiguration.new(:mongodb_x509, "invalid auth_source: #{options[:auth_source]}. Must be $external or nil") if !['$external', nil].include?(options[:auth_source])
+        raise Mongo::Auth::InvalidConfiguration.new(:mongodb_x509, "invalid auth_source: #{options[:auth_source]}. Must be $external or nil") if ![:external, nil].include?(options[:auth_source])
         raise Mongo::Auth::InvalidConfiguration.new(:mongodb_x509, 'password is not supported') if !options[:password].nil?
       when nil
         raise Mongo::Auth::InvalidConfiguration.new(:default, 'do not include user information delimiter (@) in URI for blank user') if !options[:user].nil? && !options[:user].length

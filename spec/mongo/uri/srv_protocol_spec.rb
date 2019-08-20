@@ -665,8 +665,7 @@ describe Mongo::URI::SRVProtocol do
         end
 
         context 'mongodb-x509' do
-          let(:options) { "authMechanism=#{mechanism}&authSource=#{source}" }
-          let(:source) { '$external' }
+          let(:options) { "authMechanism=#{mechanism}&authSource=$external" }
           let(:mechanism) { 'MONGODB-X509' }
           let(:expected) { :mongodb_x509 }
 
@@ -684,7 +683,7 @@ describe Mongo::URI::SRVProtocol do
           end
 
           context 'when a username is not provided' do
-
+            let(:string) { "#{scheme}#{servers}/?#{options}" }
             it 'recognizes the mechanism with no username' do
               client = new_local_client_nmio(string.downcase)
               expect(client.options[:auth_mech]).to eq(expected)
