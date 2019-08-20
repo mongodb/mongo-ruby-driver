@@ -25,4 +25,4 @@ bundle install --gemfile="$BUNDLE_GEMFILE"
 
 echo "Running tests"
 bundle exec rspec spec/enterprise_auth -fd
-bundle exec rspec spec --tag gssapi
+# bundle exec rspec spec --tag gssapi
