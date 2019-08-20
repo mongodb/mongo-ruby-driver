@@ -58,7 +58,7 @@ export MONGODB_URI="mongodb://localhost:27017/?serverSelectionTimeoutMS=30000$ur
 bundle exec rake spec:prepare
 
 export MONGODB_URI="mongodb://localhost:27017/?appName=test-suite$uri_options"
-bundle exec rake spec:ci
+bundle exec rake spec:ci --tag ~gssapi
 test_status=$?
 echo "TEST STATUS"
 echo ${test_status}
