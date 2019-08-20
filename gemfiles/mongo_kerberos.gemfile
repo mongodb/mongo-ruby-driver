@@ -4,6 +4,9 @@ gemspec path: '..'
 gem 'mongo_kerberos', github: "mongodb/mongo-ruby-kerberos", branch: "testing"
 
 group :test do
+  gem 'rfc'
+  gem 'ice_nine'
   gem 'fuubar'
+  gem 'timeout-interrupt', platforms: :mri
   gem 'rspec', '~> 3.4.0'
 end
