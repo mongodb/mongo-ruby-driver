@@ -364,7 +364,6 @@ module Mongo
     #
     # @since 2.0.0
     def initialize(addresses_or_uri, options = nil)
-      byebug
       if options
         options = options.dup
       else
