@@ -364,6 +364,7 @@ module Mongo
     #
     # @since 2.0.0
     def initialize(addresses_or_uri, options = nil)
+      byebug
       if options
         options = options.dup
       else
@@ -875,7 +876,6 @@ module Mongo
         raise Mongo::Auth::InvalidConfiguration.new(:mongodb_x509, 'auth_source must be $external or nil') if !['$external', nil].include?(options[:auth_source])
         raise Mongo::Auth::InvalidConfiguration.new(:mongodb_x509, 'password is not supported') if !options[:password].nil?
       when nil
-        raise Mongo::Auth::InvalidConfiguration.new(:default, 'auth_source cannot be present without a user') if !options[:auth_source].nil? && options[:user].nil?
         raise Mongo::Auth::InvalidConfiguration.new(:default, 'do not include user information delimiter (@) in URI for blank user') if !options[:user].nil? && !options[:user].length
         raise Mongo::Auth::InvalidConfiguration.new(:default, 'do not include password delimiter (:) in URI for blank password') if !options[:password].nil? && !options[:password].length
       else
