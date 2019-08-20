@@ -703,6 +703,9 @@ describe Mongo::URI do
     end
 
     context 'auth mechanism provided' do
+      let(:string) { "#{scheme}#{credentials}@#{servers}/?#{options}" }
+      let(:credentials) { 'tyler' }
+
       let(:options) { "authMechanism=#{mechanism}" }
 
       context 'plain' do
@@ -800,7 +803,7 @@ describe Mongo::URI do
         end
 
         context 'when a username is not provided' do
-
+          let(:string) { "#{scheme}#{servers}/?#{options}" }
           it 'recognizes the mechanism with no username' do
             client = new_local_client_nmio(string.downcase)
             expect(client.options[:auth_mech]).to eq(expected)

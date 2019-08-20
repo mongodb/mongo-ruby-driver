@@ -416,12 +416,14 @@ module Mongo
 
     def parse_password!(string)
       if (string && pwd = string.partition(AUTH_USER_PWD_DELIM)[2])
-        raise_invalid_error!(UNESCAPED_USER_PWD) if pwd =~ UNSAFE
-        pwd_decoded = decode(pwd)
-        if pwd_decoded =~ PERCENT_CHAR && encode(pwd_decoded) != pwd
-          raise_invalid_error!(UNESCAPED_USER_PWD)
+        if pwd.length > 0
+          raise_invalid_error!(UNESCAPED_USER_PWD) if pwd =~ UNSAFE
+          pwd_decoded = decode(pwd)
+          if pwd_decoded =~ PERCENT_CHAR && encode(pwd_decoded) != pwd
+            raise_invalid_error!(UNESCAPED_USER_PWD)
+          end
+          pwd_decoded
         end
-        pwd_decoded
       end
     end
 
