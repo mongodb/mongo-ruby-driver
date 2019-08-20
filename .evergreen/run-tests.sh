@@ -40,10 +40,12 @@ setup_ruby
 
 install_deps
 
+export SKIP_GSSAPI=true
+
 echo "Running specs"
 which bundle
 bundle --version
-bundle exec rake spec:ci --tag ~gssapi
+bundle exec rake spec:ci
 test_status=$?
 echo "TEST STATUS"
 echo ${test_status}

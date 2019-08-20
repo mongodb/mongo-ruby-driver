@@ -19,6 +19,7 @@ tasks = Rake.application.instance_variable_get('@tasks')
 tasks['release:do'] = tasks.delete('release')
 
 RSpec::Core::RakeTask.new(:spec) do |t|
+  t.rspec_opts = "--tag ~gssapi" if ENV['SKIP_GSSAPI']
   #t.rspec_opts = "--profile 5" if ENV['CI']
 end
 
