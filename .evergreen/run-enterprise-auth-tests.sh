@@ -25,7 +25,7 @@ bundle install --gemfile="$BUNDLE_GEMFILE"
 
 echo "Running tests"
 bundle exec rspec spec/enterprise_auth -fd
-bundle exec rspec spec/spec_tests/uri_options_spec.rb
-bundle exec rspec spec/spec_tests/connection_string_spec.rb
-bundle exec rspec spec/mongo/uri/srv_protocol_spec.rb
-bundle exec rspec spec/mongo/uri_spec.rb
+bundle exec rspec spec/spec_tests/uri_options_spec.rb -fd
+bundle exec rspec spec/spec_tests/connection_string_spec.rb -fd
+bundle exec rspec spec/mongo/uri/srv_protocol_spec.rb -fd
+bundle exec rspec spec/mongo/uri_spec.rb -fd
