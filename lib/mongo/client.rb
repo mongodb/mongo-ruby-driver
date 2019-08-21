@@ -881,9 +881,9 @@ module Mongo
       end
 
       if options[:auth_mech].nil?
-        if !(options[:user].nil? || options[:user].length)
+        if !options[:user].nil? && !options[:user].length
           raise Mongo::Auth::InvalidConfiguration.new('user information delimiter (@) must not be included if user is blank')
-        elsif !(options[:password].nil? || options[:password.length])
+        elsif !options[:password].nil? && !options[:password].length
           raise Mongo::Auth::InvalidConfiguration.new('password delimeter (:) must not be included if password is blank')
         end
       end
