@@ -84,7 +84,7 @@ module Mongo
       # @param [ String ] reason The reason that this configuration is invalid.
       #
       # @since 2.11.0
-      def initialize(message, **options)
+      def initialize(message)
         super("Invalid auth configuration: #{message}")
       end
     end
