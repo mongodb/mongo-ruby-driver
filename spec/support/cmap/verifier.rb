@@ -27,14 +27,13 @@ module Mongo
         expect(expected).to be_a(Hash)
         expect(actual).to be_a(Hash)
 
-        actual = actual.dup
+        actual_modified = actual.dup
         if actual['reason']
-          actual['reason'] = actual['reason'].to_s.gsub(/_[a-z]/) { |m| m[1].upcase }
+          actual_modified['reason'] = actual['reason'].to_s.gsub(/_[a-z]/) { |m| m[1].upcase }
         end
 
-        actual_modified = actual.dup
-        actual_modified.each do |k, v|
-          if expected.key?(k) && expected[k] == 42
+        actual.each do |k, v|
+          if expected.key?(k) && expected[k] == 42 && v
             actual_modified[k] = 42
           end
         end

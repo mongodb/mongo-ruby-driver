@@ -26,6 +26,7 @@ RSpec.configure do |config|
 
   config.after do
     LocalResourceRegistry.instance.close_all
+    ClientRegistry.instance.close_local_clients
   end
 end
 

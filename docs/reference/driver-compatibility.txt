@@ -28,6 +28,16 @@ MongoDB Compatibility
      - MongoDB 2.6
      - MongoDB 2.4
 
+   * - 2.11
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     -
+
    * - 2.10
      - |checkmark|
      - |checkmark|
@@ -128,64 +138,19 @@ MongoDB Compatibility
      - |checkmark|
      - |checkmark|
 
-   * - 1.12
-     -
-     -
-     -
-     -
-     -
-     - |checkmark|
-     - |checkmark|
-     - |checkmark|
-
-   * - 1.11
-     -
-     -
-     -
-     -
-     -
-     -
-     - |checkmark|
-     - |checkmark|
-
-   * - 1.10
-     -
-     -
-     -
-     -
-     -
-     -
-     - |checkmark|
-     - |checkmark|
-
-   * - 1.9
-     -
-     -
-     -
-     -
-     -
-     -
-     -
-     - |checkmark|
-
-   * - 1.8
-     -
-     -
-     -
-     -
-     -
-     -
-     -
-     - |checkmark|
-
-.. include:: /includes/older-server-versions-unsupported.rst
+The driver does not support older versions of MongoDB.
 
 .. _reference-compatibility-language-ruby:
 
 Ruby Compatibility
 ~~~~~~~~~~~~~~~~~~
 
-.. include:: /includes/ruby-driver-compatibility-matrix-language.rst
+The following compatibility table specifies the recommended
+version(s) of the MongoDB Ruby driver for use with a specific version of
+Ruby.
+
+The first column lists the driver versions. "D" in a column means support
+for that Ruby version is deprecated.
 
 .. list-table::
    :header-rows: 1
@@ -201,10 +166,22 @@ Ruby Compatibility
      - Ruby 2.1
      - Ruby 2.0
      - Ruby 1.9
-     - Ruby 1.8.7
      - JRuby 9.2
      - JRuby 9.1
      - JRuby
+
+   * - 2.11
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     - |checkmark|
+     - 
+     - 
+     - 
+     - 
+     - |checkmark|
+     - |checkmark|
+     -
 
    * - 2.10
      - |checkmark|
@@ -215,7 +192,6 @@ Ruby Compatibility
      - D
      - D
      - D
-     -
      - |checkmark|
      - |checkmark|
      -
@@ -229,7 +205,6 @@ Ruby Compatibility
      - D
      - D
      - D
-     -
      - |checkmark|
      - |checkmark|
      -
@@ -243,7 +218,6 @@ Ruby Compatibility
      - |checkmark|
      - |checkmark|
      - |checkmark|
-     -
      - |checkmark|
      - |checkmark|
      -
@@ -257,7 +231,6 @@ Ruby Compatibility
      - |checkmark|
      - |checkmark|
      - |checkmark|
-     -
      - |checkmark|
      - |checkmark|
      -
@@ -271,7 +244,6 @@ Ruby Compatibility
      - |checkmark|
      - |checkmark|
      - |checkmark|
-     -
      - |checkmark|
      - |checkmark|
      -
@@ -287,7 +259,6 @@ Ruby Compatibility
      - |checkmark|
      -
      -
-     -
      - |checkmark|
 
    * - 2.4
@@ -299,7 +270,6 @@ Ruby Compatibility
      - |checkmark|
      - |checkmark|
      - |checkmark|
-     -
      -
      -
      - |checkmark|
@@ -315,7 +285,6 @@ Ruby Compatibility
      - |checkmark|
      -
      -
-     -
      - |checkmark|
 
    * - 2.2
@@ -327,7 +296,6 @@ Ruby Compatibility
      - |checkmark|
      - |checkmark|
      - |checkmark|
-     -
      -
      -
      - |checkmark|
@@ -343,7 +311,6 @@ Ruby Compatibility
      - |checkmark|
      -
      -
-     -
      - |checkmark|
 
    * - 2.0
@@ -357,56 +324,9 @@ Ruby Compatibility
      - |checkmark|
      -
      -
-     -
      - |checkmark|
 
-   * - 1.12 - 1.9
-     -
-     -
-     -
-     -
-     -
-     - |checkmark|
-     - |checkmark|
-     - |checkmark|
-     - |checkmark|
-     -
-     -
-     - |checkmark|
-
-   * - 1.8
-     -
-     -
-     -
-     -
-     -
-     -
-     - |checkmark|
-     - |checkmark|
-     - |checkmark|
-     -
-     -
-     - |checkmark|
-
-   * - 1.7 - 1.6
-     -
-     -
-     -
-     -
-     -
-     -
-     -
-     - |checkmark|
-     - |checkmark|
-     -
-     -
-     - |checkmark|
-
-Support for Ruby versions less than 2.3 has been deprecated. Driver version
-2.10 will be the last release to support Ruby 1.9-2.2. As of driver version
-2.11.0, the minimum required Ruby version will be 2.3. Please note that,
-as of January 1, 2019, Ruby versions 2.2 and older are `not supported by
-the Ruby core team <https://www.ruby-lang.org/en/downloads/branches/>`_.
+The driver does not support older versions of Ruby.
 
 Rails/ActiveSupport Compatibility
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

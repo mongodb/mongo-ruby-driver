@@ -86,7 +86,7 @@ setup_ruby() {
     
     #rvm reinstall $RVM_RUBY
   else
-    if ! test "$RVM_RUBY" = ruby-1.9; then
+    if true; then
     
     # For testing toolchains:
     toolchain_url=https://s3.amazonaws.com//mciuploads/mongo-ruby-toolchain/`host_arch`/741a9eba5788e6d5254a09319d7d237b40a9f4d6/mongo_ruby_driver_toolchain_`host_arch`_patch_741a9eba5788e6d5254a09319d7d237b40a9f4d6_5cfa8ad0d6d80a02bbb45be7_19_06_07_16_03_30.tar.gz
@@ -132,7 +132,7 @@ EOH
     # Only install bundler when not using ruby-head.
     # ruby-head comes with bundler and gem complains
     # because installing bundler would overwrite the bundler binary
-    if test "$RVM_RUBY" = ruby-1.9 || test "$RVM_RUBY" = ruby-2.2 || echo "$RVM_RUBY" |grep -q jruby; then
+    if echo "$RVM_RUBY" |grep -q jruby; then
       gem install bundler -v '<2'
     fi
   fi

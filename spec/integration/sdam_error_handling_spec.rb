@@ -16,48 +16,60 @@ describe 'SDAM error handling' do
   shared_examples_for 'marks server unknown' do
     it 'marks server unknown' do
       expect(server).not_to be_unknown
-      operation
-      expect(server).to be_unknown
+      RSpec::Mocks.with_temporary_scope do
+        operation
+        expect(server).to be_unknown
+      end
     end
   end
 
   shared_examples_for 'does not mark server unknown' do
     it 'does not mark server unknown' do
       expect(server).not_to be_unknown
-      operation
-      expect(server).not_to be_unknown
+      RSpec::Mocks.with_temporary_scope do
+        operation
+        expect(server).not_to be_unknown
+      end
     end
   end
 
   shared_examples_for 'requests server scan' do
     it 'requests server scan' do
-      expect(server.scan_semaphore).to receive(:signal)
-      operation
+      RSpec::Mocks.with_temporary_scope do
+        expect(server.scan_semaphore).to receive(:signal)
+        operation
+      end
     end
   end
 
   shared_examples_for 'does not request server scan' do
     it 'does not request server scan' do
-      expect(server.scan_semaphore).not_to receive(:signal)
-      operation
+      RSpec::Mocks.with_temporary_scope do
+        expect(server.scan_semaphore).not_to receive(:signal)
+        operation
+      end
     end
   end
 
   shared_examples_for 'clears connection pool' do
     it 'clears connection pool' do
       generation = server.pool.generation
-      operation
-      new_generation = server.pool.generation
-      expect(new_generation).to eq(generation + 1)
+      RSpec::Mocks.with_temporary_scope do
+        operation
+        new_generation = server.pool.generation
+        expect(new_generation).to eq(generation + 1)
+      end
     end
   end
 
   shared_examples_for 'does not clear connection pool' do
     it 'does not clear connection pool' do
       generation = server.pool.generation
-      operation
-      new_generation = server.pool.generation
-      expect(new_generation).to eq(generation)
+      RSpec::Mocks.with_temporary_scope do
+        operation
+        new_generation = server.pool.generation
+        expect(new_generation).to eq(generation)
+      end
     end
   end
 

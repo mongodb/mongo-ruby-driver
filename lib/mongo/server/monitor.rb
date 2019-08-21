@@ -123,21 +123,19 @@ module Mongo
         server.scan_semaphore.wait(server.cluster.heartbeat_interval)
       end
 
-      def pre_stop
-        server.scan_semaphore.signal
-      end
-
+      # Stop the background thread and wait for to terminate for a reasonable
+      # amount of time.
+      #
+      # @return [ true | false ] Whether the thread was terminated.
+      #
+      # @api public for backwards compatibility only
       def stop!
-        super
-
-        # Although disconnect! documentation implies a possibility of
-        # failure, all of our disconnects always return true.
-        #
-        # Important: disconnect should happen after the background thread
-        # terminated.
-        connection.disconnect!
-
-        true
+        # Forward super's return value
+        super.tap do
+          # Important: disconnect should happen after the background thread
+          # terminated.
+          connection.disconnect!
+        end
       end
 
       # Perform a check of the server with throttling, and update
@@ -187,6 +185,10 @@ module Mongo
       end
 
       private
+
+      def pre_stop
+        server.scan_semaphore.signal
+      end
 
       def ismaster
         @mutex.synchronize do

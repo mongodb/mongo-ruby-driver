@@ -729,19 +729,6 @@ module Mongo
       end
     end
 
-    # Add this session's id to a command document.
-    #
-    # @example
-    #   session.add_id!(cmd)
-    #
-    # @return [ Hash, BSON::Document ] The command document.
-    #
-    # @since 2.5.0
-    # @api private
-    def add_id!(command)
-      command.merge!(lsid: session_id)
-    end
-
     # Add the startTransaction field to a command document if applicable.
     #
     # @example

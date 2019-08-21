@@ -23,7 +23,7 @@ Environment
 We recommend using [rbenv](https://github.com/sstephenson/rbenv) to set up
 the Ruby development and testing environments, though other tools like
 [RVM](https://rvm.io/) will also work. The driver currently supports
-MRI 1.9.3-2.6 and JRuby 9.1-9.2.
+MRI 2.3-2.6 and JRuby 9.1-9.2.
 
 A MongoDB cluster is required to run the tests. Setup procedures and
 recommendations for various clusters, as well as how to configure the

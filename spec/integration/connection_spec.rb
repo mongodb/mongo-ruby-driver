@@ -1,15 +1,12 @@
 require 'spec_helper'
 
 describe 'Connections' do
-  before(:all) do
-    ClientRegistry.instance.close_all_clients
-  end
+  clean_slate
 
   let(:client) { ClientRegistry.instance.global_client('authorized') }
   let(:server) { client.cluster.servers.first }
 
   describe '#connect!' do
-    fails_on_jruby
 
     context 'network error during handshake' do
       let(:connection) do
@@ -74,16 +71,16 @@ describe 'Connections' do
 
           # need to use the primary here, otherwise a secondary will be
           # changed to unknown which wouldn't alter topology
-          let(:server) { client.cluster.servers.detect { |s| s.primary? } }
+          let(:server) { client.cluster.next_primary }
 
           it 'changes topology type' do
             # wait for topology to get discovered
-            client.database.command(ismaster: 1)
+            client.cluster.next_primary
 
             expect(client.cluster.topology.class).to eql(Mongo::Cluster::Topology::ReplicaSetWithPrimary)
 
             # stop background monitoring to prevent it from racing with the test
-            client.cluster.servers.each do |server|
+            client.cluster.servers_list.each do |server|
               server.monitor.stop!
             end
 
@@ -98,12 +95,11 @@ describe 'Connections' do
       context 'error during handshake to primary in a replica set' do
         require_topology :replica_set
 
-        let(:server) { client.cluster.servers.detect { |server| server.primary? } }
+        let(:server) { client.cluster.next_primary }
 
         before do
-          ClientRegistry.instance.close_all_clients
           # insert to perform server selection and get topology to primary
-          client[:test].insert_one(foo: 'bar')
+          client.cluster.next_primary
         end
 
         it 'sets cluster type to replica set without primary' do
@@ -148,17 +144,19 @@ describe 'Connections' do
         server.monitor.instance_variable_set('@description',
           Mongo::Server::Description.new(server.address))
 
-        # now pretend an ismaster returned a different range
-        features = Mongo::Server::Description::Features.new(0..3)
-        # the second Features instantiation is for SDAM event publication
-        expect(Mongo::Server::Description::Features).to receive(:new).twice.and_return(features)
+        RSpec::Mocks.with_temporary_scope do
+          # now pretend an ismaster returned a different range
+          features = Mongo::Server::Description::Features.new(0..3)
+          # the second Features instantiation is for SDAM event publication
+          expect(Mongo::Server::Description::Features).to receive(:new).twice.and_return(features)
 
-        connection = Mongo::Server::Connection.new(server, server.options)
-        expect(connection.connect!).to be true
+          connection = Mongo::Server::Connection.new(server, server.options)
+          expect(connection.connect!).to be true
 
-        # ismaster response should update server description via sdam flow,
-        # which includes wire version range
-        expect(server.features.server_wire_versions.max).to eq(3)
+          # ismaster response should update server description via sdam flow,
+          # which includes wire version range
+          expect(server.features.server_wire_versions.max).to eq(3)
+        end
       end
     end
 
