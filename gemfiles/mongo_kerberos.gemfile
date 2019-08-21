@@ -6,6 +6,7 @@ gem 'mongo_kerberos', github: "mongodb/mongo-ruby-kerberos", branch: "testing"
 group :test do
   gem 'rfc'
   gem 'ice_nine'
+  gem 'rspec-retry'
   gem 'fuubar'
   gem 'timeout-interrupt', platforms: :mri
   gem 'rspec', '~> 3.4'
