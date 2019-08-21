@@ -868,18 +868,27 @@ module Mongo
     # Validates all authentication-related options after they are set on the client
     # This method is intended to catch combinations of options which are not allowed
     def validate_authentication_options!
-      case options[:auth_mech]
-      when :mongodb_cr, :plain, :scram, :scram256
-        raise Mongo::Auth::InvalidConfiguration.new(options[:auth_mech], 'user is required') if options[:user].nil?
-      when :mongodb_x509
-        raise Mongo::Auth::InvalidConfiguration.new(:mongodb_x509, "invalid auth_source: #{options[:auth_source]}. Must be $external or nil") if ![:external, nil].include?(options[:auth_source])
-        raise Mongo::Auth::InvalidConfiguration.new(:mongodb_x509, 'password is not supported') if !options[:password].nil?
-      when nil
-        raise Mongo::Auth::InvalidConfiguration.new(:default, 'do not include user information delimiter (@) in URI for blank user') if !options[:user].nil? && !options[:user].length
-        raise Mongo::Auth::InvalidConfiguration.new(:default, 'do not include password delimiter (:) in URI for blank password') if !options[:password].nil? && !options[:password].length
-      else
-        raise Mongo::Auth::InvalidMechanism.new(options[:auth_mech]) if !Mongo::Auth::SOURCES.has_key?(options[:auth_mech])
+      if options[:user].nil? && [:mongodb_cr, :plain, :scram, :scram256].include?(options[:auth_mech])
+        raise Mongo::Auth::InvalidConfiguration.new "user is required for mechanism #{options[:auth_mech]}"
       end
+
+      if options[:auth_mech] == :mongodb_x509
+        if ![:external, nil].include?(options[:auth_source])
+          raise Mongo::Auth::InvalidConfiguration.new "#{options[:auth_source]} is an invalid auth source for mechanism mongodb_x509; valid options are $external and nil"
+        elsif !options[:password].nil?
+          raise Mongo::Auth::InvalidConfiguration.new 'password is not supported for mongodb_x509 auth mechanism'
+        end
+      end
+
+      if options[:auth_mech].nil?
+        if !(options[:user].nil? || options[:user].length)
+          raise Mongo::Auth::InvalidConfiguration.new 'user information delimiter (@) must not be included if user is blank'
+        elsif !(options[:password].nil? || options[:password.length])
+          raise Mongo::Auth::InvalidConfiguration.new 'password delimeter (:) must not be included if password is blank'
+        end
+      end
+
+      raise Mongo::Auth::InvalidMechanism.new(options[:auth_mech]) if !Mongo::Auth::SOURCES.has_key?(options[:auth_mech])
     end
 
     def valid_compressors(compressors)

@@ -84,15 +84,15 @@ module Mongo
       # @param [ String ] reason The reason that this configuration is invalid.
       #
       # @since 2.11.0
-      def initialize(mechanism, reason)
-        super("Invalid auth configuration for #{mechanism.inspect} mechanism: #{reason}")
+      def initialize(message, **options)
+        super("Invalid auth configuration: #{message}")
       end
     end
 
     # Raised when trying to get an invalid authorization mechanism.
     #
     # @since 2.0.0
-    class InvalidMechanism < Mongo::Error::AuthError
+    class InvalidMechanism < InvalidConfiguration
 
       # Instantiate the new error.
       #
