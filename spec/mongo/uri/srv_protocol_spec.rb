@@ -629,10 +629,7 @@ describe Mongo::URI::SRVProtocol do
         end
 
         context 'gssapi' do
-          before(:each) do
-            skip 'ENTERPRISE_AUTH_TESTS env var not specified' unless ENV['ENTERPRISE_AUTH_TESTS']
-            require 'mongo_kerberos'
-          end
+          require_mongo_kerberos
 
           let(:mechanism) { 'GSSAPI' }
           let(:expected) { :gssapi }

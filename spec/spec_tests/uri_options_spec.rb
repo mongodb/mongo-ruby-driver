@@ -18,13 +18,8 @@ describe 'Uri Options' do
 
       spec.tests.each do |test|
         context "#{test.description}" do
-
-          before(:each) do
-            tests_gssapi = test.description.downcase.include?("gssapi")
-            if tests_gssapi
-              skip 'ENTERPRISE_AUTH_TESTS env var not specified' unless ENV['ENTERPRISE_AUTH_TESTS']
-              require 'mongo_kerberos'
-            end
+          if test.description.downcase.include?("gssapi")
+            require_mongo_kerberos
           end
 
           context 'when the uri should warn', if: test.warn? do

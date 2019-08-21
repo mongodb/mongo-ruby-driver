@@ -28,6 +28,13 @@ module LiteConstraints
     end
   end
 
+  def require_mongo_kerberos
+    before do
+      skip 'ENTERPRISE_AUTH_TESTS env var not specified' unless ENV['ENTERPRISE_AUTH_TESTS']
+      require 'mongo_kerberos'
+    end
+  end
+
   def require_linting
     before do
       unless Mongo::Lint.enabled?

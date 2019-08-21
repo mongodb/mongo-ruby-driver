@@ -1,6 +1,11 @@
 require 'mongo'
+require 'support/lite_constraints'
+
+include LiteConstraints
 
 describe 'kerberos authentication' do
+  require_mongo_kerberos
+
   let(:user) do
    "#{ENV['SASL_USER']}%40#{ENV['SASL_HOST'].upcase}"
   end
@@ -23,11 +28,6 @@ describe 'kerberos authentication' do
 
   let(:client) do
     Mongo::Client.new(uri)
-  end
-
-  before do
-    skip 'ENTERPRISE_AUTH_TESTS env var not specified' unless ENV['ENTERPRISE_AUTH_TESTS']
-    require 'mongo_kerberos'
   end
 
   let(:doc) do
