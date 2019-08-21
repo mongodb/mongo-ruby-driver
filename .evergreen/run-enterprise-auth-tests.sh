@@ -23,6 +23,7 @@ echo "Install dependencies"
 export BUNDLE_GEMFILE=gemfiles/mongo_kerberos.gemfile
 bundle install --gemfile="$BUNDLE_GEMFILE"
 
+export CI=evergreen
 echo "Running tests"
 bundle exec rspec spec/enterprise_auth -fd
 bundle exec rspec spec/spec_tests/uri_options_spec.rb -fd
