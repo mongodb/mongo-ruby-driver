@@ -3,7 +3,12 @@ require 'spec_helper'
 describe 'Connections' do
   clean_slate
 
-  let(:client) { ClientRegistry.instance.global_client('authorized') }
+  let(:client) do
+    ClientRegistry.instance.global_client('authorized').tap do |client|
+      stop_monitoring(client)
+    end
+  end
+
   let(:server) { client.cluster.servers.first }
 
   describe '#connect!' do
