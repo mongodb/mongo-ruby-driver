@@ -438,12 +438,18 @@ module Mongo
       # @option options [ true | false ] :lazy If true, do not close any of
       #   the idle connections and instead let them be closed during a
       #   subsequent check out operation.
+      # @option options [ true | false ] :stop_populator Whether to stop
+      #   the populator background thread. For internal driver use only.
       #
       # @return [ true ] true.
       #
       # @since 2.1.0
       def clear(options = nil)
         raise_if_closed!
+
+        if options && options[:stop_populator]
+          stop_populator
+        end
 
         @lock.synchronize do
           @generation += 1

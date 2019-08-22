@@ -234,9 +234,12 @@ module Mongo
         @pool = nil
       else
         # For backwards compatibility we disconnect/clear the pool rather
-        # than close it here.
+        # than close it here. We also stop the populator which allows the
+        # the pool to continue providing connections but stops it from
+        # connecting in background on clients/servers that are in fact
+        # intended to be closed and no longer used.
         begin
-          pool.disconnect!
+          pool.disconnect!(stop_populator: true)
         rescue Error::PoolClosedError
           # If the pool was already closed, we don't need to do anything here.
         end
