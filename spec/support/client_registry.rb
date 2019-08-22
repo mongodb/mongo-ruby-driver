@@ -210,7 +210,14 @@ class ClientRegistry
   def close_local_clients
     @lock.synchronize do
       @local_clients.each do |client|
-        client.close(true)
+        cluster = client.cluster
+        # Disconnect this cluster if and only if it is not shared with
+        # any of the global clients we know about.
+        if @global_clients.none? { |name, global_client|
+          cluster == global_client.cluster
+        }
+          cluster.disconnect!
+        end
       end
       @local_clients = []
     end
