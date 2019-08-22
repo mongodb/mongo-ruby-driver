@@ -24,27 +24,17 @@ module Mongo
       class Command
         include Specifiable
         include Executable
+        include ExecutableNoValidate
         include Idable
         include Limited
         include WriteConcernSupported
         include BypassDocumentValidation
 
-        # Execute the operation.
-        #
-        # @example
-        #   operation.execute(server)
-        #
-        # @param [ Mongo::Server ] server The server to send the operation to.
-        #
-        # @return [ Mongo::Operation::Insert::Result ] The operation result.
-        #
-        # @since 2.5.2
-        def execute(server)
-          result = Result.new(dispatch_message(server), @ids)
-          process_result(result, server)
-        end
-
         private
+
+        def get_result(server)
+          Result.new(dispatch_message(server), @ids)
+        end
 
         def selector(server)
           { insert: coll_name,
