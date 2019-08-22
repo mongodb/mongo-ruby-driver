@@ -16,6 +16,7 @@ module CommonShortcuts
     def clean_slate
       before do
         ClientRegistry.instance.close_all_clients
+        BackgroundThreadRegistry.instance.verify_empty!
       end
     end
 
@@ -25,6 +26,7 @@ module CommonShortcuts
     def clean_slate_for_all
       before(:all) do
         ClientRegistry.instance.close_all_clients
+        BackgroundThreadRegistry.instance.verify_empty!
       end
     end
 

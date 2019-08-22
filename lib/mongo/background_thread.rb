@@ -112,6 +112,7 @@ module Mongo
 
     private
 
+    # @return [ Thread ] The created Thread instance.
     def start!
       @thread = Thread.new do
         catch(:done) do
