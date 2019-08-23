@@ -874,17 +874,17 @@ module Mongo
       auth_source = options[:auth_source]
       mech_properties = options[:mechanism_properties]
 
-      if options[:auth_mech].nil?
-        if options[:user] && options[:user].empty?
+      if auth_mech.nil?
+        if user && user.empty?
           raise Mongo::Auth::InvalidConfiguration.new('empty username is not supported for default auth mechanism')
-        elsif options[:password] && options[:password].empty?
+        elsif password && password.empty?
           raise Mongo::Auth::InvalidConfiguration.new('empty password is not supported for default auth mechanism')
         end
 
         return
       end
 
-      if auth_mech && !Mongo::Auth::SOURCES.has_key?(auth_mech)
+      if !Mongo::Auth::SOURCES.has_key?(auth_mech)
         raise Mongo::Auth::InvalidMechanism.new(auth_mech) 
       end
 
@@ -892,14 +892,12 @@ module Mongo
         raise Mongo::Auth::InvalidConfiguration.new("user is required for mechanism #{auth_mech}")
       end
 
-      if password.nil?
-        if ![:gssapi, :mongodb_x509].include?(auth_mech)
-          raise Mongo::Auth::InvalidConfiguration.new("password is required for mechanism #{auth_mech}")
-        end
-      else
-        if auth_mech == :mongodb_x509
-          raise Mongo::Auth::InvalidConfiguration.new('password is not supported for mongodb_x509')
-        end
+      if password.nil? && ![:gssapi, :mongodb_x509].include?(auth_mech)
+        raise Mongo::Auth::InvalidConfiguration.new("password is required for mechanism #{auth_mech}")
+      end
+
+      if password && auth_mech == :mongodb_x509
+        raise Mongo::Auth::InvalidConfiguration.new('password is not supported for mongodb_x509')
       end
 
       if ![:external, nil].include?(auth_source) && [:gssapi, :mongodb_x509].include?(auth_mech)
