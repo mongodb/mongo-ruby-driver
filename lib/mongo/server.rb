@@ -227,21 +227,26 @@ module Mongo
       if monitor
         monitor.stop!
       end
-      if wait
-        pool.close(wait: wait)
-        # Need to clear @pool as otherwise the old pool will continue to be
-        # used if this server is reconnected in the future.
-        @pool = nil
-      else
-        # For backwards compatibility we disconnect/clear the pool rather
-        # than close it here. We also stop the populator which allows the
-        # the pool to continue providing connections but stops it from
-        # connecting in background on clients/servers that are in fact
-        # intended to be closed and no longer used.
-        begin
-          pool.disconnect!(stop_populator: true)
-        rescue Error::PoolClosedError
-          # If the pool was already closed, we don't need to do anything here.
+      _pool = @pool_lock.synchronize do
+        @pool
+      end
+      if _pool
+        if wait
+          _pool.close(wait: wait)
+          # Need to clear @pool as otherwise the old pool will continue to be
+          # used if this server is reconnected in the future.
+          @pool = nil
+        else
+          # For backwards compatibility we disconnect/clear the pool rather
+          # than close it here. We also stop the populator which allows the
+          # the pool to continue providing connections but stops it from
+          # connecting in background on clients/servers that are in fact
+          # intended to be closed and no longer used.
+          begin
+            _pool.disconnect!(stop_populator: true)
+          rescue Error::PoolClosedError
+            # If the pool was already closed, we don't need to do anything here.
+          end
         end
       end
       @connected = false
