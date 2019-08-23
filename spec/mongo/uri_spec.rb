@@ -726,7 +726,7 @@ describe Mongo::URI do
           client = new_local_client_nmio(string.downcase)
           expect(client.options[:auth_mech]).to eq(expected)
         end
-        
+
         context 'when mechanism_properties are provided' do
           let(:options) { "authMechanism=#{mechanism}&authMechanismProperties=CANONICALIZE_HOST_NAME:true" }
           
@@ -787,6 +787,16 @@ describe Mongo::URI do
           expect(client.options[:auth_mech]).to eq(expected)
         end
 
+        context 'when auth source is invalid' do
+          let(:options) { "authMechanism=#{mechanism}&authSource=foo" }
+
+          it 'does not allow a client to be created' do
+            expect {
+              new_local_client_nmio(string)
+            }.to raise_error Mongo::Auth::InvalidConfiguration
+          end
+        end
+
         context 'when mechanism_properties are provided' do
           let(:options) { "authMechanism=#{mechanism}&authMechanismProperties=SERVICE_NAME:other,CANONICALIZE_HOST_NAME:true" }
           
@@ -843,6 +853,16 @@ describe Mongo::URI do
         it 'is case-insensitive' do
           client = new_local_client_nmio(string.downcase)
           expect(client.options[:auth_mech]).to eq(expected)
+        end
+
+        context 'when auth source is invalid' do
+          let(:options) { "authMechanism=#{mechanism}&authSource=foo" }
+
+          it 'does not allow a client to be created' do
+            expect {
+              new_local_client_nmio(string)
+            }.to raise_error Mongo::Auth::InvalidConfiguration
+          end
         end
 
         context 'when a username is not provided' do
