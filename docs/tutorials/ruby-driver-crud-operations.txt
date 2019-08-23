@@ -152,6 +152,17 @@ query:
     #=> Yields a BSON::Document.
   end
 
+To query nested documents, specify the keys in nested order using dot
+notation.
+
+.. code-block:: ruby
+
+  client = Mongo::Client.new([ '127.0.0.1:27017' ], :database => 'music')
+  client[:artists].find("records.releaseYear": 2008).each do |document|
+    #=> Yields a BSON::Document.
+  end
+
+
 .. _ruby-driver-query-options:
 
 Query Options
