@@ -26,6 +26,9 @@ bundle install --gemfile="$BUNDLE_GEMFILE"
 unset CI
 echo "Running tests"
 bundle exec rspec spec/enterprise_auth -fd
+
+export MONGODB_URI="mongodb://$SASL_HOST:27017/"
+
 bundle exec rspec spec/spec_tests/uri_options_spec.rb -fd
 bundle exec rspec spec/spec_tests/connection_string_spec.rb -fd
 bundle exec rspec spec/mongo/uri/srv_protocol_spec.rb -fd
