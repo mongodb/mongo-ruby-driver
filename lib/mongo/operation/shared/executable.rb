@@ -59,6 +59,12 @@ module Mongo
         message(server)
       end
 
+      def add_server_diagnostics(server)
+        yield
+      rescue Mongo::Error, Mongo::AuthError => e
+        x
+      end
+
       def process_result(result, server)
         server.update_cluster_time(result)
 

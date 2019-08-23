@@ -605,12 +605,6 @@ module Mongo
           end
           raise e
         end
-
-        def add_server_diagnostics(server)
-          yield
-        rescue Mongo::Error, Mongo::AuthError => e
-          x
-        end
       end
     end
   end
