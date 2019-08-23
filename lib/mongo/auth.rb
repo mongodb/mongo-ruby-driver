@@ -73,21 +73,7 @@ module Mongo
     # Raised when trying to authorize with an invalid configuration
     #
     # @since 2.11.0
-    class InvalidConfiguration < Mongo::Error::AuthError
-
-      # Instantiate the new error
-      #
-      # @example Instantiate the error
-      #   Mongo::Auth::InvalidConfiguration.new(:mongodb_cr, "User required")
-      #
-      # @param [ Symbol ] mechanism The provided mechanism.
-      # @param [ String ] reason The reason that this configuration is invalid.
-      #
-      # @since 2.11.0
-      def initialize(message)
-        super("Invalid auth configuration: #{message}")
-      end
-    end
+    class InvalidConfiguration < Mongo::Error::AuthError; end
 
     # Raised when trying to get an invalid authorization mechanism.
     #
