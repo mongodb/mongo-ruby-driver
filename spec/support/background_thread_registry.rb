@@ -38,7 +38,11 @@ class BackgroundThreadRegistry
       if alive_thread_records.any?
         msg = "Live background threads after closing all clients:"
         alive_thread_records.each do |record|
-          msg << "\n  #{record.object}\n  in #{record.example.id} #{record.example.full_description}"
+          msg << "\n  #{record.object}"
+          if record.object.respond_to?(:options)
+            msg << "\n  #{record.object.options}"
+          end
+          msg << "\n  in #{record.example.id} #{record.example.full_description}"
         end
         raise msg
       end
