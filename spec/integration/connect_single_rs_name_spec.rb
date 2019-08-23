@@ -3,10 +3,10 @@ require 'spec_helper'
 describe 'Direct connection with RS name' do
   before(:all) do
     # preload
-    ClientRegistry.instance.close_all_clients
     ClusterConfig.instance.replica_set_name
-    ClientRegistry.instance.close_all_clients
   end
+
+  clean_slate_for_all
 
   shared_examples_for 'passes RS name to topology' do
     it 'passes RS name to topology' do

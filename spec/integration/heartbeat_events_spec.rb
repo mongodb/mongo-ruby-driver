@@ -25,11 +25,9 @@ end
 describe 'Heartbeat events' do
   class HeartbeatEventsSpecTestException < StandardError; end
 
-  let(:subscriber) { TestHeartbeatSubscriber.new }
+  clean_slate_for_all
 
-  before(:all) do
-    ClientRegistry.instance.close_all_clients
-  end
+  let(:subscriber) { TestHeartbeatSubscriber.new }
 
   before do
     Mongo::Monitoring::Global.subscribe(Mongo::Monitoring::SERVER_HEARTBEAT, subscriber)
@@ -39,7 +37,7 @@ describe 'Heartbeat events' do
     Mongo::Monitoring::Global.unsubscribe(Mongo::Monitoring::SERVER_HEARTBEAT, subscriber)
   end
 
-  let(:client) { new_local_client([SpecConfig.instance.addresses.first],
+  let(:client) { new_local_client([ClusterConfig.instance.primary_address_str],
     authorized_client.options.merge(server_selection_timeout: 0.1, connect: :direct)) }
 
   it 'notifies on successful heartbeats' do

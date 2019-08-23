@@ -1,9 +1,7 @@
 require 'spec_helper'
 
 describe 'SDAM error handling' do
-  before(:all) do
-    ClientRegistry.instance.close_all_clients
-  end
+  clean_slate_for_all
 
   # These tests operate on specific servers, and don't work in a multi
   # shard cluster where multiple servers are equally eligible
@@ -76,14 +74,12 @@ describe 'SDAM error handling' do
   describe 'when there is an error during an operation' do
 
     before do
-      wait_for_all_servers(client.cluster)
+      client.cluster.next_primary
       # we also need a connection to the primary so that our error
       # expectations do not get triggered during handshakes which
       # have different behavior from non-handshake errors
       client.database.command(ping: 1)
-      client.cluster.servers_list.each do |server|
-        server.monitor.stop!
-      end
+      stop_monitoring(client)
     end
 
     let(:operation) do

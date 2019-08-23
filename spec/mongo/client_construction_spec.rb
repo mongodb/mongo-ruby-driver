@@ -1,9 +1,7 @@
 require 'spec_helper'
 
 describe Mongo::Client do
-  before do
-    ClientRegistry.instance.close_all_clients
-  end
+  clean_slate
 
   describe '.new' do
     describe 'options' do
