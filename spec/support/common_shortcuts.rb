@@ -143,6 +143,13 @@ module CommonShortcuts
       )
     end
 
+    def register_cluster(cluster)
+      finalizer = lambda do |cluster|
+        cluster.disconnect!
+      end
+      LocalResourceRegistry.instance.register(cluster, finalizer)
+    end
+
     def register_server(server)
       finalizer = lambda do |server|
         if server.connected?

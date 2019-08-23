@@ -7,9 +7,10 @@ describe Mongo::Cluster do
   end
 
   let(:cluster_with_semaphore) do
-    described_class.new(SpecConfig.instance.addresses, monitoring,
-      SpecConfig.instance.test_options.merge(
-        server_selection_semaphore: Mongo::Semaphore.new))
+    register_cluster(
+      described_class.new(SpecConfig.instance.addresses, monitoring,
+        SpecConfig.instance.test_options.merge(
+          server_selection_semaphore: Mongo::Semaphore.new)))
   end
 
   let(:cluster_without_io) do
@@ -349,11 +350,13 @@ describe Mongo::Cluster do
     end
 
     let(:server_a) do
-      Mongo::Server.new(address_a, cluster, monitoring, Mongo::Event::Listeners.new)
+      register_server(
+        Mongo::Server.new(address_a, cluster, monitoring, Mongo::Event::Listeners.new))
     end
 
     let(:server_b) do
-      Mongo::Server.new(address_b, cluster, monitoring, Mongo::Event::Listeners.new)
+      register_server(
+        Mongo::Server.new(address_b, cluster, monitoring, Mongo::Event::Listeners.new))
     end
 
     let(:servers) do
@@ -381,7 +384,9 @@ describe Mongo::Cluster do
   describe '#next_primary' do
 
     let(:cluster) do
-      authorized_client.cluster
+      # We use next_primary to wait for server selection, and this is
+      # also the method we are testing.
+      authorized_client.tap { |client| client.cluster.next_primary }.cluster
     end
 
     let(:primary_candidates) do
