@@ -872,7 +872,7 @@ module Mongo
       user = options[:user]
       password = options[:password]
       auth_source = options[:auth_source]
-      mech_properties = options[:mechanism_properties]
+      mech_properties = options[:auth_mech_properties]
 
       if auth_mech.nil?
         if user && user.empty?
@@ -905,7 +905,7 @@ module Mongo
       end
 
       if mech_properties && auth_mech != :gssapi
-        raise Mongo::Auth::InvalidConfiguration.new("mechanism_properties is not supported for #{auth_mech}")
+        raise Mongo::Auth::InvalidConfiguration.new("mechanism_properties are not supported for #{auth_mech}")
       end
     end
 
