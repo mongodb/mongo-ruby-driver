@@ -416,7 +416,6 @@ module Mongo
 
     def parse_password!(string)
       if (string && pwd = string.partition(AUTH_USER_PWD_DELIM)[2])
-        return '' if pwd.length == 0 && string.include?(AUTH_USER_PWD_DELIM)
         if pwd.length > 0
           raise_invalid_error!(UNESCAPED_USER_PWD) if pwd =~ UNSAFE
           pwd_decoded = decode(pwd)

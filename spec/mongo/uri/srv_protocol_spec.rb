@@ -669,10 +669,10 @@ describe Mongo::URI::SRVProtocol do
         end
 
         context 'mongodb-x509' do
-          let(:options)   { "authMechanism=#{mechanism}&authSource=$external" }
-          let(:mechanism) { 'MONGODB-X509' }
-          let(:expected)  { :mongodb_x509 }
-          let(:password)  { '' }
+          let(:options)     { "authMechanism=#{mechanism}&authSource=$external" }
+          let(:mechanism)   { 'MONGODB-X509' }
+          let(:expected)    { :mongodb_x509 }
+          let(:credentials) { user }
 
           it 'sets the auth mechanism to :mongodb_x509' do
             expect(uri.uri_options[:auth_mech]).to eq(expected)

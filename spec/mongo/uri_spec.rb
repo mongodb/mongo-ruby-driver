@@ -930,20 +930,6 @@ describe Mongo::URI do
           }.to raise_error Mongo::Auth::InvalidConfiguration
         end
       end
-
-      context 'with empty password' do
-        let(:credentials) { 'tyler:' }
-
-        it 'sets the user and password as empty strings' do
-          expect(uri.credentials[:password]).to eq('')
-        end
-
-        it 'does not allow a client to be created with default auth mechanism' do
-          expect {
-            new_local_client_nmio(string)
-          }.to raise_error Mongo::Auth::InvalidConfiguration
-        end
-      end
     end
 
     context 'auth source provided' do
