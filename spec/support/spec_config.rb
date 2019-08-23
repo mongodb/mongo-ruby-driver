@@ -363,6 +363,11 @@ EOT
       merge(ssl_options).merge(compressor_options).merge(retry_writes_options)
   end
 
+  # TODO auth_options should probably be in test_options
+  def all_test_options
+    test_options.merge(auth_options)
+  end
+
   # User objects
 
   # Gets the root system administrator user.

@@ -194,7 +194,8 @@ describe Mongo::Client do
       context 'when compressors are provided' do
 
         let(:client) do
-          new_local_client(SpecConfig.instance.addresses, authorized_client.options.merge(options))
+          new_local_client(SpecConfig.instance.addresses,
+            SpecConfig.instance.all_test_options.merge(options))
         end
 
         context 'when the compressor is supported' do
