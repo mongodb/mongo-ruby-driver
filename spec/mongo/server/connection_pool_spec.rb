@@ -283,7 +283,6 @@ describe Mongo::Server::ConnectionPool do
     end
 
     after do
-      expect(server).to receive(:pool).and_return(pool)
       server.disconnect!
     end
 
@@ -652,7 +651,6 @@ describe Mongo::Server::ConnectionPool do
     end
 
     after do
-      expect(server).to receive(:pool).and_return(pool)
       server.disconnect!
       pool.close # this will no longer be needed after server disconnect kills bg thread
     end
