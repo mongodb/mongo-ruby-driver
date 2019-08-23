@@ -214,7 +214,7 @@ class ClientRegistry
         # Disconnect this cluster if and only if it is not shared with
         # any of the global clients we know about.
         if @global_clients.none? { |name, global_client|
-          cluster == global_client.cluster
+          cluster.object_id == global_client.cluster.object_id
         }
           cluster.disconnect!
         end
