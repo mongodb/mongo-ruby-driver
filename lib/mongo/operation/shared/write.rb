@@ -39,7 +39,7 @@ module Mongo
           else
             self.class::Command.new(spec).execute(server)
           end
-        validate_result(result)
+        validate_result(result, server)
       end
 
       # Execute the bulk write operation.

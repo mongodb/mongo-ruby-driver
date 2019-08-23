@@ -568,10 +568,12 @@ module Mongo
 
       private
 
-      def validate_result(result)
+      def validate_result(result, server)
         unpin_maybe(session) do
           add_error_labels do
-            result.validate!
+            add_server_diagnostics(server) do
+              result.validate!
+            end
           end
         end
       end
@@ -602,6 +604,12 @@ module Mongo
             end
           end
           raise e
+        end
+
+        def add_server_diagnostics(server)
+          yield
+        rescue Mongo::Error, Mongo::AuthError => e
+          x
         end
       end
     end

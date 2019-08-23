@@ -23,8 +23,10 @@ module Mongo
       def do_execute(server)
         unpin_maybe(session) do
           add_error_labels do
-            get_result(server).tap do |result|
-              process_result(result, server)
+            add_server_diagnostics(server) do
+              get_result(server).tap do |result|
+                process_result(result, server)
+              end
             end
           end
         end
