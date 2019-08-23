@@ -1,4 +1,4 @@
-require 'lite_spec_helper'
+require 'spec_helper'
 
 describe Mongo::URI::SRVProtocol do
   clean_slate_for_all
@@ -588,9 +588,11 @@ describe Mongo::URI::SRVProtocol do
       end
 
       context 'auth mechanism provided' do
-        let(:options) { "authMechanism=#{mechanism}" }
-        let(:string) { "#{scheme}#{credentials}@#{servers}/?#{options}" }
-        let(:credentials) { 'tyler' }
+        let(:options)     { "authMechanism=#{mechanism}" }
+        let(:string)      { "#{scheme}#{credentials}@#{servers}/?#{options}" }
+        let(:user)        { 'tyler' }
+        let(:password)    { 's3kr4t' }
+        let(:credentials) { "#{user}:#{password}" }
 
         context 'plain' do
           let(:mechanism) { 'PLAIN' }
@@ -667,9 +669,10 @@ describe Mongo::URI::SRVProtocol do
         end
 
         context 'mongodb-x509' do
-          let(:options) { "authMechanism=#{mechanism}&authSource=$external" }
+          let(:options)   { "authMechanism=#{mechanism}&authSource=$external" }
           let(:mechanism) { 'MONGODB-X509' }
-          let(:expected) { :mongodb_x509 }
+          let(:expected)  { :mongodb_x509 }
+          let(:password)  { '' }
 
           it 'sets the auth mechanism to :mongodb_x509' do
             expect(uri.uri_options[:auth_mech]).to eq(expected)

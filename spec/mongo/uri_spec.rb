@@ -703,10 +703,11 @@ describe Mongo::URI do
     end
 
     context 'auth mechanism provided' do
-      let(:string) { "#{scheme}#{credentials}@#{servers}/?#{options}" }
-      let(:credentials) { 'tyler' }
-
-      let(:options) { "authMechanism=#{mechanism}" }
+      let(:string)      { "#{scheme}#{credentials}@#{servers}/?#{options}" }
+      let(:user)        { 'tyler' }
+      let(:password)    { 's3kr4t' }
+      let(:credentials) { "#{user}:#{password}" }
+      let(:options)     { "authMechanism=#{mechanism}" }
 
       context 'plain' do
         let(:mechanism) { 'PLAIN' }
@@ -788,7 +789,8 @@ describe Mongo::URI do
 
       context 'mongodb-x509' do
         let(:mechanism) { 'MONGODB-X509' }
-        let(:expected) { :mongodb_x509 }
+        let(:expected)  { :mongodb_x509 }
+        let(:password)  { '' }
 
         it 'sets the auth mechanism to :mongodb_x509' do
           expect(uri.uri_options[:auth_mech]).to eq(expected)

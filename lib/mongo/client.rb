@@ -874,6 +874,16 @@ module Mongo
       auth_source = options[:auth_source]
       mech_properties = options[:mechanism_properties]
 
+      if options[:auth_mech].nil?
+        if options[:user] && options[:user].empty?
+          raise Mongo::Auth::InvalidConfiguration.new('empty username is not supported for default auth mechanism')
+        elsif options[:password] && options[:password].empty?
+          raise Mongo::Auth::InvalidConfiguration.new('empty password is not supported for default auth mechanism')
+        end
+
+        return
+      end
+
       if auth_mech && !Mongo::Auth::SOURCES.has_key?(auth_mech)
         raise Mongo::Auth::InvalidMechanism.new(auth_mech) 
       end
@@ -898,14 +908,6 @@ module Mongo
 
       if mech_properties && auth_mech != :gssapi
         raise Mongo::Auth::InvalidConfiguration.new("mechanism_properties is not supported for #{auth_mech}")
-      end
-
-      if options[:auth_mech].nil?
-        if options[:user] && options[:user].empty?
-          raise Mongo::Auth::InvalidConfiguration.new('empty username is not supported for default auth mechanism')
-        elsif options[:password] && options[:password].empty?
-          raise Mongo::Auth::InvalidConfiguration.new('empty password is not supported for default auth mechanism')
-        end
       end
     end
 
