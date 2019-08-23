@@ -9,7 +9,7 @@ Quick Start
    :backlinks: none
    :depth: 1
    :class: singlecol
-   
+
 Prerequisites
 -------------
 
@@ -21,7 +21,7 @@ Prerequisites
 .. code-block:: ruby
 
   require 'mongo'
-  
+
 
 Make a Connection
 -----------------
@@ -32,18 +32,18 @@ instance.
 .. code-block:: ruby
 
   client = Mongo::Client.new([ '127.0.0.1:27017' ], :database => 'test')
-  
+
 You can also use a URI connection string:
 
 .. code-block:: ruby
 
   client = Mongo::Client.new('mongodb://127.0.0.1:27017/test')
-  
+
 .. seealso::
   :ref:`Connect to a replica set <ruby-driver-connect-replica-set>`,
   :ref:`Connect to a sharded cluster <ruby-driver-connect-sharded-cluster>`,
   :ref:`Client options <ruby-driver-client-options>`
-  
+
 Access a Database and a Collection
 ----------------------------------
 
@@ -54,7 +54,7 @@ and show its collections:
 
   client = Mongo::Client.new([ '127.0.0.1:27017' ], :database => 'test')
   db = client.database
-  
+
   db.collections # returns a list of collection objects
   db.collection_names # returns a list of collection names
 
@@ -66,7 +66,7 @@ To access a collection, refer to it by name.
 
 If the collection does not exist, the server will create it the first
 time you put data into it.
-  
+
 Insert a Document
 -----------------
 
@@ -78,23 +78,34 @@ To insert a single document into a collection, use the
   client = Mongo::Client.new('mongodb://127.0.0.1:27017/test')
 
   collection = client[:people]
-  
-  doc = { name: 'Steve', hobbies: [ 'hiking', 'tennis', 'fly fishing' ] }
-  
+
+  doc = {
+    name: 'Steve',
+    hobbies: [ 'hiking', 'tennis', 'fly fishing' ],
+    siblings: {
+      brothers: 0,
+      sisters: 1
+    }
+  }
+
   result = collection.insert_one(doc)
   result.n # returns 1, because one document was inserted
-  
+
 To insert multiple documents into a collection, use the
 ``insert_many`` method.
-  
+
 .. code-block:: ruby
-  
-  docs = [ { _id: 1, name: 'Steve', hobbies: [ 'hiking', 'tennis', 'fly fishing' ] },
-           { _id: 2, name: 'Sally', hobbies: ['skiing', 'stamp collecting' ] } ]
-  
+
+  docs = [ { _id: 1, name: 'Steve',
+             hobbies: [ 'hiking', 'tennis', 'fly fishing' ],
+             siblings: { brothers: 0, sisters: 1 } },
+           { _id: 2, name: 'Sally',
+	           hobbies: ['skiing', 'stamp collecting' ],
+	           siblings: { brothers: 1, sisters: 0 } } ]
+
   result = collection.insert_many(docs)
   result.inserted_count # returns 2 because two documents were inserted
-  
+
 Query the Collection
 --------------------
 
@@ -106,26 +117,42 @@ An empty query filter returns all documents in the collection.
 
   client = Mongo::Client.new('mongodb://127.0.0.1:27017/test')
   collection = client[:people]
-  
+
   collection.find.each do |document|
     #=> Yields a BSON::Document.
   end
-  
+
 Use a query filter to find only matching documents.
 
 .. code-block:: ruby
 
   client = Mongo::Client.new('mongodb://127.0.0.1:27017/test')
   collection = client[:people]
-  
+
   puts collection.find( { name: 'Sally' } ).first
-  
+
 The example should print the following:
 
 .. code-block:: javascript
 
-  {"_id" => 2, "name" => "Sally", "hobbies" => ["skiing", "stamp collecting"]}
-  
+  {"_id" => 2, "name" => "Sally", "hobbies" => ["skiing", "stamp collecting"], "siblings" => { "brothers": 1, "sisters": 0 } }
+
+Query nested documents by specifying the keys and values you want
+to match.
+
+.. code-block:: ruby
+
+  client = Mongo::Client.new('mongodb://127.0.0.1:27017/test')
+  collection = client[:people]
+
+  puts collection.find("siblings.sisters": 1 ).first
+
+The example should print the following:
+
+.. code-block:: javascript
+
+  {"_id"=>1, "name"=>"Steve", "hobbies"=>["hiking", "tennis", "fly fishing"], "siblings"=>{"brothers"=>0, "sisters"=>1}}
+
 .. seealso::
 
   :ref:`Query Options<ruby-driver-query-options>`, :ref:`Read Preference<ruby-driver-read-preference>`
@@ -146,17 +173,17 @@ document is replaced with the update data.
 
   client = Mongo::Client.new('mongodb://127.0.0.1:27017/test')
   collection = client[:people]
-  
+
   result = collection.update_one( { 'name' => 'Sally' }, { '$set' => { 'phone_number' => "555-555-5555" } } )
-    
+
   puts collection.find( { 'name' => 'Sally' } ).first
-  
+
 The example should print the following:
 
 .. code-block:: javascript
 
   {"_id" => 2, "name" => "Sally", "hobbies" => ["skiing", "stamp collecting"], "phone_number" => "555-555-5555"}
-  
+
 The following example uses ``update_many`` with a blank query filter
 to update all the documents in the collection.
 
@@ -164,15 +191,15 @@ to update all the documents in the collection.
 
   client = Mongo::Client.new('mongodb://127.0.0.1:27017/test')
   collection = client[:people]
- 
+
   result = collection.update_many( {}, { '$set' => { 'age' => 36 } } )
-  
+
   puts result.modified_count # returns 2 because 2 documents were updated
-  
+
 .. seealso::
-  
+
   :ref:`Other update options<ruby-driver-updating>`
-  
+
 Delete Documents
 ----------------
 
@@ -183,11 +210,11 @@ from a collection (either singly or several at once).
 
   client = Mongo::Client.new('mongodb://127.0.0.1:27017/test')
   collection = client[:people]
- 
+
   result = collection.delete_one( { name: 'Steve' } )
-  
+
   puts result.deleted_count # returns 1 because one document was deleted
-  
+
 The following example inserts two more records into the collection,
 then deletes all the documents with a ``name`` field which
 matches a regular expression to find a string which begins with "S".
@@ -198,13 +225,13 @@ matches a regular expression to find a string which begins with "S".
   collection = client[:people]
 
   collection.insert_many([ { _id: 3, name: "Arnold" }, { _id: 4, name: "Susan" } ])
-  
+
   puts collection.count # counts all documents in collection
-  
-  result = collection.delete_many({ name: /$S*/ }) 
-  
+
+  result = collection.delete_many({ name: /$S*/ })
+
   puts result.deleted_count # returns the number of documents deleted
-  
+
 Create Indexes
 --------------
 
@@ -217,7 +244,7 @@ singly or several at once.
   collection = client[:people]
 
   collection.indexes.create_one({ name: 1 }, unique: true)
-  
+
 Use the ``create_many`` method to create several indexes with one
 statement. Note that when using ``create_many``, the syntax is
 different from ``create_one``.
@@ -228,7 +255,7 @@ different from ``create_one``.
   collection = client[:people]
 
   collection.indexes.create_many([
-      { key: { name: 1 } , unique: true }, 
+      { key: { name: 1 } , unique: true },
       { key:  { hobbies: 1 } },
     ])
 
