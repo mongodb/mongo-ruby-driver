@@ -111,6 +111,10 @@ RSpec.configure do |config|
   config.expect_with :rspec do |c|
     c.max_formatted_output_length = 1000
   end
+
+  unless BSON::Environment.jruby?
+    Rfc::Rif.output_object_space_stats = true
+  end
 end
 
 EventSubscriber.initialize
