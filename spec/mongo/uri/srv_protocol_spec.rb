@@ -634,7 +634,8 @@ describe Mongo::URI::SRVProtocol do
           require_mongo_kerberos
 
           let(:mechanism) { 'GSSAPI' }
-          let(:expected) { :gssapi }
+          let(:expected)  { :gssapi }
+          let(:options)   { "authMechanism=#{mechanism}&authSource=$external" }
 
           it 'sets the auth mechanism to :gssapi' do
             expect(uri.uri_options[:auth_mech]).to eq(expected)
