@@ -359,7 +359,7 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
-          ENTERPRISE_AUTH_TESTS=1 MONGODB_URI="${MONGODB_URI}" .evergreen/run-tests-with-kerberos.sh
+          ENTERPRISE_AUTH_TESTS=1 .evergreen/run-tests-with-kerberos.sh
 
   "run tests via mlaunch":
     - command: shell.exec
@@ -923,7 +923,6 @@ buildvariants:
   matrix_name: "kerberos-tests"
   matrix_spec:
     auth-and-ssl: "auth-and-ssl"
-    mongodb-version: ['4.0', '4.2']
     ruby: ["ruby-2.3", "ruby-2.4", "ruby-2.5"]
     os: rhel70
   display_name: "Kerberos Tests ${ruby} ${os}"

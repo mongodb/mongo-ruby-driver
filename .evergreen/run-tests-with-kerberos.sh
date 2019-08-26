@@ -10,7 +10,7 @@ setup_ruby
 export BUNDLE_GEMFILE=gemfiles/mongo_kerberos.gemfile
 bundle install --gemfile="$BUNDLE_GEMFILE"
 
-unset CI
+export MONGODB_URI='mongodb://localhost:27017'
 
 bundle exec rspec spec/spec_tests/uri_options_spec.rb
 bundle exec rspec spec/spec_tests/connection_string_spec.rb 
