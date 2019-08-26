@@ -1,5 +1,6 @@
 require 'mongo/operation/result'
 
+require 'mongo/operation/shared/response_handling'
 require 'mongo/operation/shared/executable'
 require 'mongo/operation/shared/executable_no_validate'
 require 'mongo/operation/shared/executable_transaction_label'

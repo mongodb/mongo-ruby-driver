@@ -20,6 +20,8 @@ module Mongo
     # @since 2.5.2
     module Executable
 
+      include ResponseHandling
+
       def do_execute(server)
         unpin_maybe(session) do
           add_error_labels do
@@ -34,7 +36,7 @@ module Mongo
 
       def execute(server)
         do_execute(server).tap do |result|
-          validate_result(result)
+          validate_result(result, server)
         end
       end
 
@@ -57,12 +59,6 @@ module Mongo
 
       def build_message(server)
         message(server)
-      end
-
-      def add_server_diagnostics(server)
-        yield
-      rescue Mongo::Error, Mongo::AuthError => e
-        x
       end
 
       def process_result(result, server)
