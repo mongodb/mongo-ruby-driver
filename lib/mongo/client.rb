@@ -877,8 +877,6 @@ module Mongo
       if auth_mech.nil?
         if user && user.empty?
           raise Mongo::Auth::InvalidConfiguration.new('empty username is not supported for default auth mechanism')
-        elsif password && password.empty?
-          raise Mongo::Auth::InvalidConfiguration.new('empty password is not supported for default auth mechanism')
         end
 
         return
