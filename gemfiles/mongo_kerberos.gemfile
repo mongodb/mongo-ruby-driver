@@ -10,4 +10,5 @@ group :test do
   gem 'fuubar'
   gem 'timeout-interrupt', platforms: :mri
   gem 'rspec', '~> 3.4'
+  gem 'rake'
 end
