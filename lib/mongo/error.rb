@@ -138,6 +138,23 @@ module Mongo
     def add_label(label)
       @labels << label unless label?(label)
     end
+
+    # If the exception is raised when performing an operation, the ?server+
+    # attribute indicates which server the operation was performed on.
+    #
+    # @return [ Server | nil ] Target server for attempted operation, if any.
+    attr_reader :server
+
+    # @api private
+    attr_writer :server
+
+    def message
+      msg = super
+      if server
+        msg += " (on #{server.address.seed})"
+      end
+      msg
+    end
   end
 end
 

@@ -64,8 +64,8 @@ module Mongo
       def add_server_diagnostics(server)
         yield
       rescue Mongo::Error, Mongo::AuthError => e
-        byebug
-        1
+        e.server = server
+        raise e
       end
     end
   end
