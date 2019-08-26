@@ -925,6 +925,8 @@ buildvariants:
     auth-and-ssl: "auth-and-ssl"
     ruby: ["ruby-2.3", "ruby-2.4", "ruby-2.5"]
     os: rhel70
+    mongodb-version: "4.0"
+    topology: standalone
   display_name: "Kerberos Tests ${ruby} ${os}"
   tasks:
     - name: "kerberos-tests"
