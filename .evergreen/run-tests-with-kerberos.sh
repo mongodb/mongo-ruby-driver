@@ -12,6 +12,8 @@ bundle install --gemfile="$BUNDLE_GEMFILE"
 
 export MONGODB_URI='mongodb://localhost:27017'
 
+bundle exec rake spec:prepare
+
 bundle exec rspec spec/spec_tests/uri_options_spec.rb
 bundle exec rspec spec/spec_tests/connection_string_spec.rb 
 bundle exec rspec spec/mongo/uri/srv_protocol_spec.rb 
