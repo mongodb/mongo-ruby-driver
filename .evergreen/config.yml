@@ -351,6 +351,16 @@ functions:
           ${PREPARE_SHELL}
           MONGODB_URI="${MONGODB_URI}" .evergreen/run-tests.sh
 
+  "run tests with kerberos":
+    - command: shell.exec
+      type: test
+      params:
+        shell: bash
+        working_dir: "src"
+        script: |
+          ${PREPARE_SHELL}
+          ENTERPRISE_AUTH_TESTS=1 MONGODB_URI="${MONGODB_URI}" .evergreen/run-tests-with-kerberos.sh
+
   "run tests via mlaunch":
     - command: shell.exec
       type: test
