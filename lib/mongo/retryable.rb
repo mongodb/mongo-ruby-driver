@@ -210,15 +210,17 @@ module Mongo
         txn_num = session.in_transaction? ? session.txn_num : session.next_txn_num
         yield(server, txn_num, false)
       rescue Error::SocketError, Error::SocketTimeoutError => e
+        e.attempt_number = 1
         if session.in_transaction? && !ending_transaction
-          raise
+          raise e
         end
         retry_write(e, session, txn_num, &block)
       rescue Error::OperationFailure => e
+        e.attempt_number = 1
         if e.unsupported_retryable_write?
           raise_unsupported_error(e)
         elsif (session.in_transaction? && !ending_transaction) || !e.write_retryable?
-          raise
+          raise e
         end
 
         retry_write(e, session, txn_num, &block)
@@ -274,16 +276,17 @@ module Mongo
         server ||= select_server(cluster, ServerSelector.primary, session)
         yield server
       rescue Error::OperationFailure => e
+        e.attempt_number = attempt + 1
         server = nil
         if attempt > client.max_write_retries
-          raise
+          raise e
         end
         if e.write_retryable? && !(session && session.in_transaction?)
           log_retry(e, message: 'Legacy write retry')
           cluster.scan!(false)
           retry
         else
-          raise
+          raise e
         end
       end
     end
@@ -296,13 +299,15 @@ module Mongo
       begin
         yield server
       rescue Error::SocketError, Error::SocketTimeoutError => e
+        e.attempt_number = attempt + 1
         if session.in_transaction?
-          raise
+          raise e
         end
         retry_read(e, server_selector, session, &block)
       rescue Error::OperationFailure => e
+        e.attempt_number = attempt + 1
         if session.in_transaction? || !e.write_retryable?
-          raise
+          raise e
         end
         retry_read(e, server_selector, session, &block)
       end
@@ -315,23 +320,25 @@ module Mongo
         attempt += 1
         yield server
       rescue Error::SocketError, Error::SocketTimeoutError => e
+        e.attempt_number = attempt + 1
         if attempt > client.max_read_retries || (session && session.in_transaction?)
-          raise
+          raise e
         end
         log_retry(e, message: 'Legacy read retry')
         server = select_server(cluster, server_selector, session)
         retry
       rescue Error::OperationFailure => e
+        e.attempt_number = attempt + 1
         if cluster.sharded? && e.retryable? && !(session && session.in_transaction?)
           if attempt > client.max_read_retries
-            raise
+            raise e
           end
           log_retry(e, message: 'Legacy read retry')
           sleep(client.read_retry_interval)
           server = select_server(cluster, server_selector, session)
           retry
         else
-          raise
+          raise e
         end
       end
     end
@@ -355,6 +362,7 @@ module Mongo
       begin
         server = select_server(cluster, server_selector, session)
       rescue
+        original_error.later_retry_failed = true
         raise original_error
       end
 
@@ -363,11 +371,17 @@ module Mongo
       begin
         yield server, true
       rescue Error::SocketError, Error::SocketTimeoutError => e
+        e.attempt_number = (original_error.attempt_number || 1) + 1
         raise e
       rescue Error::OperationFailure => e
-        raise original_error unless e.write_retryable?
+        unless e.write_retryable?
+          original_error.later_retry_failed = true
+          raise original_error
+        end
+        e.attempt_number = (original_error.attempt_number || 1) + 1
         raise e
       rescue
+        original_error.later_retry_failed = true
         raise original_error
       end
     end

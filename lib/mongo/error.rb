@@ -143,15 +143,36 @@ module Mongo
     # attribute indicates which server the operation was performed on.
     #
     # @return [ Server | nil ] Target server for attempted operation, if any.
+    # @api experimental
     attr_reader :server
 
     # @api private
     attr_writer :server
 
+    attr_reader :attempt_number
+
+    attr_writer :attempt_number
+
+    def later_retry_failed?
+      @later_retry_failed
+    end
+
+    attr_writer :later_retry_failed
+
     def message
       msg = super
+      extras = []
       if server
-        msg += " (on #{server.address.seed})"
+        extras << "on #{server.address.seed}"
+      end
+      if attempt_number
+        extras << "attempt #{attempt_number}"
+      end
+      if later_retry_failed?
+        extras << "later retry failed"
+      end
+      unless extras.empty?
+        msg += " (#{extras.join(', ')})"
       end
       msg
     end
