@@ -522,7 +522,7 @@ tasks:
         - func: "run enterprise auth tests"
     - name: "kerberos-tests"
       commands:
-        - fund: "run tests with kerberos"
+        - func: "run tests with kerberos"
 
 axes:
   - id: "mongodb-version"
