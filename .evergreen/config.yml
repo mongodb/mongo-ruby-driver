@@ -520,6 +520,9 @@ tasks:
     - name: "enterprise-auth-tests"
       commands:
         - func: "run enterprise auth tests"
+    - name: "kerberos-tests"
+      commands:
+        - fund: "run tests with kerberos"
 
 axes:
   - id: "mongodb-version"
@@ -915,6 +918,16 @@ buildvariants:
     - ubuntu1604-test
   tasks:
     - name: "enterprise-auth-tests"
+
+-
+  matrix_name: "kerberos-tests"
+  matrix_spec:
+    auth-and-ssl: "auth-and-ssl"
+    ruby: ["ruby-2.3", "ruby-2.4", "ruby-2.5"]
+    os: rhel70
+  display_name: "Kerberos Tests ${ruby} ${os}"
+  tasks:
+    - name: "kerberos-tests"
 
 -
   matrix_name: "enterprise-auth-tests-rhel"
