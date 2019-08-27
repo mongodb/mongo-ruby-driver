@@ -30,7 +30,7 @@ module LiteConstraints
 
   def require_mongo_kerberos
     before do
-      skip 'ENTERPRISE_AUTH_TESTS env var not specified' unless ENV['ENTERPRISE_AUTH_TESTS']
+      skip 'KERBEROS_REQUIRED env var not specified' unless ENV['KERBEROS_REQUIRED']
       require 'mongo_kerberos'
     end
   end
