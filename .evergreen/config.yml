@@ -595,6 +595,8 @@ axes:
            SSL: "nossl"
   - id: "ruby"
     display_name: Ruby Version
+    # Local TLS tests run on all Ruby versions, thus no versions should be
+    # listed here (uncommented) that are not supported.
     values:
       - id: "ruby-2.3"
         display_name: ruby-2.3
@@ -616,10 +618,6 @@ axes:
         display_name: ruby-head
         variables:
            RVM_RUBY: "ruby-head"
-      - id: "jruby-9.1"
-        display_name: jruby-9.1
-        variables:
-           RVM_RUBY: "jruby-9.1"
       - id: "jruby-9.2"
         display_name: jruby-9.2
         variables:
@@ -799,11 +797,11 @@ buildvariants:
      - name: "test"
 
 -
-  matrix_name: "jruby-new"
+  matrix_name: "jruby-auth"
   matrix_spec:
     auth-and-ssl: "auth-and-ssl"
     ruby: "jruby-9.2"
-    mongodb-version: "4.0"
+    mongodb-version: "4.2"
     topology: "*"
     os: rhel70
   display_name: "${mongodb-version} ${topology} ${auth-and-ssl} ${ruby}"
@@ -811,10 +809,10 @@ buildvariants:
      - name: "test"
 
 -
-  matrix_name: "jruby-old"
+  matrix_name: "jruby-noauth"
   matrix_spec:
     auth-and-ssl: "noauth-and-nossl"
-    ruby: "jruby-9.1"
+    ruby: "jruby-9.2"
     mongodb-version: "2.6"
     topology: "*"
     os: rhel70
@@ -899,7 +897,7 @@ buildvariants:
   matrix_spec:
     auth-and-ssl: "auth-and-ssl"
     # Ruby 2.6 and 2.4 segfault
-    ruby: ["ruby-2.5", "jruby-9.2", "jruby-9.1"]
+    ruby: ["ruby-2.5", "jruby-9.2"]
   display_name: "Enterprise Auth Ubuntu ${ruby}"
   run_on:
     - ubuntu1604-test

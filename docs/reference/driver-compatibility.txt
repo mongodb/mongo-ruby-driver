@@ -180,7 +180,7 @@ for that Ruby version is deprecated.
      - 
      - 
      - |checkmark|
-     - |checkmark|
+     -
      -
 
    * - 2.10

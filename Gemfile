@@ -4,8 +4,8 @@ gemspec
 gem 'yard'
 
 group :development, :testing do
-  gem 'jruby-openssl', :platforms => :jruby
-  gem 'json', :platforms => :jruby
+  gem 'jruby-openssl', platforms: :jruby
+  gem 'json', platforms: :jruby
   # Explicitly specify each rspec dependency so that we can use
   # rspec-mocks-diag instead of rspec-mocks
   #gem 'rspec', '~> 3.0'
@@ -32,6 +32,7 @@ group :testing do
   gem 'rfc'
   gem 'fuubar'
   gem 'timeout-interrupt', platforms: :mri
+  gem 'concurrent-ruby', platforms: :jruby
 end
 
 group :development do

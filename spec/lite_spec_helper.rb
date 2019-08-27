@@ -37,6 +37,13 @@ unless ENV['CI']
   end
 end
 
+if BSON::Environment.jruby?
+  require 'concurrent-ruby'
+  PossiblyConcurrentArray = Concurrent::Array
+else
+  PossiblyConcurrentArray = Array
+end
+
 require 'support/spec_config'
 
 Mongo::Logger.logger = Logger.new($stdout)
@@ -108,12 +115,14 @@ RSpec.configure do |config|
     end
   end
 
-  config.expect_with :rspec do |c|
-    c.max_formatted_output_length = 1000
+  if SpecConfig.instance.ci?
+    unless BSON::Environment.jruby?
+      Rfc::Rif.output_object_space_stats = true
+    end
   end
 
-  unless BSON::Environment.jruby?
-    Rfc::Rif.output_object_space_stats = true
+  config.expect_with :rspec do |c|
+    c.max_formatted_output_length = 1000
   end
 end
 
