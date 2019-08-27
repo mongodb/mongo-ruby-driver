@@ -12,10 +12,19 @@ module LiteConstraints
   # in principle work (as opposed to being fundamentally incompatible
   # with jruby).
   # Often times these failures happen only in Evergreen.
-  def fails_on_jruby
+  def fails_on_jruby(version=nil)
     before do
-      unless SpecConfig.instance.mri?
-        skip "Fails on jruby"
+      if BSON::Environment.jruby?
+        if version
+          min_parts = version.split('.').map(&:to_i)
+          actual_parts = JRUBY_VERSION.split('.').map(&:to_i)[0...min_parts.length]
+          actual = actual_parts.join('.')
+          if actual <= version
+            skip "Fails on jruby through #{version}"
+          end
+        else
+          skip "Fails on jruby"
+        end
       end
     end
   end

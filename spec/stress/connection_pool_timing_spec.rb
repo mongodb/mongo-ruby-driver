@@ -145,7 +145,7 @@ describe 'Connection pool timing test' do
     end
 
     let(:threads) do
-      threads = []
+      threads = PossiblyConcurrentArray.new
 
       5.times do |i|
         threads << Thread.new do
