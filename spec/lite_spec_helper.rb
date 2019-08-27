@@ -68,6 +68,7 @@ require 'support/client_registry_macros'
 require 'support/json_ext_formatter'
 require 'support/sdam_formatter_integration'
 require 'support/utils'
+require 'support/background_thread_registry'
 
 if SpecConfig.instance.mri?
   require 'timeout_interrupt'
@@ -105,6 +106,14 @@ RSpec.configure do |config|
         example.run
       end
     end
+  end
+
+  config.expect_with :rspec do |c|
+    c.max_formatted_output_length = 1000
+  end
+
+  unless BSON::Environment.jruby?
+    Rfc::Rif.output_object_space_stats = true
   end
 end
 

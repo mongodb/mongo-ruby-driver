@@ -283,7 +283,6 @@ describe Mongo::Server::ConnectionPool do
     end
 
     after do
-      expect(server).to receive(:pool).and_return(pool)
       server.disconnect!
     end
 
@@ -652,7 +651,6 @@ describe Mongo::Server::ConnectionPool do
     end
 
     after do
-      expect(server).to receive(:pool).and_return(pool)
       server.disconnect!
       pool.close # this will no longer be needed after server disconnect kills bg thread
     end
@@ -710,11 +708,11 @@ describe Mongo::Server::ConnectionPool do
     context 'when a connection cannot be checked out' do
 
       it 'does not add the connection to the pool' do
-        pending 'Re-enable when connections are connected prior to being returned from check_out method'
-
         # fails because with_connection raises the SocketError which is not caught anywhere
         allow(pool).to receive(:check_out).and_raise(Mongo::Error::SocketError)
-        pool.with_connection { |c| c }
+        expect do
+          pool.with_connection { |c| c }
+        end.to raise_error(Mongo::Error::SocketError)
 
         expect(pool.size).to eq(0)
       end

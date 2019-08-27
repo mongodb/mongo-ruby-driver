@@ -1,9 +1,7 @@
 require 'spec_helper'
 
 describe Mongo::Client do
-  before do
-    ClientRegistry.instance.close_all_clients
-  end
+  clean_slate
 
   describe '.new' do
     describe 'options' do
@@ -196,7 +194,8 @@ describe Mongo::Client do
       context 'when compressors are provided' do
 
         let(:client) do
-          new_local_client(SpecConfig.instance.addresses, authorized_client.options.merge(options))
+          new_local_client(SpecConfig.instance.addresses,
+            SpecConfig.instance.all_test_options.merge(options))
         end
 
         context 'when the compressor is supported' do

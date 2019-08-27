@@ -16,6 +16,7 @@ module CommonShortcuts
     def clean_slate
       before do
         ClientRegistry.instance.close_all_clients
+        BackgroundThreadRegistry.instance.verify_empty!
       end
     end
 
@@ -25,6 +26,7 @@ module CommonShortcuts
     def clean_slate_for_all
       before(:all) do
         ClientRegistry.instance.close_all_clients
+        BackgroundThreadRegistry.instance.verify_empty!
       end
     end
 
@@ -141,6 +143,13 @@ module CommonShortcuts
       )
     end
 
+    def register_cluster(cluster)
+      finalizer = lambda do |cluster|
+        cluster.disconnect!
+      end
+      LocalResourceRegistry.instance.register(cluster, finalizer)
+    end
+
     def register_server(server)
       finalizer = lambda do |server|
         if server.connected?
@@ -164,6 +173,17 @@ module CommonShortcuts
         end
       end
       LocalResourceRegistry.instance.register(pool, finalizer)
+    end
+
+    # Stop monitoring threads on the specified clients, after ensuring
+    # each client has a writable server. Used for tests which assert on
+    # global side effects like log messages being generated, to prevent
+    # background threads from interfering with assertions.
+    def stop_monitoring(*clients)
+      clients.each do |client|
+        client.cluster.next_primary
+        client.cluster.disconnect!
+      end
     end
   end
 end

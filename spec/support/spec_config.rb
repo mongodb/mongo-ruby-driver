@@ -53,11 +53,14 @@ class SpecConfig
         @mongodb_uri.servers
       else
         client = Mongo::Client.new(['localhost:27017'], server_selection_timeout: 5.02)
-        client.cluster.next_primary
-        @addresses = client.cluster.servers_list.map do |server|
-          server.address.to_s
+        begin
+          client.cluster.next_primary
+          @addresses = client.cluster.servers_list.map do |server|
+            server.address.to_s
+          end
+        ensure
+          client.close
         end
-        client.close(true)
       end
     end
   end
@@ -358,6 +361,11 @@ EOT
   def test_options
     base_test_options.merge(connect_options).
       merge(ssl_options).merge(compressor_options).merge(retry_writes_options)
+  end
+
+  # TODO auth_options should probably be in test_options
+  def all_test_options
+    test_options.merge(auth_options)
   end
 
   # User objects

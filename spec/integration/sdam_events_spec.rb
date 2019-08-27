@@ -3,10 +3,6 @@ require 'spec_helper'
 describe 'SDAM events' do
   let(:subscriber) { Mongo::SDAMMonitoring::TestSubscriber.new }
 
-  before do
-    ClientRegistry.instance.close_all_clients
-  end
-
   describe 'server closed event' do
     it 'is published when client is closed' do
       client = ClientRegistry.instance.new_local_client(
