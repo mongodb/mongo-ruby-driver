@@ -467,7 +467,11 @@ module Mongo
       # @param [ Numeric ] time_remaining Maximum time to wait, in seconds.
       def wait_for_server_selection(cluster, time_remaining)
         if cluster.server_selection_semaphore
-          cluster.server_selection_semaphore.wait(time_remaining)
+          # Since the semaphore may have been signaled between us checking
+          # the servers list earlier and the wait call below, we should not
+          # wait for the full remaining time - wait for up to 1 second, then
+          # recheck the state.
+          cluster.server_selection_semaphore.wait([time_remaining, 1].min)
         else
           if Lint.enabled?
             raise Error::LintError, 'Waiting for server selection without having a server selection semaphore'
