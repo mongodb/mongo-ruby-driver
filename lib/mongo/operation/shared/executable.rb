@@ -20,6 +20,8 @@ module Mongo
     # @since 2.5.2
     module Executable
 
+      include ResponseHandling
+
       def do_execute(server)
         unpin_maybe(session) do
           add_error_labels do

@@ -20,6 +20,8 @@ module Mongo
     # @since 2.5.2
     module Write
 
+      include ResponseHandling
+
       # Execute the operation.
       #
       # @example
