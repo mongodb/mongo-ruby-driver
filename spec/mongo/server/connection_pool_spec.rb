@@ -346,7 +346,7 @@ describe Mongo::Server::ConnectionPool do
       end
 
       before do
-        expect(connection.generation < pool.generation).to be true
+        expect(connection.generation).to be < pool.generation
       end
 
       it_behaves_like 'does not add connection to pool'

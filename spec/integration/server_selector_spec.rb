@@ -31,7 +31,7 @@ describe 'Server selector' do
           result
         end.to raise_error(Mongo::Error::NoServerAvailable)
         time_passed = Time.now - start_time
-        expect(time_passed < 1).to be true
+        expect(time_passed).to be < 1
       end
     end
 
