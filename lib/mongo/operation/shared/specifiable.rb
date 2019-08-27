@@ -20,7 +20,6 @@ module Mongo
     #
     # @since 2.0.0
     module Specifiable
-      include Unpinnable
 
       # The field for database name.
       #
@@ -564,45 +563,6 @@ module Mongo
       # @since 2.5.2
       def acknowledged_write?
         write_concern.nil? || write_concern.acknowledged?
-      end
-
-      private
-
-      def validate_result(result)
-        unpin_maybe(session) do
-          add_error_labels do
-            result.validate!
-          end
-        end
-      end
-
-      # Adds error labels to exceptions raised in the yielded to block,
-      # which should perform MongoDB operations and raise Mongo::Errors on
-      # failure. This method handles network errors (Error::SocketError)
-      # and server-side errors (Error::OperationFailure); it does not
-      # handle server selection errors (Error::NoServerAvailable), for which
-      # labels are added in the server selection code.
-      def add_error_labels
-        begin
-          yield
-        rescue Mongo::Error::SocketError => e
-          if session && session.in_transaction? && !session.committing_transaction?
-            e.add_label('TransientTransactionError')
-          end
-          if session && session.committing_transaction?
-            e.add_label('UnknownTransactionCommitResult')
-          end
-          raise e
-        rescue Mongo::Error::OperationFailure => e
-          if session && session.committing_transaction?
-            if e.write_retryable? || e.wtimeout? || (e.write_concern_error? &&
-                !Session::UNLABELED_WRITE_CONCERN_CODES.include?(e.write_concern_error_code)
-            ) || e.max_time_ms_expired?
-              e.add_label('UnknownTransactionCommitResult')
-            end
-          end
-          raise e
-        end
       end
     end
   end

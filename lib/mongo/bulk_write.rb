@@ -23,7 +23,7 @@ require 'mongo/bulk_write/result_combiner'
 module Mongo
   class BulkWrite
     extend Forwardable
-    include Operation::Unpinnable
+    include Operation::ResponseHandling
 
     # @return [ Mongo::Collection ] collection The collection.
     attr_reader :collection
