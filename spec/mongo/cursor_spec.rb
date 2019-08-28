@@ -335,6 +335,9 @@ describe Mongo::Cursor do
       end
 
       context 'when the cursor is unregistered before the kill cursors operations are executed' do
+        # Sometimes JRuby yields 4 documents even though we are allowing
+        # repeated cursor iteration below
+        fails_on_jruby
 
         it 'does not send a kill cursors operation for the unregistered cursor' do
           # We need to verify that the cursor was able to retrieve more documents
