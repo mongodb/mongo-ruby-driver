@@ -153,6 +153,16 @@ describe Mongo::Client do
             client
           end
           puts "client_construction_spec.rb: Cluster is: #{client.cluster.summary}"
+
+          # Because the first round of sdam waits for server statuses to change
+          # rather than for server selection semaphore on the cluster which
+          # is signaled after topology is updated, the topology here could be
+          # old (i.e. a monitor thread was just about to update the topology
+          # but hasn't quite gotten to it. Add a small delay to compensate.
+          # This issue doesn't apply to real applications which will wait for
+          # server selection semaphore.
+          sleep 0.1
+
           actual_class = client.cluster.topology.class
           expect([
             Mongo::Cluster::Topology::ReplicaSetWithPrimary,
