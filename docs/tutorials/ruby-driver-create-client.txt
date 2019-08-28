@@ -13,7 +13,7 @@ Creating a Client
 Using ``Mongo::Client``
 -----------------------
 
-To connect to a MongoDB cluster, create a ``Mongo::Client`` object.
+To connect to a MongoDB deployment, create a ``Mongo::Client`` object.
 Provide a list of hosts and options or a connection URI to the
 ``Mongo::Client`` constructor. The client's selected database
 defaults to ``admin``.
@@ -65,199 +65,22 @@ In this protocol, the comma separated list of host names is replaced with a sing
 
 .. _ruby-driver-client-options:
 
+
 Client Options
 --------------
 
-A number of different options can be passed to a ``Mongo::Client`` to configure driver
-behavior, either by providing them in the options hash to the constructor or by
-providing them in the URI. If both a URI and an options hash are provided, the options 
-in the hash take precedence over any analogous options present in the URI.
+``Mongo::Client``'s constructor accepts a number of options configuring the
+behavior of the driver. The options can be provided in the options hash as
+Ruby options, in the URI as URI options, or both. If both a Ruby option and
+the analogous URI option are provided, the Ruby option takes precedence.
 
-Since the URI options are required in camel case, which is not the Ruby standard, the
-following table shows the option in the URI and its corresponding option if passed
-to the constructor in Ruby.
+
+Ruby Options
+````````````
 
 .. note::
 
   The options passed directly should be symbols.
-
-The options are explained in detail in the :manual:`Connection URI reference
-</reference/connection-string/>`.
-
-.. note::
-  Options that are set in **milliseconds** in the URI are
-  represented as a ``float`` in Ruby and the units are **seconds**.
-
-URI Options Conversions
------------------------
-
-.. list-table::
-   :header-rows: 1
-   :widths: 40 105
-
-   * - URI Option
-     - Ruby Option
-
-   * - appName=String
-     - ``:app_name => String``
-
-   * - authMechanism=String
-     - ``:auth_mech => Symbol``
-     
-       Auth mechanism values are converted as follows from URI options to
-       Ruby options:
-       
-       - ``GSSAPI`` => ``:gssapi``
-       - ``MONGODB-CR`` => ``:mongodb_cr``
-       - ``MONGODB-X509`` => ``:mongodb_x509``
-       - ``PLAIN`` => ``:plain``
-       - ``SCRAM-SHA-1`` => ``:scram``
-       - ``SCRAM-SHA-256`` => ``:scram256``
-       
-       If a different value is provided for auth mechanism, it is converted
-       to the Ruby option unmodified and retains its ``String`` type.
-       Note that, while currently the driver allows a ``Client`` instance
-       to be constructed with an unrecognized auth mechanism, this behavior
-       `may change in a future version of the driver <https://jira.mongodb.org/browse/RUBY-1745>`_.
-
-   * - authMechanismProperties=Strings
-     - ``{ :auth_mech_properties => { :service_realm => String, :canonicalize_host_name => true|false, :service_name => String } }``
-
-       Specified as comma-separated key:value pairs, e.g. ``"SERVICE_REALM:foo,CANONICALIZE_HOST_NAME:TRUE"``.
-
-   * - authSource=String
-     - ``:auth_source => String``
-
-   * - compressors=Strings
-     - ``:compressors => Array<String>``
-
-       Specified as a comma-separated list. Note that the Ruby driver only supports zlib
-       compression; however, other drivers may support snappy. For maximum compatibility with
-       drivers, specify ``"snappy,zlib"``; if compatibility with other drivers is not a concern,
-       specify ``"zlib".`` Compression is not enabled by default and when using MongoDB 4.0 and
-       earlier, so zlib compression must be manually enabled on the server in order for the Ruby
-       driver to compress wire protocol data.
-
-   * - connect=String
-     - ``:connect => Symbol``
-
-   * - connectTimeoutMS=Integer
-     - ``:connect_timeout => Float``
-
-   * - fsync=Boolean
-     - ``{ :write_concern => { :fsync => true|false }}``
-
-   * - heartbeatFrequencyMS=Integer
-     - ``:heartbeat_frequency => Float``
-
-   * - journal=Boolean
-     - ``{ :write_concern => { :j => true|false }}``
-
-   * - localThresholdMS=Integer
-     - ``:local_threshold => Float``
-
-   * - maxIdleTimeMS=Integer
-     - ``:max_idle_time => Float``
-
-   * - maxStalenessSeconds=Integer
-     - ``{ :read => { :max_staleness => Integer }}``
-     
-       If the maxStalenessSeconds URI option value is -1, the driver treats
-       this as if the option was not given at all. Otherwise,
-       if the option value is numeric, the Ruby option is set to the
-       specified value converted to an ``Integer``.
-       Note that numeric values greater than 0 but less than 90, or less than
-       -1, are accepted by the ``Client`` constructor but will cause server
-       selection to fail (unless the option is changed via, for example, the
-       ``with`` method prior to any operations being performed on the driver).
-       If the option value is non-numeric, it is ignored and the driver
-       treats this case as if the option was not given at all.
-
-   * - maxPoolSize=Integer
-     - ``:max_pool_size => Integer``
-
-   * - minPoolSize=Integer
-     - ``:min_pool_size => Integer``
-
-   * - readConcernLevel=String
-     - ``:read_concern => Hash``
-
-   * - readPreference=String
-     - ``{ :read => { :mode => Symbol }}``
-
-   * - readPreferenceTags=Strings
-     - ``{ :read => { :tag_sets => Array<Hash> }}``
-
-       Each instance of the readPreferenceTags field is a comma-separated key:value pair which will appear in the :tag_sets array in the order they are specified. For instance, ``"readPreferenceTags=dc:ny,rack:1&readPreferenceTags=dc:ny"`` will be converted to ``[ { 'dc' => 'ny', 'rack' => '1' }, { 'dc' => 'ny' }]``.
-
-   * - replicaSet=String
-     - ``:replica_set => String``
-
-   * - retryWrites=Boolean
-     - ``:retry_writes => boolean``
-
-   * - serverSelectionTimeoutMS=Integer
-     - ``:server_selection_timeout => Float``
-
-   * - socketTimeoutMS=Integer
-     - ``:socket_timeout => Float``
-
-   * - ssl=Boolean
-     - ``:ssl => true|false``
-
-   * - tls=Boolean
-     - ``:ssl => boolean``
-
-   * - tlsAllowInvalidCertificates=Boolean
-     - ``:ssl_verify_certificate => boolean``
-
-       Because ``tlsAllowInvalidCertificates`` uses ``true`` to signify that verification
-       should be disabled and ``ssl_verify_certificate`` uses ``false`` to signify that
-       verification should be disabled, the boolean is inverted before being used to set
-       ``ssl_verify_certificate``.
-
-   * - tlsAllowInvalidHostnames=Boolean
-     - ``:ssl_verify_hostname => boolean``
-
-       Because ``tlsAllowInvalidHostnames`` uses ``true`` to signify that verification
-       should be disabled and ``ssl_verify_hostname`` uses ``false`` to signify that
-       verification should be disabled, the boolean is inverted before being used to set
-       ``ssl_verify_hostname``.
-
-   * - tlsCAFile=String
-     - ``:ssl_ca_cert => String``
-
-   * - tlsCertificateKeyFile=String
-     - ``:ssl_cert => String``
-
-   * - tlsCertificateKeyFile=String
-     - ``:ssl_key => String``
-
-   * - tlsCertificateKeyFilePassword=String
-     - ``:ssl_key_pass_phrase => String``
-
-   * - tlsInsecure=Boolean
-     - ``:ssl_verify => boolean``
-
-       Because tlsInsecure uses ``true`` to signify that verification should be disabled and
-       ``ssl_verify`` uses ``false`` to signify that verification should be disabled, the boolean
-       is inverted before being used to set ``ssl_verify``.
-
-   * - w=Integer|String
-     - ``{ :write_concern => { :w => Integer|String }}``
-
-   * - waitQueueTimeoutMS=Integer
-     - ``:wait_queue_timeout => Float``
-
-   * - wtimeoutMS=Integer
-     - ``{ :write_concern => { :wtimeout => Integer }}``
-
-   * - zlibCompressionLevel=Integer
-     - ``:zlib_compression_level => Integer``
-
-
-Ruby Options
-------------
 
 .. list-table::
    :header-rows: 1
@@ -593,6 +416,185 @@ Ruby Options
      - The Zlib compression level to use, if using compression. See Ruby's Zlib module for valid levels.
      - ``Integer``
      - none
+
+
+URI Options
+```````````
+
+Since the URI options are required to be in camel case, which is not the Ruby
+standard, the following table shows URI options and their corresponding Ruby
+options.
+
+URI options are explained in detail in the :manual:`Connection URI reference
+</reference/connection-string/>`.
+
+.. note::
+  Options that are set in **milliseconds** in the URI are
+  represented as a ``float`` in Ruby and the units are **seconds**.
+
+.. list-table::
+   :header-rows: 1
+   :widths: 40 105
+
+   * - URI Option
+     - Ruby Option
+
+   * - appName=String
+     - ``:app_name => String``
+
+   * - authMechanism=String
+     - ``:auth_mech => Symbol``
+     
+       Auth mechanism values are converted as follows from URI options to
+       Ruby options:
+       
+       - ``GSSAPI`` => ``:gssapi``
+       - ``MONGODB-CR`` => ``:mongodb_cr``
+       - ``MONGODB-X509`` => ``:mongodb_x509``
+       - ``PLAIN`` => ``:plain``
+       - ``SCRAM-SHA-1`` => ``:scram``
+       - ``SCRAM-SHA-256`` => ``:scram256``
+       
+       If a different value is provided for auth mechanism, it is converted
+       to the Ruby option unmodified and retains its ``String`` type.
+       Note that, while currently the driver allows a ``Client`` instance
+       to be constructed with an unrecognized auth mechanism, this behavior
+       `may change in a future version of the driver <https://jira.mongodb.org/browse/RUBY-1745>`_.
+
+   * - authMechanismProperties=Strings
+     - ``{ :auth_mech_properties => { :service_realm => String, :canonicalize_host_name => true|false, :service_name => String } }``
+
+       Specified as comma-separated key:value pairs, e.g. ``"SERVICE_REALM:foo,CANONICALIZE_HOST_NAME:TRUE"``.
+
+   * - authSource=String
+     - ``:auth_source => String``
+
+   * - compressors=Strings
+     - ``:compressors => Array<String>``
+
+       Specified as a comma-separated list. Note that the Ruby driver only supports zlib
+       compression; however, other drivers may support snappy. For maximum compatibility with
+       drivers, specify ``"snappy,zlib"``; if compatibility with other drivers is not a concern,
+       specify ``"zlib".`` Compression is not enabled by default and when using MongoDB 4.0 and
+       earlier, so zlib compression must be manually enabled on the server in order for the Ruby
+       driver to compress wire protocol data.
+
+   * - connect=String
+     - ``:connect => Symbol``
+
+   * - connectTimeoutMS=Integer
+     - ``:connect_timeout => Float``
+
+   * - fsync=Boolean
+     - ``{ :write_concern => { :fsync => true|false }}``
+
+   * - heartbeatFrequencyMS=Integer
+     - ``:heartbeat_frequency => Float``
+
+   * - journal=Boolean
+     - ``{ :write_concern => { :j => true|false }}``
+
+   * - localThresholdMS=Integer
+     - ``:local_threshold => Float``
+
+   * - maxIdleTimeMS=Integer
+     - ``:max_idle_time => Float``
+
+   * - maxStalenessSeconds=Integer
+     - ``{ :read => { :max_staleness => Integer }}``
+     
+       If the maxStalenessSeconds URI option value is -1, the driver treats
+       this as if the option was not given at all. Otherwise,
+       if the option value is numeric, the Ruby option is set to the
+       specified value converted to an ``Integer``.
+       Note that numeric values greater than 0 but less than 90, or less than
+       -1, are accepted by the ``Client`` constructor but will cause server
+       selection to fail (unless the option is changed via, for example, the
+       ``with`` method prior to any operations being performed on the driver).
+       If the option value is non-numeric, it is ignored and the driver
+       treats this case as if the option was not given at all.
+
+   * - maxPoolSize=Integer
+     - ``:max_pool_size => Integer``
+
+   * - minPoolSize=Integer
+     - ``:min_pool_size => Integer``
+
+   * - readConcernLevel=String
+     - ``:read_concern => Hash``
+
+   * - readPreference=String
+     - ``{ :read => { :mode => Symbol }}``
+
+   * - readPreferenceTags=Strings
+     - ``{ :read => { :tag_sets => Array<Hash> }}``
+
+       Each instance of the readPreferenceTags field is a comma-separated key:value pair which will appear in the :tag_sets array in the order they are specified. For instance, ``"readPreferenceTags=dc:ny,rack:1&readPreferenceTags=dc:ny"`` will be converted to ``[ { 'dc' => 'ny', 'rack' => '1' }, { 'dc' => 'ny' }]``.
+
+   * - replicaSet=String
+     - ``:replica_set => String``
+
+   * - retryWrites=Boolean
+     - ``:retry_writes => boolean``
+
+   * - serverSelectionTimeoutMS=Integer
+     - ``:server_selection_timeout => Float``
+
+   * - socketTimeoutMS=Integer
+     - ``:socket_timeout => Float``
+
+   * - ssl=Boolean
+     - ``:ssl => true|false``
+
+   * - tls=Boolean
+     - ``:ssl => boolean``
+
+   * - tlsAllowInvalidCertificates=Boolean
+     - ``:ssl_verify_certificate => boolean``
+
+       Because ``tlsAllowInvalidCertificates`` uses ``true`` to signify that verification
+       should be disabled and ``ssl_verify_certificate`` uses ``false`` to signify that
+       verification should be disabled, the boolean is inverted before being used to set
+       ``ssl_verify_certificate``.
+
+   * - tlsAllowInvalidHostnames=Boolean
+     - ``:ssl_verify_hostname => boolean``
+
+       Because ``tlsAllowInvalidHostnames`` uses ``true`` to signify that verification
+       should be disabled and ``ssl_verify_hostname`` uses ``false`` to signify that
+       verification should be disabled, the boolean is inverted before being used to set
+       ``ssl_verify_hostname``.
+
+   * - tlsCAFile=String
+     - ``:ssl_ca_cert => String``
+
+   * - tlsCertificateKeyFile=String
+     - ``:ssl_cert => String``
+
+   * - tlsCertificateKeyFile=String
+     - ``:ssl_key => String``
+
+   * - tlsCertificateKeyFilePassword=String
+     - ``:ssl_key_pass_phrase => String``
+
+   * - tlsInsecure=Boolean
+     - ``:ssl_verify => boolean``
+
+       Because tlsInsecure uses ``true`` to signify that verification should be disabled and
+       ``ssl_verify`` uses ``false`` to signify that verification should be disabled, the boolean
+       is inverted before being used to set ``ssl_verify``.
+
+   * - w=Integer|String
+     - ``{ :write_concern => { :w => Integer|String }}``
+
+   * - waitQueueTimeoutMS=Integer
+     - ``:wait_queue_timeout => Float``
+
+   * - wtimeoutMS=Integer
+     - ``{ :write_concern => { :wtimeout => Integer }}``
+
+   * - zlibCompressionLevel=Integer
+     - ``:zlib_compression_level => Integer``
 
 Details on Timeout Options
 --------------------------
