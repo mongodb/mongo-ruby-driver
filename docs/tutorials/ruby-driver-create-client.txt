@@ -82,6 +82,11 @@ Ruby Options
 
   The options passed directly should be symbols.
 
+.. note::
+
+  Unless otherwise specified, Ruby options that deal with times are given in
+  seconds.
+
 .. list-table::
    :header-rows: 1
    :widths: 25 40 10 15
