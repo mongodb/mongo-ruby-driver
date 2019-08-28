@@ -882,7 +882,7 @@ module Mongo
         return
       end
 
-      if !Mongo::Auth::SOURCES.has_key?(auth_mech)
+      if !Mongo::Auth::SOURCES.key?(auth_mech)
         raise Mongo::Auth::InvalidMechanism.new(auth_mech) 
       end
 

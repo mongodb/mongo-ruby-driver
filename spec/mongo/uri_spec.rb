@@ -733,7 +733,7 @@ describe Mongo::URI do
           it 'does not allow a client to be created' do
             expect {
               new_local_client_nmio(string)
-            }.to raise_error Mongo::Auth::InvalidConfiguration
+            }.to raise_error(Mongo::Auth::InvalidConfiguration, /mechanism_properties are not supported/)
           end
         end
       end
@@ -762,7 +762,7 @@ describe Mongo::URI do
           it 'does not allow a client to be created' do
             expect {
               new_local_client_nmio(string)
-            }.to raise_error Mongo::Auth::InvalidConfiguration
+            }.to raise_error(Mongo::Auth::InvalidConfiguration, /mechanism_properties are not supported/)
           end
         end
       end
@@ -793,7 +793,7 @@ describe Mongo::URI do
           it 'does not allow a client to be created' do
             expect {
               new_local_client_nmio(string)
-            }.to raise_error Mongo::Auth::InvalidConfiguration
+            }.to raise_error(Mongo::Auth::InvalidConfiguration, /invalid auth source/)
           end
         end
 
@@ -831,7 +831,7 @@ describe Mongo::URI do
           it 'does not allow a client to be created' do
             expect {
               new_local_client_nmio(string)
-            }.to raise_error Mongo::Auth::InvalidConfiguration
+            }.to raise_error(Mongo::Auth::InvalidConfiguration, /mechanism_properties are not supported/)
           end
         end
       end
@@ -861,7 +861,7 @@ describe Mongo::URI do
           it 'does not allow a client to be created' do
             expect {
               new_local_client_nmio(string)
-            }.to raise_error Mongo::Auth::InvalidConfiguration
+            }.to raise_error(Mongo::Auth::InvalidConfiguration, /invalid auth source/)
           end
         end
 
@@ -882,7 +882,7 @@ describe Mongo::URI do
           it 'does not allow a client to be created' do
             expect {
               new_local_client_nmio(string)
-            }.to raise_error Mongo::Auth::InvalidConfiguration
+            }.to raise_error(Mongo::Auth::InvalidConfiguration, /password is not supported/)
           end
         end
 
@@ -892,7 +892,7 @@ describe Mongo::URI do
           it 'does not allow a client to be created' do
             expect {
               new_local_client_nmio(string)
-            }.to raise_error Mongo::Auth::InvalidConfiguration
+            }.to raise_error(Mongo::Auth::InvalidConfiguration, /mechanism_properties are not supported/)
           end
         end
       end
@@ -927,7 +927,7 @@ describe Mongo::URI do
         it 'does not allow a client to be created with default auth mechanism' do
           expect {
             new_local_client_nmio(string)
-          }.to raise_error Mongo::Auth::InvalidConfiguration
+          }.to raise_error(Mongo::Auth::InvalidConfiguration, /empty username is not supported/)
         end
       end
     end
@@ -969,7 +969,6 @@ describe Mongo::URI do
         let(:options) do
           "authMechanismProperties=SERVICE_NAME:#{service_name}"
         end
-
         let(:service_name) { 'foo' }
         let(:expected) { Mongo::Options::Redacted.new({ service_name: service_name }) }
 

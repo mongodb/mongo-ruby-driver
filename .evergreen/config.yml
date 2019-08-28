@@ -924,11 +924,11 @@ buildvariants:
   matrix_name: "kerberos-tests"
   matrix_spec:
     auth-and-ssl: "noauth-and-nossl"
-    ruby: ["ruby-2.3", "ruby-2.4", "ruby-2.5", "ruby-2.6"]
-    mongodb-version: "*"
+    ruby: "ruby-2.6"
+    mongodb-version: "4.2"
     topology: standalone
     os: rhel70
-  display_name: "Kerberos Tests ${mongodb-version} ${ruby}"
+  display_name: "Kerberos Tests"
   tasks:
     - name: "kerberos-tests"
 
