@@ -155,6 +155,9 @@ module Mongo
         return
       end
 
+      # Need to record start time prior to starting monitoring
+      start_time = Time.now
+
       servers.each do |server|
         server.start_monitoring
       end
@@ -184,7 +187,6 @@ module Mongo
         if server_selection_timeout < 3
           server_selection_timeout = 3
         end
-        start_time = Time.now
         deadline = start_time + server_selection_timeout
         # Wait for the first scan of each server to complete, for
         # backwards compatibility.
@@ -192,13 +194,17 @@ module Mongo
         # wait for these servers to also be queried, and so on, up to the
         # server selection timeout or the 3 second minimum.
         loop do
-          servers = servers_list.dup
-          if servers.all? { |server| server.description.last_update_time >= start_time }
+          # Ensure we do not try to read the servers list while SDAM is running
+          servers = @sdam_flow_lock.synchronize do
+            servers_list.dup
+          end
+          if servers.all? { |server| server.last_scan && server.last_scan >= start_time }
             break
           end
           if (time_remaining = deadline - Time.now) <= 0
             break
           end
+          log_debug("Waiting for up to #{'%.2f' % time_remaining} seconds for servers to be scanned: #{summary}")
           server_selection_semaphore.wait(time_remaining)
         end
       end

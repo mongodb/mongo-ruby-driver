@@ -101,10 +101,17 @@ module Mongo
     #   description the monitor refreshes.
     attr_reader :description
 
-    # @return [ Time ] last_scan The time when the last server scan started.
+    # @return [ Time | nil ] last_scan The time when the last server scan
+    #   completed, or nil if the server has not been scanned yet.
     #
     # @since 2.4.0
-    attr_reader :last_scan
+    def last_scan
+      if description && !description.config.empty?
+        description.last_update_time
+      else
+        @last_scan
+      end
+    end
 
     # @deprecated
     def heartbeat_frequency

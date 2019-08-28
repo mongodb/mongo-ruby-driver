@@ -62,6 +62,7 @@ module Mongo
       :id_generator,
       :local_threshold,
       :logger,
+      :log_prefix,
       :max_idle_time,
       :max_pool_size,
       :max_read_retries,
@@ -222,6 +223,9 @@ module Mongo
     # @option options [ Integer ] :local_threshold The local threshold boundary
     #   in seconds for selecting a near server for an operation.
     # @option options [ Logger ] :logger A custom logger to use.
+    # @option options [ String ] :log_prefix A custom log prefix to use when
+    #   logging. This option is experimental and subject to change in a future
+    #   version of the driver.
     # @option options [ Integer ] :max_idle_time The maximum seconds a socket can remain idle
     #   since it has been checked in to the pool.
     # @option options [ Integer ] :max_pool_size The maximum size of the

@@ -117,19 +117,49 @@ describe Mongo::Client do
           end
         end
 
+        let(:logger) do
+          Logger.new(STDOUT).tap do |logger|
+            logger.level = Logger::DEBUG
+          end
+        end
+
+        let(:subscriber) do
+          Mongo::Monitoring::UnifiedSdamLogSubscriber.new(
+            logger: logger,
+            log_prefix: 'CCS-SDAM',
+          )
+        end
+
         let(:client) do
           ClientRegistry.instance.new_local_client(
             [address],
             # Specify server selection timeout here because test suite sets
             # one by default and it's fairly low
-            SpecConfig.instance.test_options.merge(server_selection_timeout: 5))
+            SpecConfig.instance.test_options.merge(
+              connect_timeout: 1,
+              socket_timeout: 1,
+              server_selection_timeout: 8,
+              logger: logger,
+              log_prefix: 'CCS-CLIENT',
+              sdam_proc: lambda do |client|
+                subscriber.subscribe(client)
+              end
+            ))
         end
 
         it 'does not wait for server selection timeout' do
-          start_time = Time.now
-          client
-          time_taken = Time.now - start_time
-          expect(time_taken < 3).to be true
+          time_taken = Benchmark.realtime do
+            # Client is created here.
+            client
+          end
+          puts "client_construction_spec.rb: Cluster is: #{client.cluster.summary}"
+          actual_class = client.cluster.topology.class
+          expect([
+            Mongo::Cluster::Topology::ReplicaSetWithPrimary,
+            Mongo::Cluster::Topology::Single,
+            Mongo::Cluster::Topology::Sharded,
+          ]).to include(actual_class)
+          expect(time_taken).to be < 5
 
           # run a command to ensure the client is a working one
           client.database.command(ismaster: 1)
