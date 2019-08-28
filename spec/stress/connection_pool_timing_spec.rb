@@ -131,9 +131,9 @@ describe 'Connection pool timing test' do
     end
 
     let(:more_threads) do
-      [].tap do |more_threads|
+      PossiblyConcurrentArray.new.tap do |more_threads|
         5.times do |i|
-          threads << Thread.new do
+          more_threads << Thread.new do
             10.times do |j|
               collection.find(a: i+j).to_a
               sleep 0.01
@@ -175,9 +175,11 @@ describe 'Connection pool timing test' do
     it 'does not error' do
       threads
       start = Time.now
-      expect {
-        threads.collect { |t| t.join }
-      }.not_to raise_error
+      expect do
+        threads.each do |t|
+          t.join
+        end
+      end.not_to raise_error
       puts "[Connection Pool Timing] Duration before primary change: #{@primary_chane_start - start}. "\
         "Duration after primary change: #{Time.now - @primary_change_end}"
     end

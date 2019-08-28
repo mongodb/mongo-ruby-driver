@@ -46,7 +46,7 @@ describe Mongo::Server::Monitor::Connection do
     monitor.connection.tap do |connection|
       expect(connection).not_to be nil
 
-      deadline = Time.now + 1
+      deadline = Time.now + 5
       while Time.now < deadline
         if connection.send(:socket)
           break

@@ -253,6 +253,9 @@ module Mongo
       # @since 2.9.0
       def_delegators :@server, :monitoring
 
+      # @api private
+      attr_reader :populator
+
       # Checks a connection out of the pool.
       #
       # If there are active connections in the pool, the most recently used
