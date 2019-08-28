@@ -703,7 +703,11 @@ describe Mongo::URI do
     end
 
     context 'auth mechanism provided' do
-      let(:options) { "authMechanism=#{mechanism}" }
+      let(:string)      { "#{scheme}#{credentials}@#{servers}/?#{options}" }
+      let(:user)        { 'tyler' }
+      let(:password)    { 's3kr4t' }
+      let(:credentials) { "#{user}:#{password}" }
+      let(:options)     { "authMechanism=#{mechanism}" }
 
       context 'plain' do
         let(:mechanism) { 'PLAIN' }
@@ -721,6 +725,16 @@ describe Mongo::URI do
         it 'is case-insensitive' do
           client = new_local_client_nmio(string.downcase)
           expect(client.options[:auth_mech]).to eq(expected)
+        end
+
+        context 'when mechanism_properties are provided' do
+          let(:options) { "authMechanism=#{mechanism}&authMechanismProperties=CANONICALIZE_HOST_NAME:true" }
+          
+          it 'does not allow a client to be created' do
+            expect {
+              new_local_client_nmio(string)
+            }.to raise_error(Mongo::Auth::InvalidConfiguration, /mechanism_properties are not supported/)
+          end
         end
       end
 
@@ -741,9 +755,21 @@ describe Mongo::URI do
           client = new_local_client_nmio(string.downcase)
           expect(client.options[:auth_mech]).to eq(expected)
         end
+
+        context 'when mechanism_properties are provided' do
+          let(:options) { "authMechanism=#{mechanism}&authMechanismProperties=CANONICALIZE_HOST_NAME:true" }
+          
+          it 'does not allow a client to be created' do
+            expect {
+              new_local_client_nmio(string)
+            }.to raise_error(Mongo::Auth::InvalidConfiguration, /mechanism_properties are not supported/)
+          end
+        end
       end
 
       context 'gssapi' do
+        require_mongo_kerberos
+
         let(:mechanism) { 'GSSAPI' }
         let(:expected) { :gssapi }
 
@@ -759,6 +785,25 @@ describe Mongo::URI do
         it 'is case-insensitive' do
           client = new_local_client_nmio(string.downcase)
           expect(client.options[:auth_mech]).to eq(expected)
+        end
+
+        context 'when auth source is invalid' do
+          let(:options) { "authMechanism=#{mechanism}&authSource=foo" }
+
+          it 'does not allow a client to be created' do
+            expect {
+              new_local_client_nmio(string)
+            }.to raise_error(Mongo::Auth::InvalidConfiguration, /invalid auth source/)
+          end
+        end
+
+        context 'when mechanism_properties are provided' do
+          let(:options) { "authMechanism=#{mechanism}&authMechanismProperties=SERVICE_NAME:other,CANONICALIZE_HOST_NAME:true" }
+          
+          it 'sets the options on a client created with the uri' do
+            client = new_local_client_nmio(string)
+            expect(client.options[:auth_mech_properties]).to eq({ 'canonicalize_host_name' => true, 'service_name' => 'other' })
+          end
         end
       end
 
@@ -779,11 +824,22 @@ describe Mongo::URI do
           client = new_local_client_nmio(string.downcase)
           expect(client.options[:auth_mech]).to eq(expected)
         end
+
+        context 'when mechanism_properties are provided' do
+          let(:options) { "authMechanism=#{mechanism}&authMechanismProperties=CANONICALIZE_HOST_NAME:true" }
+          
+          it 'does not allow a client to be created' do
+            expect {
+              new_local_client_nmio(string)
+            }.to raise_error(Mongo::Auth::InvalidConfiguration, /mechanism_properties are not supported/)
+          end
+        end
       end
 
       context 'mongodb-x509' do
         let(:mechanism) { 'MONGODB-X509' }
-        let(:expected) { :mongodb_x509 }
+        let(:expected)  { :mongodb_x509 }
+        let(:credentials)  { user }
 
         it 'sets the auth mechanism to :mongodb_x509' do
           expect(uri.uri_options[:auth_mech]).to eq(expected)
@@ -799,13 +855,79 @@ describe Mongo::URI do
           expect(client.options[:auth_mech]).to eq(expected)
         end
 
+        context 'when auth source is invalid' do
+          let(:options) { "authMechanism=#{mechanism}&authSource=foo" }
+
+          it 'does not allow a client to be created' do
+            expect {
+              new_local_client_nmio(string)
+            }.to raise_error(Mongo::Auth::InvalidConfiguration, /invalid auth source/)
+          end
+        end
+
         context 'when a username is not provided' do
+          let(:string) { "#{scheme}#{servers}/?#{options}" }
 
           it 'recognizes the mechanism with no username' do
             client = new_local_client_nmio(string.downcase)
             expect(client.options[:auth_mech]).to eq(expected)
             expect(client.options[:user]).to be_nil
           end
+        end
+
+        context 'when a password is provided' do
+          let(:credentials) { "#{user}:#{password}"}
+          let(:password) { 's3kr4t' }
+          
+          it 'does not allow a client to be created' do
+            expect {
+              new_local_client_nmio(string)
+            }.to raise_error(Mongo::Auth::InvalidConfiguration, /password is not supported/)
+          end
+        end
+
+        context 'when mechanism_properties are provided' do
+          let(:options) { "authMechanism=#{mechanism}&authMechanismProperties=CANONICALIZE_HOST_NAME:true" }
+          
+          it 'does not allow a client to be created' do
+            expect {
+              new_local_client_nmio(string)
+            }.to raise_error(Mongo::Auth::InvalidConfiguration, /mechanism_properties are not supported/)
+          end
+        end
+      end
+    end
+
+    context 'auth mechanism is not provided' do
+      let(:string) { "#{scheme}#{credentials}@#{servers}/" }
+
+      context 'with no credentials' do
+        let(:string) { "#{scheme}#{servers}/" }
+
+        it 'sets user and password as nil' do
+          expect(uri.credentials[:user]).to be_nil
+          expect(uri.credentials[:password]).to be_nil
+        end
+
+        it 'sets the options on a client created with the uri' do
+          client = new_local_client_nmio(string)
+          expect(client.options[:user]).to be_nil
+          expect(client.options[:password]).to be_nil
+        end
+      end
+
+      context 'with empty credentials' do
+        let(:credentials) { '' }
+
+        it 'sets user as an empty string and password as nil' do
+          expect(uri.credentials[:user]).to eq('')
+          expect(uri.credentials[:password]).to be_nil
+        end
+
+        it 'does not allow a client to be created with default auth mechanism' do
+          expect {
+            new_local_client_nmio(string)
+          }.to raise_error(Mongo::Auth::InvalidConfiguration, /empty username is not supported/)
         end
       end
     end
@@ -847,7 +969,6 @@ describe Mongo::URI do
         let(:options) do
           "authMechanismProperties=SERVICE_NAME:#{service_name}"
         end
-
         let(:service_name) { 'foo' }
         let(:expected) { Mongo::Options::Redacted.new({ service_name: service_name }) }
 

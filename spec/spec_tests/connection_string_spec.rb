@@ -12,8 +12,10 @@ describe 'ConnectionString' do
     context(spec.description) do
 
       spec.tests.each_with_index do |test, index|
-
         context "when a #{test.description} is provided" do
+          if test.description.downcase.include?("gssapi")
+            require_mongo_kerberos
+          end
 
           context 'when the uri is invalid', unless: test.valid? do
 

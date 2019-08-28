@@ -351,6 +351,16 @@ functions:
           ${PREPARE_SHELL}
           MONGODB_URI="${MONGODB_URI}" .evergreen/run-tests.sh
 
+  "run tests with kerberos":
+    - command: shell.exec
+      type: test
+      params:
+        shell: bash
+        working_dir: "src"
+        script: |
+          ${PREPARE_SHELL}
+          KERBEROS_REQUIRED=1 .evergreen/run-tests-with-kerberos.sh
+
   "run tests via mlaunch":
     - command: shell.exec
       type: test
@@ -392,7 +402,7 @@ functions:
                  IP_ADDR=`getent hosts ${sasl_host} | head -n 1 | awk '{print $1}'`
             esac
 
-            ENTERPRISE_AUTH_TESTS=1 IP_ADDR=$IP_ADDR SASL_HOST=${sasl_host} SASL_PORT=${sasl_port} SASL_USER=${sasl_user} SASL_PASS=${sasl_pass} SASL_DB=${sasl_db} PRINCIPAL=${principal} KERBEROS_DB=${kerberos_db} KEYTAB_BASE64=${keytab_base64} PROJECT_DIRECTORY=${PROJECT_DIRECTORY} RVM_RUBY="${RVM_RUBY}" ${PROJECT_DIRECTORY}/.evergreen/run-enterprise-auth-tests.sh
+            KERBEROS_REQUIRED=1 IP_ADDR=$IP_ADDR SASL_HOST=${sasl_host} SASL_PORT=${sasl_port} SASL_USER=${sasl_user} SASL_PASS=${sasl_pass} SASL_DB=${sasl_db} PRINCIPAL=${principal} KERBEROS_DB=${kerberos_db} KEYTAB_BASE64=${keytab_base64} PROJECT_DIRECTORY=${PROJECT_DIRECTORY} RVM_RUBY="${RVM_RUBY}" ${PROJECT_DIRECTORY}/.evergreen/run-enterprise-auth-tests.sh
 
   "cleanup mo":
     - command: shell.exec
@@ -510,6 +520,10 @@ tasks:
     - name: "enterprise-auth-tests"
       commands:
         - func: "run enterprise auth tests"
+    - name: "kerberos-tests"
+      commands:
+        - func: "bootstrap mongo-orchestration"
+        - func: "run tests with kerberos"
 
 axes:
   - id: "mongodb-version"
@@ -903,6 +917,18 @@ buildvariants:
     - ubuntu1604-test
   tasks:
     - name: "enterprise-auth-tests"
+
+-
+  matrix_name: "kerberos-tests"
+  matrix_spec:
+    auth-and-ssl: "noauth-and-nossl"
+    ruby: "ruby-2.6"
+    mongodb-version: "4.2"
+    topology: standalone
+    os: rhel70
+  display_name: "Kerberos Tests"
+  tasks:
+    - name: "kerberos-tests"
 
 -
   matrix_name: "enterprise-auth-tests-rhel"

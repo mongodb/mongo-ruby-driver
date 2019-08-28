@@ -20,7 +20,7 @@ echo "Running kinit"
 kinit -k -t ${PROJECT_DIRECTORY}/.evergreen/drivers.keytab -p ${PRINCIPAL}
 
 echo "Install dependencies"
-export BUNDLE_GEMFILE=gemfiles/mongo_kerberos.gemfile
+export BUNDLE_GEMFILE=gemfiles/enterprise_auth.gemfile
 bundle install --gemfile="$BUNDLE_GEMFILE"
 
 echo "Running tests"

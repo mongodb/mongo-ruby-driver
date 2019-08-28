@@ -1,4 +1,4 @@
-require 'lite_spec_helper'
+require 'spec_helper'
 
 describe 'Uri Options' do
   include Mongo::ConnectionString
@@ -17,8 +17,10 @@ describe 'Uri Options' do
       end
 
       spec.tests.each do |test|
-
         context "#{test.description}" do
+          if test.description.downcase.include?("gssapi")
+            require_mongo_kerberos
+          end
 
           context 'when the uri should warn', if: test.warn? do
 

@@ -70,10 +70,15 @@ module Mongo
       SOURCES[mechanism].new(user)
     end
 
+    # Raised when trying to authorize with an invalid configuration
+    #
+    # @since 2.11.0
+    class InvalidConfiguration < Mongo::Error::AuthError; end
+
     # Raised when trying to get an invalid authorization mechanism.
     #
     # @since 2.0.0
-    class InvalidMechanism < Mongo::Error::AuthError
+    class InvalidMechanism < InvalidConfiguration
 
       # Instantiate the new error.
       #

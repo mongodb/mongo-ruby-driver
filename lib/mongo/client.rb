@@ -411,6 +411,7 @@ module Mongo
 =end
       @options.freeze
       validate_options!
+      validate_authentication_options!
 
       @database = Database.new(self, @options[:database], @options)
 
@@ -618,6 +619,7 @@ module Mongo
         options.update(opts)
         @options = options.freeze
         validate_options!
+        validate_authentication_options!
       end
     end
 
@@ -859,11 +861,53 @@ module Mongo
     end
 
     # Validates all options after they are set on the client.
-    # This method is intended to catch combinations of options which do are
+    # This method is intended to catch combinations of options which are
     # not allowed.
     def validate_options!
       if options[:write] && options[:write_concern] && options[:write] != options[:write_concern]
         raise ArgumentError, "If :write and :write_concern are both given, they must be identical: #{options.inspect}"
+      end
+    end
+
+    # Validates all authentication-related options after they are set on the client
+    # This method is intended to catch combinations of options which are not allowed
+    def validate_authentication_options!
+      auth_mech = options[:auth_mech]
+      user = options[:user]
+      password = options[:password]
+      auth_source = options[:auth_source]
+      mech_properties = options[:auth_mech_properties]
+
+      if auth_mech.nil?
+        if user && user.empty?
+          raise Mongo::Auth::InvalidConfiguration.new('empty username is not supported for default auth mechanism')
+        end
+
+        return
+      end
+
+      if !Mongo::Auth::SOURCES.key?(auth_mech)
+        raise Mongo::Auth::InvalidMechanism.new(auth_mech) 
+      end
+
+      if user.nil? && auth_mech != :mongodb_x509
+        raise Mongo::Auth::InvalidConfiguration.new("user is required for mechanism #{auth_mech}")
+      end
+
+      if password.nil? && ![:gssapi, :mongodb_x509].include?(auth_mech)
+        raise Mongo::Auth::InvalidConfiguration.new("password is required for mechanism #{auth_mech}")
+      end
+
+      if password && auth_mech == :mongodb_x509
+        raise Mongo::Auth::InvalidConfiguration.new('password is not supported for mongodb_x509')
+      end
+
+      if ![:external, nil].include?(auth_source) && [:gssapi, :mongodb_x509].include?(auth_mech)
+        raise Mongo::Auth::InvalidConfiguration.new("#{auth_source} is an invalid auth source for #{auth_mech}; valid options are $external and nil")
+      end
+
+      if mech_properties && auth_mech != :gssapi
+        raise Mongo::Auth::InvalidConfiguration.new("mechanism_properties are not supported for #{auth_mech}")
       end
     end
 

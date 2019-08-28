@@ -1,4 +1,4 @@
-require 'lite_spec_helper'
+require 'spec_helper'
 
 describe Mongo::URI::SRVProtocol do
   clean_slate_for_all
@@ -588,7 +588,11 @@ describe Mongo::URI::SRVProtocol do
       end
 
       context 'auth mechanism provided' do
-        let(:options) { "authMechanism=#{mechanism}" }
+        let(:options)     { "authMechanism=#{mechanism}" }
+        let(:string)      { "#{scheme}#{credentials}@#{servers}/?#{options}" }
+        let(:user)        { 'tyler' }
+        let(:password)    { 's3kr4t' }
+        let(:credentials) { "#{user}:#{password}" }
 
         context 'plain' do
           let(:mechanism) { 'PLAIN' }
@@ -627,8 +631,11 @@ describe Mongo::URI::SRVProtocol do
         end
 
         context 'gssapi' do
+          require_mongo_kerberos
+
           let(:mechanism) { 'GSSAPI' }
-          let(:expected) { :gssapi }
+          let(:expected)  { :gssapi }
+          let(:options)   { "authMechanism=#{mechanism}&authSource=$external" }
 
           it 'sets the auth mechanism to :gssapi' do
             expect(uri.uri_options[:auth_mech]).to eq(expected)
@@ -663,8 +670,10 @@ describe Mongo::URI::SRVProtocol do
         end
 
         context 'mongodb-x509' do
-          let(:mechanism) { 'MONGODB-X509' }
-          let(:expected) { :mongodb_x509 }
+          let(:options)     { "authMechanism=#{mechanism}&authSource=$external" }
+          let(:mechanism)   { 'MONGODB-X509' }
+          let(:expected)    { :mongodb_x509 }
+          let(:credentials) { user }
 
           it 'sets the auth mechanism to :mongodb_x509' do
             expect(uri.uri_options[:auth_mech]).to eq(expected)
@@ -680,7 +689,7 @@ describe Mongo::URI::SRVProtocol do
           end
 
           context 'when a username is not provided' do
-
+            let(:string) { "#{scheme}#{servers}/?#{options}" }
             it 'recognizes the mechanism with no username' do
               client = new_local_client_nmio(string.downcase)
               expect(client.options[:auth_mech]).to eq(expected)
