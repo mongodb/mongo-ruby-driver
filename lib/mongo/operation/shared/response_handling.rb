@@ -22,10 +22,12 @@ module Mongo
 
       private
 
-      def validate_result(result)
+      def validate_result(result, server)
         unpin_maybe(session) do
           add_error_labels do
-            result.validate!
+            add_server_diagnostics(server) do
+              result.validate!
+            end
           end
         end
       end
@@ -74,6 +76,18 @@ module Mongo
           session.unpin_maybe(e)
         end
         raise
+      end
+
+      # Yields to the block and, if the block raises an exception, adds a note
+      # to the exception with the address of the specified server.
+      #
+      # This method is intended to add server address information to exceptions
+      # raised during execution of operations on servers.
+      def add_server_diagnostics(server)
+        yield
+      rescue Mongo::Error, Mongo::Error::AuthError => e
+        e.add_note("on #{server.address.seed}")
+        raise e
       end
     end
   end

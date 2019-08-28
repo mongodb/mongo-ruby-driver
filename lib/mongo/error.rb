@@ -12,11 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require 'mongo/error/notable'
+
 module Mongo
   # Base error class for all Mongo related errors.
   #
   # @since 2.0.0
   class Error < StandardError
+    include Notable
 
     # The error code field.
     #
