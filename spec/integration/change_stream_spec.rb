@@ -94,7 +94,7 @@ describe 'Change stream integration', retry: 4 do
       it 'watch raises error' do
         expect do
           authorized_collection.watch
-        end.to raise_error(Mongo::Error::OperationFailure, "Failing command due to 'failCommand' failpoint (100)")
+        end.to raise_error(Mongo::Error::OperationFailure, /Failing command due to 'failCommand' failpoint \(100\)/)
       end
     end
 
@@ -243,7 +243,7 @@ describe 'Change stream integration', retry: 4 do
 
         expect do
           enum.next
-        end.to raise_error(Mongo::Error::OperationFailure, "Failing command due to 'failCommand' failpoint (101)")
+        end.to raise_error(Mongo::Error::OperationFailure, /Failing command due to 'failCommand' failpoint \(101\)/)
       end
     end
   end
@@ -354,7 +354,7 @@ describe 'Change stream integration', retry: 4 do
 
           expect do
             enum.try_next
-          end.to raise_error(Mongo::Error::OperationFailure, "Failing command due to 'failCommand' failpoint (101)")
+          end.to raise_error(Mongo::Error::OperationFailure, /Failing command due to 'failCommand' failpoint \(101\)/)
         end
       end
 
@@ -377,7 +377,7 @@ describe 'Change stream integration', retry: 4 do
 
           expect do
             enum.try_next
-          end.to raise_error(Mongo::Error::OperationFailure, "Failing command due to 'failCommand' failpoint (101)")
+          end.to raise_error(Mongo::Error::OperationFailure, /Failing command due to 'failCommand' failpoint \(101\)/)
         end
       end
     end

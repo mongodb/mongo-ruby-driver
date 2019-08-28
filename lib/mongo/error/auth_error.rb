@@ -23,6 +23,7 @@ module Mongo
     #
     # @since 2.11.0
     class AuthError < RuntimeError
+      include Notable
     end
   end
 end

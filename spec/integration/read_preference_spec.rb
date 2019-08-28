@@ -409,7 +409,7 @@ describe 'Read preference' do
             res = collection.find({}, {session: session}.merge(find_options || {})).to_a.count
             expect(res).to eq(1)
           end
-        end.to raise_error(Mongo::Error::InvalidTransactionOperation, "read preference in a transaction must be primary (requested: secondary)")
+        end.to raise_error(Mongo::Error::InvalidTransactionOperation, /read preference in a transaction must be primary \(requested: secondary\)/)
       end
     end
 
@@ -478,7 +478,7 @@ describe 'Read preference' do
             res = collection.find({}, {session: session}.merge(find_options || {})).to_a.count
             expect(res).to eq(1)
           end
-        end.to raise_error(Mongo::Error::InvalidTransactionOperation, "read preference in a transaction must be primary (requested: secondary)")
+        end.to raise_error(Mongo::Error::InvalidTransactionOperation, /read preference in a transaction must be primary \(requested: secondary\)/)
       end
     end
   end
