@@ -107,6 +107,18 @@ describe 'Retryable writes integration tests' do
             }.to raise_error(Mongo::Error::OperationFailure, /other error/)
             expect(expectation).to eq(unsuccessful_retry_value)
           end
+
+          it 'indicates server used for operation' do
+            expect {
+              operation
+            }.to raise_error(Mongo::Error::OperationFailure, /on #{ClusterConfig.instance.primary_address_str}/)
+          end
+
+          it 'indicates first attempt' do
+            expect {
+              operation
+            }.to raise_error(Mongo::Error::OperationFailure, /attempt 1/)
+          end
         end
       end
     end
@@ -169,16 +181,17 @@ describe 'Retryable writes integration tests' do
       end
 
       [
-        Mongo::Error::SocketError,
-        Mongo::Error::SocketTimeoutError,
-        Mongo::Error::OperationFailure.new('not master'),
-        Mongo::Error::OperationFailure.new('node is recovering'),
-      ].each do |retryable_error|
+        [Mongo::Error::SocketError],
+        [Mongo::Error::SocketTimeoutError],
+        [Mongo::Error::OperationFailure, 'not master'],
+        [Mongo::Error::OperationFailure, 'node is recovering'],
+      ].each do |error_cls, error_msg|
+        # Note: actual exception instances must be different between tests
 
-        context "when the first error is a #{retryable_error}" do
+        context "when the first error is a #{error_cls}/#{error_msg}" do
 
           let(:error) do
-            retryable_error
+            error_cls.new(error_msg)
           end
 
           before do
@@ -197,11 +210,23 @@ describe 'Retryable writes integration tests' do
               Mongo::Error::SocketError
             end
 
-            it 'does not retry writes and raises the second error' do
+            it 'raises the second error' do
               expect {
                 operation
               }.to raise_error(second_error)
               expect(expectation).to eq(unsuccessful_retry_value)
+            end
+
+            it 'indicates server used for operation' do
+              expect {
+                operation
+              }.to raise_error(Mongo::Error, /on #{ClusterConfig.instance.primary_address_str}/)
+            end
+
+            it 'indicates second attempt' do
+              expect {
+                operation
+              }.to raise_error(Mongo::Error, /attempt 2/)
             end
           end
 
@@ -211,7 +236,7 @@ describe 'Retryable writes integration tests' do
               Mongo::Error::SocketTimeoutError
             end
 
-            it 'does not retry writes and raises the second error' do
+            it 'raises the second error' do
               expect {
                 operation
               }.to raise_error(second_error)
@@ -225,7 +250,7 @@ describe 'Retryable writes integration tests' do
               Mongo::Error::OperationFailure.new('not master')
             end
 
-            it 'does not retry writes and raises the second error' do
+            it 'raises the second error' do
               expect {
                 operation
               }.to raise_error(second_error)
@@ -253,11 +278,29 @@ describe 'Retryable writes integration tests' do
               StandardError
             end
 
-            it 'does not retry writes and raises the first error' do
+            it 'raises the first error' do
               expect {
                 operation
               }.to raise_error(error)
               expect(expectation).to eq(unsuccessful_retry_value)
+            end
+
+            it 'indicates server used for operation' do
+              expect {
+                operation
+              }.to raise_error(Mongo::Error, /on #{ClusterConfig.instance.primary_address_str}/)
+            end
+
+            it 'indicates first attempt' do
+              expect {
+                operation
+              }.to raise_error(Mongo::Error, /attempt 1/)
+            end
+
+            it 'indicates retry was performed' do
+              expect {
+                operation
+              }.to raise_error(Mongo::Error, /later retry failed: StandardError/)
             end
           end
         end

@@ -50,7 +50,7 @@ module Mongo
         else
           ''
         end
-        self.class.name + messages
+        "#{self.class}: #{messages}" + notes_tail
       end
     end
   end
