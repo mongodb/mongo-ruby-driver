@@ -766,10 +766,17 @@ is configurable. This setting, called ``wait_queue_timeout``, is defined in
 seconds. If this timeout is reached, a ``Timeout::Error`` is raised. The
 default is 1 second.
 
-The driver currently does not eagerly create connections, regardless of
-``min_pool_size`` setting. However, once a connection is established, it will
-be kept in the pool by the driver as long as the pool size does not exceed
-``min_pool_size``.
+As of driver version 2.11, the driver eagerly creates connections up to
+``min_pool_size`` setting. Prior to driver version 2.11, the driver always
+created connections on demand. In all versions of the driver, once a connection
+is established, it will be kept in the pool by the driver as long as the pool
+size does not exceed ``min_pool_size``.
+
+Note that, if ``min_pool_size`` is set to a value greater than zero, the
+driver will establish that many connections to secondaries in replica set
+deployments even if the application does not perform secondary reads. The
+purpose of these connections is to provide faster failover when the primary
+changes.
 
 Here is an example of estimating the number of connections a multi-threaded
 application will open: A client connected to a 3-node replica set opens 3
@@ -1057,13 +1064,13 @@ Production Configuration
 Please consider the following when deploying an application using the Ruby
 driver in production:
 
-- The driver has a setting for minimum connection pool size.
-  This setting results in the driver creating the specified number of
-  connection objects but each connection object creates sockets and
-  actually connects to the server on demand. Setting a minimum connection
-  pool size will keep up to that many network connections to a server
-  alive once they are established. This behavior may change in a future
-  version of the driver (`RUBY-1605 <https://jira.mongodb.org/browse/RUBY-1605>`_).
+- As of driver version 2.11, the ``:min_pool_size`` client option is completely
+  respected - the driver will create that many connections to each server
+  identified as a standalone, primary or secondary. In previous driver versions
+  the driver created connections on demand. Applications using ``:min_pool_size``
+  will see an increase in the number of idle connections to all servers as of
+  driver version 2.11, and especially to secondaries in replica set deployments
+  and to nodes in sharded clusters.
 - If the application is reverse proxied to by another web server or a load
   balancer, ``server_selection_timeout`` should generally be set to a lower
   value than the reverse proxy's read timeout. For exampe, `Heroku request timeout
