@@ -19,5 +19,28 @@ module Mongo
         end
       end
     end
+
+    class Test
+      attr_reader :description
+      attr_reader :uri_string
+
+      def initialize(spec)
+        @spec = spec
+        @description = @spec['description']
+        @uri_string = @spec['uri']
+      end
+
+      def valid?
+        @spec['valid']
+      end
+
+      def credential
+        @spec['credential']
+      end
+
+      def client
+        @client ||= ClientRegistry.instance.new_local_client(@spec['uri'], monitoring_io: false)
+      end
+    end
   end
 end

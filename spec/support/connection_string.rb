@@ -152,10 +152,6 @@ module Mongo
         @options ||= Options.new(@spec['options']) if @spec['options']
       end
 
-      def credential
-        @spec['credential']
-      end
-
       def client
         @client ||= ClientRegistry.instance.new_local_client(@spec['uri'], monitoring_io: false)
       rescue Mongo::Error::LintError => e

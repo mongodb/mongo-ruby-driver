@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe 'Auth' do
-  include Mongo::ConnectionString
+  include Mongo::Auth
   
   MECHANISMS = {
     'MONGODB-CR' => :mongodb_cr,
@@ -15,7 +15,7 @@ describe 'Auth' do
   clean_slate_for_all
 
   AUTH_TESTS.each do |file|
-    spec = Mongo::ConnectionString::Spec.new(file)
+    spec = Mongo::Auth::Spec.new(file)
 
     context(spec.description) do
       spec.tests.each_with_index do |test, index|
