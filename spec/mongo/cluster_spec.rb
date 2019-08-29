@@ -338,11 +338,11 @@ describe Mongo::Cluster do
   describe '#remove' do
 
     let(:address_a) do
-      Mongo::Address.new('127.0.0.1:27017')
+      Mongo::Address.new('127.0.0.1:25555')
     end
 
     let(:address_b) do
-      Mongo::Address.new('127.0.0.1:27018')
+      Mongo::Address.new('127.0.0.1:25556')
     end
 
     let(:monitoring) do
@@ -351,12 +351,14 @@ describe Mongo::Cluster do
 
     let(:server_a) do
       register_server(
-        Mongo::Server.new(address_a, cluster, monitoring, Mongo::Event::Listeners.new))
+        Mongo::Server.new(address_a, cluster, monitoring, Mongo::Event::Listeners.new,
+          monitor: false))
     end
 
     let(:server_b) do
       register_server(
-        Mongo::Server.new(address_b, cluster, monitoring, Mongo::Event::Listeners.new))
+        Mongo::Server.new(address_b, cluster, monitoring, Mongo::Event::Listeners.new,
+          monitor: false))
     end
 
     let(:servers) do
@@ -369,7 +371,7 @@ describe Mongo::Cluster do
 
     before do
       cluster.instance_variable_set(:@servers, servers)
-      cluster.remove('127.0.0.1:27017')
+      cluster.remove('127.0.0.1:25555')
     end
 
     it 'removes the host from the list of servers' do
