@@ -1,12 +1,3 @@
-MECHANISMS = {
-  'MONGODB-CR' => :mongodb_cr,
-  'MONGODB-X509' => :mongodb_x509,
-  'PLAIN' => :plain,
-  'SCRAM-SHA-1' => :scram,
-  'SCRAM-SHA-256' => :scram256,
-  'GSSAPI' => :gssapi
-}
-
 RSpec::Matchers.define :match_credential do |test|
   def match_user?(client, credential)
     client.options[:user] == credential['username']
@@ -25,7 +16,7 @@ RSpec::Matchers.define :match_credential do |test|
     if credential['mechanism'].nil?
       expected_mechanism = nil
     else
-      expected_mechanism = MECHANISMS[credential['mechanism']]
+      expected_mechanism = Mongo::URI::AUTH_MECH_MAP[credential['mechanism']]
     end
 
     client.options[:auth_mech] == expected_mechanism
