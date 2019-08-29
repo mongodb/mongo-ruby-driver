@@ -239,7 +239,7 @@ module Mongo
     #
     # @since 2.0.0
     def client_options
-      opts = uri_options.merge(:database => database)
+      opts = uri_options.merge(:database => database, :specified_database => @specified_database)
       @user ? opts.merge(credentials) : opts
     end
 
@@ -316,6 +316,7 @@ module Mongo
     #
     # @since 2.0.0
     def database
+      @specified_database ||= @database
       @database ? @database : Database::ADMIN
     end
 

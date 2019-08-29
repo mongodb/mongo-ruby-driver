@@ -401,6 +401,21 @@ module Mongo
       # construction
       sdam_proc = options.delete(:sdam_proc)
 
+      if options[:auth_mech] || options[:user]
+        options[:auth_source] ||= if [:gssapi, :mongodb_x509].include?(options[:auth_mech])
+          :external
+        elsif options[:auth_mech] == :plain
+          options[:specified_database] || :external
+        else
+          options[:specified_database] || 'admin'
+        end
+      end
+
+      if options[:auth_mech] == :gssapi
+        options[:auth_mech_properties] ||= {}
+        options[:auth_mech_properties][:service_name] ||= 'mongodb'
+      end
+
       @options = validate_new_options!(Database::DEFAULT_OPTIONS.merge(options))
 =begin WriteConcern object support
       if @options[:write_concern].is_a?(WriteConcern::Base)
@@ -881,6 +896,10 @@ module Mongo
       if auth_mech.nil?
         if user && user.empty?
           raise Mongo::Auth::InvalidConfiguration.new('empty username is not supported for default auth mechanism')
+        end
+
+        if auth_source && user.nil?
+          raise Mongo::Auth::InvalidConfiguration.new('auth source without a username is invalid for default auth mechanism')
         end
 
         return

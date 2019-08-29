@@ -19,6 +19,7 @@ TRANSACTIONS_TESTS = Dir.glob("#{CURRENT_PATH}/spec_tests/data/transactions/*.ym
 TRANSACTIONS_API_TESTS = Dir.glob("#{CURRENT_PATH}/spec_tests/data/transactions_api/*.yml").sort
 CHANGE_STREAMS_TESTS = Dir.glob("#{CURRENT_PATH}/spec_tests/data/change_streams/*.yml").sort
 CMAP_TESTS = Dir.glob("#{CURRENT_PATH}/spec_tests/data/cmap/*.yml").sort
+AUTH_TESTS = Dir.glob("#{CURRENT_PATH}/spec_tests/data/auth/*.yml").sort
 
 require 'mongo'
 require 'pp'
@@ -123,9 +124,9 @@ RSpec.configure do |config|
     end
   end
 
-  config.expect_with :rspec do |c|
-    c.max_formatted_output_length = 10000
-  end
+  # config.expect_with :rspec do |c|
+  #   c.max_formatted_output_length = 10000
+  # end
 end
 
 EventSubscriber.initialize
