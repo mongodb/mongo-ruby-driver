@@ -7,7 +7,7 @@ Creating a Client
 .. contents:: On this page
    :local:
    :backlinks: none
-   :depth: 1
+   :depth: 2
    :class: singlecol
 
 Using ``Mongo::Client``
@@ -605,76 +605,82 @@ Details on Timeout Options
 --------------------------
 
 ``server_selection_timeout``
+````````````````````````````
 
-  When executing an operation, the number of seconds to wait for the driver
-  to find an appropriate server to send an operation to. Defaults to 30.
-  
-  In replica set deployments, this timeout should be set to exceed the typical
-  :manual:`replica set election times </core/replica-set-elections/>`
-  in order for the driver to transparently handle primary changes. This timeout
-  also allows the application and the database to be started simultaneously;
-  the application will wait up to this much time for the database to become
-  available.
-  
-  If the application server is behind a reverse proxy, server selection timeout
-  should be lower than the request timeout configured on the reverse proxy (for
-  example, this applies to deployments on Heroku which has a fixed 30 second
-  timeout in the routing layer). In development this value can be lowered to
-  provide quicker failure when the server is not running.
+When executing an operation, the number of seconds to wait for the driver
+to find an appropriate server to send an operation to. Defaults to 30.
+
+In replica set deployments, this timeout should be set to exceed the typical
+:manual:`replica set election times </core/replica-set-elections/>`
+in order for the driver to transparently handle primary changes. This timeout
+also allows the application and the database to be started simultaneously;
+the application will wait up to this much time for the database to become
+available.
+
+If the application server is behind a reverse proxy, server selection timeout
+should be lower than the request timeout configured on the reverse proxy (for
+example, this applies to deployments on Heroku which has a fixed 30 second
+timeout in the routing layer). In development this value can be lowered to
+provide quicker failure when the server is not running.
 
 ``socket_timeout``
+``````````````````
 
-  The number of seconds to wait for a socket read or write to complete on
-  regular (non-monitoring) connections. Default is no timeout.
-  
-  This timeout should take into account both network latency and operation
-  duration. For example, setting this timeout to 5 seconds will abort queries
-  taking more than 5 seconds to execute on the server with ``Mongo::Error::SocketTimeoutError``.
-  
-  Note that even though by default there is no socket timeout set, the
-  operating system may still time out read operations depending on its
-  configuration. The keepalive settings are intended to detect broken network
-  connections (as opposed to aborting operations simply because they take a
-  long time to execute).
-  
-  Note that if an operation is timed out by the driver due to exceeding the
-  ``socket_timeout`` value, it is not aborted on the server. For this reason
-  it is recommended to use ``max_time_ms`` option for potentially long running
-  operations, as this will abort their execution on the server.
-  
-  This option does not apply to monitoring connections.
+The number of seconds to wait for a socket read or write to complete on
+regular (non-monitoring) connections. Default is no timeout.
+
+This timeout should take into account both network latency and operation
+duration. For example, setting this timeout to 5 seconds will abort queries
+taking more than 5 seconds to execute on the server with ``Mongo::Error::SocketTimeoutError``.
+
+Note that even though by default there is no socket timeout set, the
+operating system may still time out read operations depending on its
+configuration. The keepalive settings are intended to detect broken network
+connections (as opposed to aborting operations simply because they take a
+long time to execute).
+
+Note that if an operation is timed out by the driver due to exceeding the
+``socket_timeout`` value, it is not aborted on the server. For this reason
+it is recommended to use ``max_time_ms`` option for potentially long running
+operations, as this will abort their execution on the server.
+
+This option does not apply to monitoring connections.
 
 ``connect_timeout``
+```````````````````
 
-  The number of seconds to wait for a socket connection to be established to
-  a server. Defaults to 10. This timeout is also used as both connect timeout
-  and socket timeout for monitoring connections.
+The number of seconds to wait for a socket connection to be established to
+a server. Defaults to 10. This timeout is also used as both connect timeout
+and socket timeout for monitoring connections.
 
 ``wait_queue_timeout``
+``````````````````````
 
-  The number of seconds to wait for a connection in the connection pool to
-  become available. Defaults to 10.
-  
-  As of driver version 2.11, this timeout should be set to a value at least
-  as large as ``connect_timeout`` because connection pool now fully establishes
-  connections prior to returning them, which may require several network
-  round trips.
+The number of seconds to wait for a connection in the connection pool to
+become available. Defaults to 10.
+
+As of driver version 2.11, this timeout should be set to a value at least
+as large as ``connect_timeout`` because connection pool now fully establishes
+connections prior to returning them, which may require several network
+round trips.
 
 ``max_time_ms``
+```````````````
 
-  Specified as an option on a particular operation, the number of milliseconds
-  to allow the operation to execute for on the server. Not set by default.
-  
-  Consider using this option instead of a ``socket_timeout`` for potentially
-  long running operations to be interrupted on the server when they take too
-  long.
+Specified as an option on a particular operation, the number of milliseconds
+to allow the operation to execute for on the server. Not set by default.
+
+Consider using this option instead of a ``socket_timeout`` for potentially
+long running operations to be interrupted on the server when they take too
+long.
 
 ``wtimeout``
+````````````
 
-  The number of milliseconds to wait for a write to be acknowledged by the
-  number of servers specified in the write concern. Not set by default, which
-  instructs the server to apply its default. This option can be set globally
-  on the client or passed to individual operations under ``:write_concern``.
+The number of milliseconds to wait for a write to be acknowledged by the
+number of servers specified in the write concern. Not set by default, which
+instructs the server to apply its default. This option can be set globally
+on the client or passed to individual operations under ``:write_concern``.
 
 
 Details on TLS Connections
