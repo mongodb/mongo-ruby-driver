@@ -98,6 +98,10 @@ module Mongo
     #
     # @since 2.0.0
     def initialize(seeds, monitoring, options = Options::Redacted.new)
+      if seeds.nil?
+        raise ArgumentError, 'Seeds cannot be nil'
+      end
+
       if options[:monitoring_io] == false && !options.key?(:cleanup)
         options = options.dup
         options[:cleanup] = false
