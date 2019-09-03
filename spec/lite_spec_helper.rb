@@ -125,9 +125,9 @@ RSpec.configure do |config|
     end
   end
 
-  # config.expect_with :rspec do |c|
-  #   c.max_formatted_output_length = 10000
-  # end
+  config.expect_with :rspec do |c|
+    c.max_formatted_output_length = 10000
+  end
 end
 
 EventSubscriber.initialize

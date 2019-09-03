@@ -7,10 +7,8 @@ group :test do
   gem 'rfc'
   gem 'ice_nine'
   gem 'rspec-retry'
-  gem 'rspec-expectations', '~> 3.0'
   gem 'fuubar'
   gem 'timeout-interrupt', platforms: :mri
   gem 'rspec', '~> 3.4'
   gem 'rake'
-  gem 'byebug'
 end

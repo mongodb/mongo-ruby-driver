@@ -2,8 +2,6 @@ require 'spec_helper'
 
 describe 'Auth' do
   include Mongo::Auth
-  
-
 
   clean_slate_for_all
 

@@ -322,7 +322,7 @@ module Mongo
     #
     # @since 2.0.0
     def database
-      @database
+      @database ? @database : Database::ADMIN
     end
 
     private
@@ -602,23 +602,21 @@ module Mongo
     end
 
     def set_uri_option_defaults!
-      unless @user.nil? && @uri_options[:auth_mech] != :mongodb_x509
-        @uri_options[:auth_source] ||= case @uri_options[:auth_mech]
-        when :gssapi, :mongodb_x509
-          Database::EXTERNAL
-        when :plain
-          @database || Database::EXTERNAL
-        else 
-          @database || Database::ADMIN
-        end
+      return if @user.nil? && @uri_options[:auth_mech] != :mongodb_x509
+
+      @uri_options[:auth_source] ||= case @uri_options[:auth_mech]
+      when :gssapi, :mongodb_x509
+        Database::EXTERNAL
+      when :plain
+        @database || Database::EXTERNAL
+      else 
+        @database || Database::ADMIN
       end
       
       if @uri_options[:auth_mech] == :gssapi
         @uri_options[:auth_mech_properties] ||= {}
         @uri_options[:auth_mech_properties][:service_name] ||= 'mongodb'
       end
-
-      @database ||= Database::ADMIN
     end
 
     # Auth source transformation, either db string or :external.
