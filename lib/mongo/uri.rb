@@ -241,9 +241,11 @@ module Mongo
     #
     # @since 2.0.0
     def client_options
-      opts = uri_options.merge(:database => database)
+      opts = default_client_options.merge(uri_options)
+      # opts = uri_options.merge(:database => database)
       @user ? opts.merge(credentials) : opts
     end
+
 
     # Create the new uri from the provided string.
     #
@@ -289,8 +291,6 @@ module Mongo
           raise_invalid_error_no_fmt!("tlsInsecure' and 'tlsAllowInvalidHostnames' cannot both be specified")
         end
       end
-
-      set_uri_option_defaults!
 
       # Since we know that the only URI option that sets :ssl_cert is "tlsCertificateKeyFile", any
       # value set for :ssl_cert must also be set for :ssl_key.
@@ -438,6 +438,31 @@ module Mongo
     def parse_database!(string)
       raise_invalid_error!(UNESCAPED_DATABASE) if string =~ UNSAFE
       decode(string) if string.length > 0
+    end
+
+    def default_client_options
+      {
+        database: database,
+        auth_source: default_auth_source,
+        auth_mech_properties: default_auth_mech_properties
+      }
+    end
+
+    def default_auth_mech_properties
+      @uri_options[:auth_mech] == :gssapi ? { service_name: 'mongodb' } : nil
+    end
+
+    def default_auth_source
+      return nil if @uri_options[:auth_mech].nil? && @user.nil?
+
+      case @uri_options[:auth_mech]
+      when :gssapi, :mongodb_x509
+        Database::EXTERNAL
+      when :plain
+        @database || Database::EXTERNAL
+      else 
+        @database || Database::ADMIN
+      end
     end
 
     def raise_invalid_error!(details)
@@ -601,24 +626,6 @@ module Mongo
       merge_uri_option(target, value, strategy[:name])
     end
 
-    def set_uri_option_defaults!
-      return if @user.nil? && @uri_options[:auth_mech] != :mongodb_x509
-
-      @uri_options[:auth_source] ||= case @uri_options[:auth_mech]
-      when :gssapi, :mongodb_x509
-        Database::EXTERNAL
-      when :plain
-        @database || Database::EXTERNAL
-      else 
-        @database || Database::ADMIN
-      end
-      
-      if @uri_options[:auth_mech] == :gssapi
-        @uri_options[:auth_mech_properties] ||= {}
-        @uri_options[:auth_mech_properties][:service_name] ||= 'mongodb'
-      end
-    end
-
     # Auth source transformation, either db string or :external.
     #
     # @param value [String] Authentication source.
@@ -626,7 +633,7 @@ module Mongo
     # @return [String] If auth source is database name.
     # @return [:external] If auth source is external authentication.
     def auth_source(value)
-      value == '$external' ? :external : value
+      value == '$external' ? Database::EXTERNAL : value
     end
 
     # Authentication mechanism transformation.
