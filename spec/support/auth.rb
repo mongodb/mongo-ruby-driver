@@ -77,11 +77,11 @@ module Mongo
           expected_credential['password'] = credential['password']
         end
 
-        if expected_auth_mech
+        if credential['mechanism']
           expected_credential['auth_mech'] = expected_auth_mech
         end
 
-        if expected_auth_mech_properties
+        if credential['mechanism_properties']
           expected_credential['auth_mech_properties'] = expected_auth_mech_properties
         end
 
@@ -97,12 +97,10 @@ module Mongo
       private
 
       def expected_auth_mech
-        return nil if credential['mechanism'].nil?
         Mongo::URI::AUTH_MECH_MAP[credential['mechanism']]
       end
 
       def expected_auth_mech_properties
-        return nil if credential['mechanism_properties'].nil?
         credential['mechanism_properties'].keys.map(&:downcase)
       end
 

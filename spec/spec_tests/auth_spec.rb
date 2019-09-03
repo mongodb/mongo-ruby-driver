@@ -3,8 +3,6 @@ require 'spec_helper'
 describe 'Auth' do
   include Mongo::Auth
 
-  clean_slate_for_all
-
   AUTH_TESTS.each do |file|
     spec = Mongo::Auth::Spec.new(file)
 
