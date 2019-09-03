@@ -239,7 +239,7 @@ module Mongo
     #
     # @since 2.0.0
     def client_options
-      opts = uri_options.merge(:database => database, :specified_database => @specified_database)
+      opts = uri_options.merge(:database => database)
       @user ? opts.merge(credentials) : opts
     end
 
@@ -286,6 +286,8 @@ module Mongo
         end
       end
 
+      set_uri_option_defaults!
+
       # Since we know that the only URI option that sets :ssl_cert is "tlsCertificateKeyFile", any
       # value set for :ssl_cert must also be set for :ssl_key.
       if @uri_options[:ssl_cert]
@@ -316,8 +318,7 @@ module Mongo
     #
     # @since 2.0.0
     def database
-      @specified_database ||= @database
-      @database ? @database : Database::ADMIN
+      @database
     end
 
     private
@@ -639,6 +640,26 @@ module Mongo
       target = select_target(uri_options, strategy[:group])
       value = apply_transform(key, value, strategy[:type])
       merge_uri_option(target, value, strategy[:name])
+    end
+
+    def set_uri_option_defaults!
+      unless @user.nil? && @uri_options[:auth_mech] != :mongodb_x509
+        @uri_options[:auth_source] ||= case @uri_options[:auth_mech]
+        when :gssapi, :mongodb_x509
+          Database::EXTERNAL
+        when :plain
+          @database || Database::EXTERNAL
+        else 
+          @database || Database::ADMIN
+        end
+      end
+      
+      if @uri_options[:auth_mech] == :gssapi
+        @uri_options[:auth_mech_properties] ||= {}
+        @uri_options[:auth_mech_properties][:service_name] ||= 'mongodb'
+      end
+
+      @database ||= Database::ADMIN
     end
 
     # Auth source transformation, either db string or :external.

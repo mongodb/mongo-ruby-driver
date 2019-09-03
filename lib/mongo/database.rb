@@ -29,6 +29,11 @@ module Mongo
     # @since 2.0.0
     ADMIN = 'admin'.freeze
 
+    # The external database name.
+    #
+    # @since 2.11.0
+    EXTERNAL = :external
+
     # The "collection" that database commands operate against.
     #
     # @since 2.0.0

@@ -55,7 +55,9 @@ RSpec::Matchers.define :match_credential do |test|
   end
 
   failure_message do |client|
-    "Expected that client initialized with URI #{test.uri_string} would match credentials: #{test.credential}"
+    "Expected that client initialized with URI #{test.uri_string} " +
+      "would match credentials: \n\n#{test.credential} \n\n" +
+      "but instead got: \n\n #{client.options}"
   end
 end
 
