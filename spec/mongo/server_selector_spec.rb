@@ -564,4 +564,49 @@ describe Mongo::ServerSelector do
       it_behaves_like 'staleness filter'
     end
   end
+
+  describe '#candidates' do
+    let(:selector) { Mongo::ServerSelector::Primary.new(options) }
+
+    let(:cluster) { double('cluster') }
+
+    let(:options) { {} }
+
+    context 'sharded' do
+      let(:servers) do
+        [make_server(:mongos)]
+      end
+
+      before do
+        allow(cluster).to receive(:single?).and_return(false)
+        allow(cluster).to receive(:sharded?).and_return(true)
+        allow(cluster).to receive(:options).and_return({})
+        allow(cluster).to receive(:servers).and_return(servers)
+      end
+
+      it 'returns the servers' do
+        expect(selector.candidates(cluster)).to eq(servers)
+      end
+
+      context 'with local threshold' do
+        let(:options) do
+          {local_threshold: 1}
+        end
+
+        it 'returns the servers' do
+          expect(selector.candidates(cluster)).to eq(servers)
+        end
+
+        context 'when servers become unknown' do
+          let(:servers) do
+            [make_server(:unknown)]
+          end
+
+          it 'returns an empty list' do
+            expect(selector.candidates(cluster)).to eq([])
+          end
+        end
+      end
+    end
+  end
 end
