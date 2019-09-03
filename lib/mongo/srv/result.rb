@@ -23,6 +23,7 @@ module Mongo
     #
     # @api private
     class Result
+      include Address::Validator
 
       # @return [ String ] MISMATCHED_DOMAINNAME Error message format string indicating that an SRV
       #   record found does not match the domain of a hostname.
@@ -60,9 +61,10 @@ module Mongo
       #
       # @param [ Resolv::DNS::Resource ] record An SRV record found for the hostname.
       def add_record(record)
-        record_host = record.target.to_s
+        record_host = normalize_hostname(record.target.to_s)
         port = record.port
-        validate_record!(record_host)
+        validate_hostname!(record_host)
+        validate_same_origin!(record_host)
         address_str = if record_host.index(':')
           # IPV6 address
           "[#{record_host}]:#{port}"
@@ -82,6 +84,25 @@ module Mongo
 
       private
 
+      # Transforms the provided hostname to simplify its validation later on.
+      #
+      # This method is safe to call during both initial DNS seed list discovery
+      # and during SRV monitoring, in that it does not convert invalid hostnames
+      # into valid ones.
+      #
+      # - Converts the hostname to lower case.
+      # - Removes one trailing dot, if there is exactly one. If the hostname
+      #   has multiple trailing dots, it is unchanged.
+      #
+      # @param [ String ] host Hostname to transform.
+      def normalize_hostname(host)
+        host = host.downcase
+        unless host.end_with?('..')
+          host = host.sub(/\.\z/, '')
+        end
+        host
+      end
+
       # Ensures that a record's domain name matches that of the hostname.
       #
       # A hostname's domain name consists of each of the '.' delineated
@@ -92,12 +113,12 @@ module Mongo
       #
       # @raise [ Mongo::Error::MismatchedDomain ] If the record's domain name doesn't match that of
       #   the hostname.
-      def validate_record!(record_host)
-        @domainname ||= query_hostname.split(URI::SRVProtocol::DOT_PARTITION)[1..-1]
-        host_parts = record_host.split(URI::SRVProtocol::DOT_PARTITION)
+      def validate_same_origin!(record_host)
+        domain_name ||= query_hostname.split('.')[1..-1]
+        host_parts = record_host.split('.')
 
-        unless (host_parts.size > @domainname.size) && (@domainname == host_parts[-@domainname.length..-1])
-          raise Error::MismatchedDomain.new(MISMATCHED_DOMAINNAME % [record_host, @domainname])
+        unless (host_parts.size > domain_name.size) && (domain_name == host_parts[-domain_name.length..-1])
+          raise Error::MismatchedDomain.new(MISMATCHED_DOMAINNAME % [record_host, domain_name])
         end
       end
     end

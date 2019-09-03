@@ -15,6 +15,7 @@
 require 'mongo/address/ipv4'
 require 'mongo/address/ipv6'
 require 'mongo/address/unix'
+require 'mongo/address/validator'
 
 module Mongo
 
