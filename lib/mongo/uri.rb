@@ -35,7 +35,7 @@ module Mongo
     # @since 2.0.0
     attr_reader :options
 
-    # The options specified in the uri.
+    # Mongo::Options::Redacted of the options specified in the uri.
     #
     # @since 2.1.0
     attr_reader :uri_options
@@ -237,15 +237,13 @@ module Mongo
     # @example Get the client options.
     #   uri.client_options
     #
-    # @return [ Hash ] The options passed to the Mongo::Client
+    # @return [ Mongo::Options::Redacted ] The options passed to the Mongo::Client
     #
     # @since 2.0.0
     def client_options
       opts = default_client_options.merge(uri_options)
-      # opts = uri_options.merge(:database => database)
       @user ? opts.merge(credentials) : opts
     end
-
 
     # Create the new uri from the provided string.
     #
@@ -441,25 +439,29 @@ module Mongo
     end
 
     def default_client_options
-      {
-        database: database,
-        auth_source: default_auth_source,
-        auth_mech_properties: default_auth_mech_properties
-      }
+      opts = Options::Redacted.new(database: database)
+
+      if @uri_options[:auth_mech] || @user
+        opts[:auth_source] = default_auth_source
+      end
+
+      if @uri_options[:auth_mech] == :gssapi
+        opts[:auth_mech_properties] = default_auth_mech_properties
+      end
+
+      opts
     end
 
     def default_auth_mech_properties
-      @uri_options[:auth_mech] == :gssapi ? { service_name: 'mongodb' } : nil
+      { service_name: 'mongodb' }
     end
 
     def default_auth_source
-      return nil if @uri_options[:auth_mech].nil? && @user.nil?
-
       case @uri_options[:auth_mech]
       when :gssapi, :mongodb_x509
-        Database::EXTERNAL
+        :external
       when :plain
-        @database || Database::EXTERNAL
+        @database || :external
       else 
         @database || Database::ADMIN
       end
@@ -633,7 +635,7 @@ module Mongo
     # @return [String] If auth source is database name.
     # @return [:external] If auth source is external authentication.
     def auth_source(value)
-      value == '$external' ? Database::EXTERNAL : value
+      value == '$external' ? :external : value
     end
 
     # Authentication mechanism transformation.
