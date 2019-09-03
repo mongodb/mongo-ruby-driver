@@ -28,6 +28,7 @@ module Mongo
   # @since 2.0.0
   class URI
     include Loggable
+    include Address::Validator
 
     # The uri parser object options.
     #
@@ -64,6 +65,7 @@ module Mongo
     # Error details for an invalid scheme.
     #
     # @since 2.1.0
+    # @deprecated
     INVALID_SCHEME = "Invalid scheme. Scheme must be '#{MONGODB_SCHEME}' or '#{MONGODB_SRV_SCHEME}'".freeze
 
     # MongoDB URI format specification.
@@ -224,7 +226,7 @@ module Mongo
         when MONGODB_SRV_SCHEME
           SRVProtocol.new(string, opts)
         else
-          raise Error::InvalidURI.new(string, INVALID_SCHEME)
+          raise Error::InvalidURI.new(string, "Invalid scheme '#{scheme}'. Scheme must be '#{MONGODB_SCHEME}' or '#{MONGODB_SRV_SCHEME}'")
       end
     end
 
@@ -258,7 +260,9 @@ module Mongo
       @string = string
       @options = options
       parsed_scheme, _, remaining = string.partition(SCHEME_DELIM)
-      raise_invalid_error!(INVALID_SCHEME) unless parsed_scheme == scheme
+      unless parsed_scheme == scheme
+        raise_invalid_error!("Invalid scheme '#{parsed_scheme}'. Scheme must be '#{MONGODB_SCHEME}'. Use URI#get to parse SRV URIs.")
+      end
       if remaining.empty?
         raise_invalid_error!('No hosts in the URI')
       end
@@ -361,7 +365,7 @@ module Mongo
           raise_invalid_error!('Empty host given in the host list')
         end
         decode(host).tap do |host|
-          validate_host!(host)
+          validate_address_str!(host)
         end
       end
 
@@ -371,6 +375,8 @@ module Mongo
       if db
         @database = parse_database!(db)
       end
+    rescue Error::InvalidAddress => e
+      raise_invalid_error!(e.message)
     end
 
     def extract_db_opts!(string)
@@ -432,53 +438,6 @@ module Mongo
     def parse_database!(string)
       raise_invalid_error!(UNESCAPED_DATABASE) if string =~ UNSAFE
       decode(string) if string.length > 0
-    end
-
-    def validate_port_string!(port)
-      unless port.nil? || (port.length > 0 && port.to_i > 0 && port.to_i <= 65535)
-        raise_invalid_error!(INVALID_PORT)
-      end
-    end
-
-    # Takes a host in ipv4/ipv6/hostname/socket path format and validates
-    # its format.
-    def validate_host!(host)
-      case host
-      when /\A\[[\d:]+\](?::(\d+))?\z/
-        # ipv6 with optional port
-        if port_str = $1
-          validate_port_string!(port_str)
-        end
-      when /\A\//, /\.sock\z/
-        # Unix socket path.
-        # Spec requires us to validate that the path has no unescaped
-        # slashes, but if this were to be the case, parsing would have
-        # already failed elsewhere because the URI would've been split in
-        # a weird place.
-        # The spec also allows relative socket paths and requires that
-        # socket paths end in ".sock". We accept all paths but special case
-        # the .sock extension to avoid relative paths falling into the
-        # host:port case below.
-      when /[\/\[\]]/
-        # Not a host:port nor an ipv4 address with optional port.
-        # Possibly botched ipv6 address with e.g. port delimiter present and
-        # port missing, or extra junk before or after.
-        raise_invalid_error!("Invalid hostname: #{host}")
-      when /:.*:/m
-        raise_invalid_error!("Multiple port delimiters are not allowed: #{host}")
-      else
-        # host:port or ipv4 address with optional port number
-        host, port = host.split(':')
-        if host.empty?
-          raise_invalid_error!("Host is empty: #{host}")
-        end
-
-        if port && port.empty?
-          raise_invalid_error!("Port is empty: #{port}")
-        end
-
-        validate_port_string!(port)
-      end
     end
 
     def raise_invalid_error!(details)
