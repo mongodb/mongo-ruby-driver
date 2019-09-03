@@ -898,10 +898,6 @@ module Mongo
           raise Mongo::Auth::InvalidConfiguration.new('empty username is not supported for default auth mechanism')
         end
 
-        if auth_source && user.nil?
-          raise Mongo::Auth::InvalidConfiguration.new('auth source without a username is invalid for default auth mechanism')
-        end
-
         return
       end
 
