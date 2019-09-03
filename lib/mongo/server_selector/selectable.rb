@@ -361,11 +361,23 @@ module Mongo
       # @since 2.0.0
       def near_servers(candidates = [], local_threshold = nil)
         return candidates if candidates.empty?
-        nearest_server = candidates.min_by(&:average_round_trip_time)
+
+        smallest_avg_rtt = nil
+
+        candidates.each do |candidate|
+          avg = candidate.average_round_trip_time
+          if avg && (smallest_avg_rtt.nil? || avg < smallest_avg_rtt)
+            smallest_avg_rtt = avg
+          end
+        end
+
         # Default for legacy signarure
         local_threshold ||= self.local_threshold
-        threshold = nearest_server.average_round_trip_time + local_threshold
-        candidates.select { |server| server.average_round_trip_time <= threshold }.shuffle!
+        threshold = smallest_avg_rtt + local_threshold
+        candidates.select do |server|
+          rtt = server.average_round_trip_time
+          rtt && rtt <= threshold
+        end.shuffle!
       end
 
       # Select the servers matching the defined tag sets.
