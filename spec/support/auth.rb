@@ -11,66 +11,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-RSpec::Matchers.define :match_credential do |test|
-  def match_user?(client, credential)
-    client.options[:user] == credential['username']
-  end
-
-  def match_password?(client, credential)
-    client.options[:password] == credential['password']
-  end
-
-  def match_auth_source?(client, credential)
-    expected_auth_source = credential['source'] == '$external' ? :external : credential['source']
-    client.options[:auth_source] == expected_auth_source
-  end
-
-  def match_auth_mech?(client, credential)
-    if credential['mechanism'].nil?
-      expected_mechanism = nil
-    else
-      expected_mechanism = Mongo::URI::AUTH_MECH_MAP[credential['mechanism']]
-    end
-
-    client.options[:auth_mech] == expected_mechanism
-  end
-
-  def match_auth_mech_properties?(client, credential)
-    if credential['mechanism_properties'].nil?
-      return client.options[:auth_mech_properties].nil?
-    end
-
-    same_keys =
-      client.options[:auth_mech_properties] == credential['mechanism_propertis'].keys.map(&:downcase)
-    
-    same_values =
-      credential['mechanism_properties'].all? do |prop, prop_val|
-        client.options[:auth_mech_properties][prop.downcase] == prop_val
-      end
-
-    same_keys && same_values
-  end
-
-  def blank_credentials?(client)
+RSpec::Matchers.define :have_blank_credentials do 
+  match do |client|
     %i(auth_mech auth_mech_properties auth_source password user).all? do |key|
       client.options[key].nil?
     end
   end
 
-  match do |client|
-    return blank_credentials?(client) if test.credential.nil?
-
-    match_user?(client, test.credential) &&
-      match_password?(client, test.credential) &&
-      match_auth_source?(client, test.credential) &&
-      match_auth_mech?(client, test.credential) &&
-      match_auth_mech_properties?(client, test.credential)
-  end
-
   failure_message do |client|
-    "Expected that client initialized with URI #{test.uri_string} " +
-      "would match credentials: \n\n#{test.credential} \n\n" +
-      "but instead got: \n\n #{client.options}"
+    "Expected client to have blank credentials, but got the following credentials: \n\n" +
+      client.options.inspect
   end
 end
 
@@ -115,6 +65,50 @@ module Mongo
 
       def client
         @client ||= ClientRegistry.instance.new_local_client(@spec['uri'], monitoring_io: false)
+      end
+
+      def expected_credential
+        expected_credential = {
+          'auth_source' => expected_auth_source,
+        }
+
+        if credential['username']
+          expected_credential['user'] = credential['username']
+          expected_credential['password'] = credential['password']
+        end
+
+        if expected_auth_mech
+          expected_credential['auth_mech'] = expected_auth_mech
+        end
+
+        if expected_auth_mech_properties
+          expected_credential['auth_mech_properties'] = expected_auth_mech_properties
+        end
+
+        expected_credential
+      end
+
+      def received_credential
+        client.options.select do |k, _|
+          %w(auth_mech auth_mech_properties auth_source password user).include?(k)
+        end
+      end
+
+      private
+
+      def expected_auth_mech
+        return nil if credential['mechanism'].nil?
+        Mongo::URI::AUTH_MECH_MAP[credential['mechanism']]
+      end
+
+      def expected_auth_mech_properties
+        return nil if credential['mechanism_properties'].nil?
+        credential['mechanism_properties'].keys.map(&:downcase)
+      end
+
+      def expected_auth_source
+        return :external if credential['source'] == '$external'
+        credential['source']
       end
     end
   end

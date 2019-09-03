@@ -23,9 +23,15 @@ describe 'Auth' do
             end
           end
 
-          context 'when the auth configuration is valid', if: test.valid? do
-            it 'creates a client with the correct credentials' do
-              expect(test.client).to match_credential(test)
+          context 'when the auth configuration is valid' do
+            context 'with empty credentials', if: test.valid? && test.credential.nil? do
+              it 'creates a client with no credential information' do
+                expect(test.client).to have_blank_credentials
+              end
+            end
+
+            it 'creates a client with the correct credentials', if: test.valid? && test.credential do
+              expect(test.received_credential).to eq(test.expected_credential)
             end
           end
         end
