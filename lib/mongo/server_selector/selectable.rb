@@ -193,6 +193,12 @@ module Mongo
           servers = candidates(cluster)
           if Lint.enabled?
             servers.each do |server|
+              # It is possible for a server to have a nil average RTT here
+              # because the ARTT comes from description which may be updated
+              # by a background thread while server selection is running.
+              # Currently lint mode is not a public feature, if/when this
+              # changes (https://jira.mongodb.org/browse/RUBY-1576) the
+              # requirement for ARTT to be not nil would need to be removed.
               if server.average_round_trip_time.nil?
                 raise Error::LintError, "Server #{server.address} has nil average rtt"
               end
@@ -361,11 +367,34 @@ module Mongo
       # @since 2.0.0
       def near_servers(candidates = [], local_threshold = nil)
         return candidates if candidates.empty?
-        nearest_server = candidates.min_by(&:average_round_trip_time)
+
+        # Average RTT on any server may change at any time by the server
+        # monitor's background thread. ARTT may also become nil if the
+        # server is marked unknown. Take a snapshot of ARTTs for the duration
+        # of this method.
+
+        candidates = candidates.map do |server|
+          {server: server, artt: server.average_round_trip_time}
+        end.reject do |candidate|
+          candidate[:artt].nil?
+        end
+
+        return candidates if candidates.empty?
+
+        nearest_candidate = candidates.min_by do |candidate|
+          candidate[:artt]
+        end
+
         # Default for legacy signarure
         local_threshold ||= self.local_threshold
-        threshold = nearest_server.average_round_trip_time + local_threshold
-        candidates.select { |server| server.average_round_trip_time <= threshold }.shuffle!
+
+        threshold = nearest_candidate[:artt] + local_threshold
+
+        candidates.select do |candidate|
+          candidate[:artt] <= threshold
+        end.map do |candidate|
+          candidate[:server]
+        end.shuffle!
       end
 
       # Select the servers matching the defined tag sets.

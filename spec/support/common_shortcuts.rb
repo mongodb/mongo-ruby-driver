@@ -74,7 +74,11 @@ module CommonShortcuts
 
     def make_server(mode, options = {})
       tags = options[:tags] || {}
-      average_round_trip_time = options[:average_round_trip_time] || 0
+      average_round_trip_time = if mode == :unknown
+        nil
+      else
+        options[:average_round_trip_time] || 0
+      end
 
       if mode == :unknown
         ismaster = {}
