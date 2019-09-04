@@ -19,6 +19,7 @@ TRANSACTIONS_TESTS = Dir.glob("#{CURRENT_PATH}/spec_tests/data/transactions/*.ym
 TRANSACTIONS_API_TESTS = Dir.glob("#{CURRENT_PATH}/spec_tests/data/transactions_api/*.yml").sort
 CHANGE_STREAMS_TESTS = Dir.glob("#{CURRENT_PATH}/spec_tests/data/change_streams/*.yml").sort
 CMAP_TESTS = Dir.glob("#{CURRENT_PATH}/spec_tests/data/cmap/*.yml").sort
+AUTH_TESTS = Dir.glob("#{CURRENT_PATH}/spec_tests/data/auth/*.yml").sort
 
 require 'mongo'
 require 'pp'
@@ -78,6 +79,7 @@ require 'support/json_ext_formatter'
 require 'support/sdam_formatter_integration'
 require 'support/utils'
 require 'support/background_thread_registry'
+require 'support/auth'
 
 if SpecConfig.instance.mri?
   require 'timeout_interrupt'
