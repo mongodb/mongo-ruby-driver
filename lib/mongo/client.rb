@@ -887,7 +887,7 @@ module Mongo
       end
 
       if !Mongo::Auth::SOURCES.key?(auth_mech)
-        raise Mongo::Auth::InvalidMechanism.new(auth_mech) 
+        raise Mongo::Auth::InvalidMechanism.new(auth_mech)
       end
 
       if user.nil? && auth_mech != :mongodb_x509
@@ -902,7 +902,7 @@ module Mongo
         raise Mongo::Auth::InvalidConfiguration.new('password is not supported for mongodb_x509')
       end
 
-      if ![:external, nil].include?(auth_source) && [:gssapi, :mongodb_x509].include?(auth_mech)
+      if !['$external', nil].include?(auth_source) && [:gssapi, :mongodb_x509].include?(auth_mech)
         raise Mongo::Auth::InvalidConfiguration.new("#{auth_source} is an invalid auth source for #{auth_mech}; valid options are $external and nil")
       end
 

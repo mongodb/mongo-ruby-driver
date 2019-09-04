@@ -462,7 +462,7 @@ module Mongo
         :external
       when :plain
         @database || :external
-      else 
+      else
         @database || Database::ADMIN
       end
     end
@@ -540,7 +540,7 @@ module Mongo
     uri_option 'connect', :connect, type: :symbol
 
     # Auth Options
-    uri_option 'authsource', :auth_source, :type => :auth_source
+    uri_option 'authsource', :auth_source
     uri_option 'authmechanism', :auth_mech, :type => :auth_mech
     uri_option 'authmechanismproperties', :auth_mech_properties, :type => :auth_mech_props
 
@@ -626,16 +626,6 @@ module Mongo
       target = select_target(uri_options, strategy[:group])
       value = apply_transform(key, value, strategy[:type])
       merge_uri_option(target, value, strategy[:name])
-    end
-
-    # Auth source transformation, either db string or :external.
-    #
-    # @param value [String] Authentication source.
-    #
-    # @return [String] If auth source is database name.
-    # @return [:external] If auth source is external authentication.
-    def auth_source(value)
-      value == '$external' ? :external : value
     end
 
     # Authentication mechanism transformation.
