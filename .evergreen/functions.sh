@@ -46,6 +46,19 @@ set_env_vars() {
   AUTH=${AUTH:-noauth}
   SSL=${SSL:-nossl}
   MONGODB_URI=${MONGODB_URI:-}
+  
+  # drivers-evergreen-tools do not set tls parameter in URI when the
+  # deployment uses TLS, repair this
+  if test $SSL = ssl && ! echo $MONGODB_URI |grep -q tls=; then
+    if echo $MONGODB_URI |grep -q '?'; then
+      MONGODB_URI=$(echo $MONGODB_URI |sed -e 's/?/?tls=true\&/')
+    elif echo $MONGODB_URI |grep -q '/$'; then
+      MONGODB_URI="$MONGODB_URI?tls=true"
+    else
+      MONGODB_URI="$MONGODB_URI/?tls=true"
+    fi
+  fi
+  
   TOPOLOGY=${TOPOLOGY:-server}
   DRIVERS_TOOLS=${DRIVERS_TOOLS:-}
 
@@ -53,10 +66,12 @@ set_env_vars() {
     export ROOT_USER_NAME="bob"
     export ROOT_USER_PWD="pwd123"
   fi
-  if [ "$COMPRESSOR" == "zlib" ]; then
-    export COMPRESSOR="zlib"
-  fi
+  
+  export MONGODB_URI
+  export COMPRESSOR
+  
   export CI=evergreen
+  
   # JRUBY_OPTS were initially set for Mongoid
   export JRUBY_OPTS="--server -J-Xms512m -J-Xmx2G"
 }

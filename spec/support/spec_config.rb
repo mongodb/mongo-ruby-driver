@@ -43,6 +43,8 @@ class SpecConfig
         @uri_tls_options[k] = v
       end
     end
+
+    @ssl ||= false
   end
 
   attr_reader :uri_options, :connect_options
