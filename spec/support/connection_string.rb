@@ -276,8 +276,6 @@ module Mongo
             case k
             when 'authmechanism'
               Mongo::URI::AUTH_MECH_MAP[v].downcase.to_s
-            when 'authsource'
-              v.downcase
             when 'authmechanismproperties'
               v.reduce({}) do |new_v, prop|
                 prop_key = prop.first.downcase
