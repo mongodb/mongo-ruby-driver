@@ -51,6 +51,23 @@ module Mongo
         @user ? opts.merge(credentials) : opts
       end
 
+      # @return [ Srv::Result ] SRV lookup result.
+      #
+      # @api private
+      attr_reader :srv_result
+
+      # The hostname that is specified in the URI and used to look up
+      # SRV records.
+      #
+      # This attribute needs to be defined because SRVProtocol changes
+      # #servers to be the result of the lookup rather than the hostname
+      # specified in the URI.
+      #
+      # @return [ String ] The hostname used in SRV lookup.
+      #
+      # @api private
+      attr_reader :query_hostname
+
       private
 
       # @return [ String ] DOT_PARTITION The '.' character used to delineate the parts of a
@@ -110,7 +127,10 @@ module Mongo
       #
       # @return [ Mongo::Srv::Resolver ]
       def resolver
-        @resolver ||= Srv::Resolver.new(raise_on_invalid: true)
+        @resolver ||= Srv::Resolver.new(
+          raise_on_invalid: true,
+          resolv_options: options[:resolv_options],
+        )
       end
 
       # Parses the credentials from the URI and performs DNS queries to obtain
@@ -125,9 +145,13 @@ module Mongo
           raise_invalid_error!(INVALID_HOST)
         end
         hostname = @servers.first
-        validate_hostname(hostname)
+        validate_srv_hostname(hostname)
+        @query_hostname = hostname
 
-        srv_result = resolver.get_records(hostname)
+        @srv_result = resolver.get_records(hostname)
+        if srv_result.empty?
+          raise Error::NoSRVRecords.new(NO_SRV_RECORDS % hostname)
+        end
         @txt_options = get_txt_options(hostname) || {}
         records = srv_result.address_strs
         records.each do |record|
@@ -147,7 +171,7 @@ module Mongo
       # components (foo.bar.tld).
       #
       # Raises Error::InvalidURI if validation fails.
-      def validate_hostname(hostname)
+      def validate_srv_hostname(hostname)
         raise_invalid_error!(INVALID_PORT) if hostname.include?(HOST_PORT_DELIM)
 
         if hostname.start_with?('.')

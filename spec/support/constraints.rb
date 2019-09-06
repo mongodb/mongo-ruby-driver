@@ -158,6 +158,14 @@ module Constraints
     end
   end
 
+  def require_multi_shard
+    before do
+      if ClusterConfig.instance.topology == :sharded && SpecConfig.instance.addresses.length == 1
+        skip 'Test requires a minimum of two shards if run in sharded topology'
+      end
+    end
+  end
+
   def require_no_multi_shard
     before do
       if ClusterConfig.instance.topology == :sharded && SpecConfig.instance.addresses.length > 1
@@ -188,6 +196,23 @@ module Constraints
     before do
       if ClusterConfig.instance.storage_engine != :mmapv1
         skip 'Test requires MMAPv1 storage engine'
+      end
+    end
+  end
+
+  # Integration tests for SRV polling require internet connectivity to
+  # look up SRV records and a sharded cluster configured on default port on
+  # localhost (localhost:27017, localhost:27018).
+  def require_default_port_deployment
+    # Because the DNS records at test1.test.build.10gen.cc point to
+    # localhost:27017 & localhost:27018, the test suite must have been
+    # configured to use these addresses
+    before(:all) do
+      have_default_port = SpecConfig.instance.addresses.any? do |address|
+        %w(127.0.0.1 127.0.0.1:27017 localhost localhost:27017).include?(address)
+      end
+      unless have_default_port
+        skip 'This test requires the test suite to be configured for localhost:27017'
       end
     end
   end

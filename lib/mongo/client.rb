@@ -76,6 +76,7 @@ module Mongo
       :read_concern,
       :read_retry_interval,
       :replica_set,
+      :resolv_options,
       :retry_reads,
       :retry_writes,
       :scan,
@@ -365,6 +366,8 @@ module Mongo
     #   Can be :w => Integer|String, :fsync => Boolean, :j => Boolean.
     # @option options [ Integer ] :zlib_compression_level The Zlib compression level to use, if using compression.
     #   See Ruby's Zlib module for valid levels.
+    # @option options [ Hash ] :resolv_options For internal driver use only.
+    #   Options to pass through to Resolv::DNS constructor for SRV lookups.
     #
     # @since 2.0.0
     def initialize(addresses_or_uri, options = nil)
@@ -374,8 +377,14 @@ module Mongo
         options = {}
       end
 
+      srv_uri = nil
       if addresses_or_uri.is_a?(::String)
         uri = URI.get(addresses_or_uri, options)
+        if uri.is_a?(URI::SRVProtocol)
+          # If the URI is an SRV URI, note this so that we can start
+          # SRV polling if the topology is a sharded cluster.
+          srv_uri = uri
+        end
         addresses = uri.servers
         uri_options = uri.client_options.dup
         # Special handing for :write and :write_concern: allow client Ruby
@@ -425,7 +434,7 @@ module Mongo
         sdam_proc.call(self)
       end
 
-      @cluster = Cluster.new(addresses, @monitoring, cluster_options)
+      @cluster = Cluster.new(addresses, @monitoring, cluster_options.merge(srv_uri: srv_uri))
 
       # Unset monitoring, it will be taken out of cluster from now on
       remove_instance_variable('@monitoring')
@@ -449,7 +458,14 @@ module Mongo
         # applications should read these values from client, not from cluster
         max_read_retries: options[:max_read_retries],
         read_retry_interval: options[:read_retry_interval],
-      )
+      ).tap do |options|
+        # If the client has a cluster already, forward srv_uri to the new
+        # cluster to maintain SRV monitoring. If the client is brand new,
+        # its constructor sets srv_uri manually.
+        if cluster
+          options.update(srv_uri: cluster.options[:srv_uri])
+        end
+      end
     end
 
     # Get the maximum number of times the client can retry a read operation
@@ -889,7 +905,7 @@ module Mongo
       end
 
       if !Mongo::Auth::SOURCES.key?(auth_mech)
-        raise Mongo::Auth::InvalidMechanism.new(auth_mech) 
+        raise Mongo::Auth::InvalidMechanism.new(auth_mech)
       end
 
       if user.nil? && auth_mech != :mongodb_x509
