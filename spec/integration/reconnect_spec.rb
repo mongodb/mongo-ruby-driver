@@ -77,6 +77,10 @@ describe 'Client after reconnect' do
 
     it 'recreates srv monitor' do
       client.cluster.next_primary
+      if BSON::Environment.jruby?
+        # Wait for jruby to start SRV monitor thread
+        sleep 1
+      end
       expect(client.cluster.topology).to be_a(Mongo::Cluster::Topology::Sharded)
       thread = client.cluster.srv_monitor.instance_variable_get('@thread')
       expect(thread).to be_alive
@@ -84,6 +88,16 @@ describe 'Client after reconnect' do
       thread.kill
       # context switch to let the thread get killed
       sleep 0.1
+      if BSON::Environment.jruby?
+        # jruby takes a long time here as well
+        15.times do
+          if thread.alive?
+            sleep 1
+          else
+            break
+          end
+        end
+      end
       expect(thread).not_to be_alive
 
       client.reconnect
