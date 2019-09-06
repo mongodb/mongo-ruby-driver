@@ -118,6 +118,7 @@ module Mongo
       @sdam_flow_lock = Mutex.new
       @cluster_time = nil
       @cluster_time_lock = Mutex.new
+      @srv_monitor_lock = Mutex.new
       @server_selection_semaphore = Semaphore.new
       @topology = Topology.initial(self, monitoring, options)
       Session::SessionPool.create(self)
@@ -444,8 +445,10 @@ module Mongo
         session_pool.end_sessions
         @periodic_executor.stop!
       end
-      if @srv_monitor
-        @srv_monitor.stop!
+      @srv_monitor_lock.synchronize do
+        if @srv_monitor
+          @srv_monitor.stop!
+        end
       end
       @servers.each do |server|
         if server.connected?
@@ -825,16 +828,18 @@ module Mongo
     # @api private
     def check_and_start_srv_monitor
       return unless topology.is_a?(Topology::Sharded) && options[:srv_uri]
-      unless @srv_monitor
-        monitor_options = options.merge(
-          timeout: options[:connect_timeout] || Server::CONNECT_TIMEOUT)
-        @srv_monitor = _srv_monitor = SrvMonitor.new(self, monitor_options)
-        finalizer = lambda do
-          _srv_monitor.stop!
+      @srv_monitor_lock.synchronize do
+        unless @srv_monitor
+          monitor_options = options.merge(
+            timeout: options[:connect_timeout] || Server::CONNECT_TIMEOUT)
+          @srv_monitor = _srv_monitor = SrvMonitor.new(self, monitor_options)
+          finalizer = lambda do
+            _srv_monitor.stop!
+          end
+          ObjectSpace.define_finalizer(self, finalizer)
         end
-        ObjectSpace.define_finalizer(self, finalizer)
+        @srv_monitor.run!
       end
-      @srv_monitor.run!
     end
   end
 end
