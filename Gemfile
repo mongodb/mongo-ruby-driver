@@ -26,7 +26,7 @@ end
 group :testing do
   gem 'timecop'
   gem 'ice_nine'
-  gem 'rubydns'
+  gem 'rubydns', platforms: :mri
   gem 'rspec-retry'
   gem 'rspec-expectations', '~> 3.0'
   gem 'rspec-mocks-diag', '~> 3.0'

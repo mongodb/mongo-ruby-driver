@@ -1,7 +1,7 @@
 module LiteConstraints
   # Constrain tests that use TimeoutInterrupt to MRI (and Unix)
   def only_mri
-    before do
+    before(:all) do
       unless SpecConfig.instance.mri?
         skip "MRI required, we have #{SpecConfig.instance.platform}"
       end
@@ -13,7 +13,7 @@ module LiteConstraints
   # with jruby).
   # Often times these failures happen only in Evergreen.
   def fails_on_jruby(version=nil)
-    before do
+    before(:all) do
       if BSON::Environment.jruby?
         if version
           min_parts = version.split('.').map(&:to_i)
@@ -30,7 +30,7 @@ module LiteConstraints
   end
 
   def require_external_connectivity
-    before do
+    before(:all) do
       if ENV['EXTERNAL_DISABLED']
         skip "Test requires external connectivity"
       end
@@ -38,7 +38,7 @@ module LiteConstraints
   end
 
   def require_mongo_kerberos
-    before do
+    before(:all) do
       skip 'KERBEROS_REQUIRED env var not specified' unless ENV['KERBEROS_REQUIRED']
       require 'mongo_kerberos'
     end
