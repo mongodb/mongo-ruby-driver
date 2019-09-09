@@ -95,6 +95,9 @@ class ClusterConfig
         client = ClientRegistry.instance.global_client('root_authorized')
         if topology == :sharded
           shards = client.use(:admin).command(listShards: 1).first
+          if shards['shards'].empty?
+            raise 'Shards are empty'
+          end
           shard = shards['shards'].first
           address_str = shard['host'].sub(/^.*\//, '').sub(/,.*/, '')
           client = ClusterTools.instance.direct_client(address_str,
