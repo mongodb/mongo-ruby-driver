@@ -212,7 +212,7 @@ module Mongo
     #
     # @since 2.0.0
     def capped?
-      database.command(:collstats => name).documents[0][CAPPED]
+      database.read_command(:collstats => name).documents[0][CAPPED]
     end
 
     # Force the collection to be created in the database.

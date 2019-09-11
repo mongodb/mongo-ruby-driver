@@ -166,6 +166,37 @@ module Mongo
       end
       txn_read_pref ||= opts[:read] || ServerSelector::PRIMARY
       Lint.validate_underscore_read_preference(txn_read_pref)
+      selector = ServerSelector.get(txn_read_pref)
+
+      client.send(:with_session, opts) do |session|
+        server = selector.select_server(cluster, nil, session)
+        Operation::Command.new({
+          :selector => operation.dup,
+          :db_name => name,
+          :read => selector,
+          :session => session
+        }).execute(server)
+      end
+    end
+
+    # Execute a read command on the database, retrying the read if necessary.
+    #
+    # @param [ Hash ] operation The command to execute.
+    # @param [ Hash ] opts The command options.
+    #
+    # @option opts :read [ Hash ] The read preference for this command.
+    # @option opts :session [ Session ] The session to use for this command.
+    #
+    # @return [ Hash ] The result of the command execution.
+    # @api private
+    def read_command(operation, opts = {})
+      txn_read_pref = if opts[:session] && opts[:session].in_transaction?
+        opts[:session].txn_read_preference
+      else
+        nil
+      end
+      txn_read_pref ||= opts[:read] || ServerSelector::PRIMARY
+      Lint.validate_underscore_read_preference(txn_read_pref)
       preference = ServerSelector.get(txn_read_pref)
 
       client.send(:with_session, opts) do |session|
