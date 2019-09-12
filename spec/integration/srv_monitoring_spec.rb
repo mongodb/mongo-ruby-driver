@@ -286,7 +286,7 @@ describe 'SRV Monitoring' do
 
         mock_dns(rules) do
           15.times do
-            address_strs = client.cluster.servers_list.map(&:address).map(&:seed).sort
+            address_strs = client.cluster.servers.map(&:address).map(&:seed).sort
             if address_strs == %w(
                 localhost.test.build.10gen.cc:27017
               )
@@ -296,7 +296,7 @@ describe 'SRV Monitoring' do
             sleep 1
           end
 
-          address_strs = client.cluster.servers_list.map(&:address).map(&:seed).sort
+          address_strs = client.cluster.servers.map(&:address).map(&:seed).sort
           expect(address_strs).to eq(%w(
             localhost.test.build.10gen.cc:27017
           ))
@@ -335,7 +335,7 @@ describe 'SRV Monitoring' do
 
         mock_dns(rules) do
           15.times do
-            address_strs = client.cluster.servers_list.map(&:address).map(&:seed).sort
+            address_strs = client.cluster.servers.map(&:address).map(&:seed).sort
             if address_strs == %w(
                 localhost.test.build.10gen.cc:27017
               )
@@ -345,7 +345,7 @@ describe 'SRV Monitoring' do
             sleep 1
           end
 
-          address_strs = client.cluster.servers_list.map(&:address).map(&:seed).sort
+          address_strs = client.cluster.servers.map(&:address).map(&:seed).sort
           # The actual address will be localhost:27017 or 127.0.0.1:27017,
           # depending on how the replica set is configured.
           expect(address_strs.any? { |str| str =~ /27017/ }).to be true
