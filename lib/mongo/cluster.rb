@@ -221,7 +221,7 @@ module Mongo
         end
       end
 
-      check_and_start_srv_monitor
+      start_stop_srv_monitor
     end
 
     # Create a cluster for the provided client, for use when we don't want the
@@ -566,6 +566,8 @@ module Mongo
             end
           end
         end
+
+        start_stop_srv_monitor
       end
 
       # Some updated descriptions, e.g. a mismatched me one, result in the
@@ -582,8 +584,6 @@ module Mongo
       unless updated_desc.unknown?
         server_selection_semaphore.broadcast
       end
-
-      check_and_start_srv_monitor
     end
 
     # Sets the list of servers to the addresses in the provided list of address
@@ -828,20 +828,35 @@ module Mongo
     end
 
     # @api private
-    def check_and_start_srv_monitor
-      return unless options[:srv_uri] && (
-        topology.is_a?(Topology::Sharded) || topology.is_a?(Topology::Unknown))
-      @srv_monitor_lock.synchronize do
-        unless @srv_monitor
-          monitor_options = options.merge(
-            timeout: options[:connect_timeout] || Server::CONNECT_TIMEOUT)
-          @srv_monitor = _srv_monitor = SrvMonitor.new(self, monitor_options)
-          finalizer = lambda do
-            _srv_monitor.stop!
+    def start_stop_srv_monitor
+      # SRV URI is either always given or not for a given cluster, if one
+      # wasn't given we shouldn't ever have an SRV monitor to manage.
+      return unless options[:srv_uri]
+
+      if topology.is_a?(Topology::Sharded) || topology.is_a?(Topology::Unknown)
+        # Start SRV monitor
+        @srv_monitor_lock.synchronize do
+          unless @srv_monitor
+            monitor_options = options.merge(
+              timeout: options[:connect_timeout] || Server::CONNECT_TIMEOUT)
+            @srv_monitor = _srv_monitor = SrvMonitor.new(self, monitor_options)
+            finalizer = lambda do
+              _srv_monitor.stop!
+            end
+            ObjectSpace.define_finalizer(self, finalizer)
           end
-          ObjectSpace.define_finalizer(self, finalizer)
+          @srv_monitor.run!
         end
-        @srv_monitor.run!
+      else
+        # Stop SRV monitor if running. This path is taken when the client
+        # is given an SRV URI to a standalone/replica set; when the topology
+        # is discovered, since it's not a sharded cluster, the SRV monitor
+        # needs to be stopped.
+        @srv_monitor_lock.synchronize do
+          if @srv_monitor
+            @srv_monitor.stop!
+          end
+        end
       end
     end
   end
