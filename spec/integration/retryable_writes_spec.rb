@@ -737,4 +737,21 @@ describe 'Retryable writes integration tests' do
 
     it_behaves_like 'an operation that does not support retryable writes'
   end
+
+  context 'when the operation is database#command' do
+
+    let(:operation) do
+      collection.database.command(ping: 1)
+    end
+
+    let(:expectation) do
+      0
+    end
+
+    let(:unsuccessful_retry_value) do
+      0
+    end
+
+    it_behaves_like 'an operation that does not support retryable writes'
+  end
 end

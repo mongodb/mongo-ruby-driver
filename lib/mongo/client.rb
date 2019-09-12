@@ -713,7 +713,7 @@ module Mongo
       cmd = { listDatabases: 1 }
       cmd[:nameOnly] = !!name_only
       cmd[:filter] = filter unless filter.empty?
-      use(Database::ADMIN).command(cmd, opts).first[Database::DATABASES]
+      use(Database::ADMIN).database.read_command(cmd, opts).first[Database::DATABASES]
     end
 
     # Returns a list of Mongo::Database objects.
@@ -887,7 +887,7 @@ module Mongo
       end
 
       if !Mongo::Auth::SOURCES.key?(auth_mech)
-        raise Mongo::Auth::InvalidMechanism.new(auth_mech) 
+        raise Mongo::Auth::InvalidMechanism.new(auth_mech)
       end
 
       if user.nil? && auth_mech != :mongodb_x509
