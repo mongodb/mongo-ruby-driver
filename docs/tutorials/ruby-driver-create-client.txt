@@ -55,16 +55,30 @@ would like to bypass the auto-discovery, pass the
   Mongo::Client.new([ '127.0.0.1:27017' ], :database => 'mydb', :connect => :sharded)
   Mongo::Client.new('mongodb://127.0.0.1:27017/mydb?connect=sharded')
 
-The URI parser in the driver can also accept the protocol ``mongodb+srv`` as a logical
-pre-processing step before it considers the connection string and other options.
-In this protocol, the comma separated list of host names is replaced with a single host name. The format is:
+The URI parser in the driver also accepts the
+:manual:`mongodb+srv protocol <reference/connection-string/#dns-seedlist-connection-format>`
+URIs, for example:
 
 .. code-block:: ruby
 
   Mongo::Client.new('mongodb+srv://test5.test.build.mongodb.cc')
 
-.. _ruby-driver-client-options:
+When an SRV URI is given, the driver does the following:
 
+1. As part of ``Client`` object construction, the SRV URI is resolved to
+   the actual hosts comprising the deployment, as these are defined in the DNS
+   SRV records.
+2. The driver looks up URI options in the DNS TXT records corresponding to the
+   SRV records. These options can be overridden by URI options specified in the
+   URI and by Ruby options, in this order.
+3. If the topology of the constructed ``Client`` object is unknown or a
+   sharded cluster, the driver will begin monitoring the specified SRV DNS
+   records for changes and will automatically update the list of servers in the
+   cluster. The updates will stop if the topology becomes a single or a replica
+   set.
+
+
+.. _ruby-driver-client-options:
 
 Client Options
 --------------
