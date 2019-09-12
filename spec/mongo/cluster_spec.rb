@@ -267,6 +267,27 @@ describe Mongo::Cluster do
         expect(cluster.servers[0].address.seed).to_not eq('a')
       end
     end
+
+    context 'topology is Sharded' do
+
+      let(:topology) do
+        Mongo::Cluster::Topology::Single.new({}, cluster)
+      end
+
+      before do
+        cluster.add('a')
+      end
+
+      it 'creates server with nil last_scan' do
+        server = cluster.servers_list.detect do |server|
+          server.address.seed == 'a'
+        end
+
+        expect(server).not_to be nil
+
+        expect(server.last_scan).to be nil
+      end
+    end
   end
 
   describe '#disconnect!' do

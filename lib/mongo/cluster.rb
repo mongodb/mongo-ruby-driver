@@ -95,6 +95,8 @@ module Mongo
     #   :cleanup automatically defaults to false as well.
     # @option options [ Float ] :heartbeat_frequency The interval, in seconds,
     #   for the server monitor to refresh its description via ismaster.
+    # @option options [ Hash ] :resolv_options For internal driver use only.
+    #   Options to pass through to Resolv::DNS constructor for SRV lookups.
     #
     # @since 2.0.0
     def initialize(seeds, monitoring, options = Options::Redacted.new)
@@ -116,6 +118,7 @@ module Mongo
       @sdam_flow_lock = Mutex.new
       @cluster_time = nil
       @cluster_time_lock = Mutex.new
+      @srv_monitor_lock = Mutex.new
       @server_selection_semaphore = Semaphore.new
       @topology = Topology.initial(self, monitoring, options)
       Session::SessionPool.create(self)
@@ -280,6 +283,9 @@ module Mongo
       end
     end
 
+    # @api private
+    attr_reader :srv_monitor
+
     # Get the maximum number of times the client can retry a read operation
     # when using legacy read retries.
     #
@@ -439,6 +445,11 @@ module Mongo
         session_pool.end_sessions
         @periodic_executor.stop!
       end
+      @srv_monitor_lock.synchronize do
+        if @srv_monitor
+          @srv_monitor.stop!
+        end
+      end
       @servers.each do |server|
         if server.connected?
           server.disconnect!(wait)
@@ -568,6 +579,38 @@ module Mongo
       # shouldn't cause any problems.
       unless updated_desc.unknown?
         server_selection_semaphore.broadcast
+      end
+
+      check_and_start_srv_monitor
+    end
+
+    # Sets the list of servers to the addresses in the provided list of address
+    # strings.
+    #
+    # This method is called by the SRV monitor after receiving new DNS records
+    # for the monitored hostname.
+    #
+    # Removes servers in the cluster whose addresses are not in the passed
+    # list of server addresses, and adds servers for any addresses in the
+    # argument which are not already in the cluster.
+    #
+    # @param [ Array<String> ] server_address_strs List of server addresses
+    #    to sync the cluster servers to.
+    #
+    # @api private
+    def set_server_list(server_address_strs)
+      @sdam_flow_lock.synchronize do
+        server_address_strs.each do |address_str|
+          unless servers_list.any? { |server| server.address.seed == address_str }
+            add(address_str)
+          end
+        end
+
+        servers_list.each do |server|
+          unless server_address_strs.any? { |address_str| server.address.seed == address_str }
+            remove(server.address.seed)
+          end
+        end
       end
     end
 
@@ -781,7 +824,25 @@ module Mongo
         false
       end
     end
+
+    # @api private
+    def check_and_start_srv_monitor
+      return unless topology.is_a?(Topology::Sharded) && options[:srv_uri]
+      @srv_monitor_lock.synchronize do
+        unless @srv_monitor
+          monitor_options = options.merge(
+            timeout: options[:connect_timeout] || Server::CONNECT_TIMEOUT)
+          @srv_monitor = _srv_monitor = SrvMonitor.new(self, monitor_options)
+          finalizer = lambda do
+            _srv_monitor.stop!
+          end
+          ObjectSpace.define_finalizer(self, finalizer)
+        end
+        @srv_monitor.run!
+      end
+    end
   end
 end
 
 require 'mongo/cluster/sdam_flow'
+require 'mongo/cluster/srv_monitor'

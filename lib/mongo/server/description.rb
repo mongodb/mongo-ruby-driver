@@ -619,6 +619,7 @@ module Mongo
       # @return [ true, false ] If the description is from the server.
       #
       # @since 2.0.6
+      # @deprecated
       def is_server?(server)
         address == server.address
       end
@@ -632,6 +633,7 @@ module Mongo
       #   of servers.
       #
       # @since 2.0.6
+      # @deprecated
       def lists_server?(server)
         servers.include?(server.address.to_s)
       end

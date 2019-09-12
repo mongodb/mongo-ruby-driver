@@ -962,7 +962,7 @@ describe Mongo::URI::SRVProtocol do
     end
   end
 
-  describe '#validate_hostname' do
+  describe '#validate_srv_hostname' do
     let(:valid_hostname) do
     end
 
@@ -971,7 +971,7 @@ describe Mongo::URI::SRVProtocol do
     end
 
     let(:validate) do
-      dummy_uri.send(:validate_hostname, hostname)
+      dummy_uri.send(:validate_srv_hostname, hostname)
     end
 
     context 'when the hostname is valid' do

@@ -189,5 +189,54 @@ module CommonShortcuts
         client.cluster.disconnect!
       end
     end
+
+    DNS_INTERFACES = [
+      [:udp, "0.0.0.0", 5300],
+      [:tcp, "0.0.0.0", 5300],
+    ]
+
+    def mock_dns(config)
+      semaphore = Mongo::Semaphore.new
+
+      thread = Thread.new do
+        RubyDNS::run_server(DNS_INTERFACES) do
+          config.each do |(query, type, *answers)|
+
+            resource_cls = Resolv::DNS::Resource::IN.const_get(type.to_s.upcase)
+            resources = answers.map do |answer|
+              resource_cls.new(*answer)
+            end
+            match(query, resource_cls) do |req|
+              req.add(resources)
+            end
+          end
+
+          semaphore.signal
+        end
+      end
+
+      semaphore.wait
+
+      begin
+        yield
+      ensure
+        10.times do
+          if $last_async_task
+            break
+          end
+          sleep 0.5
+        end
+
+        # Hack to stop the server - https://github.com/socketry/rubydns/issues/75
+        if $last_async_task.nil?
+          STDERR.puts "No async task - server never started?"
+        else
+          $last_async_task.stop
+        end
+
+        thread.kill
+        thread.join
+      end
+    end
   end
 end

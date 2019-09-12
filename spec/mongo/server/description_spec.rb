@@ -433,6 +433,23 @@ describe Mongo::Server::Description do
       it 'returns :sharded' do
         expect(description.server_type).to eq(:sharded)
       end
+
+      context 'when client and server addresses are different' do
+        let(:config) do
+          { 'msg' => 'isdbgrid', 'ismaster' => true,
+            'minWireVersion' => 2, 'maxWireVersion' => 3, 'ok' => 1,
+            'me' => '127.0.0.1',
+          }
+        end
+
+        let(:address) do
+          Mongo::Address.new('localhost')
+        end
+
+        it 'returns :sharded' do
+          expect(description.server_type).to eq(:sharded)
+        end
+      end
     end
 
     context 'when the server is a primary' do

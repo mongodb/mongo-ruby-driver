@@ -118,9 +118,7 @@ describe Mongo::Client do
         end
 
         let(:logger) do
-          Logger.new(STDOUT).tap do |logger|
-            logger.level = Logger::DEBUG
-          end
+          Logger.new(STDOUT, level: Logger::DEBUG)
         end
 
         let(:subscriber) do

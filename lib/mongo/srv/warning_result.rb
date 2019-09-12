@@ -12,6 +12,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'mongo/srv/result'
-require 'mongo/srv/resolver'
-require 'mongo/srv/monitor'
+module Mongo
+
+  module Srv
+
+    # SRV record lookup result which warns on errors rather than raising
+    # exceptions.
+    #
+    # @api private
+    class WarningResult < Result
+
+      # Adds a new record.
+      #
+      # @param [ Resolv::DNS::Resource ] record An SRV record found for the hostname.
+      def add_record(record)
+        super
+      rescue Error::InvalidAddress, Error::MismatchedDomain => e
+        log_warn(e.message)
+      end
+    end
+  end
+end

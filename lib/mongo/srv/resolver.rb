@@ -33,9 +33,15 @@ module Mongo
       # @option options [ Boolean ] :raise_on_invalid Whether or not to raise
       #   an exception if either a record with a mismatched domain is found
       #   or if no records are found. Defaults to true.
+      # @option options [ Hash ] :resolv_options For internal driver use only.
+      #   Options to pass through to Resolv::DNS constructor for SRV lookups.
       def initialize(options = nil)
-        @options ||= {}
-        @resolver = Resolv::DNS.new
+        @options = if options
+          options.dup
+        else
+          {}
+        end.freeze
+        @resolver = Resolv::DNS.new(@options[:resolv_options])
       end
 
       # Obtains all of the SRV records for a given hostname.

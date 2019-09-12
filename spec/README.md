@@ -78,11 +78,16 @@ configuration is needed:
 
 A sharded cluster can be configured with mlaunch:
 
-    mlaunch init --replicaset --name ruby-driver-rs --sharded 1 \
+    mlaunch init --replicaset --name ruby-driver-rs --sharded 1 --mongos 2 \
       --dir /tmp/mdb-sc --setParameter enableTestCommands=1
 
 As with the replica set, the test suite will automatically detect sharded
 cluster topology.
+
+Note that some tests require a sharded cluster with exactly one shard and
+other tests require a sharded cluster with more than one shard. Tests requiring
+a single shard can be run against a deployment with multiple shards by
+specifying only one mongos address in MONGODB_URI.
 
 ## TLS With Verification
 
