@@ -81,13 +81,17 @@ describe 'Client after reconnect' do
     end
 
     shared_examples_for 'recreates SRV monitor' do
+      # JRuby produces this error:
+      # RSpec::Expectations::ExpectationNotMetError: expected nil to respond to `alive?`
+      # for this assertion:
+      # expect(thread).not_to be_alive
+      # This is bizarre because if thread was nil, the earlier call to
+      # thread.kill should've similarly failed, but it doesn't.
+      fails_on_jruby
+
       it 'recreates SRV monitor' do
         wait_for_discovery
 
-        if BSON::Environment.jruby?
-          # Wait for jruby to start SRV monitor thread
-          sleep 1
-        end
         expect(client.cluster.topology).to be_a(expected_topology_cls)
         thread = client.cluster.srv_monitor.instance_variable_get('@thread')
         expect(thread).to be_alive
@@ -95,16 +99,6 @@ describe 'Client after reconnect' do
         thread.kill
         # context switch to let the thread get killed
         sleep 0.1
-        if BSON::Environment.jruby?
-          # jruby takes a long time here as well
-          15.times do
-            if thread.alive?
-              sleep 1
-            else
-              break
-            end
-          end
-        end
         expect(thread).not_to be_alive
 
         client.reconnect
