@@ -220,6 +220,8 @@ module Mongo
           server_selection_semaphore.wait([time_remaining, 1].min)
         end
       end
+
+      check_and_start_srv_monitor
     end
 
     # Create a cluster for the provided client, for use when we don't want the
@@ -827,7 +829,8 @@ module Mongo
 
     # @api private
     def check_and_start_srv_monitor
-      return unless topology.is_a?(Topology::Sharded) && options[:srv_uri]
+      return unless options[:srv_uri] && (
+        topology.is_a?(Topology::Sharded) || topology.is_a?(Topology::Unknown))
       @srv_monitor_lock.synchronize do
         unless @srv_monitor
           monitor_options = options.merge(

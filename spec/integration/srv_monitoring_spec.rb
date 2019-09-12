@@ -175,5 +175,78 @@ describe 'SRV Monitoring' do
         end
       end
     end
+
+    context 'unknown topology' do
+      it 'updates topology via SRV records' do
+        # Expedite the polling process
+        allow_any_instance_of(Mongo::Cluster::SrvMonitor).to receive(:scan_interval).and_return(1)
+
+        rules = [
+          ['_mongodb._tcp.test-fake.test.build.10gen.cc', :srv,
+            [0, 0, 27999, 'localhost.test.build.10gen.cc'],
+          ],
+        ]
+
+        mock_dns(rules) do
+          expect(client.cluster.topology).to be_a(Mongo::Cluster::Topology::Unknown)
+
+          address_strs = client.cluster.servers_list.map(&:address).map(&:seed).sort
+          expect(address_strs).to eq(%w(
+            localhost.test.build.10gen.cc:27999
+          ))
+        end
+
+        rules = [
+          ['_mongodb._tcp.test-fake.test.build.10gen.cc', :srv,
+            [0, 0, 27998, 'localhost.test.build.10gen.cc'],
+            [0, 0, 27999, 'localhost.test.build.10gen.cc'],
+          ],
+        ]
+
+        mock_dns(rules) do
+          15.times do
+            address_strs = client.cluster.servers_list.map(&:address).map(&:seed).sort
+            if address_strs == %w(
+                localhost.test.build.10gen.cc:27998
+                localhost.test.build.10gen.cc:27999
+              )
+            then
+              break
+            end
+            sleep 1
+          end
+
+          address_strs = client.cluster.servers_list.map(&:address).map(&:seed).sort
+          expect(address_strs).to eq(%w(
+            localhost.test.build.10gen.cc:27998
+            localhost.test.build.10gen.cc:27999
+          ))
+        end
+
+        rules = [
+          ['_mongodb._tcp.test-fake.test.build.10gen.cc', :srv,
+            [0, 0, 27997, 'localhost.test.build.10gen.cc'],
+          ],
+        ]
+
+        mock_dns(rules) do
+          15.times do
+            address_strs = client.cluster.servers_list.map(&:address).map(&:seed).sort
+            if address_strs == %w(
+                localhost.test.build.10gen.cc:27997
+              )
+            then
+              break
+            end
+            sleep 1
+          end
+
+          address_strs = client.cluster.servers_list.map(&:address).map(&:seed).sort
+          expect(address_strs).to eq(%w(
+            localhost.test.build.10gen.cc:27997
+          ))
+        end
+      end
+    end
   end
 end
