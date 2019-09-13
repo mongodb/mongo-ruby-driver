@@ -422,22 +422,20 @@ module Mongo
       end
     end
 
-    # Close the cluster and disconnect all servers.
+    # Closes the cluster.
     #
     # @note Applications should call Client#close to disconnect from
     # the cluster rather than calling this method. This method is for
     # internal driver use only.
     #
-    # @example Disconnect the cluster's servers.
-    #   cluster.disconnect!
-    #
-    # @param [ Boolean ] wait Whether to wait for background threads to
-    #   finish running.
+    # Disconnects all servers in the cluster, publishing appropriate SDAM
+    # events in the process. Stops SRV monitoring if it is active.
+    # Marks the cluster disconnected.
     #
     # @return [ true ] Always true.
     #
     # @since 2.1.0
-    def disconnect!(wait=false)
+    def disconnect!
       unless @connecting || @connected
         return true
       end
@@ -452,7 +450,7 @@ module Mongo
       end
       @servers.each do |server|
         if server.connected?
-          server.disconnect!(wait)
+          server.disconnect!
           publish_sdam_event(
             Monitoring::SERVER_CLOSED,
             Monitoring::Event::ServerClosed.new(server.address, topology)

@@ -485,10 +485,8 @@ module Mongo
       #
       # @option options [ true | false ] :force Also close all checked out
       #   connections.
-      # @option options [ true | false ] :wait Wait for background threads to
-      #   exit before returning. Added in 2.10.0.
       #
-      # @return [ true ] true.
+      # @return [ true ] Always true.
       #
       # @since 2.9.0
       def close(options = nil)
