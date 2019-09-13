@@ -36,19 +36,13 @@ describe 'Connection pool stress test' do
   end
 
   let(:client) do
-    @client = authorized_client.with(options)
+    authorized_client.with(options)
   end
 
   let(:collection) do
     client[authorized_collection.name].tap do |collection|
       collection.drop
       collection.insert_many(documents)
-    end
-  end
-
-  after do
-    if @client
-      @client.close(true)
     end
   end
 

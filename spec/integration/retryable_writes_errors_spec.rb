@@ -18,10 +18,6 @@ describe 'Retryable writes errors tests' do
       authorized_client.with(retry_writes: true)
     end
 
-    after do
-      client.close(true)
-    end
-
     context 'when a retryable write is attempted' do
       it 'raises an actionable error message' do
         expect {

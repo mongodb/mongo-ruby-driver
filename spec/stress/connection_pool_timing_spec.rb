@@ -25,13 +25,7 @@ describe 'Connection pool timing test' do
   end
 
   let(:client) do
-    @client = authorized_client.with(options.merge(monitoring: true))
-  end
-
-  after(:all) do
-    if @client
-      @client.close(true)
-    end
+    authorized_client.with(options.merge(monitoring: true))
   end
 
   let!(:collection) do

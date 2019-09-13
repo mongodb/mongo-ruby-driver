@@ -10,7 +10,7 @@ describe Mongo::Session::SessionPool do
       # Cluster time assertions can fail if there are background operations
       # that cause cluster time to be updated. This also necessitates clean
       # state requirement.
-      authorized_client.close(true)
+      authorized_client.close
     end
   end
 
@@ -159,10 +159,6 @@ describe Mongo::Session::SessionPool do
 
     let(:client) do
       subscribed_client
-    end
-
-    after do
-      client.close(true)
     end
 
     context 'when the number of ids is not larger than 10,000' do

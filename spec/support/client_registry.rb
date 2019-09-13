@@ -228,7 +228,7 @@ class ClientRegistry
     close_local_clients
     @lock.synchronize do
       @global_clients.each do |name, client|
-        client.close(true)
+        client.close
       end
     end
   end

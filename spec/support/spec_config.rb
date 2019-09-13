@@ -87,7 +87,7 @@ class SpecConfig
       else
         raise "Weird topology #{client.cluster.topology}"
       end
-      client.close(true)
+      client.close
       options
     end
   end

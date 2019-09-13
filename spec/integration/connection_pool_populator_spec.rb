@@ -281,7 +281,7 @@ describe 'Connection pool populator integration' do
 
         fork do
           # follow forking guidance
-          client.close(true)
+          client.close
           client.reconnect
           # let pool populate
           sleep 2

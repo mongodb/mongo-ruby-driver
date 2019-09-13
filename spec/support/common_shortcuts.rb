@@ -157,7 +157,7 @@ module CommonShortcuts
     def register_server(server)
       finalizer = lambda do |server|
         if server.connected?
-          server.disconnect!(true)
+          server.disconnect!
         end
       end
       LocalResourceRegistry.instance.register(server, finalizer)
