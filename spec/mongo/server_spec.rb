@@ -115,32 +115,12 @@ describe Mongo::Server do
       server.disconnect!
     end
 
-    context 'with wait=false' do
-      context 'when server reconnects' do
-        it 'keeps the same pool' do
-          pool = server.pool
-          server.disconnect!
-          server.reconnect!
-          expect(server.pool).to eq(pool)
-        end
-      end
-    end
-
-    context 'with wait=true' do
-      it 'clears connection pool instance' do
-        server.pool
-        expect(server.instance_variable_get('@pool')).to be_a(Mongo::Server::ConnectionPool)
+    context 'when server reconnects' do
+      it 'keeps the same pool' do
+        pool = server.pool
         server.disconnect!
-        expect(server.instance_variable_get('@pool')).to be nil
-      end
-
-      context 'when server reconnects' do
-        it 'creates a new pool' do
-          pool = server.pool
-          server.disconnect!
-          server.reconnect!
-          expect(server.pool).not_to eq(pool)
-        end
+        server.reconnect!
+        expect(server.pool).to eq(pool)
       end
     end
   end
