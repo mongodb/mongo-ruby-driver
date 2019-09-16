@@ -22,10 +22,6 @@ describe 'change streams examples in Ruby' do
     inventory.drop
   end
 
-  after do
-    client.close(true)
-  end
-
   context 'example 1 - basic watching'do
 
     it 'returns a change after an insertion' do

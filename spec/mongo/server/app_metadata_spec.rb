@@ -22,10 +22,6 @@ describe Mongo::Server::AppMetadata do
         client.cluster
       end
 
-      after do
-        client.close(true)
-      end
-
       it 'sets the app name' do
         expect(app_metadata.send(:full_client_document)[:application][:name]).to eq('app_metadata_test')
       end
@@ -38,10 +34,6 @@ describe Mongo::Server::AppMetadata do
 
         let(:cluster) do
           client.cluster
-        end
-
-        after do
-          client.close(true)
         end
 
         it 'raises an error' do

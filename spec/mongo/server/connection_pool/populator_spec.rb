@@ -4,7 +4,7 @@ describe Mongo::Server::Populator do
   let(:options) { {} }
 
   let(:client) do
-    @client = authorized_client.with(options)
+    authorized_client.with(options)
   end
 
   let(:server) do
@@ -26,12 +26,6 @@ describe Mongo::Server::Populator do
     # and clear the pool, so ours can run
     pool.stop_populator
     pool.clear
-  end
-
-  after do
-    if @client
-      @client.close(true)
-    end
   end
 
   describe '#log_warn' do

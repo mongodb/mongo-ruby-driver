@@ -27,7 +27,7 @@ describe 'SCRAM-SHA auth mechanism negotiation' do
         roles: ['root'],
         mechanisms: server_user_auth_mechanisms,
       )
-      client.close(true)
+      client.close
     end
   end
 

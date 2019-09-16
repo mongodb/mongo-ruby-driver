@@ -219,18 +219,19 @@ module Mongo
     # @deprecated No longer necessary with Server Selection specification.
     def connectable?; end
 
-    # Disconnect the server from the connection.
+    # Disconnect the driver from this server.
     #
-    # @example Disconnect the server.
-    #   server.disconnect!
+    # Disconnects all idle connections to this server in its connection pool,
+    # if any exist. Stops the populator of the connection pool, if it is
+    # running. Does not immediately close connections which are presently
+    # checked out (i.e. in use) - such connections will be closed when they
+    # are returned to their respective connection pools. Stop the server's
+    # background monitor.
     #
-    # @param [ Boolean ] wait Whether to wait for background threads to
-    #   finish running.
-    #
-    # @return [ true ] Always true with no exception.
+    # @return [ true ] Always true.
     #
     # @since 2.0.0
-    def disconnect!(wait=false)
+    def disconnect!
       if monitor
         monitor.stop!
       end
@@ -238,22 +239,15 @@ module Mongo
         @pool
       end
       if _pool
-        if wait
-          _pool.close(wait: wait)
-          # Need to clear @pool as otherwise the old pool will continue to be
-          # used if this server is reconnected in the future.
-          @pool = nil
-        else
-          # For backwards compatibility we disconnect/clear the pool rather
-          # than close it here. We also stop the populator which allows the
-          # the pool to continue providing connections but stops it from
-          # connecting in background on clients/servers that are in fact
-          # intended to be closed and no longer used.
-          begin
-            _pool.disconnect!(stop_populator: true)
-          rescue Error::PoolClosedError
-            # If the pool was already closed, we don't need to do anything here.
-          end
+        # For backwards compatibility we disconnect/clear the pool rather
+        # than close it here. We also stop the populator which allows the
+        # the pool to continue providing connections but stops it from
+        # connecting in background on clients/servers that are in fact
+        # intended to be closed and no longer used.
+        begin
+          _pool.disconnect!(stop_populator: true)
+        rescue Error::PoolClosedError
+          # If the pool was already closed, we don't need to do anything here.
         end
       end
       @connected = false

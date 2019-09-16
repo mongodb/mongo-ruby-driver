@@ -1489,10 +1489,6 @@ describe Mongo::Collection do
         expect(custom_collection.count).to eq(1)
       end
 
-      after do
-        custom_client.close(true)
-      end
-
       it 'inserts with the custom id' do
         expect(custom_collection.count).to eq(1)
         expect(custom_collection.find.first[:_id]).to eq(1)
@@ -1538,10 +1534,6 @@ describe Mongo::Collection do
 
       before do
         client[TEST_COLL].insert_many(documents)
-      end
-
-      after do
-        client.close(true)
       end
 
       let(:insert_events) do
@@ -1751,10 +1743,6 @@ describe Mongo::Collection do
       before do
         custom_collection.delete_many
         custom_collection.insert_one({ name: 'testing' })
-      end
-
-      after do
-        custom_client.close(true)
       end
 
       it 'inserts with the custom id' do
@@ -2833,10 +2821,6 @@ describe Mongo::Collection do
 
       before do
         allow(collection.client.cluster).to receive(:single?).and_return(false)
-      end
-
-      after do
-        client.close(true)
       end
 
       let(:client) do
@@ -3985,10 +3969,6 @@ describe Mongo::Collection do
       before do
         authorized_collection.insert_many([{ field: 'test1' }, { field: 'test1' }])
         client[TEST_COLL].update_one({ a: 1 }, {'$set' => { 'name' => '1'*16777149 }})
-      end
-
-      after do
-        client.close(true)
       end
 
       let(:update_events) do

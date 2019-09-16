@@ -368,10 +368,6 @@ describe Mongo::Collection::View::Readable do
 
     context 'when the collection has a read preference set' do
 
-      after do
-        client.close(true)
-      end
-
       let(:client) do
         # Set a timeout in case the collection read_preference does get used.
         # Otherwise, the test will hang for 30 seconds.
@@ -436,10 +432,6 @@ describe Mongo::Collection::View::Readable do
 
       context 'when the collection does not have a read preference set' do
         require_topology :single, :replica_set
-
-        after do
-          client.close(true)
-        end
 
         let(:client) do
           authorized_client.with(server_selection_timeout: 1)
@@ -755,10 +747,6 @@ describe Mongo::Collection::View::Readable do
         authorized_collection.insert_many(documents)
       end
 
-      after do
-        client.close(true)
-      end
-
       let(:client) do
         # Set a timeout in case the collection read_preference does get used.
         # Otherwise, the test will hang for 30 seconds.
@@ -816,10 +804,6 @@ describe Mongo::Collection::View::Readable do
         before do
           authorized_collection.insert_many(documents)
           allow(view.collection.client.cluster).to receive(:single?).and_return(false)
-        end
-
-        after do
-          client.close(true)
         end
 
         let(:client) do

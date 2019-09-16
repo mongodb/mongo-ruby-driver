@@ -231,10 +231,6 @@ describe Mongo::Session do
         authorized_client.with(retry_writes: false)
       end
 
-      after do
-        client.close(true)
-      end
-
       it 'returns false' do
         expect(client.start_session.retry_writes?).to be(false)
       end

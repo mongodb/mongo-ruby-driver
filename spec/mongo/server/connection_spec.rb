@@ -993,10 +993,6 @@ describe Mongo::Server::Connection, retry: 3 do
       described_class.new(server, server.options)
     end
 
-    after do
-      client.close(true)
-    end
-
     context 'when a connect_timeout is in the options' do
 
       context 'when a socket_timeout is in the options' do
