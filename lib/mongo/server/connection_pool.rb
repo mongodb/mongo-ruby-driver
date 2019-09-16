@@ -341,7 +341,7 @@ module Mongo
               )
 
               msg = @lock.synchronize do
-                "Timed out when attempting to check out a connection " +
+                "Timed out attempting to check out a connection " +
                   "from pool for #{@server.address} after #{wait_timeout} sec. " +
                   "Connections in pool: #{@available_connections.length} available, " +
                   "#{@checked_out_connections.length} checked out, " +
