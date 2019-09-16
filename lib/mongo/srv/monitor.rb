@@ -15,6 +15,10 @@
 module Mongo
   module SRV
 
+    # Polls SRV records for the URI that a cluster was created for and
+    # updates the list of servers in the cluster when records change.
+    #
+    # @api private
     class Monitor
       include Loggable
 

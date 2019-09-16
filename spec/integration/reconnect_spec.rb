@@ -51,10 +51,7 @@ describe 'Client after reconnect' do
     end
   end
 
-  context 'in sharded topology' do
-    require_topology :sharded
-    require_default_port_deployment
-    require_multi_shard
+  context 'SRV monitor thread' do
 
     let(:uri) do
       "mongodb+srv://test1.test.build.10gen.cc/?tls=#{SpecConfig.instance.ssl?}&tlsInsecure=true".tap do |uri|
@@ -75,37 +72,103 @@ describe 'Client after reconnect' do
           logger: logger))
     end
 
-    it 'recreates srv monitor' do
+    let(:wait_for_discovery) do
       client.cluster.next_primary
-      if BSON::Environment.jruby?
-        # Wait for jruby to start SRV monitor thread
-        sleep 1
-      end
-      expect(client.cluster.topology).to be_a(Mongo::Cluster::Topology::Sharded)
-      thread = client.cluster.srv_monitor.instance_variable_get('@thread')
-      expect(thread).to be_alive
+    end
 
-      thread.kill
-      # context switch to let the thread get killed
-      sleep 0.1
-      if BSON::Environment.jruby?
-        # jruby takes a long time here as well
-        15.times do
-          if thread.alive?
-            sleep 1
-          else
-            break
-          end
+    let(:wait_for_discovery_again) do
+      client.cluster.next_primary
+    end
+
+    shared_examples_for 'recreates SRV monitor' do
+      # JRuby produces this error:
+      # RSpec::Expectations::ExpectationNotMetError: expected nil to respond to `alive?`
+      # for this assertion:
+      # expect(thread).not_to be_alive
+      # This is bizarre because if thread was nil, the earlier call to
+      # thread.kill should've similarly failed, but it doesn't.
+      fails_on_jruby
+
+      it 'recreates SRV monitor' do
+        wait_for_discovery
+
+        expect(client.cluster.topology).to be_a(expected_topology_cls)
+        thread = client.cluster.srv_monitor.instance_variable_get('@thread')
+        expect(thread).to be_alive
+
+        thread.kill
+        # context switch to let the thread get killed
+        sleep 0.1
+        expect(thread).not_to be_alive
+
+        client.reconnect
+
+        wait_for_discovery_again
+
+        new_thread = client.cluster.srv_monitor.instance_variable_get('@thread')
+        expect(new_thread).not_to eq(thread)
+        expect(new_thread).to be_alive
+      end
+    end
+
+    context 'in sharded topology' do
+      require_topology :sharded
+      require_default_port_deployment
+      require_multi_shard
+
+      let(:expected_topology_cls) { Mongo::Cluster::Topology::Sharded }
+
+      it_behaves_like 'recreates SRV monitor'
+    end
+
+    context 'in unknown topology' do
+
+      # JRuby apparently does not implement non-blocking UDP I/O which is used
+      # by RubyDNS:
+      # NotImplementedError: recvmsg_nonblock is not implemented
+      fails_on_jruby
+
+      let(:uri) do
+        "mongodb+srv://test-fake.test.build.10gen.cc/"
+      end
+
+      let(:client) do
+        ClientRegistry.instance.register_local_client(
+          Mongo::Client.new(uri, server_selection_timeout: 3.89,
+            resolv_options: {
+              nameserver: 'localhost',
+              nameserver_port: [['localhost', 5300], ['127.0.0.1', 5300]],
+            },
+            logger: logger))
+      end
+
+      let(:expected_topology_cls) { Mongo::Cluster::Topology::Unknown }
+
+      let(:wait_for_discovery) do
+        # Since the entire test is done in unknown topology, we cannot use
+        # next_primary to wait for the client to discover the topology.
+        sleep 5
+      end
+
+      let(:wait_for_discovery_again) do
+        sleep 5
+      end
+
+      around do |example|
+        require 'support/dns'
+
+        rules = [
+          ['_mongodb._tcp.test-fake.test.build.10gen.cc', :srv,
+            [0, 0, 2799, 'localhost.test.build.10gen.cc'],
+          ],
+        ]
+
+        mock_dns(rules) do
+          example.run
         end
       end
-      expect(thread).not_to be_alive
 
-      client.reconnect
-
-      client.cluster.next_primary
-      new_thread = client.cluster.srv_monitor.instance_variable_get('@thread')
-      expect(new_thread).not_to eq(thread)
-      expect(new_thread).to be_alive
+      it_behaves_like 'recreates SRV monitor'
     end
   end
 end
