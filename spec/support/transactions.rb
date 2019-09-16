@@ -31,7 +31,7 @@ def define_transactions_spec_tests(test_paths)
 
           before do
             if test.multiple_mongoses?
-              unless SpecConfig.instance.addresses.length > 1
+              if ClusterConfig.instance.topology == :sharded && SpecConfig.instance.addresses.length == 1
                 skip "Test requires multiple mongoses"
               end
             else
