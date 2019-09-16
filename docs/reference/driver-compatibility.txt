@@ -39,7 +39,7 @@ MongoDB Compatibility
      -
 
    * - 2.10
-     - |checkmark|
+     - |checkmark| [#srv-polling]_
      - |checkmark|
      - |checkmark|
      - |checkmark|
@@ -137,6 +137,9 @@ MongoDB Compatibility
      - |checkmark|
      - |checkmark|
      - |checkmark|
+
+.. [#srv-polling] Polling of SRV records in sharded topologies is
+   implemented as of driver version 2.11.
 
 The driver does not support older versions of MongoDB.
 
