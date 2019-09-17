@@ -166,7 +166,7 @@ module Mongo
       selector = ServerSelector.get(txn_read_pref)
 
       client.send(:with_session, opts) do |session|
-        server = selector.select_server(cluster, nil, session)
+        server = selector.select_server(cluster)
         Operation::Command.new({
           :selector => operation.dup,
           :db_name => name,
