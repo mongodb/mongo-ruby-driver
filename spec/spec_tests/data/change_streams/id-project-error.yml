@@ -1,6 +1,7 @@
 runOn:
     -
         minServerVersion: "4.1.11"
+        topology: ["replicaset", "sharded"]
 
 collection_name: &collection_name "test"
 database_name: &database_name "change-stream-tests"
@@ -10,9 +11,6 @@ tests:
   -
     description: Change Stream should error when _id is projected out
     target: collection
-    topology:
-      - replicaset
-      - sharded
     changeStreamPipeline:
       -
         $project: { _id: 0 }

@@ -1,6 +1,7 @@
 runOn:
     -
         minServerVersion: "3.8.0"
+        topology: ["replicaset"]
 
 collection_name: &collection_name "test"
 database_name: &database_name "change-stream-tests"
@@ -10,8 +11,6 @@ tests:
   -
     description: Executing a watch helper on a MongoClient results in notifications for changes to all collections in all databases in the cluster.
     target: client
-    topology:
-      - replicaset
     changeStreamPipeline: []
     changeStreamOptions: {}
     operations:
