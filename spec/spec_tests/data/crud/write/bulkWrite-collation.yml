@@ -1,11 +1,13 @@
+runOn:
+    -
+        minServerVersion: "3.4"
+
 data:
     - {_id: 1, x: 11}
     - {_id: 2, x: 'ping'}
     - {_id: 3, x: 'pINg'}
     - {_id: 4, x: 'pong'}
     - {_id: 5, x: 'pONg'}
-
-minServerVersion: '3.4'
 
 # See: https://docs.mongodb.com/master/reference/collation/#collation-document
 tests:

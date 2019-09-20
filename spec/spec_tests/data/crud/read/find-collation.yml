@@ -1,6 +1,9 @@
+runOn:
+    -
+        minServerVersion: "3.4"
+
 data:
     - {_id: 1, x: 'ping'}
-minServerVersion: '3.4'
 
 tests:
     -
