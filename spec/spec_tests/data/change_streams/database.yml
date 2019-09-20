@@ -1,3 +1,7 @@
+runOn:
+    -
+        minServerVersion: "3.8.0"
+
 collection_name: &collection_name "test"
 database_name: &database_name "change-stream-tests"
 collection2_name: &collection2_name "test2"
@@ -5,7 +9,6 @@ database2_name: &database2_name "change-stream-tests-2"
 tests:
   -
     description: Executing a watch helper on a Database results in notifications for changes to all collections in the specified database.
-    minServerVersion: "3.8.0"
     target: database
     topology:
       - replicaset

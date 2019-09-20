@@ -1,3 +1,7 @@
+runOn:
+    -
+        minServerVersion: "3.6.0"
+
 collection_name: &collection_name "test"
 database_name: &database_name "change-stream-tests"
 collection2_name: &collection2_name "test2"
@@ -5,7 +9,6 @@ database2_name: &database2_name "change-stream-tests-2"
 tests:
   -
     description: "$changeStream must be the first stage in a change stream pipeline sent to the server"
-    minServerVersion: "3.6.0"
     target: collection
     topology: 
       - replicaset
@@ -45,7 +48,6 @@ tests:
               $numberInt: "1"
   -
     description: The server returns change stream responses in the specified server response format
-    minServerVersion: "3.6.0"
     target: collection
     topology:
       - replicaset
@@ -74,7 +76,6 @@ tests:
               $numberInt: "1"
   -
     description: Executing a watch helper on a Collection results in notifications for changes to the specified collection
-    minServerVersion: "3.6.0"
     target: collection
     topology:
       - replicaset
@@ -126,7 +127,6 @@ tests:
               $numberInt: "3"
   -
     description: Change Stream should allow valid aggregate pipeline stages
-    minServerVersion: "3.6.0"
     target: collection
     topology:
       - replicaset
@@ -178,7 +178,6 @@ tests:
               $numberInt: "3"
   -
     description: Test insert, update, replace, and delete event types
-    minServerVersion: "3.6.0"
     target: collection
     topology:
       - replicaset
