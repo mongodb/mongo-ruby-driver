@@ -1,0 +1,75 @@
+collection_name: &collection_name "test"
+database_name: &database_name "change-stream-tests"
+collection2_name: &collection2_name "test2"
+database2_name: &database2_name "change-stream-tests-2"
+tests:
+  -
+    description: Executing a watch helper on a MongoClient results in notifications for changes to all collections in all databases in the cluster.
+    minServerVersion: "3.8.0"
+    target: client
+    topology:
+      - replicaset
+    changeStreamPipeline: []
+    changeStreamOptions: {}
+    operations:
+      -
+        database: *database_name
+        collection: *collection2_name
+        name: insertOne
+        arguments:
+          document:
+            x: 1
+      -
+        database: *database2_name
+        collection: *collection_name
+        name: insertOne
+        arguments:
+          document:
+            y: 2
+      -
+        database: *database_name
+        collection: *collection_name
+        name: insertOne
+        arguments:
+          document:
+            z: 3
+    expectations:
+      -
+        command_started_event:
+          command:
+            aggregate:
+              $numberInt: "1"
+            cursor: {}
+            pipeline:
+              - 
+                $changeStream:
+                  fullDocument: default
+                  allChangesForCluster: true
+          command_name: aggregate
+          database_name: admin
+    result:
+      success:
+        -
+          operationType: insert
+          ns:
+            db: *database_name
+            coll: *collection2_name
+          fullDocument:
+            x:
+              $numberInt: "1"
+        -
+          operationType: insert
+          ns:
+            db: *database2_name
+            coll: *collection_name
+          fullDocument:
+            y:
+              $numberInt: "2"
+        -
+          operationType: insert
+          ns:
+            db: *database_name
+            coll: *collection_name
+          fullDocument:
+            z:
+              $numberInt: "3"

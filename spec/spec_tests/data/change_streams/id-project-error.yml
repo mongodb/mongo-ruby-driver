@@ -1,0 +1,28 @@
+collection_name: &collection_name "test"
+database_name: &database_name "change-stream-tests"
+collection2_name: &collection2_name "test2"
+database2_name: &database2_name "change-stream-tests-2"
+tests:
+  -
+    description: Change Stream should error when _id is projected out
+    minServerVersion: "4.1.11"
+    target: collection
+    topology:
+      - replicaset
+      - sharded
+    changeStreamPipeline:
+      -
+        $project: { _id: 0 }
+    changeStreamOptions: {}
+    operations:
+      -
+        database: *database_name
+        collection: *collection_name
+        name: insertOne
+        arguments:
+          document:
+            z: 3
+    result:
+      error:
+        code: 280
+        errorLabels: [ "NonResumableChangeStreamError" ]
