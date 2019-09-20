@@ -1,0 +1,20 @@
+runOn:
+    -
+        minServerVersion: "3.6.0"
+        topology: ["single"]
+
+collection_name: &collection_name "test"
+database_name: &database_name "change-stream-tests"
+collection2_name: &collection2_name "test2"
+database2_name: &database2_name "change-stream-tests-2"
+tests:
+  -
+    description: The watch helper must not throw a custom exception when executed against a single server topology, but instead depend on a server error
+    target: collection
+    changeStreamPipeline: []
+    changeStreamOptions: {}
+    operations: []
+    expectations: []
+    result:
+      error:
+        code: 40573
