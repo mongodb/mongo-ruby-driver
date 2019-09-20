@@ -118,8 +118,8 @@ describe Mongo::Collection::View::ChangeStream do
 
     context 'when full_document is not provided' do
 
-      it "defaults to use the 'default' value" do
-        expect(change_stream_document[:fullDocument]).to eq('default')
+      it "does not set fullDocument" do
+        expect(change_stream_document).not_to have_key(:fullDocument)
       end
     end
 
