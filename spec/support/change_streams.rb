@@ -53,7 +53,17 @@ module Mongo
         @coll2 = @spec['collection2_name']
         @db1 = @spec['database_name']
         @db2 = @spec['database2_name']
+
+        @requirements = if run_on = @spec['runOn']
+          run_on.map do |spec|
+            Mongo::CRUD::Requirement.new(spec)
+          end
+        else
+          nil
+        end
       end
+
+      attr_reader :requirements
 
       # Get a list of ChangeStreamsTests for each test definition.
       #
@@ -84,12 +94,7 @@ module Mongo
 
         def initialize(test, coll1, coll2, db1, db2)
           @description = test['description']
-          @min_server_version = test['minServerVersion']
-          @max_server_version = test['maxServerVersion']
           @target_type = test['target']
-          @topologies = test['topology'].map do |topology|
-            {'single' => :single, 'replicaset' => :replica_set, 'sharded' => :sharded}[topology]
-          end
           @pipeline = test['changeStreamPipeline'] || []
           @options = test['changeStreamOptions'] || {}
           @operations = test['operations'].map { |op| Operation.new(op) }
@@ -100,8 +105,6 @@ module Mongo
           @db1_name = db1
           @db2_name = db2
         end
-
-        attr_reader :topologies
 
         def setup_test
           @global_client = ClientRegistry.instance.global_client('root_authorized').use('admin')
@@ -243,21 +246,6 @@ module Mongo
 
             actual[k] && match?(v, actual[k])
           end
-        end
-
-        def server_version(client)
-          @server_version ||= client.database.command(buildInfo: 1).first['version']
-        end
-
-        def upper_bound_satisfied?(client)
-          return true unless @max_server_version
-          ClusterConfig.instance.server_version <= @max_server_version
-        end
-
-        def lower_bound_satisfied?(client)
-          return true unless @min_server_version
-          #@min_server_version <= server_version(client)
-          @min_server_version <= ClusterConfig.instance.fcv_ish
         end
       end
     end

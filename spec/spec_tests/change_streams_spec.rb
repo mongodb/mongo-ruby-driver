@@ -9,29 +9,27 @@ describe 'ChangeStreams' do
 
     context(spec.description) do
 
-      spec.tests.each do |test|
+      define_spec_tests_with_requirements(spec) do
 
-        context(test.description) do
-          require_topology *test.topologies
+        spec.tests.each do |test|
 
-          before(:each) do
-            unless test.server_version_satisfied?(authorized_client)
-              skip 'Version requirements not satisfied'
+          context(test.description) do
+
+            before(:each) do
+              test.setup_test
             end
 
-            test.setup_test
-          end
+            let(:result) do
+              test.run
+            end
 
-          let(:result) do
-            test.run
-          end
+            it 'returns the correct result' do
+              expect(result[:result]).to match_result(test)
+            end
 
-          it 'returns the correct result' do
-            expect(result[:result]).to match_result(test)
-          end
-
-          it 'has the correct command_started events', if: test.expectations do
-            expect(result[:events]).to match_commands(test)
+            it 'has the correct command_started events', if: test.expectations do
+              expect(result[:events]).to match_commands(test)
+            end
           end
         end
       end

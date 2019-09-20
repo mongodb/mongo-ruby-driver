@@ -30,8 +30,6 @@ module Mongo
           run_on.map do |spec|
             Requirement.new(spec)
           end
-        elsif Requirement::YAML_KEYS.any? { |key| @spec.key?(key) }
-          [Requirement.new(@spec)]
         else
           nil
         end
