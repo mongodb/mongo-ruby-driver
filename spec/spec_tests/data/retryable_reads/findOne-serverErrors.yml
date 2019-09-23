@@ -40,7 +40,7 @@ tests:
                     database_name: *database_name
              - *retryable_command_started_event
     -
-        description: "FindOne succeeds after InterruptedDueToStepDown"
+        description: "FindOne succeeds after InterruptedDueToReplStateChange"
         failPoint:
             <<: *failCommand_failPoint
             data: { failCommands: [find], errorCode: 11602 }

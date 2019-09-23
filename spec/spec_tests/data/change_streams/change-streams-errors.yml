@@ -42,8 +42,7 @@ tests:
             cursor: {}
             pipeline:
               - 
-                $changeStream:
-                  fullDocument: default
+                $changeStream: {}
               -
                 $unsupported: foo
           command_name: aggregate

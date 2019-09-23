@@ -296,7 +296,11 @@ module Mongo
         end
 
         def change_doc
-          { fullDocument: ( @options[:full_document] || FULL_DOCUMENT_DEFAULT ) }.tap do |doc|
+          {}.tap do |doc|
+            if @options[:full_document]
+              doc[:fullDocument] = @options[:full_document]
+            end
+
             if resuming?
               # We have a resume token once we retrieved any documents.
               # However, if the first getMore fails and the user didn't pass
