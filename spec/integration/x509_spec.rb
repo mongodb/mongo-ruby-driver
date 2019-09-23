@@ -27,11 +27,37 @@ describe 'X509 client authentication' do
   end
 
   context 'attempting to connect without tls options' do
+    # TODO: write this test
+    # TODO: maybe write another test to connect with WRONG tls options?
 
+    # let!(:client) { ClientRegistry.instance.new_local_client("mongodb://localhost:27017/") }
+
+    # it 'fails on insert' do
+    #   result = client[:test].insert_one({ text: 'Hello, world!' })
+    # end
   end
 
   context 'with URI options' do
+    it 'successfully inserts a document' do
+      client = ClientRegistry.instance.new_local_client("mongodb://localhost:27017",
+        {
+          auth_mech: :mongodb_x509,
+          ssl: true,
+          ssl_cert: "spec/support/certificates/client-x509.pem",
+          ssl_ca_cert: "spec/support/certificates/ca.crt",
+          database: "test",
+          ssl_key: "spec/support/certificates/client-x509.pem",
+          auth_source: "$external"
+        }
+      )
 
+      # {"database"=>"test", "auth_source"=>"$external", "auth_mech"=>:mongodb_x509, "ssl"=>true, "ssl_ca_cert"=>"spec/support/certificates/ca.crt", "ssl_cert"=>"spec/support/certificates/client-x509.pem", "ssl_key"=>"spec/support/certificates/client-x509.pem", "retry_reads"=>true, "retry_writes"=>true}
+
+      client.update_options({"database"=>"test", "auth_source" => "$external", "auth_mech"=>:mongodb_x509, "ssl"=>true, "ssl_cert"=>"spec/support/certificates/client-x509.pem", "ssl_ca_cert"=>"spec/support/certificates/ca.crt", "retry_reads"=>true, "ssl_key"=>"spec/support/certificates/client-x509.pem", "retry_writes"=>true})
+
+      result = client[:test].insert_one({ text: 'Hello, world!' })
+      expect(result).to be_ok
+    end
   end
 
   context 'with client options' do
