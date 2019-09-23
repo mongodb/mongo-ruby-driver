@@ -196,7 +196,8 @@ module Mongo
       #
       # @since 2.0.0
       def spec
-        { pwd: password, roles: roles }
+        # { pwd: password, roles: roles }
+        { roles: roles }
       end
 
       private
