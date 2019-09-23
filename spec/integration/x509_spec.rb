@@ -51,6 +51,16 @@ describe 'X509 client authentication' do
         }
       )
 
+      client = Mongo::Client.new("mongodb://localhost:27017",
+        {
+          auth_mech: :mongodb_x509,
+          ssl: true,
+          ssl_cert: "spec/support/certificates/client-x509.pem",
+          ssl_ca_cert: "spec/support/certificates/ca.crt",
+          database: "test",
+        }
+      )
+
       # {"database"=>"test", "auth_source"=>"$external", "auth_mech"=>:mongodb_x509, "ssl"=>true, "ssl_ca_cert"=>"spec/support/certificates/ca.crt", "ssl_cert"=>"spec/support/certificates/client-x509.pem", "ssl_key"=>"spec/support/certificates/client-x509.pem", "retry_reads"=>true, "retry_writes"=>true}
 
       client.update_options({"database"=>"test", "auth_source" => "$external", "auth_mech"=>:mongodb_x509, "ssl"=>true, "ssl_cert"=>"spec/support/certificates/client-x509.pem", "ssl_ca_cert"=>"spec/support/certificates/ca.crt", "retry_reads"=>true, "ssl_key"=>"spec/support/certificates/client-x509.pem", "retry_writes"=>true})
