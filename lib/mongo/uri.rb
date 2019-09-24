@@ -241,7 +241,10 @@ module Mongo
     #
     # @since 2.0.0
     def client_options
-      opts = default_client_options.merge(uri_options)
+      opts = Options::Redacted.new.tap do |opts|
+        opts[:database] = @database if @database
+      end.merge(uri_options)
+
       @user ? opts.merge(credentials) : opts
     end
 
@@ -296,9 +299,9 @@ module Mongo
 
       # Since we know that the only URI option that sets :ssl_cert is "tlsCertificateKeyFile", any
       # value set for :ssl_cert must also be set for :ssl_key.
-      if @uri_options[:ssl_cert]
-        @uri_options[:ssl_key] = @uri_options[:ssl_cert]
-      end
+      # if @uri_options[:ssl_cert]
+      #   @uri_options[:ssl_key] = @uri_options[:ssl_cert]
+      # end
     end
 
     # Get the credentials provided in the URI.

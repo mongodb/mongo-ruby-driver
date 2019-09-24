@@ -408,8 +408,7 @@ module Mongo
       # Special handling for sdam_proc as it is only used during client
       # construction
       sdam_proc = options.delete(:sdam_proc)
-
-      @options = validate_new_options!(Database::DEFAULT_OPTIONS.merge(options))
+      @options = validate_new_options!(default_options(options).merge(options))
 =begin WriteConcern object support
       if @options[:write_concern].is_a?(WriteConcern::Base)
         # Cache the instance so that we do not needlessly reconstruct it.
@@ -810,6 +809,31 @@ module Mongo
     end
 
     private
+
+    # Generate default client options based on the URI and options
+    # passed into the Client constructor.
+    def default_options(options)
+      Options::Redacted.new(database: Database::DEFAULT_OPTIONS).tap do |default_options|
+        if options[:auth_mech] || options[:user]
+          default_options[:auth_source] = case options[:auth_mech]
+          when :gssapi, :mongodb_x509
+            '$external'
+          when :plain
+            options[:database] || '$external'
+          else
+            options[:database] || Database::ADMIN
+          end
+        end
+
+        if options[:auth_mech] == :gssapi
+          opts[:auth_mech_properties] = { service_name: 'mongodb' }
+        end
+
+        if options[:ssl_cert]
+          default_options[:ssl_key] = options[:ssl_cert]
+        end
+      end
+    end
 
     # If options[:session] is set, validates that session and returns it.
     # If deployment supports sessions, creates a new session and returns it.
