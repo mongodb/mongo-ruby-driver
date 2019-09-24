@@ -463,9 +463,9 @@ module Mongo
     def default_auth_source
       case @uri_options[:auth_mech]
       when :gssapi, :mongodb_x509
-        :external
+        '$external'
       when :plain
-        @database || :external
+        @database || '$external'
       else
         @database || Database::ADMIN
       end

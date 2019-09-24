@@ -716,9 +716,9 @@ describe Mongo::URI::SRVProtocol do
 
         context '$external' do
           let(:source) { '$external' }
-          let(:expected) { :external }
+          let(:expected) { '$external' }
 
-          it 'sets the auth source to :external' do
+          it 'sets the auth source to '$external'' do
             expect(uri.uri_options[:auth_source]).to eq(expected)
           end
 
