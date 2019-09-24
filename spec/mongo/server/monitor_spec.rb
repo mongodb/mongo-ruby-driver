@@ -201,6 +201,22 @@ describe Mongo::Server::Monitor do
         expect(thread.alive?).to be(false)
       end
     end
+
+    context 'when started again' do
+      it 'resumes the thread' do
+        ClientRegistry.instance.close_all_clients
+        thread
+        sleep 0.5
+
+        RSpec::Mocks.with_temporary_scope do
+          expect(monitor.connection).to receive(:disconnect!).and_call_original
+          monitor.stop!
+          monitor.start!
+          sleep 0.5
+          expect(thread.alive?).to be(true)
+        end
+      end
+    end
   end
 
   describe '#connection' do

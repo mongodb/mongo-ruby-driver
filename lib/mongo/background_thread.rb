@@ -114,6 +114,7 @@ module Mongo
 
     # @return [ Thread ] The created Thread instance.
     def start!
+      @stop_requested = nil
       @thread = Thread.new do
         catch(:done) do
           until @stop_requested
