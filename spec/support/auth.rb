@@ -68,9 +68,7 @@ module Mongo
       end
 
       def expected_credential
-        expected_credential = {
-          'auth_source' => expected_auth_source,
-        }
+        expected_credential = { 'auth_source' => credential['source'] }
 
         if credential['username']
           expected_credential['user'] = credential['username']
@@ -102,11 +100,6 @@ module Mongo
 
       def expected_auth_mech_properties
         credential['mechanism_properties'].keys.map(&:downcase)
-      end
-
-      def expected_auth_source
-        return '$external' if credential['source'] == '$external'
-        credential['source']
       end
     end
   end
