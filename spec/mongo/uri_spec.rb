@@ -790,11 +790,6 @@ describe Mongo::URI do
         it 'sets the auth source to the database' do
           expect(uri.uri_options[:auth_source]).to eq(source)
         end
-
-        it 'sets the options on a client created with the uri' do
-          client = new_local_client_nmio(string)
-          expect(client.options[:auth_source]).to eq(source)
-        end
       end
     end
 
@@ -810,11 +805,6 @@ describe Mongo::URI do
         it 'sets the auth mechanism properties' do
           expect(uri.uri_options[:auth_mech_properties]).to eq(expected)
         end
-
-        it 'sets the options on a client created with the uri' do
-          client = new_local_client_nmio(string)
-          expect(client.options[:auth_mech_properties]).to eq(expected)
-        end
       end
 
       context 'canonicalize_host_name' do
@@ -826,11 +816,6 @@ describe Mongo::URI do
 
         it 'sets the auth mechanism properties' do
           expect(uri.uri_options[:auth_mech_properties]).to eq(expected)
-        end
-
-        it 'sets the options on a client created with the uri' do
-          client = new_local_client_nmio(string)
-          expect(client.options[:auth_mech_properties]).to eq(expected)
         end
       end
 
@@ -845,11 +830,6 @@ describe Mongo::URI do
 
         it 'sets the auth mechanism properties' do
           expect(uri.uri_options[:auth_mech_properties]).to eq(expected)
-        end
-
-        it 'sets the options on a client created with the uri' do
-          client = new_local_client_nmio(string)
-          expect(client.options[:auth_mech_properties]).to eq(expected)
         end
       end
 
@@ -872,11 +852,6 @@ describe Mongo::URI do
 
         it 'sets the auth mechanism properties' do
           expect(uri.uri_options[:auth_mech_properties]).to eq(expected)
-        end
-
-        it 'sets the options on a client created with the uri' do
-          client = new_local_client_nmio(string)
-          expect(client.options[:auth_mech_properties]).to eq(expected)
         end
       end
     end

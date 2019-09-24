@@ -243,14 +243,6 @@ describe 'Client options' do
           expect(client.options[:auth_mech_properties]).to eq({ service_name: 'mongodb' })
         end
       end
-
-      context 'with custom auth mech properties' do
-        let(:options) { "?authMechanism=GSSAPI&authMechanismProperties=SERVICE_NAME:other,CANONICALIZE_HOST_NAME:true" }
-
-        it 'correctly sets auth mech properties' do
-          expect(client.options[:auth_mech_properties]).to eq(auth_mech_properties)
-        end
-      end
     end
 
     context 'with client options' do
@@ -264,21 +256,6 @@ describe 'Client options' do
 
       it 'sets default auth mech properties' do
         expect(client.options[:auth_mech_properties]).to eq({ service_name: 'mongodb' })
-      end
-
-      context 'with custom auth mech properties' do
-        let(:client_opts) do
-          {
-            auth_mech: :gssapi,
-            user: user,
-            password: pwd,
-            auth_mech_properties: auth_mech_properties
-          }
-        end
-
-        it 'correctly sets auth mech properties' do
-          expect(client.options[:auth_mech_properties]).to eq(auth_mech_properties)
-        end
       end
     end
   end
@@ -395,6 +372,68 @@ describe 'Client options' do
             client
           }.to raise_error(Mongo::Auth::InvalidConfiguration, /empty username is not supported/)
         end
+      end
+    end
+  end
+
+  context 'with auth source provided' do
+    let(:auth_source) { 'foo' }
+
+    context 'with URI options' do
+      let(:options) { "?authSource=#{auth_source}" }
+
+      it 'correctly sets auth source on the client' do
+        expect(client.options[:auth_source]).to eq(auth_source)
+      end
+    end
+
+    context 'with client options' do
+      let(:client_opts) { { auth_source: auth_source } }
+
+      it 'correctly sets auth source on the client' do
+        expect(client.options[:auth_source]).to eq(auth_source)
+      end
+    end
+  end
+
+  context 'with auth mechanism properties' do
+    let(:service_name) { 'service name' }
+    let(:canonicalize_host_name) { true }
+    let(:service_realm) { 'service_realm' }
+
+    let(:auth_mechanism_properties) do
+      {
+        service_name: service_name,
+        canonicalize_host_name: canonicalize_host_name,
+        service_realm: service_realm
+      }
+    end
+
+    context 'with URI options' do
+      let(:options) do
+        "?authMechanismProperties=SERVICE_NAME:#{service_name}," +
+          "CANONICALIZE_HOST_NAME:#{canonicalize_host_name}," +
+          "SERVICE_REALM:#{service_realm}"
+      end
+
+      it 'correctly sets auth mechanism properties on the client' do
+        expect(client.options[:auth_mech_properties]).to eq({
+          'service_name' => service_name,
+          'canonicalize_host_name' => canonicalize_host_name,
+          'service_realm' => service_realm
+        })
+      end
+    end
+
+    context 'with client options' do
+      let(:client_opts) { { auth_mech_properties: auth_mechanism_properties } }
+
+      it 'correctly sets auth mechanism properties on the client' do
+        expect(client.options[:auth_mech_properties]).to eq({
+          'service_name' => service_name,
+          'canonicalize_host_name' => canonicalize_host_name,
+          'service_realm' => service_realm
+        })
       end
     end
   end
