@@ -158,7 +158,7 @@ describe Mongo::Server::Monitor do
   end
 =end
 
-  describe '#restart!' do
+  describe '#run!' do
 
     let!(:thread) do
       monitor.run!
@@ -182,6 +182,24 @@ describe Mongo::Server::Monitor do
         expect(monitor.restart!).not_to be(thread)
       end
     end
+
+    context 'when running after a stop' do
+      it 'starts the thread' do
+        ClientRegistry.instance.close_all_clients
+        thread
+        sleep 0.5
+
+        RSpec::Mocks.with_temporary_scope do
+          expect(monitor.connection).to receive(:disconnect!).and_call_original
+          monitor.stop!
+          sleep 0.5
+          expect(thread.alive?).to be false
+          new_thread = monitor.run!
+          sleep 0.5
+          expect(new_thread.alive?).to be(true)
+        end
+      end
+    end
   end
 
   describe '#stop' do
@@ -199,22 +217,6 @@ describe Mongo::Server::Monitor do
         expect(monitor.connection).to receive(:disconnect!).and_call_original
         monitor.stop!
         expect(thread.alive?).to be(false)
-      end
-    end
-
-    context 'when started again' do
-      it 'resumes the thread' do
-        ClientRegistry.instance.close_all_clients
-        thread
-        sleep 0.5
-
-        RSpec::Mocks.with_temporary_scope do
-          expect(monitor.connection).to receive(:disconnect!).and_call_original
-          monitor.stop!
-          monitor.start!
-          sleep 0.5
-          expect(thread.alive?).to be(true)
-        end
       end
     end
   end
