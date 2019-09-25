@@ -129,7 +129,9 @@ module Mongo
           cmd[:new] = !!(opts[:return_document] && opts[:return_document] == :after)
           cmd[:upsert] = opts[:upsert] if opts[:upsert]
           cmd[:maxTimeMS] = max_time_ms if max_time_ms
-          cmd[:bypassDocumentValidation] = !!opts[:bypass_document_validation]
+          if opts[:bypass_document_validation]
+            cmd[:bypassDocumentValidation] = true
+          end
 
           value = with_session(opts) do |session|
             applied_write_concern = applied_write_concern(opts[:session])
