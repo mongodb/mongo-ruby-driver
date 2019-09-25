@@ -111,26 +111,26 @@ describe 'Client options' do
       end
     end
 
-    # TODO: get this test passing
-    # context 'with client options' do
-    #   let(:client_opts) do
-    #     {
-    #       auth_mech: auth_mech_sym,
-    #       ssl: true,
-    #       ssl_cert: cert,
-    #       ssl_ca_cert: ca_file,
-    #       user: user,
-    #       password: pwd
-    #     }
-    #   end
+    context 'with client options' do
+      let(:client_opts) do
+        {
+          auth_mech: auth_mech_sym,
+          ssl: true,
+          ssl_cert: cert,
+          ssl_ca_cert: ca_file,
+          user: user,
+          password: pwd
+        }
+      end
 
-    #   it 'creates a client with ssl properties' do
-    #     expect(client.options[:ssl]).to be true
-    #     expect(client.options[:ssl_cert]).to eq(cert)
-    #     expect(client.options[:ssl_ca_cert]).to eq(ca_file)
-    #     expect(client.options[:ssl_key]).to eq(cert)
-    #   end
-    # end
+      it 'creates a client with ssl properties' do
+        expect(client.options[:ssl]).to be true
+        expect(client.options[:ssl_cert]).to eq(cert)
+        expect(client.options[:ssl_ca_cert]).to eq(ca_file)
+        # TODO: get this expectation passing
+        # expect(client.options[:ssl_key]).to eq(cert)
+      end
+    end
   end
 
   shared_examples_for 'an auth mechanism that doesn\'t support auth_mech_properties' do
