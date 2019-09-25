@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-RSpec::Matchers.define :have_blank_credentials do 
+RSpec::Matchers.define :have_blank_credentials do
   match do |client|
     %i(auth_mech auth_mech_properties auth_source password user).all? do |key|
       client.options[key].nil?
@@ -68,9 +68,7 @@ module Mongo
       end
 
       def expected_credential
-        expected_credential = {
-          'auth_source' => expected_auth_source,
-        }
+        expected_credential = { 'auth_source' => credential['source'] }
 
         if credential['username']
           expected_credential['user'] = credential['username']
@@ -102,11 +100,6 @@ module Mongo
 
       def expected_auth_mech_properties
         credential['mechanism_properties'].keys.map(&:downcase)
-      end
-
-      def expected_auth_source
-        return :external if credential['source'] == '$external'
-        credential['source']
       end
     end
   end

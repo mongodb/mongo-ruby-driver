@@ -729,7 +729,7 @@ describe Mongo::URI do
 
         context 'when mechanism_properties are provided' do
           let(:options) { "authMechanism=#{mechanism}&authMechanismProperties=CANONICALIZE_HOST_NAME:true" }
-          
+
           it 'does not allow a client to be created' do
             expect {
               new_local_client_nmio(string)
@@ -758,7 +758,7 @@ describe Mongo::URI do
 
         context 'when mechanism_properties are provided' do
           let(:options) { "authMechanism=#{mechanism}&authMechanismProperties=CANONICALIZE_HOST_NAME:true" }
-          
+
           it 'does not allow a client to be created' do
             expect {
               new_local_client_nmio(string)
@@ -799,7 +799,7 @@ describe Mongo::URI do
 
         context 'when mechanism_properties are provided' do
           let(:options) { "authMechanism=#{mechanism}&authMechanismProperties=SERVICE_NAME:other,CANONICALIZE_HOST_NAME:true" }
-          
+
           it 'sets the options on a client created with the uri' do
             client = new_local_client_nmio(string)
             expect(client.options[:auth_mech_properties]).to eq({ 'canonicalize_host_name' => true, 'service_name' => 'other' })
@@ -827,7 +827,7 @@ describe Mongo::URI do
 
         context 'when mechanism_properties are provided' do
           let(:options) { "authMechanism=#{mechanism}&authMechanismProperties=CANONICALIZE_HOST_NAME:true" }
-          
+
           it 'does not allow a client to be created' do
             expect {
               new_local_client_nmio(string)
@@ -878,7 +878,7 @@ describe Mongo::URI do
         context 'when a password is provided' do
           let(:credentials) { "#{user}:#{password}"}
           let(:password) { 's3kr4t' }
-          
+
           it 'does not allow a client to be created' do
             expect {
               new_local_client_nmio(string)
@@ -888,7 +888,7 @@ describe Mongo::URI do
 
         context 'when mechanism_properties are provided' do
           let(:options) { "authMechanism=#{mechanism}&authMechanismProperties=CANONICALIZE_HOST_NAME:true" }
-          
+
           it 'does not allow a client to be created' do
             expect {
               new_local_client_nmio(string)
@@ -945,20 +945,6 @@ describe Mongo::URI do
         it 'sets the options on a client created with the uri' do
           client = new_local_client_nmio(string)
           expect(client.options[:auth_source]).to eq(source)
-        end
-      end
-
-      context '$external' do
-        let(:source) { '$external' }
-        let(:expected) { :external }
-
-        it 'sets the auth source to :external' do
-          expect(uri.uri_options[:auth_source]).to eq(expected)
-        end
-
-        it 'sets the options on a client created with the uri' do
-          client = new_local_client_nmio(string)
-          expect(client.options[:auth_source]).to eq(expected)
         end
       end
     end
