@@ -242,20 +242,19 @@ describe 'Client options' do
       end
     end
 
-    # TODO: get this test passing
-    # context 'with client options' do
-    #   let(:client_opts) do
-    #     {
-    #       auth_mech: :gssapi,
-    #       user: user,
-    #       password: pwd
-    #     }
-    #   end
+    context 'with client options' do
+      let(:client_opts) do
+        {
+          auth_mech: :gssapi,
+          user: user,
+          password: pwd
+        }
+      end
 
-    #   it 'sets default auth mech properties' do
-    #     expect(client.options[:auth_mech_properties]).to eq({ 'service_name' => 'mongodb' })
-    #   end
-    # end
+      it 'sets default auth mech properties' do
+        expect(client.options[:auth_mech_properties]).to eq({ 'service_name' => 'mongodb' })
+      end
+    end
   end
 
   context 'with PLAIN auth mechanism' do
