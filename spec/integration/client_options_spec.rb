@@ -339,10 +339,10 @@ describe 'Client options' do
   context 'with no auth mechanism provided' do
     context 'with URI options' do
       context 'with no credentials' do
-          it 'creates a client with epty credentials' do
+        it 'creates a client with epty credentials' do
           expect(client.options[:user]).to be_nil
           expect(client.options[:password]).to be_nil
-          end
+        end
       end
 
       context 'with empty credentials' do
@@ -358,10 +358,10 @@ describe 'Client options' do
 
     context 'with client options' do
       context 'with no credentials' do
-          it 'creates a client with epty credentials' do
+        it 'creates a client with empty credentials' do
           expect(client.options[:user]).to be_nil
           expect(client.options[:password]).to be_nil
-          end
+        end
       end
 
       context 'with empty credentials' do
