@@ -272,6 +272,10 @@ EOT
     end
   end
 
+  def client_x509_pem_path
+    "#{ssl_certs_dir}/client-x509.pem"
+  end
+
   def second_level_cert_path
     "#{ssl_certs_dir}/client-second-level.crt"
   end

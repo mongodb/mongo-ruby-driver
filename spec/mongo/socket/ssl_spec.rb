@@ -11,10 +11,6 @@ describe Mongo::Socket::SSL, retry: 3 do
     end
   end
 
-  let(:client) {
-    authorized_client
-  }
-
   let!(:resolver) do
     address.send(:create_resolver, {})
   end
@@ -55,33 +51,26 @@ describe Mongo::Socket::SSL, retry: 3 do
     OpenSSL::PKey.read(key_string)
   end
 
-  let(:client) do
-    ClientRegistry.instance.global_client('unauthorized')
-  end
-
   describe '#address' do
     it 'returns the address and tls indicator' do
       addr = socket.instance_variable_get(:@tcp_socket).remote_address
       expect(socket.send(:address)).to eq("#{addr.ip_address}:#{addr.ip_port} (#{default_address}, TLS)")
     end
-
-
   end
 
   describe '#connect!' do
+
     context 'when a certificate is provided' do
+
       context 'when connecting the tcp socket is successful' do
+
         it 'connects to the server' do
           expect(socket).to be_alive
-        end
-
-        it 'can successfully insert a document' do
-          result = client[:test].insert_one({ title: 'A Test Document' })
-          expect(result).to be_ok
         end
       end
 
       context 'when connecting the tcp socket raises an exception' do
+
         it 'raises an exception' do
           expect_any_instance_of(::Socket).to receive(:connect).and_raise(Mongo::Error::SocketTimeoutError)
           expect do
@@ -92,6 +81,7 @@ describe Mongo::Socket::SSL, retry: 3 do
     end
 
     context 'when a certificate and key are provided as strings' do
+
       let(:options) do
         {
           :ssl => true,
@@ -125,6 +115,7 @@ describe Mongo::Socket::SSL, retry: 3 do
     end
 
     context 'when a certificate and key are provided as objects' do
+
       let(:options) do
         {
           :ssl => true,
@@ -140,6 +131,7 @@ describe Mongo::Socket::SSL, retry: 3 do
     end
 
     context 'when the certificate is specified using both a file and a PEM-encoded string' do
+
       let(:options) do
         super().merge(
           :ssl_cert_string => 'This is a random string, not a PEM-encoded certificate'
@@ -153,6 +145,7 @@ describe Mongo::Socket::SSL, retry: 3 do
     end
 
     context 'when the certificate is specified using both a file and an object' do
+
       let(:options) do
         super().merge(
           :ssl_cert_object => 'This is a string, not a certificate'
@@ -166,6 +159,7 @@ describe Mongo::Socket::SSL, retry: 3 do
     end
 
     context 'when the certificate is specified using both a PEM-encoded string and an object' do
+
       let(:options) do
         {
           :ssl => true,
@@ -183,6 +177,7 @@ describe Mongo::Socket::SSL, retry: 3 do
     end
 
     context 'when the key is specified using both a file and a PEM-encoded string' do
+
       let(:options) do
         super().merge(
           :ssl_key_string => 'This is a normal string, not a PEM-encoded key'
@@ -196,6 +191,7 @@ describe Mongo::Socket::SSL, retry: 3 do
     end
 
     context 'when the key is specified using both a file and an object' do
+
       let(:options) do
         super().merge(
           :ssl_cert_object => 'This is a string, not a key'
@@ -209,6 +205,7 @@ describe Mongo::Socket::SSL, retry: 3 do
     end
 
     context 'when the key is specified using both a PEM-encoded string and an object' do
+
       let(:options) do
         {
           :ssl => true,
@@ -226,6 +223,7 @@ describe Mongo::Socket::SSL, retry: 3 do
     end
 
     context 'when a certificate is passed, but it is not of the right type' do
+
       let(:options) do
         cert = "This is a string, not a X509 Certificate"
         {
@@ -289,6 +287,7 @@ describe Mongo::Socket::SSL, retry: 3 do
       ruby_version_lt '2.4.1'
 
       context 'when a key is passed, but it is not of the right type' do
+
         let(:options) do
           key = "This is a string not a key"
           {
@@ -315,6 +314,7 @@ describe Mongo::Socket::SSL, retry: 3 do
       ruby_version_gte '2.4.1'
 
       context 'when a key is passed, but it is not of the right type' do
+
         let(:options) do
           key = "This is a string not a key"
           {
@@ -348,6 +348,7 @@ describe Mongo::Socket::SSL, retry: 3 do
     end
 
     context 'when a bad certificate is provided' do
+
       let(:options) do
         super().merge(
           :ssl_key => COMMAND_MONITORING_TESTS.first
@@ -396,6 +397,7 @@ describe Mongo::Socket::SSL, retry: 3 do
       end
 
       context 'as a string containing the PEM-encoded certificate' do
+
         let(:options) do
           super().merge(
             :ssl_ca_cert_string => ca_cert_string,
@@ -423,6 +425,7 @@ describe Mongo::Socket::SSL, retry: 3 do
       end
 
       context 'both as a file and a PEM-encoded parameter' do
+
         let(:options) do
           super().merge(
             :ssl_ca_cert => SpecConfig.instance.local_ca_cert_path,
@@ -438,6 +441,7 @@ describe Mongo::Socket::SSL, retry: 3 do
       end
 
       context 'both as a file and as object parameter' do
+
         let(:options) do
           super().merge(
             :ssl_ca_cert => SpecConfig.instance.local_ca_cert_path,
@@ -452,6 +456,7 @@ describe Mongo::Socket::SSL, retry: 3 do
       end
 
       context 'both as a PEM-encoded string and as object parameter' do
+
         let(:options) do
           cert = File.read(SpecConfig.instance.local_ca_cert_path)
           super().merge(
@@ -509,7 +514,15 @@ describe Mongo::Socket::SSL, retry: 3 do
         Mongo::Server::Connection.new(server, options.merge(socket_timeout: 2))
       end
 
+      let(:client) do
+        ClientRegistry.instance.new_local_client(ENV['MONGODB_URI'], database: SpecConfig.instance.test_db)
+      end
+
       context 'as a file' do
+        before do
+          ClientRegistry.instance.global_client('root_authorized')[:test].drop
+        end
+
         let(:options) do
           SpecConfig.instance.test_options.merge(
             ssl: true,
@@ -525,6 +538,11 @@ describe Mongo::Socket::SSL, retry: 3 do
           expect do
             connection.connect!
           end.not_to raise_error
+        end
+
+        it 'allows a client to insert a document' do
+          expect(client[:test].insert_one(test: 1)).to be_ok
+          expect(client[:test].find(test: 1).count).to eq(1)
         end
       end
     end
@@ -584,6 +602,7 @@ describe Mongo::Socket::SSL, retry: 3 do
         end
 
         context 'bundled with intermediate cert' do
+
           # https://github.com/jruby/jruby-openssl/issues/181
           only_mri
 
@@ -628,6 +647,7 @@ describe Mongo::Socket::SSL, retry: 3 do
         end
 
         context 'bundled with intermediate cert' do
+
           # https://github.com/jruby/jruby-openssl/issues/181
           only_mri
 
@@ -712,6 +732,7 @@ describe Mongo::Socket::SSL, retry: 3 do
     end
 
     context 'when ssl_verify is false' do
+
       let(:options) do
         super().merge(
           :ssl_ca_cert => 'invalid',
@@ -738,6 +759,7 @@ describe Mongo::Socket::SSL, retry: 3 do
   end
 
   describe '#readbyte' do
+
     before do
       allow_message_expectations_on_nil
 
@@ -747,6 +769,7 @@ describe Mongo::Socket::SSL, retry: 3 do
     end
 
     context 'with the socket providing "abc"' do
+
       let(:socket_content) { "abc" }
 
       it 'should return 97 (the byte for "a")' do
@@ -755,6 +778,7 @@ describe Mongo::Socket::SSL, retry: 3 do
     end
 
     context 'with the socket providing "\x00" (NULL_BYTE)' do
+
       let(:socket_content) { "\x00" }
 
       it 'should return 0' do
@@ -763,6 +787,7 @@ describe Mongo::Socket::SSL, retry: 3 do
     end
 
     context 'with the socket providing no data' do
+
       let(:socket_content) { "" }
 
       let(:remote_address) { socket.instance_variable_get(:@tcp_socket).remote_address }
