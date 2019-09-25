@@ -296,12 +296,6 @@ module Mongo
           raise_invalid_error_no_fmt!("tlsInsecure' and 'tlsAllowInvalidHostnames' cannot both be specified")
         end
       end
-
-      # Since we know that the only URI option that sets :ssl_cert is "tlsCertificateKeyFile", any
-      # value set for :ssl_cert must also be set for :ssl_key.
-      # if @uri_options[:ssl_cert]
-      #   @uri_options[:ssl_key] = @uri_options[:ssl_cert]
-      # end
     end
 
     # Get the credentials provided in the URI.
@@ -443,35 +437,6 @@ module Mongo
     def parse_database!(string)
       raise_invalid_error!(UNESCAPED_DATABASE) if string =~ UNSAFE
       decode(string) if string.length > 0
-    end
-
-    def default_client_options
-      opts = Options::Redacted.new(database: database)
-
-      if @uri_options[:auth_mech] || @user
-        opts[:auth_source] = default_auth_source
-      end
-
-      if @uri_options[:auth_mech] == :gssapi
-        opts[:auth_mech_properties] = default_auth_mech_properties
-      end
-
-      opts
-    end
-
-    def default_auth_mech_properties
-      { service_name: 'mongodb' }
-    end
-
-    def default_auth_source
-      case @uri_options[:auth_mech]
-      when :gssapi, :mongodb_x509
-        '$external'
-      when :plain
-        @database || '$external'
-      else
-        @database || Database::ADMIN
-      end
     end
 
     def raise_invalid_error!(details)
