@@ -99,36 +99,43 @@ module Mongo
                       {
                         'type' => 'ConnectionCreated',
                         'connectionId' => event.connection_id,
+                        'address' => event.address,
                       }
                     when Mongo::Monitoring::Event::Cmap::ConnectionReady
                       {
                         'type' => 'ConnectionReady',
                         'connectionId' => event.connection_id,
+                        'address' => event.address,
                       }
                     when Mongo::Monitoring::Event::Cmap::ConnectionClosed
                       {
                         'type' => 'ConnectionClosed',
                         'connectionId' => event.connection_id,
                         'reason' => event.reason,
+                        'address' => event.address,
                       }
                     when Mongo::Monitoring::Event::Cmap::ConnectionCheckOutStarted
                       {
                         'type' => 'ConnectionCheckOutStarted',
-                    }
+                        'address' => event.address,
+                      }
                     when Mongo::Monitoring::Event::Cmap::ConnectionCheckOutFailed
                       {
                         'type' => 'ConnectionCheckOutFailed',
                         'reason' => event.reason,
+                        'address' => event.address,
                       }
                    when Mongo::Monitoring::Event::Cmap::ConnectionCheckedOut
                       {
                         'type' => 'ConnectionCheckedOut',
                         'connectionId' => event.connection_id,
+                        'address' => event.address,
                       }
                     when Mongo::Monitoring::Event::Cmap::ConnectionCheckedIn
                       {
                         'type' => 'ConnectionCheckedIn',
                         'connectionId' => event.connection_id,
+                        'address' => event.address,
                       }
                     when Mongo::Monitoring::Event::Cmap::PoolCleared
                       {
