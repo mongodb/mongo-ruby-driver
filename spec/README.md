@@ -42,7 +42,7 @@ launched as follows:
     # Launch mongod in one terminal
     mkdir /tmp/mdb
     mongod --dbpath /tmp/mdb
-    
+
     # Run tests in another terminal
     rake
 
@@ -63,7 +63,7 @@ First, install [mtools](https://github.com/rueckstiess/mtools):
     export PATH=~/.local/bin:$PATH
     # On MacOS:
     export PATH=$PATH:~/Library/Python/2.7/bin
-    
+
 Then, launch a replica set:
 
     mlaunch init --replicaset --name ruby-driver-rs \
@@ -114,13 +114,13 @@ The driver's test suite is configured to verify certificates by default.
 If the server is launched with the certificates from the driver's test suite,
 the test suite can be run simply by specifying `tls=true` URI option:
 
-    MONGODB_URI='mongodb://localhost:27017/?tls=true' rake 
+    MONGODB_URI='mongodb://localhost:27017/?tls=true' rake
 
 The driver's test suite can also be executed against a server launched with
 any other certificates. In this case the certificates need to be explicitly
 specified in the URI, for example as follows:
 
-    MONGODB_URI='mongodb://localhost:27017/?tls=true&tlsCAFile=path/to/ca.crt&tlsCertificateKeyFile=path/to/client.pem' rake 
+    MONGODB_URI='mongodb://localhost:27017/?tls=true&tlsCAFile=path/to/ca.crt&tlsCertificateKeyFile=path/to/client.pem' rake
 
 Note that some tests (specifically testing TLS verification) expect the server
 to be launched using the certificates in the driver's test suite, and will
@@ -140,7 +140,7 @@ case a standalone server can be started as follows:
 To run the test suite against such a server, also omitting certificate
 verification, run:
 
-    MONGODB_URI='mongodb://localhost:27017/?tls=true&tlsInsecure=true' rake 
+    MONGODB_URI='mongodb://localhost:27017/?tls=true&tlsInsecure=true' rake
 
 Note that there are tests in the test suite that cover TLS verification, and
 they may fail if the test suite is run in this way.
@@ -153,7 +153,34 @@ mlaunch can configure authentication on the server:
 
 To run the test suite against such a server, run:
 
-    MONGODB_URI='mongodb://dev:dev@localhost:27017/' rake 
+    MONGODB_URI='mongodb://dev:dev@localhost:27017/' rake
+
+## X509 Authentication
+
+The test suite includes a set of acceptance tests for x509 client authentication.
+
+To set up a server configured to accept authentication with an x509 certificate, run:
+
+    mlaunch init --single --dir /tmp/mdb-x509 --sslMode requireSSL \
+      --sslPEMKeyFile `pwd`/spec/support/certificates/server.pem \
+      --sslCAFile `pwd`/spec/support/certificates/ca.crt \
+      --sslClientCertificate `pwd`/spec/support/certificates/client-x509.pem
+
+To set up all necessary environment variables, run:
+
+    export MONGODB_URI="mongodb://localhost:27017/?tls=true&"\
+        "tlsCAFile=spec/support/certificates/ca.crt&"\
+        "tlsCertificateKeyFile=spec/support/certificates/client-x509.pem"
+
+    export X509_AUTH_REQUIRED=1
+
+To prepare the test suite, run:
+
+    bundle exec rake spec:prepare
+
+To run the tests, run:
+
+    bundle exec rspec spec/integration/client_x509_spec.rb
 
 ## Compression
 
@@ -165,9 +192,9 @@ Generally, all URI options recognized by the driver may be set for a test run,
 and will cause the clients created by the test suite to have those options
 by default. For example, retryable writes may be turned on and off as follows:
 
-    MONGODB_URI='mongodb://localhost:27017/?retryWrites=true' rake 
+    MONGODB_URI='mongodb://localhost:27017/?retryWrites=true' rake
 
-    MONGODB_URI='mongodb://localhost:27017/?retryWrites=false' rake 
+    MONGODB_URI='mongodb://localhost:27017/?retryWrites=false' rake
 
 Individual tests may override options that the test suite uses as defaults.
 For example, retryable writes tests may create clients with the retry writes
@@ -177,7 +204,7 @@ the entire test run.
 It is also possible to, for example, reference non-default hosts and replica
 set names:
 
-    MONGODB_URI='mongodb://test.host:27017,test.host:27018/?replicaSet=fooset' rake 
+    MONGODB_URI='mongodb://test.host:27017,test.host:27018/?replicaSet=fooset' rake
 
 However, as noted in the caveats section, changing the database name used by
 the test suite is not supported.

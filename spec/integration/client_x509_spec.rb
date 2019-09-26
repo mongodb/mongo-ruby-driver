@@ -3,7 +3,7 @@ require 'lite_spec_helper'
 
 describe 'Client authentication with MONGODB-X509' do
   before do
-    skip 'X509_REQUIRED env var not specified' unless ENV['X509_REQUIRED']
+    skip 'X509_AUTH_REQUIRED env var not specified' unless ENV['X509_AUTH_REQUIRED']
 
     users = ClientRegistry.instance.global_client('root_authorized').use(:$external).database.users
 
