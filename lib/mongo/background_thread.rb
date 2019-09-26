@@ -30,6 +30,14 @@ module Mongo
     #
     # @api public for backwards compatibility only
     def run!
+      if @stop_requested && @thread
+        wait_for_stop
+        if @thread.alive?
+          log_warn("Starting a new background thread in #{self}, but the previous background thread is still running")
+          @thread = nil
+        end
+        @stop_requested = false
+      end
       if running?
         @thread
       else
@@ -81,6 +89,25 @@ module Mongo
       # the middle of an operation.
       @thread.kill
 
+      wait_for_stop
+    end
+
+    private
+
+    def start!
+      @thread = Thread.new do
+        catch(:done) do
+          until @stop_requested
+            do_work
+          end
+        end
+      end
+    end
+
+    # Waits for the thread to die, with a timeout.
+    #
+    # Returns true if the thread died, false otherwise.
+    def wait_for_stop
       # Wait for the thread to die. This is important in order to reliably
       # clean up resources like connections knowing that no background
       # thread will reconnect because it is still working.
@@ -106,20 +133,8 @@ module Mongo
         false
       else
         @thread = nil
+        @stop_requested = false
         true
-      end
-    end
-
-    private
-
-    # @return [ Thread ] The created Thread instance.
-    def start!
-      @thread = Thread.new do
-        catch(:done) do
-          until @stop_requested
-            do_work
-          end
-        end
       end
     end
 
