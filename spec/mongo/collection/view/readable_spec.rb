@@ -641,8 +641,10 @@ describe Mongo::Collection::View::Readable do
           view.distinct(nil)
         end
 
-        it 'returns an empty array' do
-          expect(distinct).to be_empty
+        it 'raises ArgumentError' do
+          expect do
+            distinct
+          end.to raise_error(ArgumentError, 'Field name for distinct operation must be not nil')
         end
       end
 
@@ -696,8 +698,10 @@ describe Mongo::Collection::View::Readable do
           view.distinct(nil)
         end
 
-        it 'returns an empty array' do
-          expect(distinct).to be_empty
+        it 'raises ArgumentError' do
+          expect do
+            distinct
+          end.to raise_error(ArgumentError, 'Field name for distinct operation must be not nil')
         end
       end
     end

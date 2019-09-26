@@ -244,6 +244,9 @@ module Mongo
         #
         # @since 2.0.0
         def distinct(field_name, opts = {})
+          if field_name.nil?
+            raise ArgumentError, 'Field name for distinct operation must be not nil'
+          end
           cmd = { :distinct => collection.name,
                   :key => field_name.to_s,
                   :query => filter }
