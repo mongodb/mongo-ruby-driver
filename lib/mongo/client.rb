@@ -371,11 +371,7 @@ module Mongo
     #
     # @since 2.0.0
     def initialize(addresses_or_uri, options = nil)
-      if options
-        options = options.dup
-      else
-        options = {}
-      end
+      options = options ? options.dup : {}
 
       srv_uri = nil
       if addresses_or_uri.is_a?(::String)
