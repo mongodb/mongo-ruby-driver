@@ -123,8 +123,8 @@ describe 'Client options' do
 
       it 'creates a client with ssl properties' do
         expect(client.options[:ssl]).to be true
-        expect(client.options[:ssl_cert]).to eq(cert)
-        expect(client.options[:ssl_ca_cert]).to eq(ca_file)
+        expect(client.options[:ssl_cert]).to eq(cert_path)
+        expect(client.options[:ssl_ca_cert]).to eq(ca_file_path)
         expect(client.options[:ssl_key]).to eq(cert_path)
       end
     end
