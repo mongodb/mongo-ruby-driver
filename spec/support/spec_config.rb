@@ -433,4 +433,8 @@ EOT
       ]
     )
   end
+
+  def x509_username
+    'C=US,ST=New York,L=New York City,O=MongoDB,OU=x509,CN=localhost'
+  end
 end

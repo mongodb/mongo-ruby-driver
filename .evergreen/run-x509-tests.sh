@@ -31,7 +31,7 @@ export MONGODB_URI="mongodb://localhost:27017/?tls=true&"\
 "tlsCertificateKeyFile=spec/support/certificates/client-x509.pem"
 bundle exec rake spec:prepare
 
-bundle exec rspec spec/mongo/socket*
+bundle exec rspec spec/integration/client_x509_spec.rb
 test_status=$?
 echo "TEST STATUS"
 echo ${test_status}
