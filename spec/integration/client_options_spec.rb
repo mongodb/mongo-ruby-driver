@@ -96,18 +96,18 @@ describe 'Client options' do
   end
 
   shared_examples_for 'an auth mechanism with ssl' do
-    let(:ca_file) { '/path/to/ca.pem' }
-    let(:cert) { '/path/to/client.pem' }
+    let(:ca_file_path) { '/path/to/ca.pem' }
+    let(:cert_path) { '/path/to/client.pem' }
 
     context 'with URI options' do
       let(:credentials) { "#{user}:#{pwd}@" }
-      let(:options) { "?authMechanism=#{auth_mech_string}&tls=true&tlsCAFile=#{ca_file}&tlsCertificateKeyFile=#{cert}" }
+      let(:options) { "?authMechanism=#{auth_mech_string}&tls=true&tlsCAFile=#{ca_file_path}&tlsCertificateKeyFile=#{cert_path}" }
 
       it 'creates a client with ssl properties' do
         expect(client.options[:ssl]).to be true
-        expect(client.options[:ssl_cert]).to eq(cert)
-        expect(client.options[:ssl_ca_cert]).to eq(ca_file)
-        expect(client.options[:ssl_key]).to eq(cert)
+        expect(client.options[:ssl_cert]).to eq(cert_path)
+        expect(client.options[:ssl_ca_cert]).to eq(ca_file_path)
+        expect(client.options[:ssl_key]).to eq(cert_path)
       end
     end
 
@@ -116,8 +116,8 @@ describe 'Client options' do
         {
           auth_mech: auth_mech_sym,
           ssl: true,
-          ssl_cert: cert,
-          ssl_ca_cert: ca_file,
+          ssl_cert: cert_path,
+          ssl_ca_cert: ca_file_path,
           user: user,
           password: pwd
         }
@@ -125,10 +125,10 @@ describe 'Client options' do
 
       it 'creates a client with ssl properties' do
         expect(client.options[:ssl]).to be true
-        expect(client.options[:ssl_cert]).to eq(cert)
-        expect(client.options[:ssl_ca_cert]).to eq(ca_file)
+        expect(client.options[:ssl_cert]).to eq(cert_path)
+        expect(client.options[:ssl_ca_cert]).to eq(ca_file_path)
         # TODO: get this expectation passing
-        # expect(client.options[:ssl_key]).to eq(cert)
+        # expect(client.options[:ssl_key]).to eq(cert_path)
       end
     end
   end
@@ -138,7 +138,7 @@ describe 'Client options' do
       let(:credentials) { "#{user}:#{pwd}@" }
       let(:options) { "?authMechanism=#{auth_mech_string}&authMechanismProperties=CANONICALIZE_HOST_NAME:true" }
 
-      it 'throws an error on client creation' do
+      it 'raises an exception on client creation' do
         expect {
           client
         }.to raise_error(Mongo::Auth::InvalidConfiguration, /mechanism_properties are not supported/)
@@ -157,7 +157,7 @@ describe 'Client options' do
         }
       end
 
-      it 'throws an error on client creation' do
+      it 'raises an exception on client creation' do
         expect {
           client
         }.to raise_error(Mongo::Auth::InvalidConfiguration, /mechanism_properties are not supported/)
@@ -170,7 +170,7 @@ describe 'Client options' do
       let(:credentials) { "#{user}:#{pwd}@" }
       let(:options) { "?authMechanism=#{auth_mech_string}&authSource=foo" }
 
-      it 'throws an error on client creation' do
+      it 'raises an exception on client creation' do
         expect {
           client
         }.to raise_error(Mongo::Auth::InvalidConfiguration, /invalid auth source/)
@@ -187,7 +187,7 @@ describe 'Client options' do
         }
       end
 
-      it 'throws an error on client creation' do
+      it 'raises an exception on client creation' do
         expect {
           client
         }.to raise_error(Mongo::Auth::InvalidConfiguration, /invalid auth source/)
@@ -301,7 +301,7 @@ describe 'Client options' do
       context 'when a password is provided' do
         let(:credentials) { "#{user}:password@" }
 
-        it 'throws an error on client creation' do
+        it 'raises an exception on client creation' do
           expect {
             client
           }.to raise_error(Mongo::Auth::InvalidConfiguration, /password is not supported/)
@@ -328,7 +328,7 @@ describe 'Client options' do
       context 'when a password is provided' do
         let(:client_opts) { { auth_mech: :mongodb_x509, user: user, password: 'password' } }
 
-        it 'throws an error on client creation' do
+        it 'raises an exception on client creation' do
           expect {
             client
           }.to raise_error(Mongo::Auth::InvalidConfiguration, /password is not supported/)
@@ -340,16 +340,16 @@ describe 'Client options' do
   context 'with no auth mechanism provided' do
     context 'with URI options' do
       context 'with no credentials' do
-        it 'creates a client with epty credentials' do
+        it 'creates a client without credentials' do
           expect(client.options[:user]).to be_nil
           expect(client.options[:password]).to be_nil
         end
       end
 
-      context 'with empty credentials' do
+      context 'with empty username' do
         let(:credentials) { '@' }
 
-        it 'does not allow a client to be created with no username' do
+        it 'does not allow a client to be created' do
           expect {
             client
           }.to raise_error(Mongo::Auth::InvalidConfiguration, /empty username is not supported/)
