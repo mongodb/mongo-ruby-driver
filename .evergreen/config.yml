@@ -361,6 +361,16 @@ functions:
           ${PREPARE_SHELL}
           KERBEROS_REQUIRED=1 .evergreen/run-tests-with-kerberos.sh
 
+  "run tests with x509 authentication":
+    - command: shell.exec
+      type: test
+      params:
+        shell: bash
+        working_dir: "src"
+        script: |
+          ${PREPARE_SHELL}
+          X509_AUTH_REQUIRED=1 .evergreen/run-x509-tests.sh
+
   "run tests via mlaunch":
     - command: shell.exec
       type: test
@@ -524,6 +534,10 @@ tasks:
       commands:
         - func: "bootstrap mongo-orchestration"
         - func: "run tests with kerberos"
+    - name: "x509-tests"
+      commands:
+        - func: "bootstrap mongo-orchestration"
+        - func: "run tests with x509 authentication"
 
 axes:
   - id: "mongodb-version"
@@ -929,6 +943,17 @@ buildvariants:
   display_name: "Kerberos Tests"
   tasks:
     - name: "kerberos-tests"
+
+  matrix_name: "x509-tests"
+  matrix_spec:
+    auth-and-ssl: "auth-and-ssl"
+    ruby: "ruby-2.6"
+    mongodb-version: "4.2"
+    topology: standalone
+    os: rhel70
+  display_name: "X509 Tests"
+  tasks:
+    - name: "x509-tests"
 
 -
   matrix_name: "enterprise-auth-tests-rhel"
