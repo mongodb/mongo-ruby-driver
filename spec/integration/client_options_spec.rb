@@ -349,7 +349,7 @@ describe 'Client options' do
       context 'with empty username' do
         let(:credentials) { '@' }
 
-        it 'does not allow a client to be created' do
+        it 'raises an exception' do
           expect {
             client
           }.to raise_error(Mongo::Auth::InvalidConfiguration, /empty username is not supported/)
@@ -359,16 +359,16 @@ describe 'Client options' do
 
     context 'with client options' do
       context 'with no credentials' do
-        it 'creates a client with empty credentials' do
+        it 'creates a client without credentials' do
           expect(client.options[:user]).to be_nil
           expect(client.options[:password]).to be_nil
         end
       end
 
-      context 'with empty credentials' do
+      context 'with empty username' do
         let(:client_opts) { { user: '', password: '' } }
 
-        it 'does not allow a client to be created with no username' do
+        it 'raises an exception' do
           expect {
             client
           }.to raise_error(Mongo::Auth::InvalidConfiguration, /empty username is not supported/)
