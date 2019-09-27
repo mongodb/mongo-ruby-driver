@@ -39,6 +39,9 @@ describe Mongo::Auth::User::View do
   end
 
   shared_examples_for 'forwards write concern to server' do
+    # w:2 requires more than one node in the deployment
+    require_topology :replica_set
+
     it 'forwards write concern to server' do
       response
 
