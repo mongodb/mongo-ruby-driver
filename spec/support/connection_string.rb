@@ -315,8 +315,12 @@ module Mongo
               opts[MAPPINGS[k]]
             end
 
-          actual = actual.to_s if actual.is_a?(Symbol)
-          actual.downcase! if actual.is_a?(String)
+          if actual.is_a?(Symbol)
+            actual = actual.to_s
+          end
+          if actual.is_a?(String)
+            actual = actual.downcase
+          end
 
           expected == actual
         end
