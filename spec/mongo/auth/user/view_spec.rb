@@ -7,7 +7,43 @@ describe Mongo::Auth::User::View do
   end
 
   before do
-    begin; view.remove('durran'); rescue; end
+    # Separate view instance to not interfere with test assertions
+    view = described_class.new(root_authorized_client.database)
+    begin
+      view.remove('durran')
+    rescue Mongo::Error::OperationFailure
+    end
+  end
+
+  shared_context 'testing write concern' do
+
+    let(:subscriber) do
+      EventSubscriber.new
+    end
+
+    let(:client) do
+      root_authorized_client.tap do |client|
+        client.subscribe(Mongo::Monitoring::COMMAND, subscriber)
+      end
+    end
+
+    let(:view) do
+      described_class.new(client.database)
+    end
+
+    before do
+      allow_any_instance_of(Mongo::Monitoring::Event::CommandStarted).to receive(:redacted) do |instance, command_name, document|
+        document
+      end
+    end
+  end
+
+  shared_examples_for 'forwards write concern to server' do
+    it 'forwards write concern to server' do
+      response
+
+      expect(event.command['writeConcern']).to eq('w' => 2)
+    end
   end
 
   describe '#create' do
@@ -72,6 +108,25 @@ describe Mongo::Auth::User::View do
       end
 
       it_behaves_like 'an operation using a session'
+    end
+
+    context 'when write concern is given' do
+      include_context 'testing write concern'
+
+      let(:response) do
+        view.create(
+          'durran',
+          password: 'password',
+          roles: [Mongo::Auth::Roles::READ_WRITE],
+          write_concern: {w: 2},
+        )
+      end
+
+      let(:event) do
+        subscriber.single_command_started_event('createUser')
+      end
+
+      it_behaves_like 'forwards write concern to server'
     end
   end
 
@@ -183,6 +238,25 @@ describe Mongo::Auth::User::View do
         it_behaves_like 'an operation using a session'
       end
     end
+
+    context 'when write concern is given' do
+      include_context 'testing write concern'
+
+      let(:response) do
+        view.update(
+          'durran',
+          password: 'password1',
+          roles: [Mongo::Auth::Roles::READ_WRITE],
+          write_concern: {w: 2},
+        )
+      end
+
+      let(:event) do
+        subscriber.single_command_started_event('updateUser')
+      end
+
+      it_behaves_like 'forwards write concern to server'
+    end
   end
 
   describe '#remove' do
@@ -259,6 +333,30 @@ describe Mongo::Auth::User::View do
 
         it_behaves_like 'a failed operation using a session'
       end
+    end
+
+    context 'when write concern is given' do
+      include_context 'testing write concern'
+
+      before do
+        view.create(
+            'durran',
+            password: 'password', roles: [ Mongo::Auth::Roles::READ_WRITE ]
+        )
+      end
+
+      let(:response) do
+        view.remove(
+          'durran',
+          write_concern: {w: 2},
+        )
+      end
+
+      let(:event) do
+        subscriber.single_command_started_event('dropUser')
+      end
+
+      it_behaves_like 'forwards write concern to server'
     end
   end
 
