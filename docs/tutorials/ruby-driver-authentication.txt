@@ -88,6 +88,13 @@ derived from the distinguished subject name of this certificate.
 This authentication method requires the use of SSL connections with
 certificate validation.
 
+To authenticate the client, you will need a valid SSL certificate
+and private encryption key. These can be stored in separate files,
+or together in one file (in the PEM format). Even if the certificate
+and private key are stored in the same file, you must specify the path to
+that file by passing both the ``ssl_cert`` and ``ssl_key`` options
+to the client.
+
 For more information about configuring X.509 authentication in MongoDB,
 see the :manual:`X.509 tutorial in the MongoDB Manual
 </tutorial/configure-x509/>`.
@@ -98,6 +105,7 @@ see the :manual:`X.509 tutorial in the MongoDB Manual
                              auth_mech: :mongodb_x509,
                              ssl: true,
                              ssl_cert: '/path/to/client.pem',
+                             ssl_key: '/path/to/client.pem',
                              ssl_ca_cert: '/path/to/ca.pem' )
 
 
