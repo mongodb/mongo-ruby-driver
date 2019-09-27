@@ -26,6 +26,7 @@ module Mongo
         include Executable
         include Limited
         include ReadPreferenceSupported
+        include WriteConcernSupported
 
         private
 
