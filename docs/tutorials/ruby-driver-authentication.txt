@@ -10,11 +10,11 @@ Authentication
    :depth: 1
    :class: singlecol
 
-MongoDB supports a variety of 
+MongoDB supports a variety of
 :manual:`authentication mechanisms </core/authentication/>`.
 
 For more information about configuring your MongoDB server for each of
-these authentication mechanisms see MongoDB's 
+these authentication mechanisms see MongoDB's
 :manual:`online documentation </tutorial/enable-authentication>`.
 
 Creating a user
@@ -29,7 +29,7 @@ username, password and roles parameters.
         'durran',
         password: 'password',
         roles: [ Mongo::Auth::Roles::READ_WRITE ])
-		
+
 .. seealso::
   :manual:`Built-in roles</reference/built-in-roles/>`
 
@@ -101,6 +101,13 @@ derived from the distinguished subject name of this certificate.
 This authentication method requires the use of SSL connections with
 certificate validation.
 
+To authenticate the client, you will need a valid SSL certificate
+and private encryption key. These can be stored in separate files,
+or together in one file (in the PEM format). Even if the certificate
+and private key are stored in the same file, you must specify the path to
+that file by passing both the ``ssl_cert`` and ``ssl_key`` options
+to the client.
+
 For more information about configuring X.509 authentication in MongoDB,
 see the :manual:`X.509 tutorial in the MongoDB Manual
 </tutorial/configure-x509/>`.
@@ -111,6 +118,7 @@ see the :manual:`X.509 tutorial in the MongoDB Manual
                              auth_mech: :mongodb_x509,
                              ssl: true,
                              ssl_cert: '/path/to/client.pem',
+                             ssl_key: '/path/to/client.pem',
                              ssl_ca_cert: '/path/to/ca.pem' )
 
 
@@ -120,7 +128,7 @@ LDAP (SASL PLAIN) mechanism
 
 MongoDB Enterprise Edition supports the LDAP authentication mechanism
 which allows you to delegate authentication using a Lightweight Directory
-Access Protocol `LDAP <http://en.wikipedia.org/wiki/LDAP>`_ server. 
+Access Protocol `LDAP <http://en.wikipedia.org/wiki/LDAP>`_ server.
 
 .. warning::
 
@@ -166,7 +174,7 @@ installed. Add to your ``Gemfile``:
   require 'mongo_kerberos'
 
 To use Kerberos in the Ruby driver with **MRI**, create a
-ticket-granting ticket using ``kinit``. See 
+ticket-granting ticket using ``kinit``. See
 `this documentation <http://linux.die.net/man/1/kinit>`_ for more
 information.
 
