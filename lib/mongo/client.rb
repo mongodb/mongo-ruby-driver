@@ -813,7 +813,7 @@ module Mongo
         end
 
         if options[:auth_mech] == :gssapi
-          opts[:auth_mech_properties] = { service_name: 'mongodb' }
+          default_options[:auth_mech_properties] = { service_name: 'mongodb' }
         end
 
         default_options[:retry_reads] = true
