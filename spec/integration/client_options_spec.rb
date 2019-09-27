@@ -115,6 +115,7 @@ describe 'Client options' do
           auth_mech: auth_mech_sym,
           ssl: true,
           ssl_cert: cert_path,
+          ssl_key: cert_path,
           ssl_ca_cert: ca_file_path,
           user: user,
           password: pwd

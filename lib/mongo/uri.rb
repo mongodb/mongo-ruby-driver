@@ -241,9 +241,9 @@ module Mongo
     #
     # @since 2.0.0
     def client_options
-      opts = Options::Redacted.new.tap do |opts|
+      opts = uri_options.tap do |opts|
         opts[:database] = @database if @database
-      end.merge(uri_options)
+      end
 
       @user ? opts.merge(credentials) : opts
     end
