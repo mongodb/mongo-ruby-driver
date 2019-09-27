@@ -816,12 +816,6 @@ module Mongo
           opts[:auth_mech_properties] = { service_name: 'mongodb' }
         end
 
-        # Since we know that the only URI option that sets :ssl_cert is "tlsCertificateKeyFile", any
-        # value set for :ssl_cert must also be set for :ssl_key.
-        if options[:ssl_cert]
-          default_options[:ssl_key] = options[:ssl_cert]
-        end
-
         default_options[:retry_reads] = true
         default_options[:retry_writes] = true
       end
