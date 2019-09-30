@@ -130,7 +130,7 @@ describe 'Connections' do
       # so that we can downgrade protocol range to 0..3 instead of 0..1.
       min_server_fcv '3.2'
 
-      let(:client) { ClientRegistry.instance.global_client('authorized').with(app_name: 'wire_protocol_update') }
+      let(:client) { ClientRegistry.instance.global_client('authorized').with(app_name: 'wire_protocol_update', auth_source: nil) }
 
       it 'updates on ismaster response from non-monitoring connections' do
         # connect server
