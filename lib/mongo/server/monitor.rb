@@ -204,7 +204,7 @@ module Mongo
             connection.ismaster
           end
           if exc
-            log_debug("Error running ismaster on #{server.address}: #{exc.message}")
+            log_debug("Error running ismaster on #{server.address}: #{exc.class}: #{exc.message}")
             if monitoring.monitoring?
               monitoring.failed(
                 Monitoring::SERVER_HEARTBEAT,
