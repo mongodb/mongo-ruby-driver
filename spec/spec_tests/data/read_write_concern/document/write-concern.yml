@@ -43,9 +43,10 @@ tests:
         isAcknowledged: true
     -
         description: "WTimeoutMS as an invalid number"
-        valid: false
+        # https://jira.mongodb.org/browse/SPEC-1457
+        valid: true
         writeConcern: { wtimeoutMS: -1000 }
-        writeConcernDocument: ~
+        writeConcernDocument: { wtimeout: -1000 }
         isServerDefault: ~
         isAcknowledged: ~
     -

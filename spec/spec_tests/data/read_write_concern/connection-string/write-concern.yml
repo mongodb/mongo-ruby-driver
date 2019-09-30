@@ -14,7 +14,8 @@ tests:
     -
         description: "w as an invalid number"
         uri: "mongodb://localhost/?w=-2"
-        valid: false
+        # https://jira.mongodb.org/browse/SPEC-1459
+        valid: true
         warning: ~
     -
         description: "w as a string"
@@ -29,10 +30,11 @@ tests:
         warning: false
         writeConcern: { wtimeoutMS: 500 }
     -
-        description: "wtimeoutMS as an invalid number"
+        description: "wtimeoutMS as a negative number"
         uri: "mongodb://localhost/?wtimeoutMS=-500"
-        valid: false
-        warning: ~
+        # https://jira.mongodb.org/browse/SPEC-1457
+        valid: true
+        warning: true
     -
         description: "journal as false"
         uri: "mongodb://localhost/?journal=false"
@@ -72,6 +74,9 @@ tests:
     -
         description: "Acknowledged with w as 0 and journal true"
         uri: "mongodb://localhost/?w=0&journal=true"
-        valid: false
+        # Ruby allows w=0 with journal=true.
+        # The spec says this SHOULD be disallowed - not a requirement.
+        # https://jira.mongodb.org/browse/SPEC-1460
+        valid: true
         warning: false
         writeConcern: { w: 0, journal: true }
