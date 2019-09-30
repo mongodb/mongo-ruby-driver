@@ -48,7 +48,7 @@ describe 'Client authentication with MONGODB-X509' do
     context 'with the correct user' do
       before do
         users = ClientRegistry.instance.global_client('root_authorized').use(:$external).database.users
-        users.create(SpecConfig.instance.x509_username)
+        users.create(SpecConfig.instance.x509_username, database: )
       end
 
       it 'can connect to the server and insert a document' do

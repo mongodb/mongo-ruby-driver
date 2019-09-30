@@ -196,9 +196,7 @@ module Mongo
       #
       # @since 2.0.0
       def spec
-        # { pwd: password, roles: roles }
-        # TODO: figure out why bundle exec rake spec:prepare doesn't work here
-        {  roles: roles }
+        { pwd: password, roles: roles }
       end
 
       private
