@@ -37,6 +37,7 @@ module Mongo
         # @param [ Hash ] options The user options.
         #
         # @option options [ Session ] :session The session to use for the operation.
+        # @option options [ Hash ] :write_concern The write concern options.
         #
         # @return [ Result ] The command response.
         #
@@ -47,7 +48,8 @@ module Mongo
             Operation::CreateUser.new(
               user: user,
               db_name: database.name,
-              session: session
+              session: session,
+              write_concern: options[:write_concern] && WriteConcern.get(options[:write_concern]),
             ).execute(next_primary(nil, session))
           end
         end
@@ -73,6 +75,7 @@ module Mongo
         # @param [ Hash ] options The options for the remove operation.
         #
         # @option options [ Session ] :session The session to use for the operation.
+        # @option options [ Hash ] :write_concern The write concern options.
         #
         # @return [ Result ] The command response.
         #
@@ -82,7 +85,8 @@ module Mongo
             Operation::RemoveUser.new(
               user_name: name,
               db_name: database.name,
-              session: session
+              session: session,
+              write_concern: options[:write_concern] && WriteConcern.get(options[:write_concern]),
             ).execute(next_primary(nil, session))
           end
         end
@@ -96,6 +100,7 @@ module Mongo
         # @param [ Hash ] options The user options.
         #
         # @option options [ Session ] :session The session to use for the operation.
+        # @option options [ Hash ] :write_concern The write concern options.
         #
         # @return [ Result ] The response.
         #
@@ -106,7 +111,8 @@ module Mongo
             Operation::UpdateUser.new(
               user: user,
               db_name: database.name,
-              session: session
+              session: session,
+              write_concern: options[:write_concern] && WriteConcern.get(options[:write_concern]),
             ).execute(next_primary(nil, session))
           end
         end
