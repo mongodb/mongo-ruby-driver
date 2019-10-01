@@ -100,17 +100,20 @@ class ClientRegistry
     # Provides an authorized mongo client on the default test database for the
     # default test user.
     when 'authorized'
-      options = {
+      client_options = {
         database: SpecConfig.instance.test_db,
         user: SpecConfig.instance.test_user.name,
         password: SpecConfig.instance.test_user.password,
       }.tap do |opts|
-        opts[:auth_mech] = SpecConfig.instance.test_user.mechanism if ENV['AUTH'] == 'auth'
+        # specify that the user was created using the SCRAM-SHA-1 mechanism if
+        # auth is turned on and MongoDB version is greater than 4.0
+        # (SCRAM-SHA-256 was introduced in 4.0)
+        opts[:auth_mech] = :scram if ENV['AUTH'] == 'auth' && ENV['VERSION'].to_f >= 4.0
       end
 
       Mongo::Client.new(
         SpecConfig.instance.addresses,
-        SpecConfig.instance.test_options.merge(options)
+        SpecConfig.instance.test_options.merge(client_options)
       )
     # Provides an authorized mongo client that retries writes.
     when 'authorized_with_retry_writes'
@@ -170,18 +173,22 @@ class ClientRegistry
     # Get an authorized client on the test database logged in as the admin
     # root user.
     when 'root_authorized'
+      client_options = {
+        user: SpecConfig.instance.root_user.name,
+        password: SpecConfig.instance.root_user.password,
+        database: SpecConfig.instance.test_db,
+        auth_source: SpecConfig.instance.auth_source || Mongo::Database::ADMIN,
+        monitoring: false
+      }.tap do |opts|
+        # specify that the user was created using the SCRAM-SHA-1 mechanism if
+        # auth is turned on and MongoDB version is greater than 4.0
+        # (SCRAM-SHA-256 was introduced in 4.0)
+        opts[:auth_mech] = :scram if ENV['AUTH'] == 'auth' && ENV['VERSION'].to_f >= 4.0
+      end
+
       Mongo::Client.new(
         SpecConfig.instance.addresses,
-        SpecConfig.instance.test_options.merge({
-          user: SpecConfig.instance.root_user.name,
-          password: SpecConfig.instance.root_user.password,
-          database: SpecConfig.instance.test_db,
-          auth_source: SpecConfig.instance.auth_source || Mongo::Database::ADMIN,
-          monitoring: false
-        }.tap do |opts|
-          opts[:auth_mech] = SpecConfig.instance.root_user.mechanism if ENV['AUTH'] == 'auth'
-        end
-        ),
+        SpecConfig.instance.test_options.merge(client_options)
       )
     # A client that has an event subscriber for commands.
     when 'subscribed'
