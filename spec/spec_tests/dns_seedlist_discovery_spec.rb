@@ -41,8 +41,20 @@ describe 'DNS Seedlist Discovery' do
           expect(test.uri).to be_a(Mongo::URI::SRVProtocol)
         end
 
-        it 'creates a client with the correct hosts' do
-          expect(test.client).to have_hosts(test)
+        if test.seeds
+          # DNS seed list tests specify both seeds and hosts.
+          # To get the hosts, the client must do SDAM (as required in the
+          # spec tests' description), but this isn't testing DNS seed list -
+          # it is testing SDAM. Plus, all of the hosts are always the same.
+          # If seed list is given in the expectations, just test the seed
+          # list and not the expanded hosts.
+          it 'creates a client with the correct seeds' do
+            expect(test.client).to have_hosts(test, test.seeds)
+          end
+        else
+          it 'creates a client with the correct hosts' do
+            expect(test.client).to have_hosts(test, test.hosts)
+          end
         end
 
         it 'creates a client with the correct options' do

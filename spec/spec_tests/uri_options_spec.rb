@@ -55,8 +55,10 @@ describe 'Uri Options' do
 
           context 'when the uri is valid', if: test.valid? do
 
-            it 'creates a client with the correct hosts' do
-              expect(test.client).to have_hosts(test)
+            if test.hosts
+              it 'creates a client with the correct hosts' do
+                expect(test.client).to have_hosts(test, test.hosts)
+              end
             end
 
             it 'creates a client with the correct authentication properties' do

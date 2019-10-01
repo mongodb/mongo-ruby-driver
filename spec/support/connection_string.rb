@@ -12,13 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-RSpec::Matchers.define :have_hosts do |test|
+RSpec::Matchers.define :have_hosts do |test, hosts|
 
   match do |cl|
 
     def find_server(client, host)
-      client.cluster.instance_variable_get(:@servers).detect do |s|
-        s.address.host == host.host
+      client.cluster.servers_list.detect do |s|
+        if host.port
+          s.address.host == host.host && s.address.port == host.port
+        else
+          s.address.host == host.host
+        end
       end
     end
 
@@ -39,18 +43,19 @@ RSpec::Matchers.define :have_hosts do |test|
       server.address.instance_variable_get(:@resolver).class
     end
 
-    test.hosts.all? do |host|
+    hosts.all? do |host|
       server = find_server(cl, host)
-      match_host?(server, host) &&
-          match_port?(server, host) if server #&&
-          #match_address_family?(server, host) if server
+      server &&
+        match_host?(server, host) &&
+        match_port?(server, host) #&&
+        #match_address_family?(server, host)
     end
+  end
 
-    failure_message do |client|
-      "With URI: #{test.uri_string}\n" +
-          "Expected that test hosts: #{test.hosts} would match " +
-          "client hosts: #{cl.cluster.instance_variable_get(:@servers)}"
-    end
+  failure_message do |client|
+    "With URI: #{test.uri_string}\n" +
+        "Expected client hosts: #{client.cluster.instance_variable_get(:@servers)} " +
+        "to match #{hosts}"
   end
 end
 
@@ -143,6 +148,16 @@ module Mongo
         end
       end
 
+      def seeds
+        if @spec['seeds']
+          @seeds ||= (@spec['seeds'] || []).collect do |host|
+            Host.new(host)
+          end
+        else
+          nil
+        end
+      end
+
       def options
         @options ||= Options.new(@spec['options']) if @spec['options']
       end
@@ -180,9 +195,17 @@ module Mongo
       attr_reader :port
 
       def initialize(spec)
-        @spec = spec
-        @host = @spec['host']
-        @port = @spec['port']
+        if spec.is_a?(Hash)
+          # Connection string spec tests
+          @spec = spec
+          @host = @spec['host']
+          @port = @spec['port']
+        else
+          # DNS seed list spec tests
+          address = Mongo::Address.new(spec)
+          @host = address.host
+          @port = address.port
+        end
       end
 
       def address_family

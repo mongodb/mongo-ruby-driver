@@ -44,7 +44,7 @@ describe 'ConnectionString' do
             end
 
             it 'creates a client with the correct hosts' do
-              expect(test.client).to have_hosts(test)
+              expect(test.client).to have_hosts(test, test.hosts)
             end
 
             it 'creates a client with the correct authentication properties' do
