@@ -104,6 +104,9 @@ class SpecConfig
     end
 
     @supports_scram_256 = client.cluster.servers.first.features.scram_sha_256_enabled?
+
+    client.close
+    @supports_scram_256
   end
 
   # Environment
