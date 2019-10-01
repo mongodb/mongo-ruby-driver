@@ -31,11 +31,9 @@ module Mongo
       attr_reader :description
       attr_reader :tests
 
-      def initialize(file)
-        file = File.new(file)
-        @spec = YAML.load(ERB.new(file.read).result)
-        file.close
-        @description = File.basename(file)
+      def initialize(test_path)
+        @spec = YAML.load(File.read(test_path))
+        @description = File.basename(test_path)
       end
 
       def tests

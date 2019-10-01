@@ -5,14 +5,11 @@ module Mongo
 
       # Instantiate the new spec.
       #
-      # @example Create the spec.
-      #   Spec.new(file)
-      #
-      # @param [ String ] file The name of the file.
+      # @param [ String ] test_path The path to the file.
       #
       # @since 2.0.0
-      def initialize(file)
-        contents = ERB.new(File.read(file)).result
+      def initialize(test_path)
+        contents = File.read(test_path)
 
         # Since Ruby driver binds a client to a database, change the
         # database name in the spec to the one we are using
@@ -21,8 +18,8 @@ module Mongo
         contents.sub!(/"transaction-tests"/, '"ruby-driver"')
         contents.sub!(/"withTransaction-tests"/, '"ruby-driver"')
 
-        @spec = YAML.load(ERB.new(contents).result)
-        @description = File.basename(file)
+        @spec = YAML.load(contents)
+        @description = File.basename(test_path)
         @data = @spec['data']
         @tests = @spec['tests']
 
