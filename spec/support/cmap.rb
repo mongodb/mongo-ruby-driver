@@ -35,12 +35,9 @@ module Mongo
 
       # Instantiate the new spec.
       #
-      # @example Create the spec.
-      #   Spec.new(file)
-      #
-      # @param [ String ] file The name of the file.
-      def initialize(file)
-        @test = YAML.load(ERB.new(File::read(file)).result)
+      # @param [ String ] test_path The path to the file.
+      def initialize(test_path)
+        @test = YAML.load(File.read(test_path))
 
         @description = @test['description']
         @pool_options = Utils.snakeize_hash(process_options(@test['poolOptions']))

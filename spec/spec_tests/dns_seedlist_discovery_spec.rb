@@ -5,15 +5,13 @@ describe 'DNS Seedlist Discovery' do
 
   include Mongo::ConnectionString
 
-  DNS_SEEDLIST_DISCOVERY_TESTS.each do |file_name|
+  DNS_SEEDLIST_DISCOVERY_TESTS.each do |test_path|
 
-    file = File.new(file_name)
-    spec = YAML.load(ERB.new(file.read).result)
-    file.close
+    spec = YAML.load(File.read(test_path))
 
     test = Mongo::ConnectionString::Test.new(spec)
 
-    context(File.basename(file_name)) do
+    context(File.basename(test_path)) do
 
       context 'when the uri is invalid', if: test.raise_error? do
 

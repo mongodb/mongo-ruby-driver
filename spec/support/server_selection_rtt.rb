@@ -21,15 +21,12 @@ module Mongo
 
         # Instantiate the new spec.
         #
-        # @example Create the spec.
-        #   Spec.new(file)
-        #
-        # @param [ String ] file The name of the file.
+        # @param [ String ] test_path The path to the file.
         #
         # @since 2.0.0
-        def initialize(file)
-          @test = YAML.load(ERB.new(File.new(file).read).result)
-          @description = "#{File.basename(file)}: avg_rtt_ms: #{@test['avg_rtt_ms']}, new_rtt_ms: #{@test['new_rtt_ms']}," +
+        def initialize(test_path)
+          @test = YAML.load(File.read(test_path))
+          @description = "#{File.basename(test_path)}: avg_rtt_ms: #{@test['avg_rtt_ms']}, new_rtt_ms: #{@test['new_rtt_ms']}," +
                            " new_avg_rtt: #{@test['new_avg_rtt']}"
           @average_rtt = @test['avg_rtt_ms'] == 'NULL' ? nil : @test['avg_rtt_ms'].to_f / 1000
           @new_rtt = @test['new_rtt_ms'].to_f / 1000

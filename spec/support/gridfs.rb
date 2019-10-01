@@ -93,15 +93,12 @@ module Mongo
 
       # Instantiate the new spec.
       #
-      # @example Create the spec.
-      #   Spec.new(file)
-      #
-      # @param [ String ] file The name of the file.
+      # @param [ String ] test_path The path to the file.
       #
       # @since 2.1.0
-      def initialize(file)
-        @spec = YAML.load(ERB.new(File.new(file).read).result)
-        @description = File.basename(file)
+      def initialize(test_path)
+        @spec = YAML.load(File.read(test_path))
+        @description = File.basename(test_path)
         @data = @spec['data']
       end
 
