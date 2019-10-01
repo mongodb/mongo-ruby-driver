@@ -159,7 +159,7 @@ describe 'Connections' do
           # now pretend an ismaster returned a different range
           features = Mongo::Server::Description::Features.new(0..3)
           # the second Features instantiation is for SDAM event publication
-          expect(Mongo::Server::Description::Features).to receive(:new).twice.and_return(features)
+          expect(Mongo::Server::Description::Features).to receive(:new).at_least(:once).and_return(features)
 
           connection = Mongo::Server::Connection.new(server, server.options)
           expect(connection.connect!).to be true
