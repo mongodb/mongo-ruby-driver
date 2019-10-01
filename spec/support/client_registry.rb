@@ -105,7 +105,9 @@ class ClientRegistry
         SpecConfig.instance.test_options.merge(
           database: SpecConfig.instance.test_db,
           user: SpecConfig.instance.test_user.name,
-          password: SpecConfig.instance.test_user.password),
+          password: SpecConfig.instance.test_user.password,
+          auth_mech: SpecConfig.instance.test_user.mechanism,
+        )
       )
     # Provides an authorized mongo client that retries writes.
     when 'authorized_with_retry_writes'
@@ -172,6 +174,7 @@ class ClientRegistry
           password: SpecConfig.instance.root_user.password,
           database: SpecConfig.instance.test_db,
           auth_source: SpecConfig.instance.auth_source || Mongo::Database::ADMIN,
+          auth_mech: SpecConfig.instance.root_user.mechanism,
           monitoring: false
         ),
       )

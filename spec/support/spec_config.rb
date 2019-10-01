@@ -377,6 +377,7 @@ EOT
     Mongo::Auth::User.new(
       user: user || 'root-user',
       password: password || 'password',
+      auth_mech: :scram,
       roles: [
         Mongo::Auth::Roles::USER_ADMIN_ANY_DATABASE,
         Mongo::Auth::Roles::DATABASE_ADMIN_ANY_DATABASE,
@@ -393,6 +394,7 @@ EOT
       database: test_db,
       user: 'test-user',
       password: 'password',
+      auth_mech: :scram,
       roles: [
         { role: Mongo::Auth::Roles::READ_WRITE, db: test_db },
         { role: Mongo::Auth::Roles::DATABASE_ADMIN, db: test_db },
