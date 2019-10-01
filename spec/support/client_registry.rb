@@ -100,14 +100,17 @@ class ClientRegistry
     # Provides an authorized mongo client on the default test database for the
     # default test user.
     when 'authorized'
+      options = {
+        database: SpecConfig.instance.test_db,
+        user: SpecConfig.instance.test_user.name,
+        password: SpecConfig.instance.test_user.password,
+      }.tap do |opts|
+        opts[:auth_mech] = SpecConfig.instance.test_user.mechanism if ENV['AUTH']
+      end
+
       Mongo::Client.new(
         SpecConfig.instance.addresses,
-        SpecConfig.instance.test_options.merge(
-          database: SpecConfig.instance.test_db,
-          user: SpecConfig.instance.test_user.name,
-          password: SpecConfig.instance.test_user.password,
-          auth_mech: SpecConfig.instance.test_user.mechanism,
-        )
+        SpecConfig.instance.test_options.merge(options)
       )
     # Provides an authorized mongo client that retries writes.
     when 'authorized_with_retry_writes'
@@ -169,13 +172,15 @@ class ClientRegistry
     when 'root_authorized'
       Mongo::Client.new(
         SpecConfig.instance.addresses,
-        SpecConfig.instance.test_options.merge(
+        SpecConfig.instance.test_options.merge({
           user: SpecConfig.instance.root_user.name,
           password: SpecConfig.instance.root_user.password,
           database: SpecConfig.instance.test_db,
           auth_source: SpecConfig.instance.auth_source || Mongo::Database::ADMIN,
-          auth_mech: SpecConfig.instance.root_user.mechanism,
           monitoring: false
+        }.tap do |opts|
+          opts[:auth_mech] = SpecConfig.instance.root_user.mechanism if ENV['AUTH']
+        end
         ),
       )
     # A client that has an event subscriber for commands.
