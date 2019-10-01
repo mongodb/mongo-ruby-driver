@@ -46,7 +46,7 @@ set_env_vars() {
   AUTH=${AUTH:-noauth}
   SSL=${SSL:-nossl}
   MONGODB_URI=${MONGODB_URI:-}
-  
+
   # drivers-evergreen-tools do not set tls parameter in URI when the
   # deployment uses TLS, repair this
   if test $SSL = ssl && ! echo $MONGODB_URI |grep -q tls=; then
@@ -58,7 +58,7 @@ set_env_vars() {
       MONGODB_URI="$MONGODB_URI/?tls=true"
     fi
   fi
-  
+
   TOPOLOGY=${TOPOLOGY:-server}
   DRIVERS_TOOLS=${DRIVERS_TOOLS:-}
 
@@ -66,12 +66,12 @@ set_env_vars() {
     export ROOT_USER_NAME="bob"
     export ROOT_USER_PWD="pwd123"
   fi
-  
+
   export MONGODB_URI
   export COMPRESSOR
-  
+
   export CI=evergreen
-  
+
   # JRUBY_OPTS were initially set for Mongoid
   export JRUBY_OPTS="--server -J-Xms512m -J-Xmx2G"
 }
@@ -81,7 +81,7 @@ setup_ruby() {
     echo "Empty RVM_RUBY, aborting"
     exit 2
   fi
-  
+
   ls -l /opt
 
   # Necessary for jruby
@@ -90,7 +90,7 @@ setup_ruby() {
     export JAVACMD=/opt/java/jdk8/bin/java
     export PATH=$PATH:/opt/java/jdk8/bin
   fi
-    
+
   # ppc64le has it in a different place
   if test -z "$JAVACMD" && [ -f /usr/lib/jvm/java-1.8.0/bin/java ]; then
     export JAVACMD=/usr/lib/jvm/java-1.8.0/bin/java
@@ -104,22 +104,22 @@ setup_ruby() {
     export PATH=`pwd`/ruby-head/bin:`pwd`/ruby-head/lib/ruby/gems/2.6.0/bin:$PATH
     ruby --version
     ruby --version |grep dev
-    
+
     #rvm reinstall $RVM_RUBY
   else
     if true; then
-    
+
     # For testing toolchains:
     toolchain_url=https://s3.amazonaws.com//mciuploads/mongo-ruby-toolchain/`host_arch`/ce62fbb005213564a3da1041854da54df6615b2a/mongo_ruby_driver_toolchain_`host_arch |tr - _`_patch_ce62fbb005213564a3da1041854da54df6615b2a_5cfacdc857e85a3ef6647ad9_19_06_07_20_49_15.tar.gz
     curl -fL $toolchain_url |tar zxf -
     export PATH=`pwd`/rubies/$RVM_RUBY/bin:$PATH
-    
+
     # Attempt to get bundler to report all errors - so far unsuccessful
     #curl -o bundler-openssl.diff https://github.com/bundler/bundler/compare/v2.0.1...p-mongo:report-errors.diff
     #find . -path \*/lib/bundler/fetcher.rb -exec patch {} bundler-openssl.diff \;
-    
+
     else
-    
+
     # Normal operation
     if ! test -d $HOME/.rubies/$RVM_RUBY/bin; then
       echo "Ruby directory does not exist: $HOME/.rubies/$RVM_RUBY/bin" 1>&2
@@ -132,9 +132,9 @@ setup_ruby() {
       exit 2
     fi
     export PATH=$HOME/.rubies/$RVM_RUBY/bin:$PATH
-    
+
     fi
-    
+
     ruby --version
 
     # Ensure we're using the right ruby
@@ -178,7 +178,7 @@ kill_jruby() {
 prepare_server() {
   arch=$1
   version=$2
-  
+
   url=http://downloads.10gen.com/linux/mongodb-linux-x86_64-enterprise-$arch-$version.tgz
   mongodb_dir="$MONGO_ORCHESTRATION_HOME"/mdb
   mkdir -p "$mongodb_dir"
