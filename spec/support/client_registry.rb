@@ -108,7 +108,7 @@ class ClientRegistry
         # specify that the user was created using the SCRAM-SHA-1 mechanism if
         # auth is turned on and MongoDB version is greater than 4.0
         # (SCRAM-SHA-256 was introduced in 4.0)
-        opts[:auth_mech] = :scram if ENV['AUTH'] == 'auth' && ENV['VERSION'].to_f >= 4.0
+        opts[:auth_mech] = :scram if ENV['AUTH'] == 'auth' && ENV['MONGODB_VERSION'].to_f >= 4.0
       end
 
       Mongo::Client.new(
@@ -183,7 +183,7 @@ class ClientRegistry
         # specify that the user was created using the SCRAM-SHA-1 mechanism if
         # auth is turned on and MongoDB version is greater than 4.0
         # (SCRAM-SHA-256 was introduced in 4.0)
-        opts[:auth_mech] = :scram if ENV['AUTH'] == 'auth' && ENV['VERSION'].to_f >= 4.0
+        opts[:auth_mech] = :scram if ENV['AUTH'] == 'auth' && ENV['MONGODB_VERSION'].to_f >= 4.0
       end
 
       Mongo::Client.new(
