@@ -105,7 +105,7 @@ class ClientRegistry
         user: SpecConfig.instance.test_user.name,
         password: SpecConfig.instance.test_user.password,
       }.tap do |opts|
-        opts[:auth_mech] = SpecConfig.instance.test_user.mechanism if ENV['AUTH']
+        opts[:auth_mech] = SpecConfig.instance.test_user.mechanism if ENV['AUTH'] == 'auth'
       end
 
       Mongo::Client.new(
@@ -179,7 +179,7 @@ class ClientRegistry
           auth_source: SpecConfig.instance.auth_source || Mongo::Database::ADMIN,
           monitoring: false
         }.tap do |opts|
-          opts[:auth_mech] = SpecConfig.instance.root_user.mechanism if ENV['AUTH']
+          opts[:auth_mech] = SpecConfig.instance.root_user.mechanism if ENV['AUTH'] == 'auth'
         end
         ),
       )
