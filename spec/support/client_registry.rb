@@ -105,7 +105,7 @@ class ClientRegistry
         user: SpecConfig.instance.test_user.name,
         password: SpecConfig.instance.test_user.password,
       }.tap do |opts|
-        # Force the client to authenticate with SCRAM-SHA-1 even on server version 4.2+
+        # Force the client to authenticate with SCRAM-SHA-1 even on server version 4.0+
         # because mlaunch does not create users with the SCRAM-SHA-256 auth mechanism.
         # This can be deleted once mlaunch is fixed.
         opts[:auth_mech] = :scram if SpecConfig.instance.user && SpecConfig.instance.supports_scram_256?
@@ -180,7 +180,7 @@ class ClientRegistry
         auth_source: SpecConfig.instance.auth_source || Mongo::Database::ADMIN,
         monitoring: false
       }.tap do |opts|
-        # Force the client to authenticate with SCRAM-SHA-1 even on server version 4.2+
+        # Force the client to authenticate with SCRAM-SHA-1 even on server version 4.0+
         # because mlaunch does not create users with the SCRAM-SHA-256 auth mechanism.
         # This can be deleted once mlaunch is fixed.
         opts[:auth_mech] = :scram if SpecConfig.instance.user && SpecConfig.instance.supports_scram_256?
