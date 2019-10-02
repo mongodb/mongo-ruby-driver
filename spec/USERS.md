@@ -4,7 +4,7 @@ The Mongo Ruby Driver tests assume the presence of two `Mongo::Auth::User` objec
 `root_user` and `test_user`. This document details the roles and privileges granted
 to those users as well as how they are created and used in the tests.
 
-Both users are defined in the [spec_config](spec/support/spec_config.rb#L376) file.
+Both users are defined in the [spec_config](support/spec_config.rb#L376) file.
 
 ## root_user
 `root_user` is the test user with the most privileges. It is created with the following roles:
@@ -39,7 +39,7 @@ The `test_user` has the username `test-user` and the password `password`; these 
 
 ## User Creation
 
-Both users are typically created in the [spec_setup](spec/setup/spec_setup.rb) script, which can be
+Both users are typically created in the [spec_setup](support/spec_setup.rb) script, which can be
 run in two ways: either by running `bundle exec rake spec:prepare`, which only runs spec setup without
 running any actual tests, or by running `rake`, which runs spec setup and the entire test suite.
 
