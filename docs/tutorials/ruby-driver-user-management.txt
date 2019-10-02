@@ -15,21 +15,6 @@ User Management
 Creating a user
 ```````````````
 
-To create a user, use the ``create`` method with the
-username, password and roles parameters.
-
-.. code-block:: ruby
-
-  client.database.users.create(
-        'alan_turing',
-        password: 'enigma',
-        roles: [ Mongo::Auth::Roles::READ_WRITE ])
-
-The user will be created in whichever database the client is
-currently connected to. To create a user in a different database,
-use the `use`
-
-
 Listing users in a database
 ```````````````````````````
 
@@ -38,3 +23,22 @@ Updating a user
 
 Removing users
 ``````````````
+To remove a user from the database, use the ``remove`` method:
+
+.. code-block:: ruby
+  client.database.users.remove('ada')
+
+Optimonally, you may pass a ``Hash`` of options as a second argument.
+The only option currently supported is :write_concern, which specifies
+the write concern of the operation if you are running this command against
+a replica set.
+
+.. code-block:: ruby
+  client.database.users.remove('ada')
+
+.. seealso::
+  :manual:`Write Concern</reference/replica-set-write-concern/>`
+
+The Ruby Driver does not implement a method for removing all users
+from a database.
+
