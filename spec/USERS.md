@@ -15,9 +15,7 @@ Both users are defined in the [spec_config](support/spec_config.rb#L376) file.
 
 By default, `root_user` is given a username of `root-user` and a password of `password`.
 However, you may override these defaults by specifying a username and password in the
-`MONGODB_URI` while running your tests. For example, if you set the `MONGODB_URI` environment
-variable to: `mongodb://alanturing:enigma@localhost:27017/`, the username
-of `root_user` would be set to `alanturing`, and the password would be set to `enigma`.
+`MONGODB_URI` environment variable while running your tests. For example, if you set `MONGODB_URI` to: `mongodb://alanturing:enigma@localhost:27017/`, the username of `root_user` would be set to `alanturing`, and the password would be set to `enigma`.
 
 ## test_user
 `test_user` is the user created with a more limited set of privileges. It is created with the following
