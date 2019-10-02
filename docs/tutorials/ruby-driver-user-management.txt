@@ -9,3 +9,32 @@ User Management
    :backlinks: none
    :depth: 1
    :class: singlecol
+
+[introduction here]
+
+Creating a user
+```````````````
+
+To create a user, use the ``create`` method with the
+username, password and roles parameters.
+
+.. code-block:: ruby
+
+  client.database.users.create(
+        'alan_turing',
+        password: 'enigma',
+        roles: [ Mongo::Auth::Roles::READ_WRITE ])
+
+The user will be created in whichever database the client is
+currently connected to. To create a user in a different database,
+use the `use`
+
+
+Listing users in a database
+```````````````````````````
+
+Updating a user
+```````````````
+
+Removing users
+``````````````
