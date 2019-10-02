@@ -25,17 +25,17 @@ roles:
 - readWrite on the ruby-driver database
 - dbAdmin on the ruby-driver database
 
-It
+It is also granted the following roles against a database called "invalid_database." These permissions are used for the purpose of running tests against a database that doesn't exist.
 - readWrite on the invalid_database database
 - dbAdmin on the invalid_database database
 
-It also has the following roles, which are exclusively used to test transactions:
+`test_user` also has the following roles, which are exclusively used to test transactions:
 - readWrite on the hr database
 - dbAdmin on the hr database
 - readWrite on the reporting database
 - dbAdmin on the reporting database
 
-The `test_user` has the username `test-user` and the password `password`; these values are not customizable.
+The `test_user` has the username `test-user` and the password `password`; these values are not customizable without changing the source code.
 
 ## User Creation
 
