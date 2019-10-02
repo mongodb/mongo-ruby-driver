@@ -181,6 +181,14 @@ module Mongo
       def raise_error?
         @spec['error']
       end
+
+      def read_concern_expectation
+        @spec['readConcern']
+      end
+
+      def write_concern_expectation
+        @spec['writeConcern']
+      end
     end
 
     class Host
