@@ -35,10 +35,11 @@ as a second argument. Currently, the only supported option is ``:session``,
 which allows you to specify a ``Mongo::Session`` object to use for this
 operation.
 
-.. seealso::
-  :ref:`Sessions`<ruby-driver-sessions>`
 The Ruby Driver does not have a method that lists all of the users
 that currently exist on a database.
+
+.. seealso::
+  :ref:`Sessions <ruby-driver-sessions>`
 
 Updating a user
 ```````````````
@@ -61,12 +62,13 @@ of the operation if you are running this command against a replica set.
 
   client.database.users.remove('ada', { w: "majority" , wtimeout: 5000 })
 
-.. seealso::
-  :manual:`Write Concerns</core/replica-set-write-concern/>`,
-  :ref:`Sessions`<ruby-driver-sessions>`
 This method will return a ``Mongo::Operation::Result`` document
 indicating whether the operation has been performed successfully.
 
 The Ruby Driver does not implement a method for removing all users
 from a database.
+
+.. seealso::
+  :manual:`Write Concerns</core/replica-set-write-concern/>`,
+  :ref:`Sessions`<ruby-driver-sessions>`
 
