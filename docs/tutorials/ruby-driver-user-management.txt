@@ -15,8 +15,31 @@ User Management
 Creating a user
 ```````````````
 
-Listing users in a database
-```````````````````````````
+User Info
+`````````
+To view the information of a user that has already been created
+in the database, use the ``info`` method:
+
+.. code-block:: ruby
+
+  client.database.users.info('ada')
+
+If the user exists, this method will return an ``Array`` object
+containing a ``Hash`` with information about the user, such as
+their id, username, the database they were created on, and their
+roles. If the user doesn't exist, this method will return an
+empty Array.
+
+The ``info`` method also takes an optional ``Hash`` of options
+as a second argument. Currently, the only supported option is ``:session``,
+which allows you to specify a ``Mongo::Session`` object to use for this
+operation.
+
+.. seealso::
+  :manual:`Sessions`</tutorials/ruby-driver-sessions>`
+
+The Ruby Driver does not have a method that lists all of the users
+that currently exist on a database.
 
 Updating a user
 ```````````````
@@ -29,10 +52,11 @@ To remove a user from the database, use the ``remove`` method:
 
   client.database.users.remove('ada')
 
-Optionally, you may pass a ``Hash`` of options as a second argument.
-The only option currently supported is ``:write_concern``, which specifies
-the write concern of the operation if you are running this command against
-a replica set.
+You may pass a ``Hash`` of options as a second argument. The two supported
+options for the ``remove`` method are ``:session`` and ``:write_concern``.
+``:session`` allows you to specify a ``Mongo::Session`` object to use for
+this operation. `:write_concern`` specifies the write concern
+of the operation if you are running this command against a replica set.
 
 .. code-block:: ruby
 
@@ -40,6 +64,10 @@ a replica set.
 
 .. seealso::
   :manual:`Write Concerns</core/replica-set-write-concern/>`
+  :manual:`Sessions`</tutorials/ruby-driver-sessions>`
+
+This method will return a ``Mongo::Operation::Result`` document
+indicating whether the operation has been performed successfully.
 
 The Ruby Driver does not implement a method for removing all users
 from a database.
