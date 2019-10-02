@@ -49,7 +49,9 @@ the `spec_setup` script, the script will delete this user and re-create it.
 The `root_user` is created in the `admin` database, while the `test_user` is created in the `ruby-driver`
 database.
 
-The authentication mechanism used to store the user credentials is going to change depending on the version of MongoDB running on your deployment. If you are running tests against an instance running a MongoDB server version older than 3.2, the users are created using the `MONGODB-CR` authentication mechanism. Starting in version 3.2,`MONGODB-CR` was replaced as the default authentication mechanism, so on any test instance running MongoDB 3.2 or newer, users will be created using the `SCRAM` authentication mechanism by default.
+The authentication mechanism used to store the user credentials is going to change depending on the version of MongoDB running on your deployment. If you are running tests against an instance with a server version older than 3.2, the users are created using the `MONGODB-CR` authentication mechanism. Starting in version 3.2,`MONGODB-CR` was replaced as the default authentication mechanism, so on any test instance running MongoDB 3.2 or newer, users will be authenticated with the `SCRAM-SHA-1` mechanism by default. The `SCRAM-SHA-256` mechanism was released in MongoDB version 4.0, so any users created on a server version of 4.0 or newer can be authenticated by either `SCRAM-SHA-1` or `SCRAM-SHA-256`.
+
+**Note:** (m-launch)[http://blog.rueckstiess.com/mtools/mlaunch.html], the client tool we use to spin up MongoDB instances for our tests, creates users EXCLUSIVELY with the `SCRAM-SHA-1` mechanism, even when `SCRAM-SHA-256` is enabled on the test server. This should not impact your ability to run the Mongo Ruby Driver test suite.
 
 ## Test Usage
 
