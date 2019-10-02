@@ -12,7 +12,8 @@ tests:
     changeStreamPipeline: []
     changeStreamOptions: {}
     operations: []
-    expectations: []
+    # https://jira.mongodb.org/browse/SPEC-1462
+    expectations: ~
     result:
       error:
         code: 40573

@@ -124,7 +124,7 @@ module Mongo
 
         def run
           change_stream = begin
-            @target.watch(@pipeline, @options)
+            @target.watch(@pipeline, Utils.snakeize_hash(@options))
           rescue Mongo::Error::OperationFailure => e
             return {
               result: { 'error' => { 'code' => e.code } },
@@ -190,9 +190,11 @@ module Mongo
 
         private
 
+        IGNORE_COMMANDS = %w(saslStart saslContinue killCursors getMore)
+
         def events
           EventSubscriber.started_events.reduce([]) do |evs, e|
-            next evs if %w(saslStart saslContinue killCursors).include?(e.command_name)
+            next evs if IGNORE_COMMANDS.include?(e.command_name)
 
             evs << {
               'command_started_event' => {
