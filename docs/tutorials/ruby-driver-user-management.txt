@@ -26,6 +26,7 @@ Removing users
 To remove a user from the database, use the ``remove`` method:
 
 .. code-block:: ruby
+
   client.database.users.remove('ada')
 
 Optimonally, you may pass a ``Hash`` of options as a second argument.
@@ -34,6 +35,7 @@ the write concern of the operation if you are running this command against
 a replica set.
 
 .. code-block:: ruby
+
   client.database.users.remove('ada')
 
 .. seealso::
