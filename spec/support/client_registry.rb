@@ -107,8 +107,9 @@ class ClientRegistry
       }.tap do |opts|
         # specify that the user was created using the SCRAM-SHA-1 mechanism if
         # auth is turned on and MongoDB version is greater than 4.0
-        # (SCRAM-SHA-256 was introduced in 4.0)
-        opts[:auth_mech] = :scram if SpecConfig.instance.user && SpecConfig.instance.supports_scram_256?
+        # (default auth mech was changed to SCRAM-SHA-256 in 4.0, but mlaunch only creates
+        # users with SCRAM-SHA-1)
+        opts[:auth_mech] = :scram256 if SpecConfig.instance.user && SpecConfig.instance.supports_scram_256?
       end
 
       Mongo::Client.new(
@@ -182,8 +183,9 @@ class ClientRegistry
       }.tap do |opts|
         # specify that the user was created using the SCRAM-SHA-1 mechanism if
         # auth is turned on and MongoDB version is greater than 4.0
-        # (SCRAM-SHA-256 was introduced in 4.0)
-        opts[:auth_mech] = :scram if SpecConfig.instance.user && SpecConfig.instance.supports_scram_256?
+        # (default auth mech was changed to SCRAM-SHA-256 in 4.0, but mlaunch only creates
+        # users with SCRAM-SHA-1)
+        opts[:auth_mech] = :scram256 if SpecConfig.instance.user && SpecConfig.instance.supports_scram_256?
       end
 
       Mongo::Client.new(
