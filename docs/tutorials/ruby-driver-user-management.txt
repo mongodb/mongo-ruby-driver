@@ -39,7 +39,7 @@ The Ruby Driver does not have a method that lists all of the users
 that currently exist on a database.
 
 .. seealso::
-
+  :ref:`Connect to a replica set <ruby-driver-connect-replica-set>`,
   :ref:`Sessions <ruby-driver-sessions>`
 
 Updating a user
