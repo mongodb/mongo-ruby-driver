@@ -39,6 +39,7 @@ The Ruby Driver does not have a method that lists all of the users
 that currently exist on a database.
 
 .. seealso::
+
   :ref:`Sessions <ruby-driver-sessions>`
 
 Updating a user
@@ -69,6 +70,7 @@ The Ruby Driver does not implement a method for removing all users
 from a database.
 
 .. seealso::
+
   :manual:`Write Concerns</core/replica-set-write-concern/>`,
   :ref:`Sessions`<ruby-driver-sessions>`
 
