@@ -15,14 +15,14 @@ User Management
 The Mongo Ruby Driver provides a set of methods for managing users on a MongoDB deployment.
 All of these methods are defined on the ``Mongo::Auth::User::View`` class, which defines the
 behavior for performing user-related operations on a database. You can access a database's
-user view using the ``users`` method on that database:
+user view by calling the ``users`` method on the correpsonding ``Mongo::Database`` object:
 
 .. code-block:: ruby
 
   client.database.users
 
 Note that this will open a view on the database to which the client is already connected.
-To interact with the users defined on a different database, use the client's ``use`` method
+To interact with the users defined on a different database, call the client's ``use`` method
 and pass in the name of the database with which you want to connect:
 
 .. code-block:: ruby
@@ -50,7 +50,7 @@ password, and roles:
   )
 
 Another way to create a user is to first create a ``Mongo::Auth::User`` object with all the
-user information and then pass that object into the ``create`` method in lieu of a username.
+user information and then pass that object into the ``create`` method instead.
 
 .. code-block:: ruby
 
@@ -63,11 +63,13 @@ user information and then pass that object into the ``create`` method in lieu of
   client.database.users.create(user)
 
 The ``create`` method takes a ``Hash`` of options as an optional second argument.
-The ``:roles`` option allows you to grant your user permissions on your MongoDB instance.
-For example, the Mongo::Auth::Roles::READ_WRITE role grants the user the ability to both
+The ``:roles`` option allows you to grant permissions to the new user.
+For example, the ``Mongo::Auth::Roles::READ_WRITE`` role grants the user the ability to both
 read from and write to the database in which they were created. Each role can be specified
 as a ``String`` or as a ``Hash``. If you would like to grant permissions to a user on a database
-other than the one on which they were created, you can pass that database name in the role hash:
+other than the one on which they were created, you can pass that database name in the role ``Hash``.
+To create a user ``alanturing`` with permission to read and write on the ``machines`` database,
+you could execute the following code:
 
 .. code-block:: ruby
 
@@ -77,24 +79,22 @@ other than the one on which they were created, you can pass that database name i
     roles: [{ role: Mongo::Auth::Roles::READWRITE, db: 'machines' }]
   )
 
-In this example, the user `alanturing` has permission to read and write on the `machines` database. For
-more information about roles in MongoDB, see the  :manual:`Built-in roles</reference/built-in-roles/>`
+For more information about roles in MongoDB, see the :manual:`Built-in roles</reference/built-in-roles/>`
 documentation.
 
 In addition to the ``:roles`` option, the ``create`` method supports a ``:session`` option,
 which allows you to specify a ``Mongo::Session`` object to use for this operation,
-as well as a ``:write_concern`` option, which represents the write concern of this operation
+as well as a ``:write_concern`` option, which specifies the write concern of this operation
 when performed on a replica set.
 
 .. seealso::
+  :manual:`Built-in roles</reference/built-in-roles/>`
   :manual:`Write Concerns</core/replica-set-write-concern/>`,
   :ref:`Sessions<sessions>`,
-  :manual:`Built-in roles</reference/built-in-roles/>`
 
 User Info
 `````````
-To view information about a user that has already been created
-in the database, use the ``info`` method:
+To view information about a user that has already been created in the database, use the ``info`` method:
 
 .. code-block:: ruby
 
@@ -119,13 +119,13 @@ that currently exist on a database.
 
 Updating a user
 ```````````````
-To update a user that already exists in the database, you may use the ``update`` method in
+To update a user that already exists in the database, you can use the ``update`` method in
 one of two ways. The first way is to specify the name of the user you wish to update,
-and a new set of options.
+along with a new set of options.
 
 .. warning::
 
-  You must include all user options in the options ``Hash``, even those options that
+  You must include all user options in the options ``Hash``, even those options whose values
   will remain the same. Omitting an option is the same as setting it to an empty value.
 
 .. code-block:: ruby
@@ -155,8 +155,8 @@ a ``Mongo::Session`` object on which to perform this operation, and ``:write_con
 which sets a write concern if this operation is performed on a replica set.
 
 .. seealso::
-  :manual:`Write Concerns</core/replica-set-write-concern/>`,
   :ref:`Sessions<sessions>`
+  :manual:`Write Concerns</core/replica-set-write-concern/>`,
 
 Removing users
 ``````````````
@@ -172,17 +172,10 @@ options for the ``remove`` method are ``:session`` and ``:write_concern``.
 this operation. ``:write_concern`` specifies the write concern
 of the operation if you are running this command against a replica set.
 
-.. code-block:: ruby
-
-  client.database.users.remove('alanturing', { w: "majority" , wtimeout: 5000 })
-
-This method will return a ``Mongo::Operation::Result`` document
-indicating whether the operation has been performed successfully.
-
 The Ruby Driver does not implement a method for removing all users
 from a database.
 
 .. seealso::
-  :manual:`Write Concerns</core/replica-set-write-concern/>`,
   :ref:`Sessions<sessions>`
+  :manual:`Write Concerns</core/replica-set-write-concern/>`,
 
