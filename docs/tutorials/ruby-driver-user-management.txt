@@ -40,7 +40,7 @@ that currently exist on a database.
 
 .. seealso::
   :ref:`Connect to a replica set <ruby-driver-connect-replica-set>`,
-  :ref:`Sessions <ruby-driver-sessions>`
+  :ref:`Sessions <sessions>`
 
 Updating a user
 ```````````````
@@ -72,5 +72,5 @@ from a database.
 .. seealso::
 
   :manual:`Write Concerns</core/replica-set-write-concern/>`,
-  :ref:`Sessions`<ruby-driver-sessions>`
+  :ref:`Sessions`<sessions>`
 
