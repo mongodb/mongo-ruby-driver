@@ -28,7 +28,7 @@ password, and roles:
   )
 
 Another way to create a user is to first create a ``Mongo::Auth::User`` object with all the
-user information, and then pass that object into the ``create`` method in lieu of a username.
+user information and then pass that object into the ``create`` method in lieu of a username.
 
 .. code-block:: ruby
 
@@ -41,26 +41,33 @@ user information, and then pass that object into the ``create`` method in lieu o
   client.database.users.create(user)
 
 The ``create`` method takes a ``Hash`` of options as an optional second argument.
-In addition to the ``:password`` and ``:roles`` options, which you can see used above,
-this method supports a ``:session`` option, which allows you to specify a ``Mongo::Session``
-object to use for this operation, and a ``:write_concern`` option, which represents the
-write concern of this operation against a replica set.
-
-Note that this method will create a user on the database to which the client is already connected.
-To create a user on a different database, use the ``use`` method and specify the new
-database:
+The ``:roles`` option allows you to grant your user permissions on your MongoDB instance.
+For example, the Mongo::Auth::Roles::READ_WRITE role grants the user the ability to both
+read from and write to the database in which they were created. Each role can be specified
+as a ``String`` or as a ``Hash``. If you would like to grant permissions to a user on a database
+other than the one on which they were created, you can pass that database name in the role hash:
 
 .. code-block:: ruby
 
-  client.use(:users).database.users.create(
+  client.database.users.create(
     'alanturing',
     password: 'enigma',
-    roles: [ Mongo::Auth::Roles::READWRITE ]
+    roles: [{ role: Mongo::Auth::Roles::READWRITE, db: 'machines' }]
   )
+
+In this example, the user `alanturing` has permission to read and write on the `machines` database. For
+more information about roles in MongoDB, see the  :manual:`Built-in roles</reference/built-in-roles/>`
+documentation.
+
+In addition to the ``:roles`` option, the ``create`` method supports a ``:session`` option,
+which allows you to specify a ``Mongo::Session`` object to use for this operation,
+as well as a ``:write_concern`` option, which represents the write concern of this operation
+when performed on a replica set.
 
 .. seealso::
   :manual:`Write Concerns</core/replica-set-write-concern/>`,
-  :ref:`Sessions<sessions>`
+  :ref:`Sessions<sessions>`,
+  :manual:`Built-in roles</reference/built-in-roles/>`
 
 User Info
 `````````
