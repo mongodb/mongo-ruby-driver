@@ -10,7 +10,24 @@ User Management
    :depth: 1
    :class: singlecol
 
-[introduction here]
+The Mongo Ruby Driver provides a set of methods for managing users on a MongoDB deployment.
+All of these methods are defined on the ``Mongo::Auth::User::View`` class, which defines the
+behavior for performing user-related operations on a database. You can access a database's
+user view using the ``users`` method on that database:
+
+.. code-block:: ruby
+
+  client.database.users
+
+Note that this will open a view on the database to which the client is already connected.
+To interact with the users defined on a different database, use the client's ``use`` method
+and pass in the name of the database with which you want to connect:
+
+.. code-block:: ruby
+
+  client.use(:users).database.users
+
+In this example, all operations would be performed on the ``users`` database.
 
 Creating a user
 ```````````````
