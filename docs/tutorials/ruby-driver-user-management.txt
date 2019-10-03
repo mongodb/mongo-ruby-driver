@@ -97,6 +97,44 @@ that currently exist on a database.
 
 Updating a user
 ```````````````
+To update a user that already exists in the database, you may use the ``update`` method in
+one of two ways. The first way is to specify the name of the user you wish to update,
+and a new set of options.
+
+.. warning::
+
+  You must include all user options in the options ``Hash``, even those options that
+  will remain the same. Omitting an option is the same as setting it to an empty value.
+
+.. code-block:: ruby
+
+  client.database.users.update(
+    'alanturing',
+    roles: [ Mongo::Auth::Roles::READ_WRITE ]
+    password: 'turing-test'
+  )
+
+The second way to update a user is to pass an updated ``Mongo::Auth::User`` object
+to the ``update`` method in lieu of a username.
+
+.. code-block:: ruby
+
+  user = Mongo::Auth::User.new({
+    user: 'alanturing',
+    roles: [ Mongo::Auth::Roles::READ_WRITE ],
+    password: 'turing-test'
+  })
+
+  client.database.users.update(user)
+
+Optionally, the ``update`` method takes a ``Hash`` of options as a second argument.
+The two possible options for this method are ``:session``, which allows you to specify
+a ``Mongo::Session`` object on which to perform this operation, and ``:write_concern``,
+which sets a write concern if this operation is performed on a replica set.
+
+.. seealso::
+  :manual:`Write Concerns</core/replica-set-write-concern/>`,
+  :ref:`Sessions<sessions>`
 
 Removing users
 ``````````````
