@@ -62,7 +62,7 @@ For tutorials on Mongoid, see the `Mongoid Manual <https://docs.mongodb.com/mong
       quick-start
       /tutorials/ruby-driver-create-client
       /tutorials/ruby-driver-authentication
-      /tutorials/ruby-driver-user-management
+      /tutorials/user-management
       /tutorials/ruby-driver-crud-operations
       /tutorials/ruby-driver-collection-tasks
       /tutorials/ruby-driver-projections
