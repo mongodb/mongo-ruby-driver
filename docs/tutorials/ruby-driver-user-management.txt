@@ -14,15 +14,62 @@ User Management
 
 Creating a user
 ```````````````
+There are two ways to create a new database user with the Ruby Driver.
+
+The simplest way to create a new user is to use the ``create`` method, passing in a username,
+password, and roles:
+
+.. code-block:: ruby
+
+  client.database.users.create(
+    'alanturing',
+    password: 'enigma',
+    roles: [ Mongo::Auth::Roles::READWRITE ]
+  )
+
+Another way to create a user is to first create a ``Mongo::Auth::User`` object with all the
+user information, and then pass that object into the ``create`` method in lieu of a username.
+
+.. code-block:: ruby
+
+  user = Mongo::User.new({
+    user: 'alanturing',
+    password: 'enigma',
+    roles: [ Mongo::Auth::Roles::READWRITE ]
+  })
+
+  client.database.users.create(user)
+
+The ``create`` method takes a ``Hash`` of options as an optional second argument.
+In addition to the ``:password`` and ``:roles`` options, which you can see used above,
+this method supports a ``:session`` option, which allows you to specify a ``Mongo::Session``
+object to use for this operation, and a ``:write_concern`` option, which represents the
+write concern of this operation against a replica set.
+
+Note that this method will create a user on the database to which the client is already connected.
+To create a user on a different database, use the ``use`` method and specify the new
+database:
+
+.. code-block:: ruby
+
+  client.use(:users).database.users.create(
+    'alanturing',
+    password: 'enigma',
+    roles: [ Mongo::Auth::Roles::READWRITE ]
+  )
+
+.. seealso::
+  :manual:`Write Concerns</core/replica-set-write-concern/>`,
+  :ref:`Sessions<sessions>`
 
 User Info
 `````````
-To view the information of a user that has already been created
+To view information about a user that has already been created
 in the database, use the ``info`` method:
 
 .. code-block:: ruby
 
-  client.database.users.info('ada')
+  client.database.users.info('alanturing')
 
 If the user exists, this method will return an ``Array`` object
 containing a ``Hash`` with information about the user, such as
@@ -39,7 +86,6 @@ The Ruby Driver does not have a method that lists all of the users
 that currently exist on a database.
 
 .. seealso::
-  :ref:`Connect to a replica set <ruby-driver-connect-replica-set>`,
   :ref:`Sessions <sessions>`
 
 Updating a user
@@ -51,17 +97,17 @@ To remove a user from the database, use the ``remove`` method:
 
 .. code-block:: ruby
 
-  client.database.users.remove('ada')
+  client.database.users.remove('alanturing')
 
 You may pass a ``Hash`` of options as a second argument. The two supported
 options for the ``remove`` method are ``:session`` and ``:write_concern``.
 ``:session`` allows you to specify a ``Mongo::Session`` object to use for
-this operation. `:write_concern`` specifies the write concern
+this operation. ``:write_concern`` specifies the write concern
 of the operation if you are running this command against a replica set.
 
 .. code-block:: ruby
 
-  client.database.users.remove('ada', { w: "majority" , wtimeout: 5000 })
+  client.database.users.remove('alanturing', { w: "majority" , wtimeout: 5000 })
 
 This method will return a ``Mongo::Operation::Result`` document
 indicating whether the operation has been performed successfully.
@@ -70,7 +116,6 @@ The Ruby Driver does not implement a method for removing all users
 from a database.
 
 .. seealso::
-
   :manual:`Write Concerns</core/replica-set-write-concern/>`,
-  :ref:`Sessions`<sessions>`
+  :ref:`Sessions<sessions>`
 
