@@ -92,23 +92,6 @@ class SpecConfig
     end
   end
 
-  def supports_scram_256?
-    return @supports_scram_256 if @supports_scram_256
-
-    client = Mongo::Client.new(addresses, Mongo::Options::Redacted.new(
-      server_selection_timeout: 5,
-    ).merge(ssl_options))
-
-    if client.cluster.servers.empty?
-      raise 'Could not determine support for SCRAM-SHA-256 because the test client failed to connect to MongoDB deployment'
-    end
-
-    @supports_scram_256 = client.cluster.servers.first.features.scram_sha_256_enabled?
-
-    client.close
-    @supports_scram_256
-  end
-
   # Environment
 
   def ci?
