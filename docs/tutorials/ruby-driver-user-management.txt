@@ -1,3 +1,5 @@
+.. _user-management:
+
 ===============
 User Management
 ===============
@@ -28,6 +30,9 @@ and pass in the name of the database with which you want to connect:
   client.use(:users).database.users
 
 In this example, all operations would be performed on the ``users`` database.
+
+For more information about users and user management, see MongoDB's
+:manual:`online documentation </core/security-users>`.
 
 Creating a user
 ```````````````
