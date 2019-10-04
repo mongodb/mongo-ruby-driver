@@ -37,17 +37,12 @@ module Mongo
 
       # Instantiate the new spec.
       #
-      # @example Create the spec.
-      #   Spec.new(file)
-      #
-      # @param [ String ] file The name of the file.
+      # @param [ String ] test_path The path to the file.
       #
       # @since 2.6.0
-      def initialize(file)
-        file = File.new(file)
-        @spec = YAML.load(ERB.new(file.read).result)
-        file.close
-        @description = File.basename(file)
+      def initialize(test_path)
+        @spec = YAML.load(File.read(test_path))
+        @description = File.basename(test_path)
         @spec_tests = @spec['tests']
         @coll1 = @spec['collection_name']
         @coll2 = @spec['collection2_name']
@@ -129,7 +124,7 @@ module Mongo
 
         def run
           change_stream = begin
-            @target.watch(@pipeline, @options)
+            @target.watch(@pipeline, Utils.snakeize_hash(@options))
           rescue Mongo::Error::OperationFailure => e
             return {
               result: { 'error' => { 'code' => e.code } },
@@ -195,9 +190,11 @@ module Mongo
 
         private
 
+        IGNORE_COMMANDS = %w(saslStart saslContinue killCursors getMore)
+
         def events
           EventSubscriber.started_events.reduce([]) do |evs, e|
-            next evs if %w(saslStart saslContinue killCursors).include?(e.command_name)
+            next evs if IGNORE_COMMANDS.include?(e.command_name)
 
             evs << {
               'command_started_event' => {

@@ -5,15 +5,13 @@ describe 'DNS Seedlist Discovery' do
 
   include Mongo::ConnectionString
 
-  DNS_SEEDLIST_DISCOVERY_TESTS.each do |file_name|
+  DNS_SEEDLIST_DISCOVERY_TESTS.each do |test_path|
 
-    file = File.new(file_name)
-    spec = YAML.load(ERB.new(file.read).result)
-    file.close
+    spec = YAML.load(File.read(test_path))
 
     test = Mongo::ConnectionString::Test.new(spec)
 
-    context(File.basename(file_name)) do
+    context(File.basename(test_path)) do
 
       context 'when the uri is invalid', if: test.raise_error? do
 
@@ -43,8 +41,20 @@ describe 'DNS Seedlist Discovery' do
           expect(test.uri).to be_a(Mongo::URI::SRVProtocol)
         end
 
-        it 'creates a client with the correct hosts' do
-          expect(test.client).to have_hosts(test)
+        if test.seeds
+          # DNS seed list tests specify both seeds and hosts.
+          # To get the hosts, the client must do SDAM (as required in the
+          # spec tests' description), but this isn't testing DNS seed list -
+          # it is testing SDAM. Plus, all of the hosts are always the same.
+          # If seed list is given in the expectations, just test the seed
+          # list and not the expanded hosts.
+          it 'creates a client with the correct seeds' do
+            expect(test.client).to have_hosts(test, test.seeds)
+          end
+        else
+          it 'creates a client with the correct hosts' do
+            expect(test.client).to have_hosts(test, test.hosts)
+          end
         end
 
         it 'creates a client with the correct options' do

@@ -48,8 +48,8 @@ by Durran Jordan.
 For tutorials on Mongoid, see the `Mongoid Manual <https://docs.mongodb.com/mongoid/master>`_.
 
 .. COMMENT  For the actual build, see mongodb/docs-ruby repo which pulls the documentation source from:
-..    mongo-ruby-driver, 
-..    bson-ruby, and 
+..    mongo-ruby-driver,
+..    bson-ruby, and
 ..    mongoid repos.
 
 .. class:: hidden
@@ -62,6 +62,7 @@ For tutorials on Mongoid, see the `Mongoid Manual <https://docs.mongodb.com/mong
       quick-start
       /tutorials/ruby-driver-create-client
       /tutorials/ruby-driver-authentication
+      /tutorials/user-management
       /tutorials/ruby-driver-crud-operations
       /tutorials/ruby-driver-collection-tasks
       /tutorials/ruby-driver-projections

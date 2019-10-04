@@ -8,16 +8,18 @@ module Utils
   end
   module_function :underscore
 
-  # Creates a copy of a hash where all keys and string values are converted to snake-case symbols.
-  # For example, `{ 'fooBar' => { 'baz' => 'bingBing', :x => 1 } }` converts to
-  # `{ :foo_bar => { :baz => :bing_bing, :x => 1 } }`.
+  # Creates a copy of a hash where all keys and string values are converted to
+  # snake-case symbols.
+  #
+  # For example, { 'fooBar' => { 'baz' => 'bingBing', :x => 1 } } converts to
+  # { :foo_bar => { :baz => :bing_bing, :x => 1 } }.
   def snakeize_hash(value)
     return underscore(value) if value.is_a?(String)
     return value unless value.is_a?(Hash)
 
-    value.reduce({}) do |hash, kv|
+    value.reduce({}) do |hash, (k, v)|
       hash.tap do |h|
-        h[underscore(kv.first)] = snakeize_hash(kv.last)
+        h[underscore(k)] = snakeize_hash(v)
       end
     end
   end
@@ -36,7 +38,24 @@ module Utils
   end
   module_function :shallow_snakeize_hash
 
-  def camelize(str, upcase_first = true)
+  # Creates a copy of a hash where all keys and symbol values are converted to
+  # camel-case strings.
+  #
+  # For example, { :foo_bar => { :baz => :bing_bing, 'x' => 1 } } converts to
+  # { 'fooBar' => { 'baz' => 'bingBing', 'x' => 1 } }.
+  def camelize_hash(value, upcase_first = false)
+    return camelize(value.to_s, upcase_first) if value.is_a?(Symbol)
+    return value unless value.is_a?(Hash)
+
+    value.reduce({}) do |hash, (k, v)|
+      hash.tap do |h|
+        h[camelize(k.to_s)] = camelize_hash(v, upcase_first)
+      end
+    end
+  end
+  module_function :camelize_hash
+
+  def camelize(str, upcase_first = false)
     str = str.gsub(%r,_(\w),) { |m| m[1].upcase }
     if upcase_first
       str = str[0].upcase + str[1...str.length]

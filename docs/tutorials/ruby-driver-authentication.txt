@@ -17,21 +17,8 @@ For more information about configuring your MongoDB server for each of
 these authentication mechanisms see MongoDB's
 :manual:`online documentation </tutorial/enable-authentication>`.
 
-Creating a user
-```````````````
-
-To create a user in specific database, use the ``create`` method with the
-username, password and roles parameters.
-
-.. code-block:: ruby
-
-  client.database.users.create(
-        'durran',
-        password: 'password',
-        roles: [ Mongo::Auth::Roles::READ_WRITE ])
-
-.. seealso::
-  :manual:`Built-in roles</reference/built-in-roles/>`
+For more information about users and user management, see the
+:ref:`User Management tutorial<user-management>`.
 
 Providing credentials
 `````````````````````
