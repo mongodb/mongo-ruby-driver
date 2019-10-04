@@ -10,28 +10,15 @@ Authentication
    :depth: 1
    :class: singlecol
 
-MongoDB supports a variety of 
+MongoDB supports a variety of
 :manual:`authentication mechanisms </core/authentication/>`.
 
 For more information about configuring your MongoDB server for each of
-these authentication mechanisms see MongoDB's 
+these authentication mechanisms see MongoDB's
 :manual:`online documentation </tutorial/enable-authentication>`.
 
-Creating a user
-```````````````
-
-To create a user in specific database, use the ``create`` method with the
-username, password and roles parameters.
-
-.. code-block:: ruby
-
-  client.database.users.create(
-        'durran',
-        password: 'password',
-        roles: [ Mongo::Auth::Roles::READ_WRITE ])
-		
-.. seealso::
-  :manual:`Built-in roles</reference/built-in-roles/>`
+For more information about users and user management, see the
+:ref:`User Management tutorial<user-management>`.
 
 Providing credentials
 `````````````````````
@@ -120,7 +107,7 @@ LDAP (SASL PLAIN) mechanism
 
 MongoDB Enterprise Edition supports the LDAP authentication mechanism
 which allows you to delegate authentication using a Lightweight Directory
-Access Protocol `LDAP <http://en.wikipedia.org/wiki/LDAP>`_ server. 
+Access Protocol `LDAP <http://en.wikipedia.org/wiki/LDAP>`_ server.
 
 .. warning::
 
@@ -166,7 +153,7 @@ installed. Add to your ``Gemfile``:
   require 'mongo_kerberos'
 
 To use Kerberos in the Ruby driver with **MRI**, create a
-ticket-granting ticket using ``kinit``. See 
+ticket-granting ticket using ``kinit``. See
 `this documentation <http://linux.die.net/man/1/kinit>`_ for more
 information.
 

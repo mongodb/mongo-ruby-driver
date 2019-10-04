@@ -127,7 +127,7 @@ module Mongo
         #
         # @option options [ Session ] :session The session to use for the operation.
         #
-        # @return [ Hash ] A document containing information on a particular user.
+        # @return [ Array ] An array wrapping a document containing information on a particular user.
         #
         # @since 2.1.0
         def info(name, options = {})
