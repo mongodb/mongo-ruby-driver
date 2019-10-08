@@ -41,7 +41,7 @@ describe 'Auth' do
           it 'indicates scram-sha-1 was used' do
             expect do
               connection.connect!
-            end.to raise_error(Mongo::Auth::Unauthorized, 'User nonexistent_user (mechanism: scram) is not authorized to access admin (used mechanism: SCRAM-SHA-1)')
+            end.to raise_error(Mongo::Auth::Unauthorized, /User nonexistent_user \(mechanism: scram\) is not authorized to access admin.*\(used mechanism: SCRAM-SHA-1\)/)
           end
         end
 
@@ -53,7 +53,7 @@ describe 'Auth' do
           it 'indicates scram-sha-1 was used' do
             expect do
               connection.connect!
-            end.to raise_error(Mongo::Auth::Unauthorized, 'User nonexistent_user (mechanism: scram) is not authorized to access admin (used mechanism: SCRAM-SHA-1)')
+            end.to raise_error(Mongo::Auth::Unauthorized, /User nonexistent_user \(mechanism: scram\) is not authorized to access admin.*\(used mechanism: SCRAM-SHA-1\)/)
           end
         end
       end
@@ -73,7 +73,7 @@ describe 'Auth' do
           it 'indicates scram-sha-1 was used' do
             expect do
               connection.connect!
-            end.to raise_error(Mongo::Auth::Unauthorized, "User existing_user (mechanism: scram) is not authorized to access admin (used mechanism: SCRAM-SHA-1)")
+            end.to raise_error(Mongo::Auth::Unauthorized, /User existing_user \(mechanism: scram\) is not authorized to access admin.*\(used mechanism: SCRAM-SHA-1\)/)
           end
         end
 
@@ -85,7 +85,7 @@ describe 'Auth' do
           it 'indicates scram-sha-256 was used' do
             expect do
               connection.connect!
-            end.to raise_error(Mongo::Auth::Unauthorized, "User existing_user (mechanism: scram256) is not authorized to access admin (used mechanism: SCRAM-SHA-256)")
+            end.to raise_error(Mongo::Auth::Unauthorized, /User existing_user \(mechanism: scram256\) is not authorized to access admin.*\(used mechanism: SCRAM-SHA-256\)/)
           end
         end
       end
@@ -101,7 +101,7 @@ describe 'Auth' do
         it 'indicates scram-sha-1 was requested and used' do
           expect do
             connection.connect!
-          end.to raise_error(Mongo::Auth::Unauthorized, 'User nonexistent_user (mechanism: scram) is not authorized to access admin (used mechanism: SCRAM-SHA-1)')
+          end.to raise_error(Mongo::Auth::Unauthorized, /User nonexistent_user \(mechanism: scram\) is not authorized to access admin.*\(used mechanism: SCRAM-SHA-1\)/)
         end
       end
 
@@ -114,13 +114,27 @@ describe 'Auth' do
         it 'indicates scram-sha-256 was requested and used' do
           expect do
             connection.connect!
-          end.to raise_error(Mongo::Auth::Unauthorized, 'User nonexistent_user (mechanism: scram256) is not authorized to access admin (used mechanism: SCRAM-SHA-256)')
+          end.to raise_error(Mongo::Auth::Unauthorized, /User nonexistent_user \(mechanism: scram256\) is not authorized to access admin.*\(used mechanism: SCRAM-SHA-256\)/)
         end
+      end
+    end
+
+    context 'when authentication fails' do
+      let(:options) { SpecConfig.instance.ssl_options.merge(
+        user: 'nonexistent_user', password: 'foo') }
+
+      it 'reports auth source used' do
+        expect do
+          connection.connect!
+        end.to raise_error(Mongo::Auth::Unauthorized, /User nonexistent_user.*is not authorized to access admin \(auth source: admin\)/)
       end
     end
 
     context 'attempting to connect to a non-tls server with tls' do
       require_no_tls
+      # The exception raised is SocketTimeout on 3.6 server for whatever reason,
+      # run the test on 4.0+ only.
+      min_server_fcv '4.0'
 
       let(:options) { {ssl: true} }
 

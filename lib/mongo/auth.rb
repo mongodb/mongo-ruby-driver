@@ -109,9 +109,10 @@ module Mongo
       # @param [ Mongo::Auth::User ] user The unauthorized user.
       # @param [ String ] used_mechanism Auth mechanism actually used for
       #   authentication. This is a full string like SCRAM-SHA-256.
+      # @param [ String ] message The error message returned by the server.
       #
       # @since 2.0.0
-      def initialize(user, used_mechanism = nil)
+      def initialize(user, used_mechanism: nil, message: nil)
         specified_mechanism = if user.mechanism
           " (mechanism: #{user.mechanism})"
         else
@@ -122,7 +123,10 @@ module Mongo
         else
           ''
         end
-        msg = "User #{user.name}#{specified_mechanism} is not authorized to access #{user.database}#{used_mechanism}"
+        msg = "User #{user.name}#{specified_mechanism} is not authorized to access #{user.database} (auth source: #{user.auth_source})#{used_mechanism}"
+        if message
+          msg += ': ' + message
+        end
         super(msg)
       end
     end
