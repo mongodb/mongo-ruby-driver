@@ -3,7 +3,7 @@ require 'spec_helper'
 describe 'Retryable writes tests' do
 
   let(:client) do
-    authorized_client.with(retry_writes: true)
+    subscribed_client
   end
 
   let(:collection) do
@@ -41,9 +41,23 @@ describe 'Retryable writes tests' do
       client['retryable-writes-error-spec', read: {mode: :secondary_preferred}]
     end
 
-    it 'is reported on the server of the second attempt' do
-      first_primary = client.cluster.next_primary
+    let(:events) do
+      events = EventSubscriber.command_started_events('find')
+    end
 
+    let(:first_server) do
+      client.cluster.servers_list.detect do |server|
+        server.address.seed == events.first.address.seed
+      end
+    end
+
+    let(:second_server) do
+      client.cluster.servers_list.detect do |server|
+        server.address.seed == events.last.address.seed
+      end
+    end
+
+    let(:perform_read) do
       client.cluster.servers_list.each do |server|
         server.monitor.stop!
       end
@@ -52,29 +66,32 @@ describe 'Retryable writes tests' do
         client.use(:admin).database.command(fail_point_command)
       end
 
-      # Retry should happen on a server other than the one used for
-      # initial attempt
-      expected_hosts = client.cluster.servers.reject do |server|
-        server.address == first_primary.address
-      end.map(&:address).map(&:host)
-
       begin
         collection.find(a: 1).to_a
-      rescue Mongo::Error::OperationFailure => e
+      rescue Mongo::Error::OperationFailure => @exception
       else
         fail('Expected operation to fail')
       end
 
-      puts e.message
+      puts @exception.message
 
-      found = expected_hosts.any? do |host|
-        e.message.include?(host)
-      end
-      expect(found).to be true
+      expect(events.length).to eq(2)
+      expect(events.first.address.seed).not_to eq(events.last.address.seed)
+    end
 
-      expect(e.message).not_to include("on #{first_primary.address.seed}")
+    it 'is reported on the server of the second attempt' do
+      perform_read
 
-      current_primary = client.cluster.next_primary
+      expect(@exception.message).not_to include(first_server.address.seed)
+      expect(@exception.message).to include(second_server.address.seed)
+    end
+
+    it 'marks servers used in both attempts unknown' do
+      perform_read
+
+      expect(first_server).to be_unknown
+
+      expect(second_server).to be_unknown
     end
   end
 end
