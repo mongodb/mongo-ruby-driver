@@ -1,6 +1,8 @@
 require 'spec_helper'
 
 describe 'Retryable writes tests' do
+  # Requirement for fail point
+  min_server_fcv '4.0'
 
   let(:client) do
     subscribed_client
