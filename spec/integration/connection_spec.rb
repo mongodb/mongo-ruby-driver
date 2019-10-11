@@ -158,7 +158,9 @@ describe 'Connections' do
         RSpec::Mocks.with_temporary_scope do
           # now pretend an ismaster returned a different range
           features = Mongo::Server::Description::Features.new(0..3)
-          # the second Features instantiation is for SDAM event publication
+          # One Features instantiation is for SDAM event publication, this
+          # one always happens. The second one happens on servers
+          # where we do not negotiate auth mechanism.
           expect(Mongo::Server::Description::Features).to receive(:new).at_least(:once).and_return(features)
 
           connection = Mongo::Server::Connection.new(server, server.options)
