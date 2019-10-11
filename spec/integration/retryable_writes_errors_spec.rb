@@ -1,21 +1,22 @@
 require 'spec_helper'
 
 describe 'Retryable writes errors tests' do
-  describe 'when the storage engine does not support retryable writes but the server does' do
+
+  let(:client) do
+    authorized_client.with(retry_writes: true)
+  end
+
+  let(:collection) do
+    client['retryable-writes-error-spec']
+  end
+
+  context 'when the storage engine does not support retryable writes but the server does' do
     require_mmapv1
     min_server_fcv '3.6'
     require_topology :replica_set, :sharded
 
     before do
       collection.delete_many
-    end
-
-    let(:collection) do
-      client[authorized_collection.name]
-    end
-
-    let(:client) do
-      authorized_client.with(retry_writes: true)
     end
 
     context 'when a retryable write is attempted' do

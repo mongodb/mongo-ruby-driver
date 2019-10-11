@@ -349,8 +349,6 @@ class ClusterTools
     end
   end
 
-  private
-
   def each_server(&block)
     admin_client.cluster.servers_list.each(&block)
   end
@@ -360,6 +358,8 @@ class ClusterTools
       yield direct_client(server.address)
     end
   end
+
+  private
 
   def reset_server_states
     each_server do |server|
