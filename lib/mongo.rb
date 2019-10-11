@@ -62,3 +62,5 @@ require 'mongo/uri'
 require 'mongo/version'
 require 'mongo/write_concern'
 require 'mongo/lint'
+
+require 'mongo/libmongocrypt/binding'
