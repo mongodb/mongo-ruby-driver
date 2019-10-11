@@ -1,6 +1,10 @@
 require 'lite_spec_helper'
 
 describe Mongo::Libmongocrypt::Binding do
+  unless ENV['LIBMONGOCRYPT_PATH']
+    skip 'Test requires path to libmongocrypt to be specified in LIBMONGOCRYPT_PATH env variable'
+  end
+
   describe '#mongocrypt_version' do
     let(:version) { described_class.mongocrypt_version(nil) }
 

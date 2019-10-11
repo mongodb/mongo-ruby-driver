@@ -23,7 +23,7 @@ module Mongo
     class Binding
       extend FFI::Library
 
-      ffi_lib "/Users/emilygiurleo/Downloads/libmongocrypt/lib/libmongocrypt.dylib"
+      ffi_lib ENV['LIBMONGOCRYPT_PATH']
       attach_function :mongocrypt_version, [:pointer], :string
     end
   end
