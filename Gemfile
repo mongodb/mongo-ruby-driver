@@ -2,6 +2,7 @@ source 'https://rubygems.org'
 
 gemspec
 gem 'yard'
+gem 'ffi'
 
 group :development, :testing do
   gem 'jruby-openssl', platforms: :jruby
