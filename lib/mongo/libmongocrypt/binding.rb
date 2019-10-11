@@ -21,10 +21,12 @@ module Mongo
     #
     # @since 2.12.0
     class Binding
-      extend FFI::Library
+      if ENV['LIBMONGOCRYPT_PATH']
+        extend FFI::Library
 
-      ffi_lib ENV['LIBMONGOCRYPT_PATH']
-      attach_function :mongocrypt_version, [:pointer], :string
+        ffi_lib ENV['LIBMONGOCRYPT_PATH']
+        attach_function :mongocrypt_version, [:pointer], :string
+      end
     end
   end
 end
