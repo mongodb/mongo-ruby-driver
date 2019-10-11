@@ -114,21 +114,6 @@ class ClusterConfig
     end
   end
 
-  def supports_scram_256?
-    return @supports_scram_256 unless @supports_scram_256.nil?
-
-    client = ClientRegistry.instance.global_client('basic')
-
-    if client.cluster.servers.empty?
-      raise 'Could not determine support for SCRAM-SHA-256 because the test client failed to connect to MongoDB deployment'
-    end
-
-    @supports_scram_256 = client.cluster.servers.first.features.scram_sha_256_enabled?
-    client.close
-    @supports_scram_256
-  end
-
-
   private
 
   def determine_cluster_config
