@@ -100,12 +100,15 @@ class ClientRegistry
     # Provides an authorized mongo client on the default test database for the
     # default test user.
     when 'authorized'
+      client_options = {
+        database: SpecConfig.instance.test_db,
+        user: SpecConfig.instance.test_user.name,
+        password: SpecConfig.instance.test_user.password,
+      }
+
       Mongo::Client.new(
         SpecConfig.instance.addresses,
-        SpecConfig.instance.test_options.merge(
-          database: SpecConfig.instance.test_db,
-          user: SpecConfig.instance.test_user.name,
-          password: SpecConfig.instance.test_user.password),
+        SpecConfig.instance.test_options.merge(client_options)
       )
     # Provides an authorized mongo client that retries writes.
     when 'authorized_with_retry_writes'
@@ -165,15 +168,17 @@ class ClientRegistry
     # Get an authorized client on the test database logged in as the admin
     # root user.
     when 'root_authorized'
+      client_options = {
+        user: SpecConfig.instance.root_user.name,
+        password: SpecConfig.instance.root_user.password,
+        database: SpecConfig.instance.test_db,
+        auth_source: SpecConfig.instance.auth_source || Mongo::Database::ADMIN,
+        monitoring: false
+      }
+
       Mongo::Client.new(
         SpecConfig.instance.addresses,
-        SpecConfig.instance.test_options.merge(
-          user: SpecConfig.instance.root_user.name,
-          password: SpecConfig.instance.root_user.password,
-          database: SpecConfig.instance.test_db,
-          auth_source: SpecConfig.instance.auth_source || Mongo::Database::ADMIN,
-          monitoring: false
-        ),
+        SpecConfig.instance.test_options.merge(client_options)
       )
     # A client that has an event subscriber for commands.
     when 'subscribed'

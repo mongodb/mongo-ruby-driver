@@ -21,6 +21,10 @@ describe 'Connection pool populator integration' do
 
   declare_topology_double
 
+  let(:app_metadata) do
+    Mongo::Server::AppMetadata.new(options)
+  end
+
   let(:cluster) do
     double('cluster').tap do |cl|
       allow(cl).to receive(:topology).and_return(topology)

@@ -49,20 +49,19 @@ describe 'Client options' do
         end
       end
 
-      # TODO: get this test passing
-      # context 'with client options' do
-      #   let(:client_opts) do
-      #     {
-      #       auth_mech: auth_mech_sym,
-      #       user: user,
-      #       password: pwd,
-      #     }
-      #   end
+      context 'with client options' do
+        let(:client_opts) do
+          {
+            auth_mech: auth_mech_sym,
+            user: user,
+            password: pwd,
+          }
+        end
 
-      #   it 'creates a client with default auth source' do
-      #     expect(client.options['auth_source']).to eq(default_auth_source)
-      #   end
-      # end
+        it 'creates a client with default auth source' do
+          expect(client.options['auth_source']).to eq(default_auth_source)
+        end
+      end
     end
 
     context 'where database is provided' do
@@ -77,21 +76,20 @@ describe 'Client options' do
         end
       end
 
-      # TODO: get this test passing
-      # context 'with client options' do
-      #   let(:client_opts) do
-      #     {
-      #       auth_mech: auth_mech_sym,
-      #       user: user,
-      #       password: pwd,
-      #       database: database
-      #     }
-      #   end
+      context 'with client options' do
+        let(:client_opts) do
+          {
+            auth_mech: auth_mech_sym,
+            user: user,
+            password: pwd,
+            database: database
+          }
+        end
 
-      #   it 'creates a client with database as auth source' do
-      #     expect(client.options['auth_source']).to eq(database)
-      #   end
-      # end
+        it 'creates a client with database as auth source' do
+          expect(client.options['auth_source']).to eq(database)
+        end
+      end
     end
   end
 
@@ -117,6 +115,7 @@ describe 'Client options' do
           auth_mech: auth_mech_sym,
           ssl: true,
           ssl_cert: cert_path,
+          ssl_key: cert_path,
           ssl_ca_cert: ca_file_path,
           user: user,
           password: pwd
@@ -127,8 +126,7 @@ describe 'Client options' do
         expect(client.options[:ssl]).to be true
         expect(client.options[:ssl_cert]).to eq(cert_path)
         expect(client.options[:ssl_ca_cert]).to eq(ca_file_path)
-        # TODO: get this expectation passing
-        # expect(client.options[:ssl_key]).to eq(cert_path)
+        expect(client.options[:ssl_key]).to eq(cert_path)
       end
     end
   end
@@ -245,20 +243,19 @@ describe 'Client options' do
       end
     end
 
-    # TODO: get this test passing
-    # context 'with client options' do
-    #   let(:client_opts) do
-    #     {
-    #       auth_mech: :gssapi,
-    #       user: user,
-    #       password: pwd
-    #     }
-    #   end
+    context 'with client options' do
+      let(:client_opts) do
+        {
+          auth_mech: :gssapi,
+          user: user,
+          password: pwd
+        }
+      end
 
-    #   it 'sets default auth mech properties' do
-    #     expect(client.options[:auth_mech_properties]).to eq({ 'service_name' => 'mongodb' })
-    #   end
-    # end
+      it 'sets default auth mech properties' do
+        expect(client.options[:auth_mech_properties]).to eq({ 'service_name' => 'mongodb' })
+      end
+    end
   end
 
   context 'with PLAIN auth mechanism' do
@@ -312,10 +309,9 @@ describe 'Client options' do
     context 'with client options' do
       let(:client_opts) { { auth_mech: :mongodb_x509, user: user } }
 
-      # TODO: get this test passing
-      # it 'sets default auth source' do
-      #   expect(client.options[:auth_source]).to eq('$external')
-      # end
+      it 'sets default auth source' do
+        expect(client.options[:auth_source]).to eq('$external')
+      end
 
       context 'when username is not provided' do
         let(:client_opts) { { auth_mech: :mongodb_x509} }

@@ -398,18 +398,12 @@ module Mongo
         @srv_records = nil
       end
 
-      unless options[:retry_reads] == false
-        options[:retry_reads] = true
-      end
-      unless options[:retry_writes] == false
-        options[:retry_writes] = true
-      end
-
       # Special handling for sdam_proc as it is only used during client
       # construction
       sdam_proc = options.delete(:sdam_proc)
 
-      @options = validate_new_options!(Database::DEFAULT_OPTIONS.merge(options))
+      options = default_options(options).merge(options)
+      @options = validate_new_options!(options)
 =begin WriteConcern object support
       if @options[:write_concern].is_a?(WriteConcern::Base)
         # Cache the instance so that we do not needlessly reconstruct it.
@@ -810,6 +804,35 @@ module Mongo
     end
 
     private
+
+    # Generate default client options based on the URI and options
+    # passed into the Client constructor.
+    def default_options(options)
+      Database::DEFAULT_OPTIONS.dup.tap do |default_options|
+        if options[:auth_mech] || options[:user]
+          default_options[:auth_source] = default_auth_source(options)
+        end
+
+        if options[:auth_mech] == :gssapi
+          default_options[:auth_mech_properties] = { service_name: 'mongodb' }
+        end
+
+        default_options[:retry_reads] = true
+        default_options[:retry_writes] = true
+      end
+    end
+
+    # Generate default auth source based on the URI and options
+    def default_auth_source(options)
+      case options[:auth_mech]
+      when :gssapi, :mongodb_x509
+        '$external'
+      when :plain
+        options[:database] || '$external'
+      else
+        options[:database] || Database::ADMIN
+      end
+    end
 
     # If options[:session] is set, validates that session and returns it.
     # If deployment supports sessions, creates a new session and returns it.
