@@ -974,7 +974,7 @@ buildvariants:
     ruby: "*"
     topology: standalone
     mongodb-version: "4.2"
-    os: rhel170
+    os: rhel70
   display_name: "FLE Tests"
   tasks:
     - name: "fle-tests"
