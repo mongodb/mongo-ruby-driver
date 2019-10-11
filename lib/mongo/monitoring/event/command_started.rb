@@ -45,6 +45,12 @@ module Mongo
         # @api private
         attr_reader :socket_object_id
 
+        # @return [ Integer ] The ID for the connection over which the command
+        #   is sent.
+        #
+        # @api private
+        attr_reader :connection_id
+
         # Create the new event.
         #
         # @example Create the event.
@@ -59,7 +65,7 @@ module Mongo
         # @since 2.1.0
         # @api private
         def initialize(command_name, database_name, address, request_id,
-          operation_id, command, socket_object_id = nil
+          operation_id, command, socket_object_id: nil, connection_id: nil
         )
           @command_name = command_name.to_s
           @database_name = database_name
@@ -68,6 +74,7 @@ module Mongo
           @operation_id = operation_id
           @command = redacted(command_name, command)
           @socket_object_id = socket_object_id
+          @connection_id = connection_id
         end
 
         # Create the event from a wire protocol message payload.
@@ -83,7 +90,9 @@ module Mongo
         #
         # @since 2.1.0
         # @api private
-        def self.generate(address, operation_id, payload, socket_object_id = nil)
+        def self.generate(address, operation_id, payload,
+          socket_object_id: nil, connection_id: nil
+        )
           new(
             payload[:command_name],
             payload[:database_name],
@@ -91,7 +100,8 @@ module Mongo
             payload[:request_id],
             operation_id,
             payload[:command],
-            socket_object_id,
+            socket_object_id: socket_object_id,
+            connection_id: connection_id,
           )
         end
 
