@@ -98,7 +98,7 @@ module Mongo
       end
 
       def prefix(event, connection_id: nil)
-        "#{event.address.to_s}#{connection_id && " ##{connection_id}"} | " +
+        "[#{event.request_id}] #{event.address.to_s}#{connection_id && " ##{connection_id}"} | " +
           "#{event.database_name}.#{event.command_name}"
       end
 
