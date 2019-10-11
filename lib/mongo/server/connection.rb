@@ -186,7 +186,7 @@ module Mongo
 
         begin
           handshake!(socket)
-          pending_connection = PendingConnection.new(socket, @server, monitoring, options)
+          pending_connection = PendingConnection.new(socket, @server, monitoring, options.merge(id: id))
           authenticate!(pending_connection)
         rescue Exception
           socket.close

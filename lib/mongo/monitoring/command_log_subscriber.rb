@@ -54,7 +54,8 @@ module Mongo
       # @since 2.1.0
       def started(event)
         if logger.debug?
-          log_debug("#{prefix(event)} | STARTED | #{format_command(event.command)}")
+          log_debug("#{prefix(event, connection_id: event.connection_id)} | " +
+            "STARTED | #{format_command(event.command)}")
         end
       end
 
@@ -96,8 +97,9 @@ module Mongo
         end
       end
 
-      def prefix(event)
-        "#{event.address.to_s} | #{event.database_name}.#{event.command_name}"
+      def prefix(event, connection_id: nil)
+        "[#{event.request_id}] #{event.address.to_s}#{connection_id && " ##{connection_id}"} | " +
+          "#{event.database_name}.#{event.command_name}"
       end
 
       def truncate(command)

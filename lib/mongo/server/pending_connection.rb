@@ -26,7 +26,13 @@ module Mongo
         @options = options
         @server = server
         @monitoring = monitoring
+        @id = options[:id]
       end
+
+      # @return [ Integer ] The ID for the connection. This is the same ID
+      #   as that of the regular Connection object for which this
+      #   PendingConnection instance was created.
+      attr_reader :id
 
       def ensure_connected
         yield @socket
