@@ -24,6 +24,10 @@ describe Mongo::Server::ConnectionPool do
 
   declare_topology_double
 
+  let(:app_metadata) do
+    Mongo::Server::AppMetadata.new(server_options)
+  end
+
   let(:cluster) do
     double('cluster').tap do |cl|
       allow(cl).to receive(:topology).and_return(topology)
