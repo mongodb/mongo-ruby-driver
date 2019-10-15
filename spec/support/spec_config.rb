@@ -75,20 +75,23 @@ class SpecConfig
       client = Mongo::Client.new(addresses, Mongo::Options::Redacted.new(
         server_selection_timeout: 5,
       ).merge(ssl_options))
-      options = case client.cluster.topology.class.name
-      when /Replica/
-        { connect: :replica_set, replica_set: client.cluster.topology.replica_set_name }
-      when /Sharded/
-        { connect: :sharded }
-      when /Single/
-        { connect: :direct }
-      when /Unknown/
-        raise "Could not detect topology because the test client failed to connect to MongoDB deployment"
-      else
-        raise "Weird topology #{client.cluster.topology}"
+
+      begin
+        case client.cluster.topology.class.name
+        when /Replica/
+          { connect: :replica_set, replica_set: client.cluster.topology.replica_set_name }
+        when /Sharded/
+          { connect: :sharded }
+        when /Single/
+          { connect: :direct }
+        when /Unknown/
+          raise "Could not detect topology because the test client failed to connect to MongoDB deployment"
+        else
+          raise "Weird topology #{client.cluster.topology}"
+        end
+      ensure
+        client.close
       end
-      client.close
-      options
     end
   end
 
@@ -255,6 +258,10 @@ EOT
     end
   end
 
+  def client_x509_pem_path
+    "#{ssl_certs_dir}/client-x509.pem"
+  end
+
   def second_level_cert_path
     "#{ssl_certs_dir}/client-second-level.crt"
   end
@@ -307,11 +314,18 @@ EOT
   # Option hashes
 
   def auth_options
-    {
-      user: user,
-      password: password,
-      auth_source: auth_source,
-    }
+    if x509_auth?
+      {
+        auth_mech: @uri_options[:auth_mech],
+        auth_source: '$external',
+      }
+    else
+      {
+        user: user,
+        password: password,
+        auth_source: auth_source,
+      }
+    end
   end
 
   def ssl_options
@@ -322,7 +336,7 @@ EOT
         ssl_cert:  client_cert_path,
         ssl_key:  client_key_path,
         ssl_ca_cert: ca_cert_path,
-      }.merge(@uri_tls_options)
+      }.merge(Utils.underscore_hash(@uri_tls_options))
     else
       {}
     end
@@ -411,5 +425,19 @@ EOT
 
       ]
     )
+  end
+
+  def x509_auth?
+    @uri_options[:auth_mech] == :mongodb_x509
+  end
+
+  # When we use x.509 authentication, omit all of the users we normally create
+  # and authenticate with x.509.
+  def credentials_or_x509(creds)
+    if x509_auth?
+      {auth_mech: :mongodb_x509}
+    else
+      creds
+    end
   end
 end

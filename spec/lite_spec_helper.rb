@@ -47,6 +47,7 @@ else
   PossiblyConcurrentArray = Array
 end
 
+require 'support/utils'
 require 'support/spec_config'
 
 Mongo::Logger.logger = Logger.new($stdout)
@@ -78,7 +79,6 @@ require 'support/client_registry'
 require 'support/client_registry_macros'
 require 'support/json_ext_formatter'
 require 'support/sdam_formatter_integration'
-require 'support/utils'
 require 'support/background_thread_registry'
 require 'support/auth'
 

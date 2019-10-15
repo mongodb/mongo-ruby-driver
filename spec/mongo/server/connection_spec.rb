@@ -289,6 +289,7 @@ describe Mongo::Server::Connection, retry: 3 do
     end
 
     context 'when user credentials exist' do
+      require_no_x509_auth
 
       let(:server) { monitored_server }
 
@@ -458,9 +459,11 @@ describe Mongo::Server::Connection, retry: 3 do
       described_class.new(
         server,
         SpecConfig.instance.test_options.merge(
-          :user => SpecConfig.instance.test_user.name,
-          :password => SpecConfig.instance.test_user.password,
-          :database => SpecConfig.instance.test_user.database )
+          :database => SpecConfig.instance.test_user.database,
+        ).merge(SpecConfig.instance.credentials_or_x509(
+          user: SpecConfig.instance.test_user.name,
+          password: SpecConfig.instance.test_user.password,
+        ))
       )
     end
 
@@ -657,7 +660,9 @@ describe Mongo::Server::Connection, retry: 3 do
         end
 
         it 'checks the size against the max bson size' do
-          expect_any_instance_of(Mongo::Server).to receive(:max_bson_object_size).at_least(:once).and_return(100)
+          # 100 works for non-x509 auth.
+          # 10 is needed for x509 auth due to smaller payloads, apparently.
+          expect_any_instance_of(Mongo::Server).to receive(:max_bson_object_size).at_least(:once).and_return(10)
           expect do
             reply
           end.to raise_exception(Mongo::Error::MaxBSONSize)
@@ -950,6 +955,7 @@ describe Mongo::Server::Connection, retry: 3 do
     end
 
     context 'when authentication options are provided' do
+      require_no_x509_auth
 
       let(:connection) do
         described_class.new(
@@ -1100,6 +1106,8 @@ describe Mongo::Server::Connection, retry: 3 do
     end
 
     context 'when auth options differ from server' do
+      require_no_x509_auth
+
       let(:connection) do
         described_class.new(server, server.options.merge(user: 'foo'))
       end

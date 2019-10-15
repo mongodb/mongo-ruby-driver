@@ -16,7 +16,7 @@ module Mongo
   module Auth
     class X509
 
-      # Defines behavior around a single x.509 conversation between the
+      # Defines behavior around a single X.509 conversation between the
       # client and server.
       #
       # @since 2.0.0
@@ -34,7 +34,7 @@ module Mongo
         # @return [ User ] user The user for the conversation.
         attr_reader :user
 
-        # Finalize the x.509 conversation. This is meant to be iterated until
+        # Finalize the X.509 conversation. This is meant to be iterated until
         # the provided reply indicates the conversation is finished.
         #
         # @example Finalize the conversation.
@@ -50,7 +50,7 @@ module Mongo
           validate!(reply)
         end
 
-        # Start the x.509 conversation. This returns the first message that
+        # Start the X.509 conversation. This returns the first message that
         # needs to be sent to the server.
         #
         # @example Start the conversation.
@@ -58,7 +58,7 @@ module Mongo
         #
         # @param [ Mongo::Server::Connection ] connection The connection being authenticated.
         #
-        # @return [ Protocol::Query ] The first x.509 conversation message.
+        # @return [ Protocol::Query ] The first X.509 conversation message.
         #
         # @since 2.0.0
         def start(connection = nil)

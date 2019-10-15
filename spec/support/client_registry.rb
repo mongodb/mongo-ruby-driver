@@ -95,16 +95,17 @@ class ClientRegistry
     when 'unauthorized'
       Mongo::Client.new(
         SpecConfig.instance.addresses,
-        SpecConfig.instance.test_options.merge(database: SpecConfig.instance.test_db, monitoring: false),
+        SpecConfig.instance.test_options.merge(database: SpecConfig.instance.test_db),
       )
     # Provides an authorized mongo client on the default test database for the
     # default test user.
     when 'authorized'
       client_options = {
         database: SpecConfig.instance.test_db,
+      }.update(SpecConfig.instance.credentials_or_x509(
         user: SpecConfig.instance.test_user.name,
         password: SpecConfig.instance.test_user.password,
-      }
+      ))
 
       Mongo::Client.new(
         SpecConfig.instance.addresses,
@@ -168,17 +169,23 @@ class ClientRegistry
     # Get an authorized client on the test database logged in as the admin
     # root user.
     when 'root_authorized'
-      client_options = {
-        user: SpecConfig.instance.root_user.name,
-        password: SpecConfig.instance.root_user.password,
-        database: SpecConfig.instance.test_db,
-        auth_source: SpecConfig.instance.auth_source || Mongo::Database::ADMIN,
-        monitoring: false
-      }
+      if SpecConfig.instance.x509_auth?
+        client_options = SpecConfig.instance.auth_options.merge(
+          database: SpecConfig.instance.test_db,
+        )
+      else
+        client_options = {
+          database: SpecConfig.instance.test_db,
+        }.update(SpecConfig.instance.credentials_or_x509(
+          user: SpecConfig.instance.root_user.name,
+          password: SpecConfig.instance.root_user.password,
+          auth_source: SpecConfig.instance.auth_source || Mongo::Database::ADMIN,
+        ))
+      end
 
       Mongo::Client.new(
         SpecConfig.instance.addresses,
-        SpecConfig.instance.test_options.merge(client_options)
+        SpecConfig.instance.test_options.merge(client_options),
       )
     # A client that has an event subscriber for commands.
     when 'subscribed'
@@ -186,8 +193,10 @@ class ClientRegistry
         SpecConfig.instance.addresses,
         SpecConfig.instance.test_options.merge(
           database: SpecConfig.instance.test_db,
+        ).merge(SpecConfig.instance.credentials_or_x509(
           user: SpecConfig.instance.test_user.name,
-          password: SpecConfig.instance.test_user.password),
+          password: SpecConfig.instance.test_user.password,
+        ))
       ).tap do |client|
         client.subscribe(Mongo::Monitoring::COMMAND, EventSubscriber)
       end

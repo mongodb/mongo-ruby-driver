@@ -66,9 +66,12 @@ describe 'Command monitoring' do
   end
 
   context 'client with no established connections' do
-    # for simplicity use 3.6+ servers only, then we can assert
+    # For simplicity use 3.6+ servers only, then we can assert
     # scram auth commands
     min_server_fcv '3.6'
+
+    # X.509 auth uses authenticate instead of sasl* commands
+    require_no_x509_auth
 
     it 'does not nest auth and find' do
       expect(subscriber.started_events.length).to eq 0

@@ -7,8 +7,10 @@ describe 'Client construction' do
     SpecConfig.instance.test_options.merge(
       server_selection_timeout: 5,
       database: SpecConfig.instance.test_db,
+    ).merge(SpecConfig.instance.credentials_or_x509(
       user: SpecConfig.instance.test_user.name,
-      password: SpecConfig.instance.test_user.password)
+      password: SpecConfig.instance.test_user.password,
+    ))
   end
 
   context 'in single topology' do

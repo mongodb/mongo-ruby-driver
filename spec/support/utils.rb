@@ -13,6 +13,22 @@ module Utils
   #
   # For example, { 'fooBar' => { 'baz' => 'bingBing', :x => 1 } } converts to
   # { :foo_bar => { :baz => :bing_bing, :x => 1 } }.
+  def underscore_hash(value)
+    return value unless value.is_a?(Hash)
+
+    value.reduce({}) do |hash, (k, v)|
+      hash.tap do |h|
+        h[underscore(k)] = underscore_hash(v)
+      end
+    end
+  end
+  module_function :underscore_hash
+
+  # Creates a copy of a hash where all keys and string values are converted to
+  # snake-case symbols.
+  #
+  # For example, { 'fooBar' => { 'baz' => 'bingBing', :x => 1 } } converts to
+  # { :foo_bar => { :baz => :bing_bing, :x => 1 } }.
   def snakeize_hash(value)
     return underscore(value) if value.is_a?(String)
     return value unless value.is_a?(Hash)
@@ -146,7 +162,10 @@ module Utils
     end
 
     # Remove any events from authentication commands.
-    events.reject! { |e| e['command_started_event']['command_name'].start_with?('sasl') }
+    events.reject! do |e|
+      command_name = e['command_started_event']['command_name']
+      command_name.start_with?('sasl') || command_name == 'authenticate'
+    end
 
     events
   end

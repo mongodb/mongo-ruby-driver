@@ -29,6 +29,7 @@ namespace :spec do
   task :prepare do
     $: << File.join(File.dirname(__FILE__), 'spec')
 
+    require 'support/utils'
     require 'support/spec_setup'
     SpecSetup.new.run
   end
@@ -40,6 +41,7 @@ namespace :spec do
     # Since this task is usually used for troubleshooting of test suite
     # configuration, leave driver log level at the default of debug to
     # have connection diagnostics printed during handshakes and such.
+    require 'support/utils'
     require 'support/spec_config'
     require 'support/client_registry'
     SpecConfig.instance.print_summary

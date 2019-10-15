@@ -225,7 +225,7 @@ describe Mongo::Socket::SSL, retry: 3 do
     context 'when a certificate is passed, but it is not of the right type' do
 
       let(:options) do
-        cert = "This is a string, not a X509 Certificate"
+        cert = "This is a string, not an X.509 Certificate"
         {
           :ssl => true,
           :ssl_cert_object => cert,

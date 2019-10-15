@@ -3,6 +3,11 @@ require_relative './client_registry'
 
 class SpecSetup
   def run
+    if SpecConfig.instance.x509_auth?
+      warn 'Skipping user creation because X.509 auth appears to be enabled'
+      return
+    end
+
     # Create the root user administrator as the first user to be added to the
     # database. This user will need to be authenticated in order to add any
     # more users to any other databases.
