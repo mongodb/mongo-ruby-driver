@@ -11,7 +11,34 @@ describe Mongo::Auth::X509 do
   end
 
   let(:user) do
-    Mongo::Auth::User.new(database: SpecConfig.instance.test_db, user: 'driver', password: 'password')
+    Mongo::Auth::User.new(database: '$external')
+  end
+
+  describe '#initialize' do
+
+    context 'when user specifies database $external' do
+
+      let(:user) do
+        Mongo::Auth::User.new(database: '$external')
+      end
+
+      it 'works' do
+        described_class.new(user)
+      end
+    end
+
+    context 'when user specifies database other than $external' do
+
+      let(:user) do
+        Mongo::Auth::User.new(database: 'foo')
+      end
+
+      it 'raises InvalidConfiguration' do
+        expect do
+          described_class.new(user)
+        end.to raise_error(Mongo::Auth::InvalidConfiguration, /User specifies auth source 'foo', but the only valid auth source for X.509 is '\$external'/)
+      end
+    end
   end
 
   describe '#login' do

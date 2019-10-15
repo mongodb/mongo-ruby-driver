@@ -39,6 +39,16 @@ module Mongo
       #
       # @since 2.0.0
       def initialize(user)
+        # The only valid database for X.509 authentication is $external.
+        if user.auth_source != '$external'
+          user_name_msg = if user.name
+            " #{user.name}"
+          else
+            ''
+          end
+          raise Auth::InvalidConfiguration, "User#{user_name_msg} specifies auth source '#{user.auth_source}', but the only valid auth source for X.509 is '$external'"
+        end
+
         @user = user
       end
 

@@ -66,7 +66,16 @@ module Mongo
           login[:user] = user.name if user.name
           if connection && connection.features.op_msg_enabled?
             selector = login
-            selector[Protocol::Msg::DATABASE_IDENTIFIER] = user.auth_source
+            # The only valid database for X.509 authentication is $external.
+            if user.auth_source != '$external'
+              user_name_msg = if user.name
+                " #{user.name}"
+              else
+                ''
+              end
+              raise Auth::InvalidConfiguration, "User#{user_name_msg} specifies auth source '#{user.auth_source}', but the only valid auth source for X.509 is '$external'"
+            end
+            selector[Protocol::Msg::DATABASE_IDENTIFIER] = '$external'
             cluster_time = connection.mongos? && connection.cluster_time
             selector[Operation::CLUSTER_TIME] = cluster_time if cluster_time
             Protocol::Msg.new([], {}, selector)
