@@ -42,6 +42,9 @@ describe Mongo::Auth::X509 do
   end
 
   describe '#login' do
+    # When x509 auth is configured, the login would work and this test
+    # requires the login to fail.
+    require_no_x509_auth
 
     context 'when the user is not authorized for the database' do
 
