@@ -9,7 +9,7 @@ wget "https://s3.amazonaws.com/mciuploads/libmongocrypt/all/master/latest/libmon
 tar -xvf libmongocrypt-all.tar.gz
 
 ls
-export LIBMONGOCRYPT_PATH=`pwd`/libmongocrypt-all/rhel-70-64-bit/lib64/libmongocrypt.so
+export LIBMONGOCRYPT_PATH=`pwd`/rhel-70-64-bit/lib64/libmongocrypt.so
 
 set_env_vars
 setup_ruby
