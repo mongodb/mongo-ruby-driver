@@ -89,6 +89,28 @@ other tests require a sharded cluster with more than one shard. Tests requiring
 a single shard can be run against a deployment with multiple shards by
 specifying only one mongos address in MONGODB_URI.
 
+## Note Regarding SSL/TLS Arguments
+
+MongoDB 4.2 (server and shell) added new command line options for setting TLS
+parameters. These options follow the naming of URI options used by both the
+shell and MongoDB drivers starting with MongoDB 4.2. The new options start with
+the `--tls` prefix.
+
+Old options, starting with the `--ssl` prefix, are still supported for backwards
+compatibility, but their use is deprecated. As of this writing, mlaunch only
+supports the old `--ssl` prefix options.
+
+In the rest of this document, when TLS options are given for `mongo` or
+`mongod` they use the new `--tls` prefixed arguments, and when the same options
+are given to `mlaunch` they use the old `--ssl` prefixed forms. The conversion
+table of the options used herein is as follows:
+
+| --tls prefixed option   | --ssl prefixed option |
+| ----------------------- | --------------------- |
+| --tls                   | --ssl                 |
+| --tlsCAFile             | --sslCAFile           |
+| --tlsCertificateKeyFile | --sslPEMKeyFile       |
+
 ## TLS With Verification
 
 The test suite includes a set of TLS certificates for configuring a server
@@ -209,16 +231,16 @@ Use the MongoDB shell to execute this command:
 Verify that authentication is required by running the following command, which
 should fail:
 
-    mongo --ssl \
-      --sslCAFile `pwd`/spec/support/certificates/ca.crt \
-      --sslPEMKeyFile `pwd`/spec/support/certificates/client-x509.pem \
+    mongo --tls \
+      --tlsCAFile `pwd`/spec/support/certificates/ca.crt \
+      --tlsCertificateKeyFile `pwd`/spec/support/certificates/client-x509.pem \
       --eval 'db.serverStatus()'
 
 Verify that X.509 authentication works by running the following command:
 
-    mongo --ssl \
-      --sslCAFile `pwd`/spec/support/certificates/ca.crt \
-      --sslPEMKeyFile `pwd`/spec/support/certificates/client-x509.pem \
+    mongo --tls \
+      --tlsCAFile `pwd`/spec/support/certificates/ca.crt \
+      --tlsCertificateKeyFile `pwd`/spec/support/certificates/client-x509.pem \
       --authenticationDatabase '$external' \
       --authenticationMechanism MONGODB-X509 \
       --eval 'db.serverStatus()'
