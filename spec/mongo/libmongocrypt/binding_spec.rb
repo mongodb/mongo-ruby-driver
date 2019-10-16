@@ -1,4 +1,4 @@
-require 'mongo/libmongocrypt/binding'
+require 'lite_spec_helper'
 
 describe Mongo::Libmongocrypt::Binding do
   before do
