@@ -1,8 +1,10 @@
-require 'lite_spec_helper'
+require 'mongo/libmongocrypt/binding'
 
 describe Mongo::Libmongocrypt::Binding do
-  unless ENV['LIBMONGOCRYPT_PATH']
-    skip 'Test requires path to libmongocrypt to be specified in LIBMONGOCRYPT_PATH env variable'
+  before do
+    unless ENV['LIBMONGOCRYPT_PATH']
+      skip 'Test requires path to libmongocrypt to be specified in LIBMONGOCRYPT_PATH env variable'
+    end
   end
 
   describe '#mongocrypt_version' do
