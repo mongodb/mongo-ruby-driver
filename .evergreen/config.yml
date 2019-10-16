@@ -369,7 +369,7 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
-          X509_AUTH_REQUIRED=1 .evergreen/run-x509-tests.sh
+          .evergreen/run-x509-tests.sh
 
   "run tests via mlaunch":
     - command: shell.exec
