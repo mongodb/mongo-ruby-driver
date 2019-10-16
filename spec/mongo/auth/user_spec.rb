@@ -10,6 +10,24 @@ describe Mongo::Auth::User do
     described_class.new(options)
   end
 
+  shared_examples_for 'sets database and auth source to admin' do
+
+    it 'sets database to admin' do
+      expect(user.database).to eq('admin')
+    end
+
+    it 'sets auth source to admin' do
+      expect(user.auth_source).to eq('admin')
+    end
+  end
+
+  shared_examples_for 'sets auth source to $external' do
+
+    it 'sets auth source to $external' do
+      expect(user.auth_source).to eq('$external')
+    end
+  end
+
   describe '#initialize' do
     let(:user) { Mongo::Auth::User.new(options) }
 
@@ -19,6 +37,8 @@ describe Mongo::Auth::User do
       it 'succeeds' do
         expect(user).to be_a(Mongo::Auth::User)
       end
+
+      it_behaves_like 'sets database and auth source to admin'
     end
 
     context 'invalid mechanism' do
@@ -45,6 +65,8 @@ describe Mongo::Auth::User do
         it 'converts mechanism to symbol' do
           expect(user.mechanism).to eq(:scram)
         end
+
+        it_behaves_like 'sets database and auth source to admin'
       end
 
       context 'linting' do
@@ -69,6 +91,40 @@ describe Mongo::Auth::User do
       it 'stores mechanism' do
         expect(user.mechanism).to eq(:scram)
       end
+
+      it_behaves_like 'sets database and auth source to admin'
+    end
+
+    context 'mechanism is x509' do
+      let(:options) { {auth_mech: :mongodb_x509} }
+
+      it 'sets database to admin' do
+        expect(user.database).to eq('admin')
+      end
+
+      it_behaves_like 'sets auth source to $external'
+
+      context 'database is explicitly given' do
+        let(:options) { {auth_mech: :mongodb_x509, database: 'foo'} }
+
+        it 'sets database to the specified one' do
+          expect(user.database).to eq('foo')
+        end
+
+        it_behaves_like 'sets auth source to $external'
+      end
+    end
+
+    it 'sets the database' do
+      expect(user.database).to eq('testing')
+    end
+
+    it 'sets the name' do
+      expect(user.name).to eq('user')
+    end
+
+    it 'sets the password' do
+      expect(user.password).to eq('pass')
     end
   end
 
@@ -128,21 +184,6 @@ describe Mongo::Auth::User do
       it 'returns a UTF-8 string' do
         expect(user.encoded_name.encoding.name).to eq('UTF-8')
       end
-    end
-  end
-
-  describe '#initialize' do
-
-    it 'sets the database' do
-      expect(user.database).to eq('testing')
-    end
-
-    it 'sets the name' do
-      expect(user.name).to eq('user')
-    end
-
-    it 'sets the password' do
-      expect(user.password).to eq('pass')
     end
   end
 

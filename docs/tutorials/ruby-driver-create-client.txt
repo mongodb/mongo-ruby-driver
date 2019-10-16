@@ -741,7 +741,7 @@ by concatenating them after the leaf server and client certificates, respectivel
 ``:ssl_cert_object`` Ruby option, which takes an instance of
 ``OpenSSL::X509::Certificate``, does not support certificate chains.
 
-The Ruby driver performs strict X509 certificate verification, which requires
+The Ruby driver performs strict X.509 certificate verification, which requires
 that both of the following fields are set in the intermediate certificate(s):
 
 - X509v3 Basic Constraints: CA: TRUE -- Can sign certificates

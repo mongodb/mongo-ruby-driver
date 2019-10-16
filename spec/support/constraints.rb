@@ -148,6 +148,14 @@ module Constraints
     end
   end
 
+  def require_no_x509_auth
+    before(:all) do
+      if SpecConfig.instance.x509_auth?
+        skip "X.509 auth not allowed"
+      end
+    end
+  end
+
   # Can the driver specify a write concern that won't be overridden?
   # (mongos 4.0+ overrides the write concern)
   def require_set_write_concern

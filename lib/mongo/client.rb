@@ -810,7 +810,7 @@ module Mongo
     def default_options(options)
       Database::DEFAULT_OPTIONS.dup.tap do |default_options|
         if options[:auth_mech] || options[:user]
-          default_options[:auth_source] = default_auth_source(options)
+          default_options[:auth_source] = Auth::User.default_auth_source(options)
         end
 
         if options[:auth_mech] == :gssapi
@@ -819,18 +819,6 @@ module Mongo
 
         default_options[:retry_reads] = true
         default_options[:retry_writes] = true
-      end
-    end
-
-    # Generate default auth source based on the URI and options
-    def default_auth_source(options)
-      case options[:auth_mech]
-      when :gssapi, :mongodb_x509
-        '$external'
-      when :plain
-        options[:database] || '$external'
-      else
-        options[:database] || Database::ADMIN
       end
     end
 

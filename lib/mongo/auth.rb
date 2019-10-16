@@ -123,7 +123,12 @@ module Mongo
         else
           ''
         end
-        msg = "User #{user.name}#{specified_mechanism} is not authorized to access #{user.database} (auth source: #{user.auth_source})#{used_mechanism}"
+        used_user = if user.mechanism == :mongodb_x509
+          'Client certificate'
+        else
+          "User #{user.name}"
+        end
+        msg = "#{used_user}#{specified_mechanism} is not authorized to access #{user.database} (auth source: #{user.auth_source})#{used_mechanism}"
         if message
           msg += ': ' + message
         end

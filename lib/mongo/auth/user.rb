@@ -159,7 +159,7 @@ module Mongo
       # @since 2.0.0
       def initialize(options)
         @database = options[:database] || Database::ADMIN
-        @auth_source = options[:auth_source] || @database
+        @auth_source = options[:auth_source] || self.class.default_auth_source(options)
         @name = options[:user]
         @password = options[:password] || options[:pwd]
         @mechanism = options[:auth_mech]
@@ -205,6 +205,20 @@ module Mongo
       #
       # @return [ String ] The client key for the user.
       attr_reader :client_key
+
+      # Generate default auth source based on the URI and options
+      #
+      # @api private
+      def self.default_auth_source(options)
+        case options[:auth_mech]
+        when :gssapi, :mongodb_x509
+          '$external'
+        when :plain
+          options[:database] || '$external'
+        else
+          options[:database] || Database::ADMIN
+        end
+      end
     end
   end
 end

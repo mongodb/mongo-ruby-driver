@@ -362,7 +362,11 @@ module Mongo
 
       def authenticate!(pending_connection)
         if options[:user] || options[:auth_mech]
-          user = Auth::User.new(Options::Redacted.new(:auth_mech => default_mechanism).merge(options))
+          user_options = Options::Redacted.new(:auth_mech => default_mechanism).merge(options)
+          if user_options[:auth_mech] == :mongodb_x509
+            user_options[:auth_source] = '$external'
+          end
+          user = Auth::User.new(user_options)
           @server.handle_auth_failure! do
             begin
               Auth.get(user).login(pending_connection)

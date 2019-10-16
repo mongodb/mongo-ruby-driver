@@ -46,6 +46,7 @@ describe Mongo::Server::Connection, retry: 3 do
   end
 
   describe '#auth_mechanism' do
+    require_no_x509_auth
 
     let(:connection) do
       described_class.new(server, server.options)
@@ -87,6 +88,8 @@ describe Mongo::Server::Connection, retry: 3 do
     end
 
     context 'when the ismaster response indicates the auth mechanism is :scram' do
+      require_no_x509_auth
+
       let(:features) do
         Mongo::Server::Description::Features.new(0..7)
       end

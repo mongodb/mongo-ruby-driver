@@ -42,7 +42,7 @@ launched as follows:
     # Launch mongod in one terminal
     mkdir /tmp/mdb
     mongod --dbpath /tmp/mdb
-    
+
     # Run tests in another terminal
     rake
 
@@ -63,7 +63,7 @@ First, install [mtools](https://github.com/rueckstiess/mtools):
     export PATH=~/.local/bin:$PATH
     # On MacOS:
     export PATH=$PATH:~/Library/Python/2.7/bin
-    
+
 Then, launch a replica set:
 
     mlaunch init --replicaset --name ruby-driver-rs \
@@ -114,13 +114,13 @@ The driver's test suite is configured to verify certificates by default.
 If the server is launched with the certificates from the driver's test suite,
 the test suite can be run simply by specifying `tls=true` URI option:
 
-    MONGODB_URI='mongodb://localhost:27017/?tls=true' rake 
+    MONGODB_URI='mongodb://localhost:27017/?tls=true' rake
 
 The driver's test suite can also be executed against a server launched with
 any other certificates. In this case the certificates need to be explicitly
 specified in the URI, for example as follows:
 
-    MONGODB_URI='mongodb://localhost:27017/?tls=true&tlsCAFile=path/to/ca.crt&tlsCertificateKeyFile=path/to/client.pem' rake 
+    MONGODB_URI='mongodb://localhost:27017/?tls=true&tlsCAFile=path/to/ca.crt&tlsCertificateKeyFile=path/to/client.pem' rake
 
 Note that some tests (specifically testing TLS verification) expect the server
 to be launched using the certificates in the driver's test suite, and will
@@ -140,7 +140,7 @@ case a standalone server can be started as follows:
 To run the test suite against such a server, also omitting certificate
 verification, run:
 
-    MONGODB_URI='mongodb://localhost:27017/?tls=true&tlsInsecure=true' rake 
+    MONGODB_URI='mongodb://localhost:27017/?tls=true&tlsInsecure=true' rake
 
 Note that there are tests in the test suite that cover TLS verification, and
 they may fail if the test suite is run in this way.
@@ -153,7 +153,81 @@ mlaunch can configure authentication on the server:
 
 To run the test suite against such a server, run:
 
-    MONGODB_URI='mongodb://dev:dev@localhost:27017/' rake 
+    MONGODB_URI='mongodb://dev:dev@localhost:27017/' rake
+
+## X.509 Authentication
+
+Note: Testing X.509 authentication requires an enterprise build of the MongoDB
+server.
+
+To set up a server configured for authentication with an X.509 certificate,
+first launch a TLS-enabled server with a regular credentialed user.
+
+The credentialed user is required because mlaunch configures `--keyFile`
+option for cluster member authentication, which in turn enables authentication.
+With authentication enabled, `mongod` allows creating the first user in the
+`admin` database but the X.509 user must be created in the `$external`
+database - as a result, the X.509 user cannot be the only user in the deployment.
+
+Run the following command to set up a standalone `mongod` with a bootstrap
+user:
+
+    mlaunch init --single --dir /tmp/mdb-x509 --sslMode requireSSL \
+      --sslPEMKeyFile `pwd`/spec/support/certificates/server.pem \
+      --sslCAFile `pwd`/spec/support/certificates/ca.crt \
+      --sslClientCertificate `pwd`/spec/support/certificates/client.pem \
+      --auth --username bootstrap --password bootstrap
+
+Next, create the X.509 user. The command to create the user is the same
+across all supported MongoDB versions, and for convenience we assign its text
+to a variable as follows:
+
+    create_user_cmd="`cat <<'EOT'
+      db.getSiblingDB("$external").runCommand(
+        {
+          createUser: "C=US,ST=New York,L=New York City,O=MongoDB,OU=x509,CN=localhost",
+          roles: [
+               { role: "dbAdminAnyDatabase", db: "admin" },
+               { role: "readWriteAnyDatabase", db: "admin" },
+               { role: "userAdminAnyDatabase", db: "admin" },
+               { role: "clusterAdmin", db: "admin" },
+          ],
+          writeConcern: { w: "majority" , wtimeout: 5000 },
+        }
+      )
+    EOT
+    `"
+
+Use the MongoDB shell to execute this command:
+
+    mongo --tls \
+      --tlsCAFile `pwd`/spec/support/certificates/ca.crt \
+      --tlsCertificateKeyFile `pwd`/spec/support/certificates/client-x509.pem \
+      -u bootstrap -p bootstrap \
+      --eval "$create_user_cmd"
+
+Verify that authentication is required by running the following command, which
+should fail:
+
+    mongo --ssl \
+      --sslCAFile `pwd`/spec/support/certificates/ca.crt \
+      --sslPEMKeyFile `pwd`/spec/support/certificates/client-x509.pem \
+      --eval 'db.serverStatus()'
+
+Verify that X.509 authentication works by running the following command:
+
+    mongo --ssl \
+      --sslCAFile `pwd`/spec/support/certificates/ca.crt \
+      --sslPEMKeyFile `pwd`/spec/support/certificates/client-x509.pem \
+      --authenticationDatabase '$external' \
+      --authenticationMechanism MONGODB-X509 \
+      --eval 'db.serverStatus()'
+
+The test suite includes a set of integration tests for X.509 client authentication.
+
+To run the test suite against such a server, run:
+
+    MONGODB_URI="mongodb://localhost:27017/?authMechanism=MONGODB-X509&tls=true&tlsCAFile=spec/support/certificates/ca.crt&tlsCertificateKeyFile=spec/support/certificates/client-x509.pem" rake
 
 ## Compression
 
@@ -165,9 +239,9 @@ Generally, all URI options recognized by the driver may be set for a test run,
 and will cause the clients created by the test suite to have those options
 by default. For example, retryable writes may be turned on and off as follows:
 
-    MONGODB_URI='mongodb://localhost:27017/?retryWrites=true' rake 
+    MONGODB_URI='mongodb://localhost:27017/?retryWrites=true' rake
 
-    MONGODB_URI='mongodb://localhost:27017/?retryWrites=false' rake 
+    MONGODB_URI='mongodb://localhost:27017/?retryWrites=false' rake
 
 Individual tests may override options that the test suite uses as defaults.
 For example, retryable writes tests may create clients with the retry writes
@@ -177,7 +251,7 @@ the entire test run.
 It is also possible to, for example, reference non-default hosts and replica
 set names:
 
-    MONGODB_URI='mongodb://test.host:27017,test.host:27018/?replicaSet=fooset' rake 
+    MONGODB_URI='mongodb://test.host:27017,test.host:27018/?replicaSet=fooset' rake
 
 However, as noted in the caveats section, changing the database name used by
 the test suite is not supported.

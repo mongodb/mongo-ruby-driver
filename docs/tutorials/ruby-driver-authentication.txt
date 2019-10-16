@@ -77,12 +77,11 @@ The mechanism can be explicitly set with the credentials:
                              auth_mech: :mongodb_cr )
 
 
-Client Certificate (x509)
-`````````````````````````
-*Requires MongoDB v2.6 or greater.*
+Client Certificate (X.509)
+``````````````````````````
 
 The driver presents an X.509 certificate during SSL negotiation.
-The Client Certificate (x509) mechanism authenticates a username
+The MONGODB-X509 authentication mechanism authenticates a username
 derived from the distinguished subject name of this certificate.
 
 This authentication method requires the use of SSL connections with

@@ -16,7 +16,7 @@ module Mongo
   module Auth
     class X509
 
-      # Defines behavior around a single x.509 conversation between the
+      # Defines behavior around a single X.509 conversation between the
       # client and server.
       #
       # @since 2.0.0
@@ -34,7 +34,7 @@ module Mongo
         # @return [ User ] user The user for the conversation.
         attr_reader :user
 
-        # Finalize the x.509 conversation. This is meant to be iterated until
+        # Finalize the X.509 conversation. This is meant to be iterated until
         # the provided reply indicates the conversation is finished.
         #
         # @example Finalize the conversation.
@@ -50,7 +50,7 @@ module Mongo
           validate!(reply)
         end
 
-        # Start the x.509 conversation. This returns the first message that
+        # Start the X.509 conversation. This returns the first message that
         # needs to be sent to the server.
         #
         # @example Start the conversation.
@@ -58,7 +58,7 @@ module Mongo
         #
         # @param [ Mongo::Server::Connection ] connection The connection being authenticated.
         #
-        # @return [ Protocol::Query ] The first x.509 conversation message.
+        # @return [ Protocol::Query ] The first X.509 conversation message.
         #
         # @since 2.0.0
         def start(connection = nil)
@@ -66,7 +66,16 @@ module Mongo
           login[:user] = user.name if user.name
           if connection && connection.features.op_msg_enabled?
             selector = login
-            selector[Protocol::Msg::DATABASE_IDENTIFIER] = user.auth_source
+            # The only valid database for X.509 authentication is $external.
+            if user.auth_source != '$external'
+              user_name_msg = if user.name
+                " #{user.name}"
+              else
+                ''
+              end
+              raise Auth::InvalidConfiguration, "User#{user_name_msg} specifies auth source '#{user.auth_source}', but the only valid auth source for X.509 is '$external'"
+            end
+            selector[Protocol::Msg::DATABASE_IDENTIFIER] = '$external'
             cluster_time = connection.mongos? && connection.cluster_time
             selector[Operation::CLUSTER_TIME] = cluster_time if cluster_time
             Protocol::Msg.new([], {}, selector)
