@@ -9,6 +9,7 @@ wget "https://s3.amazonaws.com/mciuploads/libmongocrypt/all/master/latest/libmon
 tar -xvf libmongocrypt-all.tar.gz
 
 ls
+export MONGODB_URI='mongodb://localhost:27017'
 export LIBMONGOCRYPT_PATH=`pwd`/rhel-70-64-bit/lib64/libmongocrypt.so
 
 set_env_vars
