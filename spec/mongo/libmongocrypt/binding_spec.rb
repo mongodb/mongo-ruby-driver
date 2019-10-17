@@ -1,6 +1,6 @@
 require 'lite_spec_helper'
 
-describe Mongo::Libmongocrypt::Binding do
+describe 'Mongo::Libmongocrypt::Binding' do
   before do
     unless ENV['LIBMONGOCRYPT_PATH']
       skip 'Test requires path to libmongocrypt to be specified in LIBMONGOCRYPT_PATH env variable'
@@ -8,7 +8,7 @@ describe Mongo::Libmongocrypt::Binding do
   end
 
   describe '#mongocrypt_version' do
-    let(:version) { described_class.mongocrypt_version(nil) }
+    let(:version) { Mongo::Libmongocrypt::Binding.mongocrypt_version(nil) }
 
     it 'is a string' do
       expect(version).to be_a_kind_of(String)

@@ -12,23 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'ffi'
-
 module Mongo
   class Libmongocrypt
-
-    # A Ruby binding for the libmongocrypt C library
-    #
-    # @since 2.12.0
-    class Binding
-      unless ENV['LIBMONGOCRYPT_PATH']
-        raise "Cannot load Mongo::Libmongocrypt::Binding without the libmongocrypt library; specify the path to libmongocrypt using the LIBMONGOCRYPT_PATH environment variable."
-      end
-
-      extend FFI::Library
-
-      ffi_lib ENV['LIBMONGOCRYPT_PATH']
-      attach_function :mongocrypt_version, [:pointer], :string
-    end
+    autoload(:Binding, 'mongo/libmongocrypt/binding.rb')
   end
 end
