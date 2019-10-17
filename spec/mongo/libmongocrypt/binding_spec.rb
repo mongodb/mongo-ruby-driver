@@ -15,7 +15,7 @@ describe 'Mongo::Libmongocrypt::Binding' do
     end
 
     it 'is in the x.y.z-tag format' do
-      expect(version).to match(/^(\d+.){2}(\d+)?(-[A-Za-z\d]+)?$/)
+      expect(version).to match(/\A(\d+.){2}(\d+)?(-[A-Za-z\d]+)?\z/)
     end
   end
 end
