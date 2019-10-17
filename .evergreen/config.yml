@@ -358,7 +358,7 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
-          MONGODB_URI="${MONGODB_URI}" .evergreen/run-tests.sh
+          MONGODB_URI="${MONGODB_URI}" LIBMONGOCRYPT_PATH="${LIBMONGOCRYPT_PATH}" .evergreen/run-tests.sh
 
   "run tests with kerberos":
     - command: shell.exec
