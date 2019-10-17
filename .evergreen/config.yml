@@ -370,6 +370,7 @@ functions:
         script: |
           ${PREPARE_SHELL}
           .evergreen/run-x509-tests.sh
+
   "run field level encryption tests":
     - command: shell.exec
       type: test
