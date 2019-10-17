@@ -370,6 +370,15 @@ functions:
         script: |
           ${PREPARE_SHELL}
           .evergreen/run-x509-tests.sh
+  "run field level encryption tests":
+    - command: shell.exec
+      type: test
+      params:
+        shell: bash
+        working_dir: "src"
+        script: |
+          ${PREPARE_SHELL}
+          MONGODB_URI="${MONGODB_URI}" .evergreen/run-fle-tests.sh
 
   "run tests via mlaunch":
     - command: shell.exec
@@ -537,6 +546,10 @@ tasks:
     - name: "x509-tests"
       commands:
         - func: "run tests with X.509 authentication"
+    - name: "fle-tests"
+      commands:
+        - func: "bootstrap mongo-orchestration"
+        - func: "run field level encryption tests"
 
 axes:
   - id: "mongodb-version"
@@ -953,6 +966,18 @@ buildvariants:
   display_name: "X.509 Tests"
   tasks:
     - name: "x509-tests"
+
+-
+  matrix_name: "fle-tests"
+  matrix_spec:
+    auth-and-ssl: "noauth-and-nossl"
+    ruby: ["ruby-2.3", "ruby-2.4", "ruby-2.5", "ruby-2.6", "jruby-9.2"]
+    topology: standalone
+    mongodb-version: "4.2"
+    os: rhel70
+  display_name: "FLE Tests: ${ruby}"
+  tasks:
+    - name: "fle-tests"
 
 -
   matrix_name: "enterprise-auth-tests-rhel"
