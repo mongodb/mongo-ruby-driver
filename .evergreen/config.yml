@@ -341,15 +341,6 @@ functions:
       params:
         file: mo-expansion.yml
 
-  "import libmongocrypt":
-    - command: shell.exec
-      params:
-        script: |
-          ${PREPARE_SHELL}
-          wget "https://s3.amazonaws.com/mciuploads/libmongocrypt/all/master/latest/libmongocrypt-all.tar.gz"
-          tar -xvf libmongocrypt-all.tar.gz
-          export LIBMONGOCRYPT_PATH=`pwd`/rhel-70-64-bit/lib64/libmongocrypt.so
-
   "run tests":
     - command: shell.exec
       type: test
@@ -358,7 +349,7 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
-          MONGODB_URI="${MONGODB_URI}" LIBMONGOCRYPT_PATH="${LIBMONGOCRYPT_PATH}" .evergreen/run-tests.sh
+          MONGODB_URI="${MONGODB_URI}" .evergreen/run-tests.sh
 
   "run tests with kerberos":
     - command: shell.exec
@@ -379,6 +370,15 @@ functions:
         script: |
           ${PREPARE_SHELL}
           .evergreen/run-x509-tests.sh
+  "run field level encryption tests":
+    - command: shell.exec
+      type: test
+      params:
+        shell: bash
+        working_dir: "src"
+        script: |
+          ${PREPARE_SHELL}
+          MONGODB_URI="${MONGODB_URI}" .evergreen/run-fle-tests.sh
 
   "run tests via mlaunch":
     - command: shell.exec
@@ -549,8 +549,7 @@ tasks:
     - name: "fle-tests"
       commands:
         - func: "bootstrap mongo-orchestration"
-        - func: "import libmongocrypt"
-        - func: "run tests"
+        - func: "run field level encryption tests"
 
 axes:
   - id: "mongodb-version"

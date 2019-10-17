@@ -21,13 +21,21 @@ module Mongo
     #
     # @since 2.12.0
     class Binding
-      unless ENV['LIBMONGOCRYPT_PATH']
-        raise "Cannot load Mongo::Libmongocrypt::Binding without the libmongocrypt library; specify the path to libmongocrypt using the LIBMONGOCRYPT_PATH environment variable."
-      end
-
       extend FFI::Library
 
-      ffi_lib ENV['LIBMONGOCRYPT_PATH']
+      begin
+        ffi_lib ENV['LIBMONGOCRYPT_PATH']
+      rescue LoadError => e
+        if ENV['LIBMONGOCRYPT_PATH']
+          raise "Cannot load Mongo::Libmongocrypt::Binding because the path to " +
+            "libmongocrypt specified in the LIBMONGOCRYPT_PATH environment variable " +
+            "is invalid: #{ENV['LIBMONGOCRYPT']}\n\n#{e.message}"
+        else
+          raise "Cannot load Mongo::Libmongocrypt::Binding because there is no path " +
+            "to libmongocrypt specified in the LIBMONGOCRYPT_PATH environment variable."
+        end
+      end
+
       attach_function :mongocrypt_version, [:pointer], :string
     end
   end
