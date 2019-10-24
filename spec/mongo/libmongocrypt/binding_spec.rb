@@ -57,7 +57,9 @@ describe 'Mongo::Libmongocrypt::Binding' do
       it 'destroys the reference to the binary object' do
         binary_p = Mongo::Libmongocrypt::Binding.mongocrypt_binary_new_from_data(bytes_pointer, bytes.length)
 
-        Mongo::Libmongocrypt::Binding.mongocrypt_binary_destroy(binary_p)
+        expect do
+          Mongo::Libmongocrypt::Binding.mongocrypt_binary_destroy(binary_p)
+        end.not_to raise_error
       end
     end
   end
