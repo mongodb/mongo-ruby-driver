@@ -38,8 +38,10 @@ describe Mongo::Libmongocrypt::Binary do
     end
   end
 
-
   describe '#close' do
-
+    it 'removes references to the binary data' do
+      binary.close
+      expect(binary.bytes).to be_empty
+    end
   end
 end
