@@ -22,19 +22,15 @@ module Mongo
     #
     # @since 2.12.0
     class Binary
-      def initialize(data_string)
-        unless data_string
-          raise MongocryptError.new('Cannot create new Binary object with no data')
+      def initialize(data)
+        unless data
+          raise MongocryptError.new('Cannot create new Binary object with no data.')
         end
 
-        # TODO: error handling
-        # TODO: make sure keeping copy of data
-        @data = data_string.unpack('C*')
+        @data_p = FFI::MemoryPointer.new(data.length)
+                  .write_array_of_type(FFI::TYPE_UINT8, :put_uint8, data)
 
-        data_p = FFI::MemoryPointer.new(@data.length)
-        data_p.write_array_of_type(FFI::TYPE_UINT8, :put_uint8, @data)
-
-        @bin = Binding.mongocrypt_binary_new_from_data(data_p, @data.length)
+        @bin = Binding.mongocrypt_binary_new_from_data(@data_p, data.length)
       end
 
       def to_bytes
@@ -48,10 +44,12 @@ module Mongo
       end
 
       def close
-        # TODO: error handling
-        # TODO: make sure this also frees everything??
         Binding.mongocrypt_binary_destroy(@bin) if @bin
-        @data = nil if @data
+
+        @data_p.free if @data_p
+
+        @data_p = nil
+        @bin = nil
       end
     end
   end

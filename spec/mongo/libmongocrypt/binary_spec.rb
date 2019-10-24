@@ -8,9 +8,8 @@ end
 describe Mongo::Libmongocrypt::Binary do
   require_libmongocrypt
 
-  let(:string) { 'hello' }
-  let(:string_to_bytes) { [104, 101, 108, 108, 111] }
-  let(:binary) { described_class.new(string) }
+  let(:bytes) { [104, 101, 108, 108, 111] }
+  let(:binary) { described_class.new(bytes) }
 
   after(:each) do
     binary.close if binary
@@ -34,14 +33,7 @@ describe Mongo::Libmongocrypt::Binary do
 
   describe '#to_bytes' do
     it 'returns the string as a byte array' do
-      expect(binary.to_bytes).to eq(string_to_bytes)
-    end
-  end
-
-  describe '#close' do
-    it 'removes references to the binary data' do
-      binary.close
-      expect(binary.bytes).to be_empty
+      expect(binary.to_bytes).to eq(bytes)
     end
   end
 end
