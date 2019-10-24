@@ -13,7 +13,9 @@
 # limitations under the License.
 
 module Mongo
-  class Libmongocrypt
+  module Libmongocrypt
     autoload(:Binding, 'mongo/libmongocrypt/binding.rb')
   end
 end
+
+require 'mongo/libmongocrypt/binary.rb'

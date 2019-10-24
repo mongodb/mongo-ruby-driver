@@ -15,7 +15,8 @@
 require 'ffi'
 
 module Mongo
-  class Libmongocrypt
+  module Libmongocrypt
+    class MongocryptError < Mongo::Error; end
 
     # A Ruby binding for the libmongocrypt C library
     #
@@ -37,6 +38,13 @@ module Mongo
       end
 
       attach_function :mongocrypt_version, [:pointer], :string
+
+      #mongocrypt_binary_t bindings
+      attach_function :mongocrypt_binary_new, [], :pointer
+      attach_function :mongocrypt_binary_new_from_data, [:pointer, :int], :pointer
+      attach_function :mongocrypt_binary_data, [:pointer], :pointer
+      attach_function :mongocrypt_binary_len, [:pointer], :int
+      attach_function :mongocrypt_binary_destroy, [:pointer], :void
     end
   end
 end
