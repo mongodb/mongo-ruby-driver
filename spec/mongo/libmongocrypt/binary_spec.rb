@@ -12,7 +12,7 @@ describe Mongo::Libmongocrypt::Binary do
   let(:binary) { described_class.new(bytes) }
 
   describe '#initialize' do
-    context 'with nil data string' do
+    context 'with nil data' do
       it 'raises an exception' do
         expect do
           described_class.new(nil)
@@ -20,14 +20,24 @@ describe Mongo::Libmongocrypt::Binary do
       end
     end
 
-    it 'creates a new Mongo::Libmongocrypt::Binary object' do
-      expect do
-        binary
-      end.not_to raise_error
+    context 'with valid data' do
+      after do
+        binary.close
+      end
+
+      it 'creates a new Mongo::Libmongocrypt::Binary object' do
+        expect do
+          binary
+        end.not_to raise_error
+      end
     end
   end
 
   describe '#to_bytes' do
+    after do
+      binary.close
+    end
+
     it 'returns the string as a byte array' do
       expect(binary.to_bytes).to eq(bytes)
     end

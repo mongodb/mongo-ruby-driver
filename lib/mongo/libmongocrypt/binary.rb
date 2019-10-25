@@ -42,8 +42,6 @@ module Mongo
                   .write_array_of_type(FFI::TYPE_UINT8, :put_uint8, data)
 
         @bin = Binding.mongocrypt_binary_new_from_data(@data_p, data.length)
-
-        ObjectSpace.define_finalizer(self, proc { Binding.mongocrypt_binary_destroy(@bin) } )
       end
 
       # Returns the data stored as a byte array
