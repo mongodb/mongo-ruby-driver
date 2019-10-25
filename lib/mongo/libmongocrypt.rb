@@ -15,8 +15,6 @@
 module Mongo
   module Libmongocrypt
     autoload(:Binding, 'mongo/libmongocrypt/binding.rb')
+    autoload(:Binary, 'mongo/libmongocrypt/binary.rb')
   end
 end
-
-require 'mongo/libmongocrypt/binary.rb'
-require 'mongo/libmongocrypt/mongocrypt_error.rb'

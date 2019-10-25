@@ -11,16 +11,12 @@ describe Mongo::Libmongocrypt::Binary do
   let(:bytes) { [104, 101, 108, 108, 111] }
   let(:binary) { described_class.new(bytes) }
 
-  after(:each) do
-    binary.close if binary
-  end
-
   describe '#initialize' do
     context 'with nil data string' do
       it 'raises an exception' do
         expect do
           described_class.new(nil)
-        end.to raise_error(Mongo::Libmongocrypt::MongocryptError, /Cannot create new Binary object/)
+        end.to raise_error(Mongo::Libmongocrypt::CryptError, /Cannot create new Binary object/)
       end
     end
 

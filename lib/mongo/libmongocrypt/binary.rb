@@ -34,7 +34,7 @@ module Mongo
       # @since 2.12.0
       def initialize(data)
         unless data
-          raise MongocryptError.new('Cannot create new Binary object with no data.')
+          raise CryptError.new('Cannot create new Binary object with no data.')
         end
 
         # FFI::MemoryPointer automatically frees memory when it goes out of scope
@@ -42,6 +42,8 @@ module Mongo
                   .write_array_of_type(FFI::TYPE_UINT8, :put_uint8, data)
 
         @bin = Binding.mongocrypt_binary_new_from_data(@data_p, data.length)
+
+        ObjectSpace.define_finalizer(self, proc { Binding.mongocrypt_binary_destroy(@bin) } )
       end
 
       # Returns the data stored as a byte array

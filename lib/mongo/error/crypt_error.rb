@@ -14,6 +14,6 @@ module Mongo
     # An error related to the libmongocrypt binding.
     #
     # @since 2.12.0
-    class MongocryptError < Mongo::Error; end
+    class CryptError < Mongo::Error; end
   end
 end
