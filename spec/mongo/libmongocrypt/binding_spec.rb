@@ -22,44 +22,46 @@ describe 'Mongo::Libmongocrypt::Binding' do
 
   describe 'binary_t bindings' do
     let(:bytes) { [104, 101, 108, 108, 111] }
+
     let(:bytes_pointer) do
+      # FFI::MemoryPointer automatically frees memory when it goes out of scope
       p = FFI::MemoryPointer.new(bytes.size)
       p.write_array_of_type(FFI::TYPE_UINT8, :put_uint8, bytes)
     end
 
+    after do
+      Mongo::Libmongocrypt::Binding.mongocrypt_binary_destroy(binary)
+    end
+
     describe '#mongocrypt_binary_new' do
+      let(:binary) { Mongo::Libmongocrypt::Binding.mongocrypt_binary_new }
+
       it 'returns a pointer' do
-        expect(Mongo::Libmongocrypt::Binding.mongocrypt_binary_new).to be_a_kind_of(FFI::Pointer)
+        expect(binary).to be_a_kind_of(FFI::Pointer)
       end
     end
 
     describe '#mongocrypt_binary_new_from_data' do
+      let(:binary) { Mongo::Libmongocrypt::Binding.mongocrypt_binary_new_from_data(bytes_pointer, bytes.length) }
+
       it 'returns a pointer' do
-        expect(Mongo::Libmongocrypt::Binding.mongocrypt_binary_new_from_data(bytes_pointer, bytes.length)).to be_a_kind_of(FFI::Pointer)
+        expect(binary).to be_a_kind_of(FFI::Pointer)
       end
     end
 
     describe '#mongocrypt_binary_data' do
+      let(:binary) { Mongo::Libmongocrypt::Binding.mongocrypt_binary_new_from_data(bytes_pointer, bytes.length) }
+
       it 'returns the pointer to the data' do
-        binary_p = Mongo::Libmongocrypt::Binding.mongocrypt_binary_new_from_data(bytes_pointer, bytes.length)
-        expect(Mongo::Libmongocrypt::Binding.mongocrypt_binary_data(binary_p)).to eq(bytes_pointer)
+        expect(Mongo::Libmongocrypt::Binding.mongocrypt_binary_data(binary)).to eq(bytes_pointer)
       end
     end
 
     describe '#mongocrypt_binary_len' do
+      let(:binary) { Mongo::Libmongocrypt::Binding.mongocrypt_binary_new_from_data(bytes_pointer, bytes.length) }
+
       it 'returns the length of the data' do
-        binary_p = Mongo::Libmongocrypt::Binding.mongocrypt_binary_new_from_data(bytes_pointer, bytes.length)
-        expect(Mongo::Libmongocrypt::Binding.mongocrypt_binary_len(binary_p)).to eq(bytes.length)
-      end
-    end
-
-    describe '#mongocrypt_binary_destroy' do
-      it 'destroys the reference to the binary object' do
-        binary_p = Mongo::Libmongocrypt::Binding.mongocrypt_binary_new_from_data(bytes_pointer, bytes.length)
-
-        expect do
-          Mongo::Libmongocrypt::Binding.mongocrypt_binary_destroy(binary_p)
-        end.not_to raise_error
+        expect(Mongo::Libmongocrypt::Binding.mongocrypt_binary_len(binary)).to eq(bytes.length)
       end
     end
   end

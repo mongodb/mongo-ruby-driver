@@ -24,7 +24,7 @@ module Mongo
     # @since 2.12.0
     class Binary
 
-      # Create a new Binary object that wrapps an array of bytes
+      # Create a new Binary object that wraps an array of bytes
       #
       # @example Instantiate a Binary object
       #   Mongo::Libmongocrypt::Binary.new([73, 76, 111, 118, 101, 82, 117, 98, 121])
@@ -37,6 +37,7 @@ module Mongo
           raise MongocryptError.new('Cannot create new Binary object with no data.')
         end
 
+        # FFI::MemoryPointer automatically frees memory when it goes out of scope
         @data_p = FFI::MemoryPointer.new(data.length)
                   .write_array_of_type(FFI::TYPE_UINT8, :put_uint8, data)
 
@@ -65,8 +66,6 @@ module Mongo
       # @since 2.12.0
       def close
         Binding.mongocrypt_binary_destroy(@bin) if @bin
-
-        @data_p.free if @data_p
 
         @data_p = nil
         @bin = nil
