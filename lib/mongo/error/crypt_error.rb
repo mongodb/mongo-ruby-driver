@@ -9,7 +9,7 @@
 # limitations under the License.
 
 module Mongo
-  module Libmongocrypt
+  class Error
 
     # An error related to the libmongocrypt binding.
     #

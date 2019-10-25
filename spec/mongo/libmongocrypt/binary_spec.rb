@@ -16,7 +16,7 @@ describe Mongo::Libmongocrypt::Binary do
       it 'raises an exception' do
         expect do
           described_class.new(nil)
-        end.to raise_error(Mongo::Libmongocrypt::CryptError, /Cannot create new Binary object/)
+        end.to raise_error(Mongo::Error::CryptError, /Cannot create new Binary object/)
       end
     end
 
