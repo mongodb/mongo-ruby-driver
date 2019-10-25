@@ -19,3 +19,4 @@ module Mongo
 end
 
 require 'mongo/libmongocrypt/binary.rb'
+require 'mongo/libmongocrypt/mongocrypt_error.rb'
