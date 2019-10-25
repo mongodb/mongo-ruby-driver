@@ -11,5 +11,4 @@ group :test do
   gem 'timeout-interrupt', platforms: :mri
   gem 'rspec', '~> 3.4'
   gem 'rake'
-  gem 'ffi'
 end
