@@ -16,7 +16,6 @@ require 'ffi'
 
 module Mongo
   module Libmongocrypt
-    class MongocryptError < Mongo::Error; end
 
     # A Ruby binding for the libmongocrypt C library
     #
