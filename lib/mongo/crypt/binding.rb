@@ -61,6 +61,28 @@ module Mongo
       # Takes a mongocrypt_binary_t pointer
       # Frees the reference to that mongocrypt_binary_t
       attach_function :mongocrypt_binary_destroy, [:pointer], :void
+
+      # Viable status codes
+      enum :status_type, [
+        :ok,            1,
+        :error_client,  2,
+        :error_kms,     3
+      ]
+
+      # Creates a new status object to retrieve from a mongocrypt_t handle
+      # and returns the pointer to that status
+      attach_function :mongocrypt_status_new, [], :pointer
+
+      # Takes:
+      # - a pointer to a status
+      # - a status type (defined in :status_type enum)
+      # - an integer error code
+      # - a string error message
+      # - an integer that is the length of the string + 1
+      # Sets the status_type, error code, and error message on the specified status
+      attach_function :mongocrypt_status_set, [:pointer, :status_type, :int, :string, :int], :void
+
+      attach_function :mongocrypt_status_destroy, [:pointer], :void
     end
   end
 end
