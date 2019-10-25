@@ -5,11 +5,11 @@ RSpec.configure do |config|
   config.extend(LiteConstraints)
 end
 
-describe 'Mongo::Libmongocrypt::Binding' do
+describe 'Mongo::Crypt::Binding' do
   require_libmongocrypt
 
   describe '#mongocrypt_version' do
-    let(:version) { Mongo::Libmongocrypt::Binding.mongocrypt_version(nil) }
+    let(:version) { Mongo::Crypt::Binding.mongocrypt_version(nil) }
 
     it 'is a string' do
       expect(version).to be_a_kind_of(String)
@@ -30,11 +30,11 @@ describe 'Mongo::Libmongocrypt::Binding' do
     end
 
     after do
-      Mongo::Libmongocrypt::Binding.mongocrypt_binary_destroy(binary)
+      Mongo::Crypt::Binding.mongocrypt_binary_destroy(binary)
     end
 
     describe '#mongocrypt_binary_new' do
-      let(:binary) { Mongo::Libmongocrypt::Binding.mongocrypt_binary_new }
+      let(:binary) { Mongo::Crypt::Binding.mongocrypt_binary_new }
 
       it 'returns a pointer' do
         expect(binary).to be_a_kind_of(FFI::Pointer)
@@ -42,7 +42,7 @@ describe 'Mongo::Libmongocrypt::Binding' do
     end
 
     describe '#mongocrypt_binary_new_from_data' do
-      let(:binary) { Mongo::Libmongocrypt::Binding.mongocrypt_binary_new_from_data(bytes_pointer, bytes.length) }
+      let(:binary) { Mongo::Crypt::Binding.mongocrypt_binary_new_from_data(bytes_pointer, bytes.length) }
 
       it 'returns a pointer' do
         expect(binary).to be_a_kind_of(FFI::Pointer)
@@ -50,18 +50,18 @@ describe 'Mongo::Libmongocrypt::Binding' do
     end
 
     describe '#mongocrypt_binary_data' do
-      let(:binary) { Mongo::Libmongocrypt::Binding.mongocrypt_binary_new_from_data(bytes_pointer, bytes.length) }
+      let(:binary) { Mongo::Crypt::Binding.mongocrypt_binary_new_from_data(bytes_pointer, bytes.length) }
 
       it 'returns the pointer to the data' do
-        expect(Mongo::Libmongocrypt::Binding.mongocrypt_binary_data(binary)).to eq(bytes_pointer)
+        expect(Mongo::Crypt::Binding.mongocrypt_binary_data(binary)).to eq(bytes_pointer)
       end
     end
 
     describe '#mongocrypt_binary_len' do
-      let(:binary) { Mongo::Libmongocrypt::Binding.mongocrypt_binary_new_from_data(bytes_pointer, bytes.length) }
+      let(:binary) { Mongo::Crypt::Binding.mongocrypt_binary_new_from_data(bytes_pointer, bytes.length) }
 
       it 'returns the length of the data' do
-        expect(Mongo::Libmongocrypt::Binding.mongocrypt_binary_len(binary)).to eq(bytes.length)
+        expect(Mongo::Crypt::Binding.mongocrypt_binary_len(binary)).to eq(bytes.length)
       end
     end
   end

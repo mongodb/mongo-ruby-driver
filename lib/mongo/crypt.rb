@@ -13,8 +13,8 @@
 # limitations under the License.
 
 module Mongo
-  module Libmongocrypt
-    autoload(:Binding, 'mongo/libmongocrypt/binding.rb')
-    autoload(:Binary, 'mongo/libmongocrypt/binary.rb')
+  module Crypt
+    autoload(:Binding, 'mongo/crypt/binding.rb')
+    autoload(:Binary, 'mongo/crypt/binary.rb')
   end
 end

@@ -15,7 +15,7 @@
 require 'ffi'
 
 module Mongo
-  module Libmongocrypt
+  module Crypt
 
     # A Ruby binding for the libmongocrypt C library
     #
@@ -26,14 +26,14 @@ module Mongo
       extend FFI::Library
 
       unless ENV['LIBMONGOCRYPT_PATH']
-        raise "Cannot load Mongo::Libmongocrypt::Binding because there is no path " +
+        raise "Cannot load Mongo::Crypt::Binding because there is no path " +
             "to libmongocrypt specified in the LIBMONGOCRYPT_PATH environment variable."
       end
 
       begin
         ffi_lib ENV['LIBMONGOCRYPT_PATH']
       rescue LoadError => e
-        raise "Cannot load Mongo::Libmongocrypt::Binding because the path to " +
+        raise "Cannot load Mongo::Crypt::Binding because the path to " +
           "libmongocrypt specified in the LIBMONGOCRYPT_PATH environment variable " +
           "is invalid: #{ENV['LIBMONGOCRYPT']}\n\n#{e.class}: #{e.message}"
       end
