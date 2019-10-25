@@ -82,6 +82,12 @@ module Mongo
       # Sets the status_type, error code, and error message on the specified status
       attach_function :mongocrypt_status_set, [:pointer, :status_type, :int, :string, :int], :void
 
+      # Takes a pointer to a mongocrypt_status_t object and returns the status
+      # type set on that object
+      attach_function :mongocrypt_status_type, [:pointer], :status_type
+
+      attach_function :mongocrypt_status_code, [:pointer], :int
+
       attach_function :mongocrypt_status_destroy, [:pointer], :void
     end
   end
