@@ -15,7 +15,7 @@
 require 'ffi'
 
 module Mongo
-  module Libmongocrypt
+  module Crypt
 
     # A Ruby binding for the libmongocrypt C library
     #
@@ -26,14 +26,14 @@ module Mongo
       extend FFI::Library
 
       unless ENV['LIBMONGOCRYPT_PATH']
-        raise "Cannot load Mongo::Libmongocrypt::Binding because there is no path " +
+        raise "Cannot load Mongo::Crypt::Binding because there is no path " +
             "to libmongocrypt specified in the LIBMONGOCRYPT_PATH environment variable."
       end
 
       begin
         ffi_lib ENV['LIBMONGOCRYPT_PATH']
       rescue LoadError => e
-        raise "Cannot load Mongo::Libmongocrypt::Binding because the path to " +
+        raise "Cannot load Mongo::Crypt::Binding because the path to " +
           "libmongocrypt specified in the LIBMONGOCRYPT_PATH environment variable " +
           "is invalid: #{ENV['LIBMONGOCRYPT']}\n\n#{e.class}: #{e.message}"
       end
@@ -61,6 +61,47 @@ module Mongo
       # Takes a mongocrypt_binary_t pointer
       # Frees the reference to that mongocrypt_binary_t
       attach_function :mongocrypt_binary_destroy, [:pointer], :void
+
+      # Status types
+      enum :status_type, [
+        :ok,            0,
+        :error_client,  1,
+        :error_kms,     2
+      ]
+
+      # Creates a new status object to retrieve from a mongocrypt_t handle
+      # and returns the pointer to that status
+      attach_function :mongocrypt_status_new, [], :pointer
+
+      # Takes:
+      # - a pointer to a status
+      # - a status type (defined in :status_type enum)
+      # - an integer error code
+      # - a string error message
+      # - an integer that is the length of the string + 1
+      # Sets the status_type, error code, and error message on the specified status
+      attach_function :mongocrypt_status_set, [:pointer, :status_type, :int, :string, :int], :void
+
+      # Takes a pointer to a mongocrypt_status_t object and returns the status
+      # type set on that object
+      attach_function :mongocrypt_status_type, [:pointer], :status_type
+
+      # Takes a pointer to a mongocrypt_status_t object and returns the status
+      # code set on that object
+      attach_function :mongocrypt_status_code, [:pointer], :int
+
+      # Takes a pointer to a mongocrypt_status_t object and returns the status
+      # message set on that object. Takes an optional out parameter specifying
+      # the length of the returned string.
+      attach_function :mongocrypt_status_message, [:pointer, :pointer], :string
+
+      # Takes a pointer to a mongocrypt_status_t object and returns whether or not
+      # the status type is ok
+      attach_function :mongocrypt_status_ok, [:pointer], :bool
+
+      # Takes a pointer to a mongocrypt_status_t object and destroys the
+      # reference to that status
+      attach_function :mongocrypt_status_destroy, [:pointer], :void
     end
   end
 end

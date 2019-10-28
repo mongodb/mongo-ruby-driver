@@ -15,7 +15,7 @@
 require 'ffi'
 
 module Mongo
-  module Libmongocrypt
+  module Crypt
 
     # A wrapper around mongocrypt_binary_t, a non-owning buffer of
     # uint-8 byte data. Each Binary instance keeps a copy of the data
@@ -27,7 +27,7 @@ module Mongo
       # Create a new Binary object that wraps an array of bytes
       #
       # @example Instantiate a Binary object
-      #   Mongo::Libmongocrypt::Binary.new([73, 76, 111, 118, 101, 82, 117, 98, 121])
+      #   Mongo::Crypt::Binary.new([73, 76, 111, 118, 101, 82, 117, 98, 121])
       #
       # @param [ Array<Int> ] data An array of uint-8 bytes
       #

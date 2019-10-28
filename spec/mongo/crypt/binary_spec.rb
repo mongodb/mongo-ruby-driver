@@ -5,7 +5,7 @@ RSpec.configure do |config|
   config.extend(LiteConstraints)
 end
 
-describe Mongo::Libmongocrypt::Binary do
+describe Mongo::Crypt::Binary do
   require_libmongocrypt
 
   let(:bytes) { [104, 101, 108, 108, 111] }
@@ -25,7 +25,7 @@ describe Mongo::Libmongocrypt::Binary do
         binary.close
       end
 
-      it 'creates a new Mongo::Libmongocrypt::Binary object' do
+      it 'creates a new Mongo::Crypt::Binary object' do
         expect do
           binary
         end.not_to raise_error
