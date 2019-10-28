@@ -101,7 +101,7 @@ module Mongo
 
       # Takes a pointer to a mongocrypt_status_t object and destroys the
       # reference to that status
-      attach_function :mongocrypt_status_destroy, [:pointer,], :void
+      attach_function :mongocrypt_status_destroy, [:pointer], :void
     end
   end
 end
