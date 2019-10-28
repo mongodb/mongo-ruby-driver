@@ -69,7 +69,7 @@ describe 'Mongo::Crypt::Binding' do
         end
       end
 
-      context 'when status has code' do
+      context 'when status has message' do
         it 'returns message' do
           expect(Mongo::Crypt::Binding.mongocrypt_status_message(status_with_info, nil)).to eq(message)
         end
