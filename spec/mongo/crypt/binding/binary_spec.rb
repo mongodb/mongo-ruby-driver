@@ -6,21 +6,9 @@ RSpec.configure do |config|
 end
 
 describe 'Mongo::Crypt::Binding' do
-  require_libmongocrypt
-
-  describe '#mongocrypt_version' do
-    let(:version) { Mongo::Crypt::Binding.mongocrypt_version(nil) }
-
-    it 'is a string' do
-      expect(version).to be_a_kind_of(String)
-    end
-
-    it 'is in the x.y.z-tag format' do
-      expect(version).to match(/\A(\d+.){2}(\d+)?(-[A-Za-z\d]+)?\z/)
-    end
-  end
-
   describe 'binary_t bindings' do
+    require_libmongocrypt
+
     let(:bytes) { [104, 101, 108, 108, 111] }
 
     let(:bytes_pointer) do
