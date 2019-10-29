@@ -86,13 +86,10 @@ module Mongo
         binary = self.new(data)
 
         begin
-          yield(binary)
-        rescue => e
+          yield binary
+        ensure
           binary.close
-          raise e
         end
-
-        binary.close
       end
     end
   end
