@@ -38,7 +38,7 @@ module Mongo
       # @return [ Status ] returns self
       #
       # @since 2.12.0
-      def set(label, code, message)
+      def update(label, code, message)
         unless [:ok, :error_client, :error_kms].include?(label)
           raise ArgumentError.new(
             "#{label} is an invalid value for a Mongo::Crypt::Status label. " +

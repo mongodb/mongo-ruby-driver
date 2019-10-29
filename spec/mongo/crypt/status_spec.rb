@@ -15,7 +15,7 @@ describe Mongo::Crypt::Status do
   let(:message) { 'Unauthorized' }
 
   let(:status_with_info) do
-    status.set(label, code, message)
+    status.update(label, code, message)
   end
 
   describe '#initialize' do
@@ -36,12 +36,12 @@ describe Mongo::Crypt::Status do
     context 'with invalid label' do
       it 'raises an exception' do
         expect do
-          status.set(:random_label, 0, '')
+          status.update(:random_label, 0, '')
         end.to raise_error(ArgumentError, /random_label is an invalid value for a Mongo::Crypt::Status label/)
       end
 
       it 'works with an empty message' do
-        status.set(:ok, 0, '')
+        status.update(:ok, 0, '')
         expect(status.message).to eq('')
       end
     end
