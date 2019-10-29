@@ -34,7 +34,7 @@ module Mongo
       # @since 2.12.0
       def initialize(data)
         unless data
-          raise Error::CryptError.new('Cannot create new Binary object with no data')
+          raise ArgumentError.new('Cannot create new Binary object with no data')
         end
 
         # FFI::MemoryPointer automatically frees memory when it goes out of scope
