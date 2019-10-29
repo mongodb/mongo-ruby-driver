@@ -14,7 +14,6 @@
 
 require 'ffi'
 require 'base64'
-require 'byebug'
 
 module Mongo
   module Crypt
@@ -102,7 +101,7 @@ module Mongo
       # Only called once it has been validated that @options[:kms_providers][:local][:key]
       # is present and a String
       #
-      # Raises an error if the master key is not a 96-byte string once it has been base64 decoded
+      # Raises an error if the operation fails
       def set_kms_provider_local
         master_key = @options[:kms_providers][:local][:key]
 
@@ -110,6 +109,12 @@ module Mongo
           success = Binding.mongocrypt_setopt_kms_provider_local(@mongocrypt, binary.ref)
           raise_from_status unless success
         end
+      end
+
+      # Initialize the underlying mongocrypt_t object and raise an error if the operation fails
+      def initialize_mongocrypt
+        success = Binding.mongocrypt_init(@mongocrypt)
+        raise_from_status unless success
       end
 
       # Raise a Mongo::Error::CryptError based on the status of the underlying
@@ -130,11 +135,6 @@ module Mongo
 
           raise error
         end
-      end
-
-      def initialize_mongocrypt
-        success = Binding.mongocrypt_init(@mongocrypt)
-        raise_from_status unless success
       end
     end
   end
