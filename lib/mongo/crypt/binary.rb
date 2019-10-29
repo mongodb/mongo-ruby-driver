@@ -84,9 +84,8 @@ module Mongo
       # @since 2.12.0
       def self.with_binary(data)
         binary = self.new(data)
-
         begin
-          yield binary
+          yield(binary)
         ensure
           binary.close
         end
