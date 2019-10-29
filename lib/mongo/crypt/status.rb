@@ -35,7 +35,7 @@ module Mongo
       # @param [ Integer ] code
       # @param [ String ] message
       #
-      # @return [ Status ] returns self
+      # @return [ Mongo::Crypt::Status ] returns self
       #
       # @since 2.12.0
       def update(label, code, message)
