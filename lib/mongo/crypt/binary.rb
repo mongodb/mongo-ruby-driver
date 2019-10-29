@@ -72,6 +72,24 @@ module Mongo
 
         true
       end
+
+      # Convenient API for using binary object without having
+      # to perform cleanup.
+      #
+      # @example
+      #   Mongo::Crypt::Binary.with_binary([73, 76, 111, 118, 101, 82, 117, 98, 121]) do |binary|
+      #     binary.to_bytes # => [73, 76, 111, 118, 101, 82, 117, 98, 121]
+      #   end
+      #
+      # @since 2.12.0
+      def self.with_binary(data)
+        binary = self.new(data)
+        begin
+          yield(binary)
+        ensure
+          binary.close
+        end
+      end
     end
   end
 end
