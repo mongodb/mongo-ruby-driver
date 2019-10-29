@@ -26,7 +26,10 @@ module Mongo
       end
     end
 
+    # A libmongocrypt error relating to the client
     class CryptClientError < CryptError; end
+
+    # A libmongocrypt error relating to the KMS
     class CryptKmsError < CryptError; end
   end
 end

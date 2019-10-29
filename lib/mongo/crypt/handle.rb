@@ -18,7 +18,9 @@ require 'base64'
 module Mongo
   module Crypt
 
-    # TODO: documentation
+    # A handle to the libmongocrypt library that wraps a mongocrypt_t object,
+    # allowing clients to set options on that object or perform operations such
+    # as encryption and decryption
     class Handle
 
       # Creates a new Handle object and initializes it with options
@@ -53,7 +55,12 @@ module Mongo
       end
 
 
-      # TODO: documentation
+      # Destroy the reference to the underlying mongocrypt_t object and
+      # clean up resources
+      #
+      # @return [ true ] Always true
+      #
+      # @since 2.12.0
       def close
         Binding.mongocrypt_destroy(@mongocrypt) if @mongocrypt
         @status.close if @status
