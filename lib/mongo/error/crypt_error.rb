@@ -24,17 +24,9 @@ module Mongo
         @code = code
         super(message)
       end
-
-      # Raise a new Mongo::Error::CryptError based on a Mongo::Crypt::Status object
-      #
-      # @param [ Mongo::Crypt::Status ]
-      #
-      # @since 2.12.0
-      # def self.from_status(status)
-      #   return if status.ok?
-
-      #   self.new(status.label, status.code, status.message)
-      # end
     end
+
+    class CryptClientError < CryptError; end
+    class CryptKmsError < CryptError; end
   end
 end

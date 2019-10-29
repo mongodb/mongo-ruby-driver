@@ -68,6 +68,8 @@ module Mongo
 
       private
 
+      # Validate the kms_providers option and use it to set the KMS provider
+      # information on the underlying mongocrypt_t object
       def set_kms_providers
         unless @options[:kms_providers]
           raise ArgumentError.new("The kms_providers option must not be blank")
@@ -95,6 +97,12 @@ module Mongo
         end
       end
 
+      # Set the local KMS provider information on the underlying mongocrypt_t object
+      #
+      # Only called once it has been validated that @options[:kms_providers][:local][:key]
+      # is present and a String
+      #
+      # Raises an error if the master key is not a 96-byte string once it has been base64 decoded
       def set_kms_provider_local
         master_key = @options[:kms_providers][:local][:key]
 
@@ -104,18 +112,23 @@ module Mongo
         end
       end
 
+      # Raise a Mongo::Error::CryptError based on the status of the underlying
+      # mongocrypt_t object
       def raise_from_status
         Status.with_status do |status|
           Binding.mongocrypt_status(@mongocrypt, status.ref)
 
-          component = case status.label
+          message = "Code #{status.code}: #{status.message}"
+
+          error = case status.label
           when :error_kms
-            'KMS'
+            # There is currently no test for this code path
+            Error::CryptKmsError.new(status.code, message)
           when :error_client
-            'Client'
+            Error::CryptClientError.new(status.code, message)
           end
 
-          raise Error::CryptError.new(status.code, "#{component} error with code #{status.code}: #{status.message}")
+          raise error
         end
       end
 
