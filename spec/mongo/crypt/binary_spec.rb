@@ -42,4 +42,29 @@ describe Mongo::Crypt::Binary do
       expect(binary.to_bytes).to eq(bytes)
     end
   end
+
+  describe '#self.with_binary' do
+    before do
+      allow(described_class)
+        .to receive(:new)
+        .and_return(binary)
+    end
+
+    context 'when yield errors' do
+      it 'closes the created binary and raises the error' do
+        expect(binary).to receive(:close).once
+
+        expect do
+          described_class.with_binary(bytes) do |bin|
+            raise StandardError.new("an error")
+          end
+        end.to raise_error(StandardError, /an error/)
+      end
+    end
+
+    it 'creates a new binary and closes it' do
+      expect(binary).to receive(:close).once
+      described_class.with_binary(bytes) { |bin| }
+    end
+  end
 end
