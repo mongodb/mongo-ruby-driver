@@ -8,8 +8,8 @@ end
 describe Mongo::Crypt::Binary do
   require_libmongocrypt
 
-  let(:bytes) { [104, 101, 108, 108, 111] }
-  let(:binary) { described_class.new(bytes) }
+  let(:data) { 'I love Ruby' }
+  let(:binary) { described_class.new(data) }
 
   describe '#initialize' do
     context 'with nil data' do
@@ -39,7 +39,7 @@ describe Mongo::Crypt::Binary do
     end
 
     it 'returns the string as a byte array' do
-      expect(binary.to_bytes).to eq(bytes)
+      expect(binary.to_bytes).to eq(data.unpack("C*"))
     end
   end
 
@@ -47,6 +47,7 @@ describe Mongo::Crypt::Binary do
     before do
       allow(described_class)
         .to receive(:new)
+        .with(data)
         .and_return(binary)
     end
 
@@ -55,7 +56,7 @@ describe Mongo::Crypt::Binary do
         expect(binary).to receive(:close).once
 
         expect do
-          described_class.with_binary(bytes) do |bin|
+          described_class.with_binary(data) do |bin|
             raise StandardError.new("an error")
           end
         end.to raise_error(StandardError, /an error/)
@@ -65,8 +66,8 @@ describe Mongo::Crypt::Binary do
     it 'creates a new binary and closes it' do
       expect(binary).to receive(:close).once
 
-      described_class.with_binary(bytes) do |bin|
-        expect(bin.to_bytes).to eq(bytes)
+      described_class.with_binary(data) do |bin|
+        expect(bin.to_bytes).to eq(data.unpack("C*"))
       end
     end
   end

@@ -102,6 +102,30 @@ module Mongo
       # Takes a pointer to a mongocrypt_status_t object and destroys the
       # reference to that status
       attach_function :mongocrypt_status_destroy, [:pointer], :void
+
+      # Creates a new mongocrypt_t object and returns a pointer to that object
+      attach_function :mongocrypt_new, [], :pointer
+
+      # Takes a pointer to a mongocrypt_t object and a pointer to a mongocrypt_binary_t
+      # object wrapping a 96-byte master key for encryption/decryption.
+      # Configures the mongocrypt_t with the KMS provider options and returns a boolean
+      # indicating the success of the operation.
+      attach_function :mongocrypt_setopt_kms_provider_local, [:pointer, :pointer], :bool
+
+      # Takes a pointer to a mongocrypt_t object and initializes that object.
+      # Should be called after mongocrypt_setopt_kms_provider_local and other methods that
+      # set options on the mongocrypt_t object.
+      # Returns a boolean indicating the success of the operation.
+      attach_function :mongocrypt_init, [:pointer], :bool
+
+      # Takes a pointer to a mongocrypt_t object and a pointer to a mongocrypt_status_t
+      # object as an out parameter. Sets the status information of the mongocrypt_t
+      # on the specified status object. Returns a boolean indicating the success of
+      # the operation.
+      attach_function :mongocrypt_status, [:pointer, :pointer], :bool
+
+      # Takes a pointer to a mongocrypt_t object and destroys the reference to that object.
+      attach_function :mongocrypt_destroy, [:pointer], :void
     end
   end
 end

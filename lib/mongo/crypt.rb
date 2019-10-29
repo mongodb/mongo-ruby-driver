@@ -14,8 +14,9 @@
 
 module Mongo
   module Crypt
-    autoload(:Binding, 'mongo/crypt/binding.rb')
-    autoload(:Binary, 'mongo/crypt/binary.rb')
-    autoload(:Status, 'mongo/crypt/status.rb')
+    autoload(:Binding, 'mongo/crypt/binding')
+    autoload(:Binary, 'mongo/crypt/binary')
+    autoload(:Status, 'mongo/crypt/status')
+    autoload(:Handle, 'mongo/crypt/handle')
   end
 end

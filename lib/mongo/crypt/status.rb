@@ -90,6 +90,16 @@ module Mongo
         Binding.mongocrypt_status_ok(@status)
       end
 
+      # Returns the reference to the underlying mongocrypt_status_t
+      # object
+      #
+      # @return [ FFI::Pointer ] Pointer to the underlying mongocrypt_status_t oject
+      #
+      # @since 2.12.0
+      def ref
+        @status
+      end
+
       # Destroys reference to mongocrypt_status_t object and
       # cleans up resources.
       #

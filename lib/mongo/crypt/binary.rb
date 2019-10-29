@@ -23,13 +23,14 @@ module Mongo
     #
     # @since 2.12.0
     class Binary
+      attr_accessor :bin
 
-      # Create a new Binary object that wraps an array of bytes
+      # Create a new Binary object that wraps a string
       #
       # @example Instantiate a Binary object
-      #   Mongo::Crypt::Binary.new([73, 76, 111, 118, 101, 82, 117, 98, 121])
+      #   Mongo::Crypt::Binary.new('Hello, world!')
       #
-      # @param [ Array<Int> ] data An array of uint-8 bytes
+      # @param [ String ] data
       #
       # @since 2.12.0
       def initialize(data)
@@ -37,11 +38,14 @@ module Mongo
           raise ArgumentError.new('Cannot create new Binary object with no data')
         end
 
-        # FFI::MemoryPointer automatically frees memory when it goes out of scope
-        @data_p = FFI::MemoryPointer.new(data.length)
-                  .write_array_of_type(FFI::TYPE_UINT8, :put_uint8, data)
+        # Represent data string as array of uint-8 bytes
+        bytes = data.unpack("C*")
 
-        @bin = Binding.mongocrypt_binary_new_from_data(@data_p, data.length)
+        # FFI::MemoryPointer automatically frees memory when it goes out of scope
+        @data_p = FFI::MemoryPointer.new(bytes.length)
+                  .write_array_of_type(FFI::TYPE_UINT8, :put_uint8, bytes)
+
+        @bin = Binding.mongocrypt_binary_new_from_data(@data_p, bytes.length)
       end
 
       # Returns the data stored as a byte array
@@ -57,6 +61,10 @@ module Mongo
 
         len = Binding.mongocrypt_binary_len(@bin)
         data.read_array_of_type(FFI::TYPE_UINT8, :read_uint8, len)
+      end
+
+      def ref
+        @bin
       end
 
       # Releases allocated memory and cleans up resources
@@ -77,8 +85,8 @@ module Mongo
       # to perform cleanup.
       #
       # @example
-      #   Mongo::Crypt::Binary.with_binary([73, 76, 111, 118, 101, 82, 117, 98, 121]) do |binary|
-      #     binary.to_bytes # => [73, 76, 111, 118, 101, 82, 117, 98, 121]
+      #   Mongo::Crypt::Binary.with_binary('Hello, world!') do |binary|
+      #     binary.to_bytes # => [72, 101, 108, 108, 111, 44, 32, 119, 111, 114, 108, 100, 33]
       #   end
       #
       # @since 2.12.0
