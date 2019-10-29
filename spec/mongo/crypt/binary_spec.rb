@@ -64,7 +64,10 @@ describe Mongo::Crypt::Binary do
 
     it 'creates a new binary and closes it' do
       expect(binary).to receive(:close).once
-      described_class.with_binary(bytes) { |bin| }
+
+      described_class.with_binary(bytes) do |bin|
+        expect(bin.to_bytes).to eq(bytes)
+      end
     end
   end
 end
