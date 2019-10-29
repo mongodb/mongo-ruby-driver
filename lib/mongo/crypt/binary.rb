@@ -23,8 +23,6 @@ module Mongo
     #
     # @since 2.12.0
     class Binary
-      attr_accessor :bin
-
       # Create a new Binary object that wraps a string
       #
       # @example Instantiate a Binary object
