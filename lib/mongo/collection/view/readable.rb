@@ -602,7 +602,7 @@ module Mongo
           cmd.execute(server).cursor_ids.map do |cursor_id|
             result = if server.features.find_command_enabled?
               Operation::GetMore.new({
-                :selector => {:getMore => cursor_id,
+                :selector => {:getMore => BSON::Int64.new(cursor_id),
                              :collection => collection.name},
                 :db_name => database.name,
                 :session => session,
@@ -610,7 +610,7 @@ module Mongo
              else
               Operation::GetMore.new({
                 :to_return => 0,
-                :cursor_id => cursor_id,
+                :cursor_id => BSON::Int64.new(cursor_id),
                 :db_name => database.name,
                 :coll_name => collection.name
               }).execute(server)
