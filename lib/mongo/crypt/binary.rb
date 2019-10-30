@@ -37,7 +37,7 @@ module Mongo
         end
 
         # Represent data string as array of uint-8 bytes
-        bytes = data.unpack("C*")
+        bytes = data.unpack('C*')
 
         # FFI::MemoryPointer automatically frees memory when it goes out of scope
         @data_p = FFI::MemoryPointer.new(bytes.length)
